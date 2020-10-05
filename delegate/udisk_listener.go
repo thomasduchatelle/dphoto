@@ -73,7 +73,7 @@ func (fs *UDiskFilesystem) String() string {
 	return fmt.Sprintf("UDiskFilesystem[mountpoints=%s]", fs.MountPoint)
 }
 
-func parseDbusObject(signal *dbus.Signal) (*UDiskSignal, bool) {
+func ParseDbusObject(signal *dbus.Signal) (*UDiskSignal, bool) {
 	udisk := UDiskSignal{}
 	var header string
 
@@ -196,47 +196,54 @@ func startUDiskListener() {
 	var removableDrives []*UDiskSignal
 
 	for v := range c {
-		if signal, ok := parseDbusObject(v); ok {
-			var found *UDiskSignal
-			wasPlugged := false
+		removableDrives = HandleDBusSignal(v, removableDrives)
+	}
+}
 
-			for i := 0; i < len(removableDrives) && found == nil; i++ {
-				if equalsIfNotNil(removableDrives[i].DrivePath, signal.DrivePath) || equalsIfNotNil(removableDrives[i].BlockPath, signal.BlockPath) {
-					found = removableDrives[i]
-					wasPlugged = isMounted(found)
-					if signal.removed {
-						removableDrives = append(removableDrives[:i], removableDrives[i+1:]...)
-						found.removed = true
-					} else {
-						removableDrives[i].merge(signal)
-					}
+func HandleDBusSignal(v *dbus.Signal, removableDrives []*UDiskSignal) []*UDiskSignal {
+	if signal, ok := ParseDbusObject(v); ok {
+		var found *UDiskSignal
+		wasPlugged := false
+
+		for i := 0; i < len(removableDrives) && found == nil; i++ {
+			if equalsIfNotNil(removableDrives[i].DrivePath, signal.DrivePath) || equalsIfNotNil(removableDrives[i].BlockPath, signal.BlockPath) {
+				found = removableDrives[i]
+				wasPlugged = isMounted(found)
+				if signal.removed {
+					removableDrives = append(removableDrives[:i], removableDrives[i+1:]...)
+					found.removed = true
+				} else {
+					removableDrives[i].merge(signal)
 				}
 			}
+		}
 
-			if found == nil && !signal.removed {
-				found = signal
-				removableDrives = append(removableDrives, signal)
-			}
+		if found == nil && !signal.removed {
+			found = signal
+			removableDrives = append(removableDrives, signal)
+		}
 
-			withContext := log.WithFields(log.Fields{})
-			if found != nil && found.Block != nil {
-				withContext = withContext.WithField("uuid", found.Block.IdUuid)
-			}
-			if found != nil && found.FileSystem != nil {
-				withContext = withContext.WithField("mountPoints", found.FileSystem.MountPoint)
-			}
+		// Trigger event and Logging
+		withContext := log.WithFields(log.Fields{})
+		if found != nil && found.Block != nil {
+			withContext = withContext.WithField("uuid", found.Block.IdUuid)
+		}
+		if found != nil && found.FileSystem != nil {
+			withContext = withContext.WithField("mountPoints", found.FileSystem.MountPoint)
+		}
 
-			if found != nil && !wasPlugged && isMounted(found) {
-				withContext.Infoln("Disk plugged")
-			} else if found != nil && found.Block != nil && wasPlugged && !isMounted(found) {
-				withContext.Infoln("Disk unplugged")
-			} else if found != nil && found.removed {
-				withContext.WithField("found", found).Debugln("Interface removed")
-			} else {
-				withContext.WithField("found", found).Debugln("Disk updated")
-			}
+		if found != nil && !wasPlugged && isMounted(found) {
+			withContext.Infoln("Disk plugged")
+		} else if found != nil && found.Block != nil && wasPlugged && !isMounted(found) {
+			withContext.Infoln("Disk unplugged")
+		} else if found != nil && found.removed {
+			withContext.WithField("found", found).Debugln("Interface removed")
+		} else {
+			withContext.WithField("found", found).Debugln("Disk updated")
 		}
 	}
+
+	return removableDrives
 }
 
 func isMounted(signal *UDiskSignal) bool {
