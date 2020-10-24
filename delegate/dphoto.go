@@ -1,9 +1,9 @@
 package main
 
 import (
+	"duchatelle.io/dphoto/delegate/daemon"
 	"flag"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -33,11 +33,8 @@ func main() {
 		})
 	}
 
-	loggingArgs()
-
 	flag.Parse()
 	loggingInit()
 
-	log.Infoln("Starting dphoto - delegates")
-	startUDiskListener()
+	daemon.StartUDiskListener()
 }

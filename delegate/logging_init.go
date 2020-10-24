@@ -9,7 +9,7 @@ import (
 var debug bool
 var trace bool
 
-func loggingArgs() {
+func init() {
 	flag.BoolVar(&debug, "debug", false, "enable debug output")
 	flag.BoolVar(&debug, "v", false, "enable debug output")
 	flag.BoolVar(&trace, "trace", false, "enable trace output")

@@ -16,4 +16,4 @@ Contribute
 
 Components:
 
-* [Delegate](./delegate/README.md): installed on the end-user computer, backup photos and videos when a media is plug-in.
+* [Delegate](./delegate/README.md): installed on the end-user computer, backup photos and videos when a media is plugged in.

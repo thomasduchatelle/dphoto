@@ -1,15 +1,25 @@
-package main
+package daemon
 
 import (
+	"duchatelle.io/dphoto/delegate/backup"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 )
 
-func TestDetectPlugAndUnplugDisk(t *testing.T) {
-	assert := assert.New(t)
+var volumeManagerPort *MockVolumeManagerPort
+
+func init() {
 	log.SetLevel(log.TraceLevel)
+}
+
+func TestDetectPlugAndUnplugDisk(t *testing.T) {
+	a := assert.New(t)
+
+	volumeManagerPort = new(MockVolumeManagerPort)
+	VolumeManager = volumeManagerPort
 
 	// when
 	var removableDrives []*UDiskSignal
@@ -24,12 +34,14 @@ func TestDetectPlugAndUnplugDisk(t *testing.T) {
 	}}, removableDrives)
 
 	// then
-	if len(removableDrives) == 0 {
-		t.Error("new drives should have been added")
+	if !a.Len(removableDrives, 1, "new drives should have been added") {
 		t.FailNow()
 	}
-	assert.Equal("/org/freedesktop/UDisks2/drives/F8_T5_11100000917", removableDrives[0].DrivePath, "DrivePath")
-	assert.Equal(true, removableDrives[0].Drive.Ejectable, "Ejectable")
+	a.Equal("/org/freedesktop/UDisks2/drives/F8_T5_11100000917", removableDrives[0].DrivePath, "DrivePath")
+	a.Equal(true, removableDrives[0].Drive.Ejectable, "Ejectable")
+
+	// and
+	volumeManagerPort.AssertNotCalled(t, "OnMountedVolume", mock.Anything)
 
 	// when
 	removableDrives = HandleDBusSignal(&dbus.Signal{Sender: "unit", Path: "/org/freedesktop/UDisks2", Name: "org.freedesktop.DBus.ObjectManager.InterfacesAdded", Body: []interface{}{
@@ -46,16 +58,18 @@ func TestDetectPlugAndUnplugDisk(t *testing.T) {
 	}}, removableDrives)
 
 	// then
-	if len(removableDrives) != 1 {
-		t.Error("update should have updated the list, not create a new record.", removableDrives)
+	if !a.Len(removableDrives, 1, "update should have updated the list, not create a new record.") {
 		t.FailNow()
 	}
 
-	assert.Equal("/org/freedesktop/UDisks2/block_devices/sdb", removableDrives[0].BlockPath)
-	assert.NotNil(removableDrives[0].Block)
-	assert.Equal("001B-9622", removableDrives[0].Block.IdUuid)
-	assert.NotNil(removableDrives[0].FileSystem)
-	assert.Equal(0, len(removableDrives[0].FileSystem.MountPoint))
+	a.Equal("/org/freedesktop/UDisks2/block_devices/sdb", removableDrives[0].BlockPath)
+	a.NotNil(removableDrives[0].Block)
+	a.Equal("001B-9622", removableDrives[0].Block.IdUuid)
+	a.NotNil(removableDrives[0].FileSystem)
+	a.Equal(0, len(removableDrives[0].FileSystem.MountPoint))
+
+	// and
+	volumeManagerPort.AssertNotCalled(t, "OnMountedVolume", mock.Anything)
 
 	// when
 	const mountPoint = "run/media/stark/001B-9622"
@@ -63,6 +77,12 @@ func TestDetectPlugAndUnplugDisk(t *testing.T) {
 	for i, c := range mountPoint {
 		bytes[i] = uint8(c)
 	}
+
+	volumeManagerPort.On("OnMountedVolume", backup.RemovableVolume{
+		UniqueId:   "001B-9622",
+		MountPaths: []string{mountPoint},
+	}).Return()
+
 	removableDrives = HandleDBusSignal(&dbus.Signal{Sender: "unit", Path: "/org/freedesktop/UDisks2/block_devices/sdb", Name: "org.freedesktop.DBus.Properties.PropertiesChanged", Body: []interface{}{
 		"org.freedesktop.UDisks2.Filesystem",
 		map[string]dbus.Variant{
@@ -71,16 +91,22 @@ func TestDetectPlugAndUnplugDisk(t *testing.T) {
 	}}, removableDrives)
 
 	// then
-	if len(removableDrives) != 1 {
-		t.Error("update should have updated the list, not create a new record.", removableDrives)
+	if !a.Len(removableDrives, 1, "update should have updated the list, not create a new record.") {
 		t.FailNow()
 	}
 
-	assert.Equal([]string{mountPoint}, removableDrives[0].FileSystem.MountPoint)
+	a.Equal([]string{mountPoint}, removableDrives[0].FileSystem.MountPoint)
+
+	// and
+	volumeManagerPort.AssertExpectations(t)
 }
 
 func TestUmount(t *testing.T) {
-	assert := assert.New(t)
+	a := assert.New(t)
+
+	volumeManagerPort = new(MockVolumeManagerPort)
+	VolumeManager = volumeManagerPort
+
 	// given
 	removableDrives := []*UDiskSignal{
 		{
@@ -99,6 +125,8 @@ func TestUmount(t *testing.T) {
 			},
 		},
 	}
+
+	volumeManagerPort.On("OnUnMountedVolume", "001B-9622").Return()
 
 	// when
 	removableDrives = HandleDBusSignal(&dbus.Signal{Sender: "unit", Path: "/org/freedesktop/UDisks2", Name: "org.freedesktop.DBus.ObjectManager.InterfacesRemoved", Body: []interface{}{
@@ -110,12 +138,18 @@ func TestUmount(t *testing.T) {
 	}}, removableDrives)
 
 	// then - note: Block is kept
-	assert.Equal(1, len(removableDrives))
-	assert.Nil(removableDrives[0].Drive)
+	a.Equal(1, len(removableDrives))
+	a.Nil(removableDrives[0].Drive)
+
+	volumeManagerPort.AssertExpectations(t)
 }
 
 func TestRemoved(t *testing.T) {
-	assert := assert.New(t)
+	a := assert.New(t)
+
+	volumeManagerPort = new(MockVolumeManagerPort)
+	VolumeManager = volumeManagerPort
+
 	// given
 	removableDrives := []*UDiskSignal{
 		{
@@ -135,6 +169,8 @@ func TestRemoved(t *testing.T) {
 		},
 	}
 
+	volumeManagerPort.On("OnUnMountedVolume", "001B-9622").Return()
+
 	// when
 	removableDrives = HandleDBusSignal(&dbus.Signal{Sender: "unit", Path: "/org/freedesktop/UDisks2", Name: "org.freedesktop.DBus.ObjectManager.InterfacesRemoved", Body: []interface{}{
 		dbus.ObjectPath("/org/freedesktop/UDisks2/drives/F8_T5_11100000917"),
@@ -144,5 +180,6 @@ func TestRemoved(t *testing.T) {
 	}}, removableDrives)
 
 	// then
-	assert.Equal(0, len(removableDrives))
+	a.Empty(removableDrives)
+	volumeManagerPort.AssertExpectations(t)
 }

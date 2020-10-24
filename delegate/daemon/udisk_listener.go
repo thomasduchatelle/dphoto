@@ -1,9 +1,11 @@
-package main
+package daemon
 
 import (
+	"duchatelle.io/dphoto/delegate/backup"
 	"fmt"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
 type UDiskDrive struct {
@@ -157,7 +159,8 @@ func getStringArray(props map[string]dbus.Variant, key string, defaultValue []st
 		if array, ok := val.Value().([][]uint8); ok {
 			var result []string
 			for _, p := range array {
-				result = append(result, string(p))
+				// last char is \x00
+				result = append(result, strings.TrimSuffix(string(p), "\x00"))
 			}
 
 			return result
@@ -177,7 +180,7 @@ func getObjectPathAsString(props map[string]dbus.Variant, key string, defaultVal
 	return defaultValue
 }
 
-func startUDiskListener() {
+func StartUDiskListener() {
 	conn, err := dbus.SystemBus()
 	if err != nil {
 		log.Fatalln("Failed to connect to session bus:", err)
@@ -233,9 +236,9 @@ func HandleDBusSignal(v *dbus.Signal, removableDrives []*UDiskSignal) []*UDiskSi
 		}
 
 		if found != nil && !wasPlugged && isMounted(found) {
-			withContext.Infoln("Disk plugged")
+			VolumeManager.OnMountedVolume(backup.RemovableVolume{UniqueId: found.Block.IdUuid, MountPaths: found.FileSystem.MountPoint})
 		} else if found != nil && found.Block != nil && wasPlugged && !isMounted(found) {
-			withContext.Infoln("Disk unplugged")
+			VolumeManager.OnUnMountedVolume(found.Block.IdUuid)
 		} else if found != nil && found.removed {
 			withContext.WithField("found", found).Debugln("Interface removed")
 		} else {
