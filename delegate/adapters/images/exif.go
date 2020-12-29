@@ -1,7 +1,7 @@
 package images
 
 import (
-	"duchatelle.io/dphoto/delegate/backup"
+	"duchatelle.io/dphoto/dphoto/backup"
 	"github.com/pkg/errors"
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"

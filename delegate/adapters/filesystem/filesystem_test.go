@@ -1,7 +1,7 @@
 package filesystem
 
 import (
-	"duchatelle.io/dphoto/delegate/backup"
+	"duchatelle.io/dphoto/dphoto/backup"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path"

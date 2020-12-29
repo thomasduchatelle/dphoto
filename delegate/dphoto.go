@@ -1,7 +1,7 @@
 package main
 
 import (
-	"duchatelle.io/dphoto/delegate/daemon"
+	"duchatelle.io/dphoto/dphoto/daemon"
 	"flag"
 	"fmt"
 	"os"

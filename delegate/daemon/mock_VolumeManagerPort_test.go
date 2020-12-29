@@ -3,7 +3,7 @@
 package daemon
 
 import (
-	backup "duchatelle.io/dphoto/delegate/backup"
+	backup "duchatelle.io/dphoto/dphoto/backup"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -1,8 +1,8 @@
 package backup_adapter
 
 import (
-	"duchatelle.io/dphoto/delegate/backup"
-	"duchatelle.io/dphoto/delegate/daemon"
+	"duchatelle.io/dphoto/dphoto/backup"
+	"duchatelle.io/dphoto/dphoto/daemon"
 )
 
 func init() {

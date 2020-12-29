@@ -1,7 +1,7 @@
 package daemon
 
 import (
-	"duchatelle.io/dphoto/delegate/backup"
+	"duchatelle.io/dphoto/dphoto/backup"
 	"fmt"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"

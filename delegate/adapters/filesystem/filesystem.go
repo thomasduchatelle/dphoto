@@ -2,7 +2,7 @@ package filesystem
 
 import (
 	"crypto/sha256"
-	"duchatelle.io/dphoto/delegate/backup"
+	"duchatelle.io/dphoto/dphoto/backup"
 	"encoding/hex"
 	"github.com/dixonwille/skywalker"
 	"github.com/pkg/errors"

@@ -1,10 +1,9 @@
-module duchatelle.io/dphoto/delegate
+module duchatelle.io/dphoto/dphoto
 
 go 1.15
 
 require (
 	github.com/dixonwille/skywalker v0.0.0-20170804202456-07698455332d
-	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.0.3
 	github.com/pkg/errors v0.9.1
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd

@@ -1,6 +1,6 @@
 package daemon
 
-import "duchatelle.io/dphoto/delegate/backup"
+import "duchatelle.io/dphoto/dphoto/backup"
 
 var (
 	VolumeManager VolumeManagerPort
