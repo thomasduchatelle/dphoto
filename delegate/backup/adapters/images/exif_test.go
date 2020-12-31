@@ -12,7 +12,7 @@ func TestFileWithoutExif(t *testing.T) {
 
 	reader := new(exifReader)
 
-	details, err := reader.ReadImageDetails("../../test_resources/scan/golang-logo.jpeg")
+	details, err := reader.ReadImageDetails("../../../test_resources/scan/golang-logo.jpeg")
 
 	if a.NoError(err) {
 		a.Equal(&backup.MediaDetails{
@@ -28,7 +28,7 @@ func TestFileWithExif(t *testing.T) {
 
 	reader := new(exifReader)
 
-	details, err := reader.ReadImageDetails("../../test_resources/scan/london_skyline_southbank.jpg")
+	details, err := reader.ReadImageDetails("../../../test_resources/scan/london_skyline_southbank.jpg")
 
 	if a.NoError(err) {
 		a.Equal(&backup.MediaDetails{

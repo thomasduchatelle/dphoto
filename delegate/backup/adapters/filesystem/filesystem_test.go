@@ -19,7 +19,7 @@ func TestScanner(t *testing.T) {
 	}
 
 	media := make(chan backup.FoundMedia, 42)
-	err := fsHandler.FindMediaRecursively("../../test_resources", media)
+	err := fsHandler.FindMediaRecursively("../../../test_resources", media)
 	close(media)
 
 	if a.NoError(err) {
@@ -58,7 +58,7 @@ func TestFsHandler_CopyToLocal(t *testing.T) {
 	localCache := path.Join(os.TempDir(), "dphoto_filesystem")
 	_ = os.RemoveAll(localCache)
 
-	mediaHash, err := fsHandler.CopyToLocal("../../test_resources/scan/golang-logo.jpeg", path.Join(localCache, "logo.jpg"))
+	mediaHash, err := fsHandler.CopyToLocal("../../../test_resources/scan/golang-logo.jpeg", path.Join(localCache, "logo.jpg"))
 
 	if a.NoError(err) {
 		a.Equal("2921a1e238f8fd3231a8b04c8bd1433e49ef66e3737c49cd01d34ca4cd4a97ad", mediaHash)
