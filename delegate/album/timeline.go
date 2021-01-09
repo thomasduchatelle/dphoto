@@ -2,13 +2,13 @@ package album
 
 import (
 	"container/heap"
+	"github.com/pkg/errors"
 	"sort"
-	"strings"
 	"time"
 )
 
 type Timeline struct {
-	timeline []segment
+	segments []segment
 }
 
 type segment struct {
@@ -23,13 +23,19 @@ type builderCursor struct {
 	priorityHeap    *albumHeap
 }
 
+type PrioritySegment struct {
+	Start  time.Time
+	End    time.Time
+	Albums []Album // sorted by priority
+}
+
 func (c *builderCursor) closeCurrent(end time.Time, timeline *Timeline) {
 	if c.current != nil {
 		closing := *c.current
 		c.current = nil
 
 		closing.to = end
-		timeline.timeline = append(timeline.timeline, closing)
+		timeline.segments = append(timeline.segments, closing)
 	}
 }
 
@@ -56,7 +62,7 @@ func (c *builderCursor) appendAlbum(album *Album) bool {
 	c.nextToCloseHeap.HeapPush(album)
 	newPriority := c.priorityHeap.HeapPush(album)
 
-	if c.current != nil {
+	if !newPriority && c.current != nil {
 		c.current.albums = append(c.current.albums, album)
 	}
 
@@ -72,12 +78,18 @@ func NewTimeline(albums []Album) (*Timeline, error) {
 
 	cursor := &builderCursor{
 		current:         nil,
-		nextToCloseHeap: newAlbumHeap(firstToEndComparator),
-		priorityHeap:    newAlbumHeap(priorityComparator),
+		nextToCloseHeap: newAlbumHeap(endDescComparator),
+		priorityHeap:    newAlbumHeap(priorityDescComparator),
 	}
 
 	for index, a := range albums {
 		album := a
+		if index > 0 && albums[index-1].Start.After(album.Start) {
+			return nil, errors.Errorf("Albums must be sorted by Start date ASC, %s [index %d] is before %s", album.String(), index, albums[index-1].String())
+		}
+		if !album.End.After(album.Start) {
+			return nil, errors.Errorf("Invalid album, end date must be after start date: %s", album.String())
+		}
 
 		for toClose, ok := cursor.nextToCloseHeap.Head(); ok && !toClose.End.After(album.Start); toClose, ok = cursor.nextToCloseHeap.Head() {
 			removeAlbumFromCursor(timeline, cursor)
@@ -116,14 +128,13 @@ func removeAlbumFromCursor(timeline *Timeline, cursor *builderCursor) {
 }
 
 func (t *Timeline) FindAllAt(date time.Time) []*Album {
-	index := sort.Search(len(t.timeline), func(i int) bool {
-		return t.timeline[i].to.After(date)
+	index := sort.Search(len(t.segments), func(i int) bool {
+		return t.segments[i].to.After(date)
 	})
 
-
-	if index < len(t.timeline) {
+	if index < len(t.segments) {
 		var albums []*Album
-		for _, a := range t.timeline[index].albums {
+		for _, a := range t.segments[index].albums {
 			if !a.Start.After(date) && a.End.After(date) {
 				albums = append(albums, a)
 			}
@@ -144,25 +155,53 @@ func (t *Timeline) FindAt(date time.Time) *Album {
 	return nil
 }
 
-func priorityComparator(a, b *Album) int64 {
-	durationDiff := albumDuration(b).Seconds() - albumDuration(a).Seconds()
-	if durationDiff != 0 {
-		return int64(durationDiff)
+func (t *Timeline) FindForAlbum(folderName string) (segments []PrioritySegment) {
+	for _, seg := range t.segments {
+		if seg.albums[0].FolderName == folderName {
+			segments = append(segments, PrioritySegment{
+				Start:  seg.from,
+				End:    seg.to,
+				Albums: toSortedArray(seg.albums, priorityDescComparator),
+			})
+		}
 	}
 
-	startDiff := b.Start.Unix() - a.Start.Unix()
-	if startDiff != 0 {
-		return startDiff
-	}
-
-	endDiff := b.End.Unix() - a.End.Unix()
-	if endDiff != 0 {
-		return endDiff
-	}
-
-	return int64(strings.Compare(a.Name, b.Name))
+	return segments
 }
 
-func albumDuration(album *Album) time.Duration {
-	return album.End.Sub(album.Start)
+func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment) {
+	startIndex := sort.Search(len(t.segments), func(i int) bool {
+		return t.segments[i].to.After(start)
+	})
+
+	if startIndex >= len(t.segments) {
+		return
+	}
+
+	endIndex := sort.Search(len(t.segments)-startIndex, func(i int) bool {
+		return !t.segments[startIndex+i].from.Before(end)
+	})
+
+	for _, seg := range t.segments[startIndex : startIndex+endIndex] {
+		segments = append(segments, PrioritySegment{
+			Start:  maxTime(seg.from, start),
+			End:    minTime(seg.to, end),
+			Albums: toSortedArray(seg.albums, priorityDescComparator),
+		})
+	}
+
+	return segments
+}
+
+func toSortedArray(albums []*Album, comparator func(a *Album, b *Album) int64) []Album {
+	sortedAlbums := make([]Album, len(albums))
+	for i, a := range albums {
+		sortedAlbums[i] = *a
+	}
+
+	sort.Slice(sortedAlbums, func(i, j int) bool {
+		return comparator(&sortedAlbums[i], &sortedAlbums[j]) > 0
+	})
+
+	return sortedAlbums
 }

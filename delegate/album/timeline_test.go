@@ -123,8 +123,8 @@ func TestNewTimeline(t *testing.T) {
 		got, err := NewTimeline(tt.args)
 
 		if !tt.wantErr && a.NoError(err, tt.name) && err == nil {
-			segments := make([]simplifiedSegment, len(got.timeline))
-			for i, s := range got.timeline {
+			segments := make([]simplifiedSegment, len(got.segments))
+			for i, s := range got.segments {
 				segments[i] = toSimplifiedSegment(&s)
 			}
 
@@ -199,6 +199,110 @@ func TestFindAt_FindAllAt(t *testing.T) {
 
 			a.Equal(tt.want.allNames, albums, tt.name)
 		}
+	}
+}
+
+func TestFindAt_FindBetween(t *testing.T) {
+	a := assert.New(t)
+
+	type Args struct {
+		start string
+		end   string
+	}
+	type Want struct {
+		start    string
+		end      string
+		allNames []string
+	}
+	tests := []struct {
+		name string
+		args Args
+		want []Want
+	}{
+		{
+			"it should return no segment outside timeline boundaries",
+			Args{"2019-01-01T00", "2019-01-01T00"},
+			nil,
+		},
+		{
+			"it should return a segment with dates updated to match the request",
+			Args{"2020-01-01T00", "2020-09-01T00"},
+			[]Want{{"2020-07-01T00", "2020-09-01T00", []string{"2020-Q3"}}},
+		},
+		{
+			"it should return segments within the request",
+			Args{"2020-12-31T00", "2021-01-02T00"},
+			[]Want{
+				{"2020-12-31T00", "2020-12-31T18", []string{"Christmas Holidays", "2020-Q4"}},
+				{"2020-12-31T18", "2021-01-01T18", []string{"New Year", "Christmas Holidays", "2021-Q1", "2020-Q4"}},
+				{"2021-01-01T18", "2021-01-02T00", []string{"Christmas Holidays", "2021-Q1"}},
+			},
+		},
+		{
+			"it should return segments within the request",
+			Args{"2020-12-18T00", "2020-12-26T00"},
+			[]Want{
+				{"2020-12-18T00", "2020-12-24T00", []string{"Christmas First Week", "Christmas Holidays", "2020-Q4"}},
+				{"2020-12-24T00", "2020-12-26T00", []string{"Christmas Day", "Christmas First Week", "Christmas Holidays", "2020-Q4"}},
+			},
+		},
+	}
+
+	timeline, err := NewTimeline(albumCollection())
+
+	if a.NoError(err) {
+		for _, tt := range tests {
+			segments := timeline.FindBetween(mustParse(layout, tt.args.start), mustParse(layout, tt.args.end))
+			var got []Want
+			for _, seg := range segments {
+				var names []string
+				for _, a := range seg.Albums {
+					names = append(names, a.FolderName)
+				}
+
+				got = append(got, Want{
+					start:    seg.Start.Format(layout),
+					end:      seg.End.Format(layout),
+					allNames: names,
+				})
+			}
+
+			a.Equal(tt.want, got, tt.name)
+		}
+	}
+}
+
+func TestTimeline_FindForAlbum(t *testing.T) {
+	a := assert.New(t)
+
+	type Want struct {
+		start    string
+		end      string
+		allNames []string
+	}
+
+	timeline, err := NewTimeline(albumCollection())
+	if a.NoError(err) {
+		segments := timeline.FindForAlbum("Christmas Holidays")
+
+		var got []Want
+		for _, seg := range segments {
+			var names []string
+			for _, a := range seg.Albums {
+				names = append(names, a.FolderName)
+			}
+
+			got = append(got, Want{
+				start:    seg.Start.Format(layout),
+				end:      seg.End.Format(layout),
+				allNames: names,
+			})
+		}
+
+		a.Equal([]Want{
+			{"2020-12-26T00", "2020-12-31T18", []string{"Christmas Holidays", "2020-Q4"}},
+			{"2021-01-01T18", "2021-01-04T00", []string{"Christmas Holidays", "2021-Q1"}},
+		}, got)
 	}
 }
 

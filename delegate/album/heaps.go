@@ -25,10 +25,6 @@ func (a *albumHeap) Pop() interface{} {
 	return x
 }
 
-func firstToEndComparator(a, b *Album) int64 {
-	return b.End.Unix() - a.End.Unix()
-}
-
 func (a *albumHeap) Head() (*Album, bool) {
 	if a.Len() == 0 {
 		return nil, false

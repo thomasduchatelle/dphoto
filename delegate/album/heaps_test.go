@@ -11,7 +11,7 @@ func TestHeap(t *testing.T) {
 	a := assert.New(t)
 
 	h := &albumHeap{
-		comparator: firstToEndComparator,
+		comparator: endDescComparator,
 	}
 	heap.Init(h)
 

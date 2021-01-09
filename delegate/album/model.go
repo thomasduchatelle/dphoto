@@ -7,7 +7,7 @@ import (
 
 type Album struct {
 	Name       string
-	FolderName string
+	FolderName string // unique and immutable
 	Start      time.Time
 	End        time.Time
 }
@@ -20,8 +20,8 @@ type CreateAlbum struct {
 }
 
 func (a *Album) String() string {
-	layout := "2006-01-02T03"
-	return fmt.Sprintf("%s [%s-%s]", a.Name, a.Start.Format(layout), a.End.Format(layout))
+	const layout = "2006-01-02T03"
+	return fmt.Sprintf("[%s-%s] %s (%s)", a.Start.Format(layout), a.End.Format(layout), a.FolderName, a.Name)
 }
 
 // Use unique identifier to compare both albums
@@ -34,27 +34,57 @@ type MediaFilter struct {
 	Page      int
 	Size      int
 
-	AlbumName string
+	AlbumFolderNames map[string]interface{}
+	Ranges           []TimeRange
 }
 
 type MediaUpdate struct {
-	Album          string
-	FolderName     string
-	ToMoveToFolder string
+	FolderName string
 }
 
 func NewFilter() *MediaFilter {
-	return new(MediaFilter)
+	return &MediaFilter{
+		AlbumFolderNames: make(map[string]interface{}),
+	}
 }
 
-func (m *MediaFilter) withPage(page, size int) *MediaFilter {
+func (m *MediaFilter) WithPage(page, size int) *MediaFilter {
 	m.Paginated = true
 	m.Page = page
 	m.Size = size
 	return m
 }
 
-func (m *MediaFilter) withAlbum(name string) *MediaFilter {
-	m.AlbumName = name
+func (m *MediaFilter) WithAlbum(folderNames ...string) *MediaFilter {
+	for _, name := range folderNames {
+		m.AlbumFolderNames[name] = nil
+	}
+
 	return m
+}
+
+func (m *MediaFilter) WithinRange(start, end time.Time) *MediaFilter {
+	m.Ranges = append(m.Ranges, TimeRange{
+		Start: start,
+		End:   end,
+	})
+
+	return m
+}
+
+func NewTimeRangeFromAlbum(album Album) TimeRange {
+	if album.Start.After(album.End) {
+		panic("Album must end AFTER its start: " + album.String())
+	}
+
+	return TimeRange{
+		Start: album.Start,
+		End:   album.End,
+	}
+}
+
+func NewMoveMediaUpdate(album Album) MediaUpdate {
+	return MediaUpdate{
+		FolderName: album.FolderName,
+	}
 }
