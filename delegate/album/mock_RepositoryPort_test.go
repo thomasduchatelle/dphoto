@@ -9,8 +9,8 @@ type MockRepositoryPort struct {
 	mock.Mock
 }
 
-// DeleteEmpty provides a mock function with given fields: folderName
-func (_m *MockRepositoryPort) DeleteEmpty(folderName string) error {
+// DeleteEmptyAlbum provides a mock function with given fields: folderName
+func (_m *MockRepositoryPort) DeleteEmptyAlbum(folderName string) error {
 	ret := _m.Called(folderName)
 
 	var r0 error
@@ -23,8 +23,8 @@ func (_m *MockRepositoryPort) DeleteEmpty(folderName string) error {
 	return r0
 }
 
-// Find provides a mock function with given fields: folderName
-func (_m *MockRepositoryPort) Find(folderName string) (*Album, error) {
+// FindAlbum provides a mock function with given fields: folderName
+func (_m *MockRepositoryPort) FindAlbum(folderName string) (*Album, error) {
 	ret := _m.Called(folderName)
 
 	var r0 *Album
@@ -46,16 +46,16 @@ func (_m *MockRepositoryPort) Find(folderName string) (*Album, error) {
 	return r0, r1
 }
 
-// FindAll provides a mock function with given fields:
-func (_m *MockRepositoryPort) FindAll() ([]Album, error) {
+// FindAllAlbums provides a mock function with given fields:
+func (_m *MockRepositoryPort) FindAllAlbums() ([]*Album, error) {
 	ret := _m.Called()
 
-	var r0 []Album
-	if rf, ok := ret.Get(0).(func() []Album); ok {
+	var r0 []*Album
+	if rf, ok := ret.Get(0).(func() []*Album); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]Album)
+			r0 = ret.Get(0).([]*Album)
 		}
 	}
 
@@ -69,8 +69,54 @@ func (_m *MockRepositoryPort) FindAll() ([]Album, error) {
 	return r0, r1
 }
 
-// Insert provides a mock function with given fields: album
-func (_m *MockRepositoryPort) Insert(album Album) error {
+// FindExistingSignatures provides a mock function with given fields: signatures
+func (_m *MockRepositoryPort) FindExistingSignatures(signatures []*MediaSignature) ([]*MediaSignature, error) {
+	ret := _m.Called(signatures)
+
+	var r0 []*MediaSignature
+	if rf, ok := ret.Get(0).(func([]*MediaSignature) []*MediaSignature); ok {
+		r0 = rf(signatures)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*MediaSignature)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]*MediaSignature) error); ok {
+		r1 = rf(signatures)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindMedias provides a mock function with given fields: folderName, request
+func (_m *MockRepositoryPort) FindMedias(folderName string, request PageRequest) (*MediaPage, error) {
+	ret := _m.Called(folderName, request)
+
+	var r0 *MediaPage
+	if rf, ok := ret.Get(0).(func(string, PageRequest) *MediaPage); ok {
+		r0 = rf(folderName, request)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*MediaPage)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, PageRequest) error); ok {
+		r1 = rf(folderName, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// InsertAlbum provides a mock function with given fields: album
+func (_m *MockRepositoryPort) InsertAlbum(album Album) error {
 	ret := _m.Called(album)
 
 	var r0 error
@@ -83,8 +129,22 @@ func (_m *MockRepositoryPort) Insert(album Album) error {
 	return r0
 }
 
-// Update provides a mock function with given fields: album
-func (_m *MockRepositoryPort) Update(album Album) error {
+// InsertMedias provides a mock function with given fields: media
+func (_m *MockRepositoryPort) InsertMedias(media []CreateMediaRequest) error {
+	ret := _m.Called(media)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]CreateMediaRequest) error); ok {
+		r0 = rf(media)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateAlbum provides a mock function with given fields: album
+func (_m *MockRepositoryPort) UpdateAlbum(album Album) error {
 	ret := _m.Called(album)
 
 	var r0 error
@@ -97,16 +157,30 @@ func (_m *MockRepositoryPort) Update(album Album) error {
 	return r0
 }
 
-// UpdateMedias provides a mock function with given fields: filter, update
-func (_m *MockRepositoryPort) UpdateMedias(filter *MediaFilter, update MediaUpdate) error {
-	ret := _m.Called(filter, update)
+// UpdateMedias provides a mock function with given fields: filter, newFolderName
+func (_m *MockRepositoryPort) UpdateMedias(filter *UpdateMediaFilter, newFolderName string) (string, int, error) {
+	ret := _m.Called(filter, newFolderName)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*MediaFilter, MediaUpdate) error); ok {
-		r0 = rf(filter, update)
+	var r0 string
+	if rf, ok := ret.Get(0).(func(*UpdateMediaFilter, string) string); ok {
+		r0 = rf(filter, newFolderName)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	var r1 int
+	if rf, ok := ret.Get(1).(func(*UpdateMediaFilter, string) int); ok {
+		r1 = rf(filter, newFolderName)
+	} else {
+		r1 = ret.Get(1).(int)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(*UpdateMediaFilter, string) error); ok {
+		r2 = rf(filter, newFolderName)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }

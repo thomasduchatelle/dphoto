@@ -69,7 +69,8 @@ func (c *builderCursor) appendAlbum(album *Album) bool {
 	return newPriority
 }
 
-func NewTimeline(albums []Album) (*Timeline, error) {
+// NewTimeline creates a Timeline object used to compute overlaps between Album. List of albums must be sorted by Start date ASC (End sorting do not matter).
+func NewTimeline(albums []*Album) (*Timeline, error) {
 	timeline := new(Timeline)
 
 	if len(albums) == 0 {
@@ -95,7 +96,7 @@ func NewTimeline(albums []Album) (*Timeline, error) {
 			removeAlbumFromCursor(timeline, cursor)
 		}
 
-		newPriority := cursor.appendAlbum(&album)
+		newPriority := cursor.appendAlbum(album)
 
 		if newPriority {
 			cursor.closeCurrent(album.Start, timeline)

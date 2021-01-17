@@ -29,49 +29,6 @@ func (a *Album) IsEqual(other *Album) bool {
 	return a.FolderName == other.FolderName
 }
 
-type MediaFilter struct {
-	Paginated bool
-	Page      int
-	Size      int
-
-	AlbumFolderNames map[string]interface{}
-	Ranges           []TimeRange
-}
-
-type MediaUpdate struct {
-	FolderName string
-}
-
-func NewFilter() *MediaFilter {
-	return &MediaFilter{
-		AlbumFolderNames: make(map[string]interface{}),
-	}
-}
-
-func (m *MediaFilter) WithPage(page, size int) *MediaFilter {
-	m.Paginated = true
-	m.Page = page
-	m.Size = size
-	return m
-}
-
-func (m *MediaFilter) WithAlbum(folderNames ...string) *MediaFilter {
-	for _, name := range folderNames {
-		m.AlbumFolderNames[name] = nil
-	}
-
-	return m
-}
-
-func (m *MediaFilter) WithinRange(start, end time.Time) *MediaFilter {
-	m.Ranges = append(m.Ranges, TimeRange{
-		Start: start,
-		End:   end,
-	})
-
-	return m
-}
-
 func NewTimeRangeFromAlbum(album Album) TimeRange {
 	if album.Start.After(album.End) {
 		panic("Album must end AFTER its start: " + album.String())
@@ -83,8 +40,59 @@ func NewTimeRangeFromAlbum(album Album) TimeRange {
 	}
 }
 
-func NewMoveMediaUpdate(album Album) MediaUpdate {
-	return MediaUpdate{
-		FolderName: album.FolderName,
-	}
+type MediaType string
+type MediaOrientation string
+
+type MediaLocation struct {
+	FolderName string
+	Filename   string
+}
+
+type MediaSignature struct {
+	SignatureSha256 string
+	SignatureSize   int64
+}
+
+type CreateMediaRequest struct {
+	Location  MediaLocation
+	Type      MediaType
+	Details   MediaDetails
+	Signature MediaSignature
+}
+
+type MediaMeta struct {
+	Signature MediaSignature // Signature is the key used to get the image (or its location)
+	Filename  string         // Filename original filename when image was uploaded
+	Type      MediaType
+	Details   MediaDetails
+}
+
+type MediaDetails struct {
+	Width, Height             int
+	DateTime                  time.Time
+	Orientation               MediaOrientation
+	Make                      string
+	Model                     string
+	GPSLatitude, GPSLongitude float64
+}
+
+type MovedMedia struct {
+	Signature        MediaSignature
+	SourceFolderName string
+	TargetFolderName string
+	Filename         string
+}
+
+type MediaPage struct {
+	NextPage string // empty if no other pages
+	Content  []*MediaMeta
+}
+
+type MediaSignatureAndLocation struct {
+	Location  MediaLocation
+	Signature MediaSignature
+}
+
+func (s MediaSignature) String() string {
+	return fmt.Sprintf("Signature[%s - %d]", s.SignatureSha256, s.SignatureSize)
 }

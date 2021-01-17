@@ -11,48 +11,49 @@ import (
 )
 
 var (
-	NotFoundError = errors.New("Album not found")
+	NotFoundError = errors.New("Album hasn't been found")
+	NotEmptyError = errors.New("Album is not empty")
 )
 
-func FindAll() ([]Album, error) {
-	return Repository.FindAll()
+func FindAll() ([]*Album, error) {
+	return Repository.FindAllAlbums()
 }
 
-func Create(createrequest CreateAlbum) error {
-	if createrequest.Name == "" {
+func Create(createRequest CreateAlbum) error {
+	if createRequest.Name == "" {
 		return errors.Errorf("Album name is mandatory")
 	}
 
-	if createrequest.Start == nil || createrequest.End == nil {
+	if createRequest.Start == nil || createRequest.End == nil {
 		return errors.Errorf("Start and End times are mandatory")
 	}
 
-	if !createrequest.End.After(*createrequest.Start) {
+	if !createRequest.End.After(*createRequest.Start) {
 		return errors.Errorf("Albem end must be strictly after its start")
 	}
 
 	createdAlbum := Album{
-		Name:       createrequest.Name,
-		FolderName: createrequest.ForcedFolderName,
-		Start:      *createrequest.Start,
-		End:        *createrequest.End,
+		Name:       createRequest.Name,
+		FolderName: createRequest.ForcedFolderName,
+		Start:      *createRequest.Start,
+		End:        *createRequest.End,
 	}
 
 	if createdAlbum.FolderName == "" {
-		createdAlbum.FolderName = generateAlbumFolder(createrequest.Name, *createrequest.Start)
+		createdAlbum.FolderName = generateAlbumFolder(createRequest.Name, *createRequest.Start)
 	}
 
-	albums, err := Repository.FindAll()
+	albums, err := Repository.FindAllAlbums()
 	if err != nil {
 		return err
 	}
 
-	err = Repository.Insert(createdAlbum)
+	err = Repository.InsertAlbum(createdAlbum)
 	if err != nil {
 		return err
 	}
 
-	albums = append(albums, createdAlbum)
+	albums = append(albums, &createdAlbum)
 	sort.Slice(albums, startsAscSort(albums))
 
 	timeline, err := NewTimeline(albums)
@@ -60,7 +61,7 @@ func Create(createrequest CreateAlbum) error {
 		return err
 	}
 
-	filter := NewFilter()
+	filter := NewUpdateFilter()
 	for _, s := range timeline.FindForAlbum(createdAlbum.FolderName) {
 		filter.WithinRange(s.Start, s.End)
 		for _, a := range s.Albums[1:] {
@@ -68,7 +69,15 @@ func Create(createrequest CreateAlbum) error {
 		}
 	}
 
-	return Repository.UpdateMedias(filter, NewMoveMediaUpdate(createdAlbum))
+	medias, count, err := Repository.UpdateMedias(filter, createdAlbum.FolderName)
+
+	log.WithFields(log.Fields{
+		"Album":           createdAlbum.FolderName,
+		"MoveTransaction": medias,
+		"MediaCount":      count,
+	}).Infof("Album %s has been created, and %d medias has been virtually moved to it\n", createdAlbum.FolderName, count)
+
+	return err
 }
 
 func generateAlbumFolder(name string, start time.Time) string {
@@ -77,12 +86,12 @@ func generateAlbumFolder(name string, start time.Time) string {
 }
 
 func Find(folderName string) (*Album, error) {
-	return Repository.Find(folderName)
+	return Repository.FindAlbum(folderName)
 }
 
 func Delete(folderNameToDelete string, emptyOnly bool) error {
 	if !emptyOnly {
-		albums, err := Repository.FindAll()
+		albums, err := Repository.FindAllAlbums()
 		if err != nil {
 			return err
 		}
@@ -90,7 +99,7 @@ func Delete(folderNameToDelete string, emptyOnly bool) error {
 		albums, removed := removeAlbumFrom(albums, folderNameToDelete)
 
 		if removed != nil {
-			err = assignMediasTo(albums, removed, func(timeline *Timeline) []PrioritySegment {
+			_, err = assignMediasTo(albums, removed, func(timeline *Timeline) []PrioritySegment {
 				return timeline.FindBetween(removed.Start, removed.End)
 			})
 			if err != nil {
@@ -99,18 +108,15 @@ func Delete(folderNameToDelete string, emptyOnly bool) error {
 		}
 	}
 
-	return Repository.DeleteEmpty(folderNameToDelete)
+	return Repository.DeleteEmptyAlbum(folderNameToDelete)
 }
 
 // Rename an album, and flag all medias to be moved...
 // folderName: optional, force to use a specific name
 func Rename(folderName, newName string, renameFolder bool) error {
-	found, err := Repository.Find(folderName)
+	found, err := Repository.FindAlbum(folderName)
 	if err != nil {
-		return err
-	}
-	if found == nil {
-		return NotFoundError
+		return err // can be NotFoundError
 	}
 
 	if renameFolder {
@@ -121,25 +127,31 @@ func Rename(folderName, newName string, renameFolder bool) error {
 			End:        found.End,
 		}
 
-		err = Repository.Insert(album)
+		err = Repository.InsertAlbum(album)
 		if err != nil {
 			return err
 		}
 
-		err = Repository.UpdateMedias(NewFilter().WithAlbum(folderName), NewMoveMediaUpdate(album))
+		transactionId, count, err := Repository.UpdateMedias(NewUpdateFilter().WithAlbum(folderName), album.FolderName)
 		if err != nil {
 			return err
 		}
 
-		return Repository.DeleteEmpty(folderName)
+		log.WithFields(log.Fields{
+			"AlbumFolderName":    album.FolderName,
+			"PreviousFolderName": folderName,
+			"MoveTransactionId":  transactionId,
+			"AlbumMoved":         count,
+		}).Infof("Album renamed and %d medias moved\n", count)
+		return Repository.DeleteEmptyAlbum(folderName)
 	}
 
 	found.Name = newName
-	return Repository.Update(*found)
+	return Repository.UpdateAlbum(*found)
 }
 
 func Update(folderName string, start, end time.Time) error {
-	albums, err := Repository.FindAll()
+	albums, err := Repository.FindAllAlbums()
 	if err != nil {
 		return err
 	}
@@ -153,40 +165,47 @@ func Update(folderName string, start, end time.Time) error {
 	newTimeRange := TimeRange{Start: start, End: end}
 	if previousTimeRange.Equals(newTimeRange) {
 		log.WithFields(log.Fields{
-			"FolderName": folderName,
-			"Start":      start,
-			"End":        end,
+			"AlbumFolderName": folderName,
+			"Start":           start,
+			"End":             end,
 		}).Infoln("Album date unchanged, nothing to do.")
 		return nil
 	}
 
 	updated.Start = start
 	updated.End = end
-	updatedAlbums := append(albumsWithoutUpdated, *updated)
+	updatedAlbums := append(albumsWithoutUpdated, updated)
 	sort.Slice(updatedAlbums, startsAscSort(updatedAlbums))
 
-	return assignMediasTo(updatedAlbums, updated, func(timeline *Timeline) (segments []PrioritySegment) {
+	count, err := assignMediasTo(updatedAlbums, updated, func(timeline *Timeline) (segments []PrioritySegment) {
 		for _, timeRange := range previousTimeRange.Plus(newTimeRange) {
 			segments = append(segments, timeline.FindBetween(timeRange.Start, timeRange.End)...)
 		}
 
 		return segments
 	})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"FolderName": folderName,
+		}).Infof("Album dates updated, %d medias moved\n", count)
+	}
+	return err
 }
 
-func assignMediasTo(albums []Album, removedAlbum *Album, segmentsToReassignSupplier func(timeline *Timeline) []PrioritySegment) error {
+func assignMediasTo(albums []*Album, removedAlbum *Album, segmentsToReassignSupplier func(timeline *Timeline) []PrioritySegment) (int, error) {
 	timeline, err := NewTimeline(albums)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	segmentsToReassign := segmentsToReassignSupplier(timeline)
 	if len(segmentsToReassign) == 0 {
-		return nil
+		return 0, nil
 	}
 
+	count := 0
 	for _, s := range segmentsToReassign {
-		filter := NewFilter().WithinRange(s.Start, s.End)
+		filter := NewUpdateFilter().WithinRange(s.Start, s.End)
 		if removedAlbum != nil && !removedAlbum.IsEqual(&s.Albums[0]) {
 			filter.WithAlbum(removedAlbum.FolderName)
 		}
@@ -194,24 +213,26 @@ func assignMediasTo(albums []Album, removedAlbum *Album, segmentsToReassignSuppl
 			filter.WithAlbum(a.FolderName)
 		}
 
-		err = Repository.UpdateMedias(filter, NewMoveMediaUpdate(s.Albums[0]))
+		_, mediaCount, err := Repository.UpdateMedias(filter, s.Albums[0].FolderName)
 		if err != nil {
-			return err
+			return 0, err
 		}
+
+		count += mediaCount
 	}
 
-	return nil
+	return count, nil
 }
 
 // remove and keep order
-func removeAlbumFrom(albums []Album, folderName string) ([]Album, *Album) {
+func removeAlbumFrom(albums []*Album, folderName string) ([]*Album, *Album) {
 	index := -1
 	var removed *Album
 	for i, a := range albums {
 		if a.FolderName == folderName {
 			index = i
 			removedCopy := a
-			removed = &removedCopy
+			removed = removedCopy
 		}
 	}
 
@@ -249,9 +270,9 @@ func startsAscComparator(a, b *Album) int64 {
 	return b.Start.Unix() - a.Start.Unix()
 }
 
-func startsAscSort(albums []Album) func(i int, j int) bool {
+func startsAscSort(albums []*Album) func(i int, j int) bool {
 	return func(i, j int) bool {
-		return startsAscComparator(&albums[i], &albums[j]) > 0
+		return startsAscComparator(albums[i], albums[j]) > 0
 	}
 }
 

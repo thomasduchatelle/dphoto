@@ -1,6 +1,9 @@
 package album
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type TimeRange struct {
 	Start time.Time
@@ -37,6 +40,10 @@ func (t TimeRange) Minus(other TimeRange) (ranges []TimeRange) {
 
 func (t TimeRange) Equals(other TimeRange) bool {
 	return t.Start.Equal(other.Start) && t.End.Equal(other.End)
+}
+
+func (t TimeRange) String() string {
+	return fmt.Sprintf("%s -> %s", t.Start.Format(time.RFC3339), t.End.Format(time.RFC3339))
 }
 
 func minTime(a, b time.Time) time.Time {
