@@ -1,7 +1,7 @@
 package dynamo
 
 import (
-	"duchatelle.io/dphoto/dphoto/album"
+	"duchatelle.io/dphoto/dphoto/catalog"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func (r *rep) UpdateMedias(filter *album.UpdateMediaFilter, newFolderName string) (string, int, error) {
+func (r *rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName string) (string, int, error) {
 	transactionId, _, err := r.startMoveTransaction()
 	if err != nil {
 		return "", 0, err
@@ -108,7 +108,7 @@ func (r *rep) markMoveTransactionReady(transactionId string) error {
 	return err
 }
 
-func (r *rep) findMediasQueries(filter *album.UpdateMediaFilter, projectionExpression *string) ([]*dynamodb.QueryInput, error) {
+func (r *rep) findMediasQueries(filter *catalog.UpdateMediaFilter, projectionExpression *string) ([]*dynamodb.QueryInput, error) {
 	queries := make([]*dynamodb.QueryInput, 0, len(filter.AlbumFolderNames)*len(filter.Ranges))
 	for folderName, _ := range filter.AlbumFolderNames {
 		if len(filter.Ranges) == 0 {
@@ -153,7 +153,7 @@ func (r *rep) findMediasQueries(filter *album.UpdateMediaFilter, projectionExpre
 	return queries, nil
 }
 
-func (r *rep) FindReadyMoveTransactions() ([]string, error) {
+func (r *rep) FindReadyMoveTransactions() ([]*catalog.MoveTransaction, error) {
 	crawler := r.bufferedQueriesCrawler([]*dynamodb.QueryInput{
 		{
 			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
@@ -165,7 +165,7 @@ func (r *rep) FindReadyMoveTransactions() ([]string, error) {
 		},
 	})
 
-	var transactionPartitionKeys []string
+	var transactionPartitionKeys []*catalog.MoveTransaction
 	for crawler.HasNext() {
 		var transaction MediaMoveTransactionData
 		err := dynamodbattribute.UnmarshalMap(crawler.Next(), &transaction)
@@ -173,14 +173,21 @@ func (r *rep) FindReadyMoveTransactions() ([]string, error) {
 			return nil, err
 		}
 
-		transactionPartitionKeys = append(transactionPartitionKeys, transaction.PK)
+		count, err := r.countNumberOfMediaToBeMoved(transaction.PK)
+		if err != nil {
+			return nil, err
+		}
+		transactionPartitionKeys = append(transactionPartitionKeys, &catalog.MoveTransaction{
+			TransactionId: transaction.PK,
+			Count:         count,
+		})
 	}
 
 	return transactionPartitionKeys, crawler.Error()
 }
 
 // FindFilesToMove returns a page of media to move (25 like a write batch of dynamodb) and the next page token
-func (r *rep) FindFilesToMove(transactionId, pageToken string) ([]*album.MovedMedia, string, error) {
+func (r *rep) FindFilesToMove(transactionId, pageToken string) ([]*catalog.MovedMedia, string, error) {
 	startKey, err := r.unmarshalPageToken(pageToken)
 	if err != nil {
 		return nil, "", err
@@ -229,7 +236,7 @@ func (r *rep) FindFilesToMove(transactionId, pageToken string) ([]*album.MovedMe
 
 	stream := r.bufferedBatchGetItem(currentLocationKeys, nil)
 
-	movedMedias := make([]*album.MovedMedia, 0, len(results.Items))
+	movedMedias := make([]*catalog.MovedMedia, 0, len(results.Items))
 	for stream.HasNext() {
 		attributes := stream.Next()
 
@@ -239,8 +246,8 @@ func (r *rep) FindFilesToMove(transactionId, pageToken string) ([]*album.MovedMe
 			return nil, "", err
 		}
 
-		movedMedias = append(movedMedias, &album.MovedMedia{
-			Signature: album.MediaSignature{
+		movedMedias = append(movedMedias, &catalog.MovedMedia{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: location.SignatureHash,
 				SignatureSize:   location.SignatureSize,
 			},
@@ -253,7 +260,7 @@ func (r *rep) FindFilesToMove(transactionId, pageToken string) ([]*album.MovedMe
 	return movedMedias, nextPageToken, stream.Error()
 }
 
-func (r *rep) UpdateMediasLocation(transactionId string, moves []*album.MovedMedia) error {
+func (r *rep) UpdateMediasLocation(transactionId string, moves []*catalog.MovedMedia) error {
 	locations := make([]*dynamodb.WriteRequest, len(moves)*2)
 	for i, move := range moves {
 		locationItem, err := r.marshalMediaLocationFromMoveOrder(move)
@@ -284,20 +291,12 @@ func (r *rep) UpdateMediasLocation(transactionId string, moves []*album.MovedMed
 }
 
 func (r *rep) deleteMoveTransactionIfEmpty(transactionId string) error {
-	result, err := r.db.Query(&dynamodb.QueryInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":pk": {S: &transactionId},
-		},
-		IndexName:              aws.String("MoveOrder"),
-		KeyConditionExpression: aws.String("MoveTransaction = :pk"),
-		Select:                 aws.String(dynamodb.SelectCount),
-		TableName:              &r.table,
-	})
+	count, err := r.countNumberOfMediaToBeMoved(transactionId)
 	if err != nil {
 		return err
 	}
 
-	if *result.Count == 1 {
+	if count == 1 {
 		log.WithField("MoveTransactionId", transactionId).Infoln("Move transaction completed.")
 
 		key, err := dynamodbattribute.MarshalMap(r.moveTransactionPrimaryKey(transactionId))
@@ -313,4 +312,20 @@ func (r *rep) deleteMoveTransactionIfEmpty(transactionId string) error {
 	}
 
 	return nil
+}
+
+func (r *rep) countNumberOfMediaToBeMoved(transactionId string) (int, error) {
+	result, err := r.db.Query(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk": {S: &transactionId},
+		},
+		IndexName:              aws.String("MoveOrder"),
+		KeyConditionExpression: aws.String("MoveTransaction = :pk"),
+		Select:                 aws.String(dynamodb.SelectCount),
+		TableName:              &r.table,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(*result.Count), nil
 }

@@ -1,4 +1,4 @@
-package album
+package catalog
 
 import (
 	"container/heap"
@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Timeline can be used to find to which album a media will belongs.
 type Timeline struct {
 	segments []segment
 }

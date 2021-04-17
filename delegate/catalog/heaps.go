@@ -1,4 +1,4 @@
-package album
+package catalog
 
 import "container/heap"
 

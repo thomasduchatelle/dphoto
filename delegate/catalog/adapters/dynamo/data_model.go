@@ -11,7 +11,7 @@
 package dynamo
 
 import (
-	"duchatelle.io/dphoto/dphoto/album"
+	"duchatelle.io/dphoto/dphoto/catalog"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -190,14 +190,14 @@ func (r *rep) albumPrimaryKey(foldername string) TablePk {
 	}
 }
 
-func (r *rep) mediaPrimaryKey(signature *album.MediaSignature) TablePk {
+func (r *rep) mediaPrimaryKey(signature *catalog.MediaSignature) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
 		SK: "#METADATA",
 	}
 }
 
-func (r *rep) mediaLocationPrimaryKey(signature *album.MediaSignature) TablePk {
+func (r *rep) mediaLocationPrimaryKey(signature *catalog.MediaSignature) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
 		SK: "LOCATION",
@@ -211,7 +211,7 @@ func (r *rep) moveTransactionPrimaryKey(moveTransactionId string) TablePk {
 	}
 }
 
-func (r *rep) mediaMoveOrderPrimaryKey(signature *album.MediaSignature, moveTransactionId string) TablePk {
+func (r *rep) mediaMoveOrderPrimaryKey(signature *catalog.MediaSignature, moveTransactionId string) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
 		SK: moveTransactionId,
@@ -238,7 +238,7 @@ func (r *rep) albumIndexedKey(owner, folderName string) AlbumIndexKey {
 	}
 }
 
-func (r *rep) mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, signature *album.MediaSignature) AlbumIndexKey {
+func (r *rep) mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, signature *catalog.MediaSignature) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: fmt.Sprintf("%s#%s", owner, folderName),
 		AlbumIndexSK: fmt.Sprintf("MEDIA#%s#%s", dateTime.Format(IsoTime), r.mediaBusinessSignature(signature)),
@@ -246,11 +246,11 @@ func (r *rep) mediaAlbumIndexedKey(owner string, folderName string, dateTime tim
 }
 
 // mediaBusinessSignature generate a string representing uniquely the album.Media
-func (r *rep) mediaBusinessSignature(signature *album.MediaSignature) string {
+func (r *rep) mediaBusinessSignature(signature *catalog.MediaSignature) string {
 	return fmt.Sprintf("%s#%v", signature.SignatureSha256, signature.SignatureSize)
 }
 
-func (r *rep) marshalAlbum(album *album.Album) (map[string]*dynamodb.AttributeValue, error) {
+func (r *rep) marshalAlbum(album *catalog.Album) (map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(album.FolderName) {
 		return nil, errors.WithStack(errors.New("folderName must not be blank"))
 	}
@@ -265,14 +265,14 @@ func (r *rep) marshalAlbum(album *album.Album) (map[string]*dynamodb.AttributeVa
 	})
 }
 
-func (r *rep) unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*album.Album, error) {
+func (r *rep) unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*catalog.Album, error) {
 	var data AlbumData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal attributes %+v", attributes)
 	}
 
-	return &album.Album{
+	return &catalog.Album{
 		Name:       data.AlbumName,
 		FolderName: data.AlbumFolderName,
 		Start:      data.AlbumStart,
@@ -281,7 +281,7 @@ func (r *rep) unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*a
 }
 
 // marshalMedia return both Media metadata attributes and location attributes
-func (r *rep) marshalMedia(media *album.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, map[string]*dynamodb.AttributeValue, error) {
+func (r *rep) marshalMedia(media *catalog.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(media.Signature.SignatureSha256) || media.Signature.SignatureSize == 0 || media.Details.DateTime.IsZero() {
 		return nil, nil, errors.WithStack(errors.Errorf("media must have a valid signature and date [sha256=%v ; size=%v ; time=%v]", media.Signature.SignatureSha256, media.Signature.SignatureSize, media.Details.DateTime))
 	}
@@ -316,34 +316,34 @@ func (r *rep) marshalMedia(media *album.CreateMediaRequest) (map[string]*dynamod
 	return mediaEntry, locationEntry, err
 }
 
-func (r *rep) unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*album.MediaMeta, error) {
+func (r *rep) unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalog.MediaMeta, error) {
 	var data MediaData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal attributes %+v", attributes)
 	}
 
-	var details album.MediaDetails
+	var details catalog.MediaDetails
 	err = mapstructure.Decode(data.Details, &details)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal details %+v", data.Details)
 	}
 
 	details.DateTime = data.DateTime // note: mapstructure do not support times
-	media := album.MediaMeta{
-		Signature: album.MediaSignature{
+	media := catalog.MediaMeta{
+		Signature: catalog.MediaSignature{
 			SignatureSha256: data.SignatureHash,
 			SignatureSize:   data.SignatureSize,
 		},
 		Filename: data.Filename,
-		Type:     album.MediaType(data.Type),
+		Type:     catalog.MediaType(data.Type),
 		Details:  details,
 	}
 
 	return &media, nil
 }
 
-func (r *rep) marshalMediaLocationFromMoveOrder(moveOrder *album.MovedMedia) (dynamoObject, error) {
+func (r *rep) marshalMediaLocationFromMoveOrder(moveOrder *catalog.MovedMedia) (dynamoObject, error) {
 	return dynamodbattribute.MarshalMap(&MediaLocationData{
 		TablePk:       r.mediaLocationPrimaryKey(&moveOrder.Signature),
 		FolderName:    moveOrder.TargetFolderName,

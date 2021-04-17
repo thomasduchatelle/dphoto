@@ -1,7 +1,7 @@
 package dynamo
 
 import (
-	"duchatelle.io/dphoto/dphoto/album"
+	"duchatelle.io/dphoto/dphoto/catalog"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -40,7 +40,7 @@ func (a *AlbumCrudTestSuite) SetupSuite() {
 func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	folderName := "Christmas"
 
-	err := a.repo.InsertAlbum(album.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Name:       "Christmas",
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-24"),
@@ -53,7 +53,7 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	name := "it should find previously saved album"
 	found, err := a.repo.FindAlbum(folderName)
 	if a.NoError(err, name) {
-		a.Equal(&album.Album{
+		a.Equal(&catalog.Album{
 			Name:       "Christmas",
 			FolderName: folderName,
 			Start:      mustParseDate("2020-12-24"),
@@ -65,7 +65,7 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 	folderName := "New Year"
 
-	err := a.repo.InsertAlbum(album.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Name:       "New Year",
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-31"),
@@ -75,7 +75,7 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 		return
 	}
 
-	err = a.repo.InsertAlbum(album.Album{
+	err = a.repo.InsertAlbum(catalog.Album{
 		Name:       "New Year Again",
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-31"),
@@ -89,13 +89,13 @@ func (a *AlbumCrudTestSuite) TestFindNotFound() {
 	ttName := "it should return [?, NotFoundError] when searched album do not exists"
 	_, err := a.repo.FindAlbum("_donotexist")
 	if a.Error(err, ttName) {
-		a.Equal(album.NotFoundError, err)
+		a.Equal(catalog.NotFoundError, err)
 	}
 }
 
 func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 	folderName := "ToBeDeleted"
-	err := a.repo.InsertAlbum(album.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Name:       folderName,
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-24"),
@@ -112,7 +112,7 @@ func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 func (a *AlbumCrudTestSuite) TestUpdate() {
 	folderName := "Update1"
 
-	err := a.repo.InsertAlbum(album.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Name:       folderName,
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-01"),
@@ -122,7 +122,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 		return
 	}
 
-	update := album.Album{
+	update := catalog.Album{
 		Name:       "Another Name",
 		FolderName: folderName,
 		Start:      mustParseDate("2021-01-01"),
@@ -140,7 +140,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 
 func (a *AlbumCrudTestSuite) TestUpdateNotExisting() {
 	folderName := "_do_not_exist"
-	update := album.Album{
+	update := catalog.Album{
 		Name:       "Another Name",
 		FolderName: folderName,
 		Start:      mustParseDate("2021-01-01"),

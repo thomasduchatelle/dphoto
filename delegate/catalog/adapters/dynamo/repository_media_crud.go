@@ -1,7 +1,7 @@
 package dynamo
 
 import (
-	"duchatelle.io/dphoto/dphoto/album"
+	"duchatelle.io/dphoto/dphoto/catalog"
 	"duchatelle.io/dphoto/dphoto/config"
 	"encoding/base64"
 	"encoding/json"
@@ -24,7 +24,7 @@ const (
 )
 
 func init() {
-	album.Repository = &rep{
+	catalog.Repository = &rep{
 		db:                      dynamodb.New(config.AwsConfig.GetSession()),
 		table:                   "AlbumMedia",
 		RootOwner:               "#ROOT",
@@ -40,7 +40,7 @@ type rep struct {
 	findMovedMediaBatchSize int64
 }
 
-func (r *rep) InsertMedias(medias []album.CreateMediaRequest) error {
+func (r *rep) InsertMedias(medias []catalog.CreateMediaRequest) error {
 	requests := make([]*dynamodb.WriteRequest, len(medias)*2)
 	for index, media := range medias {
 		mediaEntry, locationEntry, err := r.marshalMedia(&media)
@@ -63,7 +63,7 @@ func (r *rep) InsertMedias(medias []album.CreateMediaRequest) error {
 	return r.bufferedWriteItems(requests)
 }
 
-func (r *rep) FindMedias(folderName string, request album.PageRequest) (*album.MediaPage, error) {
+func (r *rep) FindMedias(folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
 	albumKey := r.albumIndexedKey(r.RootOwner, folderName)
 	albumIndexPK, err := dynamodbattribute.Marshal(albumKey.AlbumIndexPK)
 	if err != nil {
@@ -95,7 +95,7 @@ func (r *rep) FindMedias(folderName string, request album.PageRequest) (*album.M
 		return nil, errors.Wrapf(err, "failed to load medias for album %s with page request %+v", folderName, request)
 	}
 
-	medias := make([]*album.MediaMeta, 0, len(page.Items))
+	medias := make([]*catalog.MediaMeta, 0, len(page.Items))
 	for _, attributes := range page.Items {
 		media, err := r.unmarshalMediaMetaData(attributes)
 		if err != nil {
@@ -105,13 +105,13 @@ func (r *rep) FindMedias(folderName string, request album.PageRequest) (*album.M
 	}
 
 	nextPage, err := r.marshalPageToken(page.LastEvaluatedKey)
-	return &album.MediaPage{
+	return &catalog.MediaPage{
 		NextPage: nextPage,
 		Content:  medias,
 	}, err
 }
 
-func (r *rep) FindExistingSignatures(signatures []*album.MediaSignature) ([]*album.MediaSignature, error) {
+func (r *rep) FindExistingSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
 	for index, signature := range signatures {
 		key, err := dynamodbattribute.MarshalMap(r.mediaPrimaryKey(signature))
@@ -124,7 +124,7 @@ func (r *rep) FindExistingSignatures(signatures []*album.MediaSignature) ([]*alb
 
 	stream := r.bufferedBatchGetItem(keys, aws.String("SignatureSize, SignatureHash"))
 
-	found := make([]*album.MediaSignature, 0, len(signatures))
+	found := make([]*catalog.MediaSignature, 0, len(signatures))
 	for stream.HasNext() {
 		attributes := stream.Next()
 
@@ -134,7 +134,7 @@ func (r *rep) FindExistingSignatures(signatures []*album.MediaSignature) ([]*alb
 			return nil, err
 		}
 
-		found = append(found, &album.MediaSignature{
+		found = append(found, &catalog.MediaSignature{
 			SignatureSha256: signature.SignatureHash,
 			SignatureSize:   signature.SignatureSize,
 		})
@@ -143,7 +143,7 @@ func (r *rep) FindExistingSignatures(signatures []*album.MediaSignature) ([]*alb
 	return found, stream.Error()
 }
 
-func (r *rep) FindMediaLocationsSignatures(signatures []*album.MediaSignature) ([]*album.MediaSignatureAndLocation, error) {
+func (r *rep) FindMediaLocationsSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignatureAndLocation, error) {
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
 	for index, signature := range signatures {
 		key, err := dynamodbattribute.MarshalMap(r.mediaLocationPrimaryKey(signature))
@@ -156,7 +156,7 @@ func (r *rep) FindMediaLocationsSignatures(signatures []*album.MediaSignature) (
 
 	stream := r.bufferedBatchGetItem(keys, aws.String("FolderName, Filename, SignatureHash, SignatureSize"))
 
-	locations := make([]*album.MediaSignatureAndLocation, 0, len(signatures))
+	locations := make([]*catalog.MediaSignatureAndLocation, 0, len(signatures))
 	for stream.HasNext() {
 		attributes := stream.Next()
 
@@ -166,12 +166,12 @@ func (r *rep) FindMediaLocationsSignatures(signatures []*album.MediaSignature) (
 			return nil, err
 		}
 
-		locations = append(locations, &album.MediaSignatureAndLocation{
-			Location: album.MediaLocation{
+		locations = append(locations, &catalog.MediaSignatureAndLocation{
+			Location: catalog.MediaLocation{
 				FolderName: location.FolderName,
 				Filename:   location.Filename,
 			},
-			Signature: album.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: location.SignatureHash,
 				SignatureSize:   location.SignatureSize,
 			},
@@ -284,7 +284,7 @@ func (r *rep) mustAttribute(value interface{}) *dynamodb.AttributeValue {
 	return attribute
 }
 
-func (r *rep) FindMediaLocations(signature album.MediaSignature) ([]*album.MediaLocation, error) {
+func (r *rep) FindMediaLocations(signature catalog.MediaSignature) ([]*catalog.MediaLocation, error) {
 	mediaPK := r.mediaPrimaryKey(&signature)
 	queryValues, err := dynamodbattribute.MarshalMap(map[string]string{
 		":mediaPK":    mediaPK.PK,
@@ -308,13 +308,13 @@ func (r *rep) FindMediaLocations(signature album.MediaSignature) ([]*album.Media
 		return nil, errors.Errorf("Location not found for media %+v", signature)
 	}
 
-	locations := make([]*album.MediaLocation, len(orders)+1)
-	locations[0] = &album.MediaLocation{
+	locations := make([]*catalog.MediaLocation, len(orders)+1)
+	locations[0] = &catalog.MediaLocation{
 		FolderName: location.FolderName,
 		Filename:   location.Filename,
 	}
 	for index, order := range orders {
-		locations[index+1] = &album.MediaLocation{
+		locations[index+1] = &catalog.MediaLocation{
 			FolderName: order.DestinationFolder,
 			Filename:   location.Filename,
 		}

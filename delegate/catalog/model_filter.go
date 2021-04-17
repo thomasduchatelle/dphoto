@@ -1,4 +1,4 @@
-package album
+package catalog
 
 import (
 	"fmt"
@@ -7,9 +7,10 @@ import (
 	"time"
 )
 
+// UpdateMediaFilter is used internally to update a range of folders
 type UpdateMediaFilter struct {
 	AlbumFolderNames map[string]interface{} // AlbumFolderNames is a set of folder names (map value is nil)
-	Ranges           []TimeRange            // empty = no restriction
+	Ranges           []timeRange            // empty = no restriction
 }
 
 func NewUpdateFilter() *UpdateMediaFilter {
@@ -26,7 +27,7 @@ func (m *UpdateMediaFilter) WithAlbum(folderNames ...string) *UpdateMediaFilter 
 }
 
 func (m *UpdateMediaFilter) WithinRange(start, end time.Time) *UpdateMediaFilter {
-	m.Ranges = append(m.Ranges, TimeRange{
+	m.Ranges = append(m.Ranges, timeRange{
 		Start: start,
 		End:   end,
 	})

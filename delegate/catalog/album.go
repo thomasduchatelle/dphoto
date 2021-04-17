@@ -1,4 +1,5 @@
-package album
+// Package provides tools to maintain a catalog of medias and albums owned by a user
+package catalog
 
 import (
 	"fmt"
@@ -15,10 +16,12 @@ var (
 	NotEmptyError = errors.New("Album is not empty")
 )
 
-func FindAll() ([]*Album, error) {
+// FindAllAlbum FindAlbum all albums owned by root user
+func FindAllAlbum() ([]*Album, error) {
 	return Repository.FindAllAlbums()
 }
 
+// Create creates a new album
 func Create(createRequest CreateAlbum) error {
 	if createRequest.Name == "" {
 		return errors.Errorf("Album name is mandatory")
@@ -85,11 +88,13 @@ func generateAlbumFolder(name string, start time.Time) string {
 	return strings.Trim(fmt.Sprintf("%s_%s", start.Format("2006-01"), re.ReplaceAllString(name, "_")), "_")
 }
 
-func Find(folderName string) (*Album, error) {
+// FindAlbum get an album by its business key (its folder name), or returns NotFoundError
+func FindAlbum(folderName string) (*Album, error) {
 	return Repository.FindAlbum(folderName)
 }
 
-func Delete(folderNameToDelete string, emptyOnly bool) error {
+// DeleteAlbum delete an album, medias it contains are dispatched to other albums.
+func DeleteAlbum(folderNameToDelete string, emptyOnly bool) error {
 	if !emptyOnly {
 		albums, err := Repository.FindAllAlbums()
 		if err != nil {
@@ -111,9 +116,9 @@ func Delete(folderNameToDelete string, emptyOnly bool) error {
 	return Repository.DeleteEmptyAlbum(folderNameToDelete)
 }
 
-// Rename an album, and flag all medias to be moved...
-// folderName: optional, force to use a specific name
-func Rename(folderName, newName string, renameFolder bool) error {
+// RenameAlbum updates the displayed named of the album. Optionally changes the folder in which media will be stored
+// and flag all its media to be moved to the new one.
+func RenameAlbum(folderName, newName string, renameFolder bool) error {
 	found, err := Repository.FindAlbum(folderName)
 	if err != nil {
 		return err // can be NotFoundError
@@ -150,7 +155,8 @@ func Rename(folderName, newName string, renameFolder bool) error {
 	return Repository.UpdateAlbum(*found)
 }
 
-func Update(folderName string, start, end time.Time) error {
+// UpdateAlbum updates the dates of an album, medias will be re-assign between albums accordingly
+func UpdateAlbum(folderName string, start, end time.Time) error {
 	albums, err := Repository.FindAllAlbums()
 	if err != nil {
 		return err
@@ -161,8 +167,8 @@ func Update(folderName string, start, end time.Time) error {
 		return NotFoundError
 	}
 
-	previousTimeRange := NewTimeRangeFromAlbum(*updated)
-	newTimeRange := TimeRange{Start: start, End: end}
+	previousTimeRange := newTimeRangeFromAlbum(*updated)
+	newTimeRange := timeRange{Start: start, End: end}
 	if previousTimeRange.Equals(newTimeRange) {
 		log.WithFields(log.Fields{
 			"AlbumFolderName": folderName,

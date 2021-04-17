@@ -1,4 +1,4 @@
-package album
+package catalog
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -65,7 +65,7 @@ func TestDelete(t *testing.T) {
 	RepositoryMock.On("UpdateMedias", NewUpdateFilter().WithAlbum(deletedFolder, q1, q4).WithinRange(mustParse(layout, "2020-12-31T18"), mustParse(layout, "2021-01-01T18")), MoveTo("New Year")).Return("", 0, nil)
 
 	// when
-	err := Delete(deletedFolder, false)
+	err := DeleteAlbum(deletedFolder, false)
 
 	a.NoError(err)
 	RepositoryMock.AssertExpectations(t)
@@ -84,7 +84,7 @@ func TestFind(t *testing.T) {
 
 	RepositoryMock.On("FindAlbum", "MyAlbum").Return(&album, nil)
 
-	got, err := Find("MyAlbum")
+	got, err := FindAlbum("MyAlbum")
 	if a.NoError(err) {
 		a.Equal(&album, got)
 	}
@@ -103,7 +103,7 @@ func TestFindAll(t *testing.T) {
 
 	RepositoryMock.On("FindAllAlbums").Return([]*Album{album}, nil)
 
-	got, err := FindAll()
+	got, err := FindAllAlbum()
 	if a.NoError(err) {
 		a.Equal([]*Album{album}, got)
 	}
@@ -128,7 +128,7 @@ func TestRename_sameFolderName(t *testing.T) {
 		End:        album.End,
 	}).Return(nil)
 
-	err := Rename("MyAlbum", "My Other Album", false)
+	err := RenameAlbum("MyAlbum", "My Other Album", false)
 	a.NoError(err)
 	RepositoryMock.AssertExpectations(t)
 }
@@ -154,7 +154,7 @@ func TestRename_updateFolderName(t *testing.T) {
 	}).Return(nil)
 	RepositoryMock.On("UpdateMedias", NewUpdateFilter().WithAlbum("Christmas Holidays"), "2020-12_Covid_Lockdown_3").Return("", 0, nil)
 
-	err := Rename("Christmas Holidays", "Covid Lockdown 3", true)
+	err := RenameAlbum("Christmas Holidays", "Covid Lockdown 3", true)
 	a.NoError(err)
 	RepositoryMock.AssertExpectations(t)
 }
@@ -174,7 +174,7 @@ func TestUpdate(t *testing.T) {
 	RepositoryMock.On("UpdateMedias", NewUpdateFilter().WithAlbum(christmas, updatedFolder, q4).WithinRange(mustParse(layout, "2020-12-24T00"), mustParse(layout, "2020-12-26T00")), MoveTo("Christmas Day")).Return("", 0, nil)
 	RepositoryMock.On("UpdateMedias", NewUpdateFilter().WithAlbum(christmas, q4).WithinRange(mustParse(layout, "2020-12-26T00"), mustParse(layout, "2020-12-27T00")), MoveTo(updatedFolder)).Return("", 0, nil)
 
-	err := Update(updatedFolder, mustParse(layout, "2020-12-21T00"), mustParse(layout, "2020-12-27T00"))
+	err := UpdateAlbum(updatedFolder, mustParse(layout, "2020-12-21T00"), mustParse(layout, "2020-12-27T00"))
 	if a.NoError(err) {
 		RepositoryMock.AssertExpectations(t)
 	}

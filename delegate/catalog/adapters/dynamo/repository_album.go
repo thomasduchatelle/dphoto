@@ -1,7 +1,7 @@
 package dynamo
 
 import (
-	"duchatelle.io/dphoto/dphoto/album"
+	"duchatelle.io/dphoto/dphoto/catalog"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-func (r *rep) FindAllAlbums() ([]*album.Album, error) {
+func (r *rep) FindAllAlbums() ([]*catalog.Album, error) {
 	data, err := r.db.Query(&dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":owner":     r.mustAttribute(r.RootOwner),
@@ -22,7 +22,7 @@ func (r *rep) FindAllAlbums() ([]*album.Album, error) {
 		return nil, errors.Wrapf(err, "error while searching all albums")
 	}
 
-	albums := make([]*album.Album, 0, len(data.Items))
+	albums := make([]*catalog.Album, 0, len(data.Items))
 	for _, attributes := range data.Items {
 		unmarshalAlbum, err := r.unmarshalAlbum(attributes)
 		if err != nil {
@@ -39,7 +39,7 @@ func (r *rep) FindAllAlbums() ([]*album.Album, error) {
 	return albums, nil
 }
 
-func (r *rep) InsertAlbum(album album.Album) error {
+func (r *rep) InsertAlbum(album catalog.Album) error {
 	item, err := r.marshalAlbum(&album)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func (r *rep) DeleteEmptyAlbum(folderName string) error {
 		return errors.Wrapf(err, "failed to count number of medias in album %s", folderName)
 	}
 	if *query.Count > 0 {
-		return album.NotEmptyError
+		return catalog.NotEmptyError
 	}
 
 	primaryKey, err := dynamodbattribute.MarshalMap(r.albumPrimaryKey(folderName))
@@ -88,7 +88,7 @@ func (r *rep) DeleteEmptyAlbum(folderName string) error {
 	return err
 }
 
-func (r *rep) FindAlbum(folderName string) (*album.Album, error) {
+func (r *rep) FindAlbum(folderName string) (*catalog.Album, error) {
 	key, err := dynamodbattribute.MarshalMap(r.albumPrimaryKey(folderName))
 	if err != nil {
 		return nil, err
@@ -102,13 +102,13 @@ func (r *rep) FindAlbum(folderName string) (*album.Album, error) {
 		return nil, errors.Wrapf(err, "failed to find album '%s'", folderName)
 	}
 	if len(attributes.Item) == 0 {
-		return nil, album.NotFoundError
+		return nil, catalog.NotFoundError
 	}
 
 	return r.unmarshalAlbum(attributes.Item)
 }
 
-func (r *rep) UpdateAlbum(album album.Album) error {
+func (r *rep) UpdateAlbum(album catalog.Album) error {
 	item, err := r.marshalAlbum(&album)
 	if err != nil {
 		return err

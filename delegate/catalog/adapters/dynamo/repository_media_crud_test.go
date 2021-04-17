@@ -1,7 +1,7 @@
 package dynamo
 
 import (
-	"duchatelle.io/dphoto/dphoto/album"
+	"duchatelle.io/dphoto/dphoto/catalog"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -27,7 +27,7 @@ func mustParseDate(date string) time.Time {
 type MediaCrudTestSuite struct {
 	suite.Suite
 	repo   *rep
-	medias []album.CreateMediaRequest
+	medias []catalog.CreateMediaRequest
 	jan21  string
 	feb21  string
 	mar21  string
@@ -64,7 +64,7 @@ func (a *MediaCrudTestSuite) preload() error {
 	a.feb21 = "/media/2021-feb"
 	a.mar21 = "/media/2021-mar"
 
-	err := a.repo.InsertAlbum(album.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Name:       "Media Container Jan",
 		FolderName: a.jan21,
 		Start:      mustParseDate("2021-01-01"),
@@ -74,7 +74,7 @@ func (a *MediaCrudTestSuite) preload() error {
 		return err
 	}
 
-	err = a.repo.InsertAlbum(album.Album{
+	err = a.repo.InsertAlbum(catalog.Album{
 		Name:       "Media Container Feb",
 		FolderName: a.feb21,
 		Start:      mustParseDate("2021-02-01"),
@@ -84,7 +84,7 @@ func (a *MediaCrudTestSuite) preload() error {
 		return err
 	}
 
-	err = a.repo.InsertAlbum(album.Album{
+	err = a.repo.InsertAlbum(catalog.Album{
 		Name:       "Media Container Mar",
 		FolderName: a.mar21,
 		Start:      mustParseDate("2021-03-01"),
@@ -94,14 +94,14 @@ func (a *MediaCrudTestSuite) preload() error {
 		return err
 	}
 
-	a.medias = []album.CreateMediaRequest{
+	a.medias = []catalog.CreateMediaRequest{
 		{
-			Location: album.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: a.jan21,
 				Filename:   "img001.jpeg",
 			},
 			Type: "Image",
-			Details: album.MediaDetails{
+			Details: catalog.MediaDetails{
 				Width:        1280,
 				Height:       720,
 				DateTime:     time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -111,35 +111,35 @@ func (a *MediaCrudTestSuite) preload() error {
 				GPSLatitude:  0.123,
 				GPSLongitude: 0.456,
 			},
-			Signature: album.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "dc58865da1228b7a187693c702905d00d6a59439a07d52f2a8e7ae43764b55b9",
 				SignatureSize:   16384,
 			},
 		},
 		{
-			Location: album.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: a.feb21,
 				Filename:   "img002.jpeg",
 			},
 			Type: "Image",
-			Details: album.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: time.Date(2021, 2, 20, 0, 0, 0, 0, time.UTC),
 			},
-			Signature: album.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "4d37f8780f5f5f14b914683b1fd36a9a567f5ea63a835b76100d9970303d6ad6",
 				SignatureSize:   32000,
 			},
 		},
 		{
-			Location: album.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: a.jan21,
 				Filename:   "img003.jpeg",
 			},
 			Type: "Image",
-			Details: album.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: time.Date(2021, 1, 12, 0, 0, 0, 0, time.UTC),
 			},
-			Signature: album.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "77f218b4deaab40c47d21799f74a5c400b413d597e3f8926ef7d00572b8bb3d2",
 				SignatureSize:   16384,
 			},
@@ -151,7 +151,7 @@ func (a *MediaCrudTestSuite) preload() error {
 	return err
 }
 
-func (a *MediaCrudTestSuite) fullPathNames(medias []*album.CreateMediaRequest) []string {
+func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest) []string {
 	names := make([]string, 0, len(medias))
 	for _, a := range medias {
 		names = append(names, path.Join(a.Location.FolderName, a.Location.Filename))
@@ -208,13 +208,13 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 	for _, tt := range tests {
 		var pages [][]string
 
-		medias, err := a.repo.FindMedias(tt.folderName, album.PageRequest{Size: tt.size})
+		medias, err := a.repo.FindMedias(tt.folderName, catalog.PageRequest{Size: tt.size})
 		if a.NoError(err, tt.name) {
 			pages = append(pages, extractFilenames(tt.folderName, medias.Content))
 
 			for medias.NextPage != "" {
 				log.WithField("NextPage", medias.NextPage).Infoln("Request next page")
-				medias, err = a.repo.FindMedias(tt.folderName, album.PageRequest{Size: tt.size, NextPage: medias.NextPage})
+				medias, err = a.repo.FindMedias(tt.folderName, catalog.PageRequest{Size: tt.size, NextPage: medias.NextPage})
 				if !a.NoError(err, tt.name) {
 					return
 				}
@@ -228,10 +228,10 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 
 func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 	name := "it should find a media with all its details"
-	medias, err := a.repo.FindMedias(a.jan21, album.PageRequest{Size: 1})
+	medias, err := a.repo.FindMedias(a.jan21, catalog.PageRequest{Size: 1})
 	if a.NoError(err, name) {
 		a.Len(medias.Content, 1, name)
-		a.Equal(&album.MediaMeta{
+		a.Equal(&catalog.MediaMeta{
 			Signature: a.medias[0].Signature,
 			Filename:  a.medias[0].Location.Filename,
 			Type:      a.medias[0].Type,
@@ -242,17 +242,17 @@ func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 
 func (a *MediaCrudTestSuite) TestDeleteNonEmpty() {
 	err := a.repo.DeleteEmptyAlbum(a.jan21)
-	a.Equal(album.NotEmptyError, err, "it should not delete an album with images in it")
+	a.Equal(catalog.NotEmptyError, err, "it should not delete an album with images in it")
 }
 
 func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
-	exiting := []*album.MediaSignature{
+	exiting := []*catalog.MediaSignature{
 		{SignatureSha256: "4d37f8780f5f5f14b914683b1fd36a9a567f5ea63a835b76100d9970303d6ad6", SignatureSize: 32000},
 		{SignatureSha256: "dc58865da1228b7a187693c702905d00d6a59439a07d52f2a8e7ae43764b55b9", SignatureSize: 16384},
 	}
-	search := make([]*album.MediaSignature, 0, dynamoReadBatchSize*2+20)
+	search := make([]*catalog.MediaSignature, 0, dynamoReadBatchSize*2+20)
 	for i := 0; i < dynamoReadBatchSize*2+20; i++ {
-		search = append(search, &album.MediaSignature{
+		search = append(search, &catalog.MediaSignature{
 			SignatureSha256: fmt.Sprintf("%064d", i),
 			SignatureSize:   42,
 		})
@@ -273,7 +273,7 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 	}
 }
 
-func extractFilenames(albumFolderName string, medias []*album.MediaMeta) []string {
+func extractFilenames(albumFolderName string, medias []*catalog.MediaMeta) []string {
 	filenames := make([]string, 0, len(medias))
 	for _, m := range medias {
 		filenames = append(filenames, path.Join(albumFolderName, m.Filename))

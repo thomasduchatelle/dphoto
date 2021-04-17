@@ -1,10 +1,11 @@
-package album
+package catalog
 
 import (
 	"fmt"
 	"time"
 )
 
+// Organise albums based on their dates. Files are physically stored in a folder matching the album folderName
 type Album struct {
 	Name       string
 	FolderName string // unique and immutable
@@ -29,12 +30,12 @@ func (a *Album) IsEqual(other *Album) bool {
 	return a.FolderName == other.FolderName
 }
 
-func NewTimeRangeFromAlbum(album Album) TimeRange {
+func newTimeRangeFromAlbum(album Album) timeRange {
 	if album.Start.After(album.End) {
 		panic("Album must end AFTER its start: " + album.String())
 	}
 
-	return TimeRange{
+	return timeRange{
 		Start: album.Start,
 		End:   album.End,
 	}
