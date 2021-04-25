@@ -5,3 +5,16 @@ services:
     container_name: dynamodb-local
     ports:
       - "8000:8000"
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - '4563-4599:4563-4599'
+      - '8055:8080'
+    environment:
+      - SERVICES=s3
+      - DATA_DIR=/tmp/localstack/data
+      - DEBUG=1
+    volumes:
+      - "/tmp/localstack:/tmp/localstack"
+      - '/var/run/docker.sock:/var/run/docker.sock'

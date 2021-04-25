@@ -1,33 +1,47 @@
 package backup
 
+import (
+	"duchatelle.io/dphoto/dphoto/backup/model"
+	"io"
+	"time"
+)
+
 var (
-	VolumeRepository   VolumeRepositoryAdapter
-	FileHandler        FileHandlerAdapter
-	ImageDetailsReader ImageDetailsReaderAdapter
-	OnlineStorage      OnlineStorageAdapter
+	VolumeRepository     VolumeRepositoryAdapter
+	ImageDetailsReader   ImageDetailsReaderAdapter
+	ScannerAdapters      = make(map[model.VolumeType]MediaScannerAdapter) // ScannerAdapters maps the type of volume with it's implementation
+	OnlineStorageFactory func() OnlineStorageAdapter                      // OnlineStorageFactory creates a new OnlineStorageAdaptor or panic.
+	DownloaderFactory    func() DownloaderAdapter                         // DownloaderFactory creates a new instance of the Downloader
 )
 
 type VolumeRepositoryAdapter interface {
-	// return nil when not found
-	FindVolumeMetadata(string) (*VolumeMetadata, error)
-	CreateNewVolume(volume RemovableVolume) error
-	RestoreLastSnapshot(volumeId string) ([]SimpleMediaSignature, error)
-	StoreSnapshot(volumeId string, backupId string, signatures []SimpleMediaSignature) error
+	RestoreLastSnapshot(volumeId string) ([]model.SimpleMediaSignature, error)
+	StoreSnapshot(volumeId string, backupId string, signatures []model.SimpleMediaSignature) error
 }
 
-type FileHandlerAdapter interface {
-	// close channel once complete, log and skip errors
-	FindMediaRecursively(mountPath string, paths chan FoundMedia) error
+// ClosableMedia can be implemented alongside FoundMedia if the implementation requires to release resources once the media has been handled.
+type ClosableMedia interface {
+	Close() error
+}
 
-	// Copy file and compute its SHA256
-	CopyToLocal(originPath string, destPath string) (mediaHash string, err error)
+type MediaScannerAdapter interface {
+	// FindMediaRecursively scan throw the VolumeToBackup and emit to the channel any media found. Interrupted in case of error.
+	FindMediaRecursively(volume model.VolumeToBackup, paths chan model.FoundMedia) error
 }
 
 type ImageDetailsReaderAdapter interface {
-	ReadImageDetails(imagePath string) (*MediaDetails, error)
+	ReadImageDetails(reader io.Reader, lastModifiedDate time.Time) (*model.MediaDetails, error)
+}
+
+type DownloaderAdapter interface {
+	DownloadMedia(media model.FoundMedia) (model.FoundMedia, error)
 }
 
 type OnlineStorageAdapter interface {
-	// start N goroutine to backup files, register errors and clone #completionChannel once finished
-	BackupOnline(mediaChannel chan LocalMedia) error
+	// UploadFile uploads the file in the right folder but might change the name to avoid clash with other existing files. Use files name is always returned.
+	UploadFile(media ReadableMedia, folderName, filename string) (string, error)
+}
+
+type ReadableMedia interface {
+	ReadMedia() (io.Reader, error)
 }

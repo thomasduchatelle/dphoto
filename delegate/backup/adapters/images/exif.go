@@ -1,7 +1,8 @@
 package images
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
+	"bytes"
+	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/pkg/errors"
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
@@ -9,32 +10,24 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
-	"os"
+	"io"
 	"time"
 )
 
 func init() {
 	exif.RegisterParsers(mknote.All...)
-
-	backup.ImageDetailsReader = new(exifReader)
 }
 
-type exifReader struct{}
+type ExifReader struct{}
 
-func (e *exifReader) ReadImageDetails(imagePath string) (*backup.MediaDetails, error) {
-	withContext := log.WithField("ImagePath", imagePath)
+func (e *ExifReader) ReadImageDetails(reader io.Reader, lastModifiedDate time.Time) (*model.MediaDetails, error) {
+	buffer := bytes.NewBuffer(nil)
+	teeReader := io.TeeReader(reader, buffer)
 
-	file, err := os.Open(imagePath)
-
+	x, err := exif.Decode(teeReader)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to open file '%s'", imagePath)
-	}
-	defer file.Close()
-
-	x, err := exif.Decode(file)
-	if err != nil {
-		withContext.WithError(err).Warn("no EXIF data found in file, try another way")
-		return e.readImageWithoutExif(imagePath)
+		log.WithField("Reader", reader).WithError(err).Warn("no EXIF data found in file, try another way")
+		return e.readImageWithoutExif(io.MultiReader(buffer, reader), lastModifiedDate)
 	}
 
 	latitude, longitude, err := x.LatLong()
@@ -43,11 +36,11 @@ func (e *exifReader) ReadImageDetails(imagePath string) (*backup.MediaDetails, e
 		longitude = 0
 	}
 
-	return &backup.MediaDetails{
+	return &model.MediaDetails{
 		Width:        e.getIntOrIgnore(x, exif.ImageWidth),
 		Height:       e.getIntOrIgnore(x, exif.ImageLength),
 		Orientation:  e.readOrientation(x),
-		DateTime:     e.readDateTime(x, imagePath),
+		DateTime:     e.readDateTime(x, lastModifiedDate),
 		Make:         e.getStringOrIgnore(x, exif.Make),
 		Model:        e.getStringOrIgnore(x, exif.Model),
 		GPSLatitude:  latitude,
@@ -55,20 +48,20 @@ func (e *exifReader) ReadImageDetails(imagePath string) (*backup.MediaDetails, e
 	}, nil
 }
 
-func (e *exifReader) readOrientation(x *exif.Exif) backup.ImageOrientation {
+func (e *ExifReader) readOrientation(x *exif.Exif) model.ImageOrientation {
 	switch e.getIntOrIgnore(x, exif.Orientation) {
 	case 3:
-		return backup.LOWER_RIGHT
+		return model.OrientationLowerRight
 	case 6:
-		return backup.UPPER_RIGHT
+		return model.OrientationUpperRight
 	case 8:
-		return backup.LOWER_LEFT
+		return model.OrientationLowerLeft
 	default:
-		return backup.UPPER_LEFT
+		return model.OrientationUpperLeft
 	}
 }
 
-func (e *exifReader) readDateTime(x *exif.Exif, imagePath string) time.Time {
+func (e *ExifReader) readDateTime(x *exif.Exif, lastModifiedDate time.Time) time.Time {
 	datetime := e.getStringOrIgnore(x, exif.DateTime)
 	if datetime != "" {
 		exifTime, err := time.Parse("2006:01:02 15:04:05", datetime)
@@ -77,14 +70,10 @@ func (e *exifReader) readDateTime(x *exif.Exif, imagePath string) time.Time {
 		}
 	}
 
-	if stat, err := os.Stat(imagePath); err == nil {
-		return stat.ModTime()
-	}
-
-	return time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	return lastModifiedDate
 }
 
-func (e *exifReader) getStringOrIgnore(x *exif.Exif, model exif.FieldName) string {
+func (e *ExifReader) getStringOrIgnore(x *exif.Exif, model exif.FieldName) string {
 	if t, err := x.Get(model); err == nil && t != nil {
 		if val, err := t.StringVal(); err == nil {
 			return val
@@ -93,7 +82,7 @@ func (e *exifReader) getStringOrIgnore(x *exif.Exif, model exif.FieldName) strin
 	return ""
 }
 
-func (e *exifReader) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
+func (e *ExifReader) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
 	if t, err := x.Get(model); err == nil && t != nil && t.Count > 0 {
 		if val, err := t.Int(0); err == nil {
 			return val
@@ -102,7 +91,7 @@ func (e *exifReader) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
 	return 0
 }
 
-func (e *exifReader) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float64 {
+func (e *ExifReader) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float64 {
 	if t, err := x.Get(model); err == nil && t != nil && t.Count > 0 {
 		if val, err := t.Float(0); err == nil {
 			return val
@@ -111,21 +100,16 @@ func (e *exifReader) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float6
 	return 0
 }
 
-func (e *exifReader) readImageWithoutExif(imagePath string) (*backup.MediaDetails, error) {
-	file, err := os.Open(imagePath)
+func (e *ExifReader) readImageWithoutExif(reader io.Reader, lastModifiedDate time.Time) (*model.MediaDetails, error) {
+	img, _, err := image.DecodeConfig(reader)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to open image file '%s' to extract its dimensions", imagePath)
-	}
-	defer file.Close()
-
-	img, _, err := image.DecodeConfig(file)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Can't read image '%s' to extract its dimensions", imagePath)
+		return nil, errors.Wrapf(err, "Can't extract image dimentions")
 	}
 
-	return &backup.MediaDetails{
+	return &model.MediaDetails{
 		Width:       img.Width,
 		Height:      img.Height,
-		Orientation: backup.UPPER_LEFT,
+		Orientation: model.OrientationUpperLeft,
+		DateTime:    lastModifiedDate,
 	}, nil
 }

@@ -37,8 +37,8 @@ func TestCreate(t *testing.T) {
 
 	err := Create(CreateAlbum{
 		Name:  "Christm@s  2nd-week !\"£$%^&*",
-		Start: &start,
-		End:   &end,
+		Start: start,
+		End:   end,
 	})
 
 	a.NoError(err)
@@ -103,7 +103,7 @@ func TestFindAll(t *testing.T) {
 
 	RepositoryMock.On("FindAllAlbums").Return([]*Album{album}, nil)
 
-	got, err := FindAllAlbum()
+	got, err := FindAllAlbums()
 	if a.NoError(err) {
 		a.Equal([]*Album{album}, got)
 	}

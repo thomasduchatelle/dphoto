@@ -183,13 +183,12 @@ func TestFindAt_FindAllAt(t *testing.T) {
 	timeline, err := NewTimeline(albumCollection())
 	if a.NoError(err) {
 		for _, tt := range tests {
-			album := timeline.FindAt(tt.args)
-			albumName := ""
-			if album != nil {
-				albumName = album.FolderName
+			album, ok := timeline.FindAt(tt.args)
+			if tt.want.name == "" {
+				a.False(ok, tt.name)
+			} else {
+				a.Equal(tt.want.name, album.FolderName, tt.name)
 			}
-
-			a.Equal(tt.want.name, albumName, tt.name)
 
 			var albums []string
 			for _, a := range timeline.FindAllAt(tt.args) {
@@ -304,6 +303,50 @@ func TestTimeline_FindForAlbum(t *testing.T) {
 			{"2021-01-01T18", "2021-01-04T00", []string{"Christmas Holidays", "2021-Q1"}},
 		}, got)
 	}
+}
+
+func TestTimeline_AppendAlbum(t *testing.T) {
+	a := assert.New(t)
+
+	albums := []*Album{
+		{
+			FolderName: "2020-Q3",
+			Start:      time.Date(2020, 7, 1, 0, 0, 0, 0, time.UTC),
+			End:        time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			FolderName: "2020-Q4",
+			Start:      time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
+			End:        time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			FolderName: "Christmas Holidays",
+			Start:      time.Date(2020, 12, 18, 0, 0, 0, 0, time.UTC),
+			End:        time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	reference, err := NewTimeline(albums)
+	if !a.NoError(err) {
+		a.FailNow(err.Error())
+	}
+
+	timeline, err := NewTimeline([]*Album{albums[0]})
+	if !a.NoError(err) {
+		a.FailNow(err.Error())
+	}
+
+	timeline, err = timeline.AppendAlbum(albums[2])
+	if !a.NoError(err) {
+		a.FailNow(err.Error())
+	}
+
+	timeline, err = timeline.AppendAlbum(albums[1])
+	if !a.NoError(err) {
+		a.FailNow(err.Error())
+	}
+
+	a.Equal(reference, timeline, "it should create the same timeline than if if it was created with all albums from the beginning")
 }
 
 func newSimplifiedSegment(folder, start, end string) simplifiedSegment {

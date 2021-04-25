@@ -1,7 +1,7 @@
 package daemon
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
+	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -78,9 +78,9 @@ func TestDetectPlugAndUnplugDisk(t *testing.T) {
 		bytes[i] = uint8(c)
 	}
 
-	volumeManagerPort.On("OnMountedVolume", backup.RemovableVolume{
-		UniqueId:   "001B-9622",
-		MountPaths: []string{mountPoint},
+	volumeManagerPort.On("OnMountedVolume", model.VolumeToBackup{
+		UniqueId: "001B-9622",
+		Path:     mountPoint,
 	}).Return()
 
 	removableDrives = HandleDBusSignal(&dbus.Signal{Sender: "unit", Path: "/org/freedesktop/UDisks2/block_devices/sdb", Name: "org.freedesktop.DBus.Properties.PropertiesChanged", Body: []interface{}{

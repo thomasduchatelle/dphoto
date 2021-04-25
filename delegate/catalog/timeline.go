@@ -10,6 +10,7 @@ import (
 // Timeline can be used to find to which album a media will belongs.
 type Timeline struct {
 	segments []segment
+	albums []*Album // albums is only used to re-generate a new Timeline
 }
 
 type segment struct {
@@ -72,7 +73,9 @@ func (c *builderCursor) appendAlbum(album *Album) bool {
 
 // NewTimeline creates a Timeline object used to compute overlaps between Album. List of albums must be sorted by Start date ASC (End sorting do not matter).
 func NewTimeline(albums []*Album) (*Timeline, error) {
-	timeline := new(Timeline)
+	timeline := &Timeline{
+		albums: albums,
+	}
 
 	if len(albums) == 0 {
 		return timeline, nil
@@ -147,14 +150,14 @@ func (t *Timeline) FindAllAt(date time.Time) []*Album {
 	return nil
 }
 
-// return nil if not found
-func (t *Timeline) FindAt(date time.Time) *Album {
+// FindAt returns nil if not found
+func (t *Timeline) FindAt(date time.Time) (*Album, bool) {
 	albums := t.FindAllAt(date)
 	if len(albums) > 0 {
-		return albums[0]
+		return albums[0], true
 	}
 
-	return nil
+	return nil, false
 }
 
 func (t *Timeline) FindForAlbum(folderName string) (segments []PrioritySegment) {
@@ -193,6 +196,19 @@ func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment
 	}
 
 	return segments
+}
+
+// AppendAlbum generates a new timeline from memory
+func (t *Timeline) AppendAlbum(album *Album) (*Timeline, error) {
+	albums := make([]*Album, len(t.albums) + 1)
+	albums[0] = album
+	copy(albums[1:], t.albums)
+
+	sort.Slice(albums, func(i, j int) bool {
+		return startsAscComparator(albums[i], albums[j]) > 0
+	})
+
+	return NewTimeline(albums)
 }
 
 func toSortedArray(albums []*Album, comparator func(a *Album, b *Album) int64) []Album {

@@ -1,4 +1,4 @@
-// dynamodb package store all the data in a single multi-tenant table:
+// Package dynamodb package store all the data in a single multi-tenant table:
 // - OWNER
 //   > Album X meta
 //   > Album Y meta
@@ -56,7 +56,7 @@ type MediaData struct {
 	DateTime      time.Time        // DateTime time used in AlbumIndexKey
 	Details       MediaDetailsData // Details are other attributes from domain model, stored as it
 	Filename      string           // Filename is the original filename for display purpose only ; physical filename is in MediaLocationData
-	SignatureSize int64
+	SignatureSize int
 	SignatureHash string
 }
 
@@ -64,7 +64,7 @@ type MediaLocationData struct {
 	TablePk
 	FolderName    string // FolderName is where the media is physically located: its current album folder or previous album if the physical move haven't been flushed yet
 	Filename      string // Filename is the physical name of the image
-	SignatureSize int64
+	SignatureSize int
 	SignatureHash string
 }
 

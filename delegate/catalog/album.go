@@ -16,8 +16,8 @@ var (
 	NotEmptyError = errors.New("Album is not empty")
 )
 
-// FindAllAlbum FindAlbum all albums owned by root user
-func FindAllAlbum() ([]*Album, error) {
+// FindAllAlbums FindAlbum all albums owned by root user
+func FindAllAlbums() ([]*Album, error) {
 	return Repository.FindAllAlbums()
 }
 
@@ -27,23 +27,23 @@ func Create(createRequest CreateAlbum) error {
 		return errors.Errorf("Album name is mandatory")
 	}
 
-	if createRequest.Start == nil || createRequest.End == nil {
+	if createRequest.Start.IsZero() || createRequest.End.IsZero() {
 		return errors.Errorf("Start and End times are mandatory")
 	}
 
-	if !createRequest.End.After(*createRequest.Start) {
+	if !createRequest.End.After(createRequest.Start) {
 		return errors.Errorf("Albem end must be strictly after its start")
 	}
 
 	createdAlbum := Album{
 		Name:       createRequest.Name,
 		FolderName: createRequest.ForcedFolderName,
-		Start:      *createRequest.Start,
-		End:        *createRequest.End,
+		Start:      createRequest.Start,
+		End:        createRequest.End,
 	}
 
 	if createdAlbum.FolderName == "" {
-		createdAlbum.FolderName = generateAlbumFolder(createRequest.Name, *createRequest.Start)
+		createdAlbum.FolderName = generateAlbumFolder(createRequest.Name, createRequest.Start)
 	}
 
 	albums, err := Repository.FindAllAlbums()

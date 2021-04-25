@@ -176,7 +176,9 @@ func TestUpdateMedias(t *testing.T) {
 
 		transactions, err := repo.FindReadyMoveTransactions()
 		if a.NoError(err, name) {
-			a.Equal([]string{transactionId}, transactions)
+			a.Equal([]*catalog.MoveTransaction{
+				{TransactionId: transactionId, Count: 3},
+			}, transactions)
 		}
 
 		moveOrders, nextPage, err := repo.FindFilesToMove(transactionId, "")

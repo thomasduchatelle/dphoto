@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Organise albums based on their dates. Files are physically stored in a folder matching the album folderName
+// Album defines how medias are physically stored.
 type Album struct {
 	Name       string
 	FolderName string // unique and immutable
@@ -15,8 +15,8 @@ type Album struct {
 
 type CreateAlbum struct {
 	Name             string
-	Start            *time.Time
-	End              *time.Time
+	Start            time.Time
+	End              time.Time
 	ForcedFolderName string
 }
 
@@ -25,7 +25,7 @@ func (a *Album) String() string {
 	return fmt.Sprintf("[%s-%s] %s (%s)", a.Start.Format(layout), a.End.Format(layout), a.FolderName, a.Name)
 }
 
-// Use unique identifier to compare both albums
+// IsEqual uses unique identifier to compare both albums
 func (a *Album) IsEqual(other *Album) bool {
 	return a.FolderName == other.FolderName
 }
@@ -51,7 +51,7 @@ type MediaLocation struct {
 
 type MediaSignature struct {
 	SignatureSha256 string
-	SignatureSize   int64
+	SignatureSize   int
 }
 
 type CreateMediaRequest struct {

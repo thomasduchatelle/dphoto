@@ -1,16 +1,34 @@
 package backup
 
-import "sync/atomic"
+import (
+	"duchatelle.io/dphoto/dphoto/backup/model"
+	"sync/atomic"
+)
 
-type Counter struct {
+// Tracker is an object provided by consumer to track a backup progress
+type Tracker interface {
+	// IncrementFound is used during the scan each time a file is found
+	IncrementFound(by int, mediaType model.MediaType)
+	// ScanComplete is called when volume has been fully scanned
+	ScanComplete()
+
+	IncrementToBackup(by int, mediaType model.MediaType)
+	IncrementBackedUp(by int, mediaType model.MediaType)
+}
+
+// count is an array of 1 + number of media types: [<total>,<number of images>,<number of video>]
+type count [numberOfMediaType]uint32
+
+type tracker struct {
+	total count
 	found [numberOfMediaType]uint32
 }
 
-func (c *Counter) GetFoundCount() uint32 {
+func (c *tracker) GetFoundCount() uint32 {
 	return c.found[0]
 }
 
-func (c *Counter) GetFound(mediaType MediaType) uint32 {
+func (c *tracker) GetFound(mediaType model.MediaType) uint32 {
 	index := c.getMediaIndex(mediaType)
 	if index > 0 {
 		return c.found[index]
@@ -19,13 +37,13 @@ func (c *Counter) GetFound(mediaType MediaType) uint32 {
 	return 0
 }
 
-// atomically increments found counter per type
-func (c *Counter) incrementFoundCounter(mediaType MediaType) uint32 {
+// atomically increments found tracker per type
+func (c *tracker) incrementFoundCounter(mediaType model.MediaType) uint32 {
 	return c.incrementCounter(&c.found, mediaType)
 }
 
-// atomically increments counter per type
-func (c *Counter) incrementCounter(counter *[numberOfMediaType]uint32, mediaType MediaType) uint32 {
+// atomically increments tracker per type
+func (c *tracker) incrementCounter(counter *[numberOfMediaType]uint32, mediaType model.MediaType) uint32 {
 	index := c.getMediaIndex(mediaType)
 	if index > 0 {
 		atomic.AddUint32(&(counter[index]), 1)
@@ -35,11 +53,11 @@ func (c *Counter) incrementCounter(counter *[numberOfMediaType]uint32, mediaType
 }
 
 // return -1 if media type is unknown
-func (c *Counter) getMediaIndex(mediaType MediaType) int {
+func (c *tracker) getMediaIndex(mediaType model.MediaType) int {
 	switch mediaType {
-	case IMAGE:
+	case model.MediaTypeImage:
 		return 1
-	case VIDEO:
+	case model.MediaTypeVideo:
 		return 2
 	}
 

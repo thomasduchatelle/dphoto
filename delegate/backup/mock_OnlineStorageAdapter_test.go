@@ -9,16 +9,23 @@ type MockOnlineStorageAdapter struct {
 	mock.Mock
 }
 
-// BackupOnline provides a mock function with given fields: mediaChannel
-func (_m *MockOnlineStorageAdapter) BackupOnline(mediaChannel chan LocalMedia) error {
-	ret := _m.Called(mediaChannel)
+// UploadFile provides a mock function with given fields: media, folderName, filename
+func (_m *MockOnlineStorageAdapter) UploadFile(media ReadableMedia, folderName string, filename string) (string, error) {
+	ret := _m.Called(media, folderName, filename)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(chan LocalMedia) error); ok {
-		r0 = rf(mediaChannel)
+	var r0 string
+	if rf, ok := ret.Get(0).(func(ReadableMedia, string, string) string); ok {
+		r0 = rf(media, folderName, filename)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(ReadableMedia, string, string) error); ok {
+		r1 = rf(media, folderName, filename)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }

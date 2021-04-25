@@ -1,66 +1,63 @@
 package filesystem
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
+	"bytes"
+	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/stretchr/testify/assert"
-	"os"
+	"io"
 	"path"
+	"path/filepath"
 	"sort"
-	"strings"
 	"testing"
 )
 
 func TestScanner(t *testing.T) {
 	a := assert.New(t)
 
-	fsHandler := &FsHandler{
-		ImageExtensions: []string{".jpeg"},
-		VideoExtensions: []string{".TxT"},
-	}
+	fsHandler := new(FsHandler)
 
-	media := make(chan backup.FoundMedia, 42)
-	err := fsHandler.FindMediaRecursively("../../../test_resources", media)
-	close(media)
+	mediaChannel := make(chan model.FoundMedia, 42)
+	volumeMount := "../../../test_resources"
+	volumeMountAbs, _ := filepath.Abs(volumeMount)
+
+	err := fsHandler.FindMediaRecursively(model.VolumeToBackup{
+		UniqueId: volumeMount,
+		Type:     model.VolumeTypeFileSystem,
+		Path:     volumeMount,
+		Local:    true,
+	}, mediaChannel)
+	close(mediaChannel)
 
 	if a.NoError(err) {
-		var found []backup.FoundMedia
-		for m := range media {
-			found = append(found, m)
+		var found []*fsMedia
+		for m := range mediaChannel {
+			found = append(found, m.(*fsMedia))
 		}
 		sort.Slice(found, func(i, j int) bool {
-			return found[i].LocalAbsolutePath < found[j].LocalAbsolutePath
+			return found[i].absolutePath < found[j].absolutePath
 		})
 
 		if a.Len(found, 2) {
-			a.Equal(found[0].Type, backup.VIDEO)
-			a.True(strings.HasSuffix(found[0].LocalAbsolutePath, "a_text.TXT"), found[0].LocalAbsolutePath, "has suffix")
-			a.Equal(backup.SimpleMediaSignature{
+			a.Equal(path.Join(volumeMountAbs, "scan/a_text.TXT"), found[0].String())
+			a.Equal("a_text.TXT", found[0].Filename())
+			a.Equal(&model.SimpleMediaSignature{
 				RelativePath: "scan/a_text.TXT",
 				Size:         6,
-			}, found[0].SimpleSignature)
+			}, found[0].SimpleSignature())
 
-			a.Equal(found[1].Type, backup.IMAGE)
-			a.Equal(backup.SimpleMediaSignature{
+			buffer := new(bytes.Buffer)
+			content, err := found[0].ReadMedia()
+			if a.NoError(err) {
+				_, err = io.Copy(buffer, content)
+				if a.NoError(err) {
+					a.Equal("Hello.", buffer.String())
+				}
+			}
+
+			a.Equal(&model.SimpleMediaSignature{
 				RelativePath: "scan/golang-logo.jpeg",
 				Size:         22601,
-			}, found[1].SimpleSignature)
+			}, found[1].SimpleSignature())
 		}
-	}
-}
-
-func TestFsHandler_CopyToLocal(t *testing.T) {
-	a := assert.New(t)
-
-	fsHandler := FsHandler{
-		DirMode: 0744,
-	}
-
-	localCache := path.Join(os.TempDir(), "dphoto_filesystem")
-	_ = os.RemoveAll(localCache)
-
-	mediaHash, err := fsHandler.CopyToLocal("../../../test_resources/scan/golang-logo.jpeg", path.Join(localCache, "logo.jpg"))
-
-	if a.NoError(err) {
-		a.Equal("2921a1e238f8fd3231a8b04c8bd1433e49ef66e3737c49cd01d34ca4cd4a97ad", mediaHash)
 	}
 }
