@@ -38,7 +38,7 @@ type Runner struct {
 	ConcurrentDownloader int // ConcurrentDownloader is the number of goroutines that will filter and download files ; should be 1 with a pass-through downloaders
 	ConcurrentAnalyser   int // ConcurrentAnalyser is the number of goroutines that analyse the medias
 	ConcurrentUploader   int // ConcurrentUploader is the number of goroutine that upload files online
-	UploadBatchSize      int // UploadBatchSize is the size of the buffer for the uplaoder
+	UploadBatchSize      int // UploadBatchSize is the size of the buffer for the uploader
 	report               *Report
 	completionChannel    chan *Report
 }
@@ -129,13 +129,22 @@ func (r *Runner) pipeReadyToBackupToCompletedChannels(readyToBackupChannel chan 
 					}
 				}
 			}
+
+			// flush buffer
+			if len(buffer) > 0 {
+				err := r.Uploader(buffer)
+				if err != nil {
+					r.report.AppendError(err)
+					return
+				}
+			}
 		}()
 	}
 
 	go func() {
 		group.Wait()
 
-		if len(r.report.Errors) > 0 {
+		if len(r.report.Errors) == 0 {
 			r.report.AppendError(r.PreCompletion())
 		}
 

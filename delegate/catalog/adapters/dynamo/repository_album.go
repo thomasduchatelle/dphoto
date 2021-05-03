@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-func (r *rep) FindAllAlbums() ([]*catalog.Album, error) {
+func (r *Rep) FindAllAlbums() ([]*catalog.Album, error) {
 	data, err := r.db.Query(&dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":owner":     r.mustAttribute(r.RootOwner),
@@ -39,7 +39,7 @@ func (r *rep) FindAllAlbums() ([]*catalog.Album, error) {
 	return albums, nil
 }
 
-func (r *rep) InsertAlbum(album catalog.Album) error {
+func (r *Rep) InsertAlbum(album catalog.Album) error {
 	item, err := r.marshalAlbum(&album)
 	if err != nil {
 		return err
@@ -54,26 +54,13 @@ func (r *rep) InsertAlbum(album catalog.Album) error {
 	return errors.WithStack(errors.Wrapf(err, "failed inserting album '%s'", album.FolderName))
 }
 
-func (r *rep) DeleteEmptyAlbum(folderName string) error {
-	albumIndexKey, err := dynamodbattribute.MarshalMap(r.albumIndexedKey(r.RootOwner, folderName))
-	if err != nil {
-		return err
-	}
-
-	query, err := r.db.Query(&dynamodb.QueryInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":albumKey":    albumIndexKey["AlbumIndexPK"],
-			":excludeMeta": r.mustAttribute("$"),
-		},
-		IndexName:              aws.String("AlbumIndex"),
-		KeyConditionExpression: aws.String("AlbumIndexPK = :albumKey AND AlbumIndexSK >= :excludeMeta"),
-		Select:                 aws.String(dynamodb.SelectCount),
-		TableName:              &r.table,
-	})
+func (r *Rep) DeleteEmptyAlbum(folderName string) error {
+	count, err := r.CountMedias(folderName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to count number of medias in album %s", folderName)
 	}
-	if *query.Count > 0 {
+
+	if count > 0 {
 		return catalog.NotEmptyError
 	}
 
@@ -88,7 +75,29 @@ func (r *rep) DeleteEmptyAlbum(folderName string) error {
 	return err
 }
 
-func (r *rep) FindAlbum(folderName string) (*catalog.Album, error) {
+func (r *Rep) CountMedias(folderName string) (int, error) {
+	albumIndexKey, err := dynamodbattribute.MarshalMap(r.albumIndexedKey(r.RootOwner, folderName))
+	if err != nil {
+		return 0, err
+	}
+
+	query, err := r.db.Query(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":albumKey":    albumIndexKey["AlbumIndexPK"],
+			":excludeMeta": r.mustAttribute("$"),
+		},
+		IndexName:              aws.String("AlbumIndex"),
+		KeyConditionExpression: aws.String("AlbumIndexPK = :albumKey AND AlbumIndexSK >= :excludeMeta"),
+		Select:                 aws.String(dynamodb.SelectCount),
+		TableName:              &r.table,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(*query.Count), nil
+}
+
+func (r *Rep) FindAlbum(folderName string) (*catalog.Album, error) {
 	key, err := dynamodbattribute.MarshalMap(r.albumPrimaryKey(folderName))
 	if err != nil {
 		return nil, err
@@ -108,7 +117,7 @@ func (r *rep) FindAlbum(folderName string) (*catalog.Album, error) {
 	return r.unmarshalAlbum(attributes.Item)
 }
 
-func (r *rep) UpdateAlbum(album catalog.Album) error {
+func (r *Rep) UpdateAlbum(album catalog.Album) error {
 	item, err := r.marshalAlbum(&album)
 	if err != nil {
 		return err

@@ -3,6 +3,7 @@ package backup
 import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type filter struct {
@@ -32,7 +33,12 @@ func (f *filter) Filter(found model.FoundMedia) bool {
 	f.currentSnapshot = append(f.currentSnapshot, *found.SimpleSignature())
 
 	size, ok := f.lastVolumeSnapshot[found.SimpleSignature().RelativePath]
-	return !ok || size != found.SimpleSignature().Size
+	keep := !ok || size != found.SimpleSignature().Size
+
+	if !keep {
+		log.Debugf("Filter > filter out media %s", found)
+	}
+	return keep
 }
 
 func (f *filter) StoreState(backupId string) error {

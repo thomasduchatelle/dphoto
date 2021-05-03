@@ -14,7 +14,7 @@ import (
 type AlbumCrudTestSuite struct {
 	suite.Suite
 	suffix string
-	repo   *rep
+	repo   *Rep
 }
 
 func TestRepositoryAlbum(t *testing.T) {
@@ -24,7 +24,7 @@ func TestRepositoryAlbum(t *testing.T) {
 func (a *AlbumCrudTestSuite) SetupSuite() {
 	a.suffix = time.Now().Format("20060102150405")
 
-	a.repo = &rep{
+	a.repo = &Rep{
 		db:            dynamodb.New(session.Must(session.NewSession(&aws.Config{Region: aws.String("eu-west-1")})), &aws.Config{Endpoint: aws.String("http://localhost:8000")}),
 		table:         "test-albums-" + a.suffix,
 		RootOwner:     "UNITTEST#1",

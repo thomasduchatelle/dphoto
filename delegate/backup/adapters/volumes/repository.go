@@ -3,10 +3,13 @@ package volumes
 import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"encoding/json"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path"
+	"regexp"
+	"strings"
 )
 
 type FileSystemRepository struct {
@@ -14,10 +17,19 @@ type FileSystemRepository struct {
 }
 
 func (r *FileSystemRepository) RestoreLastSnapshot(volumeId string) ([]model.SimpleMediaSignature, error) {
-	file, err := os.Open(path.Join(r.Directory, volumeId+".json"))
-	if err != nil {
-		log.WithField("VolumeId", volumeId).Info("No previous snapshot to load.")
+	storageFile := r.getStorageFile(volumeId)
+	mdc := log.WithFields(log.Fields{
+		"VolumeId":    volumeId,
+		"StorageFile": storageFile,
+	})
+
+	file, err := os.Open(storageFile)
+	if err != nil && os.IsNotExist(err) {
+		mdc.Infoln("No previous snapshot to load.")
 		return nil, nil
+
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "Couldn't load previous volume snapshot from file %s", storageFile)
 	}
 
 	content, err := ioutil.ReadAll(file)
@@ -27,14 +39,21 @@ func (r *FileSystemRepository) RestoreLastSnapshot(volumeId string) ([]model.Sim
 
 	var signatures []model.SimpleMediaSignature
 	err = json.Unmarshal(content, &signatures)
+
+	mdc.Debugf("FileSystemRepository > restored snaphot with %d medias", len(signatures))
 	return signatures, err
 }
 
 func (r *FileSystemRepository) StoreSnapshot(volumeId string, backupId string, signatures []model.SimpleMediaSignature) error {
-	snapshotPath := path.Join(r.Directory, volumeId+".json")
-	log.WithField("VolumeId", volumeId).Infof("Storing snapshot in '%s'...", backupId)
+	storageFile := r.getStorageFile(volumeId)
+	mdc := log.WithFields(log.Fields{
+		"VolumeId":    volumeId,
+		"StorageFile": storageFile,
+		"BackupID":    backupId,
+	})
+	mdc.Infof("FileSystemRepository > Storing volume snapshot with %d signatures", len(signatures))
 
-	err := os.MkdirAll(path.Dir(snapshotPath), 0766)
+	err := os.MkdirAll(path.Dir(storageFile), 0766)
 	if err != nil {
 		return err
 	}
@@ -44,5 +63,11 @@ func (r *FileSystemRepository) StoreSnapshot(volumeId string, backupId string, s
 		return err
 	}
 
-	return ioutil.WriteFile(snapshotPath, content, 0644)
+	return ioutil.WriteFile(storageFile, content, 0644)
+}
+
+func (r *FileSystemRepository) getStorageFile(volumeId string) string {
+	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+	safeVolumeId := strings.Trim(unsafeChar.ReplaceAllString(volumeId, "_"), "_")
+	return os.ExpandEnv(path.Join(r.Directory, safeVolumeId+".json"))
 }

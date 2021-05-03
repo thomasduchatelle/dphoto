@@ -4,6 +4,7 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/catalog"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"path"
 	"strings"
 	"sync"
@@ -42,6 +43,20 @@ func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage OnlineStorageAd
 }
 
 func (u *Uploader) Upload(buffer []*model.AnalysedMedia) error {
+	log.Infof("Upload %d medias", len(buffer))
+	defer func() {
+		log.Infof("Closing all medias...")
+		// media must be closed to release local buffer space
+		for _, media := range buffer {
+			if toClose, ok := media.FoundMedia.(ClosableMedia); ok {
+				err := toClose.Close()
+				if err != nil {
+					log.WithError(err).Warnf("failed to close media %s", toClose)
+				}
+			}
+		}
+	}()
+
 	signatures := make([]*catalog.MediaSignature, len(buffer))
 	medias := make(map[catalog.MediaSignature]mediaRecord)
 
@@ -51,7 +66,7 @@ func (u *Uploader) Upload(buffer []*model.AnalysedMedia) error {
 			SignatureSize:   media.Signature.Size,
 		}
 
-		folderName, err := u.findOrCreateAlbum(media)
+		folderName, err := u.findOrCreateAlbum(media.Details.DateTime)
 		if err != nil {
 			return err
 		}
@@ -110,21 +125,24 @@ func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, media
 	}
 
 	for _, signature := range knownSignatures {
+		if m, ok := medias[*signature]; ok {
+			log.Debugf("Uploader > skipping duplicate %s", m.analysedMedia.FoundMedia)
+		}
 		delete(medias, *signature)
 	}
 	return nil
 }
 
-func (u *Uploader) findOrCreateAlbum(media *model.AnalysedMedia) (string, error) {
+func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, error) {
 	u.timelineLock.Lock()
 	defer u.timelineLock.Unlock()
 
-	if album, ok := u.timeline.FindAt(media.Details.DateTime); ok {
+	if album, ok := u.timeline.FindAt(mediaTime); ok {
 		return album.FolderName, nil
 	}
 
-	year := media.Details.DateTime.Year()
-	quarter := media.Details.DateTime.Month() / 4
+	year := mediaTime.Year()
+	quarter := mediaTime.Month() / 4
 
 	createRequest := catalog.CreateAlbum{
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),
@@ -132,6 +150,9 @@ func (u *Uploader) findOrCreateAlbum(media *model.AnalysedMedia) (string, error)
 		End:              time.Date(year, (quarter+1)*3+1, 1, 0, 0, 0, 0, time.UTC),
 		ForcedFolderName: fmt.Sprintf("%d-Q%d", year, quarter+1),
 	}
+
+	log.Infof("Creates new album '%s' to accomodate media at %s", createRequest.ForcedFolderName, mediaTime.Format(time.RFC3339))
+
 	err := u.catalog.Create(createRequest)
 	if err != nil {
 		return "", err
@@ -147,6 +168,7 @@ func (u *Uploader) findOrCreateAlbum(media *model.AnalysedMedia) (string, error)
 }
 
 func (u *Uploader) doUpload(media model.FoundMedia, location *catalog.MediaLocation) (err error) {
+	log.Debugf("Uploader > Upload media %s", media)
 	location.Filename, err = u.onlineStorage.UploadFile(media, location.FolderName, location.Filename)
 	return
 }

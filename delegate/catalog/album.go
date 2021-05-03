@@ -1,4 +1,4 @@
-// Package provides tools to maintain a catalog of medias and albums owned by a user
+// Package catalog provides tools to maintain a catalog of medias and albums owned by a user
 package catalog
 
 import (
@@ -16,9 +16,32 @@ var (
 	NotEmptyError = errors.New("Album is not empty")
 )
 
-// FindAllAlbums FindAlbum all albums owned by root user
+// FindAllAlbums find all albums owned by root user
 func FindAllAlbums() ([]*Album, error) {
 	return Repository.FindAllAlbums()
+}
+
+// FindAllAlbumsWithStats returns the list of albums, with statistics for each
+func FindAllAlbumsWithStats() ([]*AlbumStat, error) {
+	albums, err := Repository.FindAllAlbums()
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make([]*AlbumStat, len(albums))
+	for i, album := range albums {
+		count, err := Repository.CountMedias(album.FolderName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to count medias of %s", album.FolderName)
+		}
+
+		stats[i] = &AlbumStat{
+			Album:      *album,
+			totalCount: count,
+		}
+	}
+
+	return stats, err
 }
 
 // Create creates a new album
@@ -32,7 +55,7 @@ func Create(createRequest CreateAlbum) error {
 	}
 
 	if !createRequest.End.After(createRequest.Start) {
-		return errors.Errorf("Albem end must be strictly after its start")
+		return errors.Errorf("Album end must be strictly after its start")
 	}
 
 	createdAlbum := Album{
@@ -191,11 +214,18 @@ func UpdateAlbum(folderName string, start, end time.Time) error {
 		return segments
 	})
 	if err != nil {
-		log.WithFields(log.Fields{
-			"FolderName": folderName,
-		}).Infof("Album dates updated, %d medias moved\n", count)
+		return err
 	}
-	return err
+
+	err = Repository.UpdateAlbum(*updated)
+	if err != nil {
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"FolderName": folderName,
+	}).Infof("Album dates updated, %d medias moved\n", count)
+	return nil
 }
 
 func assignMediasTo(albums []*Album, removedAlbum *Album, segmentsToReassignSupplier func(timeline *Timeline) []PrioritySegment) (int, error) {

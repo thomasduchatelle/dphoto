@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"encoding/hex"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -20,41 +21,42 @@ import (
 // TODO - keep files under 10MB in a 512MB in-memory cache
 type LocalStorage struct {
 	localMediaPath string
-	semaphore      semaphore.Weighted
+	semaphore      *semaphore.Weighted
 }
 
-type mediaWrapper struct {
-	store    LocalStorage
+type localMedia struct {
+	store    *LocalStorage
 	delegate model.FoundMedia
 	path     string
 	sha256   string
 }
 
-func (m *mediaWrapper) Filename() string {
+func (m *localMedia) Filename() string {
 	return m.delegate.Filename()
 }
 
-func (m *mediaWrapper) LastModificationDate() time.Time {
+func (m *localMedia) LastModificationDate() time.Time {
 	return m.delegate.LastModificationDate()
 }
 
-func (m *mediaWrapper) SimpleSignature() *model.SimpleMediaSignature {
+func (m *localMedia) SimpleSignature() *model.SimpleMediaSignature {
 	return m.delegate.SimpleSignature()
 }
 
-func (m *mediaWrapper) ReadMedia() (io.Reader, error) {
+func (m *localMedia) ReadMedia() (io.Reader, error) {
 	return os.Open(m.path)
 }
 
-func (m *mediaWrapper) Sha256Hash() string {
+func (m *localMedia) Sha256Hash() string {
 	return m.sha256
 }
 
-func (m *mediaWrapper) String() string {
-	return "(local) " + m.path
+func (m *localMedia) String() string {
+	return fmt.Sprint(m.delegate) + " [local=" + m.path + "]"
 }
 
-func (m *mediaWrapper) Close() error {
+func (m *localMedia) Close() error {
+	log.Infof("Releasing %d for %s", m.SimpleSignature().Size, m)
 	err := os.Remove(m.path)
 	m.store.release(m.SimpleSignature().Size)
 
@@ -73,7 +75,7 @@ func NewLocalStorage(localDir string, bufferAreaSizeInBytes int) (*LocalStorage,
 	err = os.MkdirAll(cleanedDir, 0744)
 	return &LocalStorage{
 		localMediaPath: cleanedDir,
-		semaphore:      *semaphore.NewWeighted(int64(bufferAreaSizeInBytes)),
+		semaphore:      semaphore.NewWeighted(int64(bufferAreaSizeInBytes)),
 	}, err
 }
 
@@ -89,7 +91,7 @@ func (l *LocalStorage) DownloadMedia(found model.FoundMedia) (model.FoundMedia, 
 	}
 
 	key := path.Join(l.localMediaPath, uuid.New().String()+path.Ext(found.Filename()))
-	log.Debugf("download locally %s to %s", found, key)
+	log.Debugf("Downloader > download locally %s to %s", found, key)
 
 	writer, err := os.Create(key)
 	if err != nil {
@@ -99,7 +101,8 @@ func (l *LocalStorage) DownloadMedia(found model.FoundMedia) (model.FoundMedia, 
 	hash := sha256.New()
 
 	_, err = io.Copy(io.MultiWriter(writer, hash), reader)
-	return &mediaWrapper{
+	return &localMedia{
+		store:    l,
 		delegate: found,
 		path:     key,
 		sha256:   hex.EncodeToString(hash.Sum(nil)),

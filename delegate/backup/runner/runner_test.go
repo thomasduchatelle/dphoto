@@ -107,8 +107,18 @@ func TestRunner(t *testing.T) {
 		},
 	}).Once().Return(nil)
 
+	preCompletion.On("Execute").Return(nil)
+
 	// when
 	completionChannel := Start(r)
 	report := <-completionChannel
 	a.Empty(report.Errors)
+
+	for _, m := range []HasExpectations{filter, downloader, analyser, uploader, preCompletion} {
+		m.AssertExpectations(t)
+	}
+}
+
+type HasExpectations interface {
+	AssertExpectations(t mock.TestingT) bool
 }

@@ -13,8 +13,6 @@ package dynamo
 import (
 	"duchatelle.io/dphoto/dphoto/catalog"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/mitchellh/mapstructure"
@@ -84,134 +82,35 @@ type MediaMoveOrderData struct {
 type MediaDetailsData map[string]interface{}
 type dynamoObject map[string]*dynamodb.AttributeValue
 
-// CreateTableIfNecessary creates the table if it doesn't exists ; or update it.
-func (r *rep) CreateTableIfNecessary() error {
-	table, err := r.db.DescribeTable(&dynamodb.DescribeTableInput{
-		TableName: &r.table,
-	})
-
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == dynamodb.ErrCodeResourceNotFoundException {
-			table = nil
-		} else {
-			return errors.Wrap(err, "failed to find existing table")
-		}
-	}
-
-	s := aws.String(dynamodb.ScalarAttributeTypeS)
-	createTableInput := &dynamodb.CreateTableInput{
-		AttributeDefinitions: []*dynamodb.AttributeDefinition{
-			{AttributeName: aws.String("PK"), AttributeType: s},
-			{AttributeName: aws.String("SK"), AttributeType: s},
-			{AttributeName: aws.String("AlbumIndexPK"), AttributeType: s},
-			{AttributeName: aws.String("AlbumIndexSK"), AttributeType: s},
-			{AttributeName: aws.String("MoveTransactionStatus"), AttributeType: s},
-			{AttributeName: aws.String("MoveTransaction"), AttributeType: s},
-		},
-		BillingMode: aws.String(dynamodb.BillingModePayPerRequest),
-		GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndex{
-			{
-				IndexName: aws.String("AlbumIndex"),
-				KeySchema: []*dynamodb.KeySchemaElement{
-					{AttributeName: aws.String("AlbumIndexPK"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-					{AttributeName: aws.String("AlbumIndexSK"), KeyType: aws.String(dynamodb.KeyTypeRange)},
-				},
-				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
-			},
-			{
-				IndexName: aws.String("MoveTransaction"),
-				KeySchema: []*dynamodb.KeySchemaElement{
-					{AttributeName: aws.String("MoveTransactionStatus"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-					{AttributeName: aws.String("PK"), KeyType: aws.String(dynamodb.KeyTypeRange)},
-				},
-				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeKeysOnly)},
-			},
-			{
-				IndexName: aws.String("MoveOrder"),
-				KeySchema: []*dynamodb.KeySchemaElement{
-					{AttributeName: aws.String("MoveTransaction"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-					{AttributeName: aws.String("PK"), KeyType: aws.String(dynamodb.KeyTypeRange)},
-				},
-				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
-			},
-		},
-		KeySchema: []*dynamodb.KeySchemaElement{
-			{AttributeName: aws.String("PK"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-			{AttributeName: aws.String("SK"), KeyType: aws.String(dynamodb.KeyTypeRange)},
-		},
-		TableName: &r.table,
-		Tags: []*dynamodb.Tag{
-			{Key: aws.String(versionTagName), Value: aws.String(tableVersion)},
-		},
-	}
-
-	if table == nil {
-		log.WithFields(log.Fields{
-			"Table":   r.table,
-			"Version": tableVersion,
-		}).Infoln("Creating dynamodb table...")
-		_, err = r.db.CreateTable(createTableInput)
-
-		return errors.Wrapf(err, "failed to create table %s", r.table)
-
-	} else if r.localDynamodb {
-		log.WithField("Table", r.table).Debugln("Local dynamodb update is not supported due to lack of AWS Tag support.")
-	} else {
-		resource, err := r.db.ListTagsOfResource(&dynamodb.ListTagsOfResourceInput{
-			ResourceArn: table.Table.TableArn,
-		})
-		if err != nil {
-			return err
-		}
-
-		version := ""
-		for _, t := range resource.Tags {
-			if *t.Key == versionTagName {
-				version = *t.Value
-			}
-		}
-
-		if version != tableVersion {
-			log.WithFields(log.Fields{
-				"Table":           r.table,
-				"Version":         tableVersion,
-				"PreviousVersion": version,
-			}).Errorln("Dynamodb table exists but must be updated...")
-		}
-	}
-
-	return nil
-}
-
-func (r *rep) albumPrimaryKey(foldername string) TablePk {
+func (r *Rep) albumPrimaryKey(foldername string) TablePk {
 	return TablePk{
 		PK: r.RootOwner,
 		SK: fmt.Sprintf("ALBUM#%s", foldername),
 	}
 }
 
-func (r *rep) mediaPrimaryKey(signature *catalog.MediaSignature) TablePk {
+func (r *Rep) mediaPrimaryKey(signature *catalog.MediaSignature) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
 		SK: "#METADATA",
 	}
 }
 
-func (r *rep) mediaLocationPrimaryKey(signature *catalog.MediaSignature) TablePk {
+func (r *Rep) mediaLocationPrimaryKey(signature *catalog.MediaSignature) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
 		SK: "LOCATION",
 	}
 }
 
-func (r *rep) moveTransactionPrimaryKey(moveTransactionId string) TablePk {
+func (r *Rep) moveTransactionPrimaryKey(moveTransactionId string) TablePk {
 	return TablePk{
 		PK: moveTransactionId,
 		SK: "#METADATA#",
 	}
 }
 
-func (r *rep) mediaMoveOrderPrimaryKey(signature *catalog.MediaSignature, moveTransactionId string) TablePk {
+func (r *Rep) mediaMoveOrderPrimaryKey(signature *catalog.MediaSignature, moveTransactionId string) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
 		SK: moveTransactionId,
@@ -219,7 +118,7 @@ func (r *rep) mediaMoveOrderPrimaryKey(signature *catalog.MediaSignature, moveTr
 }
 
 // mediaPrimaryKeyFromSubEntry takes the key of any entries related to the media (metadata, location, or move order) and return location entry key
-func (r *rep) mediaLocationKeyFromMediaKey(mediaKey map[string]*dynamodb.AttributeValue) (map[string]*dynamodb.AttributeValue, error) {
+func (r *Rep) mediaLocationKeyFromMediaKey(mediaKey map[string]*dynamodb.AttributeValue) (map[string]*dynamodb.AttributeValue, error) {
 	pk, ok := mediaKey["PK"]
 	if !ok {
 		return nil, errors.Errorf("mediaKey must contains key 'PK': %+v", mediaKey)
@@ -231,14 +130,14 @@ func (r *rep) mediaLocationKeyFromMediaKey(mediaKey map[string]*dynamodb.Attribu
 	}, nil
 }
 
-func (r *rep) albumIndexedKey(owner, folderName string) AlbumIndexKey {
+func (r *Rep) albumIndexedKey(owner, folderName string) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: fmt.Sprintf("%s#%s", owner, folderName),
 		AlbumIndexSK: fmt.Sprintf("#METADATA#ALBUM#%s", folderName),
 	}
 }
 
-func (r *rep) mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, signature *catalog.MediaSignature) AlbumIndexKey {
+func (r *Rep) mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, signature *catalog.MediaSignature) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: fmt.Sprintf("%s#%s", owner, folderName),
 		AlbumIndexSK: fmt.Sprintf("MEDIA#%s#%s", dateTime.Format(IsoTime), r.mediaBusinessSignature(signature)),
@@ -246,11 +145,11 @@ func (r *rep) mediaAlbumIndexedKey(owner string, folderName string, dateTime tim
 }
 
 // mediaBusinessSignature generate a string representing uniquely the album.Media
-func (r *rep) mediaBusinessSignature(signature *catalog.MediaSignature) string {
+func (r *Rep) mediaBusinessSignature(signature *catalog.MediaSignature) string {
 	return fmt.Sprintf("%s#%v", signature.SignatureSha256, signature.SignatureSize)
 }
 
-func (r *rep) marshalAlbum(album *catalog.Album) (map[string]*dynamodb.AttributeValue, error) {
+func (r *Rep) marshalAlbum(album *catalog.Album) (map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(album.FolderName) {
 		return nil, errors.WithStack(errors.New("folderName must not be blank"))
 	}
@@ -265,7 +164,7 @@ func (r *rep) marshalAlbum(album *catalog.Album) (map[string]*dynamodb.Attribute
 	})
 }
 
-func (r *rep) unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*catalog.Album, error) {
+func (r *Rep) unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*catalog.Album, error) {
 	var data AlbumData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
@@ -281,7 +180,7 @@ func (r *rep) unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*c
 }
 
 // marshalMedia return both Media metadata attributes and location attributes
-func (r *rep) marshalMedia(media *catalog.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, map[string]*dynamodb.AttributeValue, error) {
+func (r *Rep) marshalMedia(media *catalog.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(media.Signature.SignatureSha256) || media.Signature.SignatureSize == 0 || media.Details.DateTime.IsZero() {
 		return nil, nil, errors.WithStack(errors.Errorf("media must have a valid signature and date [sha256=%v ; size=%v ; time=%v]", media.Signature.SignatureSha256, media.Signature.SignatureSize, media.Details.DateTime))
 	}
@@ -316,7 +215,7 @@ func (r *rep) marshalMedia(media *catalog.CreateMediaRequest) (map[string]*dynam
 	return mediaEntry, locationEntry, err
 }
 
-func (r *rep) unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalog.MediaMeta, error) {
+func (r *Rep) unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalog.MediaMeta, error) {
 	var data MediaData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
@@ -343,7 +242,7 @@ func (r *rep) unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeVa
 	return &media, nil
 }
 
-func (r *rep) marshalMediaLocationFromMoveOrder(moveOrder *catalog.MovedMedia) (dynamoObject, error) {
+func (r *Rep) marshalMediaLocationFromMoveOrder(moveOrder *catalog.MovedMedia) (dynamoObject, error) {
 	return dynamodbattribute.MarshalMap(&MediaLocationData{
 		TablePk:       r.mediaLocationPrimaryKey(&moveOrder.Signature),
 		FolderName:    moveOrder.TargetFolderName,
@@ -353,7 +252,7 @@ func (r *rep) marshalMediaLocationFromMoveOrder(moveOrder *catalog.MovedMedia) (
 	})
 }
 
-func (r *rep) marshalMoveTransaction(moveTransactionId string, status MediaMoveTransactionStatus) (dynamoObject, error) {
+func (r *Rep) marshalMoveTransaction(moveTransactionId string, status MediaMoveTransactionStatus) (dynamoObject, error) {
 	return dynamodbattribute.MarshalMap(&MediaMoveTransactionData{
 		TablePk:               r.moveTransactionPrimaryKey(moveTransactionId),
 		MoveTransactionStatus: status,
@@ -361,7 +260,7 @@ func (r *rep) marshalMoveTransaction(moveTransactionId string, status MediaMoveT
 }
 
 // mediaKey must have the attributes of TablePk
-func (r *rep) marshalMoveOrder(mediaKey dynamoObject, moveTransactionId, destinationFolder string) (dynamoObject, error) {
+func (r *Rep) marshalMoveOrder(mediaKey dynamoObject, moveTransactionId, destinationFolder string) (dynamoObject, error) {
 	if _, pkOk := mediaKey["PK"]; !pkOk {
 		return nil, errors.Errorf("mediaPk do not contains mandatory PK key")
 	}
@@ -376,13 +275,13 @@ func (r *rep) marshalMoveOrder(mediaKey dynamoObject, moveTransactionId, destina
 	})
 }
 
-func (r *rep) unmarshalMoveOrder(attributes dynamoObject) (*MediaMoveOrderData, error) {
+func (r *Rep) unmarshalMoveOrder(attributes dynamoObject) (*MediaMoveOrderData, error) {
 	var order MediaMoveOrderData
 	err := dynamodbattribute.UnmarshalMap(attributes, &order)
 	return &order, err
 }
 
-func (r *rep) unmarshalMediaItems(items []map[string]*dynamodb.AttributeValue) (location *MediaLocationData, orders []*MediaMoveOrderData, err error) {
+func (r *Rep) unmarshalMediaItems(items []map[string]*dynamodb.AttributeValue) (location *MediaLocationData, orders []*MediaMoveOrderData, err error) {
 	for _, item := range items {
 		if sk, ok := item["SK"]; ok && sk.S != nil {
 			switch {

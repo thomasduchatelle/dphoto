@@ -1,56 +1,59 @@
-/*
-Copyright © 2020 Thomas Duchatelle <duchatelle.thomas@gmail.com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
 package cmd
 
 import (
+	"duchatelle.io/dphoto/dphoto/config"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
+	"path"
 )
 
 var (
-	debug = false
-	info  = false
+	LogFile = "$HOME/.dphoto/logs/dphoto.log"
+	debug   = false
 )
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "dphoto",
 	Short: "Backup photos and videos to your personal AWS Cloud",
 	Long:  `Backup photos and videos to your personal AWS Cloud.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		log.SetOutput(os.Stdout)
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// send all logging to a file to not pollute STDOUT
+		err := os.MkdirAll(path.Dir(os.ExpandEnv(LogFile)), 0766)
+		if err != nil {
+			panic(err)
+		}
+
+		openLogFile, err := os.OpenFile(os.ExpandEnv(LogFile), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		log.SetOutput(openLogFile)
 		formatter := new(log.TextFormatter)
 		formatter.FullTimestamp = true
+		formatter.DisableColors = true
 		log.SetFormatter(formatter)
+		log.RegisterExitHandler(func() {
+			_ = openLogFile.Close()
+		})
 
+		log.SetLevel(log.InfoLevel)
 		if debug {
 			log.SetLevel(log.DebugLevel)
-		} else if info {
-			log.SetLevel(log.InfoLevel)
-		} else {
-			log.SetLevel(log.WarnLevel)
 		}
 
 		log.WithFields(log.Fields{
-			"debug": debug,
-			"info":  info,
-		}).Traceln("Start logging")
+			"LogLevel": log.GetLevel(),
+		}).Debugln("Logger setup, starts program...")
+
+		// complete initialisation on components
+		config.Connect()
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		log.Debugln("Program complete.")
+		log.Exit(0)
 	},
 }
 
@@ -65,5 +68,20 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
-	rootCmd.PersistentFlags().BoolVar(&info, "info", false, "enable info logging")
+}
+
+func exitOnErr(err error, code int) {
+	if err != nil {
+		log.WithError(err).Errorln("Unexpected error")
+		_, _ = fmt.Fprintf(os.Stderr, "Unexpected error: %s\n", err.Error())
+		log.Exit(code)
+	}
+}
+
+func exitOnErrWithMessage(err error, code int, pattern string, args ...interface{}) {
+	if err != nil {
+		log.WithError(err).Errorln(pattern, args)
+		_, _ = fmt.Fprintf(os.Stderr, "%s: %s\n", fmt.Sprintf(pattern, args...), err.Error())
+		log.Exit(code)
+	}
 }

@@ -29,11 +29,6 @@ type fsMedia struct {
 }
 
 func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, medias chan model.FoundMedia) error {
-	backup.SupportedExtensions = map[string]model.MediaType{
-		"txt":  model.MediaTypeOther,
-		"Jpeg": model.MediaTypeImage,
-	}
-
 	worker, err := f.newWorker(volume.Path, medias)
 	if err != nil {
 		return err

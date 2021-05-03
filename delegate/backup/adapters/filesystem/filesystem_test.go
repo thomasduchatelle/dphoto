@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"bytes"
+	"duchatelle.io/dphoto/dphoto/backup"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -19,6 +20,11 @@ func TestScanner(t *testing.T) {
 	mediaChannel := make(chan model.FoundMedia, 42)
 	volumeMount := "../../../test_resources"
 	volumeMountAbs, _ := filepath.Abs(volumeMount)
+
+	backup.SupportedExtensions = map[string]model.MediaType{
+		"txt":  model.MediaTypeOther,
+		"Jpeg": model.MediaTypeImage,
+	}
 
 	err := fsHandler.FindMediaRecursively(model.VolumeToBackup{
 		UniqueId: volumeMount,

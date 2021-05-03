@@ -16,7 +16,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package main
 
-import "duchatelle.io/dphoto/dphoto/cmd"
+import (
+	_ "duchatelle.io/dphoto/dphoto/backup/adapters"
+	_ "duchatelle.io/dphoto/dphoto/catalog/adapters"
+	"duchatelle.io/dphoto/dphoto/cmd"
+)
 
 func main() {
 	cmd.Execute()

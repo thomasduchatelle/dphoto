@@ -1,0 +1,37 @@
+# config using localstack - used when running 'go run .', start it with 'docker-compose up -d'
+aws:
+  endpoint: http://localhost:4566
+  key: key
+  secret: secret
+  region: eu-west-1
+
+catalog:
+  dynamodb:
+    table: dphoto-local
+
+backup:
+  s3:
+    bucket: dphoto-local
+
+  buffer:
+    # path where medias are downloaded first before being read
+    path: .build/buffer
+    # size, in octet, must be higher than 25 medias (example: 100MB)
+    size: 104857600
+
+  onlinestorage:
+    # number of images to upload as a batch (use a multiple of 25 to optimise dynamodb requests)
+    batchSize: 25
+
+  concurrency:
+    # number of goroutines that will be used to read metadata from file contents
+    imageReader: 4
+    # number of concurrent download from volume to local storage allowed
+    downloader: 2
+    # number of goroutines that will be used to backup batches of files
+    uploader: 2
+
+  volumes:
+    repository:
+      # directory where are stored the previous snapshots are stored (as file)
+      directory: .build/volumes

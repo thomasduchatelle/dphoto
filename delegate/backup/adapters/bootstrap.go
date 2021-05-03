@@ -8,28 +8,27 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/adapters/onlinestorage"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/volumes"
 	"duchatelle.io/dphoto/dphoto/backup/model"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"duchatelle.io/dphoto/dphoto/config"
+	log "github.com/sirupsen/logrus"
+	"os"
 )
 
 func init() {
-	backup.VolumeRepository = nil
 	backup.ImageDetailsReader = new(images.ExifReader)
 	backup.ScannerAdapters[model.VolumeTypeFileSystem] = new(filesystem.FsHandler)
-	backup.OnlineStorageFactory = func() backup.OnlineStorageAdapter {
-		storage, err := onlinestorage.NewS3OnlineStorage(backup.OnlineBackupLocation, session.Must(session.NewSession()))
+
+	config.Listen(func(cfg config.Config) {
+		log.Debugln("connecting backup adapters")
+		backup.OnlineStorage = onlinestorage.Must(onlinestorage.NewS3OnlineStorage(cfg.GetString("backup.s3.bucket"), cfg.GetAWSSession()))
+
+		var err error
+		backup.Downloader, err = localstorage.NewLocalStorage(os.ExpandEnv(cfg.GetString("backup.buffer.path")), cfg.GetInt("backup.buffer.size"))
 		if err != nil {
 			panic(err)
 		}
-		return storage
-	}
-	backup.DownloaderFactory = func() backup.DownloaderAdapter {
-		downloader, err := localstorage.NewLocalStorage(backup.LocalMediaPath, backup.LocalBufferAreaSizeInOctet)
-		if err != nil {
-			panic(err)
+
+		backup.VolumeRepository = &volumes.FileSystemRepository{
+			Directory: os.ExpandEnv(cfg.GetString("backup.volumes.repository.directory")),
 		}
-		return downloader
-	}
-	backup.VolumeRepository = &volumes.FileSystemRepository{
-		Directory: backup.LocalMediaPath,
-	}
+	})
 }

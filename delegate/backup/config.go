@@ -1,16 +1,23 @@
 package backup
 
+import "duchatelle.io/dphoto/dphoto/config"
+
 const (
-	numberOfMediaType        = 3
-	backupChannelsBufferSize = 32
+	numberOfMediaType = 3
 )
 
 var (
-	ImageReaderThreadCount     = 4                      // ImageReaderThreadCount is the number of goroutines that will be used to read metadata from file contents
-	UploadThreadCount          = 2                      // UploadThreadCount is the number of goroutines that will be used to backup batch of files
-	DownloadThreadCount        = 2                      // DownloadThreadCount is the number of concurrent download from volume to local storage allowed
-	UploadBatchSize            = 25                     // UploadBatchSize number of media to process as a batch (ideally, should be a multiple of 25: the dynamodb write batch size)
-	LocalMediaPath             = "$HOME/.dphoto/medias" // LocalMediaPath is the path where medias are downloaded first before being read
-	LocalBufferAreaSizeInOctet = 512 * 1024 * 1024      // LocalBufferAreaSizeInOctet is the size, in octet, dphoto can use to download photos
-	OnlineBackupLocation       string                   // OnlineBackupLocation is the S£ bucket name where document must be uplaoded.
+	imageReaderThreadCount int // imageReaderThreadCount is the number of goroutines that will be used to read metadata from file contents
+	uploadThreadCount      int // uploadThreadCount is the number of goroutines that will be used to backup batch of files
+	downloadThreadCount    int // downloadThreadCount is the number of concurrent download from volume to local storage allowed
+	uploadBatchSize        int // uploadBatchSize number of media to process as a batch (ideally, should be a multiple of 25: the dynamodb write batch size)
 )
+
+func init() {
+	config.Listen(func(cfg config.Config) {
+		imageReaderThreadCount = cfg.GetIntOrDefault("backup.concurrency.imageReader", 4)
+		downloadThreadCount = cfg.GetIntOrDefault("backup.concurrency.downloader", 2)
+		uploadThreadCount = cfg.GetIntOrDefault("backup.concurrency.uploader", 2)
+		uploadThreadCount = cfg.GetIntOrDefault("backup.onlinestorage.batchSize", 25)
+	})
+}

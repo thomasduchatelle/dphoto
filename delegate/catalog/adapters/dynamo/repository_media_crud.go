@@ -2,7 +2,6 @@ package dynamo
 
 import (
 	"duchatelle.io/dphoto/dphoto/catalog"
-	"duchatelle.io/dphoto/dphoto/config"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -23,24 +22,7 @@ const (
 	defaultPage          = 50
 )
 
-func init() {
-	catalog.Repository = &rep{
-		db:                      dynamodb.New(config.AwsConfig.GetSession()),
-		table:                   "AlbumMedia",
-		RootOwner:               "#ROOT",
-		findMovedMediaBatchSize: int64(dynamoWriteBatchSize),
-	}
-}
-
-type rep struct {
-	db                      *dynamodb.DynamoDB
-	table                   string
-	RootOwner               string // PK ID, '#ROOT' if single tenant.
-	localDynamodb           bool   // some feature like tagging are not available
-	findMovedMediaBatchSize int64
-}
-
-func (r *rep) InsertMedias(medias []catalog.CreateMediaRequest) error {
+func (r *Rep) InsertMedias(medias []catalog.CreateMediaRequest) error {
 	requests := make([]*dynamodb.WriteRequest, len(medias)*2)
 	for index, media := range medias {
 		mediaEntry, locationEntry, err := r.marshalMedia(&media)
@@ -63,7 +45,7 @@ func (r *rep) InsertMedias(medias []catalog.CreateMediaRequest) error {
 	return r.bufferedWriteItems(requests)
 }
 
-func (r *rep) FindMedias(folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
+func (r *Rep) FindMedias(folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
 	albumKey := r.albumIndexedKey(r.RootOwner, folderName)
 	albumIndexPK, err := dynamodbattribute.Marshal(albumKey.AlbumIndexPK)
 	if err != nil {
@@ -111,7 +93,7 @@ func (r *rep) FindMedias(folderName string, request catalog.PageRequest) (*catal
 	}, err
 }
 
-func (r *rep) FindExistingSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
+func (r *Rep) FindExistingSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
 	for index, signature := range signatures {
 		key, err := dynamodbattribute.MarshalMap(r.mediaPrimaryKey(signature))
@@ -143,7 +125,7 @@ func (r *rep) FindExistingSignatures(signatures []*catalog.MediaSignature) ([]*c
 	return found, stream.Error()
 }
 
-func (r *rep) FindMediaLocationsSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignatureAndLocation, error) {
+func (r *Rep) FindMediaLocationsSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignatureAndLocation, error) {
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
 	for index, signature := range signatures {
 		key, err := dynamodbattribute.MarshalMap(r.mediaLocationPrimaryKey(signature))
@@ -181,15 +163,15 @@ func (r *rep) FindMediaLocationsSignatures(signatures []*catalog.MediaSignature)
 	return locations, stream.Error()
 }
 
-func (r *rep) bufferedBatchGetItem(keys []map[string]*dynamodb.AttributeValue, projectionExpression *string) Stream {
+func (r *Rep) bufferedBatchGetItem(keys []map[string]*dynamodb.AttributeValue, projectionExpression *string) Stream {
 	return NewGetStream(r, keys, projectionExpression, dynamoReadBatchSize)
 }
 
-func (r *rep) bufferedQueriesCrawler(queries []*dynamodb.QueryInput) Stream {
+func (r *Rep) bufferedQueriesCrawler(queries []*dynamodb.QueryInput) Stream {
 	return NewQueryStream(r, queries)
 }
 
-func (r *rep) bufferedWriteItems(requests []*dynamodb.WriteRequest) error {
+func (r *Rep) bufferedWriteItems(requests []*dynamodb.WriteRequest) error {
 	retry := backoff.NewExponentialBackOff()
 	buffer := make([]*dynamodb.WriteRequest, 0, dynamoWriteBatchSize)
 
@@ -236,7 +218,7 @@ func (r *rep) bufferedWriteItems(requests []*dynamodb.WriteRequest) error {
 	return nil
 }
 
-func (r *rep) bufferedUpdateItems(updates []*dynamodb.UpdateItemInput) error {
+func (r *Rep) bufferedUpdateItems(updates []*dynamodb.UpdateItemInput) error {
 	for _, update := range updates {
 		_, err := r.db.UpdateItem(update)
 		if err != nil {
@@ -248,7 +230,7 @@ func (r *rep) bufferedUpdateItems(updates []*dynamodb.UpdateItemInput) error {
 }
 
 // unmarshalPageToken take a base64 page id and decode it into a dynamodb key. Return nil, nil if nextPageToken is blank
-func (r *rep) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
+func (r *Rep) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
 	var startKey map[string]*dynamodb.AttributeValue
 	if !isBlank(nextPageToken) {
 		startKeyJson, err := base64.StdEncoding.DecodeString(nextPageToken)
@@ -266,7 +248,7 @@ func (r *rep) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.Att
 }
 
 // marshalPageToken take a dynamodb key and encode it (JSON+BASE64) to be used by service. Return empty string when key is empty
-func (r *rep) marshalPageToken(key map[string]*dynamodb.AttributeValue) (string, error) {
+func (r *Rep) marshalPageToken(key map[string]*dynamodb.AttributeValue) (string, error) {
 	if len(key) == 0 {
 		return "", nil
 	}
@@ -276,7 +258,7 @@ func (r *rep) marshalPageToken(key map[string]*dynamodb.AttributeValue) (string,
 }
 
 // panic if value can't be converted into an attribute
-func (r *rep) mustAttribute(value interface{}) *dynamodb.AttributeValue {
+func (r *Rep) mustAttribute(value interface{}) *dynamodb.AttributeValue {
 	attribute, err := dynamodbattribute.Marshal(value)
 	if err != nil {
 		panic(err)
@@ -284,7 +266,7 @@ func (r *rep) mustAttribute(value interface{}) *dynamodb.AttributeValue {
 	return attribute
 }
 
-func (r *rep) FindMediaLocations(signature catalog.MediaSignature) ([]*catalog.MediaLocation, error) {
+func (r *Rep) FindMediaLocations(signature catalog.MediaSignature) ([]*catalog.MediaLocation, error) {
 	mediaPK := r.mediaPrimaryKey(&signature)
 	queryValues, err := dynamodbattribute.MarshalMap(map[string]string{
 		":mediaPK":    mediaPK.PK,

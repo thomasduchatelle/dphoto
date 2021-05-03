@@ -27,15 +27,19 @@ func NewArrayStream(results []map[string]*dynamodb.AttributeValue) Stream {
 }
 
 type queryStream struct {
-	*rep
+	*Rep
 	internalStream arrayStream                         // arrayStream is wrapping the current internalStream
 	queries        []*dynamodb.QueryInput              // queries first item is the one to use as long as queryHasNextPage is true
 	nextPageToken  map[string]*dynamodb.AttributeValue // nextPageToken is only usable when queryHasNextPage is true
 }
 
-func NewQueryStream(rep *rep, queries []*dynamodb.QueryInput) Stream {
+func NewQueryStream(rep *Rep, queries []*dynamodb.QueryInput) Stream {
+	if len(queries) == 0 {
+		return NewArrayStream(nil)
+	}
+
 	stream := &queryStream{
-		rep:            rep,
+		Rep:            rep,
 		internalStream: arrayStream{},
 		queries:        queries,
 	}
@@ -52,7 +56,7 @@ type getStream struct {
 	buffer               []map[string]*dynamodb.AttributeValue
 }
 
-func NewGetStream(rep *rep, keys []map[string]*dynamodb.AttributeValue, projectionExpression *string, bufferSize int64) Stream {
+func NewGetStream(rep *Rep, keys []map[string]*dynamodb.AttributeValue, projectionExpression *string, bufferSize int64) Stream {
 	stream := &getStream{
 		buffer:               make([]map[string]*dynamodb.AttributeValue, 0, bufferSize),
 		db:                   rep.db,

@@ -26,7 +26,7 @@ func mustParseDate(date string) time.Time {
 
 type MediaCrudTestSuite struct {
 	suite.Suite
-	repo   *rep
+	repo   *Rep
 	medias []catalog.CreateMediaRequest
 	jan21  string
 	feb21  string
@@ -40,7 +40,7 @@ func TestRepositoryMediaCrud(t *testing.T) {
 func (a *MediaCrudTestSuite) SetupSuite() {
 	suffix := time.Now().Format("20060102150405")
 
-	a.repo = &rep{
+	a.repo = &Rep{
 		db:            dynamodb.New(session.Must(session.NewSession(&aws.Config{Region: aws.String("eu-west-1")})), &aws.Config{Endpoint: aws.String("http://localhost:8000")}),
 		table:         "test-medias-crud-" + suffix,
 		RootOwner:     "UNITTEST#2",

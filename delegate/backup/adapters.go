@@ -7,11 +7,11 @@ import (
 )
 
 var (
-	VolumeRepository     VolumeRepositoryAdapter
-	ImageDetailsReader   ImageDetailsReaderAdapter
-	ScannerAdapters      = make(map[model.VolumeType]MediaScannerAdapter) // ScannerAdapters maps the type of volume with it's implementation
-	OnlineStorageFactory func() OnlineStorageAdapter                      // OnlineStorageFactory creates a new OnlineStorageAdaptor or panic.
-	DownloaderFactory    func() DownloaderAdapter                         // DownloaderFactory creates a new instance of the Downloader
+	VolumeRepository   VolumeRepositoryAdapter
+	ImageDetailsReader ImageDetailsReaderAdapter
+	ScannerAdapters    = make(map[model.VolumeType]MediaScannerAdapter) // ScannerAdapters maps the type of volume with it's implementation
+	OnlineStorage      OnlineStorageAdapter                             // OnlineStorage creates a new OnlineStorageAdaptor or panic.
+	Downloader         DownloaderAdapter                                // Downloader creates a new instance of the Downloader
 )
 
 type VolumeRepositoryAdapter interface {

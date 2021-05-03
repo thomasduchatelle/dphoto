@@ -35,11 +35,15 @@ func NewS3OnlineStorage(bucketName string, sess *session.Session) (*S3OnlineStor
 	}, nil
 }
 
-func (s *S3OnlineStorage) UploadFile(media backup.ReadableMedia, folderName, filename string) (string, error) {
-	if closable, ok := media.(backup.ClosableMedia); ok {
-		defer closable.Close()
+func Must(storage *S3OnlineStorage, err error) *S3OnlineStorage {
+	if err != nil {
+		panic(err)
 	}
 
+	return storage
+}
+
+func (s *S3OnlineStorage) UploadFile(media backup.ReadableMedia, folderName, filename string) (string, error) {
 	cleanedFolderName := strings.Trim(folderName, "/")
 
 	prefix, suffix := s.splitKey(cleanedFolderName, filename)

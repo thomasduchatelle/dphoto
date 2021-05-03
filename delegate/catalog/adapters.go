@@ -12,6 +12,8 @@ type RepositoryPort interface {
 	FindAlbum(folderName string) (*Album, error)
 	// UpdateAlbum updates data of matching Album.FolderName
 	UpdateAlbum(album Album) error
+	// CountMedias counts number of media within the album
+	CountMedias(folderName string) (int, error)
 
 	// InsertMedias bulks insert medias
 	InsertMedias(media []CreateMediaRequest) error

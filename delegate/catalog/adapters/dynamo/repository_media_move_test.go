@@ -12,10 +12,10 @@ import (
 	"time"
 )
 
-func setupTest(name string) *rep {
+func setupTest(name string) *Rep {
 	suffix := time.Now().Format("20060102150405")
 
-	r := &rep{
+	r := &Rep{
 		db:                      dynamodb.New(session.Must(session.NewSession(&aws.Config{Region: aws.String("eu-west-1")})), &aws.Config{Endpoint: aws.String("http://localhost:8000")}),
 		findMovedMediaBatchSize: 25,
 		localDynamodb:           true,

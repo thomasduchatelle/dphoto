@@ -1,3 +1,4 @@
 delegate
 dphoto
 *.log
+.build/

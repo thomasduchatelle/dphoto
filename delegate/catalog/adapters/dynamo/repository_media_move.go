@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func (r *rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName string) (string, int, error) {
+func (r *Rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName string) (string, int, error) {
 	transactionId, _, err := r.startMoveTransaction()
 	if err != nil {
 		return "", 0, err
@@ -80,7 +80,7 @@ func (r *rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName stri
 	return transactionId, int(it.Count()), err
 }
 
-func (r *rep) startMoveTransaction() (string, map[string]*dynamodb.AttributeValue, error) {
+func (r *Rep) startMoveTransaction() (string, map[string]*dynamodb.AttributeValue, error) {
 	transactionId := fmt.Sprintf("MOVE_ORDER#%s#%s", time.Now().Format(time.RFC3339), uuid.New())
 
 	transaction, err := r.marshalMoveTransaction(transactionId, transactionPreparing)
@@ -95,7 +95,7 @@ func (r *rep) startMoveTransaction() (string, map[string]*dynamodb.AttributeValu
 	return transactionId, transaction, err
 }
 
-func (r *rep) markMoveTransactionReady(transactionId string) error {
+func (r *Rep) markMoveTransactionReady(transactionId string) error {
 	transaction, err := r.marshalMoveTransaction(transactionId, transactionReady)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (r *rep) markMoveTransactionReady(transactionId string) error {
 	return err
 }
 
-func (r *rep) findMediasQueries(filter *catalog.UpdateMediaFilter, projectionExpression *string) ([]*dynamodb.QueryInput, error) {
+func (r *Rep) findMediasQueries(filter *catalog.UpdateMediaFilter, projectionExpression *string) ([]*dynamodb.QueryInput, error) {
 	queries := make([]*dynamodb.QueryInput, 0, len(filter.AlbumFolderNames)*len(filter.Ranges))
 	for folderName, _ := range filter.AlbumFolderNames {
 		if len(filter.Ranges) == 0 {
@@ -153,7 +153,7 @@ func (r *rep) findMediasQueries(filter *catalog.UpdateMediaFilter, projectionExp
 	return queries, nil
 }
 
-func (r *rep) FindReadyMoveTransactions() ([]*catalog.MoveTransaction, error) {
+func (r *Rep) FindReadyMoveTransactions() ([]*catalog.MoveTransaction, error) {
 	crawler := r.bufferedQueriesCrawler([]*dynamodb.QueryInput{
 		{
 			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
@@ -187,7 +187,7 @@ func (r *rep) FindReadyMoveTransactions() ([]*catalog.MoveTransaction, error) {
 }
 
 // FindFilesToMove returns a page of media to move (25 like a write batch of dynamodb) and the next page token
-func (r *rep) FindFilesToMove(transactionId, pageToken string) ([]*catalog.MovedMedia, string, error) {
+func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalog.MovedMedia, string, error) {
 	startKey, err := r.unmarshalPageToken(pageToken)
 	if err != nil {
 		return nil, "", err
@@ -260,7 +260,7 @@ func (r *rep) FindFilesToMove(transactionId, pageToken string) ([]*catalog.Moved
 	return movedMedias, nextPageToken, stream.Error()
 }
 
-func (r *rep) UpdateMediasLocation(transactionId string, moves []*catalog.MovedMedia) error {
+func (r *Rep) UpdateMediasLocation(transactionId string, moves []*catalog.MovedMedia) error {
 	locations := make([]*dynamodb.WriteRequest, len(moves)*2)
 	for i, move := range moves {
 		locationItem, err := r.marshalMediaLocationFromMoveOrder(move)
@@ -290,7 +290,7 @@ func (r *rep) UpdateMediasLocation(transactionId string, moves []*catalog.MovedM
 	return r.deleteMoveTransactionIfEmpty(transactionId)
 }
 
-func (r *rep) deleteMoveTransactionIfEmpty(transactionId string) error {
+func (r *Rep) deleteMoveTransactionIfEmpty(transactionId string) error {
 	count, err := r.countNumberOfMediaToBeMoved(transactionId)
 	if err != nil {
 		return err
@@ -314,7 +314,7 @@ func (r *rep) deleteMoveTransactionIfEmpty(transactionId string) error {
 	return nil
 }
 
-func (r *rep) countNumberOfMediaToBeMoved(transactionId string) (int, error) {
+func (r *Rep) countNumberOfMediaToBeMoved(transactionId string) (int, error) {
 	result, err := r.db.Query(&dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":pk": {S: &transactionId},
