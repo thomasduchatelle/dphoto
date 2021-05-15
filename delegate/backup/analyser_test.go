@@ -13,7 +13,7 @@ import (
 
 type inmemoryMedia struct {
 	filename string
-	size     int
+	size     uint
 }
 
 type inmemoryMediaWithHash struct {
@@ -87,7 +87,7 @@ func Test_analyseMedia(t *testing.T) {
 	}
 }
 
-func newInmemoryMedia(name string, size int) model.FoundMedia {
+func newInmemoryMedia(name string, size uint) model.FoundMedia {
 	return &inmemoryMedia{name, size}
 }
 

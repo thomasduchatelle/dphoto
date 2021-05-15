@@ -42,10 +42,8 @@ func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage OnlineStorageAd
 	}, nil
 }
 
-func (u *Uploader) Upload(buffer []*model.AnalysedMedia) error {
-	log.Infof("Upload %d medias", len(buffer))
+func (u *Uploader) Upload(buffer []*model.AnalysedMedia, progressChannel chan *model.ProgressEvent) error {
 	defer func() {
-		log.Infof("Closing all medias...")
 		// media must be closed to release local buffer space
 		for _, media := range buffer {
 			if toClose, ok := media.FoundMedia.(ClosableMedia); ok {
@@ -63,12 +61,15 @@ func (u *Uploader) Upload(buffer []*model.AnalysedMedia) error {
 	for i, media := range buffer {
 		signature := catalog.MediaSignature{
 			SignatureSha256: media.Signature.Sha256,
-			SignatureSize:   media.Signature.Size,
+			SignatureSize:   int(media.Signature.Size),
 		}
 
-		folderName, err := u.findOrCreateAlbum(media.Details.DateTime)
+		folderName, created, err := u.findOrCreateAlbum(media.Details.DateTime)
 		if err != nil {
 			return err
+		}
+		if created {
+			progressChannel <- &model.ProgressEvent{Type: model.ProgressEventAlbumCreated, Count: 1, Album: folderName}
 		}
 
 		location := catalog.MediaLocation{
@@ -99,7 +100,7 @@ func (u *Uploader) Upload(buffer []*model.AnalysedMedia) error {
 		}
 	}
 
-	err := u.filterKnownMedias(signatures, medias)
+	err := u.filterKnownMedias(signatures, medias, progressChannel)
 	if err != nil {
 		return err
 	}
@@ -113,32 +114,47 @@ func (u *Uploader) Upload(buffer []*model.AnalysedMedia) error {
 		}
 		uploaded[index] = *media.createRequest
 		index++
+
+		progressChannel <- &model.ProgressEvent{
+			Type:      model.ProgressEventUploaded,
+			Count:     1,
+			Size:      media.analysedMedia.FoundMedia.SimpleSignature().Size,
+			Album:     media.createRequest.Location.FolderName,
+			MediaType: media.analysedMedia.Type,
+		}
 	}
 
 	return u.catalog.InsertMedias(uploaded)
 }
 
-func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, medias map[catalog.MediaSignature]mediaRecord) error {
+func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, medias map[catalog.MediaSignature]mediaRecord, progressChannel chan *model.ProgressEvent) error {
 	knownSignatures, err := u.catalog.FindSignatures(signatures)
 	if err != nil {
 		return err
 	}
 
+	filteredOutCount := uint(0)
+	filteredOutSize := uint(0)
+
 	for _, signature := range knownSignatures {
 		if m, ok := medias[*signature]; ok {
 			log.Debugf("Uploader > skipping duplicate %s", m.analysedMedia.FoundMedia)
+			delete(medias, *signature)
+			filteredOutCount += 1
+			filteredOutSize += uint(signature.SignatureSize)
 		}
-		delete(medias, *signature)
 	}
+
+	progressChannel <- &model.ProgressEvent{Type: model.ProgressEventSkippedAfterAnalyse, Count: filteredOutCount, Size: filteredOutSize}
 	return nil
 }
 
-func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, error) {
+func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) {
 	u.timelineLock.Lock()
 	defer u.timelineLock.Unlock()
 
 	if album, ok := u.timeline.FindAt(mediaTime); ok {
-		return album.FolderName, nil
+		return album.FolderName, false, nil
 	}
 
 	year := mediaTime.Year()
@@ -155,7 +171,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, error) {
 
 	err := u.catalog.Create(createRequest)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	u.timeline, err = u.timeline.AppendAlbum(&catalog.Album{
@@ -164,7 +180,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, error) {
 		Start:      createRequest.Start,
 		End:        createRequest.End,
 	})
-	return createRequest.ForcedFolderName, err
+	return createRequest.ForcedFolderName, true, err
 }
 
 func (u *Uploader) doUpload(media model.FoundMedia, location *catalog.MediaLocation) (err error) {

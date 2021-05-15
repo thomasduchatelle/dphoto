@@ -52,7 +52,7 @@ func TestRunner(t *testing.T) {
 
 	r := Runner{
 		MDC: log.WithField("Unit", "Test"),
-		Source: func(medias chan model.FoundMedia) error {
+		Source: func(medias chan model.FoundMedia) (int, int, error) {
 			log.Infoln("Starting to push medias")
 
 			medias <- newMedia("foo", 1)
@@ -61,7 +61,7 @@ func TestRunner(t *testing.T) {
 
 			log.Infoln("Pushed 3 scanned medias")
 
-			return nil
+			return 3, 6, nil
 		},
 		Filter:               filter.Execute,
 		Downloader:           downloader.Execute,
@@ -105,12 +105,14 @@ func TestRunner(t *testing.T) {
 			FoundMedia: newMedia("baz", 3),
 			Type:       model.MediaTypeImage,
 		},
-	}).Once().Return(nil)
+	}, mock.Anything).Once().Return(nil)
 
 	preCompletion.On("Execute").Return(nil)
 
 	// when
-	completionChannel := Start(r)
+	completionChannel, progressChannel := Start(r)
+	DummyProgressListener(progressChannel)
+
 	report := <-completionChannel
 	a.Empty(report.Errors)
 

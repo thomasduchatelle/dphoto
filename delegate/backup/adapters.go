@@ -26,7 +26,8 @@ type ClosableMedia interface {
 
 type MediaScannerAdapter interface {
 	// FindMediaRecursively scan throw the VolumeToBackup and emit to the channel any media found. Interrupted in case of error.
-	FindMediaRecursively(volume model.VolumeToBackup, paths chan model.FoundMedia) error
+	// returns number of items found, and size of these items
+	FindMediaRecursively(volume model.VolumeToBackup, paths chan model.FoundMedia) (uint, uint, error)
 }
 
 type ImageDetailsReaderAdapter interface {

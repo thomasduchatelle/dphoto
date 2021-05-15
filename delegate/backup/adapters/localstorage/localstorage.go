@@ -109,10 +109,10 @@ func (l *LocalStorage) DownloadMedia(found model.FoundMedia) (model.FoundMedia, 
 	}, err
 }
 
-func (l *LocalStorage) take(size int) error {
+func (l *LocalStorage) take(size uint) error {
 	return l.semaphore.Acquire(context.TODO(), int64(size))
 }
 
-func (l *LocalStorage) release(size int) {
+func (l *LocalStorage) release(size uint) {
 	l.semaphore.Release(int64(size))
 }

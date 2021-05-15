@@ -77,7 +77,7 @@ func TestUploader_Upload(t *testing.T) {
 	signatureRequest := make([]*catalog.MediaSignature, len(medias))
 
 	for i, sign := range medias {
-		signatureRequest[i] = &catalog.MediaSignature{SignatureSha256: sign.Signature.Sha256, SignatureSize: sign.Signature.Size}
+		signatureRequest[i] = &catalog.MediaSignature{SignatureSha256: sign.Signature.Sha256, SignatureSize: int(sign.Signature.Size)}
 	}
 	catalogProxy.On("FindSignatures", signatureRequest).Return([]*catalog.MediaSignature{signatureRequest[4]}, nil).Once()
 
@@ -144,7 +144,7 @@ func TestUploader_Upload(t *testing.T) {
 		a.FailNow(err.Error())
 	}
 
-	err = uploader.Upload(medias)
+	err = uploader.Upload(medias, make(chan *model.ProgressEvent))
 	if a.NoError(err) {
 		catalogProxy.AssertExpectations(t)
 		onlineStorage.AssertExpectations(t)

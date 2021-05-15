@@ -2,7 +2,7 @@ package runner
 
 import "sync"
 
-// Report is returned wuth the backup is finished ; if Errors isn't empty, backup has failed or has been interupted.
+// Report is returned with the backup is finished ; if Errors isn't empty, backup has failed or has been interupted.
 type Report struct {
 	errorsMutex sync.Mutex
 	Errors      []error

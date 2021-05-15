@@ -9,6 +9,27 @@ type MockRepositoryPort struct {
 	mock.Mock
 }
 
+// CountMedias provides a mock function with given fields: folderName
+func (_m *MockRepositoryPort) CountMedias(folderName string) (int, error) {
+	ret := _m.Called(folderName)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		r0 = rf(folderName)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(folderName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteEmptyAlbum provides a mock function with given fields: folderName
 func (_m *MockRepositoryPort) DeleteEmptyAlbum(folderName string) error {
 	ret := _m.Called(folderName)

@@ -12,13 +12,13 @@ type MockUploader struct {
 	mock.Mock
 }
 
-// Execute provides a mock function with given fields: buffer
-func (_m *MockUploader) Execute(buffer []*model.AnalysedMedia) error {
-	ret := _m.Called(buffer)
+// Execute provides a mock function with given fields: buffer, progressChannel
+func (_m *MockUploader) Execute(buffer []*model.AnalysedMedia, progressChannel chan *model.ProgressEvent) error {
+	ret := _m.Called(buffer, progressChannel)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]*model.AnalysedMedia) error); ok {
-		r0 = rf(buffer)
+	if rf, ok := ret.Get(0).(func([]*model.AnalysedMedia, chan *model.ProgressEvent) error); ok {
+		r0 = rf(buffer, progressChannel)
 	} else {
 		r0 = ret.Error(0)
 	}

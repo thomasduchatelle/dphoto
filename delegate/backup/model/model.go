@@ -21,6 +21,13 @@ const (
 	VolumeTypeS3         VolumeType = "s3"         // Storage in S3
 	VolumeTypeMtp        VolumeType = "mtp"        // MTP (Android drive)
 
+	ProgressEventScanComplete        ProgressEventType = "scan-complete"
+	ProgressEventDownloaded          ProgressEventType = "downloaded"
+	ProgressEventSkipped             ProgressEventType = "skipped-before-download"
+	ProgressEventSkippedAfterAnalyse ProgressEventType = "skipped-after-analyse"
+	ProgressEventAnalysed            ProgressEventType = "analysed"
+	ProgressEventUploaded            ProgressEventType = "uploaded"
+	ProgressEventAlbumCreated        ProgressEventType = "album-created"
 )
 
 // MediaType is photo or video
@@ -74,13 +81,13 @@ type MediaDetails struct {
 // SimpleMediaSignature is unique only for a single volume, and only for a certain time (i.e.: filename)
 type SimpleMediaSignature struct {
 	RelativePath string
-	Size         int
+	Size         uint
 }
 
 // FullMediaSignature is the business key of the media, unique per user
 type FullMediaSignature struct {
 	Sha256 string
-	Size   int
+	Size   uint
 }
 
 type AnalysedMedia struct {
@@ -88,6 +95,16 @@ type AnalysedMedia struct {
 	Type       MediaType           // Photo or Video
 	Signature  *FullMediaSignature // Business key of the media
 	Details    *MediaDetails       // Details are data found within the file (location, date, ...)
+}
+
+type ProgressEventType string
+
+type ProgressEvent struct {
+	Type      ProgressEventType // Type defines what's count, and size are about ; some might not be used.
+	Count     uint               // Count is the number of media
+	Size      uint               // Size is the sum of the size of the media concerned by this event
+	Album     string            // Album is the folder name of the medias concerned by this event
+	MediaType MediaType         // MediaType is the type of media ; only mandatory with 'uploaded' event
 }
 
 func byteCountIEC(b int64) string {

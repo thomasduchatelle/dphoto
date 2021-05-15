@@ -8,7 +8,7 @@ import (
 
 type filter struct {
 	volumeId           string
-	lastVolumeSnapshot map[string]int
+	lastVolumeSnapshot map[string]uint
 	currentSnapshot    []model.SimpleMediaSignature
 }
 
@@ -20,7 +20,7 @@ func newMediaFilter(volume *model.VolumeToBackup) (*filter, error) {
 
 	f := &filter{
 		volumeId:           volume.UniqueId,
-		lastVolumeSnapshot: make(map[string]int),
+		lastVolumeSnapshot: make(map[string]uint),
 	}
 	for _, m := range snapshot {
 		f.lastVolumeSnapshot[m.RelativePath] = m.Size

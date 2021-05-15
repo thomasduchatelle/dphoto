@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -19,6 +20,8 @@ type FsHandler struct{}
 type fsWorker struct {
 	mountPath string
 	media     chan model.FoundMedia
+	count     int64
+	sizeSum   int64
 }
 
 type fsMedia struct {
@@ -28,10 +31,10 @@ type fsMedia struct {
 	relativePath         string
 }
 
-func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, medias chan model.FoundMedia) error {
+func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, medias chan model.FoundMedia) (uint, uint, error) {
 	worker, err := f.newWorker(volume.Path, medias)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
 	extensions := make([]string, len(backup.SupportedExtensions)*2)
@@ -46,7 +49,7 @@ func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, medias cha
 	walker.ExtListType = skywalker.LTWhitelist
 	walker.ExtList = extensions
 
-	return errors.Wrapf(walker.Walk(), "failed scanning path %s", volume.Path)
+	return uint(worker.count), uint(worker.sizeSum), errors.Wrapf(walker.Walk(), "failed scanning path %s", volume.Path)
 }
 
 func (w *fsWorker) Work(mediaPath string) {
@@ -75,9 +78,11 @@ func (w *fsWorker) Work(mediaPath string) {
 		lastModificationDate: stat.ModTime(),
 		relativePath:         rel,
 	}
+	atomic.AddInt64(&w.count, 1)
+	atomic.AddInt64(&w.sizeSum, stat.Size())
 }
 
-func (f *FsHandler) newWorker(mountPath string, media chan model.FoundMedia) (skywalker.Worker, error) {
+func (f *FsHandler) newWorker(mountPath string, media chan model.FoundMedia) (*fsWorker, error) {
 	absMountPath, err := filepath.Abs(mountPath)
 	return &fsWorker{
 		mountPath: absMountPath,
@@ -96,7 +101,7 @@ func (f *fsMedia) LastModificationDate() time.Time {
 func (f *fsMedia) SimpleSignature() *model.SimpleMediaSignature {
 	return &model.SimpleMediaSignature{
 		RelativePath: f.relativePath,
-		Size:         f.size,
+		Size:         uint(f.size),
 	}
 }
 

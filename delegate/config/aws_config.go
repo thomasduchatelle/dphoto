@@ -25,7 +25,6 @@ func init() {
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
-
 }
 
 // Listen registers a Listener that will be invoked when configuration will be provided.
