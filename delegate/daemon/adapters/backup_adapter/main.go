@@ -35,7 +35,7 @@ func (b *backupAdapter) OnMountedVolume(volume model.VolumeToBackup) {
 		withContext.WithField("Name", metadata.Name).Infoln("Disk plugged")
 
 		if metadata.AutoBackup {
-			err = backup.StartBackupRunner(volume)
+			_, err = backup.StartBackupRunner(volume)
 			if err != nil {
 				withContext.WithError(err).Errorf("Backup failed to start")
 			}

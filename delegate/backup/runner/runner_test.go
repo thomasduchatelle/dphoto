@@ -28,7 +28,7 @@ func (u *unitMedia) LastModificationDate() time.Time {
 func (u *unitMedia) SimpleSignature() *model.SimpleMediaSignature {
 	return &model.SimpleMediaSignature{
 		RelativePath: u.filename,
-		Size:         u.size,
+		Size:         uint(u.size),
 	}
 }
 
@@ -52,7 +52,7 @@ func TestRunner(t *testing.T) {
 
 	r := Runner{
 		MDC: log.WithField("Unit", "Test"),
-		Source: func(medias chan model.FoundMedia) (int, int, error) {
+		Source: func(medias chan model.FoundMedia) (uint, uint, error) {
 			log.Infoln("Starting to push medias")
 
 			medias <- newMedia("foo", 1)

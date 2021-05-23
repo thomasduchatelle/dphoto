@@ -57,7 +57,7 @@ func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (*
 			return mediaFilter.StoreState(backupId)
 		},
 		FoundMediaBufferSize: scanBufferSize,
-		BufferSize:           uploadBatchSize,
+		BufferSize:           uploadBatchSize * uploadThreadCount * 2,
 		ConcurrentDownloader: downloadThreadCount,
 		ConcurrentAnalyser:   imageReaderThreadCount,
 		ConcurrentUploader:   uploadThreadCount,

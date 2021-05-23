@@ -13,19 +13,10 @@ import (
 // Listener function is called once config is loaded
 type Listener func(Config)
 
-var listeners []Listener
-
-func init() {
-	viper.SetConfigName("dphoto")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("$HOME/.dphoto")
-	viper.AddConfigPath("/etc/dphoto/")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
-	}
-}
+var (
+	ForcedConfigFile string // ForcedConfigFile is the path to the file of the config to use (instead of defaulting to ./dphoto.yml, $HOME/.dphoto/dphoto.yml, ...)
+	listeners        []Listener
+)
 
 // Listen registers a Listener that will be invoked when configuration will be provided.
 func Listen(listener Listener) {
@@ -34,6 +25,20 @@ func Listen(listener Listener) {
 
 // Connect must be called by main function, it dispatches the config to all components requiring it.
 func Connect() {
+	if ForcedConfigFile == "" {
+		viper.SetConfigName("dphoto")
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("$HOME/.dphoto")
+		viper.AddConfigPath("/etc/dphoto/")
+	} else {
+		viper.SetConfigFile(ForcedConfigFile)
+	}
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error while loading configuration: %s \n", err))
+	}
+
 	// use explicit config to avoid creating unwanted environment
 	sess := session.Must(session.NewSession(&aws.Config{
 		Credentials: credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),

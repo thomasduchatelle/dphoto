@@ -167,6 +167,9 @@ func TestUpdate(t *testing.T) {
 	RepositoryMock.On("FindAllAlbums").Maybe().Return(albumCollection(), nil)
 
 	updatedFolder := "Christmas First Week"
+	updatedStart := mustParse(layout, "2020-12-21T00")
+	updatedEnd := mustParse(layout, "2020-12-27T00")
+
 	christmas := "Christmas Holidays"
 	q4 := "2020-Q4"
 	RepositoryMock.On("UpdateMedias", NewUpdateFilter().WithAlbum(updatedFolder, q4).WithinRange(mustParse(layout, "2020-12-18T00"), mustParse(layout, "2020-12-21T00")), MoveTo(christmas)).Return("", 0, nil)
@@ -174,7 +177,14 @@ func TestUpdate(t *testing.T) {
 	RepositoryMock.On("UpdateMedias", NewUpdateFilter().WithAlbum(christmas, updatedFolder, q4).WithinRange(mustParse(layout, "2020-12-24T00"), mustParse(layout, "2020-12-26T00")), MoveTo("Christmas Day")).Return("", 0, nil)
 	RepositoryMock.On("UpdateMedias", NewUpdateFilter().WithAlbum(christmas, q4).WithinRange(mustParse(layout, "2020-12-26T00"), mustParse(layout, "2020-12-27T00")), MoveTo(updatedFolder)).Return("", 0, nil)
 
-	err := UpdateAlbum(updatedFolder, mustParse(layout, "2020-12-21T00"), mustParse(layout, "2020-12-27T00"))
+	RepositoryMock.On("UpdateAlbum", Album{
+		Name:       "",
+		FolderName: updatedFolder,
+		Start:      updatedStart,
+		End:        updatedEnd,
+	}).Return(nil)
+
+	err := UpdateAlbum(updatedFolder, updatedStart, updatedEnd)
 	if a.NoError(err) {
 		RepositoryMock.AssertExpectations(t)
 	}

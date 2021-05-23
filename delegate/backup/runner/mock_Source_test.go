@@ -13,21 +13,21 @@ type MockSource struct {
 }
 
 // Execute provides a mock function with given fields: medias
-func (_m *MockSource) Execute(medias chan model.FoundMedia) (int, int, error) {
+func (_m *MockSource) Execute(medias chan model.FoundMedia) (uint, uint, error) {
 	ret := _m.Called(medias)
 
-	var r0 int
-	if rf, ok := ret.Get(0).(func(chan model.FoundMedia) int); ok {
+	var r0 uint
+	if rf, ok := ret.Get(0).(func(chan model.FoundMedia) uint); ok {
 		r0 = rf(medias)
 	} else {
-		r0 = ret.Get(0).(int)
+		r0 = ret.Get(0).(uint)
 	}
 
-	var r1 int
-	if rf, ok := ret.Get(1).(func(chan model.FoundMedia) int); ok {
+	var r1 uint
+	if rf, ok := ret.Get(1).(func(chan model.FoundMedia) uint); ok {
 		r1 = rf(medias)
 	} else {
-		r1 = ret.Get(1).(int)
+		r1 = ret.Get(1).(uint)
 	}
 
 	var r2 error

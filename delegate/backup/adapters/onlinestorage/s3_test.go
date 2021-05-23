@@ -2,6 +2,7 @@ package onlinestorage
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
+	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -66,6 +67,13 @@ func must(a *assert.Assertions, err error) {
 
 type InMemoryMedia struct {
 	content string
+}
+
+func (i *InMemoryMedia) SimpleSignature() *model.SimpleMediaSignature {
+	return &model.SimpleMediaSignature{
+		RelativePath: "not-used",
+		Size:         uint(len(i.content)),
+	}
 }
 
 func (i *InMemoryMedia) ReadMedia() (io.Reader, error) {

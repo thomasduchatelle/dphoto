@@ -5,6 +5,7 @@ package backup
 import (
 	io "io"
 
+	model "duchatelle.io/dphoto/dphoto/backup/model"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -34,4 +35,20 @@ func (_m *MockReadableMedia) ReadMedia() (io.Reader, error) {
 	}
 
 	return r0, r1
+}
+
+// SimpleSignature provides a mock function with given fields:
+func (_m *MockReadableMedia) SimpleSignature() *model.SimpleMediaSignature {
+	ret := _m.Called()
+
+	var r0 *model.SimpleMediaSignature
+	if rf, ok := ret.Get(0).(func() *model.SimpleMediaSignature); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.SimpleMediaSignature)
+		}
+	}
+
+	return r0
 }

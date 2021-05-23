@@ -1,15 +1,12 @@
 package onlinestorage
 
 import (
-	"crypto/md5"
 	"duchatelle.io/dphoto/dphoto/backup"
-	"encoding/hex"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/pkg/errors"
-	"io"
 	"path"
 	"strings"
 	"sync"
@@ -49,7 +46,7 @@ func (s *S3OnlineStorage) UploadFile(media backup.ReadableMedia, folderName, fil
 	prefix, suffix := s.splitKey(cleanedFolderName, filename)
 	prefix, err := s.findUniquePrefix(prefix)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed getting unique prefix for media %s", media)
 	}
 
 	key := prefix + suffix
@@ -59,21 +56,14 @@ func (s *S3OnlineStorage) UploadFile(media backup.ReadableMedia, folderName, fil
 		return "", err
 	}
 
-	hash := md5.New()
-	teeReader := io.TeeReader(mediaReader, hash)
-
-	output, err := s.s3.PutObject(&s3.PutObjectInput{
-		Body:   aws.ReadSeekCloser(teeReader),
-		Bucket: &s.bucketName,
-		Key:    &key,
+	_, err = s.s3.PutObject(&s3.PutObjectInput{
+		Body:          aws.ReadSeekCloser(mediaReader),
+		Bucket:        &s.bucketName,
+		ContentLength: aws.Int64(int64(media.SimpleSignature().Size)),
+		Key:           &key,
 	})
 	if err != nil {
-		return "", err
-	}
-
-	expected := hex.EncodeToString(hash.Sum(nil))
-	if strings.Trim(*output.ETag, "\"") != expected {
-		return key, errors.Errorf("Upload failed, invalid MD5 [expected '%s' ; got '%s']", expected, *output.ETag)
+		return "", errors.Wrapf(err, "uploading %s failed", media)
 	}
 
 	return strings.TrimPrefix(key, cleanedFolderName+"/"), nil

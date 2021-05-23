@@ -13,21 +13,21 @@ type MockMediaScannerAdapter struct {
 }
 
 // FindMediaRecursively provides a mock function with given fields: volume, paths
-func (_m *MockMediaScannerAdapter) FindMediaRecursively(volume model.VolumeToBackup, paths chan model.FoundMedia) (int, int, error) {
+func (_m *MockMediaScannerAdapter) FindMediaRecursively(volume model.VolumeToBackup, paths chan model.FoundMedia) (uint, uint, error) {
 	ret := _m.Called(volume, paths)
 
-	var r0 int
-	if rf, ok := ret.Get(0).(func(model.VolumeToBackup, chan model.FoundMedia) int); ok {
+	var r0 uint
+	if rf, ok := ret.Get(0).(func(model.VolumeToBackup, chan model.FoundMedia) uint); ok {
 		r0 = rf(volume, paths)
 	} else {
-		r0 = ret.Get(0).(int)
+		r0 = ret.Get(0).(uint)
 	}
 
-	var r1 int
-	if rf, ok := ret.Get(1).(func(model.VolumeToBackup, chan model.FoundMedia) int); ok {
+	var r1 uint
+	if rf, ok := ret.Get(1).(func(model.VolumeToBackup, chan model.FoundMedia) uint); ok {
 		r1 = rf(volume, paths)
 	} else {
-		r1 = ret.Get(1).(int)
+		r1 = ret.Get(1).(uint)
 	}
 
 	var r2 error

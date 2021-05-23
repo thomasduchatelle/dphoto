@@ -26,7 +26,7 @@ func TestScanner(t *testing.T) {
 		"Jpeg": model.MediaTypeImage,
 	}
 
-	err := fsHandler.FindMediaRecursively(model.VolumeToBackup{
+	_, _, err := fsHandler.FindMediaRecursively(model.VolumeToBackup{
 		UniqueId: volumeMount,
 		Type:     model.VolumeTypeFileSystem,
 		Path:     volumeMount,

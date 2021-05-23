@@ -144,7 +144,7 @@ func TestUploader_Upload(t *testing.T) {
 		a.FailNow(err.Error())
 	}
 
-	err = uploader.Upload(medias, make(chan *model.ProgressEvent))
+	err = uploader.Upload(medias, make(chan *model.ProgressEvent, 42))
 	if a.NoError(err) {
 		catalogProxy.AssertExpectations(t)
 		onlineStorage.AssertExpectations(t)

@@ -18,6 +18,6 @@ func init() {
 		imageReaderThreadCount = cfg.GetIntOrDefault("backup.concurrency.imageReader", 4)
 		downloadThreadCount = cfg.GetIntOrDefault("backup.concurrency.downloader", 2)
 		uploadThreadCount = cfg.GetIntOrDefault("backup.concurrency.uploader", 2)
-		uploadThreadCount = cfg.GetIntOrDefault("backup.onlinestorage.batchSize", 25)
+		uploadBatchSize = cfg.GetIntOrDefault("backup.onlinestorage.batchSize", 25)
 	})
 }

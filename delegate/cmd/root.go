@@ -68,20 +68,5 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
-}
-
-func exitOnErr(err error, code int) {
-	if err != nil {
-		log.WithError(err).Errorln("Unexpected error")
-		_, _ = fmt.Fprintf(os.Stderr, "Unexpected error: %s\n", err.Error())
-		log.Exit(code)
-	}
-}
-
-func exitOnErrWithMessage(err error, code int, pattern string, args ...interface{}) {
-	if err != nil {
-		log.WithError(err).Errorln(pattern, args)
-		_, _ = fmt.Fprintf(os.Stderr, "%s: %s\n", fmt.Sprintf(pattern, args...), err.Error())
-		log.Exit(code)
-	}
+	rootCmd.PersistentFlags().StringVar(&config.ForcedConfigFile, "config", "", "use configuration file provided instead of searching in ./ , $HOME/.dphoto, and /etc/dphoto")
 }
