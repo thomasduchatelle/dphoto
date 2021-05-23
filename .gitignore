@@ -1,3 +1,4 @@
 .idea
-delegate/delegate
-
+delegate/dphoto
+infra-data/.terraform/
+infra-data/.terraform*
