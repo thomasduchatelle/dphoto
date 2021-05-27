@@ -1,5 +1,5 @@
 resource "aws_iam_user" "cli" {
-  name = "cli"
+  name = "${local.prefix}-cli"
   path = local.path
   tags = local.tags
 }
@@ -16,5 +16,5 @@ resource "aws_iam_user_policy_attachment" "cli_table" {
 
 resource "aws_iam_access_key" "cli" {
   user    = aws_iam_user.cli.name
-  pgp_key = "keybase:thomasduchatelle"
+  pgp_key = var.keybase_user
 }

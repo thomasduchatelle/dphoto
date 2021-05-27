@@ -1,14 +1,13 @@
 resource "aws_kms_key" "storage" {
   deletion_window_in_days = 30
   tags                    = merge(local.tags, {
-    Name = "dphoto-${var.environment_name}-encryption-key"
+    Name = "${local.prefix}-encryption-key"
   })
 }
 
 resource "aws_s3_bucket" "storage" {
-  bucket        = "dphoto-${var.environment_name}"
+  bucket        = "${local.prefix}-storage"
   acl           = "private"
-  force_destroy = "true"
 
   server_side_encryption_configuration {
     rule {
@@ -36,9 +35,7 @@ resource "aws_s3_bucket" "storage" {
     }
   }
 
-  tags = merge(local.tags, {
-    Name = "dphoto-${var.environment_name}"
-  })
+  tags = local.tags
 }
 
 # Ensure bucket and objects are not public

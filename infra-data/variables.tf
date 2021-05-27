@@ -7,3 +7,7 @@ variable "region" {
   description = "AWS Region"
   default     = "eu-west-1"
 }
+
+variable "keybase_user" {
+  default = "keybase:thomasduchatelle"
+}
