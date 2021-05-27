@@ -1,5 +1,5 @@
 resource "aws_iam_policy" "index_rw" {
-  name   = "index-rw"
+  name   = "${local.prefix}-index-rw"
   path   = local.path
   policy = data.aws_iam_policy_document.index_rw.json
 }

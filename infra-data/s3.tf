@@ -6,8 +6,8 @@ resource "aws_kms_key" "storage" {
 }
 
 resource "aws_s3_bucket" "storage" {
-  bucket        = "${local.prefix}-storage"
-  acl           = "private"
+  bucket = "${local.prefix}-storage"
+  acl    = "private"
 
   server_side_encryption_configuration {
     rule {
@@ -48,7 +48,7 @@ resource "aws_s3_bucket_public_access_block" "s3_block_public_access" {
 }
 
 resource "aws_iam_policy" "storage_rw" {
-  name   = "storage-rw"
+  name   = "${local.prefix}-storage-rw"
   path   = local.path
   policy = data.aws_iam_policy_document.storage_rw.json
 }
