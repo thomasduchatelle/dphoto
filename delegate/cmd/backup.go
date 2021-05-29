@@ -27,8 +27,14 @@ type Progress struct {
 	uploadLine   *ProgressLine
 }
 
+var (
+	backupArgs = struct {
+		remote bool
+	}{}
+)
+
 var backupCmd = &cobra.Command{
-	Use:   "backup",
+	Use:   "backup [--remote] <source path>",
 	Short: "Backup photos and videos to personal cloud",
 	Long:  `Backup photos and videos to personal cloud`,
 	Args:  cobra.ExactArgs(1),
@@ -42,7 +48,7 @@ var backupCmd = &cobra.Command{
 			UniqueId: volumePath,
 			Type:     model.VolumeTypeFileSystem,
 			Path:     volumePath,
-			Local:    true,
+			Local:    !backupArgs.remote,
 		}, progress)
 		printer.FatalIfError(err, 1)
 
@@ -50,6 +56,12 @@ var backupCmd = &cobra.Command{
 
 		printBackupStats(tracker, volumePath)
 	},
+}
+
+func init() {
+	rootCmd.AddCommand(backupCmd)
+
+	backupCmd.Flags().BoolVarP(&backupArgs.remote, "remote", "r", false, "mark the source as remote ; a local buffer will be used to read files only once")
 }
 
 func printBackupStats(tracker *backup.Tracker, volumePath string) {
@@ -115,10 +127,6 @@ func countAndSize(counter backup.MediaCounter) *simpletable.Cell {
 	return &simpletable.Cell{
 		Text: fmt.Sprintf("%d (%s)", counter.Count, byteCountIEC(counter.Size)),
 	}
-}
-
-func init() {
-	rootCmd.AddCommand(backupCmd)
 }
 
 func NewProgress() *Progress {
