@@ -38,7 +38,7 @@ func StartBackupRunner(volume scanner.VolumeToBackup, listeners ...interface{}) 
 
 	downloader := Downloader.DownloadMedia
 	if volume.Local {
-		downloader = PassThroughDownload
+		downloader = scanner.PassThroughDownload
 	}
 
 	r := scanner.Runner{
