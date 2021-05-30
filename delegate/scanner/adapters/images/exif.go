@@ -2,7 +2,7 @@ package images
 
 import (
 	"bytes"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"github.com/pkg/errors"
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
@@ -20,7 +20,7 @@ func init() {
 
 type ExifReader struct{}
 
-func (e *ExifReader) ReadImageDetails(reader io.Reader, lastModifiedDate time.Time) (*model.MediaDetails, error) {
+func (e *ExifReader) ReadImageDetails(reader io.Reader, lastModifiedDate time.Time) (*scanner.MediaDetails, error) {
 	buffer := bytes.NewBuffer(nil)
 	teeReader := io.TeeReader(reader, buffer)
 
@@ -36,7 +36,7 @@ func (e *ExifReader) ReadImageDetails(reader io.Reader, lastModifiedDate time.Ti
 		longitude = 0
 	}
 
-	return &model.MediaDetails{
+	return &scanner.MediaDetails{
 		Width:        e.getIntOrIgnore(x, exif.ImageWidth),
 		Height:       e.getIntOrIgnore(x, exif.ImageLength),
 		Orientation:  e.readOrientation(x),
@@ -48,16 +48,16 @@ func (e *ExifReader) ReadImageDetails(reader io.Reader, lastModifiedDate time.Ti
 	}, nil
 }
 
-func (e *ExifReader) readOrientation(x *exif.Exif) model.ImageOrientation {
+func (e *ExifReader) readOrientation(x *exif.Exif) scanner.ImageOrientation {
 	switch e.getIntOrIgnore(x, exif.Orientation) {
 	case 3:
-		return model.OrientationLowerRight
+		return scanner.OrientationLowerRight
 	case 6:
-		return model.OrientationUpperRight
+		return scanner.OrientationUpperRight
 	case 8:
-		return model.OrientationLowerLeft
+		return scanner.OrientationLowerLeft
 	default:
-		return model.OrientationUpperLeft
+		return scanner.OrientationUpperLeft
 	}
 }
 
@@ -100,16 +100,16 @@ func (e *ExifReader) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float6
 	return 0
 }
 
-func (e *ExifReader) readImageWithoutExif(reader io.Reader, lastModifiedDate time.Time) (*model.MediaDetails, error) {
+func (e *ExifReader) readImageWithoutExif(reader io.Reader, lastModifiedDate time.Time) (*scanner.MediaDetails, error) {
 	img, _, err := image.DecodeConfig(reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Can't extract image dimentions")
 	}
 
-	return &model.MediaDetails{
+	return &scanner.MediaDetails{
 		Width:       img.Width,
 		Height:      img.Height,
-		Orientation: model.OrientationUpperLeft,
+		Orientation: scanner.OrientationUpperLeft,
 		DateTime:    lastModifiedDate,
 	}, nil
 }

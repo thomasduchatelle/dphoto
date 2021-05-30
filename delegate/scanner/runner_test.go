@@ -1,7 +1,6 @@
-package runner
+package scanner
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -25,8 +24,8 @@ func (u *unitMedia) LastModificationDate() time.Time {
 	return time.Now()
 }
 
-func (u *unitMedia) SimpleSignature() *model.SimpleMediaSignature {
-	return &model.SimpleMediaSignature{
+func (u *unitMedia) SimpleSignature() *SimpleMediaSignature {
+	return &SimpleMediaSignature{
 		RelativePath: u.filename,
 		Size:         uint(u.size),
 	}
@@ -52,7 +51,7 @@ func TestRunner(t *testing.T) {
 
 	r := Runner{
 		MDC: log.WithField("Unit", "Test"),
-		Source: func(medias chan model.FoundMedia) (uint, uint, error) {
+		Source: func(medias chan FoundMedia) (uint, uint, error) {
 			log.Infoln("Starting to push medias")
 
 			medias <- newMedia("foo", 1)
@@ -76,34 +75,34 @@ func TestRunner(t *testing.T) {
 	}
 
 	// pre-then
-	filter.On("Execute", mock.Anything).Times(3).Return(func(m model.FoundMedia) bool {
+	filter.On("Execute", mock.Anything).Times(3).Return(func(m FoundMedia) bool {
 		log.Infof("Filter %+v", m)
 		return m.SimpleSignature().Size >= 2
 	})
 
-	downloader.On("Execute", mock.Anything).Times(2).Return(func(m model.FoundMedia) model.FoundMedia {
+	downloader.On("Execute", mock.Anything).Times(2).Return(func(m FoundMedia) FoundMedia {
 		log.Infof("Download %+v", m)
 		return m
 	}, nil)
 
-	analyser.On("Execute", mock.Anything).Times(2).Return(func(m model.FoundMedia) *model.AnalysedMedia {
+	analyser.On("Execute", mock.Anything).Times(2).Return(func(m FoundMedia) *AnalysedMedia {
 		log.Infof("Analyse %+v", m)
-		return &model.AnalysedMedia{
+		return &AnalysedMedia{
 			FoundMedia: m,
-			Type:       model.MediaTypeImage,
+			Type:       MediaTypeImage,
 			Signature:  nil,
 			Details:    nil,
 		}
 	}, nil)
 
-	uploader.On("Execute", []*model.AnalysedMedia{
+	uploader.On("Execute", []*AnalysedMedia{
 		{
 			FoundMedia: newMedia("bar", 2),
-			Type:       model.MediaTypeImage,
+			Type:       MediaTypeImage,
 		},
 		{
 			FoundMedia: newMedia("baz", 3),
-			Type:       model.MediaTypeImage,
+			Type:       MediaTypeImage,
 		},
 	}, mock.Anything).Once().Return(nil)
 

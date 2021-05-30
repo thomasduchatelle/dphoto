@@ -1,14 +1,12 @@
 package filesystem
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"github.com/dixonwille/skywalker"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
@@ -19,7 +17,7 @@ type FsHandler struct{}
 
 type fsWorker struct {
 	mountPath string
-	media     chan model.FoundMedia
+	media     chan scanner.FoundMedia
 	count     int64
 	sizeSum   int64
 }
@@ -31,15 +29,15 @@ type fsMedia struct {
 	relativePath         string
 }
 
-func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, medias chan model.FoundMedia) (uint, uint, error) {
+func (f *FsHandler) FindMediaRecursively(volume scanner.VolumeToBackup, medias chan scanner.FoundMedia) (uint, uint, error) {
 	worker, err := f.newWorker(volume.Path, medias)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	extensions := make([]string, len(backup.SupportedExtensions)*2)
+	extensions := make([]string, len(scanner.SupportedExtensions)*2)
 	index := 0
-	for typ, _ := range backup.SupportedExtensions {
+	for typ, _ := range scanner.SupportedExtensions {
 		extensions[index*2] = "." + strings.ToLower(typ)
 		extensions[index*2+1] = "." + strings.ToUpper(typ)
 		index++
@@ -82,7 +80,7 @@ func (w *fsWorker) Work(mediaPath string) {
 	atomic.AddInt64(&w.sizeSum, stat.Size())
 }
 
-func (f *FsHandler) newWorker(mountPath string, media chan model.FoundMedia) (*fsWorker, error) {
+func (f *FsHandler) newWorker(mountPath string, media chan scanner.FoundMedia) (*fsWorker, error) {
 	absMountPath, err := filepath.Abs(mountPath)
 	return &fsWorker{
 		mountPath: absMountPath,
@@ -91,15 +89,15 @@ func (f *FsHandler) newWorker(mountPath string, media chan model.FoundMedia) (*f
 }
 
 func (f *fsMedia) Filename() string {
-	return path.Base(f.absolutePath)
+	return f.absolutePath
 }
 
 func (f *fsMedia) LastModificationDate() time.Time {
 	return f.lastModificationDate
 }
 
-func (f *fsMedia) SimpleSignature() *model.SimpleMediaSignature {
-	return &model.SimpleMediaSignature{
+func (f *fsMedia) SimpleSignature() *scanner.SimpleMediaSignature {
+	return &scanner.SimpleMediaSignature{
 		RelativePath: f.relativePath,
 		Size:         uint(f.size),
 	}

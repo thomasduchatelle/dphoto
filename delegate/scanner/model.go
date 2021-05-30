@@ -1,5 +1,5 @@
 // Package model is mostly to break cyclic dependencies between backup package and runner sub-package (which is type-safe).
-package model
+package scanner
 
 import (
 	"fmt"
@@ -54,7 +54,8 @@ type VolumeMetadata struct {
 }
 
 type FoundMedia interface {
-	// Filename returns the original filename, used to determine the type of the media
+	// Filename returns the original path and filename, used to determine the type of the media and the original structure (for imports)
+	// value is expected to be usable with path.Ext and path.Dir
 	Filename() string
 	// LastModificationDate returns the dte the physical file has been last updated
 	LastModificationDate() time.Time
@@ -101,8 +102,8 @@ type ProgressEventType string
 
 type ProgressEvent struct {
 	Type      ProgressEventType // Type defines what's count, and size are about ; some might not be used.
-	Count     uint               // Count is the number of media
-	Size      uint               // Size is the sum of the size of the media concerned by this event
+	Count     uint              // Count is the number of media
+	Size      uint              // Size is the sum of the size of the media concerned by this event
 	Album     string            // Album is the folder name of the medias concerned by this event
 	MediaType MediaType         // MediaType is the type of media ; only mandatory with 'uploaded' event
 }

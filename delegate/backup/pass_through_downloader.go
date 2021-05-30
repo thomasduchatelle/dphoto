@@ -1,7 +1,9 @@
 package backup
 
-import "duchatelle.io/dphoto/dphoto/backup/model"
+import (
+	"duchatelle.io/dphoto/dphoto/scanner"
+)
 
-func PassThroughDownload(media model.FoundMedia) (model.FoundMedia, error) {
+func PassThroughDownload(media scanner.FoundMedia) (scanner.FoundMedia, error) {
 	return media, nil
 }

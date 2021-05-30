@@ -1,7 +1,7 @@
 package volumes
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"encoding/json"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -16,7 +16,7 @@ type FileSystemRepository struct {
 	Directory string
 }
 
-func (r *FileSystemRepository) RestoreLastSnapshot(volumeId string) ([]model.SimpleMediaSignature, error) {
+func (r *FileSystemRepository) RestoreLastSnapshot(volumeId string) ([]scanner.SimpleMediaSignature, error) {
 	storageFile := r.getStorageFile(volumeId)
 	mdc := log.WithFields(log.Fields{
 		"VolumeId":    volumeId,
@@ -37,14 +37,14 @@ func (r *FileSystemRepository) RestoreLastSnapshot(volumeId string) ([]model.Sim
 		return nil, err
 	}
 
-	var signatures []model.SimpleMediaSignature
+	var signatures []scanner.SimpleMediaSignature
 	err = json.Unmarshal(content, &signatures)
 
 	mdc.Debugf("FileSystemRepository > restored snaphot with %d medias", len(signatures))
 	return signatures, err
 }
 
-func (r *FileSystemRepository) StoreSnapshot(volumeId string, backupId string, signatures []model.SimpleMediaSignature) error {
+func (r *FileSystemRepository) StoreSnapshot(volumeId string, backupId string, signatures []scanner.SimpleMediaSignature) error {
 	storageFile := r.getStorageFile(volumeId)
 	mdc := log.WithFields(log.Fields{
 		"VolumeId":    volumeId,

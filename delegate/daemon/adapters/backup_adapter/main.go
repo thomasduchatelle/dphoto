@@ -2,8 +2,8 @@ package backup_adapter
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/daemon"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -14,11 +14,18 @@ func init() {
 type backupAdapter struct{}
 
 // OnMountedVolume can be used to a daemon to automatically start a backup
-func (b *backupAdapter) OnMountedVolume(volume model.VolumeToBackup) {
+func (b *backupAdapter) OnMountedVolume(volume daemon.VolumeToBackup) {
 	withContext := log.WithFields(log.Fields{
 		"VolumeId": volume.UniqueId,
 		"Path":     volume.Path,
 	})
+
+	volumeToBackup := scanner.VolumeToBackup{
+		UniqueId: volume.UniqueId,
+		Type:     scanner.VolumeTypeFileSystem,
+		Path:     volume.Path,
+		Local:    false,
+	}
 
 	metadata, err := b.findVolumeMetadata(volume.UniqueId)
 	if err != nil {
@@ -26,7 +33,7 @@ func (b *backupAdapter) OnMountedVolume(volume model.VolumeToBackup) {
 		return
 	}
 	if metadata == nil {
-		err := b.createNewVolume(volume)
+		err := b.createNewVolume(volumeToBackup)
 		if err != nil {
 			withContext.WithError(err).Errorln("CreateNewVolume failed")
 		}
@@ -35,7 +42,7 @@ func (b *backupAdapter) OnMountedVolume(volume model.VolumeToBackup) {
 		withContext.WithField("Name", metadata.Name).Infoln("Disk plugged")
 
 		if metadata.AutoBackup {
-			_, err = backup.StartBackupRunner(volume)
+			_, err = backup.StartBackupRunner(volumeToBackup)
 			if err != nil {
 				withContext.WithError(err).Errorf("Backup failed to start")
 			}
@@ -53,9 +60,9 @@ func (b *backupAdapter) OnUnMountedVolume(uniqueId string) {
 }
 
 // return nil when not found
-func (b *backupAdapter) findVolumeMetadata(string) (*model.VolumeMetadata, error) {
+func (b *backupAdapter) findVolumeMetadata(string) (*scanner.VolumeMetadata, error) {
 	panic("Not implemented")
 }
-func (b *backupAdapter) createNewVolume(volume model.VolumeToBackup) error {
+func (b *backupAdapter) createNewVolume(volume scanner.VolumeToBackup) error {
 	panic("Not implemented")
 }

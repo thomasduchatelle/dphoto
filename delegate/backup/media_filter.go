@@ -1,7 +1,7 @@
 package backup
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -9,10 +9,10 @@ import (
 type filter struct {
 	volumeId           string
 	lastVolumeSnapshot map[string]uint
-	currentSnapshot    []model.SimpleMediaSignature
+	currentSnapshot    []scanner.SimpleMediaSignature
 }
 
-func newMediaFilter(volume *model.VolumeToBackup) (*filter, error) {
+func newMediaFilter(volume *scanner.VolumeToBackup) (*filter, error) {
 	snapshot, err := VolumeRepository.RestoreLastSnapshot(volume.UniqueId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to restore previous snapshot fo volume %s", volume.UniqueId)
@@ -29,7 +29,7 @@ func newMediaFilter(volume *model.VolumeToBackup) (*filter, error) {
 	return f, nil
 }
 
-func (f *filter) Filter(found model.FoundMedia) bool {
+func (f *filter) Filter(found scanner.FoundMedia) bool {
 	f.currentSnapshot = append(f.currentSnapshot, *found.SimpleSignature())
 
 	size, ok := f.lastVolumeSnapshot[found.SimpleSignature().RelativePath]

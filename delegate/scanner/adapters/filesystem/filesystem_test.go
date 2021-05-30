@@ -2,8 +2,7 @@ package filesystem
 
 import (
 	"bytes"
-	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"path"
@@ -17,18 +16,18 @@ func TestScanner(t *testing.T) {
 
 	fsHandler := new(FsHandler)
 
-	mediaChannel := make(chan model.FoundMedia, 42)
+	mediaChannel := make(chan scanner.FoundMedia, 42)
 	volumeMount := "../../../test_resources"
 	volumeMountAbs, _ := filepath.Abs(volumeMount)
 
-	backup.SupportedExtensions = map[string]model.MediaType{
-		"txt":  model.MediaTypeOther,
-		"Jpeg": model.MediaTypeImage,
+	scanner.SupportedExtensions = map[string]scanner.MediaType{
+		"txt":  scanner.MediaTypeOther,
+		"Jpeg": scanner.MediaTypeImage,
 	}
 
-	_, _, err := fsHandler.FindMediaRecursively(model.VolumeToBackup{
+	_, _, err := fsHandler.FindMediaRecursively(scanner.VolumeToBackup{
 		UniqueId: volumeMount,
-		Type:     model.VolumeTypeFileSystem,
+		Type:     scanner.VolumeTypeFileSystem,
 		Path:     volumeMount,
 		Local:    true,
 	}, mediaChannel)
@@ -45,8 +44,8 @@ func TestScanner(t *testing.T) {
 
 		if a.Len(found, 2) {
 			a.Equal(path.Join(volumeMountAbs, "scan/a_text.TXT"), found[0].String())
-			a.Equal("a_text.TXT", found[0].Filename())
-			a.Equal(&model.SimpleMediaSignature{
+			a.Equal("a_text.TXT", path.Base(found[0].Filename()))
+			a.Equal(&scanner.SimpleMediaSignature{
 				RelativePath: "scan/a_text.TXT",
 				Size:         6,
 			}, found[0].SimpleSignature())
@@ -60,7 +59,7 @@ func TestScanner(t *testing.T) {
 				}
 			}
 
-			a.Equal(&model.SimpleMediaSignature{
+			a.Equal(&scanner.SimpleMediaSignature{
 				RelativePath: "scan/golang-logo.jpeg",
 				Size:         22601,
 			}, found[1].SimpleSignature())

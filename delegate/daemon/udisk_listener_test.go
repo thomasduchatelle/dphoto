@@ -1,7 +1,6 @@
 package daemon
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +77,7 @@ func TestDetectPlugAndUnplugDisk(t *testing.T) {
 		bytes[i] = uint8(c)
 	}
 
-	volumeManagerPort.On("OnMountedVolume", model.VolumeToBackup{
+	volumeManagerPort.On("OnMountedVolume", VolumeToBackup{
 		UniqueId: "001B-9622",
 		Path:     mountPoint,
 	}).Return()

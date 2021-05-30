@@ -1,7 +1,7 @@
 package backup
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,7 +50,7 @@ type Tracker struct {
 }
 
 // NewTracker creates the Tracker and start consuming (async)
-func NewTracker(progressChannel chan *model.ProgressEvent, listeners []interface{}) *Tracker {
+func NewTracker(progressChannel chan *scanner.ProgressEvent, listeners []interface{}) *Tracker {
 	tracker := &Tracker{
 		listeners:     listeners,
 		Done:          make(chan struct{}),
@@ -75,10 +75,10 @@ func (t *Tracker) CountPerAlbum() map[string]*TypeCounter {
 	return t.detailedCount
 }
 
-func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
+func (t *Tracker) consume(progressChannel chan *scanner.ProgressEvent) {
 	for event := range progressChannel {
 		switch event.Type {
-		case model.ProgressEventScanComplete:
+		case scanner.ProgressEventScanComplete:
 			t.scanComplete = true
 			t.total = MediaCounter{
 				Count: event.Count,
@@ -91,26 +91,26 @@ func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
 				}
 			}
 
-		case model.ProgressEventSkipped:
+		case scanner.ProgressEventSkipped:
 			t.skipped = t.skipped.Add(event.Count, event.Size)
 
 			t.fireDownloadedEvent()
 			t.fireAnalysedEvent()
 			t.fireUploadedEvent()
 
-		case model.ProgressEventDownloaded:
+		case scanner.ProgressEventDownloaded:
 			t.downloaded = t.downloaded.Add(event.Count, event.Size)
 			t.fireDownloadedEvent()
 
-		case model.ProgressEventAnalysed:
+		case scanner.ProgressEventAnalysed:
 			t.analysed = t.analysed.Add(event.Count, event.Size)
 			t.fireAnalysedEvent()
 
-		case model.ProgressEventSkippedAfterAnalyse:
+		case scanner.ProgressEventSkippedAfterAnalyse:
 			t.skippedBeforeUpload.Add(event.Count, event.Size)
 			t.fireUploadedEvent()
 
-		case model.ProgressEventUploaded:
+		case scanner.ProgressEventUploaded:
 			t.uploaded = t.uploaded.Add(event.Count, event.Size)
 
 			typeCount, ok := t.detailedCount[event.Album]
@@ -122,7 +122,7 @@ func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
 
 			t.fireUploadedEvent()
 
-		case model.ProgressEventAlbumCreated:
+		case scanner.ProgressEventAlbumCreated:
 			t.createdAlbums = append(t.createdAlbums, event.Album)
 
 		default:
@@ -173,12 +173,12 @@ func (c MediaCounter) IsZero() bool {
 	return c.Size == 0 && c.Count == 0
 }
 
-func (c *TypeCounter) incrementFoundCounter(mediaType model.MediaType, count uint, size uint) {
+func (c *TypeCounter) incrementFoundCounter(mediaType scanner.MediaType, count uint, size uint) {
 	c.incrementCounter(&c.counts, mediaType, count)
 	c.incrementCounter(&c.sizes, mediaType, size)
 }
 
-func (c *TypeCounter) incrementCounter(counter *[numberOfMediaType]uint, mediaType model.MediaType, delta uint) {
+func (c *TypeCounter) incrementCounter(counter *[numberOfMediaType]uint, mediaType scanner.MediaType, delta uint) {
 	index := c.getMediaIndex(mediaType)
 	if index > 0 {
 		counter[index] = counter[index] + delta
@@ -187,11 +187,11 @@ func (c *TypeCounter) incrementCounter(counter *[numberOfMediaType]uint, mediaTy
 	counter[0] = counter[0] + delta
 }
 
-func (c *TypeCounter) getMediaIndex(mediaType model.MediaType) int {
+func (c *TypeCounter) getMediaIndex(mediaType scanner.MediaType) int {
 	switch mediaType {
-	case model.MediaTypeImage:
+	case scanner.MediaTypeImage:
 		return 1
-	case model.MediaTypeVideo:
+	case scanner.MediaTypeVideo:
 		return 2
 	}
 
@@ -205,7 +205,7 @@ func (c *TypeCounter) Total() MediaCounter {
 	}
 }
 
-func (c *TypeCounter) OfType(mediaType model.MediaType) MediaCounter {
+func (c *TypeCounter) OfType(mediaType scanner.MediaType) MediaCounter {
 	index := c.getMediaIndex(mediaType)
 	if index < 0 {
 		return MediaCounter{}

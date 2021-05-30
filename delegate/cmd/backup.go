@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/cmd/printer"
 	"duchatelle.io/dphoto/dphoto/cmd/screen"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"fmt"
 	"github.com/alexeyco/simpletable"
 	"github.com/logrusorgru/aurora/v3"
@@ -44,9 +44,9 @@ var backupCmd = &cobra.Command{
 
 		progress := NewProgress()
 
-		tracker, err := backup.StartBackupRunner(model.VolumeToBackup{
+		tracker, err := backup.StartBackupRunner(scanner.VolumeToBackup{
 			UniqueId: volumePath,
-			Type:     model.VolumeTypeFileSystem,
+			Type:     scanner.VolumeTypeFileSystem,
 			Path:     volumePath,
 			Local:    !backupArgs.remote,
 		}, progress)
@@ -98,13 +98,13 @@ func printBackupStats(tracker *backup.Tracker, volumePath string) {
 		table.Body.Cells[i] = []*simpletable.Cell{
 			{Align: simpletable.AlignCenter, Text: newMarker},
 			{Text: folderName},
-			countAndSize(counts.OfType(model.MediaTypeImage)),
-			countAndSize(counts.OfType(model.MediaTypeVideo)),
+			countAndSize(counts.OfType(scanner.MediaTypeImage)),
+			countAndSize(counts.OfType(scanner.MediaTypeVideo)),
 			countAndSize(counts.Total()),
 		}
 
-		totals[0] = totals[0].AddCounter(counts.OfType(model.MediaTypeImage))
-		totals[1] = totals[1].AddCounter(counts.OfType(model.MediaTypeVideo))
+		totals[0] = totals[0].AddCounter(counts.OfType(scanner.MediaTypeImage))
+		totals[1] = totals[1].AddCounter(counts.OfType(scanner.MediaTypeVideo))
 		totals[2] = totals[2].AddCounter(counts.Total())
 		i++
 	}

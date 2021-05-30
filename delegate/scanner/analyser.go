@@ -1,8 +1,7 @@
-package backup
+package scanner
 
 import (
 	"crypto/sha256"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"encoding/hex"
 	"github.com/pkg/errors"
 	"io"
@@ -10,35 +9,35 @@ import (
 	"strings"
 )
 
-var SupportedExtensions = map[string]model.MediaType{
-	"jpg":  model.MediaTypeImage,
-	"jpeg": model.MediaTypeImage,
-	"png":  model.MediaTypeImage,
-	"gif":  model.MediaTypeImage,
-	"webp": model.MediaTypeImage,
-	"raw":  model.MediaTypeImage,
-	"bmp":  model.MediaTypeImage,
-	"svg":  model.MediaTypeImage,
-	"eps":  model.MediaTypeImage,
+var SupportedExtensions = map[string]MediaType{
+	"jpg":  MediaTypeImage,
+	"jpeg": MediaTypeImage,
+	"png":  MediaTypeImage,
+	"gif":  MediaTypeImage,
+	"webp": MediaTypeImage,
+	"raw":  MediaTypeImage,
+	"bmp":  MediaTypeImage,
+	"svg":  MediaTypeImage,
+	"eps":  MediaTypeImage,
 
-	"mkv":  model.MediaTypeVideo,
-	"mts":  model.MediaTypeVideo,
-	"avi":  model.MediaTypeVideo,
-	"mp4":  model.MediaTypeVideo,
-	"mpeg": model.MediaTypeVideo,
-	"mov":  model.MediaTypeVideo,
-	"wmv":  model.MediaTypeVideo,
-	"webm": model.MediaTypeVideo,
+	"mkv":  MediaTypeVideo,
+	"mts":  MediaTypeVideo,
+	"avi":  MediaTypeVideo,
+	"mp4":  MediaTypeVideo,
+	"mpeg": MediaTypeVideo,
+	"mov":  MediaTypeVideo,
+	"wmv":  MediaTypeVideo,
+	"webm": MediaTypeVideo,
 }
 
-func analyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
+func AnalyseMedia(found FoundMedia) (*AnalysedMedia, error) {
 	mediaType := getMediaType(found)
 
-	details := &model.MediaDetails{
+	details := &MediaDetails{
 		DateTime: found.LastModificationDate(),
 	}
 
-	if mediaType == model.MediaTypeImage {
+	if mediaType == MediaTypeImage {
 		content, err := found.ReadMedia()
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
@@ -51,10 +50,10 @@ func analyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
 	}
 
 	fileHash, err := computeMediaHash(found)
-	return &model.AnalysedMedia{
+	return &AnalysedMedia{
 		FoundMedia: found,
 		Type:       mediaType,
-		Signature: &model.FullMediaSignature{
+		Signature: &FullMediaSignature{
 			Sha256: fileHash,
 			Size:   found.SimpleSignature().Size,
 		},
@@ -62,8 +61,8 @@ func analyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
 	}, errors.Wrapf(err, "failed to compute HASH of media %s", found)
 }
 
-func computeMediaHash(found model.FoundMedia) (string, error) {
-	if mediaWithHash, ok := found.(model.FoundMediaWithHash); ok {
+func computeMediaHash(found FoundMedia) (string, error) {
+	if mediaWithHash, ok := found.(FoundMediaWithHash); ok {
 		return mediaWithHash.Sha256Hash(), nil
 	}
 
@@ -77,11 +76,11 @@ func computeMediaHash(found model.FoundMedia) (string, error) {
 	return hex.EncodeToString(shaWriter.Sum(nil)), err
 }
 
-func getMediaType(media model.FoundMedia) model.MediaType {
+func getMediaType(media FoundMedia) MediaType {
 	extension := strings.TrimPrefix(strings.ToLower(path.Ext(media.Filename())), ".")
 	if t, ok := SupportedExtensions[extension]; ok {
 		return t
 	}
 
-	return model.MediaTypeOther
+	return MediaTypeOther
 }

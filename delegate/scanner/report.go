@@ -1,4 +1,4 @@
-package runner
+package scanner
 
 import "sync"
 

@@ -1,7 +1,7 @@
 package images
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -20,10 +20,10 @@ func TestFileWithoutExif(t *testing.T) {
 	lastModificationDate := time.Date(2021, 04, 25, 16, 40, 0, 0, time.UTC)
 	details, err := exifAdapter.ReadImageDetails(reader, lastModificationDate)
 	if a.NoError(err) {
-		a.Equal(&model.MediaDetails{
+		a.Equal(&scanner.MediaDetails{
 			Width:       700,
 			Height:      307,
-			Orientation: model.OrientationUpperLeft,
+			Orientation: scanner.OrientationUpperLeft,
 			DateTime:    lastModificationDate,
 		}, details)
 	}
@@ -42,11 +42,11 @@ func TestFileWithExif(t *testing.T) {
 	details, err := exifAdapter.ReadImageDetails(reader, lastModificationDate)
 
 	if a.NoError(err) {
-		a.Equal(&model.MediaDetails{
+		a.Equal(&scanner.MediaDetails{
 			Width:        4048,
 			Height:       3036,
 			DateTime:     time.Unix(1574694084, 0).UTC(),
-			Orientation:  model.OrientationUpperLeft,
+			Orientation:  scanner.OrientationUpperLeft,
 			Make:         "Google",
 			Model:        "Pixel",
 			GPSLatitude:  51.50363055555555,

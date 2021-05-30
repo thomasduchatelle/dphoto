@@ -1,41 +1,23 @@
 package backup
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"io"
-	"time"
 )
 
 var (
-	VolumeRepository   VolumeRepositoryAdapter
-	ImageDetailsReader ImageDetailsReaderAdapter
-	ScannerAdapters    = make(map[model.VolumeType]MediaScannerAdapter) // ScannerAdapters maps the type of volume with it's implementation
-	OnlineStorage      OnlineStorageAdapter                             // OnlineStorage creates a new OnlineStorageAdaptor or panic.
-	Downloader         DownloaderAdapter                                // Downloader creates a new instance of the Downloader
+	VolumeRepository VolumeRepositoryAdapter
+	OnlineStorage    OnlineStorageAdapter // OnlineStorage creates a new OnlineStorageAdaptor or panic.
+	Downloader       DownloaderAdapter    // Downloader creates a new instance of the Downloader
 )
 
 type VolumeRepositoryAdapter interface {
-	RestoreLastSnapshot(volumeId string) ([]model.SimpleMediaSignature, error)
-	StoreSnapshot(volumeId string, backupId string, signatures []model.SimpleMediaSignature) error
-}
-
-// ClosableMedia can be implemented alongside FoundMedia if the implementation requires to release resources once the media has been handled.
-type ClosableMedia interface {
-	Close() error
-}
-
-type MediaScannerAdapter interface {
-	// FindMediaRecursively scan throw the VolumeToBackup and emit to the channel any media found. Interrupted in case of error.
-	// returns number of items found, and size of these items
-	FindMediaRecursively(volume model.VolumeToBackup, paths chan model.FoundMedia) (uint, uint, error)
-}
-
-type ImageDetailsReaderAdapter interface {
-	ReadImageDetails(reader io.Reader, lastModifiedDate time.Time) (*model.MediaDetails, error)
+	RestoreLastSnapshot(volumeId string) ([]scanner.SimpleMediaSignature, error)
+	StoreSnapshot(volumeId string, backupId string, signatures []scanner.SimpleMediaSignature) error
 }
 
 type DownloaderAdapter interface {
-	DownloadMedia(media model.FoundMedia) (model.FoundMedia, error)
+	DownloadMedia(media scanner.FoundMedia) (scanner.FoundMedia, error)
 }
 
 type OnlineStorageAdapter interface {
@@ -46,5 +28,5 @@ type OnlineStorageAdapter interface {
 type ReadableMedia interface {
 	ReadMedia() (io.Reader, error)
 	// SimpleSignature is used to get the size to upload
-	SimpleSignature() *model.SimpleMediaSignature
+	SimpleSignature() *scanner.SimpleMediaSignature
 }

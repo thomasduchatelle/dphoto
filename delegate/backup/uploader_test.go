@@ -1,8 +1,8 @@
 package backup
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/catalog"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"sort"
@@ -12,48 +12,50 @@ import (
 
 const isoDatePattern = "2006-01-02"
 
+var mediaDate = time.Date(2021, 4, 27, 10, 16, 22, 0, time.UTC)
+
 func TestUploader_Upload(t *testing.T) {
 	a := assert.New(t)
 
 	catalogProxy := new(MockCatalogProxyAdapter)
 	onlineStorage := new(MockOnlineStorageAdapter)
 
-	medias := []*model.AnalysedMedia{
+	medias := []*scanner.AnalysedMedia{
 		{
-			FoundMedia: newInmemoryMedia("image_001.jpg", 42),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000001", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-03-27")},
+			FoundMedia: scanner.NewInmemoryMedia("image_001.jpg", 42, mediaDate),
+			Type:       scanner.MediaTypeImage,
+			Signature:  &scanner.FullMediaSignature{Sha256: "00000001", Size: 42},
+			Details:    &scanner.MediaDetails{DateTime: mustParseDate("2021-03-27")},
 		},
 		{
-			FoundMedia: newInmemoryMedia("video_002.mkv", 4200),
-			Type:       model.MediaTypeVideo,
-			Signature:  &model.FullMediaSignature{Sha256: "00000002", Size: 4200},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-04-02")},
+			FoundMedia: scanner.NewInmemoryMedia("video_002.mkv", 4200, mediaDate),
+			Type:       scanner.MediaTypeVideo,
+			Signature:  &scanner.FullMediaSignature{Sha256: "00000002", Size: 4200},
+			Details:    &scanner.MediaDetails{DateTime: mustParseDate("2021-04-02")},
 		},
 		{
-			FoundMedia: newInmemoryMedia("image_003.jpg", 42),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000003", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-04-04")},
+			FoundMedia: scanner.NewInmemoryMedia("image_003.jpg", 42, mediaDate),
+			Type:       scanner.MediaTypeImage,
+			Signature:  &scanner.FullMediaSignature{Sha256: "00000003", Size: 42},
+			Details:    &scanner.MediaDetails{DateTime: mustParseDate("2021-04-04")},
 		},
 		{
-			FoundMedia: newInmemoryMedia("image_004.jpg", 42),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000004", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-04-05")},
+			FoundMedia: scanner.NewInmemoryMedia("image_004.jpg", 42, mediaDate),
+			Type:       scanner.MediaTypeImage,
+			Signature:  &scanner.FullMediaSignature{Sha256: "00000004", Size: 42},
+			Details:    &scanner.MediaDetails{DateTime: mustParseDate("2021-04-05")},
 		},
 		{
-			FoundMedia: newInmemoryMedia("image_005.jpg", 42),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000005", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-04-12")},
+			FoundMedia: scanner.NewInmemoryMedia("image_005.jpg", 42, mediaDate),
+			Type:       scanner.MediaTypeImage,
+			Signature:  &scanner.FullMediaSignature{Sha256: "00000005", Size: 42},
+			Details:    &scanner.MediaDetails{DateTime: mustParseDate("2021-04-12")},
 		},
 		{
-			FoundMedia: newInmemoryMedia("image_001_again.jpg", 42),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000001", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-03-26")},
+			FoundMedia: scanner.NewInmemoryMedia("image_001_again.jpg", 42, mediaDate),
+			Type:       scanner.MediaTypeImage,
+			Signature:  &scanner.FullMediaSignature{Sha256: "00000001", Size: 42},
+			Details:    &scanner.MediaDetails{DateTime: mustParseDate("2021-03-26")},
 		},
 	}
 
@@ -144,7 +146,7 @@ func TestUploader_Upload(t *testing.T) {
 		a.FailNow(err.Error())
 	}
 
-	err = uploader.Upload(medias, make(chan *model.ProgressEvent, 42))
+	err = uploader.Upload(medias, make(chan *scanner.ProgressEvent, 42))
 	if a.NoError(err) {
 		catalogProxy.AssertExpectations(t)
 		onlineStorage.AssertExpectations(t)

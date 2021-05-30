@@ -3,7 +3,7 @@ package localstorage
 import (
 	"context"
 	"crypto/sha256"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"encoding/hex"
 	"fmt"
 	"github.com/google/uuid"
@@ -26,7 +26,7 @@ type LocalStorage struct {
 
 type localMedia struct {
 	store    *LocalStorage
-	delegate model.FoundMedia
+	delegate scanner.FoundMedia
 	path     string
 	sha256   string
 }
@@ -39,7 +39,7 @@ func (m *localMedia) LastModificationDate() time.Time {
 	return m.delegate.LastModificationDate()
 }
 
-func (m *localMedia) SimpleSignature() *model.SimpleMediaSignature {
+func (m *localMedia) SimpleSignature() *scanner.SimpleMediaSignature {
 	return m.delegate.SimpleSignature()
 }
 
@@ -79,7 +79,7 @@ func NewLocalStorage(localDir string, bufferAreaSizeInBytes int) (*LocalStorage,
 	}, err
 }
 
-func (l *LocalStorage) DownloadMedia(found model.FoundMedia) (model.FoundMedia, error) {
+func (l *LocalStorage) DownloadMedia(found scanner.FoundMedia) (scanner.FoundMedia, error) {
 	err := l.take(found.SimpleSignature().Size)
 	if err != nil {
 		return nil, err

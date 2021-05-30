@@ -1,7 +1,7 @@
 package backup
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/scanner"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -13,14 +13,14 @@ func Test_filter_filter(t *testing.T) {
 	VolumeRepository = mockVolumeRepository
 
 	// given
-	mockVolumeRepository.On("RestoreLastSnapshot", "volume-1").Return([]model.SimpleMediaSignature{
+	mockVolumeRepository.On("RestoreLastSnapshot", "volume-1").Return([]scanner.SimpleMediaSignature{
 		{RelativePath: "image_002.jpg", Size: 42},
 		{RelativePath: "image_003.jpg", Size: 12},
 	}, nil)
 
-	mediaFilter, err := newMediaFilter(&model.VolumeToBackup{
+	mediaFilter, err := newMediaFilter(&scanner.VolumeToBackup{
 		UniqueId: "volume-1",
-		Type:     model.VolumeTypeFileSystem,
+		Type:     scanner.VolumeTypeFileSystem,
 		Path:     "/somewhere",
 		Local:    false,
 	})
@@ -30,17 +30,17 @@ func Test_filter_filter(t *testing.T) {
 
 	// and
 	type args struct {
-		found model.FoundMedia
+		found scanner.FoundMedia
 	}
 	tests := []struct {
 		name string
 		args args
 		want bool
 	}{
-		{"it should keep media with different name and size", args{newInmemoryMedia("image_001.jpg", 1)}, true},
-		{"it should keep media with different name", args{newInmemoryMedia("image_001.jpg", 42)}, true},
-		{"it should keep media with same name but different size", args{newInmemoryMedia("image_002.jpg", 1)}, true},
-		{"it should filter out medias matching both name and size", args{newInmemoryMedia("image_002.jpg", 42)}, false},
+		{"it should keep media with different name and size", args{scanner.NewInmemoryMedia("image_001.jpg", 1, mediaDate)}, true},
+		{"it should keep media with different name", args{scanner.NewInmemoryMedia("image_001.jpg", 42, mediaDate)}, true},
+		{"it should keep media with same name but different size", args{scanner.NewInmemoryMedia("image_002.jpg", 1, mediaDate)}, true},
+		{"it should filter out medias matching both name and size", args{scanner.NewInmemoryMedia("image_002.jpg", 42, mediaDate)}, false},
 	}
 
 	// when - then
