@@ -1,3 +1,4 @@
+// Package runner is a multi-threaded workflow used by backup to scan -> filter -> download -> upload
 package runner
 
 import (

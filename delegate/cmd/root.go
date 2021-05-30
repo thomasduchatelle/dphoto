@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"duchatelle.io/dphoto/dphoto/config"
+	config2 "duchatelle.io/dphoto/dphoto/internal/config"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -49,7 +49,7 @@ var rootCmd = &cobra.Command{
 		}).Debugln("Logger setup, starts program...")
 
 		// complete initialisation on components
-		config.Connect()
+		config2.Connect()
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		log.Debugln("Program complete.")
@@ -68,5 +68,5 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
-	rootCmd.PersistentFlags().StringVar(&config.ForcedConfigFile, "config", "", "use configuration file provided instead of searching in ./ , $HOME/.dphoto, and /etc/dphoto")
+	rootCmd.PersistentFlags().StringVar(&config2.ForcedConfigFile, "config", "", "use configuration file provided instead of searching in ./ , $HOME/.dphoto, and /etc/dphoto")
 }

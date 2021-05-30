@@ -2,22 +2,22 @@ package adapters
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/adapters/filesystem"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/images"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/localstorage"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/onlinestorage"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/volumes"
 	"duchatelle.io/dphoto/dphoto/backup/model"
-	"duchatelle.io/dphoto/dphoto/config"
+	config2 "duchatelle.io/dphoto/dphoto/internal/config"
+	filesystem2 "duchatelle.io/dphoto/dphoto/internal/sources/filesystem"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
 
 func init() {
 	backup.ImageDetailsReader = new(images.ExifReader)
-	backup.ScannerAdapters[model.VolumeTypeFileSystem] = new(filesystem.FsHandler)
+	backup.ScannerAdapters[model.VolumeTypeFileSystem] = new(filesystem2.FsHandler)
 
-	config.Listen(func(cfg config.Config) {
+	config2.Listen(func(cfg config2.Config) {
 		log.Debugln("connecting backup adapters")
 		backup.OnlineStorage = onlinestorage.Must(onlinestorage.NewS3OnlineStorage(cfg.GetString("backup.s3.bucket"), cfg.GetAWSSession()))
 

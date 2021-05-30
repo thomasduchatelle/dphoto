@@ -1,6 +1,8 @@
 package backup
 
-import "duchatelle.io/dphoto/dphoto/config"
+import (
+	config2 "duchatelle.io/dphoto/dphoto/internal/config"
+)
 
 const (
 	scanBufferSize = 1024 * 16
@@ -14,7 +16,7 @@ var (
 )
 
 func init() {
-	config.Listen(func(cfg config.Config) {
+	config2.Listen(func(cfg config2.Config) {
 		imageReaderThreadCount = cfg.GetIntOrDefault("backup.concurrency.imageReader", 4)
 		downloadThreadCount = cfg.GetIntOrDefault("backup.concurrency.downloader", 2)
 		uploadThreadCount = cfg.GetIntOrDefault("backup.concurrency.uploader", 2)
