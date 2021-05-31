@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	model "duchatelle.io/dphoto/dphoto/backup/model"
 	mock "github.com/stretchr/testify/mock"
 )
 

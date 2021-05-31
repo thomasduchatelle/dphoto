@@ -1,6 +1,7 @@
 package backup
 
 import (
+	interactors2 "duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/downloader"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/filter"
@@ -27,9 +28,9 @@ func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (m
 		"VolumePath": volume.Path,
 	})
 
-	source, ok := model.SourcePorts[volume.Type]
-	if !ok {
-		return nil, errors.Errorf("No scanner implementation provided for volume type %s", volume.Type)
+	source, err := interactors2.NewSource(mdc, volume)
+	if err != nil {
+		return nil, err
 	}
 
 	mediaFilter, err := filter.NewMediaFilter(&volume)
@@ -37,23 +38,19 @@ func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (m
 		return nil, err
 	}
 
-	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), model.OnlineStoragePort)
+	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), interactors2.OnlineStoragePort)
 	if err != nil {
 		return nil, err
 	}
 
-	downloaderPort := model.DownloaderPort.DownloadMedia
+	downloaderPort := interactors2.DownloaderPort.DownloadMedia
 	if volume.Local {
 		downloaderPort = downloader.PassThroughDownload
 	}
 
 	r := runner.Runner{
-		MDC: mdc,
-		Source: func(medias chan model.FoundMedia) (uint, uint, error) {
-			count, size, err := source.FindMediaRecursively(volume, medias)
-			mdc.Debugf("Source > volume scanning complete.")
-			return count, size, err
-		},
+		MDC:        mdc,
+		Source:     source,
 		Filter:     mediaFilter.Filter,
 		Downloader: downloaderPort,
 		Analyser:   analyser.AnalyseMedia,

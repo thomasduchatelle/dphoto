@@ -7,7 +7,7 @@ test:
 	go test ./... -race -cover
 
 mocks:
-	mockery --all -r --testonly --inpackage
+	mockery --all -r
 
 clearlocal:
 	aws --endpoint "http://localhost:4566" --region eu-west-1 s3 rm --recursive "s3://dphoto-local"

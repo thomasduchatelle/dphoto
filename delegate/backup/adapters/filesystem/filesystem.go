@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
@@ -19,7 +18,7 @@ type FsHandler struct{}
 
 type fsWorker struct {
 	mountPath string
-	media     chan model.FoundMedia
+	callback  func(model.FoundMedia)
 	count     int64
 	sizeSum   int64
 }
@@ -31,8 +30,8 @@ type fsMedia struct {
 	relativePath         string
 }
 
-func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, medias chan model.FoundMedia) (uint, uint, error) {
-	worker, err := f.newWorker(volume.Path, medias)
+func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, callback func(model.FoundMedia)) (uint, uint, error) {
+	worker, err := f.newWorker(volume.Path, callback)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -72,26 +71,26 @@ func (w *fsWorker) Work(mediaPath string) {
 		return
 	}
 
-	w.media <- &fsMedia{
+	w.callback(&fsMedia{
 		absolutePath:         abs,
 		size:                 int(stat.Size()),
 		lastModificationDate: stat.ModTime(),
 		relativePath:         rel,
-	}
+	})
 	atomic.AddInt64(&w.count, 1)
 	atomic.AddInt64(&w.sizeSum, stat.Size())
 }
 
-func (f *FsHandler) newWorker(mountPath string, media chan model.FoundMedia) (*fsWorker, error) {
+func (f *FsHandler) newWorker(mountPath string, callback func(model.FoundMedia)) (*fsWorker, error) {
 	absMountPath, err := filepath.Abs(mountPath)
 	return &fsWorker{
 		mountPath: absMountPath,
-		media:     media,
+		callback:  callback,
 	}, errors.Wrapf(err, "can't get the absolute path of %s", mountPath)
 }
 
 func (f *fsMedia) Filename() string {
-	return path.Base(f.absolutePath)
+	return f.absolutePath
 }
 
 func (f *fsMedia) LastModificationDate() time.Time {

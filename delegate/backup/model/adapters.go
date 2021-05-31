@@ -5,14 +5,6 @@ import (
 	"time"
 )
 
-var (
-	VolumeRepositoryPort   VolumeRepositoryAdapter
-	ImageDetailsReaderPort ImageDetailsReaderAdapter
-	SourcePorts            = make(map[VolumeType]MediaScannerAdapter) // SourcePorts maps the type of volume with it's implementation
-	OnlineStoragePort      OnlineStorageAdapter                       // OnlineStoragePort creates a new OnlineStorageAdaptor or panic.
-	DownloaderPort         DownloaderAdapter                          // DownloaderPort creates a new instance of the DownloaderPort
-)
-
 type VolumeRepositoryAdapter interface {
 	RestoreLastSnapshot(volumeId string) ([]SimpleMediaSignature, error)
 	StoreSnapshot(volumeId string, backupId string, signatures []SimpleMediaSignature) error
@@ -26,7 +18,7 @@ type ClosableMedia interface {
 type MediaScannerAdapter interface {
 	// FindMediaRecursively scan throw the VolumeToBackup and emit to the channel any media found. Interrupted in case of error.
 	// returns number of items found, and size of these items
-	FindMediaRecursively(volume VolumeToBackup, paths chan FoundMedia) (uint, uint, error)
+	FindMediaRecursively(volume VolumeToBackup, callback func(FoundMedia)) (uint, uint, error)
 }
 
 type ImageDetailsReaderAdapter interface {
