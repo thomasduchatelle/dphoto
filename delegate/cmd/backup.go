@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
-	tracker2 "duchatelle.io/dphoto/dphoto/backup/interactors/tracker"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/cmd/printer"
 	"duchatelle.io/dphoto/dphoto/cmd/screen"
@@ -65,7 +64,7 @@ func init() {
 	backupCmd.Flags().BoolVarP(&backupArgs.remote, "remote", "r", false, "mark the source as remote ; a local buffer will be used to read files only once")
 }
 
-func printBackupStats(tracker *tracker2.Tracker, volumePath string) {
+func printBackupStats(tracker model.BackupReport, volumePath string) {
 	if len(tracker.CountPerAlbum()) == 0 {
 		printer.Success("\n\nBackup of %s complete: %s.", aurora.Cyan(volumePath), aurora.Bold(aurora.Yellow("no new medias")))
 		return
@@ -88,7 +87,7 @@ func printBackupStats(tracker *tracker2.Tracker, volumePath string) {
 		newAlbums[album] = nil
 	}
 
-	var totals [3]tracker2.MediaCounter
+	var totals [3]model.MediaCounter
 	i := 0
 	for folderName, counts := range tracker.CountPerAlbum() {
 		newMarker := ""
@@ -120,7 +119,7 @@ func printBackupStats(tracker *tracker2.Tracker, volumePath string) {
 	fmt.Println(table.String())
 }
 
-func countAndSize(counter tracker2.MediaCounter) *simpletable.Cell {
+func countAndSize(counter model.MediaCounter) *simpletable.Cell {
 	if counter.Count == 0 {
 		return &simpletable.Cell{Align: simpletable.AlignCenter, Text: "-"}
 	}
@@ -162,12 +161,12 @@ func NewProgressLine(table *screen.TableGenerator, initialLabel string) (*Progre
 	}, table.NewRow(spinner, label, bar, explanation)
 }
 
-func (p *Progress) OnScanComplete(total tracker2.MediaCounter) {
+func (p *Progress) OnScanComplete(total model.MediaCounter) {
 	p.scanLine.swapSpinner(1)
 	p.scanLine.setLabel(fmt.Sprintf("Scan complete: %d files found", total.Count))
 }
 
-func (p *Progress) OnDownloaded(done, total tracker2.MediaCounter) {
+func (p *Progress) OnDownloaded(done, total model.MediaCounter) {
 	if !total.IsZero() {
 		p.downloadLine.setBar(done.Size, total.Size)
 		p.downloadLine.setExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))
@@ -179,7 +178,7 @@ func (p *Progress) OnDownloaded(done, total tracker2.MediaCounter) {
 	}
 }
 
-func (p *Progress) OnAnalysed(done, total tracker2.MediaCounter) {
+func (p *Progress) OnAnalysed(done, total model.MediaCounter) {
 	//time.Sleep(330 * time.Millisecond)
 	if !total.IsZero() {
 		p.analyseLine.setBar(done.Count, total.Count)
@@ -192,7 +191,7 @@ func (p *Progress) OnAnalysed(done, total tracker2.MediaCounter) {
 	}
 }
 
-func (p *Progress) OnUploaded(done, total tracker2.MediaCounter) {
+func (p *Progress) OnUploaded(done, total model.MediaCounter) {
 	//time.Sleep(time.Second)
 	if !total.IsZero() {
 		p.uploadLine.setBar(done.Size, total.Size)

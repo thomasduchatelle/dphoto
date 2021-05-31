@@ -5,59 +5,47 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const numberOfMediaType = 3 // exclude "other", include "total" in position 0
-
 type TrackScanComplete interface {
-	OnScanComplete(total MediaCounter)
+	OnScanComplete(total model.MediaCounter)
 }
 
 type TrackDownloaded interface {
-	OnDownloaded(done, total MediaCounter)
+	OnDownloaded(done, total model.MediaCounter)
 }
 
 type TrackAnalysed interface {
-	OnAnalysed(done, total MediaCounter)
+	OnAnalysed(done, total model.MediaCounter)
 }
 
 // TrackUploaded includes both uploaded and skipped
 type TrackUploaded interface {
-	OnUploaded(done, total MediaCounter)
-}
-
-type MediaCounter struct {
-	Count uint // Count is the number of medias
-	Size  uint // Size is the sum of the size of the medias
-}
-
-type TypeCounter struct {
-	counts [numberOfMediaType]uint
-	sizes  [numberOfMediaType]uint
+	OnUploaded(done, total model.MediaCounter)
 }
 
 // Tracker is consuming progress channel, keep a record of counts, and call listeners
 type Tracker struct {
 	listeners           []interface{} // listeners will receive aggregated and typed updates
-	total               MediaCounter
+	total               model.MediaCounter
 	scanComplete        bool
-	skipped             MediaCounter
-	downloaded          MediaCounter
-	analysed            MediaCounter
-	skippedBeforeUpload MediaCounter
-	uploaded            MediaCounter
+	skipped             model.MediaCounter
+	downloaded          model.MediaCounter
+	analysed            model.MediaCounter
+	skippedBeforeUpload model.MediaCounter
+	uploaded            model.MediaCounter
 	createdAlbums       []string
-	detailedCount       map[string]*TypeCounter
-	Done                chan struct{} // Done is closed when all events have been processed.
+	detailedCount       map[string]*model.TypeCounter
+	done                chan struct{} // done is closed when all events have been processed.
 }
 
 // NewTracker creates the Tracker and start consuming (async)
 func NewTracker(progressChannel chan *model.ProgressEvent, listeners []interface{}) *Tracker {
 	tracker := &Tracker{
 		listeners:     listeners,
-		Done:          make(chan struct{}),
-		detailedCount: make(map[string]*TypeCounter),
+		done:          make(chan struct{}),
+		detailedCount: make(map[string]*model.TypeCounter),
 	}
 	go func() {
-		defer close(tracker.Done)
+		defer close(tracker.done)
 		tracker.consume(progressChannel)
 	}()
 	return tracker
@@ -67,12 +55,16 @@ func (t *Tracker) NewAlbums() []string {
 	return t.createdAlbums
 }
 
-func (t *Tracker) Skipped() MediaCounter {
+func (t *Tracker) Skipped() model.MediaCounter {
 	return t.skipped.AddCounter(t.skippedBeforeUpload)
 }
 
-func (t *Tracker) CountPerAlbum() map[string]*TypeCounter {
+func (t *Tracker) CountPerAlbum() map[string]*model.TypeCounter {
 	return t.detailedCount
+}
+
+func (t *Tracker) WaitToComplete() {
+	<-t.done
 }
 
 func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
@@ -80,7 +72,7 @@ func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
 		switch event.Type {
 		case model.ProgressEventScanComplete:
 			t.scanComplete = true
-			t.total = MediaCounter{
+			t.total = model.MediaCounter{
 				Count: event.Count,
 				Size:  event.Size,
 			}
@@ -115,10 +107,10 @@ func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
 
 			typeCount, ok := t.detailedCount[event.Album]
 			if !ok {
-				typeCount = &TypeCounter{}
+				typeCount = &model.TypeCounter{}
 				t.detailedCount[event.Album] = typeCount
 			}
-			typeCount.incrementFoundCounter(event.MediaType, event.Count, event.Size)
+			typeCount.IncrementFoundCounter(event.MediaType, event.Count, event.Size)
 
 			t.fireUploadedEvent()
 
@@ -152,67 +144,5 @@ func (t *Tracker) fireUploadedEvent() {
 		if dispatch, ok := listener.(TrackUploaded); ok {
 			dispatch.OnUploaded(t.uploaded.AddCounter(t.skipped).AddCounter(t.skippedBeforeUpload), t.total)
 		}
-	}
-}
-
-// Add creates a new MediaCounter with the delta applied ; initial MediaCounter is not updated.
-func (c MediaCounter) Add(count uint, size uint) MediaCounter {
-	return MediaCounter{
-		Count: c.Count + count,
-		Size:  c.Size + size,
-	}
-}
-
-// AddCounter creates a new MediaCounter which is the sum of the 2 counters provided.
-func (c MediaCounter) AddCounter(counter MediaCounter) MediaCounter {
-	return c.Add(counter.Count, counter.Size)
-}
-
-// IsZero returns true if it's the default value
-func (c MediaCounter) IsZero() bool {
-	return c.Size == 0 && c.Count == 0
-}
-
-func (c *TypeCounter) incrementFoundCounter(mediaType model.MediaType, count uint, size uint) {
-	c.incrementCounter(&c.counts, mediaType, count)
-	c.incrementCounter(&c.sizes, mediaType, size)
-}
-
-func (c *TypeCounter) incrementCounter(counter *[numberOfMediaType]uint, mediaType model.MediaType, delta uint) {
-	index := c.getMediaIndex(mediaType)
-	if index > 0 {
-		counter[index] = counter[index] + delta
-	}
-
-	counter[0] = counter[0] + delta
-}
-
-func (c *TypeCounter) getMediaIndex(mediaType model.MediaType) int {
-	switch mediaType {
-	case model.MediaTypeImage:
-		return 1
-	case model.MediaTypeVideo:
-		return 2
-	}
-
-	return -1
-}
-
-func (c *TypeCounter) Total() MediaCounter {
-	return MediaCounter{
-		Count: c.counts[0],
-		Size:  c.sizes[0],
-	}
-}
-
-func (c *TypeCounter) OfType(mediaType model.MediaType) MediaCounter {
-	index := c.getMediaIndex(mediaType)
-	if index < 0 {
-		return MediaCounter{}
-	}
-
-	return MediaCounter{
-		Count: c.counts[index],
-		Size:  c.sizes[index],
 	}
 }

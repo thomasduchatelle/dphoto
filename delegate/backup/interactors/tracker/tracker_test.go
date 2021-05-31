@@ -23,39 +23,13 @@ func TestTracker(t *testing.T) {
 	channel <- &model.ProgressEvent{Type: model.ProgressEventAlbumCreated, Album: "albums/007"}
 	close(channel)
 
-	<-tracker.Done
+	<-tracker.done
 
-	a.Equal(MediaCounter{Count: 2, Size: 30}, tracker.Skipped())
-	a.Equal(map[string]*TypeCounter{
-		"albums/007": {
-			counts: [3]uint{1, 1, 0},
-			sizes:  [3]uint{12, 12, 0},
-		},
+	a.Equal(model.MediaCounter{Count: 2, Size: 30}, tracker.Skipped())
+	c := &model.TypeCounter{}
+	c.IncrementFoundCounter(model.MediaTypeImage, 1, 12)
+	a.Equal(map[string]*model.TypeCounter{
+		"albums/007": c,
 	}, tracker.CountPerAlbum())
 	a.Equal([]string{"albums/007"}, tracker.NewAlbums())
 }
-
-//func TestCounter_GetFound(t *testing.T) {
-//	a := assert.New(t)
-//
-//	// it should init a tracker starting at 0
-//	counter := {}
-//	a.Equal(uint32(0), counter.GetFoundCount())
-//	a.Equal(uint32(0), counter.GetFound(model.MediaTypeImage))
-//	a.Equal(uint32(0), counter.GetFound(model.MediaTypeVideo))
-//
-//	// it should increment both total and media type sub-tracker
-//	counter.incrementFoundCounter(model.MediaTypeImage)
-//	a.Equal(uint32(1), counter.GetFoundCount())
-//	a.Equal(uint32(1), counter.GetFound(model.MediaTypeImage))
-//	a.Equal(uint32(0), counter.GetFound(model.MediaTypeVideo))
-//
-//	// it should keep count of each media type
-//	counter.incrementFoundCounter(model.MediaTypeImage)
-//	counter.incrementFoundCounter(model.MediaTypeVideo)
-//	counter.incrementFoundCounter("Audio")
-//	a.Equal(uint32(4), counter.GetFoundCount())
-//	a.Equal(uint32(2), counter.GetFound(model.MediaTypeImage))
-//	a.Equal(uint32(1), counter.GetFound(model.MediaTypeVideo))
-//	a.Equal(uint32(0), counter.GetFound("Audio"))
-//}

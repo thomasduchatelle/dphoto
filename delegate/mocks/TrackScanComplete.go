@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	tracker "duchatelle.io/dphoto/dphoto/backup/interactors/tracker"
+	"duchatelle.io/dphoto/dphoto/backup/model"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,6 +13,6 @@ type TrackScanComplete struct {
 }
 
 // OnScanComplete provides a mock function with given fields: total
-func (_m *TrackScanComplete) OnScanComplete(total tracker.MediaCounter) {
+func (_m *TrackScanComplete) OnScanComplete(total model.MediaCounter) {
 	_m.Called(total)
 }
