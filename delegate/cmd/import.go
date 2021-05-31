@@ -7,14 +7,86 @@ import (
 	"duchatelle.io/dphoto/dphoto/cmd/screen"
 	"fmt"
 	"github.com/alexeyco/simpletable"
+	"github.com/eiannone/keyboard"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
 )
 
 type ScanProgress struct {
-	screen       *screen.Screen
+	screen       *screen.AutoRefreshScreen
 	scanningLine *screen.ProgressLine
 	analysedLine *screen.ProgressLine
+}
+
+type InteractiveTable struct {
+	suggestions []*backup.FoundAlbum
+	selected    int
+	done        chan struct{}
+}
+
+func newInteractiveTable(suggestions []*backup.FoundAlbum) *InteractiveTable {
+	it := &InteractiveTable{
+		suggestions: suggestions,
+		done:        make(chan struct{}),
+	}
+	scr := screen.NewSimpleScreen(screen.RenderingOptions{Width: 180}, it)
+
+	go func() {
+		defer close(it.done)
+		keysChannel, err := keyboard.GetKeys(16)
+		if err != nil {
+			panic(err)
+		}
+		defer func() {
+			_ = keyboard.Close()
+		}()
+
+		for event := range keysChannel {
+			switch event.Key {
+			case keyboard.KeyEsc:
+				return
+
+			case keyboard.KeyArrowDown:
+				it.selected = (it.selected + 1) % len(it.suggestions)
+
+			case keyboard.KeyArrowUp:
+				it.selected = (len(it.suggestions) + it.selected - 1) % len(it.suggestions)
+			}
+
+			scr.Refresh()
+		}
+	}()
+
+	scr.Refresh()
+	<-it.done
+
+	return it
+}
+
+func (i *InteractiveTable) Content(options screen.RenderingOptions) string {
+	table := simpletable.New()
+	table.Header = &simpletable.Header{Cells: []*simpletable.Cell{
+		{Text: ""},
+		{Text: "Name"},
+		{Text: "Start"},
+		{Text: "End"},
+	}}
+	table.Body = &simpletable.Body{Cells: make([][]*simpletable.Cell, len(i.suggestions))}
+
+	for idx, album := range i.suggestions {
+		selectedMark := ""
+		if i.selected == idx {
+			selectedMark = "*"
+		}
+		table.Body.Cells[idx] = []*simpletable.Cell{
+			{Text: selectedMark},
+			{Text: aurora.Cyan(album.Name).String()},
+			{Text: album.Start.Format(layout)},
+			{Text: album.End.Format(layout)},
+		}
+	}
+
+	return table.String()
 }
 
 const layout = "02/01/2006"
@@ -40,24 +112,10 @@ var scan = &cobra.Command{
 		if len(suggestions) == 0 {
 			fmt.Println(aurora.Red(fmt.Sprintf("No media found on path %s .", volume)))
 		} else {
-			table := simpletable.New()
-			table.Header = &simpletable.Header{Cells: []*simpletable.Cell{
-				{Text: "Name"},
-				{Text: "Start"},
-				{Text: "End"},
-			}}
-			table.Body = &simpletable.Body{Cells: make([][]*simpletable.Cell, len(suggestions))}
+			fmt.Println()
+			printer.Info("%d albums suggested:\n", len(suggestions))
 
-			for i, album := range suggestions {
-				table.Body.Cells[i] = []*simpletable.Cell{
-					{Text: aurora.Cyan(album.Name).String()},
-					{Text: album.Start.Format(layout)},
-					{Text: album.End.Format(layout)},
-				}
-			}
-
-			fmt.Printf("%d albums suggested:\n", len(suggestions))
-			fmt.Println(table)
+			newInteractiveTable(suggestions)
 		}
 	},
 }
@@ -71,7 +129,7 @@ func newScanProgress() *ScanProgress {
 	scanningLine, scanningSegment := screen.NewProgressLine(table, "Scanning...")
 	analysedLine, analysedSegment := screen.NewProgressLine(table, "Analysed...")
 
-	progressScreen := screen.NewScreen(
+	progressScreen := screen.NewAutoRefreshScreen(
 		screen.RenderingOptions{Width: 180},
 		scanningSegment,
 		analysedSegment,

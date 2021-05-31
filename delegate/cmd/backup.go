@@ -13,7 +13,7 @@ import (
 )
 
 type BackupProgress struct {
-	screen       *screen.Screen
+	screen       *screen.AutoRefreshScreen
 	scanLine     *screen.ProgressLine
 	downloadLine *screen.ProgressLine
 	analyseLine  *screen.ProgressLine
@@ -132,7 +132,7 @@ func NewProgress() *BackupProgress {
 	p.analyseLine, segments[2] = screen.NewProgressLine(table, "Analysing...")
 	p.uploadLine, segments[3] = screen.NewProgressLine(table, "Uploading ...")
 
-	p.screen = screen.NewScreen(
+	p.screen = screen.NewAutoRefreshScreen(
 		screen.RenderingOptions{Width: 180},
 		segments...,
 	)
