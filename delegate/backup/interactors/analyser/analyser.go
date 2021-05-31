@@ -2,6 +2,7 @@ package analyser
 
 import (
 	"crypto/sha256"
+	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"encoding/hex"
 	"github.com/pkg/errors"
@@ -44,7 +45,7 @@ func AnalyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
 			return nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
 		}
 
-		details, err = model.ImageDetailsReaderPort.ReadImageDetails(content, found.LastModificationDate())
+		details, err = interactors.ImageDetailsReaderPort.ReadImageDetails(content, found.LastModificationDate())
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to analyse image %s", found)
 		}

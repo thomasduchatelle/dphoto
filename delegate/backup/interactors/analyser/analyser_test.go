@@ -1,6 +1,7 @@
 package analyser
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/mocks"
 	log "github.com/sirupsen/logrus"
@@ -15,7 +16,7 @@ var mediaDate = time.Date(2021, 4, 27, 10, 16, 22, 0, time.UTC)
 func Test_analyseMedia(t *testing.T) {
 	a := assert.New(t)
 	mockImageDetailsReader := new(mocks.ImageDetailsReaderAdapter)
-	model.ImageDetailsReaderPort = mockImageDetailsReader
+	interactors.ImageDetailsReaderPort = mockImageDetailsReader
 
 	medias := []model.FoundMedia{
 		model.NewInmemoryMedia("/somewhere/my_image.jpg", 42, mediaDate),

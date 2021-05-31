@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/mocks"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,7 @@ func Test_filter_filter(t *testing.T) {
 	a := assert.New(t)
 
 	mockVolumeRepository := new(mocks.VolumeRepositoryAdapter)
-	model.VolumeRepositoryPort = mockVolumeRepository
+	interactors.VolumeRepositoryPort = mockVolumeRepository
 
 	// given
 	mockVolumeRepository.On("RestoreLastSnapshot", "volume-1").Return([]model.SimpleMediaSignature{

@@ -31,7 +31,9 @@ func TestScanner(t *testing.T) {
 		Type:     model.VolumeTypeFileSystem,
 		Path:     volumeMount,
 		Local:    true,
-	}, mediaChannel)
+	}, func(media model.FoundMedia) {
+		mediaChannel <- media
+	})
 	close(mediaChannel)
 
 	if a.NoError(err) {
@@ -45,7 +47,7 @@ func TestScanner(t *testing.T) {
 
 		if a.Len(found, 2) {
 			a.Equal(path.Join(volumeMountAbs, "scan/a_text.TXT"), found[0].String())
-			a.Equal("a_text.TXT", found[0].Filename())
+			a.Equal("a_text.TXT", path.Base(found[0].Filename()))
 			a.Equal(&model.SimpleMediaSignature{
 				RelativePath: "scan/a_text.TXT",
 				Size:         6,

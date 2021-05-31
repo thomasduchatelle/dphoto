@@ -12,19 +12,12 @@ import (
 	"path/filepath"
 )
 
-type ProgressLine struct {
-	swapSpinner    func(int)
-	setLabel       func(string)
-	setBar         func(uint, uint)
-	setExplanation func(string)
-}
-
-type Progress struct {
+type BackupProgress struct {
 	screen       *screen.Screen
-	scanLine     *ProgressLine
-	downloadLine *ProgressLine
-	analyseLine  *ProgressLine
-	uploadLine   *ProgressLine
+	scanLine     *screen.ProgressLine
+	downloadLine *screen.ProgressLine
+	analyseLine  *screen.ProgressLine
+	uploadLine   *screen.ProgressLine
 }
 
 var (
@@ -129,15 +122,15 @@ func countAndSize(counter model.MediaCounter) *simpletable.Cell {
 	}
 }
 
-func NewProgress() *Progress {
+func NewProgress() *BackupProgress {
 	table := screen.NewTable(" ", 2, 20, 80, 25)
 
 	segments := make([]screen.Segment, 4)
-	p := &Progress{}
-	p.scanLine, segments[0] = NewProgressLine(table, "Scanning...")
-	p.downloadLine, segments[1] = NewProgressLine(table, "Downloading...")
-	p.analyseLine, segments[2] = NewProgressLine(table, "Analysing...")
-	p.uploadLine, segments[3] = NewProgressLine(table, "Uploading ...")
+	p := &BackupProgress{}
+	p.scanLine, segments[0] = screen.NewProgressLine(table, "Scanning...")
+	p.downloadLine, segments[1] = screen.NewProgressLine(table, "Downloading...")
+	p.analyseLine, segments[2] = screen.NewProgressLine(table, "Analysing...")
+	p.uploadLine, segments[3] = screen.NewProgressLine(table, "Uploading ...")
 
 	p.screen = screen.NewScreen(
 		screen.RenderingOptions{Width: 180},
@@ -147,65 +140,51 @@ func NewProgress() *Progress {
 	return p
 }
 
-func NewProgressLine(table *screen.TableGenerator, initialLabel string) (*ProgressLine, screen.Segment) {
-	spinner, swapSpinner := screen.NewSwitchSegment(screen.NewSpinnerSegment(), screen.NewGreenTickSegment())
-	label, setLabel := screen.NewUpdatableSegment(initialLabel)
-	bar, setBar := screen.NewProgressBarSegment()
-	explanation, setExplanation := screen.NewUpdatableSegment("")
-
-	return &ProgressLine{
-		swapSpinner:    swapSpinner,
-		setLabel:       setLabel,
-		setBar:         setBar,
-		setExplanation: setExplanation,
-	}, table.NewRow(spinner, label, bar, explanation)
+func (p *BackupProgress) OnScanComplete(total model.MediaCounter) {
+	p.scanLine.SwapSpinner(1)
+	p.scanLine.SetLabel(fmt.Sprintf("Scan complete: %d files found", total.Count))
 }
 
-func (p *Progress) OnScanComplete(total model.MediaCounter) {
-	p.scanLine.swapSpinner(1)
-	p.scanLine.setLabel(fmt.Sprintf("Scan complete: %d files found", total.Count))
-}
-
-func (p *Progress) OnDownloaded(done, total model.MediaCounter) {
+func (p *BackupProgress) OnDownloaded(done, total model.MediaCounter) {
 	if !total.IsZero() {
-		p.downloadLine.setBar(done.Size, total.Size)
-		p.downloadLine.setExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))
+		p.downloadLine.SetBar(done.Size, total.Size)
+		p.downloadLine.SetExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))
 
 		if done.Count == total.Count {
-			p.downloadLine.swapSpinner(1)
-			p.downloadLine.setLabel("Download complete")
+			p.downloadLine.SwapSpinner(1)
+			p.downloadLine.SetLabel("Download complete")
 		}
 	}
 }
 
-func (p *Progress) OnAnalysed(done, total model.MediaCounter) {
+func (p *BackupProgress) OnAnalysed(done, total model.MediaCounter) {
 	//time.Sleep(330 * time.Millisecond)
 	if !total.IsZero() {
-		p.analyseLine.setBar(done.Count, total.Count)
-		p.analyseLine.setExplanation(fmt.Sprintf("%d / %d files", done.Count, total.Count))
+		p.analyseLine.SetBar(done.Count, total.Count)
+		p.analyseLine.SetExplanation(fmt.Sprintf("%d / %d files", done.Count, total.Count))
 
 		if done.Count == total.Count {
-			p.analyseLine.swapSpinner(1)
-			p.analyseLine.setLabel("Analyse complete")
+			p.analyseLine.SwapSpinner(1)
+			p.analyseLine.SetLabel("Analyse complete")
 		}
 	}
 }
 
-func (p *Progress) OnUploaded(done, total model.MediaCounter) {
+func (p *BackupProgress) OnUploaded(done, total model.MediaCounter) {
 	//time.Sleep(time.Second)
 	if !total.IsZero() {
-		p.uploadLine.setBar(done.Size, total.Size)
-		p.uploadLine.setExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))
+		p.uploadLine.SetBar(done.Size, total.Size)
+		p.uploadLine.SetExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))
 
 		if done.Count == total.Count {
-			p.uploadLine.swapSpinner(1)
-			p.uploadLine.setLabel("Upload complete")
+			p.uploadLine.SwapSpinner(1)
+			p.uploadLine.SetLabel("Upload complete")
 		}
 	}
 }
 
 // binaryMultiplier returns a next power 2 value above given value
-func (p *Progress) binaryMultiplier(value uint) int64 {
+func (p *BackupProgress) binaryMultiplier(value uint) int64 {
 	nextBinaryPower := int64(2)
 	for nextBinaryPower <= int64(value) {
 		nextBinaryPower *= 2

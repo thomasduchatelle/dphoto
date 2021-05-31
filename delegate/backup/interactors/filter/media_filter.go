@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -13,7 +14,7 @@ type filter struct {
 }
 
 func NewMediaFilter(volume *model.VolumeToBackup) (*filter, error) {
-	snapshot, err := model.VolumeRepositoryPort.RestoreLastSnapshot(volume.UniqueId)
+	snapshot, err := interactors.VolumeRepositoryPort.RestoreLastSnapshot(volume.UniqueId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to restore previous snapshot fo volume %s", volume.UniqueId)
 	}
@@ -42,5 +43,5 @@ func (f *filter) Filter(found model.FoundMedia) bool {
 }
 
 func (f *filter) StoreState(backupId string) error {
-	return model.VolumeRepositoryPort.StoreSnapshot(f.volumeId, backupId, f.currentSnapshot)
+	return interactors.VolumeRepositoryPort.StoreSnapshot(f.volumeId, backupId, f.currentSnapshot)
 }
