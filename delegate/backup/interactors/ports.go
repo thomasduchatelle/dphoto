@@ -3,7 +3,6 @@ package interactors
 import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -14,7 +13,7 @@ var (
 	DownloaderPort         model.DownloaderAdapter                                // DownloaderPort creates a new instance of the DownloaderPort
 )
 
-func NewSource(mdc *logrus.Entry, volume model.VolumeToBackup) (model.Source, error) {
+func NewSource(volume model.VolumeToBackup, onCompletion func(uint, uint)) (model.Source, error) {
 	source, ok := SourcePorts[volume.Type]
 	if !ok {
 		return nil, errors.Errorf("No scanner implementation provided for volume type %s", volume.Type)
@@ -24,7 +23,9 @@ func NewSource(mdc *logrus.Entry, volume model.VolumeToBackup) (model.Source, er
 		count, size, err := source.FindMediaRecursively(volume, func(media model.FoundMedia) {
 			medias <- media
 		})
-		mdc.Debugf("Source > volume scanning complete.")
+		if err == nil {
+			onCompletion(count, size)
+		}
 		return count, size, err
 	}, nil
 }

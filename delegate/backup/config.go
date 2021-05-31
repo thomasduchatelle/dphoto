@@ -3,7 +3,7 @@ package backup
 import "duchatelle.io/dphoto/dphoto/config"
 
 const (
-	scanBufferSize = 1024 * 16
+	scanBufferSize = 1024 * 128
 )
 
 var (

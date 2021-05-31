@@ -90,10 +90,11 @@ func (s *ScanProgress) OnScanComplete(total uint) {
 }
 
 func (s *ScanProgress) OnAnalyseProgress(count, total uint) {
+	s.analysedLine.SetBar(count, total)
+	s.analysedLine.SetExplanation(fmt.Sprintf("%d / %d", count, total))
+
 	if count < total {
 		s.analysedLine.SetLabel("Reading...")
-		s.analysedLine.SetBar(count, total)
-		s.analysedLine.SetExplanation(fmt.Sprintf("%d / %d", count, total))
 	} else {
 		s.analysedLine.SwapSpinner(1)
 		s.analysedLine.SetLabel("Reading completed.")

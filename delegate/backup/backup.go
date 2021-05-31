@@ -1,7 +1,7 @@
 package backup
 
 import (
-	interactors2 "duchatelle.io/dphoto/dphoto/backup/interactors"
+	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/downloader"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/filter"
@@ -28,7 +28,9 @@ func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (m
 		"VolumePath": volume.Path,
 	})
 
-	source, err := interactors2.NewSource(mdc, volume)
+	source, err := interactors.NewSource(volume, func(count, size uint) {
+		mdc.Debugf("Source > volume scanning complete.")
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -38,12 +40,12 @@ func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (m
 		return nil, err
 	}
 
-	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), interactors2.OnlineStoragePort)
+	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), interactors.OnlineStoragePort)
 	if err != nil {
 		return nil, err
 	}
 
-	downloaderPort := interactors2.DownloaderPort.DownloadMedia
+	downloaderPort := interactors.DownloaderPort.DownloadMedia
 	if volume.Local {
 		downloaderPort = downloader.PassThroughDownload
 	}
