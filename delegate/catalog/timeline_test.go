@@ -180,7 +180,7 @@ func TestFindAt_FindAllAt(t *testing.T) {
 		},
 	}
 
-	timeline, err := NewTimeline(albumCollection())
+	timeline, err := NewTimeline(AlbumCollection())
 	if a.NoError(err) {
 		for _, tt := range tests {
 			album, ok := timeline.FindAt(tt.args)
@@ -247,11 +247,11 @@ func TestFindAt_FindBetween(t *testing.T) {
 		},
 	}
 
-	timeline, err := NewTimeline(albumCollection())
+	timeline, err := NewTimeline(AlbumCollection())
 
 	if a.NoError(err) {
 		for _, tt := range tests {
-			segments := timeline.FindBetween(mustParse(layout, tt.args.start), mustParse(layout, tt.args.end))
+			segments := timeline.FindBetween(MustParse(layout, tt.args.start), MustParse(layout, tt.args.end))
 			var got []Want
 			for _, seg := range segments {
 				var names []string
@@ -280,7 +280,7 @@ func TestTimeline_FindForAlbum(t *testing.T) {
 		allNames []string
 	}
 
-	timeline, err := NewTimeline(albumCollection())
+	timeline, err := NewTimeline(AlbumCollection())
 	if a.NoError(err) {
 		segments := timeline.FindForAlbum("Christmas Holidays")
 

@@ -1,8 +1,13 @@
 package backup
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
+	downloader2 "duchatelle.io/dphoto/dphoto/backup/interactors/downloader"
+	"duchatelle.io/dphoto/dphoto/backup/interactors/filter"
+	runner2 "duchatelle.io/dphoto/dphoto/backup/interactors/runner"
+	"duchatelle.io/dphoto/dphoto/backup/interactors/tracker"
+	"duchatelle.io/dphoto/dphoto/backup/interactors/uploaders"
 	"duchatelle.io/dphoto/dphoto/backup/model"
-	"duchatelle.io/dphoto/dphoto/backup/runner"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -13,7 +18,7 @@ import (
 
 // StartBackupRunner starts backup of given model.VolumeToBackup and returns when finished. Listeners will received
 // progress updates.
-func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (*Tracker, error) {
+func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (*tracker.Tracker, error) {
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.UniqueId, "_"), "_"), time.Now().Format("20060102_150405"))
 	mdc := log.WithFields(log.Fields{
@@ -22,27 +27,27 @@ func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (*
 		"VolumePath": volume.Path,
 	})
 
-	scanner, ok := ScannerAdapters[volume.Type]
+	scanner, ok := model.SourcePorts[volume.Type]
 	if !ok {
 		return nil, errors.Errorf("No scanner implementation provided for volume type %s", volume.Type)
 	}
 
-	mediaFilter, err := newMediaFilter(&volume)
+	mediaFilter, err := filter.NewMediaFilter(&volume)
 	if err != nil {
 		return nil, err
 	}
 
-	uploader, err := NewUploader(new(CatalogProxy), OnlineStorage)
+	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), model.OnlineStoragePort)
 	if err != nil {
 		return nil, err
 	}
 
-	downloader := Downloader.DownloadMedia
+	downloader := model.DownloaderPort.DownloadMedia
 	if volume.Local {
-		downloader = PassThroughDownload
+		downloader = downloader2.PassThroughDownload
 	}
 
-	r := runner.Runner{
+	r := runner2.Runner{
 		MDC: mdc,
 		Source: func(medias chan model.FoundMedia) (uint, uint, error) {
 			count, size, err := scanner.FindMediaRecursively(volume, medias)
@@ -51,7 +56,7 @@ func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (*
 		},
 		Filter:     mediaFilter.Filter,
 		Downloader: downloader,
-		Analyser:   analyseMedia,
+		Analyser:   analyser.AnalyseMedia,
 		Uploader:   uploader.Upload,
 		PreCompletion: func() error {
 			return mediaFilter.StoreState(backupId)
@@ -63,8 +68,8 @@ func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (*
 		ConcurrentUploader:   uploadThreadCount,
 		UploadBatchSize:      uploadBatchSize,
 	}
-	doneChannel, progressChannel := runner.Start(r)
-	tracker := NewTracker(progressChannel, listeners) // TODO - use tracker to returns final stats.
+	doneChannel, progressChannel := runner2.Start(r)
+	tracker := tracker.NewTracker(progressChannel, listeners) // TODO - use tracker to returns final stats.
 
 	report := <-doneChannel
 	<-tracker.Done

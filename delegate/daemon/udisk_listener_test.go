@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/mocks"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,7 @@ import (
 	"testing"
 )
 
-var volumeManagerPort *MockVolumeManagerPort
+var volumeManagerPort *mocks.VolumeManagerPort
 
 func init() {
 	log.SetLevel(log.TraceLevel)
@@ -18,7 +19,7 @@ func init() {
 func TestDetectPlugAndUnplugDisk(t *testing.T) {
 	a := assert.New(t)
 
-	volumeManagerPort = new(MockVolumeManagerPort)
+	volumeManagerPort = new(mocks.VolumeManagerPort)
 	VolumeManager = volumeManagerPort
 
 	// when
@@ -104,7 +105,7 @@ func TestDetectPlugAndUnplugDisk(t *testing.T) {
 func TestUmount(t *testing.T) {
 	a := assert.New(t)
 
-	volumeManagerPort = new(MockVolumeManagerPort)
+	volumeManagerPort = new(mocks.VolumeManagerPort)
 	VolumeManager = volumeManagerPort
 
 	// given
@@ -147,7 +148,7 @@ func TestUmount(t *testing.T) {
 func TestRemoved(t *testing.T) {
 	a := assert.New(t)
 
-	volumeManagerPort = new(MockVolumeManagerPort)
+	volumeManagerPort = new(mocks.VolumeManagerPort)
 	VolumeManager = volumeManagerPort
 
 	// given

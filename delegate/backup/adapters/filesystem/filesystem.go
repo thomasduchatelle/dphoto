@@ -1,7 +1,7 @@
 package filesystem
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
+	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/dixonwille/skywalker"
 	"github.com/pkg/errors"
@@ -37,9 +37,9 @@ func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, medias cha
 		return 0, 0, err
 	}
 
-	extensions := make([]string, len(backup.SupportedExtensions)*2)
+	extensions := make([]string, len(analyser.SupportedExtensions)*2)
 	index := 0
-	for typ, _ := range backup.SupportedExtensions {
+	for typ, _ := range analyser.SupportedExtensions {
 		extensions[index*2] = "." + strings.ToLower(typ)
 		extensions[index*2+1] = "." + strings.ToUpper(typ)
 		index++

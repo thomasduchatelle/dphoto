@@ -91,7 +91,7 @@ func (l *LocalStorage) DownloadMedia(found model.FoundMedia) (model.FoundMedia, 
 	}
 
 	key := path.Join(l.localMediaPath, uuid.New().String()+path.Ext(found.Filename()))
-	log.Debugf("Downloader > download locally %s to %s", found, key)
+	log.Debugf("DownloaderPort > download locally %s to %s", found, key)
 
 	writer, err := os.Create(key)
 	if err != nil {

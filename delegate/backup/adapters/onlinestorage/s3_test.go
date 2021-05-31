@@ -1,7 +1,6 @@
 package onlinestorage
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -35,7 +34,7 @@ func TestS3OnlineStorage_UploadFile(t *testing.T) {
 	}
 
 	type args struct {
-		media      backup.ReadableMedia
+		media      model.ReadableMedia
 		folderName string
 		filename   string
 	}
@@ -80,7 +79,7 @@ func (i *InMemoryMedia) ReadMedia() (io.Reader, error) {
 	return strings.NewReader(i.content), nil
 }
 
-func newMedia(content string) backup.ReadableMedia {
+func newMedia(content string) model.ReadableMedia {
 	return &InMemoryMedia{
 		content: content,
 	}

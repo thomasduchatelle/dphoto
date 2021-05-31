@@ -2,7 +2,7 @@ package filesystem
 
 import (
 	"bytes"
-	"duchatelle.io/dphoto/dphoto/backup"
+	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -21,7 +21,7 @@ func TestScanner(t *testing.T) {
 	volumeMount := "../../../test_resources"
 	volumeMountAbs, _ := filepath.Abs(volumeMount)
 
-	backup.SupportedExtensions = map[string]model.MediaType{
+	analyser.SupportedExtensions = map[string]model.MediaType{
 		"txt":  model.MediaTypeOther,
 		"Jpeg": model.MediaTypeImage,
 	}

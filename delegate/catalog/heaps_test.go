@@ -15,7 +15,7 @@ func TestHeap(t *testing.T) {
 	}
 	heap.Init(h)
 
-	for _, album := range albumCollection() {
+	for _, album := range AlbumCollection() {
 		a := album
 		heap.Push(h, a)
 	}
@@ -30,7 +30,7 @@ func TestHeap(t *testing.T) {
 	a.Empty(h.heap)
 }
 
-func albumCollection() []*Album {
+func AlbumCollection() []*Album {
 	return []*Album{
 		{
 			FolderName: "2020-Q3",

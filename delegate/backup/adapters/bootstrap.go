@@ -1,7 +1,6 @@
 package adapters
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/filesystem"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/images"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/localstorage"
@@ -14,20 +13,20 @@ import (
 )
 
 func init() {
-	backup.ImageDetailsReader = new(images.ExifReader)
-	backup.ScannerAdapters[model.VolumeTypeFileSystem] = new(filesystem.FsHandler)
+	model.ImageDetailsReaderPort = new(images.ExifReader)
+	model.SourcePorts[model.VolumeTypeFileSystem] = new(filesystem.FsHandler)
 
 	config.Listen(func(cfg config.Config) {
 		log.Debugln("connecting backup adapters")
-		backup.OnlineStorage = onlinestorage.Must(onlinestorage.NewS3OnlineStorage(cfg.GetString("backup.s3.bucket"), cfg.GetAWSSession()))
+		model.OnlineStoragePort = onlinestorage.Must(onlinestorage.NewS3OnlineStorage(cfg.GetString("backup.s3.bucket"), cfg.GetAWSSession()))
 
 		var err error
-		backup.Downloader, err = localstorage.NewLocalStorage(os.ExpandEnv(cfg.GetString("backup.buffer.path")), cfg.GetInt("backup.buffer.size"))
+		model.DownloaderPort, err = localstorage.NewLocalStorage(os.ExpandEnv(cfg.GetString("backup.buffer.path")), cfg.GetInt("backup.buffer.size"))
 		if err != nil {
 			panic(err)
 		}
 
-		backup.VolumeRepository = &volumes.FileSystemRepository{
+		model.VolumeRepositoryPort = &volumes.FileSystemRepository{
 			Directory: os.ExpandEnv(cfg.GetString("backup.volumes.repository.directory")),
 		}
 	})
