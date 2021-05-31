@@ -16,11 +16,15 @@ type Listener func(Config)
 var (
 	ForcedConfigFile string // ForcedConfigFile is the path to the file of the config to use (instead of defaulting to ./dphoto.yml, $HOME/.dphoto/dphoto.yml, ...)
 	listeners        []Listener
+	config           *viperConfig
 )
 
 // Listen registers a Listener that will be invoked when configuration will be provided.
 func Listen(listener Listener) {
 	listeners = append(listeners, listener)
+	if config != nil {
+		listener(config)
+	}
 }
 
 // Connect must be called by main function, it dispatches the config to all components requiring it.
@@ -46,7 +50,7 @@ func Connect() {
 		Region:      aws.String(viper.GetString("aws.region")),
 	}))
 
-	config := &viperConfig{
+	config = &viperConfig{
 		Viper:      viper.GetViper(),
 		awsSession: sess,
 	}

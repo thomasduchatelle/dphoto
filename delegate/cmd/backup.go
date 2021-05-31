@@ -13,7 +13,7 @@ import (
 )
 
 type BackupProgress struct {
-	screen       *screen.Screen
+	screen       *screen.AutoRefreshScreen
 	scanLine     *screen.ProgressLine
 	downloadLine *screen.ProgressLine
 	analyseLine  *screen.ProgressLine
@@ -132,7 +132,7 @@ func NewProgress() *BackupProgress {
 	p.analyseLine, segments[2] = screen.NewProgressLine(table, "Analysing...")
 	p.uploadLine, segments[3] = screen.NewProgressLine(table, "Uploading ...")
 
-	p.screen = screen.NewScreen(
+	p.screen = screen.NewAutoRefreshScreen(
 		screen.RenderingOptions{Width: 180},
 		segments...,
 	)
@@ -141,8 +141,22 @@ func NewProgress() *BackupProgress {
 }
 
 func (p *BackupProgress) OnScanComplete(total model.MediaCounter) {
-	p.scanLine.SwapSpinner(1)
-	p.scanLine.SetLabel(fmt.Sprintf("Scan complete: %d files found", total.Count))
+	if total.Count == 0 {
+		p.scanLine.SwapSpinner(1)
+		p.scanLine.SetLabel(fmt.Sprintf("Scan complete: no new files found"))
+
+		p.downloadLine.SwapSpinner(1)
+		p.downloadLine.SetLabel("Download skipped")
+
+		p.analyseLine.SwapSpinner(1)
+		p.analyseLine.SetLabel("Analyse skipped")
+
+		p.uploadLine.SwapSpinner(1)
+		p.uploadLine.SetLabel("Upload skipped")
+	} else {
+		p.scanLine.SwapSpinner(1)
+		p.scanLine.SetLabel(fmt.Sprintf("Scan complete: %d files found", total.Count))
+	}
 }
 
 func (p *BackupProgress) OnDownloaded(done, total model.MediaCounter) {
@@ -158,7 +172,6 @@ func (p *BackupProgress) OnDownloaded(done, total model.MediaCounter) {
 }
 
 func (p *BackupProgress) OnAnalysed(done, total model.MediaCounter) {
-	//time.Sleep(330 * time.Millisecond)
 	if !total.IsZero() {
 		p.analyseLine.SetBar(done.Count, total.Count)
 		p.analyseLine.SetExplanation(fmt.Sprintf("%d / %d files", done.Count, total.Count))
@@ -171,7 +184,6 @@ func (p *BackupProgress) OnAnalysed(done, total model.MediaCounter) {
 }
 
 func (p *BackupProgress) OnUploaded(done, total model.MediaCounter) {
-	//time.Sleep(time.Second)
 	if !total.IsZero() {
 		p.uploadLine.SetBar(done.Size, total.Size)
 		p.uploadLine.SetExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))

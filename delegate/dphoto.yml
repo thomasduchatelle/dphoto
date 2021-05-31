@@ -5,6 +5,9 @@ aws:
   secret: secret
   region: eu-west-1
 
+local:
+  home: .build
+
 catalog:
   dynamodb:
     table: dphoto-local
