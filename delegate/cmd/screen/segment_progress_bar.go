@@ -3,22 +3,29 @@ package screen
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 type ProgressBarSegment struct {
 	done  uint
 	total uint
+	lock sync.RWMutex
 }
 
 func NewProgressBarSegment() (Segment, func(uint, uint)) {
-	segment := &ProgressBarSegment{}
+	segment := &ProgressBarSegment{lock: sync.RWMutex{}}
 	return segment, func(done, total uint) {
+		segment.lock.Lock()
+		defer segment.lock.Unlock()
 		segment.done = done
 		segment.total = total
 	}
 }
 
 func (p *ProgressBarSegment) Content(options RenderingOptions) string {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+
 	if p.total == 0 {
 		return strings.Repeat(" ", options.Width)
 	}

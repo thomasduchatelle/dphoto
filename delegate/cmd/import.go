@@ -3,13 +3,14 @@ package cmd
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
 	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/catalog"
+	"duchatelle.io/dphoto/dphoto/cmd/interactive"
 	"duchatelle.io/dphoto/dphoto/cmd/printer"
 	"duchatelle.io/dphoto/dphoto/cmd/screen"
 	"fmt"
-	"github.com/alexeyco/simpletable"
-	"github.com/eiannone/keyboard"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 type ScanProgress struct {
@@ -18,78 +19,7 @@ type ScanProgress struct {
 	analysedLine *screen.ProgressLine
 }
 
-type InteractiveTable struct {
-	suggestions []*backup.FoundAlbum
-	selected    int
-	done        chan struct{}
-}
-
-func newInteractiveTable(suggestions []*backup.FoundAlbum) *InteractiveTable {
-	it := &InteractiveTable{
-		suggestions: suggestions,
-		done:        make(chan struct{}),
-	}
-	scr := screen.NewSimpleScreen(screen.RenderingOptions{Width: 180}, it)
-
-	go func() {
-		defer close(it.done)
-		keysChannel, err := keyboard.GetKeys(16)
-		if err != nil {
-			panic(err)
-		}
-		defer func() {
-			_ = keyboard.Close()
-		}()
-
-		for event := range keysChannel {
-			switch event.Key {
-			case keyboard.KeyEsc:
-				return
-
-			case keyboard.KeyArrowDown:
-				it.selected = (it.selected + 1) % len(it.suggestions)
-
-			case keyboard.KeyArrowUp:
-				it.selected = (len(it.suggestions) + it.selected - 1) % len(it.suggestions)
-			}
-
-			scr.Refresh()
-		}
-	}()
-
-	scr.Refresh()
-	<-it.done
-
-	return it
-}
-
-func (i *InteractiveTable) Content(options screen.RenderingOptions) string {
-	table := simpletable.New()
-	table.Header = &simpletable.Header{Cells: []*simpletable.Cell{
-		{Text: ""},
-		{Text: "Name"},
-		{Text: "Start"},
-		{Text: "End"},
-	}}
-	table.Body = &simpletable.Body{Cells: make([][]*simpletable.Cell, len(i.suggestions))}
-
-	for idx, album := range i.suggestions {
-		selectedMark := ""
-		if i.selected == idx {
-			selectedMark = "*"
-		}
-		table.Body.Cells[idx] = []*simpletable.Cell{
-			{Text: selectedMark},
-			{Text: aurora.Cyan(album.Name).String()},
-			{Text: album.Start.Format(layout)},
-			{Text: album.End.Format(layout)},
-		}
-	}
-
-	return table.String()
-}
-
-const layout = "02/01/2006"
+type operations struct{}
 
 var scan = &cobra.Command{
 	Use:   "scan <folder to scan>",
@@ -115,7 +45,20 @@ var scan = &cobra.Command{
 			fmt.Println()
 			printer.Info("%d albums suggested:\n", len(suggestions))
 
-			newInteractiveTable(suggestions)
+			interactiveSuggestion := make([]*interactive.AlbumRecord, len(suggestions))
+			for i, s := range suggestions {
+				interactiveSuggestion[i] = &interactive.AlbumRecord{
+					Suggestion: true,
+					FolderName: "",
+					Name:       s.Name,
+					Start:      s.Start,
+					End:        s.End,
+					Count:      0,
+					Size:       0,
+				}
+			}
+
+			interactive.StartInteractiveSession(interactiveSuggestion, new(operations))
 		}
 	},
 }
@@ -157,4 +100,38 @@ func (s *ScanProgress) OnAnalyseProgress(count, total uint) {
 		s.analysedLine.SwapSpinner(1)
 		s.analysedLine.SetLabel("Reading completed.")
 	}
+}
+
+func (o *operations) FindAllAlbumsWithStats() ([]*interactive.AlbumRecord, error) {
+	albums, err := catalog.FindAllAlbumsWithStats()
+
+	records := make([]*interactive.AlbumRecord, len(albums))
+	for i, album := range albums {
+		records[i] = &interactive.AlbumRecord{
+			Suggestion: false,
+			FolderName: album.Album.FolderName,
+			Name:       album.Album.Name,
+			Start:      album.Album.Start,
+			End:        album.Album.End,
+			Count:      uint(album.TotalCount()),
+		}
+	}
+	return records, err
+}
+
+func (o *operations) Create(request interactive.AlbumRecord) error {
+	return catalog.Create(catalog.CreateAlbum{
+		Name:             request.Name,
+		Start:            request.Start,
+		End:              request.End,
+		ForcedFolderName: request.FolderName,
+	})
+}
+
+func (o *operations) RenameAlbum(folderName, newName string, renameFolder bool) error {
+	return catalog.RenameAlbum(folderName, newName, renameFolder)
+}
+
+func (o *operations) UpdateAlbum(folderName string, start, end time.Time) error {
+	return catalog.UpdateAlbum(folderName, start, end)
 }

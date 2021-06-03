@@ -4,10 +4,10 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
 	"duchatelle.io/dphoto/dphoto/backup/model"
-	"fmt"
 	"github.com/pkg/errors"
 	"path"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -89,12 +89,12 @@ func scanMediaSource(volume model.VolumeToBackup) ([]model.FoundMedia, error) {
 		return nil, errors.Errorf("No scanner implementation provided for volume type %s", volume.Type)
 	}
 
+	lock := sync.Mutex{}
 	var medias []model.FoundMedia
 	_, _, err := source.FindMediaRecursively(volume, func(media model.FoundMedia) {
-		if media == nil {
-			fmt.Printf("THIS IS GOING TO BUG\n\nPREVIOUS: %s\n\n", medias[len(medias)-1])
-		}
+		lock.Lock()
 		medias = append(medias, media)
+		lock.Unlock()
 	})
 	if err != nil {
 		return nil, err
@@ -105,16 +105,16 @@ func scanMediaSource(volume model.VolumeToBackup) ([]model.FoundMedia, error) {
 func newFoundAlbum(albumFullPath string, date time.Time) *FoundAlbum {
 	return &FoundAlbum{
 		Name:  path.Base(albumFullPath),
-		Start: date,
-		End:   date,
+		Start: atStartOfDay(date),
+		End:   atStartOfFollowingDay(date),
 	}
 }
 func (a *FoundAlbum) pushBoundaries(date time.Time) {
 	if a.Start.After(date) {
-		a.Start = atStartOfDay(a.Start)
+		a.Start = atStartOfDay(date)
 	}
 
-	if a.End.Before(date) {
+	if !a.End.After(date) {
 		a.End = atStartOfFollowingDay(date)
 	}
 }

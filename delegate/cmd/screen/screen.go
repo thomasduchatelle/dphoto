@@ -11,6 +11,7 @@ type SimpleScreen struct {
 	lines                []Segment
 	numberOfPrintedLines int
 	renderingOptions     RenderingOptions
+	maxWidth             int
 }
 
 type AutoRefreshScreen struct {
@@ -45,16 +46,44 @@ func NewAutoRefreshScreen(options RenderingOptions, bars ...Segment) *AutoRefres
 	return progress
 }
 
+func (s *SimpleScreen) Clear() {
+	if s.numberOfPrintedLines > 0 {
+		fmt.Printf("\033[%dA", s.numberOfPrintedLines)
+		fmt.Printf(strings.Repeat(strings.Repeat(" ", s.maxWidth)+"\n", s.numberOfPrintedLines))
+		fmt.Printf("\033[%dA", s.numberOfPrintedLines)
+
+		s.numberOfPrintedLines = 0
+	}
+}
+
 func (s *SimpleScreen) Refresh() {
 	if s.numberOfPrintedLines > 0 {
 		fmt.Printf("\033[%dA", s.numberOfPrintedLines)
 	}
-
 	s.numberOfPrintedLines = 0
 	for _, line := range s.lines {
 		content := strings.Trim(line.Content(s.renderingOptions), "\n")
 		s.numberOfPrintedLines += strings.Count(content, "\n") + 1
+		s.updateMaxLength(content)
 		fmt.Println(content)
+	}
+}
+
+func (s *SimpleScreen) updateMaxLength(content string) {
+	substr := content
+	for len(substr) > 0 {
+		idx := strings.Index(substr, "\n")
+		if idx > s.maxWidth {
+			s.maxWidth = idx
+		} else if idx == -1 && len(substr) > s.maxWidth {
+			s.maxWidth = len(substr)
+		}
+
+		if idx >= 0 {
+			substr = substr[idx+1:]
+		} else {
+			substr = ""
+		}
 	}
 }
 
