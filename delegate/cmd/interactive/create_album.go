@@ -4,19 +4,19 @@ func CreateAlbumForm(operations CatalogOperations, record AlbumRecord) error {
 	creation := AlbumRecord{}
 	ok := true
 
-	creation.Name, ok = scanString("Name of the album", record.Name)
+	creation.Name, ok = ReadString("Name of the album", record.Name)
 	if !ok {
 		return nil
 	}
 
-	creation.FolderName, _ = scanString("Folder name (leave blank for automatically generated)", "")
+	creation.FolderName, _ = ReadString("Folder name (leave blank for automatically generated)", "")
 
-	creation.Start, ok = scanDate("Start date", record.Start)
+	creation.Start, ok = ReadDate("Start date", record.Start)
 	if !ok {
 		return nil
 	}
 
-	creation.End, ok = scanDate("End date", record.End)
+	creation.End, ok = ReadDate("End date", record.End)
 	if !ok {
 		return nil
 	}

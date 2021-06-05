@@ -6,6 +6,7 @@ import (
 	"duchatelle.io/dphoto/dphoto/catalog"
 	"duchatelle.io/dphoto/dphoto/cmd/interactive"
 	"duchatelle.io/dphoto/dphoto/cmd/printer"
+	"duchatelle.io/dphoto/dphoto/cmd/scanresult"
 	"duchatelle.io/dphoto/dphoto/cmd/screen"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
@@ -29,15 +30,21 @@ var scan = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		volume := args[0]
 
-		progress := newScanProgress()
-		suggestions, err := backup.DiscoverAlbumFromSource(model.VolumeToBackup{
-			UniqueId: volume,
-			Type:     model.VolumeTypeFileSystem,
-			Path:     volume,
-			Local:    true,
-		}, progress)
-		printer.FatalIfError(err, 1)
-		progress.screen.Stop()
+		previousResult, err := scanresult.Restore(volume)
+		printer.FatalWithMessageIfError(err, 2, "failed to restore previous scan result for volume %s", volume)
+
+		var suggestions []*backup.FoundAlbum
+		if len(previousResult) > 0 {
+			restore, ok := interactive.ReadBool("Previous result has been found for this volume, do you want to restore it?", "Y/n")
+			if !ok || restore {
+				suggestions = previousResult
+			}
+		}
+
+		if len(suggestions) == 0 {
+			suggestions, err = doScan(volume)
+			printer.FatalIfError(err, 1)
+		}
 
 		if len(suggestions) == 0 {
 			fmt.Println(aurora.Red(fmt.Sprintf("No media found on path %s .", volume)))
@@ -61,6 +68,24 @@ var scan = &cobra.Command{
 			interactive.StartInteractiveSession(interactiveSuggestion, new(operations))
 		}
 	},
+}
+
+func doScan(volume string) ([]*backup.FoundAlbum, error) {
+	progress := newScanProgress()
+	suggestions, err := backup.DiscoverAlbumFromSource(model.VolumeToBackup{
+		UniqueId: volume,
+		Type:     model.VolumeTypeFileSystem,
+		Path:     volume,
+		Local:    true,
+	}, progress)
+	progress.screen.Stop()
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = scanresult.Store(volume, suggestions)
+	return suggestions, err
 }
 
 func init() {

@@ -10,7 +10,8 @@ import (
 	"time"
 )
 
-func scanString(label string, defaultValue string) (string, bool) {
+// ReadString read a string from the standard input
+func ReadString(label string, defaultValue string) (string, bool) {
 	reader := bufio.NewReader(os.Stdin)
 	printedDefaultValue := ""
 	if defaultValue != "" {
@@ -26,7 +27,8 @@ func scanString(label string, defaultValue string) (string, bool) {
 	return value, err == nil
 }
 
-func scanDate(label string, defaultValue time.Time) (time.Time, bool) {
+// ReadDate reads a date from standard input, return true if reading was a success.
+func ReadDate(label string, defaultValue time.Time) (time.Time, bool) {
 	reader := bufio.NewReader(os.Stdin)
 	printedDefaultValue := ""
 	if !defaultValue.IsZero() {
@@ -55,8 +57,8 @@ func parseDate(value string) (time.Time, error) {
 	return time.Time{}, errors.Errorf("'%s' is not a valid date, or datetime, format.", value)
 }
 
-// scanBool reads a boolean, notation can be [Y/n] if (_, false) is interpreted as positive
-func scanBool(label string, notation string) (bool, bool) {
+// ReadBool reads a boolean, notation can be [Y/n] if (_, false) is interpreted as positive
+func ReadBool(label string, notation string) (bool, bool) {
 	reader := bufio.NewReader(os.Stdin)
 	printedDefaultValue := ""
 	if notation != "" {
@@ -70,7 +72,6 @@ func scanBool(label string, notation string) (bool, bool) {
 	}
 
 	answer := strings.ToLower(strings.Trim(strings.TrimSuffix(value, "\n"), " "))
-	fmt.Println("answer", answer)
 	switch answer {
 	case "yes", "oui", "true", "y", "o", "1":
 		return true, true

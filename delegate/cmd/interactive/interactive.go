@@ -63,7 +63,7 @@ func (u *ui) Content(options screen.RenderingOptions) string {
 		{Text: "Folder Name"},
 		{Text: "Start"},
 		{Text: "End"},
-		{Text: "Files (size)"},
+		{Text: "Files"},
 	}}
 	table.Body = &simpletable.Body{Cells: make([][]*simpletable.Cell, len(u.suggestions))}
 

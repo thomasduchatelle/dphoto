@@ -1,12 +1,12 @@
 package interactive
 
 func EditAlbumDates(operations CatalogOperations, record AlbumRecord) error {
-	start, ok := scanDate("Start date", record.Start)
+	start, ok := ReadDate("Start date", record.Start)
 	if !ok {
 		return nil
 	}
 
-	end, ok := scanDate("End date", record.End)
+	end, ok := ReadDate("End date", record.End)
 	if !ok {
 		return nil
 	}
