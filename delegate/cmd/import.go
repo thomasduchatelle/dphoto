@@ -135,3 +135,7 @@ func (o *operations) RenameAlbum(folderName, newName string, renameFolder bool) 
 func (o *operations) UpdateAlbum(folderName string, start, end time.Time) error {
 	return catalog.UpdateAlbum(folderName, start, end)
 }
+
+func (o *operations) DeleteAlbum(folderName string) error {
+	return catalog.DeleteAlbum(folderName, false)
+}

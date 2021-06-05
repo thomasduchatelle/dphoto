@@ -56,6 +56,21 @@ func (s *SimpleScreen) Clear() {
 	}
 }
 
+// Keep resets the count so anything already printed will remain. Argument is to force N lines from the end.
+func (s *SimpleScreen) Keep(linesFromTheEndToRemove int) {
+	if linesFromTheEndToRemove > s.numberOfPrintedLines {
+		linesFromTheEndToRemove = s.numberOfPrintedLines
+	}
+
+	if linesFromTheEndToRemove > 0 {
+		fmt.Printf("\033[%dA", linesFromTheEndToRemove)
+		fmt.Printf(strings.Repeat(strings.Repeat(" ", s.maxWidth)+"\n", linesFromTheEndToRemove))
+		fmt.Printf("\033[%dA", linesFromTheEndToRemove)
+
+		s.numberOfPrintedLines = 0
+	}
+}
+
 func (s *SimpleScreen) Refresh() {
 	if s.numberOfPrintedLines > 0 {
 		fmt.Printf("\033[%dA", s.numberOfPrintedLines)

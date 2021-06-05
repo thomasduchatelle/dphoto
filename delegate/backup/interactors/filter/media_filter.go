@@ -5,12 +5,14 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"sync"
 )
 
 type filter struct {
 	volumeId           string
 	lastVolumeSnapshot map[string]uint
 	currentSnapshot    []model.SimpleMediaSignature
+	lock               sync.Mutex
 }
 
 func NewMediaFilter(volume *model.VolumeToBackup) (*filter, error) {
@@ -22,6 +24,7 @@ func NewMediaFilter(volume *model.VolumeToBackup) (*filter, error) {
 	f := &filter{
 		volumeId:           volume.UniqueId,
 		lastVolumeSnapshot: make(map[string]uint),
+		lock:               sync.Mutex{},
 	}
 	for _, m := range snapshot {
 		f.lastVolumeSnapshot[m.RelativePath] = m.Size
@@ -31,7 +34,9 @@ func NewMediaFilter(volume *model.VolumeToBackup) (*filter, error) {
 }
 
 func (f *filter) Filter(found model.FoundMedia) bool {
+	f.lock.Lock()
 	f.currentSnapshot = append(f.currentSnapshot, *found.SimpleSignature())
+	f.lock.Unlock()
 
 	size, ok := f.lastVolumeSnapshot[found.SimpleSignature().RelativePath]
 	keep := !ok || size != found.SimpleSignature().Size
