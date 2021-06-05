@@ -170,6 +170,19 @@ func (u *ui) start() {
 						u.reloadExistingAlbum()
 						u.refresh()
 					}
+
+				case 'f':
+					record := *u.suggestions[u.selected]
+					if !record.Suggestion {
+						u.screen.Keep(1)
+						fmt.Println()
+						err = EditAlbumName(u.operations, record)
+						if err != nil {
+							panic(err)
+						}
+						u.reloadExistingAlbum()
+						u.refresh()
+					}
 				}
 
 			}
@@ -263,7 +276,7 @@ func (u *ui) refresh() {
 	if u.suggestions[u.selected].Suggestion {
 		actions = append(actions, "c: create")
 	} else {
-		actions = append(actions, "d: delete", "n: edit name", "e: edit dates")
+		actions = append(actions, "d: delete", "f: edit name", "e: edit dates")
 	}
 	u.setActions(strings.Join(actions, " ; "))
 

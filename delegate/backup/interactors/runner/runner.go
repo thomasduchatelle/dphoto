@@ -53,19 +53,14 @@ func (r *Runner) pipeFoundToReadyToAnalyseChannels(foundCh, downloadedCh chan mo
 		go func() {
 			defer group.Done()
 			for found := range foundCh {
-				if r.Filter(found) {
-					r.MDC.Debugf("Runner > downloading %s", found)
-					dl, err := r.Downloader(found)
-					if err != nil {
-						r.report.AppendError(err)
-						return
-					}
-					downloadedCh <- dl
-					r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventDownloaded, Count: 1, Size: found.SimpleSignature().Size}
-
-				} else {
-					r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventSkipped, Count: 1, Size: found.SimpleSignature().Size}
+				r.MDC.Debugf("Runner > downloading %s", found)
+				dl, err := r.Downloader(found)
+				if err != nil {
+					r.report.AppendError(err)
+					return
 				}
+				downloadedCh <- dl
+				r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventDownloaded, Count: 1, Size: found.SimpleSignature().Size}
 			}
 		}()
 	}
@@ -148,11 +143,32 @@ func (r *Runner) pipeReadyToBackupToCompletedChannels(readyToBackupChannel chan 
 }
 
 func (r *Runner) startScanning(channel chan model.FoundMedia) {
+	bufferChannel := make(chan model.FoundMedia, 255)
+	var allMedias []model.FoundMedia
+	var size uint = 0
+
 	go func() {
 		defer close(channel)
-		count, size, err := r.Source(channel)
+		for m := range bufferChannel {
+			if r.Filter(m) {
+				allMedias = append(allMedias, m)
+				size += m.SimpleSignature().Size
+			} else {
+				r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventSkipped, Count: 1, Size: m.SimpleSignature().Size}
+			}
+		}
+
+		r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventScanComplete, Count: uint(len(allMedias)), Size: size}
+
+		for _, m := range allMedias {
+			channel <- m
+		}
+	}()
+
+	go func() {
+		defer close(bufferChannel)
+		_, _, err := r.Source(bufferChannel)
 		r.report.AppendError(err)
-		r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventScanComplete, Count: count, Size: size}
 	}()
 }
 

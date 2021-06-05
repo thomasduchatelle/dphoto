@@ -86,10 +86,6 @@ func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
 		case model.ProgressEventSkipped:
 			t.skipped = t.skipped.Add(event.Count, event.Size)
 
-			t.fireDownloadedEvent()
-			t.fireAnalysedEvent()
-			t.fireUploadedEvent()
-
 		case model.ProgressEventDownloaded:
 			t.downloaded = t.downloaded.Add(event.Count, event.Size)
 			t.fireDownloadedEvent()
@@ -99,7 +95,7 @@ func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
 			t.fireAnalysedEvent()
 
 		case model.ProgressEventSkippedAfterAnalyse:
-			t.skippedBeforeUpload.Add(event.Count, event.Size)
+			t.skippedBeforeUpload = t.skippedBeforeUpload.Add(event.Count, event.Size)
 			t.fireUploadedEvent()
 
 		case model.ProgressEventUploaded:
@@ -126,7 +122,7 @@ func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
 func (t *Tracker) fireDownloadedEvent() {
 	for _, listener := range t.listeners {
 		if dispatch, ok := listener.(TrackDownloaded); ok {
-			dispatch.OnDownloaded(t.downloaded.AddCounter(t.skipped), t.total)
+			dispatch.OnDownloaded(t.downloaded, t.total)
 		}
 	}
 }
@@ -134,7 +130,7 @@ func (t *Tracker) fireDownloadedEvent() {
 func (t *Tracker) fireAnalysedEvent() {
 	for _, listener := range t.listeners {
 		if dispatch, ok := listener.(TrackAnalysed); ok {
-			dispatch.OnAnalysed(t.analysed.AddCounter(t.skipped), t.total)
+			dispatch.OnAnalysed(t.analysed, t.total)
 		}
 	}
 }
@@ -142,7 +138,7 @@ func (t *Tracker) fireAnalysedEvent() {
 func (t *Tracker) fireUploadedEvent() {
 	for _, listener := range t.listeners {
 		if dispatch, ok := listener.(TrackUploaded); ok {
-			dispatch.OnUploaded(t.uploaded.AddCounter(t.skipped).AddCounter(t.skippedBeforeUpload), t.total)
+			dispatch.OnUploaded(t.uploaded.AddCounter(t.skippedBeforeUpload), t.total)
 		}
 	}
 }
