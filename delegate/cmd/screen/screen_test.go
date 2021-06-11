@@ -23,7 +23,7 @@ func TestSimpleScreen_updateMaxLength(t *testing.T) {
 
 	for _, tt := range tests {
 		s := &SimpleScreen{}
-		s.updateMaxLength(tt.args)
+		s.updateMaxWidth(tt.args)
 		a.Equal(tt.want, s.maxWidth, tt.name)
 	}
 }

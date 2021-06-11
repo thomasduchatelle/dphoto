@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/alexeyco/simpletable v1.0.0
 	github.com/aws/aws-sdk-go v1.36.23
+	github.com/buger/goterm v1.0.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/dixonwille/skywalker v0.0.0-20170804202456-07698455332d
 	github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807

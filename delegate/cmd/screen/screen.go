@@ -3,6 +3,7 @@ package screen
 import (
 	"context"
 	"fmt"
+	"github.com/buger/goterm"
 	"strings"
 	"time"
 )
@@ -20,11 +21,19 @@ type AutoRefreshScreen struct {
 	done   chan struct{}
 }
 
+type PagePrint struct {
+	Content []Segment
+	Footer  []Segment
+}
+
 type Segment interface {
 	Content(options RenderingOptions) string
 }
 
 func NewSimpleScreen(options RenderingOptions, bars ...Segment) *SimpleScreen {
+	if options.Full {
+		goterm.Clear()
+	}
 	return &SimpleScreen{
 		lines:            bars,
 		renderingOptions: options,
@@ -32,6 +41,9 @@ func NewSimpleScreen(options RenderingOptions, bars ...Segment) *SimpleScreen {
 }
 
 func NewAutoRefreshScreen(options RenderingOptions, bars ...Segment) *AutoRefreshScreen {
+	if options.Full {
+		goterm.Clear()
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	progress := &AutoRefreshScreen{
 		SimpleScreen: SimpleScreen{
@@ -46,7 +58,8 @@ func NewAutoRefreshScreen(options RenderingOptions, bars ...Segment) *AutoRefres
 	return progress
 }
 
-func (s *SimpleScreen) Clear() {
+// ForceClear goes back to the beginning after writing white spaces everywhere
+func (s *SimpleScreen) ForceClear() {
 	if s.numberOfPrintedLines > 0 {
 		fmt.Printf("\033[%dA", s.numberOfPrintedLines)
 		fmt.Printf(strings.Repeat(strings.Repeat(" ", s.maxWidth)+"\n", s.numberOfPrintedLines))
@@ -56,35 +69,60 @@ func (s *SimpleScreen) Clear() {
 	}
 }
 
-// Keep resets the count so anything already printed will remain. Argument is to force N lines from the end.
-func (s *SimpleScreen) Keep(linesFromTheEndToRemove int) {
-	if linesFromTheEndToRemove > s.numberOfPrintedLines {
-		linesFromTheEndToRemove = s.numberOfPrintedLines
-	}
-
-	if linesFromTheEndToRemove > 0 {
-		fmt.Printf("\033[%dA", linesFromTheEndToRemove)
-		fmt.Printf(strings.Repeat(strings.Repeat(" ", s.maxWidth)+"\n", linesFromTheEndToRemove))
-		fmt.Printf("\033[%dA", linesFromTheEndToRemove)
-
-		s.numberOfPrintedLines = 0
-	}
-}
-
-func (s *SimpleScreen) Refresh() {
-	if s.numberOfPrintedLines > 0 {
+// Clear goes back to the beginning
+func (s *SimpleScreen) Clear() {
+	if s.renderingOptions.Full {
+		for s.numberOfPrintedLines > 0 {
+			goterm.ResetLine("")
+			goterm.MoveCursorBackward(1)
+			s.numberOfPrintedLines--
+		}
+		//fmt.Print("\033[H\033[2J")
+		goterm.MoveCursor(1, 1)
+		goterm.Flush()
+	} else if s.numberOfPrintedLines > 0 {
 		fmt.Printf("\033[%dA", s.numberOfPrintedLines)
 	}
 	s.numberOfPrintedLines = 0
-	for _, line := range s.lines {
-		content := strings.Trim(line.Content(s.renderingOptions), "\n")
-		s.numberOfPrintedLines += strings.Count(content, "\n") + 1
-		s.updateMaxLength(content)
-		fmt.Println(content)
+}
+
+func (s *SimpleScreen) Refresh() {
+	s.Clear()
+	s.Print(PagePrint{Content: s.lines})
+}
+
+// Print writes given segments in the output ; it doesn't keep the segments and doesn't refresh the page.
+func (s *SimpleScreen) Print(page PagePrint) {
+	footer := make([]string, len(page.Footer))
+	footerHeight := 0
+	for i, line := range page.Footer {
+		footer[i] = strings.Trim(line.Content(s.renderingOptions), "\n")
+		footerHeight += strings.Count(footer[i], "\n") + 1
+	}
+
+	content := make([]string, len(page.Content))
+	contentHeight := 0
+	for i, line := range page.Content {
+		content[i] = strings.Trim(line.Content(s.renderingOptions), "\n")
+		s.updateMaxWidth(content[i])
+		contentHeight += strings.Count(content[i], "\n") + 1
+	}
+
+	if s.renderingOptions.Full {
+		_, _ = goterm.Println(strings.Join(content, "\n"))
+		goterm.MoveCursor(1, goterm.Height()-footerHeight)
+		_, _ = goterm.Println(strings.Join(footer, "\n"))
+		goterm.Flush()
+		s.numberOfPrintedLines = goterm.Height()
+
+	} else {
+		s.numberOfPrintedLines = contentHeight + footerHeight
+		fmt.Println(strings.Join(content, "\n"))
+		fmt.Println(strings.Join(footer, "\n"))
 	}
 }
 
-func (s *SimpleScreen) updateMaxLength(content string) {
+func (s *SimpleScreen) updateMaxWidth(content string) {
 	substr := content
 	for len(substr) > 0 {
 		idx := strings.Index(substr, "\n")

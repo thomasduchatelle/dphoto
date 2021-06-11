@@ -1,4 +1,4 @@
-package scanresult
+package backupadaptor
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
@@ -50,7 +50,7 @@ func Store(volumeId string, result []*backup.FoundAlbum) error {
 	return ioutil.WriteFile(storeFile, jsonValue, 0644)
 }
 
-func Restore(volumeId string) ([]*backup.FoundAlbum, error) {
+func restore(volumeId string) ([]*backup.FoundAlbum, error) {
 	content, err := ioutil.ReadFile(storeFile)
 	if err != nil && os.IsNotExist(err) {
 		return nil, nil

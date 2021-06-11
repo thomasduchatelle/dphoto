@@ -1,4 +1,4 @@
-package interactive
+package ui
 
 import (
 	"bufio"
@@ -80,6 +80,5 @@ func ReadBool(label string, notation string) (bool, bool) {
 		return false, true
 	}
 
-	fmt.Printf("switch failed '%s'", answer)
 	return false, false
 }
