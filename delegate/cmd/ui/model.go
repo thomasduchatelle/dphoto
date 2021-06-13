@@ -31,6 +31,11 @@ type InteractiveActionsPort interface {
 	DeleteAlbum(folderName string) error
 }
 
+// UserInputPort listens user input (keyboard) to interact with the session
+type UserInputPort interface {
+	startListening()
+}
+
 type recordsState struct {
 	Records      []*Record
 	Selected     int // Selected can be -1 to not highlight any line
