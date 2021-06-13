@@ -1,25 +1,31 @@
 package ui
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
-	"os"
 	"strings"
 	"time"
 )
 
+type FormUseCase struct {
+	TerminalPort PrintReadTerminalPort
+}
+
+// NewSimpleForm creates a simple form using standard output and input
+func NewSimpleForm() *FormUseCase {
+	return &FormUseCase{TerminalPort: &FormFmtAdapter{}}
+}
+
 // ReadString read a string from the standard input
-func ReadString(label string, defaultValue string) (string, bool) {
-	reader := bufio.NewReader(os.Stdin)
+func (f *FormUseCase) ReadString(label string, defaultValue string) (string, bool) {
 	printedDefaultValue := ""
 	if defaultValue != "" {
 		printedDefaultValue = fmt.Sprintf(" [%s]", defaultValue)
 	}
-	fmt.Printf("%s%s: ", aurora.Bold(aurora.White(label)), aurora.Gray(12, printedDefaultValue))
+	f.TerminalPort.Print(fmt.Sprintf("%s%s: ", aurora.Bold(aurora.White(label)), aurora.Gray(12, printedDefaultValue)))
 
-	value, err := reader.ReadString('\n')
+	value, err := f.TerminalPort.ReadAnswer()
 	value = strings.Trim(strings.TrimSuffix(value, "\n"), " ")
 	if (err != nil || value == "") && defaultValue != "" {
 		return defaultValue, true
@@ -28,25 +34,24 @@ func ReadString(label string, defaultValue string) (string, bool) {
 }
 
 // ReadDate reads a date from standard input, return true if reading was a success.
-func ReadDate(label string, defaultValue time.Time) (time.Time, bool) {
-	reader := bufio.NewReader(os.Stdin)
+func (f *FormUseCase) ReadDate(label string, defaultValue time.Time) (time.Time, bool) {
 	printedDefaultValue := ""
 	if !defaultValue.IsZero() {
 		printedDefaultValue = fmt.Sprintf(" [%s]", defaultValue.Format("2006-01-02"))
 	}
-	fmt.Printf("%s%s: ", aurora.Bold(aurora.White(label)), aurora.Gray(12, printedDefaultValue))
+	f.TerminalPort.Print(fmt.Sprintf("%s%s: ", aurora.Bold(aurora.White(label)), aurora.Gray(12, printedDefaultValue)))
 
-	value, err := reader.ReadString('\n')
+	value, err := f.TerminalPort.ReadAnswer()
 	value = strings.Trim(strings.TrimSuffix(value, "\n"), " ")
 	if err != nil || value == "" {
 		return defaultValue, !defaultValue.IsZero()
 	}
 
-	date, err := parseDate(value)
+	date, err := f.parseDate(value)
 	return date, err == nil
 }
 
-func parseDate(value string) (time.Time, error) {
+func (f *FormUseCase) parseDate(value string) (time.Time, error) {
 	for _, layout := range []string{"2006-01-02T15:04:05", "2006-01-02"} {
 		parse, err := time.Parse(layout, value)
 		if err == nil {
@@ -58,15 +63,14 @@ func parseDate(value string) (time.Time, error) {
 }
 
 // ReadBool reads a boolean, notation can be [Y/n] if (_, false) is interpreted as positive
-func ReadBool(label string, notation string) (bool, bool) {
-	reader := bufio.NewReader(os.Stdin)
+func (f *FormUseCase) ReadBool(label string, notation string) (bool, bool) {
 	printedDefaultValue := ""
 	if notation != "" {
 		printedDefaultValue = fmt.Sprintf(" [%s]", notation)
 	}
-	fmt.Printf("%s%s: ", aurora.Bold(aurora.White(label)), aurora.Gray(12, printedDefaultValue))
+	f.TerminalPort.Print(fmt.Sprintf("%s%s: ", aurora.Bold(aurora.White(label)), aurora.Gray(12, printedDefaultValue)))
 
-	value, err := reader.ReadString('\n')
+	value, err := f.TerminalPort.ReadAnswer()
 	if err != nil {
 		return false, false
 	}

@@ -23,17 +23,39 @@ type RecordRepositoryPort interface {
 	FindRecords() ([]*Record, error)
 }
 
+type CreateAlbumPort interface {
+	Create(createRequest RecordCreation) error
+}
+
+type RenameAlbumPort interface {
+	RenameAlbum(folderName, newName string, renameFolder bool) error
+}
+
+type UpdateAlbumPort interface {
+	UpdateAlbum(folderName string, start, end time.Time) error
+}
+
+type DeleteAlbumPort interface {
+	DeleteAlbum(folderName string) error
+}
+
 // InteractiveActionsPort are actions on 'Record.Suggestion = false' records
 type InteractiveActionsPort interface {
-	Create(createRequest RecordCreation) error
-	RenameAlbum(folderName, newName string, renameFolder bool) error
-	UpdateAlbum(folderName string, start, end time.Time) error
-	DeleteAlbum(folderName string) error
+	CreateAlbumPort
+	RenameAlbumPort
+	UpdateAlbumPort
+	DeleteAlbumPort
 }
 
 // UserInputPort listens user input (keyboard) to interact with the session
 type UserInputPort interface {
 	startListening()
+}
+
+// PrintReadTerminalPort is a port to print questions (simple strings), and read answers (strings as well)
+type PrintReadTerminalPort interface {
+	Print(question string)
+	ReadAnswer() (string, error)
 }
 
 type recordsState struct {

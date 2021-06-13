@@ -1,13 +1,19 @@
 package ui
 
 import (
+	"bufio"
 	"duchatelle.io/dphoto/dphoto/cmd/screen"
+	"github.com/buger/goterm"
+	"os"
 	"strings"
 )
 
 type interactiveRender struct {
 	recordsRenderer *recordsRenderer
 	screen          *screen.SimpleScreen
+	lastPrintedPage screen.PagePrint
+	form            []*screen.Segment
+	formMode bool
 }
 
 func newInteractiveRender() *interactiveRender {
@@ -23,11 +29,13 @@ func (i *interactiveRender) Render(state *interactiveViewState) error {
 		return nil
 	}
 
+	i.formMode = false
 	i.screen.Clear()
-	i.screen.Print(screen.PagePrint{
+	i.lastPrintedPage = screen.PagePrint{
 		Content: []screen.Segment{screen.NewConstantSegment(table)},
 		Footer:  []screen.Segment{screen.NewConstantSegment(strings.Join(state.Actions, " ; "))},
-	})
+	}
+	i.screen.Print(i.lastPrintedPage)
 
 	return nil
 }
@@ -35,4 +43,18 @@ func (i *interactiveRender) Render(state *interactiveViewState) error {
 func (i *interactiveRender) Height() int {
 	_, height := i.screen.TermSize()
 	return height
+}
+
+func (i *interactiveRender) Print(question string) {
+	if !i.formMode {
+		goterm.MoveCursor(1, i.screen.ContentHeight()+2)
+		i.formMode = true
+	}
+	_, _ = goterm.Print(question)
+	goterm.Flush()
+}
+
+func (i *interactiveRender) ReadAnswer() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	return reader.ReadString('\n')
 }

@@ -11,6 +11,7 @@ import (
 type SimpleScreen struct {
 	lines                []Segment
 	numberOfPrintedLines int
+	contentHeight        int
 	renderingOptions     RenderingOptions
 	maxWidth             int
 }
@@ -73,7 +74,7 @@ func (s *SimpleScreen) ForceClear() {
 func (s *SimpleScreen) Clear() {
 	if s.renderingOptions.Full {
 		goterm.MoveCursor(1, 1)
-		for l := 1 ; l < goterm.Height() ; l++ {
+		for l := 1; l < goterm.Height(); l++ {
 			_, _ = goterm.Println(strings.Repeat(" ", goterm.Width()))
 		}
 		goterm.Flush()
@@ -105,6 +106,7 @@ func (s *SimpleScreen) Print(page PagePrint) {
 		contentHeight += strings.Count(content[i], "\n") + 1
 	}
 
+	s.contentHeight = contentHeight
 	if s.renderingOptions.Full {
 		goterm.MoveCursor(1, 1)
 		_, _ = goterm.Println(strings.Join(content, "\n"))
@@ -142,8 +144,14 @@ func (s *SimpleScreen) updateMaxWidth(content string) {
 	}
 }
 
+// TermSize returns the size of the terminal, in chars
 func (s *SimpleScreen) TermSize() (int, int) {
 	return goterm.Width(), goterm.Height()
+}
+
+// ContentHeight returns number of lines used in content (excluding footer)
+func (s *SimpleScreen) ContentHeight() int {
+	return s.contentHeight
 }
 
 func (s *AutoRefreshScreen) start(ctx context.Context) {

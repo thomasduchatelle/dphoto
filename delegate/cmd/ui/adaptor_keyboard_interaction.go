@@ -1,6 +1,8 @@
 package ui
 
-import "github.com/eiannone/keyboard"
+import (
+	"github.com/eiannone/keyboard"
+)
 
 type keyboardInteractionAdaptor struct {
 	session *InteractiveSession
@@ -36,72 +38,27 @@ func (a *keyboardInteractionAdaptor) startListening() {
 			a.session.PreviousPage()
 			a.session.Refresh()
 
+		case keyboard.KeyDelete:
+			a.session.DeleteSelectedAlbum()
+			a.session.Refresh()
+
 		default:
 			switch ck {
-			//case 'c':
-			//	record := *a.state.Records[a.state.Selected]
-			//	if record.Suggestion {
-			//		a.screen.Keep(1)
-			//		fmt.Println()
-			//
-			//		err = CreateAlbumForm(a.operations, record)
-			//		a.state.Records = append(a.state.Records[:a.state.Selected], a.state.Records[a.state.Selected+1:]...)
-			//		if err != nil {
-			//			panic(err)
-			//		}
-			//		a.reloadExistingAlbum()
-			//		a.Refresh()
-			//	}
-			//
-			//case 'n':
-			//	a.screen.Keep(1)
-			//	fmt.Println()
-			//
-			//	err = CreateAlbumForm(a.operations, Record{})
-			//	if err != nil {
-			//		panic(err)
-			//	}
-			//	a.reloadExistingAlbum()
-			//	a.Refresh()
-			//
-			//case 'd':
-			//	record := *a.state.Records[a.state.Selected]
-			//	if !record.Suggestion {
-			//		a.screen.Keep(1)
-			//		fmt.Println()
-			//		err = DeleteAlbum(a.operations, record)
-			//		if err != nil {
-			//			panic(err)
-			//		}
-			//		a.reloadExistingAlbum()
-			//		a.Refresh()
-			//	}
-			//
-			//case 'e':
-			//	record := *a.state.Records[a.state.Selected]
-			//	if !record.Suggestion {
-			//		a.screen.Keep(1)
-			//		fmt.Println()
-			//		err = EditAlbumDates(a.operations, record)
-			//		if err != nil {
-			//			panic(err)
-			//		}
-			//		a.reloadExistingAlbum()
-			//		a.Refresh()
-			//	}
-			//
-			//case 'f':
-			//	record := *a.state.Records[a.state.Selected]
-			//	if !record.Suggestion {
-			//		a.screen.Keep(1)
-			//		fmt.Println()
-			//		err = EditAlbumName(a.operations, record)
-			//		if err != nil {
-			//			panic(err)
-			//		}
-			//		a.reloadExistingAlbum()
-			//		a.Refresh()
-			//	}
+			case 'c':
+				a.session.CreateFromSelectedSuggestion()
+				a.session.Refresh()
+
+			case 'n':
+				a.session.CreateNew()
+				a.session.Refresh()
+
+			case 'd':
+				a.session.EditSelectedAlbumDates()
+				a.session.Refresh()
+
+			case 'e':
+				a.session.EditSelectedAlbumName()
+				a.session.Refresh()
 			}
 
 		}

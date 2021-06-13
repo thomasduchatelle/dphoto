@@ -8,37 +8,57 @@ import (
 type InteractiveSession struct {
 	actionsPort    InteractiveActionsPort
 	catchError     atomic.Value
+	removedRecords map[Record]interface{}
 	renderer       *interactiveRender
 	repositoryPort RecordRepositoryPort
 	state          interactiveViewState
-	userInputPort  UserInputPort
 }
 
 func NewInteractiveSession(actions InteractiveActionsPort, repositories ...RecordRepositoryPort) *InteractiveSession {
 	return &InteractiveSession{
 		actionsPort:    actions,
+		removedRecords: make(map[Record]interface{}),
 		renderer:       newInteractiveRender(),
 		repositoryPort: NewRepositoryAggregator(repositories...),
 		state: interactiveViewState{
 			recordsState: recordsState{},
 			Actions:      nil,
 		},
-		userInputPort: new(keyboardInteractionAdaptor),
 	}
 }
 
 func (i *InteractiveSession) Start() error {
+	i.state.PageSize = i.renderer.Height() - 15
+	i.reloadRecords()
+
+	keyboardPort := keyboardInteractionAdaptor{
+		session: i,
+	}
+	keyboardPort.startListening()
+
+	err, _ := i.catchError.Load().(error)
+	return err
+}
+
+func (i *InteractiveSession) reloadRecords() {
 	records, err := i.repositoryPort.FindRecords()
 	if err != nil {
-		return err
+		i.catchError.Store(err)
+		return
 	}
-	i.state.Records = records
-	i.state.PageSize = i.renderer.Height() - 15
 
-	i.userInputPort.startListening()
+	i.state.Records = i.state.Records[:0]
+	for _, record := range records {
+		if _, present := i.removedRecords[*record]; !present {
+			i.state.Records = append(i.state.Records, record)
+		}
+	}
 
-	err, _ = i.catchError.Load().(error)
-	return err
+	if i.state.Selected >= len(i.state.Records) {
+		// safeguard that won't happen unless anther process deleted some albums
+		i.state.Selected = 0
+		i.state.FirstElement = 0
+	}
 }
 
 func (i *InteractiveSession) MoveDown() {
@@ -111,8 +131,75 @@ func (i *InteractiveSession) updateActions() {
 	if i.state.Records[i.state.Selected].Suggestion {
 		actions = append(actions, "C: create")
 	} else {
-		actions = append(actions, "D: delete", "F: edit name", "E: edit dates")
+		actions = append(actions, "DEL: delete", "E: edit name", "D: edit dates")
 	}
 
 	i.state.Actions = actions
+}
+
+func (i *InteractiveSession) CreateFromSelectedSuggestion() {
+	record := *i.state.Records[i.state.Selected]
+	if record.Suggestion {
+		ok, err := NewCreateAlbumForm(i.actionsPort, i.renderer).AlbumForm(record)
+		if err != nil {
+			i.catchError.Store(err)
+			return
+		}
+
+		if ok {
+			i.removedRecords[record] = nil
+			i.reloadRecords()
+		}
+	}
+}
+
+func (i *InteractiveSession) CreateNew() {
+	_, err := NewCreateAlbumForm(i.actionsPort, i.renderer).AlbumForm(Record{})
+	if err != nil {
+		i.catchError.Store(err)
+		return
+	}
+
+	i.reloadRecords()
+}
+
+func (i *InteractiveSession) DeleteSelectedAlbum() {
+	record := *i.state.Records[i.state.Selected]
+	if !record.Suggestion {
+		deleted, err := NewDeleteAlbumForm(i.actionsPort, i.renderer).DeleteAlbum(record)
+		if err != nil {
+			i.catchError.Store(err)
+			return
+		}
+
+		if deleted {
+			i.state.Records = append(i.state.Records[:i.state.Selected], i.state.Records[i.state.Selected+1:]...)
+		}
+	}
+}
+
+func (i *InteractiveSession) EditSelectedAlbumDates() {
+	record := *i.state.Records[i.state.Selected]
+	if !record.Suggestion {
+		err := NewEditAlbumDateForm(i.actionsPort, i.renderer).EditAlbumDates(record)
+		if err != nil {
+			i.catchError.Store(err)
+			return
+		}
+
+		i.reloadRecords()
+	}
+}
+
+func (i *InteractiveSession) EditSelectedAlbumName() {
+	record := *i.state.Records[i.state.Selected]
+	if !record.Suggestion {
+		err := NewRenameAlbumForm(i.actionsPort, i.renderer).EditAlbumName(record)
+		if err != nil {
+			i.catchError.Store(err)
+			return
+		}
+
+		i.reloadRecords()
+	}
 }

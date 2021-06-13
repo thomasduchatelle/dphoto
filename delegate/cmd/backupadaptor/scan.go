@@ -23,7 +23,7 @@ func ScanWithCache(volume string) (ui.RecordRepositoryPort, int, error) {
 	}
 
 	if len(previousResult) > 0 {
-		useState, ok := ui.ReadBool("Previous result has been found for this volume, do you want to restore it?", "Y/n")
+		useState, ok := ui.NewSimpleForm().ReadBool("Previous result has been found for this volume, do you want to restore it?", "Y/n")
 		if !ok || useState {
 			return NewSuggestionRepository(previousResult), len(previousResult), err
 		}

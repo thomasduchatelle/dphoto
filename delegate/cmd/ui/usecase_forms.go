@@ -2,63 +2,116 @@ package ui
 
 import "github.com/logrusorgru/aurora/v3"
 
-func CreateAlbumForm(operations InteractiveActionsPort, record Record) error {
+type AlbumFormSession struct {
+	actionPort CreateAlbumPort
+	form       *FormUseCase
+}
+type DeleteSession struct {
+	actionPort DeleteAlbumPort
+	form       *FormUseCase
+}
+type EditDateSession struct {
+	actionPort UpdateAlbumPort
+	form       *FormUseCase
+}
+type RenameSession struct {
+	actionPort RenameAlbumPort
+	form       *FormUseCase
+}
+
+func NewCreateAlbumForm(actionsPort CreateAlbumPort, terminalPort PrintReadTerminalPort) *AlbumFormSession {
+	return &AlbumFormSession{
+		actionPort: actionsPort,
+		form: &FormUseCase{
+			TerminalPort: terminalPort,
+		},
+	}
+}
+
+func NewDeleteAlbumForm(actionPort DeleteAlbumPort, terminalPort PrintReadTerminalPort) *DeleteSession {
+	return &DeleteSession{
+		actionPort: actionPort,
+		form: &FormUseCase{
+			TerminalPort: terminalPort,
+		},
+	}
+}
+
+func NewEditAlbumDateForm(actionPort UpdateAlbumPort, terminalPort PrintReadTerminalPort) *EditDateSession {
+	return &EditDateSession{
+		actionPort: actionPort,
+		form: &FormUseCase{
+			TerminalPort: terminalPort,
+		},
+	}
+}
+
+func NewRenameAlbumForm(actionPort RenameAlbumPort, terminalPort PrintReadTerminalPort) *RenameSession {
+	return &RenameSession{
+		actionPort: actionPort,
+		form: &FormUseCase{
+			TerminalPort: terminalPort,
+		},
+	}
+}
+
+func (a *AlbumFormSession) AlbumForm(record Record) (bool, error) {
 	creation := RecordCreation{}
 	var ok bool
 
-	creation.Name, ok = ReadString("Name of the album", record.Name)
+	creation.Name, ok = a.form.ReadString("Name of the album", record.Name)
 	if !ok {
-		return nil
+		return false, nil
 	}
 
-	creation.FolderName, _ = ReadString("Folder name (leave blank for automatically generated)", "")
+	creation.FolderName, _ = a.form.ReadString("Folder name (leave blank for automatically generated)", "")
 
-	creation.Start, ok = ReadDate("Start date", record.Start)
+	creation.Start, ok = a.form.ReadDate("Start date", record.Start)
 	if !ok {
-		return nil
+		return false, nil
 	}
 
-	creation.End, ok = ReadDate("End date", record.End)
+	creation.End, ok = a.form.ReadDate("End date", record.End)
 	if !ok {
-		return nil
+		return false, nil
 	}
 
-	return operations.Create(creation)
+	return true, a.actionPort.Create(creation)
 }
 
-func DeleteAlbum(operations InteractiveActionsPort, record Record) error {
+func (s *DeleteSession) DeleteAlbum(record Record) (bool, error) {
 	const pattern = "02/01/2006"
-	proceed, ok := ReadBool(aurora.Sprintf("Are you sure you want to delete %s (%s) [%s -> %s] with %d medias in it?", aurora.Cyan(record.Name), record.FolderName, record.Start.Format(pattern), record.End.Format(pattern), record.Count), "y/N")
+	proceed, ok := s.form.ReadBool(aurora.Sprintf("Are you sure you want to delete %s (%s) [%s -> %s] with %d medias in it?", aurora.Cyan(record.Name), record.FolderName, record.Start.Format(pattern), record.End.Format(pattern), record.Count), "y/N")
 	if ok && proceed {
-		return operations.DeleteAlbum(record.FolderName)
+		return true, s.actionPort.DeleteAlbum(record.FolderName)
 	}
 
-	return nil
+	return false, nil
 }
 
-func EditAlbumDates(operations InteractiveActionsPort, record Record) error {
-	start, ok := ReadDate("Start date", record.Start)
+func (s *EditDateSession) EditAlbumDates(record Record) error {
+	start, ok := s.form.ReadDate("Start date", record.Start)
 	if !ok {
 		return nil
 	}
 
-	end, ok := ReadDate("End date", record.End)
+	end, ok := s.form.ReadDate("End date", record.End)
 	if !ok {
 		return nil
 	}
 
-	return operations.UpdateAlbum(record.FolderName, start, end)
+	return s.actionPort.UpdateAlbum(record.FolderName, start, end)
 }
 
-func EditAlbumName(operations InteractiveActionsPort, record Record) error {
-	newName, ok := ReadString("Name of the album", record.Name)
+func (s *RenameSession) EditAlbumName(record Record) error {
+	newName, ok := s.form.ReadString("Name of the album", record.Name)
 	if !ok {
 		return nil
 	}
 
 	if newName != record.Name {
-		proceed, ok := ReadBool(aurora.Sprintf("Re-generate folder name /%s ?", aurora.Cyan(record.FolderName)), "[Y/n]")
-		return operations.RenameAlbum(record.FolderName, newName, !ok || proceed)
+		proceed, ok := s.form.ReadBool(aurora.Sprintf("Re-generate folder name /%s", aurora.Cyan(record.FolderName)), "Y/n")
+		return s.actionPort.RenameAlbum(record.FolderName, newName, !ok || proceed)
 	}
 
 	return nil
