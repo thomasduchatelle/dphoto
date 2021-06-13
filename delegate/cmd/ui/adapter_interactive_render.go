@@ -13,7 +13,7 @@ type interactiveRender struct {
 	screen          *screen.SimpleScreen
 	lastPrintedPage screen.PagePrint
 	form            []*screen.Segment
-	formMode bool
+	formMode        bool
 }
 
 func newInteractiveRender() *interactiveRender {

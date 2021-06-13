@@ -9,7 +9,7 @@ import (
 type ProgressBarSegment struct {
 	done  uint
 	total uint
-	lock sync.RWMutex
+	lock  sync.RWMutex
 }
 
 func NewProgressBarSegment() (Segment, func(uint, uint)) {

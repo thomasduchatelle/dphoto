@@ -17,7 +17,7 @@ func Success(format string, args ...interface{}) {
 }
 
 // Error prints the error with description
-func Error(err error, format string, args...interface{}) {
+func Error(err error, format string, args ...interface{}) {
 	fmt.Println(fmt.Sprintf("%s: %s", aurora.Red("error"), err.Error()))
 	fmt.Println(aurora.Sprintf(aurora.Red(format), args...))
 }

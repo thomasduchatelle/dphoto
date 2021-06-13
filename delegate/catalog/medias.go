@@ -49,7 +49,7 @@ func RelocateMovedMedias(operator MoveMediaOperator) (int, error) {
 
 	count := 0
 	pageToken := ""
-	for operator.Continue() && (pageToken != "" || count == 0){
+	for operator.Continue() && (pageToken != "" || count == 0) {
 		var moves []*MovedMedia
 		moves, pageToken, err = Repository.FindFilesToMove(transactionId, pageToken)
 		if len(moves) == 0 {

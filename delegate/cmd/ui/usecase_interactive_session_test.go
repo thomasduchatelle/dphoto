@@ -123,7 +123,6 @@ func TestInteractiveSession_NextPage(t *testing.T) {
 	}
 }
 
-
 func TestInteractiveSession_PreviousPage(t *testing.T) {
 	a := assert.New(t)
 
@@ -180,7 +179,7 @@ func newTestRecords(selected, size, first int) recordsState {
 }
 
 func newNoSuggestionActions(paging ...string) []string {
-	return append(paging, "ESC: exit", "N: new", "D: delete", "F: edit name", "E: edit dates")
+	return append(paging, "ESC: exit", "N: new", "DEL: delete", "E: edit name", "D: edit dates")
 }
 
 func newSuggestionActions(paging ...string) []string {

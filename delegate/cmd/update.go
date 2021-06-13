@@ -10,9 +10,9 @@ import (
 
 var (
 	updateArgs = struct {
-		folderName   string
-		start        string
-		end          string
+		folderName string
+		start      string
+		end        string
 	}{}
 )
 

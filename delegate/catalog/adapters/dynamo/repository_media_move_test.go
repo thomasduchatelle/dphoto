@@ -19,7 +19,7 @@ func setupTest(name string) *Rep {
 		db:                      dynamodb.New(session.Must(session.NewSession(&aws.Config{Region: aws.String("eu-west-1")})), &aws.Config{Endpoint: aws.String("http://localhost:8000")}),
 		findMovedMediaBatchSize: 25,
 		localDynamodb:           true,
-		RootOwner:               "UN ITTEST#2",
+		RootOwner:               "UNITTEST#2",
 		table:                   fmt.Sprintf("test-medias-move-%s-%s", name, suffix),
 	}
 

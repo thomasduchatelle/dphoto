@@ -139,7 +139,7 @@ func (s *SimpleScreen) updateMaxWidth(content string) {
 		}
 	}
 
-	if s.maxWidth > goterm.Width() {
+	if goterm.Width() > 0 && s.maxWidth > goterm.Width() {
 		s.maxWidth = goterm.Width()
 	}
 }

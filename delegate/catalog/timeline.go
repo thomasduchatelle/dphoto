@@ -10,7 +10,7 @@ import (
 // Timeline can be used to find to which album a media will belongs.
 type Timeline struct {
 	segments []segment
-	albums []*Album // albums is only used to re-generate a new Timeline
+	albums   []*Album // albums is only used to re-generate a new Timeline
 }
 
 type segment struct {
@@ -200,7 +200,7 @@ func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment
 
 // AppendAlbum generates a new timeline from memory
 func (t *Timeline) AppendAlbum(album *Album) (*Timeline, error) {
-	albums := make([]*Album, len(t.albums) + 1)
+	albums := make([]*Album, len(t.albums)+1)
 	albums[0] = album
 	copy(albums[1:], t.albums)
 

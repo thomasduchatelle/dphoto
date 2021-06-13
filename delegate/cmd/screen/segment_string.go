@@ -4,14 +4,14 @@ import "sync"
 
 type StringSegment struct {
 	content string
-	lock sync.RWMutex
+	lock    sync.RWMutex
 }
 
 // NewConstantSegment creates a constant segment
 func NewConstantSegment(content string) Segment {
 	return &StringSegment{
 		content: content,
-		lock: sync.RWMutex{},
+		lock:    sync.RWMutex{},
 	}
 }
 
