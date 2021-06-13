@@ -32,8 +32,10 @@ type InteractiveActionsPort interface {
 }
 
 type recordsState struct {
-	Records  []*Record
-	Selected int // Selected can be -1 to not highlight any line
+	Records      []*Record
+	Selected     int // Selected can be -1 to not highlight any line
+	PageSize     int
+	FirstElement int
 }
 
 type interactiveViewState struct {

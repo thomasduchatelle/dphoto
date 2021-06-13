@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"github.com/eiannone/keyboard"
 	"sync/atomic"
 )
@@ -33,6 +34,7 @@ func (i *InteractiveSession) Start() error {
 		return err
 	}
 	i.state.Records = records
+	i.state.PageSize = i.renderer.Height() - 15
 
 	i.actionListener()
 
@@ -56,11 +58,19 @@ func (i *InteractiveSession) actionListener() {
 				return
 
 			case keyboard.KeyArrowDown:
-				i.state.Selected = (i.state.Selected + 1) % len(i.state.Records)
+				i.MoveDown()
 				i.refresh()
 
 			case keyboard.KeyArrowUp:
-				i.state.Selected = (len(i.state.Records) + i.state.Selected - 1) % len(i.state.Records)
+				i.MoveUp()
+				i.refresh()
+
+			case keyboard.KeyPgdn:
+				i.NextPage()
+				i.refresh()
+
+			case keyboard.KeyPgup:
+				i.PreviousPage()
 				i.refresh()
 
 			default:
@@ -140,14 +150,67 @@ func (i *InteractiveSession) actionListener() {
 	<-i.done
 }
 
+func (i *InteractiveSession) MoveDown() {
+	i.state.Selected = (i.state.Selected + 1) % len(i.state.Records)
+	if i.state.Selected >= i.state.FirstElement+i.state.PageSize || i.state.Selected < i.state.FirstElement {
+		i.state.FirstElement = i.state.PageSize * (i.state.Selected / i.state.PageSize)
+	}
+	i.updateActions()
+}
+
+func (i *InteractiveSession) MoveUp() {
+	i.state.Selected = (len(i.state.Records) + i.state.Selected - 1) % len(i.state.Records)
+	if i.state.Selected >= i.state.FirstElement+i.state.PageSize || i.state.Selected < i.state.FirstElement {
+		i.state.FirstElement = i.state.PageSize * (i.state.Selected / i.state.PageSize)
+	}
+	i.updateActions()
+}
+
+func (i *InteractiveSession) NextPage() {
+	if i.state.PageSize < len(i.state.Records) {
+		i.state.FirstElement += i.state.PageSize
+		if i.state.FirstElement >= len(i.state.Records) {
+			i.state.FirstElement = 0
+		}
+		i.state.Selected = i.state.FirstElement
+		i.updateActions()
+	}
+}
+
+func (i *InteractiveSession) PreviousPage() {
+	if i.state.PageSize < len(i.state.Records) {
+		i.state.FirstElement -= i.state.PageSize
+		if i.state.FirstElement < 0 {
+			i.state.FirstElement = i.state.PageSize * ((len(i.state.Records) - 1) / i.state.PageSize)
+		}
+		i.state.Selected = i.state.FirstElement
+		i.updateActions()
+	}
+}
+
 // refresh update available actions depending on selected line, and refresh the screen
 func (i *InteractiveSession) refresh() {
+	err := i.renderer.Render(&i.state)
+	if err != nil {
+		i.catchError.Store(err)
+	}
+}
+
+func (i *InteractiveSession) updateActions() {
 	actions := []string{
 		"ESC: exit",
 		"N: new",
 	}
-	if i.state.Selected < 0 || i.state.Selected >= len(i.state.Records) {
-		i.state.Selected = 0
+	if len(i.state.Records) > i.state.PageSize {
+		incompletePage := 0
+		if len(i.state.Records)%i.state.PageSize > 0 {
+			incompletePage = 1
+		}
+		actions = append([]string{
+			fmt.Sprintf("page %d/%d", 1+i.state.FirstElement/i.state.PageSize, incompletePage+len(i.state.Records)/i.state.PageSize),
+			"DOWN: next page",
+			"UP: previous page",
+		}, actions...)
 	}
 	if i.state.Records[i.state.Selected].Suggestion {
 		actions = append(actions, "C: create")
@@ -156,8 +219,4 @@ func (i *InteractiveSession) refresh() {
 	}
 
 	i.state.Actions = actions
-	err := i.renderer.Render(&i.state)
-	if err != nil {
-		i.catchError.Store(err)
-	}
 }

@@ -11,6 +11,22 @@ type recordsRenderer struct{}
 func (r *recordsRenderer) Render(state *recordsState) (string, error) {
 	const layout = "02/01/2006 (Mon)"
 
+	records := state.Records
+	start := state.FirstElement
+	if state.PageSize > 0 && state.PageSize < len(state.Records) {
+		if start < 0 {
+			start = 0
+		} else if start >= len(state.Records) {
+			start = len(state.Records) - 1
+		}
+		end := start + state.PageSize
+		if end >= len(state.Records) {
+			end = len(state.Records)
+		}
+
+		records = records[start:end]
+	}
+
 	table := simpletable.New()
 	table.Header = &simpletable.Header{Cells: []*simpletable.Cell{
 		{Text: "Name"},
@@ -19,10 +35,10 @@ func (r *recordsRenderer) Render(state *recordsState) (string, error) {
 		{Text: "End"},
 		{Text: "Files"},
 	}}
-	table.Body = &simpletable.Body{Cells: make([][]*simpletable.Cell, len(state.Records))}
+	table.Body = &simpletable.Body{Cells: make([][]*simpletable.Cell, len(records))}
 
-	for idx, album := range state.Records {
-		isSelected := state.Selected == idx
+	for idx, album := range records {
+		isSelected := state.Selected == (idx + start)
 
 		countContent := "-"
 		if album.Count > 0 {

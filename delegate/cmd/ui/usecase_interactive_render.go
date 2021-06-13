@@ -31,3 +31,8 @@ func (i *interactiveRender) Render(state *interactiveViewState) error {
 
 	return nil
 }
+
+func (i *interactiveRender) Height() int {
+	_, height := i.screen.TermSize()
+	return height
+}

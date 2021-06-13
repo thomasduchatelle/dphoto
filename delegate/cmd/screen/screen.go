@@ -72,13 +72,10 @@ func (s *SimpleScreen) ForceClear() {
 // Clear goes back to the beginning
 func (s *SimpleScreen) Clear() {
 	if s.renderingOptions.Full {
-		for s.numberOfPrintedLines > 0 {
-			goterm.ResetLine("")
-			goterm.MoveCursorBackward(1)
-			s.numberOfPrintedLines--
-		}
-		//fmt.Print("\033[H\033[2J")
 		goterm.MoveCursor(1, 1)
+		for l := 1 ; l < goterm.Height() ; l++ {
+			_, _ = goterm.Println(strings.Repeat(" ", goterm.Width()))
+		}
 		goterm.Flush()
 	} else if s.numberOfPrintedLines > 0 {
 		fmt.Printf("\033[%dA", s.numberOfPrintedLines)
@@ -109,6 +106,7 @@ func (s *SimpleScreen) Print(page PagePrint) {
 	}
 
 	if s.renderingOptions.Full {
+		goterm.MoveCursor(1, 1)
 		_, _ = goterm.Println(strings.Join(content, "\n"))
 		goterm.MoveCursor(1, goterm.Height()-footerHeight)
 		_, _ = goterm.Println(strings.Join(footer, "\n"))
@@ -138,6 +136,14 @@ func (s *SimpleScreen) updateMaxWidth(content string) {
 			substr = ""
 		}
 	}
+
+	if s.maxWidth > goterm.Width() {
+		s.maxWidth = goterm.Width()
+	}
+}
+
+func (s *SimpleScreen) TermSize() (int, int) {
+	return goterm.Width(), goterm.Height()
 }
 
 func (s *AutoRefreshScreen) start(ctx context.Context) {
