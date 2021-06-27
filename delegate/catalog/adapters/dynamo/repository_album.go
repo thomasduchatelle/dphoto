@@ -10,16 +10,17 @@ import (
 )
 
 func (r *Rep) FindAllAlbums() ([]*catalog.Album, error) {
-	data, err := r.db.Query(&dynamodb.QueryInput{
+	query := &dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":owner":     r.mustAttribute(r.RootOwner),
 			":albumOnly": r.mustAttribute("ALBUM#"),
 		},
 		KeyConditionExpression: aws.String("PK = :owner AND begins_with(SK, :albumOnly)"),
 		TableName:              &r.table,
-	})
+	}
+	data, err := r.db.Query(query)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while searching all albums")
+		return nil, errors.Wrapf(err, "DynamoDb Query failed: %s", query)
 	}
 
 	albums := make([]*catalog.Album, 0, len(data.Items))

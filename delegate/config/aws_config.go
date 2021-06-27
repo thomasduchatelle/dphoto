@@ -27,8 +27,8 @@ func Listen(listener Listener) {
 	}
 }
 
-// Connect must be called by main function, it dispatches the config to all components requiring it.
-func Connect() {
+// Connect must be called by main function, it dispatches the config to all components requiring it. Set ignite to TRUE to connect to AWS (required for most commands)
+func Connect(ignite bool) {
 	if ForcedConfigFile == "" {
 		viper.SetConfigName("dphoto")
 		viper.AddConfigPath(".")
@@ -43,22 +43,24 @@ func Connect() {
 		panic(fmt.Errorf("Fatal error while loading configuration: %s \n", err))
 	}
 
-	// use explicit config to avoid creating unwanted environment
-	sess := session.Must(session.NewSession(&aws.Config{
-		Credentials: credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
-		Endpoint:    awsString(viper.GetString("aws.endpoint")),
-		Region:      aws.String(viper.GetString("aws.region")),
-	}))
+	if ignite {
+		// use explicit config to avoid creating unwanted environment
+		sess := session.Must(session.NewSession(&aws.Config{
+			Credentials: credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
+			Endpoint:    awsString(viper.GetString("aws.endpoint")),
+			Region:      aws.String(viper.GetString("aws.region")),
+		}))
 
-	config = &viperConfig{
-		Viper:      viper.GetViper(),
-		awsSession: sess,
-	}
+		config = &viperConfig{
+			Viper:      viper.GetViper(),
+			awsSession: sess,
+		}
 
-	for _, l := range listeners {
-		l(config)
+		for _, l := range listeners {
+			l(config)
+		}
+		log.Debugf("Config > %d adapters connected", len(listeners))
 	}
-	log.Debugf("Config > %d adapters connected", len(listeners))
 }
 
 func awsString(value string) *string {

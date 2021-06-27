@@ -49,7 +49,7 @@ var rootCmd = &cobra.Command{
 		}).Debugln("Logger setup, starts program...")
 
 		// complete initialisation on components
-		config.Connect()
+		config.Connect(cmd.Name() != "configure")
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		log.Debugln("Program complete.")
