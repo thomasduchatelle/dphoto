@@ -282,36 +282,29 @@ func (r *Rep) UpdateMediasLocation(transactionId string, moves []*catalog.MovedM
 		}
 	}
 
-	err := r.bufferedWriteItems(locations)
-	if err != nil {
-		return err
-	}
-
-	return r.deleteMoveTransactionIfEmpty(transactionId)
+	return r.bufferedWriteItems(locations)
 }
 
-func (r *Rep) deleteMoveTransactionIfEmpty(transactionId string) error {
+func (r *Rep) DeleteEmptyMoveTransaction(transactionId string) error {
 	count, err := r.countNumberOfMediaToBeMoved(transactionId)
 	if err != nil {
 		return err
 	}
 
-	if count == 1 {
-		log.WithField("MoveTransactionId", transactionId).Infoln("Move transaction completed.")
+	if count > 0 {
+		return errors.Errorf("Move transaction must be empty to be deleted. %s contains %d media to move", transactionId, count)
+	}
 
-		key, err := dynamodbattribute.MarshalMap(r.moveTransactionPrimaryKey(transactionId))
-		if err != nil {
-			return err
-		}
-
-		_, err = r.db.DeleteItem(&dynamodb.DeleteItemInput{
-			Key:       key,
-			TableName: &r.table,
-		})
+	key, err := dynamodbattribute.MarshalMap(r.moveTransactionPrimaryKey(transactionId))
+	if err != nil {
 		return err
 	}
 
-	return nil
+	_, err = r.db.DeleteItem(&dynamodb.DeleteItemInput{
+		Key:       key,
+		TableName: &r.table,
+	})
+	return err
 }
 
 func (r *Rep) countNumberOfMediaToBeMoved(transactionId string) (int, error) {

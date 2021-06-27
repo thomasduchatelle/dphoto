@@ -116,7 +116,7 @@ func (s *SimpleScreen) Print(page PagePrint) {
 		s.numberOfPrintedLines = goterm.Height()
 
 	} else {
-		s.numberOfPrintedLines = contentHeight + footerHeight
+		s.numberOfPrintedLines = contentHeight + footerHeight + 1
 		fmt.Println(strings.Join(content, "\n"))
 		fmt.Println(strings.Join(footer, "\n"))
 	}
