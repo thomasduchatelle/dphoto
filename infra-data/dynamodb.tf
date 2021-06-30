@@ -35,6 +35,7 @@ data "aws_iam_policy_document" "index_rw" {
     ]
     resources = [
       local.dynamodb_table_arn,
+      "${local.dynamodb_table_arn}/*",
     ]
   }
 }

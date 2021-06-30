@@ -6,6 +6,7 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/pkg/errors"
 	"path"
+	"regexp"
 	"sort"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 
 type FoundAlbum struct {
 	Name       string
+	FolderName string // FolderName is the original folder name (Name with date prefix that have been removed)
 	Start, End time.Time
 }
 
@@ -23,6 +25,10 @@ type scanCompleteListener interface {
 type analyseProgressListener interface {
 	OnAnalyseProgress(count, total uint)
 }
+
+var (
+	datePrefix = regexp.MustCompile("^[0-9]{4}-[01Q][0-9][-_]")
+)
 
 // DiscoverAlbumFromSource scan a source to discover albums based on original folder structure
 func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface{}) ([]*FoundAlbum, error) {
@@ -35,16 +41,16 @@ func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface
 
 	albums := make(map[string]*FoundAlbum)
 	for count, found := range medias {
-		analysed, err := analyser.AnalyseMedia(found)
+		_, details, err := analyser.ExtractTypeAndDetails(found)
 		if err != nil {
 			return nil, err
 		}
 
-		dir := path.Dir(analysed.FoundMedia.Filename())
+		dir := path.Dir(found.Filename())
 		if album, ok := albums[dir]; ok {
-			album.pushBoundaries(analysed.Details.DateTime)
+			album.pushBoundaries(details.DateTime)
 		} else {
-			albums[dir] = newFoundAlbum(dir, analysed.Details.DateTime)
+			albums[dir] = newFoundAlbum(dir, details.DateTime)
 		}
 
 		triggerProgress(listeners, count, len(medias))
@@ -103,10 +109,14 @@ func scanMediaSource(volume model.VolumeToBackup) ([]model.FoundMedia, error) {
 }
 
 func newFoundAlbum(albumFullPath string, date time.Time) *FoundAlbum {
+	name := path.Base(albumFullPath)
+	name = datePrefix.ReplaceAllString(name, "")
+
 	return &FoundAlbum{
-		Name:  path.Base(albumFullPath),
-		Start: atStartOfDay(date),
-		End:   atStartOfFollowingDay(date),
+		Name:       name,
+		FolderName: path.Base(albumFullPath),
+		Start:      atStartOfDay(date),
+		End:        atStartOfFollowingDay(date),
 	}
 }
 func (a *FoundAlbum) pushBoundaries(date time.Time) {

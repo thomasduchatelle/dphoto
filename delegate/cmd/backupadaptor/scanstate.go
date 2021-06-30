@@ -23,7 +23,7 @@ type stateContent struct {
 
 func init() {
 	config.Listen(func(cfg config.Config) {
-		dir := cfg.GetString("local.home")
+		dir := cfg.GetStringOrDefault("local.home", os.ExpandEnv("$HOME/.dphoto"))
 
 		storeDir, err := filepath.Abs(dir)
 		if err != nil {

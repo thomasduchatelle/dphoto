@@ -33,22 +33,9 @@ var SupportedExtensions = map[string]model.MediaType{
 }
 
 func AnalyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
-	mediaType := getMediaType(found)
-
-	details := &model.MediaDetails{
-		DateTime: found.LastModificationDate(),
-	}
-
-	if mediaType == model.MediaTypeImage {
-		content, err := found.ReadMedia()
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
-		}
-
-		details, err = interactors.ImageDetailsReaderPort.ReadImageDetails(content, found.LastModificationDate())
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to analyse image %s", found)
-		}
+	mediaType, details, err := ExtractTypeAndDetails(found)
+	if err != nil {
+		return nil, err
 	}
 
 	fileHash, err := computeMediaHash(found)
@@ -61,6 +48,28 @@ func AnalyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
 		},
 		Details: details,
 	}, errors.Wrapf(err, "failed to compute HASH of media %s", found)
+}
+
+func ExtractTypeAndDetails(found model.FoundMedia) (model.MediaType, *model.MediaDetails, error) {
+	mediaType := getMediaType(found)
+
+	details := &model.MediaDetails{
+		DateTime: found.LastModificationDate(),
+	}
+
+	if mediaType == model.MediaTypeImage {
+		content, err := found.ReadMedia()
+		if err != nil {
+			return "", nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
+		}
+
+		details, err = interactors.ImageDetailsReaderPort.ReadImageDetails(content, found.LastModificationDate())
+		if err != nil {
+			return "", nil, errors.Wrapf(err, "failed to analyse image %s", found)
+		}
+	}
+
+	return mediaType, details, nil
 }
 
 func computeMediaHash(found model.FoundMedia) (string, error) {

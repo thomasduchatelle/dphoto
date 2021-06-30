@@ -12,7 +12,7 @@ func NewSuggestionRepository(suggestions []*backup.FoundAlbum) ui.RecordReposito
 	for i, suggestion := range suggestions {
 		records[i] = &ui.Record{
 			Suggestion: true,
-			FolderName: "",
+			FolderName: suggestion.FolderName,
 			Name:       suggestion.Name,
 			Start:      suggestion.Start,
 			End:        suggestion.End,

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
+	"path/filepath"
 )
 
 type ScanProgress struct {
@@ -17,6 +18,7 @@ type ScanProgress struct {
 }
 
 func ScanWithCache(volume string) (ui.RecordRepositoryPort, int, error) {
+	volume, _ = filepath.Abs(volume)
 	previousResult, err := restore(volume)
 	if err != nil {
 		return nil, 0, errors.Wrapf(err, "failed to restore previous scan result for volume %s", volume)

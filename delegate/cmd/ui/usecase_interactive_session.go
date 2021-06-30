@@ -30,6 +30,9 @@ func NewInteractiveSession(actions InteractiveActionsPort, repositories ...Recor
 func (i *InteractiveSession) Start() error {
 	i.state.PageSize = i.renderer.Height() - 15
 	i.reloadRecords()
+	if i.catchError.Load() != nil {
+		return i.catchError.Load().(error)
+	}
 	i.updateActions()
 
 	keyboardPort := keyboardInteractionAdaptor{
