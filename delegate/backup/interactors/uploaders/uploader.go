@@ -93,6 +93,7 @@ func (u *Uploader) Upload(buffer []*model.AnalysedMedia, progressChannel chan *m
 						Model:        media.Details.Model,
 						GPSLatitude:  media.Details.GPSLatitude,
 						GPSLongitude: media.Details.GPSLongitude,
+						Duration:     media.Details.Duration,
 					},
 					Signature: signature,
 				},

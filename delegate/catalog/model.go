@@ -75,6 +75,7 @@ type MediaDetails struct {
 	Make                      string
 	Model                     string
 	GPSLatitude, GPSLongitude float64
+	Duration                  int64 // Duration is the length, in milliseconds, of a video
 }
 
 type MovedMedia struct {

@@ -76,6 +76,8 @@ type MediaDetails struct {
 	Make                      string
 	Model                     string
 	GPSLatitude, GPSLongitude float64
+	Duration                  int64 // Duration is the length, in milliseconds, of a video
+	VideoEncoding             string // VideoEncoding is the codec used to encode the video (ex: 'H264')
 }
 
 // SimpleMediaSignature is unique only for a single volume, and only for a certain time (i.e.: filename)
@@ -130,5 +132,5 @@ func (s *SimpleMediaSignature) String() string {
 }
 
 func (s *MediaDetails) String() string {
-	return fmt.Sprintf("[Width=%d,Height=%d,DateTime=%s,Orientation=%s,Make=%s,Model=%s,GPSLatitude=%f,GPSLongitude=%f,]", s.Width, s.Height, s.DateTime, s.Orientation, s.Make, s.Model, s.GPSLatitude, s.GPSLongitude)
+	return fmt.Sprintf("[Width=%d,Height=%d,DateTime=%s,Orientation=%s,Make=%s,Model=%s,GPSLatitude=%f,GPSLongitude=%f,Duration=%d]", s.Width, s.Height, s.DateTime, s.Orientation, s.Make, s.Model, s.GPSLatitude, s.GPSLongitude, s.Duration)
 }

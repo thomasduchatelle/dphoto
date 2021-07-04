@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -57,19 +58,40 @@ func ExtractTypeAndDetails(found model.FoundMedia) (model.MediaType, *model.Medi
 		DateTime: found.LastModificationDate(),
 	}
 
-	if mediaType == model.MediaTypeImage {
-		content, err := found.ReadMedia()
-		if err != nil {
-			return "", nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
+	switch {
+	case mediaType == model.MediaTypeImage:
+		exifDetails, err := exifAdapter(found)
+		if exifDetails != nil {
+			details = exifDetails
 		}
 
-		details, err = interactors.ImageDetailsReaderPort.ReadImageDetails(content, found.LastModificationDate())
-		if err != nil {
-			return "", nil, errors.Wrapf(err, "failed to analyse image %s", found)
+		return mediaType, details, err
+	case strings.ToUpper(filepath.Ext(found.Filename())) == ".MTS":
+		m2tsDetails, err := m2tsAdapter(found)
+
+		if m2tsDetails != nil {
+			details = m2tsDetails
 		}
+
+		return mediaType, details, err
+
 	}
 
 	return mediaType, details, nil
+}
+
+func exifAdapter(found model.FoundMedia) (*model.MediaDetails, error) {
+	content, err := found.ReadMedia()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
+	}
+
+	details, err := interactors.ImageDetailsReaderPort.ReadImageDetails(content, found.LastModificationDate())
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to analyse image %s", found)
+	}
+
+	return details, nil
 }
 
 func computeMediaHash(found model.FoundMedia) (string, error) {
