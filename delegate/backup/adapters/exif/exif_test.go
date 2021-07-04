@@ -1,4 +1,4 @@
-package images
+package exif
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
@@ -11,20 +11,18 @@ import (
 func TestFileWithoutExif(t *testing.T) {
 	a := assert.New(t)
 
-	exifAdapter := new(ExifReader)
+	exifAdapter := new(Parser)
 	reader, err := os.Open("../../../test_resources/scan/golang-logo.jpeg")
 	if !a.NoError(err) {
 		panic(err.Error())
 	}
 
-	lastModificationDate := time.Date(2021, 04, 25, 16, 40, 0, 0, time.UTC)
-	details, err := exifAdapter.ReadImageDetails(reader, lastModificationDate)
+	details, err := exifAdapter.ReadDetails(reader, model.DetailsReaderOptions{})
 	if a.NoError(err) {
 		a.Equal(&model.MediaDetails{
 			Width:       700,
 			Height:      307,
 			Orientation: model.OrientationUpperLeft,
-			DateTime:    lastModificationDate,
 		}, details)
 	}
 }
@@ -32,14 +30,13 @@ func TestFileWithoutExif(t *testing.T) {
 func TestFileWithExif(t *testing.T) {
 	a := assert.New(t)
 
-	exifAdapter := new(ExifReader)
+	exifAdapter := new(Parser)
 	reader, err := os.Open("../../../test_resources/scan/london_skyline_southbank.jpg")
 	if !a.NoError(err) {
 		panic(err.Error())
 	}
 
-	lastModificationDate := time.Date(2021, 04, 25, 16, 40, 0, 0, time.UTC)
-	details, err := exifAdapter.ReadImageDetails(reader, lastModificationDate)
+	details, err := exifAdapter.ReadDetails(reader, model.DetailsReaderOptions{})
 
 	if a.NoError(err) {
 		a.Equal(&model.MediaDetails{

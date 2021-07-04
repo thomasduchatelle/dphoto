@@ -1,4 +1,4 @@
-package images
+package exif
 
 import (
 	"bytes"
@@ -18,16 +18,16 @@ func init() {
 	exif.RegisterParsers(mknote.All...)
 }
 
-type ExifReader struct{}
+type Parser struct{}
 
-func (e *ExifReader) ReadImageDetails(reader io.Reader, lastModifiedDate time.Time) (*model.MediaDetails, error) {
+func (e *Parser) ReadDetails(reader io.Reader, options model.DetailsReaderOptions) (*model.MediaDetails, error) {
 	buffer := bytes.NewBuffer(nil)
 	teeReader := io.TeeReader(reader, buffer)
 
 	x, err := exif.Decode(teeReader)
 	if err != nil {
 		log.WithField("Reader", reader).WithError(err).Warn("no EXIF data found in file, try another way")
-		return e.readImageWithoutExif(io.MultiReader(buffer, reader), lastModifiedDate)
+		return e.readImageWithoutExif(io.MultiReader(buffer, reader))
 	}
 
 	latitude, longitude, err := x.LatLong()
@@ -40,7 +40,7 @@ func (e *ExifReader) ReadImageDetails(reader io.Reader, lastModifiedDate time.Ti
 		Width:        e.getIntOrIgnore(x, exif.ImageWidth),
 		Height:       e.getIntOrIgnore(x, exif.ImageLength),
 		Orientation:  e.readOrientation(x),
-		DateTime:     e.readDateTime(x, lastModifiedDate),
+		DateTime:     e.readDateTime(x, time.Time{}),
 		Make:         e.getStringOrIgnore(x, exif.Make),
 		Model:        e.getStringOrIgnore(x, exif.Model),
 		GPSLatitude:  latitude,
@@ -48,7 +48,7 @@ func (e *ExifReader) ReadImageDetails(reader io.Reader, lastModifiedDate time.Ti
 	}, nil
 }
 
-func (e *ExifReader) readOrientation(x *exif.Exif) model.ImageOrientation {
+func (e *Parser) readOrientation(x *exif.Exif) model.ImageOrientation {
 	switch e.getIntOrIgnore(x, exif.Orientation) {
 	case 3:
 		return model.OrientationLowerRight
@@ -61,7 +61,7 @@ func (e *ExifReader) readOrientation(x *exif.Exif) model.ImageOrientation {
 	}
 }
 
-func (e *ExifReader) readDateTime(x *exif.Exif, lastModifiedDate time.Time) time.Time {
+func (e *Parser) readDateTime(x *exif.Exif, defaultDate time.Time) time.Time {
 	datetime := e.getStringOrIgnore(x, exif.DateTime)
 	if datetime != "" {
 		exifTime, err := time.Parse("2006:01:02 15:04:05", datetime)
@@ -70,10 +70,10 @@ func (e *ExifReader) readDateTime(x *exif.Exif, lastModifiedDate time.Time) time
 		}
 	}
 
-	return lastModifiedDate
+	return defaultDate
 }
 
-func (e *ExifReader) getStringOrIgnore(x *exif.Exif, model exif.FieldName) string {
+func (e *Parser) getStringOrIgnore(x *exif.Exif, model exif.FieldName) string {
 	if t, err := x.Get(model); err == nil && t != nil {
 		if val, err := t.StringVal(); err == nil {
 			return val
@@ -82,7 +82,7 @@ func (e *ExifReader) getStringOrIgnore(x *exif.Exif, model exif.FieldName) strin
 	return ""
 }
 
-func (e *ExifReader) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
+func (e *Parser) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
 	if t, err := x.Get(model); err == nil && t != nil && t.Count > 0 {
 		if val, err := t.Int(0); err == nil {
 			return val
@@ -91,7 +91,7 @@ func (e *ExifReader) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
 	return 0
 }
 
-func (e *ExifReader) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float64 {
+func (e *Parser) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float64 {
 	if t, err := x.Get(model); err == nil && t != nil && t.Count > 0 {
 		if val, err := t.Float(0); err == nil {
 			return val
@@ -100,7 +100,7 @@ func (e *ExifReader) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float6
 	return 0
 }
 
-func (e *ExifReader) readImageWithoutExif(reader io.Reader, lastModifiedDate time.Time) (*model.MediaDetails, error) {
+func (e *Parser) readImageWithoutExif(reader io.Reader) (*model.MediaDetails, error) {
 	img, _, err := image.DecodeConfig(reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Can't extract image dimentions")
@@ -110,6 +110,5 @@ func (e *ExifReader) readImageWithoutExif(reader io.Reader, lastModifiedDate tim
 		Width:       img.Width,
 		Height:      img.Height,
 		Orientation: model.OrientationUpperLeft,
-		DateTime:    lastModifiedDate,
 	}, nil
 }

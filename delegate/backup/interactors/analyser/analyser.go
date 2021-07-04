@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -38,7 +39,7 @@ func AnalyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
 		return nil, err
 	}
 
-	fileHash, err := computeMediaHash(found)
+	fileHash, err := computeMediaHash(found) // todo - do it while analysing files
 	return &model.AnalysedMedia{
 		FoundMedia: found,
 		Type:       mediaType,
@@ -53,20 +54,32 @@ func AnalyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
 func ExtractTypeAndDetails(found model.FoundMedia) (model.MediaType, *model.MediaDetails, error) {
 	mediaType := getMediaType(found)
 
-	details := &model.MediaDetails{
-		DateTime: found.LastModificationDate(),
+	details := &model.MediaDetails{}
+
+	var detailsReaderType interactors.DetailsReaderType
+
+	switch {
+	case mediaType == model.MediaTypeImage:
+		detailsReaderType = interactors.DetailsReaderTypeImage
+
+	case strings.ToUpper(filepath.Ext(found.Filename())) == ".MTS":
+		detailsReaderType = interactors.DetailsReaderTypeM2TS
 	}
 
-	if mediaType == model.MediaTypeImage {
+	if detailsReader, ok := interactors.DetailsReaders[detailsReaderType]; ok {
 		content, err := found.ReadMedia()
 		if err != nil {
-			return "", nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
+			return mediaType, nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
 		}
 
-		details, err = interactors.ImageDetailsReaderPort.ReadImageDetails(content, found.LastModificationDate())
+		details, err = detailsReader.ReadDetails(content, model.DetailsReaderOptions{Fast: true})
 		if err != nil {
-			return "", nil, errors.Wrapf(err, "failed to analyse image %s", found)
+			return mediaType, nil, errors.Wrapf(err, "failed to analyse %s", found)
 		}
+	}
+
+	if details.DateTime.IsZero() {
+		details.DateTime = found.LastModificationDate()
 	}
 
 	return mediaType, details, nil

@@ -32,6 +32,8 @@ func TestRelocateMovedMedias_full(t *testing.T) {
 	repository.On("UpdateMediasLocation", transactionId, movedMedias[:2]).Return(nil)
 	repository.On("UpdateMediasLocation", transactionId, movedMedias[2:]).Return(nil)
 
+	repository.On("DeleteEmptyMoveTransaction", transactionId).Once().Return(nil)
+
 	operator.On("Continue").Return(true)
 	operator.On("UpdateStatus", 0, 42).Return(nil)
 	operator.On("UpdateStatus", 2, 42).Return(nil)
@@ -42,10 +44,11 @@ func TestRelocateMovedMedias_full(t *testing.T) {
 	operator.On("Move", catalog.MediaLocation{FolderName: "A", Filename: "003"}, catalog.MediaLocation{FolderName: "D", Filename: "003"}).Return(nil)
 
 	// when
-	got, err := catalog.RelocateMovedMedias(operator)
+	got, err := catalog.RelocateMovedMedias(operator, transactionId)
 
 	if a.NoError(err) {
 		a.Equal(3, got)
+		repository.AssertExpectations(t)
 		operator.AssertExpectations(t)
 	}
 }
@@ -73,6 +76,8 @@ func TestRelocateMovedMedias_interrupt(t *testing.T) {
 
 	repository.On("UpdateMediasLocation", transactionId, movedMedias[:2]).Return(nil)
 
+	repository.On("DeleteEmptyMoveTransaction", transactionId).Once().Return(nil)
+
 	operator.On("Continue").Return(true).Once()
 	operator.On("Continue").Return(false)
 	operator.On("UpdateStatus", 0, 42).Return(nil)
@@ -82,7 +87,7 @@ func TestRelocateMovedMedias_interrupt(t *testing.T) {
 	operator.On("Move", catalog.MediaLocation{FolderName: "C", Filename: "002"}, catalog.MediaLocation{FolderName: "B", Filename: "002"}).Return(nil)
 
 	// when
-	got, err := catalog.RelocateMovedMedias(operator)
+	got, err := catalog.RelocateMovedMedias(operator, transactionId)
 
 	if a.NoError(err) {
 		a.Equal(2, got)
@@ -101,7 +106,7 @@ func TestRelocateMovedMedias_empty(t *testing.T) {
 	repository.On("FindReadyMoveTransactions").Return(nil, nil)
 
 	// when
-	got, err := catalog.RelocateMovedMedias(operator)
+	got, err := catalog.RelocateMovedMedias(operator, "no-transaction-exist")
 
 	if a.NoError(err) {
 		a.Equal(0, got)

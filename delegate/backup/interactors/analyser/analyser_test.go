@@ -15,8 +15,8 @@ var mediaDate = time.Date(2021, 4, 27, 10, 16, 22, 0, time.UTC)
 
 func Test_analyseMedia(t *testing.T) {
 	a := assert.New(t)
-	mockImageDetailsReader := new(mocks.ImageDetailsReaderAdapter)
-	interactors.ImageDetailsReaderPort = mockImageDetailsReader
+	mockImageDetailsReader := new(mocks.DetailsReaderAdapter)
+	interactors.DetailsReaders[interactors.DetailsReaderTypeImage] = mockImageDetailsReader
 
 	medias := []model.FoundMedia{
 		model.NewInmemoryMedia("/somewhere/my_image.jpg", 42, mediaDate),
@@ -34,7 +34,7 @@ func Test_analyseMedia(t *testing.T) {
 		GPSLatitude:  0.0001,
 		GPSLongitude: 0.0002,
 	}
-	mockImageDetailsReader.On("ReadImageDetails", mock.Anything, mediaDate).Once().Return(details, nil)
+	mockImageDetailsReader.On("ReadDetails", mock.Anything, model.DetailsReaderOptions{Fast: true}).Once().Return(details, nil)
 
 	type args struct {
 		found model.FoundMedia

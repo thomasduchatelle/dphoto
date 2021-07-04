@@ -76,6 +76,8 @@ type MediaDetails struct {
 	Make                      string
 	Model                     string
 	GPSLatitude, GPSLongitude float64
+	Duration                  int64  // Duration is the length, in milliseconds, of a video
+	VideoEncoding             string // VideoEncoding is the codec used to encode the video (ex: 'H264')
 }
 
 // SimpleMediaSignature is unique only for a single volume, and only for a certain time (i.e.: filename)
@@ -107,6 +109,10 @@ type ProgressEvent struct {
 	MediaType MediaType         // MediaType is the type of media ; only mandatory with 'uploaded' event
 }
 
+type DetailsReaderOptions struct {
+	Fast bool // Fast determine if the reader should extract all the details it can, or should only focus on the DateTime (and other it could get in the same time)
+}
+
 func byteCountIEC(b int64) string {
 	const unit = 1024
 	if b < unit {
@@ -130,5 +136,5 @@ func (s *SimpleMediaSignature) String() string {
 }
 
 func (s *MediaDetails) String() string {
-	return fmt.Sprintf("[Width=%d,Height=%d,DateTime=%s,Orientation=%s,Make=%s,Model=%s,GPSLatitude=%f,GPSLongitude=%f,]", s.Width, s.Height, s.DateTime, s.Orientation, s.Make, s.Model, s.GPSLatitude, s.GPSLongitude)
+	return fmt.Sprintf("[Width=%d,Height=%d,DateTime=%s,Orientation=%s,Make=%s,Model=%s,GPSLatitude=%f,GPSLongitude=%f,Duration=%d,VideoEncoding=%s]", s.Width, s.Height, s.DateTime, s.Orientation, s.Make, s.Model, s.GPSLatitude, s.GPSLongitude, s.Duration, s.VideoEncoding)
 }

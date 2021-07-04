@@ -2,7 +2,6 @@ package model
 
 import (
 	"io"
-	"time"
 )
 
 type VolumeRepositoryAdapter interface {
@@ -21,8 +20,9 @@ type MediaScannerAdapter interface {
 	FindMediaRecursively(volume VolumeToBackup, callback func(FoundMedia)) (uint, uint, error)
 }
 
-type ImageDetailsReaderAdapter interface {
-	ReadImageDetails(reader io.Reader, lastModifiedDate time.Time) (*MediaDetails, error)
+type DetailsReaderAdapter interface {
+	// ReadDetails extracts metadata from the content of the file.
+	ReadDetails(reader io.Reader, options DetailsReaderOptions) (*MediaDetails, error)
 }
 
 type DownloaderAdapter interface {

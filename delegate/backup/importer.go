@@ -63,11 +63,11 @@ func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface
 		i++
 	}
 	sort.Slice(suggestions, func(i, j int) bool {
-		if suggestions[i].Start == suggestions[j].Start {
-			return suggestions[i].End.Before(suggestions[j].End)
+		if suggestions[i].Start != suggestions[j].Start {
+			return suggestions[i].Start.Before(suggestions[j].Start)
 		}
 
-		return suggestions[i].Start.Before(suggestions[j].Start)
+		return suggestions[i].End.Before(suggestions[j].End)
 	})
 
 	return suggestions, err
