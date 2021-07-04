@@ -1,9 +1,10 @@
 package adapters
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/adapters/exif"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/filesystem"
-	"duchatelle.io/dphoto/dphoto/backup/adapters/images"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/localstorage"
+	"duchatelle.io/dphoto/dphoto/backup/adapters/m2ts"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/onlinestorage"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/volumes"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
@@ -14,7 +15,8 @@ import (
 )
 
 func init() {
-	interactors.ImageDetailsReaderPort = new(images.ExifReader)
+	interactors.DetailsReaders[interactors.DetailsReaderTypeImage] = new(exif.Parser)
+	interactors.DetailsReaders[interactors.DetailsReaderTypeM2TS] = new(m2ts.Parser)
 	interactors.SourcePorts[model.VolumeTypeFileSystem] = new(filesystem.FsHandler)
 
 	config.Listen(func(cfg config.Config) {

@@ -4,7 +4,12 @@ import (
 	"bytes"
 	"duchatelle.io/dphoto/dphoto/backup/model"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
+	"github.com/pkg/errors"
+	"regexp"
+	"sort"
+	"strings"
 	"time"
 	"unicode"
 )
@@ -34,6 +39,38 @@ var (
 func UpdateDetailsFromMDPM(payload []byte, details *model.MediaDetails) map[byte][]byte {
 	mdpm := readMDPM(payload)
 
+	details.DateTime, _ = extractDateFromMDPM(mdpm)
+
+	if makeValue, ok := mdpm[MDPMMake]; ok {
+		details.Make, _ = makeMap[binary.BigEndian.Uint16(makeValue[:2])]
+	}
+
+	details.Model = extractModelFromMDPM(mdpm)
+
+	return mdpm
+}
+
+func extractModelFromMDPM(mdpm map[byte][]byte) string {
+	// Model is only working for SONY
+	var modelBuffer []byte
+	ended := false
+	for key := byte(0xe4); !ended && key < 0xe7; key++ {
+		val, ok := mdpm[key]
+		ended = ended || !ok
+		for i := 0; !ended && i < len(val); i++ {
+			if val[i] == 0 {
+				ended = true
+			} else if val[i] <= unicode.MaxASCII {
+				modelBuffer = append(modelBuffer, val[i])
+			}
+		}
+	}
+
+	return string(modelBuffer)
+}
+
+func extractDateFromMDPM(mdpm map[byte][]byte) (time.Time, error) {
+
 	var dateTime []byte
 	dateBuf, hasDate := mdpm[MDPMDate]
 	timeBuf, hasTime := mdpm[MDPMTime]
@@ -57,33 +94,10 @@ func UpdateDetailsFromMDPM(payload []byte, details *model.MediaDetails) map[byte
 			minutes = "30"
 		}
 
-		details.DateTime, _ = time.Parse("20060102150405-0700", fmt.Sprintf("%x%s%02d%s", dateTime[1:], sign, hours, minutes))
+		return time.Parse("20060102150405-0700", fmt.Sprintf("%x%s%02d%s", dateTime[1:], sign, hours, minutes))
 	}
 
-	if makeValue, ok := mdpm[MDPMMake]; ok {
-		details.Make, _ = makeMap[binary.BigEndian.Uint16(makeValue[:2])]
-	}
-
-	// Model is only working for SONY
-	var modelBuffer []byte
-	ended := false
-	for key := byte(0xe4); !ended && key < 0xe7; key++ {
-		val, ok := mdpm[key]
-		ended = ended || !ok
-		for i := 0; !ended && i < len(val); i++ {
-			if val[i] == 0 {
-				ended = true
-			} else if val[i] <= unicode.MaxASCII {
-				modelBuffer = append(modelBuffer, val[i])
-			}
-		}
-	}
-
-	if len(modelBuffer) > 0 {
-		details.Model = string(modelBuffer)
-	}
-
-	return mdpm
+	return time.Time{}, errors.Errorf("No date-time found in MDPM %s", printMDPM(mdpm))
 }
 
 func readMDPM(payload []byte) map[byte][]byte {
@@ -109,4 +123,24 @@ func readMDPM(payload []byte) map[byte][]byte {
 	}
 
 	return mdpm
+}
+
+func printMDPM(mdpm map[byte][]byte) string {
+	mdpmDump := []string{
+		"MDPM (H264 Netadata)",
+	}
+
+	keys := make([]byte, 0, len(mdpm))
+	for k := range mdpm {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	for _, k := range keys {
+		mdpmDump = append(mdpmDump, fmt.Sprintf("\t- %02x = %s", k, regexp.MustCompile(" +").ReplaceAllString(strings.Trim(hex.Dump(mdpm[k]), "\n")[10:], " ")))
+	}
+
+	return strings.Join(mdpmDump, "\n")
 }

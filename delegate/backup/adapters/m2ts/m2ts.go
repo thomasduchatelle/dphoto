@@ -10,16 +10,20 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
-	"sort"
 	"strings"
 )
+
+type Parser struct {
+	Debug bool // Debug can be set to true to print in the console payload dumps and read metadata.
+}
 
 // ProgramNumber is the code as defined in https://en.wikipedia.org/wiki/Program-specific_information#Program_and_Elementary_Stream_Descriptor_Tags
 type ProgramNumber uint8
 
 const (
-	PIDMask                         = 0x1fff // PIDMask can be used to get PID from uint16: last 13 bits
-	ProgramNumberH264 ProgramNumber = 0x1b   // ProgramNumberH264 is a H264 video stream
+	PIDMask                          = 0x1fff // PIDMask can be used to get PID from uint16: last 13 bits
+	ProgramNumberH264  ProgramNumber = 0x1b   // ProgramNumberH264 is a H264 video stream
+	minSizeH264Payload               = 256
 )
 
 var (
@@ -27,13 +31,13 @@ var (
 	psiGroups    = []int{4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4}
 )
 
-// ReadM2TSDetails unmux M2TS (MTS) file, with h264 support, to collect the Make, Model, and DateTime of the video flux.
+// ReadDetails unmux M2TS (MTS) file, with h264 support, to collect the Make, Model, and DateTime of the video flux.
 // Example:
 // 00 00 00 00 | 47 40 00 10 | 00 00 b0 11 00 00 c1 00 00 00 00 e0 1f 00 01 e1 00 23 5a ab 82 ffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff
 //               M2TS HEADER-- PAT HEADER- SECTION------- #1--------- #2--------- CRC--------
 // 00 00 06 9c | 47 | 41 00 10 | 00 02 b0 3e | 00 01 c1 00 00 | f0 01 f0 0c | 05 04 48 44 | 4d 56 88 04 | 0f ff fc fc | 1b f0 11 f0 0a | 05 08 48 44 4d 56 ff 1b 43 3f | 81 f1 00 f0 0c | 05 04 41 43 2d 33 81 04 04 30 04 00 90 f2 00 f0 00 | 0c d3 f4 dc
 //               M2TS HEADER---  PAT HEADER--  SECTION-------   PMT-------- | Program Descriptors -------------------   #1 1011=>1b-----------------------------------                                                                         CRC--------
-func ReadM2TSDetails(reader io.Reader) (*model.MediaDetails, error) {
+func (p *Parser) ReadDetails(reader io.Reader, options model.DetailsReaderOptions) (*model.MediaDetails, error) {
 	details := new(model.MediaDetails)
 
 	var packet Packet = make([]byte, 192)
@@ -42,8 +46,9 @@ func ReadM2TSDetails(reader io.Reader) (*model.MediaDetails, error) {
 	var minPCR, maxPCR uint64
 	programs := make(map[uint16]ProgramNumber)
 	payloads := make(map[uint16][]byte)
+	payloadsFull := false
 
-	for {
+	for !options.Fast || !payloadsFull {
 		count++
 
 		full, err := io.ReadFull(reader, packet)
@@ -92,29 +97,28 @@ func ReadM2TSDetails(reader io.Reader) (*model.MediaDetails, error) {
 		// H264 payload is where Make, Model, and DateTime are found. Only keeping 256 bytes.
 		if streamType, ok := programs[pid]; ok && streamType == ProgramNumberH264 {
 			buffer, _ := payloads[pid]
-			if len(buffer) < 1024 {
+			if len(buffer) < minSizeH264Payload {
 				payloads[pid] = append(buffer, payload...)
+			} else {
+				payloadsFull = true
 			}
 		}
-
-		//if count < 32 {
-		//	fmt.Printf("Buffer [pid=0x%04x]: %s\n", pid, bytesToString(packet, packetGroups))
-		//}
 	}
 
-	// debug - print payloads
-	for pid, payload := range payloads {
-		fmt.Printf("PID %04x\n%s", pid, hex.Dump(payload))
+	// debug - print program map and payloads
+	if p.Debug {
+		fmt.Printf("%d programs found:\n", len(programs))
+		for pid, programNumber := range programs {
+			fmt.Printf("\t- 0x%04x -> 0x%02x\n", pid, programNumber)
+		}
+
+		for pid, payload := range payloads {
+			fmt.Printf("PID %04x\n%s", pid, hex.Dump(payload))
+		}
 	}
 
 	// PCR tick at 27MHz
 	details.Duration = int64((maxPCR - minPCR) / 27000)
-
-	// debug - Program Map
-	//fmt.Printf("%d programs found:\n", len(programs))
-	//for pid, programNumber := range programs {
-	//	fmt.Printf("\t- 0x%04x -> 0x%02x\n", pid, programNumber)
-	//}
 
 	// debug - H264 MDPM
 	for pid, programNumber := range programs {
@@ -122,26 +126,11 @@ func ReadM2TSDetails(reader io.Reader) (*model.MediaDetails, error) {
 			details.VideoEncoding = "H264"
 
 			mdpm := UpdateDetailsFromMDPM(payload, details)
-
-			fmt.Printf("MDPM (H264 Netadata):\n")
-
-			keys := make([]byte, 0, len(mdpm))
-			for k := range mdpm {
-				keys = append(keys, k)
-			}
-			sort.Slice(keys, func(i, j int) bool {
-				return keys[i] < keys[j]
-			})
-
-			for _, k := range keys {
-				fmt.Printf("\t- %02x = %s [%s]\n", k, bytesToString(mdpm[k]), string(mdpm[k]))
+			if p.Debug {
+				fmt.Println(printMDPM(mdpm))
 			}
 		}
-
 	}
-
-	// debug - details
-	fmt.Printf("Details: %+v\n", details)
 
 	return details, nil
 }

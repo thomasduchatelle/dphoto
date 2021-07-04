@@ -1,4 +1,4 @@
-package images
+package exif
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup/model"
@@ -11,7 +11,7 @@ import (
 func TestFileWithoutExif(t *testing.T) {
 	a := assert.New(t)
 
-	exifAdapter := new(ExifReader)
+	exifAdapter := new(Parser)
 	reader, err := os.Open("../../../test_resources/scan/golang-logo.jpeg")
 	if !a.NoError(err) {
 		panic(err.Error())
@@ -32,7 +32,7 @@ func TestFileWithoutExif(t *testing.T) {
 func TestFileWithExif(t *testing.T) {
 	a := assert.New(t)
 
-	exifAdapter := new(ExifReader)
+	exifAdapter := new(Parser)
 	reader, err := os.Open("../../../test_resources/scan/london_skyline_southbank.jpg")
 	if !a.NoError(err) {
 		panic(err.Error())
