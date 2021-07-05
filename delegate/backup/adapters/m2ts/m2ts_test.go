@@ -1,6 +1,7 @@
 package m2ts
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/model"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -10,11 +11,12 @@ import (
 
 func TestM2TSReader(t *testing.T) {
 	a := assert.New(t)
-	Debug = true
+
+	detailsReader := &Parser{Debug: true}
 
 	reader, err := os.Open("../../../test_resources/scan/sample.MTS")
 	if a.NoError(err) {
-		details, err := ReadM2TSDetails(reader)
+		details, err := detailsReader.ReadDetails(reader, model.DetailsReaderOptions{})
 		if a.NoError(err) {
 			// debug - details
 			fmt.Printf("Details: %+v\n", details)

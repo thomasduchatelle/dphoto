@@ -337,16 +337,29 @@ func TestMoveCycle(t *testing.T) {
 		a.Len(moves, 1, name)
 		a.Equal(photos[1].Signature, moves[0].Signature, name)
 	}
+}
+
+func TestRep_DeleteEmptyMoveTransaction(t *testing.T) {
+	a := assert.New(t)
+	repo := setupTest("cycle")
+
+	// given
+	transactionsBefore, err := repo.FindReadyMoveTransactions()
+
+	transactionId, _, err := repo.startMoveTransaction()
+	if !a.NoError(err) {
+		a.FailNow(err.Error())
+	}
 
 	// when
-	err = repo.UpdateMediasLocation(transactionId, moves)
+	err = repo.DeleteEmptyMoveTransaction(transactionId)
 
 	// then
 	if a.NoError(err) {
 		transactions, err := repo.FindReadyMoveTransactions()
 		name := "it should have deleted the transaction now all medias has been moved"
 		if a.NoError(err, name) {
-			a.Empty(transactions, name)
+			a.Equal(transactionsBefore, transactions, name)
 		}
 	}
 }

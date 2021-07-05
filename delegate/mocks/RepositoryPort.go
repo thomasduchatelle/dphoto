@@ -47,6 +47,20 @@ func (_m *RepositoryPort) DeleteEmptyAlbum(folderName string) error {
 	return r0
 }
 
+// DeleteEmptyMoveTransaction provides a mock function with given fields: transactionId
+func (_m *RepositoryPort) DeleteEmptyMoveTransaction(transactionId string) error {
+	ret := _m.Called(transactionId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(transactionId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FindAlbum provides a mock function with given fields: folderName
 func (_m *RepositoryPort) FindAlbum(folderName string) (*catalog.Album, error) {
 	ret := _m.Called(folderName)

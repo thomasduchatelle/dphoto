@@ -99,3 +99,17 @@ func (_m *Config) GetString(key string) string {
 
 	return r0
 }
+
+// GetStringOrDefault provides a mock function with given fields: key, defaultValue
+func (_m *Config) GetStringOrDefault(key string, defaultValue string) string {
+	ret := _m.Called(key, defaultValue)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, string) string); ok {
+		r0 = rf(key, defaultValue)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}

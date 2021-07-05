@@ -17,14 +17,12 @@ func TestFileWithoutExif(t *testing.T) {
 		panic(err.Error())
 	}
 
-	lastModificationDate := time.Date(2021, 04, 25, 16, 40, 0, 0, time.UTC)
-	details, err := exifAdapter.ReadImageDetails(reader, lastModificationDate)
+	details, err := exifAdapter.ReadDetails(reader, model.DetailsReaderOptions{})
 	if a.NoError(err) {
 		a.Equal(&model.MediaDetails{
 			Width:       700,
 			Height:      307,
 			Orientation: model.OrientationUpperLeft,
-			DateTime:    lastModificationDate,
 		}, details)
 	}
 }
@@ -38,8 +36,7 @@ func TestFileWithExif(t *testing.T) {
 		panic(err.Error())
 	}
 
-	lastModificationDate := time.Date(2021, 04, 25, 16, 40, 0, 0, time.UTC)
-	details, err := exifAdapter.ReadImageDetails(reader, lastModificationDate)
+	details, err := exifAdapter.ReadDetails(reader, model.DetailsReaderOptions{})
 
 	if a.NoError(err) {
 		a.Equal(&model.MediaDetails{
