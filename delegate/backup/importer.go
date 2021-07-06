@@ -9,14 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"sync"
-	"time"
 )
-
-type FoundAlbum struct {
-	Name       string
-	FolderName string // FolderName is the original folder name (Name with date prefix that have been removed)
-	Start, End time.Time
-}
 
 type scanCompleteListener interface {
 	OnScanComplete(total uint)
@@ -31,7 +24,7 @@ var (
 )
 
 // DiscoverAlbumFromSource scan a source to discover albums based on original folder structure
-func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface{}) ([]*FoundAlbum, error) {
+func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface{}) ([]*model.ScannedFolder, error) {
 	medias, err := scanMediaSource(volume)
 	if err != nil {
 		return nil, err
@@ -39,7 +32,7 @@ func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface
 
 	triggerScanComplete(listeners, len(medias))
 
-	albums := make(map[string]*FoundAlbum)
+	albums := make(map[string]*model.ScannedFolder)
 	for count, found := range medias {
 		_, details, err := analyser.ExtractTypeAndDetails(found)
 		if err != nil {
@@ -48,15 +41,16 @@ func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface
 
 		dir := path.Dir(found.Filename())
 		if album, ok := albums[dir]; ok {
-			album.pushBoundaries(details.DateTime)
+			album.PushBoundaries(details.DateTime, found.SimpleSignature().Size)
 		} else {
-			albums[dir] = newFoundAlbum(dir, details.DateTime)
+			albums[dir] = newFoundAlbum(dir)
+			albums[dir].PushBoundaries(details.DateTime, found.SimpleSignature().Size)
 		}
 
 		triggerProgress(listeners, count, len(medias))
 	}
 
-	suggestions := make([]*FoundAlbum, len(albums))
+	suggestions := make([]*model.ScannedFolder, len(albums))
 	i := 0
 	for _, album := range albums {
 		suggestions[i] = album
@@ -108,33 +102,9 @@ func scanMediaSource(volume model.VolumeToBackup) ([]model.FoundMedia, error) {
 	return medias, nil
 }
 
-func newFoundAlbum(albumFullPath string, date time.Time) *FoundAlbum {
+func newFoundAlbum(albumFullPath string) *model.ScannedFolder {
 	name := path.Base(albumFullPath)
 	name = datePrefix.ReplaceAllString(name, "")
 
-	return &FoundAlbum{
-		Name:       name,
-		FolderName: path.Base(albumFullPath),
-		Start:      atStartOfDay(date),
-		End:        atStartOfFollowingDay(date),
-	}
-}
-func (a *FoundAlbum) pushBoundaries(date time.Time) {
-	if a.Start.After(date) {
-		a.Start = atStartOfDay(date)
-	}
-
-	if !a.End.After(date) {
-		a.End = atStartOfFollowingDay(date)
-	}
-}
-
-func atStartOfDay(value time.Time) time.Time {
-	year, month, day := value.Date()
-	return time.Date(year, month, day, 0, 0, 0, 0, value.Location())
-}
-
-func atStartOfFollowingDay(value time.Time) time.Time {
-	year, month, day := value.Date()
-	return time.Date(year, month, day+1, 0, 0, 0, 0, value.Location())
+	return model.NewScannedFolder(albumFullPath, name)
 }

@@ -20,7 +20,7 @@ var (
 
 var scan = &cobra.Command{
 	Use:   "scan <folder to scan>",
-	Short: "Discover directory structure to suggest new album to create",
+	Short: "Discover directory structure to suggest new albums to create",
 	Long:  "Discover directory structure to suggest new album to create",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {

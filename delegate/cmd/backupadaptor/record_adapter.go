@@ -1,22 +1,28 @@
 package backupadaptor
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
+	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/catalog"
 	"duchatelle.io/dphoto/dphoto/cmd/ui"
 )
 
-func NewSuggestionRepository(suggestions []*backup.FoundAlbum) ui.RecordRepositoryPort {
+func NewSuggestionRepository(suggestions []*model.ScannedFolder) ui.RecordRepositoryPort {
 	records := make([]*ui.Record, len(suggestions))
 
 	for i, suggestion := range suggestions {
+
+		count := uint(0)
+		for _, dayCounter := range suggestion.Distribution {
+			count += dayCounter.Count
+		}
+
 		records[i] = &ui.Record{
 			Suggestion: true,
 			FolderName: suggestion.FolderName,
 			Name:       suggestion.Name,
 			Start:      suggestion.Start,
 			End:        suggestion.End,
-			Count:      0,
+			Count:      count,
 		}
 	}
 

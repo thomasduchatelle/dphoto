@@ -35,7 +35,7 @@ func ScanWithCache(volume string) (ui.RecordRepositoryPort, int, error) {
 	return NewSuggestionRepository(suggestions), len(suggestions), err
 }
 
-func doScan(volume string) ([]*backup.FoundAlbum, error) {
+func doScan(volume string) ([]*model.ScannedFolder, error) {
 	progress := newScanProgress()
 	suggestions, err := backup.DiscoverAlbumFromSource(model.VolumeToBackup{
 		UniqueId: volume,
