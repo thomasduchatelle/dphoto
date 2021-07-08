@@ -127,16 +127,37 @@ func DeleteAlbum(folderNameToDelete string, emptyOnly bool) error {
 		albums, removed := removeAlbumFrom(albums, folderNameToDelete)
 
 		if removed != nil {
-			_, err = assignMediasTo(albums, removed, func(timeline *Timeline) []PrioritySegment {
-				return timeline.FindBetween(removed.Start, removed.End)
+			_, err = assignMediasTo(albums, removed, func(timeline *Timeline) (segments []PrioritySegment, missed []PrioritySegment, err error) {
+				segments, missed = timeline.FindBetween(removed.Start, removed.End)
+				reallyMissed, err := filterMissedSegmentWithMedias(folderNameToDelete, missed)
+				return segments, reallyMissed, nil
 			})
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "Album cannot be deleted")
 			}
 		}
 	}
 
 	return Repository.DeleteEmptyAlbum(folderNameToDelete)
+}
+
+func filterMissedSegmentWithMedias(folderName string, missed []PrioritySegment) ([]PrioritySegment, error) {
+	var reallyMissed []PrioritySegment
+	for _, m := range missed {
+		page, err := Repository.FindMedias(folderName, FindMediaFilter{
+			PageRequest: PageRequest{Size: 1},
+			TimeRange:   TimeRange{Start: m.Start, End: m.End},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if len(page.Content) > 0 {
+			reallyMissed = append(reallyMissed, m)
+		}
+	}
+
+	return reallyMissed, nil
 }
 
 // RenameAlbum updates the displayed named of the album. Optionally changes the folder in which media will be stored
@@ -191,7 +212,7 @@ func UpdateAlbum(folderName string, start, end time.Time) error {
 	}
 
 	previousTimeRange := newTimeRangeFromAlbum(*updated)
-	newTimeRange := timeRange{Start: start, End: end}
+	newTimeRange := TimeRange{Start: start, End: end}
 	if previousTimeRange.Equals(newTimeRange) {
 		log.WithFields(log.Fields{
 			"AlbumFolderName": folderName,
@@ -206,15 +227,18 @@ func UpdateAlbum(folderName string, start, end time.Time) error {
 	updatedAlbums := append(albumsWithoutUpdated, updated)
 	sort.Slice(updatedAlbums, startsAscSort(updatedAlbums))
 
-	count, err := assignMediasTo(updatedAlbums, updated, func(timeline *Timeline) (segments []PrioritySegment) {
+	count, err := assignMediasTo(updatedAlbums, updated, func(timeline *Timeline) (segments []PrioritySegment, missed []PrioritySegment, err error) {
 		for _, timeRange := range previousTimeRange.Plus(newTimeRange) {
-			segments = append(segments, timeline.FindBetween(timeRange.Start, timeRange.End)...)
+			subSegments, subMissed := timeline.FindBetween(timeRange.Start, timeRange.End)
+			segments = append(segments, subSegments...)
+			missed = append(missed, subMissed...)
 		}
 
-		return segments
+		reallyMissed, err := filterMissedSegmentWithMedias(folderName, missed)
+		return segments, reallyMissed, nil
 	})
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Album dates couldn't be updated.")
 	}
 
 	err = Repository.UpdateAlbum(*updated)
@@ -228,13 +252,21 @@ func UpdateAlbum(folderName string, start, end time.Time) error {
 	return nil
 }
 
-func assignMediasTo(albums []*Album, removedAlbum *Album, segmentsToReassignSupplier func(timeline *Timeline) []PrioritySegment) (int, error) {
+func assignMediasTo(albums []*Album, removedAlbum *Album, segmentsToReassignSupplier func(timeline *Timeline) (segments []PrioritySegment, missed []PrioritySegment, err error)) (int, error) {
 	timeline, err := NewTimeline(albums)
 	if err != nil {
 		return 0, err
 	}
 
-	segmentsToReassign := segmentsToReassignSupplier(timeline)
+	segmentsToReassign, missedSegments, err := segmentsToReassignSupplier(timeline)
+	if len(missedSegments) > 0 {
+		segRanges := make([]string, len(missedSegments))
+		for i, seg := range missedSegments {
+			segRanges[i] = fmt.Sprintf("%s -> %s", seg.Start.Format("2006-01-02"), seg.End.Format("2006-01-02"))
+		}
+		return 0, errors.Errorf("some dates are not covered, create albums to cover them before retrying (%s)", strings.Join(segRanges, " ; "))
+	}
+
 	if len(segmentsToReassign) == 0 {
 		return 0, nil
 	}

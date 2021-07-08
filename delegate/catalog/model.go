@@ -22,7 +22,7 @@ type CreateAlbum struct {
 
 func (a *Album) String() string {
 	const layout = "2006-01-02T03"
-	return fmt.Sprintf("[%s-%s] %s (%s)", a.Start.Format(layout), a.End.Format(layout), a.FolderName, a.Name)
+	return fmt.Sprintf("[%s -> %s] %s (%s)", a.Start.Format(layout), a.End.Format(layout), a.FolderName, a.Name)
 }
 
 // IsEqual uses unique identifier to compare both albums
@@ -30,12 +30,12 @@ func (a *Album) IsEqual(other *Album) bool {
 	return a.FolderName == other.FolderName
 }
 
-func newTimeRangeFromAlbum(album Album) timeRange {
+func newTimeRangeFromAlbum(album Album) TimeRange {
 	if album.Start.After(album.End) {
 		panic("Album must end AFTER its start: " + album.String())
 	}
 
-	return timeRange{
+	return TimeRange{
 		Start: album.Start,
 		End:   album.End,
 	}
@@ -86,8 +86,9 @@ type MovedMedia struct {
 	Filename         string
 }
 
+// MediaPage is the current page MediaMeta, and the token of the next page
 type MediaPage struct {
-	NextPage string // empty if no other pages
+	NextPage string // NextPage is empty if no other pages
 	Content  []*MediaMeta
 }
 

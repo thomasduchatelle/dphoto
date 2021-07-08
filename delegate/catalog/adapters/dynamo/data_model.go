@@ -34,7 +34,7 @@ type TablePk struct {
 }
 
 type AlbumIndexKey struct {
-	AlbumIndexPK string
+	AlbumIndexPK string // AlbumIndexPK is same than album's TablePk.PK
 	AlbumIndexSK string
 }
 
@@ -58,6 +58,9 @@ type MediaData struct {
 	SignatureHash string
 }
 
+// MediaDetailsData is a sub-object ; not stored directly
+type MediaDetailsData map[string]interface{}
+
 type MediaLocationData struct {
 	TablePk
 	FolderName    string // FolderName is where the media is physically located: its current album folder or previous album if the physical move haven't been flushed yet
@@ -70,55 +73,52 @@ type MediaMoveTransactionStatus string
 
 type MediaMoveTransactionData struct {
 	TablePk
-	MoveTransactionStatus MediaMoveTransactionStatus // Ready is false until all media to be moved have a MediaMoveOrderData created and their album updated
+	MoveTransactionStatus MediaMoveTransactionStatus // MoveTransactionStatus is false until all media to be moved have a MediaMoveOrderData created and their album updated
 }
 
 type MediaMoveOrderData struct {
-	TablePk
-	MoveTransaction   string // MoveTransaction is a copy of SK to only index MediaMoveOrderData (and not the whole table content)
+	TablePk                  // TablePk.PK is the same than the media, TablePk.SK is the transaction
+	MoveTransaction   string // MoveTransaction is a copy of TablePk.SK used by 'MoveOrder' index (thus, only orders are in the index, not transactions)
 	DestinationFolder string // DestinationFolder is the folder name of the album to which media must be moved.
 }
 
-type MediaDetailsData map[string]interface{}
-type dynamoObject map[string]*dynamodb.AttributeValue
-
-func (r *Rep) albumPrimaryKey(foldername string) TablePk {
+func albumPrimaryKey(owner string, folderName string) TablePk {
 	return TablePk{
-		PK: r.RootOwner,
-		SK: fmt.Sprintf("ALBUM#%s", foldername),
+		PK: owner,
+		SK: fmt.Sprintf("ALBUM#%s", folderName),
 	}
 }
 
-func (r *Rep) mediaPrimaryKey(signature *catalog.MediaSignature) TablePk {
+func mediaPrimaryKey(owner string, signature *catalog.MediaSignature) TablePk {
 	return TablePk{
-		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
+		PK: fmt.Sprintf("%s#MEDIA#%s", owner, mediaBusinessSignature(signature)),
 		SK: "#METADATA",
 	}
 }
 
-func (r *Rep) mediaLocationPrimaryKey(signature *catalog.MediaSignature) TablePk {
+func mediaLocationPrimaryKey(owner string, signature *catalog.MediaSignature) TablePk {
 	return TablePk{
-		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
+		PK: fmt.Sprintf("%s#MEDIA#%s", owner, mediaBusinessSignature(signature)),
 		SK: "LOCATION",
 	}
 }
 
-func (r *Rep) moveTransactionPrimaryKey(moveTransactionId string) TablePk {
+func moveTransactionPrimaryKey(moveTransactionId string) TablePk {
 	return TablePk{
 		PK: moveTransactionId,
 		SK: "#METADATA#",
 	}
 }
 
-func (r *Rep) mediaMoveOrderPrimaryKey(signature *catalog.MediaSignature, moveTransactionId string) TablePk {
+func mediaMoveOrderPrimaryKey(rootOwner string, signature *catalog.MediaSignature, moveTransactionId string) TablePk {
 	return TablePk{
-		PK: fmt.Sprintf("%s#MEDIA#%s", r.RootOwner, r.mediaBusinessSignature(signature)),
+		PK: fmt.Sprintf("%s#MEDIA#%s", rootOwner, mediaBusinessSignature(signature)),
 		SK: moveTransactionId,
 	}
 }
 
 // mediaPrimaryKeyFromSubEntry takes the key of any entries related to the media (metadata, location, or move order) and return location entry key
-func (r *Rep) mediaLocationKeyFromMediaKey(mediaKey map[string]*dynamodb.AttributeValue) (map[string]*dynamodb.AttributeValue, error) {
+func mediaLocationKeyFromMediaKey(mediaKey map[string]*dynamodb.AttributeValue) (map[string]*dynamodb.AttributeValue, error) {
 	pk, ok := mediaKey["PK"]
 	if !ok {
 		return nil, errors.Errorf("mediaKey must contains key 'PK': %+v", mediaKey)
@@ -126,37 +126,37 @@ func (r *Rep) mediaLocationKeyFromMediaKey(mediaKey map[string]*dynamodb.Attribu
 
 	return map[string]*dynamodb.AttributeValue{
 		"PK": pk,
-		"SK": r.mustAttribute("LOCATION"),
+		"SK": mustAttribute("LOCATION"),
 	}, nil
 }
 
-func (r *Rep) albumIndexedKey(owner, folderName string) AlbumIndexKey {
+func albumIndexedKey(owner, folderName string) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: fmt.Sprintf("%s#%s", owner, folderName),
 		AlbumIndexSK: fmt.Sprintf("#METADATA#ALBUM#%s", folderName),
 	}
 }
 
-func (r *Rep) mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, signature *catalog.MediaSignature) AlbumIndexKey {
+func mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, signature *catalog.MediaSignature) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: fmt.Sprintf("%s#%s", owner, folderName),
-		AlbumIndexSK: fmt.Sprintf("MEDIA#%s#%s", dateTime.Format(IsoTime), r.mediaBusinessSignature(signature)),
+		AlbumIndexSK: fmt.Sprintf("MEDIA#%s#%s", dateTime.Format(IsoTime), mediaBusinessSignature(signature)),
 	}
 }
 
 // mediaBusinessSignature generate a string representing uniquely the album.Media
-func (r *Rep) mediaBusinessSignature(signature *catalog.MediaSignature) string {
+func mediaBusinessSignature(signature *catalog.MediaSignature) string {
 	return fmt.Sprintf("%s#%v", signature.SignatureSha256, signature.SignatureSize)
 }
 
-func (r *Rep) marshalAlbum(album *catalog.Album) (map[string]*dynamodb.AttributeValue, error) {
+func marshalAlbum(owner string, album *catalog.Album) (map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(album.FolderName) {
 		return nil, errors.WithStack(errors.New("folderName must not be blank"))
 	}
 
 	return dynamodbattribute.MarshalMap(&AlbumData{
-		TablePk:         r.albumPrimaryKey(album.FolderName),
-		AlbumIndexKey:   r.albumIndexedKey(r.RootOwner, album.FolderName),
+		TablePk:         albumPrimaryKey(owner, album.FolderName),
+		AlbumIndexKey:   albumIndexedKey(owner, album.FolderName),
 		AlbumName:       album.Name,
 		AlbumFolderName: album.FolderName,
 		AlbumStart:      album.Start,
@@ -164,7 +164,7 @@ func (r *Rep) marshalAlbum(album *catalog.Album) (map[string]*dynamodb.Attribute
 	})
 }
 
-func (r *Rep) unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*catalog.Album, error) {
+func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*catalog.Album, error) {
 	var data AlbumData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
@@ -180,7 +180,7 @@ func (r *Rep) unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*c
 }
 
 // marshalMedia return both Media metadata attributes and location attributes
-func (r *Rep) marshalMedia(media *catalog.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, map[string]*dynamodb.AttributeValue, error) {
+func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(media.Signature.SignatureSha256) || media.Signature.SignatureSize == 0 || media.Details.DateTime.IsZero() {
 		return nil, nil, errors.WithStack(errors.Errorf("media must have a valid signature and date [sha256=%v ; size=%v ; time=%v]", media.Signature.SignatureSha256, media.Signature.SignatureSize, media.Details.DateTime))
 	}
@@ -192,8 +192,8 @@ func (r *Rep) marshalMedia(media *catalog.CreateMediaRequest) (map[string]*dynam
 	}
 
 	mediaEntry, err := dynamodbattribute.MarshalMap(&MediaData{
-		TablePk:       r.mediaPrimaryKey(&media.Signature),
-		AlbumIndexKey: r.mediaAlbumIndexedKey(r.RootOwner, media.Location.FolderName, media.Details.DateTime, &media.Signature),
+		TablePk:       mediaPrimaryKey(owner, &media.Signature),
+		AlbumIndexKey: mediaAlbumIndexedKey(owner, media.Location.FolderName, media.Details.DateTime, &media.Signature),
 		Type:          string(media.Type),
 		DateTime:      media.Details.DateTime,
 		Details:       details,
@@ -206,7 +206,7 @@ func (r *Rep) marshalMedia(media *catalog.CreateMediaRequest) (map[string]*dynam
 	}
 
 	locationEntry, err := dynamodbattribute.MarshalMap(&MediaLocationData{
-		TablePk:       r.mediaLocationPrimaryKey(&media.Signature),
+		TablePk:       mediaLocationPrimaryKey(owner, &media.Signature),
 		FolderName:    media.Location.FolderName,
 		Filename:      media.Location.Filename,
 		SignatureSize: media.Signature.SignatureSize,
@@ -215,7 +215,7 @@ func (r *Rep) marshalMedia(media *catalog.CreateMediaRequest) (map[string]*dynam
 	return mediaEntry, locationEntry, err
 }
 
-func (r *Rep) unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalog.MediaMeta, error) {
+func unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalog.MediaMeta, error) {
 	var data MediaData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
@@ -242,9 +242,9 @@ func (r *Rep) unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeVa
 	return &media, nil
 }
 
-func (r *Rep) marshalMediaLocationFromMoveOrder(moveOrder *catalog.MovedMedia) (dynamoObject, error) {
+func marshalMediaLocationFromMoveOrder(owner string, moveOrder *catalog.MovedMedia) (map[string]*dynamodb.AttributeValue, error) {
 	return dynamodbattribute.MarshalMap(&MediaLocationData{
-		TablePk:       r.mediaLocationPrimaryKey(&moveOrder.Signature),
+		TablePk:       mediaLocationPrimaryKey(owner, &moveOrder.Signature),
 		FolderName:    moveOrder.TargetFolderName,
 		Filename:      moveOrder.Filename,
 		SignatureSize: moveOrder.Signature.SignatureSize,
@@ -252,15 +252,15 @@ func (r *Rep) marshalMediaLocationFromMoveOrder(moveOrder *catalog.MovedMedia) (
 	})
 }
 
-func (r *Rep) marshalMoveTransaction(moveTransactionId string, status MediaMoveTransactionStatus) (dynamoObject, error) {
+func marshalMoveTransaction(moveTransactionId string, status MediaMoveTransactionStatus) (map[string]*dynamodb.AttributeValue, error) {
 	return dynamodbattribute.MarshalMap(&MediaMoveTransactionData{
-		TablePk:               r.moveTransactionPrimaryKey(moveTransactionId),
+		TablePk:               moveTransactionPrimaryKey(moveTransactionId),
 		MoveTransactionStatus: status,
 	})
 }
 
-// mediaKey must have the attributes of TablePk
-func (r *Rep) marshalMoveOrder(mediaKey dynamoObject, moveTransactionId, destinationFolder string) (dynamoObject, error) {
+// marshalMoveOrder creates a marshalled MediaMoveOrderData from its transaction (mediaKey must have the attributes of TablePk)
+func marshalMoveOrder(mediaKey map[string]*dynamodb.AttributeValue, moveTransactionId, destinationFolder string) (map[string]*dynamodb.AttributeValue, error) {
 	if _, pkOk := mediaKey["PK"]; !pkOk {
 		return nil, errors.Errorf("mediaPk do not contains mandatory PK key")
 	}
@@ -275,13 +275,13 @@ func (r *Rep) marshalMoveOrder(mediaKey dynamoObject, moveTransactionId, destina
 	})
 }
 
-func (r *Rep) unmarshalMoveOrder(attributes dynamoObject) (*MediaMoveOrderData, error) {
+func unmarshalMoveOrder(attributes map[string]*dynamodb.AttributeValue) (*MediaMoveOrderData, error) {
 	var order MediaMoveOrderData
 	err := dynamodbattribute.UnmarshalMap(attributes, &order)
 	return &order, err
 }
 
-func (r *Rep) unmarshalMediaItems(items []map[string]*dynamodb.AttributeValue) (location *MediaLocationData, orders []*MediaMoveOrderData, err error) {
+func unmarshalMediaItems(items []map[string]*dynamodb.AttributeValue) (location *MediaLocationData, orders []*MediaMoveOrderData, err error) {
 	for _, item := range items {
 		if sk, ok := item["SK"]; ok && sk.S != nil {
 			switch {

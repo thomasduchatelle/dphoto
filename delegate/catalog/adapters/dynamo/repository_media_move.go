@@ -31,7 +31,7 @@ func (r *Rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName stri
 	for it.HasNext() {
 		mediaKey := it.Next()
 
-		order, err := r.marshalMoveOrder(mediaKey, transactionId, newFolderName)
+		order, err := marshalMoveOrder(mediaKey, transactionId, newFolderName)
 		if err != nil {
 			return "", 0, err
 		}
@@ -42,7 +42,7 @@ func (r *Rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName stri
 			},
 		})
 
-		newAlbumKey := r.albumIndexedKey(r.RootOwner, newFolderName)
+		newAlbumKey := albumIndexedKey(r.RootOwner, newFolderName)
 		updateValues, err := dynamodbattribute.MarshalMap(map[string]string{
 			":albumPK": newAlbumKey.AlbumIndexPK,
 		})
@@ -81,9 +81,9 @@ func (r *Rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName stri
 }
 
 func (r *Rep) startMoveTransaction() (string, map[string]*dynamodb.AttributeValue, error) {
-	transactionId := fmt.Sprintf("MOVE_ORDER#%s#%s", time.Now().Format(time.RFC3339), uuid.New())
+	transactionId := fmt.Sprintf("MOVE_ORDER#%s#%s#%s", r.RootOwner, time.Now().Format(time.RFC3339), uuid.New())
 
-	transaction, err := r.marshalMoveTransaction(transactionId, transactionPreparing)
+	transaction, err := marshalMoveTransaction(transactionId, transactionPreparing)
 	if err != nil {
 		return transactionId, nil, err
 	}
@@ -96,7 +96,7 @@ func (r *Rep) startMoveTransaction() (string, map[string]*dynamodb.AttributeValu
 }
 
 func (r *Rep) markMoveTransactionReady(transactionId string) error {
-	transaction, err := r.marshalMoveTransaction(transactionId, transactionReady)
+	transaction, err := marshalMoveTransaction(transactionId, transactionReady)
 	if err != nil {
 		return err
 	}
@@ -112,55 +112,47 @@ func (r *Rep) findMediasQueries(filter *catalog.UpdateMediaFilter, projectionExp
 	queries := make([]*dynamodb.QueryInput, 0, len(filter.AlbumFolderNames)*len(filter.Ranges))
 	for folderName, _ := range filter.AlbumFolderNames {
 		if len(filter.Ranges) == 0 {
-			values, err := dynamodbattribute.MarshalMap(map[string]string{
-				":partitionKey": fmt.Sprintf("%s#%s", r.RootOwner, folderName),
-				":mediaOnly":    "MEDIA#",
-			})
+			builder := newMediaQueryBuilder(r.table)
+			builder.WithAlbum(r.RootOwner, folderName)
+			builder.ExcludeAlbumMeta()
+			builder.WithProjection(*projectionExpression)
+
+			query, err := builder.Build()
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to generate query for folderName=%s AND no range", folderName)
 			}
 
-			queries = append(queries, &dynamodb.QueryInput{
-				ExpressionAttributeValues: values,
-				IndexName:                 aws.String("AlbumIndex"),
-				KeyConditionExpression:    aws.String("AlbumIndexPK = :partitionKey AND begins_with(AlbumIndexSK, :mediaOnly)"),
-				ProjectionExpression:      projectionExpression,
-				Select:                    aws.String(dynamodb.SelectSpecificAttributes),
-				TableName:                 &r.table,
-			})
+			queries = append(queries, query)
 		}
 
 		for _, ran := range filter.Ranges {
-			values, err := dynamodbattribute.MarshalMap(map[string]string{
-				":partitionKey": fmt.Sprintf("%s#%s", r.RootOwner, folderName),
-				":from":         fmt.Sprintf("MEDIA#%s#", ran.Start.Format(IsoTime)),
-				":to":           fmt.Sprintf("MEDIA#%s#", ran.End.Format(IsoTime)), // exclusive
-			})
+			builder := newMediaQueryBuilder(r.table)
+			builder.WithAlbum(r.RootOwner, folderName)
+			builder.Within(ran.Start, ran.End)
+			builder.WithProjection(*projectionExpression)
+
+			query, err := builder.Build()
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to generate query for folderName=%s AND range=%+v", folderName, ran)
 			}
 
-			queries = append(queries, &dynamodb.QueryInput{
-				ExpressionAttributeValues: values,
-				IndexName:                 aws.String("AlbumIndex"),
-				KeyConditionExpression:    aws.String("AlbumIndexPK = :partitionKey AND AlbumIndexSK BETWEEN :from AND :to"),
-				ProjectionExpression:      projectionExpression,
-				Select:                    aws.String(dynamodb.SelectSpecificAttributes),
-				TableName:                 &r.table,
-			})
+			queries = append(queries, query)
 		}
 	}
 	return queries, nil
 }
 
 func (r *Rep) FindReadyMoveTransactions() ([]*catalog.MoveTransaction, error) {
+	ownedTransactionsPrefix := fmt.Sprintf("MOVE_ORDER#%s", r.RootOwner) // see startMoveTransaction
 	crawler := r.bufferedQueriesCrawler([]*dynamodb.QueryInput{
 		{
 			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-				":status": r.mustAttribute(transactionReady),
+				":status":     mustAttribute(transactionReady),
+				":ownedStart": mustAttribute(ownedTransactionsPrefix + "#"),
+				":ownedEnd":   mustAttribute(ownedTransactionsPrefix + "$"),
 			},
 			IndexName:              aws.String("MoveTransaction"),
-			KeyConditionExpression: aws.String("MoveTransactionStatus = :status"),
+			KeyConditionExpression: aws.String("MoveTransactionStatus = :status AND PK BETWEEN :ownedStart AND :ownedEnd"),
 			TableName:              &r.table,
 		},
 	})
@@ -221,11 +213,11 @@ func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalog.Moved
 	currentLocationKeys := make([]map[string]*dynamodb.AttributeValue, len(results.Items))
 
 	for index, attributes := range results.Items {
-		order, err := r.unmarshalMoveOrder(attributes)
+		order, err := unmarshalMoveOrder(attributes)
 		if err != nil {
 			return nil, "", err
 		}
-		locationKey, err := r.mediaLocationKeyFromMediaKey(attributes)
+		locationKey, err := mediaLocationKeyFromMediaKey(attributes)
 		if err != nil {
 			return nil, "", err
 		}
@@ -263,12 +255,12 @@ func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalog.Moved
 func (r *Rep) UpdateMediasLocation(transactionId string, moves []*catalog.MovedMedia) error {
 	locations := make([]*dynamodb.WriteRequest, len(moves)*2)
 	for i, move := range moves {
-		locationItem, err := r.marshalMediaLocationFromMoveOrder(move)
+		locationItem, err := marshalMediaLocationFromMoveOrder(r.RootOwner, move)
 		if err != nil {
 			return err
 		}
 
-		moveKey, err := dynamodbattribute.MarshalMap(r.mediaMoveOrderPrimaryKey(&move.Signature, transactionId))
+		moveKey, err := dynamodbattribute.MarshalMap(mediaMoveOrderPrimaryKey(r.RootOwner, &move.Signature, transactionId))
 		if err != nil {
 			return err
 		}
@@ -295,7 +287,7 @@ func (r *Rep) DeleteEmptyMoveTransaction(transactionId string) error {
 		return errors.Errorf("Move transaction must be empty to be deleted. %s contains %d media to move", transactionId, count)
 	}
 
-	key, err := dynamodbattribute.MarshalMap(r.moveTransactionPrimaryKey(transactionId))
+	key, err := dynamodbattribute.MarshalMap(moveTransactionPrimaryKey(transactionId))
 	if err != nil {
 		return err
 	}

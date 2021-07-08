@@ -7,10 +7,16 @@ import (
 	"time"
 )
 
+// FindMediaFilter is a filter that is applied to find medias within a time range.
+type FindMediaFilter struct {
+	PageRequest PageRequest // PageRequest size will use a default if too high or not set (0)
+	TimeRange   TimeRange   // TimeRange is optional
+}
+
 // UpdateMediaFilter is used internally to update a range of folders
 type UpdateMediaFilter struct {
 	AlbumFolderNames map[string]interface{} // AlbumFolderNames is a set of folder names (map value is nil)
-	Ranges           []timeRange            // empty = no restriction
+	Ranges           []TimeRange            // empty = no restriction
 }
 
 func NewUpdateFilter() *UpdateMediaFilter {
@@ -27,7 +33,7 @@ func (m *UpdateMediaFilter) WithAlbum(folderNames ...string) *UpdateMediaFilter 
 }
 
 func (m *UpdateMediaFilter) WithinRange(start, end time.Time) *UpdateMediaFilter {
-	m.Ranges = append(m.Ranges, timeRange{
+	m.Ranges = append(m.Ranges, TimeRange{
 		Start: start,
 		End:   end,
 	})

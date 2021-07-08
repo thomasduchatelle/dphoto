@@ -159,17 +159,17 @@ func TestUpdateMedias(t *testing.T) {
 	name := "it should move medias within time range from 2 album into a 3rd album"
 	a.Equal(3, count, name)
 	if a.NoError(err, name) {
-		medias, err := repo.FindMedias(albums[0].FolderName, catalog.PageRequest{})
+		medias, err := repo.FindMedias(albums[0].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err, name) {
 			a.Equal([]string{"img010.jpeg", "img013.jpeg"}, extractFilenames("", medias.Content), name)
 		}
 
-		medias, err = repo.FindMedias(albums[1].FolderName, catalog.PageRequest{})
+		medias, err = repo.FindMedias(albums[1].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err) {
 			a.Len(medias.Content, 0, name)
 		}
 
-		medias, err = repo.FindMedias(albums[2].FolderName, catalog.PageRequest{})
+		medias, err = repo.FindMedias(albums[2].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err) {
 			a.Equal([]string{"img011.jpeg", "img012.jpeg", "img014.jpeg"}, extractFilenames("", medias.Content), name)
 		}
@@ -203,17 +203,17 @@ func TestUpdateMedias(t *testing.T) {
 	// then
 	name = "it should move from an album to another one without range restriction"
 	if a.NoError(err, name) {
-		medias, err := repo.FindMedias(albums[0].FolderName, catalog.PageRequest{})
+		medias, err := repo.FindMedias(albums[0].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err, name) {
 			a.Equal([]string{"img010.jpeg", "img011.jpeg", "img012.jpeg", "img013.jpeg", "img014.jpeg"}, extractFilenames("", medias.Content), name)
 		}
 
-		medias, err = repo.FindMedias(albums[1].FolderName, catalog.PageRequest{})
+		medias, err = repo.FindMedias(albums[1].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err) {
 			a.Len(medias.Content, 0, name)
 		}
 
-		medias, err = repo.FindMedias(albums[2].FolderName, catalog.PageRequest{})
+		medias, err = repo.FindMedias(albums[2].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err) {
 			a.Len(medias.Content, 0, name)
 		}

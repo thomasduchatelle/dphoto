@@ -160,13 +160,13 @@ func (_m *RepositoryPort) FindFilesToMove(transactionId string, pageToken string
 	return r0, r1, r2
 }
 
-// FindMedias provides a mock function with given fields: folderName, request
-func (_m *RepositoryPort) FindMedias(folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
-	ret := _m.Called(folderName, request)
+// FindMedias provides a mock function with given fields: folderName, filter
+func (_m *RepositoryPort) FindMedias(folderName string, filter catalog.FindMediaFilter) (*catalog.MediaPage, error) {
+	ret := _m.Called(folderName, filter)
 
 	var r0 *catalog.MediaPage
-	if rf, ok := ret.Get(0).(func(string, catalog.PageRequest) *catalog.MediaPage); ok {
-		r0 = rf(folderName, request)
+	if rf, ok := ret.Get(0).(func(string, catalog.FindMediaFilter) *catalog.MediaPage); ok {
+		r0 = rf(folderName, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*catalog.MediaPage)
@@ -174,8 +174,8 @@ func (_m *RepositoryPort) FindMedias(folderName string, request catalog.PageRequ
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, catalog.PageRequest) error); ok {
-		r1 = rf(folderName, request)
+	if rf, ok := ret.Get(1).(func(string, catalog.FindMediaFilter) error); ok {
+		r1 = rf(folderName, filter)
 	} else {
 		r1 = ret.Error(1)
 	}

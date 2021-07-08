@@ -5,12 +5,13 @@ import (
 	"time"
 )
 
-type timeRange struct {
+// TimeRange is of days, start is inclusive (at the second), end is exclusive (at the second)
+type TimeRange struct {
 	Start time.Time
 	End   time.Time
 }
 
-func (t timeRange) Plus(other timeRange) (ranges []timeRange) {
+func (t TimeRange) Plus(other TimeRange) (ranges []TimeRange) {
 	first := t
 	second := other
 	if second.Start.Before(first.Start) {
@@ -18,31 +19,31 @@ func (t timeRange) Plus(other timeRange) (ranges []timeRange) {
 	}
 
 	if second.Start.Before(first.End) {
-		return []timeRange{
+		return []TimeRange{
 			{first.Start, maxTime(first.End, second.End)},
 		}
 	}
 
-	return []timeRange{t, other}
+	return []TimeRange{t, other}
 }
 
-func (t timeRange) Minus(other timeRange) (ranges []timeRange) {
+func (t TimeRange) Minus(other TimeRange) (ranges []TimeRange) {
 	if other.Start.After(t.Start) {
-		ranges = append(ranges, timeRange{Start: t.Start, End: minTime(t.End, other.Start)})
+		ranges = append(ranges, TimeRange{Start: t.Start, End: minTime(t.End, other.Start)})
 	}
 
 	if other.End.Before(t.End) {
-		ranges = append(ranges, timeRange{Start: maxTime(t.Start, other.End), End: t.End})
+		ranges = append(ranges, TimeRange{Start: maxTime(t.Start, other.End), End: t.End})
 	}
 
 	return ranges
 }
 
-func (t timeRange) Equals(other timeRange) bool {
+func (t TimeRange) Equals(other TimeRange) bool {
 	return t.Start.Equal(other.Start) && t.End.Equal(other.End)
 }
 
-func (t timeRange) String() string {
+func (t TimeRange) String() string {
 	return fmt.Sprintf("%s -> %s", t.Start.Format(time.RFC3339), t.End.Format(time.RFC3339))
 }
 

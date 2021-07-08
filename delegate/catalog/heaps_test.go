@@ -27,6 +27,7 @@ func TestHeap(t *testing.T) {
 	a.Equal("New Year", heap.Pop(h).(*Album).FolderName)
 	a.Equal("Christmas Holidays", heap.Pop(h).(*Album).FolderName)
 	a.Equal("2021-Q1", heap.Pop(h).(*Album).FolderName)
+	a.Equal("2021-May", heap.Pop(h).(*Album).FolderName)
 	a.Empty(h.heap)
 }
 
@@ -66,6 +67,11 @@ func AlbumCollection() []*Album {
 			FolderName: "2021-Q1",
 			Start:      time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 4, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			FolderName: "2021-May",
+			Start:      time.Date(2021, 5, 1, 0, 0, 0, 0, time.UTC),
+			End:        time.Date(2021, 6, 1, 0, 0, 0, 0, time.UTC),
 		},
 	}
 }

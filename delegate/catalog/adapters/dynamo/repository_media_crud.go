@@ -25,7 +25,7 @@ const (
 func (r *Rep) InsertMedias(medias []catalog.CreateMediaRequest) error {
 	requests := make([]*dynamodb.WriteRequest, len(medias)*2)
 	for index, media := range medias {
-		mediaEntry, locationEntry, err := r.marshalMedia(&media)
+		mediaEntry, locationEntry, err := marshalMedia(r.RootOwner, &media)
 		if err != nil {
 			return errors.Wrapf(err, "Failed mapping media %s", fmt.Sprint(media))
 		}
@@ -45,58 +45,47 @@ func (r *Rep) InsertMedias(medias []catalog.CreateMediaRequest) error {
 	return r.bufferedWriteItems(requests)
 }
 
-func (r *Rep) FindMedias(folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
-	albumKey := r.albumIndexedKey(r.RootOwner, folderName)
-	albumIndexPK, err := dynamodbattribute.Marshal(albumKey.AlbumIndexPK)
+func (r *Rep) FindMedias(folderName string, filter catalog.FindMediaFilter) (*catalog.MediaPage, error) {
+	builder := newMediaQueryBuilder(r.table)
+
+	builder.WithAlbum(r.RootOwner, folderName)
+	if !filter.TimeRange.Start.IsZero() && !filter.TimeRange.End.IsZero() {
+		builder.Within(filter.TimeRange.Start, filter.TimeRange.End)
+	} else {
+		builder.ExcludeAlbumMeta()
+	}
+	err := builder.AddPagination(filter.PageRequest.Size, filter.PageRequest.NextPage)
 	if err != nil {
 		return nil, err
 	}
 
-	limit := aws.Int64(defaultPage)
-	if request.Size > 0 {
-		limit = aws.Int64(request.Size)
-	}
-
-	startKey, err := r.unmarshalPageToken(request.NextPage)
+	query, err := builder.Build()
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := r.db.Query(&dynamodb.QueryInput{
-		ExclusiveStartKey: startKey,
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":albumKey":    albumIndexPK,
-			":excludeMeta": r.mustAttribute("$"),
-		},
-		IndexName:              aws.String("AlbumIndex"),
-		KeyConditionExpression: aws.String("AlbumIndexPK = :albumKey AND AlbumIndexSK >= :excludeMeta"),
-		Limit:                  limit,
-		TableName:              &r.table,
-	})
+	results, err := r.db.Query(query)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to load medias for album %s with page request %+v", folderName, request)
+		return nil, errors.Wrapf(err, "query failed [%s]", query)
 	}
 
-	medias := make([]*catalog.MediaMeta, 0, len(page.Items))
-	for _, attributes := range page.Items {
-		media, err := r.unmarshalMediaMetaData(attributes)
+	page := new(catalog.MediaPage)
+	for _, media := range results.Items {
+		data, err := unmarshalMediaMetaData(media)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to unmarshal media %v", attributes)
+			return nil, err
 		}
-		medias = append(medias, media)
+		page.Content = append(page.Content, data)
 	}
 
-	nextPage, err := r.marshalPageToken(page.LastEvaluatedKey)
-	return &catalog.MediaPage{
-		NextPage: nextPage,
-		Content:  medias,
-	}, err
+	page.NextPage, err = r.marshalPageToken(results.LastEvaluatedKey)
+	return page, err
 }
 
 func (r *Rep) FindExistingSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
 	for index, signature := range signatures {
-		key, err := dynamodbattribute.MarshalMap(r.mediaPrimaryKey(signature))
+		key, err := dynamodbattribute.MarshalMap(mediaPrimaryKey(r.RootOwner, signature))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
 		}
@@ -128,7 +117,7 @@ func (r *Rep) FindExistingSignatures(signatures []*catalog.MediaSignature) ([]*c
 func (r *Rep) FindMediaLocationsSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignatureAndLocation, error) {
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
 	for index, signature := range signatures {
-		key, err := dynamodbattribute.MarshalMap(r.mediaLocationPrimaryKey(signature))
+		key, err := dynamodbattribute.MarshalMap(mediaLocationPrimaryKey(r.RootOwner, signature))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
 		}
@@ -207,8 +196,7 @@ func (r *Rep) bufferedWriteItems(requests []*dynamodb.WriteRequest) error {
 		}, retry, func(err error, duration time.Duration) {
 			log.WithFields(log.Fields{
 				"Duration": duration,
-				"Buffer":   buffer,
-			}).WithError(err).Warn("Retrying inserting media")
+			}).WithError(err).Warnf("Retrying inserting media (buffer len %d)", len(buffer))
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to insert batch %+v", buffer)
@@ -230,7 +218,7 @@ func (r *Rep) bufferedUpdateItems(updates []*dynamodb.UpdateItemInput) error {
 }
 
 // unmarshalPageToken take a base64 page id and decode it into a dynamodb key. Return nil, nil if nextPageToken is blank
-func (r *Rep) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
+func unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
 	var startKey map[string]*dynamodb.AttributeValue
 	if !isBlank(nextPageToken) {
 		startKeyJson, err := base64.StdEncoding.DecodeString(nextPageToken)
@@ -247,6 +235,10 @@ func (r *Rep) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.Att
 	return startKey, nil
 }
 
+func (r *Rep) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
+	return unmarshalPageToken(nextPageToken)
+}
+
 // marshalPageToken take a dynamodb key and encode it (JSON+BASE64) to be used by service. Return empty string when key is empty
 func (r *Rep) marshalPageToken(key map[string]*dynamodb.AttributeValue) (string, error) {
 	if len(key) == 0 {
@@ -258,7 +250,7 @@ func (r *Rep) marshalPageToken(key map[string]*dynamodb.AttributeValue) (string,
 }
 
 // panic if value can't be converted into an attribute
-func (r *Rep) mustAttribute(value interface{}) *dynamodb.AttributeValue {
+func mustAttribute(value interface{}) *dynamodb.AttributeValue {
 	attribute, err := dynamodbattribute.Marshal(value)
 	if err != nil {
 		panic(err)
@@ -267,7 +259,7 @@ func (r *Rep) mustAttribute(value interface{}) *dynamodb.AttributeValue {
 }
 
 func (r *Rep) FindMediaLocations(signature catalog.MediaSignature) ([]*catalog.MediaLocation, error) {
-	mediaPK := r.mediaPrimaryKey(&signature)
+	mediaPK := mediaPrimaryKey(r.RootOwner, &signature)
 	queryValues, err := dynamodbattribute.MarshalMap(map[string]string{
 		":mediaPK":    mediaPK.PK,
 		":noMetadata": "$",
@@ -285,7 +277,7 @@ func (r *Rep) FindMediaLocations(signature catalog.MediaSignature) ([]*catalog.M
 		return nil, err
 	}
 
-	location, orders, err := r.unmarshalMediaItems(result.Items)
+	location, orders, err := unmarshalMediaItems(result.Items)
 	if location == nil {
 		return nil, errors.Errorf("Location not found for media %+v", signature)
 	}

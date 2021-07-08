@@ -173,48 +173,61 @@ func (a *MediaCrudTestSuite) TestFindAlbums() {
 }
 
 func (a *MediaCrudTestSuite) TestFindMedias() {
+	allTime := catalog.TimeRange{}
 	tests := []struct {
 		name       string
 		folderName string
 		size       int64
+		timeRange  catalog.TimeRange
 		medias     [][]string
 	}{
 		{
 			"it should find no media in empty albums",
 			a.mar21,
 			0,
+			allTime,
 			[][]string{{}},
 		},
 		{
 			"it should find 2 medias in Jan",
 			a.jan21,
 			0,
+			allTime,
 			[][]string{{"/media/2021-jan/img001.jpeg", "/media/2021-jan/img003.jpeg"}},
 		},
 		{
 			"it should paginate with 1 item on each page",
 			a.jan21,
 			1,
+			allTime,
 			[][]string{{"/media/2021-jan/img001.jpeg"}, {"/media/2021-jan/img003.jpeg"}, {}},
 		},
 		{
 			"it should paginate with 2 item on each page (last empty)",
 			a.jan21,
 			2,
+			allTime,
 			[][]string{{"/media/2021-jan/img001.jpeg", "/media/2021-jan/img003.jpeg"}, {}},
+		},
+		{
+			"it should filter on the date to only get medias between 2 dates",
+			a.jan21,
+			42,
+			newDateRange("2021-01-12", "2021-01-13"),
+			[][]string{{"/media/2021-jan/img003.jpeg"}},
 		},
 	}
 
 	for _, tt := range tests {
 		var pages [][]string
 
-		medias, err := a.repo.FindMedias(tt.folderName, catalog.PageRequest{Size: tt.size})
+		medias, err := a.repo.FindMedias(tt.folderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{Size: tt.size}, TimeRange: tt.timeRange})
 		if a.NoError(err, tt.name) {
 			pages = append(pages, extractFilenames(tt.folderName, medias.Content))
 
 			for medias.NextPage != "" {
 				log.WithField("NextPage", medias.NextPage).Infoln("Request next page")
-				medias, err = a.repo.FindMedias(tt.folderName, catalog.PageRequest{Size: tt.size, NextPage: medias.NextPage})
+				medias, err = a.repo.FindMedias(tt.folderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{Size: tt.size, NextPage: medias.NextPage}})
 				if !a.NoError(err, tt.name) {
 					return
 				}
@@ -228,7 +241,7 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 
 func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 	name := "it should find a media with all its details"
-	medias, err := a.repo.FindMedias(a.jan21, catalog.PageRequest{Size: 1})
+	medias, err := a.repo.FindMedias(a.jan21, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{Size: 1}})
 	if a.NoError(err, name) {
 		a.Len(medias.Content, 1, name)
 		a.Equal(&catalog.MediaMeta{
@@ -280,4 +293,11 @@ func extractFilenames(albumFolderName string, medias []*catalog.MediaMeta) []str
 	}
 
 	return filenames
+}
+
+func newDateRange(start, end string) catalog.TimeRange {
+	return catalog.TimeRange{
+		Start: mustParseDate(start),
+		End:   mustParseDate(end),
+	}
 }

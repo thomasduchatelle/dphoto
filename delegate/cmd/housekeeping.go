@@ -40,6 +40,8 @@ var housekeepingCmd = &cobra.Command{
 			}
 			err := startHousekeepingTransactions(transactions)
 			printer.FatalIfError(err, 2)
+
+			printer.Success("Housekeeping complete.")
 		}
 	},
 }

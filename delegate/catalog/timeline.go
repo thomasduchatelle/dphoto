@@ -174,7 +174,7 @@ func (t *Timeline) FindForAlbum(folderName string) (segments []PrioritySegment) 
 	return segments
 }
 
-func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment) {
+func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment, missed []PrioritySegment) {
 	startIndex := sort.Search(len(t.segments), func(i int) bool {
 		return t.segments[i].to.After(start)
 	})
@@ -187,7 +187,15 @@ func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment
 		return !t.segments[startIndex+i].from.Before(end)
 	})
 
+	previousEnd := start
 	for _, seg := range t.segments[startIndex : startIndex+endIndex] {
+		if previousEnd.Before(seg.from) {
+			missed = append(missed, PrioritySegment{
+				Start: previousEnd,
+				End:   seg.from,
+			})
+		}
+		previousEnd = seg.to
 		segments = append(segments, PrioritySegment{
 			Start:  maxTime(seg.from, start),
 			End:    minTime(seg.to, end),
@@ -195,7 +203,19 @@ func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment
 		})
 	}
 
-	return segments
+	if len(segments) == 0 {
+		missed = append(missed, PrioritySegment{
+			Start: start,
+			End:   end,
+		})
+	} else if segments[len(segments)-1].End.Before(end) {
+		missed = append(missed, PrioritySegment{
+			Start: segments[len(segments)-1].End,
+			End:   end,
+		})
+	}
+
+	return segments, missed
 }
 
 // AppendAlbum generates a new timeline from memory

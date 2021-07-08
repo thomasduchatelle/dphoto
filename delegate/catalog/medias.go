@@ -2,7 +2,9 @@ package catalog
 
 // ListMedias return a page of medias within an album
 func ListMedias(folderName string, request PageRequest) (*MediaPage, error) {
-	return Repository.FindMedias(folderName, request)
+	return Repository.FindMedias(folderName, FindMediaFilter{
+		PageRequest: request,
+	})
 }
 
 // InsertMedias stores metadata and location of photo and videos

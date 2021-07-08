@@ -214,19 +214,22 @@ func TestFindAt_FindBetween(t *testing.T) {
 		allNames []string
 	}
 	tests := []struct {
-		name string
-		args Args
-		want []Want
+		name       string
+		args       Args
+		want       []Want
+		wantMissed []Want
 	}{
 		{
 			"it should return no segment outside timeline boundaries",
 			Args{"2019-01-01T00", "2019-01-01T00"},
 			nil,
+			[]Want{{start: "2019-01-01T00", end: "2019-01-01T00"}},
 		},
 		{
 			"it should return a segment with dates updated to match the request",
 			Args{"2020-01-01T00", "2020-09-01T00"},
 			[]Want{{"2020-07-01T00", "2020-09-01T00", []string{"2020-Q3"}}},
+			[]Want{{start: "2020-01-01T00", end: "2020-07-01T00"}},
 		},
 		{
 			"it should return segments within the request",
@@ -236,6 +239,7 @@ func TestFindAt_FindBetween(t *testing.T) {
 				{"2020-12-31T18", "2021-01-01T18", []string{"New Year", "Christmas Holidays", "2021-Q1", "2020-Q4"}},
 				{"2021-01-01T18", "2021-01-02T00", []string{"Christmas Holidays", "2021-Q1"}},
 			},
+			nil,
 		},
 		{
 			"it should return segments within the request",
@@ -244,6 +248,19 @@ func TestFindAt_FindBetween(t *testing.T) {
 				{"2020-12-18T00", "2020-12-24T00", []string{"Christmas First Week", "Christmas Holidays", "2020-Q4"}},
 				{"2020-12-24T00", "2020-12-26T00", []string{"Christmas Day", "Christmas First Week", "Christmas Holidays", "2020-Q4"}},
 			},
+			nil,
+		},
+		{
+			"it should notice the gap between mars and may, and the missing dates at the end of the request",
+			Args{"2021-03-23T00", "2021-06-26T00"},
+			[]Want{
+				{"2021-03-23T00", "2021-04-01T00", []string{"2021-Q1"}},
+				{"2021-05-01T00", "2021-06-01T00", []string{"2021-May"}},
+			},
+			[]Want{
+				{"2021-04-01T00", "2021-05-01T00", nil},
+				{"2021-06-01T00", "2021-06-26T00", nil},
+			},
 		},
 	}
 
@@ -251,8 +268,9 @@ func TestFindAt_FindBetween(t *testing.T) {
 
 	if a.NoError(err) {
 		for _, tt := range tests {
-			segments := timeline.FindBetween(MustParse(layout, tt.args.start), MustParse(layout, tt.args.end))
+			segments, missed := timeline.FindBetween(MustParse(layout, tt.args.start), MustParse(layout, tt.args.end))
 			var got []Want
+			var gotMissed []Want
 			for _, seg := range segments {
 				var names []string
 				for _, a := range seg.Albums {
@@ -265,8 +283,15 @@ func TestFindAt_FindBetween(t *testing.T) {
 					allNames: names,
 				})
 			}
+			for _, seg := range missed {
+				gotMissed = append(gotMissed, Want{
+					start: seg.Start.Format(layout),
+					end:   seg.End.Format(layout),
+				})
+			}
 
 			a.Equal(tt.want, got, tt.name)
+			a.Equal(tt.wantMissed, gotMissed, tt.name)
 		}
 	}
 }

@@ -29,16 +29,16 @@ func TestTimeRange_Plus(t *testing.T) {
 
 	const layout = "2006-01-02"
 	for _, tt := range tests {
-		t := timeRange{
+		t := TimeRange{
 			Start: MustParse(layout, tt.timeRange.Start),
 			End:   MustParse(layout, tt.timeRange.End),
 		}
 
-		gotRanges := t.Plus(timeRange{Start: MustParse(layout, tt.other.Start), End: MustParse(layout, tt.other.End)})
+		gotRanges := t.Plus(TimeRange{Start: MustParse(layout, tt.other.Start), End: MustParse(layout, tt.other.End)})
 
-		var expected []timeRange
+		var expected []TimeRange
 		for _, r := range tt.wantRanges {
-			expected = append(expected, timeRange{Start: MustParse(layout, r.Start), End: MustParse(layout, r.End)})
+			expected = append(expected, TimeRange{Start: MustParse(layout, r.Start), End: MustParse(layout, r.End)})
 		}
 
 		a.Equal(expected, gotRanges, tt.name)
@@ -67,12 +67,12 @@ func TestTimeRange_Equal(t *testing.T) {
 
 	const layout = "2006-01-02"
 	for _, tt := range tests {
-		t := timeRange{
+		t := TimeRange{
 			Start: MustParse(layout, tt.timeRange.Start),
 			End:   MustParse(layout, tt.timeRange.End),
 		}
 
-		got := t.Equals(timeRange{Start: MustParse(layout, tt.other.Start), End: MustParse(layout, tt.other.End)})
+		got := t.Equals(TimeRange{Start: MustParse(layout, tt.other.Start), End: MustParse(layout, tt.other.End)})
 		a.Equal(tt.want, got, tt.name)
 	}
 }
@@ -100,16 +100,16 @@ func TestTimeRange_Minus(t *testing.T) {
 
 	const layout = "2006-01-02"
 	for _, tt := range tests {
-		t := timeRange{
+		t := TimeRange{
 			Start: MustParse(layout, tt.timeRange.Start),
 			End:   MustParse(layout, tt.timeRange.End),
 		}
 
-		gotRanges := t.Minus(timeRange{Start: MustParse(layout, tt.other.Start), End: MustParse(layout, tt.other.End)})
+		gotRanges := t.Minus(TimeRange{Start: MustParse(layout, tt.other.Start), End: MustParse(layout, tt.other.End)})
 
-		var expected []timeRange
+		var expected []TimeRange
 		for _, r := range tt.wantRanges {
-			expected = append(expected, timeRange{Start: MustParse(layout, r.Start), End: MustParse(layout, r.End)})
+			expected = append(expected, TimeRange{Start: MustParse(layout, r.Start), End: MustParse(layout, r.End)})
 		}
 
 		a.Equal(expected, gotRanges, tt.name)

@@ -17,8 +17,8 @@ type RepositoryPort interface {
 
 	// InsertMedias bulks insert medias
 	InsertMedias(media []CreateMediaRequest) error
-	// FindMedias is a paginated search of medias within an album
-	FindMedias(folderName string, request PageRequest) (*MediaPage, error)
+	// FindMedias is a paginated search of medias within an album, and optionally within a time range
+	FindMedias(folderName string, filter FindMediaFilter) (*MediaPage, error)
 	// FindExistingSignatures returns the signatures that are already known
 	FindExistingSignatures(signatures []*MediaSignature) ([]*MediaSignature, error)
 	// UpdateMedias updates metadata and mark the media to be moved, the AlbumFolderName is never updated (part of the primary key)
