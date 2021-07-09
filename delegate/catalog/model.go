@@ -82,8 +82,9 @@ type MediaDetails struct {
 type MovedMedia struct {
 	Signature        MediaSignature
 	SourceFolderName string
+	SourceFilename   string
 	TargetFolderName string
-	Filename         string
+	TargetFilename   string
 }
 
 // MediaPage is the current page MediaMeta, and the token of the next page

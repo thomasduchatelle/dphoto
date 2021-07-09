@@ -11,6 +11,10 @@ type recordsRenderer struct{}
 func (r *recordsRenderer) Render(state *recordsState) (string, error) {
 	const layout = "02/01/2006 (Mon)"
 
+	if len(state.Records) == 0 {
+		return "No album to show.", nil
+	}
+
 	records := state.Records
 	start := state.FirstElement
 	if state.PageSize > 0 && state.PageSize < len(state.Records) {

@@ -114,13 +114,13 @@ func (s *S3OnlineStorage) findUniquePrefix(prefix string) (string, error) {
 	return candidate, nil
 }
 
-func (s *S3OnlineStorage) MoveFile(folderName string, filename string, destFolderName string) error {
+func (s *S3OnlineStorage) MoveFile(folderName string, filename string, destFolderName string) (string, error) {
 	cleanedFolderName := strings.Trim(destFolderName, "/")
 
 	prefix, suffix := s.splitKey(cleanedFolderName, filename)
 	prefix, err := s.findUniquePrefix(prefix)
 	if err != nil {
-		return errors.Wrapf(err, "failed getting unique prefix for media %s/%s", destFolderName, filename)
+		return "", errors.Wrapf(err, "failed getting unique prefix for media %s/%s", destFolderName, filename)
 	}
 
 	origKey := strings.Trim(path.Join(folderName, filename), "/")
@@ -132,12 +132,12 @@ func (s *S3OnlineStorage) MoveFile(folderName string, filename string, destFolde
 		Key:        &destKey,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "failed to copy file %s to %s", origKey, destKey)
+		return destKey, errors.Wrapf(err, "failed to copy file %s to %s", origKey, destKey)
 	}
 
 	_, err = s.s3.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: &s.bucketName,
 		Key:    &origKey,
 	})
-	return errors.Wrapf(err, "failed to remove moved file %s", origKey)
+	return destKey, errors.Wrapf(err, "failed to remove moved file %s", origKey)
 }

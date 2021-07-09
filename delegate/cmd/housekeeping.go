@@ -129,19 +129,18 @@ func (h *housekeepingOperator) updateGlobalTransactionBar(countFromLastCompleted
 	}
 }
 
-func (h *housekeepingOperator) Move(source, dest catalog.MediaLocation) error {
+func (h *housekeepingOperator) Move(source, dest catalog.MediaLocation) (string, error) {
 	if len(h.lastMoves) > 5 {
 		h.lastMoves = h.lastMoves[1:]
 	}
 	h.lastMoves = append(h.lastMoves, aurora.Gray(10, fmt.Sprintf("%-70s -> %s", source.FolderName+"/"+source.Filename, dest.FolderName)).String())
 	h.setRollingLog(strings.Join(h.lastMoves, "\n"))
 
-	err := backup.MovePhysicalStorage(source.FolderName, source.Filename, dest.FolderName)
-
-	h.currentCount++
-	h.updateProgress(h.currentCount, h.currentTotal)
-
-	return err
+	defer func() {
+		h.currentCount++
+		h.updateProgress(h.currentCount, h.currentTotal)
+	}()
+	return backup.MovePhysicalStorage(source.FolderName, source.Filename, dest.FolderName)
 }
 
 func (h *housekeepingOperator) UpdateStatus(done, total int) error {

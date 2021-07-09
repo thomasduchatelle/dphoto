@@ -27,17 +27,24 @@ func (_m *MoveMediaOperator) Continue() bool {
 }
 
 // Move provides a mock function with given fields: source, dest
-func (_m *MoveMediaOperator) Move(source catalog.MediaLocation, dest catalog.MediaLocation) error {
+func (_m *MoveMediaOperator) Move(source catalog.MediaLocation, dest catalog.MediaLocation) (string, error) {
 	ret := _m.Called(source, dest)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(catalog.MediaLocation, catalog.MediaLocation) error); ok {
+	var r0 string
+	if rf, ok := ret.Get(0).(func(catalog.MediaLocation, catalog.MediaLocation) string); ok {
 		r0 = rf(source, dest)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(catalog.MediaLocation, catalog.MediaLocation) error); ok {
+		r1 = rf(source, dest)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UpdateStatus provides a mock function with given fields: done, total

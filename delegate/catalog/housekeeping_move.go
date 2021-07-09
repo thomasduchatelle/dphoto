@@ -6,8 +6,8 @@ import (
 )
 
 type MoveMediaOperator interface {
-	// Move must perform the physical move of the file to a different directory
-	Move(source, dest MediaLocation) error
+	// Move must perform the physical move of the file to a different directory ; return the final name if it has been changed
+	Move(source, dest MediaLocation) (string, error)
 
 	// UpdateStatus informs of the global status of the move operation
 	UpdateStatus(done, total int) error
@@ -52,12 +52,12 @@ func RelocateMovedMedias(operator MoveMediaOperator, transactionId string) (int,
 		}
 
 		for _, move := range moves {
-			err = operator.Move(MediaLocation{
+			move.TargetFilename, err = operator.Move(MediaLocation{
 				FolderName: move.SourceFolderName,
-				Filename:   move.Filename,
+				Filename:   move.SourceFilename,
 			}, MediaLocation{
 				FolderName: move.TargetFolderName,
-				Filename:   move.Filename,
+				Filename:   move.TargetFilename,
 			})
 			if err != nil {
 				return count, err

@@ -246,7 +246,7 @@ func marshalMediaLocationFromMoveOrder(owner string, moveOrder *catalog.MovedMed
 	return dynamodbattribute.MarshalMap(&MediaLocationData{
 		TablePk:       mediaLocationPrimaryKey(owner, &moveOrder.Signature),
 		FolderName:    moveOrder.TargetFolderName,
-		Filename:      moveOrder.Filename,
+		Filename:      moveOrder.TargetFilename,
 		SignatureSize: moveOrder.Signature.SignatureSize,
 		SignatureHash: moveOrder.Signature.SignatureSha256,
 	})

@@ -13,17 +13,20 @@ import (
 )
 
 func (r *Rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName string) (string, int, error) {
-	transactionId, _, err := r.startMoveTransaction()
-	if err != nil {
-		return "", 0, err
-	}
-
 	queries, err := r.findMediasQueries(filter, aws.String("PK, SK"))
 	if err != nil {
 		return "", 0, err
 	}
 
 	it := r.bufferedQueriesCrawler(queries)
+	if !it.HasNext() {
+		return "", 0, nil
+	}
+
+	transactionId, _, err := r.startMoveTransaction()
+	if err != nil {
+		return "", 0, err
+	}
 
 	var moveOrders []*dynamodb.WriteRequest
 	var updates []*dynamodb.UpdateItemInput
@@ -244,8 +247,9 @@ func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalog.Moved
 				SignatureSize:   location.SignatureSize,
 			},
 			SourceFolderName: location.FolderName,
+			SourceFilename:   location.Filename,
 			TargetFolderName: destinationFolders[location.PK],
-			Filename:         location.Filename,
+			TargetFilename:   location.Filename,
 		})
 	}
 

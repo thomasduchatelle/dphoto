@@ -188,7 +188,7 @@ func TestUpdateMedias(t *testing.T) {
 
 			orders := make([]string, len(moveOrders))
 			for i, o := range moveOrders {
-				orders[i] = fmt.Sprintf("[%s]%s->%s", o.Filename, o.SourceFolderName, o.TargetFolderName)
+				orders[i] = fmt.Sprintf("[%s]%s->%s", o.SourceFilename, o.SourceFolderName, o.TargetFolderName)
 			}
 			sort.Slice(orders, func(i, j int) bool {
 				return orders[i] < orders[j]

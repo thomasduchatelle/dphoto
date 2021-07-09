@@ -13,17 +13,24 @@ type OnlineStorageAdapter struct {
 }
 
 // MoveFile provides a mock function with given fields: folderName, filename, destFolderName
-func (_m *OnlineStorageAdapter) MoveFile(folderName string, filename string, destFolderName string) error {
+func (_m *OnlineStorageAdapter) MoveFile(folderName string, filename string, destFolderName string) (string, error) {
 	ret := _m.Called(folderName, filename, destFolderName)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, string) error); ok {
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, string, string) string); ok {
 		r0 = rf(folderName, filename, destFolderName)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(folderName, filename, destFolderName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UploadFile provides a mock function with given fields: media, folderName, filename
