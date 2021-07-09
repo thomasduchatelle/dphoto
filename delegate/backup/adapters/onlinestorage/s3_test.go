@@ -51,7 +51,7 @@ func TestS3OnlineStorage_UploadFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := s.UploadFile(tt.args.media, tt.args.folderName, tt.args.filename)
+		got, err := s.UploadFile("unittest", tt.args.media, tt.args.folderName, tt.args.filename)
 		if a.NoError(err, tt.name) {
 			a.Equal(tt.want, got, tt.name)
 		}

@@ -18,11 +18,11 @@ type Rep struct {
 }
 
 // NewRepository creates the repository and connect to the database
-func NewRepository(awsSession *session.Session, tableName string) (*Rep, error) {
+func NewRepository(awsSession *session.Session, owner string, tableName string) (*Rep, error) {
 	rep := &Rep{
 		db:                      dynamodb.New(awsSession),
 		table:                   tableName,
-		RootOwner:               "#ROOT",
+		RootOwner:               "#" + owner,
 		localDynamodb:           false,
 		findMovedMediaBatchSize: int64(dynamoWriteBatchSize),
 	}

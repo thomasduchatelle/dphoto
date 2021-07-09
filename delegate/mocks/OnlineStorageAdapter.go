@@ -12,20 +12,20 @@ type OnlineStorageAdapter struct {
 	mock.Mock
 }
 
-// MoveFile provides a mock function with given fields: folderName, filename, destFolderName
-func (_m *OnlineStorageAdapter) MoveFile(folderName string, filename string, destFolderName string) (string, error) {
-	ret := _m.Called(folderName, filename, destFolderName)
+// MoveFile provides a mock function with given fields: owner, folderName, filename, destFolderName
+func (_m *OnlineStorageAdapter) MoveFile(owner string, folderName string, filename string, destFolderName string) (string, error) {
+	ret := _m.Called(owner, folderName, filename, destFolderName)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(string, string, string) string); ok {
-		r0 = rf(folderName, filename, destFolderName)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) string); ok {
+		r0 = rf(owner, folderName, filename, destFolderName)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(folderName, filename, destFolderName)
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(owner, folderName, filename, destFolderName)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -33,20 +33,20 @@ func (_m *OnlineStorageAdapter) MoveFile(folderName string, filename string, des
 	return r0, r1
 }
 
-// UploadFile provides a mock function with given fields: media, folderName, filename
-func (_m *OnlineStorageAdapter) UploadFile(media backupmodel.ReadableMedia, folderName string, filename string) (string, error) {
-	ret := _m.Called(media, folderName, filename)
+// UploadFile provides a mock function with given fields: owner, media, folderName, filename
+func (_m *OnlineStorageAdapter) UploadFile(owner string, media backupmodel.ReadableMedia, folderName string, filename string) (string, error) {
+	ret := _m.Called(owner, media, folderName, filename)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(backupmodel.ReadableMedia, string, string) string); ok {
-		r0 = rf(media, folderName, filename)
+	if rf, ok := ret.Get(0).(func(string, backupmodel.ReadableMedia, string, string) string); ok {
+		r0 = rf(owner, media, folderName, filename)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(backupmodel.ReadableMedia, string, string) error); ok {
-		r1 = rf(media, folderName, filename)
+	if rf, ok := ret.Get(1).(func(string, backupmodel.ReadableMedia, string, string) error); ok {
+		r1 = rf(owner, media, folderName, filename)
 	} else {
 		r1 = ret.Error(1)
 	}

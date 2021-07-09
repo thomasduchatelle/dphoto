@@ -41,10 +41,10 @@ func Must(storage *S3OnlineStorage, err error) *S3OnlineStorage {
 	return storage
 }
 
-func (s *S3OnlineStorage) UploadFile(media backupmodel.ReadableMedia, folderName, filename string) (string, error) {
+func (s *S3OnlineStorage) UploadFile(owner string, media backupmodel.ReadableMedia, folderName, filename string) (string, error) {
 	cleanedFolderName := strings.Trim(folderName, "/")
 
-	prefix, suffix := s.splitKey(cleanedFolderName, filename)
+	prefix, suffix := s.splitKey(owner, cleanedFolderName, filename)
 	prefix, err := s.findUniquePrefix(prefix)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed getting unique prefix for media %s", media)
@@ -70,8 +70,8 @@ func (s *S3OnlineStorage) UploadFile(media backupmodel.ReadableMedia, folderName
 	return strings.TrimPrefix(key, cleanedFolderName+"/"), nil
 }
 
-func (s *S3OnlineStorage) splitKey(folderName, filename string) (string, string) {
-	key := path.Join(folderName, filename)
+func (s *S3OnlineStorage) splitKey(owner, folderName, filename string) (string, string) {
+	key := path.Join(owner, folderName, filename)
 	suffix := path.Ext(key)
 
 	return strings.TrimPrefix(strings.TrimSuffix(key, suffix), "/"), suffix
@@ -115,10 +115,10 @@ func (s *S3OnlineStorage) findUniquePrefix(prefix string) (string, error) {
 	return candidate, nil
 }
 
-func (s *S3OnlineStorage) MoveFile(folderName string, filename string, destFolderName string) (string, error) {
+func (s *S3OnlineStorage) MoveFile(owner string, folderName string, filename string, destFolderName string) (string, error) {
 	cleanedFolderName := strings.Trim(destFolderName, "/")
 
-	prefix, suffix := s.splitKey(cleanedFolderName, filename)
+	prefix, suffix := s.splitKey(owner, cleanedFolderName, filename)
 	prefix, err := s.findUniquePrefix(prefix)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed getting unique prefix for media %s/%s", destFolderName, filename)

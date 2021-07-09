@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"crypto/sha1"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/exif"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/filesystem"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/localstorage"
@@ -10,8 +11,10 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/config"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"path"
 )
 
 func init() {
@@ -29,8 +32,9 @@ func init() {
 			panic(err)
 		}
 
+		owner := cfg.GetString("owner")
 		interactors.VolumeRepositoryPort = &volumes.FileSystemRepository{
-			Directory: os.ExpandEnv(cfg.GetString("backup.volumes.repository.directory")),
+			Directory: path.Join(os.ExpandEnv(cfg.GetString("backup.volumes.repository.directory")), fmt.Sprintf("%x", sha1.Sum([]byte(owner)))),
 		}
 	})
 }

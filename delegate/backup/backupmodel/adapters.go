@@ -33,9 +33,9 @@ type DownloaderAdapter interface {
 
 type OnlineStorageAdapter interface {
 	// UploadFile uploads the file in the right folder but might change the name to avoid clash with other existing files. Use files name is always returned.
-	UploadFile(media ReadableMedia, folderName, filename string) (string, error)
+	UploadFile(owner string, media ReadableMedia, folderName, filename string) (string, error)
 	// MoveFile moves physically a file in remote storage ; returns filename (different in case on conflict)
-	MoveFile(folderName string, filename string, destFolderName string) (string, error)
+	MoveFile(owner string, folderName string, filename string, destFolderName string) (string, error)
 }
 
 type ReadableMedia interface {

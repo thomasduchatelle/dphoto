@@ -140,7 +140,7 @@ func (h *housekeepingOperator) Move(source, dest catalog.MediaLocation) (string,
 		h.currentCount++
 		h.updateProgress(h.currentCount, h.currentTotal)
 	}()
-	return backup.MovePhysicalStorage(source.FolderName, source.Filename, dest.FolderName)
+	return backup.MovePhysicalStorage(Owner, source.FolderName, source.Filename, dest.FolderName)
 }
 
 func (h *housekeepingOperator) UpdateStatus(done, total int) error {

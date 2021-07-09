@@ -12,6 +12,7 @@ import (
 var (
 	LogFile = "$HOME/.dphoto/logs/dphoto.log"
 	debug   = false
+	Owner   string // Owner source of truce is viper config, for convenience, other commands can get it from here.
 )
 
 var rootCmd = &cobra.Command{
@@ -49,7 +50,14 @@ var rootCmd = &cobra.Command{
 		}).Debugln("Logger setup, starts program...")
 
 		// complete initialisation on components
-		config.Connect(cmd.Name() != "configure")
+		ignite := cmd.Name() != "configure"
+		config.Connect(ignite)
+
+		if ignite {
+			config.Listen(func(c config.Config) {
+				Owner = c.GetString("owner")
+			})
+		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		log.Debugln("Program complete.")

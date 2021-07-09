@@ -1,4 +1,5 @@
 # config using localstack - used when running 'go run .', start it with 'docker-compose up -d'
+owner: dphoto@example.com
 aws:
   endpoint: http://localhost:4566
   key: key

@@ -16,6 +16,7 @@ type Uploader struct {
 	timelineLock  sync.Mutex
 	catalog       CatalogProxyAdapter
 	onlineStorage backupmodel.OnlineStorageAdapter
+	owner         string
 }
 
 type mediaRecord struct {
@@ -23,7 +24,7 @@ type mediaRecord struct {
 	createRequest *catalog.CreateMediaRequest
 }
 
-func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.OnlineStorageAdapter) (*Uploader, error) {
+func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.OnlineStorageAdapter, owner string) (*Uploader, error) {
 	albums, err := catalogProxy.FindAllAlbums()
 	if err != nil {
 		return nil, err
@@ -39,6 +40,7 @@ func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.Onl
 		timelineLock:  sync.Mutex{},
 		catalog:       catalogProxy,
 		onlineStorage: onlineStorage,
+		owner:         owner,
 	}, nil
 }
 
@@ -187,7 +189,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 
 func (u *Uploader) doUpload(media backupmodel.FoundMedia, location *catalog.MediaLocation) (err error) {
 	log.Debugf("Uploader > Upload media %s", media)
-	location.Filename, err = u.onlineStorage.UploadFile(media, location.FolderName, location.Filename)
+	location.Filename, err = u.onlineStorage.UploadFile(u.owner, media, location.FolderName, location.Filename)
 	return
 }
 

@@ -20,7 +20,7 @@ import (
 
 // StartBackupRunner starts backup of given backupmodel.VolumeToBackup and returns when finished. Listeners will received
 // progress updates.
-func StartBackupRunner(volume backupmodel.VolumeToBackup, listeners ...interface{}) (backupmodel.BackupReport, error) {
+func StartBackupRunner(owner string, volume backupmodel.VolumeToBackup, listeners ...interface{}) (backupmodel.BackupReport, error) {
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.UniqueId, "_"), "_"), time.Now().Format("20060102_150405"))
 	mdc := log.WithFields(log.Fields{
@@ -41,7 +41,7 @@ func StartBackupRunner(volume backupmodel.VolumeToBackup, listeners ...interface
 		return nil, err
 	}
 
-	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), interactors.OnlineStoragePort)
+	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), interactors.OnlineStoragePort, owner)
 	if err != nil {
 		return nil, err
 	}

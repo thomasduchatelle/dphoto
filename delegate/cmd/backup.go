@@ -37,7 +37,7 @@ var backupCmd = &cobra.Command{
 
 		progress := NewProgress()
 
-		tracker, err := backup.StartBackupRunner(backupmodel.VolumeToBackup{
+		tracker, err := backup.StartBackupRunner(Owner, backupmodel.VolumeToBackup{
 			UniqueId: volumePath,
 			Type:     backupmodel.VolumeTypeFileSystem,
 			Path:     volumePath,

@@ -137,12 +137,12 @@ func TestUploader_Upload(t *testing.T) {
 	}).Once()
 
 	// EXPECTATION 2/2
-	onlineStorage.On("UploadFile", mock.Anything, "2021-Q1", "2021-03-27_00-00-00_00000001.jpg").Return("2021-03-27_00-00-00_ONLINE.jpg", nil).Once()
-	onlineStorage.On("UploadFile", mock.Anything, "2021-Q2", "2021-04-02_00-00-00_00000002.mkv").Return("2021-04-02_00-00-00_00000002.mkv", nil).Once()
-	onlineStorage.On("UploadFile", mock.Anything, "2021-04_easter", "2021-04-04_00-00-00_00000003.jpg").Return("2021-04-04_00-00-00_00000003.jpg", nil).Once()
-	onlineStorage.On("UploadFile", mock.Anything, "2021-Q2", "2021-04-05_00-00-00_00000004.jpg").Return("2021-04-05_00-00-00_00000004.jpg", nil).Once()
+	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-Q1", "2021-03-27_00-00-00_00000001.jpg").Return("2021-03-27_00-00-00_ONLINE.jpg", nil).Once()
+	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-Q2", "2021-04-02_00-00-00_00000002.mkv").Return("2021-04-02_00-00-00_00000002.mkv", nil).Once()
+	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-04_easter", "2021-04-04_00-00-00_00000003.jpg").Return("2021-04-04_00-00-00_00000003.jpg", nil).Once()
+	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-Q2", "2021-04-05_00-00-00_00000004.jpg").Return("2021-04-05_00-00-00_00000004.jpg", nil).Once()
 
-	uploader, err := NewUploader(catalogProxy, onlineStorage)
+	uploader, err := NewUploader(catalogProxy, onlineStorage, "unittest")
 	if !a.NoError(err) {
 		a.FailNow(err.Error())
 	}
