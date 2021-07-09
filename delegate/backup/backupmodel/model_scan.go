@@ -1,4 +1,4 @@
-package model
+package backupmodel
 
 import (
 	"path"

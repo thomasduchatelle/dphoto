@@ -1,3 +1,4 @@
+// Package screen provides building blocks to represent progress bars.
 package screen
 
 import (

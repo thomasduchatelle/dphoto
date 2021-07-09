@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,11 +13,11 @@ type Filter struct {
 }
 
 // Execute provides a mock function with given fields: found
-func (_m *Filter) Execute(found model.FoundMedia) bool {
+func (_m *Filter) Execute(found backupmodel.FoundMedia) bool {
 	ret := _m.Called(found)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(model.FoundMedia) bool); ok {
+	if rf, ok := ret.Get(0).(func(backupmodel.FoundMedia) bool); ok {
 		r0 = rf(found)
 	} else {
 		r0 = ret.Get(0).(bool)

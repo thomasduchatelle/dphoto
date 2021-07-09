@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/cmd/printer"
 	"duchatelle.io/dphoto/dphoto/cmd/screen"
 	"fmt"
@@ -37,9 +37,9 @@ var backupCmd = &cobra.Command{
 
 		progress := NewProgress()
 
-		tracker, err := backup.StartBackupRunner(model.VolumeToBackup{
+		tracker, err := backup.StartBackupRunner(backupmodel.VolumeToBackup{
 			UniqueId: volumePath,
-			Type:     model.VolumeTypeFileSystem,
+			Type:     backupmodel.VolumeTypeFileSystem,
 			Path:     volumePath,
 			Local:    !backupArgs.remote,
 		}, progress)
@@ -57,7 +57,7 @@ func init() {
 	backupCmd.Flags().BoolVarP(&backupArgs.remote, "remote", "r", false, "mark the source as remote ; a local buffer will be used to read files only once")
 }
 
-func printBackupStats(tracker model.BackupReport, volumePath string) {
+func printBackupStats(tracker backupmodel.BackupReport, volumePath string) {
 	if len(tracker.CountPerAlbum()) == 0 {
 		printer.Success("\n\nBackup of %s complete: %s.", aurora.Cyan(volumePath), aurora.Bold(aurora.Yellow("no new medias")))
 		return
@@ -80,7 +80,7 @@ func printBackupStats(tracker model.BackupReport, volumePath string) {
 		newAlbums[album] = nil
 	}
 
-	var totals [3]model.MediaCounter
+	var totals [3]backupmodel.MediaCounter
 	i := 0
 	for folderName, counts := range tracker.CountPerAlbum() {
 		newMarker := ""
@@ -91,13 +91,13 @@ func printBackupStats(tracker model.BackupReport, volumePath string) {
 		table.Body.Cells[i] = []*simpletable.Cell{
 			{Align: simpletable.AlignCenter, Text: newMarker},
 			{Text: folderName},
-			countAndSize(counts.OfType(model.MediaTypeImage)),
-			countAndSize(counts.OfType(model.MediaTypeVideo)),
+			countAndSize(counts.OfType(backupmodel.MediaTypeImage)),
+			countAndSize(counts.OfType(backupmodel.MediaTypeVideo)),
 			countAndSize(counts.Total()),
 		}
 
-		totals[0] = totals[0].AddCounter(counts.OfType(model.MediaTypeImage))
-		totals[1] = totals[1].AddCounter(counts.OfType(model.MediaTypeVideo))
+		totals[0] = totals[0].AddCounter(counts.OfType(backupmodel.MediaTypeImage))
+		totals[1] = totals[1].AddCounter(counts.OfType(backupmodel.MediaTypeVideo))
 		totals[2] = totals[2].AddCounter(counts.Total())
 		i++
 	}
@@ -112,7 +112,7 @@ func printBackupStats(tracker model.BackupReport, volumePath string) {
 	fmt.Println(table.String())
 }
 
-func countAndSize(counter model.MediaCounter) *simpletable.Cell {
+func countAndSize(counter backupmodel.MediaCounter) *simpletable.Cell {
 	if counter.Count == 0 {
 		return &simpletable.Cell{Align: simpletable.AlignCenter, Text: "-"}
 	}
@@ -140,7 +140,7 @@ func NewProgress() *BackupProgress {
 	return p
 }
 
-func (p *BackupProgress) OnScanComplete(total model.MediaCounter) {
+func (p *BackupProgress) OnScanComplete(total backupmodel.MediaCounter) {
 	if total.Count == 0 {
 		p.scanLine.SwapSpinner(1)
 		p.scanLine.SetLabel(fmt.Sprintf("Scan complete: no new files found"))
@@ -159,7 +159,7 @@ func (p *BackupProgress) OnScanComplete(total model.MediaCounter) {
 	}
 }
 
-func (p *BackupProgress) OnDownloaded(done, total model.MediaCounter) {
+func (p *BackupProgress) OnDownloaded(done, total backupmodel.MediaCounter) {
 	if !total.IsZero() {
 		p.downloadLine.SetBar(done.Size, total.Size)
 		p.downloadLine.SetExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))
@@ -171,7 +171,7 @@ func (p *BackupProgress) OnDownloaded(done, total model.MediaCounter) {
 	}
 }
 
-func (p *BackupProgress) OnAnalysed(done, total model.MediaCounter) {
+func (p *BackupProgress) OnAnalysed(done, total backupmodel.MediaCounter) {
 	if !total.IsZero() {
 		p.analyseLine.SetBar(done.Count, total.Count)
 		p.analyseLine.SetExplanation(fmt.Sprintf("%d / %d files", done.Count, total.Count))
@@ -183,7 +183,7 @@ func (p *BackupProgress) OnAnalysed(done, total model.MediaCounter) {
 	}
 }
 
-func (p *BackupProgress) OnUploaded(done, total model.MediaCounter) {
+func (p *BackupProgress) OnUploaded(done, total backupmodel.MediaCounter) {
 	if !total.IsZero() {
 		p.uploadLine.SetBar(done.Size, total.Size)
 		p.uploadLine.SetExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))

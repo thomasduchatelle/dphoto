@@ -2,8 +2,8 @@ package analyser
 
 import (
 	"crypto/sha256"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"encoding/hex"
 	"github.com/pkg/errors"
 	"io"
@@ -12,38 +12,38 @@ import (
 	"strings"
 )
 
-var SupportedExtensions = map[string]model.MediaType{
-	"jpg":  model.MediaTypeImage,
-	"jpeg": model.MediaTypeImage,
-	"png":  model.MediaTypeImage,
-	"gif":  model.MediaTypeImage,
-	"webp": model.MediaTypeImage,
-	"raw":  model.MediaTypeImage,
-	"bmp":  model.MediaTypeImage,
-	"svg":  model.MediaTypeImage,
-	"eps":  model.MediaTypeImage,
+var SupportedExtensions = map[string]backupmodel.MediaType{
+	"jpg":  backupmodel.MediaTypeImage,
+	"jpeg": backupmodel.MediaTypeImage,
+	"png":  backupmodel.MediaTypeImage,
+	"gif":  backupmodel.MediaTypeImage,
+	"webp": backupmodel.MediaTypeImage,
+	"raw":  backupmodel.MediaTypeImage,
+	"bmp":  backupmodel.MediaTypeImage,
+	"svg":  backupmodel.MediaTypeImage,
+	"eps":  backupmodel.MediaTypeImage,
 
-	"mkv":  model.MediaTypeVideo,
-	"mts":  model.MediaTypeVideo,
-	"avi":  model.MediaTypeVideo,
-	"mp4":  model.MediaTypeVideo,
-	"mpeg": model.MediaTypeVideo,
-	"mov":  model.MediaTypeVideo,
-	"wmv":  model.MediaTypeVideo,
-	"webm": model.MediaTypeVideo,
+	"mkv":  backupmodel.MediaTypeVideo,
+	"mts":  backupmodel.MediaTypeVideo,
+	"avi":  backupmodel.MediaTypeVideo,
+	"mp4":  backupmodel.MediaTypeVideo,
+	"mpeg": backupmodel.MediaTypeVideo,
+	"mov":  backupmodel.MediaTypeVideo,
+	"wmv":  backupmodel.MediaTypeVideo,
+	"webm": backupmodel.MediaTypeVideo,
 }
 
-func AnalyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
+func AnalyseMedia(found backupmodel.FoundMedia) (*backupmodel.AnalysedMedia, error) {
 	mediaType, details, err := ExtractTypeAndDetails(found)
 	if err != nil {
 		return nil, err
 	}
 
 	fileHash, err := computeMediaHash(found) // todo - do it while analysing files
-	return &model.AnalysedMedia{
+	return &backupmodel.AnalysedMedia{
 		FoundMedia: found,
 		Type:       mediaType,
-		Signature: &model.FullMediaSignature{
+		Signature: &backupmodel.FullMediaSignature{
 			Sha256: fileHash,
 			Size:   found.SimpleSignature().Size,
 		},
@@ -51,15 +51,15 @@ func AnalyseMedia(found model.FoundMedia) (*model.AnalysedMedia, error) {
 	}, errors.Wrapf(err, "failed to compute HASH of media %s", found)
 }
 
-func ExtractTypeAndDetails(found model.FoundMedia) (model.MediaType, *model.MediaDetails, error) {
+func ExtractTypeAndDetails(found backupmodel.FoundMedia) (backupmodel.MediaType, *backupmodel.MediaDetails, error) {
 	mediaType := getMediaType(found)
 
-	details := &model.MediaDetails{}
+	details := &backupmodel.MediaDetails{}
 
 	var detailsReaderType interactors.DetailsReaderType
 
 	switch {
-	case mediaType == model.MediaTypeImage:
+	case mediaType == backupmodel.MediaTypeImage:
 		detailsReaderType = interactors.DetailsReaderTypeImage
 
 	case strings.ToUpper(filepath.Ext(found.Filename())) == ".MTS":
@@ -72,7 +72,7 @@ func ExtractTypeAndDetails(found model.FoundMedia) (model.MediaType, *model.Medi
 			return mediaType, nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
 		}
 
-		details, err = detailsReader.ReadDetails(content, model.DetailsReaderOptions{Fast: true})
+		details, err = detailsReader.ReadDetails(content, backupmodel.DetailsReaderOptions{Fast: true})
 		if err != nil {
 			return mediaType, nil, errors.Wrapf(err, "failed to analyse %s", found)
 		}
@@ -85,8 +85,8 @@ func ExtractTypeAndDetails(found model.FoundMedia) (model.MediaType, *model.Medi
 	return mediaType, details, nil
 }
 
-func computeMediaHash(found model.FoundMedia) (string, error) {
-	if mediaWithHash, ok := found.(model.FoundMediaWithHash); ok {
+func computeMediaHash(found backupmodel.FoundMedia) (string, error) {
+	if mediaWithHash, ok := found.(backupmodel.FoundMediaWithHash); ok {
 		return mediaWithHash.Sha256Hash(), nil
 	}
 
@@ -100,11 +100,11 @@ func computeMediaHash(found model.FoundMedia) (string, error) {
 	return hex.EncodeToString(shaWriter.Sum(nil)), err
 }
 
-func getMediaType(media model.FoundMedia) model.MediaType {
+func getMediaType(media backupmodel.FoundMedia) backupmodel.MediaType {
 	extension := strings.TrimPrefix(strings.ToLower(path.Ext(media.Filename())), ".")
 	if t, ok := SupportedExtensions[extension]; ok {
 		return t
 	}
 
-	return model.MediaTypeOther
+	return backupmodel.MediaTypeOther
 }

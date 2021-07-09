@@ -3,7 +3,8 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,7 +14,7 @@ type VolumeManagerPort struct {
 }
 
 // OnMountedVolume provides a mock function with given fields: volume
-func (_m *VolumeManagerPort) OnMountedVolume(volume model.VolumeToBackup) {
+func (_m *VolumeManagerPort) OnMountedVolume(volume backupmodel.VolumeToBackup) {
 	_m.Called(volume)
 }
 

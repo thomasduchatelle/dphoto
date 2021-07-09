@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,20 +13,20 @@ type DownloaderAdapter struct {
 }
 
 // DownloadMedia provides a mock function with given fields: media
-func (_m *DownloaderAdapter) DownloadMedia(media model.FoundMedia) (model.FoundMedia, error) {
+func (_m *DownloaderAdapter) DownloadMedia(media backupmodel.FoundMedia) (backupmodel.FoundMedia, error) {
 	ret := _m.Called(media)
 
-	var r0 model.FoundMedia
-	if rf, ok := ret.Get(0).(func(model.FoundMedia) model.FoundMedia); ok {
+	var r0 backupmodel.FoundMedia
+	if rf, ok := ret.Get(0).(func(backupmodel.FoundMedia) backupmodel.FoundMedia); ok {
 		r0 = rf(media)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(model.FoundMedia)
+			r0 = ret.Get(0).(backupmodel.FoundMedia)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.FoundMedia) error); ok {
+	if rf, ok := ret.Get(1).(func(backupmodel.FoundMedia) error); ok {
 		r1 = rf(media)
 	} else {
 		r1 = ret.Error(1)

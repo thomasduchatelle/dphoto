@@ -1,9 +1,10 @@
-package model
+package backupmodel
 
 import (
 	"io"
 )
 
+// VolumeRepositoryAdapter keeps media found previously on a volume to not re-analyse them or request the remote server if there are already backed-up.
 type VolumeRepositoryAdapter interface {
 	RestoreLastSnapshot(volumeId string) ([]SimpleMediaSignature, error)
 	StoreSnapshot(volumeId string, backupId string, signatures []SimpleMediaSignature) error
@@ -25,6 +26,7 @@ type DetailsReaderAdapter interface {
 	ReadDetails(reader io.Reader, options DetailsReaderOptions) (*MediaDetails, error)
 }
 
+// DownloaderAdapter downloads locally files that are in a slow volume as they will need to be read twice each (analyse + sha256, and upload)
 type DownloaderAdapter interface {
 	DownloadMedia(media FoundMedia) (FoundMedia, error)
 }

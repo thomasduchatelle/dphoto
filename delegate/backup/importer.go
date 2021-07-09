@@ -1,9 +1,9 @@
 package backup
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/pkg/errors"
 	"path"
 	"regexp"
@@ -23,8 +23,9 @@ var (
 	datePrefix = regexp.MustCompile("^[0-9]{4}-[01Q][0-9][-_]")
 )
 
-// DiscoverAlbumFromSource scan a source to discover albums based on original folder structure
-func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface{}) ([]*model.ScannedFolder, error) {
+// ScanVolume scan a source to discover albums based on original folder structure.
+// Listeners will be notified on the progress of the scan.
+func ScanVolume(volume backupmodel.VolumeToBackup, listeners ...interface{}) ([]*backupmodel.ScannedFolder, error) {
 	medias, err := scanMediaSource(volume)
 	if err != nil {
 		return nil, err
@@ -32,7 +33,7 @@ func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface
 
 	triggerScanComplete(listeners, len(medias))
 
-	albums := make(map[string]*model.ScannedFolder)
+	albums := make(map[string]*backupmodel.ScannedFolder)
 	for count, found := range medias {
 		_, details, err := analyser.ExtractTypeAndDetails(found)
 		if err != nil {
@@ -50,7 +51,7 @@ func DiscoverAlbumFromSource(volume model.VolumeToBackup, listeners ...interface
 		triggerProgress(listeners, count, len(medias))
 	}
 
-	suggestions := make([]*model.ScannedFolder, len(albums))
+	suggestions := make([]*backupmodel.ScannedFolder, len(albums))
 	i := 0
 	for _, album := range albums {
 		suggestions[i] = album
@@ -83,15 +84,15 @@ func triggerProgress(listeners []interface{}, count int, total int) {
 	}
 }
 
-func scanMediaSource(volume model.VolumeToBackup) ([]model.FoundMedia, error) {
+func scanMediaSource(volume backupmodel.VolumeToBackup) ([]backupmodel.FoundMedia, error) {
 	source, ok := interactors.SourcePorts[volume.Type]
 	if !ok {
 		return nil, errors.Errorf("No scanner implementation provided for volume type %s", volume.Type)
 	}
 
 	lock := sync.Mutex{}
-	var medias []model.FoundMedia
-	_, _, err := source.FindMediaRecursively(volume, func(media model.FoundMedia) {
+	var medias []backupmodel.FoundMedia
+	_, _, err := source.FindMediaRecursively(volume, func(media backupmodel.FoundMedia) {
 		lock.Lock()
 		medias = append(medias, media)
 		lock.Unlock()
@@ -102,9 +103,9 @@ func scanMediaSource(volume model.VolumeToBackup) ([]model.FoundMedia, error) {
 	return medias, nil
 }
 
-func newFoundAlbum(albumFullPath string) *model.ScannedFolder {
+func newFoundAlbum(albumFullPath string) *backupmodel.ScannedFolder {
 	name := path.Base(albumFullPath)
 	name = datePrefix.ReplaceAllString(name, "")
 
-	return model.NewScannedFolder(albumFullPath, name)
+	return backupmodel.NewScannedFolder(albumFullPath, name)
 }

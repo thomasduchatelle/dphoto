@@ -1,4 +1,4 @@
-package model
+package backupmodel
 
 import (
 	"io"
@@ -17,7 +17,7 @@ type InmemoryMediaWithHash struct {
 	hash string
 }
 
-// NewInmemoryMedia creates a new InmemoryMedia. TESTING PURPOSE ONLY
+// NewInmemoryMedia creates a new FoundMedia for TESTING PURPOSE ONLY
 func NewInmemoryMedia(name string, size uint, date time.Time) FoundMedia {
 	return &InmemoryMedia{filename: name, size: size, date: date}
 }

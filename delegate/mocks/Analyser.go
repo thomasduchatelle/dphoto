@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,20 +13,20 @@ type Analyser struct {
 }
 
 // Execute provides a mock function with given fields: found
-func (_m *Analyser) Execute(found model.FoundMedia) (*model.AnalysedMedia, error) {
+func (_m *Analyser) Execute(found backupmodel.FoundMedia) (*backupmodel.AnalysedMedia, error) {
 	ret := _m.Called(found)
 
-	var r0 *model.AnalysedMedia
-	if rf, ok := ret.Get(0).(func(model.FoundMedia) *model.AnalysedMedia); ok {
+	var r0 *backupmodel.AnalysedMedia
+	if rf, ok := ret.Get(0).(func(backupmodel.FoundMedia) *backupmodel.AnalysedMedia); ok {
 		r0 = rf(found)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.AnalysedMedia)
+			r0 = ret.Get(0).(*backupmodel.AnalysedMedia)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.FoundMedia) error); ok {
+	if rf, ok := ret.Get(1).(func(backupmodel.FoundMedia) error); ok {
 		r1 = rf(found)
 	} else {
 		r1 = ret.Error(1)

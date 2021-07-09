@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	log "github.com/sirupsen/logrus"
 	"sync"
 )
@@ -10,12 +10,12 @@ import (
 // Workflow is stopped at the first error but might have several while channels are de-stacked.
 type Runner struct {
 	MDC                  *log.Entry // MDC is log.WithFields({}) that contains Mapped Diagnostic Context
-	Source               model.Source
-	Filter               model.Filter
-	Downloader           model.Downloader
-	Analyser             model.Analyser
-	Uploader             model.Uploader
-	PreCompletion        model.PreCompletion
+	Source               Source
+	Filter               Filter
+	Downloader           Downloader
+	Analyser             Analyser
+	Uploader             Uploader
+	PreCompletion        PreCompletion
 	FoundMediaBufferSize int // FoundMediaBufferSize is the size of the scanner buffer, should be BIG in order to let the scan finish (and progress bars to give an accurate estimation)
 	BufferSize           int // BufferSize is the default size for channels
 	ConcurrentDownloader int // ConcurrentDownloader is the number of goroutines that will filter and download files ; should be 1 with a pass-through downloaders
@@ -24,17 +24,17 @@ type Runner struct {
 	UploadBatchSize      int // UploadBatchSize is the size of the buffer for the uploader
 	report               *Report
 	completionChannel    chan *Report
-	progressEventChannel chan *model.ProgressEvent
+	progressEventChannel chan *backupmodel.ProgressEvent
 }
 
-func Start(runner Runner) (chan *Report, chan *model.ProgressEvent) {
+func Start(runner Runner) (chan *Report, chan *backupmodel.ProgressEvent) {
 	runner.report = &Report{}
 	runner.completionChannel = make(chan *Report, 1)
-	runner.progressEventChannel = make(chan *model.ProgressEvent, runner.BufferSize)
+	runner.progressEventChannel = make(chan *backupmodel.ProgressEvent, runner.BufferSize)
 
-	foundChannel := make(chan model.FoundMedia, runner.FoundMediaBufferSize)
-	readyToAnalyseChannel := make(chan model.FoundMedia, runner.BufferSize)
-	readyToBackupChannel := make(chan *model.AnalysedMedia, runner.BufferSize)
+	foundChannel := make(chan backupmodel.FoundMedia, runner.FoundMediaBufferSize)
+	readyToAnalyseChannel := make(chan backupmodel.FoundMedia, runner.BufferSize)
+	readyToBackupChannel := make(chan *backupmodel.AnalysedMedia, runner.BufferSize)
 
 	runner.pipeFoundToReadyToAnalyseChannels(foundChannel, readyToAnalyseChannel)
 	runner.pipeReadyToAnalyseToReadyToBackupChannels(readyToAnalyseChannel, readyToBackupChannel)
@@ -45,7 +45,7 @@ func Start(runner Runner) (chan *Report, chan *model.ProgressEvent) {
 	return runner.completionChannel, runner.progressEventChannel
 }
 
-func (r *Runner) pipeFoundToReadyToAnalyseChannels(foundCh, downloadedCh chan model.FoundMedia) {
+func (r *Runner) pipeFoundToReadyToAnalyseChannels(foundCh, downloadedCh chan backupmodel.FoundMedia) {
 	group := sync.WaitGroup{}
 
 	group.Add(r.ConcurrentDownloader)
@@ -60,7 +60,7 @@ func (r *Runner) pipeFoundToReadyToAnalyseChannels(foundCh, downloadedCh chan mo
 					return
 				}
 				downloadedCh <- dl
-				r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventDownloaded, Count: 1, Size: found.SimpleSignature().Size}
+				r.progressEventChannel <- &backupmodel.ProgressEvent{Type: backupmodel.ProgressEventDownloaded, Count: 1, Size: found.SimpleSignature().Size}
 			}
 		}()
 	}
@@ -71,7 +71,7 @@ func (r *Runner) pipeFoundToReadyToAnalyseChannels(foundCh, downloadedCh chan mo
 	}()
 }
 
-func (r *Runner) pipeReadyToAnalyseToReadyToBackupChannels(downloadedCh chan model.FoundMedia, readyToAnalyse chan *model.AnalysedMedia) {
+func (r *Runner) pipeReadyToAnalyseToReadyToBackupChannels(downloadedCh chan backupmodel.FoundMedia, readyToAnalyse chan *backupmodel.AnalysedMedia) {
 	group := sync.WaitGroup{}
 
 	group.Add(r.ConcurrentAnalyser)
@@ -86,7 +86,7 @@ func (r *Runner) pipeReadyToAnalyseToReadyToBackupChannels(downloadedCh chan mod
 					return
 				}
 				readyToAnalyse <- analysed
-				r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventAnalysed, Count: 1, Size: media.SimpleSignature().Size}
+				r.progressEventChannel <- &backupmodel.ProgressEvent{Type: backupmodel.ProgressEventAnalysed, Count: 1, Size: media.SimpleSignature().Size}
 			}
 		}()
 	}
@@ -97,14 +97,14 @@ func (r *Runner) pipeReadyToAnalyseToReadyToBackupChannels(downloadedCh chan mod
 	}()
 }
 
-func (r *Runner) pipeReadyToBackupToCompletedChannels(readyToBackupChannel chan *model.AnalysedMedia, completionChannel chan *Report, progressChannel chan *model.ProgressEvent) {
+func (r *Runner) pipeReadyToBackupToCompletedChannels(readyToBackupChannel chan *backupmodel.AnalysedMedia, completionChannel chan *Report, progressChannel chan *backupmodel.ProgressEvent) {
 	group := sync.WaitGroup{}
 	group.Add(r.ConcurrentUploader)
 
 	for i := 0; i < r.ConcurrentUploader; i++ {
 		go func() {
 			defer group.Done()
-			buffer := make([]*model.AnalysedMedia, 0, r.UploadBatchSize)
+			buffer := make([]*backupmodel.AnalysedMedia, 0, r.UploadBatchSize)
 
 			for media := range readyToBackupChannel {
 				buffer = append(buffer, media)
@@ -142,9 +142,9 @@ func (r *Runner) pipeReadyToBackupToCompletedChannels(readyToBackupChannel chan 
 	}()
 }
 
-func (r *Runner) startScanning(channel chan model.FoundMedia) {
-	bufferChannel := make(chan model.FoundMedia, 255)
-	var allMedias []model.FoundMedia
+func (r *Runner) startScanning(channel chan backupmodel.FoundMedia) {
+	bufferChannel := make(chan backupmodel.FoundMedia, 255)
+	var allMedias []backupmodel.FoundMedia
 	var size uint = 0
 
 	go func() {
@@ -154,11 +154,11 @@ func (r *Runner) startScanning(channel chan model.FoundMedia) {
 				allMedias = append(allMedias, m)
 				size += m.SimpleSignature().Size
 			} else {
-				r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventSkipped, Count: 1, Size: m.SimpleSignature().Size}
+				r.progressEventChannel <- &backupmodel.ProgressEvent{Type: backupmodel.ProgressEventSkipped, Count: 1, Size: m.SimpleSignature().Size}
 			}
 		}
 
-		r.progressEventChannel <- &model.ProgressEvent{Type: model.ProgressEventScanComplete, Count: uint(len(allMedias)), Size: size}
+		r.progressEventChannel <- &backupmodel.ProgressEvent{Type: backupmodel.ProgressEventScanComplete, Count: uint(len(allMedias)), Size: size}
 
 		for _, m := range allMedias {
 			channel <- m
@@ -173,7 +173,7 @@ func (r *Runner) startScanning(channel chan model.FoundMedia) {
 }
 
 // DummyProgressListener is logging each events from progress event channel ; it is mandatory to consume it
-func DummyProgressListener(progressChannel chan *model.ProgressEvent) {
+func DummyProgressListener(progressChannel chan *backupmodel.ProgressEvent) {
 	go func() {
 		for event := range progressChannel {
 			log.Debugf("progress: %+v", event)

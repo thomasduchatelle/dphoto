@@ -1,8 +1,8 @@
-package backupadaptor
+package backupadapter
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/cmd/screen"
 	"duchatelle.io/dphoto/dphoto/cmd/ui"
 	"fmt"
@@ -35,11 +35,11 @@ func ScanWithCache(volume string) (ui.RecordRepositoryPort, int, error) {
 	return NewSuggestionRepository(suggestions), len(suggestions), err
 }
 
-func doScan(volume string) ([]*model.ScannedFolder, error) {
+func doScan(volume string) ([]*backupmodel.ScannedFolder, error) {
 	progress := newScanProgress()
-	suggestions, err := backup.DiscoverAlbumFromSource(model.VolumeToBackup{
+	suggestions, err := backup.ScanVolume(backupmodel.VolumeToBackup{
 		UniqueId: volume,
-		Type:     model.VolumeTypeFileSystem,
+		Type:     backupmodel.VolumeTypeFileSystem,
 		Path:     volume,
 		Local:    true,
 	}, progress)

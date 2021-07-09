@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,15 +13,15 @@ type BackupReport struct {
 }
 
 // CountPerAlbum provides a mock function with given fields:
-func (_m *BackupReport) CountPerAlbum() map[string]*model.TypeCounter {
+func (_m *BackupReport) CountPerAlbum() map[string]*backupmodel.TypeCounter {
 	ret := _m.Called()
 
-	var r0 map[string]*model.TypeCounter
-	if rf, ok := ret.Get(0).(func() map[string]*model.TypeCounter); ok {
+	var r0 map[string]*backupmodel.TypeCounter
+	if rf, ok := ret.Get(0).(func() map[string]*backupmodel.TypeCounter); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]*model.TypeCounter)
+			r0 = ret.Get(0).(map[string]*backupmodel.TypeCounter)
 		}
 	}
 
@@ -45,14 +45,14 @@ func (_m *BackupReport) NewAlbums() []string {
 }
 
 // Skipped provides a mock function with given fields:
-func (_m *BackupReport) Skipped() model.MediaCounter {
+func (_m *BackupReport) Skipped() backupmodel.MediaCounter {
 	ret := _m.Called()
 
-	var r0 model.MediaCounter
-	if rf, ok := ret.Get(0).(func() model.MediaCounter); ok {
+	var r0 backupmodel.MediaCounter
+	if rf, ok := ret.Get(0).(func() backupmodel.MediaCounter); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(model.MediaCounter)
+		r0 = ret.Get(0).(backupmodel.MediaCounter)
 	}
 
 	return r0

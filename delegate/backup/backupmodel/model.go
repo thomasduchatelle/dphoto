@@ -1,5 +1,5 @@
-// Package model is mostly to break cyclic dependencies between backup package and runner sub-package (which is type-safe).
-package model
+// Package backupmodel define the common language used within backup package (between interactors, adapters, and backup consumers)
+package backupmodel
 
 import (
 	"fmt"
@@ -92,6 +92,7 @@ type FullMediaSignature struct {
 	Size   uint
 }
 
+// AnalysedMedia is a FoundMedia to which has been attached its type (photo / video) and other details usually found within the file.
 type AnalysedMedia struct {
 	FoundMedia FoundMedia          // FoundMedia is the reference of the file, implementation depends on the VolumeType
 	Type       MediaType           // Photo or Video

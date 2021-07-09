@@ -1,7 +1,8 @@
+// Package onlinestorage provides operations to the location where medias are backed-up.
 package onlinestorage
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -40,7 +41,7 @@ func Must(storage *S3OnlineStorage, err error) *S3OnlineStorage {
 	return storage
 }
 
-func (s *S3OnlineStorage) UploadFile(media model.ReadableMedia, folderName, filename string) (string, error) {
+func (s *S3OnlineStorage) UploadFile(media backupmodel.ReadableMedia, folderName, filename string) (string, error) {
 	cleanedFolderName := strings.Trim(folderName, "/")
 
 	prefix, suffix := s.splitKey(cleanedFolderName, filename)

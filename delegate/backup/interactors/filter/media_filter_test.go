@@ -1,8 +1,8 @@
 package filter
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -18,14 +18,14 @@ func Test_filter_filter(t *testing.T) {
 	interactors.VolumeRepositoryPort = mockVolumeRepository
 
 	// given
-	mockVolumeRepository.On("RestoreLastSnapshot", "volume-1").Return([]model.SimpleMediaSignature{
+	mockVolumeRepository.On("RestoreLastSnapshot", "volume-1").Return([]backupmodel.SimpleMediaSignature{
 		{RelativePath: "image_002.jpg", Size: 42},
 		{RelativePath: "image_003.jpg", Size: 12},
 	}, nil)
 
-	mediaFilter, err := NewMediaFilter(&model.VolumeToBackup{
+	mediaFilter, err := NewMediaFilter(&backupmodel.VolumeToBackup{
 		UniqueId: "volume-1",
-		Type:     model.VolumeTypeFileSystem,
+		Type:     backupmodel.VolumeTypeFileSystem,
 		Path:     "/somewhere",
 		Local:    false,
 	})
@@ -35,17 +35,17 @@ func Test_filter_filter(t *testing.T) {
 
 	// and
 	type args struct {
-		found model.FoundMedia
+		found backupmodel.FoundMedia
 	}
 	tests := []struct {
 		name string
 		args args
 		want bool
 	}{
-		{"it should keep media with different name and size", args{model.NewInmemoryMedia("image_001.jpg", 1, mediaDate)}, true},
-		{"it should keep media with different name", args{model.NewInmemoryMedia("image_001.jpg", 42, mediaDate)}, true},
-		{"it should keep media with same name but different size", args{model.NewInmemoryMedia("image_002.jpg", 1, mediaDate)}, true},
-		{"it should filter out medias matching both name and size", args{model.NewInmemoryMedia("image_002.jpg", 42, mediaDate)}, false},
+		{"it should keep media with different name and size", args{backupmodel.NewInmemoryMedia("image_001.jpg", 1, mediaDate)}, true},
+		{"it should keep media with different name", args{backupmodel.NewInmemoryMedia("image_001.jpg", 42, mediaDate)}, true},
+		{"it should keep media with same name but different size", args{backupmodel.NewInmemoryMedia("image_002.jpg", 1, mediaDate)}, true},
+		{"it should filter out medias matching both name and size", args{backupmodel.NewInmemoryMedia("image_002.jpg", 42, mediaDate)}, false},
 	}
 
 	// when - then

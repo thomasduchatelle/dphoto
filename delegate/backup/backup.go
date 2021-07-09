@@ -1,6 +1,8 @@
+// Package backup is providing commands to inspect a file system (hard-drive, USB, Android, S3) and backup medias to a remote DPhoto storage.
 package backup
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/downloader"
@@ -8,7 +10,6 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/interactors/runner"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/tracker"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/uploaders"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -17,9 +18,9 @@ import (
 	"time"
 )
 
-// StartBackupRunner starts backup of given model.VolumeToBackup and returns when finished. Listeners will received
+// StartBackupRunner starts backup of given backupmodel.VolumeToBackup and returns when finished. Listeners will received
 // progress updates.
-func StartBackupRunner(volume model.VolumeToBackup, listeners ...interface{}) (model.BackupReport, error) {
+func StartBackupRunner(volume backupmodel.VolumeToBackup, listeners ...interface{}) (backupmodel.BackupReport, error) {
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.UniqueId, "_"), "_"), time.Now().Format("20060102_150405"))
 	mdc := log.WithFields(log.Fields{

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"duchatelle.io/dphoto/dphoto/cmd/backupadaptor"
+	"duchatelle.io/dphoto/dphoto/cmd/adapters/backupadapter"
 	"duchatelle.io/dphoto/dphoto/cmd/printer"
 	"duchatelle.io/dphoto/dphoto/cmd/ui"
 	"github.com/spf13/cobra"
@@ -22,10 +22,10 @@ var albumCmd = &cobra.Command{
 	Long:    `Organise your collection into albums.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if listArgs.interactive {
-			err := ui.NewInteractiveSession(new(uiCatalogAdapter), backupadaptor.NewAlbumRepository()).Start()
+			err := ui.NewInteractiveSession(new(uiCatalogAdapter), backupadapter.NewAlbumRepository()).Start()
 			printer.FatalIfError(err, 1)
 		} else {
-			err := ui.NewSimpleSession(backupadaptor.NewAlbumRepository()).Render()
+			err := ui.NewSimpleSession(backupadapter.NewAlbumRepository()).Render()
 			printer.FatalIfError(err, 1)
 		}
 	},

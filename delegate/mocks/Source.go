@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,25 +13,25 @@ type Source struct {
 }
 
 // Execute provides a mock function with given fields: medias
-func (_m *Source) Execute(medias chan model.FoundMedia) (uint, uint, error) {
+func (_m *Source) Execute(medias chan backupmodel.FoundMedia) (uint, uint, error) {
 	ret := _m.Called(medias)
 
 	var r0 uint
-	if rf, ok := ret.Get(0).(func(chan model.FoundMedia) uint); ok {
+	if rf, ok := ret.Get(0).(func(chan backupmodel.FoundMedia) uint); ok {
 		r0 = rf(medias)
 	} else {
 		r0 = ret.Get(0).(uint)
 	}
 
 	var r1 uint
-	if rf, ok := ret.Get(1).(func(chan model.FoundMedia) uint); ok {
+	if rf, ok := ret.Get(1).(func(chan backupmodel.FoundMedia) uint); ok {
 		r1 = rf(medias)
 	} else {
 		r1 = ret.Get(1).(uint)
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(chan model.FoundMedia) error); ok {
+	if rf, ok := ret.Get(2).(func(chan backupmodel.FoundMedia) error); ok {
 		r2 = rf(medias)
 	} else {
 		r2 = ret.Error(2)

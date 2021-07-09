@@ -1,7 +1,7 @@
 package daemon
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 )
 
 var (
@@ -9,6 +9,6 @@ var (
 )
 
 type VolumeManagerPort interface {
-	OnMountedVolume(volume model.VolumeToBackup)
+	OnMountedVolume(volume backupmodel.VolumeToBackup)
 	OnUnMountedVolume(uuid string)
 }

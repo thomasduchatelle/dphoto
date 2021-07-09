@@ -1,8 +1,8 @@
 package analyser
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/mocks"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -18,52 +18,52 @@ func Test_analyseMedia(t *testing.T) {
 	mockImageDetailsReader := new(mocks.DetailsReaderAdapter)
 	interactors.DetailsReaders[interactors.DetailsReaderTypeImage] = mockImageDetailsReader
 
-	medias := []model.FoundMedia{
-		model.NewInmemoryMedia("/somewhere/my_image.jpg", 42, mediaDate),
-		model.NewInmemoryMediaWithHash("/somewhere/my_video.AVI", 42, mediaDate, "qwerty"),
-		model.NewInmemoryMedia("/somewhere/my_document.txt", 42, mediaDate),
+	medias := []backupmodel.FoundMedia{
+		backupmodel.NewInmemoryMedia("/somewhere/my_image.jpg", 42, mediaDate),
+		backupmodel.NewInmemoryMediaWithHash("/somewhere/my_video.AVI", 42, mediaDate, "qwerty"),
+		backupmodel.NewInmemoryMedia("/somewhere/my_document.txt", 42, mediaDate),
 	}
 
-	details := &model.MediaDetails{
+	details := &backupmodel.MediaDetails{
 		Width:        1024,
 		Height:       768,
 		DateTime:     time.Now(),
-		Orientation:  model.OrientationUpperLeft,
+		Orientation:  backupmodel.OrientationUpperLeft,
 		Make:         "Google",
 		Model:        "Pixel 1",
 		GPSLatitude:  0.0001,
 		GPSLongitude: 0.0002,
 	}
-	mockImageDetailsReader.On("ReadDetails", mock.Anything, model.DetailsReaderOptions{Fast: true}).Once().Return(details, nil)
+	mockImageDetailsReader.On("ReadDetails", mock.Anything, backupmodel.DetailsReaderOptions{Fast: true}).Once().Return(details, nil)
 
 	type args struct {
-		found model.FoundMedia
+		found backupmodel.FoundMedia
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *model.AnalysedMedia
+		want    *backupmodel.AnalysedMedia
 		wantErr bool
 	}{
-		{"it should extract EXIF values from images, and compute a hash", args{medias[0]}, &model.AnalysedMedia{
+		{"it should extract EXIF values from images, and compute a hash", args{medias[0]}, &backupmodel.AnalysedMedia{
 			FoundMedia: medias[0],
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "07b9bc44acdbbc0926117bb9e284f953060b2da0259b703af3def3841c7f61e8", Size: 42},
+			Type:       backupmodel.MediaTypeImage,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "07b9bc44acdbbc0926117bb9e284f953060b2da0259b703af3def3841c7f61e8", Size: 42},
 			Details:    details,
 		}, false},
 
-		{"it should not extract from video, and use pre-computed hash", args{medias[1]}, &model.AnalysedMedia{
+		{"it should not extract from video, and use pre-computed hash", args{medias[1]}, &backupmodel.AnalysedMedia{
 			FoundMedia: medias[1],
-			Type:       model.MediaTypeVideo,
-			Signature:  &model.FullMediaSignature{Sha256: "qwerty", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mediaDate},
+			Type:       backupmodel.MediaTypeVideo,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "qwerty", Size: 42},
+			Details:    &backupmodel.MediaDetails{DateTime: mediaDate},
 		}, false},
 
-		{"it should not extract from other, and compute a hash", args{medias[2]}, &model.AnalysedMedia{
+		{"it should not extract from other, and compute a hash", args{medias[2]}, &backupmodel.AnalysedMedia{
 			FoundMedia: medias[2],
-			Type:       model.MediaTypeOther,
-			Signature:  &model.FullMediaSignature{Sha256: "07b9bc44acdbbc0926117bb9e284f953060b2da0259b703af3def3841c7f61e8", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mediaDate},
+			Type:       backupmodel.MediaTypeOther,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "07b9bc44acdbbc0926117bb9e284f953060b2da0259b703af3def3841c7f61e8", Size: 42},
+			Details:    &backupmodel.MediaDetails{DateTime: mediaDate},
 		}, false},
 	}
 

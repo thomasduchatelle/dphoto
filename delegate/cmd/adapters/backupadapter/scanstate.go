@@ -1,7 +1,7 @@
-package backupadaptor
+package backupadapter
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/config"
 	"encoding/json"
 	"github.com/pkg/errors"
@@ -18,7 +18,7 @@ var (
 
 type stateContent struct {
 	VolumeId   string
-	ScanResult []*model.ScannedFolder
+	ScanResult []*backupmodel.ScannedFolder
 }
 
 func init() {
@@ -34,7 +34,7 @@ func init() {
 	})
 }
 
-func Store(volumeId string, result []*model.ScannedFolder) error {
+func Store(volumeId string, result []*backupmodel.ScannedFolder) error {
 	if storeFile == "" {
 		return errors.Errorf("local.home must have been set before using this function.")
 	}
@@ -50,7 +50,7 @@ func Store(volumeId string, result []*model.ScannedFolder) error {
 	return ioutil.WriteFile(storeFile, jsonValue, 0644)
 }
 
-func restore(volumeId string) ([]*model.ScannedFolder, error) {
+func restore(volumeId string) ([]*backupmodel.ScannedFolder, error) {
 	content, err := ioutil.ReadFile(storeFile)
 	if err != nil && os.IsNotExist(err) {
 		return nil, nil

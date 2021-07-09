@@ -1,8 +1,9 @@
+// Package exif parse image files to extract key details.
 package exif
 
 import (
 	"bytes"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"github.com/pkg/errors"
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
@@ -20,7 +21,7 @@ func init() {
 
 type Parser struct{}
 
-func (e *Parser) ReadDetails(reader io.Reader, options model.DetailsReaderOptions) (*model.MediaDetails, error) {
+func (e *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReaderOptions) (*backupmodel.MediaDetails, error) {
 	buffer := bytes.NewBuffer(nil)
 	teeReader := io.TeeReader(reader, buffer)
 
@@ -36,7 +37,7 @@ func (e *Parser) ReadDetails(reader io.Reader, options model.DetailsReaderOption
 		longitude = 0
 	}
 
-	return &model.MediaDetails{
+	return &backupmodel.MediaDetails{
 		Width:        e.getIntOrIgnore(x, exif.ImageWidth),
 		Height:       e.getIntOrIgnore(x, exif.ImageLength),
 		Orientation:  e.readOrientation(x),
@@ -48,16 +49,16 @@ func (e *Parser) ReadDetails(reader io.Reader, options model.DetailsReaderOption
 	}, nil
 }
 
-func (e *Parser) readOrientation(x *exif.Exif) model.ImageOrientation {
+func (e *Parser) readOrientation(x *exif.Exif) backupmodel.ImageOrientation {
 	switch e.getIntOrIgnore(x, exif.Orientation) {
 	case 3:
-		return model.OrientationLowerRight
+		return backupmodel.OrientationLowerRight
 	case 6:
-		return model.OrientationUpperRight
+		return backupmodel.OrientationUpperRight
 	case 8:
-		return model.OrientationLowerLeft
+		return backupmodel.OrientationLowerLeft
 	default:
-		return model.OrientationUpperLeft
+		return backupmodel.OrientationUpperLeft
 	}
 }
 
@@ -100,15 +101,15 @@ func (e *Parser) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float64 {
 	return 0
 }
 
-func (e *Parser) readImageWithoutExif(reader io.Reader) (*model.MediaDetails, error) {
+func (e *Parser) readImageWithoutExif(reader io.Reader) (*backupmodel.MediaDetails, error) {
 	img, _, err := image.DecodeConfig(reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Can't extract image dimentions")
 	}
 
-	return &model.MediaDetails{
+	return &backupmodel.MediaDetails{
 		Width:       img.Width,
 		Height:      img.Height,
-		Orientation: model.OrientationUpperLeft,
+		Orientation: backupmodel.OrientationUpperLeft,
 	}, nil
 }

@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -34,18 +34,18 @@ func (_m *OnlineStorageAdapter) MoveFile(folderName string, filename string, des
 }
 
 // UploadFile provides a mock function with given fields: media, folderName, filename
-func (_m *OnlineStorageAdapter) UploadFile(media model.ReadableMedia, folderName string, filename string) (string, error) {
+func (_m *OnlineStorageAdapter) UploadFile(media backupmodel.ReadableMedia, folderName string, filename string) (string, error) {
 	ret := _m.Called(media, folderName, filename)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(model.ReadableMedia, string, string) string); ok {
+	if rf, ok := ret.Get(0).(func(backupmodel.ReadableMedia, string, string) string); ok {
 		r0 = rf(media, folderName, filename)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.ReadableMedia, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(backupmodel.ReadableMedia, string, string) error); ok {
 		r1 = rf(media, folderName, filename)
 	} else {
 		r1 = ret.Error(1)

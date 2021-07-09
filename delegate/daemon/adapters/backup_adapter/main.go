@@ -2,7 +2,7 @@ package backup_adapter
 
 import (
 	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/daemon"
 	log "github.com/sirupsen/logrus"
 )
@@ -14,7 +14,7 @@ func init() {
 type backupAdapter struct{}
 
 // OnMountedVolume can be used to a daemon to automatically start a backup
-func (b *backupAdapter) OnMountedVolume(volume model.VolumeToBackup) {
+func (b *backupAdapter) OnMountedVolume(volume backupmodel.VolumeToBackup) {
 	withContext := log.WithFields(log.Fields{
 		"VolumeId": volume.UniqueId,
 		"Path":     volume.Path,
@@ -53,9 +53,9 @@ func (b *backupAdapter) OnUnMountedVolume(uniqueId string) {
 }
 
 // return nil when not found
-func (b *backupAdapter) findVolumeMetadata(string) (*model.VolumeMetadata, error) {
+func (b *backupAdapter) findVolumeMetadata(string) (*backupmodel.VolumeMetadata, error) {
 	panic("Not implemented")
 }
-func (b *backupAdapter) createNewVolume(volume model.VolumeToBackup) error {
+func (b *backupAdapter) createNewVolume(volume backupmodel.VolumeToBackup) error {
 	panic("Not implemented")
 }

@@ -2,7 +2,7 @@ package m2ts
 
 import (
 	"bytes"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -36,7 +36,7 @@ var (
 
 // UpdateDetailsFromMDPM find MDPM UUID followed by 'MDPM' marker, and reads what's following as key-value map
 // inspired by https://metacpan.org/release/EXIFTOOL/Image-ExifTool-8.90/source/lib/Image/ExifTool/H264.pm
-func UpdateDetailsFromMDPM(payload []byte, details *model.MediaDetails) map[byte][]byte {
+func UpdateDetailsFromMDPM(payload []byte, details *backupmodel.MediaDetails) map[byte][]byte {
 	mdpm := readMDPM(payload)
 
 	details.DateTime, _ = extractDateFromMDPM(mdpm)

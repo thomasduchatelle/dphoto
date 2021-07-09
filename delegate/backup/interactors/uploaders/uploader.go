@@ -1,7 +1,7 @@
 package uploaders
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/catalog"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -15,15 +15,15 @@ type Uploader struct {
 	timeline      *catalog.Timeline
 	timelineLock  sync.Mutex
 	catalog       CatalogProxyAdapter
-	onlineStorage model.OnlineStorageAdapter
+	onlineStorage backupmodel.OnlineStorageAdapter
 }
 
 type mediaRecord struct {
-	analysedMedia *model.AnalysedMedia
+	analysedMedia *backupmodel.AnalysedMedia
 	createRequest *catalog.CreateMediaRequest
 }
 
-func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage model.OnlineStorageAdapter) (*Uploader, error) {
+func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.OnlineStorageAdapter) (*Uploader, error) {
 	albums, err := catalogProxy.FindAllAlbums()
 	if err != nil {
 		return nil, err
@@ -42,11 +42,11 @@ func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage model.OnlineSto
 	}, nil
 }
 
-func (u *Uploader) Upload(buffer []*model.AnalysedMedia, progressChannel chan *model.ProgressEvent) error {
+func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel chan *backupmodel.ProgressEvent) error {
 	defer func() {
 		// media must be closed to release local buffer space
 		for _, media := range buffer {
-			if toClose, ok := media.FoundMedia.(model.ClosableMedia); ok {
+			if toClose, ok := media.FoundMedia.(backupmodel.ClosableMedia); ok {
 				err := toClose.Close()
 				if err != nil {
 					log.WithError(err).Warnf("failed to close media %s", toClose)
@@ -69,7 +69,7 @@ func (u *Uploader) Upload(buffer []*model.AnalysedMedia, progressChannel chan *m
 			return err
 		}
 		if created {
-			progressChannel <- &model.ProgressEvent{Type: model.ProgressEventAlbumCreated, Count: 1, Album: folderName}
+			progressChannel <- &backupmodel.ProgressEvent{Type: backupmodel.ProgressEventAlbumCreated, Count: 1, Album: folderName}
 		}
 
 		location := catalog.MediaLocation{
@@ -117,8 +117,8 @@ func (u *Uploader) Upload(buffer []*model.AnalysedMedia, progressChannel chan *m
 		uploaded[index] = *media.createRequest
 		index++
 
-		progressChannel <- &model.ProgressEvent{
-			Type:      model.ProgressEventUploaded,
+		progressChannel <- &backupmodel.ProgressEvent{
+			Type:      backupmodel.ProgressEventUploaded,
 			Count:     1,
 			Size:      media.analysedMedia.FoundMedia.SimpleSignature().Size,
 			Album:     media.createRequest.Location.FolderName,
@@ -129,7 +129,7 @@ func (u *Uploader) Upload(buffer []*model.AnalysedMedia, progressChannel chan *m
 	return u.catalog.InsertMedias(uploaded)
 }
 
-func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, medias map[catalog.MediaSignature]mediaRecord, progressChannel chan *model.ProgressEvent) error {
+func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, medias map[catalog.MediaSignature]mediaRecord, progressChannel chan *backupmodel.ProgressEvent) error {
 	knownSignatures, err := u.catalog.FindSignatures(signatures)
 	if err != nil {
 		return err
@@ -147,7 +147,7 @@ func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, media
 		}
 	}
 
-	progressChannel <- &model.ProgressEvent{Type: model.ProgressEventSkippedAfterAnalyse, Count: filteredOutCount, Size: filteredOutSize}
+	progressChannel <- &backupmodel.ProgressEvent{Type: backupmodel.ProgressEventSkippedAfterAnalyse, Count: filteredOutCount, Size: filteredOutSize}
 	return nil
 }
 
@@ -185,7 +185,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 	return createRequest.ForcedFolderName, true, err
 }
 
-func (u *Uploader) doUpload(media model.FoundMedia, location *catalog.MediaLocation) (err error) {
+func (u *Uploader) doUpload(media backupmodel.FoundMedia, location *catalog.MediaLocation) (err error) {
 	log.Debugf("Uploader > Upload media %s", media)
 	location.Filename, err = u.onlineStorage.UploadFile(media, location.FolderName, location.Filename)
 	return

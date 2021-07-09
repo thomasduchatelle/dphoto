@@ -5,7 +5,7 @@
 package m2ts
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"encoding/hex"
 	"fmt"
 	"github.com/pkg/errors"
@@ -37,8 +37,8 @@ var (
 //               M2TS HEADER-- PAT HEADER- SECTION------- #1--------- #2--------- CRC--------
 // 00 00 06 9c | 47 | 41 00 10 | 00 02 b0 3e | 00 01 c1 00 00 | f0 01 f0 0c | 05 04 48 44 | 4d 56 88 04 | 0f ff fc fc | 1b f0 11 f0 0a | 05 08 48 44 4d 56 ff 1b 43 3f | 81 f1 00 f0 0c | 05 04 41 43 2d 33 81 04 04 30 04 00 90 f2 00 f0 00 | 0c d3 f4 dc
 //               M2TS HEADER---  PAT HEADER--  SECTION-------   PMT-------- | Program Descriptors -------------------   #1 1011=>1b-----------------------------------                                                                         CRC--------
-func (p *Parser) ReadDetails(reader io.Reader, options model.DetailsReaderOptions) (*model.MediaDetails, error) {
-	details := new(model.MediaDetails)
+func (p *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReaderOptions) (*backupmodel.MediaDetails, error) {
+	details := new(backupmodel.MediaDetails)
 
 	var packet Packet = make([]byte, 192)
 	count := 0

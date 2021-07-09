@@ -1,7 +1,7 @@
 package volumes
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path"
@@ -11,7 +11,7 @@ import (
 func TestStoreAndRetrieve(t *testing.T) {
 	a := assert.New(t)
 
-	signatures := []model.SimpleMediaSignature{
+	signatures := []backupmodel.SimpleMediaSignature{
 		{
 			RelativePath: "/somewhere/file-1.jpg",
 			Size:         42,

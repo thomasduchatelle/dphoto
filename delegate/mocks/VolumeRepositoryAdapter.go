@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,15 +13,15 @@ type VolumeRepositoryAdapter struct {
 }
 
 // RestoreLastSnapshot provides a mock function with given fields: volumeId
-func (_m *VolumeRepositoryAdapter) RestoreLastSnapshot(volumeId string) ([]model.SimpleMediaSignature, error) {
+func (_m *VolumeRepositoryAdapter) RestoreLastSnapshot(volumeId string) ([]backupmodel.SimpleMediaSignature, error) {
 	ret := _m.Called(volumeId)
 
-	var r0 []model.SimpleMediaSignature
-	if rf, ok := ret.Get(0).(func(string) []model.SimpleMediaSignature); ok {
+	var r0 []backupmodel.SimpleMediaSignature
+	if rf, ok := ret.Get(0).(func(string) []backupmodel.SimpleMediaSignature); ok {
 		r0 = rf(volumeId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.SimpleMediaSignature)
+			r0 = ret.Get(0).([]backupmodel.SimpleMediaSignature)
 		}
 	}
 
@@ -36,11 +36,11 @@ func (_m *VolumeRepositoryAdapter) RestoreLastSnapshot(volumeId string) ([]model
 }
 
 // StoreSnapshot provides a mock function with given fields: volumeId, backupId, signatures
-func (_m *VolumeRepositoryAdapter) StoreSnapshot(volumeId string, backupId string, signatures []model.SimpleMediaSignature) error {
+func (_m *VolumeRepositoryAdapter) StoreSnapshot(volumeId string, backupId string, signatures []backupmodel.SimpleMediaSignature) error {
 	ret := _m.Called(volumeId, backupId, signatures)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, []model.SimpleMediaSignature) error); ok {
+	if rf, ok := ret.Get(0).(func(string, string, []backupmodel.SimpleMediaSignature) error); ok {
 		r0 = rf(volumeId, backupId, signatures)
 	} else {
 		r0 = ret.Error(0)

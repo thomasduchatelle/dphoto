@@ -1,4 +1,4 @@
-package model
+package backupmodel
 
 import (
 	"github.com/stretchr/testify/assert"

@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,11 +13,11 @@ type Uploader struct {
 }
 
 // Execute provides a mock function with given fields: buffer, progressChannel
-func (_m *Uploader) Execute(buffer []*model.AnalysedMedia, progressChannel chan *model.ProgressEvent) error {
+func (_m *Uploader) Execute(buffer []*backupmodel.AnalysedMedia, progressChannel chan *backupmodel.ProgressEvent) error {
 	ret := _m.Called(buffer, progressChannel)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]*model.AnalysedMedia, chan *model.ProgressEvent) error); ok {
+	if rf, ok := ret.Get(0).(func([]*backupmodel.AnalysedMedia, chan *backupmodel.ProgressEvent) error); ok {
 		r0 = rf(buffer, progressChannel)
 	} else {
 		r0 = ret.Error(0)

@@ -5,7 +5,8 @@ package mocks
 import (
 	io "io"
 
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -15,20 +16,20 @@ type DetailsReaderAdapter struct {
 }
 
 // ReadDetails provides a mock function with given fields: reader, options
-func (_m *DetailsReaderAdapter) ReadDetails(reader io.Reader, options model.DetailsReaderOptions) (*model.MediaDetails, error) {
+func (_m *DetailsReaderAdapter) ReadDetails(reader io.Reader, options backupmodel.DetailsReaderOptions) (*backupmodel.MediaDetails, error) {
 	ret := _m.Called(reader, options)
 
-	var r0 *model.MediaDetails
-	if rf, ok := ret.Get(0).(func(io.Reader, model.DetailsReaderOptions) *model.MediaDetails); ok {
+	var r0 *backupmodel.MediaDetails
+	if rf, ok := ret.Get(0).(func(io.Reader, backupmodel.DetailsReaderOptions) *backupmodel.MediaDetails); ok {
 		r0 = rf(reader, options)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.MediaDetails)
+			r0 = ret.Get(0).(*backupmodel.MediaDetails)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(io.Reader, model.DetailsReaderOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(io.Reader, backupmodel.DetailsReaderOptions) error); ok {
 		r1 = rf(reader, options)
 	} else {
 		r1 = ret.Error(1)

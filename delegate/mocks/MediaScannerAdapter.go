@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,25 +13,25 @@ type MediaScannerAdapter struct {
 }
 
 // FindMediaRecursively provides a mock function with given fields: volume, callback
-func (_m *MediaScannerAdapter) FindMediaRecursively(volume model.VolumeToBackup, callback func(model.FoundMedia)) (uint, uint, error) {
+func (_m *MediaScannerAdapter) FindMediaRecursively(volume backupmodel.VolumeToBackup, callback func(backupmodel.FoundMedia)) (uint, uint, error) {
 	ret := _m.Called(volume, callback)
 
 	var r0 uint
-	if rf, ok := ret.Get(0).(func(model.VolumeToBackup, func(model.FoundMedia)) uint); ok {
+	if rf, ok := ret.Get(0).(func(backupmodel.VolumeToBackup, func(backupmodel.FoundMedia)) uint); ok {
 		r0 = rf(volume, callback)
 	} else {
 		r0 = ret.Get(0).(uint)
 	}
 
 	var r1 uint
-	if rf, ok := ret.Get(1).(func(model.VolumeToBackup, func(model.FoundMedia)) uint); ok {
+	if rf, ok := ret.Get(1).(func(backupmodel.VolumeToBackup, func(backupmodel.FoundMedia)) uint); ok {
 		r1 = rf(volume, callback)
 	} else {
 		r1 = ret.Get(1).(uint)
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(model.VolumeToBackup, func(model.FoundMedia)) error); ok {
+	if rf, ok := ret.Get(2).(func(backupmodel.VolumeToBackup, func(backupmodel.FoundMedia)) error); ok {
 		r2 = rf(volume, callback)
 	} else {
 		r2 = ret.Error(2)

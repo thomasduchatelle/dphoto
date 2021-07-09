@@ -1,4 +1,4 @@
-// Package config create AWS session and distribute it to any package interested once all config files has been loaded.
+// Package config create AWS session and distribute it (alongside other config value) to any package interested.
 package config
 
 import (

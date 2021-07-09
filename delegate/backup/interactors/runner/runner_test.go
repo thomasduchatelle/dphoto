@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/mocks"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -26,8 +26,8 @@ func (u *unitMedia) LastModificationDate() time.Time {
 	return time.Now()
 }
 
-func (u *unitMedia) SimpleSignature() *model.SimpleMediaSignature {
-	return &model.SimpleMediaSignature{
+func (u *unitMedia) SimpleSignature() *backupmodel.SimpleMediaSignature {
+	return &backupmodel.SimpleMediaSignature{
 		RelativePath: u.filename,
 		Size:         uint(u.size),
 	}
@@ -53,7 +53,7 @@ func TestRunner(t *testing.T) {
 
 	r := Runner{
 		MDC: log.WithField("Unit", "Test"),
-		Source: func(medias chan model.FoundMedia) (uint, uint, error) {
+		Source: func(medias chan backupmodel.FoundMedia) (uint, uint, error) {
 			log.Infoln("Starting to push medias")
 
 			medias <- newMedia("foo", 1)
@@ -77,34 +77,34 @@ func TestRunner(t *testing.T) {
 	}
 
 	// pre-then
-	filter.On("Execute", mock.Anything).Times(3).Return(func(m model.FoundMedia) bool {
+	filter.On("Execute", mock.Anything).Times(3).Return(func(m backupmodel.FoundMedia) bool {
 		log.Infof("Filter %+v", m)
 		return m.SimpleSignature().Size >= 2
 	})
 
-	downloader.On("Execute", mock.Anything).Times(2).Return(func(m model.FoundMedia) model.FoundMedia {
+	downloader.On("Execute", mock.Anything).Times(2).Return(func(m backupmodel.FoundMedia) backupmodel.FoundMedia {
 		log.Infof("Download %+v", m)
 		return m
 	}, nil)
 
-	analyser.On("Execute", mock.Anything).Times(2).Return(func(m model.FoundMedia) *model.AnalysedMedia {
+	analyser.On("Execute", mock.Anything).Times(2).Return(func(m backupmodel.FoundMedia) *backupmodel.AnalysedMedia {
 		log.Infof("Analyse %+v", m)
-		return &model.AnalysedMedia{
+		return &backupmodel.AnalysedMedia{
 			FoundMedia: m,
-			Type:       model.MediaTypeImage,
+			Type:       backupmodel.MediaTypeImage,
 			Signature:  nil,
 			Details:    nil,
 		}
 	}, nil)
 
-	uploader.On("Execute", []*model.AnalysedMedia{
+	uploader.On("Execute", []*backupmodel.AnalysedMedia{
 		{
 			FoundMedia: newMedia("bar", 2),
-			Type:       model.MediaTypeImage,
+			Type:       backupmodel.MediaTypeImage,
 		},
 		{
 			FoundMedia: newMedia("baz", 3),
-			Type:       model.MediaTypeImage,
+			Type:       backupmodel.MediaTypeImage,
 		},
 	}, mock.Anything).Once().Return(nil)
 

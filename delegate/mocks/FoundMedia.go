@@ -5,7 +5,8 @@ package mocks
 import (
 	io "io"
 
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
+
 	mock "github.com/stretchr/testify/mock"
 
 	time "time"
@@ -68,15 +69,15 @@ func (_m *FoundMedia) ReadMedia() (io.Reader, error) {
 }
 
 // SimpleSignature provides a mock function with given fields:
-func (_m *FoundMedia) SimpleSignature() *model.SimpleMediaSignature {
+func (_m *FoundMedia) SimpleSignature() *backupmodel.SimpleMediaSignature {
 	ret := _m.Called()
 
-	var r0 *model.SimpleMediaSignature
-	if rf, ok := ret.Get(0).(func() *model.SimpleMediaSignature); ok {
+	var r0 *backupmodel.SimpleMediaSignature
+	if rf, ok := ret.Get(0).(func() *backupmodel.SimpleMediaSignature); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.SimpleMediaSignature)
+			r0 = ret.Get(0).(*backupmodel.SimpleMediaSignature)
 		}
 	}
 

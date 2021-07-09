@@ -1,7 +1,8 @@
+// Package daemon is WORK IN PROGRESS
 package daemon
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"fmt"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
@@ -236,7 +237,7 @@ func HandleDBusSignal(v *dbus.Signal, removableDrives []*UDiskSignal) []*UDiskSi
 		}
 
 		if found != nil && !wasPlugged && isMounted(found) {
-			VolumeManager.OnMountedVolume(model.VolumeToBackup{UniqueId: found.Block.IdUuid, Path: found.FileSystem.MountPoint[0]})
+			VolumeManager.OnMountedVolume(backupmodel.VolumeToBackup{UniqueId: found.Block.IdUuid, Path: found.FileSystem.MountPoint[0]})
 		} else if found != nil && found.Block != nil && wasPlugged && !isMounted(found) {
 			VolumeManager.OnUnMountedVolume(found.Block.IdUuid)
 		} else if found != nil && found.removed {

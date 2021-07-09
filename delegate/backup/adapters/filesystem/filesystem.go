@@ -1,8 +1,9 @@
+// Package filesystem scan a local filesystem to find medias on it
 package filesystem
 
 import (
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"github.com/dixonwille/skywalker"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ type FsHandler struct{}
 
 type fsWorker struct {
 	mountPath string
-	callback  func(model.FoundMedia)
+	callback  func(backupmodel.FoundMedia)
 	count     int64
 	sizeSum   int64
 }
@@ -30,7 +31,7 @@ type fsMedia struct {
 	relativePath         string
 }
 
-func (f *FsHandler) FindMediaRecursively(volume model.VolumeToBackup, callback func(model.FoundMedia)) (uint, uint, error) {
+func (f *FsHandler) FindMediaRecursively(volume backupmodel.VolumeToBackup, callback func(backupmodel.FoundMedia)) (uint, uint, error) {
 	worker, err := f.newWorker(volume.Path, callback)
 	if err != nil {
 		return 0, 0, err
@@ -81,7 +82,7 @@ func (w *fsWorker) Work(mediaPath string) {
 	atomic.AddInt64(&w.sizeSum, stat.Size())
 }
 
-func (f *FsHandler) newWorker(mountPath string, callback func(model.FoundMedia)) (*fsWorker, error) {
+func (f *FsHandler) newWorker(mountPath string, callback func(backupmodel.FoundMedia)) (*fsWorker, error) {
 	absMountPath, err := filepath.Abs(mountPath)
 	return &fsWorker{
 		mountPath: absMountPath,
@@ -97,8 +98,8 @@ func (f *fsMedia) LastModificationDate() time.Time {
 	return f.lastModificationDate
 }
 
-func (f *fsMedia) SimpleSignature() *model.SimpleMediaSignature {
-	return &model.SimpleMediaSignature{
+func (f *fsMedia) SimpleSignature() *backupmodel.SimpleMediaSignature {
+	return &backupmodel.SimpleMediaSignature{
 		RelativePath: f.relativePath,
 		Size:         uint(f.size),
 	}

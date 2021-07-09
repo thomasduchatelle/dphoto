@@ -1,48 +1,48 @@
 package tracker
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	log "github.com/sirupsen/logrus"
 )
 
 type TrackScanComplete interface {
-	OnScanComplete(total model.MediaCounter)
+	OnScanComplete(total backupmodel.MediaCounter)
 }
 
 type TrackDownloaded interface {
-	OnDownloaded(done, total model.MediaCounter)
+	OnDownloaded(done, total backupmodel.MediaCounter)
 }
 
 type TrackAnalysed interface {
-	OnAnalysed(done, total model.MediaCounter)
+	OnAnalysed(done, total backupmodel.MediaCounter)
 }
 
 // TrackUploaded includes both uploaded and skipped
 type TrackUploaded interface {
-	OnUploaded(done, total model.MediaCounter)
+	OnUploaded(done, total backupmodel.MediaCounter)
 }
 
 // Tracker is consuming progress channel, keep a record of counts, and call listeners
 type Tracker struct {
 	listeners           []interface{} // listeners will receive aggregated and typed updates
-	total               model.MediaCounter
+	total               backupmodel.MediaCounter
 	scanComplete        bool
-	skipped             model.MediaCounter
-	downloaded          model.MediaCounter
-	analysed            model.MediaCounter
-	skippedBeforeUpload model.MediaCounter
-	uploaded            model.MediaCounter
+	skipped             backupmodel.MediaCounter
+	downloaded          backupmodel.MediaCounter
+	analysed            backupmodel.MediaCounter
+	skippedBeforeUpload backupmodel.MediaCounter
+	uploaded            backupmodel.MediaCounter
 	createdAlbums       []string
-	detailedCount       map[string]*model.TypeCounter
+	detailedCount       map[string]*backupmodel.TypeCounter
 	done                chan struct{} // done is closed when all events have been processed.
 }
 
 // NewTracker creates the Tracker and start consuming (async)
-func NewTracker(progressChannel chan *model.ProgressEvent, listeners []interface{}) *Tracker {
+func NewTracker(progressChannel chan *backupmodel.ProgressEvent, listeners []interface{}) *Tracker {
 	tracker := &Tracker{
 		listeners:     listeners,
 		done:          make(chan struct{}),
-		detailedCount: make(map[string]*model.TypeCounter),
+		detailedCount: make(map[string]*backupmodel.TypeCounter),
 	}
 	go func() {
 		defer close(tracker.done)
@@ -55,11 +55,11 @@ func (t *Tracker) NewAlbums() []string {
 	return t.createdAlbums
 }
 
-func (t *Tracker) Skipped() model.MediaCounter {
+func (t *Tracker) Skipped() backupmodel.MediaCounter {
 	return t.skipped.AddCounter(t.skippedBeforeUpload)
 }
 
-func (t *Tracker) CountPerAlbum() map[string]*model.TypeCounter {
+func (t *Tracker) CountPerAlbum() map[string]*backupmodel.TypeCounter {
 	return t.detailedCount
 }
 
@@ -67,12 +67,12 @@ func (t *Tracker) WaitToComplete() {
 	<-t.done
 }
 
-func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
+func (t *Tracker) consume(progressChannel chan *backupmodel.ProgressEvent) {
 	for event := range progressChannel {
 		switch event.Type {
-		case model.ProgressEventScanComplete:
+		case backupmodel.ProgressEventScanComplete:
 			t.scanComplete = true
-			t.total = model.MediaCounter{
+			t.total = backupmodel.MediaCounter{
 				Count: event.Count,
 				Size:  event.Size,
 			}
@@ -83,34 +83,34 @@ func (t *Tracker) consume(progressChannel chan *model.ProgressEvent) {
 				}
 			}
 
-		case model.ProgressEventSkipped:
+		case backupmodel.ProgressEventSkipped:
 			t.skipped = t.skipped.Add(event.Count, event.Size)
 
-		case model.ProgressEventDownloaded:
+		case backupmodel.ProgressEventDownloaded:
 			t.downloaded = t.downloaded.Add(event.Count, event.Size)
 			t.fireDownloadedEvent()
 
-		case model.ProgressEventAnalysed:
+		case backupmodel.ProgressEventAnalysed:
 			t.analysed = t.analysed.Add(event.Count, event.Size)
 			t.fireAnalysedEvent()
 
-		case model.ProgressEventSkippedAfterAnalyse:
+		case backupmodel.ProgressEventSkippedAfterAnalyse:
 			t.skippedBeforeUpload = t.skippedBeforeUpload.Add(event.Count, event.Size)
 			t.fireUploadedEvent()
 
-		case model.ProgressEventUploaded:
+		case backupmodel.ProgressEventUploaded:
 			t.uploaded = t.uploaded.Add(event.Count, event.Size)
 
 			typeCount, ok := t.detailedCount[event.Album]
 			if !ok {
-				typeCount = &model.TypeCounter{}
+				typeCount = &backupmodel.TypeCounter{}
 				t.detailedCount[event.Album] = typeCount
 			}
 			typeCount.IncrementFoundCounter(event.MediaType, event.Count, event.Size)
 
 			t.fireUploadedEvent()
 
-		case model.ProgressEventAlbumCreated:
+		case backupmodel.ProgressEventAlbumCreated:
 			t.createdAlbums = append(t.createdAlbums, event.Album)
 
 		default:

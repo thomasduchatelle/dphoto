@@ -1,7 +1,7 @@
 package exif
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -17,12 +17,12 @@ func TestFileWithoutExif(t *testing.T) {
 		panic(err.Error())
 	}
 
-	details, err := exifAdapter.ReadDetails(reader, model.DetailsReaderOptions{})
+	details, err := exifAdapter.ReadDetails(reader, backupmodel.DetailsReaderOptions{})
 	if a.NoError(err) {
-		a.Equal(&model.MediaDetails{
+		a.Equal(&backupmodel.MediaDetails{
 			Width:       700,
 			Height:      307,
-			Orientation: model.OrientationUpperLeft,
+			Orientation: backupmodel.OrientationUpperLeft,
 		}, details)
 	}
 }
@@ -36,14 +36,14 @@ func TestFileWithExif(t *testing.T) {
 		panic(err.Error())
 	}
 
-	details, err := exifAdapter.ReadDetails(reader, model.DetailsReaderOptions{})
+	details, err := exifAdapter.ReadDetails(reader, backupmodel.DetailsReaderOptions{})
 
 	if a.NoError(err) {
-		a.Equal(&model.MediaDetails{
+		a.Equal(&backupmodel.MediaDetails{
 			Width:        4048,
 			Height:       3036,
 			DateTime:     time.Unix(1574694084, 0).UTC(),
-			Orientation:  model.OrientationUpperLeft,
+			Orientation:  backupmodel.OrientationUpperLeft,
 			Make:         "Google",
 			Model:        "Pixel",
 			GPSLatitude:  51.50363055555555,

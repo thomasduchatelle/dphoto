@@ -1,7 +1,7 @@
 package uploaders
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/catalog"
 	"duchatelle.io/dphoto/dphoto/mocks"
 	"github.com/stretchr/testify/assert"
@@ -21,42 +21,42 @@ func TestUploader_Upload(t *testing.T) {
 	catalogProxy := new(mocks.CatalogProxyAdapter)
 	onlineStorage := new(mocks.OnlineStorageAdapter)
 
-	medias := []*model.AnalysedMedia{
+	medias := []*backupmodel.AnalysedMedia{
 		{
-			FoundMedia: model.NewInmemoryMedia("image_001.jpg", 42, mediaDate),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000001", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-03-27")},
+			FoundMedia: backupmodel.NewInmemoryMedia("image_001.jpg", 42, mediaDate),
+			Type:       backupmodel.MediaTypeImage,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "00000001", Size: 42},
+			Details:    &backupmodel.MediaDetails{DateTime: mustParseDate("2021-03-27")},
 		},
 		{
-			FoundMedia: model.NewInmemoryMedia("video_002.mkv", 4200, mediaDate),
-			Type:       model.MediaTypeVideo,
-			Signature:  &model.FullMediaSignature{Sha256: "00000002", Size: 4200},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-04-02")},
+			FoundMedia: backupmodel.NewInmemoryMedia("video_002.mkv", 4200, mediaDate),
+			Type:       backupmodel.MediaTypeVideo,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "00000002", Size: 4200},
+			Details:    &backupmodel.MediaDetails{DateTime: mustParseDate("2021-04-02")},
 		},
 		{
-			FoundMedia: model.NewInmemoryMedia("image_003.jpg", 42, mediaDate),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000003", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-04-04")},
+			FoundMedia: backupmodel.NewInmemoryMedia("image_003.jpg", 42, mediaDate),
+			Type:       backupmodel.MediaTypeImage,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "00000003", Size: 42},
+			Details:    &backupmodel.MediaDetails{DateTime: mustParseDate("2021-04-04")},
 		},
 		{
-			FoundMedia: model.NewInmemoryMedia("image_004.jpg", 42, mediaDate),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000004", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-04-05")},
+			FoundMedia: backupmodel.NewInmemoryMedia("image_004.jpg", 42, mediaDate),
+			Type:       backupmodel.MediaTypeImage,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "00000004", Size: 42},
+			Details:    &backupmodel.MediaDetails{DateTime: mustParseDate("2021-04-05")},
 		},
 		{
-			FoundMedia: model.NewInmemoryMedia("image_005.jpg", 42, mediaDate),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000005", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-04-12")},
+			FoundMedia: backupmodel.NewInmemoryMedia("image_005.jpg", 42, mediaDate),
+			Type:       backupmodel.MediaTypeImage,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "00000005", Size: 42},
+			Details:    &backupmodel.MediaDetails{DateTime: mustParseDate("2021-04-12")},
 		},
 		{
-			FoundMedia: model.NewInmemoryMedia("image_001_again.jpg", 42, mediaDate),
-			Type:       model.MediaTypeImage,
-			Signature:  &model.FullMediaSignature{Sha256: "00000001", Size: 42},
-			Details:    &model.MediaDetails{DateTime: mustParseDate("2021-03-26")},
+			FoundMedia: backupmodel.NewInmemoryMedia("image_001_again.jpg", 42, mediaDate),
+			Type:       backupmodel.MediaTypeImage,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "00000001", Size: 42},
+			Details:    &backupmodel.MediaDetails{DateTime: mustParseDate("2021-03-26")},
 		},
 	}
 
@@ -147,7 +147,7 @@ func TestUploader_Upload(t *testing.T) {
 		a.FailNow(err.Error())
 	}
 
-	err = uploader.Upload(medias, make(chan *model.ProgressEvent, 42))
+	err = uploader.Upload(medias, make(chan *backupmodel.ProgressEvent, 42))
 	if a.NoError(err) {
 		catalogProxy.AssertExpectations(t)
 		onlineStorage.AssertExpectations(t)

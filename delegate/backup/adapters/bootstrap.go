@@ -7,8 +7,8 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/adapters/m2ts"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/onlinestorage"
 	"duchatelle.io/dphoto/dphoto/backup/adapters/volumes"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
-	"duchatelle.io/dphoto/dphoto/backup/model"
 	"duchatelle.io/dphoto/dphoto/config"
 	log "github.com/sirupsen/logrus"
 	"os"
@@ -17,7 +17,7 @@ import (
 func init() {
 	interactors.DetailsReaders[interactors.DetailsReaderTypeImage] = new(exif.Parser)
 	interactors.DetailsReaders[interactors.DetailsReaderTypeM2TS] = new(m2ts.Parser)
-	interactors.SourcePorts[model.VolumeTypeFileSystem] = new(filesystem.FsHandler)
+	interactors.SourcePorts[backupmodel.VolumeTypeFileSystem] = new(filesystem.FsHandler)
 
 	config.Listen(func(cfg config.Config) {
 		log.Debugln("connecting backup adapters")

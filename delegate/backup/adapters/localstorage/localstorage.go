@@ -1,9 +1,10 @@
+// Package localstorage provides a temporary location where files can be copied to be quickly read for analyse.
 package localstorage
 
 import (
 	"context"
 	"crypto/sha256"
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"encoding/hex"
 	"fmt"
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ type LocalStorage struct {
 
 type localMedia struct {
 	store    *LocalStorage
-	delegate model.FoundMedia
+	delegate backupmodel.FoundMedia
 	path     string
 	sha256   string
 }
@@ -39,7 +40,7 @@ func (m *localMedia) LastModificationDate() time.Time {
 	return m.delegate.LastModificationDate()
 }
 
-func (m *localMedia) SimpleSignature() *model.SimpleMediaSignature {
+func (m *localMedia) SimpleSignature() *backupmodel.SimpleMediaSignature {
 	return m.delegate.SimpleSignature()
 }
 
@@ -79,7 +80,7 @@ func NewLocalStorage(localDir string, bufferAreaSizeInBytes int) (*LocalStorage,
 	}, err
 }
 
-func (l *LocalStorage) DownloadMedia(found model.FoundMedia) (model.FoundMedia, error) {
+func (l *LocalStorage) DownloadMedia(found backupmodel.FoundMedia) (backupmodel.FoundMedia, error) {
 	err := l.take(found.SimpleSignature().Size)
 	if err != nil {
 		return nil, err

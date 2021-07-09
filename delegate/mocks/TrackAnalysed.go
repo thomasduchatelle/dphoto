@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "duchatelle.io/dphoto/dphoto/backup/model"
+	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,6 +13,6 @@ type TrackAnalysed struct {
 }
 
 // OnAnalysed provides a mock function with given fields: done, total
-func (_m *TrackAnalysed) OnAnalysed(done model.MediaCounter, total model.MediaCounter) {
+func (_m *TrackAnalysed) OnAnalysed(done backupmodel.MediaCounter, total backupmodel.MediaCounter) {
 	_m.Called(done, total)
 }

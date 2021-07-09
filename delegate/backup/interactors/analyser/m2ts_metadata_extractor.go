@@ -1,19 +1,19 @@
 package analyser
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/model"
+	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"fmt"
 	"io"
 )
 
-func m2tsAdapter(found model.FoundMedia) (*model.MediaDetails, error) {
+func m2tsAdapter(found backupmodel.FoundMedia) (*backupmodel.MediaDetails, error) {
 	reader, err := found.ReadMedia()
 	if err != nil {
 		return nil, err
 	}
 
 	buf := make([]byte, 192)
-	for read, err := reader.Read(buf) ; read > 0 ; {
+	for read, err := reader.Read(buf); read > 0; {
 		if err != nil && err != io.EOF {
 			return nil, err
 		}

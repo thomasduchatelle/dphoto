@@ -1,4 +1,4 @@
-package model
+package backupmodel
 
 const numberOfMediaType = 3 // exclude "other", include "total" in position 0
 

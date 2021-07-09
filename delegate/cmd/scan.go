@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"duchatelle.io/dphoto/dphoto/catalog"
-	"duchatelle.io/dphoto/dphoto/cmd/backupadaptor"
+	"duchatelle.io/dphoto/dphoto/cmd/adapters/backupadapter"
 	"duchatelle.io/dphoto/dphoto/cmd/printer"
 	"duchatelle.io/dphoto/dphoto/cmd/ui"
 	"fmt"
@@ -26,16 +26,16 @@ var scan = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		volume := args[0]
 
-		recordRepository, count, err := backupadaptor.ScanWithCache(volume)
+		recordRepository, count, err := backupadapter.ScanWithCache(volume)
 		printer.FatalIfError(err, 2)
 
 		if count == 0 {
 			fmt.Println(aurora.Red(fmt.Sprintf("No media found on path %s .", volume)))
 		} else if scanArgs.nonInteractive {
-			err = ui.NewSimpleSession(recordRepository, backupadaptor.NewAlbumRepository()).Render()
+			err = ui.NewSimpleSession(recordRepository, backupadapter.NewAlbumRepository()).Render()
 			printer.FatalIfError(err, 1)
 		} else {
-			err = ui.NewInteractiveSession(new(uiCatalogAdapter), recordRepository, backupadaptor.NewAlbumRepository()).Start()
+			err = ui.NewInteractiveSession(new(uiCatalogAdapter), recordRepository, backupadapter.NewAlbumRepository()).Start()
 			printer.FatalIfError(err, 1)
 		}
 

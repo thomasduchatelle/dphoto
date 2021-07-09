@@ -1,3 +1,4 @@
+// Package printer display in standard output simple info/success/error messages
 package printer
 
 import (
