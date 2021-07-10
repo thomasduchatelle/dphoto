@@ -2,7 +2,7 @@ package catalog
 
 // ListMedias return a page of medias within an album
 func ListMedias(folderName string, request PageRequest) (*MediaPage, error) {
-	return Repository.FindMedias(folderName, FindMediaFilter{
+	return Repository.FindMedias(normaliseFolderName(folderName), FindMediaFilter{
 		PageRequest: request,
 	})
 }

@@ -66,19 +66,23 @@ func (i *InteractiveSession) reloadRecords() {
 }
 
 func (i *InteractiveSession) MoveDown() {
-	i.state.Selected = (i.state.Selected + 1) % len(i.state.Records)
-	if i.state.Selected >= i.state.FirstElement+i.state.PageSize || i.state.Selected < i.state.FirstElement {
-		i.state.FirstElement = i.state.PageSize * (i.state.Selected / i.state.PageSize)
+	if len(i.state.Records) > 0 {
+		i.state.Selected = (i.state.Selected + 1) % len(i.state.Records)
+		if i.state.Selected >= i.state.FirstElement+i.state.PageSize || i.state.Selected < i.state.FirstElement {
+			i.state.FirstElement = i.state.PageSize * (i.state.Selected / i.state.PageSize)
+		}
+		i.updateActions()
 	}
-	i.updateActions()
 }
 
 func (i *InteractiveSession) MoveUp() {
-	i.state.Selected = (len(i.state.Records) + i.state.Selected - 1) % len(i.state.Records)
-	if i.state.Selected >= i.state.FirstElement+i.state.PageSize || i.state.Selected < i.state.FirstElement {
-		i.state.FirstElement = i.state.PageSize * (i.state.Selected / i.state.PageSize)
+	if len(i.state.Records) > 0 {
+		i.state.Selected = (len(i.state.Records) + i.state.Selected - 1) % len(i.state.Records)
+		if i.state.Selected >= i.state.FirstElement+i.state.PageSize || i.state.Selected < i.state.FirstElement {
+			i.state.FirstElement = i.state.PageSize * (i.state.Selected / i.state.PageSize)
+		}
+		i.updateActions()
 	}
-	i.updateActions()
 }
 
 func (i *InteractiveSession) NextPage() {
@@ -132,7 +136,10 @@ func (i *InteractiveSession) updateActions() {
 			"UP: previous page",
 		}, actions...)
 	}
-	if i.state.Records[i.state.Selected].Suggestion {
+
+	if len(i.state.Records) == 0 {
+		// no specific action
+	} else if i.state.Records[i.state.Selected].Suggestion {
 		actions = append(actions, "C: create")
 	} else {
 		actions = append(actions, "DEL: delete", "E: edit name", "D: edit dates")

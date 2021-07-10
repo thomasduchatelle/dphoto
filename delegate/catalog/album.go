@@ -67,6 +67,8 @@ func Create(createRequest CreateAlbum) error {
 
 	if createdAlbum.FolderName == "" {
 		createdAlbum.FolderName = generateAlbumFolder(createRequest.Name, createRequest.Start)
+	} else {
+		createdAlbum.FolderName = normaliseFolderName(createdAlbum.FolderName)
 	}
 
 	albums, err := Repository.FindAllAlbums()
@@ -107,17 +109,22 @@ func Create(createRequest CreateAlbum) error {
 }
 
 func generateAlbumFolder(name string, start time.Time) string {
-	re := regexp.MustCompile("[^a-zA-Z0-9]+")
-	return strings.Trim(fmt.Sprintf("%s_%s", start.Format("2006-01"), re.ReplaceAllString(name, "_")), "_")
+	return normaliseFolderName(fmt.Sprintf("%s_%s", start.Format("2006-01"), name))
+}
+
+func normaliseFolderName(name string) string {
+	nonAlphaNumeric := regexp.MustCompile("[^A-Za-z0-9-]+")
+	return "/" + strings.Trim(nonAlphaNumeric.ReplaceAllString(name, "_"), "_")
 }
 
 // FindAlbum get an album by its business key (its folder name), or returns NotFoundError
 func FindAlbum(folderName string) (*Album, error) {
-	return Repository.FindAlbum(folderName)
+	return Repository.FindAlbum(normaliseFolderName(folderName))
 }
 
 // DeleteAlbum delete an album, medias it contains are dispatched to other albums.
 func DeleteAlbum(folderNameToDelete string, emptyOnly bool) error {
+	folderNameToDelete = normaliseFolderName(folderNameToDelete)
 	if !emptyOnly {
 		albums, err := Repository.FindAllAlbums()
 		if err != nil {
@@ -144,7 +151,7 @@ func DeleteAlbum(folderNameToDelete string, emptyOnly bool) error {
 func filterMissedSegmentWithMedias(folderName string, missed []PrioritySegment) ([]PrioritySegment, error) {
 	var reallyMissed []PrioritySegment
 	for _, m := range missed {
-		page, err := Repository.FindMedias(folderName, FindMediaFilter{
+		page, err := Repository.FindMedias(normaliseFolderName(folderName), FindMediaFilter{
 			PageRequest: PageRequest{Size: 1},
 			TimeRange:   TimeRange{Start: m.Start, End: m.End},
 		})
@@ -163,6 +170,9 @@ func filterMissedSegmentWithMedias(folderName string, missed []PrioritySegment) 
 // RenameAlbum updates the displayed named of the album. Optionally changes the folder in which media will be stored
 // and flag all its media to be moved to the new one.
 func RenameAlbum(folderName, newName string, renameFolder bool) error {
+	folderName = normaliseFolderName(folderName)
+	newName = normaliseFolderName(newName)
+
 	found, err := Repository.FindAlbum(folderName)
 	if err != nil {
 		return err // can be NotFoundError
@@ -201,6 +211,8 @@ func RenameAlbum(folderName, newName string, renameFolder bool) error {
 
 // UpdateAlbum updates the dates of an album, medias will be re-assign between albums accordingly
 func UpdateAlbum(folderName string, start, end time.Time) error {
+	folderName = normaliseFolderName(folderName)
+
 	albums, err := Repository.FindAllAlbums()
 	if err != nil {
 		return err
