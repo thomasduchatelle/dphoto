@@ -21,14 +21,18 @@ func init() {
 
 type Parser struct{}
 
-func (e *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReaderOptions) (*backupmodel.MediaDetails, error) {
+func (p *Parser) Supports(media backupmodel.FoundMedia, mediaType backupmodel.MediaType) bool {
+	return mediaType == backupmodel.MediaTypeImage
+}
+
+func (p *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReaderOptions) (*backupmodel.MediaDetails, error) {
 	buffer := bytes.NewBuffer(nil)
 	teeReader := io.TeeReader(reader, buffer)
 
 	x, err := exif.Decode(teeReader)
 	if err != nil {
 		log.WithField("Reader", reader).WithError(err).Warn("no EXIF data found in file, try another way")
-		return e.readImageWithoutExif(io.MultiReader(buffer, reader))
+		return p.readImageWithoutExif(io.MultiReader(buffer, reader))
 	}
 
 	latitude, longitude, err := x.LatLong()
@@ -38,19 +42,19 @@ func (e *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReader
 	}
 
 	return &backupmodel.MediaDetails{
-		Width:        e.getIntOrIgnore(x, exif.ImageWidth),
-		Height:       e.getIntOrIgnore(x, exif.ImageLength),
-		Orientation:  e.readOrientation(x),
-		DateTime:     e.readDateTime(x, time.Time{}),
-		Make:         e.getStringOrIgnore(x, exif.Make),
-		Model:        e.getStringOrIgnore(x, exif.Model),
+		Width:        p.getIntOrIgnore(x, exif.ImageWidth),
+		Height:       p.getIntOrIgnore(x, exif.ImageLength),
+		Orientation:  p.readOrientation(x),
+		DateTime:     p.readDateTime(x, time.Time{}),
+		Make:         p.getStringOrIgnore(x, exif.Make),
+		Model:        p.getStringOrIgnore(x, exif.Model),
 		GPSLatitude:  latitude,
 		GPSLongitude: longitude,
 	}, nil
 }
 
-func (e *Parser) readOrientation(x *exif.Exif) backupmodel.ImageOrientation {
-	switch e.getIntOrIgnore(x, exif.Orientation) {
+func (p *Parser) readOrientation(x *exif.Exif) backupmodel.ImageOrientation {
+	switch p.getIntOrIgnore(x, exif.Orientation) {
 	case 3:
 		return backupmodel.OrientationLowerRight
 	case 6:
@@ -62,8 +66,8 @@ func (e *Parser) readOrientation(x *exif.Exif) backupmodel.ImageOrientation {
 	}
 }
 
-func (e *Parser) readDateTime(x *exif.Exif, defaultDate time.Time) time.Time {
-	datetime := e.getStringOrIgnore(x, exif.DateTime)
+func (p *Parser) readDateTime(x *exif.Exif, defaultDate time.Time) time.Time {
+	datetime := p.getStringOrIgnore(x, exif.DateTime)
 	if datetime != "" {
 		exifTime, err := time.Parse("2006:01:02 15:04:05", datetime)
 		if err == nil {
@@ -74,7 +78,7 @@ func (e *Parser) readDateTime(x *exif.Exif, defaultDate time.Time) time.Time {
 	return defaultDate
 }
 
-func (e *Parser) getStringOrIgnore(x *exif.Exif, model exif.FieldName) string {
+func (p *Parser) getStringOrIgnore(x *exif.Exif, model exif.FieldName) string {
 	if t, err := x.Get(model); err == nil && t != nil {
 		if val, err := t.StringVal(); err == nil {
 			return val
@@ -83,7 +87,7 @@ func (e *Parser) getStringOrIgnore(x *exif.Exif, model exif.FieldName) string {
 	return ""
 }
 
-func (e *Parser) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
+func (p *Parser) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
 	if t, err := x.Get(model); err == nil && t != nil && t.Count > 0 {
 		if val, err := t.Int(0); err == nil {
 			return val
@@ -92,7 +96,7 @@ func (e *Parser) getIntOrIgnore(x *exif.Exif, model exif.FieldName) int {
 	return 0
 }
 
-func (e *Parser) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float64 {
+func (p *Parser) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float64 {
 	if t, err := x.Get(model); err == nil && t != nil && t.Count > 0 {
 		if val, err := t.Float(0); err == nil {
 			return val
@@ -101,7 +105,7 @@ func (e *Parser) getFloatOrIgnore(x *exif.Exif, model exif.FieldName) float64 {
 	return 0
 }
 
-func (e *Parser) readImageWithoutExif(reader io.Reader) (*backupmodel.MediaDetails, error) {
+func (p *Parser) readImageWithoutExif(reader io.Reader) (*backupmodel.MediaDetails, error) {
 	img, _, err := image.DecodeConfig(reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Can't extract image dimentions")

@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"path"
-	"path/filepath"
 	"strings"
 )
 
@@ -56,25 +55,17 @@ func ExtractTypeAndDetails(found backupmodel.FoundMedia) (backupmodel.MediaType,
 
 	details := &backupmodel.MediaDetails{}
 
-	var detailsReaderType interactors.DetailsReaderType
+	for _, detailsReader := range interactors.DetailsReaders {
+		if detailsReader.Supports(found, mediaType) {
+			content, err := found.ReadMedia()
+			if err != nil {
+				return mediaType, nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
+			}
 
-	switch {
-	case mediaType == backupmodel.MediaTypeImage:
-		detailsReaderType = interactors.DetailsReaderTypeImage
-
-	case strings.ToUpper(filepath.Ext(found.Filename())) == ".MTS":
-		detailsReaderType = interactors.DetailsReaderTypeM2TS
-	}
-
-	if detailsReader, ok := interactors.DetailsReaders[detailsReaderType]; ok {
-		content, err := found.ReadMedia()
-		if err != nil {
-			return mediaType, nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
-		}
-
-		details, err = detailsReader.ReadDetails(content, backupmodel.DetailsReaderOptions{Fast: true})
-		if err != nil {
-			return mediaType, nil, errors.Wrapf(err, "failed to analyse %s", found)
+			details, err = detailsReader.ReadDetails(content, backupmodel.DetailsReaderOptions{Fast: true})
+			if err != nil {
+				return mediaType, nil, errors.Wrapf(err, "failed to analyse %s", found)
+			}
 		}
 	}
 

@@ -10,15 +10,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
+	"path"
 	"strings"
 )
-
-type Parser struct {
-	Debug bool // Debug can be set to true to print in the console payload dumps and read metadata.
-}
-
-// ProgramNumber is the code as defined in https://en.wikipedia.org/wiki/Program-specific_information#Program_and_Elementary_Stream_Descriptor_Tags
-type ProgramNumber uint8
 
 const (
 	PIDMask                          = 0x1fff // PIDMask can be used to get PID from uint16: last 13 bits
@@ -30,6 +24,18 @@ var (
 	packetGroups = []int{4, 1, 3}
 	psiGroups    = []int{4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4}
 )
+
+// ProgramNumber is the code as defined in https://en.wikipedia.org/wiki/Program-specific_information#Program_and_Elementary_Stream_Descriptor_Tags
+type ProgramNumber uint8
+
+type Parser struct {
+	Debug bool // Debug can be set to true to print in the console payload dumps and read metadata.
+}
+
+func (p *Parser) Supports(media backupmodel.FoundMedia, mediaType backupmodel.MediaType) bool {
+	ext := strings.ToUpper(path.Ext(media.Filename()))
+	return ext == "MTS" || ext == "M2TS"
+}
 
 // ReadDetails unmux M2TS (MTS) file, with h264 support, to collect the Make, Model, and DateTime of the video flux.
 // Example:

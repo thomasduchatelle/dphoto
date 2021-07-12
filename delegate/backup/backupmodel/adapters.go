@@ -22,6 +22,8 @@ type MediaScannerAdapter interface {
 }
 
 type DetailsReaderAdapter interface {
+	// Supports returns true if the file can be parsed with this reader. False otherwise.
+	Supports(media FoundMedia, mediaType MediaType) bool
 	// ReadDetails extracts metadata from the content of the file.
 	ReadDetails(reader io.Reader, options DetailsReaderOptions) (*MediaDetails, error)
 }
