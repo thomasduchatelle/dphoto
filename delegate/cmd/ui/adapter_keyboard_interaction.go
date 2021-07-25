@@ -8,8 +8,8 @@ type keyboardInteractionAdaptor struct {
 	session *InteractiveSession
 }
 
-// startListening listens keyboard events until session has an error or ESC key is hit.
-func (a *keyboardInteractionAdaptor) startListening() {
+// StartListening listens keyboard events until session has an error or ESC key is hit.
+func (a *keyboardInteractionAdaptor) StartListening() {
 	a.session.Refresh()
 
 	for !a.session.HasError() {

@@ -20,56 +20,56 @@ func TestHeap(t *testing.T) {
 		heap.Push(h, a)
 	}
 
-	a.Equal("2020-Q3", heap.Pop(h).(*Album).FolderName)
-	a.Equal("Christmas First Week", heap.Pop(h).(*Album).FolderName)
-	a.Equal("Christmas Day", heap.Pop(h).(*Album).FolderName)
-	a.Equal("2020-Q4", heap.Pop(h).(*Album).FolderName)
-	a.Equal("New Year", heap.Pop(h).(*Album).FolderName)
-	a.Equal("Christmas Holidays", heap.Pop(h).(*Album).FolderName)
-	a.Equal("2021-Q1", heap.Pop(h).(*Album).FolderName)
-	a.Equal("2021-May", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/2020-Q3", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/Christmas_First_Week", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/Christmas_Day", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/2020-Q4", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/New_Year", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/Christmas_Holidays", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/2021-Q1", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/2021-May", heap.Pop(h).(*Album).FolderName)
 	a.Empty(h.heap)
 }
 
 func AlbumCollection() []*Album {
 	return []*Album{
 		{
-			FolderName: "2020-Q3",
+			FolderName: "/2020-Q3",
 			Start:      time.Date(2020, 7, 1, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "2020-Q4",
+			FolderName: "/2020-Q4",
 			Start:      time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "Christmas Holidays",
+			FolderName: "/Christmas_Holidays",
 			Start:      time.Date(2020, 12, 18, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "Christmas First Week",
+			FolderName: "/Christmas_First_Week",
 			Start:      time.Date(2020, 12, 18, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2020, 12, 25, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "Christmas Day",
+			FolderName: "/Christmas_Day",
 			Start:      time.Date(2020, 12, 24, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "New Year",
+			FolderName: "/New_Year",
 			Start:      time.Date(2020, 12, 31, 18, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 1, 1, 18, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "2021-Q1",
+			FolderName: "/2021-Q1",
 			Start:      time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 4, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "2021-May",
+			FolderName: "/2021-May",
 			Start:      time.Date(2021, 5, 1, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 6, 1, 0, 0, 0, 0, time.UTC),
 		},

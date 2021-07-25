@@ -3,17 +3,17 @@ package ui
 import "sort"
 
 type recordRepositoryAggregator struct {
-	repositories []RecordRepositoryPort
+	repositories []SuggestionRecordRepositoryPort
 }
 
-func NewRepositoryAggregator(repositories ...RecordRepositoryPort) RecordRepositoryPort {
+func NewRepositoryAggregator(repositories ...SuggestionRecordRepositoryPort) SuggestionRecordRepositoryPort {
 	return &recordRepositoryAggregator{repositories: repositories}
 }
 
-func (r *recordRepositoryAggregator) FindRecords() ([]*Record, error) {
-	var records []*Record
+func (r *recordRepositoryAggregator) FindSuggestionRecords() ([]*SuggestionRecord, error) {
+	var records []*SuggestionRecord
 	for _, repo := range r.repositories {
-		slice, err := repo.FindRecords()
+		slice, err := repo.FindSuggestionRecords()
 		if err != nil {
 			return nil, err
 		}

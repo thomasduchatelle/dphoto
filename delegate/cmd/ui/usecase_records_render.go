@@ -8,7 +8,7 @@ import (
 
 type recordsRenderer struct{}
 
-func (r *recordsRenderer) Render(state *recordsState) (string, error) {
+func (r *recordsRenderer) Render(state *RecordsState) (string, error) {
 	const layout = "02/01/2006 (Mon)"
 
 	if len(state.Records) == 0 {
@@ -48,9 +48,21 @@ func (r *recordsRenderer) Render(state *recordsState) (string, error) {
 		if album.Count > 0 {
 			countContent = fmt.Sprint(album.Count)
 		}
+		if album.TotalCount > album.Count {
+			countContent += fmt.Sprintf(" (of %d)", album.TotalCount)
+		}
+
+		indent := ""
+		if album.Indent > 0 {
+			if idx+1 < len(records) && records[idx+1].Indent > 0 {
+				indent = "\u251c "
+			} else {
+				indent = "\u2514 "
+			}
+		}
 
 		table.Body.Cells[idx] = []*simpletable.Cell{
-			{Text: r.applyStyleOnName(isSelected, album.Suggestion, album.Name)},
+			{Text: indent + r.applyStyleOnName(isSelected, album.Suggestion, album.Name)},
 			{Text: r.applyStyle(isSelected, album.Suggestion, album.FolderName)},
 			{Text: r.applyStyle(isSelected, album.Suggestion, album.Start.Format(layout))},
 			{Text: r.applyStyle(isSelected, album.Suggestion, album.End.Format(layout))},

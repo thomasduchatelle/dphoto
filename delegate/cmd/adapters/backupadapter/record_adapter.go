@@ -6,23 +6,22 @@ import (
 	"duchatelle.io/dphoto/dphoto/cmd/ui"
 )
 
-func NewSuggestionRepository(suggestions []*backupmodel.ScannedFolder) ui.RecordRepositoryPort {
-	records := make([]*ui.Record, len(suggestions))
+func NewSuggestionRepository(suggestions []*backupmodel.ScannedFolder) ui.SuggestionRecordRepositoryPort {
+	records := make([]*ui.SuggestionRecord, len(suggestions))
 
 	for i, suggestion := range suggestions {
 
-		count := uint(0)
-		for _, dayCounter := range suggestion.Distribution {
-			count += dayCounter.Count
+		simplifiedDistribution := make(map[string]uint)
+		for day, dayCounter := range suggestion.Distribution {
+			simplifiedDistribution[day] = dayCounter.Count
 		}
 
-		records[i] = &ui.Record{
-			Suggestion: true,
-			FolderName: suggestion.FolderName,
-			Name:       suggestion.Name,
-			Start:      suggestion.Start,
-			End:        suggestion.End,
-			Count:      count,
+		records[i] = &ui.SuggestionRecord{
+			FolderName:   suggestion.FolderName,
+			Name:         suggestion.Name,
+			Start:        suggestion.Start,
+			End:          suggestion.End,
+			Distribution: simplifiedDistribution,
 		}
 	}
 
@@ -31,33 +30,62 @@ func NewSuggestionRepository(suggestions []*backupmodel.ScannedFolder) ui.Record
 	}
 }
 
-func NewAlbumRepository() ui.RecordRepositoryPort {
+func NewAlbumRepository() ui.ExistingRecordRepositoryPort {
 	return new(dynamicAlbumRepository)
 }
 
 type staticRecordRepository struct {
-	Records []*ui.Record
+	Records []*ui.SuggestionRecord
 }
 
-func (r *staticRecordRepository) FindRecords() ([]*ui.Record, error) {
+func (r *staticRecordRepository) FindSuggestionRecords() ([]*ui.SuggestionRecord, error) {
 	return r.Records, nil
 }
 
 type dynamicAlbumRepository struct{}
 
-func (r *dynamicAlbumRepository) FindRecords() ([]*ui.Record, error) {
+func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, error) {
 	albums, err := catalog.FindAllAlbumsWithStats()
-	records := make([]*ui.Record, len(albums))
+	if err != nil {
+		return nil, err
+	}
 
+	albumsWithoutStats := make([]*catalog.Album, len(albums))
+	for i, a := range albums {
+		albumsWithoutStats[i] = &a.Album
+	}
+
+	timeline, err := catalog.NewTimeline(albumsWithoutStats)
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]*ui.ExistingRecord, len(albums))
 	for i, album := range albums {
-		records[i] = &ui.Record{
-			Suggestion: false,
-			FolderName: album.Album.FolderName,
-			Name:       album.Album.Name,
-			Start:      album.Album.Start,
-			End:        album.Album.End,
-			Count:      uint(album.TotalCount()),
+
+		records[i] = &ui.ExistingRecord{
+			FolderName:    album.Album.FolderName,
+			Name:          album.Album.Name,
+			Start:         album.Album.Start,
+			End:           album.Album.End,
+			Count:         uint(album.TotalCount()),
+			ActivePeriods: r.activePeriods(timeline, album),
 		}
 	}
 	return records, err
+}
+
+func (r *dynamicAlbumRepository) activePeriods(timeline *catalog.Timeline, album *catalog.AlbumStat) []ui.Period {
+	actives, _ := timeline.FindBetween(album.Album.Start, album.Album.End)
+	var periods []ui.Period
+	for _, active := range actives {
+		if len(active.Albums) > 0 && active.Albums[0].FolderName == album.Album.FolderName {
+			periods = append(periods, ui.Period{
+				Start: active.Start,
+				End:   active.End,
+			})
+		}
+	}
+
+	return periods
 }

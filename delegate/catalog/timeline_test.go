@@ -40,80 +40,80 @@ func TestNewTimeline(t *testing.T) {
 		{
 			"it should support albums following up each-other",
 			[]*Album{
-				newAlbum("2020-Q3", "2020-07-01T00", "2020-10-01T00"),
-				newAlbum("2020-Q4", "2020-10-01T00", "2021-01-01T00"),
+				newAlbum("/2020-Q3", "2020-07-01T00", "2020-10-01T00"),
+				newAlbum("/2020-Q4", "2020-10-01T00", "2021-01-01T00"),
 			},
 			[]simplifiedSegment{
-				newSimplifiedSegment("2020-Q3", "2020-07-01T00", "2020-10-01T00"),
-				newSimplifiedSegment("2020-Q4", "2020-10-01T00", "2021-01-01T00"),
+				newSimplifiedSegment("/2020-Q3", "2020-07-01T00", "2020-10-01T00"),
+				newSimplifiedSegment("/2020-Q4", "2020-10-01T00", "2021-01-01T00"),
 			},
 			false,
 		},
 		{
 			"it should support albums with a gap",
 			[]*Album{
-				newAlbum("2020-Q3", "2020-07-01T00", "2020-10-01T00"),
-				newAlbum("2020-Q4", "2020-11-01T00", "2021-02-01T00"),
+				newAlbum("/2020-Q3", "2020-07-01T00", "2020-10-01T00"),
+				newAlbum("/2020-Q4", "2020-11-01T00", "2021-02-01T00"),
 			},
 			[]simplifiedSegment{
-				newSimplifiedSegment("2020-Q3", "2020-07-01T00", "2020-10-01T00"),
-				newSimplifiedSegment("2020-Q4", "2020-11-01T00", "2021-02-01T00"),
+				newSimplifiedSegment("/2020-Q3", "2020-07-01T00", "2020-10-01T00"),
+				newSimplifiedSegment("/2020-Q4", "2020-11-01T00", "2021-02-01T00"),
 			},
 			false,
 		},
 		{
 			"it should support albums overlapping - priority to the first",
 			[]*Album{
-				newAlbum("A-01", "2020-12-01T00", "2020-12-11T00"),
-				newAlbum("A-02", "2020-12-10T12", "2020-12-21T12"),
+				newAlbum("/A-01", "2020-12-01T00", "2020-12-11T00"),
+				newAlbum("/A-02", "2020-12-10T12", "2020-12-21T12"),
 			},
 			[]simplifiedSegment{
-				newSimplifiedSegment("A-01", "2020-12-01T00", "2020-12-11T00"),
-				newSimplifiedSegment("A-02", "2020-12-11T00", "2020-12-21T12"),
+				newSimplifiedSegment("/A-01", "2020-12-01T00", "2020-12-11T00"),
+				newSimplifiedSegment("/A-02", "2020-12-11T00", "2020-12-21T12"),
 			},
 			false,
 		},
 		{
 			"it should support albums overlapping - priority to the shortest",
 			[]*Album{
-				newAlbum("A-01", "2020-12-01T00", "2020-12-06T00"),
-				newAlbum("A-02", "2020-12-02T00", "2020-12-05T00"),
-				newAlbum("A-03", "2020-12-03T00", "2020-12-04T00"),
+				newAlbum("/A-01", "2020-12-01T00", "2020-12-06T00"),
+				newAlbum("/A-02", "2020-12-02T00", "2020-12-05T00"),
+				newAlbum("/A-03", "2020-12-03T00", "2020-12-04T00"),
 			},
 			[]simplifiedSegment{
-				newSimplifiedSegment("A-01", "2020-12-01T00", "2020-12-02T00"),
-				newSimplifiedSegment("A-02", "2020-12-02T00", "2020-12-03T00"),
-				newSimplifiedSegment("A-03", "2020-12-03T00", "2020-12-04T00"),
-				newSimplifiedSegment("A-02", "2020-12-04T00", "2020-12-05T00"),
-				newSimplifiedSegment("A-01", "2020-12-05T00", "2020-12-06T00"),
+				newSimplifiedSegment("/A-01", "2020-12-01T00", "2020-12-02T00"),
+				newSimplifiedSegment("/A-02", "2020-12-02T00", "2020-12-03T00"),
+				newSimplifiedSegment("/A-03", "2020-12-03T00", "2020-12-04T00"),
+				newSimplifiedSegment("/A-02", "2020-12-04T00", "2020-12-05T00"),
+				newSimplifiedSegment("/A-01", "2020-12-05T00", "2020-12-06T00"),
 			},
 			false,
 		},
 		{
 			"it should support albums starting at the same time",
 			[]*Album{
-				newAlbum("A-01", "2020-12-01T00", "2020-12-06T00"),
-				newAlbum("A-02", "2020-12-01T00", "2020-12-05T00"),
-				newAlbum("A-03", "2020-12-01T00", "2020-12-07T00"),
+				newAlbum("/A-01", "2020-12-01T00", "2020-12-06T00"),
+				newAlbum("/A-02", "2020-12-01T00", "2020-12-05T00"),
+				newAlbum("/A-03", "2020-12-01T00", "2020-12-07T00"),
 			},
 			[]simplifiedSegment{
-				newSimplifiedSegment("A-02", "2020-12-01T00", "2020-12-05T00"),
-				newSimplifiedSegment("A-01", "2020-12-05T00", "2020-12-06T00"),
-				newSimplifiedSegment("A-03", "2020-12-06T00", "2020-12-07T00"),
+				newSimplifiedSegment("/A-02", "2020-12-01T00", "2020-12-05T00"),
+				newSimplifiedSegment("/A-01", "2020-12-05T00", "2020-12-06T00"),
+				newSimplifiedSegment("/A-03", "2020-12-06T00", "2020-12-07T00"),
 			},
 			false,
 		},
 		{
 			"it should support albums ending at the same time",
 			[]*Album{
-				newAlbum("A-01", "2020-12-01T00", "2020-12-06T00"),
-				newAlbum("A-02", "2020-12-02T00", "2020-12-06T00"),
-				newAlbum("A-03", "2020-12-03T00", "2020-12-06T00"),
+				newAlbum("/A-01", "2020-12-01T00", "2020-12-06T00"),
+				newAlbum("/A-02", "2020-12-02T00", "2020-12-06T00"),
+				newAlbum("/A-03", "2020-12-03T00", "2020-12-06T00"),
 			},
 			[]simplifiedSegment{
-				newSimplifiedSegment("A-01", "2020-12-01T00", "2020-12-02T00"),
-				newSimplifiedSegment("A-02", "2020-12-02T00", "2020-12-03T00"),
-				newSimplifiedSegment("A-03", "2020-12-03T00", "2020-12-06T00"),
+				newSimplifiedSegment("/A-01", "2020-12-01T00", "2020-12-02T00"),
+				newSimplifiedSegment("/A-02", "2020-12-02T00", "2020-12-03T00"),
+				newSimplifiedSegment("/A-03", "2020-12-03T00", "2020-12-06T00"),
 			},
 			false,
 		},
@@ -156,27 +156,27 @@ func TestFindAt_FindAllAt(t *testing.T) {
 		{
 			"it should return album on first second (inclusive)",
 			time.Date(2020, 7, 1, 0, 0, 0, 0, time.UTC),
-			Want{"2020-Q3", []string{"2020-Q3"}},
+			Want{"/2020-Q3", []string{"/2020-Q3"}},
 		},
 		{
 			"it should return albums up to its last second (range's end is exclusive)",
 			time.Date(2020, 9, 30, 23, 59, 59, 999999, time.UTC),
-			Want{"2020-Q3", []string{"2020-Q3"}},
+			Want{"/2020-Q3", []string{"/2020-Q3"}},
 		},
 		{
 			"it should return next album on its first second (inclusive)",
 			time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
-			Want{"2020-Q4", []string{"2020-Q4"}},
+			Want{"/2020-Q4", []string{"/2020-Q4"}},
 		},
 		{
 			"it should return all albums matching the date (album added to timeline are taking the priority each time)",
 			time.Date(2020, 12, 25, 10, 0, 0, 0, time.UTC),
-			Want{"Christmas Day", []string{"2020-Q4", "Christmas Day", "Christmas Holidays"}},
+			Want{"/Christmas_Day", []string{"/2020-Q4", "/Christmas_Day", "/Christmas_Holidays"}},
 		},
 		{
 			"it should return all albums matching the date (2021-Q1 album added to the timeline is not taking the priority immediately)",
 			time.Date(2021, 1, 1, 10, 0, 0, 0, time.UTC),
-			Want{"New Year", []string{"2021-Q1", "Christmas Holidays", "New Year"}},
+			Want{"/New_Year", []string{"/2021-Q1", "/Christmas_Holidays", "/New_Year"}},
 		},
 	}
 
@@ -228,16 +228,16 @@ func TestFindAt_FindBetween(t *testing.T) {
 		{
 			"it should return a segment with dates updated to match the request",
 			Args{"2020-01-01T00", "2020-09-01T00"},
-			[]Want{{"2020-07-01T00", "2020-09-01T00", []string{"2020-Q3"}}},
+			[]Want{{"2020-07-01T00", "2020-09-01T00", []string{"/2020-Q3"}}},
 			[]Want{{start: "2020-01-01T00", end: "2020-07-01T00"}},
 		},
 		{
 			"it should return segments within the request",
 			Args{"2020-12-31T00", "2021-01-02T00"},
 			[]Want{
-				{"2020-12-31T00", "2020-12-31T18", []string{"Christmas Holidays", "2020-Q4"}},
-				{"2020-12-31T18", "2021-01-01T18", []string{"New Year", "Christmas Holidays", "2021-Q1", "2020-Q4"}},
-				{"2021-01-01T18", "2021-01-02T00", []string{"Christmas Holidays", "2021-Q1"}},
+				{"2020-12-31T00", "2020-12-31T18", []string{"/Christmas_Holidays", "/2020-Q4"}},
+				{"2020-12-31T18", "2021-01-01T18", []string{"/New_Year", "/Christmas_Holidays", "/2021-Q1", "/2020-Q4"}},
+				{"2021-01-01T18", "2021-01-02T00", []string{"/Christmas_Holidays", "/2021-Q1"}},
 			},
 			nil,
 		},
@@ -245,8 +245,8 @@ func TestFindAt_FindBetween(t *testing.T) {
 			"it should return segments within the request",
 			Args{"2020-12-18T00", "2020-12-26T00"},
 			[]Want{
-				{"2020-12-18T00", "2020-12-24T00", []string{"Christmas First Week", "Christmas Holidays", "2020-Q4"}},
-				{"2020-12-24T00", "2020-12-26T00", []string{"Christmas Day", "Christmas First Week", "Christmas Holidays", "2020-Q4"}},
+				{"2020-12-18T00", "2020-12-24T00", []string{"/Christmas_First_Week", "/Christmas_Holidays", "/2020-Q4"}},
+				{"2020-12-24T00", "2020-12-26T00", []string{"/Christmas_Day", "/Christmas_First_Week", "/Christmas_Holidays", "/2020-Q4"}},
 			},
 			nil,
 		},
@@ -254,8 +254,8 @@ func TestFindAt_FindBetween(t *testing.T) {
 			"it should notice the gap between mars and may, and the missing dates at the end of the request",
 			Args{"2021-03-23T00", "2021-06-26T00"},
 			[]Want{
-				{"2021-03-23T00", "2021-04-01T00", []string{"2021-Q1"}},
-				{"2021-05-01T00", "2021-06-01T00", []string{"2021-May"}},
+				{"2021-03-23T00", "2021-04-01T00", []string{"/2021-Q1"}},
+				{"2021-05-01T00", "2021-06-01T00", []string{"/2021-May"}},
 			},
 			[]Want{
 				{"2021-04-01T00", "2021-05-01T00", nil},
@@ -307,7 +307,7 @@ func TestTimeline_FindForAlbum(t *testing.T) {
 
 	timeline, err := NewTimeline(AlbumCollection())
 	if a.NoError(err) {
-		segments := timeline.FindForAlbum("Christmas Holidays")
+		segments := timeline.FindForAlbum("/Christmas_Holidays")
 
 		var got []Want
 		for _, seg := range segments {
@@ -324,8 +324,8 @@ func TestTimeline_FindForAlbum(t *testing.T) {
 		}
 
 		a.Equal([]Want{
-			{"2020-12-26T00", "2020-12-31T18", []string{"Christmas Holidays", "2020-Q4"}},
-			{"2021-01-01T18", "2021-01-04T00", []string{"Christmas Holidays", "2021-Q1"}},
+			{"2020-12-26T00", "2020-12-31T18", []string{"/Christmas_Holidays", "/2020-Q4"}},
+			{"2021-01-01T18", "2021-01-04T00", []string{"/Christmas_Holidays", "/2021-Q1"}},
 		}, got)
 	}
 }
@@ -340,12 +340,12 @@ func TestTimeline_AppendAlbum(t *testing.T) {
 			End:        time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "2020-Q4",
+			FolderName: "/2020-Q4",
 			Start:      time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			FolderName: "Christmas Holidays",
+			FolderName: "/Christmas_Holidays",
 			Start:      time.Date(2020, 12, 18, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC),
 		},

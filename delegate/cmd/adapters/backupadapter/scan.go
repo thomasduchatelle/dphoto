@@ -17,7 +17,7 @@ type ScanProgress struct {
 	analysedLine *screen.ProgressLine
 }
 
-func ScanWithCache(volume string) (ui.RecordRepositoryPort, int, error) {
+func ScanWithCache(volume string) (ui.SuggestionRecordRepositoryPort, int, error) {
 	volume, _ = filepath.Abs(volume)
 	previousResult, err := restore(volume)
 	if err != nil {

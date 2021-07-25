@@ -9,7 +9,7 @@ type UserInputPort struct {
 	mock.Mock
 }
 
-// startListening provides a mock function with given fields:
-func (_m *UserInputPort) startListening() {
+// StartListening provides a mock function with given fields:
+func (_m *UserInputPort) StartListening() {
 	_m.Called()
 }

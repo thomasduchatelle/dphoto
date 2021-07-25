@@ -23,8 +23,8 @@ func newInteractiveRender() *interactiveRender {
 	}
 }
 
-func (i *interactiveRender) Render(state *interactiveViewState) error {
-	table, err := i.recordsRenderer.Render(&state.recordsState)
+func (i *interactiveRender) Render(state *InteractiveViewState) error {
+	table, err := i.recordsRenderer.Render(&state.RecordsState)
 	if err != nil {
 		return nil
 	}

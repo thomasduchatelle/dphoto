@@ -37,3 +37,17 @@ func (_m *DetailsReaderAdapter) ReadDetails(reader io.Reader, options backupmode
 
 	return r0, r1
 }
+
+// Supports provides a mock function with given fields: media, mediaType
+func (_m *DetailsReaderAdapter) Supports(media backupmodel.FoundMedia, mediaType backupmodel.MediaType) bool {
+	ret := _m.Called(media, mediaType)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(backupmodel.FoundMedia, backupmodel.MediaType) bool); ok {
+		r0 = rf(media, mediaType)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}

@@ -7,8 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const ukDateLayout = "02 Jan 06 15:04"
-
 var (
 	listArgs = struct {
 		interactive bool
@@ -22,10 +20,10 @@ var albumCmd = &cobra.Command{
 	Long:    `Organise your collection into albums.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if listArgs.interactive {
-			err := ui.NewInteractiveSession(new(uiCatalogAdapter), backupadapter.NewAlbumRepository()).Start()
+			err := ui.NewInteractiveSession(new(uiCatalogAdapter), backupadapter.NewAlbumRepository(), ui.NewNoopRepository()).Start()
 			printer.FatalIfError(err, 1)
 		} else {
-			err := ui.NewSimpleSession(backupadapter.NewAlbumRepository()).Render()
+			err := ui.NewSimpleSession(backupadapter.NewAlbumRepository(), ui.NewNoopRepository()).Render()
 			printer.FatalIfError(err, 1)
 		}
 	},

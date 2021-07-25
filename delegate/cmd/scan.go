@@ -32,10 +32,10 @@ var scan = &cobra.Command{
 		if count == 0 {
 			fmt.Println(aurora.Red(fmt.Sprintf("No media found on path %s .", volume)))
 		} else if scanArgs.nonInteractive {
-			err = ui.NewSimpleSession(recordRepository, backupadapter.NewAlbumRepository()).Render()
+			err = ui.NewSimpleSession(backupadapter.NewAlbumRepository(), recordRepository).Render()
 			printer.FatalIfError(err, 1)
 		} else {
-			err = ui.NewInteractiveSession(new(uiCatalogAdapter), recordRepository, backupadapter.NewAlbumRepository()).Start()
+			err = ui.NewInteractiveSession(new(uiCatalogAdapter), backupadapter.NewAlbumRepository(), recordRepository).Start()
 			printer.FatalIfError(err, 1)
 		}
 
