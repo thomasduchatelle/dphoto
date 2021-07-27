@@ -34,7 +34,7 @@ func Test_analyseMedia(t *testing.T) {
 		GPSLatitude:  0.0001,
 		GPSLongitude: 0.0002,
 	}
-	mockImageDetailsReader.On("ReadDetails", mock.Anything, backupmodel.DetailsReaderOptions{Fast: true}).Once().Return(details, nil)
+	mockImageDetailsReader.On("ReadDetails", mock.Anything, backupmodel.DetailsReaderOptions{Fast: false}).Once().Return(details, nil)
 
 	mockImageDetailsReader.On("Supports", mock.Anything, backupmodel.MediaTypeImage).Once().Return(true)
 	mockImageDetailsReader.On("Supports", mock.Anything, backupmodel.MediaTypeVideo).Once().Return(false)

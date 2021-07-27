@@ -61,33 +61,6 @@ func TestMp4DetailsExtraction_android8(t *testing.T) {
 	}
 }
 
-func TestMp4DetailsExtraction_mov(t *testing.T) {
-	a := assert.New(t)
-
-	exifAdapter := &Parser{
-		Debug: true,
-	}
-	reader, err := os.Open("/mnt/local/Photos/2019-08_Crete/P1080125.MOV")
-
-	if !a.NoError(err) {
-		panic(err.Error())
-	}
-
-	details, err := exifAdapter.ReadDetails(reader, backupmodel.DetailsReaderOptions{})
-	if a.NoError(err) {
-		fmt.Printf("Parsed date is %s\n", details.DateTime.Format("2006-01-02 15:04:05"))
-		a.Equal(&backupmodel.MediaDetails{
-			DateTime:      time.Date(2018, 3, 6, 15, 22, 25, 0, time.UTC),
-			Duration:      13071,
-			Height:        1080,
-			VideoEncoding: "MP4",
-			Width:         1920,
-			GPSLatitude:   0.2952,
-			GPSLongitude:  42.8127,
-		}, details)
-	}
-}
-
 func TestParseISO6709(t *testing.T) {
 	a := assert.New(t)
 

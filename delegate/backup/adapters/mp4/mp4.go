@@ -33,7 +33,7 @@ func (p *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReader
 	decoder := NewAtomDecoder(reader)
 	for {
 		atom, payload, err := decoder.Next()
-		if err == io.EOF || options.Fast && !details.DateTime.IsZero() || !details.DateTime.IsZero() && details.VideoEncoding != "" && details.Width > 0 && details.Height > 0 {
+		if err == io.EOF || options.Fast && !details.DateTime.IsZero() || !details.DateTime.IsZero() && details.VideoEncoding != "" && details.Width > 0 && details.Height > 0 && details.GPSLongitude != 0 && details.GPSLatitude != 0 {
 			// end of file (EOF is expected to notify the end of the file) ; or all details already extracted
 			break
 		} else if err != nil {

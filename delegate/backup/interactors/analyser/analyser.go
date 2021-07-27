@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"hash"
 	"io"
+	"io/ioutil"
 	"path"
 	"reflect"
 	"strings"
@@ -36,12 +38,18 @@ var SupportedExtensions = map[string]backupmodel.MediaType{
 }
 
 func AnalyseMedia(found backupmodel.FoundMedia) (*backupmodel.AnalysedMedia, error) {
-	mediaType, details, err := ExtractTypeAndDetails(found)
+
+	reader, hasher, err := readerSpyingForHash(found)
+
+	mediaType, details, err := extractDetails(found, backupmodel.DetailsReaderOptions{}, func() (io.Reader, error) {
+		return reader, nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	fileHash, err := computeMediaHash(found) // todo - do it while analysing files
+	fileHash, err := hasher.computeHash()
+
 	return &backupmodel.AnalysedMedia{
 		FoundMedia: found,
 		Type:       mediaType,
@@ -54,6 +62,12 @@ func AnalyseMedia(found backupmodel.FoundMedia) (*backupmodel.AnalysedMedia, err
 }
 
 func ExtractTypeAndDetails(found backupmodel.FoundMedia) (backupmodel.MediaType, *backupmodel.MediaDetails, error) {
+	return extractDetails(found, backupmodel.DetailsReaderOptions{Fast: true}, func() (io.Reader, error) {
+		return found.ReadMedia()
+	})
+}
+
+func extractDetails(found backupmodel.FoundMedia, options backupmodel.DetailsReaderOptions, readMedia func() (io.Reader, error)) (backupmodel.MediaType, *backupmodel.MediaDetails, error) {
 	mediaType := getMediaType(found)
 
 	details := &backupmodel.MediaDetails{}
@@ -62,12 +76,12 @@ func ExtractTypeAndDetails(found backupmodel.FoundMedia) (backupmodel.MediaType,
 	for _, detailsReader := range interactors.DetailsReaders {
 		if detailsReader.Supports(found, mediaType) {
 			matchingReaders = append(matchingReaders, getType(detailsReader))
-			content, err := found.ReadMedia()
+			content, err := readMedia()
 			if err != nil {
 				return mediaType, nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
 			}
 
-			details, err = detailsReader.ReadDetails(content, backupmodel.DetailsReaderOptions{Fast: true})
+			details, err = detailsReader.ReadDetails(content, options)
 			if err != nil {
 				return mediaType, nil, errors.Wrapf(err, "failed to analyse %s", found)
 			}
@@ -82,19 +96,34 @@ func ExtractTypeAndDetails(found backupmodel.FoundMedia) (backupmodel.MediaType,
 	return mediaType, details, nil
 }
 
-func computeMediaHash(found backupmodel.FoundMedia) (string, error) {
+type hashSpy struct {
+	reader     io.Reader
+	shaWriter  hash.Hash
+	cachedHash string
+}
+
+func readerSpyingForHash(found backupmodel.FoundMedia) (io.Reader, *hashSpy, error) {
+	reader, err := found.ReadMedia()
 	if mediaWithHash, ok := found.(backupmodel.FoundMediaWithHash); ok {
-		return mediaWithHash.Sha256Hash(), nil
+		return reader, &hashSpy{cachedHash: mediaWithHash.Sha256Hash()}, err
 	}
 
 	shaWriter := sha256.New()
-	reader, err := found.ReadMedia()
-	if err != nil {
-		return "", err
+	teeReader := io.TeeReader(reader, shaWriter)
+
+	return teeReader, &hashSpy{
+		reader:    teeReader,
+		shaWriter: shaWriter,
+	}, err
+}
+
+func (r *hashSpy) computeHash() (string, error) {
+	if r.cachedHash != "" {
+		return r.cachedHash, nil
 	}
 
-	_, err = io.Copy(shaWriter, reader)
-	return hex.EncodeToString(shaWriter.Sum(nil)), err
+	_, err := io.Copy(ioutil.Discard, r.reader)
+	return hex.EncodeToString(r.shaWriter.Sum(nil)), err
 }
 
 func getMediaType(media backupmodel.FoundMedia) backupmodel.MediaType {
