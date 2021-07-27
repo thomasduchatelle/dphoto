@@ -2,6 +2,7 @@
 // References:
 // - https://xhelmboyx.tripod.com/formats/mp4-layout.txt
 // - https://www.programmersought.com/article/92132468003/
+// - https://github.com/exiftool/exiftool/blob/master/lib/Image/ExifTool/QuickTime.pm
 package mp4
 
 import (
@@ -11,6 +12,8 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -21,7 +24,7 @@ type Parser struct {
 
 func (p *Parser) Supports(media backupmodel.FoundMedia, mediaType backupmodel.MediaType) bool {
 	ext := strings.ToUpper(path.Ext(media.Filename()))
-	return ext == "MP4"
+	return ext == ".MP4" || ext == ".MOV"
 }
 
 func (p *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReaderOptions) (*backupmodel.MediaDetails, error) {
@@ -37,6 +40,10 @@ func (p *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReader
 			return nil, err
 		}
 
+		if p.Debug {
+			fmt.Printf("'%s' atom [%d]:\n", atom.Path, atom.Size)
+		}
+
 		switch atom.Path {
 		case "ftyp":
 			buffer, err := payload.Next(4)
@@ -44,7 +51,7 @@ func (p *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReader
 				return nil, err
 			}
 
-			details.VideoEncoding = string(buffer)
+			details.VideoEncoding = strings.Trim(string(buffer), " ")
 			if details.VideoEncoding == "mp42" {
 				details.VideoEncoding = "MP4"
 			}
@@ -63,12 +70,16 @@ func (p *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReader
 			}
 			p.parseTKHD(details, buffer)
 
+		case "moov.udta":
+			buffer, err := payload.Next(1024)
+			if err != nil {
+				return nil, err
+			}
+			p.parseUDTA(details, buffer)
+
 		default:
 			if p.Debug {
-				if atom.IsParent {
-					fmt.Printf("Starting a new '%s'\n", atom.Path)
-				} else {
-					fmt.Printf("'%s' atom:\n", atom.Path)
+				if !atom.IsParent {
 					if payload.HasNext() {
 						buffer, err := payload.Next(1024)
 						if err != nil {
@@ -125,144 +136,59 @@ func (p *Parser) parseTKHD(details *backupmodel.MediaDetails, buffer []byte) {
 	details.Height = int(binary.BigEndian.Uint16(buffer[4:6]))
 }
 
-//func (e *Parser) ReadDetails2(reader io.Reader, options backupmodel.DetailsReaderOptions) (*backupmodel.MediaDetails, error) {
-//	//buf := make([]byte, 2048)
-//	//_, _ = io.ReadFull(reader, buf)
-//	//fmt.Println(hex.Dump(buf))
-//
-//	firstChunk, err := readChunk(reader)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if firstChunk.Code != "ftyp" {
-//		return nil, errors.Errorf("not MP4 format, first chunk type expected to be 0x66747970 but is %x", firstChunk.Code)
-//	}
-//
-//	fileMetadata, _, err := firstChunk.Payload(reader)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	details := new(backupmodel.MediaDetails)
-//	details.VideoEncoding = string(fileMetadata[:4])
-//	if details.VideoEncoding == "mp42" {
-//		details.VideoEncoding = "MP4"
-//	}
-//
-//	moov, err := readChunk(reader)
-//	if err != nil {
-//		return nil, err
-//	}
-//	for moov.Code != "moov" {
-//		// search for 'moov' atom, skip any previous one
-//		var more bool
-//		for _, more, err = moov.Payload(reader); err == nil && more; _, more, err = moov.Payload(reader) {
-//			// read whole payload...
-//		}
-//		if err != nil {
-//			return nil, err
-//		}
-//	}
-//
-//	moreChildren := moov.Size > 8
-//	for moreChildren {
-//		var child *Atom
-//		child, moreChildren, err = moov.ReadChild(reader)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		switch child.Code {
-//		case "mvhd":
-//			payload, _, err := child.Payload(reader)
-//			if err != nil {
-//				return nil, err
-//			}
-//			e.parseMVHD(payload, details)
-//
-//			if options.Fast {
-//				// In Fast mode, only datetime matter, return as soon it has been retrieved
-//				moreChildren = false
-//			}
-//
-//		case "trak":
-//			err = e.parseTRACK(child, reader, details)
-//			if err != nil {
-//				return nil, err
-//			}
-//
-//		default:
-//			payload, more, err := child.Payload(reader)
-//			if err != nil {
-//				return nil, err
-//			}
-//
-//			if e.Debug {
-//				fmt.Printf("\nChunk %s:\n%s", child.Code, hex.Dump(payload))
-//			}
-//
-//			if more {
-//				// if chunk is too big, there is certainly no more metadata to be found
-//				fmt.Println("...")
-//				moreChildren = false
-//			}
-//
-//		}
-//	}
-//
-//	return details, nil
-//}
+func (p *Parser) parseUDTA(details *backupmodel.MediaDetails, payload []byte) {
+	fmt.Println(hex.Dump(payload))
+	if len(payload) >= 30 && binary.BigEndian.Uint32(payload[4:8]) == binary.BigEndian.Uint32([]byte("\xa9xyz")) {
+		gps := string(payload[12:30])
+		details.GPSLongitude, details.GPSLatitude = parseISO6709(gps)
+	}
+}
 
-//func (e *Parser) parseTRACK(trak *Atom, reader io.Reader, details *backupmodel.MediaDetails) (err error) {
-//	fmt.Println("Parsing track...")
-//	hasNext := trak.Size > 8
-//	for hasNext {
-//		var child *Atom
-//		child, hasNext, err = trak.ReadChild(reader)
-//		if err != nil {
-//			return err
-//		}
-//		switch child.Code {
-//		case "mdia":
-//
-//		default:
-//			payload, _, err := child.Payload(reader)
-//			if err != nil {
-//				return err
-//			}
-//
-//			fmt.Printf("\nChunk %s:\n%s", child.Code, hex.Dump(payload))
-//		}
-//
-//	}
-//
-//	return nil
-//}
+// parseISO6709 parse a ISO-6709 GPS coordinates
+func parseISO6709(gps string) (float64, float64) {
+	degMatcher := regexp.MustCompile("(?P<LON_DEG>[+-]\\d{1,2}(\\.\\d*)?)(?P<LAT_DEG>[+-]\\d{1,3}(\\.\\d*)?)")
+	minutesMatcher := regexp.MustCompile("(?P<LON_DEG>[+-]\\d{1,2})(?P<LON_MIN>\\d{2}(\\.\\d*)?)(?P<LAT_DEG>[+-]\\d{1,3})(?P<LAT_MIN>\\d{2}(\\.\\d*)?)")
+	secMatcher := regexp.MustCompile("(?P<LON_DEG>[+-]\\d{1,2})(?P<LON_MIN>\\d{2})(?P<LON_SEC>\\d{2}(\\.\\d*)?)(?P<LAT_DEG>[+-]\\d{1,3})(?P<LAT_MIN>\\d{2})(?P<LAT_SEC>\\d{2}(\\.\\d*)?)")
 
-//func (c *Atom) Payload(reader io.Reader) ([]byte, bool, error) {
-//	bufferSize := c.Size - c.read
-//	if bufferSize > 1024 {
-//		bufferSize = 1024
-//	}
-//
-//	buffer := make([]byte, bufferSize)
-//	_, err := io.ReadFull(reader, buffer)
-//
-//	c.read += bufferSize
-//	return buffer, c.read < c.Size, err
-//}
-//
-//func (c *Atom) ReadChild(reader io.Reader) (*Atom, bool, error) {
-//	if c.read >= c.Size {
-//		return nil, false, errors.Errorf("There is no more child in atom %+v", c)
-//	}
-//
-//	child, err := readChunk(reader)
-//	if err != nil {
-//		return nil, false, err
-//	}
-//
-//	c.read += child.Size
-//	return child, c.read < c.Size, nil
-//}
+	submatch := degMatcher.FindStringSubmatch(gps)
+	expNames := degMatcher.SubexpNames()
+	if len(submatch) == 0 {
+		submatch = minutesMatcher.FindStringSubmatch(gps)
+		expNames = minutesMatcher.SubexpNames()
+	}
+	if len(submatch) == 0 {
+		submatch = secMatcher.FindStringSubmatch(gps)
+		expNames = secMatcher.SubexpNames()
+	}
+	if len(submatch) >= len(expNames) {
+		var lonDeg, lonMin, lonSec float64
+		var latDeg, latMin, latSec float64
+
+		for i, key := range expNames {
+			var err error
+
+			switch key {
+			case "LON_DEG":
+				lonDeg, err = strconv.ParseFloat(submatch[i], 64)
+			case "LON_MIN":
+				lonMin, err = strconv.ParseFloat(submatch[i], 64)
+			case "LON_SEC":
+				lonSec, err = strconv.ParseFloat(submatch[i], 64)
+			case "LAT_DEG":
+				latDeg, err = strconv.ParseFloat(submatch[i], 64)
+			case "LAT_MIN":
+				latMin, err = strconv.ParseFloat(submatch[i], 64)
+			case "LAT_SEC":
+				latSec, err = strconv.ParseFloat(submatch[i], 64)
+			}
+
+			if err != nil {
+				return 0, 0
+			}
+		}
+
+		return lonDeg + lonMin/60 + lonSec/3600, latDeg + latMin/60 + latSec/3600
+	}
+
+	return 0, 0
+}

@@ -68,10 +68,16 @@ func (p *Parser) readOrientation(x *exif.Exif) backupmodel.ImageOrientation {
 
 func (p *Parser) readDateTime(x *exif.Exif, defaultDate time.Time) time.Time {
 	datetime := p.getStringOrIgnore(x, exif.DateTime)
+	if datetime == "" {
+		datetime = p.getStringOrIgnore(x, exif.DateTimeOriginal)
+	}
+
 	if datetime != "" {
 		exifTime, err := time.Parse("2006:01:02 15:04:05", datetime)
 		if err == nil {
 			return exifTime.UTC()
+		} else {
+			log.WithField("MediaAnalyser", "Exif").Warnf("Unsupported dfate format: %s", datetime)
 		}
 	}
 

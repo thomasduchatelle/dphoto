@@ -100,12 +100,26 @@ func (d *AtomDecoder) readChunk(reader io.Reader) (*Atom, error) {
 	}
 	atomPath[len(d.stack)] = code
 
+	size := uint64(binary.BigEndian.Uint32(header[:4]))
+	read := uint64(8)
+
+	if size == 1 {
+		sizeBuffer := make([]byte, 8)
+		_, err = io.ReadFull(reader, sizeBuffer)
+		if err != nil {
+			return nil, err
+		}
+
+		size = binary.BigEndian.Uint64(sizeBuffer)
+		read = uint64(16)
+	}
+
 	return &Atom{
 		Path:     strings.Join(atomPath, "."),
 		Code:     code,
 		IsParent: isParent,
-		read:     uint64(8),
-		Size:     uint64(binary.BigEndian.Uint32(header[:4])),
+		read:     read,
+		Size:     size,
 	}, err
 }
 

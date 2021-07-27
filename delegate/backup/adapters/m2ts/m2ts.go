@@ -34,7 +34,7 @@ type Parser struct {
 
 func (p *Parser) Supports(media backupmodel.FoundMedia, mediaType backupmodel.MediaType) bool {
 	ext := strings.ToUpper(path.Ext(media.Filename()))
-	return ext == "MTS" || ext == "M2TS"
+	return ext == ".MTS" || ext == ".M2TS"
 }
 
 // ReadDetails unmux M2TS (MTS) file, with h264 support, to collect the Make, Model, and DateTime of the video flux.

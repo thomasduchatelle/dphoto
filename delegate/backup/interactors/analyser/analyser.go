@@ -5,9 +5,12 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"encoding/hex"
+	"fmt"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"path"
+	"reflect"
 	"strings"
 )
 
@@ -55,8 +58,10 @@ func ExtractTypeAndDetails(found backupmodel.FoundMedia) (backupmodel.MediaType,
 
 	details := &backupmodel.MediaDetails{}
 
+	var matchingReaders []string
 	for _, detailsReader := range interactors.DetailsReaders {
 		if detailsReader.Supports(found, mediaType) {
+			matchingReaders = append(matchingReaders, getType(detailsReader))
 			content, err := found.ReadMedia()
 			if err != nil {
 				return mediaType, nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
@@ -70,6 +75,7 @@ func ExtractTypeAndDetails(found backupmodel.FoundMedia) (backupmodel.MediaType,
 	}
 
 	if details.DateTime.IsZero() {
+		log.WithField("Media", found).Warnf("Modification date not found with readers: %s", strings.Join(matchingReaders, ", "))
 		details.DateTime = found.LastModificationDate()
 	}
 
@@ -98,4 +104,13 @@ func getMediaType(media backupmodel.FoundMedia) backupmodel.MediaType {
 	}
 
 	return backupmodel.MediaTypeOther
+}
+
+func getType(myvar interface{}) (res string) {
+	t := reflect.TypeOf(myvar)
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+		res += "*"
+	}
+	return fmt.Sprintf("%s%s/%s", res, t.PkgPath(), t.Name())
 }
