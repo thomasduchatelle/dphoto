@@ -127,7 +127,7 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 			Type:      backupmodel.ProgressEventUploaded,
 			Count:     1,
 			Size:      media.analysedMedia.FoundMedia.SimpleSignature().Size,
-			Album:     media.createRequest.Location.FolderName,
+			Album:     media.folderName,
 			MediaType: media.analysedMedia.Type,
 		}
 	}

@@ -102,7 +102,7 @@ func (s MediaSignature) String() string {
 	return fmt.Sprintf("Signature[%s - %d]", s.SignatureSha256, s.SignatureSize)
 }
 
-// AlbumStat has the counts of media in the album ; it's currently limited to total number because of the database.
+// AlbumStat has the counts of media on the album ; it's currently limited to total number because of the database.
 type AlbumStat struct {
 	Album      Album
 	totalCount int

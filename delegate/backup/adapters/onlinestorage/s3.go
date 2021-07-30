@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 	"path"
 	"strings"
@@ -18,13 +19,16 @@ type S3OnlineStorage struct {
 	bucketName         string
 	lock               sync.Mutex
 	filenamesPerFolder map[string]map[string]interface{}
+	s3Uploader         *s3manager.Uploader
 }
 
 func NewS3OnlineStorage(bucketName string, sess *session.Session) (*S3OnlineStorage, error) {
 	s3client := s3.New(sess)
+	uploader := s3manager.NewUploader(sess)
 
 	return &S3OnlineStorage{
 		s3:                 s3client,
+		s3Uploader:         uploader,
 		bucketName:         bucketName,
 		lock:               sync.Mutex{},
 		filenamesPerFolder: make(map[string]map[string]interface{}),
@@ -52,11 +56,10 @@ func (s *S3OnlineStorage) UploadFile(owner string, media backupmodel.ReadableMed
 		return "", err
 	}
 
-	_, err = s.s3.PutObject(&s3.PutObjectInput{
-		Body:          aws.ReadSeekCloser(mediaReader),
-		Bucket:        &s.bucketName,
-		ContentLength: aws.Int64(int64(media.SimpleSignature().Size)),
-		Key:           &key,
+	_, err = s.s3Uploader.Upload(&s3manager.UploadInput{
+		Body:   aws.ReadSeekCloser(mediaReader),
+		Bucket: &s.bucketName,
+		Key:    &key,
 	})
 	if err != nil {
 		return "", errors.Wrapf(err, "uploading %s failed", media)

@@ -137,7 +137,6 @@ func (p *Parser) parseTKHD(details *backupmodel.MediaDetails, buffer []byte) {
 }
 
 func (p *Parser) parseUDTA(details *backupmodel.MediaDetails, payload []byte) {
-	fmt.Println(hex.Dump(payload))
 	if len(payload) >= 30 && binary.BigEndian.Uint32(payload[4:8]) == binary.BigEndian.Uint32([]byte("\xa9xyz")) {
 		gps := string(payload[12:30])
 		details.GPSLongitude, details.GPSLatitude = parseISO6709(gps)
