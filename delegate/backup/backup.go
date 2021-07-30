@@ -20,7 +20,7 @@ import (
 
 // StartBackupRunner starts backup of given backupmodel.VolumeToBackup and returns when finished. Listeners will received
 // progress updates.
-func StartBackupRunner(owner string, volume backupmodel.VolumeToBackup, listeners ...interface{}) (backupmodel.BackupReport, error) {
+func StartBackupRunner(owner string, volume backupmodel.VolumeToBackup, options Options) (backupmodel.BackupReport, error) {
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.UniqueId, "_"), "_"), time.Now().Format("20060102_150405"))
 	mdc := log.WithFields(log.Fields{
@@ -41,7 +41,11 @@ func StartBackupRunner(owner string, volume backupmodel.VolumeToBackup, listener
 		return nil, err
 	}
 
-	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), interactors.OnlineStoragePort, owner)
+	analyseFilter := backupmodel.DefaultPostAnalyseFilter
+	if options.PostAnalyseFilter != nil {
+		analyseFilter = options.PostAnalyseFilter
+	}
+	uploader, err := uploaders.NewUploader(new(uploaders.CatalogProxy), interactors.OnlineStoragePort, owner, analyseFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +73,7 @@ func StartBackupRunner(owner string, volume backupmodel.VolumeToBackup, listener
 		UploadBatchSize:      uploadBatchSize,
 	}
 	doneChannel, progressChannel := runner.Start(r)
-	backupReport := tracker.NewTracker(progressChannel, listeners)
+	backupReport := tracker.NewTracker(progressChannel, []interface{}{options.Listener})
 
 	report := <-doneChannel
 	backupReport.WaitToComplete()
@@ -84,4 +88,9 @@ func StartBackupRunner(owner string, volume backupmodel.VolumeToBackup, listener
 
 	mdc.Infoln("Backup completed.")
 	return backupReport, nil
+}
+
+type Options struct {
+	PostAnalyseFilter backupmodel.PostAnalyseFilter
+	Listener          interface{}
 }

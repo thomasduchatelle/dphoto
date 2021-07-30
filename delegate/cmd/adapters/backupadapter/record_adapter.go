@@ -6,22 +6,23 @@ import (
 	"duchatelle.io/dphoto/dphoto/cmd/ui"
 )
 
-func NewSuggestionRepository(suggestions []*backupmodel.ScannedFolder) ui.SuggestionRecordRepositoryPort {
-	records := make([]*ui.SuggestionRecord, len(suggestions))
+func NewSuggestionRepository(folders []*backupmodel.ScannedFolder) ui.SuggestionRecordRepositoryPort {
+	records := make([]*ui.SuggestionRecord, len(folders))
 
-	for i, suggestion := range suggestions {
+	for i, folder := range folders {
 
 		simplifiedDistribution := make(map[string]uint)
-		for day, dayCounter := range suggestion.Distribution {
+		for day, dayCounter := range folder.Distribution {
 			simplifiedDistribution[day] = dayCounter.Count
 		}
 
 		records[i] = &ui.SuggestionRecord{
-			FolderName:   suggestion.FolderName,
-			Name:         suggestion.Name,
-			Start:        suggestion.Start,
-			End:          suggestion.End,
+			FolderName:   "." + folder.RelativePath,
+			Name:         folder.Name,
+			Start:        folder.Start,
+			End:          folder.End,
 			Distribution: simplifiedDistribution,
+			Original:     folder,
 		}
 	}
 

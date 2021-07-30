@@ -28,14 +28,16 @@ func createFlattenTree(existing []*ExistingRecord, suggestions []*SuggestionReco
 
 			if count > 0 {
 				node.children = append(node.children, &Record{
-					Indent:     1,
-					Suggestion: true,
-					FolderName: suggestion.FolderName,
-					Name:       suggestion.Name,
-					Start:      suggestion.Start,
-					End:        suggestion.End,
-					Count:      count,
-					TotalCount: totalCount,
+					Indent:               1,
+					Suggestion:           true,
+					FolderName:           suggestion.FolderName,
+					Name:                 suggestion.Name,
+					Start:                suggestion.Start,
+					End:                  suggestion.End,
+					Count:                count,
+					TotalCount:           totalCount,
+					ParentExistingRecord: node.ExistingRecord,
+					SuggestionRecord:     suggestion,
 				})
 			}
 		}
@@ -48,14 +50,15 @@ func createFlattenTree(existing []*ExistingRecord, suggestions []*SuggestionReco
 		if left > 0 {
 			nodes = append(nodes, &recordNode{
 				record: &Record{
-					Indent:     0,
-					Suggestion: true,
-					FolderName: suggestion.FolderName,
-					Name:       suggestion.Name,
-					Start:      suggestion.Start,
-					End:        suggestion.End,
-					Count:      left,
-					TotalCount: totalCount,
+					Indent:           0,
+					Suggestion:       true,
+					FolderName:       suggestion.FolderName,
+					Name:             suggestion.Name,
+					Start:            suggestion.Start,
+					End:              suggestion.End,
+					Count:            left,
+					TotalCount:       totalCount,
+					SuggestionRecord: suggestion,
 				},
 			})
 		}
@@ -99,6 +102,7 @@ func buildRecordTree(existing []*ExistingRecord) []*recordNode {
 			}
 		}
 		nodes[idx] = &recordNode{
+			ExistingRecord: alb,
 			record: &Record{
 				Indent:     0,
 				Suggestion: false,

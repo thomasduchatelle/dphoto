@@ -58,3 +58,9 @@ func (i *interactiveRender) ReadAnswer() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	return reader.ReadString('\n')
 }
+
+func (i *interactiveRender) TakeOverScreen() {
+	i.screen.Clear()
+	goterm.MoveCursor(1, 1)
+	goterm.Flush()
+}

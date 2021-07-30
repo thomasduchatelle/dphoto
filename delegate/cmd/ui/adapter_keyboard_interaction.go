@@ -59,6 +59,10 @@ func (a *keyboardInteractionAdaptor) StartListening() {
 			case 'e':
 				a.session.EditSelectedAlbumName()
 				a.session.Refresh()
+
+			case 'b':
+				a.session.BackupSelected()
+				a.session.Refresh()
 			}
 
 		}

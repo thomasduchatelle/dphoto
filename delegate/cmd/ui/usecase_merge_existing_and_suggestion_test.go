@@ -9,9 +9,140 @@ import (
 func Test_createFlattenTree(t *testing.T) {
 	a := assert.New(t)
 
+	singleSuggestion := []*SuggestionRecord{
+		{
+			FolderName: "suggestion-1",
+			Name:       "",
+			Start:      parseDate("2021-07-20"),
+			End:        parseDate("2021-07-24"),
+			Distribution: map[string]uint{
+				"2021-07-20": uint(4),
+				"2021-07-21": uint(3),
+				"2021-07-22": uint(12),
+			},
+		},
+	}
+
+	existingRecordsToMere := []*ExistingRecord{
+		{
+			FolderName: "fev-21",
+			Name:       "",
+			Start:      parseDate("2021-02-01"),
+			End:        parseDate("2021-03-01"),
+			Count:      2,
+			ActivePeriods: []Period{
+				{Start: parseDate("2021-02-01"), End: parseDate("2021-03-01")},
+			},
+		},
+		{
+			FolderName: "q1-21",
+			Name:       "",
+			Start:      parseDate("2021-01-01"),
+			End:        parseDate("2021-04-01"),
+			Count:      6,
+			ActivePeriods: []Period{
+				{Start: parseDate("2021-01-01"), End: parseDate("2021-02-01")},
+				{Start: parseDate("2021-03-01"), End: parseDate("2021-04-01")},
+			},
+		},
+	}
+	suggestionRecordsToMerge := []*SuggestionRecord{
+		{
+			FolderName: "ski 21",
+			Name:       "",
+			Start:      parseDate("2021-02-12"),
+			End:        parseDate("2021-02-19"),
+			Distribution: map[string]uint{
+				"2021-02-12": uint(4),
+				"2021-02-17": uint(3),
+			},
+		},
+		{
+			FolderName: "school q1",
+			Name:       "",
+			Start:      parseDate("2021-01-04"),
+			End:        parseDate("2021-04-12"),
+			Distribution: map[string]uint{
+				"2021-01-04": uint(1),
+				"2021-02-17": uint(10),
+				"2021-03-05": uint(100),
+				"2021-04-10": uint(1000),
+			},
+		},
+	}
+
 	type args struct {
 		existing    []*ExistingRecord
 		suggestions []*SuggestionRecord
+	}
+	wantMergeRecords := []*Record{
+		{
+			Indent:     0,
+			Suggestion: false,
+			FolderName: "q1-21",
+			Name:       "",
+			Start:      parseDate("2021-01-01"),
+			End:        parseDate("2021-04-01"),
+			Count:      6,
+			TotalCount: 6,
+		},
+		{
+			Indent:               1,
+			Suggestion:           true,
+			FolderName:           "school q1",
+			Name:                 "",
+			Start:                parseDate("2021-01-04"),
+			End:                  parseDate("2021-04-12"),
+			Count:                101,
+			TotalCount:           1111,
+			ParentExistingRecord: existingRecordsToMere[1],
+			SuggestionRecord:     suggestionRecordsToMerge[1],
+		},
+		{
+			Indent:           0,
+			Suggestion:       true,
+			FolderName:       "school q1",
+			Name:             "",
+			Start:            parseDate("2021-01-04"),
+			End:              parseDate("2021-04-12"),
+			Count:            1000,
+			TotalCount:       1111,
+			SuggestionRecord: suggestionRecordsToMerge[1],
+		},
+		{
+			Indent:     0,
+			Suggestion: false,
+			FolderName: "fev-21",
+			Name:       "",
+			Start:      parseDate("2021-02-01"),
+			End:        parseDate("2021-03-01"),
+			Count:      2,
+			TotalCount: 2,
+		},
+		{
+			Indent:               1,
+			Suggestion:           true,
+			FolderName:           "school q1",
+			Name:                 "",
+			Start:                parseDate("2021-01-04"),
+			End:                  parseDate("2021-04-12"),
+			Count:                10,
+			TotalCount:           1111,
+			ParentExistingRecord: existingRecordsToMere[0],
+			SuggestionRecord:     suggestionRecordsToMerge[1],
+		},
+		{
+			Indent:               1,
+			Suggestion:           true,
+			FolderName:           "ski 21",
+			Name:                 "",
+			Start:                parseDate("2021-02-12"),
+			End:                  parseDate("2021-02-19"),
+			Count:                7,
+			TotalCount:           7,
+			ParentExistingRecord: existingRecordsToMere[0],
+			SuggestionRecord:     suggestionRecordsToMerge[0],
+		},
 	}
 	tests := []struct {
 		name string
@@ -47,144 +178,27 @@ func Test_createFlattenTree(t *testing.T) {
 		{"it should give a list with only suggestions",
 			args{
 				nil,
-				[]*SuggestionRecord{
-					{
-						FolderName: "suggestion-1",
-						Name:       "",
-						Start:      parseDate("2021-07-20"),
-						End:        parseDate("2021-07-24"),
-						Distribution: map[string]uint{
-							"2021-07-20": uint(4),
-							"2021-07-21": uint(3),
-							"2021-07-22": uint(12),
-						},
-					},
-				},
+				singleSuggestion,
 			},
 			[]*Record{
 				{
-					Indent:     0,
-					Suggestion: true,
-					FolderName: "suggestion-1",
-					Name:       "",
-					Start:      parseDate("2021-07-20"),
-					End:        parseDate("2021-07-24"),
-					Count:      19,
-					TotalCount: 19,
+					Indent:           0,
+					Suggestion:       true,
+					FolderName:       "suggestion-1",
+					Name:             "",
+					Start:            parseDate("2021-07-20"),
+					End:              parseDate("2021-07-24"),
+					Count:            19,
+					TotalCount:       19,
+					SuggestionRecord: singleSuggestion[0],
 				},
 			}},
-		{"it should give a list with only suggestions",
+		{"it should merge suggestions with the existing records",
 			args{
-				[]*ExistingRecord{
-					{
-						FolderName: "fev-21",
-						Name:       "",
-						Start:      parseDate("2021-02-01"),
-						End:        parseDate("2021-03-01"),
-						Count:      2,
-						ActivePeriods: []Period{
-							{Start: parseDate("2021-02-01"), End: parseDate("2021-03-01")},
-						},
-					},
-					{
-						FolderName: "q1-21",
-						Name:       "",
-						Start:      parseDate("2021-01-01"),
-						End:        parseDate("2021-04-01"),
-						Count:      6,
-						ActivePeriods: []Period{
-							{Start: parseDate("2021-01-01"), End: parseDate("2021-02-01")},
-							{Start: parseDate("2021-03-01"), End: parseDate("2021-04-01")},
-						},
-					},
-				},
-				[]*SuggestionRecord{
-					{
-						FolderName: "ski 21",
-						Name:       "",
-						Start:      parseDate("2021-02-12"),
-						End:        parseDate("2021-02-19"),
-						Distribution: map[string]uint{
-							"2021-02-12": uint(4),
-							"2021-02-17": uint(3),
-						},
-					},
-					{
-						FolderName: "school q1",
-						Name:       "",
-						Start:      parseDate("2021-01-04"),
-						End:        parseDate("2021-04-12"),
-						Distribution: map[string]uint{
-							"2021-01-04": uint(1),
-							"2021-02-17": uint(10),
-							"2021-03-05": uint(100),
-							"2021-04-10": uint(1000),
-						},
-					},
-				},
+				existingRecordsToMere,
+				suggestionRecordsToMerge,
 			},
-			[]*Record{
-				{
-					Indent:     0,
-					Suggestion: false,
-					FolderName: "q1-21",
-					Name:       "",
-					Start:      parseDate("2021-01-01"),
-					End:        parseDate("2021-04-01"),
-					Count:      6,
-					TotalCount: 6,
-				},
-				{
-					Indent:     1,
-					Suggestion: true,
-					FolderName: "school q1",
-					Name:       "",
-					Start:      parseDate("2021-01-04"),
-					End:        parseDate("2021-04-12"),
-					Count:      101,
-					TotalCount: 1111,
-				},
-				{
-					Indent:     0,
-					Suggestion: true,
-					FolderName: "school q1",
-					Name:       "",
-					Start:      parseDate("2021-01-04"),
-					End:        parseDate("2021-04-12"),
-					Count:      1000,
-					TotalCount: 1111,
-				},
-				{
-					Indent:     0,
-					Suggestion: false,
-					FolderName: "fev-21",
-					Name:       "",
-					Start:      parseDate("2021-02-01"),
-					End:        parseDate("2021-03-01"),
-					Count:      2,
-					TotalCount: 2,
-				},
-				{
-					Indent:     1,
-					Suggestion: true,
-					FolderName: "school q1",
-					Name:       "",
-					Start:      parseDate("2021-01-04"),
-					End:        parseDate("2021-04-12"),
-					Count:      10,
-					TotalCount: 1111,
-				},
-				{
-					Indent:     1,
-					Suggestion: true,
-					FolderName: "ski 21",
-					Name:       "",
-					Start:      parseDate("2021-02-12"),
-					End:        parseDate("2021-02-19"),
-					Count:      7,
-					TotalCount: 7,
-				},
-			}},
+			wantMergeRecords},
 	}
 	for _, tt := range tests {
 		got := createFlattenTree(tt.args.existing, tt.args.suggestions)

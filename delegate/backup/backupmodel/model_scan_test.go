@@ -26,7 +26,7 @@ func TestFoundAlbum_pushBoundaries(t *testing.T) {
 		{"it should push boundaries in start directions", []found{{mustParse("2021-06-02"), 1}, {mustParse("2021-05-21"), 2}, {mustParse("2021-06-01"), 4}}, mustParse("2021-05-21"), mustParse("2021-06-03"), 3},
 	}
 	for _, tt := range tests {
-		alb := NewScannedFolder("", "")
+		alb := &ScannedFolder{Distribution: make(map[string]*MediaCounter)}
 		for _, f := range tt.found {
 			alb.PushBoundaries(f.date, f.size)
 		}

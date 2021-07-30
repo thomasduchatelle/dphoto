@@ -20,6 +20,7 @@ func TestUploader_Upload(t *testing.T) {
 
 	catalogProxy := new(mocks.CatalogProxyAdapter)
 	onlineStorage := new(mocks.OnlineStorageAdapter)
+	postFilter := new(mocks.PostAnalyseFilter)
 
 	medias := []*backupmodel.AnalysedMedia{
 		{
@@ -53,6 +54,12 @@ func TestUploader_Upload(t *testing.T) {
 			Details:    &backupmodel.MediaDetails{DateTime: mustParseDate("2021-04-12")},
 		},
 		{
+			FoundMedia: backupmodel.NewInmemoryMedia("image_006.jpg", 32, mediaDate),
+			Type:       backupmodel.MediaTypeOther,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "00000006", Size: 32},
+			Details:    &backupmodel.MediaDetails{DateTime: mustParseDate("2021-04-13")},
+		},
+		{
 			FoundMedia: backupmodel.NewInmemoryMedia("image_001_again.jpg", 42, mediaDate),
 			Type:       backupmodel.MediaTypeImage,
 			Signature:  &backupmodel.FullMediaSignature{Sha256: "00000001", Size: 42},
@@ -83,6 +90,9 @@ func TestUploader_Upload(t *testing.T) {
 		signatureRequest[i] = &catalog.MediaSignature{SignatureSha256: sign.Signature.Sha256, SignatureSize: int(sign.Signature.Size)}
 	}
 	catalogProxy.On("FindSignatures", signatureRequest).Return([]*catalog.MediaSignature{signatureRequest[4]}, nil).Once()
+
+	postFilter.On("AcceptAnalysedMedia", medias[5], "2021-Q2").Return(false)
+	postFilter.On("AcceptAnalysedMedia", mock.Anything, mock.Anything).Return(true)
 
 	// EXPECTATION 1/2
 	expectedCreateMediaRequest := []catalog.CreateMediaRequest{
@@ -142,7 +152,7 @@ func TestUploader_Upload(t *testing.T) {
 	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-04_easter", "2021-04-04_00-00-00_00000003.jpg").Return("2021-04-04_00-00-00_00000003.jpg", nil).Once()
 	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-Q2", "2021-04-05_00-00-00_00000004.jpg").Return("2021-04-05_00-00-00_00000004.jpg", nil).Once()
 
-	uploader, err := NewUploader(catalogProxy, onlineStorage, "unittest")
+	uploader, err := NewUploader(catalogProxy, onlineStorage, "unittest", postFilter)
 	if !a.NoError(err) {
 		a.FailNow(err.Error())
 	}

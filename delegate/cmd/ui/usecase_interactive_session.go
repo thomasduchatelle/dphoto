@@ -15,9 +15,10 @@ type InteractiveSession struct {
 }
 
 type recordNode struct {
-	record     *Record
-	activeDays map[string]interface{} // activeDays has the day ('YYYY-MM-dd' format) as key
-	children   []*Record
+	ExistingRecord *ExistingRecord // ExistingRecord is only present if record is not a suggestion
+	record         *Record
+	activeDays     map[string]interface{} // activeDays has the day ('YYYY-MM-dd' format) as key
+	children       []*Record
 }
 
 func NewInteractiveSession(actions InteractiveActionsPort, existingRepository ExistingRecordRepositoryPort, suggestionRepository SuggestionRecordRepositoryPort) *InteractiveSession {
@@ -155,6 +156,18 @@ func (i *InteractiveSession) EditSelectedAlbumName() {
 	}
 }
 
+func (i *InteractiveSession) BackupSelected() {
+	record := *i.state.Records[i.state.Selected]
+	if record.Suggestion {
+		// take control of the screen
+		if i.must(i.actionsPort.BackupSuggestion(record.SuggestionRecord, record.ParentExistingRecord, i.renderer)) {
+
+			// hand over screen control
+			i.must(i.reloadRecords())
+		}
+	}
+}
+
 func (i *InteractiveSession) reloadRecords() error {
 	existing, err := i.existingRepository.FindExistingRecords()
 	if err != nil {
@@ -196,7 +209,7 @@ func (i *InteractiveSession) updateActions() {
 	if len(i.state.Records) == 0 {
 		// no specific action
 	} else if i.state.Records[i.state.Selected].Suggestion {
-		actions = append(actions, "C: create")
+		actions = append(actions, "C: create", "B: backup")
 	} else {
 		actions = append(actions, "DEL: delete", "E: edit name", "D: edit dates")
 	}

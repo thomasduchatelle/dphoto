@@ -17,14 +17,16 @@ type Uploader struct {
 	catalog       CatalogProxyAdapter
 	onlineStorage backupmodel.OnlineStorageAdapter
 	owner         string
+	postFilter    backupmodel.PostAnalyseFilter // postFilter might be nil (backupmodel.DefaultPostAnalyseFilter)
 }
 
 type mediaRecord struct {
 	analysedMedia *backupmodel.AnalysedMedia
 	createRequest *catalog.CreateMediaRequest
+	folderName    string
 }
 
-func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.OnlineStorageAdapter, owner string) (*Uploader, error) {
+func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.OnlineStorageAdapter, owner string, postFilter backupmodel.PostAnalyseFilter) (*Uploader, error) {
 	albums, err := catalogProxy.FindAllAlbums()
 	if err != nil {
 		return nil, err
@@ -41,6 +43,7 @@ func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.Onl
 		catalog:       catalogProxy,
 		onlineStorage: onlineStorage,
 		owner:         owner,
+		postFilter:    postFilter,
 	}, nil
 }
 
@@ -83,6 +86,7 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 		if _, duplicated := medias[signature]; !duplicated {
 			medias[signature] = mediaRecord{
 				analysedMedia: media,
+				folderName:    folderName,
 				createRequest: &catalog.CreateMediaRequest{
 					Location: location,
 					Type:     catalog.MediaType(media.Type),
@@ -139,6 +143,17 @@ func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, media
 
 	filteredOutCount := uint(0)
 	filteredOutSize := uint(0)
+
+	if u.postFilter != nil {
+		for sig, record := range medias {
+			if !u.postFilter.AcceptAnalysedMedia(record.analysedMedia, record.folderName) {
+				log.Debugf("Uploader > skipping filtered out media %s", record.analysedMedia.FoundMedia)
+				delete(medias, sig)
+				filteredOutCount += 1
+				filteredOutSize += record.analysedMedia.Signature.Size
+			}
+		}
+	}
 
 	for _, signature := range knownSignatures {
 		if m, ok := medias[*signature]; ok {

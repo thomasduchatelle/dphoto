@@ -30,6 +30,10 @@ const (
 	ProgressEventAlbumCreated        ProgressEventType = "album-created"
 )
 
+var (
+	DefaultPostAnalyseFilter PostAnalyseFilter = nil
+)
+
 // MediaType is photo or video
 type MediaType string
 
@@ -112,6 +116,11 @@ type ProgressEvent struct {
 
 type DetailsReaderOptions struct {
 	Fast bool // Fast determine if the reader should extract all the details it can, or should only focus on the DateTime (and other it could get in the same time)
+}
+
+type PostAnalyseFilter interface {
+	// AcceptAnalysedMedia returns TRUE if the media should be backed-up.
+	AcceptAnalysedMedia(media *AnalysedMedia, folderName string) bool
 }
 
 func byteCountIEC(b int64) string {

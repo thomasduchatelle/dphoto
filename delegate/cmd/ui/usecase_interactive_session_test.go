@@ -183,5 +183,5 @@ func newNoSuggestionActions(paging ...string) []string {
 }
 
 func newSuggestionActions(paging ...string) []string {
-	return append(paging, "ESC: exit", "N: new", "C: create")
+	return append(paging, "ESC: exit", "N: new", "C: create", "B: backup")
 }

@@ -14,6 +14,7 @@ type SuggestionRecord struct {
 	Name         string
 	Start, End   time.Time
 	Distribution map[string]uint // Distribution is the number of media found for each day (format YYYY-MM-DD)
+	Original     interface{}     // Original is used by adapter for targeted backup
 }
 
 // ExistingRecord is an album already existing
@@ -26,13 +27,15 @@ type ExistingRecord struct {
 }
 
 type Record struct {
-	Indent     int    // Indent is to represent the list as a tree
-	Suggestion bool   // Suggestion is TRUE when it's a suggestion, not an existing album.
-	FolderName string // FolderName is a suggested name when Suggestion is true, not a unique key
-	Name       string
-	Start, End time.Time
-	Count      uint // Count is the number of files relevant to the context (if in a tree branch)
-	TotalCount uint // TotalCount is the total number of file
+	Indent               int    // Indent is to represent the list as a tree
+	Suggestion           bool   // Suggestion is TRUE when it's a suggestion, not an existing album.
+	FolderName           string // FolderName is a suggested name when Suggestion is true, not a unique key
+	Name                 string
+	Start, End           time.Time
+	Count                uint              // Count is the number of files relevant to the context (if in a tree branch)
+	TotalCount           uint              // TotalCount is the total number of file
+	ParentExistingRecord *ExistingRecord   // ParentExistingRecord is the album if the suggestion is a child (used to limit the backup to a single album)
+	SuggestionRecord     *SuggestionRecord // SuggestionRecord is the original when Suggestion is true (used for backup)
 }
 
 type RecordsState struct {
@@ -83,12 +86,17 @@ type DeleteAlbumPort interface {
 	DeleteAlbum(folderName string) error
 }
 
+type BackupSuggestionPort interface {
+	BackupSuggestion(record *SuggestionRecord, existing *ExistingRecord, listener InteractiveRendererPort) error
+}
+
 // InteractiveActionsPort are actions on 'SuggestionRecord.Suggestion = false' records
 type InteractiveActionsPort interface {
 	CreateAlbumPort
 	RenameAlbumPort
 	UpdateAlbumPort
 	DeleteAlbumPort
+	BackupSuggestionPort
 }
 
 // UserInputPort listens user input (keyboard) to interact with the session
@@ -107,6 +115,8 @@ type InteractiveRendererPort interface {
 	PrintReadTerminalPort
 	Render(state *InteractiveViewState) error
 	Height() int
+	// TakeOverScreen is clearing the screen and let another object handling the rendering
+	TakeOverScreen()
 }
 
 // NewNoopRepository implements both SuggestionRecordRepositoryPort and ExistingRecordRepositoryPort but won't returns anything.

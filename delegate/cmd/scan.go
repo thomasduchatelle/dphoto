@@ -35,7 +35,7 @@ var scan = &cobra.Command{
 			err = ui.NewSimpleSession(backupadapter.NewAlbumRepository(), recordRepository).Render()
 			printer.FatalIfError(err, 1)
 		} else {
-			err = ui.NewInteractiveSession(new(uiCatalogAdapter), backupadapter.NewAlbumRepository(), recordRepository).Start()
+			err = ui.NewInteractiveSession(&uiCatalogAdapter{backupadapter.NewBackupHandler(Owner)}, backupadapter.NewAlbumRepository(), recordRepository).Start()
 			printer.FatalIfError(err, 1)
 		}
 
@@ -49,7 +49,9 @@ func init() {
 	scan.Flags().BoolVarP(&scanArgs.nonInteractive, "non-interactive", "I", false, "Disable interactive output and only display the scan results.")
 }
 
-type uiCatalogAdapter struct{}
+type uiCatalogAdapter struct {
+	ui.BackupSuggestionPort
+}
 
 func (o uiCatalogAdapter) Create(request ui.RecordCreation) error {
 	return catalog.Create(catalog.CreateAlbum{

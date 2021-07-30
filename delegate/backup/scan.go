@@ -8,6 +8,7 @@ import (
 	"path"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 )
 
@@ -40,12 +41,12 @@ func ScanVolume(volume backupmodel.VolumeToBackup, listeners ...interface{}) ([]
 			return nil, err
 		}
 
-		dir := path.Dir(found.Filename())
-		if album, ok := albums[dir]; ok {
+		dirCode := path.Dir(found.Filename())
+		if album, ok := albums[dirCode]; ok {
 			album.PushBoundaries(details.DateTime, found.SimpleSignature().Size)
 		} else {
-			albums[dir] = newFoundAlbum(dir)
-			albums[dir].PushBoundaries(details.DateTime, found.SimpleSignature().Size)
+			albums[dirCode] = newFoundAlbum(volume, found.Filename())
+			albums[dirCode].PushBoundaries(details.DateTime, found.SimpleSignature().Size)
 		}
 
 		triggerProgress(listeners, count, len(medias))
@@ -103,9 +104,21 @@ func scanMediaSource(volume backupmodel.VolumeToBackup) ([]backupmodel.FoundMedi
 	return medias, nil
 }
 
-func newFoundAlbum(albumFullPath string) *backupmodel.ScannedFolder {
-	name := path.Base(albumFullPath)
-	name = datePrefix.ReplaceAllString(name, "")
+func newFoundAlbum(volume backupmodel.VolumeToBackup, mediaAbsolutePath string) *backupmodel.ScannedFolder {
+	folderRelativePath := path.Dir(strings.TrimPrefix(mediaAbsolutePath, volume.Path))
+	folderName := path.Base(folderRelativePath)
+	name := datePrefix.ReplaceAllString(folderName, "")
 
-	return backupmodel.NewScannedFolder(albumFullPath, name)
+	return &backupmodel.ScannedFolder{
+		Name:         name,
+		RelativePath: folderRelativePath,
+		FolderName:   folderName,
+		Distribution: make(map[string]*backupmodel.MediaCounter),
+		BackupVolume: &backupmodel.VolumeToBackup{
+			UniqueId: volume.UniqueId,
+			Type:     volume.Type,
+			Path:     strings.TrimSuffix(mediaAbsolutePath, path.Base(mediaAbsolutePath)), // note: should support s3:// urls
+			Local:    volume.Local,
+		},
+	}
 }
