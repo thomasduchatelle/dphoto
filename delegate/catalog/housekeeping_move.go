@@ -28,7 +28,7 @@ func RelocateMovedMedias(operator MoveMediaOperator, transactionId string) (int,
 	}
 
 	if len(transactions) == 0 {
-		log.Infoln("No physical move to perform, aborting.")
+		log.WithField("HouseKeepingTransaction", transactionId).Infoln("No physical move to perform, aborting.")
 		return 0, err
 	}
 

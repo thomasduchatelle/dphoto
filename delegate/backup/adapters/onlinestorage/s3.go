@@ -14,22 +14,20 @@ import (
 )
 
 type S3OnlineStorage struct {
-	s3                *s3.S3
-	bucketName        string
-	lock              sync.Mutex
-	listedFolderNames map[string]interface{}
-	prefixes          map[string]interface{}
+	s3                 *s3.S3
+	bucketName         string
+	lock               sync.Mutex
+	filenamesPerFolder map[string]map[string]interface{}
 }
 
 func NewS3OnlineStorage(bucketName string, sess *session.Session) (*S3OnlineStorage, error) {
 	s3client := s3.New(sess)
 
 	return &S3OnlineStorage{
-		s3:                s3client,
-		bucketName:        bucketName,
-		lock:              sync.Mutex{},
-		listedFolderNames: make(map[string]interface{}),
-		prefixes:          make(map[string]interface{}),
+		s3:                 s3client,
+		bucketName:         bucketName,
+		lock:               sync.Mutex{},
+		filenamesPerFolder: make(map[string]map[string]interface{}),
 	}, nil
 }
 
@@ -44,13 +42,10 @@ func Must(storage *S3OnlineStorage, err error) *S3OnlineStorage {
 func (s *S3OnlineStorage) UploadFile(owner string, media backupmodel.ReadableMedia, folderName, filename string) (string, error) {
 	cleanedFolderName := strings.Trim(folderName, "/")
 
-	prefix, suffix := s.splitKey(owner, cleanedFolderName, filename)
-	prefix, err := s.findUniquePrefix(prefix)
+	key, filename, err := s.findUniqueFilename(owner, cleanedFolderName, filename)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed getting unique prefix for media %s", media)
 	}
-
-	key := prefix + suffix
 
 	mediaReader, err := media.ReadMedia()
 	if err != nil {
@@ -67,69 +62,65 @@ func (s *S3OnlineStorage) UploadFile(owner string, media backupmodel.ReadableMed
 		return "", errors.Wrapf(err, "uploading %s failed", media)
 	}
 
-	return strings.TrimPrefix(key, cleanedFolderName+"/"), nil
+	return filename, nil
 }
 
-func (s *S3OnlineStorage) splitKey(owner, folderName, filename string) (string, string) {
-	key := path.Join(owner, folderName, filename)
-	suffix := path.Ext(key)
-
-	return strings.TrimPrefix(strings.TrimSuffix(key, suffix), "/"), suffix
-}
-
-func (s *S3OnlineStorage) findUniquePrefix(prefix string) (string, error) {
+func (s *S3OnlineStorage) findUniqueFilename(owner string, folderName string, filename string) (string, string, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	dirPrefix := path.Dir(prefix) + "/"
-	if _, listed := s.listedFolderNames[dirPrefix]; !listed {
+	dir := path.Join(owner, folderName) + "/"
+	filenames, listed := s.filenamesPerFolder[dir]
+
+	if !listed {
+		filenames = make(map[string]interface{})
 		err := s.s3.ListObjectsV2Pages(&s3.ListObjectsV2Input{
 			Bucket: &s.bucketName,
-			Prefix: aws.String(dirPrefix),
+			Prefix: aws.String(dir),
 		}, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
 			for _, obj := range output.Contents {
-				objPrefix := strings.TrimSuffix(*obj.Key, path.Ext(*obj.Key))
-				s.prefixes[objPrefix] = nil
+				filenames[strings.TrimPrefix(*obj.Key, dir)] = nil
 			}
 			return true
 		})
 
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 
-		s.listedFolderNames[dirPrefix] = nil
+		s.filenamesPerFolder[dir] = filenames
 	}
 
-	candidate := prefix
-	_, clash := s.prefixes[candidate]
+	filenameSuffix := path.Ext(filename)
+	filenamePrefix := strings.TrimSuffix(filename, filenameSuffix)
+
+	candidate := filenamePrefix + filenameSuffix
+	_, clash := filenames[candidate]
 	index := 1
 	for clash {
-		candidate = fmt.Sprintf("%s_%02d", prefix, index)
-		_, clash = s.prefixes[candidate]
+		candidate = fmt.Sprintf("%s_%02d%s", filenamePrefix, index, filenameSuffix)
+		_, clash = filenames[candidate]
 		index++
 	}
 
-	s.prefixes[candidate] = nil
+	filenames[candidate] = nil
 
-	return candidate, nil
+	return path.Join(dir, candidate), candidate, nil
 }
 
 func (s *S3OnlineStorage) MoveFile(owner string, folderName string, filename string, destFolderName string) (string, error) {
 	cleanedFolderName := strings.Trim(destFolderName, "/")
 
-	prefix, suffix := s.splitKey(owner, cleanedFolderName, filename)
-	prefix, err := s.findUniquePrefix(prefix)
+	destKey, filename, err := s.findUniqueFilename(owner, cleanedFolderName, filename)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed getting unique prefix for media %s/%s", destFolderName, filename)
 	}
 
-	origKey := strings.Trim(path.Join(folderName, filename), "/")
-	destKey := prefix + suffix
+	origKey := strings.Trim(path.Join(s.bucketName, owner, folderName, filename), "/")
 
 	_, err = s.s3.CopyObject(&s3.CopyObjectInput{
 		Bucket:     &s.bucketName,
-		CopySource: aws.String(fmt.Sprintf("%s/%s", s.bucketName, origKey)),
+		CopySource: &origKey,
 		Key:        &destKey,
 	})
 	if err != nil {
@@ -140,5 +131,5 @@ func (s *S3OnlineStorage) MoveFile(owner string, folderName string, filename str
 		Bucket: &s.bucketName,
 		Key:    &origKey,
 	})
-	return destKey, errors.Wrapf(err, "failed to remove moved file %s", origKey)
+	return filename, errors.Wrapf(err, "failed to remove moved file %s", origKey)
 }

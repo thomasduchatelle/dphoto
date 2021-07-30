@@ -43,11 +43,11 @@ func TestS3OnlineStorage_UploadFile(t *testing.T) {
 		args args
 		want string
 	}{
-		{"it should upload a file, without special case", args{newMedia("media-1"), "/2020", "img-2020-1.jpg"}, "unittest/2020/img-2020-1.jpg"},
-		{"it should find a different key when file already uploaded [memory]", args{newMedia("media-1"), "/2020", "img-2020-1.jpg"}, "unittest/2020/img-2020-1_01.jpg"},
-		{"it should find a different key again [memory]", args{newMedia("media-1"), "/2020", "img-2020-1.jpg"}, "unittest/2020/img-2020-1_02.jpg"},
-		{"it should upload a file avoiding a clash with existing file", args{newMedia("media-1"), "/2021", "img-2021-1.jpg"}, "unittest/2021/img-2021-1_02.jpg"},
-		{"it should upload a file avoiding again a clash", args{newMedia("media-1"), "/2021", "img-2021-1.jpg"}, "unittest/2021/img-2021-1_03.jpg"},
+		{"it should upload a file, without special case", args{newMedia("media-1"), "/2020", "img-2020-1.jpg"}, "img-2020-1.jpg"},
+		{"it should find a different key when file already uploaded [memory]", args{newMedia("media-1"), "/2020", "img-2020-1.jpg"}, "img-2020-1_01.jpg"},
+		{"it should find a different key again [memory]", args{newMedia("media-1"), "/2020", "img-2020-1.jpg"}, "img-2020-1_02.jpg"},
+		{"it should upload a file avoiding a clash with existing file", args{newMedia("media-1"), "/2021", "img-2021-1.jpg"}, "img-2021-1_02.jpg"},
+		{"it should upload a file avoiding again a clash", args{newMedia("media-1"), "/2021", "img-2021-1.jpg"}, "img-2021-1_03.jpg"},
 	}
 
 	for _, tt := range tests {
