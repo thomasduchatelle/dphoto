@@ -9,6 +9,9 @@ func ListMedias(folderName string, request PageRequest) (*MediaPage, error) {
 
 // InsertMedias stores metadata and location of photo and videos
 func InsertMedias(medias []CreateMediaRequest) error {
+	for _, m := range medias {
+		m.Location.FolderName = normaliseFolderName(m.Location.FolderName)
+	}
 	return Repository.InsertMedias(medias)
 }
 

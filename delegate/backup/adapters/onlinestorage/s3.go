@@ -132,7 +132,7 @@ func (s *S3OnlineStorage) MoveFile(owner string, folderName string, filename str
 
 	_, err = s.s3.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: &s.bucketName,
-		Key:    &origKey,
+		Key:    aws.String(strings.Trim(path.Join(owner, folderName, filename), "/")),
 	})
 	return filename, errors.Wrapf(err, "failed to remove moved file %s", origKey)
 }

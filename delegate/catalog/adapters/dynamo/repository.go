@@ -12,8 +12,8 @@ import (
 type Rep struct {
 	db                      *dynamodb.DynamoDB
 	table                   string
-	RootOwner               string // PK ID, '#ROOT' if single tenant.
-	localDynamodb           bool   // some feature like tagging are not available
+	RootOwner               string // RootOwner is the tenant id, 'ROOT' if single tenant.
+	localDynamodb           bool   // localDynamodb is set to true to disable some feature - not available on localstack - like tagging
 	findMovedMediaBatchSize int64
 }
 
@@ -22,7 +22,7 @@ func NewRepository(awsSession *session.Session, owner string, tableName string) 
 	rep := &Rep{
 		db:                      dynamodb.New(awsSession),
 		table:                   tableName,
-		RootOwner:               "#" + owner,
+		RootOwner:               owner,
 		localDynamodb:           false,
 		findMovedMediaBatchSize: int64(dynamoWriteBatchSize),
 	}

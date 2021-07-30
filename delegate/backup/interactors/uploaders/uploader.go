@@ -183,7 +183,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),
 		Start:            time.Date(year, quarter*3+1, 1, 0, 0, 0, 0, time.UTC),
 		End:              time.Date(year, (quarter+1)*3+1, 1, 0, 0, 0, 0, time.UTC),
-		ForcedFolderName: fmt.Sprintf("%d-Q%d", year, quarter+1),
+		ForcedFolderName: fmt.Sprintf("/%d-Q%d", year, quarter+1),
 	}
 
 	log.Infof("Creates new album '%s' to accomodate media at %s", createRequest.ForcedFolderName, mediaTime.Format(time.RFC3339))

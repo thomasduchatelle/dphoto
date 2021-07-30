@@ -12,4 +12,4 @@ mocks:
 clearlocal:
 	aws --endpoint "http://localhost:4566" --region eu-west-1 s3 rm --recursive "s3://dphoto-local"
 	aws --endpoint http://localhost:4566 --region eu-west-1 dynamodb delete-table --table dphoto-local
-	rm -f .build/volumes/*
+	rm -rf .build/volumes/*
