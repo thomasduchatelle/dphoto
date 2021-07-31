@@ -177,7 +177,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 	}
 
 	year := mediaTime.Year()
-	quarter := mediaTime.Month() / 4
+	quarter := mediaTime.Month() / 3
 
 	createRequest := catalog.CreateAlbum{
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),

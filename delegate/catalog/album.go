@@ -171,7 +171,6 @@ func filterMissedSegmentWithMedias(folderName string, missed []PrioritySegment) 
 // and flag all its media to be moved to the new one.
 func RenameAlbum(folderName, newName string, renameFolder bool) error {
 	folderName = normaliseFolderName(folderName)
-	newName = normaliseFolderName(newName)
 
 	found, err := Repository.FindAlbum(folderName)
 	if err != nil {
