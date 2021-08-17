@@ -23,7 +23,7 @@ var SupportedExtensions = map[string]backupmodel.MediaType{
 	"gif":  backupmodel.MediaTypeImage,
 	"webp": backupmodel.MediaTypeImage,
 	"raw":  backupmodel.MediaTypeImage,
-	"bmp":  backupmodel.MediaTypeImage,
+	//"bmp":  backupmodel.MediaTypeImage,
 	"svg":  backupmodel.MediaTypeImage,
 	"eps":  backupmodel.MediaTypeImage,
 
