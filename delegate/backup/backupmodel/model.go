@@ -19,7 +19,6 @@ const (
 
 	VolumeTypeFileSystem VolumeType = "filesystem" // Mounted folder
 	VolumeTypeS3         VolumeType = "s3"         // Storage in S3
-	VolumeTypeMtp        VolumeType = "mtp"        // MTP (Android drive)
 
 	ProgressEventScanComplete        ProgressEventType = "scan-complete"
 	ProgressEventDownloaded          ProgressEventType = "downloaded"
@@ -57,15 +56,24 @@ type VolumeMetadata struct {
 	AutoBackup bool
 }
 
+// MediaPath is a breakdown of an absolute path, or URL, agnostic of its origin.
+type MediaPath struct {
+	ParentFullPath string // ParentFullPath is the path that can be used to create a sub-volume that only contains sibling medias of this one
+	Root           string // Root is the path or URL representing the volume in which the media has been found.
+	Path           string // Path is the path between Root and Filename (ie: Root + Path + Filename would be the absolute URL)
+	Filename       string // Filename does not contain any slash, and contains the extension.
+	ParentDir      string // ParentDir is the name of the media folder ; it might be from the Path or from the Root
+}
+
 type FoundMedia interface {
-	// Filename returns the original filename, used to determine the type of the media
-	Filename() string
+	// MediaPath return breakdown of the absolute path of the media.
+	MediaPath() MediaPath
 	// LastModificationDate returns the dte the physical file has been last updated
 	LastModificationDate() time.Time
 	// SimpleSignature gets a key, unique for the volume
 	SimpleSignature() *SimpleMediaSignature
 	// ReadMedia reads content of the file ; it might not be optimised to call it several times (see VolumeToBackup)
-	ReadMedia() (io.Reader, error)
+	ReadMedia() (io.ReadCloser, error)
 }
 
 // FoundMediaWithHash can be implemented along side FoundMedia if the implementation can compute sha256 hash on the fly
@@ -135,6 +143,10 @@ func byteCountIEC(b int64) string {
 	}
 	return fmt.Sprintf("%.1f %ciB",
 		float64(b)/float64(div), "KMGTPE"[exp])
+}
+
+func (v *VolumeToBackup) String() string {
+	return fmt.Sprintf("[%s] %s (local=%t)", v.UniqueId, v.Path, v.Local)
 }
 
 func (s *FullMediaSignature) String() string {

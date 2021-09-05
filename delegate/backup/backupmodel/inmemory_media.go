@@ -27,8 +27,14 @@ func NewInmemoryMediaWithHash(name string, size uint, date time.Time, hash strin
 	return &InmemoryMediaWithHash{&InmemoryMedia{filename: name, size: size, date: date}, hash}
 }
 
-func (i *InmemoryMedia) Filename() string {
-	return i.filename
+func (i *InmemoryMedia) MediaPath() MediaPath {
+	return MediaPath{
+		ParentFullPath: "/ram/virtual",
+		Root:           "/ram",
+		Path:           "virtual",
+		Filename:       i.filename,
+		ParentDir:      "virtual",
+	}
 }
 
 func (i *InmemoryMedia) LastModificationDate() time.Time {
@@ -42,7 +48,7 @@ func (i *InmemoryMedia) SimpleSignature() *SimpleMediaSignature {
 	}
 }
 
-func (i *InmemoryMedia) ReadMedia() (io.Reader, error) {
+func (i *InmemoryMedia) ReadMedia() (io.ReadCloser, error) {
 	return os.Open("../../../test_resources/scan/london_skyline_southbank.jpg")
 }
 

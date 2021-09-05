@@ -16,7 +16,7 @@ import (
 func TestS3OnlineStorage_UploadFile(t *testing.T) {
 	a := assert.New(t)
 
-	s, err := NewS3OnlineStorage("dphoto-unit-"+time.Now().Format("20060102150405"), session.Must(session.NewSession(&aws.Config{
+	s, err := NewS3OnlineStorage("dphoto-unit-upload-"+time.Now().Format("20060102150405"), session.Must(session.NewSession(&aws.Config{
 		Region:   aws.String("eu-west-1"),
 		Endpoint: aws.String("http://localhost:4566"),
 	})))
@@ -61,8 +61,8 @@ func TestS3OnlineStorage_UploadFile(t *testing.T) {
 
 func TestMoveFile(t *testing.T) {
 	a := assert.New(t)
-	
-	s, err := NewS3OnlineStorage("dphoto-unit-"+time.Now().Format("20060102150405"), session.Must(session.NewSession(&aws.Config{
+
+	s, err := NewS3OnlineStorage("dphoto-unit-move-"+time.Now().Format("20060102150405"), session.Must(session.NewSession(&aws.Config{
 		Region:   aws.String("eu-west-1"),
 		Endpoint: aws.String("http://localhost:4566"),
 	})))
@@ -109,8 +109,8 @@ func (i *InMemoryMedia) SimpleSignature() *backupmodel.SimpleMediaSignature {
 	}
 }
 
-func (i *InMemoryMedia) ReadMedia() (io.Reader, error) {
-	return strings.NewReader(i.content), nil
+func (i *InMemoryMedia) ReadMedia() (io.ReadCloser, error) {
+	return io.NopCloser(strings.NewReader(i.content)), nil
 }
 
 func newMedia(content string) backupmodel.ReadableMedia {

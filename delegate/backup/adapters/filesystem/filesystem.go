@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
@@ -25,10 +26,10 @@ type fsWorker struct {
 }
 
 type fsMedia struct {
+	volumeAbsolutePath   string
 	absolutePath         string
 	size                 int
 	lastModificationDate time.Time
-	relativePath         string
 }
 
 func (f *FsHandler) FindMediaRecursively(volume backupmodel.VolumeToBackup, callback func(backupmodel.FoundMedia)) (uint, uint, error) {
@@ -60,11 +61,6 @@ func (w *fsWorker) Work(mediaPath string) {
 		logContext.WithError(err).Warnln("Invalid path, no absolute path")
 		return
 	}
-	rel, err := filepath.Rel(w.mountPath, mediaPath)
-	if err != nil {
-		logContext.WithError(err).WithField("mountPath", w.mountPath).Warnln("Media path is not relative.")
-		return
-	}
 
 	stat, err := os.Stat(abs)
 	if err != nil {
@@ -73,10 +69,10 @@ func (w *fsWorker) Work(mediaPath string) {
 	}
 
 	w.callback(&fsMedia{
+		volumeAbsolutePath:   w.mountPath,
 		absolutePath:         abs,
 		size:                 int(stat.Size()),
 		lastModificationDate: stat.ModTime(),
-		relativePath:         rel,
 	})
 	atomic.AddInt64(&w.count, 1)
 	atomic.AddInt64(&w.sizeSum, stat.Size())
@@ -90,8 +86,14 @@ func (f *FsHandler) newWorker(mountPath string, callback func(backupmodel.FoundM
 	}, errors.Wrapf(err, "can't get the absolute path of %s", mountPath)
 }
 
-func (f *fsMedia) Filename() string {
-	return f.absolutePath
+func (f *fsMedia) MediaPath() backupmodel.MediaPath {
+	return backupmodel.MediaPath{
+		ParentFullPath: path.Dir(f.absolutePath),
+		Root:           f.volumeAbsolutePath,
+		Path:           strings.TrimPrefix(strings.TrimPrefix(path.Dir(f.absolutePath), f.volumeAbsolutePath), "/"),
+		Filename:       path.Base(f.absolutePath),
+		ParentDir:      path.Base(path.Dir(f.absolutePath)),
+	}
 }
 
 func (f *fsMedia) LastModificationDate() time.Time {
@@ -99,13 +101,14 @@ func (f *fsMedia) LastModificationDate() time.Time {
 }
 
 func (f *fsMedia) SimpleSignature() *backupmodel.SimpleMediaSignature {
+	mediaPath := f.MediaPath()
 	return &backupmodel.SimpleMediaSignature{
-		RelativePath: f.relativePath,
+		RelativePath: path.Join(mediaPath.Path, mediaPath.Filename),
 		Size:         uint(f.size),
 	}
 }
 
-func (f *fsMedia) ReadMedia() (io.Reader, error) {
+func (f *fsMedia) ReadMedia() (io.ReadCloser, error) {
 	return os.Open(f.absolutePath)
 }
 

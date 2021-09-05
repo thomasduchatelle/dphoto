@@ -5,10 +5,8 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
 	"github.com/pkg/errors"
-	"path"
 	"regexp"
 	"sort"
-	"strings"
 	"sync"
 )
 
@@ -41,12 +39,12 @@ func ScanVolume(volume backupmodel.VolumeToBackup, listeners ...interface{}) ([]
 			return nil, err
 		}
 
-		dirCode := path.Dir(found.Filename())
-		if album, ok := albums[dirCode]; ok {
+		mediaPath := found.MediaPath()
+		if album, ok := albums[mediaPath.Path]; ok {
 			album.PushBoundaries(details.DateTime, found.SimpleSignature().Size)
 		} else {
-			albums[dirCode] = newFoundAlbum(volume, found.Filename())
-			albums[dirCode].PushBoundaries(details.DateTime, found.SimpleSignature().Size)
+			albums[mediaPath.Path] = newFoundAlbum(volume, mediaPath)
+			albums[mediaPath.Path].PushBoundaries(details.DateTime, found.SimpleSignature().Size)
 		}
 
 		triggerProgress(listeners, count, len(medias))
@@ -104,20 +102,16 @@ func scanMediaSource(volume backupmodel.VolumeToBackup) ([]backupmodel.FoundMedi
 	return medias, nil
 }
 
-func newFoundAlbum(volume backupmodel.VolumeToBackup, mediaAbsolutePath string) *backupmodel.ScannedFolder {
-	folderRelativePath := path.Dir(strings.TrimPrefix(mediaAbsolutePath, volume.Path))
-	folderName := path.Base(folderRelativePath)
-	name := datePrefix.ReplaceAllString(folderName, "")
-
+func newFoundAlbum(volume backupmodel.VolumeToBackup, mediaPath backupmodel.MediaPath) *backupmodel.ScannedFolder {
 	return &backupmodel.ScannedFolder{
-		Name:         name,
-		RelativePath: folderRelativePath,
-		FolderName:   folderName,
+		Name:         mediaPath.ParentDir,
+		RelativePath: mediaPath.Path,
+		FolderName:   mediaPath.ParentDir,
 		Distribution: make(map[string]*backupmodel.MediaCounter),
 		BackupVolume: &backupmodel.VolumeToBackup{
 			UniqueId: volume.UniqueId,
 			Type:     volume.Type,
-			Path:     strings.TrimSuffix(mediaAbsolutePath, path.Base(mediaAbsolutePath)), // note: should support s3:// urls
+			Path:     mediaPath.ParentFullPath,
 			Local:    volume.Local,
 		},
 	}

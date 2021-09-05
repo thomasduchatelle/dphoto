@@ -41,7 +41,7 @@ type OnlineStorageAdapter interface {
 }
 
 type ReadableMedia interface {
-	ReadMedia() (io.Reader, error)
+	ReadMedia() (io.ReadCloser, error)
 	// SimpleSignature is used to get the size to upload
 	SimpleSignature() *SimpleMediaSignature
 }

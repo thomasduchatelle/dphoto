@@ -32,8 +32,8 @@ type localMedia struct {
 	sha256   string
 }
 
-func (m *localMedia) Filename() string {
-	return m.delegate.Filename()
+func (m *localMedia) MediaPath() backupmodel.MediaPath {
+	return m.delegate.MediaPath()
 }
 
 func (m *localMedia) LastModificationDate() time.Time {
@@ -44,7 +44,7 @@ func (m *localMedia) SimpleSignature() *backupmodel.SimpleMediaSignature {
 	return m.delegate.SimpleSignature()
 }
 
-func (m *localMedia) ReadMedia() (io.Reader, error) {
+func (m *localMedia) ReadMedia() (io.ReadCloser, error) {
 	return os.Open(m.path)
 }
 
@@ -90,8 +90,9 @@ func (l *LocalStorage) DownloadMedia(found backupmodel.FoundMedia) (backupmodel.
 	if err != nil {
 		return nil, err
 	}
+	defer reader.Close()
 
-	key := path.Join(l.localMediaPath, uuid.New().String()+path.Ext(found.Filename()))
+	key := path.Join(l.localMediaPath, uuid.New().String()+path.Ext(found.MediaPath().Filename))
 	log.Debugf("DownloaderPort > download locally %s to %s", found, key)
 
 	writer, err := os.Create(key)

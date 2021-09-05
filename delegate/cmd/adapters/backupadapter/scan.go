@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
-	"path/filepath"
 )
 
 type ScanProgress struct {
@@ -17,11 +16,10 @@ type ScanProgress struct {
 	analysedLine *screen.ProgressLine
 }
 
-func ScanWithCache(volume string) (ui.SuggestionRecordRepositoryPort, int, error) {
-	volume, _ = filepath.Abs(volume)
-	previousResult, err := restore(volume)
+func ScanWithCache(volume backupmodel.VolumeToBackup) (ui.SuggestionRecordRepositoryPort, int, error) {
+	previousResult, err := restore(volume.UniqueId)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "failed to restore previous scan result for volume %s", volume)
+		return nil, 0, errors.Wrapf(err, "failed to restore previous scan result for volume %s", volume.String())
 	}
 
 	if len(previousResult) > 0 {
@@ -35,21 +33,16 @@ func ScanWithCache(volume string) (ui.SuggestionRecordRepositoryPort, int, error
 	return NewSuggestionRepository(suggestions), len(suggestions), err
 }
 
-func doScan(volume string) ([]*backupmodel.ScannedFolder, error) {
+func doScan(volume backupmodel.VolumeToBackup) ([]*backupmodel.ScannedFolder, error) {
 	progress := newScanProgress()
-	suggestions, err := backup.ScanVolume(backupmodel.VolumeToBackup{
-		UniqueId: volume,
-		Type:     backupmodel.VolumeTypeFileSystem,
-		Path:     volume,
-		Local:    true,
-	}, progress)
+	suggestions, err := backup.ScanVolume(volume, progress)
 	progress.screen.Stop()
 
 	if err != nil {
 		return nil, err
 	}
 
-	err = Store(volume, suggestions)
+	err = Store(volume.UniqueId, suggestions)
 	return suggestions, err
 }
 

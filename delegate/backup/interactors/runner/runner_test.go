@@ -18,8 +18,14 @@ type unitMedia struct {
 	size     int
 }
 
-func (u *unitMedia) Filename() string {
-	return path.Base(u.filename)
+func (u *unitMedia) MediaPath() backupmodel.MediaPath {
+	return backupmodel.MediaPath{
+		ParentFullPath: path.Dir(u.filename),
+		Root:           path.Dir(u.filename),
+		Path:           "",
+		Filename:       path.Base(u.filename),
+		ParentDir:      path.Dir(u.filename),
+	}
 }
 
 func (u *unitMedia) LastModificationDate() time.Time {
@@ -33,8 +39,8 @@ func (u *unitMedia) SimpleSignature() *backupmodel.SimpleMediaSignature {
 	}
 }
 
-func (u *unitMedia) ReadMedia() (io.Reader, error) {
-	return strings.NewReader(u.filename), nil
+func (u *unitMedia) ReadMedia() (io.ReadCloser, error) {
+	return io.NopCloser(strings.NewReader(u.filename)), nil
 }
 
 func newMedia(url string, size int) *unitMedia {

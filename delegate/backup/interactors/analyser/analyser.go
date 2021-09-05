@@ -24,8 +24,8 @@ var SupportedExtensions = map[string]backupmodel.MediaType{
 	"webp": backupmodel.MediaTypeImage,
 	"raw":  backupmodel.MediaTypeImage,
 	//"bmp":  backupmodel.MediaTypeImage,
-	"svg":  backupmodel.MediaTypeImage,
-	"eps":  backupmodel.MediaTypeImage,
+	"svg": backupmodel.MediaTypeImage,
+	"eps": backupmodel.MediaTypeImage,
 
 	"mkv":  backupmodel.MediaTypeVideo,
 	"mts":  backupmodel.MediaTypeVideo,
@@ -40,8 +40,9 @@ var SupportedExtensions = map[string]backupmodel.MediaType{
 func AnalyseMedia(found backupmodel.FoundMedia) (*backupmodel.AnalysedMedia, error) {
 
 	reader, hasher, err := readerSpyingForHash(found)
+	defer reader.Close()
 
-	mediaType, details, err := extractDetails(found, backupmodel.DetailsReaderOptions{}, func() (io.Reader, error) {
+	mediaType, details, err := extractDetails(found, backupmodel.DetailsReaderOptions{}, func() (io.ReadCloser, error) {
 		return reader, nil
 	})
 	if err != nil {
@@ -62,12 +63,18 @@ func AnalyseMedia(found backupmodel.FoundMedia) (*backupmodel.AnalysedMedia, err
 }
 
 func ExtractTypeAndDetails(found backupmodel.FoundMedia) (backupmodel.MediaType, *backupmodel.MediaDetails, error) {
-	return extractDetails(found, backupmodel.DetailsReaderOptions{Fast: true}, func() (io.Reader, error) {
-		return found.ReadMedia()
+	media, err := found.ReadMedia()
+	if err != nil {
+		return "", nil, err
+	}
+	defer media.Close()
+
+	return extractDetails(found, backupmodel.DetailsReaderOptions{Fast: true}, func() (io.ReadCloser, error) {
+		return media, err
 	})
 }
 
-func extractDetails(found backupmodel.FoundMedia, options backupmodel.DetailsReaderOptions, readMedia func() (io.Reader, error)) (backupmodel.MediaType, *backupmodel.MediaDetails, error) {
+func extractDetails(found backupmodel.FoundMedia, options backupmodel.DetailsReaderOptions, readMedia func() (io.ReadCloser, error)) (backupmodel.MediaType, *backupmodel.MediaDetails, error) {
 	mediaType := getMediaType(found)
 
 	details := &backupmodel.MediaDetails{}
@@ -76,12 +83,12 @@ func extractDetails(found backupmodel.FoundMedia, options backupmodel.DetailsRea
 	for _, detailsReader := range interactors.DetailsReaders {
 		if detailsReader.Supports(found, mediaType) {
 			matchingReaders = append(matchingReaders, getType(detailsReader))
-			content, err := readMedia()
+			reader, err := readMedia()
 			if err != nil {
 				return mediaType, nil, errors.Wrapf(err, "failed to open media %s for analyse", found)
 			}
 
-			details, err = detailsReader.ReadDetails(content, options)
+			details, err = detailsReader.ReadDetails(reader, options)
 			if err != nil {
 				return mediaType, nil, errors.Wrapf(err, "failed to analyse %s", found)
 			}
@@ -102,7 +109,12 @@ type hashSpy struct {
 	cachedHash string
 }
 
-func readerSpyingForHash(found backupmodel.FoundMedia) (io.Reader, *hashSpy, error) {
+type teeCloser struct {
+	io.Reader
+	io.Closer
+}
+
+func readerSpyingForHash(found backupmodel.FoundMedia) (io.ReadCloser, *hashSpy, error) {
 	reader, err := found.ReadMedia()
 	if mediaWithHash, ok := found.(backupmodel.FoundMediaWithHash); ok {
 		return reader, &hashSpy{cachedHash: mediaWithHash.Sha256Hash()}, err
@@ -111,7 +123,7 @@ func readerSpyingForHash(found backupmodel.FoundMedia) (io.Reader, *hashSpy, err
 	shaWriter := sha256.New()
 	teeReader := io.TeeReader(reader, shaWriter)
 
-	return teeReader, &hashSpy{
+	return teeCloser{Reader: teeReader, Closer: reader}, &hashSpy{
 		reader:    teeReader,
 		shaWriter: shaWriter,
 	}, err
@@ -127,7 +139,7 @@ func (r *hashSpy) computeHash() (string, error) {
 }
 
 func getMediaType(media backupmodel.FoundMedia) backupmodel.MediaType {
-	extension := strings.TrimPrefix(strings.ToLower(path.Ext(media.Filename())), ".")
+	extension := strings.TrimPrefix(strings.ToLower(path.Ext(media.MediaPath().Filename)), ".")
 	if t, ok := SupportedExtensions[extension]; ok {
 		return t
 	}

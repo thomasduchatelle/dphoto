@@ -68,20 +68,20 @@ func TestUploader_Upload(t *testing.T) {
 	}
 
 	catalogProxy.On("FindAllAlbums").Return([]*catalog.Album{
-		{"Easter", "2021-04_easter", mustParseDate("2021-04-04"), mustParseDate("2021-04-05")},
+		{"Easter", "/2021-04_easter", mustParseDate("2021-04-04"), mustParseDate("2021-04-05")},
 	}, nil)
 
 	catalogProxy.On("Create", catalog.CreateAlbum{
 		Name:             "Q1 2021",
 		Start:            mustParseDate("2021-01-01"),
 		End:              mustParseDate("2021-04-01"),
-		ForcedFolderName: "2021-Q1",
+		ForcedFolderName: "/2021-Q1",
 	}).Return(nil).Once()
 	catalogProxy.On("Create", catalog.CreateAlbum{
 		Name:             "Q2 2021",
 		Start:            mustParseDate("2021-04-01"),
 		End:              mustParseDate("2021-07-01"),
-		ForcedFolderName: "2021-Q2",
+		ForcedFolderName: "/2021-Q2",
 	}).Return(nil).Once()
 
 	signatureRequest := make([]*catalog.MediaSignature, len(medias))
@@ -91,14 +91,14 @@ func TestUploader_Upload(t *testing.T) {
 	}
 	catalogProxy.On("FindSignatures", signatureRequest).Return([]*catalog.MediaSignature{signatureRequest[4]}, nil).Once()
 
-	postFilter.On("AcceptAnalysedMedia", medias[5], "2021-Q2").Return(false)
+	postFilter.On("AcceptAnalysedMedia", medias[5], "/2021-Q2").Return(false)
 	postFilter.On("AcceptAnalysedMedia", mock.Anything, mock.Anything).Return(true)
 
 	// EXPECTATION 1/2
 	expectedCreateMediaRequest := []catalog.CreateMediaRequest{
 		{
 			Location: catalog.MediaLocation{
-				FolderName: "2021-Q1",
+				FolderName: "/2021-Q1",
 				Filename:   "2021-03-27_00-00-00_ONLINE.jpg",
 			},
 			Type:      "IMAGE",
@@ -107,7 +107,7 @@ func TestUploader_Upload(t *testing.T) {
 		},
 		{
 			Location: catalog.MediaLocation{
-				FolderName: "2021-Q2",
+				FolderName: "/2021-Q2",
 				Filename:   "2021-04-02_00-00-00_00000002.mkv",
 			},
 			Type:      "VIDEO",
@@ -116,7 +116,7 @@ func TestUploader_Upload(t *testing.T) {
 		},
 		{
 			Location: catalog.MediaLocation{
-				FolderName: "2021-04_easter",
+				FolderName: "/2021-04_easter",
 				Filename:   "2021-04-04_00-00-00_00000003.jpg",
 			},
 			Type:      "IMAGE",
@@ -125,7 +125,7 @@ func TestUploader_Upload(t *testing.T) {
 		},
 		{
 			Location: catalog.MediaLocation{
-				FolderName: "2021-Q2",
+				FolderName: "/2021-Q2",
 				Filename:   "2021-04-05_00-00-00_00000004.jpg",
 			},
 			Type:      "IMAGE",
@@ -147,10 +147,10 @@ func TestUploader_Upload(t *testing.T) {
 	}).Once()
 
 	// EXPECTATION 2/2
-	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-Q1", "2021-03-27_00-00-00_00000001.jpg").Return("2021-03-27_00-00-00_ONLINE.jpg", nil).Once()
-	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-Q2", "2021-04-02_00-00-00_00000002.mkv").Return("2021-04-02_00-00-00_00000002.mkv", nil).Once()
-	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-04_easter", "2021-04-04_00-00-00_00000003.jpg").Return("2021-04-04_00-00-00_00000003.jpg", nil).Once()
-	onlineStorage.On("UploadFile", "unittest", mock.Anything, "2021-Q2", "2021-04-05_00-00-00_00000004.jpg").Return("2021-04-05_00-00-00_00000004.jpg", nil).Once()
+	onlineStorage.On("UploadFile", "unittest", mock.Anything, "/2021-Q1", "2021-03-27_00-00-00_00000001.jpg").Return("2021-03-27_00-00-00_ONLINE.jpg", nil).Once()
+	onlineStorage.On("UploadFile", "unittest", mock.Anything, "/2021-Q2", "2021-04-02_00-00-00_00000002.mkv").Return("2021-04-02_00-00-00_00000002.mkv", nil).Once()
+	onlineStorage.On("UploadFile", "unittest", mock.Anything, "/2021-04_easter", "2021-04-04_00-00-00_00000003.jpg").Return("2021-04-04_00-00-00_00000003.jpg", nil).Once()
+	onlineStorage.On("UploadFile", "unittest", mock.Anything, "/2021-Q2", "2021-04-05_00-00-00_00000004.jpg").Return("2021-04-05_00-00-00_00000004.jpg", nil).Once()
 
 	uploader, err := NewUploader(catalogProxy, onlineStorage, "unittest", postFilter)
 	if !a.NoError(err) {

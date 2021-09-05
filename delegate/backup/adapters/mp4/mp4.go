@@ -23,7 +23,7 @@ type Parser struct {
 }
 
 func (p *Parser) Supports(media backupmodel.FoundMedia, mediaType backupmodel.MediaType) bool {
-	ext := strings.ToUpper(path.Ext(media.Filename()))
+	ext := strings.ToUpper(path.Ext(media.MediaPath().Filename))
 	return ext == ".MP4" || ext == ".MOV"
 }
 

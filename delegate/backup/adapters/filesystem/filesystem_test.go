@@ -47,7 +47,7 @@ func TestScanner(t *testing.T) {
 
 		if a.Len(found, 2) {
 			a.Equal(path.Join(volumeMountAbs, "scan/a_text.TXT"), found[0].String())
-			a.Equal("a_text.TXT", path.Base(found[0].Filename()))
+			a.Equal("a_text.TXT", path.Base(found[0].MediaPath().Filename))
 			a.Equal(&backupmodel.SimpleMediaSignature{
 				RelativePath: "scan/a_text.TXT",
 				Size:         6,

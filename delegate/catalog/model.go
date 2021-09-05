@@ -41,6 +41,11 @@ func newTimeRangeFromAlbum(album Album) TimeRange {
 	}
 }
 
+func (c *CreateAlbum) String() string {
+	const layout = "2006-01-02T03"
+	return fmt.Sprintf("[%s -> %s] %s (%s)", c.Start.Format(layout), c.End.Format(layout), c.Name, c.ForcedFolderName)
+}
+
 type MediaType string
 type MediaOrientation string
 

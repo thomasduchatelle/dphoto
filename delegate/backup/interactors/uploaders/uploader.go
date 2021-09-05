@@ -4,6 +4,7 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"duchatelle.io/dphoto/dphoto/catalog"
 	"fmt"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"path"
 	"strings"
@@ -79,7 +80,7 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 
 		location := catalog.MediaLocation{
 			FolderName: folderName,
-			Filename:   fmt.Sprintf("%s_%s%s", media.Details.DateTime.Format("2006-01-02_15-04-05"), signature.SignatureSha256[:8], strings.ToLower(path.Ext(media.FoundMedia.Filename()))),
+			Filename:   fmt.Sprintf("%s_%s%s", media.Details.DateTime.Format("2006-01-02_15-04-05"), signature.SignatureSha256[:8], strings.ToLower(path.Ext(media.FoundMedia.MediaPath().Filename))),
 		}
 
 		signatures[i] = &signature
@@ -177,7 +178,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 	}
 
 	year := mediaTime.Year()
-	quarter := mediaTime.Month() / 3
+	quarter := (mediaTime.Month() - 1) / 3
 
 	createRequest := catalog.CreateAlbum{
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),
@@ -190,7 +191,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 
 	err := u.catalog.Create(createRequest)
 	if err != nil {
-		return "", false, err
+		return "", false, errors.Wrapf(err, "failed to create album containing %s [%s]", mediaTime.Format(time.RFC3339), createRequest.String())
 	}
 
 	u.timeline, err = u.timeline.AppendAlbum(&catalog.Album{

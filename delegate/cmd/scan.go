@@ -26,7 +26,7 @@ var scan = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		volume := args[0]
 
-		recordRepository, count, err := backupadapter.ScanWithCache(volume)
+		recordRepository, count, err := backupadapter.ScanWithCache(newSmartVolume(volume))
 		printer.FatalIfError(err, 2)
 
 		if count == 0 {
