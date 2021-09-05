@@ -6,7 +6,6 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
 	"github.com/pkg/errors"
 	"github.com/rwcarlsen/goexif/exif"
-	"github.com/rwcarlsen/goexif/mknote"
 	log "github.com/sirupsen/logrus"
 	"image"
 	_ "image/jpeg"
@@ -16,7 +15,8 @@ import (
 )
 
 func init() {
-	exif.RegisterParsers(mknote.All...)
+	// note - Canon parser is failing on 2007 photos from a Canon camera
+	exif.RegisterParsers()
 }
 
 type Parser struct{}
@@ -31,7 +31,7 @@ func (p *Parser) ReadDetails(reader io.Reader, options backupmodel.DetailsReader
 
 	x, err := exif.Decode(teeReader)
 	if err != nil {
-		log.WithField("Reader", reader).WithError(err).Warn("no EXIF data found in file, try another way")
+		log.WithError(err).Warn("no EXIF data found in file, try another way")
 		return p.readImageWithoutExif(io.MultiReader(buffer, reader))
 	}
 
