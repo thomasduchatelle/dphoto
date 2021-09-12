@@ -5,6 +5,7 @@ import (
 	"duchatelle.io/dphoto/dphoto/backup/interactors"
 	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"regexp"
 	"sort"
 	"sync"
@@ -18,36 +19,50 @@ type analyseProgressListener interface {
 	OnAnalyseProgress(count, total uint)
 }
 
+type ScanOptions struct {
+	Listeners   []interface{}
+	SkipRejects bool // SkipRejects mode will report any analysis error, or missing timestamp, and continue.
+}
+
 var (
 	datePrefix = regexp.MustCompile("^[0-9]{4}-[01Q][0-9][-_]")
 )
 
 // ScanVolume scan a source to discover albums based on original folder structure.
 // Listeners will be notified on the progress of the scan.
-func ScanVolume(volume backupmodel.VolumeToBackup, listeners ...interface{}) ([]*backupmodel.ScannedFolder, error) {
+func ScanVolume(volume backupmodel.VolumeToBackup, options ScanOptions) ([]*backupmodel.ScannedFolder, []backupmodel.FoundMedia, error) {
+	analyser.DefaultMediaTimestamp = !options.SkipRejects
+
 	medias, err := scanMediaSource(volume)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	triggerScanComplete(listeners, len(medias))
+	triggerScanComplete(options.Listeners, len(medias))
 
 	albums := make(map[string]*backupmodel.ScannedFolder)
+	var rejects []backupmodel.FoundMedia
 	for count, found := range medias {
 		_, details, err := analyser.ExtractTypeAndDetails(found)
 		if err != nil {
-			return nil, err
-		}
+			log.WithError(err).Warnf("Details can't be read from media %s", found)
+			rejects = append(rejects, found)
 
-		mediaPath := found.MediaPath()
-		if album, ok := albums[mediaPath.Path]; ok {
-			album.PushBoundaries(details.DateTime, found.SimpleSignature().Size)
+		} else if options.SkipRejects && details.DateTime.IsZero() {
+			log.Warnf("Meida timestamp can't be found within the file %s", found)
+			rejects = append(rejects, found)
+
 		} else {
-			albums[mediaPath.Path] = newFoundAlbum(volume, mediaPath)
-			albums[mediaPath.Path].PushBoundaries(details.DateTime, found.SimpleSignature().Size)
+			mediaPath := found.MediaPath()
+			if album, ok := albums[mediaPath.Path]; ok {
+				album.PushBoundaries(details.DateTime, found.SimpleSignature().Size)
+			} else {
+				albums[mediaPath.Path] = newFoundAlbum(volume, mediaPath)
+				albums[mediaPath.Path].PushBoundaries(details.DateTime, found.SimpleSignature().Size)
+			}
 		}
 
-		triggerProgress(listeners, count, len(medias))
+		triggerProgress(options.Listeners, count, len(medias))
 	}
 
 	suggestions := make([]*backupmodel.ScannedFolder, len(albums))
@@ -64,7 +79,7 @@ func ScanVolume(volume backupmodel.VolumeToBackup, listeners ...interface{}) ([]
 		return suggestions[i].End.Before(suggestions[j].End)
 	})
 
-	return suggestions, err
+	return suggestions, rejects, err
 }
 
 func triggerScanComplete(listeners []interface{}, total int) {

@@ -17,8 +17,9 @@ var (
 )
 
 type stateContent struct {
-	VolumeId   string
-	ScanResult []*backupmodel.ScannedFolder
+	VolumeId    string
+	ScanResult  []*backupmodel.ScannedFolder
+	RejectCount int
 }
 
 func init() {
@@ -34,14 +35,15 @@ func init() {
 	})
 }
 
-func Store(volumeId string, result []*backupmodel.ScannedFolder) error {
+func Store(volumeId string, result []*backupmodel.ScannedFolder, rejectCount int) error {
 	if storeFile == "" {
 		return errors.Errorf("local.home must have been set before using this function.")
 	}
 
 	jsonValue, err := json.Marshal(stateContent{
-		VolumeId:   volumeId,
-		ScanResult: result,
+		VolumeId:    volumeId,
+		ScanResult:  result,
+		RejectCount: rejectCount,
 	})
 	if err != nil {
 		return err
@@ -50,22 +52,22 @@ func Store(volumeId string, result []*backupmodel.ScannedFolder) error {
 	return ioutil.WriteFile(storeFile, jsonValue, 0644)
 }
 
-func restore(volumeId string) ([]*backupmodel.ScannedFolder, error) {
+func restore(volumeId string) ([]*backupmodel.ScannedFolder, int, error) {
 	content, err := ioutil.ReadFile(storeFile)
 	if err != nil && os.IsNotExist(err) {
-		return nil, nil
+		return nil, 0, nil
 	} else if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	state := stateContent{}
 	err = json.Unmarshal(content, &state)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if state.VolumeId != volumeId {
-		return nil, nil
+		return nil, 0, nil
 	}
-	return state.ScanResult, nil
+	return state.ScanResult, state.RejectCount, nil
 }

@@ -28,8 +28,10 @@ func NewInteractiveSession(actions InteractiveActionsPort, existingRepository Ex
 		existingRepository:   existingRepository,
 		suggestionRepository: suggestionRepository,
 		state: InteractiveViewState{
-			RecordsState: RecordsState{},
-			Actions:      nil,
+			RecordsState: RecordsState{
+				Rejected: suggestionRepository.Rejects(),
+			},
+			Actions: nil,
 		},
 	}
 }
@@ -174,10 +176,7 @@ func (i *InteractiveSession) reloadRecords() error {
 		return err
 	}
 
-	suggestions, err := i.suggestionRepository.FindSuggestionRecords()
-	if err != nil {
-		return err
-	}
+	suggestions := i.suggestionRepository.FindSuggestionRecords()
 
 	i.state.Records = createFlattenTree(existing, suggestions)
 

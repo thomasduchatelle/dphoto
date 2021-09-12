@@ -6,7 +6,7 @@ import (
 	"duchatelle.io/dphoto/dphoto/cmd/ui"
 )
 
-func NewSuggestionRepository(folders []*backupmodel.ScannedFolder) ui.SuggestionRecordRepositoryPort {
+func NewSuggestionRepository(folders []*backupmodel.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {
 	records := make([]*ui.SuggestionRecord, len(folders))
 
 	for i, folder := range folders {
@@ -27,7 +27,8 @@ func NewSuggestionRepository(folders []*backupmodel.ScannedFolder) ui.Suggestion
 	}
 
 	return &staticRecordRepository{
-		Records: records,
+		Records:     records,
+		RejectCount: rejectCount,
 	}
 }
 
@@ -36,11 +37,20 @@ func NewAlbumRepository() ui.ExistingRecordRepositoryPort {
 }
 
 type staticRecordRepository struct {
-	Records []*ui.SuggestionRecord
+	Records     []*ui.SuggestionRecord
+	RejectCount int
 }
 
-func (r *staticRecordRepository) FindSuggestionRecords() ([]*ui.SuggestionRecord, error) {
-	return r.Records, nil
+func (r *staticRecordRepository) FindSuggestionRecords() []*ui.SuggestionRecord {
+	return r.Records
+}
+
+func (r *staticRecordRepository) Count() int {
+	return len(r.Records)
+}
+
+func (r *staticRecordRepository) Rejects() int {
+	return r.RejectCount
 }
 
 type dynamicAlbumRepository struct{}

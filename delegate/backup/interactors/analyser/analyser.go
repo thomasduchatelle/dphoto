@@ -37,6 +37,8 @@ var SupportedExtensions = map[string]backupmodel.MediaType{
 	"webm": backupmodel.MediaTypeVideo,
 }
 
+var DefaultMediaTimestamp = true // DefaultMediaTimestamp set to TRUE will use file last modification date as its timestamp when it can't be found within the file.
+
 func AnalyseMedia(found backupmodel.FoundMedia) (*backupmodel.AnalysedMedia, error) {
 
 	reader, hasher, err := readerSpyingForHash(found)
@@ -97,7 +99,9 @@ func extractDetails(found backupmodel.FoundMedia, options backupmodel.DetailsRea
 
 	if details.DateTime.IsZero() {
 		log.WithField("Media", found).Warnf("Modification date not found with readers: %s", strings.Join(matchingReaders, ", "))
-		details.DateTime = found.LastModificationDate()
+		if DefaultMediaTimestamp {
+			details.DateTime = found.LastModificationDate()
+		}
 	}
 
 	return mediaType, details, nil

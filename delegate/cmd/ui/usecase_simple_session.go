@@ -24,13 +24,11 @@ func (s *StaticSession) Render() error {
 		return err
 	}
 
-	suggestions, err := s.suggestionRepository.FindSuggestionRecords()
-	if err != nil {
-		return err
-	}
+	suggestions := s.suggestionRepository.FindSuggestionRecords()
 
 	content, err := s.renderer.Render(&RecordsState{
 		Records:  createFlattenTree(existing, suggestions),
+		Rejected: s.suggestionRepository.Rejects(),
 		Selected: -1,
 	})
 

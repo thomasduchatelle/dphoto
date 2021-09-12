@@ -70,7 +70,12 @@ func (r *recordsRenderer) Render(state *RecordsState) (string, error) {
 		}
 	}
 
-	return table.String(), nil
+	rejectLine := ""
+	if state.Rejected > 0 {
+		rejectLine = aurora.Sprintf("\n(%d medias has been rejected - see reject file for more details)\n", aurora.Red(state.Rejected))
+	}
+
+	return table.String() + rejectLine, nil
 }
 
 func (r *recordsRenderer) applyStyle(selected, suggestion bool, args interface{}) string {

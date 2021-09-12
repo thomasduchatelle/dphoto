@@ -16,34 +16,36 @@ type ScanProgress struct {
 	analysedLine *screen.ProgressLine
 }
 
-func ScanWithCache(volume backupmodel.VolumeToBackup) (ui.SuggestionRecordRepositoryPort, int, error) {
-	previousResult, err := restore(volume.UniqueId)
+func ScanWithCache(volume backupmodel.VolumeToBackup, options backup.ScanOptions) (ui.SuggestionRecordRepositoryPort, []backupmodel.FoundMedia, error) {
+	previousResult, rejectCount, err := restore(volume.UniqueId)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "failed to restore previous scan result for volume %s", volume.String())
+		return nil, nil, errors.Wrapf(err, "failed to restore previous scan result for volume %s", volume.String())
 	}
 
 	if len(previousResult) > 0 {
 		useState, ok := ui.NewSimpleForm().ReadBool("Previous result has been found for this volume, do you want to restore it?", "Y/n")
 		if !ok || useState {
-			return NewSuggestionRepository(previousResult), len(previousResult), err
+			return NewSuggestionRepository(previousResult, rejectCount), nil, err
 		}
 	}
 
-	suggestions, err := doScan(volume)
-	return NewSuggestionRepository(suggestions), len(suggestions), err
+	suggestions, rejects, err := doScan(volume, options)
+	return NewSuggestionRepository(suggestions, len(rejects)), rejects, err
 }
 
-func doScan(volume backupmodel.VolumeToBackup) ([]*backupmodel.ScannedFolder, error) {
+func doScan(volume backupmodel.VolumeToBackup, options backup.ScanOptions) ([]*backupmodel.ScannedFolder, []backupmodel.FoundMedia, error) {
 	progress := newScanProgress()
-	suggestions, err := backup.ScanVolume(volume, progress)
+	options.Listeners = append(options.Listeners, progress)
+
+	suggestions, rejects, err := backup.ScanVolume(volume, options)
 	progress.screen.Stop()
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	err = Store(volume.UniqueId, suggestions)
-	return suggestions, err
+	err = Store(volume.UniqueId, suggestions, len(rejects))
+	return suggestions, rejects, err
 }
 
 func newScanProgress() *ScanProgress {

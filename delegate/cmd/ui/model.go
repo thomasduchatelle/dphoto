@@ -40,6 +40,7 @@ type Record struct {
 
 type RecordsState struct {
 	Records      []*Record
+	Rejected     int // Rejected is the number of file that has been rejected (ignored)
 	Selected     int // Selected can be -1 to not highlight any line
 	PageSize     int // PageSize can be 0 to disable pagination
 	FirstElement int // FirstElement is the index of the first shown record ; default (or pagination disabled): 0
@@ -59,7 +60,9 @@ type RecordCreation struct {
 
 // SuggestionRecordRepositoryPort is the port providing data to the UI
 type SuggestionRecordRepositoryPort interface {
-	FindSuggestionRecords() ([]*SuggestionRecord, error)
+	FindSuggestionRecords() []*SuggestionRecord
+	Count() int
+	Rejects() int
 }
 
 // ExistingRecordRepositoryPort is the port providing data to the UI
@@ -67,8 +70,8 @@ type ExistingRecordRepositoryPort interface {
 	FindExistingRecords() ([]*ExistingRecord, error)
 }
 
-// FullRepository is only used for Noop version
-type FullRepository struct{}
+// NoopRepository is only used for Noop version
+type NoopRepository struct{}
 
 type CreateAlbumPort interface {
 	Create(createRequest RecordCreation) error
@@ -120,14 +123,18 @@ type InteractiveRendererPort interface {
 }
 
 // NewNoopRepository implements both SuggestionRecordRepositoryPort and ExistingRecordRepositoryPort but won't returns anything.
-func NewNoopRepository() *FullRepository {
-	return new(FullRepository)
+func NewNoopRepository() SuggestionRecordRepositoryPort {
+	return new(NoopRepository)
 }
 
-func (r FullRepository) FindSuggestionRecords() ([]*SuggestionRecord, error) {
-	return nil, nil
+func (r NoopRepository) FindSuggestionRecords() []*SuggestionRecord {
+	return nil
 }
 
-func (r FullRepository) FindExistingRecords() ([]*ExistingRecord, error) {
-	return nil, nil
+func (r NoopRepository) Count() int {
+	return 0
+}
+
+func (r NoopRepository) Rejects() int {
+	return 0
 }
