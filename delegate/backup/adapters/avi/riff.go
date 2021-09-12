@@ -3,9 +3,9 @@ package avi
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"github.com/pkg/errors"
 	"io"
+	"strings"
 )
 
 type RiffNode struct {
@@ -33,27 +33,39 @@ func DecodeRiff(reader io.Reader) (*RiffNode, error) {
 		return nil, errors.Errorf("RIFF structure must start by 'RIFF', not '%s'", string(flag[:4]))
 	}
 
-	header := make([]byte, 12)
-	_, err = io.ReadFull(reader, header)
-	if err != nil {
-		return nil, err
-	}
-	if string(header[:4]) != "LIST" {
-		return nil, errors.Errorf("First chunk of RIFF is expected to be LIST but is %s", string(header[:4]))
+	var children []*RiffNode
+	parsingHeader := true
+	for parsingHeader {
+		header := make([]byte, 8)
+		_, err = io.ReadFull(reader, header)
+		if err != nil {
+			return nil, err
+		}
+
+		length := binary.LittleEndian.Uint32(header[4:8])
+
+		content := make([]byte, length+8)
+		copy(content[:8], header)
+
+		_, err = io.ReadFull(reader, content[8:])
+		if err != nil {
+			return nil, err
+		}
+
+		nodes, err := parseRiffNode(content, 0)
+		if err != nil {
+			return nil, err
+		}
+		children = append(children, nodes...)
+
+		if len(nodes) > 0 && nodes[0].Type == "INFO" {
+			parsingHeader = false
+		}
 	}
 
-	length := binary.LittleEndian.Uint32(header[4:8]) - 4
-	content := make([]byte, length)
-
-	_, err = io.ReadFull(reader, content)
-	if err != nil {
-		return nil, err
-	}
-
-	nodes, err := parseRiffNode(content, 0)
 	return &RiffNode{
-		Type:     fmt.Sprintf("%s_%s", string(flag[8:]), string(header[8:])),
-		Children: nodes,
+		Type:     strings.Trim(string(flag[8:]), " "),
+		Children: children,
 	}, err
 }
 

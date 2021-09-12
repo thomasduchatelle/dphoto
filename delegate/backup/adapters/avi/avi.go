@@ -57,7 +57,7 @@ func browseRiffNodes(details *backupmodel.MediaDetails, node *RiffNode) {
 
 	} else if node.Type == "strh" && len(node.Value) == 56 {
 		if binary.LittleEndian.Uint32(node.Value[4:8]) != 0 {
-			details.VideoEncoding = string(node.Value[4:8])
+			details.VideoEncoding = strings.Trim(string(node.Value[4:8]), "\x00")
 		}
 
 		// note - likely to pick both VIDEO and AUDIO stream but duration is the same
@@ -65,6 +65,9 @@ func browseRiffNodes(details *backupmodel.MediaDetails, node *RiffNode) {
 		frameCount := float64(binary.LittleEndian.Uint32(node.Value[32:36]))
 
 		details.Duration = int64(rate * frameCount * 1000)
+
+	} else if node.Type == "ISFT" && len(node.Value) > 0 {
+		details.Make = strings.Trim(string(node.Value), "\x00")
 	}
 
 	for _, child := range node.Children {
