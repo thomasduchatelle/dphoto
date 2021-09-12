@@ -111,18 +111,22 @@ func extractDetails(found backupmodel.FoundMedia, options backupmodel.DetailsRea
 
 func extractFromFileName(filename string, defaultDate time.Time) time.Time {
 	formats := []struct {
-		Regex  string
-		Layout string
+		Regex            string
+		Layout           string
+		RemoveNonNumeric bool
 	}{
-		{"(199[0-9]|20[012][0-9])-[01][0-9]-[0-3][0-9]", "2006-01-02"},
-		{"(199[0-9]|20[012][0-9])[01][0-9][0-3][0-9]", "20060102"},
+		{"(199[0-9]|20[012][0-9])[^0-9A-Za-z]?[01][^0-9A-Za-z]?[0-9][^0-9A-Za-z]?[0-3][0-9][^0-9]?[0-2][0-9][^0-9A-Za-z]?[0-6][0-9][^0-9A-Za-z]?[0-6][0-9]", "20060102150405", true},
+		{"(199[0-9]|20[012][0-9])[^0-9A-Za-z]?[01][^0-9A-Za-z]?[0-9][^0-9A-Za-z]?[0-3][0-9]", "20060102", true},
 	}
 
 	for _, f := range formats {
 		date := regexp.MustCompile(f.Regex).FindString(filename)
+		if f.RemoveNonNumeric {
+			date = regexp.MustCompile("[^0-9]").ReplaceAllLiteralString(date, "")
+		}
 		if date != "" {
 			parsedDate, err := time.Parse(f.Layout, date)
-			if err == nil && !parsedDate.IsZero() {
+			if err == nil && !parsedDate.IsZero() && parsedDate.Before(time.Now()) && parsedDate.After(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)){
 				return parsedDate
 			}
 		}

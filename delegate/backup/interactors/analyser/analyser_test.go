@@ -88,3 +88,37 @@ func Test_analyseMedia(t *testing.T) {
 		}
 	}
 }
+
+func TestDateParser(t *testing.T) {
+	a := assert.New(t)
+
+	const layout = "2006-01-02T15:04:05"
+	defaultTime := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct{
+		name string
+		filename string
+		defaultValue time.Time
+		want time.Time
+	}{
+		{"it should parse an ISO date", "VID_2007-12-24_1245ABC.mp4", defaultTime, mustParse(layout, "2007-12-24T00:00:00")},
+		{"it should parse an ISO date time", "VID_2007-12-24T12:45:42ABC.mp4", defaultTime, mustParse(layout, "2007-12-24T12:45:42")},
+		{"it should parse a date time without separator", "VID_20071224124542ABC.mp4", defaultTime, mustParse(layout, "2007-12-24T12:45:42")},
+		{"it should parse a date without separator", "VID_2007122412454ABC.mp4", defaultTime, mustParse(layout, "2007-12-24T00:00:00")},
+		{"it should not accept date in the future", "VID_21000101.mp4", defaultTime, defaultTime},
+		{"it should not accept dates too far in the past", "VID_1999-01-01.mp4", defaultTime, defaultTime},
+	}
+
+	for _, tt := range tests {
+		got := extractFromFileName(tt.filename, tt.defaultValue)
+		a.Equal(tt.want, got, tt.name)
+	}
+}
+
+func mustParse(layout, value string) time.Time {
+	date, err := time.Parse(layout, value)
+	if err != nil {
+		panic(err)
+	}
+	return date
+}
