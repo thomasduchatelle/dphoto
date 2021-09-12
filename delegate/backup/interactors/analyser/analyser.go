@@ -13,7 +13,9 @@ import (
 	"io/ioutil"
 	"path"
 	"reflect"
+	"regexp"
 	"strings"
+	"time"
 )
 
 var SupportedExtensions = map[string]backupmodel.MediaType{
@@ -100,11 +102,33 @@ func extractDetails(found backupmodel.FoundMedia, options backupmodel.DetailsRea
 	if details.DateTime.IsZero() {
 		log.WithField("Media", found).Warnf("Modification date not found with readers: %s", strings.Join(matchingReaders, ", "))
 		if DefaultMediaTimestamp {
-			details.DateTime = found.LastModificationDate()
+			details.DateTime = extractFromFileName(found.MediaPath().Filename, found.LastModificationDate())
 		}
 	}
 
 	return mediaType, details, nil
+}
+
+func extractFromFileName(filename string, defaultDate time.Time) time.Time {
+	formats := []struct {
+		Regex  string
+		Layout string
+	}{
+		{"(199[0-9]|20[012][0-9])-[01][0-9]-[0-3][0-9]", "2006-01-02"},
+		{"(199[0-9]|20[012][0-9])[01][0-9][0-3][0-9]", "20060102"},
+	}
+
+	for _, f := range formats {
+		date := regexp.MustCompile(f.Regex).FindString(filename)
+		if date != "" {
+			parsedDate, err := time.Parse(f.Layout, date)
+			if err == nil && !parsedDate.IsZero() {
+				return parsedDate
+			}
+		}
+	}
+
+	return defaultDate
 }
 
 type hashSpy struct {

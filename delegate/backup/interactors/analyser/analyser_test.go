@@ -22,6 +22,7 @@ func Test_analyseMedia(t *testing.T) {
 		backupmodel.NewInmemoryMedia("/somewhere/my_image.jpg", 42, mediaDate),
 		backupmodel.NewInmemoryMediaWithHash("/somewhere/my_video.AVI", 42, mediaDate, "qwerty"),
 		backupmodel.NewInmemoryMedia("/somewhere/my_document.txt", 42, mediaDate),
+		backupmodel.NewInmemoryMedia("/somewhere/VID_20210911_WA0001.mp4", 42, mediaDate),
 	}
 
 	details := &backupmodel.MediaDetails{
@@ -37,7 +38,7 @@ func Test_analyseMedia(t *testing.T) {
 	mockImageDetailsReader.On("ReadDetails", mock.Anything, backupmodel.DetailsReaderOptions{Fast: false}).Once().Return(details, nil)
 
 	mockImageDetailsReader.On("Supports", mock.Anything, backupmodel.MediaTypeImage).Once().Return(true)
-	mockImageDetailsReader.On("Supports", mock.Anything, backupmodel.MediaTypeVideo).Once().Return(false)
+	mockImageDetailsReader.On("Supports", mock.Anything, backupmodel.MediaTypeVideo).Times(2).Return(false)
 	mockImageDetailsReader.On("Supports", mock.Anything, backupmodel.MediaTypeOther).Once().Return(false)
 
 	type args struct {
@@ -68,6 +69,13 @@ func Test_analyseMedia(t *testing.T) {
 			Type:       backupmodel.MediaTypeOther,
 			Signature:  &backupmodel.FullMediaSignature{Sha256: "07b9bc44acdbbc0926117bb9e284f953060b2da0259b703af3def3841c7f61e8", Size: 42},
 			Details:    &backupmodel.MediaDetails{DateTime: mediaDate},
+		}, false},
+
+		{"it should use the date from the file name", args{medias[3]}, &backupmodel.AnalysedMedia{
+			FoundMedia: medias[3],
+			Type:       backupmodel.MediaTypeVideo,
+			Signature:  &backupmodel.FullMediaSignature{Sha256: "07b9bc44acdbbc0926117bb9e284f953060b2da0259b703af3def3841c7f61e8", Size: 42},
+			Details:    &backupmodel.MediaDetails{DateTime: time.Date(2021, 9, 11, 0, 0, 0, 0, time.UTC)},
 		}, false},
 	}
 
