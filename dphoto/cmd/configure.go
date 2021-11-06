@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
@@ -52,9 +52,9 @@ The configuration is stored in '~/.dphoto/dphoto.yaml'.
 
 		fields := []configField{
 			{key: "owner", description: "Owner of the medias (an email address)"},
+			{key: "aws.region", description: "AWS_REGION where dphoto is deployed", outputName: "region"},
 			{key: "aws.key", description: "AWS_ACCESS_KEY_ID to use with dphoto", outputName: "delegate_access_key_id"},
 			{key: "aws.secret", description: "AWS_SECRET_ACCESS_KEY to use with dphoto"},
-			{key: "aws.region", description: "AWS_REGION where dphoto is deployed"},
 			{key: "catalog.dynamodb.table", description: "DynamoDB table where catalog is stored", outputName: "dynamodb_name"},
 			{key: "backup.s3.bucket", description: "S3 bucket where medias are stored", outputName: "bucket_name"},
 		}

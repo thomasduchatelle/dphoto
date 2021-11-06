@@ -28,7 +28,7 @@ func Listen(listener Listener) {
 }
 
 // Connect must be called by main function, it dispatches the config to all components requiring it. Set ignite to TRUE to connect to AWS (required for most commands)
-func Connect(ignite bool) {
+func Connect(ignite bool) error {
 	if ForcedConfigFile == "" {
 		viper.SetConfigName("dphoto")
 		viper.AddConfigPath(".")
@@ -40,7 +40,7 @@ func Connect(ignite bool) {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("Fatal error while loading configuration: %s \n", err))
+		return fmt.Errorf("Fatal error while loading configuration: %s \n", err)
 	}
 
 	if ignite {
@@ -61,6 +61,8 @@ func Connect(ignite bool) {
 		}
 		log.Debugf("Config > %d adapters connected", len(listeners))
 	}
+
+	return nil
 }
 
 func awsString(value string) *string {

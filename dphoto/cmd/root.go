@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/config"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/dphoto/config"
 	"os"
 	"path"
 )
@@ -50,8 +51,15 @@ var rootCmd = &cobra.Command{
 		}).Debugln("Logger setup, starts program...")
 
 		// complete initialisation on components
-		ignite := cmd.Name() != "configure"
-		config.Connect(ignite)
+		ignite := cmd.Name() != "configure" && cmd.Name() != "version"
+		err = config.Connect(ignite)
+		if err != nil {
+			if ignite {
+				panic(fmt.Errorf("Fatal error while loading configuration: %s \n", err))
+			} else {
+				printer.Info("Configuration not loaded - only 'configure' and 'version' commands are available.")
+			}
+		}
 
 		if ignite {
 			config.Listen(func(c config.Config) {

@@ -14,9 +14,14 @@ Media sharing | - | Albums can be shared and contributed by several users
 Getting Started
 ------------------------------------
 
-    go install github.com/thomasduchatelle/dphoto/delegate@master
+Install 'dphoto' command line interface and configure it using the following:
+
+    go install github.com/thomasduchatelle/dphoto/dphoto@latest
     dphoto configure
 
+Then use command `backup` to upload media in a directory, or scan to interactively organise the albums.
+
+    dphoto scan /x/y/z
     dphoto backup /x/y/z
 
 Contribute
@@ -24,4 +29,5 @@ Contribute
 
 Components:
 
-* [Delegate](./delegate/README.md): installed on the end-user computer, backup photos and videos when a media is plugged in.
+* [DPhoto CLI](./dphoto/README.md): installed on the end-user computer, backup photos and videos using command line interface
+* `infra-data`: terraform project to create required infrastructure on AWS for the CLI to work. Project won't be re-usable in a different context without overriding backend and some other defaults.
