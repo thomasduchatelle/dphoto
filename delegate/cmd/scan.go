@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/catalog"
-	"duchatelle.io/dphoto/dphoto/cmd/adapters/backupadapter"
-	"duchatelle.io/dphoto/dphoto/cmd/printer"
-	"duchatelle.io/dphoto/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/delegate/backup"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/adapters/backupadapter"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/ui"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"

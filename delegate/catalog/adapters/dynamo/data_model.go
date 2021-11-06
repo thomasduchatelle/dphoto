@@ -11,7 +11,7 @@
 package dynamo
 
 import (
-	"duchatelle.io/dphoto/dphoto/catalog"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog"
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"

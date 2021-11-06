@@ -2,14 +2,14 @@
 package backup
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/backup/interactors"
-	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
-	"duchatelle.io/dphoto/dphoto/backup/interactors/downloader"
-	"duchatelle.io/dphoto/dphoto/backup/interactors/filter"
-	"duchatelle.io/dphoto/dphoto/backup/interactors/runner"
-	"duchatelle.io/dphoto/dphoto/backup/interactors/tracker"
-	"duchatelle.io/dphoto/dphoto/backup/interactors/uploaders"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors/analyser"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors/downloader"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors/filter"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors/runner"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors/tracker"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors/uploaders"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

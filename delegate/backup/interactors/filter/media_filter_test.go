@@ -1,9 +1,9 @@
 package filter
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/backup/interactors"
-	"duchatelle.io/dphoto/dphoto/mocks"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors"
+	"github.com/thomasduchatelle/dphoto/delegate/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

@@ -1,9 +1,9 @@
 package backup_adapter
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/daemon"
+	"github.com/thomasduchatelle/dphoto/delegate/backup"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/daemon"
 	log "github.com/sirupsen/logrus"
 )
 

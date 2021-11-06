@@ -1,6 +1,6 @@
 package runner
 
-import "duchatelle.io/dphoto/dphoto/backup/backupmodel"
+import "github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 
 // Source populates media channel with everything found on the volume.
 type Source func(medias chan backupmodel.FoundMedia) (uint, uint, error)

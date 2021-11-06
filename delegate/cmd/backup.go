@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/cmd/backupui"
-	"duchatelle.io/dphoto/dphoto/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/delegate/backup"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/backupui"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/printer"
 	"github.com/spf13/cobra"
 	"path/filepath"
 	"strings"

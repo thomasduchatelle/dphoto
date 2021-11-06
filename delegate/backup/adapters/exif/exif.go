@@ -3,7 +3,7 @@ package exif
 
 import (
 	"bytes"
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 	"github.com/pkg/errors"
 	"github.com/rwcarlsen/goexif/exif"
 	log "github.com/sirupsen/logrus"

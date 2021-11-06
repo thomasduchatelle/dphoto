@@ -4,7 +4,7 @@ package localstorage
 import (
 	"context"
 	"crypto/sha256"
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 	"encoding/hex"
 	"fmt"
 	"github.com/google/uuid"

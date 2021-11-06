@@ -17,9 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package main
 
 import (
-	_ "duchatelle.io/dphoto/dphoto/backup/adapters"
-	_ "duchatelle.io/dphoto/dphoto/catalog/adapters"
-	"duchatelle.io/dphoto/dphoto/cmd"
+	_ "github.com/thomasduchatelle/dphoto/delegate/backup/adapters"
+	_ "github.com/thomasduchatelle/dphoto/delegate/catalog/adapters"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd"
 )
 
 func main() {

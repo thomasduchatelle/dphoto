@@ -2,7 +2,7 @@
 package volumes
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 	"encoding/json"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

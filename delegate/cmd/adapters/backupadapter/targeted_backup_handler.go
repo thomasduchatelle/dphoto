@@ -1,10 +1,10 @@
 package backupadapter
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/cmd/backupui"
-	"duchatelle.io/dphoto/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/delegate/backup"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/backupui"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/ui"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"

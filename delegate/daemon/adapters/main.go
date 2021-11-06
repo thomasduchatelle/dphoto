@@ -1,5 +1,5 @@
 package adapters
 
 import (
-	_ "duchatelle.io/dphoto/dphoto/daemon/adapters/backup_adapter"
+	_ "github.com/thomasduchatelle/dphoto/delegate/daemon/adapters/backup_adapter"
 )

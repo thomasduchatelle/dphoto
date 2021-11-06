@@ -1,9 +1,9 @@
 package adapters
 
 import (
-	"duchatelle.io/dphoto/dphoto/catalog"
-	"duchatelle.io/dphoto/dphoto/catalog/adapters/dynamo"
-	"duchatelle.io/dphoto/dphoto/config"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog/adapters/dynamo"
+	"github.com/thomasduchatelle/dphoto/delegate/config"
 	log "github.com/sirupsen/logrus"
 )
 

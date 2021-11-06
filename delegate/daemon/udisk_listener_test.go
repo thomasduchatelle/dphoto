@@ -1,8 +1,8 @@
 package daemon
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/mocks"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/mocks"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

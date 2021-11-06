@@ -1,7 +1,7 @@
 package m2ts
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"

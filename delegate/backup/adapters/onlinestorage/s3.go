@@ -2,7 +2,7 @@
 package onlinestorage
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"

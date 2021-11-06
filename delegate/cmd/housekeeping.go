@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup"
-	"duchatelle.io/dphoto/dphoto/catalog"
-	"duchatelle.io/dphoto/dphoto/cmd/printer"
-	"duchatelle.io/dphoto/dphoto/cmd/screen"
+	"github.com/thomasduchatelle/dphoto/delegate/backup"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/screen"
 	"fmt"
 	"github.com/alexeyco/simpletable"
 	"github.com/logrusorgru/aurora/v3"

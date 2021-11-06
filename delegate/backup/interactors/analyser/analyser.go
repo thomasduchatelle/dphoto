@@ -2,8 +2,8 @@ package analyser
 
 import (
 	"crypto/sha256"
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/backup/interactors"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors"
 	"encoding/hex"
 	"fmt"
 	"github.com/pkg/errors"

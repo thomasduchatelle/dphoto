@@ -1,9 +1,9 @@
 package backupadapter
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/catalog"
-	"duchatelle.io/dphoto/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/ui"
 )
 
 func NewSuggestionRepository(folders []*backupmodel.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {

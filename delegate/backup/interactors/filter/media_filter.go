@@ -1,8 +1,8 @@
 package filter
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/backup/interactors"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"sync"

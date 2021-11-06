@@ -2,8 +2,8 @@
 package filesystem
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/backup/interactors/analyser"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/interactors/analyser"
 	"github.com/dixonwille/skywalker"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

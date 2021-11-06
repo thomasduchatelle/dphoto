@@ -1,8 +1,8 @@
 package uploaders
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/catalog"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

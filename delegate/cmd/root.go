@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"duchatelle.io/dphoto/dphoto/config"
+	"github.com/thomasduchatelle/dphoto/delegate/config"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

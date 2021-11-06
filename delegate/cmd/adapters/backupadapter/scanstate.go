@@ -1,8 +1,8 @@
 package backupadapter
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
-	"duchatelle.io/dphoto/dphoto/config"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/config"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"io/ioutil"

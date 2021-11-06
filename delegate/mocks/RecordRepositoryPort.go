@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	ui "duchatelle.io/dphoto/dphoto/cmd/ui"
+	ui "github.com/thomasduchatelle/dphoto/delegate/cmd/ui"
 	mock "github.com/stretchr/testify/mock"
 )
 

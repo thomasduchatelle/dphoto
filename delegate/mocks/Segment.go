@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	screen "duchatelle.io/dphoto/dphoto/cmd/screen"
+	screen "github.com/thomasduchatelle/dphoto/delegate/cmd/screen"
 	mock "github.com/stretchr/testify/mock"
 )
 

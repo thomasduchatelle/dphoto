@@ -1,6 +1,6 @@
 package backup
 
-import "duchatelle.io/dphoto/dphoto/config"
+import "github.com/thomasduchatelle/dphoto/delegate/config"
 
 const (
 	scanBufferSize = 1024 * 128

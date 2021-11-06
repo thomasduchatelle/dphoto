@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	config "duchatelle.io/dphoto/dphoto/config"
+	config "github.com/thomasduchatelle/dphoto/delegate/config"
 	mock "github.com/stretchr/testify/mock"
 )
 

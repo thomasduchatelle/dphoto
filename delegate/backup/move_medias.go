@@ -1,6 +1,6 @@
 package backup
 
-import "duchatelle.io/dphoto/dphoto/backup/interactors"
+import "github.com/thomasduchatelle/dphoto/delegate/backup/interactors"
 
 // MovePhysicalStorage is a pass through to the adapter.
 func MovePhysicalStorage(owner string, folderName, filename, destinationFolderName string) (string, error) {

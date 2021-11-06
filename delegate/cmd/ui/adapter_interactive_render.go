@@ -2,7 +2,7 @@ package ui
 
 import (
 	"bufio"
-	"duchatelle.io/dphoto/dphoto/cmd/screen"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/screen"
 	"github.com/buger/goterm"
 	"os"
 	"strings"

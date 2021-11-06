@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"duchatelle.io/dphoto/dphoto/catalog"
-	"duchatelle.io/dphoto/dphoto/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/printer"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

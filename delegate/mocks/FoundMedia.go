@@ -5,7 +5,7 @@ package mocks
 import (
 	io "io"
 
-	backupmodel "duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	backupmodel "github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 
 	mock "github.com/stretchr/testify/mock"
 

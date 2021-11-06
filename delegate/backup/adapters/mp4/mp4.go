@@ -6,7 +6,7 @@
 package mp4
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"

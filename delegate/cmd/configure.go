@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"duchatelle.io/dphoto/dphoto/cmd/printer"
-	"duchatelle.io/dphoto/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/delegate/cmd/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"

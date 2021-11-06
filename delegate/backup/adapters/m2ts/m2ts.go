@@ -5,7 +5,7 @@
 package m2ts
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 	"encoding/hex"
 	"fmt"
 	"github.com/pkg/errors"

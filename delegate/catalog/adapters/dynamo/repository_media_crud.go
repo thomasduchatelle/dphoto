@@ -1,7 +1,7 @@
 package dynamo
 
 import (
-	"duchatelle.io/dphoto/dphoto/catalog"
+	"github.com/thomasduchatelle/dphoto/delegate/catalog"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"

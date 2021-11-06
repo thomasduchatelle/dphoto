@@ -1,7 +1,7 @@
 package tracker
 
 import (
-	"duchatelle.io/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/delegate/backup/backupmodel"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
