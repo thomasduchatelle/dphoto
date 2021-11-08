@@ -2,6 +2,9 @@
 package backup
 
 import (
+	"fmt"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors/analyser"
@@ -10,9 +13,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors/runner"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors/tracker"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors/uploaders"
-	"fmt"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"regexp"
 	"strings"
 	"time"

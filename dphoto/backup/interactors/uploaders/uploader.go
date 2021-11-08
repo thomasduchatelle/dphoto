@@ -1,11 +1,11 @@
 package uploaders
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
 	"path"
 	"strings"
 	"sync"
@@ -13,12 +13,14 @@ import (
 )
 
 type Uploader struct {
-	timeline      *catalog.Timeline
-	timelineLock  sync.Mutex
-	catalog       CatalogProxyAdapter
-	onlineStorage backupmodel.OnlineStorageAdapter
-	owner         string
-	postFilter    backupmodel.PostAnalyseFilter // postFilter might be nil (backupmodel.DefaultPostAnalyseFilter)
+	timeline       *catalog.Timeline
+	timelineLock   sync.Mutex
+	signatures     map[catalog.MediaSignature]interface{}
+	signaturesLock sync.Mutex
+	catalog        CatalogProxyAdapter
+	onlineStorage  backupmodel.OnlineStorageAdapter
+	owner          string
+	postFilter     backupmodel.PostAnalyseFilter // postFilter might be nil (backupmodel.DefaultPostAnalyseFilter)
 }
 
 type mediaRecord struct {
@@ -39,12 +41,14 @@ func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.Onl
 	}
 
 	return &Uploader{
-		timeline:      timeline,
-		timelineLock:  sync.Mutex{},
-		catalog:       catalogProxy,
-		onlineStorage: onlineStorage,
-		owner:         owner,
-		postFilter:    postFilter,
+		timeline:       timeline,
+		timelineLock:   sync.Mutex{},
+		signatures:     make(map[catalog.MediaSignature]interface{}),
+		signaturesLock: sync.Mutex{},
+		catalog:        catalogProxy,
+		onlineStorage:  onlineStorage,
+		owner:          owner,
+		postFilter:     postFilter,
 	}, nil
 }
 
@@ -61,10 +65,10 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 		}
 	}()
 
-	signatures := make([]*catalog.MediaSignature, len(buffer))
+	var signatures []*catalog.MediaSignature
 	medias := make(map[catalog.MediaSignature]mediaRecord)
 
-	for i, media := range buffer {
+	for _, media := range buffer {
 		signature := catalog.MediaSignature{
 			SignatureSha256: media.Signature.Sha256,
 			SignatureSize:   int(media.Signature.Size),
@@ -83,8 +87,8 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 			Filename:   fmt.Sprintf("%s_%s%s", media.Details.DateTime.Format("2006-01-02_15-04-05"), signature.SignatureSha256[:8], strings.ToLower(path.Ext(media.FoundMedia.MediaPath().Filename))),
 		}
 
-		signatures[i] = &signature
 		if _, duplicated := medias[signature]; !duplicated {
+			signatures = append(signatures, &signature)
 			medias[signature] = mediaRecord{
 				analysedMedia: media,
 				folderName:    folderName,
@@ -111,7 +115,7 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 
 	err := u.filterKnownMedias(signatures, medias, progressChannel)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to find signatures %+v", signatures)
 	}
 
 	uploaded := make([]catalog.CreateMediaRequest, len(medias))
@@ -133,17 +137,30 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 		}
 	}
 
-	return u.catalog.InsertMedias(uploaded)
+	return errors.Wrapf(u.catalog.InsertMedias(uploaded), "failed to insert photos in catalog: ")
 }
 
 func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, medias map[catalog.MediaSignature]mediaRecord, progressChannel chan *backupmodel.ProgressEvent) error {
+	filteredOutCount := uint(0)
+	filteredOutSize := uint(0)
+
+	u.signaturesLock.Lock()
+	for sig, record := range medias {
+		if _, duplicated := u.signatures[sig]; duplicated {
+			log.Debugf("Uploader > skipping media already backed up %s", record.analysedMedia.FoundMedia)
+			delete(medias, sig)
+			filteredOutCount += 1
+			filteredOutSize += record.analysedMedia.Signature.Size
+		}
+
+		u.signatures[sig] = nil
+	}
+	u.signaturesLock.Unlock()
+
 	knownSignatures, err := u.catalog.FindSignatures(signatures)
 	if err != nil {
 		return err
 	}
-
-	filteredOutCount := uint(0)
-	filteredOutSize := uint(0)
 
 	if u.postFilter != nil {
 		for sig, record := range medias {

@@ -1,11 +1,11 @@
 package uploaders
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
 	"github.com/thomasduchatelle/dphoto/dphoto/mocks"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"sort"
 	"testing"
 	"time"
@@ -84,10 +84,12 @@ func TestUploader_Upload(t *testing.T) {
 		ForcedFolderName: "/2021-Q2",
 	}).Return(nil).Once()
 
-	signatureRequest := make([]*catalog.MediaSignature, len(medias))
+	signatureRequest := make([]*catalog.MediaSignature, len(medias)-1) // dynamoDB do not support duplicates even in queries
 
 	for i, sign := range medias {
-		signatureRequest[i] = &catalog.MediaSignature{SignatureSha256: sign.Signature.Sha256, SignatureSize: int(sign.Signature.Size)}
+		if i != 6 {
+			signatureRequest[i] = &catalog.MediaSignature{SignatureSha256: sign.Signature.Sha256, SignatureSize: int(sign.Signature.Size)}
+		}
 	}
 	catalogProxy.On("FindSignatures", signatureRequest).Return([]*catalog.MediaSignature{signatureRequest[4]}, nil).Once()
 

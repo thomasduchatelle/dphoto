@@ -1,8 +1,9 @@
 package runner
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"sync"
 )
 
@@ -56,7 +57,7 @@ func (r *Runner) pipeFoundToReadyToAnalyseChannels(foundCh, downloadedCh chan ba
 				r.MDC.Debugf("Runner > downloading %s", found)
 				dl, err := r.Downloader(found)
 				if err != nil {
-					r.report.AppendError(err)
+					r.report.AppendError(errors.Wrap(err, "error in downloader"))
 					return
 				}
 				downloadedCh <- dl
@@ -82,7 +83,7 @@ func (r *Runner) pipeReadyToAnalyseToReadyToBackupChannels(downloadedCh chan bac
 				r.MDC.Debugf("Runner > analysing %s", media)
 				analysed, err := r.Analyser(media)
 				if err != nil {
-					r.report.AppendError(err)
+					r.report.AppendError(errors.Wrap(err, "error in analyser"))
 					return
 				}
 				readyToAnalyse <- analysed
@@ -111,7 +112,7 @@ func (r *Runner) pipeReadyToBackupToCompletedChannels(readyToBackupChannel chan 
 				if len(buffer) == cap(buffer) {
 					err := r.Uploader(buffer, r.progressEventChannel)
 					if err != nil {
-						r.report.AppendError(err)
+						r.report.AppendError(errors.Wrap(err, "error in uploader"))
 						return
 					}
 					buffer = buffer[:0]
@@ -122,7 +123,7 @@ func (r *Runner) pipeReadyToBackupToCompletedChannels(readyToBackupChannel chan 
 			if len(buffer) > 0 {
 				err := r.Uploader(buffer, r.progressEventChannel)
 				if err != nil {
-					r.report.AppendError(err)
+					r.report.AppendError(errors.Wrap(err, "error in uploader (flush)"))
 					return
 				}
 			}
@@ -133,7 +134,7 @@ func (r *Runner) pipeReadyToBackupToCompletedChannels(readyToBackupChannel chan 
 		group.Wait()
 
 		if len(r.report.Errors) == 0 {
-			r.report.AppendError(r.PreCompletion())
+			r.report.AppendError(errors.Wrap(r.PreCompletion(), "error in pre-completion"))
 		}
 
 		completionChannel <- r.report
@@ -168,7 +169,7 @@ func (r *Runner) startScanning(channel chan backupmodel.FoundMedia) {
 	go func() {
 		defer close(bufferChannel)
 		_, _, err := r.Source(bufferChannel)
-		r.report.AppendError(err)
+		r.report.AppendError(errors.Wrap(err, "error in sourcing"))
 	}()
 }
 
