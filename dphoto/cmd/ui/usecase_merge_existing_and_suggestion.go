@@ -67,10 +67,10 @@ func createFlattenTree(existing []*ExistingRecord, suggestions []*SuggestionReco
 	var records []*Record
 	sort.Slice(nodes, func(i, j int) bool {
 		if !nodes[i].record.Start.Equal(nodes[j].record.Start) {
-			return nodes[i].record.Start.Before(nodes[j].record.Start)
+			return nodes[i].record.Start.After(nodes[j].record.Start)
 		}
 
-		return nodes[i].record.End.Before(nodes[j].record.End)
+		return nodes[i].record.End.After(nodes[j].record.End)
 	})
 
 	for _, node := range nodes {
@@ -78,10 +78,10 @@ func createFlattenTree(existing []*ExistingRecord, suggestions []*SuggestionReco
 
 		sort.Slice(node.children, func(i, j int) bool {
 			if !node.children[i].Start.Equal(node.children[j].Start) {
-				return node.children[i].Start.Before(node.children[j].Start)
+				return node.children[i].Start.After(node.children[j].Start)
 			}
 
-			return node.children[i].End.Before(node.children[j].End)
+			return node.children[i].End.After(node.children[j].End)
 		})
 		for _, child := range node.children {
 			records = append(records, child)
