@@ -46,9 +46,10 @@ func Connect(ignite bool) error {
 	if ignite {
 		// use explicit config to avoid creating unwanted environment
 		sess := session.Must(session.NewSession(&aws.Config{
-			Credentials: credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
-			Endpoint:    awsString(viper.GetString("aws.endpoint")),
-			Region:      aws.String(viper.GetString("aws.region")),
+			Credentials:      credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
+			Endpoint:         awsString(viper.GetString("aws.endpoint")),
+			Region:           aws.String(viper.GetString("aws.region")),
+			S3ForcePathStyle: aws.Bool(true), // prevent using S3 bucket in HOST (incompatible with localstack on macOS)
 		}))
 
 		config = &viperConfig{

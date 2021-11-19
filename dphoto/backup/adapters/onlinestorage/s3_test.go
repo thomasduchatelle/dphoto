@@ -1,25 +1,28 @@
 package onlinestorage
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"io"
 	"strings"
 	"testing"
 	"time"
 )
 
+var awsSession = session.Must(session.NewSession(&aws.Config{
+	Region:           aws.String("eu-west-1"),
+	Endpoint:         aws.String("http://localhost:4566"),
+	S3ForcePathStyle: aws.Bool(true),
+}))
+
 func TestS3OnlineStorage_UploadFile(t *testing.T) {
 	a := assert.New(t)
 
-	s, err := NewS3OnlineStorage("dphoto-unit-upload-"+time.Now().Format("20060102150405"), session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String("eu-west-1"),
-		Endpoint: aws.String("http://localhost:4566"),
-	})))
+	s, err := NewS3OnlineStorage("dphoto-unit-upload-"+time.Now().Format("20060102150405"), awsSession)
 	must(a, err)
 
 	_, err = s.s3.CreateBucket(&s3.CreateBucketInput{Bucket: &s.bucketName})
@@ -62,10 +65,7 @@ func TestS3OnlineStorage_UploadFile(t *testing.T) {
 func TestMoveFile(t *testing.T) {
 	a := assert.New(t)
 
-	s, err := NewS3OnlineStorage("dphoto-unit-move-"+time.Now().Format("20060102150405"), session.Must(session.NewSession(&aws.Config{
-		Region:   aws.String("eu-west-1"),
-		Endpoint: aws.String("http://localhost:4566"),
-	})))
+	s, err := NewS3OnlineStorage("dphoto-unit-move-"+time.Now().Format("20060102150405"), awsSession)
 	must(a, err)
 
 	_, err = s.s3.CreateBucket(&s3.CreateBucketInput{Bucket: &s.bucketName})
