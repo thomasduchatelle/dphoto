@@ -1,3 +1,5 @@
+.PHONY: all delegate test mocks clearlocal
+
 all: test delegate
 
 delegate:
