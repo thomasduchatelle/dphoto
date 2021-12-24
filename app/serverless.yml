@@ -1,0 +1,51 @@
+service: dphoto-app
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  region: eu-west-1
+  runtime: go1.x
+  memorySize: 256
+  lambdaHashingVersion: 20201221
+  deploymentBucket:
+    blockPublicAccess: true
+    tags:
+      Application: dphoto-app
+      Environment: ${sls:stage}
+
+  iam:
+    role:
+      name: dphoto-app-${sls:stage}-lambdas-role
+      path: /dphoto/${sls:stage}/
+      managedPolicies:
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/storageROArn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/indexRWArn}
+      tags:
+        Application: dphoto-app
+        Environment: ${sls:stage}
+  tags:
+    Application: dphoto-app
+    Environment: ${sls:stage}
+  httpApi:
+    useProviderTags: true
+
+package:
+  patterns:
+    - '!./**'
+    - ./bin/**
+
+functions:
+  list-albums:
+    handler: bin/list-albums
+    events:
+      - httpApi:
+          path: /v1/albums
+          method: get
+
+plugins:
+  - serverless-ssm-fetch
+
+custom:
+  serverlessSsmFetch:
+    STORAGE_BUCKET_NAME: /dphoto/${sls:stage}/storage/bucketName
+    CATALOG_TABLE_NAME: /dphoto/${sls:stage}/catalog/tableName

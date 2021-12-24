@@ -83,3 +83,40 @@ data "aws_iam_policy_document" "storage_rw" {
     ]
   }
 }
+
+resource "aws_iam_policy" "storage_ro" {
+  name   = "${local.prefix}-storage-ro"
+  path   = local.path
+  policy = data.aws_iam_policy_document.storage_ro.json
+}
+
+data "aws_iam_policy_document" "storage_ro" {
+  statement {
+    effect    = "Allow"
+    actions   = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      aws_s3_bucket.storage.arn,
+    ]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.storage.arn}/*",
+    ]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
+    ]
+    resources = [
+      aws_kms_key.storage.arn
+    ]
+  }
+}

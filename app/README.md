@@ -1,4 +1,4 @@
-DPhoto - WEB
+DPhoto - VIEWER
 =======================================
 
 WEB viewer for photo and video backed up with DPhoto command line interface.
