@@ -1,14 +1,15 @@
 package cmd
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup"
-	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/screen"
 	"fmt"
 	"github.com/alexeyco/simpletable"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/screen"
 	"strings"
 )
 
@@ -46,7 +47,7 @@ var housekeepingCmd = &cobra.Command{
 	},
 }
 
-func startHousekeepingTransactions(transactions []*catalog.MoveTransaction) error {
+func startHousekeepingTransactions(transactions []*catalogmodel.MoveTransaction) error {
 	total := 0
 	for _, t := range transactions {
 		total += t.Count
@@ -80,7 +81,7 @@ func startHousekeepingTransactions(transactions []*catalog.MoveTransaction) erro
 	return nil
 }
 
-func printTransactions(transactions []*catalog.MoveTransaction) {
+func printTransactions(transactions []*catalogmodel.MoveTransaction) {
 	table := simpletable.New()
 	table.Header = &simpletable.Header{Cells: []*simpletable.Cell{
 		{Text: "Transaction ID"},
@@ -129,7 +130,7 @@ func (h *housekeepingOperator) updateGlobalTransactionBar(countFromLastCompleted
 	}
 }
 
-func (h *housekeepingOperator) Move(source, dest catalog.MediaLocation) (string, error) {
+func (h *housekeepingOperator) Move(source, dest catalogmodel.MediaLocation) (string, error) {
 	if len(h.lastMoves) > 5 {
 		h.lastMoves = h.lastMoves[1:]
 	}

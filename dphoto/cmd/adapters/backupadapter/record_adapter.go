@@ -1,8 +1,9 @@
 package backupadapter
 
 import (
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 )
 
@@ -61,7 +62,7 @@ func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, er
 		return nil, err
 	}
 
-	albumsWithoutStats := make([]*catalog.Album, len(albums))
+	albumsWithoutStats := make([]*catalogmodel.Album, len(albums))
 	for i, a := range albums {
 		albumsWithoutStats[i] = &a.Album
 	}
@@ -79,14 +80,14 @@ func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, er
 			Name:          album.Album.Name,
 			Start:         album.Album.Start,
 			End:           album.Album.End,
-			Count:         uint(album.TotalCount()),
+			Count:         uint(album.TotalCount),
 			ActivePeriods: r.activePeriods(timeline, album),
 		}
 	}
 	return records, err
 }
 
-func (r *dynamicAlbumRepository) activePeriods(timeline *catalog.Timeline, album *catalog.AlbumStat) []ui.Period {
+func (r *dynamicAlbumRepository) activePeriods(timeline *catalog.Timeline, album *catalogmodel.AlbumStat) []ui.Period {
 	actives, _ := timeline.FindBetween(album.Album.Start, album.Album.End)
 	var periods []ui.Period
 	for _, active := range actives {

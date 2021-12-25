@@ -1,16 +1,17 @@
 package cmd
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
 	"time"
 )
 
 var (
-	creationRequest catalog.CreateAlbum
+	creationRequest catalogmodel.CreateAlbum
 	newArgs         = struct {
 		startDate string
 		endDate   string

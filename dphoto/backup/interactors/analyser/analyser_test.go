@@ -1,12 +1,12 @@
 package analyser
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors"
-	"github.com/thomasduchatelle/dphoto/dphoto/mocks"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors"
+	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )
@@ -95,11 +95,11 @@ func TestDateParser(t *testing.T) {
 	const layout = "2006-01-02T15:04:05"
 	defaultTime := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	tests := []struct{
-		name string
-		filename string
+	tests := []struct {
+		name         string
+		filename     string
 		defaultValue time.Time
-		want time.Time
+		want         time.Time
 	}{
 		{"it should parse an ISO date", "VID_2007-12-24_1245ABC.mp4", defaultTime, mustParse(layout, "2007-12-24T00:00:00")},
 		{"it should parse an ISO date time", "VID_2007-12-24T12:45:42ABC.mp4", defaultTime, mustParse(layout, "2007-12-24T12:45:42")},

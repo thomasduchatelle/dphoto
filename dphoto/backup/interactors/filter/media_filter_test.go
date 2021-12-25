@@ -1,10 +1,10 @@
 package filter
 
 import (
+	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors"
-	"github.com/thomasduchatelle/dphoto/dphoto/mocks"
-	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )

@@ -1,15 +1,16 @@
 package cmd
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/adapters/backupadapter"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/adapters/backupadapter"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 	"os"
 	"path"
 	"time"
@@ -91,7 +92,7 @@ type uiCatalogAdapter struct {
 }
 
 func (o uiCatalogAdapter) Create(request ui.RecordCreation) error {
-	return catalog.Create(catalog.CreateAlbum{
+	return catalog.Create(catalogmodel.CreateAlbum{
 		Name:             request.Name,
 		Start:            request.Start,
 		End:              request.End,

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
 	"path"
 	"strings"
 	"sync"
@@ -15,7 +16,7 @@ import (
 type Uploader struct {
 	timeline       *catalog.Timeline
 	timelineLock   sync.Mutex
-	signatures     map[catalog.MediaSignature]interface{}
+	signatures     map[catalogmodel.MediaSignature]interface{}
 	signaturesLock sync.Mutex
 	catalog        CatalogProxyAdapter
 	onlineStorage  backupmodel.OnlineStorageAdapter
@@ -25,7 +26,7 @@ type Uploader struct {
 
 type mediaRecord struct {
 	analysedMedia *backupmodel.AnalysedMedia
-	createRequest *catalog.CreateMediaRequest
+	createRequest *catalogmodel.CreateMediaRequest
 	folderName    string
 }
 
@@ -43,7 +44,7 @@ func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.Onl
 	return &Uploader{
 		timeline:       timeline,
 		timelineLock:   sync.Mutex{},
-		signatures:     make(map[catalog.MediaSignature]interface{}),
+		signatures:     make(map[catalogmodel.MediaSignature]interface{}),
 		signaturesLock: sync.Mutex{},
 		catalog:        catalogProxy,
 		onlineStorage:  onlineStorage,
@@ -65,11 +66,11 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 		}
 	}()
 
-	var signatures []*catalog.MediaSignature
-	medias := make(map[catalog.MediaSignature]mediaRecord)
+	var signatures []*catalogmodel.MediaSignature
+	medias := make(map[catalogmodel.MediaSignature]mediaRecord)
 
 	for _, media := range buffer {
-		signature := catalog.MediaSignature{
+		signature := catalogmodel.MediaSignature{
 			SignatureSha256: media.Signature.Sha256,
 			SignatureSize:   int(media.Signature.Size),
 		}
@@ -82,7 +83,7 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 			progressChannel <- &backupmodel.ProgressEvent{Type: backupmodel.ProgressEventAlbumCreated, Count: 1, Album: folderName}
 		}
 
-		location := catalog.MediaLocation{
+		location := catalogmodel.MediaLocation{
 			FolderName: folderName,
 			Filename:   fmt.Sprintf("%s_%s%s", media.Details.DateTime.Format("2006-01-02_15-04-05"), signature.SignatureSha256[:8], strings.ToLower(path.Ext(media.FoundMedia.MediaPath().Filename))),
 		}
@@ -92,14 +93,14 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 			medias[signature] = mediaRecord{
 				analysedMedia: media,
 				folderName:    folderName,
-				createRequest: &catalog.CreateMediaRequest{
+				createRequest: &catalogmodel.CreateMediaRequest{
 					Location: location,
-					Type:     catalog.MediaType(media.Type),
-					Details: catalog.MediaDetails{
+					Type:     catalogmodel.MediaType(media.Type),
+					Details: catalogmodel.MediaDetails{
 						Width:         media.Details.Width,
 						Height:        media.Details.Height,
 						DateTime:      media.Details.DateTime,
-						Orientation:   catalog.MediaOrientation(media.Details.Orientation),
+						Orientation:   catalogmodel.MediaOrientation(media.Details.Orientation),
 						Make:          media.Details.Make,
 						Model:         media.Details.Model,
 						GPSLatitude:   media.Details.GPSLatitude,
@@ -118,7 +119,7 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 		return errors.Wrapf(err, "failed to find signatures %+v", signatures)
 	}
 
-	uploaded := make([]catalog.CreateMediaRequest, len(medias))
+	uploaded := make([]catalogmodel.CreateMediaRequest, len(medias))
 	index := 0
 	for _, media := range medias {
 		err = u.doUpload(media.analysedMedia.FoundMedia, &media.createRequest.Location)
@@ -140,7 +141,7 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 	return errors.Wrapf(u.catalog.InsertMedias(uploaded), "failed to insert photos in catalog: ")
 }
 
-func (u *Uploader) filterKnownMedias(signatures []*catalog.MediaSignature, medias map[catalog.MediaSignature]mediaRecord, progressChannel chan *backupmodel.ProgressEvent) error {
+func (u *Uploader) filterKnownMedias(signatures []*catalogmodel.MediaSignature, medias map[catalogmodel.MediaSignature]mediaRecord, progressChannel chan *backupmodel.ProgressEvent) error {
 	filteredOutCount := uint(0)
 	filteredOutSize := uint(0)
 
@@ -197,7 +198,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 	year := mediaTime.Year()
 	quarter := (mediaTime.Month() - 1) / 3
 
-	createRequest := catalog.CreateAlbum{
+	createRequest := catalogmodel.CreateAlbum{
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),
 		Start:            time.Date(year, quarter*3+1, 1, 0, 0, 0, 0, time.UTC),
 		End:              time.Date(year, (quarter+1)*3+1, 1, 0, 0, 0, 0, time.UTC),
@@ -211,7 +212,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 		return "", false, errors.Wrapf(err, "failed to create album containing %s [%s]", mediaTime.Format(time.RFC3339), createRequest.String())
 	}
 
-	u.timeline, err = u.timeline.AppendAlbum(&catalog.Album{
+	u.timeline, err = u.timeline.AppendAlbum(&catalogmodel.Album{
 		Name:       createRequest.Name,
 		FolderName: createRequest.ForcedFolderName,
 		Start:      createRequest.Start,
@@ -220,33 +221,33 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 	return createRequest.ForcedFolderName, true, err
 }
 
-func (u *Uploader) doUpload(media backupmodel.FoundMedia, location *catalog.MediaLocation) (err error) {
+func (u *Uploader) doUpload(media backupmodel.FoundMedia, location *catalogmodel.MediaLocation) (err error) {
 	log.Debugf("Uploader > Upload media %s", media)
 	location.Filename, err = u.onlineStorage.UploadFile(u.owner, media, location.FolderName, location.Filename)
 	return
 }
 
 type CatalogProxyAdapter interface {
-	FindAllAlbums() ([]*catalog.Album, error)
-	InsertMedias(medias []catalog.CreateMediaRequest) error
-	Create(createRequest catalog.CreateAlbum) error
-	FindSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error)
+	FindAllAlbums() ([]*catalogmodel.Album, error)
+	InsertMedias(medias []catalogmodel.CreateMediaRequest) error
+	Create(createRequest catalogmodel.CreateAlbum) error
+	FindSignatures(signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error)
 }
 
 type CatalogProxy struct{}
 
-func (c CatalogProxy) FindAllAlbums() ([]*catalog.Album, error) {
+func (c CatalogProxy) FindAllAlbums() ([]*catalogmodel.Album, error) {
 	return catalog.FindAllAlbums()
 }
 
-func (c CatalogProxy) InsertMedias(medias []catalog.CreateMediaRequest) error {
+func (c CatalogProxy) InsertMedias(medias []catalogmodel.CreateMediaRequest) error {
 	return catalog.InsertMedias(medias)
 }
 
-func (c CatalogProxy) Create(createRequest catalog.CreateAlbum) error {
+func (c CatalogProxy) Create(createRequest catalogmodel.CreateAlbum) error {
 	return catalog.Create(createRequest)
 }
 
-func (c CatalogProxy) FindSignatures(signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
+func (c CatalogProxy) FindSignatures(signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
 	return catalog.FindSignatures(signatures)
 }

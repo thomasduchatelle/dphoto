@@ -1,12 +1,12 @@
 package daemon
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/mocks"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 )
 

@@ -1,11 +1,11 @@
 package runner
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/mocks"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/mocks"
 	"io"
 	"path"
 	"strings"

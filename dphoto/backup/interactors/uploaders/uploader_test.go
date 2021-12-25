@@ -3,9 +3,9 @@ package uploaders
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/catalog"
-	"github.com/thomasduchatelle/dphoto/dphoto/mocks"
+	"github.com/thomasduchatelle/dphoto/mocks"
 	"sort"
 	"testing"
 	"time"
@@ -67,75 +67,75 @@ func TestUploader_Upload(t *testing.T) {
 		},
 	}
 
-	catalogProxy.On("FindAllAlbums").Return([]*catalog.Album{
+	catalogProxy.On("FindAllAlbums").Return([]*catalogmodel.Album{
 		{"Easter", "/2021-04_easter", mustParseDate("2021-04-04"), mustParseDate("2021-04-05")},
 	}, nil)
 
-	catalogProxy.On("Create", catalog.CreateAlbum{
+	catalogProxy.On("Create", catalogmodel.CreateAlbum{
 		Name:             "Q1 2021",
 		Start:            mustParseDate("2021-01-01"),
 		End:              mustParseDate("2021-04-01"),
 		ForcedFolderName: "/2021-Q1",
 	}).Return(nil).Once()
-	catalogProxy.On("Create", catalog.CreateAlbum{
+	catalogProxy.On("Create", catalogmodel.CreateAlbum{
 		Name:             "Q2 2021",
 		Start:            mustParseDate("2021-04-01"),
 		End:              mustParseDate("2021-07-01"),
 		ForcedFolderName: "/2021-Q2",
 	}).Return(nil).Once()
 
-	signatureRequest := make([]*catalog.MediaSignature, len(medias)-1) // dynamoDB do not support duplicates even in queries
+	signatureRequest := make([]*catalogmodel.MediaSignature, len(medias)-1) // dynamoDB do not support duplicates even in queries
 
 	for i, sign := range medias {
 		if i != 6 {
-			signatureRequest[i] = &catalog.MediaSignature{SignatureSha256: sign.Signature.Sha256, SignatureSize: int(sign.Signature.Size)}
+			signatureRequest[i] = &catalogmodel.MediaSignature{SignatureSha256: sign.Signature.Sha256, SignatureSize: int(sign.Signature.Size)}
 		}
 	}
-	catalogProxy.On("FindSignatures", signatureRequest).Return([]*catalog.MediaSignature{signatureRequest[4]}, nil).Once()
+	catalogProxy.On("FindSignatures", signatureRequest).Return([]*catalogmodel.MediaSignature{signatureRequest[4]}, nil).Once()
 
 	postFilter.On("AcceptAnalysedMedia", medias[5], "/2021-Q2").Return(false)
 	postFilter.On("AcceptAnalysedMedia", mock.Anything, mock.Anything).Return(true)
 
 	// EXPECTATION 1/2
-	expectedCreateMediaRequest := []catalog.CreateMediaRequest{
+	expectedCreateMediaRequest := []catalogmodel.CreateMediaRequest{
 		{
-			Location: catalog.MediaLocation{
+			Location: catalogmodel.MediaLocation{
 				FolderName: "/2021-Q1",
 				Filename:   "2021-03-27_00-00-00_ONLINE.jpg",
 			},
 			Type:      "IMAGE",
-			Details:   catalog.MediaDetails{DateTime: medias[0].Details.DateTime},
+			Details:   catalogmodel.MediaDetails{DateTime: medias[0].Details.DateTime},
 			Signature: *signatureRequest[0],
 		},
 		{
-			Location: catalog.MediaLocation{
+			Location: catalogmodel.MediaLocation{
 				FolderName: "/2021-Q2",
 				Filename:   "2021-04-02_00-00-00_00000002.mkv",
 			},
 			Type:      "VIDEO",
-			Details:   catalog.MediaDetails{DateTime: medias[1].Details.DateTime},
+			Details:   catalogmodel.MediaDetails{DateTime: medias[1].Details.DateTime},
 			Signature: *signatureRequest[1],
 		},
 		{
-			Location: catalog.MediaLocation{
+			Location: catalogmodel.MediaLocation{
 				FolderName: "/2021-04_easter",
 				Filename:   "2021-04-04_00-00-00_00000003.jpg",
 			},
 			Type:      "IMAGE",
-			Details:   catalog.MediaDetails{DateTime: medias[2].Details.DateTime},
+			Details:   catalogmodel.MediaDetails{DateTime: medias[2].Details.DateTime},
 			Signature: *signatureRequest[2],
 		},
 		{
-			Location: catalog.MediaLocation{
+			Location: catalogmodel.MediaLocation{
 				FolderName: "/2021-Q2",
 				Filename:   "2021-04-05_00-00-00_00000004.jpg",
 			},
 			Type:      "IMAGE",
-			Details:   catalog.MediaDetails{DateTime: medias[3].Details.DateTime},
+			Details:   catalogmodel.MediaDetails{DateTime: medias[3].Details.DateTime},
 			Signature: *signatureRequest[3],
 		},
 	}
-	catalogProxy.On("InsertMedias", mock.Anything).Return(func(actual []catalog.CreateMediaRequest) error {
+	catalogProxy.On("InsertMedias", mock.Anything).Return(func(actual []catalogmodel.CreateMediaRequest) error {
 		sort.Slice(actual, func(i, j int) bool {
 			return actual[i].Location.Filename < actual[j].Location.Filename
 		})
