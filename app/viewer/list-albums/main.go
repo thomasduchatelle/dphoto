@@ -1,44 +1,24 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"os"
-
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/app/viewer/common"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
 )
 
-type Response events.APIGatewayProxyResponse
+func Handler(ctx context.Context) (common.Response, error) {
+	if err := common.ConnectCatalog("tomdush@gmail.com"); err != nil {
+		return common.InternalError(err), nil
+	}
 
-// Handler is our lambda handler invoked by the `lambda.Start` function call
-func Handler(ctx context.Context) (Response, error) {
-	var buf bytes.Buffer
-
-	tableName, _ := os.LookupEnv("CATALOG_TABLE_NAME")
-	bucketName, _ := os.LookupEnv("STORAGE_BUCKET_NAME")
-
-	body, err := json.Marshal(map[string]interface{}{
-		"dynamo_table": tableName,
-		"s3_bucket":    bucketName,
-	})
+	albums, err := catalog.FindAllAlbumsWithStats()
 	if err != nil {
-		return Response{StatusCode: 404}, err
-	}
-	json.HTMLEscape(&buf, body)
-
-	resp := Response{
-		StatusCode:      200,
-		IsBase64Encoded: false,
-		Body:            buf.String(),
-		Headers: map[string]string{
-			"Content-Type":           "application/json",
-			"X-MyCompany-Func-Reply": "hello-handler",
-		},
+		common.InternalError(errors.Wrapf(err, "failed to fetch albums"))
 	}
 
-	return resp, nil
+	return common.Ok(albums), nil
 }
 
 func main() {
