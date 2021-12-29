@@ -1,8 +1,27 @@
-import React from 'react';
+import axios from "axios";
+import React, {useEffect, useState} from 'react';
 import './App.css';
 import logo from './logo.svg';
 
+interface Album {
+  Name: String
+  FolderName: String
+  Start: Date
+  End: Date
+}
+
+interface AlbumWithStats {
+  Album: Album
+  TotalCount: number
+}
+
 function App() {
+  let [albums, setAlbums] = useState<AlbumWithStats[]>([])
+
+  useEffect(() => {
+    axios.get<AlbumWithStats[]>('/api/v1/albums').then(resp => setAlbums(resp.data))
+  }, [])
+
   return (
     <div className="App">
       <header className="App-header">
@@ -10,14 +29,17 @@ function App() {
         <p>
           Welcome to DPhoto !
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        {albums.length > 0 && (
+          <div>
+            <h4>{albums.length} album(s):</h4>
+            <ul>
+              {albums.map(a => (
+                  <li>{a.Album.Name} starting on {a.Album.Start.toLocaleString()} [{a.TotalCount} media(s)]</li>
+                )
+              )}
+            </ul>
+          </div>
+        )}
       </header>
     </div>
   );
