@@ -1,16 +1,26 @@
-.PHONY: build clean deploy gomodgen
+.PHONY: testApi buildApi testUi buildUi clean build deploy test
 
-build: test
+testApi:
+	go test ./...
+
+buildApi:
 	mkdir -p bin
 	export GO111MODULE=on
 	env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o bin ./...
 
-test: 
-	go test ./...
+testUi:
+	echo "TODO - note: 'yarn test' is interactive"
+
+buildUi:
+	cd viewer_ui && yarn build
 
 clean:
 	rm -rf ./bin ./vendor
+	cd viewer_ui && yarn clean
 
-deploy: clean build
+build: buildApi buildUi
+
+deploy: clean test build
 	sls deploy --verbose
 
+test: testApi testUi

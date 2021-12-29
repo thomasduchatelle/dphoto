@@ -29,6 +29,82 @@ provider:
   httpApi:
     useProviderTags: true
 
+resources:
+  Resources:
+    ViewerUiBucket:
+      Type: 'AWS::S3::Bucket'
+      Properties:
+        BucketName: dphoto-app-${sls:stage}-ui-static-public
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        Tags:
+          - Key: Application
+            Value: dphoto-app
+          - Key: Environment
+            Value: ${sls:stage}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+          RoutingRules:
+            - RoutingRuleCondition:
+                HttpErrorCodeReturnedEquals: '404'
+              RedirectRule:
+                ReplaceKeyPrefixWith: index.html
+
+    ViewerUiBucketPolicy:
+      Type: 'AWS::S3::BucketPolicy'
+      Properties:
+        Bucket: !Ref ViewerUiBucket
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Action:
+                - 's3:GetObject'
+              Effect: Allow
+              Resource: !Join
+                - ''
+                - - !GetAtt ViewerUiBucket.Arn
+                  - /*
+              Principal: '*'
+
+    ApiGatewayStaticDefaultRoute:
+      Type: AWS::ApiGatewayV2::Route
+      Properties:
+        ApiId: !Ref HttpApi
+        RouteKey: '$default'
+        Target: !Join
+          - ''
+          - - integrations/
+            - !Ref ApiGatewayStaticDefaultRouteIntegration
+
+    ApiGatewayStaticDefaultRouteIntegration:
+      Type: AWS::ApiGatewayV2::Integration
+      Properties:
+        ApiId: !Ref HttpApi
+        Description: Redirect any non-api calls to static website served by S3
+        IntegrationMethod: GET
+        IntegrationType: HTTP_PROXY
+        IntegrationUri: !GetAtt ViewerUiBucket.WebsiteURL
+        PayloadFormatVersion: '1.0'
+
+  #    DnsRecord:
+  #      Type: "AWS::Route53::RecordSet"
+  #      Properties:
+  #        AliasTarget:
+  #          DNSName: ${self:custom.aliasDNSName}
+  #          HostedZoneId: ${self:custom.aliasHostedZoneId}
+  #        HostedZoneName: ${self:custom.siteName}.
+  #        Name:
+  #          Ref: StaticSite
+  #        Type: 'A'
+  Outputs:
+    ViewerUiBucketName:
+      Description: "Bucket name where static resources of DPhoto are stored"
+      Value: !Ref ViewerUiBucket
+
 package:
   patterns:
     - '!./**'
@@ -39,13 +115,17 @@ functions:
     handler: bin/list-albums
     events:
       - httpApi:
-          path: /v1/albums
+          path: /api/v1/albums
           method: get
 
 plugins:
   - serverless-ssm-fetch
+  - serverless-s3-sync
 
 custom:
   serverlessSsmFetch:
     STORAGE_BUCKET_NAME: /dphoto/${sls:stage}/storage/bucketName
     CATALOG_TABLE_NAME: /dphoto/${sls:stage}/catalog/tableName
+  s3Sync:
+    - bucketNameKey: ViewerUiBucketName
+      localDir: viewer_ui/build/

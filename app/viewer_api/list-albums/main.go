@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/app/viewer/common"
+	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 )
 
