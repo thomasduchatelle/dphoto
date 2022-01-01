@@ -1,7 +1,8 @@
 .PHONY: testApi buildApi testUi buildUi clean build deploy test
 
 testApi:
-	go test ./...
+	AWS_PROFILE="" go test ../domain/...
+	AWS_PROFILE="" go test ./viewer_api/...
 
 buildApi:
 	mkdir -p bin

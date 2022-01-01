@@ -29,6 +29,7 @@ require (
 
 require (
 	github.com/fnproject/fdk-go v0.0.14
+	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/tencentyun/scf-go-lib v0.0.0-20211123032342-f972dcd16ff6
 )
 

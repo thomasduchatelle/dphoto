@@ -7,6 +7,8 @@ provider:
   runtime: go1.x
   memorySize: 256
   lambdaHashingVersion: 20201221
+  environment:
+    SECRET_JWT_KEY_B64: VGhhdCdzIGEgc3VwZXIgUzNjcjN0IGZvciBKV1QK
   deploymentBucket:
     blockPublicAccess: true
     tags:
@@ -111,6 +113,12 @@ package:
     - ./bin/**
 
 functions:
+  oauth-token:
+    handler: bin/oauth
+    events:
+      - httpApi:
+          path: /api/oauth/token
+          method: post
   list-albums:
     handler: bin/list-albums
     events:

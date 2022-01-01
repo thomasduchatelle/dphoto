@@ -10,15 +10,15 @@ import (
 
 func Handler(ctx context.Context) (common.Response, error) {
 	if err := common.ConnectCatalog("tomdush@gmail.com"); err != nil {
-		return common.InternalError(err), nil
+		return common.InternalError(err)
 	}
 
 	albums, err := catalog.FindAllAlbumsWithStats()
 	if err != nil {
-		common.InternalError(errors.Wrapf(err, "failed to fetch albums"))
+		return common.InternalError(errors.Wrapf(err, "failed to fetch albums"))
 	}
 
-	return common.Ok(albums), nil
+	return common.Ok(albums)
 }
 
 func main() {
