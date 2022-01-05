@@ -39,4 +39,4 @@ To release a new version, without CI:
 1. verify everything is checked-in (`git status`)
 2. push on `master`
 3. **infra-data** - verify and approve the plan on [https://app.terraform.io/app/dphoto/workspaces](https://app.terraform.io/app/dphoto/workspaces)
-4. **dphoto CLI** - create a git tag: `git tag v1.x.y && git push --tags`
+4. **dphoto CLI** - create a git tag: `git tag dphoto/v1.x.y && git push --tags`
