@@ -31,3 +31,12 @@ Components:
 
 * [DPhoto CLI](./dphoto/README.md): installed on the end-user computer, backup photos and videos using command line interface
 * `infra-data`: terraform project to create required infrastructure on AWS for the CLI to work. Project won't be re-usable in a different context without overriding backend and some other defaults.
+
+### Releasing process
+
+To release a new version, without CI:
+
+1. verify everything is checked-in (`git status`)
+2. push on `master`
+3. **infra-data** - verify and approve the plan on [https://app.terraform.io/app/dphoto/workspaces](https://app.terraform.io/app/dphoto/workspaces)
+4. **dphoto CLI** - create a git tag: `git tag v1.x.y && git push --tags`

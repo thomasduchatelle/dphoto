@@ -15,6 +15,7 @@ type Listener func(Config)
 
 var (
 	ForcedConfigFile string // ForcedConfigFile is the path to the file of the config to use (instead of defaulting to ./dphoto.yml, $HOME/.dphoto/dphoto.yml, ...)
+	Environment      string // Environment is used as suffix for the config file name.
 	listeners        []Listener
 	config           *viperConfig
 )
@@ -30,7 +31,11 @@ func Listen(listener Listener) {
 // Connect must be called by main function, it dispatches the config to all components requiring it. Set ignite to TRUE to connect to AWS (required for most commands)
 func Connect(ignite bool) error {
 	if ForcedConfigFile == "" {
-		viper.SetConfigName("dphoto")
+		configFileName := "dphoto"
+		if Environment != "" {
+			configFileName = fmt.Sprintf("%s-%s", configFileName, Environment)
+		}
+		viper.SetConfigName(configFileName)
 		viper.AddConfigPath(".")
 		viper.AddConfigPath("$HOME/.dphoto")
 		viper.AddConfigPath("/etc/dphoto/")

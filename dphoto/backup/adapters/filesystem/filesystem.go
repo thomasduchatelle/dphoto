@@ -2,11 +2,11 @@
 package filesystem
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors/analyser"
 	"github.com/dixonwille/skywalker"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors/analyser"
 	"io"
 	"os"
 	"path"
@@ -55,6 +55,13 @@ func (f *FsHandler) FindMediaRecursively(volume backupmodel.VolumeToBackup, call
 
 func (w *fsWorker) Work(mediaPath string) {
 	logContext := log.WithField("mediaPath", mediaPath)
+
+	for _, p := range strings.Split(mediaPath, "/") {
+		if strings.HasPrefix(p, ".") && p != "." && p != ".." {
+			// skip hidden files
+			return
+		}
+	}
 
 	abs, err := filepath.Abs(mediaPath)
 	if err != nil {

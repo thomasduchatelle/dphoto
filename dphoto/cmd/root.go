@@ -101,4 +101,5 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
 	rootCmd.PersistentFlags().StringVar(&config.ForcedConfigFile, "config", "", "use configuration file provided instead of searching in ./ , $HOME/.dphoto, and /etc/dphoto")
+	rootCmd.PersistentFlags().StringVar(&config.Environment, "env", "", "add suffix to configuration filename: '--env dev' would use $HOME/dphoto-dev.yml file.")
 }
