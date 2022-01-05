@@ -5,26 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamo"
-	"os"
 )
 
 type Response events.APIGatewayProxyResponse
-
-func ConnectCatalog(owner string) error {
-	//bucketName, _ := os.LookupEnv("STORAGE_BUCKET_NAME")
-	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
-	if !ok || tableName == "" {
-		return errors.Errorf("CATALOG_TABLE_NAME environment variable must be set.")
-	}
-	catalog.Repository = dynamo.Must(dynamo.NewRepository(session.Must(session.NewSession()), owner, tableName))
-
-	return nil
-}
 
 // NewJsonResponse serialises body into JSON and create a Response containing it as body.
 func NewJsonResponse(code int, body interface{}, headers map[string]string) (Response, error) {

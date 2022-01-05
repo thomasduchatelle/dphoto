@@ -2,6 +2,7 @@ import axios from "axios";
 import React, {useEffect, useState} from 'react';
 import './App.css';
 import logo from './logo.svg';
+import {accessToken, owner} from "./security/google-authentication.service";
 import {SecurityContextType} from "./security/security.model";
 import {withSecurityContext} from "./security/with-security-context.hook";
 
@@ -21,7 +22,11 @@ const App = ({loggedUser}: SecurityContextType) => {
   const [albums, setAlbums] = useState<AlbumWithStats[]>([])
 
   useEffect(() => {
-    axios.get<AlbumWithStats[]>('/api/v1/albums').then(resp => setAlbums(resp.data))
+    axios.get<AlbumWithStats[]>(`/api/v1/owners/${owner}/albums`, {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+      }
+    }).then(resp => setAlbums(resp.data))
   }, [])
 
   return (

@@ -1,17 +1,21 @@
 package main
 
 import (
-	"context"
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/oauth"
 )
 
-func Handler(ctx context.Context) (common.Response, error) {
-	if err := common.ConnectCatalog("tomdush@gmail.com"); err != nil {
-		return common.InternalError(err)
+func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
+	owner, _ := request.PathParameters["owner"]
+	if resp, deny := common.ValidateRequest(request, oauth.NewAuthoriseQuery("owner").WithOwner(owner, "READ")); deny {
+		return resp, nil
 	}
+
+	common.BootstrapCatalogDomain("tomdush@gmail.com")
 
 	albums, err := catalog.FindAllAlbumsWithStats()
 	if err != nil {
@@ -22,5 +26,7 @@ func Handler(ctx context.Context) (common.Response, error) {
 }
 
 func main() {
+	common.Bootstrap()
+
 	lambda.Start(Handler)
 }

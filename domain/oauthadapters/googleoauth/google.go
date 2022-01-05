@@ -65,7 +65,6 @@ func (o *OAuth2ConfigReader) Read(config *oauthmodel.Config) error {
 	}
 
 	config.TrustedIssuers[strings.TrimLeft(index.Issuer, "https://")] = oauthmodel.IssuerOAuth2Config{
-		Name:         index.Issuer,
 		ConfigSource: o.OpenIdConfigUrl,
 		PublicKeysLookup: func(method oauthmodel.TokenMethod) (interface{}, error) {
 			if method.Algorithm != jwt.SigningMethodRS256.Alg() {

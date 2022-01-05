@@ -16,7 +16,6 @@ func TestAuthenticate(t *testing.T) {
 	Config = oauthmodel.Config{
 		TrustedIssuers: map[string]oauthmodel.IssuerOAuth2Config{
 			"accounts.google.com": {
-				Name:         "mocked-google",
 				ConfigSource: "unitTest",
 				PublicKeysLookup: func(method oauthmodel.TokenMethod) (interface{}, error) {
 					if method.Algorithm == "HS512" {

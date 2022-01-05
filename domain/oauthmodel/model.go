@@ -30,7 +30,6 @@ type TokenMethod struct {
 }
 
 type IssuerOAuth2Config struct {
-	Name             string
 	ConfigSource     string
 	PublicKeysLookup func(method TokenMethod) (interface{}, error)
 }
@@ -55,5 +54,5 @@ func (t *TokenMethod) String() string {
 	return fmt.Sprintf("TokenMethod(alg=%s, kid=%s)", t.Algorithm, t.Kid)
 }
 func (i *IssuerOAuth2Config) String() string {
-	return fmt.Sprintf("%s [%s]", i.Name, i.ConfigSource)
+	return fmt.Sprintf("%s", i.ConfigSource)
 }

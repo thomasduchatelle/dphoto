@@ -13,6 +13,9 @@ interface TokenResponse {
   identity: IdentityResponse
 }
 
+export let owner = ""
+export let accessToken = ""
+
 function isValidResponse(value: GoogleLoginResponse | GoogleLoginResponseOffline): value is GoogleLoginResponse {
   return value.hasOwnProperty('profileObj');
 }
@@ -24,6 +27,9 @@ export const authenticateWithGoogle = (googleAnswer: (GoogleLoginResponse | Goog
         'Authorization': `Bearer ${googleAnswer.tokenId}`
       }
     }).then(resp => {
+      console.log("access_token = " + resp.data.access_token)
+      owner = resp.data.identity.email
+      accessToken = resp.data.access_token
       return {
         loggedUser: {
           name: resp.data.identity.name,

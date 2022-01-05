@@ -1,5 +1,6 @@
 service: dphoto-app
 frameworkVersion: '2'
+variablesResolutionMode: 20210326
 
 provider:
   name: aws
@@ -8,7 +9,8 @@ provider:
   memorySize: 256
   lambdaHashingVersion: 20201221
   environment:
-    SECRET_JWT_KEY_B64: VGhhdCdzIGEgc3VwZXIgUzNjcjN0IGZvciBKV1QK
+    DPHOTO_JWT_KEY_B64: ${file('./sls-config.js'):DPHOTO_JWT_KEY_B64}
+    DPHOTO_JWT_ISSUER: ${file('./sls-config.js'):DPHOTO_JWT_ISSUER}
   deploymentBucket:
     blockPublicAccess: true
     tags:
@@ -123,7 +125,7 @@ functions:
     handler: bin/list-albums
     events:
       - httpApi:
-          path: /api/v1/albums
+          path: /api/v1/owners/{owner}/albums
           method: get
 
 plugins:

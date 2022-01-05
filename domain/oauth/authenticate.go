@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-var (
-	Config         oauthmodel.Config
-	UserRepository oauthmodel.UserRepository
-	Now            = time.Now
-)
-
 type googleClaims struct {
 	jwt.RegisteredClaims
 	Email   string `json:"email"`
