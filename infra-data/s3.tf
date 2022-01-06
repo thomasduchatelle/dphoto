@@ -1,4 +1,5 @@
 resource "aws_kms_key" "storage" {
+  count = var.simple_s3 ? 0 : 1
   deletion_window_in_days = 30
   tags                    = merge(local.tags, {
     Name = "${local.prefix}-encryption-key"
@@ -9,21 +10,24 @@ resource "aws_s3_bucket" "storage" {
   bucket = "${local.prefix}-storage"
   acl    = "private"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.storage.arn
-        sse_algorithm     = "aws:kms"
+  dynamic "server_side_encryption_configuration" {
+    for_each = var.simple_s3 ? [] : [1]
+    content {
+      rule {
+        apply_server_side_encryption_by_default {
+          kms_master_key_id = aws_kms_key.storage.0.arn
+          sse_algorithm     = "aws:kms"
+        }
       }
     }
   }
 
   versioning {
-    enabled = true
+    enabled = !var.simple_s3
   }
 
   lifecycle_rule {
-    enabled = true
+    enabled = !var.simple_s3
 
     noncurrent_version_transition {
       days          = 0
@@ -72,15 +76,19 @@ data "aws_iam_policy_document" "storage_rw" {
       "${aws_s3_bucket.storage.arn}/*",
     ]
   }
-  statement {
-    effect    = "Allow"
-    actions   = [
-      "kms:Decrypt",
-      "kms:GenerateDataKey"
-    ]
-    resources = [
-      aws_kms_key.storage.arn
-    ]
+
+  dynamic "statement" {
+    for_each = var.simple_s3 ? [] : [1]
+    content {
+      effect    = "Allow"
+      actions   = [
+        "kms:Decrypt",
+        "kms:GenerateDataKey"
+      ]
+      resources = [
+        aws_kms_key.storage.0.arn
+      ]
+    }
   }
 }
 
@@ -109,14 +117,18 @@ data "aws_iam_policy_document" "storage_ro" {
       "${aws_s3_bucket.storage.arn}/*",
     ]
   }
-  statement {
-    effect    = "Allow"
-    actions   = [
-      "kms:Decrypt",
-      "kms:GenerateDataKey"
-    ]
-    resources = [
-      aws_kms_key.storage.arn
-    ]
+
+  dynamic "statement" {
+    for_each = var.simple_s3 ? [] : [1]
+    content {
+      effect    = "Allow"
+      actions   = [
+        "kms:Decrypt",
+        "kms:GenerateDataKey"
+      ]
+      resources = [
+        aws_kms_key.storage.0.arn
+      ]
+    }
   }
 }

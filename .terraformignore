@@ -1,2 +1,6 @@
-delegate/
+domain/
+app/
+dphoto/
+mocks/
+tools/
 .idea/

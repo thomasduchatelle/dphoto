@@ -3,11 +3,17 @@ variable "environment_name" {
   type        = string
 }
 
+variable "keybase_user" {
+  default = "keybase:thomasduchatelle"
+}
+
+variable "simple_s3" {
+  description = "disable KMS encryption (1$/month), versioning, and glacier retention from S3 store"
+  default = false
+}
+
 variable "region" {
   description = "AWS Region"
   default     = "eu-west-1"
 }
 
-variable "keybase_user" {
-  default = "keybase:thomasduchatelle"
-}
