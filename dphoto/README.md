@@ -1,4 +1,4 @@
-DPhoto - Delegate
+DPhoto - CLI
 ====================================
 
 Installed on the end-user computer, backup photos and videos using command line interface.

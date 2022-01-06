@@ -9,10 +9,39 @@ Main features:
 * online viewer for backed-up photos and videos
 * download medias pack, selected by date, album, and/or tags
 
-Roadmap
+Getting Started
 ---------------------------------------
 
-1. Get a go function deployed to AWS with access to DPhoto catalog
-2. Get a react-app deployed in S3 / CDN
-3. Authenticate with AWS cognito and secure the backends
+App contains several sub-projects:
 
+* viewer API: serverless backend to serve data for viewer (golang)
+* viewer UI: create-react-app deployed as static website on S3 (typescript)
+* (planned) more generic API to be used by CLI instead of direct IAM role
+
+They are all deployed as a monolith using _Serverless Framework_. To deploy on dev:
+
+    # test, build, and deploy
+    make deploy
+
+    # only re-deploy
+    sls deploy
+
+    # destroy all software bits (not the data managed by 'infra-data')
+    sls remove
+
+Backend code is following the hexagonal architecture: core logic is developed in `domain` and imported here.
+
+Authentication - Design Decisions
+---------------------------------------
+
+Authentication requirement is only to use Google oauth. AWS Cognito and Auth0 has been investigated to bring a larger authentication-as-a-service, but final decision is to use directly Google APIs.
+
+AaaS solutions bring sign-in, email/phone number confirmation, password recovery, MFA, ... that are all non-wanted and should be disabled. Ease to use and integrate is the main expectation.
+
+_AWS Cognito_ is complex to provision and does not provide React library (including Amplify) or documentation making the integration simple. The Access Token is not customisable: subject is the user UUID from Cognito (not recognised by DPhoto) and no
+claims can support multi-tenancy of DPhoto. A second level of authentication, or verification against database, would be required to use it.
+
+_Auth0_ is much easier to integrate with their JS library, and has customisation claims feature on the access token. Provisioning it, especially from CloudFormation (Serverless Framework), is very complex.
+
+_Google Identity_, retained solution, requires a lot of manual development: on the UI an opensource react component is used to redirect to Google and get the identity token from the user. Then this token is used to authenticate on DPhoto and get an
+access token.
