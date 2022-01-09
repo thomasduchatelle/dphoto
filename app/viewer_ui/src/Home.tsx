@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, {useEffect, useState} from 'react';
 import './App.css';
-import logo from './logo.svg';
+// import logo from './logo.svg';
 import {accessToken, owner} from "./security/google-authentication.service";
 import {SecurityContextType} from "./security/security.model";
 import {withSecurityContext} from "./security/with-security-context.hook";
@@ -31,7 +31,7 @@ const App = ({loggedUser}: SecurityContextType) => {
 
   return (
     <header className="App-header">
-      <img src={logo} className="App-logo" alt="logo"/>
+      {/*<img src={logo} className="App-logo" alt="logo"/>*/}
       <p>
         Welcome to DPhoto{loggedUser && `, ${loggedUser.name}`} !
       </p>

@@ -2,8 +2,8 @@ import React, {ReactNode, useState} from "react";
 import {GoogleLoginResponse, GoogleLoginResponseOffline} from "react-google-login";
 import googleConfig from '../config/google.config'
 import {authenticateWithGoogle, logoutFromGoogle} from "./google-authentication.service";
-import LoginPage from "./login.page";
 import LogoutButton from "./logout-button";
+import PreviousloginPage from "./previouslogin.page";
 import {SecurityReactContext} from "./security.context";
 import {SecurityContextType} from "./security.model";
 
@@ -44,11 +44,11 @@ const SecuredContent = ({children}: {
           </div>
         )
         : (
-          <LoginPage clientId={googleConfig.clientId}
-                     isSignedIn={true}
-                     authenticateWithGoogle={authenticate}
-                     onFailure={onPopupFailure}
-                     errorMessage={err}/>
+          <PreviousloginPage clientId={googleConfig.clientId}
+                             isSignedIn={true}
+                             authenticateWithGoogle={authenticate}
+                             onFailure={onPopupFailure}
+                             errorMessage={err}/>
         )
       }
     </SecurityReactContext.Provider>

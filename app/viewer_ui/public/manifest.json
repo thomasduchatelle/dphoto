@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "DPhoto",
+  "name": "DPhoto - backup your medias",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,14 +8,14 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "dphoto-fulllogo-large.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "650x158"
     },
     {
-      "src": "logo512.png",
+      "src": "dphoto-fulllogo-medium.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "250x61"
     }
   ],
   "start_url": ".",

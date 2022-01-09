@@ -1,15 +1,14 @@
-import {BrowserRouter} from "react-router-dom";
-import Home from "./Home";
-import SecuredContent from "./security/secured-content.case";
+import LoginPage from "./pages/login/login.page";
 
 const App = () => {
   return (
     <div className="App">
-      <BrowserRouter>
-        <SecuredContent>
-          <Home/>
-        </SecuredContent>
-      </BrowserRouter>
+      <LoginPage/>
+      {/*<BrowserRouter>*/}
+      {/*  <SecuredContent>*/}
+      {/*    <Home/>*/}
+      {/*  </SecuredContent>*/}
+      {/*</BrowserRouter>*/}
     </div>
   )
 }

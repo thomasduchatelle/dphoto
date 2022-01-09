@@ -1,7 +1,7 @@
 import React from "react";
 import {GoogleLogin, GoogleLoginResponse, GoogleLoginResponseOffline} from "react-google-login";
 
-const LoginPage = (props: {
+const PreviousloginPage = (props: {
   clientId: string
   isSignedIn: boolean
   authenticateWithGoogle: (googleAnswer: (GoogleLoginResponse | GoogleLoginResponseOffline)) => void
@@ -25,4 +25,4 @@ const LoginPage = (props: {
   );
 }
 
-export default LoginPage
+export default PreviousloginPage
