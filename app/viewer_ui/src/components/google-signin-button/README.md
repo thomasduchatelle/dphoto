@@ -1,4 +1,4 @@
-This is a fork of https://github.com/anthonyjgrove/react-google-login to keep the sign-in button without any logic.
+This is a fork of https://github.com/anthonyjgrove/react-google-login to keep the sign-in button without any logic. Use directly the library for anything non-business.
 
 No update should be required but just in case:
 
