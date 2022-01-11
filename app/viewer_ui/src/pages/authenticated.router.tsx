@@ -1,15 +1,13 @@
-import {Button, Typography} from "@mui/material";
-import {useContext} from "react";
+import {GoogleLogout} from "react-google-login";
 import {Route, Routes} from "react-router-dom"
-import {SecurityContext} from "./layout/security.context";
+import googleConfig from "../config/google.config";
+import Home from "../Home";
 
 const SomeContent = () => {
-  const securityContext = useContext(SecurityContext);
   return (
     <>
-      <Typography component='h1'>You are authenticated!</Typography>
-      <Typography component='p'>Welcome authenticated user !</Typography>
-      <Button onClick={securityContext.signOut} variant='contained' color='error'>Sign out</Button>
+      <GoogleLogout clientId={googleConfig.clientId}/>
+      <Home/>
     </>
   )
 }

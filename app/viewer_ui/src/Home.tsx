@@ -1,10 +1,6 @@
 import axios from "axios";
 import React, {useEffect, useState} from 'react';
-import './App.css';
-// import logo from './logo.svg';
-import {accessToken, owner} from "./security/google-authentication.service";
-import {SecurityContextType} from "./security/security.model";
-import {withSecurityContext} from "./security/with-security-context.hook";
+import {getAppContext, useAuthenticatedUser} from "./core/application";
 
 interface Album {
   Name: string
@@ -18,13 +14,14 @@ interface AlbumWithStats {
   TotalCount: number
 }
 
-const App = ({loggedUser}: SecurityContextType) => {
+const App = () => {
+  const loggedUser = useAuthenticatedUser()
   const [albums, setAlbums] = useState<AlbumWithStats[]>([])
 
   useEffect(() => {
-    axios.get<AlbumWithStats[]>(`/api/v1/owners/${owner}/albums`, {
+    axios.get<AlbumWithStats[]>(`/api/v1/owners/${loggedUser?.email}/albums`, {
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
+        "Authorization": `Bearer ${getAppContext().oauthService.getAccessToken()}`,
       }
     }).then(resp => setAlbums(resp.data))
   }, [])
@@ -51,4 +48,4 @@ const App = ({loggedUser}: SecurityContextType) => {
   );
 }
 
-export default withSecurityContext(App);
+export default App;

@@ -1,25 +1,19 @@
+import {CssBaseline} from "@mui/material";
 import {BrowserRouter} from "react-router-dom";
-import {bootstrap} from "./domain/bootstrap";
-import AnonymousRouter from "./pages/anonymous.router";
-import LoadingPage from "./pages/layout/loading.page";
-import SecurityIntegation from "./pages/layout/security-integation";
-
-// resolve all dependency injection and configuration
-bootstrap()
+import {SecurityIntegration} from "./core/application";
+import GeneralRouter from "./pages/general.router";
 
 const App = () => {
+  // TODO - add MUI theme
+  // TODO - add React error boundary
   return (
     <div className="App">
+      <CssBaseline/>
       <BrowserRouter>
-        <SecurityIntegation loading={<LoadingPage/>}>
-          <AnonymousRouter/>
-        </SecurityIntegation>
+        <SecurityIntegration>
+          <GeneralRouter/>
+        </SecurityIntegration>
       </BrowserRouter>
-      {/*<BrowserRouter>*/}
-      {/*  <SecuredContent>*/}
-      {/*    <Home/>*/}
-      {/*  </SecuredContent>*/}
-      {/*</BrowserRouter>*/}
     </div>
   )
 }

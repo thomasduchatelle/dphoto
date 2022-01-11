@@ -12,8 +12,19 @@ interface TokenResponse {
   identity: IdentityResponse
 }
 
-export const OauthServiceImpl: OAuthService = {
-  authenticateWithGoogleId(googleIdToken: string): Promise<AuthenticatedUser> {
+export class OauthServiceImpl implements OAuthService {
+  constructor(private dphotoAccessToken?: string) {
+  }
+
+  public clearTokens = (): void => {
+    this.dphotoAccessToken = undefined
+  }
+
+  public dispatchAccessToken = (accessToken: string): void => {
+    this.dphotoAccessToken = accessToken
+  }
+
+  public authenticateWithGoogleId = (googleIdToken: string): Promise<AuthenticatedUser> => {
     return axios.post<TokenResponse>("/api/oauth/token", {}, {
       headers: {
         'Authorization': `Bearer ${googleIdToken}`
@@ -26,6 +37,10 @@ export const OauthServiceImpl: OAuthService = {
         accessToken: resp.data.access_token,
       }
     })
+  }
+
+  public getAccessToken = (): string | undefined => {
+    return this.dphotoAccessToken
   }
 
 }
