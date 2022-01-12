@@ -1,5 +1,5 @@
 import {createContext, useContext} from "react";
-import {AuthenticatedUser, GoogleSignInCase} from "../domain/security";
+import {AuthenticatedUser, GoogleSignInCase, LogoutCase} from "../domain/security";
 import {getAppContext} from "./bootstrap";
 
 
@@ -23,19 +23,28 @@ export function useAuthenticatedUser(): AuthenticatedUser | undefined {
   return useContext(SecurityContext).user
 }
 
+function newStateManager(securityContext: SecurityContextType) {
+  return {
+    clearUser(): void {
+      securityContext.mutateContext(_ => ({}))
+    },
+    displayAuthenticationError(authenticationError: string): void {
+      securityContext.mutateContext(current => ({...current, authenticationError}))
+    },
+    storeUser(user: AuthenticatedUser): void {
+      securityContext.mutateContext(_ => ({user, authenticationError: undefined}))
+    }
+  };
+}
+
 export function useGoogleSignInCase(): GoogleSignInCase {
   const securityContext = useContext(SecurityContext);
 
-  return new GoogleSignInCase({
-      clearUser(): void {
-        securityContext.mutateContext(_ => ({}))
-      },
-      displayAuthenticationError(authenticationError: string): void {
-        securityContext.mutateContext(current => ({...current, authenticationError}))
-      },
-      storeUser(user: AuthenticatedUser): void {
-        securityContext.mutateContext(_ => ({user, authenticationError: undefined}))
-      }
-    },
-    getAppContext().oauthService)
+  return new GoogleSignInCase(newStateManager(securityContext), getAppContext().oauthService)
+}
+
+export function useSignOutCase() {
+  const securityContext = useContext(SecurityContext);
+
+  return new LogoutCase(newStateManager(securityContext), getAppContext().oauthService)
 }

@@ -1,5 +1,7 @@
-import axios from "axios";
+import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
 import {AuthenticatedUser, OAuthService} from "../../security.domain";
+
+const instance = axios.create({})
 
 interface IdentityResponse {
   email: string
@@ -13,15 +15,22 @@ interface TokenResponse {
 }
 
 export class OauthServiceImpl implements OAuthService {
-  constructor(private dphotoAccessToken?: string) {
+  constructor(private dphotoAccessToken?: string,
+              private axiosInterceptorId?: number) {
   }
 
   public clearTokens = (): void => {
+    if (this.axiosInterceptorId) {
+      instance.interceptors.request.eject(this.axiosInterceptorId);
+    }
     this.dphotoAccessToken = undefined
   }
 
   public dispatchAccessToken = (accessToken: string): void => {
     this.dphotoAccessToken = accessToken
+    if (!this.axiosInterceptorId) {
+      this.axiosInterceptorId = instance.interceptors.request.use(this.axiosRequestInterceptor);
+    }
   }
 
   public authenticateWithGoogleId = (googleIdToken: string): Promise<AuthenticatedUser> => {
@@ -39,8 +48,22 @@ export class OauthServiceImpl implements OAuthService {
     })
   }
 
-  public getAccessToken = (): string | undefined => {
-    return this.dphotoAccessToken
-  }
+  private axiosRequestInterceptor = (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
+    if (!this.dphotoAccessToken) {
+      // safeguard - interceptor should be ejected before
+      return Promise.resolve(config)
+    }
 
+    return Promise.resolve({
+      ...config,
+      headers: {
+        ...config.headers,
+        'Authorization': `Bearer ${this.dphotoAccessToken}`
+      }
+    })
+  };
+}
+
+export function authenticatedAxios(): AxiosInstance {
+  return instance
 }

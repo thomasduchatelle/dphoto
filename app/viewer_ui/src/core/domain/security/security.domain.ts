@@ -25,7 +25,4 @@ export interface OAuthService {
 
   // remove store token(s) that would be used to request DPhoto API
   clearTokens(): void;
-
-  // FIXME temporary
-  getAccessToken(): string | undefined
 }

@@ -25,8 +25,8 @@ export class GoogleSignInCase {
   public googleSignIn = (identityToken: string): Promise<void> => {
     return this.oauthService.authenticateWithGoogleId(identityToken)
       .then(user => {
-        this.stateManager.storeUser(user)
         this.oauthService.dispatchAccessToken(user.accessToken)
+        this.stateManager.storeUser(user)
       })
       .catch((err: AxiosError<ErrorBody>) => {
         console.log(`Authentication failed: ${JSON.stringify(err)}`)

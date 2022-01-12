@@ -1,23 +1,24 @@
 import {OAuthService} from "../domain/security";
 import {OauthServiceImpl} from "../domain/security/adapters/oauthapi/oauth.service";
 
-export interface AppContext {
-  oauthService: OAuthService
+class AppContext {
+  constructor(
+    public oauthService: OAuthService
+  ) {
+  }
+
+  static instance: AppContext
+
+  static getInstance = (): AppContext => {
+    if (!instance) {
+      const oauthService: OAuthService = new OauthServiceImpl()
+      this.instance = new AppContext(oauthService)
+    }
+
+    return this.instance
+  }
 }
 
 let instance: AppContext;
 
-export function getAppContext() {
-  if (!instance) {
-    instance = bootstrap()
-  }
-  return instance
-}
-
-export function bootstrap(): AppContext {
-  const oauthService: OAuthService = new OauthServiceImpl()
-
-  return {
-    oauthService,
-  }
-}
+export const getAppContext = AppContext.getInstance

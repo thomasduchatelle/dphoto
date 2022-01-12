@@ -5,7 +5,7 @@ export class LogoutCase {
               readonly oauthService: OAuthService) {
   }
 
-  public logout(): Promise<void> {
+  public logout = (): Promise<void> => {
     this.oauthService.clearTokens()
     this.stateManager.clearUser()
     return Promise.resolve()

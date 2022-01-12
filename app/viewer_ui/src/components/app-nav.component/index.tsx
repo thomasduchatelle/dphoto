@@ -23,7 +23,7 @@ export default ({rightContent}: {
         <Container maxWidth={false}>
           <Toolbar disableGutters>
             <Box component='a' href='/' sx={{flexGrow: 0}}>
-              <img src='/dphoto-fulllogo-50px.png' alt='DPhoto' style={{height: '50px', marginTop: '5px'}}/>
+              <img src='/dphoto-fulllogo-reversed-50px.png' alt='DPhoto' style={{height: '50px', marginTop: '5px'}}/>
             </Box>
             <Box sx={{flexGrow: 1}}/>
             <Box sx={{flexGrow: 0}}>
@@ -36,8 +36,3 @@ export default ({rightContent}: {
     <Toolbar/>
   </>
 )
-// <Tooltip title="Open settings">
-//   <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-//     <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-//   </IconButton>
-// </Tooltip>

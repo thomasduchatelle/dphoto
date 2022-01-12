@@ -1,4 +1,4 @@
-import {Alert, Container} from "@mui/material";
+import {Alert, Container, Paper} from "@mui/material";
 import {useState} from "react";
 import {GoogleLogin, GoogleLoginResponse, GoogleLoginResponseOffline} from "react-google-login";
 import AppNavComponent from "../../components/app-nav.component";
@@ -17,8 +17,7 @@ export default ({googleSignIn, authenticationError}: {
   const [ready, setReady] = useState(false)
   const [failureMessage, setFailureMessage] = useState("")
 
-  const errorToDisplay = authenticationError ? authenticationError : failureMessage
-  console.log(`errorToDisplay=${JSON.stringify(errorToDisplay)}`)
+  const errorToDisplay = authenticationError ?? failureMessage
 
   const handleFailure = (error: string) => {
     setFailureMessage(error)
@@ -50,13 +49,17 @@ export default ({googleSignIn, authenticationError}: {
       />
       <Container maxWidth='md'>
         {errorToDisplay ? (
-          <Alert severity="error" sx={{mt: 3, mb: 10}}>
-            {errorToDisplay}
-          </Alert>
+          <Paper>
+            <Alert severity="error" sx={{mt: 3}}>
+              {errorToDisplay}
+            </Alert>
+          </Paper>
         ) : (
-          <Alert severity="info" sx={{mt: 3, mb: 10}}>
-            This is an invitation only application. Sign in with your Google account.
-          </Alert>
+          <Paper sx={{mt: 3}}>
+            <Alert severity='info'>
+              This is an invitation only application. Sign in with your Google account.
+            </Alert>
+          </Paper>
         )}
       </Container>
     </>
