@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+const (
+	invalidTokenError         = "authenticated failed"
+	invalidTokenExplicitError = "authentication failed: token invalid"
+	notPreregisteredError     = "user must be pre-registered"
+)
+
 type googleClaims struct {
 	jwt.RegisteredClaims
 	Email   string `json:"email"`
@@ -23,10 +29,10 @@ func Authenticate(tokenString string) (oauthmodel.Authentication, oauthmodel.Ide
 	token, err := jwt.ParseWithClaims(tokenString, identityClaims, keyLookup)
 
 	if err != nil {
-		return oauthmodel.Authentication{}, oauthmodel.Identity{}, errors.Wrapf(err, "authenticated failed")
+		return oauthmodel.Authentication{}, oauthmodel.Identity{}, errors.Wrapf(err, invalidTokenError)
 	}
 	if !token.Valid {
-		return oauthmodel.Authentication{}, oauthmodel.Identity{}, errors.Errorf("authentication failed: token invalid")
+		return oauthmodel.Authentication{}, oauthmodel.Identity{}, errors.Errorf(invalidTokenExplicitError)
 	}
 
 	identity := oauthmodel.Identity{
@@ -49,7 +55,7 @@ func Authenticate(tokenString string) (oauthmodel.Authentication, oauthmodel.Ide
 		if err != nil {
 			log.WithError(err).Errorf("Failed to load user's roles %s", identity.Email)
 		}
-		return oauthmodel.Authentication{}, identity, errors.Errorf("user must be pre-registered")
+		return oauthmodel.Authentication{}, identity, errors.Errorf(notPreregisteredError)
 	}
 
 	generatedToken := jwt.NewWithClaims(jwt.SigningMethodHS512, struct {
@@ -126,4 +132,14 @@ func keyLookup(token *jwt.Token) (interface{}, error) {
 	}
 
 	return nil, errors.Errorf("Issuer '%s' is not supported. Trusted issuers are: %s", issuerName, strings.Join(issuers, ", "))
+}
+
+// IsInvalidTokenError returns true if authenticated failed because of an invalid token.
+func IsInvalidTokenError(err error) bool {
+	return err.Error() == invalidTokenError || err.Error() == invalidTokenExplicitError
+}
+
+// IsNotPreregisteredError returns true when authentication failed because user is not pre-registered
+func IsNotPreregisteredError(err error) bool {
+	return err.Error() == notPreregisteredError
 }

@@ -19,8 +19,8 @@ export default ({googleSignIn, authenticationError}: {
 
   const errorToDisplay = authenticationError ?? failureMessage
 
-  const handleFailure = (error: string) => {
-    setFailureMessage(error)
+  const handleFailure = (error: any) => {
+    setFailureMessage(JSON.stringify(error))
   }
 
   const handleSuccess = (response: GoogleLoginResponse | GoogleLoginResponseOffline): void => {

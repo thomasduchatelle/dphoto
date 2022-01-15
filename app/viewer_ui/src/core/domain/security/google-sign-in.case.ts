@@ -8,7 +8,7 @@ interface ErrorBody {
 
 function lookupErrorMessage(code?: string, message?: string): string {
   switch (code) {
-    case 'user-not-preregistered':
+    case 'oauth.user-not-preregistered':
       return "You must be pre-registered to use this service."
 
     default:

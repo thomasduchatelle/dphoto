@@ -18,7 +18,9 @@ type identityDTO struct {
 }
 
 var (
-	oauthAuthenticate = oauth.Authenticate
+	oauthAuthenticate       = oauth.Authenticate
+	isNotPreregisteredError = oauth.IsNotPreregisteredError
+	isInvalidTokenError     = oauth.IsInvalidTokenError
 )
 
 func Handler(request events.APIGatewayRequest) (common.Response, error) {
@@ -39,7 +41,10 @@ func Handler(request events.APIGatewayRequest) (common.Response, error) {
 	authentication, identity, err := oauthAuthenticate(tokenString)
 	if err != nil {
 		log.WithError(err).Infof("Authentication rejected: %+v", request)
-		return common.NewJsonResponse(403, map[string]string{
+
+		code, status := lookupCode(err)
+		return common.NewJsonResponse(status, map[string]string{
+			"code":  code,
 			"error": err.Error(),
 		}, nil)
 	}
@@ -53,6 +58,17 @@ func Handler(request events.APIGatewayRequest) (common.Response, error) {
 			Picture: identity.Picture,
 		},
 	})
+}
+
+func lookupCode(err error) (string, int) {
+	switch {
+	case isNotPreregisteredError(err):
+		return "oauth.user-not-preregistered", 403
+	case isInvalidTokenError(err):
+		return "oauth.invalid-token", 403
+	default:
+		return "", 500
+	}
 }
 
 func main() {

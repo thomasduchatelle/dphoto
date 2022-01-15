@@ -16,7 +16,7 @@ func TestOauthRouting(t *testing.T) {
 	a := assert.New(t)
 
 	noopAuthenticate := func(tokenString string) (oauthmodel.Authentication, oauthmodel.Identity, error) {
-		return oauthmodel.Authentication{}, oauthmodel.Identity{}, errors.Errorf("NOOP - call not expected")
+		return oauthmodel.Authentication{}, oauthmodel.Identity{}, errors.Errorf("user must be pre-registered")
 	}
 
 	tests := []struct {
@@ -93,7 +93,8 @@ func TestOauthRouting(t *testing.T) {
 			noopAuthenticate,
 			403,
 			map[string]interface{}{
-				"error": "NOOP - call not expected",
+				"code":  "oauth.user-not-preregistered",
+				"error": "user must be pre-registered",
 			},
 		},
 	}
