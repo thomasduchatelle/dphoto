@@ -1,4 +1,6 @@
-.PHONY: testApi buildApi testUi buildUi clean build deploy test
+.PHONY: default testApi buildApi testUi buildUi clean build deploy test
+
+default: test build
 
 testApi:
 	AWS_PROFILE="" go test ../domain/...
