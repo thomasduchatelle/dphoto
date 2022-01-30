@@ -3,6 +3,7 @@ package dynamo
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
@@ -42,7 +43,11 @@ func (a *MediaCrudTestSuite) SetupSuite() {
 	suffix := time.Now().Format("20060102150405")
 
 	a.repo = &Rep{
-		db:            dynamodb.New(session.Must(session.NewSession(&aws.Config{Region: aws.String("eu-west-1")})), &aws.Config{Endpoint: aws.String("http://localhost:8000")}),
+		db: dynamodb.New(session.Must(session.NewSession(&aws.Config{
+			Credentials: credentials.NewStaticCredentials("localstack", "localstack", ""),
+			Endpoint:    aws.String("http://localhost:8000"),
+			Region:      aws.String("eu-west-1"),
+		}))),
 		table:         "test-medias-crud-" + suffix,
 		RootOwner:     "UNITTEST#2",
 		localDynamodb: true,

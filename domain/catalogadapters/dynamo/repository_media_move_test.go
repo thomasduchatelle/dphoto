@@ -3,6 +3,7 @@ package dynamo
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,11 @@ func setupTest(name string) *Rep {
 	suffix := time.Now().Format("20060102150405")
 
 	r := &Rep{
-		db:                      dynamodb.New(session.Must(session.NewSession(&aws.Config{Region: aws.String("eu-west-1")})), &aws.Config{Endpoint: aws.String("http://localhost:8000")}),
+		db: dynamodb.New(session.Must(session.NewSession(&aws.Config{
+			Credentials: credentials.NewStaticCredentials("localstack", "localstack", ""),
+			Endpoint:    aws.String("http://localhost:8000"),
+			Region:      aws.String("eu-west-1"),
+		}))),
 		findMovedMediaBatchSize: 25,
 		localDynamodb:           true,
 		RootOwner:               "UNITTEST#2",

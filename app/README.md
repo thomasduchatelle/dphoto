@@ -16,7 +16,7 @@ App contains several sub-projects:
 
 * viewer API: serverless backend to serve data for viewer (golang)
 * viewer UI: create-react-app deployed as static website on S3 (typescript)
-* (planned) more generic API to be used by CLI instead of direct IAM role
+* (roadmap) more generic API to be used by CLI instead of direct IAM role
 
 They are all deployed as a monolith using _Serverless Framework_. To deploy on dev:
 

@@ -1,29 +1,24 @@
-.PHONY: default testApi buildApi testUi buildUi clean build deploy test
+# Convenient shortcuts for the main Makefile
+#################################################
 
-default: test build
+.PHONY: start test build api ui deploy
 
-testApi:
-	AWS_PROFILE="" go test ../domain/...
-	AWS_PROFILE="" go test ./viewer_api/...
+start:
+	cd .. && $(MAKE) start
 
-buildApi:
-	mkdir -p bin
-	export GO111MODULE=on
-	env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o bin ./...
+test:
+	cd .. && $(MAKE) test-app
 
-testUi:
-	echo "TODO - note: 'yarn test' is interactive"
+build:
+	cd .. && $(MAKE) build-app
 
-buildUi:
-	cd viewer_ui && yarn build
+api:
+	cd .. && $(MAKE) test-app-api
+	cd .. && $(MAKE) build-app-api
 
-clean:
-	rm -rf ./bin ./vendor
-	cd viewer_ui && yarn clean
+ui:
+	cd .. && $(MAKE) test-app-ui
+	cd .. && $(MAKE) build-app-ui
 
-build: buildApi buildUi
-
-deploy: clean test build
-	sls deploy --verbose
-
-test: testApi testUi
+deploy:
+	cd .. && $(MAKE) deploy-app

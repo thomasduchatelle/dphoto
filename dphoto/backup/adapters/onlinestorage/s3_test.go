@@ -3,6 +3,7 @@ package onlinestorage
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/assert"
@@ -14,8 +15,9 @@ import (
 )
 
 var awsSession = session.Must(session.NewSession(&aws.Config{
-	Region:           aws.String("eu-west-1"),
+	Credentials:      credentials.NewStaticCredentials("localstack", "localstack", ""),
 	Endpoint:         aws.String("http://localhost:4566"),
+	Region:           aws.String("eu-west-1"),
 	S3ForcePathStyle: aws.Bool(true),
 }))
 

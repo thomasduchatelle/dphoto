@@ -1,24 +1,109 @@
-.PHONY: all delegate test mocks clean clearlocal app
+.PHONY: all clean install test build deploy
 
-all: test delegate app
+all: test build
 
-delegate:
+clean: clean-app
+	go clean -testcache
+
+install: install-infra-data install-domain install-app
+
+test: test-infra-data test-domain test-cli test-app
+
+build: build-cli build-app
+
+deploy: deploy-infra-data deploy-app deploy-cli-local
+
+#######################################
+## INFRA DATA
+#######################################
+
+.PHONY: install-infra-data test-infra-data deploy-infra-data
+
+install-infra-data:
+	cd infra-data && \
+		command -v tfenv > /dev/null && tfenv install min-required && tfenv use min-required
+	cd infra-data && \
+		terraform init
+
+test-infra-data:
+	terraform validate
+
+deploy-infra-data:
+	terraform apply
+
+#######################################
+## DOMAIN
+#######################################
+
+.PHONY: install-domain test-domain
+
+install-domain:
+	docker-compose pull
+	docker-compose up -d
+
+test-domain:
+	AWS_PROFILE="" go test ./domain/... -race -cover
+
+#######################################
+## APP
+#######################################
+
+.PHONY: clean-app install-app test-app test-app-api test-app-ui build-app build-app-api build-app-ui deploy-app
+
+clean-app:
+	cd app && rm -rf ./bin ./vendor
+	cd app/viewer_ui && yarn clean
+
+install-app:
+	cd app && npm install
+	cd app/viewer_ui && yarn install
+
+test-app: test-app-api test-app-ui
+
+test-app-api: test-domain
+	AWS_PROFILE="" go test ./app/viewer_api/...
+
+test-app-ui:
+	+echo "Implement tests for APP VIEWER UI"
+
+build-app: build-app-api build-app-ui
+
+build-app-api:
+	cd app && \
+		mkdir -p bin && \
+		export GO111MODULE=on && \
+		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o bin ./...
+
+build-app-ui:
+	cd app/viewer_ui && yarn build
+
+deploy-app: clean-app test-app build-app
+	AWS_PROFILE=${AWS_PROFILE:-dphoto} && cd app && sls deploy --debug
+
+start:
+	cd app/viewer_ui && yarn start
+
+#######################################
+## CLI
+#######################################
+
+test-cli: test-domain
+	AWS_PROFILE="" go test ./dphoto/... -race -cover
+
+build-cli:
 	cd dphoto && go build
 
-test:
-	docker-compose up -d
-	go test ./... -race -cover
+deploy-cli-local:
+	cd dphoto && go install
+
+#######################################
+## UTILS
+#######################################
 
 mocks:
 	mockery --all -r
-
-clean:
-	go clean -testcache
 
 clearlocal:
 	aws --endpoint "http://localhost:4566" --region eu-west-1 s3 rm --recursive "s3://dphoto-local"
 	aws --endpoint http://localhost:4566 --region eu-west-1 dynamodb delete-table --table dphoto-local
 	rm -rf .build/volumes/*
-
-app:
-	cd app && make 

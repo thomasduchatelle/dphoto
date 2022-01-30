@@ -2,6 +2,7 @@ package dynamo
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
@@ -26,11 +27,14 @@ func (a *AlbumCrudTestSuite) SetupSuite() {
 	a.suffix = time.Now().Format("20060102150405")
 
 	a.repo = &Rep{
-		db: dynamodb.New(session.Must(session.NewSession(&aws.Config{
-			CredentialsChainVerboseErrors: aws.Bool(true),
-			//Credentials:                   credentials.NewCredentials(nil),
-			Region: aws.String("eu-west-1"),
-		})), &aws.Config{Endpoint: aws.String("http://localhost:8000")}),
+		db: dynamodb.New(session.Must(session.NewSession(
+			&aws.Config{
+				CredentialsChainVerboseErrors: aws.Bool(true),
+				Endpoint:                      aws.String("http://localhost:8000"),
+				Credentials:                   credentials.NewStaticCredentials("localstack", "localstack", ""),
+				Region:                        aws.String("eu-west-1"),
+			})),
+		),
 		table:         "test-albums-" + a.suffix,
 		RootOwner:     "UNITTEST#1",
 		localDynamodb: true,

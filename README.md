@@ -34,6 +34,30 @@ Components:
 * [DPhoto CLI](./dphoto/README.md): installed on the end-user computer, backup photos and videos using command line interface
 * [APP](./app/README.md): deployed on top of `infra-data`, contains the viewer UI, and APIs for the UI and the CLI
 
+### Install development environment
+
+Required tools:
+
+* Infra:
+  * terraform: `brew install tfenv`, [Makefile](./Makefile)
+  * Serverless Framework: `npm install -g serverless`
+  * AWS CLI: `brew install awscli`
+* Languages & build tools:
+  * `make`
+  * GoLang: `brew install golang`
+  * Yarn: `brew install yarn`
+* Docker and Docker Compose
+
+Setup the environment:
+
+    make install all
+
+    # Run tests & build (all sub-projects)
+    make
+
+    # Deploy to DEV and dphoto bin to local laptop
+    make deploy
+
 ### Releasing process
 
 To release a new version, without CI:
