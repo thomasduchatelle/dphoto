@@ -65,5 +65,10 @@ To release a new version, without CI:
 1. verify everything is checked-in (`git status`)
 2. push on `master`
 3. **infra-data** - verify and approve the plan on [https://app.terraform.io/app/dphoto/workspaces](https://app.terraform.io/app/dphoto/workspaces)
-4. **APP** - to deploy dev version, run `cd app && make deploy`
-5. **dphoto CLI** - create a git tag: `git tag dphoto/v1.x.y && git push --tags`
+4. One-timer pre-requisite: create an SSL certificate for the domain to provision the API Gateway. Certificate is then automatically re-newed
+
+      go install github.com/go-acme/lego/v4/cmd/lego@latest
+      go run ./app/letsencrypt/ignition -domain <domain> -email <email> -env dev
+
+6. **APP** - to deploy dev version, run `cd app && make deploy`
+7. **dphoto CLI** - create a git tag: `git tag dphoto/v1.x.y && git push --tags`

@@ -77,8 +77,9 @@ build-app-api:
 build-app-ui:
 	cd app/viewer_ui && yarn build
 
+AWS_PROFILE ?= dphoto
 deploy-app: clean-app test-app build-app
-	AWS_PROFILE=${AWS_PROFILE:-dphoto} && cd app && sls deploy --debug
+	export AWS_PROFILE="$(AWS_PROFILE)" && cd app && sls deploy --debug
 
 start:
 	cd app/viewer_ui && yarn start
@@ -86,6 +87,8 @@ start:
 #######################################
 ## CLI
 #######################################
+
+.PHONY: test-cli build-cli deploy-cli-local
 
 test-cli: test-domain
 	AWS_PROFILE="" go test ./dphoto/... -race -cover
@@ -99,6 +102,8 @@ deploy-cli-local:
 #######################################
 ## UTILS
 #######################################
+
+.PHONY: mocks clearlocal
 
 mocks:
 	mockery --all -r

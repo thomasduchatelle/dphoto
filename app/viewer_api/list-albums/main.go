@@ -15,7 +15,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return resp, nil
 	}
 
-	common.BootstrapCatalogDomain("tomdush@gmail.com")
+	common.BootstrapCatalogDomain(owner)
 
 	albums, err := catalog.FindAllAlbumsWithStats()
 	if err != nil {
