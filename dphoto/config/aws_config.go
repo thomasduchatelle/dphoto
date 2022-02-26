@@ -6,8 +6,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
+	"os"
+	"path"
 )
 
 // Listener function is called once config is loaded
@@ -29,7 +33,8 @@ func Listen(listener Listener) {
 }
 
 // Connect must be called by main function, it dispatches the config to all components requiring it. Set ignite to TRUE to connect to AWS (required for most commands)
-func Connect(ignite bool) error {
+func Connect(ignite, createConfigIfNotExist bool) error {
+	defaultConfigFile := ForcedConfigFile
 	if ForcedConfigFile == "" {
 		configFileName := "dphoto"
 		if Environment != "" {
@@ -39,13 +44,32 @@ func Connect(ignite bool) error {
 		viper.AddConfigPath(".")
 		viper.AddConfigPath("$HOME/.dphoto")
 		viper.AddConfigPath("/etc/dphoto/")
+
+		defaultConfigFile = os.ExpandEnv("$HOME/.dphoto/") + configFileName + ".yaml"
 	} else {
 		viper.SetConfigFile(ForcedConfigFile)
 	}
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		return fmt.Errorf("Fatal error while loading configuration: %s \n", err)
+		if _, isFileNotFound := err.(viper.ConfigFileNotFoundError); isFileNotFound && createConfigIfNotExist {
+			printer.Info("Creating default configuration file: %s", defaultConfigFile)
+			err = os.MkdirAll(path.Dir(defaultConfigFile), 0600)
+			if err != nil {
+				return errors.Wrapf(err, "can't create directory for the config file %s", defaultConfigFile)
+			}
+
+			_, err = os.Create(defaultConfigFile)
+			if err != nil {
+				return err
+			}
+
+			// read config is re-run to find the now-created file
+			return viper.ReadInConfig()
+
+		} else {
+			return err
+		}
 	}
 
 	if ignite {
@@ -54,7 +78,7 @@ func Connect(ignite bool) error {
 			Credentials:      credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
 			Endpoint:         awsString(viper.GetString("aws.endpoint")),
 			Region:           aws.String(viper.GetString("aws.region")),
-			S3ForcePathStyle: aws.Bool(true), // prevent using S3 bucket in HOST (incompatible with localstack on macOS)
+			S3ForcePathStyle: aws.Bool(true), // prevent using S3 bucket name in HOST (incompatible with localstack on macOS)
 		}))
 
 		config = &viperConfig{

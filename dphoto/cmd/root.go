@@ -4,8 +4,6 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
 	"github.com/thomasduchatelle/dphoto/dphoto/config"
 	"os"
 	"path"
@@ -52,35 +50,18 @@ var rootCmd = &cobra.Command{
 		}).Debugln("Logger setup, starts program...")
 
 		// complete initialisation on components
-		ignite := cmd.Name() != "configure" && cmd.Name() != "version"
-		err = config.Connect(ignite)
-		if err != nil {
-			_, isFileNotFound := err.(viper.ConfigFileNotFoundError)
-			switch {
-			case cmd.Name() == "configure" && isFileNotFound:
-				printer.Info("Creating default configuration file in HOME directory.")
-				_, err = os.Create(os.ExpandEnv("$HOME/.dphoto/dphoto.yaml"))
-				if err != nil {
-					panic(fmt.Errorf("Can't create empty config file: %s \n", err))
-				}
-
-				err = config.Connect(ignite)
-				if err != nil {
-					panic(fmt.Errorf("failed to load justr created empty config file: %s", err))
-				}
-
-			case cmd.Name() == "version":
-				// ignore
-				break
-
-			default:
+		if cmd.Name() != "version" {
+			ignite := cmd.Name() != "configure"
+			err = config.Connect(ignite, cmd.Name() == "configure")
+			if err != nil {
 				panic(fmt.Errorf("Fatal error while loading configuration: %s \n", err))
 			}
 
-		} else if ignite {
-			config.Listen(func(c config.Config) {
-				Owner = c.GetString("owner")
-			})
+			if ignite {
+				config.Listen(func(c config.Config) {
+					Owner = c.GetString("owner")
+				})
+			}
 		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
