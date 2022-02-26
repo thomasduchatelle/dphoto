@@ -1,3 +1,5 @@
+![GitHub tag](https://img.shields.io/github/tag/thomasduchatelle/dphoto?include_prereleases=&sort=semver&color=blue)
+
 DPhoto
 ====================================
 
