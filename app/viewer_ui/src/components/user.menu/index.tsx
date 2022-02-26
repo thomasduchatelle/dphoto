@@ -1,7 +1,7 @@
 import {Avatar, IconButton, Menu, MenuItem, Tooltip} from "@mui/material";
 import {MouseEvent, useState} from "react";
 import {useGoogleLogout} from "react-google-login";
-import googleConfig from "../../config/google.config";
+import {useConfigContext} from "../../core/application/app-config.context";
 import {AuthenticatedUser} from "../../core/domain/security";
 
 export default ({user, onLogout}: {
@@ -9,10 +9,11 @@ export default ({user, onLogout}: {
   onLogout: () => void,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const appConfig = useConfigContext();
 
   const {signOut} = useGoogleLogout({
-    clientId: googleConfig.clientId,
-    uxMode: googleConfig.uxMode,
+    clientId: appConfig.googleClientId,
+    uxMode: appConfig.googleClientId,
     onLogoutSuccess: () => {
       onLogout()
     }

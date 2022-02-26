@@ -3,7 +3,7 @@ module.exports = async ({options, resolveVariable}) => {
     // const region = await resolveVariable('opt:region, self:provider.region, "eu-west-1"');
 
     const rootDomain = `duchatelle.net`;
-    const hostPrefix = stage === 'prod' ? 'dphoto' : 'dphoto-int'
+    const hostPrefix = stage === 'prod' ? 'dphoto' : 'dphoto-dev'
     const domain = `${hostPrefix}.${rootDomain}`
 
     return {

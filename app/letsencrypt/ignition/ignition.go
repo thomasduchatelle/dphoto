@@ -12,6 +12,7 @@ func main() {
 	domain := flag.String("domain", "", "Domain for which request and install the certificate")
 	email := flag.String("email", "", "Email to own the SSL certificate")
 	environment := flag.String("env", "", "DPhoto environment, used for SSM name and tags")
+	force := flag.Bool("force", false, "force re-generating the certificate (to be used in case of domain change)")
 
 	flag.Parse()
 
@@ -28,7 +29,7 @@ func main() {
 	}, *environment)
 	dns.CertificateAuthority = letsencrypt.NewCertificateAuthority()
 
-	err := dns.RenewCertificate(*email, *domain)
+	err := dns.RenewCertificate(*email, *domain, *force)
 	if err != nil {
 		panic(err)
 	}

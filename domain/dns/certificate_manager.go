@@ -14,7 +14,7 @@ var (
 	CertificateAuthority dnsdomain.CertificateAuthority
 )
 
-func RenewCertificate(email, domain string) error {
+func RenewCertificate(email, domain string, forced bool) error {
 	logCtx := log.WithField("Domain", domain)
 	logCtx.Infoln("checking SSL certificate validity...")
 
@@ -27,7 +27,7 @@ func RenewCertificate(email, domain string) error {
 		id = existing.ID
 	}
 
-	if existing == nil || existing.Expiry.Before(time.Now().Add(MinimumExpiryDelay)) {
+	if forced || existing == nil || existing.Expiry.Before(time.Now().Add(MinimumExpiryDelay)) {
 		logCtx.Infoln("Renewing SSL certificate")
 
 		cert, err := CertificateAuthority.RequestCertificate(email, domain)

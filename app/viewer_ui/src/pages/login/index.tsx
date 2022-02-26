@@ -3,7 +3,7 @@ import {useState} from "react";
 import {GoogleLogin, GoogleLoginResponse, GoogleLoginResponseOffline} from "react-google-login";
 import AppNavComponent from "../../components/app-nav.component";
 import BackdropComponent from "../../components/backdrop.component";
-import googleConfig from "../../config/google.config";
+import {useConfigContext} from "../../core/application/app-config.context";
 
 
 function isGoogleLoginResponse(value: GoogleLoginResponse | GoogleLoginResponseOffline): value is GoogleLoginResponse {
@@ -16,6 +16,7 @@ export default ({googleSignIn, authenticationError}: {
 }) => {
   const [ready, setReady] = useState(false)
   const [failureMessage, setFailureMessage] = useState("")
+  const appConfig = useConfigContext();
 
   const errorToDisplay = authenticationError ?? failureMessage
 
@@ -39,8 +40,8 @@ export default ({googleSignIn, authenticationError}: {
       <BackdropComponent loading={!ready}/>
       <AppNavComponent
         rightContent={<GoogleLogin
-          clientId={googleConfig.clientId}
-          uxMode={googleConfig.uxMode}
+          clientId={appConfig.googleClientId}
+          uxMode={appConfig.googleLoginUxMode}
           onFailure={handleFailure}
           onSuccess={handleSuccess}
           onAutoLoadFinished={handleAutoLoadFinished}

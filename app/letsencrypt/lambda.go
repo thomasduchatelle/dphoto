@@ -12,7 +12,7 @@ import (
 
 func Handler() error {
 	domain := env.Getenv("DPHOTO_DOMAIN")
-	err := dns.RenewCertificate(env.Getenv("DPHOTO_CERTIFICATE_EMAIL"), domain)
+	err := dns.RenewCertificate(env.Getenv("DPHOTO_CERTIFICATE_EMAIL"), domain, false)
 	if err != nil {
 		log.WithField("Domain", domain).WithError(err).Errorln("Renewing SSL certificate failed.")
 	}

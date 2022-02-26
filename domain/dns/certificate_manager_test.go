@@ -72,7 +72,7 @@ func TestRenewCertificate(t *testing.T) {
 
 		tt.setMocks(certManager, certAuthority)
 
-		err := dns.RenewCertificate(email, domain)
+		err := dns.RenewCertificate(email, domain, false)
 		if a.NoError(err, tt.name) {
 			certManager.AssertExpectations(t)
 			certAuthority.AssertExpectations(t)
