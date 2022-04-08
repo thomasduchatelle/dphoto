@@ -20,10 +20,12 @@ const theme = createTheme({
   }
 });
 
-export default ({children}: {
+const DPhotoTheme = ({children}: {
   children: ReactNode
 }) => (
   <ThemeProvider theme={theme}>
     {children}
   </ThemeProvider>
-)
+);
+
+export default DPhotoTheme

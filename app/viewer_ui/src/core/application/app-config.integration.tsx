@@ -6,7 +6,7 @@ interface ConfigFile {
   googleClientId: string
 }
 
-export default ({children}: {
+const AppConfigIntegration = ({children}: {
   children?: ReactNode
 }) => {
   const [context, setContext] = useState<AppConfigContextType>({
@@ -33,3 +33,5 @@ export default ({children}: {
     </AppConfigContext.Provider>
   );
 }
+
+export default AppConfigIntegration

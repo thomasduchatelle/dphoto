@@ -4,7 +4,7 @@ import {useGoogleSignInCase, useSecurityContext, useSignOutCase} from '../core/a
 import AuthenticatedRouter from "./authenticated.router";
 import LoginPage from "./login";
 
-export default () => {
+const GeneralRouter = () => {
   const {user, authenticationError} = useSecurityContext();
   const googleSignInCase = useGoogleSignInCase()
   const signOutCase = useSignOutCase()
@@ -20,3 +20,5 @@ export default () => {
     <LoginPage googleSignIn={googleSignInCase.googleSignIn} authenticationError={authenticationError}/>
   )
 }
+
+export default GeneralRouter

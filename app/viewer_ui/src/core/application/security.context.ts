@@ -2,25 +2,29 @@ import {createContext, useContext} from "react";
 import {AuthenticatedUser, GoogleSignInCase, LogoutCase} from "../domain/security";
 import {getAppContext} from "./bootstrap";
 
-
-export interface SecurityContextType {
+export interface SecurityContextPayloadType {
   user?: AuthenticatedUser
   authenticationError?: string
+}
 
-  mutateContext(mutator: (current: Omit<SecurityContextType, "mutateContext">) => Omit<SecurityContextType, "mutateContext">): void
+export interface SecurityContextType {
+  payload: SecurityContextPayloadType
+
+  mutateContext(mutator: (current: SecurityContextPayloadType) => SecurityContextPayloadType): void
 }
 
 export const SecurityContext = createContext<SecurityContextType>({
-  mutateContext(mutator: (current: SecurityContextType) => SecurityContextType) {
+  payload: {},
+  mutateContext(mutator: (current: SecurityContextPayloadType) => SecurityContextPayloadType) {
   }
 })
 
-export function useSecurityContext(): Omit<SecurityContextType, "mutateContext"> {
-  return useContext(SecurityContext)
+export function useSecurityContext(): SecurityContextPayloadType {
+  return useContext(SecurityContext).payload
 }
 
 export function useAuthenticatedUser(): AuthenticatedUser | undefined {
-  return useContext(SecurityContext).user
+  return useContext(SecurityContext).payload.user
 }
 
 function newStateManager(securityContext: SecurityContextType) {

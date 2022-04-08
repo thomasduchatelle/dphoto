@@ -1,6 +1,6 @@
 import {Backdrop, CircularProgress} from "@mui/material";
 
-export default ({loading}: {
+const BackdropComponent = ({loading}: {
   loading: boolean
 }) => (
   <Backdrop
@@ -10,3 +10,5 @@ export default ({loading}: {
     <CircularProgress color="primary" size={100} thickness={2}/>
   </Backdrop>
 )
+
+export default BackdropComponent

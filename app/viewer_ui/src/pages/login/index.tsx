@@ -10,7 +10,7 @@ function isGoogleLoginResponse(value: GoogleLoginResponse | GoogleLoginResponseO
   return value.hasOwnProperty('profileObj');
 }
 
-export default ({googleSignIn, authenticationError}: {
+const Login = ({googleSignIn, authenticationError}: {
   authenticationError?: string
   googleSignIn(identityToken: string): Promise<void>
 }) => {
@@ -66,3 +66,5 @@ export default ({googleSignIn, authenticationError}: {
     </>
   )
 }
+
+export default Login

@@ -1,6 +1,8 @@
 import {AppBar, Box, Container, Toolbar, useScrollTrigger} from "@mui/material";
 import {cloneElement, ReactElement, ReactNode} from "react";
 
+const appVersion = "1.4.0-alpha"
+
 const ElevationScroll = ({children}: {
   children: ReactElement;
 }) => {
@@ -14,7 +16,7 @@ const ElevationScroll = ({children}: {
   });
 }
 
-export default ({rightContent}: {
+const AppNapComponent = ({rightContent}: {
   rightContent: ReactNode
 }) => (
   <>
@@ -23,7 +25,7 @@ export default ({rightContent}: {
         <Container maxWidth={false}>
           <Toolbar disableGutters>
             <Box component='a' href='/' sx={{flexGrow: 0}}>
-              <img src='/dphoto-fulllogo-reversed-50px.png' alt='DPhoto' style={{height: '50px', marginTop: '5px'}}/>
+              <img src='/dphoto-fulllogo-reversed-50px.png' alt='DPhoto Logo' style={{height: '50px', marginTop: '5px'}} title={"version: " + appVersion} />
             </Box>
             <Box sx={{flexGrow: 1}}/>
             <Box sx={{flexGrow: 0}}>
@@ -36,3 +38,5 @@ export default ({rightContent}: {
     <Toolbar/>
   </>
 )
+
+export default AppNapComponent

@@ -1,5 +1,11 @@
 ![GitHub tag](https://img.shields.io/github/tag/thomasduchatelle/dphoto?include_prereleases=&sort=semver&color=blue)
 
+[comment]: <> (TODO add a badge for version deployed on live)
+
+[comment]: <> (TODO add a badge for version deployed on dev)
+
+[comment]: <> (TODO add a badge for the branch passing the tests)
+
 DPhoto
 ====================================
 
@@ -59,23 +65,28 @@ Setup the environment:
 
 ### Releasing process
 
+Bootstrap an environment with built-in command (one-of pre-requisite):
+
+    go run ./app/infra-bootstrap -domain <domain> -email <email> -env dev -google-client-id <id>
+
 To release a new version, without CI:
 
-1. verify everything is checked-in (`git status`)
-2. push on `main`
-3. **infra-data** - verify and approve the plan on [https://app.terraform.io/app/dphoto/workspaces](https://app.terraform.io/app/dphoto/workspaces)
-4. **One-timer pre-requisite**: create an SSL certificate for the domain to provision the API Gateway. Certificate is then automatically re-newed
+1. bump the CLI version
    ```
-   go run ./app/letsencrypt/ignition -domain <domain> -email <email> -env dev
-   # to generate manually a SSL certificate:
-   go install github.com/go-acme/lego/v4/cmd/lego@latest
+   ./ci/pre-release.sh 1.5.0
    ```
 
-5. **One-timer pre-requisite**: create a SSM parameter /dphoto/{Serverless Stage}/googleLogin/clientId with the client if from https://console.developers.google.com/apis/credentials
-6. **APP** - to deploy dev version, run `cd app && make deploy`
-7. **dphoto CLI** - create a git tag: `git tag dphoto/v1.x.y && git push --tags`
+2. commit and push on branch `develop` -> it will deploy to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
+3. upon build success on `develop`, merge to `main` branch -> it will create a tag for the CLI and get deployments ready
+4. approve deployment on terraform cloud first for the data infrastructure, then on github actions for APP
+5. update local versions of dphoto by running
+   ```
+   go install github.com/thomasduchatelle/dphoto/dphoto@latest
+   ```
+
+Note: to avoid confusion, next development iteration can be started by running `./ci/pre-release.sh 1.6.0-alpha`.
 
 ### Tech debt
 
-1. infra-data is using AWS provider v3.*, should be upgraded to v4.*
-2. 
+1. infra-data is using AWS provider v3.x, should be upgraded to v4.x
+2. go cli is using AWS SDK 1.x and should use 2.x
