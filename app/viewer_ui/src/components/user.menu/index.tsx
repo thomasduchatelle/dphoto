@@ -4,7 +4,7 @@ import {useGoogleLogout} from "react-google-login";
 import {useConfigContext} from "../../core/application/app-config.context";
 import {AuthenticatedUser} from "../../core/domain/security";
 
-export default ({user, onLogout}: {
+const UserMenu = ({user, onLogout}: {
   user: AuthenticatedUser,
   onLogout: () => void,
 }) => {
@@ -50,3 +50,5 @@ export default ({user, onLogout}: {
     </>
   )
 }
+
+export default UserMenu

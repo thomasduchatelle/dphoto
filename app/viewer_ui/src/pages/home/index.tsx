@@ -20,7 +20,7 @@ const App = () => {
 
   useEffect(() => {
     authenticatedAxios().get<AlbumWithStats[]>(`/api/v1/owners/${loggedUser?.email}/albums`).then(resp => setAlbums(resp.data))
-  }, [])
+  }, [loggedUser])
 
   return (
     <Container maxWidth={false}>
