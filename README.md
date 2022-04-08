@@ -62,14 +62,20 @@ Setup the environment:
 To release a new version, without CI:
 
 1. verify everything is checked-in (`git status`)
-2. push on `master`
+2. push on `main`
 3. **infra-data** - verify and approve the plan on [https://app.terraform.io/app/dphoto/workspaces](https://app.terraform.io/app/dphoto/workspaces)
 4. **One-timer pre-requisite**: create an SSL certificate for the domain to provision the API Gateway. Certificate is then automatically re-newed
-
-      go run ./app/letsencrypt/ignition -domain <domain> -email <email> -env dev
-      # to generate manually a SSL certificate:
-      go install github.com/go-acme/lego/v4/cmd/lego@latest
+   ```
+   go run ./app/letsencrypt/ignition -domain <domain> -email <email> -env dev
+   # to generate manually a SSL certificate:
+   go install github.com/go-acme/lego/v4/cmd/lego@latest
+   ```
 
 5. **One-timer pre-requisite**: create a SSM parameter /dphoto/{Serverless Stage}/googleLogin/clientId with the client if from https://console.developers.google.com/apis/credentials
 6. **APP** - to deploy dev version, run `cd app && make deploy`
 7. **dphoto CLI** - create a git tag: `git tag dphoto/v1.x.y && git push --tags`
+
+### Tech debt
+
+1. infra-data is using AWS provider v3.*, should be upgraded to v4.*
+2. 
