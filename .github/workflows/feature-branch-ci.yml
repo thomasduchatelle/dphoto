@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./github/actions/install-go
+      - uses: ./.github/actions/install-go
       - name: start mock services
         run: docker-compose up -d
       - run: make test-domain test-app-api test-cli
@@ -14,6 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./github/actions/install-node
+      - uses: ./.github/actions/install-node
       - name: Test and build WEB UI
         run: make install-app test-app-ui build-app-ui
