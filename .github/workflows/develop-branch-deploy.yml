@@ -6,9 +6,7 @@ on:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/feature-branch-ci.yml
+    uses: ./.github/workflows/feature-branch-ci.yml
 
   provision-data-infrastructure:
     runs-on: ubuntu-latest
