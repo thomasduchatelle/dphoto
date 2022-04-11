@@ -1,0 +1,40 @@
+name: Feature branch continuous integration
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: branch name (github.base_ref for pull requests, and github.ref_name for pushes)
+        required: true
+        type: string
+    outputs:
+      environment-name:
+        value: ${{ jobs.choose-env.outputs.environment-name }}
+      environment-workspace:
+        value: ${{ jobs.choose-env.outputs.environment-workspace }}
+
+jobs:
+  choose-env:
+    runs-on: ubuntu-latest
+    outputs:
+      environment-name: ${{ steps.setenv.outputs.environment-name }}
+      environment-workspace: ${{ steps.setenv.outputs.environment-workspace }}
+    steps:
+      - name: set environment based on the branch
+        id: setenv
+        run: |
+          case "${{ inputs.ref }}" in
+            "main")
+              echo "::set-output name=environment-name::live" 
+              echo "::set-output name=environment-workspace::live"
+              ;;
+          
+            "develop")
+              echo "::set-output name=environment-name::dev" 
+              echo "::set-output name=environment-workspace::dev"
+              ;;
+          
+            *)
+              echo "Reference is not set to use any environment"
+              exit 1
+              ;;
+          esac

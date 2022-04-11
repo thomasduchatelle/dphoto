@@ -1,10 +1,9 @@
-![GitHub tag](https://img.shields.io/github/tag/thomasduchatelle/dphoto?include_prereleases=&sort=semver&color=blue)
+![Licence](https://img.shields.io/github/license/thomasduchatelle/dphoto)
+![CLI Version](https://img.shields.io/github/tag/thomasduchatelle/dphoto?include_prereleases=&sort=semver&color=blue)
+[![live version](https://img.shields.io/badge/dynamic/json?label=live+version&query=%24.version&url=https%3A%2F%2Fdphoto.duchatelle.net%2Fapi%2Fv1%2Finfo)](https://dphoto.duchatelle.net)
+[![dev version](https://img.shields.io/badge/dynamic/json?label=dev+version&query=%24.version&url=https%3A%2F%2Fdphoto-dev.duchatelle.net%2Fapi%2Fv1%2Finfo)](https://dphoto-dev.duchatelle.net)
 
-[comment]: <> (TODO add a badge for version deployed on live)
-
-[comment]: <> (TODO add a badge for version deployed on dev)
-
-[comment]: <> (TODO add a badge for the branch passing the tests)
+[comment]: <> (Generate badges: https://michaelcurrin.github.io/badge-generator/#/generic or https://shields.io/)
 
 DPhoto
 ====================================
@@ -69,22 +68,21 @@ Bootstrap an environment with built-in command (one-of pre-requisite):
 
     go run ./app/infra-bootstrap -domain <domain> -email <email> -env dev -google-client-id <id>
 
-To release a new version, without CI:
+To release a new version:
 
-1. bump the CLI version
+1. make changes on a feature branch and bump the CLI version:
    ```
    ./ci/pre-release.sh 1.5.0
    ```
 
-2. commit and push on branch `develop` -> it will deploy to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
-3. upon build success on `develop`, merge to `main` branch -> it will create a tag for the CLI and get deployments ready
-4. approve deployment on terraform cloud first for the data infrastructure ; on success, APP will be deployed by a github actions workflow
-6. update local versions of dphoto by running
+2. create a pull request to `develop`, review the terraform plan and tests then merge -> it will deploy to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
+3. create a pull request `develop -> main`, review the terraform plan then merge -> it will deploy to [https://dphoto.duchatelle.net](https://dphoto.duchatelle.net) and create a tag for the CLI
+4. (optional) update local versions of `dphoto` by running
    ```
    go install github.com/thomasduchatelle/dphoto/dphoto@latest
    ```
-
-Note: to avoid confusion, next development iteration can be started by running `./ci/pre-release.sh 1.6.0-alpha`.
+   
+5. to avoid confusion, next development iteration can be started by running `./ci/pre-release.sh 1.6.0-alpha`.
 
 ### Tech debt
 

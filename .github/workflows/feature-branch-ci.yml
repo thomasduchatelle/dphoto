@@ -25,4 +25,4 @@ jobs:
       - name: Setup NODE
         uses: ./.github/actions/install-node
       - name: Test and build WEB UI
-        run: make install-app test-app-ui build-app-ui
+        run: make test-app-ui build-app-ui

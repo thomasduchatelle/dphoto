@@ -1,5 +1,10 @@
 name: 'Install and cache NODE'
 description: 'Run npm install and yarn install everywhere required and cache node_modules'
+inputs:
+  sls:
+    description: install globally serverless cli
+    required: false
+    default: 'false'
 runs:
   using: "composite"
   steps:
@@ -14,3 +19,10 @@ runs:
           app/viewer_ui/node_modules
           app/node_modules
         key: ${{ runner.os }}-npm-${{ hashFiles('app/viewer_ui/yarn.lock', 'app/package-lock.json') }}
+    - name: Download deps
+      run: make install-app
+      shell: bash
+    - name: Install SLS
+      if: inputs.sls == 'true'
+      run: npm install -g serverless
+      shell: bash

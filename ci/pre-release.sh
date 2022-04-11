@@ -77,7 +77,7 @@ done
 ## Functions
 
 function current_cli_version {
-    CLI_VERSION=$(grep 'Version = ' "$REPO_DIR/dphoto/cmd/version.go" | sed 's/Version = "\(.*\)"/\1/')
+    CLI_VERSION=$(grep 'Version = ' "$REPO_DIR/dphoto/cmd/version.go" | sed 's/.*Version = "\(.*\)".*/\1/')
 }
 
 function update_cli_version {
@@ -90,6 +90,12 @@ function update_app_version {
 
 # Updating version ...
 current_cli_version
+if [[ -z "$VERSION" ]] ; then
+  >&2 info "Current version:"
+  echo "$CLI_VERSION"
+  exit 0
+fi
+
 info "Updating version $CYAN$CLI_VERSION$WHITE -> $CYAN$VERSION"
 
 update_cli_version

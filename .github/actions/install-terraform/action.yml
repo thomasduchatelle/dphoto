@@ -1,0 +1,19 @@
+name: 'Install terraform'
+description: 'Uses .terraform-version to choose the right terraform version.'
+inputs:
+  tf-api-token:
+    description: Terraform cloud API token
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Get terraform version
+      id: vars
+      run: |
+        echo "::set-output name=terraform-version::$(cat infra-data/.terraform-version)"
+        echo "TF_API_TOKEN: ${{ inputs.tf-api-token }}"
+      shell: sh
+    - uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: ${{ steps.vars.outputs.terraform-version }}
+        cli_config_credentials_token: ${{ inputs.tf-api-token }}
