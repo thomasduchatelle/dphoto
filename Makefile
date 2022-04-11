@@ -26,10 +26,12 @@ install-infra-data:
 		terraform init
 
 test-infra-data:
-	terraform validate
+	cd infra-data && \
+		terraform validate
 
 deploy-infra-data:
-	terraform apply
+	cd infra-data && \
+		terraform apply
 
 #######################################
 ## DOMAIN

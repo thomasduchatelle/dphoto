@@ -1,11 +1,19 @@
 name: Feature branch continuous integration
-on: [ push ]
+on:
+  push:
+    branches-ignore:
+      - develop
+      - main
+      - actions
+  workflow_call:
+
 jobs:
   test-go-code:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/install-go
+      - name: Setup GO
+        uses: ./.github/actions/install-go
       - name: start mock services
         run: docker-compose up -d
       - run: make test-domain test-app-api test-cli
@@ -14,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/install-node
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
       - name: Test and build WEB UI
         run: make install-app test-app-ui build-app-ui
