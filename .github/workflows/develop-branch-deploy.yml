@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
 #    needs: [tests]
+    env:
+      TF_WORKSPACE: dev
     steps:
       - uses: actions/checkout@v3
 
