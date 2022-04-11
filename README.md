@@ -78,8 +78,8 @@ To release a new version, without CI:
 
 2. commit and push on branch `develop` -> it will deploy to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
 3. upon build success on `develop`, merge to `main` branch -> it will create a tag for the CLI and get deployments ready
-4. approve deployment on terraform cloud first for the data infrastructure, then on github actions for APP
-5. update local versions of dphoto by running
+4. approve deployment on terraform cloud first for the data infrastructure ; on success, APP will be deployed by a github actions workflow
+6. update local versions of dphoto by running
    ```
    go install github.com/thomasduchatelle/dphoto/dphoto@latest
    ```
