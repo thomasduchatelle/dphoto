@@ -11,7 +11,7 @@ jobs:
   provision-data-infrastructure:
     runs-on: ubuntu-latest
     environment: dev
-    needs: [tests]
+#    needs: [tests]
     steps:
       - uses: actions/checkout@v3
 
