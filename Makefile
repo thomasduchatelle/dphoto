@@ -20,8 +20,9 @@ deploy: deploy-infra-data deploy-app deploy-cli-local
 .PHONY: install-infra-data test-infra-data deploy-infra-data
 
 install-infra-data:
-	cd infra-data && \
-		command -v tfenv > /dev/null && tfenv install min-required && tfenv use min-required
+	command -v tfenv > /dev/null \
+		cd infra-data && \
+		tfenv install && tfenv use
 	cd infra-data && \
 		terraform init
 

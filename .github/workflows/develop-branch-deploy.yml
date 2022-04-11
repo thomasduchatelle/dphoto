@@ -5,8 +5,8 @@ on:
       - actions
 
 jobs:
-  tests:
-    uses: ./.github/workflows/feature-branch-ci.yml
+#  tests:
+#    uses: ./.github/workflows/feature-branch-ci.yml
 
   provision-data-infrastructure:
     runs-on: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
           path: infra-data/.terraform
 
       - name: Terraform init
-        run: make install-infra-data
+        run: cd infra-data && terraform init
 
       - run: cd infra-data && terraform plan
 
