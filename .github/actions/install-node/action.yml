@@ -1,0 +1,16 @@
+name: 'Install and cache NODE'
+description: 'Run npm install and yarn install everywhere required and cache node_modules'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '17'
+        # note - directly caching node_modules is MUCH faster
+    - name: YARN and NPM Cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          app/viewer_ui/node_modules
+          app/node_modules
+        key: ${{ runner.os }}-npm-${{ hashFiles('app/viewer_ui/yarn.lock', 'app/package-lock.json') }}

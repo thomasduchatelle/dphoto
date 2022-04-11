@@ -1,0 +1,25 @@
+on:
+  push:
+    branches:
+      - develop
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make test
+
+  provision-data-infrastructure:
+    runs-on: ubuntu-latest
+    environment: dev
+    needs: [tests]
+    steps:
+      - run: echo "terraform apply"
+
+  deploy-app:
+    runs-on: ubuntu-latest
+    environment: dev
+    needs: [provision-data-infrastructure]
+    steps:
+      - run: make build
+
+
