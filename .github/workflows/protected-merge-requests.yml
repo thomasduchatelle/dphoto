@@ -43,6 +43,8 @@ jobs:
 
       - name: Setup terraform
         uses: ./.github/actions/install-terraform
+        with:
+          tf-api-token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform init
         id: init
