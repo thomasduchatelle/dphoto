@@ -14,12 +14,12 @@ jobs:
       - name: set environment based on the branch
         run: |
               case "${{ github.base_ref }}" in
-                "refs/heads/main")
+                "main")
                   echo "::set-output name=environment-name::live" 
                   echo "::set-output name=environment-workspace::live"
                   ;;
               
-                "refs/heads/develop")
+                "develop")
                   echo "::set-output name=environment-name::dev" 
                   echo "::set-output name=environment-workspace::dev"
                   ;;
