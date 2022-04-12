@@ -2,43 +2,40 @@ on:
   push:
     branches:
       - develop
-#  pull_request:
-#    branches:
-#      - develop
 
 jobs:
-#  tests:
-#    uses: ./.github/workflows/feature-branch-ci.yml
-
   provision-data-infrastructure:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
     environment: dev
-#    needs: [tests]
     env:
       TF_WORKSPACE: dev
     steps:
       - uses: actions/checkout@v3
-
-      - name: Get terraform version
-        id: vars
-        run: echo "::set-output name=terraform-version::$(cat infra-data/.terraform-version)"
-
-      - uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: $({ steps.vars.output.terraform-version })
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: Setup terraform
+        uses: ./.github/actions/install-terraform
 
       - name: Terraform init
+        id: init
         run: cd infra-data && terraform init
 
-      - run: cd infra-data && terraform plan
-
+      - name: Terraform apply
+        run: cd infra-data && terraform apply -auto-approve
 
   deploy-app:
     runs-on: ubuntu-latest
     environment: dev
     needs: [provision-data-infrastructure]
+    env:
+      AWS_DEFAULT_REGION: eu-west-1
     steps:
-      - run: echo "sls deploy"
+      - uses: actions/checkout@v3
+      - name: Setup GO
+        uses: ./.github/actions/install-go
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+
+      - name: Build and deploy
+        run: make deploy-app
 
 
