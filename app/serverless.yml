@@ -218,11 +218,18 @@ functions:
       - httpApi:
           path: /env-config.json
           method: get
+
   list-albums:
     handler: bin/list-albums
     events:
       - httpApi:
           path: /api/v1/owners/{owner}/albums
+          method: get
+  version:
+    handler: bin/version
+    events:
+      - httpApi:
+          path: /api/v1/version
           method: get
 
 plugins:

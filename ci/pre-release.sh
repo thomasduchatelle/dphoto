@@ -77,11 +77,11 @@ done
 ## Functions
 
 function current_cli_version {
-    CLI_VERSION=$(grep 'Version = ' "$REPO_DIR/dphoto/cmd/version.go" | sed 's/.*Version = "\(.*\)".*/\1/')
+    CLI_VERSION=$(grep 'version = ' "$REPO_DIR/domain/meta/version.go" | sed 's/.*version = "\(.*\)".*/\1/')
 }
 
 function update_cli_version {
-  sed -i "s/Version = \".*\"/Version = \"$VERSION\"/" "$REPO_DIR/dphoto/cmd/version.go"
+  sed -i "s/Version = \".*\"/version = \"$VERSION\"/" "$REPO_DIR/domain/meta/version.go"
 }
 
 function update_app_version {
