@@ -7,11 +7,11 @@ on:
 jobs:
   tests:
     uses: ./.github/workflows/feature-branch-ci.yml
-    with:
-      ref: ${{ github.base_ref }}
 
   choose-env:
     uses: ./.github/workflows/choose-environment.yml
+    with:
+      ref: ${{ github.base_ref }}
 
   plan-data-infrastructure:
     name: Plan / ${{ needs.choose-env.outputs.environment-name }} / infra-data
