@@ -42,8 +42,8 @@ jobs:
       - uses: actions/checkout@v3
 
       - run: |
-          echo "Env name: ${{ jobs.choose-env.outputs.environment-name }}"
-          echo "Env workspace: ${{ jobs.choose-env.outputs.environment-workspace }}"
+          echo "Env name: ${{ needs.choose-env.outputs.environment-name }}"
+          echo "Env workspace: ${{ needs.jobs.choose-env.outputs.environment-workspace }}"
 
       - name: Setup terraform
         uses: ./.github/actions/install-terraform
