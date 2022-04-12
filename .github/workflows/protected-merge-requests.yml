@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: set environment based on the branch
-      - run: |
+        run: |
               case "${{ github.ref }}" in
                 "refs/heads/main")
                   echo "::set-output name=environment-name::live" 
