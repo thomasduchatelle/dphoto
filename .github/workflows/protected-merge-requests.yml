@@ -31,13 +31,13 @@ jobs:
 
   plan-data-infrastructure:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ jobs.choose-env.outputs.environment-name }}
+#    environment:
+#      name: ${{ jobs.choose-env.outputs.environment-name }}
     needs:
 #      - tests
       - choose-env
-    env:
-      TF_WORKSPACE: ${{ jobs.choose-env.outputs.environment-workspace }}
+#    env:
+#      TF_WORKSPACE: ${{ jobs.choose-env.outputs.environment-workspace }}
     steps:
       - uses: actions/checkout@v3
 
