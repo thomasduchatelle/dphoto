@@ -32,18 +32,18 @@ jobs:
   plan-data-infrastructure:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.jobs.choose-env.outputs.environment-name }}
+      name: ${{ jobs.choose-env.outputs.environment-name }}
     needs:
 #      - tests
       - choose-env
     env:
-      TF_WORKSPACE: ${{ github.jobs.choose-env.outputs.environment-workspace }}
+      TF_WORKSPACE: ${{ jobs.choose-env.outputs.environment-workspace }}
     steps:
       - uses: actions/checkout@v3
 
       - run: |
-          echo "Env name: ${{ github.jobs.choose-env.outputs.environment-name }}"
-          echo "Env workspace: ${{ github.jobs.choose-env.outputs.environment-workspace }}"
+          echo "Env name: ${{ jobs.choose-env.outputs.environment-name }}"
+          echo "Env workspace: ${{ jobs.choose-env.outputs.environment-workspace }}"
 
       - name: Setup terraform
         uses: ./.github/actions/install-terraform
