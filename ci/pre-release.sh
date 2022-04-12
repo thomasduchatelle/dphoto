@@ -81,7 +81,7 @@ function current_cli_version {
 }
 
 function update_cli_version {
-  sed -i "s/Version = \".*\"/version = \"$VERSION\"/" "$REPO_DIR/domain/meta/version.go"
+  sed -i "s/version = \".*\"/version = \"$VERSION\"/" "$REPO_DIR/domain/meta/version.go"
 }
 
 function update_app_version {
