@@ -10,8 +10,12 @@ jobs:
 
   choose-env:
     runs-on: ubuntu-latest
+    outputs:
+      environment-name: ${{ steps.setenv.outputs.environment-name }}
+      environment-workspace: ${{ steps.setenv.outputs.environment-workspace }}
     steps:
       - name: set environment based on the branch
+        id: setenv
         run: |
               case "${{ github.base_ref }}" in
                 "main")
