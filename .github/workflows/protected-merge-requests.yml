@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: set environment based on the branch
         run: |
-              case "${{ github.ref }}" in
+              case "${{ github.base_ref }}" in
                 "refs/heads/main")
                   echo "::set-output name=environment-name::live" 
                   echo "::set-output name=environment-workspace::live"
