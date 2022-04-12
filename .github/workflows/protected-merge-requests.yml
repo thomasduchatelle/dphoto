@@ -5,8 +5,8 @@ on:
       - develop
 
 jobs:
-  tests:
-    uses: ./.github/workflows/feature-branch-ci.yml
+#  tests:
+#    uses: ./.github/workflows/feature-branch-ci.yml
 
   choose-env:
     runs-on: ubuntu-latest
@@ -34,12 +34,16 @@ jobs:
     environment:
       name: ${{ github.jobs.choose-env.outputs.environment-name }}
     needs:
-      - tests
+#      - tests
       - choose-env
     env:
       TF_WORKSPACE: ${{ github.jobs.choose-env.outputs.environment-workspace }}
     steps:
       - uses: actions/checkout@v3
+
+      - run: |
+          echo "Env name: ${{ github.jobs.choose-env.outputs.environment-name }}"
+          echo "Env workspace: ${{ github.jobs.choose-env.outputs.environment-workspace }}"
 
       - name: Setup terraform
         uses: ./.github/actions/install-terraform
