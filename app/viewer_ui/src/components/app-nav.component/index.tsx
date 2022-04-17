@@ -19,24 +19,22 @@ const ElevationScroll = ({children}: {
 const AppNapComponent = ({rightContent}: {
   rightContent: ReactNode
 }) => (
-  <>
-    <ElevationScroll>
-      <AppBar>
-        <Container maxWidth={false}>
-          <Toolbar disableGutters>
-            <Box component='a' href='/' sx={{flexGrow: 0}}>
-              <img src='/dphoto-fulllogo-reversed-50px.png' alt='DPhoto Logo' style={{height: '50px', marginTop: '5px'}} title={"version: " + appVersion} />
-            </Box>
-            <Box sx={{flexGrow: 1}}/>
-            <Box sx={{flexGrow: 0}}>
-              {rightContent}
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
-    </ElevationScroll>
-    <Toolbar/>
-  </>
+  <ElevationScroll>
+    <AppBar sx={{zIndex: (theme) => theme.zIndex.drawer + 1}}>
+      <Container maxWidth={false}>
+        <Toolbar disableGutters>
+          <Box component='a' href='/' sx={{flexGrow: 0}}>
+            <img src='/dphoto-fulllogo-reversed-50px.png' alt='DPhoto Logo' style={{height: '50px', marginTop: '5px'}}
+                 title={"version: " + appVersion}/>
+          </Box>
+          <Box sx={{flexGrow: 1}}/>
+          <Box sx={{flexGrow: 0}}>
+            {rightContent}
+          </Box>
+        </Toolbar>
+      </Container>
+    </AppBar>
+  </ElevationScroll>
 )
 
 export default AppNapComponent

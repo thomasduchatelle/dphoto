@@ -1,5 +1,7 @@
+import {AxiosInstance} from "axios";
 import {createContext, useContext} from "react";
 import {AuthenticatedUser, GoogleSignInCase, LogoutCase} from "../domain/security";
+import {authenticatedAxios} from "../domain/security/adapters/oauthapi/oauth.service";
 import {getAppContext} from "./bootstrap";
 
 export interface SecurityContextPayloadType {
@@ -25,6 +27,19 @@ export function useSecurityContext(): SecurityContextPayloadType {
 
 export function useAuthenticatedUser(): AuthenticatedUser | undefined {
   return useContext(SecurityContext).payload.user
+}
+
+export function useMustBeAuthenticated(): [AuthenticatedUser, AxiosInstance, LogoutCase] {
+  const user = useAuthenticatedUser();
+  if (!user) {
+    throw new Error("user must be authenticated to access this page")
+  }
+
+  return [
+    user,
+    authenticatedAxios(),
+    useSignOutCase(),
+  ]
 }
 
 function newStateManager(securityContext: SecurityContextType) {

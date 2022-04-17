@@ -1,3 +1,4 @@
 .idea
 delegate/dphoto
 infra-data/.terraform/
+/dist/

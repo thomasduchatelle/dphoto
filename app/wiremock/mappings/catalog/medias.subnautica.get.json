@@ -1,0 +1,196 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPattern": "/api/v1/owners/[^/]+/albums/2022-02_Subnautica/medias"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": [
+      {
+        "id": "00001",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_1.jpeg",
+        "time": "2022-02-19T13:42:00Z",
+        "source": "android"
+      },
+      {
+        "id": "00002",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_2.jpeg",
+        "time": "2022-02-20T14:00:00Z",
+        "source": "android"
+      },
+      {
+        "id": "00003",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_3.jpeg",
+        "time": "2022-02-21T12:00:00Z",
+        "source": "sony"
+      },
+      {
+        "id": "00004",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_4.jpeg",
+        "time": "2022-02-21T12:00:00Z"
+      },
+      {
+        "id": "00005",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_5.jpeg",
+        "time": "2022-02-21T13:00:00Z"
+      },
+      {
+        "id": "00006",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_6.jpeg",
+        "time": "2022-02-22T12:00:00Z",
+        "source": "sony"
+      },
+      {
+        "id": "00007",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_7.jpeg",
+        "time": "2022-02-22T12:01:00Z"
+      },
+      {
+        "id": "00011",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_1.jpeg",
+        "time": "2022-02-19T13:42:00Z",
+        "source": "android"
+      },
+      {
+        "id": "00012",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_2.jpeg",
+        "time": "2022-02-20T14:00:00Z",
+        "source": "android"
+      },
+      {
+        "id": "00013",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_3.jpeg",
+        "time": "2022-02-21T12:00:00Z",
+        "source": "sony"
+      },
+      {
+        "id": "00014",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_4.jpeg",
+        "time": "2022-02-21T12:00:00Z"
+      },
+      {
+        "id": "00015",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_5.jpeg",
+        "time": "2022-02-21T13:00:00Z"
+      },
+      {
+        "id": "00016",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_6.jpeg",
+        "time": "2022-02-22T12:00:00Z",
+        "source": "sony"
+      },
+      {
+        "id": "00017",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_7.jpeg",
+        "time": "2022-02-22T12:01:00Z"
+      },
+      {
+        "id": "00021",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_1.jpeg",
+        "time": "2022-02-19T13:42:00Z",
+        "source": "android"
+      },
+      {
+        "id": "00022",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_2.jpeg",
+        "time": "2022-02-20T14:00:00Z",
+        "source": "android"
+      },
+      {
+        "id": "00023",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_3.jpeg",
+        "time": "2022-02-21T12:00:00Z",
+        "source": "sony"
+      },
+      {
+        "id": "00024",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_4.jpeg",
+        "time": "2022-02-21T12:00:00Z"
+      },
+      {
+        "id": "00035",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_5.jpeg",
+        "time": "2022-02-21T13:00:00Z"
+      },
+      {
+        "id": "00036",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_6.jpeg",
+        "time": "2022-02-22T12:00:00Z",
+        "source": "sony"
+      },
+      {
+        "id": "00037",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_7.jpeg",
+        "time": "2022-02-22T12:01:00Z"
+      },
+      {
+        "id": "00041",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_1.jpeg",
+        "time": "2022-02-19T13:42:00Z",
+        "source": "android"
+      },
+      {
+        "id": "00042",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_2.jpeg",
+        "time": "2022-02-20T14:00:00Z",
+        "source": "android"
+      },
+      {
+        "id": "00043",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_3.jpeg",
+        "time": "2022-02-21T12:00:00Z",
+        "source": "sony"
+      },
+      {
+        "id": "00044",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_4.jpeg",
+        "time": "2022-02-21T12:00:00Z"
+      },
+      {
+        "id": "00045",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_5.jpeg",
+        "time": "2022-02-21T13:00:00Z"
+      },
+      {
+        "id": "00046",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_6.jpeg",
+        "time": "2022-02-22T12:00:00Z",
+        "source": "sony"
+      },
+      {
+        "id": "00047",
+        "type": "IMAGE",
+        "path": "/api/images/subnautica_7.jpeg",
+        "time": "2022-02-22T12:01:00Z"
+      }
+    ]
+  }
+}

@@ -1,4 +1,6 @@
-import {Avatar, IconButton, Menu, MenuItem, Tooltip} from "@mui/material";
+import LogoutIcon from '@mui/icons-material/Logout';
+import PersonIcon from '@mui/icons-material/Person';
+import {Avatar, IconButton, ListItemIcon, Menu, MenuItem, Tooltip} from "@mui/material";
 import {MouseEvent, useState} from "react";
 import {useGoogleLogout} from "react-google-login";
 import {useConfigContext} from "../../core/application/app-config.context";
@@ -45,7 +47,14 @@ const UserMenu = ({user, onLogout}: {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem onClick={signOut}>Logout</MenuItem>
+        <MenuItem sx={{cursor: 'unset'}}>
+          <ListItemIcon><PersonIcon/></ListItemIcon>
+          {user.name}
+        </MenuItem>
+        <MenuItem onClick={signOut}>
+          <ListItemIcon><LogoutIcon/></ListItemIcon>
+          Logout
+        </MenuItem>
       </Menu>
     </>
   )

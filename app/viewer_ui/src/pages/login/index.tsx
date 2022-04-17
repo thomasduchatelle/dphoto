@@ -1,4 +1,4 @@
-import {Alert, Container, Paper} from "@mui/material";
+import {Alert, Container, Paper, Toolbar} from "@mui/material";
 import {useState} from "react";
 import {GoogleLogin, GoogleLoginResponse, GoogleLoginResponseOffline} from "react-google-login";
 import AppNavComponent from "../../components/app-nav.component";
@@ -36,7 +36,8 @@ const Login = ({googleSignIn, authenticationError}: {
   }
 
   return (
-    <>
+    <div>
+      <Toolbar/>
       <BackdropComponent loading={!ready}/>
       <AppNavComponent
         rightContent={<GoogleLogin
@@ -63,7 +64,7 @@ const Login = ({googleSignIn, authenticationError}: {
           </Paper>
         )}
       </Container>
-    </>
+    </div>
   )
 }
 

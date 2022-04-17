@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/api/oauth/token"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "access_token": "asecret.token",
+      "expires_in": 28800,
+      "identity": {
+        "email": "tony@stark.com",
+        "name": "Tony Stark",
+        "picture": "http://127.0.0.1:8080/api/static/tonystark-profile.jpg"
+      }
+    }
+  }
+}

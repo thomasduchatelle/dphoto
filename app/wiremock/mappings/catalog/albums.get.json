@@ -1,0 +1,44 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPattern": "/api/v1/owners/[^/]+/albums"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": [
+      {
+        "name": "God of War",
+        "owner": "tony@stark.com",
+        "folderName": "/2021-12_christmas",
+        "start": "2021-12-24T00:00:00Z",
+        "end": "2022-01-04T00:00:00Z",
+        "totalCount": 360
+      },
+      {
+        "name": "Subnautica",
+        "owner": "tony@stark.com",
+        "folderName": "/2022-02_Subnautica",
+        "start": "2022-02-19T00:00:00Z",
+        "end": "2022-02-26T00:00:00Z",
+        "totalCount": 420
+      },
+      {
+        "name": "Horizon Zero Down",
+        "owner": "tony@stark.com",
+        "folderName": "/2022-Q1",
+        "start": "2022-01-01T00:00:00Z",
+        "end": "2022-04-01T00:00:00Z",
+        "totalCount": 420
+      },
+      {
+        "name": "Q4 2021",
+        "owner": "tony@stark.com",
+        "folderName": "/2021-Q4",
+        "start": "2021-10-01T00:00:00Z",
+        "end": "2022-01-01T00:00:00Z",
+        "totalCount": 32
+      }
+    ]
+  }
+}
