@@ -23,7 +23,7 @@ export function ImageInList({media, imageMinHeight, imageViewportPercentage}: {
     >
       <img
         src={`${media.path}`}
-        srcSet={`${media.path}?w=150 150w, ${media.path}?w=350 350w, ${media.path}?w=600 600w, ${media.path}?w=1200 1200w`}
+        srcSet={`${media.path}?w=150 150w, ${media.path}?w=300 300w, ${media.path}?w=450 450w, ${media.path}?w=800 800w, ${media.path}?w=1200 1200w, ${media.path} 1300w`}
         sizes={`${imageViewportPercentage}vw`}
         alt={dateTimeToString(media.time)}
         loading="lazy"

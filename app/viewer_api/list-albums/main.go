@@ -7,7 +7,17 @@ import (
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/oauth"
+	"time"
 )
+
+type Album struct {
+	Name       string    `json:"name"`
+	Owner      string    `json:"owner"`
+	FolderName string    `json:"folderName"`
+	Start      time.Time `json:"start"`
+	End        time.Time `json:"end"`
+	TotalCount int       `json:"totalCount"`
+}
 
 func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	owner, _ := request.PathParameters["owner"]
@@ -22,7 +32,18 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return common.InternalError(errors.Wrapf(err, "failed to fetch albums"))
 	}
 
-	return common.Ok(albums)
+	restAlbums := make([]Album, len(albums))
+	for i, a := range albums {
+		restAlbums[i] = Album{
+			Name:       a.Album.Name,
+			Owner:      owner,
+			FolderName: a.Album.FolderName,
+			Start:      a.Album.Start,
+			End:        a.Album.End,
+			TotalCount: a.TotalCount,
+		}
+	}
+	return common.Ok(restAlbums)
 }
 
 func main() {
