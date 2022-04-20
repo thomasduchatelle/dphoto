@@ -7,13 +7,13 @@ import (
 )
 
 // FindMoveTransactions lists transactions of media requiring to be physically moved.
-func FindMoveTransactions() ([]*catalogmodel.MoveTransaction, error) {
-	return Repository.FindReadyMoveTransactions()
+func FindMoveTransactions(owner string) ([]*catalogmodel.MoveTransaction, error) {
+	return Repository.FindReadyMoveTransactions(owner)
 }
 
 // RelocateMovedMedias drives the physical re-location of all medias that have been flagged.
-func RelocateMovedMedias(operator catalogmodel.MoveMediaOperator, transactionId string) (int, error) {
-	transactions, err := Repository.FindReadyMoveTransactions()
+func RelocateMovedMedias(owner string, operator catalogmodel.MoveMediaOperator, transactionId string) (int, error) {
+	transactions, err := Repository.FindReadyMoveTransactions(owner)
 	if err != nil {
 		return 0, err
 	}
@@ -55,7 +55,7 @@ func RelocateMovedMedias(operator catalogmodel.MoveMediaOperator, transactionId 
 			}
 		}
 
-		err = Repository.UpdateMediasLocation(transactionId, moves)
+		err = Repository.UpdateMediasLocation(owner, transactionId, moves)
 		if err != nil {
 			return count, err
 		}

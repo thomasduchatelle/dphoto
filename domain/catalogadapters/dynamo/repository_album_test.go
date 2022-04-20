@@ -17,6 +17,7 @@ type AlbumCrudTestSuite struct {
 	suite.Suite
 	suffix string
 	repo   *Rep
+	owner  string
 }
 
 func TestRepositoryAlbum(t *testing.T) {
@@ -26,6 +27,7 @@ func TestRepositoryAlbum(t *testing.T) {
 func (a *AlbumCrudTestSuite) SetupSuite() {
 	a.suffix = time.Now().Format("20060102150405")
 
+	a.owner = "UNITTEST#1"
 	a.repo = &Rep{
 		db: dynamodb.New(session.Must(session.NewSession(
 			&aws.Config{
@@ -36,7 +38,6 @@ func (a *AlbumCrudTestSuite) SetupSuite() {
 			})),
 		),
 		table:         "test-albums-" + a.suffix,
-		RootOwner:     "UNITTEST#1",
 		localDynamodb: true,
 	}
 
@@ -47,9 +48,10 @@ func (a *AlbumCrudTestSuite) SetupSuite() {
 }
 
 func (a *AlbumCrudTestSuite) TestInsertAndFind() {
-	folderName := "Christmas"
+	folderName := "/christmas"
 
 	err := a.repo.InsertAlbum(catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       "Christmas",
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-24"),
@@ -60,9 +62,10 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	}
 
 	name := "it should find previously saved album"
-	found, err := a.repo.FindAlbum(folderName)
+	found, err := a.repo.FindAlbum(a.owner, folderName)
 	if a.NoError(err, name) {
 		a.Equal(&catalogmodel.Album{
+			Owner:      a.owner,
 			Name:       "Christmas",
 			FolderName: folderName,
 			Start:      mustParseDate("2020-12-24"),
@@ -75,6 +78,7 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 	folderName := "New Year"
 
 	err := a.repo.InsertAlbum(catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       "New Year",
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-31"),
@@ -85,6 +89,7 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 	}
 
 	err = a.repo.InsertAlbum(catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       "New Year Again",
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-31"),
@@ -96,7 +101,7 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 
 func (a *AlbumCrudTestSuite) TestFindNotFound() {
 	ttName := "it should return [?, NotFoundError] when searched album do not exists"
-	_, err := a.repo.FindAlbum("_donotexist")
+	_, err := a.repo.FindAlbum(a.owner, "_donotexist")
 	if a.Error(err, ttName) {
 		a.Equal(catalog.NotFoundError, err)
 	}
@@ -105,6 +110,7 @@ func (a *AlbumCrudTestSuite) TestFindNotFound() {
 func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 	folderName := "ToBeDeleted"
 	err := a.repo.InsertAlbum(catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       folderName,
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-24"),
@@ -114,7 +120,7 @@ func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 		return
 	}
 
-	err = a.repo.DeleteEmptyAlbum(folderName)
+	err = a.repo.DeleteEmptyAlbum(a.owner, folderName)
 	a.NoError(err, "it should delete an album that do not have any medias")
 }
 
@@ -122,6 +128,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 	folderName := "Update1"
 
 	err := a.repo.InsertAlbum(catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       folderName,
 		FolderName: folderName,
 		Start:      mustParseDate("2020-12-01"),
@@ -132,6 +139,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 	}
 
 	update := catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       "Another Name",
 		FolderName: folderName,
 		Start:      mustParseDate("2021-01-01"),
@@ -140,7 +148,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 	err = a.repo.UpdateAlbum(update)
 	name := "it should update an exiting album"
 	if a.NoError(err, name) {
-		updated, err := a.repo.FindAlbum(folderName)
+		updated, err := a.repo.FindAlbum(a.owner, folderName)
 		if a.NoError(err, name) {
 			a.Equal(&update, updated, name)
 		}
@@ -150,6 +158,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 func (a *AlbumCrudTestSuite) TestUpdateNotExisting() {
 	folderName := "_do_not_exist"
 	update := catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       "Another Name",
 		FolderName: folderName,
 		Start:      mustParseDate("2021-01-01"),

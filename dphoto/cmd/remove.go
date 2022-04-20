@@ -27,7 +27,7 @@ unless different albums fully cover the 3 months.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		rmArgs.folderName = args[0]
 
-		err := catalog.DeleteAlbum(strings.Trim(rmArgs.folderName, "/"), !rmArgs.notEmpty)
+		err := catalog.DeleteAlbum(Owner, strings.Trim(rmArgs.folderName, "/"), !rmArgs.notEmpty)
 		printer.FatalWithMessageIfError(err, 1, "Album %s couldn't be deleted", rmArgs.folderName)
 
 		printer.Success("Album %s has been deleted", aurora.Cyan(rmArgs.folderName))

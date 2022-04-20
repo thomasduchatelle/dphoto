@@ -7,27 +7,27 @@ var (
 )
 
 type RepositoryPort interface {
-	FindAllAlbums() ([]*catalogmodel.Album, error)
+	FindAllAlbums(owner string) ([]*catalogmodel.Album, error)
 	InsertAlbum(album catalogmodel.Album) error
-	DeleteEmptyAlbum(folderName string) error
+	DeleteEmptyAlbum(owner string, folderName string) error
 	// FindAlbum returns (nil, NotFoundError) when not found
-	FindAlbum(folderName string) (*catalogmodel.Album, error)
+	FindAlbum(owner string, folderName string) (*catalogmodel.Album, error)
 	// UpdateAlbum updates data of matching catalogmodel.Album.FolderName
 	UpdateAlbum(album catalogmodel.Album) error
 	// CountMedias counts number of media within the album
-	CountMedias(folderName string) (int, error)
+	CountMedias(owner string, folderName string) (int, error)
 
 	// InsertMedias bulks insert medias
-	InsertMedias(media []catalogmodel.CreateMediaRequest) error
+	InsertMedias(owner string, media []catalogmodel.CreateMediaRequest) error
 	// FindMedias is a paginated search of medias within an album, and optionally within a time range
-	FindMedias(folderName string, filter catalogmodel.FindMediaFilter) (*catalogmodel.MediaPage, error)
+	FindMedias(owner string, folderName string, filter catalogmodel.FindMediaFilter) (*catalogmodel.MediaPage, error)
 	// FindExistingSignatures returns the signatures that are already known
-	FindExistingSignatures(signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error)
+	FindExistingSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error)
 	// UpdateMedias updates metadata and mark the media to be moved, the AlbumFolderName is never updated (part of the primary key)
 	UpdateMedias(filter *catalogmodel.UpdateMediaFilter, newFolderName string) (string, int, error)
 
-	FindReadyMoveTransactions() ([]*catalogmodel.MoveTransaction, error)
+	FindReadyMoveTransactions(owner string) ([]*catalogmodel.MoveTransaction, error)
 	FindFilesToMove(transactionId, pageToken string) ([]*catalogmodel.MovedMedia, string, error)
-	UpdateMediasLocation(transactionId string, moves []*catalogmodel.MovedMedia) error
+	UpdateMediasLocation(owner string, transactionId string, moves []*catalogmodel.MovedMedia) error
 	DeleteEmptyMoveTransaction(transactionId string) error
 }

@@ -161,9 +161,9 @@ func (t *Timeline) FindAt(date time.Time) (*catalogmodel.Album, bool) {
 	return nil, false
 }
 
-func (t *Timeline) FindForAlbum(folderName string) (segments []PrioritySegment) {
+func (t *Timeline) FindForAlbum(owner, folderName string) (segments []PrioritySegment) {
 	for _, seg := range t.segments {
-		if seg.albums[0].FolderName == folderName {
+		if seg.albums[0].Owner == owner && seg.albums[0].FolderName == folderName {
 			segments = append(segments, PrioritySegment{
 				Start:  seg.from,
 				End:    seg.to,

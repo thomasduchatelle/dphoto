@@ -45,11 +45,11 @@ func (a *keyboardInteractionAdaptor) StartListening() {
 		default:
 			switch ck {
 			case 'c':
-				a.session.CreateFromSelectedSuggestion()
+				a.session.CreateFromSelectedSuggestion(a.session.owner)
 				a.session.Refresh()
 
 			case 'n':
-				a.session.CreateNew()
+				a.session.CreateNew(a.session.owner)
 				a.session.Refresh()
 
 			case 'd':

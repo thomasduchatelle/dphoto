@@ -53,6 +53,7 @@ type InteractiveViewState struct {
 
 // RecordCreation contains parameter to create a new album.
 type RecordCreation struct {
+	Owner      string
 	FolderName string // FolderName might be empty to be generated
 	Name       string
 	Start, End time.Time

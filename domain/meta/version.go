@@ -1,4 +1,5 @@
-package version
+// Package meta expose information about the application like the version.
+package meta
 
 const (
 	version = "1.4.0-delta"

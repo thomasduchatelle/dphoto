@@ -1,3 +1,4 @@
+// Package oauth exposes function to forge and validate JWT tokens
 package oauth
 
 import (

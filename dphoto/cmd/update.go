@@ -33,7 +33,7 @@ Note: default quarter albums should not be updated unless the 3 months are cover
 		endDate, err := parseDate(updateArgs.end)
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
-		err = catalog.UpdateAlbum(strings.Trim(updateArgs.folderName, "/"), startDate, endDate)
+		err = catalog.UpdateAlbum(Owner, strings.Trim(updateArgs.folderName, "/"), startDate, endDate)
 		printer.FatalWithMessageIfError(err, 1, "Couldn't update dates of folder %s", updateArgs.folderName)
 
 		printer.Success("Album %s has been updated.", aurora.Cyan(updateArgs.folderName))

@@ -1,13 +1,13 @@
 package backupadapter
 
 import (
+	"fmt"
+	"github.com/logrusorgru/aurora/v3"
+	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/screen"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
-	"fmt"
-	"github.com/logrusorgru/aurora/v3"
-	"github.com/pkg/errors"
 )
 
 type ScanProgress struct {
@@ -16,7 +16,7 @@ type ScanProgress struct {
 	analysedLine *screen.ProgressLine
 }
 
-func ScanWithCache(volume backupmodel.VolumeToBackup, options backup.ScanOptions) (ui.SuggestionRecordRepositoryPort, []backupmodel.FoundMedia, error) {
+func ScanWithCache(owner string, volume backupmodel.VolumeToBackup, options backup.ScanOptions) (ui.SuggestionRecordRepositoryPort, []backupmodel.FoundMedia, error) {
 	previousResult, rejectCount, err := restore(volume.UniqueId)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to restore previous scan result for volume %s", volume.String())
@@ -25,12 +25,12 @@ func ScanWithCache(volume backupmodel.VolumeToBackup, options backup.ScanOptions
 	if len(previousResult) > 0 {
 		useState, ok := ui.NewSimpleForm().ReadBool("Previous result has been found for this volume, do you want to restore it?", "Y/n")
 		if !ok || useState {
-			return NewSuggestionRepository(previousResult, rejectCount), nil, err
+			return NewSuggestionRepository(owner, previousResult, rejectCount), nil, err
 		}
 	}
 
 	suggestions, rejects, err := doScan(volume, options)
-	return NewSuggestionRepository(suggestions, len(rejects)), rejects, err
+	return NewSuggestionRepository(owner, suggestions, len(rejects)), rejects, err
 }
 
 func doScan(volume backupmodel.VolumeToBackup, options backup.ScanOptions) ([]*backupmodel.ScannedFolder, []backupmodel.FoundMedia, error) {

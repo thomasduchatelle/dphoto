@@ -7,13 +7,15 @@ import (
 
 // Album defines how medias are physically stored.
 type Album struct {
+	Owner      string // Owner is a PK with FolderName
 	Name       string
-	FolderName string // unique and immutable
+	FolderName string // FolderName is unique with Owner, and immutable
 	Start      time.Time
 	End        time.Time
 }
 
 type CreateAlbum struct {
+	Owner            string
 	Name             string
 	Start            time.Time
 	End              time.Time
@@ -27,7 +29,7 @@ func (a *Album) String() string {
 
 // IsEqual uses unique identifier to compare both albums
 func (a *Album) IsEqual(other *Album) bool {
-	return a.FolderName == other.FolderName
+	return a.Owner == a.Owner && a.FolderName == other.FolderName
 }
 
 func NewTimeRangeFromAlbum(album Album) TimeRange {
@@ -43,7 +45,7 @@ func NewTimeRangeFromAlbum(album Album) TimeRange {
 
 func (c *CreateAlbum) String() string {
 	const layout = "2006-01-02T03"
-	return fmt.Sprintf("[%s -> %s] %s (%s)", c.Start.Format(layout), c.End.Format(layout), c.Name, c.ForcedFolderName)
+	return fmt.Sprintf("[%s -> %s] %s (%s/%s)", c.Start.Format(layout), c.End.Format(layout), c.Name, c.Owner, c.ForcedFolderName)
 }
 
 type MediaType string
@@ -59,6 +61,7 @@ type MediaSignature struct {
 	SignatureSize   int
 }
 
+// CreateMediaRequest is the request to add a new media to the catalog. It's within an Owner context.
 type CreateMediaRequest struct {
 	Location  MediaLocation
 	Type      MediaType
@@ -66,6 +69,7 @@ type CreateMediaRequest struct {
 	Signature MediaSignature
 }
 
+// MediaMeta is an entry (read) of a media in the catalog
 type MediaMeta struct {
 	Signature MediaSignature // Signature is the key used to get the image (or its location)
 	Filename  string         // Filename original filename when image was uploaded
@@ -73,6 +77,7 @@ type MediaMeta struct {
 	Details   MediaDetails
 }
 
+// MediaDetails are extracted from the metadata within photos and videos and stored as it.
 type MediaDetails struct {
 	Width, Height             int
 	DateTime                  time.Time
@@ -84,6 +89,7 @@ type MediaDetails struct {
 	VideoEncoding             string // VideoEncoding is the codec used to encode the video (ex: 'H264')
 }
 
+// MovedMedia is a record of a media that will be, or have been, physically moved
 type MovedMedia struct {
 	Signature        MediaSignature
 	SourceFolderName string

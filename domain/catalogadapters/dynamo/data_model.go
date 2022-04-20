@@ -41,6 +41,7 @@ type AlbumIndexKey struct {
 type AlbumData struct {
 	TablePk
 	AlbumIndexKey
+	AlbumOwner      string
 	AlbumName       string
 	AlbumFolderName string
 	AlbumStart      time.Time
@@ -149,14 +150,15 @@ func mediaBusinessSignature(signature *catalogmodel.MediaSignature) string {
 	return fmt.Sprintf("%s#%v", signature.SignatureSha256, signature.SignatureSize)
 }
 
-func marshalAlbum(owner string, album *catalogmodel.Album) (map[string]*dynamodb.AttributeValue, error) {
+func marshalAlbum(album *catalogmodel.Album) (map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(album.FolderName) {
 		return nil, errors.WithStack(errors.New("folderName must not be blank"))
 	}
 
 	return dynamodbattribute.MarshalMap(&AlbumData{
-		TablePk:         albumPrimaryKey(owner, album.FolderName),
-		AlbumIndexKey:   albumIndexedKey(owner, album.FolderName),
+		TablePk:         albumPrimaryKey(album.Owner, album.FolderName),
+		AlbumIndexKey:   albumIndexedKey(album.Owner, album.FolderName),
+		AlbumOwner:      album.Owner,
 		AlbumName:       album.Name,
 		AlbumFolderName: album.FolderName,
 		AlbumStart:      album.Start,
@@ -164,14 +166,21 @@ func marshalAlbum(owner string, album *catalogmodel.Album) (map[string]*dynamodb
 	})
 }
 
-func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*catalogmodel.Album, error) {
+func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue, defaultOwner string) (*catalogmodel.Album, error) {
 	var data AlbumData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal attributes %+v", attributes)
 	}
 
+	// note - owner has been added to the data structure on 18 Apr 2022
+	owner := data.AlbumOwner
+	if owner == "" {
+		owner = defaultOwner
+	}
+
 	return &catalogmodel.Album{
+		Owner:      defaultOwner,
 		Name:       data.AlbumName,
 		FolderName: data.AlbumFolderName,
 		Start:      data.AlbumStart,

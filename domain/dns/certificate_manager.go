@@ -1,3 +1,4 @@
+// Package dns expose functions to renew SSL certificates on AWS
 package dns
 
 import (

@@ -10,10 +10,10 @@ import (
 	"sort"
 )
 
-func (r *Rep) FindAllAlbums() ([]*catalogmodel.Album, error) {
+func (r *Rep) FindAllAlbums(owner string) ([]*catalogmodel.Album, error) {
 	query := &dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":owner":     mustAttribute(r.RootOwner),
+			":owner":     mustAttribute(owner),
 			":albumOnly": mustAttribute("ALBUM#"),
 		},
 		KeyConditionExpression: aws.String("PK = :owner AND begins_with(SK, :albumOnly)"),
@@ -26,7 +26,7 @@ func (r *Rep) FindAllAlbums() ([]*catalogmodel.Album, error) {
 
 	albums := make([]*catalogmodel.Album, 0, len(data.Items))
 	for _, attributes := range data.Items {
-		unmarshalAlbum, err := unmarshalAlbum(attributes)
+		unmarshalAlbum, err := unmarshalAlbum(attributes, owner)
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +42,11 @@ func (r *Rep) FindAllAlbums() ([]*catalogmodel.Album, error) {
 }
 
 func (r *Rep) InsertAlbum(album catalogmodel.Album) error {
-	item, err := marshalAlbum(r.RootOwner, &album)
+	if album.Owner == "" || album.FolderName == "" {
+		return errors.Errorf("Owner and Foldername are mandatory")
+	}
+
+	item, err := marshalAlbum(&album)
 	if err != nil {
 		return err
 	}
@@ -56,8 +60,8 @@ func (r *Rep) InsertAlbum(album catalogmodel.Album) error {
 	return errors.WithStack(errors.Wrapf(err, "failed inserting album '%s'", album.FolderName))
 }
 
-func (r *Rep) DeleteEmptyAlbum(folderName string) error {
-	count, err := r.CountMedias(folderName)
+func (r *Rep) DeleteEmptyAlbum(owner string, folderName string) error {
+	count, err := r.CountMedias(owner, folderName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to count number of medias in album %s", folderName)
 	}
@@ -66,7 +70,7 @@ func (r *Rep) DeleteEmptyAlbum(folderName string) error {
 		return catalog.NotEmptyError
 	}
 
-	primaryKey, err := dynamodbattribute.MarshalMap(albumPrimaryKey(r.RootOwner, folderName))
+	primaryKey, err := dynamodbattribute.MarshalMap(albumPrimaryKey(owner, folderName))
 	if err != nil {
 		return err
 	}
@@ -77,8 +81,8 @@ func (r *Rep) DeleteEmptyAlbum(folderName string) error {
 	return err
 }
 
-func (r *Rep) CountMedias(folderName string) (int, error) {
-	albumIndexKey, err := dynamodbattribute.MarshalMap(albumIndexedKey(r.RootOwner, folderName))
+func (r *Rep) CountMedias(owner string, folderName string) (int, error) {
+	albumIndexKey, err := dynamodbattribute.MarshalMap(albumIndexedKey(owner, folderName))
 	if err != nil {
 		return 0, err
 	}
@@ -99,8 +103,8 @@ func (r *Rep) CountMedias(folderName string) (int, error) {
 	return int(*query.Count), nil
 }
 
-func (r *Rep) FindAlbum(folderName string) (*catalogmodel.Album, error) {
-	key, err := dynamodbattribute.MarshalMap(albumPrimaryKey(r.RootOwner, folderName))
+func (r *Rep) FindAlbum(owner string, folderName string) (*catalogmodel.Album, error) {
+	key, err := dynamodbattribute.MarshalMap(albumPrimaryKey(owner, folderName))
 	if err != nil {
 		return nil, err
 	}
@@ -116,11 +120,11 @@ func (r *Rep) FindAlbum(folderName string) (*catalogmodel.Album, error) {
 		return nil, catalog.NotFoundError
 	}
 
-	return unmarshalAlbum(attributes.Item)
+	return unmarshalAlbum(attributes.Item, owner)
 }
 
 func (r *Rep) UpdateAlbum(album catalogmodel.Album) error {
-	item, err := marshalAlbum(r.RootOwner, &album)
+	item, err := marshalAlbum(&album)
 	if err != nil {
 		return err
 	}

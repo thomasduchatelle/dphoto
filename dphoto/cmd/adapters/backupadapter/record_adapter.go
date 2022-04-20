@@ -7,7 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 )
 
-func NewSuggestionRepository(folders []*backupmodel.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {
+func NewSuggestionRepository(owner string, folders []*backupmodel.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {
 	records := make([]*ui.SuggestionRecord, len(folders))
 
 	for i, folder := range folders {
@@ -28,16 +28,20 @@ func NewSuggestionRepository(folders []*backupmodel.ScannedFolder, rejectCount i
 	}
 
 	return &staticRecordRepository{
+		Owner:       owner,
 		Records:     records,
 		RejectCount: rejectCount,
 	}
 }
 
-func NewAlbumRepository() ui.ExistingRecordRepositoryPort {
-	return new(dynamicAlbumRepository)
+func NewAlbumRepository(owner string) ui.ExistingRecordRepositoryPort {
+	return &dynamicAlbumRepository{
+		owner: owner,
+	}
 }
 
 type staticRecordRepository struct {
+	Owner       string
 	Records     []*ui.SuggestionRecord
 	RejectCount int
 }
@@ -54,10 +58,12 @@ func (r *staticRecordRepository) Rejects() int {
 	return r.RejectCount
 }
 
-type dynamicAlbumRepository struct{}
+type dynamicAlbumRepository struct {
+	owner string
+}
 
 func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, error) {
-	albums, err := catalog.FindAllAlbumsWithStats()
+	albums, err := catalog.FindAllAlbumsWithStats(r.owner)
 	if err != nil {
 		return nil, err
 	}

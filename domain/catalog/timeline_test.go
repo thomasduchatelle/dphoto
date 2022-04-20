@@ -299,6 +299,7 @@ func TestFindAt_FindBetween(t *testing.T) {
 
 func TestTimeline_FindForAlbum(t *testing.T) {
 	a := assert.New(t)
+	const owner = "ironman"
 
 	type Want struct {
 		start    string
@@ -308,7 +309,7 @@ func TestTimeline_FindForAlbum(t *testing.T) {
 
 	timeline, err := NewTimeline(AlbumCollection())
 	if a.NoError(err) {
-		segments := timeline.FindForAlbum("/Christmas_Holidays")
+		segments := timeline.FindForAlbum(owner, "/Christmas_Holidays")
 
 		var got []Want
 		for _, seg := range segments {
@@ -333,19 +334,23 @@ func TestTimeline_FindForAlbum(t *testing.T) {
 
 func TestTimeline_AppendAlbum(t *testing.T) {
 	a := assert.New(t)
+	const owner = "ironman"
 
 	albums := []*catalogmodel.Album{
 		{
+			Owner:      owner,
 			FolderName: "2020-Q3",
 			Start:      time.Date(2020, 7, 1, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
+			Owner:      owner,
 			FolderName: "/2020-Q4",
 			Start:      time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
+			Owner:      owner,
 			FolderName: "/Christmas_Holidays",
 			Start:      time.Date(2020, 12, 18, 0, 0, 0, 0, time.UTC),
 			End:        time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC),
@@ -393,6 +398,7 @@ func newAlbum(folder, start, end string) *catalogmodel.Album {
 		panic(err)
 	}
 	return &catalogmodel.Album{
+		Owner:      "stark",
 		Name:       folder,
 		FolderName: folder,
 		Start:      startTime,

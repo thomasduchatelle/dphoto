@@ -14,15 +14,16 @@ import (
 
 func Bootstrap() {
 	BootstrapOAuthDomain()
+	BootstrapCatalogDomain()
 }
 
-func BootstrapCatalogDomain(owner string) {
+func BootstrapCatalogDomain() {
 	//bucketName, _ := os.LookupEnv("STORAGE_BUCKET_NAME")
 	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
-	catalog.Repository = dynamo.Must(dynamo.NewRepository(session.Must(session.NewSession()), owner, tableName))
+	catalog.Repository = dynamo.Must(dynamo.NewRepository(session.Must(session.NewSession()), tableName))
 }
 
 func BootstrapOAuthDomain() {

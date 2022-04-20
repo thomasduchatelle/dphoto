@@ -32,7 +32,7 @@ var scan = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		volume := args[0]
 
-		recordRepository, rejects, err := backupadapter.ScanWithCache(newSmartVolume(volume), backup.ScanOptions{
+		recordRepository, rejects, err := backupadapter.ScanWithCache(Owner, newSmartVolume(volume), backup.ScanOptions{
 			SkipRejects: scanArgs.skipRejects,
 		})
 		printer.FatalIfError(err, 2)
@@ -45,10 +45,10 @@ var scan = &cobra.Command{
 		if recordRepository.Count() == 0 {
 			fmt.Println(aurora.Red(fmt.Sprintf("No media found on path %s .", volume)))
 		} else if scanArgs.nonInteractive {
-			err = ui.NewSimpleSession(backupadapter.NewAlbumRepository(), recordRepository).Render()
+			err = ui.NewSimpleSession(backupadapter.NewAlbumRepository(Owner), recordRepository).Render()
 			printer.FatalIfError(err, 1)
 		} else {
-			err = ui.NewInteractiveSession(&uiCatalogAdapter{backupadapter.NewBackupHandler(Owner)}, backupadapter.NewAlbumRepository(), recordRepository).Start()
+			err = ui.NewInteractiveSession(&uiCatalogAdapter{backupadapter.NewBackupHandler(Owner)}, backupadapter.NewAlbumRepository(Owner), recordRepository, Owner).Start()
 			printer.FatalIfError(err, 1)
 		}
 
@@ -93,6 +93,7 @@ type uiCatalogAdapter struct {
 
 func (o uiCatalogAdapter) Create(request ui.RecordCreation) error {
 	return catalog.Create(catalogmodel.CreateAlbum{
+		Owner:            request.Owner,
 		Name:             request.Name,
 		Start:            request.Start,
 		End:              request.End,
@@ -101,13 +102,13 @@ func (o uiCatalogAdapter) Create(request ui.RecordCreation) error {
 }
 
 func (o *uiCatalogAdapter) RenameAlbum(folderName, newName string, renameFolder bool) error {
-	return catalog.RenameAlbum(folderName, newName, renameFolder)
+	return catalog.RenameAlbum(Owner, folderName, newName, renameFolder)
 }
 
 func (o *uiCatalogAdapter) UpdateAlbum(folderName string, start, end time.Time) error {
-	return catalog.UpdateAlbum(folderName, start, end)
+	return catalog.UpdateAlbum(Owner, folderName, start, end)
 }
 
 func (o *uiCatalogAdapter) DeleteAlbum(folderName string) error {
-	return catalog.DeleteAlbum(folderName, false)
+	return catalog.DeleteAlbum(Owner, folderName, false)
 }

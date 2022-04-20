@@ -13,14 +13,16 @@ type FindMediaFilter struct {
 	TimeRange   TimeRange   // TimeRange is optional
 }
 
-// UpdateMediaFilter is used internally to update a range of folders
+// UpdateMediaFilter is used internally to filter medias based on album and date range
 type UpdateMediaFilter struct {
+	Owner            string
 	AlbumFolderNames map[string]interface{} // AlbumFolderNames is a set of folder names (map value is nil)
 	Ranges           []TimeRange            // empty = no restriction
 }
 
-func NewUpdateFilter() *UpdateMediaFilter {
+func NewUpdateFilter(owner string) *UpdateMediaFilter {
 	return &UpdateMediaFilter{
+		Owner:            owner,
 		AlbumFolderNames: make(map[string]interface{}),
 	}
 }
@@ -61,5 +63,5 @@ func (m *UpdateMediaFilter) String() string {
 		rangesString = fmt.Sprintf(" and ranges in [%s}", strings.Join(ranges, ", "))
 	}
 
-	return fmt.Sprintf("albums in [%s]%s", strings.Join(albums, ", "), rangesString)
+	return fmt.Sprintf("albums in %s/{%s}%s", m.Owner, strings.Join(albums, ", "), rangesString)
 }

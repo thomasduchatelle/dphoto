@@ -26,8 +26,6 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	}
 
 	log.Infof("find medias for album %s/%s", owner, folderName)
-	common.BootstrapCatalogDomain(owner)
-
 	return common.Ok([]Media{})
 }
 

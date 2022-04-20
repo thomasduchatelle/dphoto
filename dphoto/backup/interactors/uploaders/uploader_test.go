@@ -12,6 +12,7 @@ import (
 )
 
 const isoDatePattern = "2006-01-02"
+const owner = "unittest"
 
 var mediaDate = time.Date(2021, 4, 27, 10, 16, 22, 0, time.UTC)
 
@@ -67,17 +68,19 @@ func TestUploader_Upload(t *testing.T) {
 		},
 	}
 
-	catalogProxy.On("FindAllAlbums").Return([]*catalogmodel.Album{
-		{"Easter", "/2021-04_easter", mustParseDate("2021-04-04"), mustParseDate("2021-04-05")},
+	catalogProxy.On("FindAllAlbums", owner).Return([]*catalogmodel.Album{
+		{owner, "Easter", "/2021-04_easter", mustParseDate("2021-04-04"), mustParseDate("2021-04-05")},
 	}, nil)
 
 	catalogProxy.On("Create", catalogmodel.CreateAlbum{
+		Owner:            owner,
 		Name:             "Q1 2021",
 		Start:            mustParseDate("2021-01-01"),
 		End:              mustParseDate("2021-04-01"),
 		ForcedFolderName: "/2021-Q1",
 	}).Return(nil).Once()
 	catalogProxy.On("Create", catalogmodel.CreateAlbum{
+		Owner:            owner,
 		Name:             "Q2 2021",
 		Start:            mustParseDate("2021-04-01"),
 		End:              mustParseDate("2021-07-01"),
@@ -91,7 +94,7 @@ func TestUploader_Upload(t *testing.T) {
 			signatureRequest[i] = &catalogmodel.MediaSignature{SignatureSha256: sign.Signature.Sha256, SignatureSize: int(sign.Signature.Size)}
 		}
 	}
-	catalogProxy.On("FindSignatures", signatureRequest).Return([]*catalogmodel.MediaSignature{signatureRequest[4]}, nil).Once()
+	catalogProxy.On("FindSignatures", owner, signatureRequest).Return([]*catalogmodel.MediaSignature{signatureRequest[4]}, nil).Once()
 
 	postFilter.On("AcceptAnalysedMedia", medias[5], "/2021-Q2").Return(false)
 	postFilter.On("AcceptAnalysedMedia", mock.Anything, mock.Anything).Return(true)
@@ -135,7 +138,7 @@ func TestUploader_Upload(t *testing.T) {
 			Signature: *signatureRequest[3],
 		},
 	}
-	catalogProxy.On("InsertMedias", mock.Anything).Return(func(actual []catalogmodel.CreateMediaRequest) error {
+	catalogProxy.On("InsertMedias", owner, mock.Anything).Return(func(owner string, actual []catalogmodel.CreateMediaRequest) error {
 		sort.Slice(actual, func(i, j int) bool {
 			return actual[i].Location.Filename < actual[j].Location.Filename
 		})
@@ -149,12 +152,12 @@ func TestUploader_Upload(t *testing.T) {
 	}).Once()
 
 	// EXPECTATION 2/2
-	onlineStorage.On("UploadFile", "unittest", mock.Anything, "/2021-Q1", "2021-03-27_00-00-00_00000001.jpg").Return("2021-03-27_00-00-00_ONLINE.jpg", nil).Once()
-	onlineStorage.On("UploadFile", "unittest", mock.Anything, "/2021-Q2", "2021-04-02_00-00-00_00000002.mkv").Return("2021-04-02_00-00-00_00000002.mkv", nil).Once()
-	onlineStorage.On("UploadFile", "unittest", mock.Anything, "/2021-04_easter", "2021-04-04_00-00-00_00000003.jpg").Return("2021-04-04_00-00-00_00000003.jpg", nil).Once()
-	onlineStorage.On("UploadFile", "unittest", mock.Anything, "/2021-Q2", "2021-04-05_00-00-00_00000004.jpg").Return("2021-04-05_00-00-00_00000004.jpg", nil).Once()
+	onlineStorage.On("UploadFile", owner, mock.Anything, "/2021-Q1", "2021-03-27_00-00-00_00000001.jpg").Return("2021-03-27_00-00-00_ONLINE.jpg", nil).Once()
+	onlineStorage.On("UploadFile", owner, mock.Anything, "/2021-Q2", "2021-04-02_00-00-00_00000002.mkv").Return("2021-04-02_00-00-00_00000002.mkv", nil).Once()
+	onlineStorage.On("UploadFile", owner, mock.Anything, "/2021-04_easter", "2021-04-04_00-00-00_00000003.jpg").Return("2021-04-04_00-00-00_00000003.jpg", nil).Once()
+	onlineStorage.On("UploadFile", owner, mock.Anything, "/2021-Q2", "2021-04-05_00-00-00_00000004.jpg").Return("2021-04-05_00-00-00_00000004.jpg", nil).Once()
 
-	uploader, err := NewUploader(catalogProxy, onlineStorage, "unittest", postFilter)
+	uploader, err := NewUploader(catalogProxy, onlineStorage, owner, postFilter)
 	if !a.NoError(err) {
 		a.FailNow(err.Error())
 	}

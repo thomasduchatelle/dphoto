@@ -8,10 +8,11 @@ import (
 type InteractiveSession struct {
 	actionsPort          InteractiveActionsPort
 	catchError           atomic.Value
-	renderer             InteractiveRendererPort
 	existingRepository   ExistingRecordRepositoryPort
-	suggestionRepository SuggestionRecordRepositoryPort
+	owner                string
+	renderer             InteractiveRendererPort
 	state                InteractiveViewState
+	suggestionRepository SuggestionRecordRepositoryPort
 }
 
 type recordNode struct {
@@ -21,11 +22,12 @@ type recordNode struct {
 	children       []*Record
 }
 
-func NewInteractiveSession(actions InteractiveActionsPort, existingRepository ExistingRecordRepositoryPort, suggestionRepository SuggestionRecordRepositoryPort) *InteractiveSession {
+func NewInteractiveSession(actions InteractiveActionsPort, existingRepository ExistingRecordRepositoryPort, suggestionRepository SuggestionRecordRepositoryPort, owner string) *InteractiveSession {
 	return &InteractiveSession{
 		actionsPort:          actions,
 		renderer:             newInteractiveRender(),
 		existingRepository:   existingRepository,
+		owner:                owner,
 		suggestionRepository: suggestionRepository,
 		state: InteractiveViewState{
 			RecordsState: RecordsState{
@@ -105,10 +107,10 @@ func (i *InteractiveSession) HasError() bool {
 	return hasError
 }
 
-func (i *InteractiveSession) CreateFromSelectedSuggestion() {
+func (i *InteractiveSession) CreateFromSelectedSuggestion(owner string) {
 	record := *i.state.Records[i.state.Selected]
 	if record.Suggestion {
-		ok, err := NewCreateAlbumForm(i.actionsPort, i.renderer).AlbumForm(record)
+		ok, err := NewCreateAlbumForm(i.actionsPort, i.renderer).AlbumForm(owner, record)
 		if err != nil {
 			i.catchError.Store(err)
 			return
@@ -120,8 +122,8 @@ func (i *InteractiveSession) CreateFromSelectedSuggestion() {
 	}
 }
 
-func (i *InteractiveSession) CreateNew() {
-	_, err := NewCreateAlbumForm(i.actionsPort, i.renderer).AlbumForm(Record{})
+func (i *InteractiveSession) CreateNew(owner string) {
+	_, err := NewCreateAlbumForm(i.actionsPort, i.renderer).AlbumForm(owner, Record{})
 	if i.must(err) {
 		i.must(i.reloadRecords())
 	}

@@ -12,17 +12,15 @@ import (
 type Rep struct {
 	db                      *dynamodb.DynamoDB
 	table                   string
-	RootOwner               string // RootOwner is the tenant id, 'ROOT' if single tenant.
-	localDynamodb           bool   // localDynamodb is set to true to disable some feature - not available on localstack - like tagging
+	localDynamodb           bool // localDynamodb is set to true to disable some feature - not available on localstack - like tagging
 	findMovedMediaBatchSize int64
 }
 
 // NewRepository creates the repository and connect to the database
-func NewRepository(awsSession *session.Session, owner string, tableName string) (*Rep, error) {
+func NewRepository(awsSession *session.Session, tableName string) (*Rep, error) {
 	rep := &Rep{
 		db:                      dynamodb.New(awsSession),
 		table:                   tableName,
-		RootOwner:               owner,
 		localDynamodb:           false,
 		findMovedMediaBatchSize: int64(dynamoWriteBatchSize),
 	}

@@ -31,7 +31,7 @@ type mediaRecord struct {
 }
 
 func NewUploader(catalogProxy CatalogProxyAdapter, onlineStorage backupmodel.OnlineStorageAdapter, owner string, postFilter backupmodel.PostAnalyseFilter) (*Uploader, error) {
-	albums, err := catalogProxy.FindAllAlbums()
+	albums, err := catalogProxy.FindAllAlbums(owner)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (u *Uploader) Upload(buffer []*backupmodel.AnalysedMedia, progressChannel c
 		}
 	}
 
-	return errors.Wrapf(u.catalog.InsertMedias(uploaded), "failed to insert photos in catalog: ")
+	return errors.Wrapf(u.catalog.InsertMedias(u.owner, uploaded), "failed to insert photos in catalog: ")
 }
 
 func (u *Uploader) filterKnownMedias(signatures []*catalogmodel.MediaSignature, medias map[catalogmodel.MediaSignature]mediaRecord, progressChannel chan *backupmodel.ProgressEvent) error {
@@ -158,7 +158,7 @@ func (u *Uploader) filterKnownMedias(signatures []*catalogmodel.MediaSignature, 
 	}
 	u.signaturesLock.Unlock()
 
-	knownSignatures, err := u.catalog.FindSignatures(signatures)
+	knownSignatures, err := u.catalog.FindSignatures(u.owner, signatures)
 	if err != nil {
 		return err
 	}
@@ -199,6 +199,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 	quarter := (mediaTime.Month() - 1) / 3
 
 	createRequest := catalogmodel.CreateAlbum{
+		Owner:            u.owner,
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),
 		Start:            time.Date(year, quarter*3+1, 1, 0, 0, 0, 0, time.UTC),
 		End:              time.Date(year, (quarter+1)*3+1, 1, 0, 0, 0, 0, time.UTC),
@@ -213,6 +214,7 @@ func (u *Uploader) findOrCreateAlbum(mediaTime time.Time) (string, bool, error) 
 	}
 
 	u.timeline, err = u.timeline.AppendAlbum(&catalogmodel.Album{
+		Owner:      createRequest.Owner,
 		Name:       createRequest.Name,
 		FolderName: createRequest.ForcedFolderName,
 		Start:      createRequest.Start,
@@ -228,26 +230,26 @@ func (u *Uploader) doUpload(media backupmodel.FoundMedia, location *catalogmodel
 }
 
 type CatalogProxyAdapter interface {
-	FindAllAlbums() ([]*catalogmodel.Album, error)
-	InsertMedias(medias []catalogmodel.CreateMediaRequest) error
+	FindAllAlbums(owner string) ([]*catalogmodel.Album, error)
+	InsertMedias(owner string, medias []catalogmodel.CreateMediaRequest) error
 	Create(createRequest catalogmodel.CreateAlbum) error
-	FindSignatures(signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error)
+	FindSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error)
 }
 
 type CatalogProxy struct{}
 
-func (c CatalogProxy) FindAllAlbums() ([]*catalogmodel.Album, error) {
-	return catalog.FindAllAlbums()
+func (c CatalogProxy) FindAllAlbums(owner string) ([]*catalogmodel.Album, error) {
+	return catalog.FindAllAlbums(owner)
 }
 
-func (c CatalogProxy) InsertMedias(medias []catalogmodel.CreateMediaRequest) error {
-	return catalog.InsertMedias(medias)
+func (c CatalogProxy) InsertMedias(owner string, medias []catalogmodel.CreateMediaRequest) error {
+	return catalog.InsertMedias(owner, medias)
 }
 
 func (c CatalogProxy) Create(createRequest catalogmodel.CreateAlbum) error {
 	return catalog.Create(createRequest)
 }
 
-func (c CatalogProxy) FindSignatures(signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
-	return catalog.FindSignatures(signatures)
+func (c CatalogProxy) FindSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
+	return catalog.FindSignatures(owner, signatures)
 }

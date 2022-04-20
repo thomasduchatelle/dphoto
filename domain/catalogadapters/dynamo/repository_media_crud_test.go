@@ -28,6 +28,7 @@ func mustParseDate(date string) time.Time {
 
 type MediaCrudTestSuite struct {
 	suite.Suite
+	owner  string
 	repo   *Rep
 	medias []catalogmodel.CreateMediaRequest
 	jan21  string
@@ -42,6 +43,7 @@ func TestRepositoryMediaCrud(t *testing.T) {
 func (a *MediaCrudTestSuite) SetupSuite() {
 	suffix := time.Now().Format("20060102150405")
 
+	a.owner = "UNITTEST#2"
 	a.repo = &Rep{
 		db: dynamodb.New(session.Must(session.NewSession(&aws.Config{
 			Credentials: credentials.NewStaticCredentials("localstack", "localstack", ""),
@@ -49,7 +51,6 @@ func (a *MediaCrudTestSuite) SetupSuite() {
 			Region:      aws.String("eu-west-1"),
 		}))),
 		table:         "test-medias-crud-" + suffix,
-		RootOwner:     "UNITTEST#2",
 		localDynamodb: true,
 	}
 
@@ -71,6 +72,7 @@ func (a *MediaCrudTestSuite) preload() error {
 	a.mar21 = "/media/2021-mar"
 
 	err := a.repo.InsertAlbum(catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       "Media Container Jan",
 		FolderName: a.jan21,
 		Start:      mustParseDate("2021-01-01"),
@@ -81,6 +83,7 @@ func (a *MediaCrudTestSuite) preload() error {
 	}
 
 	err = a.repo.InsertAlbum(catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       "Media Container Feb",
 		FolderName: a.feb21,
 		Start:      mustParseDate("2021-02-01"),
@@ -91,6 +94,7 @@ func (a *MediaCrudTestSuite) preload() error {
 	}
 
 	err = a.repo.InsertAlbum(catalogmodel.Album{
+		Owner:      a.owner,
 		Name:       "Media Container Mar",
 		FolderName: a.mar21,
 		Start:      mustParseDate("2021-03-01"),
@@ -151,7 +155,7 @@ func (a *MediaCrudTestSuite) preload() error {
 			},
 		},
 	}
-	err = a.repo.InsertMedias(a.medias)
+	err = a.repo.InsertMedias(a.owner, a.medias)
 	a.NoError(err, "failed media initialisation")
 
 	return err
@@ -167,7 +171,7 @@ func (a *MediaCrudTestSuite) fullPathNames(medias []*catalogmodel.CreateMediaReq
 }
 
 func (a *MediaCrudTestSuite) TestFindAlbums() {
-	albums, err := a.repo.FindAllAlbums()
+	albums, err := a.repo.FindAllAlbums(a.owner)
 	if a.NoError(err) {
 		names := make([]string, 0, len(albums))
 		for _, a := range albums {
@@ -227,13 +231,13 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 	for _, tt := range tests {
 		var pages [][]string
 
-		medias, err := a.repo.FindMedias(tt.folderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: tt.size}, TimeRange: tt.timeRange})
+		medias, err := a.repo.FindMedias(a.owner, tt.folderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: tt.size}, TimeRange: tt.timeRange})
 		if a.NoError(err, tt.name) {
 			pages = append(pages, extractFilenames(tt.folderName, medias.Content))
 
 			for medias.NextPage != "" {
 				log.WithField("NextPage", medias.NextPage).Infoln("Request next page")
-				medias, err = a.repo.FindMedias(tt.folderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: tt.size, NextPage: medias.NextPage}})
+				medias, err = a.repo.FindMedias(a.owner, tt.folderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: tt.size, NextPage: medias.NextPage}})
 				if !a.NoError(err, tt.name) {
 					return
 				}
@@ -247,7 +251,7 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 
 func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 	name := "it should find a media with all its details"
-	medias, err := a.repo.FindMedias(a.jan21, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: 1}})
+	medias, err := a.repo.FindMedias(a.owner, a.jan21, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: 1}})
 	if a.NoError(err, name) {
 		a.Len(medias.Content, 1, name)
 		a.Equal(&catalogmodel.MediaMeta{
@@ -260,7 +264,7 @@ func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 }
 
 func (a *MediaCrudTestSuite) TestDeleteNonEmpty() {
-	err := a.repo.DeleteEmptyAlbum(a.jan21)
+	err := a.repo.DeleteEmptyAlbum(a.owner, a.jan21)
 	a.Equal(catalog.NotEmptyError, err, "it should not delete an album with images in it")
 }
 
@@ -277,7 +281,7 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 		})
 	}
 
-	signatures, err := a.repo.FindExistingSignatures(search)
+	signatures, err := a.repo.FindExistingSignatures(a.owner, search)
 	if a.NoError(err) {
 		a.Empty(signatures, "it should not find any of non-existing signature")
 	} else {
@@ -286,7 +290,7 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 
 	search[42] = exiting[0]
 	search[69] = exiting[1]
-	signatures, err = a.repo.FindExistingSignatures(search)
+	signatures, err = a.repo.FindExistingSignatures(a.owner, search)
 	if a.NoError(err) {
 		a.Equal(exiting, signatures, "it should filter out any non exiting signature to keep the only 2 that exist")
 	}

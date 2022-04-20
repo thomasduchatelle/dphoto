@@ -22,10 +22,10 @@ const (
 	defaultPage          = 50
 )
 
-func (r *Rep) InsertMedias(medias []catalogmodel.CreateMediaRequest) error {
+func (r *Rep) InsertMedias(owner string, medias []catalogmodel.CreateMediaRequest) error {
 	requests := make([]*dynamodb.WriteRequest, len(medias)*2)
 	for index, media := range medias {
-		mediaEntry, locationEntry, err := marshalMedia(r.RootOwner, &media)
+		mediaEntry, locationEntry, err := marshalMedia(owner, &media)
 		if err != nil {
 			return errors.Wrapf(err, "Failed mapping media %s", fmt.Sprint(media))
 		}
@@ -45,10 +45,10 @@ func (r *Rep) InsertMedias(medias []catalogmodel.CreateMediaRequest) error {
 	return r.bufferedWriteItems(requests)
 }
 
-func (r *Rep) FindMedias(folderName string, filter catalogmodel.FindMediaFilter) (*catalogmodel.MediaPage, error) {
+func (r *Rep) FindMedias(owner string, folderName string, filter catalogmodel.FindMediaFilter) (*catalogmodel.MediaPage, error) {
 	builder := newMediaQueryBuilder(r.table)
 
-	builder.WithAlbum(r.RootOwner, folderName)
+	builder.WithAlbum(owner, folderName)
 	if !filter.TimeRange.Start.IsZero() && !filter.TimeRange.End.IsZero() {
 		builder.Within(filter.TimeRange.Start, filter.TimeRange.End)
 	} else {
@@ -82,10 +82,10 @@ func (r *Rep) FindMedias(folderName string, filter catalogmodel.FindMediaFilter)
 	return page, err
 }
 
-func (r *Rep) FindExistingSignatures(signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
+func (r *Rep) FindExistingSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
 	for index, signature := range signatures {
-		key, err := dynamodbattribute.MarshalMap(mediaPrimaryKey(r.RootOwner, signature))
+		key, err := dynamodbattribute.MarshalMap(mediaPrimaryKey(owner, signature))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
 		}
@@ -114,10 +114,10 @@ func (r *Rep) FindExistingSignatures(signatures []*catalogmodel.MediaSignature) 
 	return found, stream.Error()
 }
 
-func (r *Rep) FindMediaLocationsSignatures(signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignatureAndLocation, error) {
+func (r *Rep) FindMediaLocationsSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignatureAndLocation, error) {
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
 	for index, signature := range signatures {
-		key, err := dynamodbattribute.MarshalMap(mediaLocationPrimaryKey(r.RootOwner, signature))
+		key, err := dynamodbattribute.MarshalMap(mediaLocationPrimaryKey(owner, signature))
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
 		}
@@ -258,8 +258,8 @@ func mustAttribute(value interface{}) *dynamodb.AttributeValue {
 	return attribute
 }
 
-func (r *Rep) FindMediaLocations(signature catalogmodel.MediaSignature) ([]*catalogmodel.MediaLocation, error) {
-	mediaPK := mediaPrimaryKey(r.RootOwner, &signature)
+func (r *Rep) FindMediaLocations(owner string, signature catalogmodel.MediaSignature) ([]*catalogmodel.MediaLocation, error) {
+	mediaPK := mediaPrimaryKey(owner, &signature)
 	queryValues, err := dynamodbattribute.MarshalMap(map[string]string{
 		":mediaPK":    mediaPK.PK,
 		":noMetadata": "$",

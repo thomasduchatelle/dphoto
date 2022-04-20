@@ -24,7 +24,7 @@ var housekeepingCmd = &cobra.Command{
 	Short: "Run housekeeping script to perform delayed operations",
 	Long:  "Run housekeeping script to perform delayed operations",
 	Run: func(cmd *cobra.Command, args []string) {
-		transactions, err := catalog.FindMoveTransactions()
+		transactions, err := catalog.FindMoveTransactions(Owner)
 		printer.FatalIfError(err, 1)
 
 		if len(transactions) == 0 {
@@ -68,7 +68,7 @@ func startHousekeepingTransactions(transactions []*catalogmodel.MoveTransaction)
 	operator.refreshScreen = screen.NewAutoRefreshScreen(screen.RenderingOptions{Width: 180}, segments...)
 
 	for _, transaction := range transactions {
-		_, err := catalog.RelocateMovedMedias(operator, transaction.TransactionId)
+		_, err := catalog.RelocateMovedMedias(Owner, operator, transaction.TransactionId)
 		if err != nil {
 			return err
 		}

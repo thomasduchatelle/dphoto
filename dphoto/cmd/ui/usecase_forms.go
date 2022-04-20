@@ -55,8 +55,10 @@ func NewRenameAlbumForm(actionPort RenameAlbumPort, terminalPort PrintReadTermin
 	}
 }
 
-func (a *AlbumFormSession) AlbumForm(record Record) (bool, error) {
-	creation := RecordCreation{}
+func (a *AlbumFormSession) AlbumForm(owner string, record Record) (bool, error) {
+	creation := RecordCreation{
+		Owner: owner,
+	}
 	var ok bool
 
 	creation.Name, ok = a.form.ReadString("Name of the album", record.Name)

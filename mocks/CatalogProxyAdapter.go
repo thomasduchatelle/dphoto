@@ -26,13 +26,13 @@ func (_m *CatalogProxyAdapter) Create(createRequest catalogmodel.CreateAlbum) er
 	return r0
 }
 
-// FindAllAlbums provides a mock function with given fields:
-func (_m *CatalogProxyAdapter) FindAllAlbums() ([]*catalogmodel.Album, error) {
-	ret := _m.Called()
+// FindAllAlbums provides a mock function with given fields: owner
+func (_m *CatalogProxyAdapter) FindAllAlbums(owner string) ([]*catalogmodel.Album, error) {
+	ret := _m.Called(owner)
 
 	var r0 []*catalogmodel.Album
-	if rf, ok := ret.Get(0).(func() []*catalogmodel.Album); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string) []*catalogmodel.Album); ok {
+		r0 = rf(owner)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*catalogmodel.Album)
@@ -40,8 +40,8 @@ func (_m *CatalogProxyAdapter) FindAllAlbums() ([]*catalogmodel.Album, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(owner)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -49,13 +49,13 @@ func (_m *CatalogProxyAdapter) FindAllAlbums() ([]*catalogmodel.Album, error) {
 	return r0, r1
 }
 
-// FindSignatures provides a mock function with given fields: signatures
-func (_m *CatalogProxyAdapter) FindSignatures(signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
-	ret := _m.Called(signatures)
+// FindSignatures provides a mock function with given fields: owner, signatures
+func (_m *CatalogProxyAdapter) FindSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
+	ret := _m.Called(owner, signatures)
 
 	var r0 []*catalogmodel.MediaSignature
-	if rf, ok := ret.Get(0).(func([]*catalogmodel.MediaSignature) []*catalogmodel.MediaSignature); ok {
-		r0 = rf(signatures)
+	if rf, ok := ret.Get(0).(func(string, []*catalogmodel.MediaSignature) []*catalogmodel.MediaSignature); ok {
+		r0 = rf(owner, signatures)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*catalogmodel.MediaSignature)
@@ -63,8 +63,8 @@ func (_m *CatalogProxyAdapter) FindSignatures(signatures []*catalogmodel.MediaSi
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func([]*catalogmodel.MediaSignature) error); ok {
-		r1 = rf(signatures)
+	if rf, ok := ret.Get(1).(func(string, []*catalogmodel.MediaSignature) error); ok {
+		r1 = rf(owner, signatures)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,13 +72,13 @@ func (_m *CatalogProxyAdapter) FindSignatures(signatures []*catalogmodel.MediaSi
 	return r0, r1
 }
 
-// InsertMedias provides a mock function with given fields: medias
-func (_m *CatalogProxyAdapter) InsertMedias(medias []catalogmodel.CreateMediaRequest) error {
-	ret := _m.Called(medias)
+// InsertMedias provides a mock function with given fields: owner, medias
+func (_m *CatalogProxyAdapter) InsertMedias(owner string, medias []catalogmodel.CreateMediaRequest) error {
+	ret := _m.Called(owner, medias)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]catalogmodel.CreateMediaRequest) error); ok {
-		r0 = rf(medias)
+	if rf, ok := ret.Get(0).(func(string, []catalogmodel.CreateMediaRequest) error); ok {
+		r0 = rf(owner, medias)
 	} else {
 		r0 = ret.Error(0)
 	}

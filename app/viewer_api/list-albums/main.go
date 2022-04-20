@@ -25,9 +25,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return resp, nil
 	}
 
-	common.BootstrapCatalogDomain(owner)
-
-	albums, err := catalog.FindAllAlbumsWithStats()
+	albums, err := catalog.FindAllAlbumsWithStats(owner)
 	if err != nil {
 		return common.InternalError(errors.Wrapf(err, "failed to fetch albums"))
 	}

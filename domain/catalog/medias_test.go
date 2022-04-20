@@ -17,6 +17,7 @@ func TestRelocateMovedMedias_full(t *testing.T) {
 	catalog.Repository = repository
 
 	const transactionId = "move-transaction-1"
+	const owner = "stark"
 
 	movedMedias := []*catalogmodel.MovedMedia{
 		{Signature: catalogmodel.MediaSignature{}, SourceFolderName: "A", SourceFilename: "001_before", TargetFolderName: "B", TargetFilename: "001"},
@@ -24,14 +25,14 @@ func TestRelocateMovedMedias_full(t *testing.T) {
 		{Signature: catalogmodel.MediaSignature{}, SourceFolderName: "A", SourceFilename: "003", TargetFolderName: "D", TargetFilename: "003"},
 	}
 
-	repository.On("FindReadyMoveTransactions").Return([]*catalogmodel.MoveTransaction{
+	repository.On("FindReadyMoveTransactions", owner).Return([]*catalogmodel.MoveTransaction{
 		{TransactionId: transactionId, Count: 42},
 	}, nil)
 	repository.On("FindFilesToMove", transactionId, "").Return(movedMedias[:2], "next-page-1", nil)
 	repository.On("FindFilesToMove", transactionId, "next-page-1").Return(movedMedias[2:], "", nil)
 
-	repository.On("UpdateMediasLocation", transactionId, movedMedias[:2]).Return(nil)
-	repository.On("UpdateMediasLocation", transactionId, movedMedias[2:]).Return(nil)
+	repository.On("UpdateMediasLocation", owner, transactionId, movedMedias[:2]).Return(nil)
+	repository.On("UpdateMediasLocation", owner, transactionId, movedMedias[2:]).Return(nil)
 
 	repository.On("DeleteEmptyMoveTransaction", transactionId).Once().Return(nil)
 
@@ -45,7 +46,7 @@ func TestRelocateMovedMedias_full(t *testing.T) {
 	operator.On("Move", catalogmodel.MediaLocation{FolderName: "A", Filename: "003"}, catalogmodel.MediaLocation{FolderName: "D", Filename: "003"}).Return("003", nil)
 
 	// when
-	got, err := catalog.RelocateMovedMedias(operator, transactionId)
+	got, err := catalog.RelocateMovedMedias(owner, operator, transactionId)
 
 	if a.NoError(err) {
 		a.Equal(3, got)
@@ -58,6 +59,7 @@ func TestRelocateMovedMedias_interrupt(t *testing.T) {
 	a := assert.New(t)
 
 	// given
+	const owner = "stark"
 	operator := new(mocks.MoveMediaOperator)
 	repository := new(mocks.RepositoryPort)
 	catalog.Repository = repository
@@ -70,12 +72,12 @@ func TestRelocateMovedMedias_interrupt(t *testing.T) {
 		{Signature: catalogmodel.MediaSignature{}, SourceFolderName: "A", SourceFilename: "003", TargetFolderName: "D", TargetFilename: "003"},
 	}
 
-	repository.On("FindReadyMoveTransactions").Return([]*catalogmodel.MoveTransaction{
+	repository.On("FindReadyMoveTransactions", owner).Return([]*catalogmodel.MoveTransaction{
 		{TransactionId: transactionId, Count: 42},
 	}, nil)
 	repository.On("FindFilesToMove", transactionId, "").Return(movedMedias[:2], "next-page-1", nil)
 
-	repository.On("UpdateMediasLocation", transactionId, movedMedias[:2]).Return(nil)
+	repository.On("UpdateMediasLocation", owner, transactionId, movedMedias[:2]).Return(nil)
 
 	repository.On("DeleteEmptyMoveTransaction", transactionId).Once().Return(nil)
 
@@ -88,7 +90,7 @@ func TestRelocateMovedMedias_interrupt(t *testing.T) {
 	operator.On("Move", catalogmodel.MediaLocation{FolderName: "C", Filename: "002"}, catalogmodel.MediaLocation{FolderName: "B", Filename: "002"}).Return("002", nil)
 
 	// when
-	got, err := catalog.RelocateMovedMedias(operator, transactionId)
+	got, err := catalog.RelocateMovedMedias(owner, operator, transactionId)
 
 	if a.NoError(err) {
 		a.Equal(2, got)
@@ -100,14 +102,15 @@ func TestRelocateMovedMedias_empty(t *testing.T) {
 	a := assert.New(t)
 
 	// given
+	const owner = "ironman"
 	operator := new(mocks.MoveMediaOperator)
 	repository := new(mocks.RepositoryPort)
 	catalog.Repository = repository
 
-	repository.On("FindReadyMoveTransactions").Return(nil, nil)
+	repository.On("FindReadyMoveTransactions", owner).Return(nil, nil)
 
 	// when
-	got, err := catalog.RelocateMovedMedias(operator, "no-transaction-exist")
+	got, err := catalog.RelocateMovedMedias(owner, operator, "no-transaction-exist")
 
 	if a.NoError(err) {
 		a.Equal(0, got)
