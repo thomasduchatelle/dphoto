@@ -9,7 +9,7 @@ import (
 )
 
 // ValidateRequest make sure authorisation is valid for the expected actions. Return [response, TRUE] when the consumer is not authorised.
-func ValidateRequest(request events.APIGatewayProxyRequest, query *oauth.AuthoriseQuery) (Response, bool) {
+func ValidateRequest(request *events.APIGatewayProxyRequest, query *oauth.AuthoriseQuery) (Response, bool) {
 	tokenString, err := readToken(request)
 	if err != nil {
 		response, _ := NewJsonResponse(401, map[string]string{
@@ -21,7 +21,7 @@ func ValidateRequest(request events.APIGatewayProxyRequest, query *oauth.Authori
 	_, err = oauth.Authorise(tokenString, query)
 	if err != nil {
 		response, _ := NewJsonResponse(403, map[string]string{
-			"error": fmt.Sprintf("access denied: %s", err.Error()),
+			"error": fmt.Sprintf("access forbidden: %s", err.Error()),
 		}, nil)
 		return response, true
 	}
@@ -29,10 +29,16 @@ func ValidateRequest(request events.APIGatewayProxyRequest, query *oauth.Authori
 	return Response{}, false
 }
 
-func readToken(request events.APIGatewayProxyRequest) (string, error) {
+func readToken(request *events.APIGatewayProxyRequest) (string, error) {
 	authorisation, ok := request.Headers["authorization"]
 	if !ok {
-		return "", errors.Errorf("no authorization header")
+		// allow to pass tokens in the Query parameters for images loaded in <img /> tags
+		if token, withAccessToken := request.QueryStringParameters["access_token"]; withAccessToken {
+			authorisation = "bearer " + token
+
+		} else {
+			return "", errors.Errorf("no authorization header")
+		}
 	}
 
 	bearerPrefix := "bearer "

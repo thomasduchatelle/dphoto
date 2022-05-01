@@ -25,4 +25,7 @@ export interface OAuthService {
 
   // remove store token(s) that would be used to request DPhoto API
   clearTokens(): void;
+
+  // get direct access to DPhoto access token, could be used to generate download links
+  getDPhotoAccessToken(): string
 }

@@ -29,7 +29,7 @@ export function useAuthenticatedUser(): AuthenticatedUser | undefined {
   return useContext(SecurityContext).payload.user
 }
 
-export function useMustBeAuthenticated(): [AuthenticatedUser, AxiosInstance, LogoutCase] {
+export function useMustBeAuthenticated(): [AuthenticatedUser, AxiosInstance, LogoutCase, string] {
   const user = useAuthenticatedUser();
   if (!user) {
     throw new Error("user must be authenticated to access this page")
@@ -39,6 +39,7 @@ export function useMustBeAuthenticated(): [AuthenticatedUser, AxiosInstance, Log
     user,
     authenticatedAxios(),
     useSignOutCase(),
+    getAppContext().oauthService.getDPhotoAccessToken(),
   ]
 }
 

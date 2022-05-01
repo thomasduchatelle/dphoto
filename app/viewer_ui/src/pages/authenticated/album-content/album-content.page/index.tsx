@@ -27,13 +27,13 @@ interface AlbumPageCache {
 }
 
 const AlbumPage = () => {
-  const [loggedUser, axiosInstance, signOutCase] = useMustBeAuthenticated()
+  const [loggedUser, axiosInstance, signOutCase, accessToken] = useMustBeAuthenticated()
   const {owner, album} = useParams<AlbumPageUrlParams>()
   const [state, setState] = useState<AlbumPageState>({fullyLoaded: false, albumNotFound: false, albums: [], medias: []})
   const cache = useRef<AlbumPageCache>({owner: '', albums: []})
   const navigate = useNavigate()
 
-  const engine = useMemo(() => new AlbumsPageCase(axiosInstance,
+  const engine = useMemo(() => new AlbumsPageCase(axiosInstance, accessToken,
     {
       cacheAlbums(owner: string, albums: Album[]): void {
         cache.current = {owner, albums}
@@ -76,14 +76,14 @@ const AlbumPage = () => {
       />
       <Box
         component="nav"
-        sx={{width: {sm: drawerWidth}, flexShrink: {sm: 0}}}
+        sx={{width: {lg: drawerWidth}, flexShrink: {lg: 0}}}
         aria-label="mailbox folders"
       >
         <Drawer
           variant="permanent"
           sx={{
             width: drawerWidth,
-            display: {xs: 'none', sm: 'block'},
+            display: {xs: 'none', lg: 'block'},
             flexShrink: 0,
             [`& .MuiDrawer-paper`]: {width: drawerWidth, boxSizing: 'border-box'},
           }}
@@ -98,7 +98,7 @@ const AlbumPage = () => {
         sx={{flexGrow: 1, pl: 2, pr: 2, width: {sm: `calc(100% - ${drawerWidth}px)`}}}
       >
         <Toolbar/>
-        {(state.fullyLoaded && state.albumNotFound && (
+        {(state.fullyLoaded && !state.albums && (
           <Alert severity='info' sx={{mt: 3}}>Your account is empty, start to create new albums and upload your
             photos with the command line interface.</Alert>
         )) || (

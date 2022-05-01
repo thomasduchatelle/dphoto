@@ -7,15 +7,13 @@ class AppContext {
   ) {
   }
 
-  static instance: AppContext
-
   static getInstance = (): AppContext => {
     if (!instance) {
       const oauthService: OAuthService = new OauthServiceImpl()
-      this.instance = new AppContext(oauthService)
+      instance = new AppContext(oauthService)
     }
 
-    return this.instance
+    return instance
   }
 }
 

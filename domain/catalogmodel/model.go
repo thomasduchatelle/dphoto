@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+var (
+	MediaNotFoundError = fmt.Errorf("media not found")
+)
+
 // Album defines how medias are physically stored.
 type Album struct {
 	Owner      string // Owner is a PK with FolderName
@@ -126,7 +130,7 @@ type PageRequest struct {
 
 type MoveTransaction struct {
 	TransactionId string
-	Count         int // Number of medias to be moved as part of this transaction
+	Count         int // Count is the number of medias to be moved as part of this transaction
 }
 
 type MoveMediaOperator interface {

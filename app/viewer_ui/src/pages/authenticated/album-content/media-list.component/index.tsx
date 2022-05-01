@@ -4,8 +4,9 @@ import useWindowDimensions from "../../../../core/window-utils";
 import {ImageInList} from "./media-in-list";
 
 
-const drawerWidth = 450;
-const xsBreakpoint = 600;
+const drawerWidth = 498;
+const marginsWidth = 33;
+const breakpoint = 1200;
 
 export function MediaListComponent({medias, loaded, albumNotFound}: {
   medias: Media[]
@@ -13,17 +14,18 @@ export function MediaListComponent({medias, loaded, albumNotFound}: {
   albumNotFound: boolean
 }) {
   const {width} = useWindowDimensions()
-  const cols = width > xsBreakpoint ? Math.floor((width - drawerWidth) / 200) : 2 // keeps images ~200px wide on non-mobile screen
+  // keep images ~200px wide for non-mobile and ~100px for mobile
+  const cols = width > breakpoint ? Math.floor((width - drawerWidth) / 200) : Math.max(Math.floor((width - marginsWidth) / 100), 2)
 
-  const estimatedWidth = width > xsBreakpoint ? (width - drawerWidth) / cols : width / cols
-  const estimatedWidthPercentage = estimatedWidth / width
+  const estimatedWidth = width > breakpoint ? (width - drawerWidth) / cols : (width - marginsWidth) / cols
+  console.log(`estimatedWidth = (${width} - ${drawerWidth}) / ${cols} = ${estimatedWidth}`)
 
   if (!loaded) {
     return (
-      <ImageList cols={cols} gap={2}>
+      <ImageList cols={cols} gap={2} rowHeight={estimatedWidth}>
         {Array.from(Array(3 * cols).keys()).map(i => (
           <ImageListItem key={i}>
-            <Skeleton variant="rectangular" animation='wave' height={150}/>
+            <Skeleton variant="rectangular" animation='wave' height={estimatedWidth}/>
           </ImageListItem>
         ))}
       </ImageList>
@@ -42,13 +44,12 @@ export function MediaListComponent({medias, loaded, albumNotFound}: {
       {(medias.length === 0 && (
         <Alert severity='info' sx={{mt: 3}}>This album is empty, uploads some to see them here.</Alert>
       )) || (
-        <ImageList cols={cols} gap={0}>
+        <ImageList cols={cols} gap={0} rowHeight={estimatedWidth}>
           {/*<ImageListItem key="Subheader" cols={4}>*/}
           {/*  <ListSubheader component="div">December</ListSubheader>*/}
           {/*</ImageListItem>*/}
           {medias.map((media) => (
-            <ImageInList media={media} key={media.id} imageMinHeight={estimatedWidth * 9 / 16}
-                         imageViewportPercentage={Math.round(estimatedWidthPercentage * 100)}/>
+            <ImageInList media={media} key={media.id} imageViewportPercentage={100 * estimatedWidth / width}/>
           ))}
         </ImageList>
       )}

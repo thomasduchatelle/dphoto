@@ -29,6 +29,7 @@ function numberOfDays(start: Date, end: Date) {
 
 export class AlbumsPageCase {
   constructor(private axios: AxiosInstance,
+              private accessToken: string,
               private cacheAdapter: CacheAdapter,
               private webAdapter: WebAdapter) {
   }
@@ -108,7 +109,8 @@ export class AlbumsPageCase {
         return data.map(media => ({
           ...media,
           type: convertToType(media.type),
-          time: new Date(media.time)
+          time: new Date(media.time),
+          path: `${media.path}?access_token=${this.accessToken}`
         }))
       })
   }

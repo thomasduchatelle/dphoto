@@ -3,27 +3,29 @@ package common
 import (
 	"encoding/base64"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/thomasduchatelle/dphoto/domain/backup"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamo"
 	"github.com/thomasduchatelle/dphoto/domain/oauth"
 	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/googleoauth"
 	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/userrepositorystatic"
 	"github.com/thomasduchatelle/dphoto/domain/oauthmodel"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/adapters/onlinestorage"
 	"os"
 )
 
 func Bootstrap() {
 	BootstrapOAuthDomain()
 	BootstrapCatalogDomain()
+	BootstrapBackupDomain()
 }
 
 func BootstrapCatalogDomain() {
-	//bucketName, _ := os.LookupEnv("STORAGE_BUCKET_NAME")
 	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
-	catalog.Repository = dynamo.Must(dynamo.NewRepository(session.Must(session.NewSession()), tableName))
+	catalog.Repository = dynamo.Must(dynamo.NewRepository(newSession(), tableName))
 }
 
 func BootstrapOAuthDomain() {
@@ -56,4 +58,13 @@ func BootstrapOAuthDomain() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func BootstrapBackupDomain() {
+	bucketName, _ := os.LookupEnv("STORAGE_BUCKET_NAME")
+	backup.Storage = onlinestorage.Must(onlinestorage.NewS3OnlineStorage(bucketName, newSession()))
+}
+
+func newSession() *session.Session {
+	return session.Must(session.NewSession())
 }

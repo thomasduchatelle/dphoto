@@ -48,9 +48,13 @@ export class OauthServiceImpl implements OAuthService {
     })
   }
 
+  public getDPhotoAccessToken(): string {
+    return this.dphotoAccessToken ?? ""
+  }
+
   private axiosRequestInterceptor = (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
     if (!this.dphotoAccessToken) {
-      // safeguard - interceptor should be ejected before
+      // safeguard - interceptor should have been ejected before
       return Promise.resolve(config)
     }
 

@@ -6,6 +6,8 @@ provider:
   name: aws
   region: eu-west-1
   runtime: go1.x
+  #  runtime: provided.al2 # custom runtime available for ARM64
+  #  architecture: x86_64
   memorySize: 256
   lambdaHashingVersion: 20201221
   environment:
@@ -56,7 +58,11 @@ resources:
             - RoutingRuleCondition:
                 HttpErrorCodeReturnedEquals: '404'
               RedirectRule:
-                ReplaceKeyPrefixWith: index.html
+                # redirect back to / of the original domain ; url is passed as an argument
+                HostName: ${file('./sls-config.js'):DPHOTO_DOMAIN}
+                Protocol: https
+                HttpRedirectCode: "307"
+                ReplaceKeyPrefixWith: "?path="
 
     ViewerUiBucketPolicy:
       Type: 'AWS::S3::BucketPolicy'
@@ -224,6 +230,20 @@ functions:
     events:
       - httpApi:
           path: /api/v1/owners/{owner}/albums
+          method: get
+  list-medias:
+    handler: bin/list-medias
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums/{folderName}/medias
+          method: get
+  get-media:
+    handler: bin/get-media
+    memorySize: 1024
+    timeout: 29 # maximum allowed by API gateway
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/medias/{signatureHash}/{signatureSize}/{filename}
           method: get
   version:
     handler: bin/version

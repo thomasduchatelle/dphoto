@@ -2,3 +2,4 @@
 delegate/dphoto
 infra-data/.terraform/
 /dist/
+/.build/

@@ -1,18 +1,21 @@
 import DownloadIcon from "@mui/icons-material/Download";
 import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
 import {dateTimeToString} from "../../../../core/date-utils";
-import {Media} from "../../../../core/domain/catalog";
+import {Media, MediaType} from "../../../../core/domain/catalog";
 
-export function ImageInList({media, imageMinHeight, imageViewportPercentage}: {
+export function ImageInList({media, imageViewportPercentage}: {
   media: Media,
-  imageMinHeight: number,
   imageViewportPercentage: number,
 }) {
+  const imageSrc = media.type == MediaType.IMAGE ? `${media.path}` : '/video-placeholder.png';
+  const imageSrcSet = media.type == MediaType.IMAGE ? `${media.path}&w=150 150w, ${media.path}&w=300 300w` : '/video-placeholder.png';
   return (
     <ImageListItem
       key={media.id}
       sx={{
-        minHeight: `${imageMinHeight}px`,
+        overflow: 'hidden',
+        justifyContent: 'center',
+        alignItems: 'center',
         '& .MuiImageListItemBar-root': {
           display: 'none'
         },
@@ -22,8 +25,8 @@ export function ImageInList({media, imageMinHeight, imageViewportPercentage}: {
       }}
     >
       <img
-        src={`${media.path}`}
-        srcSet={`${media.path}?w=150 150w, ${media.path}?w=300 300w, ${media.path}?w=450 450w, ${media.path}?w=800 800w, ${media.path}?w=1200 1200w, ${media.path} 1300w`}
+        src={`${imageSrc}`}
+        srcSet={`${imageSrcSet}`}
         sizes={`${imageViewportPercentage}vw`}
         alt={dateTimeToString(media.time)}
         loading="lazy"

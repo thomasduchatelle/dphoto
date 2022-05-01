@@ -22,7 +22,7 @@ type accessTokenClaims struct {
 func Authorise(tokenString string, queryPt *AuthoriseQuery) (*oauthmodel.Claims, error) {
 	query := toObj(queryPt)
 
-	claims := &accessTokenClaims{}
+	claims := new(accessTokenClaims)
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return Config.SecretJwtKey, nil
 	})
@@ -77,13 +77,13 @@ func contains(slice []string, element string) bool {
 func ownerPermissionLevel(permission string) int {
 	switch permission {
 	case "ADMIN":
-		return 100
+		return 0100
 	case "WRITE":
-		return 80
+		return 0010
 	case "READ":
-		return 40
+		return 0001
 	default:
-		return 0
+		return 0000
 	}
 }
 

@@ -19,7 +19,7 @@ const (
 	tableVersion         = "1.1" // to be bumped manually when schema is updated
 	dynamoWriteBatchSize = 25
 	dynamoReadBatchSize  = 100
-	defaultPage          = 50
+	defaultPage          = 10000 // defaultPage is a safeguard as the UI is not using pagination to display albums
 )
 
 func (r *Rep) InsertMedias(owner string, medias []catalogmodel.CreateMediaRequest) error {
@@ -278,8 +278,11 @@ func (r *Rep) FindMediaLocations(owner string, signature catalogmodel.MediaSigna
 	}
 
 	location, orders, err := unmarshalMediaItems(result.Items)
+	if err != nil {
+		return nil, err
+	}
 	if location == nil {
-		return nil, errors.Errorf("Location not found for media %+v", signature)
+		return nil, catalogmodel.MediaNotFoundError
 	}
 
 	locations := make([]*catalogmodel.MediaLocation, len(orders)+1)

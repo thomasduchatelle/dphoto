@@ -2,16 +2,20 @@
 package onlinestorage
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/domain/backup"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	"io/ioutil"
 	"path"
 	"strings"
 	"sync"
+	"time"
 )
 
 type S3OnlineStorage struct {
@@ -41,6 +45,32 @@ func Must(storage *S3OnlineStorage, err error) *S3OnlineStorage {
 	}
 
 	return storage
+}
+
+func (s *S3OnlineStorage) FetchFile(owner string, folderName, filename string) ([]byte, error) {
+	data, err := s.s3.GetObject(&s3.GetObjectInput{
+		Bucket: &s.bucketName,
+		Key:    aws.String(path.Join(owner, strings.Trim(folderName, "/"), filename)),
+	})
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == s3.ErrCodeNoSuchKey {
+			return nil, backup.MediaNotFoundError
+		}
+		return nil, err
+	}
+
+	defer data.Body.Close()
+
+	return ioutil.ReadAll(data.Body)
+}
+
+func (s *S3OnlineStorage) ContentSignedUrl(owner string, folderName string, filename string, duration time.Duration) (string, error) {
+	request, _ := s.s3.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: &s.bucketName,
+		Key:    aws.String(path.Join(owner, strings.Trim(folderName, "/"), filename)),
+	})
+
+	return request.Presign(duration)
 }
 
 func (s *S3OnlineStorage) UploadFile(owner string, media backupmodel.ReadableMedia, folderName, filename string) (string, error) {

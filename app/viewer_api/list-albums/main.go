@@ -21,7 +21,7 @@ type Album struct {
 
 func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	owner, _ := request.PathParameters["owner"]
-	if resp, deny := common.ValidateRequest(request, oauth.NewAuthoriseQuery("owner").WithOwner(owner, "READ")); deny {
+	if resp, deny := common.ValidateRequest(&request, oauth.NewAuthoriseQuery("owner").WithOwner(owner, "READ")); deny {
 		return resp, nil
 	}
 

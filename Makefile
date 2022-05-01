@@ -85,7 +85,7 @@ deploy-app: clean-app test-app build-app
 	export AWS_PROFILE="$(AWS_PROFILE)" && cd app && sls deploy --debug
 
 start:
-	cd app/viewer_ui && yarn start
+	cd app/viewer_ui && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
 
 #######################################
 ## CLI

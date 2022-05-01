@@ -2,9 +2,9 @@ package filesystem
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors/analyser"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"path"
 	"path/filepath"
@@ -45,7 +45,7 @@ func TestScanner(t *testing.T) {
 			return found[i].absolutePath < found[j].absolutePath
 		})
 
-		if a.Len(found, 2) {
+		if a.Len(found, 3) {
 			a.Equal(path.Join(volumeMountAbs, "scan/a_text.TXT"), found[0].String())
 			a.Equal("a_text.TXT", path.Base(found[0].MediaPath().Filename))
 			a.Equal(&backupmodel.SimpleMediaSignature{
@@ -65,7 +65,7 @@ func TestScanner(t *testing.T) {
 			a.Equal(&backupmodel.SimpleMediaSignature{
 				RelativePath: "scan/golang-logo.jpeg",
 				Size:         22601,
-			}, found[1].SimpleSignature())
+			}, found[2].SimpleSignature())
 		}
 	}
 }
