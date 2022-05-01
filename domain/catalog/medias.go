@@ -21,3 +21,7 @@ func InsertMedias(owner string, medias []catalogmodel.CreateMediaRequest) error 
 func FindSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
 	return Repository.FindExistingSignatures(owner, signatures)
 }
+
+func GetMediaLocations(owner string, signature catalogmodel.MediaSignature) ([]*catalogmodel.MediaLocation, error) {
+	return Repository.FindMediaLocations(owner, signature)
+}

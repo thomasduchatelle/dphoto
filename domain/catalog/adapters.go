@@ -25,6 +25,8 @@ type RepositoryPort interface {
 	FindExistingSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error)
 	// UpdateMedias updates metadata and mark the media to be moved, the AlbumFolderName is never updated (part of the primary key)
 	UpdateMedias(filter *catalogmodel.UpdateMediaFilter, newFolderName string) (string, int, error)
+	// FindMediaLocations get the list of all locations media might be in (expected only 1 unless media is pending a physical re-location)
+	FindMediaLocations(owner string, signature catalogmodel.MediaSignature) ([]*catalogmodel.MediaLocation, error)
 
 	FindReadyMoveTransactions(owner string) ([]*catalogmodel.MoveTransaction, error)
 	FindFilesToMove(transactionId, pageToken string) ([]*catalogmodel.MovedMedia, string, error)
