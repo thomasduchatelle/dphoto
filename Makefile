@@ -78,7 +78,7 @@ build-app-api:
 		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o bin ./...
 
 build-app-ui:
-	cd app/viewer_ui && yarn build
+	cd app/viewer_ui && CI=true yarn build
 
 AWS_PROFILE ?= dphoto
 deploy-app: clean-app test-app build-app

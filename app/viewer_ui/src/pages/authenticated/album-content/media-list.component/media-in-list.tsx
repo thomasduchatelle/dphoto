@@ -7,8 +7,8 @@ export function ImageInList({media, imageViewportPercentage}: {
   media: Media,
   imageViewportPercentage: number,
 }) {
-  const imageSrc = media.type == MediaType.IMAGE ? `${media.path}` : '/video-placeholder.png';
-  const imageSrcSet = media.type == MediaType.IMAGE ? `${media.path}&w=150 150w, ${media.path}&w=300 300w` : '/video-placeholder.png';
+  const imageSrc = media.type === MediaType.IMAGE ? `${media.path}` : '/video-placeholder.png';
+  const imageSrcSet = media.type === MediaType.IMAGE ? `${media.path}&w=150 150w, ${media.path}&w=300 300w` : '/video-placeholder.png';
   return (
     <ImageListItem
       key={media.id}

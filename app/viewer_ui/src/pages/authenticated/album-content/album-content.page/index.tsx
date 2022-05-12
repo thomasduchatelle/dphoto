@@ -55,7 +55,7 @@ const AlbumPage = () => {
       renderNoAlbums(): void {
         setState(current => ({...current, fullyLoaded: true, albums: [], medias: [], albumNotFound: false}))
       }
-    }), [axiosInstance, setState, navigate])
+    }), [axiosInstance, setState, navigate, accessToken])
 
   useEffect(() => {
     if (!owner || !album) {
