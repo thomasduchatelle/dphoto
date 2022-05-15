@@ -12,16 +12,7 @@ NC='\033[0m'
 
 function print_help() {
 	cat << EOF
-Usage: TODO
-
-Args:
-  <foo>         arguments
-
-Options:
-  --help        print this help and exit
-  --debug       enable debug logging
-  --bar=1       with equals
-  --baz <baz>   with space
+Usage: $0 [<version>]
 EOF
 }
 # Args: message [color] [exit=-1]
@@ -85,7 +76,7 @@ function update_cli_version {
 }
 
 function update_app_version {
-  sed -i "s/const appVersion = \".*\"/const appVersion = \"$VERSION\"/" "$REPO_DIR/app/viewer_ui/src/components/app-nav.component/index.tsx"
+  sed -i "s/const appVersion = \".*\"/const appVersion = \"$VERSION\"/" "$REPO_DIR/app/viewer_ui/src/components/AppNav/index.tsx"
 }
 
 # Updating version ...
@@ -98,5 +89,5 @@ fi
 
 info "Updating version $CYAN$CLI_VERSION$WHITE -> $CYAN$VERSION"
 
-update_cli_version
-update_app_version
+update_cli_version || echoe "CLI version update failed" RED -1
+update_app_version || echoe "APP version update failed" RED -1

@@ -91,7 +91,6 @@ export class AlbumsLogic {
   }
 
   private fetchAlbums(owner: string): Promise<Album[]> {
-    console.log("fetch albums...")
     return this.mustBeAuthenticated.authenticatedAxios.get<RestAlbum[]>(`/api/v1/owners/${owner}/albums`)
       .then(resp => {
         const maxTemperature = resp.data.map(a => a.totalCount / numberOfDays(new Date(a.start), new Date(a.end))).reduce(function (p, v) {
@@ -131,7 +130,6 @@ export class AlbumsLogic {
   }
 
   private fetchMedias(albumId: AlbumId): Promise<Media[]> {
-    console.log("fetch medias...")
     return this.mustBeAuthenticated.authenticatedAxios
       .get<RestMedia[]>(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/medias`)
       .then(resp => resp.data as RestMedia[])

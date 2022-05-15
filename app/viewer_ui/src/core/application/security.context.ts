@@ -74,5 +74,5 @@ export function useGoogleSignInCase(): GoogleSignInCase {
 export function useSignOutCase() {
   const securityContext = useContext(SecurityContext);
 
-  return new LogoutCase(newStateManager(securityContext), getAppContext().oauthService)
+  return useMemo(() => new LogoutCase(newStateManager(securityContext), getAppContext().oauthService), [securityContext])
 }

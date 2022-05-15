@@ -16,7 +16,7 @@ const ElevationScroll = ({children}: {
   });
 }
 
-const AppNapComponent = ({rightContent, middleContent}: {
+const AppNav = ({rightContent, middleContent}: {
   rightContent: ReactNode,
   middleContent?: ReactNode
 }) => (
@@ -44,4 +44,4 @@ const AppNapComponent = ({rightContent, middleContent}: {
   </ElevationScroll>
 )
 
-export default AppNapComponent
+export default AppNav

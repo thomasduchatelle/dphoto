@@ -1,7 +1,7 @@
 import {Box} from "@mui/material";
 import React, {useMemo} from "react";
 import {Navigate, Route, Routes, useLocation} from "react-router-dom"
-import AppNavComponent from "../../components/app-nav.component";
+import AppNavComponent from "../../components/AppNav";
 import UserMenu from "../../components/user.menu";
 import {useMustBeAuthenticated} from "../../core/application";
 import AlbumRouterPage from "./albums/AlbumRouterPage";

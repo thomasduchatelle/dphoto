@@ -83,10 +83,9 @@ export default function AlbumRouterPage() {
           albumNotFound: false,
         }))
       }
-    }), [cache, width, setState, navigate]) // mustBeAuthenticated, cache, width, setState, navigate
+    }), [mustBeAuthenticated, cache, width, setState, navigate]) //mustBeAuthenticated
 
   useEffect(() => {
-    console.log("useEffect > engine, owner, or album have changed")
     if (!owner || !album) {
       engine.loadAlbumsPage().catch(err => console.log(`Error: ${err}\n${err.stack}`))
     } else {
@@ -97,7 +96,6 @@ export default function AlbumRouterPage() {
     }
   }, [engine, owner, album])
 
-  console.log("> render AlbumRouterPage")
   return (
     <Box>
       <Toolbar/>

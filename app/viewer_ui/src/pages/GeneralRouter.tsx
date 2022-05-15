@@ -1,6 +1,6 @@
 import {useGoogleSignInCase, useSecurityContext} from '../core/application'
-import AuthenticatedRouter from "./authenticated/authenticated.router";
-import LoginPage from "./login";
+import AuthenticatedRouter from "./authenticated/AuthenticatedRouter";
+import LoginPage from "./Login";
 
 const GeneralRouter = () => {
   const {user, authenticationError} = useSecurityContext();
