@@ -1,7 +1,7 @@
 import DownloadIcon from "@mui/icons-material/Download";
 import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
 import {dateTimeToString} from "../../../../core/date-utils";
-import {Media, MediaType} from "../../../../core/domain/catalog";
+import {Media, MediaType} from "../logic";
 
 export function ImageInList({media, imageViewportPercentage}: {
   media: Media,

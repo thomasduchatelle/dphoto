@@ -1,6 +1,8 @@
-import axios, {AxiosError, AxiosInstance} from "axios";
-import {AuthenticatedUser} from "../security";
-import {Album, AlbumId, CacheAdapter, Media, MediaType, WebAdapter} from "./albums.domain";
+import axios, {AxiosError} from "axios";
+import {MustBeAuthenticated} from "../../../../core/application";
+import {Album, AlbumId, AlbumsLogicCache, Cache, Media, MediaType, MediaWithinADay, WebAdapter} from "./albums.domain";
+
+export const mobileBreakpoint = 1200;
 
 interface RestAlbum {
   owner: string
@@ -27,39 +29,70 @@ function numberOfDays(start: Date, end: Date) {
   return Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 3600 * 24)) ?? 1;
 }
 
-export class AlbumsPageCase {
-  constructor(private axios: AxiosInstance,
-              private accessToken: string,
-              private cacheAdapter: CacheAdapter,
-              private webAdapter: WebAdapter) {
+export class AlbumsLogic {
+  constructor(
+    private mustBeAuthenticated: MustBeAuthenticated,
+    private cache: Cache<AlbumsLogicCache>,
+    private width: number,
+    private webAdapter: WebAdapter,
+    private mobileMode: boolean = false
+  ) {
+    this.mobileMode = width < mobileBreakpoint
   }
 
-  public redirectToDefaultAlbum(loggedUser: AuthenticatedUser): Promise<void> {
-    return this.fetchAlbumsWithCache(loggedUser.email).then(albums => {
+  public loadAlbumsPage = (): Promise<void> => {
+    return this.fetchAlbumsWithCache(this.mustBeAuthenticated.loggedUser.email).then(albums => {
       if (albums.length === 0) {
         return this.webAdapter.renderNoAlbums()
+
+      } else if (this.mobileMode) {
+        return this.webAdapter.renderAlbumsList(albums)
+
       } else {
         return this.webAdapter.redirectToAlbum(albums[0].albumId);
       }
     })
   }
 
-  public refreshPage(loggedUser: AuthenticatedUser, albumId: AlbumId): Promise<void> {
-    return this.fetchAlbumsWithCache(loggedUser.email)
+  public loadMediasPage = (albumId: AlbumId): Promise<void> => {
+    return this.fetchAlbumsWithCache(this.mustBeAuthenticated.loggedUser.email)
       .then(albums => {
         const selectedAlbum = albums.find(a => a.albumId.owner === albumId.owner && a.albumId.folderName === albumId.folderName)
         if (!selectedAlbum) {
-          return this.webAdapter.renderAlbumNotPresent(albums)
+          return this.webAdapter.renderAlbumNotPresent(albums, albumId)
         }
 
         return this.fetchMedias(albumId)
+          .then(medias => this.groupByDay(medias))
           .then(medias => this.webAdapter.renderAlbumsWithMedia(albums, selectedAlbum, medias))
           .then()
       })
   }
 
+  private groupByDay(medias: Media[]): MediaWithinADay[] {
+    let result: MediaWithinADay[] = []
+
+    medias.forEach(m => {
+      const beginning = new Date(m.time)
+      beginning.setHours(0, 0, 0, 0)
+
+      if (result.length > 0 && result[0].day.getTime() === beginning.getTime()) {
+        result[0].medias.push(m)
+      } else {
+        result = [{
+          day: beginning,
+          medias: [m],
+        }, ...result]
+      }
+    })
+
+    result.reverse()
+    return result
+  }
+
   private fetchAlbums(owner: string): Promise<Album[]> {
-    return this.axios.get<RestAlbum[]>(`/api/v1/owners/${owner}/albums`)
+    console.log("fetch albums...")
+    return this.mustBeAuthenticated.authenticatedAxios.get<RestAlbum[]>(`/api/v1/owners/${owner}/albums`)
       .then(resp => {
         const maxTemperature = resp.data.map(a => a.totalCount / numberOfDays(new Date(a.start), new Date(a.end))).reduce(function (p, v) {
           return (p > v ? p : v);
@@ -85,19 +118,22 @@ export class AlbumsPageCase {
   }
 
   private fetchAlbumsWithCache(loggedEmail: string): Promise<Album[]> {
-    const [owner, cachedAlbums] = this.cacheAdapter.getCachedAlbums()
+    const {owner, albums} = this.cache.current
 
-    return owner && owner === loggedEmail ?
-      Promise.resolve(cachedAlbums) :
-      this.fetchAlbums(loggedEmail)
-        .then(albums => {
-          this.cacheAdapter.cacheAlbums(loggedEmail, albums)
-          return albums
-        });
+    if (owner && owner === loggedEmail) {
+      return Promise.resolve(albums)
+    }
+
+    return this.fetchAlbums(loggedEmail).then(albums => {
+      this.cache.current = {owner: loggedEmail, albums}
+      return albums
+    });
   }
 
   private fetchMedias(albumId: AlbumId): Promise<Media[]> {
-    return this.axios.get<RestMedia[]>(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/medias`)
+    console.log("fetch medias...")
+    return this.mustBeAuthenticated.authenticatedAxios
+      .get<RestMedia[]>(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/medias`)
       .then(resp => resp.data as RestMedia[])
       .catch((err: AxiosError | Error) => {
         if (axios.isAxiosError(err) && err.response?.status === 404) {
@@ -110,8 +146,8 @@ export class AlbumsPageCase {
           ...media,
           type: convertToType(media.type),
           time: new Date(media.time),
-          path: `${media.path}?access_token=${this.accessToken}`
-        }))
+          path: `${media.path}?access_token=${this.mustBeAuthenticated.accessToken}`
+        })).sort((a, b) => b.time.getTime() - a.time.getTime())
       })
   }
 }

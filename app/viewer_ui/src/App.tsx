@@ -1,6 +1,6 @@
 import {CssBaseline} from "@mui/material";
 import {BrowserRouter} from "react-router-dom";
-import DphotoTheme from "./components/dphoto.theme";
+import DphotoTheme from "./components/DPhotoTheme";
 import {AppConfigIntegration, SecurityIntegration} from "./core/application";
 import GeneralRouter from "./pages/general.router";
 

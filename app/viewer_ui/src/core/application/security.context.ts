@@ -1,5 +1,5 @@
 import {AxiosInstance} from "axios";
-import {createContext, useContext} from "react";
+import {createContext, useContext, useMemo} from "react";
 import {AuthenticatedUser, GoogleSignInCase, LogoutCase} from "../domain/security";
 import {authenticatedAxios} from "../domain/security/adapters/oauthapi/oauth.service";
 import {getAppContext} from "./bootstrap";
@@ -13,6 +13,13 @@ export interface SecurityContextType {
   payload: SecurityContextPayloadType
 
   mutateContext(mutator: (current: SecurityContextPayloadType) => SecurityContextPayloadType): void
+}
+
+export interface MustBeAuthenticated {
+  loggedUser: AuthenticatedUser
+  signOutCase: LogoutCase
+  authenticatedAxios: AxiosInstance
+  accessToken: string
 }
 
 export const SecurityContext = createContext<SecurityContextType>({
@@ -29,18 +36,19 @@ export function useAuthenticatedUser(): AuthenticatedUser | undefined {
   return useContext(SecurityContext).payload.user
 }
 
-export function useMustBeAuthenticated(): [AuthenticatedUser, AxiosInstance, LogoutCase, string] {
+export function useMustBeAuthenticated(): MustBeAuthenticated {
   const user = useAuthenticatedUser();
   if (!user) {
     throw new Error("user must be authenticated to access this page")
   }
 
-  return [
-    user,
-    authenticatedAxios(),
-    useSignOutCase(),
-    getAppContext().oauthService.getDPhotoAccessToken(),
-  ]
+  const signOutCase = useSignOutCase()
+  return useMemo(() => ({
+    loggedUser: user,
+    signOutCase: signOutCase,
+    authenticatedAxios: authenticatedAxios(),
+    accessToken: getAppContext().oauthService.getDPhotoAccessToken(),
+  }), [user, signOutCase])
 }
 
 function newStateManager(securityContext: SecurityContextType) {

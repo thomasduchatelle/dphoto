@@ -19,6 +19,11 @@ export enum MediaType {
   OTHER
 }
 
+export interface MediaWithinADay {
+  day: Date
+  medias: Media[]
+}
+
 export interface Media {
   id: string
   type: MediaType
@@ -32,13 +37,18 @@ export interface WebAdapter {
 
   renderNoAlbums(): void;
 
-  renderAlbumNotPresent(albums: Album[]): void;
+  renderAlbumNotPresent(albums: Album[], albumId: AlbumId): void;
 
-  renderAlbumsWithMedia(albums: Album[], selectedAlbum: Album, medias: Media[]): void;
+  renderAlbumsWithMedia(albums: Album[], selectedAlbum: Album, medias: MediaWithinADay[]): void;
+
+  renderAlbumsList(albums: Album[]): void;
 }
 
-export interface CacheAdapter {
-  getCachedAlbums(): [string, Album[]]
+export interface AlbumsLogicCache {
+  owner: string
+  albums: Album[]
+}
 
-  cacheAlbums(owner: string, albums: Album[]): void
+export interface Cache<T> {
+  current: T;
 }

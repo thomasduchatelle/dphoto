@@ -66,7 +66,7 @@ Setup the environment:
 
 Bootstrap an environment with built-in command (one-of pre-requisite):
 
-    go run ./app/infra-bootstrap -domain <domain> -email <email> -env dev -google-client-id <id>
+    go run ./tools/infra-bootstrap -domain <domain> -email <email> -env dev -google-client-id <id>
 
 To release a new version:
 

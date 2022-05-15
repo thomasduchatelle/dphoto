@@ -1,7 +1,7 @@
 import {AppBar, Box, Container, Toolbar, useScrollTrigger} from "@mui/material";
 import {cloneElement, ReactElement, ReactNode} from "react";
 
-const appVersion = "1.4.0"
+const appVersion = "1.5.0-alpha"
 
 const ElevationScroll = ({children}: {
   children: ReactElement;
@@ -16,18 +16,25 @@ const ElevationScroll = ({children}: {
   });
 }
 
-const AppNapComponent = ({rightContent}: {
-  rightContent: ReactNode
+const AppNapComponent = ({rightContent, middleContent}: {
+  rightContent: ReactNode,
+  middleContent?: ReactNode
 }) => (
   <ElevationScroll>
     <AppBar sx={{zIndex: (theme) => theme.zIndex.drawer + 1}}>
       <Container maxWidth={false}>
         <Toolbar disableGutters>
-          <Box component='a' href='/' sx={{flexGrow: 0}}>
+          <Box component='a' href='/' sx={{flexGrow: 0, display: {xs: 'none', lg: 'flex'}}}>
             <img src='/dphoto-fulllogo-reversed-50px.png' alt='DPhoto Logo' style={{height: '50px', marginTop: '5px'}}
                  title={"version: " + appVersion}/>
           </Box>
-          <Box sx={{flexGrow: 1}}/>
+          <Box component='a' href='/' sx={{flexGrow: 0, display: {lg: 'none'}}}>
+            <img src='/dphoto-logo-reversed-50px.png' alt='DPhoto Logo' style={{height: '50px', marginTop: '5px'}}
+                 title={"version: " + appVersion}/>
+          </Box>
+          <Box sx={{flexGrow: 1}}>
+            {middleContent}
+          </Box>
           <Box sx={{flexGrow: 0}}>
             {rightContent}
           </Box>
