@@ -243,7 +243,7 @@ functions:
     timeout: 29 # maximum allowed by API gateway
     events:
       - httpApi:
-          path: /api/v1/owners/{owner}/medias/{signatureHash}/{signatureSize}/{filename}
+          path: /api/v1/owners/{owner}/medias/{encodedId}/{filename}
           method: get
   version:
     handler: bin/version

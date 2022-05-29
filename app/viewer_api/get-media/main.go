@@ -18,14 +18,16 @@ import (
 func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	parser := common.NewArgParser(&request)
 	owner := parser.ReadPathParameterString("owner")
-	signature := catalogmodel.MediaSignature{
-		SignatureSha256: parser.ReadPathParameterString("signatureHash"),
-		SignatureSize:   parser.ReadPathParameterInt("signatureSize"),
-	}
+	signature, err := common.DecodeMediaId(parser.ReadPathParameterString("encodedId"))
 	width := parser.ReadQueryParameterInteger("w", false)
 
 	if parser.HasViolations() {
 		return parser.BadRequest()
+	}
+	if err != nil {
+		return common.BadRequest(map[string]string{
+			"error": fmt.Sprintf("invalid signature: %s", err),
+		})
 	}
 
 	if resp, deny := common.ValidateRequest(&request, oauth.NewAuthoriseQuery("owner").WithOwner(owner, "READ")); deny {
@@ -38,7 +40,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	//	}, nil
 	//}
 
-	locations, err := catalog.GetMediaLocations(owner, signature)
+	locations, err := catalog.GetMediaLocations(owner, *signature)
 	if err != nil {
 		if errors.As(err, catalogmodel.MediaNotFoundError) {
 			return common.NotFound(map[string]string{

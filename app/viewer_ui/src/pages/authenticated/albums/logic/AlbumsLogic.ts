@@ -16,8 +16,8 @@ interface RestAlbum {
 interface RestMedia {
   id: string
   type: string
+  filename: string
   time: string
-  path: string
   source: string
 }
 
@@ -140,12 +140,13 @@ export class AlbumsLogic {
         return Promise.reject<RestMedia[]>(err)
       })
       .then(data => {
-        return data.map(media => ({
+        return data.map((media): Media => ({
           ...media,
           type: convertToType(media.type),
           time: new Date(media.time),
-          path: `${media.path}?access_token=${this.mustBeAuthenticated.accessToken}`
-        })).sort((a, b) => b.time.getTime() - a.time.getTime())
+          uiRelativePath: `${media.id}/${media.filename}`,
+          contentPath: `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}?access_token=${this.mustBeAuthenticated.accessToken}`,
+      })).sort((a, b) => b.time.getTime() - a.time.getTime())
       })
   }
 }

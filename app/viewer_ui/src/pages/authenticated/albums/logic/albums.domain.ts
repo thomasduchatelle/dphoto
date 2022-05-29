@@ -24,11 +24,17 @@ export interface MediaWithinADay {
   medias: Media[]
 }
 
+export interface MediaId {
+  hash: string
+  size: number
+}
+
 export interface Media {
   id: string
   type: MediaType
   time: Date
-  path: string
+  uiRelativePath: string // uiRelativePath is the WEB UI internal link (from the album)
+  contentPath: string
   source: string
 }
 

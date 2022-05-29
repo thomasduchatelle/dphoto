@@ -1,10 +1,8 @@
-import {Box} from "@mui/material";
 import React, {useMemo} from "react";
 import {Navigate, Route, Routes, useLocation} from "react-router-dom"
-import AppNavComponent from "../../components/AppNav";
-import UserMenu from "../../components/user.menu";
 import {useMustBeAuthenticated} from "../../core/application";
 import AlbumRouterPage from "./albums/AlbumRouterPage";
+import MediaPage from "./media";
 
 const RedirectToDefaultOrPrevious = () => {
   // note - API Gateway + S3 static will redirect on '/?path=<previously requested url>' when a page is reloaded
@@ -21,16 +19,12 @@ const AuthenticatedRouter = () => {
   const {loggedUser, signOutCase} = useMustBeAuthenticated()
 
   return (
-    <Box sx={{display: 'flex'}}>
-      <AppNavComponent
-        rightContent={<UserMenu user={loggedUser} onLogout={signOutCase.logout}/>}
-      />
-      <Routes>
-        <Route path='/albums' element={<AlbumRouterPage/>}/>
-        <Route path='/albums/:owner/:album' element={<AlbumRouterPage/>}/>
-        <Route path='*' element={<RedirectToDefaultOrPrevious/>}/>
-      </Routes>
-    </Box>
+    <Routes>
+      <Route path='/albums' element={<AlbumRouterPage/>}/>
+      <Route path='/albums/:owner/:album' element={<AlbumRouterPage/>}/>
+      <Route path='/albums/:owner/:album/:encodedId/:filename' element={<MediaPage/>}/>
+      <Route path='*' element={<RedirectToDefaultOrPrevious/>}/>
+    </Routes>
   )
 }
 

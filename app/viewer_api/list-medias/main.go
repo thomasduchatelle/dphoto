@@ -14,11 +14,11 @@ import (
 )
 
 type Media struct {
-	Id     string    `json:"id"`
-	Type   string    `json:"type"`
-	Path   string    `json:"path"`
-	Time   time.Time `json:"time"`   // Time is the datetime at which the media has been taken
-	Source string    `json:"source"` // Source is the camera that capture the media, taken from the file metadata
+	Id       string    `json:"id"`       // Id is an encoded version of the business id of the media
+	Type     string    `json:"type"`     // Type is PHOTO or VIDEO
+	Filename string    `json:"filename"` // Filename is user-friendly and have the right extension
+	Time     time.Time `json:"time"`     // Time is the datetime at which the media has been taken
+	Source   string    `json:"source"`   // Source is the camera that capture the media, taken from the file metadata
 }
 
 func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
@@ -37,14 +37,17 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 
 	resp := make([]Media, len(medias.Content), len(medias.Content))
 	for i, media := range medias.Content {
-		restKey := fmt.Sprintf("/api/v1/owners/%s/medias/%s/%d", owner, media.Signature.SignatureSha256, media.Signature.SignatureSize)
+		id, err := common.EncodeMediaId(media.Signature)
+		if err != nil {
+			return common.InternalError(err)
+		}
 
 		resp[i] = Media{
-			Id:     restKey,
-			Type:   string(media.Type),
-			Path:   fmt.Sprintf("%s/%s", restKey, media.Filename),
-			Time:   media.Details.DateTime,
-			Source: strings.Trim(fmt.Sprintf("%s %s", media.Details.Make, media.Details.Model), " "),
+			Id:       id,
+			Type:     string(media.Type),
+			Filename: media.Filename,
+			Time:     media.Details.DateTime,
+			Source:   strings.Trim(fmt.Sprintf("%s %s", media.Details.Make, media.Details.Model), " "),
 		}
 	}
 

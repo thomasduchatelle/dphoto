@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/v1/owners/tony@stark.com/medias/008/subnautica_8.jpeg?w=800"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "api/v1/owners/tony@stark.com/medias/008/subnautica_8_800p.jpeg"
+  }
+}

@@ -31,10 +31,8 @@ export default function MediasPage({
         <Drawer
           variant="permanent"
           sx={{
-            width: drawerWidth,
-            display: {xs: 'none', lg: 'flex'},
-            flexShrink: 0,
-            [`& .MuiDrawer-paper`]: {width: drawerWidth, boxSizing: 'border-box'},
+            display: { xs: 'none', lg: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
         >
           <Toolbar/>
@@ -44,7 +42,7 @@ export default function MediasPage({
       </Box>
       <Box
         component="main"
-        sx={{flexGrow: 1, pl: 2, pr: 2, width: {lg: `calc(100% - ${drawerWidth}px)`}}}
+        sx={{flexGrow: 1, p: 2, width: {lg: `calc(100% - ${drawerWidth}px)`}}}
       >
         {(fullyLoaded && !albums && (
           <Alert severity='info' sx={{mt: 3}}>Your account is empty, start to create new albums and upload your
