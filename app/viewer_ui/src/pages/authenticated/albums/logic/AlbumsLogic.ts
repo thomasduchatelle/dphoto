@@ -1,6 +1,7 @@
 import axios, {AxiosError} from "axios";
 import {MustBeAuthenticated} from "../../../../core/application";
-import {Album, AlbumId, AlbumsLogicCache, Cache, Media, MediaType, MediaWithinADay, WebAdapter} from "./albums.domain";
+import {Cache} from "../../../../core/common";
+import {Album, AlbumId, AlbumsLogicCache, Media, MediaType, MediaWithinADay, WebAdapter} from "./albums.domain";
 
 export const mobileBreakpoint = 1200;
 

@@ -55,6 +55,3 @@ export interface AlbumsLogicCache {
   albums: Album[]
 }
 
-export interface Cache<T> {
-  current: T;
-}

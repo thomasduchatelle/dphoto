@@ -3,3 +3,5 @@ delegate/dphoto
 infra-data/.terraform/
 /dist/
 /.build/
+.DS_Store
+
