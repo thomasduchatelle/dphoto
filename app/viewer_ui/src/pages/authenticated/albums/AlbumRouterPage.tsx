@@ -104,15 +104,15 @@ export default function AlbumRouterPage() {
         rightContent={<UserMenu user={mustBeAuthenticated.loggedUser} onLogout={mustBeAuthenticated.signOutCase.logout}/>}
       />
       <Toolbar/>
-      <Box sx={{mt: 2, mb: 2, display: {lg: 'none'}}}>
+      <Box sx={{mt: 2, pl: 2, pr: 2, display: {lg: 'none'}}}>
         <MobileNavigation album={owner && album ? state.selectedAlbum : undefined}/>
       </Box>
-      {((!owner || !album) && (
+      {!owner || !album ? (
         <AlbumsList albums={state.albums}
                     loaded={state.albumsLoaded}
                     selected={state.selectedAlbum}
                     onSelect={engine.selectAlbum}/>
-      )) || (
+      ) : (
         <MediasPage
           albums={state.albums}
           albumNotFound={state.albumNotFound}

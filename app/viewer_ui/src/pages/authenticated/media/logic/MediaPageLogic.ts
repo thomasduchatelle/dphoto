@@ -36,9 +36,11 @@ export class MediaPageLogic {
     backToAlbumLink: string
     imgSrc: string
     previousMediaLink: string
+    previousMediaSrc: string
     nextMediaLink: string
+    nextMediaSrc: string
   } => {
-    let previousMediaLink = "", nextMediaLink = ""
+    let previousMediaLink = "", nextMediaLink = "", previousMediaSrc = "", nextMediaSrc = ""
 
     if (mediasState.owner === owner && mediasState.folderName === album && mediasState.medias) {
       let index = mediasState.medias.findIndex(media => media.encodedId === encodedId)
@@ -48,18 +50,22 @@ export class MediaPageLogic {
 
       if (index > 0) {
         previousMediaLink = `/albums/${owner}/${album}/${mediasState.medias[index - 1].encodedId}/${mediasState.medias[index - 1].filename}`
+        previousMediaSrc = `/api/v1/owners/${owner}/medias/${mediasState.medias[index - 1].encodedId}/${mediasState.medias[index - 1].filename}?access_token=${this.mustBeAuthenticated.accessToken}`
       }
 
       if (index + 1 < mediasState.medias.length) {
         nextMediaLink = `/albums/${owner}/${album}/${mediasState.medias[index + 1].encodedId}/${mediasState.medias[index + 1].filename}`
+        nextMediaSrc = `/api/v1/owners/${owner}/medias/${mediasState.medias[index + 1].encodedId}/${mediasState.medias[index + 1].filename}?access_token=${this.mustBeAuthenticated.accessToken}`
       }
     }
 
     return {
       backToAlbumLink: `/albums/${owner}/${album}`,
-      imgSrc: `/api/v1/owners/${owner}/medias/${encodedId}/${filename}`,
-      previousMediaLink: previousMediaLink,
-      nextMediaLink: nextMediaLink,
+      imgSrc: `/api/v1/owners/${owner}/medias/${encodedId}/${filename}?access_token=${this.mustBeAuthenticated.accessToken}`,
+      previousMediaLink,
+      previousMediaSrc,
+      nextMediaLink,
+      nextMediaSrc,
     }
   }
 }

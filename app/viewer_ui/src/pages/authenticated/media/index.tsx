@@ -22,42 +22,50 @@ export default function MediaPage() {
 
   useEffect(() => {
     logic.findMediasWithCache(owner ?? "", album ?? "").catch(err => console.log(err))
-  }, [owner, album])
+  }, [logic, owner, album])
 
   const {
     backToAlbumLink,
     imgSrc,
     previousMediaLink,
-    nextMediaLink
+    previousMediaSrc,
+    nextMediaLink,
+    nextMediaSrc,
   } = logic.getModel(owner, album, encodedId, filename, state)
-
-  console.log(`loading image ${imgSrc}`)
 
   return (
     <>
-      <MediaNavBar backUrl={backToAlbumLink} downloadHref={imgSrc}/>
+      {[[previousMediaSrc, '-100%'], [imgSrc, 0], [nextMediaSrc, '100%']].filter(([src, left]) => src && src !== "").map(([src, left]) => (
+        <Box
+          key={src}
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: left,
+            transition: 'left 0.6s',
+            backgroundColor: 'black',
+            width: '100%',
+            height: '100vh',
+            display: 'flex',
+            alignContent: 'center',
+            justifyContent: 'center',
+            '& img': {
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+            }
+          }}>
+          <img
+            src={`${src}&w=1920`}
+            srcSet={`${src}&w=360 360w, ${src}&w=1920 1920w`} // TODO 3036 hit the 6MB limits - ${src}&w=3036 3036w, ${src}&w=4048 4048w
+            sizes='100vw'
+            alt='previous media'/>
+        </Box>
+      ))}
+
       <FullHeightLink mediaLink={previousMediaLink} side='left'/>
       <FullHeightLink mediaLink={nextMediaLink} side='right'/>
-
-      <Box sx={{
-        backgroundColor: 'black',
-        height: '100vh',
-        display: 'flex',
-        alignContent: 'center',
-        justifyContent: 'center',
-        '& img': {
-          maxWidth: '100%',
-          maxHeight: '100%',
-          objectFit: 'contain',
-        }
-      }}>
-        <img
-          key={imgSrc}
-          src={`${imgSrc}?w=1920`}
-          srcSet={`${imgSrc}?w=360 360w, ${imgSrc}?w=1920 1920w, ${imgSrc}?w=3036 3036w, ${imgSrc}?w=4048 4048w`}
-          sizes='100vw'
-          alt={filename}/>
-      </Box>
+      <MediaNavBar backUrl={backToAlbumLink} downloadHref={imgSrc}/>
     </>
   )
 }

@@ -33,9 +33,11 @@ export function FullHeightLink({mediaLink, side}: {
         color: 'inherit',
         display: 'none',
       },
-      '& button.Mui-focusVisible, & a:hover button': {
-        backgroundColor: 'rgba(122, 122, 122, 0.3)',
-        display: 'flex',
+      [theme.breakpoints.up("lg")]: {
+        '& button.Mui-focusVisible, & a:hover button': {
+          backgroundColor: 'rgba(122, 122, 122, 0.3)',
+          display: 'flex',
+        },
       },
     })}>
       <Link to={mediaLink}>

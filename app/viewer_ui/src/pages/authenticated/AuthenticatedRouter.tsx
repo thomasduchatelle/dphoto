@@ -1,6 +1,5 @@
 import React, {useMemo} from "react";
 import {Navigate, Route, Routes, useLocation} from "react-router-dom"
-import {useMustBeAuthenticated} from "../../core/application";
 import AlbumRouterPage from "./albums/AlbumRouterPage";
 import MediaPage from "./media";
 
@@ -16,8 +15,6 @@ const RedirectToDefaultOrPrevious = () => {
 }
 
 const AuthenticatedRouter = () => {
-  const {loggedUser, signOutCase} = useMustBeAuthenticated()
-
   return (
     <Routes>
       <Route path='/albums' element={<AlbumRouterPage/>}/>
