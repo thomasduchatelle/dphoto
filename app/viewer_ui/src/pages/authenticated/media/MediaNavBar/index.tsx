@@ -2,9 +2,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadIcon from '@mui/icons-material/Download';
 import {AppBar, Box, IconButton, Toolbar} from "@mui/material";
 
-export default function Index({backUrl, downloadHref}: {
+export default function Index({backUrl, downloadHref, downloadId}: {
   backUrl: string
   downloadHref: string
+  downloadId: string
 }) {
   return (
     <Box>
@@ -32,6 +33,7 @@ export default function Index({backUrl, downloadHref}: {
           <IconButton href={downloadHref}
                       title='Download'
                       component='a'
+                      id={downloadId}
                       download>
             <DownloadIcon/>
           </IconButton>

@@ -1,11 +1,11 @@
 import {Box} from "@mui/material";
 import React, {useEffect, useMemo, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import {useSwipeable} from "react-swipeable";
 import {useMustBeAuthenticated} from "../../../core/application";
 import {FullHeightLink} from "./FullHeightLink";
 import {MediaPageLogic, MediaPageMediasState, MediaPageMediasStateInit} from "./logic";
 import MediaNavBar from "./MediaNavBar";
+import {Key, useNativeControl} from "./useNativeControl";
 
 type MediaPageUrlParams = {
   owner: string
@@ -35,23 +35,25 @@ export default function MediaPage() {
     nextMediaSrc,
   } = logic.getModel(owner, album, encodedId, filename, state)
 
-  const handlers = useSwipeable({
-    onSwiped: (eventData) => {
-      switch (eventData.dir) {
-        case "Right":
-          if (previousMediaLink) {
-            navigate(previousMediaLink)
-          }
-          break
+  const handlers = useNativeControl(key => {
+    switch (key) {
+      case Key.Left:
+        if (previousMediaLink) {
+          navigate(previousMediaLink)
+        }
+        break
 
-        case "Left":
-          if (nextMediaLink) {
-            navigate(nextMediaLink)
-          }
-          break
-      }
-    },
-  });
+      case Key.Right:
+        if (nextMediaLink) {
+          navigate(nextMediaLink)
+        }
+        break
+
+      case Key.D:
+        document.getElementById("download_current")?.click()
+        break
+    }
+  }, Key.Left, Key.Right, Key.D)
 
   return (
     <div {...handlers}>
@@ -85,7 +87,7 @@ export default function MediaPage() {
 
       <FullHeightLink mediaLink={previousMediaLink} side='left'/>
       <FullHeightLink mediaLink={nextMediaLink} side='right'/>
-      <MediaNavBar backUrl={backToAlbumLink} downloadHref={imgSrc}/>
+      <MediaNavBar backUrl={backToAlbumLink} downloadHref={imgSrc} downloadId="download_current"/>
     </div>
   )
 }
