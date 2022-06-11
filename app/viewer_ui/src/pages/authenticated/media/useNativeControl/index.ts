@@ -8,10 +8,6 @@ export enum Key {
   Del = "Del",
 }
 
-interface KeyConfig {
-  keyboard: string
-}
-
 // Listen for device native input (keyboard, swipe, ...)
 export function useNativeControl(callback: (key: Key) => void, ...keys: Key[]): SwipeableHandlers {
   const handlers = useSwipeable({
@@ -37,7 +33,7 @@ export function useNativeControl(callback: (key: Key) => void, ...keys: Key[]): 
     return () => {
       window.removeEventListener("keydown", handler);
     };
-  }, [callback]);
+  }, [callback, keys]);
 
   return handlers
 }

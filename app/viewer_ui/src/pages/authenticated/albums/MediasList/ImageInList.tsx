@@ -30,7 +30,7 @@ export function ImageInList({media, imageViewportPercentage}: {
         },
         '& img': {
           minHeight: '100%',
-          maxHeight: '100%',
+          minWidth: '100%',
           objectFit: 'cover',
         },
       }}
