@@ -35,12 +35,16 @@ export class MediaPageLogic {
   public getModel = (owner: string | undefined, album: string | undefined, encodedId: string | undefined, filename: string | undefined, mediasState: MediaPageMediasState): {
     backToAlbumLink: string
     imgSrc: string
+    currentIsImage: boolean
     previousMediaLink: string
     previousMediaSrc: string
+    previousIsImage: boolean
     nextMediaLink: string
     nextMediaSrc: string
+    nextIsImage: boolean
   } => {
-    let previousMediaLink = "", nextMediaLink = "", previousMediaSrc = "", nextMediaSrc = ""
+    let previousMediaLink = "", nextMediaLink = "", previousMediaSrc = "", nextMediaSrc = "", previousIsImage = false,
+      nextIsImage = false
 
     if (mediasState.owner === owner && mediasState.folderName === album && mediasState.medias) {
       let index = mediasState.medias.findIndex(media => media.encodedId === encodedId)
@@ -49,23 +53,34 @@ export class MediaPageLogic {
       }
 
       if (index > 0) {
-        previousMediaLink = `/albums/${owner}/${album}/${mediasState.medias[index - 1].encodedId}/${mediasState.medias[index - 1].filename}`
-        previousMediaSrc = `/api/v1/owners/${owner}/medias/${mediasState.medias[index - 1].encodedId}/${mediasState.medias[index - 1].filename}?access_token=${this.mustBeAuthenticated.accessToken}`
+        const media = mediasState.medias[index - 1];
+        previousMediaLink = `/albums/${owner}/${album}/${media.encodedId}/${media.filename}`
+        previousMediaSrc = `/api/v1/owners/${owner}/medias/${media.encodedId}/${media.filename}?access_token=${this.mustBeAuthenticated.accessToken}`
+        previousIsImage = this.isAnImage(media.filename)
       }
 
       if (index + 1 < mediasState.medias.length) {
-        nextMediaLink = `/albums/${owner}/${album}/${mediasState.medias[index + 1].encodedId}/${mediasState.medias[index + 1].filename}`
-        nextMediaSrc = `/api/v1/owners/${owner}/medias/${mediasState.medias[index + 1].encodedId}/${mediasState.medias[index + 1].filename}?access_token=${this.mustBeAuthenticated.accessToken}`
+        const media = mediasState.medias[index + 1];
+        nextMediaLink = `/albums/${owner}/${album}/${media.encodedId}/${media.filename}`
+        nextMediaSrc = `/api/v1/owners/${owner}/medias/${media.encodedId}/${media.filename}?access_token=${this.mustBeAuthenticated.accessToken}`
+        nextIsImage = this.isAnImage(media.filename)
       }
     }
 
     return {
       backToAlbumLink: `/albums/${owner}/${album}`,
       imgSrc: `/api/v1/owners/${owner}/medias/${encodedId}/${filename}?access_token=${this.mustBeAuthenticated.accessToken}`,
+      currentIsImage: this.isAnImage(filename),
       previousMediaLink,
       previousMediaSrc,
+      previousIsImage,
       nextMediaLink,
       nextMediaSrc,
+      nextIsImage,
     }
+  }
+
+  private isAnImage(filename: string | undefined): boolean {
+    return [".jpg", ".jpeg", ".png"].filter(ext => filename?.toLowerCase().endsWith(ext)).length > 0;
   }
 }

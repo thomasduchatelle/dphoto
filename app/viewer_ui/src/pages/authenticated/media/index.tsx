@@ -14,6 +14,12 @@ type MediaPageUrlParams = {
   filename: string
 }
 
+interface ImageRef {
+  src: string
+  positionLeft: string
+  isImage: boolean
+}
+
 export default function MediaPage() {
   const mustBeAuthenticated = useMustBeAuthenticated()
   const navigate = useNavigate()
@@ -23,17 +29,40 @@ export default function MediaPage() {
   const logic = useMemo(() => new MediaPageLogic(mustBeAuthenticated, setState), [mustBeAuthenticated, setState])
 
   useEffect(() => {
-    logic.findMediasWithCache(owner ?? "", album ?? "").catch(err => console.log(err))
+    if (owner && album) {
+      logic.findMediasWithCache(owner, album).catch(err => console.log(err))
+    }
   }, [logic, owner, album])
 
   const {
     backToAlbumLink,
     imgSrc,
+    currentIsImage,
     previousMediaLink,
     previousMediaSrc,
+    previousIsImage,
     nextMediaLink,
     nextMediaSrc,
+    nextIsImage,
   } = logic.getModel(owner, album, encodedId, filename, state)
+
+  const images: ImageRef[] = [
+    {
+      src: previousMediaSrc,
+      positionLeft: '-100%',
+      isImage: previousIsImage,
+    },
+    {
+      src: imgSrc,
+      positionLeft: '0',
+      isImage: currentIsImage,
+    },
+    {
+      src: nextMediaSrc,
+      positionLeft: '100%',
+      isImage: nextIsImage,
+    },
+  ]
 
   const handlers = useNativeControl(key => {
     switch (key) {
@@ -62,33 +91,40 @@ export default function MediaPage() {
 
   return (
     <div {...handlers}>
-      {[[previousMediaSrc, '-100%'], [imgSrc, 0], [nextMediaSrc, '100%']].filter(([src, left]) => src && src !== "").map(([src, left]) => (
-        <Box
-          key={src}
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: left,
-            transition: 'left 0.6s',
-            backgroundColor: 'black',
-            width: '100%',
-            height: '100vh',
-            display: 'flex',
-            alignContent: 'center',
-            justifyContent: 'center',
-            '& img': {
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-            }
-          }}>
-          <img
-            src={`${src}&w=1920`}
-            srcSet={`${src}&w=360 360w, ${src}&w=1920 1920w`} // TODO 3036 hit the 6MB limits - ${src}&w=3036 3036w, ${src}&w=4048 4048w
-            sizes='100vw'
-            alt='previous media'/>
-        </Box>
-      ))}
+      {images.filter(ref => ref.src && ref.src !== "")
+        .map(({src, positionLeft, isImage}) => (
+          <Box
+            key={src}
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: positionLeft,
+              transition: 'left 0.6s',
+              backgroundColor: 'black',
+              width: '100%',
+              height: '100vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '& img.picture': {
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+              }
+            }}>
+            {isImage ? (<img
+              className="picture"
+              src={`${src}&w=1920`}
+              srcSet={`${src}&w=360 360w, ${src}&w=1920 1920w`} // TODO 3036 hit the 6MB limits - ${src}&w=3036 3036w, ${src}&w=4048 4048w
+              sizes='100vw'
+              alt='previous media'/>) : (
+              <img src="/video-placeholder.png" alt="video-image" style={{
+                width: '350px',
+                height: '288px',
+              }}/>
+            )}
+          </Box>
+        ))}
 
       <FullHeightLink mediaLink={previousMediaLink} side='left'/>
       <FullHeightLink mediaLink={nextMediaLink} side='right'/>
