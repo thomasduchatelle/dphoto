@@ -118,7 +118,7 @@ export default function MediaPage() {
               srcSet={`${src}&w=360 360w, ${src}&w=1920 1920w`} // TODO 3036 hit the 6MB limits - ${src}&w=3036 3036w, ${src}&w=4048 4048w
               sizes='100vw'
               alt='previous media'/>) : (
-              <img src="/video-placeholder.png" alt="video-image" style={{
+              <img src="/video-placeholder.png" alt="video placeholder" style={{
                 width: '350px',
                 height: '288px',
               }}/>
