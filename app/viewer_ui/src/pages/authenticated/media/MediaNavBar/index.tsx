@@ -2,8 +2,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadIcon from '@mui/icons-material/Download';
 import {AppBar, Box, IconButton, Toolbar} from "@mui/material";
 
-export default function Index({backUrl, downloadHref, downloadId}: {
+export default function MediaNavBar({backUrl, backId, downloadHref, downloadId}: {
   backUrl: string
+  backId: string
   downloadHref: string
   downloadId: string
 }) {
@@ -24,7 +25,7 @@ export default function Index({backUrl, downloadHref, downloadId}: {
         })}
       >
         <Toolbar>
-          <IconButton href={backUrl}>
+          <IconButton href={backUrl} id={backId}>
             <ArrowBackIcon/>
           </IconButton>
 

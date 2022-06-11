@@ -6,6 +6,7 @@ export enum Key {
   Right = "Right",
   D = "D",
   Del = "Del",
+  Esc = "Esc",
 }
 
 // Listen for device native input (keyboard, swipe, ...)
@@ -15,6 +16,8 @@ export function useNativeControl(callback: (key: Key) => void, ...keys: Key[]): 
       const key = swipeToKey(eventData.dir)
       if (key && keys.indexOf(key) >= 0) {
         callback(key)
+        // } else {
+        //   console.log(`missed: ${eventData.dir}`)
       }
     },
   });
@@ -25,6 +28,8 @@ export function useNativeControl(callback: (key: Key) => void, ...keys: Key[]): 
       if (key && keys.indexOf(key) >= 0) {
         evt.preventDefault()
         callback(key)
+        // } else {
+        //   console.log(`missed ${evt.key}`)
       }
     }
 
@@ -53,6 +58,9 @@ function keyboardToKey(key: string): Key | null {
     case "ArrowRight":
       return Key.Right
 
+    case "Escape":
+      return Key.Esc
+
     default:
       return null
   }
@@ -65,6 +73,10 @@ function swipeToKey(swipeDirection: string): Key | null {
 
     case "Left":
       return Key.Right
+
+    case "Up":
+    case "Down":
+      return Key.Esc
 
     default:
       return null

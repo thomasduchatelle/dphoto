@@ -52,8 +52,13 @@ export default function MediaPage() {
       case Key.D:
         document.getElementById("download_current")?.click()
         break
+
+      case Key.Esc:
+        document.getElementById("go_back")?.click()
+        break
+
     }
-  }, Key.Left, Key.Right, Key.D)
+  }, Key.Left, Key.Right, Key.D, Key.Esc)
 
   return (
     <div {...handlers}>
@@ -87,7 +92,7 @@ export default function MediaPage() {
 
       <FullHeightLink mediaLink={previousMediaLink} side='left'/>
       <FullHeightLink mediaLink={nextMediaLink} side='right'/>
-      <MediaNavBar backUrl={backToAlbumLink} downloadHref={imgSrc} downloadId="download_current"/>
+      <MediaNavBar backUrl={backToAlbumLink} backId="go_back" downloadHref={imgSrc} downloadId="download_current"/>
     </div>
   )
 }
