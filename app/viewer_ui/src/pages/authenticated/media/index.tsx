@@ -1,6 +1,7 @@
 import {Box} from "@mui/material";
 import React, {useEffect, useMemo, useState} from "react";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
+import {useSwipeable} from "react-swipeable";
 import {useMustBeAuthenticated} from "../../../core/application";
 import {FullHeightLink} from "./FullHeightLink";
 import {MediaPageLogic, MediaPageMediasState, MediaPageMediasStateInit} from "./logic";
@@ -15,6 +16,7 @@ type MediaPageUrlParams = {
 
 export default function MediaPage() {
   const mustBeAuthenticated = useMustBeAuthenticated()
+  const navigate = useNavigate()
   const {owner, album, encodedId, filename} = useParams<MediaPageUrlParams>()
   const [state, setState] = useState<MediaPageMediasState>(MediaPageMediasStateInit)
 
@@ -33,8 +35,26 @@ export default function MediaPage() {
     nextMediaSrc,
   } = logic.getModel(owner, album, encodedId, filename, state)
 
+  const handlers = useSwipeable({
+    onSwiped: (eventData) => {
+      switch (eventData.dir) {
+        case "Right":
+          if (previousMediaLink) {
+            navigate(previousMediaLink)
+          }
+          break
+
+        case "Left":
+          if (nextMediaLink) {
+            navigate(nextMediaLink)
+          }
+          break
+      }
+    },
+  });
+
   return (
-    <>
+    <div {...handlers}>
       {[[previousMediaSrc, '-100%'], [imgSrc, 0], [nextMediaSrc, '100%']].filter(([src, left]) => src && src !== "").map(([src, left]) => (
         <Box
           key={src}
@@ -66,6 +86,6 @@ export default function MediaPage() {
       <FullHeightLink mediaLink={previousMediaLink} side='left'/>
       <FullHeightLink mediaLink={nextMediaLink} side='right'/>
       <MediaNavBar backUrl={backToAlbumLink} downloadHref={imgSrc}/>
-    </>
+    </div>
   )
 }
