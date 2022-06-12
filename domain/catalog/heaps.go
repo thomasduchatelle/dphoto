@@ -2,15 +2,14 @@ package catalog
 
 import (
 	"container/heap"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 )
 
 type albumHeap struct {
-	heap       []*catalogmodel.Album
-	comparator func(a, b *catalogmodel.Album) int64
+	heap       []*Album
+	comparator func(a, b *Album) int64
 }
 
-func newAlbumHeap(comparator func(a, b *catalogmodel.Album) int64) *albumHeap {
+func newAlbumHeap(comparator func(a, b *Album) int64) *albumHeap {
 	return &albumHeap{
 		comparator: comparator,
 	}
@@ -19,7 +18,7 @@ func newAlbumHeap(comparator func(a, b *catalogmodel.Album) int64) *albumHeap {
 func (a *albumHeap) Len() int           { return len(a.heap) }
 func (a *albumHeap) Less(i, j int) bool { return a.comparator(a.heap[i], a.heap[j]) > 0 }
 func (a *albumHeap) Swap(i, j int)      { a.heap[i], a.heap[j] = a.heap[j], a.heap[i] }
-func (a *albumHeap) Push(x interface{}) { a.heap = append(a.heap, x.(*catalogmodel.Album)) }
+func (a *albumHeap) Push(x interface{}) { a.heap = append(a.heap, x.(*Album)) }
 
 func (a *albumHeap) Pop() interface{} {
 	n := len(a.heap)
@@ -28,7 +27,7 @@ func (a *albumHeap) Pop() interface{} {
 	return x
 }
 
-func (a *albumHeap) Head() (*catalogmodel.Album, bool) {
+func (a *albumHeap) Head() (*Album, bool) {
 	if a.Len() == 0 {
 		return nil, false
 	}
@@ -37,13 +36,13 @@ func (a *albumHeap) Head() (*catalogmodel.Album, bool) {
 }
 
 // HeapPush returns: TRUE if new element took the head
-func (a *albumHeap) HeapPush(album *catalogmodel.Album) bool {
+func (a *albumHeap) HeapPush(album *Album) bool {
 	heap.Push(a, album)
 	return album.IsEqual(a.heap[0])
 }
 
 // Remove removes album fro heap and return TRUE if it was the head
-func (a *albumHeap) Remove(albumToFind *catalogmodel.Album) bool {
+func (a *albumHeap) Remove(albumToFind *Album) bool {
 	for index, album := range a.heap {
 		if albumToFind.IsEqual(album) {
 			heap.Remove(a, index)
@@ -54,14 +53,14 @@ func (a *albumHeap) Remove(albumToFind *catalogmodel.Album) bool {
 	return false
 }
 
-func (a *albumHeap) HasHead(album *catalogmodel.Album) (bool, *catalogmodel.Album) {
+func (a *albumHeap) HasHead(album *Album) (bool, *Album) {
 	head, notEmpty := a.Head()
 	return notEmpty && album.IsEqual(head), head
 }
 
 // AsArray copies of the heap: slice where the first element is the head of the heap
-func (a *albumHeap) AsArray() []*catalogmodel.Album {
-	albums := make([]*catalogmodel.Album, a.Len())
+func (a *albumHeap) AsArray() []*Album {
+	albums := make([]*Album, a.Len())
 	copy(albums, a.heap)
 	return albums
 }

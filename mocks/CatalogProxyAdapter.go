@@ -4,7 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	catalogmodel "github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	catalog "github.com/thomasduchatelle/dphoto/domain/catalog"
 
 	testing "testing"
 )
@@ -15,11 +15,11 @@ type CatalogProxyAdapter struct {
 }
 
 // Create provides a mock function with given fields: createRequest
-func (_m *CatalogProxyAdapter) Create(createRequest catalogmodel.CreateAlbum) error {
+func (_m *CatalogProxyAdapter) Create(createRequest catalog.CreateAlbum) error {
 	ret := _m.Called(createRequest)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(catalogmodel.CreateAlbum) error); ok {
+	if rf, ok := ret.Get(0).(func(catalog.CreateAlbum) error); ok {
 		r0 = rf(createRequest)
 	} else {
 		r0 = ret.Error(0)
@@ -29,15 +29,15 @@ func (_m *CatalogProxyAdapter) Create(createRequest catalogmodel.CreateAlbum) er
 }
 
 // FindAllAlbums provides a mock function with given fields: owner
-func (_m *CatalogProxyAdapter) FindAllAlbums(owner string) ([]*catalogmodel.Album, error) {
+func (_m *CatalogProxyAdapter) FindAllAlbums(owner string) ([]*catalog.Album, error) {
 	ret := _m.Called(owner)
 
-	var r0 []*catalogmodel.Album
-	if rf, ok := ret.Get(0).(func(string) []*catalogmodel.Album); ok {
+	var r0 []*catalog.Album
+	if rf, ok := ret.Get(0).(func(string) []*catalog.Album); ok {
 		r0 = rf(owner)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*catalogmodel.Album)
+			r0 = ret.Get(0).([]*catalog.Album)
 		}
 	}
 
@@ -52,20 +52,20 @@ func (_m *CatalogProxyAdapter) FindAllAlbums(owner string) ([]*catalogmodel.Albu
 }
 
 // FindSignatures provides a mock function with given fields: owner, signatures
-func (_m *CatalogProxyAdapter) FindSignatures(owner string, signatures []*catalogmodel.MediaSignature) ([]*catalogmodel.MediaSignature, error) {
+func (_m *CatalogProxyAdapter) FindSignatures(owner string, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	ret := _m.Called(owner, signatures)
 
-	var r0 []*catalogmodel.MediaSignature
-	if rf, ok := ret.Get(0).(func(string, []*catalogmodel.MediaSignature) []*catalogmodel.MediaSignature); ok {
+	var r0 []*catalog.MediaSignature
+	if rf, ok := ret.Get(0).(func(string, []*catalog.MediaSignature) []*catalog.MediaSignature); ok {
 		r0 = rf(owner, signatures)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*catalogmodel.MediaSignature)
+			r0 = ret.Get(0).([]*catalog.MediaSignature)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, []*catalogmodel.MediaSignature) error); ok {
+	if rf, ok := ret.Get(1).(func(string, []*catalog.MediaSignature) error); ok {
 		r1 = rf(owner, signatures)
 	} else {
 		r1 = ret.Error(1)
@@ -75,11 +75,11 @@ func (_m *CatalogProxyAdapter) FindSignatures(owner string, signatures []*catalo
 }
 
 // InsertMedias provides a mock function with given fields: owner, medias
-func (_m *CatalogProxyAdapter) InsertMedias(owner string, medias []catalogmodel.CreateMediaRequest) error {
+func (_m *CatalogProxyAdapter) InsertMedias(owner string, medias []catalog.CreateMediaRequest) error {
 	ret := _m.Called(owner, medias)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, []catalogmodel.CreateMediaRequest) error); ok {
+	if rf, ok := ret.Get(0).(func(string, []catalog.CreateMediaRequest) error); ok {
 		r0 = rf(owner, medias)
 	} else {
 		r0 = ret.Error(0)

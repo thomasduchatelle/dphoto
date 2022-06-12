@@ -3,7 +3,6 @@ package catalog
 import (
 	"container/heap"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"sort"
 	"time"
 )
@@ -11,13 +10,13 @@ import (
 // Timeline can be used to find to which album a media will belongs.
 type Timeline struct {
 	segments []segment
-	albums   []*catalogmodel.Album // albums is only used to re-generate a new Timeline
+	albums   []*Album // albums is only used to re-generate a new Timeline
 }
 
 type segment struct {
 	from   time.Time
 	to     time.Time
-	albums []*catalogmodel.Album
+	albums []*Album
 }
 
 type builderCursor struct {
@@ -29,7 +28,7 @@ type builderCursor struct {
 type PrioritySegment struct {
 	Start  time.Time
 	End    time.Time
-	Albums []catalogmodel.Album // sorted by priority
+	Albums []Album // sorted by priority
 }
 
 func (c *builderCursor) closeCurrent(end time.Time, timeline *Timeline) {
@@ -42,12 +41,12 @@ func (c *builderCursor) closeCurrent(end time.Time, timeline *Timeline) {
 	}
 }
 
-func (c *builderCursor) removeNextToClose() (*catalogmodel.Album, bool) {
+func (c *builderCursor) removeNextToClose() (*Album, bool) {
 	if c.nextToCloseHeap.Len() == 0 {
 		return nil, false
 	}
 
-	toClose := heap.Pop(c.nextToCloseHeap).(*catalogmodel.Album)
+	toClose := heap.Pop(c.nextToCloseHeap).(*Album)
 	hasPriority := c.priorityHeap.Remove(toClose)
 
 	return toClose, hasPriority
@@ -61,7 +60,7 @@ func (c *builderCursor) startSegment(start time.Time) {
 }
 
 // add album to both heaps, return TRUE if album is the new priority
-func (c *builderCursor) appendAlbum(album *catalogmodel.Album) bool {
+func (c *builderCursor) appendAlbum(album *Album) bool {
 	c.nextToCloseHeap.HeapPush(album)
 	newPriority := c.priorityHeap.HeapPush(album)
 
@@ -73,7 +72,7 @@ func (c *builderCursor) appendAlbum(album *catalogmodel.Album) bool {
 }
 
 // NewTimeline creates a Timeline object used to compute overlaps between Album. List of albums must be sorted by Start date ASC (End sorting do not matter).
-func NewTimeline(albums []*catalogmodel.Album) (*Timeline, error) {
+func NewTimeline(albums []*Album) (*Timeline, error) {
 	timeline := &Timeline{
 		albums: albums,
 	}
@@ -133,13 +132,13 @@ func removeAlbumFromCursor(timeline *Timeline, cursor *builderCursor) {
 	}
 }
 
-func (t *Timeline) FindAllAt(date time.Time) []*catalogmodel.Album {
+func (t *Timeline) FindAllAt(date time.Time) []*Album {
 	index := sort.Search(len(t.segments), func(i int) bool {
 		return t.segments[i].to.After(date)
 	})
 
 	if index < len(t.segments) {
-		var albums []*catalogmodel.Album
+		var albums []*Album
 		for _, a := range t.segments[index].albums {
 			if !a.Start.After(date) && a.End.After(date) {
 				albums = append(albums, a)
@@ -152,7 +151,7 @@ func (t *Timeline) FindAllAt(date time.Time) []*catalogmodel.Album {
 }
 
 // FindAt returns nil if not found
-func (t *Timeline) FindAt(date time.Time) (*catalogmodel.Album, bool) {
+func (t *Timeline) FindAt(date time.Time) (*Album, bool) {
 	albums := t.FindAllAt(date)
 	if len(albums) > 0 {
 		return albums[0], true
@@ -220,8 +219,8 @@ func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment
 }
 
 // AppendAlbum generates a new timeline from memory
-func (t *Timeline) AppendAlbum(album *catalogmodel.Album) (*Timeline, error) {
-	albums := make([]*catalogmodel.Album, len(t.albums)+1)
+func (t *Timeline) AppendAlbum(album *Album) (*Timeline, error) {
+	albums := make([]*Album, len(t.albums)+1)
 	albums[0] = album
 	copy(albums[1:], t.albums)
 
@@ -232,8 +231,8 @@ func (t *Timeline) AppendAlbum(album *catalogmodel.Album) (*Timeline, error) {
 	return NewTimeline(albums)
 }
 
-func toSortedArray(albums []*catalogmodel.Album, comparator func(a *catalogmodel.Album, b *catalogmodel.Album) int64) []catalogmodel.Album {
-	sortedAlbums := make([]catalogmodel.Album, len(albums))
+func toSortedArray(albums []*Album, comparator func(a *Album, b *Album) int64) []Album {
+	sortedAlbums := make([]Album, len(albums))
 	for i, a := range albums {
 		sortedAlbums[i] = *a
 	}
@@ -243,20 +242,4 @@ func toSortedArray(albums []*catalogmodel.Album, comparator func(a *catalogmodel
 	})
 
 	return sortedAlbums
-}
-
-func minTime(a, b time.Time) time.Time {
-	if a.Unix() < b.Unix() {
-		return a
-	}
-
-	return b
-}
-
-func maxTime(a, b time.Time) time.Time {
-	if a.Unix() > b.Unix() {
-		return a
-	}
-
-	return b
 }

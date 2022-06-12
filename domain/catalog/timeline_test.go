@@ -2,7 +2,6 @@ package catalog
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"sort"
 	"testing"
 	"time"
@@ -34,13 +33,13 @@ func TestNewTimeline(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		args    []*catalogmodel.Album
+		args    []*Album
 		want    []simplifiedSegment
 		wantErr bool
 	}{
 		{
 			"it should support albums following up each-other",
-			[]*catalogmodel.Album{
+			[]*Album{
 				newAlbum("/2020-Q3", "2020-07-01T00", "2020-10-01T00"),
 				newAlbum("/2020-Q4", "2020-10-01T00", "2021-01-01T00"),
 			},
@@ -52,7 +51,7 @@ func TestNewTimeline(t *testing.T) {
 		},
 		{
 			"it should support albums with a gap",
-			[]*catalogmodel.Album{
+			[]*Album{
 				newAlbum("/2020-Q3", "2020-07-01T00", "2020-10-01T00"),
 				newAlbum("/2020-Q4", "2020-11-01T00", "2021-02-01T00"),
 			},
@@ -64,7 +63,7 @@ func TestNewTimeline(t *testing.T) {
 		},
 		{
 			"it should support albums overlapping - priority to the first",
-			[]*catalogmodel.Album{
+			[]*Album{
 				newAlbum("/A-01", "2020-12-01T00", "2020-12-11T00"),
 				newAlbum("/A-02", "2020-12-10T12", "2020-12-21T12"),
 			},
@@ -76,7 +75,7 @@ func TestNewTimeline(t *testing.T) {
 		},
 		{
 			"it should support albums overlapping - priority to the shortest",
-			[]*catalogmodel.Album{
+			[]*Album{
 				newAlbum("/A-01", "2020-12-01T00", "2020-12-06T00"),
 				newAlbum("/A-02", "2020-12-02T00", "2020-12-05T00"),
 				newAlbum("/A-03", "2020-12-03T00", "2020-12-04T00"),
@@ -92,7 +91,7 @@ func TestNewTimeline(t *testing.T) {
 		},
 		{
 			"it should support albums starting at the same time",
-			[]*catalogmodel.Album{
+			[]*Album{
 				newAlbum("/A-01", "2020-12-01T00", "2020-12-06T00"),
 				newAlbum("/A-02", "2020-12-01T00", "2020-12-05T00"),
 				newAlbum("/A-03", "2020-12-01T00", "2020-12-07T00"),
@@ -106,7 +105,7 @@ func TestNewTimeline(t *testing.T) {
 		},
 		{
 			"it should support albums ending at the same time",
-			[]*catalogmodel.Album{
+			[]*Album{
 				newAlbum("/A-01", "2020-12-01T00", "2020-12-06T00"),
 				newAlbum("/A-02", "2020-12-02T00", "2020-12-06T00"),
 				newAlbum("/A-03", "2020-12-03T00", "2020-12-06T00"),
@@ -336,7 +335,7 @@ func TestTimeline_AppendAlbum(t *testing.T) {
 	a := assert.New(t)
 	const owner = "ironman"
 
-	albums := []*catalogmodel.Album{
+	albums := []*Album{
 		{
 			Owner:      owner,
 			FolderName: "2020-Q3",
@@ -362,7 +361,7 @@ func TestTimeline_AppendAlbum(t *testing.T) {
 		a.FailNow(err.Error())
 	}
 
-	timeline, err := NewTimeline([]*catalogmodel.Album{albums[0]})
+	timeline, err := NewTimeline([]*Album{albums[0]})
 	if !a.NoError(err) {
 		a.FailNow(err.Error())
 	}
@@ -388,7 +387,7 @@ func newSimplifiedSegment(folder, start, end string) simplifiedSegment {
 	}
 }
 
-func newAlbum(folder, start, end string) *catalogmodel.Album {
+func newAlbum(folder, start, end string) *Album {
 	startTime, err := time.Parse(layout, start)
 	if err != nil {
 		panic(err)
@@ -397,7 +396,7 @@ func newAlbum(folder, start, end string) *catalogmodel.Album {
 	if err != nil {
 		panic(err)
 	}
-	return &catalogmodel.Album{
+	return &Album{
 		Owner:      "stark",
 		Name:       folder,
 		FolderName: folder,

@@ -5,11 +5,11 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"strings"
 )
 
-func EncodeMediaId(mediaId catalogmodel.MediaSignature) (string, error) {
+func EncodeMediaId(mediaId catalog.MediaSignature) (string, error) {
 	idBuffer, err := hex.DecodeString(mediaId.SignatureSha256)
 	buf := make([]byte, 8, 8)
 	binary.PutUvarint(buf, uint64(mediaId.SignatureSize))
@@ -23,7 +23,7 @@ func EncodeMediaId(mediaId catalogmodel.MediaSignature) (string, error) {
 	return strings.ReplaceAll(base64.StdEncoding.EncodeToString(idBuffer), "/", "_"), err
 }
 
-func DecodeMediaId(encodedId string) (*catalogmodel.MediaSignature, error) {
+func DecodeMediaId(encodedId string) (*catalog.MediaSignature, error) {
 	decoded, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(encodedId, "_", "/"))
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid encoded identifier")
@@ -36,7 +36,7 @@ func DecodeMediaId(encodedId string) (*catalogmodel.MediaSignature, error) {
 	if n <= 0 {
 		err = errors.Errorf("size can't be read as a var int")
 	}
-	return &catalogmodel.MediaSignature{
+	return &catalog.MediaSignature{
 		SignatureSha256: hex.EncodeToString(decoded[:32]),
 		SignatureSize:   int(size),
 	}, err

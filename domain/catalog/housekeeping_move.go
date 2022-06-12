@@ -3,16 +3,15 @@ package catalog
 import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 )
 
 // FindMoveTransactions lists transactions of media requiring to be physically moved.
-func FindMoveTransactions(owner string) ([]*catalogmodel.MoveTransaction, error) {
+func FindMoveTransactions(owner string) ([]*MoveTransaction, error) {
 	return Repository.FindReadyMoveTransactions(owner)
 }
 
 // RelocateMovedMedias drives the physical re-location of all medias that have been flagged.
-func RelocateMovedMedias(owner string, operator catalogmodel.MoveMediaOperator, transactionId string) (int, error) {
+func RelocateMovedMedias(owner string, operator MoveMediaOperator, transactionId string) (int, error) {
 	transactions, err := Repository.FindReadyMoveTransactions(owner)
 	if err != nil {
 		return 0, err
@@ -36,17 +35,17 @@ func RelocateMovedMedias(owner string, operator catalogmodel.MoveMediaOperator, 
 	count := 0
 	pageToken := ""
 	for operator.Continue() && (pageToken != "" || count == 0) {
-		var moves []*catalogmodel.MovedMedia
+		var moves []*MovedMedia
 		moves, pageToken, err = Repository.FindFilesToMove(transactionId, pageToken)
 		if len(moves) == 0 {
 			break
 		}
 
 		for _, move := range moves {
-			move.TargetFilename, err = operator.Move(catalogmodel.MediaLocation{
+			move.TargetFilename, err = operator.Move(MediaLocation{
 				FolderName: move.SourceFolderName,
 				Filename:   move.SourceFilename,
-			}, catalogmodel.MediaLocation{
+			}, MediaLocation{
 				FolderName: move.TargetFolderName,
 				Filename:   move.TargetFilename,
 			})

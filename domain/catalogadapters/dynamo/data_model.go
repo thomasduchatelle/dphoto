@@ -1,13 +1,4 @@
 // Package dynamodb package store all the data in a single multi-tenant table:
-// - OWNER
-//   > Album X meta
-//   > Album Y meta
-// - MEDIA (OWNER#SIGNATURE)
-//   > #META
-//   > LOCATION
-//   > MOVE LOCATION
-//   > MOVE LOCATION
-// - MOVE TRANSACTION (...#uniqueID)
 package dynamo
 
 import (
@@ -17,10 +8,21 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"strings"
 	"time"
 )
+
+// DynamoDB table structure
+// - OWNER
+//   > Album X meta
+//   > Album Y meta
+// - MEDIA (OWNER#SIGNATURE)
+//   > #META
+//   > LOCATION
+//   > MOVE LOCATION
+//   > MOVE LOCATION
+// - MOVE TRANSACTION (...#uniqueID)
 
 const (
 	IsoTime              = "2006-01-02T15:04:05"
@@ -90,14 +92,14 @@ func albumPrimaryKey(owner string, folderName string) TablePk {
 	}
 }
 
-func mediaPrimaryKey(owner string, signature *catalogmodel.MediaSignature) TablePk {
+func mediaPrimaryKey(owner string, signature *catalog.MediaSignature) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", owner, mediaBusinessSignature(signature)),
 		SK: "#METADATA",
 	}
 }
 
-func mediaLocationPrimaryKey(owner string, signature *catalogmodel.MediaSignature) TablePk {
+func mediaLocationPrimaryKey(owner string, signature *catalog.MediaSignature) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", owner, mediaBusinessSignature(signature)),
 		SK: "LOCATION",
@@ -111,7 +113,7 @@ func moveTransactionPrimaryKey(moveTransactionId string) TablePk {
 	}
 }
 
-func mediaMoveOrderPrimaryKey(rootOwner string, signature *catalogmodel.MediaSignature, moveTransactionId string) TablePk {
+func mediaMoveOrderPrimaryKey(rootOwner string, signature *catalog.MediaSignature, moveTransactionId string) TablePk {
 	return TablePk{
 		PK: fmt.Sprintf("%s#MEDIA#%s", rootOwner, mediaBusinessSignature(signature)),
 		SK: moveTransactionId,
@@ -138,7 +140,7 @@ func albumIndexedKey(owner, folderName string) AlbumIndexKey {
 	}
 }
 
-func mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, signature *catalogmodel.MediaSignature) AlbumIndexKey {
+func mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, signature *catalog.MediaSignature) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: fmt.Sprintf("%s#%s", owner, folderName),
 		AlbumIndexSK: fmt.Sprintf("MEDIA#%s#%s", dateTime.Format(IsoTime), mediaBusinessSignature(signature)),
@@ -146,11 +148,11 @@ func mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, s
 }
 
 // mediaBusinessSignature generate a string representing uniquely the album.Media
-func mediaBusinessSignature(signature *catalogmodel.MediaSignature) string {
+func mediaBusinessSignature(signature *catalog.MediaSignature) string {
 	return fmt.Sprintf("%s#%v", signature.SignatureSha256, signature.SignatureSize)
 }
 
-func marshalAlbum(album *catalogmodel.Album) (map[string]*dynamodb.AttributeValue, error) {
+func marshalAlbum(album *catalog.Album) (map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(album.FolderName) {
 		return nil, errors.WithStack(errors.New("folderName must not be blank"))
 	}
@@ -166,7 +168,7 @@ func marshalAlbum(album *catalogmodel.Album) (map[string]*dynamodb.AttributeValu
 	})
 }
 
-func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue, defaultOwner string) (*catalogmodel.Album, error) {
+func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue, defaultOwner string) (*catalog.Album, error) {
 	var data AlbumData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
@@ -179,7 +181,7 @@ func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue, defaultOwner
 		owner = defaultOwner
 	}
 
-	return &catalogmodel.Album{
+	return &catalog.Album{
 		Owner:      defaultOwner,
 		Name:       data.AlbumName,
 		FolderName: data.AlbumFolderName,
@@ -189,7 +191,7 @@ func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue, defaultOwner
 }
 
 // marshalMedia return both Media metadata attributes and location attributes
-func marshalMedia(owner string, media *catalogmodel.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, map[string]*dynamodb.AttributeValue, error) {
+func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, map[string]*dynamodb.AttributeValue, error) {
 	if isBlank(media.Signature.SignatureSha256) || media.Signature.SignatureSize == 0 || media.Details.DateTime.IsZero() {
 		return nil, nil, errors.WithStack(errors.Errorf("media must have a valid signature and date [sha256=%v ; size=%v ; time=%v]", media.Signature.SignatureSha256, media.Signature.SignatureSize, media.Details.DateTime))
 	}
@@ -224,34 +226,34 @@ func marshalMedia(owner string, media *catalogmodel.CreateMediaRequest) (map[str
 	return mediaEntry, locationEntry, err
 }
 
-func unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalogmodel.MediaMeta, error) {
+func unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalog.MediaMeta, error) {
 	var data MediaData
 	err := dynamodbattribute.UnmarshalMap(attributes, &data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal attributes %+v", attributes)
 	}
 
-	var details catalogmodel.MediaDetails
+	var details catalog.MediaDetails
 	err = mapstructure.Decode(data.Details, &details)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal details %+v", data.Details)
 	}
 
 	details.DateTime = data.DateTime // note: mapstructure do not support times
-	media := catalogmodel.MediaMeta{
-		Signature: catalogmodel.MediaSignature{
+	media := catalog.MediaMeta{
+		Signature: catalog.MediaSignature{
 			SignatureSha256: data.SignatureHash,
 			SignatureSize:   data.SignatureSize,
 		},
 		Filename: data.Filename,
-		Type:     catalogmodel.MediaType(data.Type),
+		Type:     catalog.MediaType(data.Type),
 		Details:  details,
 	}
 
 	return &media, nil
 }
 
-func marshalMediaLocationFromMoveOrder(owner string, moveOrder *catalogmodel.MovedMedia) (map[string]*dynamodb.AttributeValue, error) {
+func marshalMediaLocationFromMoveOrder(owner string, moveOrder *catalog.MovedMedia) (map[string]*dynamodb.AttributeValue, error) {
 	return dynamodbattribute.MarshalMap(&MediaLocationData{
 		TablePk:       mediaLocationPrimaryKey(owner, &moveOrder.Signature),
 		FolderName:    moveOrder.TargetFolderName,

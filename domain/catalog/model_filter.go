@@ -1,4 +1,4 @@
-package catalogmodel
+package catalog
 
 import (
 	"fmt"

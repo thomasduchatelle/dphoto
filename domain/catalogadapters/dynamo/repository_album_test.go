@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"testing"
 	"time"
 )
@@ -50,7 +49,7 @@ func (a *AlbumCrudTestSuite) SetupSuite() {
 func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	folderName := "/christmas"
 
-	err := a.repo.InsertAlbum(catalogmodel.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Owner:      a.owner,
 		Name:       "Christmas",
 		FolderName: folderName,
@@ -64,7 +63,7 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	name := "it should find previously saved album"
 	found, err := a.repo.FindAlbum(a.owner, folderName)
 	if a.NoError(err, name) {
-		a.Equal(&catalogmodel.Album{
+		a.Equal(&catalog.Album{
 			Owner:      a.owner,
 			Name:       "Christmas",
 			FolderName: folderName,
@@ -77,7 +76,7 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 	folderName := "New Year"
 
-	err := a.repo.InsertAlbum(catalogmodel.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Owner:      a.owner,
 		Name:       "New Year",
 		FolderName: folderName,
@@ -88,7 +87,7 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 		return
 	}
 
-	err = a.repo.InsertAlbum(catalogmodel.Album{
+	err = a.repo.InsertAlbum(catalog.Album{
 		Owner:      a.owner,
 		Name:       "New Year Again",
 		FolderName: folderName,
@@ -109,7 +108,7 @@ func (a *AlbumCrudTestSuite) TestFindNotFound() {
 
 func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 	folderName := "ToBeDeleted"
-	err := a.repo.InsertAlbum(catalogmodel.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Owner:      a.owner,
 		Name:       folderName,
 		FolderName: folderName,
@@ -127,7 +126,7 @@ func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 func (a *AlbumCrudTestSuite) TestUpdate() {
 	folderName := "Update1"
 
-	err := a.repo.InsertAlbum(catalogmodel.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Owner:      a.owner,
 		Name:       folderName,
 		FolderName: folderName,
@@ -138,7 +137,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 		return
 	}
 
-	update := catalogmodel.Album{
+	update := catalog.Album{
 		Owner:      a.owner,
 		Name:       "Another Name",
 		FolderName: folderName,
@@ -157,7 +156,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 
 func (a *AlbumCrudTestSuite) TestUpdateNotExisting() {
 	folderName := "_do_not_exist"
-	update := catalogmodel.Album{
+	update := catalog.Album{
 		Owner:      a.owner,
 		Name:       "Another Name",
 		FolderName: folderName,

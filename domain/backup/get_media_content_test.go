@@ -3,7 +3,7 @@ package backup
 import (
 	"crypto/md5"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/mocks"
 	"io/ioutil"
 	"os"
@@ -26,7 +26,7 @@ func TestResizing(t *testing.T) {
 
 	StorageMock.On("FetchFile", "ironman", "tony", "stark").Return(src, nil)
 
-	content, format, err := GetMediaContent("ironman", []*catalogmodel.MediaLocation{
+	content, format, err := GetMediaContent("ironman", []*catalog.MediaLocation{
 		{FolderName: "tony", Filename: "stark"},
 	}, 100)
 

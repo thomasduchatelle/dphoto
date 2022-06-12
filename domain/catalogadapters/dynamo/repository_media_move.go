@@ -8,11 +8,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"time"
 )
 
-func (r *Rep) UpdateMedias(filter *catalogmodel.UpdateMediaFilter, newFolderName string) (string, int, error) {
+func (r *Rep) UpdateMedias(filter *catalog.UpdateMediaFilter, newFolderName string) (string, int, error) {
 	queries, err := r.findMediasQueries(filter, aws.String("PK, SK"))
 	if err != nil {
 		return "", 0, err
@@ -111,7 +111,7 @@ func (r *Rep) markMoveTransactionReady(transactionId string) error {
 	return err
 }
 
-func (r *Rep) findMediasQueries(filter *catalogmodel.UpdateMediaFilter, projectionExpression *string) ([]*dynamodb.QueryInput, error) {
+func (r *Rep) findMediasQueries(filter *catalog.UpdateMediaFilter, projectionExpression *string) ([]*dynamodb.QueryInput, error) {
 	queries := make([]*dynamodb.QueryInput, 0, len(filter.AlbumFolderNames)*len(filter.Ranges))
 	for folderName, _ := range filter.AlbumFolderNames {
 		if len(filter.Ranges) == 0 {
@@ -145,7 +145,7 @@ func (r *Rep) findMediasQueries(filter *catalogmodel.UpdateMediaFilter, projecti
 	return queries, nil
 }
 
-func (r *Rep) FindReadyMoveTransactions(owner string) ([]*catalogmodel.MoveTransaction, error) {
+func (r *Rep) FindReadyMoveTransactions(owner string) ([]*catalog.MoveTransaction, error) {
 	ownedTransactionsPrefix := fmt.Sprintf("MOVE_ORDER#%s", owner) // see startMoveTransaction
 	crawler := r.bufferedQueriesCrawler([]*dynamodb.QueryInput{
 		{
@@ -160,7 +160,7 @@ func (r *Rep) FindReadyMoveTransactions(owner string) ([]*catalogmodel.MoveTrans
 		},
 	})
 
-	var transactionPartitionKeys []*catalogmodel.MoveTransaction
+	var transactionPartitionKeys []*catalog.MoveTransaction
 	for crawler.HasNext() {
 		var transaction MediaMoveTransactionData
 		err := dynamodbattribute.UnmarshalMap(crawler.Next(), &transaction)
@@ -172,7 +172,7 @@ func (r *Rep) FindReadyMoveTransactions(owner string) ([]*catalogmodel.MoveTrans
 		if err != nil {
 			return nil, err
 		}
-		transactionPartitionKeys = append(transactionPartitionKeys, &catalogmodel.MoveTransaction{
+		transactionPartitionKeys = append(transactionPartitionKeys, &catalog.MoveTransaction{
 			TransactionId: transaction.PK,
 			Count:         count,
 		})
@@ -182,7 +182,7 @@ func (r *Rep) FindReadyMoveTransactions(owner string) ([]*catalogmodel.MoveTrans
 }
 
 // FindFilesToMove returns a page of media to move (25 like a write batch of dynamodb) and the next page token
-func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalogmodel.MovedMedia, string, error) {
+func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalog.MovedMedia, string, error) {
 	startKey, err := r.unmarshalPageToken(pageToken)
 	if err != nil {
 		return nil, "", err
@@ -231,7 +231,7 @@ func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalogmodel.
 
 	stream := r.bufferedBatchGetItem(currentLocationKeys, nil)
 
-	movedMedias := make([]*catalogmodel.MovedMedia, 0, len(results.Items))
+	movedMedias := make([]*catalog.MovedMedia, 0, len(results.Items))
 	for stream.HasNext() {
 		attributes := stream.Next()
 
@@ -241,8 +241,8 @@ func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalogmodel.
 			return nil, "", err
 		}
 
-		movedMedias = append(movedMedias, &catalogmodel.MovedMedia{
-			Signature: catalogmodel.MediaSignature{
+		movedMedias = append(movedMedias, &catalog.MovedMedia{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: location.SignatureHash,
 				SignatureSize:   location.SignatureSize,
 			},
@@ -256,7 +256,7 @@ func (r *Rep) FindFilesToMove(transactionId, pageToken string) ([]*catalogmodel.
 	return movedMedias, nextPageToken, stream.Error()
 }
 
-func (r *Rep) UpdateMediasLocation(owner string, transactionId string, moves []*catalogmodel.MovedMedia) error {
+func (r *Rep) UpdateMediasLocation(owner string, transactionId string, moves []*catalog.MovedMedia) error {
 	locations := make([]*dynamodb.WriteRequest, len(moves)*2)
 	for i, move := range moves {
 		locationItem, err := marshalMediaLocationFromMoveOrder(owner, move)

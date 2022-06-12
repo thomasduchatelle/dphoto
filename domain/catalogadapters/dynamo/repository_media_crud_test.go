@@ -9,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"path"
 	"testing"
 	"time"
@@ -30,7 +29,7 @@ type MediaCrudTestSuite struct {
 	suite.Suite
 	owner  string
 	repo   *Rep
-	medias []catalogmodel.CreateMediaRequest
+	medias []catalog.CreateMediaRequest
 	jan21  string
 	feb21  string
 	mar21  string
@@ -71,7 +70,7 @@ func (a *MediaCrudTestSuite) preload() error {
 	a.feb21 = "/media/2021-feb"
 	a.mar21 = "/media/2021-mar"
 
-	err := a.repo.InsertAlbum(catalogmodel.Album{
+	err := a.repo.InsertAlbum(catalog.Album{
 		Owner:      a.owner,
 		Name:       "Media Container Jan",
 		FolderName: a.jan21,
@@ -82,7 +81,7 @@ func (a *MediaCrudTestSuite) preload() error {
 		return err
 	}
 
-	err = a.repo.InsertAlbum(catalogmodel.Album{
+	err = a.repo.InsertAlbum(catalog.Album{
 		Owner:      a.owner,
 		Name:       "Media Container Feb",
 		FolderName: a.feb21,
@@ -93,7 +92,7 @@ func (a *MediaCrudTestSuite) preload() error {
 		return err
 	}
 
-	err = a.repo.InsertAlbum(catalogmodel.Album{
+	err = a.repo.InsertAlbum(catalog.Album{
 		Owner:      a.owner,
 		Name:       "Media Container Mar",
 		FolderName: a.mar21,
@@ -104,14 +103,14 @@ func (a *MediaCrudTestSuite) preload() error {
 		return err
 	}
 
-	a.medias = []catalogmodel.CreateMediaRequest{
+	a.medias = []catalog.CreateMediaRequest{
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: a.jan21,
 				Filename:   "img001.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				Width:        1280,
 				Height:       720,
 				DateTime:     time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -121,35 +120,35 @@ func (a *MediaCrudTestSuite) preload() error {
 				GPSLatitude:  0.123,
 				GPSLongitude: 0.456,
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "dc58865da1228b7a187693c702905d00d6a59439a07d52f2a8e7ae43764b55b9",
 				SignatureSize:   16384,
 			},
 		},
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: a.feb21,
 				Filename:   "img002.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: time.Date(2021, 2, 20, 0, 0, 0, 0, time.UTC),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "4d37f8780f5f5f14b914683b1fd36a9a567f5ea63a835b76100d9970303d6ad6",
 				SignatureSize:   32000,
 			},
 		},
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: a.jan21,
 				Filename:   "img003.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: time.Date(2021, 1, 12, 0, 0, 0, 0, time.UTC),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "77f218b4deaab40c47d21799f74a5c400b413d597e3f8926ef7d00572b8bb3d2",
 				SignatureSize:   16384,
 			},
@@ -161,7 +160,7 @@ func (a *MediaCrudTestSuite) preload() error {
 	return err
 }
 
-func (a *MediaCrudTestSuite) fullPathNames(medias []*catalogmodel.CreateMediaRequest) []string {
+func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest) []string {
 	names := make([]string, 0, len(medias))
 	for _, a := range medias {
 		names = append(names, path.Join(a.Location.FolderName, a.Location.Filename))
@@ -183,12 +182,12 @@ func (a *MediaCrudTestSuite) TestFindAlbums() {
 }
 
 func (a *MediaCrudTestSuite) TestFindMedias() {
-	allTime := catalogmodel.TimeRange{}
+	allTime := catalog.TimeRange{}
 	tests := []struct {
 		name       string
 		folderName string
 		size       int64
-		timeRange  catalogmodel.TimeRange
+		timeRange  catalog.TimeRange
 		medias     [][]string
 	}{
 		{
@@ -231,13 +230,13 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 	for _, tt := range tests {
 		var pages [][]string
 
-		medias, err := a.repo.FindMedias(a.owner, tt.folderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: tt.size}, TimeRange: tt.timeRange})
+		medias, err := a.repo.FindMedias(a.owner, tt.folderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{Size: tt.size}, TimeRange: tt.timeRange})
 		if a.NoError(err, tt.name) {
 			pages = append(pages, extractFilenames(tt.folderName, medias.Content))
 
 			for medias.NextPage != "" {
 				log.WithField("NextPage", medias.NextPage).Infoln("Request next page")
-				medias, err = a.repo.FindMedias(a.owner, tt.folderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: tt.size, NextPage: medias.NextPage}})
+				medias, err = a.repo.FindMedias(a.owner, tt.folderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{Size: tt.size, NextPage: medias.NextPage}})
 				if !a.NoError(err, tt.name) {
 					return
 				}
@@ -251,10 +250,10 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 
 func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 	name := "it should find a media with all its details"
-	medias, err := a.repo.FindMedias(a.owner, a.jan21, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{Size: 1}})
+	medias, err := a.repo.FindMedias(a.owner, a.jan21, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{Size: 1}})
 	if a.NoError(err, name) {
 		a.Len(medias.Content, 1, name)
-		a.Equal(&catalogmodel.MediaMeta{
+		a.Equal(&catalog.MediaMeta{
 			Signature: a.medias[0].Signature,
 			Filename:  a.medias[0].Location.Filename,
 			Type:      a.medias[0].Type,
@@ -269,13 +268,13 @@ func (a *MediaCrudTestSuite) TestDeleteNonEmpty() {
 }
 
 func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
-	exiting := []*catalogmodel.MediaSignature{
+	exiting := []*catalog.MediaSignature{
 		{SignatureSha256: "4d37f8780f5f5f14b914683b1fd36a9a567f5ea63a835b76100d9970303d6ad6", SignatureSize: 32000},
 		{SignatureSha256: "dc58865da1228b7a187693c702905d00d6a59439a07d52f2a8e7ae43764b55b9", SignatureSize: 16384},
 	}
-	search := make([]*catalogmodel.MediaSignature, 0, dynamoReadBatchSize*2+20)
+	search := make([]*catalog.MediaSignature, 0, dynamoReadBatchSize*2+20)
 	for i := 0; i < dynamoReadBatchSize*2+20; i++ {
-		search = append(search, &catalogmodel.MediaSignature{
+		search = append(search, &catalog.MediaSignature{
 			SignatureSha256: fmt.Sprintf("%064d", i),
 			SignatureSize:   42,
 		})
@@ -296,7 +295,7 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 	}
 }
 
-func extractFilenames(albumFolderName string, medias []*catalogmodel.MediaMeta) []string {
+func extractFilenames(albumFolderName string, medias []*catalog.MediaMeta) []string {
 	filenames := make([]string, 0, len(medias))
 	for _, m := range medias {
 		filenames = append(filenames, path.Join(albumFolderName, m.Filename))
@@ -305,8 +304,8 @@ func extractFilenames(albumFolderName string, medias []*catalogmodel.MediaMeta) 
 	return filenames
 }
 
-func newDateRange(start, end string) catalogmodel.TimeRange {
-	return catalogmodel.TimeRange{
+func newDateRange(start, end string) catalog.TimeRange {
+	return catalog.TimeRange{
 		Start: mustParseDate(start),
 		End:   mustParseDate(end),
 	}

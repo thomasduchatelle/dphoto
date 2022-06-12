@@ -6,11 +6,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"sort"
 )
 
-func (r *Rep) FindAllAlbums(owner string) ([]*catalogmodel.Album, error) {
+func (r *Rep) FindAllAlbums(owner string) ([]*catalog.Album, error) {
 	query := &dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":owner":     mustAttribute(owner),
@@ -24,7 +23,7 @@ func (r *Rep) FindAllAlbums(owner string) ([]*catalogmodel.Album, error) {
 		return nil, errors.Wrapf(err, "DynamoDb Query failed: %s", query)
 	}
 
-	albums := make([]*catalogmodel.Album, 0, len(data.Items))
+	albums := make([]*catalog.Album, 0, len(data.Items))
 	for _, attributes := range data.Items {
 		unmarshalAlbum, err := unmarshalAlbum(attributes, owner)
 		if err != nil {
@@ -41,7 +40,7 @@ func (r *Rep) FindAllAlbums(owner string) ([]*catalogmodel.Album, error) {
 	return albums, nil
 }
 
-func (r *Rep) InsertAlbum(album catalogmodel.Album) error {
+func (r *Rep) InsertAlbum(album catalog.Album) error {
 	if album.Owner == "" || album.FolderName == "" {
 		return errors.Errorf("Owner and Foldername are mandatory")
 	}
@@ -103,7 +102,7 @@ func (r *Rep) CountMedias(owner string, folderName string) (int, error) {
 	return int(*query.Count), nil
 }
 
-func (r *Rep) FindAlbum(owner string, folderName string) (*catalogmodel.Album, error) {
+func (r *Rep) FindAlbum(owner string, folderName string) (*catalog.Album, error) {
 	key, err := dynamodbattribute.MarshalMap(albumPrimaryKey(owner, folderName))
 	if err != nil {
 		return nil, err
@@ -123,7 +122,7 @@ func (r *Rep) FindAlbum(owner string, folderName string) (*catalogmodel.Album, e
 	return unmarshalAlbum(attributes.Item, owner)
 }
 
-func (r *Rep) UpdateAlbum(album catalogmodel.Album) error {
+func (r *Rep) UpdateAlbum(album catalog.Album) error {
 	item, err := marshalAlbum(&album)
 	if err != nil {
 		return err

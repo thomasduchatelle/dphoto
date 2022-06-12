@@ -5,7 +5,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"image"
 	"time"
 )
@@ -24,7 +24,7 @@ type StorageAdapter interface {
 }
 
 // GetMediaContent is an abomination trying to be the bridge between the catalog domain and the backup domain (temporary since May 2022)
-func GetMediaContent(owner string, locations []*catalogmodel.MediaLocation, width int) ([]byte, string, error) {
+func GetMediaContent(owner string, locations []*catalog.MediaLocation, width int) ([]byte, string, error) {
 	start := time.Now()
 	content, err := fetchContent(owner, locations)
 	if err != nil {
@@ -68,7 +68,7 @@ func resizeImage(content []byte, width int) ([]byte, string, error) {
 	return dest.Bytes(), "image/" + format, err
 }
 
-func fetchContent(owner string, locations []*catalogmodel.MediaLocation) (content []byte, err error) {
+func fetchContent(owner string, locations []*catalog.MediaLocation) (content []byte, err error) {
 	for _, location := range locations {
 		content, err = Storage.FetchFile(owner, location.FolderName, location.Filename)
 

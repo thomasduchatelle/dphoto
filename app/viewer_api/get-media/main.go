@@ -10,7 +10,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/backup"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"github.com/thomasduchatelle/dphoto/domain/oauth"
 	"time"
 )
@@ -42,7 +41,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 
 	locations, err := catalog.GetMediaLocations(owner, *signature)
 	if err != nil {
-		if errors.As(err, catalogmodel.MediaNotFoundError) {
+		if errors.As(err, catalog.MediaNotFoundError) {
 			return common.NotFound(map[string]string{
 				"error": "no locations found for this media",
 			})
@@ -58,7 +57,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	return ResizedResponse(owner, locations, width)
 }
 
-func RedirectResponse(owner string, locations []*catalogmodel.MediaLocation, expires time.Duration) (common.Response, error) {
+func RedirectResponse(owner string, locations []*catalog.MediaLocation, expires time.Duration) (common.Response, error) {
 	url, err := backup.GetPreAuthorisedUrl(owner, locations, expires)
 	if err != nil {
 		return common.InternalError(err)
@@ -73,7 +72,7 @@ func RedirectResponse(owner string, locations []*catalogmodel.MediaLocation, exp
 	}, nil
 }
 
-func ResizedResponse(owner string, locations []*catalogmodel.MediaLocation, width int) (common.Response, error) {
+func ResizedResponse(owner string, locations []*catalog.MediaLocation, width int) (common.Response, error) {
 	content, contentType, err := backup.GetMediaContent(owner, locations, width)
 	if err != nil {
 		return common.InternalError(err)

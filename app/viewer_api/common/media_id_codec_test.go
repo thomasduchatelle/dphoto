@@ -3,7 +3,7 @@ package common
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"strings"
 	"testing"
 )
@@ -11,7 +11,7 @@ import (
 func TestCodec(t *testing.T) {
 	a := assert.New(t)
 
-	signature := catalogmodel.MediaSignature{
+	signature := catalog.MediaSignature{
 		SignatureSha256: "dbd318c1c462aee872f41109a4dfd3048871a03dedd0fe0e757ced57dad6f2d7",
 		SignatureSize:   42,
 	}

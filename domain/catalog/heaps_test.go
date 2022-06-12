@@ -3,7 +3,6 @@ package catalog
 import (
 	"container/heap"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"testing"
 	"time"
 )
@@ -21,19 +20,19 @@ func TestHeap(t *testing.T) {
 		heap.Push(h, a)
 	}
 
-	a.Equal("/2020-Q3", heap.Pop(h).(*catalogmodel.Album).FolderName)
-	a.Equal("/Christmas_First_Week", heap.Pop(h).(*catalogmodel.Album).FolderName)
-	a.Equal("/Christmas_Day", heap.Pop(h).(*catalogmodel.Album).FolderName)
-	a.Equal("/2020-Q4", heap.Pop(h).(*catalogmodel.Album).FolderName)
-	a.Equal("/New_Year", heap.Pop(h).(*catalogmodel.Album).FolderName)
-	a.Equal("/Christmas_Holidays", heap.Pop(h).(*catalogmodel.Album).FolderName)
-	a.Equal("/2021-Q1", heap.Pop(h).(*catalogmodel.Album).FolderName)
-	a.Equal("/2021-May", heap.Pop(h).(*catalogmodel.Album).FolderName)
+	a.Equal("/2020-Q3", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/Christmas_First_Week", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/Christmas_Day", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/2020-Q4", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/New_Year", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/Christmas_Holidays", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/2021-Q1", heap.Pop(h).(*Album).FolderName)
+	a.Equal("/2021-May", heap.Pop(h).(*Album).FolderName)
 	a.Empty(h.heap)
 }
 
-func AlbumCollection() []*catalogmodel.Album {
-	return []*catalogmodel.Album{
+func AlbumCollection() []*Album {
+	return []*Album{
 		{
 			Owner:      "ironman",
 			FolderName: "/2020-Q3",

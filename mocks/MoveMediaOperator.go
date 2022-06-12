@@ -4,7 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	catalogmodel "github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	catalog "github.com/thomasduchatelle/dphoto/domain/catalog"
 
 	testing "testing"
 )
@@ -29,18 +29,18 @@ func (_m *MoveMediaOperator) Continue() bool {
 }
 
 // Move provides a mock function with given fields: source, dest
-func (_m *MoveMediaOperator) Move(source catalogmodel.MediaLocation, dest catalogmodel.MediaLocation) (string, error) {
+func (_m *MoveMediaOperator) Move(source catalog.MediaLocation, dest catalog.MediaLocation) (string, error) {
 	ret := _m.Called(source, dest)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(catalogmodel.MediaLocation, catalogmodel.MediaLocation) string); ok {
+	if rf, ok := ret.Get(0).(func(catalog.MediaLocation, catalog.MediaLocation) string); ok {
 		r0 = rf(source, dest)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(catalogmodel.MediaLocation, catalogmodel.MediaLocation) error); ok {
+	if rf, ok := ret.Get(1).(func(catalog.MediaLocation, catalog.MediaLocation) error); ok {
 		r1 = rf(source, dest)
 	} else {
 		r1 = ret.Error(1)

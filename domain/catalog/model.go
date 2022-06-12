@@ -1,4 +1,4 @@
-package catalogmodel
+package catalog
 
 import (
 	"fmt"
@@ -65,7 +65,7 @@ type MediaSignature struct {
 	SignatureSize   int
 }
 
-// CreateMediaRequest is the request to add a new media to the catalog. It's within an Owner context.
+// CreateMediaRequest is the request to add a new media to the  It's within an Owner context.
 type CreateMediaRequest struct {
 	Location  MediaLocation
 	Type      MediaType

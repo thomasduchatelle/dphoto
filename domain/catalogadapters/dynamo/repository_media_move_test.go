@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"sort"
 	"testing"
 	"time"
@@ -41,7 +41,7 @@ func TestUpdateMedias(t *testing.T) {
 	repo := setupTest("update")
 
 	// given
-	albums := []catalogmodel.Album{
+	albums := []catalog.Album{
 		{
 			Owner:      owner,
 			Name:       "April 21",
@@ -79,73 +79,73 @@ func TestUpdateMedias(t *testing.T) {
 	}
 
 	// and
-	photos := []catalogmodel.CreateMediaRequest{
+	photos := []catalog.CreateMediaRequest{
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: albums[0].FolderName,
 				Filename:   "img010.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: mustParseDate("2021-04-08"),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "0010",
 				SignatureSize:   1,
 			},
 		},
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: albums[0].FolderName,
 				Filename:   "img011.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: mustParseDate("2021-04-09"),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "0011",
 				SignatureSize:   1,
 			},
 		},
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: albums[0].FolderName,
 				Filename:   "img012.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: mustParseDate("2021-04-10"),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "0012",
 				SignatureSize:   1,
 			},
 		},
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: albums[0].FolderName,
 				Filename:   "img013.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: mustParseDate("2021-04-11"),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "0013",
 				SignatureSize:   1,
 			},
 		},
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: albums[1].FolderName,
 				Filename:   "img014.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: mustParseDate("2021-05-01"),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "0014",
 				SignatureSize:   1,
 			},
@@ -158,7 +158,7 @@ func TestUpdateMedias(t *testing.T) {
 
 	// when
 	transactionId, count, err := repo.UpdateMedias(
-		catalogmodel.NewUpdateFilter(owner).
+		catalog.NewUpdateFilter(owner).
 			WithAlbum(albums[0].FolderName, albums[1].FolderName).
 			WithinRange(mustParseDate("2021-04-09"), mustParseDate("2021-04-11")).
 			WithinRange(mustParseDate("2021-05-01"), mustParseDate("2021-05-05")),
@@ -169,24 +169,24 @@ func TestUpdateMedias(t *testing.T) {
 	name := "it should move medias within time range from 2 album into a 3rd album"
 	a.Equal(3, count, name)
 	if a.NoError(err, name) {
-		medias, err := repo.FindMedias(owner, albums[0].FolderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{}})
+		medias, err := repo.FindMedias(owner, albums[0].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err, name) {
 			a.Equal([]string{"img010.jpeg", "img013.jpeg"}, extractFilenames("", medias.Content), name)
 		}
 
-		medias, err = repo.FindMedias(owner, albums[1].FolderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{}})
+		medias, err = repo.FindMedias(owner, albums[1].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err) {
 			a.Len(medias.Content, 0, name)
 		}
 
-		medias, err = repo.FindMedias(owner, albums[2].FolderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{}})
+		medias, err = repo.FindMedias(owner, albums[2].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err) {
 			a.Equal([]string{"img011.jpeg", "img012.jpeg", "img014.jpeg"}, extractFilenames("", medias.Content), name)
 		}
 
 		transactions, err := repo.FindReadyMoveTransactions(owner)
 		if a.NoError(err, name) {
-			a.Equal([]*catalogmodel.MoveTransaction{
+			a.Equal([]*catalog.MoveTransaction{
 				{TransactionId: transactionId, Count: 3},
 			}, transactions)
 		}
@@ -208,22 +208,22 @@ func TestUpdateMedias(t *testing.T) {
 	}
 
 	// when - without range
-	_, _, err = repo.UpdateMedias(catalogmodel.NewUpdateFilter(owner).WithAlbum(albums[2].FolderName), albums[0].FolderName)
+	_, _, err = repo.UpdateMedias(catalog.NewUpdateFilter(owner).WithAlbum(albums[2].FolderName), albums[0].FolderName)
 
 	// then
 	name = "it should move from an album to another one without range restriction"
 	if a.NoError(err, name) {
-		medias, err := repo.FindMedias(owner, albums[0].FolderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{}})
+		medias, err := repo.FindMedias(owner, albums[0].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err, name) {
 			a.Equal([]string{"img010.jpeg", "img011.jpeg", "img012.jpeg", "img013.jpeg", "img014.jpeg"}, extractFilenames("", medias.Content), name)
 		}
 
-		medias, err = repo.FindMedias(owner, albums[1].FolderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{}})
+		medias, err = repo.FindMedias(owner, albums[1].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err) {
 			a.Len(medias.Content, 0, name)
 		}
 
-		medias, err = repo.FindMedias(owner, albums[2].FolderName, catalogmodel.FindMediaFilter{PageRequest: catalogmodel.PageRequest{}})
+		medias, err = repo.FindMedias(owner, albums[2].FolderName, catalog.FindMediaFilter{PageRequest: catalog.PageRequest{}})
 		if a.NoError(err) {
 			a.Len(medias.Content, 0, name)
 		}
@@ -235,7 +235,7 @@ func TestMoveCycle(t *testing.T) {
 	repo := setupTest("cycle")
 
 	// given
-	albums := []catalogmodel.Album{
+	albums := []catalog.Album{
 		{
 			Owner:      owner,
 			Name:       "April 21",
@@ -259,31 +259,31 @@ func TestMoveCycle(t *testing.T) {
 	}
 
 	// and
-	photos := []catalogmodel.CreateMediaRequest{
+	photos := []catalog.CreateMediaRequest{
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: albums[0].FolderName,
 				Filename:   "img010.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: mustParseDate("2021-04-08"),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "0010",
 				SignatureSize:   1,
 			},
 		},
 		{
-			Location: catalogmodel.MediaLocation{
+			Location: catalog.MediaLocation{
 				FolderName: albums[0].FolderName,
 				Filename:   "img011.jpeg",
 			},
 			Type: "Image",
-			Details: catalogmodel.MediaDetails{
+			Details: catalog.MediaDetails{
 				DateTime: mustParseDate("2021-04-09"),
 			},
-			Signature: catalogmodel.MediaSignature{
+			Signature: catalog.MediaSignature{
 				SignatureSha256: "0011",
 				SignatureSize:   1,
 			},
@@ -296,7 +296,7 @@ func TestMoveCycle(t *testing.T) {
 
 	// and
 	transactionId, _, err := repo.UpdateMedias(
-		catalogmodel.NewUpdateFilter(owner).WithAlbum(albums[0].FolderName),
+		catalog.NewUpdateFilter(owner).WithAlbum(albums[0].FolderName),
 		albums[1].FolderName,
 	)
 
@@ -316,7 +316,7 @@ func TestMoveCycle(t *testing.T) {
 		locations, err := repo.FindMediaLocations(owner, moves[0].Signature)
 		name := "it should have updated the current location of the media, and removed the 'to be moved' marker"
 		if a.NoError(err, name) {
-			a.Equal([]*catalogmodel.MediaLocation{
+			a.Equal([]*catalog.MediaLocation{
 				{
 					FolderName: albums[1].FolderName,
 					Filename:   photos[0].Location.Filename,
@@ -327,7 +327,7 @@ func TestMoveCycle(t *testing.T) {
 		locations, err = repo.FindMediaLocations(owner, photos[1].Signature)
 		name = "it should have the 2 possible locations of the photo that haven't been physically moved"
 		if a.NoError(err, name) {
-			a.Equal([]*catalogmodel.MediaLocation{
+			a.Equal([]*catalog.MediaLocation{
 				{
 					FolderName: albums[0].FolderName,
 					Filename:   photos[1].Location.Filename,

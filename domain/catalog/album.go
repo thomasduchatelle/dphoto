@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"regexp"
 	"sort"
 	"strings"
@@ -18,25 +17,25 @@ var (
 )
 
 // FindAllAlbums find all albums owned by root user
-func FindAllAlbums(owner string) ([]*catalogmodel.Album, error) {
+func FindAllAlbums(owner string) ([]*Album, error) {
 	return Repository.FindAllAlbums(owner)
 }
 
 // FindAllAlbumsWithStats returns the list of albums, with statistics for each
-func FindAllAlbumsWithStats(owner string) ([]*catalogmodel.AlbumStat, error) {
+func FindAllAlbumsWithStats(owner string) ([]*AlbumStat, error) {
 	albums, err := Repository.FindAllAlbums(owner)
 	if err != nil {
 		return nil, err
 	}
 
-	stats := make([]*catalogmodel.AlbumStat, len(albums))
+	stats := make([]*AlbumStat, len(albums))
 	for i, album := range albums {
 		count, err := Repository.CountMedias(owner, album.FolderName)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to count medias of %s", album.FolderName)
 		}
 
-		stats[i] = &catalogmodel.AlbumStat{
+		stats[i] = &AlbumStat{
 			Album:      *album,
 			TotalCount: count,
 		}
@@ -46,7 +45,7 @@ func FindAllAlbumsWithStats(owner string) ([]*catalogmodel.AlbumStat, error) {
 }
 
 // Create creates a new album
-func Create(createRequest catalogmodel.CreateAlbum) error {
+func Create(createRequest CreateAlbum) error {
 	if createRequest.Owner == "" {
 		return errors.Errorf("Album owner is mandatory")
 	}
@@ -62,7 +61,7 @@ func Create(createRequest catalogmodel.CreateAlbum) error {
 		return errors.Errorf("Album end must be strictly after its start")
 	}
 
-	createdAlbum := catalogmodel.Album{
+	createdAlbum := Album{
 		Owner:      createRequest.Owner,
 		Name:       createRequest.Name,
 		FolderName: createRequest.ForcedFolderName,
@@ -94,7 +93,7 @@ func Create(createRequest catalogmodel.CreateAlbum) error {
 		return err
 	}
 
-	filter := catalogmodel.NewUpdateFilter(createdAlbum.Owner)
+	filter := NewUpdateFilter(createdAlbum.Owner)
 	for _, s := range timeline.FindForAlbum(createdAlbum.Owner, createdAlbum.FolderName) {
 		filter.WithinRange(s.Start, s.End)
 		for _, a := range s.Albums[1:] {
@@ -123,7 +122,7 @@ func normaliseFolderName(name string) string {
 }
 
 // FindAlbum get an album by its business key (its folder name), or returns NotFoundError
-func FindAlbum(owner string, folderName string) (*catalogmodel.Album, error) {
+func FindAlbum(owner string, folderName string) (*Album, error) {
 	return Repository.FindAlbum(owner, normaliseFolderName(folderName))
 }
 
@@ -156,9 +155,9 @@ func DeleteAlbum(owner string, folderNameToDelete string, emptyOnly bool) error 
 func filterMissedSegmentWithMedias(owner string, folderName string, missed []PrioritySegment) ([]PrioritySegment, error) {
 	var reallyMissed []PrioritySegment
 	for _, m := range missed {
-		page, err := Repository.FindMedias(owner, normaliseFolderName(folderName), catalogmodel.FindMediaFilter{
-			PageRequest: catalogmodel.PageRequest{Size: 1},
-			TimeRange:   catalogmodel.TimeRange{Start: m.Start, End: m.End},
+		page, err := Repository.FindMedias(owner, normaliseFolderName(folderName), FindMediaFilter{
+			PageRequest: PageRequest{Size: 1},
+			TimeRange:   TimeRange{Start: m.Start, End: m.End},
 		})
 		if err != nil {
 			return nil, err
@@ -183,7 +182,7 @@ func RenameAlbum(owner string, folderName, newName string, renameFolder bool) er
 	}
 
 	if renameFolder {
-		album := catalogmodel.Album{
+		album := Album{
 			Owner:      owner,
 			Name:       newName,
 			FolderName: generateAlbumFolder(newName, found.Start),
@@ -196,7 +195,7 @@ func RenameAlbum(owner string, folderName, newName string, renameFolder bool) er
 			return err
 		}
 
-		transactionId, count, err := Repository.UpdateMedias(catalogmodel.NewUpdateFilter(owner).WithAlbum(folderName), album.FolderName)
+		transactionId, count, err := Repository.UpdateMedias(NewUpdateFilter(owner).WithAlbum(folderName), album.FolderName)
 		if err != nil {
 			return err
 		}
@@ -228,8 +227,8 @@ func UpdateAlbum(owner string, folderName string, start, end time.Time) error {
 		return NotFoundError
 	}
 
-	previousTimeRange := catalogmodel.NewTimeRangeFromAlbum(*updated)
-	newTimeRange := catalogmodel.TimeRange{Start: start, End: end}
+	previousTimeRange := NewTimeRangeFromAlbum(*updated)
+	newTimeRange := TimeRange{Start: start, End: end}
 	if previousTimeRange.Equals(newTimeRange) {
 		log.WithFields(log.Fields{
 			"AlbumFolderName": folderName,
@@ -269,7 +268,7 @@ func UpdateAlbum(owner string, folderName string, start, end time.Time) error {
 	return nil
 }
 
-func assignMediasTo(owner string, albums []*catalogmodel.Album, removedAlbum *catalogmodel.Album, segmentsToReassignSupplier func(timeline *Timeline) (segments []PrioritySegment, missed []PrioritySegment, err error)) (int, error) {
+func assignMediasTo(owner string, albums []*Album, removedAlbum *Album, segmentsToReassignSupplier func(timeline *Timeline) (segments []PrioritySegment, missed []PrioritySegment, err error)) (int, error) {
 	timeline, err := NewTimeline(albums)
 	if err != nil {
 		return 0, err
@@ -290,7 +289,7 @@ func assignMediasTo(owner string, albums []*catalogmodel.Album, removedAlbum *ca
 
 	count := 0
 	for _, s := range segmentsToReassign {
-		filter := catalogmodel.NewUpdateFilter(owner).WithinRange(s.Start, s.End)
+		filter := NewUpdateFilter(owner).WithinRange(s.Start, s.End)
 		if removedAlbum != nil && !removedAlbum.IsEqual(&s.Albums[0]) {
 			filter.WithAlbum(removedAlbum.FolderName)
 		}
@@ -310,9 +309,9 @@ func assignMediasTo(owner string, albums []*catalogmodel.Album, removedAlbum *ca
 }
 
 // remove and keep order
-func removeAlbumFrom(albums []*catalogmodel.Album, folderName string) ([]*catalogmodel.Album, *catalogmodel.Album) {
+func removeAlbumFrom(albums []*Album, folderName string) ([]*Album, *Album) {
 	index := -1
-	var removed *catalogmodel.Album
+	var removed *Album
 	for i, a := range albums {
 		if a.FolderName == folderName {
 			index = i
@@ -328,7 +327,7 @@ func removeAlbumFrom(albums []*catalogmodel.Album, folderName string) ([]*catalo
 	return albums, removed
 }
 
-func priorityDescComparator(a, b *catalogmodel.Album) int64 {
+func priorityDescComparator(a, b *Album) int64 {
 	durationDiff := albumDuration(b).Seconds() - albumDuration(a).Seconds()
 	if durationDiff != 0 {
 		return int64(durationDiff)
@@ -347,20 +346,20 @@ func priorityDescComparator(a, b *catalogmodel.Album) int64 {
 	return int64(strings.Compare(a.Name, b.Name))
 }
 
-func endDescComparator(a, b *catalogmodel.Album) int64 {
+func endDescComparator(a, b *Album) int64 {
 	return b.End.Unix() - a.End.Unix()
 }
 
-func startsAscComparator(a, b *catalogmodel.Album) int64 {
+func startsAscComparator(a, b *Album) int64 {
 	return b.Start.Unix() - a.Start.Unix()
 }
 
-func startsAscSort(albums []*catalogmodel.Album) func(i int, j int) bool {
+func startsAscSort(albums []*Album) func(i int, j int) bool {
 	return func(i, j int) bool {
 		return startsAscComparator(albums[i], albums[j]) > 0
 	}
 }
 
-func albumDuration(album *catalogmodel.Album) time.Duration {
+func albumDuration(album *Album) time.Duration {
 	return album.End.Sub(album.Start)
 }

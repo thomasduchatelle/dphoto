@@ -5,7 +5,6 @@ import (
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/adapters/backupadapter"
@@ -92,7 +91,7 @@ type uiCatalogAdapter struct {
 }
 
 func (o uiCatalogAdapter) Create(request ui.RecordCreation) error {
-	return catalog.Create(catalogmodel.CreateAlbum{
+	return catalog.Create(catalog.CreateAlbum{
 		Owner:            request.Owner,
 		Name:             request.Name,
 		Start:            request.Start,

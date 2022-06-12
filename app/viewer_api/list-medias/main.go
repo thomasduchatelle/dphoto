@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogmodel"
 	"github.com/thomasduchatelle/dphoto/domain/oauth"
 	"strings"
 	"time"
@@ -30,7 +29,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	}
 
 	log.Infof("find medias for album %s/%s", owner, folderName)
-	medias, err := catalog.ListMedias(owner, fmt.Sprintf("/%s", folderName), catalogmodel.PageRequest{})
+	medias, err := catalog.ListMedias(owner, fmt.Sprintf("/%s", folderName), catalog.PageRequest{})
 	if err != nil {
 		return common.InternalError(err)
 	}
