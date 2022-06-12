@@ -50,15 +50,18 @@ func GetMediaContent(owner string, locations []*catalogmodel.MediaLocation, widt
 func resizeImage(content []byte, width int) ([]byte, string, error) {
 	img, err := imaging.Decode(bytes.NewReader(content), imaging.AutoOrientation(true))
 	if err != nil {
-		return nil, "", err
+		return nil, "", errors.Wrapf(err, "failed to decode the image")
 	}
 
 	resized := imaging.Resize(img, width, 0, imaging.Box) // todo should use imaging.Lanczos for cached version
 
-	_, format, _ := image.DecodeConfig(bytes.NewReader(content))
+	_, format, err := image.DecodeConfig(bytes.NewReader(content))
+	if err != nil {
+		return nil, "", errors.Wrapf(err, "couldn't determine image format from its content")
+	}
 	encodingFormat, err := imaging.FormatFromExtension(format)
 	if err != nil {
-		return nil, "", err
+		return nil, "", errors.Wrapf(err, "failed to find format from extention %s", format)
 	}
 	dest := bytes.NewBuffer(nil)
 	err = imaging.Encode(dest, resized, encodingFormat)
