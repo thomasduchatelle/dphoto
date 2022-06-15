@@ -1,9 +1,17 @@
 package catalog
 
 var (
-	Repository RepositoryPort
+	dbPort      RepositoryPort
+	archivePort ArchivePort
 )
 
+// Init must be called before using this package.
+func Init(repositoryAdapter RepositoryPort, archive ArchivePort) {
+	dbPort = repositoryAdapter
+	archivePort = archive
+}
+
+// RepositoryPort brings persistence layer to catalog package
 type RepositoryPort interface {
 	FindAllAlbums(owner string) ([]*Album, error)
 	InsertAlbum(album Album) error
@@ -12,22 +20,20 @@ type RepositoryPort interface {
 	FindAlbum(owner string, folderName string) (*Album, error)
 	// UpdateAlbum updates data of matching Album.FolderName
 	UpdateAlbum(album Album) error
-	// CountMedias counts number of media within the album
-	CountMedias(owner string, folderName string) (int, error)
 
 	// InsertMedias bulks insert medias
 	InsertMedias(owner string, media []CreateMediaRequest) error
-	// FindMedias is a paginated search of medias within an album, and optionally within a time range
-	FindMedias(owner string, folderName string, filter FindMediaFilter) (*MediaPage, error)
+	// FindMedias is a paginated search for media with their details
+	FindMedias(request *FindMediaRequest) (medias []*MediaMeta, err error)
+	// FindMediaIds is a paginated search to only get the media ids
+	FindMediaIds(request *FindMediaRequest) (ids []string, err error)
 	// FindExistingSignatures returns the signatures that are already known
 	FindExistingSignatures(owner string, signatures []*MediaSignature) ([]*MediaSignature, error)
-	// UpdateMedias updates metadata and mark the media to be moved, the AlbumFolderName is never updated (part of the primary key)
-	UpdateMedias(filter *UpdateMediaFilter, newFolderName string) (string, int, error)
-	// FindMediaLocations get the list of all locations media might be in (expected only 1 unless media is pending a physical re-location)
-	FindMediaLocations(owner string, signature MediaSignature) ([]*MediaLocation, error)
+	// TransferMedias to a different album, and returns list of moved media ids
+	TransferMedias(owner string, mediaIds []string, newFolderName string) error
+}
 
-	FindReadyMoveTransactions(owner string) ([]*MoveTransaction, error)
-	FindFilesToMove(transactionId, pageToken string) ([]*MovedMedia, string, error)
-	UpdateMediasLocation(owner string, transactionId string, moves []*MovedMedia) error
-	DeleteEmptyMoveTransaction(transactionId string) error
+// ArchivePort forward events to archive package
+type ArchivePort interface {
+	MoveMedias(owner string, ids []string, name string) error
 }

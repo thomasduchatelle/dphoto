@@ -18,30 +18,7 @@ var (
 
 // FindAllAlbums find all albums owned by root user
 func FindAllAlbums(owner string) ([]*Album, error) {
-	return Repository.FindAllAlbums(owner)
-}
-
-// FindAllAlbumsWithStats returns the list of albums, with statistics for each
-func FindAllAlbumsWithStats(owner string) ([]*AlbumStat, error) {
-	albums, err := Repository.FindAllAlbums(owner)
-	if err != nil {
-		return nil, err
-	}
-
-	stats := make([]*AlbumStat, len(albums))
-	for i, album := range albums {
-		count, err := Repository.CountMedias(owner, album.FolderName)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to count medias of %s", album.FolderName)
-		}
-
-		stats[i] = &AlbumStat{
-			Album:      *album,
-			TotalCount: count,
-		}
-	}
-
-	return stats, err
+	return dbPort.FindAllAlbums(owner)
 }
 
 // Create creates a new album
@@ -75,12 +52,12 @@ func Create(createRequest CreateAlbum) error {
 		createdAlbum.FolderName = normaliseFolderName(createdAlbum.FolderName)
 	}
 
-	albums, err := Repository.FindAllAlbums(createRequest.Owner)
+	albums, err := dbPort.FindAllAlbums(createRequest.Owner)
 	if err != nil {
 		return err
 	}
 
-	err = Repository.InsertAlbum(createdAlbum)
+	err = dbPort.InsertAlbum(createdAlbum)
 	if err != nil {
 		return err
 	}
@@ -93,7 +70,7 @@ func Create(createRequest CreateAlbum) error {
 		return err
 	}
 
-	filter := NewUpdateFilter(createdAlbum.Owner)
+	filter := NewFindMediaRequest(createdAlbum.Owner)
 	for _, s := range timeline.FindForAlbum(createdAlbum.Owner, createdAlbum.FolderName) {
 		filter.WithinRange(s.Start, s.End)
 		for _, a := range s.Albums[1:] {
@@ -101,11 +78,10 @@ func Create(createRequest CreateAlbum) error {
 		}
 	}
 
-	medias, count, err := Repository.UpdateMedias(filter, createdAlbum.FolderName)
+	count, err := transferMedias(filter, createdAlbum.FolderName)
 
 	log.WithFields(log.Fields{
 		"Album":           createdAlbum.FolderName,
-		"MoveTransaction": medias,
 		"MediaCount":      count,
 	}).Infof("Album %s has been created, and %d medias has been virtually moved to it\n", createdAlbum.FolderName, count)
 
@@ -123,14 +99,14 @@ func normaliseFolderName(name string) string {
 
 // FindAlbum get an album by its business key (its folder name), or returns NotFoundError
 func FindAlbum(owner string, folderName string) (*Album, error) {
-	return Repository.FindAlbum(owner, normaliseFolderName(folderName))
+	return dbPort.FindAlbum(owner, normaliseFolderName(folderName))
 }
 
 // DeleteAlbum delete an album, medias it contains are dispatched to other albums.
 func DeleteAlbum(owner string, folderNameToDelete string, emptyOnly bool) error {
 	folderNameToDelete = normaliseFolderName(folderNameToDelete)
 	if !emptyOnly {
-		albums, err := Repository.FindAllAlbums(owner)
+		albums, err := dbPort.FindAllAlbums(owner)
 		if err != nil {
 			return err
 		}
@@ -149,21 +125,20 @@ func DeleteAlbum(owner string, folderNameToDelete string, emptyOnly bool) error 
 		}
 	}
 
-	return Repository.DeleteEmptyAlbum(owner, folderNameToDelete)
+	return dbPort.DeleteEmptyAlbum(owner, folderNameToDelete)
 }
 
 func filterMissedSegmentWithMedias(owner string, folderName string, missed []PrioritySegment) ([]PrioritySegment, error) {
 	var reallyMissed []PrioritySegment
 	for _, m := range missed {
-		page, err := Repository.FindMedias(owner, normaliseFolderName(folderName), FindMediaFilter{
-			PageRequest: PageRequest{Size: 1},
-			TimeRange:   TimeRange{Start: m.Start, End: m.End},
-		})
+		request := NewFindMediaRequest(owner).WithAlbum(normaliseFolderName(folderName)).WithinRange(m.Start, m.End)
+		medias, err := dbPort.FindMediaIds(request)
+
 		if err != nil {
 			return nil, err
 		}
 
-		if len(page.Content) > 0 {
+		if len(medias) > 0 {
 			reallyMissed = append(reallyMissed, m)
 		}
 	}
@@ -176,7 +151,7 @@ func filterMissedSegmentWithMedias(owner string, folderName string, missed []Pri
 func RenameAlbum(owner string, folderName, newName string, renameFolder bool) error {
 	folderName = normaliseFolderName(folderName)
 
-	found, err := Repository.FindAlbum(owner, folderName)
+	found, err := dbPort.FindAlbum(owner, folderName)
 	if err != nil {
 		return err // can be NotFoundError
 	}
@@ -190,12 +165,12 @@ func RenameAlbum(owner string, folderName, newName string, renameFolder bool) er
 			End:        found.End,
 		}
 
-		err = Repository.InsertAlbum(album)
+		err = dbPort.InsertAlbum(album)
 		if err != nil {
 			return err
 		}
 
-		transactionId, count, err := Repository.UpdateMedias(NewUpdateFilter(owner).WithAlbum(folderName), album.FolderName)
+		count, err := transferMedias(NewFindMediaRequest(owner).WithAlbum(folderName), album.FolderName)
 		if err != nil {
 			return err
 		}
@@ -203,21 +178,20 @@ func RenameAlbum(owner string, folderName, newName string, renameFolder bool) er
 		log.WithFields(log.Fields{
 			"AlbumFolderName":    album.FolderName,
 			"PreviousFolderName": folderName,
-			"MoveTransactionId":  transactionId,
 			"AlbumMoved":         count,
 		}).Infof("Album renamed and %d medias moved\n", count)
-		return Repository.DeleteEmptyAlbum(owner, folderName)
+		return dbPort.DeleteEmptyAlbum(owner, folderName)
 	}
 
 	found.Name = newName
-	return Repository.UpdateAlbum(*found)
+	return dbPort.UpdateAlbum(*found)
 }
 
 // UpdateAlbum updates the dates of an album, medias will be re-assign between albums accordingly
 func UpdateAlbum(owner string, folderName string, start, end time.Time) error {
 	folderName = normaliseFolderName(folderName)
 
-	albums, err := Repository.FindAllAlbums(owner)
+	albums, err := dbPort.FindAllAlbums(owner)
 	if err != nil {
 		return err
 	}
@@ -257,7 +231,7 @@ func UpdateAlbum(owner string, folderName string, start, end time.Time) error {
 		return errors.Wrapf(err, "Album dates couldn't be updated.")
 	}
 
-	err = Repository.UpdateAlbum(*updated)
+	err = dbPort.UpdateAlbum(*updated)
 	if err != nil {
 		return err
 	}
@@ -289,7 +263,7 @@ func assignMediasTo(owner string, albums []*Album, removedAlbum *Album, segments
 
 	count := 0
 	for _, s := range segmentsToReassign {
-		filter := NewUpdateFilter(owner).WithinRange(s.Start, s.End)
+		filter := NewFindMediaRequest(owner).WithinRange(s.Start, s.End)
 		if removedAlbum != nil && !removedAlbum.IsEqual(&s.Albums[0]) {
 			filter.WithAlbum(removedAlbum.FolderName)
 		}
@@ -297,7 +271,7 @@ func assignMediasTo(owner string, albums []*Album, removedAlbum *Album, segments
 			filter.WithAlbum(a.FolderName)
 		}
 
-		_, mediaCount, err := Repository.UpdateMedias(filter, s.Albums[0].FolderName)
+		mediaCount, err := transferMedias(filter, s.Albums[0].FolderName)
 		if err != nil {
 			return 0, err
 		}

@@ -14,7 +14,7 @@ var (
 
 func mockAdapters() {
 	RepositoryMock = new(mocks.RepositoryPort)
-	catalog.Repository = RepositoryMock
+	catalog.dbPort = RepositoryMock
 }
 
 const layout = "2006-01-02T15"
@@ -39,7 +39,7 @@ func TestCreate(t *testing.T) {
 		End:        end,
 	}).Return(nil)
 
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum("/2020-Q4", "/2021-Q1", "/Christmas_Holidays").WithinRange(start, catalog.MustParse(layout, "2020-12-31T18")).WithinRange(catalog.MustParse(layout, "2021-01-01T18"), end), MoveTo("/2020-12_Christm_s_2nd-week")).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum("/2020-Q4", "/2021-Q1", "/Christmas_Holidays").WithinRange(start, catalog.MustParse(layout, "2020-12-31T18")).WithinRange(catalog.MustParse(layout, "2021-01-01T18"), end), MoveTo("/2020-12_Christm_s_2nd-week")).Return("", 0, nil)
 
 	err := catalog.Create(catalog.CreateAlbum{
 		Owner: owner,
@@ -64,13 +64,13 @@ func TestDelete(t *testing.T) {
 	RepositoryMock.On("FindAllAlbums", owner).Maybe().Return(catalog.AlbumCollection(), nil)
 	RepositoryMock.On("DeleteEmptyAlbum", owner, deletedFolder).Return(nil)
 
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(deletedFolder).WithinRange(catalog.MustParse(layout, "2020-12-26T00"), catalog.MustParse(layout, "2020-12-31T18")), MoveTo(q4)).Return("", 0, nil)
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(deletedFolder).WithinRange(catalog.MustParse(layout, "2021-01-01T18"), catalog.MustParse(layout, "2021-01-04T00")), MoveTo(q1)).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(deletedFolder).WithinRange(catalog.MustParse(layout, "2020-12-26T00"), catalog.MustParse(layout, "2020-12-31T18")), MoveTo(q4)).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(deletedFolder).WithinRange(catalog.MustParse(layout, "2021-01-01T18"), catalog.MustParse(layout, "2021-01-04T00")), MoveTo(q1)).Return("", 0, nil)
 
 	// side effect - medias has never been assigned to these albums
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(deletedFolder, q4).WithinRange(catalog.MustParse(layout, "2020-12-18T00"), catalog.MustParse(layout, "2020-12-24T00")), MoveTo("/Christmas_First_Week")).Return("", 0, nil)
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(deletedFolder, q4, "/Christmas_First_Week").WithinRange(catalog.MustParse(layout, "2020-12-24T00"), catalog.MustParse(layout, "2020-12-26T00")), MoveTo("/Christmas_Day")).Return("", 0, nil)
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(deletedFolder, q1, q4).WithinRange(catalog.MustParse(layout, "2020-12-31T18"), catalog.MustParse(layout, "2021-01-01T18")), MoveTo("/New_Year")).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(deletedFolder, q4).WithinRange(catalog.MustParse(layout, "2020-12-18T00"), catalog.MustParse(layout, "2020-12-24T00")), MoveTo("/Christmas_First_Week")).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(deletedFolder, q4, "/Christmas_First_Week").WithinRange(catalog.MustParse(layout, "2020-12-24T00"), catalog.MustParse(layout, "2020-12-26T00")), MoveTo("/Christmas_Day")).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(deletedFolder, q1, q4).WithinRange(catalog.MustParse(layout, "2020-12-31T18"), catalog.MustParse(layout, "2021-01-01T18")), MoveTo("/New_Year")).Return("", 0, nil)
 
 	// when
 	err := catalog.DeleteAlbum(owner, deletedFolder, false)
@@ -170,7 +170,7 @@ func TestRename_updateFolderName(t *testing.T) {
 		Start:      album.Start,
 		End:        album.End,
 	}).Return(nil)
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum("/Christmas_Holidays"), "/2020-12_Covid_Lockdown_3").Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum("/Christmas_Holidays"), "/2020-12_Covid_Lockdown_3").Return("", 0, nil)
 
 	err := catalog.RenameAlbum(owner, "/Christmas_Holidays", "/Covid_Lockdown_3", true)
 	a.NoError(err)
@@ -191,10 +191,10 @@ func TestUpdate(t *testing.T) {
 
 	christmas := "/Christmas_Holidays"
 	q4 := "/2020-Q4"
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(updatedFolder, q4).WithinRange(catalog.MustParse(layout, "2020-12-18T00"), catalog.MustParse(layout, "2020-12-21T00")), MoveTo(christmas)).Return("", 0, nil)
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(christmas, q4).WithinRange(catalog.MustParse(layout, "2020-12-21T00"), catalog.MustParse(layout, "2020-12-24T00")), MoveTo(updatedFolder)).Return("", 0, nil)
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(christmas, updatedFolder, q4).WithinRange(catalog.MustParse(layout, "2020-12-24T00"), catalog.MustParse(layout, "2020-12-26T00")), MoveTo("/Christmas_Day")).Return("", 0, nil)
-	RepositoryMock.On("UpdateMedias", catalog.NewUpdateFilter(owner).WithAlbum(christmas, q4).WithinRange(catalog.MustParse(layout, "2020-12-26T00"), catalog.MustParse(layout, "2020-12-27T00")), MoveTo(updatedFolder)).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(updatedFolder, q4).WithinRange(catalog.MustParse(layout, "2020-12-18T00"), catalog.MustParse(layout, "2020-12-21T00")), MoveTo(christmas)).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(christmas, q4).WithinRange(catalog.MustParse(layout, "2020-12-21T00"), catalog.MustParse(layout, "2020-12-24T00")), MoveTo(updatedFolder)).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(christmas, updatedFolder, q4).WithinRange(catalog.MustParse(layout, "2020-12-24T00"), catalog.MustParse(layout, "2020-12-26T00")), MoveTo("/Christmas_Day")).Return("", 0, nil)
+	RepositoryMock.On("UpdateMedias", catalog.NewFindMediaRequest(owner).WithAlbum(christmas, q4).WithinRange(catalog.MustParse(layout, "2020-12-26T00"), catalog.MustParse(layout, "2020-12-27T00")), MoveTo(updatedFolder)).Return("", 0, nil)
 
 	RepositoryMock.On("UpdateAlbum", catalog.Album{
 		Owner:      owner,

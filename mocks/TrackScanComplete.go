@@ -4,7 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	backupmodel "github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	backup "github.com/thomasduchatelle/dphoto/domain/backup"
 
 	testing "testing"
 )
@@ -15,7 +15,7 @@ type TrackScanComplete struct {
 }
 
 // OnScanComplete provides a mock function with given fields: total
-func (_m *TrackScanComplete) OnScanComplete(total backupmodel.MediaCounter) {
+func (_m *TrackScanComplete) OnScanComplete(total backup.MediaCounter) {
 	_m.Called(total)
 }
 

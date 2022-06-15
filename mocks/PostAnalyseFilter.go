@@ -4,7 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	backupmodel "github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	backup "github.com/thomasduchatelle/dphoto/domain/backup"
 
 	testing "testing"
 )
@@ -15,11 +15,11 @@ type PostAnalyseFilter struct {
 }
 
 // AcceptAnalysedMedia provides a mock function with given fields: media, folderName
-func (_m *PostAnalyseFilter) AcceptAnalysedMedia(media *backupmodel.AnalysedMedia, folderName string) bool {
+func (_m *PostAnalyseFilter) AcceptAnalysedMedia(media *backup.AnalysedMedia, folderName string) bool {
 	ret := _m.Called(media, folderName)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(*backupmodel.AnalysedMedia, string) bool); ok {
+	if rf, ok := ret.Get(0).(func(*backup.AnalysedMedia, string) bool); ok {
 		r0 = rf(media, folderName)
 	} else {
 		r0 = ret.Get(0).(bool)

@@ -5,7 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/thomasduchatelle/dphoto/domain/backup"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamo"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
 	"github.com/thomasduchatelle/dphoto/domain/oauth"
 	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/googleoauth"
 	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/userrepositorystatic"
@@ -25,7 +25,7 @@ func BootstrapCatalogDomain() {
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
-	catalog.Repository = dynamo.Must(dynamo.NewRepository(newSession(), tableName))
+	catalog.db = catalogdynamo.Must(catalogdynamo.NewRepository(newSession(), tableName))
 }
 
 func BootstrapOAuthDomain() {

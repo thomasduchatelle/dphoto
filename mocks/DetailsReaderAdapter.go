@@ -5,7 +5,7 @@ package mocks
 import (
 	io "io"
 
-	backupmodel "github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	backup "github.com/thomasduchatelle/dphoto/domain/backup"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -18,20 +18,20 @@ type DetailsReaderAdapter struct {
 }
 
 // ReadDetails provides a mock function with given fields: reader, options
-func (_m *DetailsReaderAdapter) ReadDetails(reader io.Reader, options backupmodel.DetailsReaderOptions) (*backupmodel.MediaDetails, error) {
+func (_m *DetailsReaderAdapter) ReadDetails(reader io.Reader, options backup.DetailsReaderOptions) (*backup.MediaDetails, error) {
 	ret := _m.Called(reader, options)
 
-	var r0 *backupmodel.MediaDetails
-	if rf, ok := ret.Get(0).(func(io.Reader, backupmodel.DetailsReaderOptions) *backupmodel.MediaDetails); ok {
+	var r0 *backup.MediaDetails
+	if rf, ok := ret.Get(0).(func(io.Reader, backup.DetailsReaderOptions) *backup.MediaDetails); ok {
 		r0 = rf(reader, options)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*backupmodel.MediaDetails)
+			r0 = ret.Get(0).(*backup.MediaDetails)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(io.Reader, backupmodel.DetailsReaderOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(io.Reader, backup.DetailsReaderOptions) error); ok {
 		r1 = rf(reader, options)
 	} else {
 		r1 = ret.Error(1)
@@ -41,11 +41,11 @@ func (_m *DetailsReaderAdapter) ReadDetails(reader io.Reader, options backupmode
 }
 
 // Supports provides a mock function with given fields: media, mediaType
-func (_m *DetailsReaderAdapter) Supports(media backupmodel.FoundMedia, mediaType backupmodel.MediaType) bool {
+func (_m *DetailsReaderAdapter) Supports(media backup.FoundMedia, mediaType backup.MediaType) bool {
 	ret := _m.Called(media, mediaType)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(backupmodel.FoundMedia, backupmodel.MediaType) bool); ok {
+	if rf, ok := ret.Get(0).(func(backup.FoundMedia, backup.MediaType) bool); ok {
 		r0 = rf(media, mediaType)
 	} else {
 		r0 = ret.Get(0).(bool)

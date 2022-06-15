@@ -4,7 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	backupmodel "github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
+	backup "github.com/thomasduchatelle/dphoto/domain/backup"
 
 	testing "testing"
 )
@@ -15,7 +15,7 @@ type TrackDownloaded struct {
 }
 
 // OnDownloaded provides a mock function with given fields: done, total
-func (_m *TrackDownloaded) OnDownloaded(done backupmodel.MediaCounter, total backupmodel.MediaCounter) {
+func (_m *TrackDownloaded) OnDownloaded(done backup.MediaCounter, total backup.MediaCounter) {
 	_m.Called(done, total)
 }
 

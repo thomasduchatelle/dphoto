@@ -4,6 +4,7 @@ package mocks
 
 import (
 	dynamodb "github.com/aws/aws-sdk-go/service/dynamodb"
+
 	mock "github.com/stretchr/testify/mock"
 
 	testing "testing"

@@ -1,4 +1,4 @@
-.PHONY: all clean install test build deploy
+.PHONY: all clean install test build deploy test-go
 
 all: test build
 
@@ -12,6 +12,8 @@ test: test-infra-data test-domain test-cli test-app
 build: build-cli build-app
 
 deploy: deploy-infra-data deploy-app deploy-cli-local
+
+test-go: test-domain test-cli test-app-api
 
 #######################################
 ## INFRA DATA
