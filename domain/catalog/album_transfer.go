@@ -2,13 +2,21 @@ package catalog
 
 import log "github.com/sirupsen/logrus"
 
-func transferMedias(filter *FindMediaRequest, filderName string) (int, error) {
+func transferMedias(filter *FindMediaRequest, folderName string) (int, error) {
 	ids, err := repositoryPort.FindMediaIds(filter)
 	if err != nil {
 		return 0, err
 	}
 
-	err = archivePort.MoveMedias(filter.Owner, ids, filderName)
+	if len(ids) == 0 {
+		log.WithFields(log.Fields{
+			"Owner":      filter,
+			"FolderName": folderName,
+		}).Infoln(len(ids), "no media to transfer to the new album")
+		return 0, nil
+	}
+
+	err = archivePort.MoveMedias(filter.Owner, ids, folderName)
 	if err != nil {
 		return 0, err
 	}
@@ -16,8 +24,8 @@ func transferMedias(filter *FindMediaRequest, filderName string) (int, error) {
 	defer func() {
 		log.WithFields(log.Fields{
 			"Owner":      filter,
-			"FolderName": filderName,
+			"FolderName": folderName,
 		}).Infoln(len(ids), "medias virtually moved to new album")
 	}()
-	return len(ids), repositoryPort.TransferMedias(filter.Owner, ids, filderName)
+	return len(ids), repositoryPort.TransferMedias(filter.Owner, ids, folderName)
 }

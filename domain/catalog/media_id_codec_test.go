@@ -15,7 +15,7 @@ func TestCodec(t *testing.T) {
 		SignatureSize:   42,
 	}
 
-	encoded, err := EncodeMediaId(signature)
+	encoded, err := GenerateMediaId(signature)
 	if a.NoError(err) {
 		fmt.Printf("encoded > %s\n", encoded)
 
