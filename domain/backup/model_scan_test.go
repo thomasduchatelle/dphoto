@@ -13,20 +13,20 @@ func TestFoundAlbum_pushBoundaries(t *testing.T) {
 
 	type found struct {
 		date time.Time
-		size uint
+		size int
 	}
 	tests := []struct {
 		name               string
 		found              []found
 		wantStart, wantEnd time.Time
-		wantSize           uint
+		wantSize           int
 	}{
 		{"it should use the only date for start and end", []found{{mustParse("2021-06-02"), 42}}, mustParse("2021-06-02"), mustParse("2021-06-03"), 1},
 		{"it should push boundaries in both directions", []found{{mustParse("2021-06-02"), 1}, {mustParse("2021-06-03"), 2}, {mustParse("2021-06-01"), 4}}, mustParse("2021-06-01"), mustParse("2021-06-04"), 3},
 		{"it should push boundaries in start directions", []found{{mustParse("2021-06-02"), 1}, {mustParse("2021-05-21"), 2}, {mustParse("2021-06-01"), 4}}, mustParse("2021-05-21"), mustParse("2021-06-03"), 3},
 	}
 	for _, tt := range tests {
-		alb := &ScannedFolder{Distribution: make(map[string]*MediaCounter)}
+		alb := &ScannedFolder{Distribution: make(map[string]MediaCounter)}
 		for _, f := range tt.found {
 			alb.PushBoundaries(f.date, f.size)
 		}
@@ -34,7 +34,7 @@ func TestFoundAlbum_pushBoundaries(t *testing.T) {
 		a.Equal(tt.wantStart.Format(layout), alb.Start.Format(layout), tt.name)
 		a.Equal(tt.wantEnd.Format(layout), alb.End.Format(layout), tt.name)
 
-		count := uint(0)
+		count := 0
 		for _, d := range alb.Distribution {
 			count += d.Count
 		}

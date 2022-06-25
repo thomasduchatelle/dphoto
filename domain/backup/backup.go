@@ -4,7 +4,6 @@ package backup
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"regexp"
 	"strings"
@@ -14,6 +13,7 @@ import (
 type SourceVolume interface {
 	String() string
 	FindMedias() ([]FoundMedia, error)
+	Children(path MediaPath) (SourceVolume, error)
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
@@ -47,27 +47,19 @@ func Backup(owner string, volume SourceVolume, optionsSlice ...Options) (Complet
 		BatchSize:            BatchSize,
 	}
 
-	progressChannel, doneChannel := run.start(context.TODO(), hintSize)
-	backupReport := NewTracker(progressChannel, []interface{}{options.Listener})
+	progressChannel, _ := run.start(context.TODO(), hintSize)
+	backupReport := NewTracker(progressChannel, options.Listener)
 
-	reportedErrors := <-doneChannel
+	err = run.waitToFinish()
 	backupReport.WaitToComplete()
 
-	for i, err := range reportedErrors {
-		mdc.WithError(err).Errorf("Error %d/%d: %s", i+1, len(reportedErrors), err.Error())
-	}
-
-	if len(reportedErrors) > 0 {
-		return nil, errors.Wrapf(reportedErrors[0], "Backup failed, %d errors reported until shutdown.", len(reportedErrors))
-	}
-
 	mdc.Infoln("Backup completed.")
-	return backupReport, nil
+	return backupReport, err
 }
 
 func chooseCataloger(owner string, options Options) (runnerCataloger, error) {
 	if len(options.RestrictedAlbumFolderName) > 0 {
-		return newReadOnlyCataloger(owner, options.RestrictedAlbumFolderName)
+		return newAlbumFilterCataloger(owner, options.RestrictedAlbumFolderName)
 	}
 
 	return newCreatorCataloger(owner)

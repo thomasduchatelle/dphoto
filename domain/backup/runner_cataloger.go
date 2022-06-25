@@ -40,8 +40,11 @@ func newCreatorCataloger(owner string) (runnerCataloger, error) {
 	}, err
 }
 
-// newReadOnlyCataloger doesn't create any album, and filters media not listed in 'albums'
-func newReadOnlyCataloger(owner string, albums map[string]interface{}) (runnerCataloger, error) {
+// newAlbumFilterCataloger doesn't create any album, and filters media not listed in 'albums'
+func newAlbumFilterCataloger(owner string, albums map[string]interface{}) (runnerCataloger, error) {
+	if len(albums) == 0 {
+		return nil, errors.Errorf("newAlbumFilterCataloger must be created with at least 1 album (otherwise no media will go through")
+	}
 	timeline, err := catalogPort.GetAlbumsTimeline(owner)
 
 	return func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
@@ -53,9 +56,8 @@ func newReadOnlyCataloger(owner string, albums map[string]interface{}) (runnerCa
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to find album for the date %s", media.Details.DateTime)
 			}
-			_, included := albums[folderName]
 
-			if exists && (len(albums) == 0 || included) {
+			if _, included := albums[folderName]; exists && included {
 				filteredMedias = append(filteredMedias, media)
 				mediaAlbums[media] = folderName
 			} else {
@@ -87,4 +89,31 @@ func newReadOnlyCataloger(owner string, albums map[string]interface{}) (runnerCa
 		return requests, nil
 
 	}, err
+}
+
+func newScannerCataloger(owner string) runnerCataloger {
+	return func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
+		var requests []*BackingUpMediaRequest
+
+		idsMap, err := catalogPort.AssignIdsToNewMedias(owner, medias)
+		if err != nil {
+			return nil, err
+		}
+
+		count := MediaCounterZero
+		for id, media := range idsMap {
+			requests = append(requests, &BackingUpMediaRequest{
+				AnalysedMedia: media,
+				Id:            id,
+				FolderName:    "",
+			})
+
+			count = count.Add(1, media.FoundMedia.Size())
+		}
+
+		progressChannel <- &ProgressEvent{Type: ProgressEventCatalogued, Count: count.Count, Size: count.Size}
+		progressChannel <- &ProgressEvent{Type: ProgressEventAlreadyExists, Count: len(medias) - count.Count}
+
+		return requests, nil
+	}
 }

@@ -36,21 +36,29 @@ func TestScanner(t *testing.T) {
 		}
 
 		a.Equal([]string{
-			"scan/a_text.TXT",
-			"scan/another.txt",
+			"a_text.TXT",
+			"scan/folder1/another.txt",
 			"scan/golang-logo-resized.jpeg",
 			"scan/golang-logo.jpeg",
-		}, relativePaths, "it should find all the files with matching extension, sub folders, while ignoring hiden files")
+		}, relativePaths, "it should find all the files with matching extension, sub folders, while ignoring hidden files")
 
+		name := "it should generate proper media path"
 		a.Equal(backup.MediaPath{
-			ParentFullPath: path.Join(abspath, "scan"),
+			ParentFullPath: abspath,
 			Root:           abspath,
-			Path:           "scan",
+			Path:           "",
 			Filename:       "a_text.TXT",
-			ParentDir:      "scan",
-		}, medias[0].MediaPath())
+			ParentDir:      "test_resources",
+		}, medias[0].MediaPath(), name+" when in the root folder")
+		a.Equal(backup.MediaPath{
+			ParentFullPath: path.Join(abspath, "scan/folder1"),
+			Root:           abspath,
+			Path:           "scan/folder1",
+			Filename:       "another.txt",
+			ParentDir:      "folder1",
+		}, medias[1].MediaPath(), name+" when in the sub-folder")
 
-		name := "it should read the content of the file"
+		name = "it should read the content of the file"
 		a.Equal(6, medias[0].Size(), name)
 		reader, err := medias[0].ReadMedia()
 		if a.NoError(err, name) {
@@ -60,6 +68,21 @@ func TestScanner(t *testing.T) {
 			}
 		}
 
-		a.Equal(path.Join(abspath, "scan/a_text.TXT"), medias[0].String(), "it should have String() returning the full URL")
+		a.Equal(path.Join(abspath, "a_text.TXT"), medias[0].String(), "it should have String() returning the full URL")
+
+		name = "it should generate a valid children"
+		childVolume, err := fs.Children(medias[1].MediaPath())
+		if a.NoError(err, name) {
+			fsChildVolume := childVolume.(*volume)
+			fsChildVolume.supportedExtensions = fs.supportedExtensions
+
+			subFolderMedias, err := childVolume.FindMedias()
+			if a.NoError(err, name) {
+				if a.Len(subFolderMedias, 1, name) {
+					a.Equal("another.txt", subFolderMedias[0].MediaPath().Filename, name)
+				}
+
+			}
+		}
 	}
 }

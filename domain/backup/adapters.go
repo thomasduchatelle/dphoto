@@ -15,9 +15,9 @@ func RegisterDetailsReader(reader DetailsReaderAdapter) {
 	detailsReaders = append(detailsReaders, reader)
 }
 
-func Init(catalogPort CatalogAdapter, archivePort ArchiveAdapter) {
-	catalogPort = catalogPort
-	archivePort = archivePort
+func Init(catalog CatalogAdapter, archive ArchiveAdapter) {
+	catalogPort = catalog
+	archivePort = archive
 }
 
 type TimelineAdapter interface {

@@ -61,6 +61,10 @@ func (v *volume) FindMedias() ([]backup.FoundMedia, error) {
 	return *medias, err
 }
 
+func (v *volume) Children(path backup.MediaPath) (backup.SourceVolume, error) {
+	return New(path.ParentFullPath), nil
+}
+
 func (v *volume) newWorker(rootPath string) *fsWorker {
 	return &fsWorker{
 		rootPath: rootPath,

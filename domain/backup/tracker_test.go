@@ -107,7 +107,7 @@ func TestTracker(t *testing.T) {
 			tt.setMocks(trackScanComplete, trackAnalysed, trackUploaded)
 
 			channel := make(chan *backup.ProgressEvent, len(tt.events))
-			tracker := backup.NewTracker(channel, []interface{}{trackScanComplete, trackAnalysed, trackUploaded})
+			tracker := backup.NewTracker(channel, trackScanComplete, trackAnalysed, trackUploaded)
 
 			for _, event := range tt.events {
 				channel <- event

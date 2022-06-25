@@ -32,7 +32,7 @@ type Tracker struct {
 }
 
 // NewTracker creates the Tracker and start consuming (async)
-func NewTracker(progressChannel chan *ProgressEvent, listeners []interface{}) *Tracker {
+func NewTracker(progressChannel chan *ProgressEvent, listeners ...interface{}) *Tracker {
 	tracker := &Tracker{
 		listeners:     listeners,
 		eventCount:    make(map[ProgressEventType]MediaCounter),

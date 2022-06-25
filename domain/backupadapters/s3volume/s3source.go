@@ -14,6 +14,10 @@ import (
 
 // New creates a new backup.SourceVolume that will find files on an S3 bucket.
 func New(sess *session.Session, path string) (backup.SourceVolume, error) {
+	return newWithS3Client(s3.New(sess), path)
+}
+
+func newWithS3Client(client *s3.S3, path string) (backup.SourceVolume, error) {
 	s3Url, err := url.Parse(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid s3 path, '%s' must be a valid URL (s3://<bucket-name>[/...])", path)
@@ -29,7 +33,7 @@ func New(sess *session.Session, path string) (backup.SourceVolume, error) {
 	}
 
 	return &volume{
-		s3:                  s3.New(sess),
+		s3:                  client,
 		bucket:              bucket,
 		keyPrefix:           prefix,
 		supportedExtensions: backup.SupportedExtensions,
@@ -41,6 +45,10 @@ type volume struct {
 	bucket              string
 	keyPrefix           string
 	supportedExtensions map[string]backup.MediaType
+}
+
+func (s *volume) Children(path backup.MediaPath) (backup.SourceVolume, error) {
+	return newWithS3Client(s.s3, path.ParentFullPath)
 }
 
 func (s *volume) String() string {

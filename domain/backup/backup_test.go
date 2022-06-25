@@ -97,7 +97,7 @@ func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 				Id:         "id_file_4.jpg",
 				FolderName: "/folder2",
 			},
-			ArchiveFilename: "OUT",
+			ArchiveFilename: "",
 		},
 	}
 	catalogMock.On("AssignIdsToNewMedias", owner, []*backup.AnalysedMedia{
@@ -105,10 +105,14 @@ func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 		expectedCatalogRequests[1].BackingUpMediaRequest.AnalysedMedia,
 		expectedCatalogRequests[2].BackingUpMediaRequest.AnalysedMedia,
 		expectedCatalogRequests[3].BackingUpMediaRequest.AnalysedMedia,
-	}).Once().Return(idGenerator, nil)
+	}).Once().Return(newIdGeneratorWithExclusion(func(filename string) bool {
+		return filename != "file_3.avi"
+	}), nil)
 	catalogMock.On("AssignIdsToNewMedias", owner, []*backup.AnalysedMedia{
 		expectedCatalogRequests[4].BackingUpMediaRequest.AnalysedMedia,
-	}).Once().Return(idGenerator, nil)
+	}).Once().Return(newIdGeneratorWithExclusion(func(name string) bool {
+		return true
+	}), nil)
 
 	timelineMock.On("FindOrCreateAlbum", time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC)).Return("/folder1", false, nil)
 	timelineMock.On("FindOrCreateAlbum", time.Date(2022, 6, 19, 0, 0, 0, 0, time.UTC)).Return("/folder2", true, nil)
@@ -225,7 +229,9 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 	catalogMock.On("AssignIdsToNewMedias", owner, []*backup.AnalysedMedia{
 		expectedCatalogRequests[0].BackingUpMediaRequest.AnalysedMedia,
 		expectedCatalogRequests[2].BackingUpMediaRequest.AnalysedMedia,
-	}).Once().Return(idGenerator, nil)
+	}).Once().Return(newIdGeneratorWithExclusion(func(filename string) bool {
+		return filename != "file_3.jpg"
+	}), nil)
 
 	timelineMock.On("FindAlbum", time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC)).Once().Return("/folder1", true, nil)
 	timelineMock.On("FindAlbum", time.Date(2022, 6, 19, 0, 0, 0, 0, time.UTC)).Once().Return("/folder2", true, nil)
@@ -257,15 +263,17 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 	}
 }
 
-func idGenerator(_ string, medias []*backup.AnalysedMedia) map[string]*backup.AnalysedMedia {
-	ids := make(map[string]*backup.AnalysedMedia)
-	for _, media := range medias {
-		filename := media.FoundMedia.MediaPath().Filename
-		if filename != "file_3.avi" && filename != "file_3.jpg" {
-			ids["id_"+filename] = media
+func newIdGeneratorWithExclusion(accept func(name string) bool) func(_ string, medias []*backup.AnalysedMedia) map[string]*backup.AnalysedMedia {
+	return func(_ string, medias []*backup.AnalysedMedia) map[string]*backup.AnalysedMedia {
+		ids := make(map[string]*backup.AnalysedMedia)
+		for _, media := range medias {
+			filename := media.FoundMedia.MediaPath().Filename
+			if accept(filename) {
+				ids["id_"+filename] = media
+			}
 		}
+		return ids
 	}
-	return ids
 }
 
 type mockVolume []backup.FoundMedia
@@ -276,4 +284,8 @@ func (m *mockVolume) String() string {
 
 func (m *mockVolume) FindMedias() ([]backup.FoundMedia, error) {
 	return *m, nil
+}
+
+func (m *mockVolume) Children(backup.MediaPath) (backup.SourceVolume, error) {
+	panic("mockVolume cannot generate procreate")
 }

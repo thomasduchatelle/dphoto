@@ -29,6 +29,7 @@ type runner struct {
 	progressEventChannel chan *ProgressEvent
 	errorsMutex          sync.Mutex
 	errors               []error
+	completionChannel    chan []error
 }
 
 func (r *runner) appendError(err error) {
@@ -45,6 +46,7 @@ func (r *runner) appendError(err error) {
 	r.errors = append(r.errors, err)
 }
 
+// start initialises the channels and publish files in the source channel
 func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, chan []error) {
 	r.progressEventChannel = make(chan *ProgressEvent, sizeHint*5)
 	r.context, r.cancel = context.WithCancel(ctx)
@@ -59,16 +61,32 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	bufferedAnalysedChannel := make(chan []*AnalysedMedia, bufferedChannelSize)
 	cataloguedChannel := make(chan *BackingUpMediaRequest, bufferedChannelSize)
 	bufferedCataloguedChannel := make(chan []*BackingUpMediaRequest, bufferedChannelSize)
-	completionChannel := make(chan []error, 1)
+	r.completionChannel = make(chan []error, 1)
 
 	r.analyseMedias(foundChannel, analysedChannel)
 	r.bufferAnalysedMedias(analysedChannel, bufferedAnalysedChannel)
 	r.catalogueMedias(bufferedAnalysedChannel, cataloguedChannel)
 	r.bufferUniqueCataloguedMedias(cataloguedChannel, bufferedCataloguedChannel)
-	r.uploadMedias(bufferedCataloguedChannel, completionChannel)
+	r.uploadMedias(bufferedCataloguedChannel, r.completionChannel)
 
 	r.startPublishing(foundChannel)
-	return r.progressEventChannel, completionChannel
+	return r.progressEventChannel, r.completionChannel
+}
+
+// waitToFinish is blocking until runner completes (or fails), returned completion channel should not be consumed.
+func (r *runner) waitToFinish() error {
+
+	reportedErrors := <-r.completionChannel
+
+	for i, err := range reportedErrors {
+		r.MDC.WithError(err).Errorf("Error %d/%d: %s", i+1, len(reportedErrors), err.Error())
+	}
+
+	if len(reportedErrors) > 0 {
+		return errors.Wrapf(reportedErrors[0], "Backup failed, %d errors reported until shutdown.", len(reportedErrors))
+	}
+
+	return nil
 }
 
 func (r *runner) startsInParallel(parallel int, consume func(), closeChannel func()) {

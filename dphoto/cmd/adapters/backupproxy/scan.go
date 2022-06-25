@@ -29,7 +29,7 @@ func ScanWithCache(owner string, volume backup.SourceVolume, options ...backup.O
 		}
 	}
 
-	suggestions, rejects, err := doScan(volume, options...)
+	suggestions, rejects, err := doScan(owner, volume, options...)
 	return NewSuggestionRepository(owner, suggestions, len(rejects)), rejects, err
 }
 
@@ -37,11 +37,11 @@ func volumeId(volume backup.SourceVolume) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(volume.String())))
 }
 
-func doScan(volume backup.SourceVolume, options ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error) {
+func doScan(owner string, volume backup.SourceVolume, options ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error) {
 	progress := newScanProgress()
 	options = append(options, backup.OptionWithListener(progress))
 
-	suggestions, rejects, err := backup.Scan(volume, options...)
+	suggestions, rejects, err := backup.Scan(owner, volume, options...)
 	progress.screen.Stop()
 
 	if err != nil {

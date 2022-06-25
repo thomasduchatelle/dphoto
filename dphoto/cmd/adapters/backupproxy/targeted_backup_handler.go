@@ -30,7 +30,10 @@ func (b *BackupAlbumFilter) AcceptAnalysedMedia(media *backup.AnalysedMedia, fol
 
 func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, existing *ui.ExistingRecord, renderer ui.InteractiveRendererPort) error {
 	if folder, ok := record.Original.(*backup.ScannedFolder); ok {
-		subVolume := folder.Volume()
+		subVolume, err := folder.Volume()
+		if err != nil {
+			return err
+		}
 
 		restriction := ""
 		if existing != nil {

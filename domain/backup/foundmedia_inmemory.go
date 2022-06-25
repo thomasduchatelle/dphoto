@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"path"
 	"time"
 )
 
@@ -28,11 +29,11 @@ func (i *InmemoryMedia) String() string {
 
 func (i *InmemoryMedia) MediaPath() MediaPath {
 	return MediaPath{
-		ParentFullPath: "/ram/virtual",
+		ParentFullPath: path.Join("/ram", i.filename),
 		Root:           "/ram",
-		Path:           "virtual",
-		Filename:       i.filename,
-		ParentDir:      "virtual",
+		Path:           path.Dir(i.filename),
+		Filename:       path.Base(i.filename),
+		ParentDir:      path.Base(path.Dir(i.filename)),
 	}
 }
 
