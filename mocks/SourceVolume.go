@@ -14,6 +14,29 @@ type SourceVolume struct {
 	mock.Mock
 }
 
+// Children provides a mock function with given fields: path
+func (_m *SourceVolume) Children(path backup.MediaPath) (backup.SourceVolume, error) {
+	ret := _m.Called(path)
+
+	var r0 backup.SourceVolume
+	if rf, ok := ret.Get(0).(func(backup.MediaPath) backup.SourceVolume); ok {
+		r0 = rf(path)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(backup.SourceVolume)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(backup.MediaPath) error); ok {
+		r1 = rf(path)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindMedias provides a mock function with given fields:
 func (_m *SourceVolume) FindMedias() ([]backup.FoundMedia, error) {
 	ret := _m.Called()
@@ -37,7 +60,7 @@ func (_m *SourceVolume) FindMedias() ([]backup.FoundMedia, error) {
 	return r0, r1
 }
 
-// Name provides a mock function with given fields:
+// String provides a mock function with given fields:
 func (_m *SourceVolume) String() string {
 	ret := _m.Called()
 

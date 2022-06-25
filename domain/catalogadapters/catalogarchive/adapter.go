@@ -2,6 +2,6 @@ package catalogarchive
 
 import "github.com/thomasduchatelle/dphoto/domain/catalog"
 
-func New() catalog.ArchiveAdapter {
+func New() catalog.CArchiveAdapter {
 	panic("you need to implement this one!")
 }

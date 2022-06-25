@@ -19,7 +19,7 @@ func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 	catalogMock := mocks.NewCatalogAdapter(t)
 	timelineMock := mocks.NewTimelineAdapter(t)
 	catalogMock.On("GetAlbumsTimeline", owner).Return(timelineMock, nil)
-	archiveMock := mocks.NewArchiveAdapter(t)
+	archiveMock := mocks.NewBArchiveAdapter(t)
 	backup.Init(catalogMock, archiveMock)
 	backup.BatchSize = 4
 
@@ -139,8 +139,8 @@ func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 			backup.ProgressEventAlbumCreated:   {Number: 1, SumCount: 1, Albums: []string{"/folder2"}},
 			backup.ProgressEventScanComplete:   {Number: 1, SumCount: 5, SumSize: 10 + 11 + 12 + 13 + 14},
 			backup.ProgressEventAnalysed:       {Number: 5, SumCount: 5, SumSize: 10 + 11 + 12 + 13 + 14},
-			backup.ProgressEventAlreadyExists:  {Number: 1, SumCount: 1},
-			backup.ProgressEventCatalogued:     {Number: 2, SumCount: 4},
+			backup.ProgressEventAlreadyExists:  {Number: 1, SumCount: 1, SumSize: 12},
+			backup.ProgressEventCatalogued:     {Number: 2, SumCount: 4, SumSize: 10 + 11 + 13 + 14},
 			backup.ProgressEventDuplicate:      {Number: 1, SumCount: 1, SumSize: 14},
 			backup.ProgressEventReadyForUpload: {Number: 3, SumCount: 3, SumSize: 10 + 11 + 13},
 			backup.ProgressEventUploaded:       {Number: 3, SumCount: 3, SumSize: 10 + 11 + 13, Albums: []string{"/folder1", "/folder2", "/folder2"}},
@@ -159,7 +159,7 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 	catalogMock := mocks.NewCatalogAdapter(t)
 	timelineMock := mocks.NewTimelineAdapter(t)
 	catalogMock.On("GetAlbumsTimeline", owner).Return(timelineMock, nil)
-	archiveMock := mocks.NewArchiveAdapter(t)
+	archiveMock := mocks.NewBArchiveAdapter(t)
 	backup.Init(catalogMock, archiveMock)
 	backup.BatchSize = 4
 
@@ -255,21 +255,21 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 			backup.ProgressEventScanComplete:   {Number: 1, SumCount: 4, SumSize: 10 + 11 + 12 + 13},
 			backup.ProgressEventAnalysed:       {Number: 4, SumCount: 4, SumSize: 10 + 11 + 12 + 13},
 			backup.ProgressEventWrongAlbum:     {Number: 2, SumCount: 2, SumSize: 11 + 13},
-			backup.ProgressEventAlreadyExists:  {Number: 1, SumCount: 1},
-			backup.ProgressEventCatalogued:     {Number: 1, SumCount: 1},
+			backup.ProgressEventAlreadyExists:  {Number: 1, SumCount: 1, SumSize: 12},
+			backup.ProgressEventCatalogued:     {Number: 1, SumCount: 1, SumSize: 10},
 			backup.ProgressEventReadyForUpload: {Number: 1, SumCount: 1, SumSize: 10},
 			backup.ProgressEventUploaded:       {Number: 1, SumCount: 1, SumSize: 10, Albums: []string{"/folder1"}},
 		}, eventCapture.Captured)
 	}
 }
 
-func newIdGeneratorWithExclusion(accept func(name string) bool) func(_ string, medias []*backup.AnalysedMedia) map[string]*backup.AnalysedMedia {
-	return func(_ string, medias []*backup.AnalysedMedia) map[string]*backup.AnalysedMedia {
-		ids := make(map[string]*backup.AnalysedMedia)
+func newIdGeneratorWithExclusion(accept func(name string) bool) func(_ string, medias []*backup.AnalysedMedia) map[*backup.AnalysedMedia]string {
+	return func(_ string, medias []*backup.AnalysedMedia) map[*backup.AnalysedMedia]string {
+		ids := make(map[*backup.AnalysedMedia]string)
 		for _, media := range medias {
 			filename := media.FoundMedia.MediaPath().Filename
 			if accept(filename) {
-				ids["id_"+filename] = media
+				ids[media] = "id_" + filename
 			}
 		}
 		return ids

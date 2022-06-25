@@ -17,7 +17,7 @@ func TestShouldReportScannedItems(t *testing.T) {
 	backup.RegisterDetailsReader(readerAdapter)
 
 	catalogMock := mocks.NewCatalogAdapter(t)
-	archiveMock := mocks.NewArchiveAdapter(t)
+	archiveMock := mocks.NewBArchiveAdapter(t)
 	backup.Init(catalogMock, archiveMock)
 	backup.BatchSize = 128
 
@@ -146,7 +146,7 @@ func TestShouldReportScannedItems(t *testing.T) {
 		a.Equal(map[backup.ProgressEventType]eventSummary{
 			backup.ProgressEventScanComplete:   {Number: 1, SumCount: 6, SumSize: 10 + 11 + 12 + 13 + 14 + 15},
 			backup.ProgressEventAnalysed:       {Number: 6, SumCount: 6, SumSize: 10 + 11 + 12 + 13 + 14 + 15},
-			backup.ProgressEventAlreadyExists:  {Number: 1, SumCount: 2},
+			backup.ProgressEventAlreadyExists:  {Number: 1, SumCount: 2, SumSize: 13 + 15},
 			backup.ProgressEventCatalogued:     {Number: 1, SumCount: 4, SumSize: 10 + 11 + 12 + 14},
 			backup.ProgressEventReadyForUpload: {Number: 4, SumCount: 4, SumSize: 10 + 11 + 12 + 14},
 			backup.ProgressEventUploaded:       {Number: 4, SumCount: 4, SumSize: 10 + 11 + 12 + 14, Albums: nil},

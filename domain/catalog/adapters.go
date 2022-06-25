@@ -2,11 +2,11 @@ package catalog
 
 var (
 	repositoryPort RepositoryAdapter
-	archivePort    ArchiveAdapter
+	archivePort    CArchiveAdapter
 )
 
 // Init must be called before using this package.
-func Init(repositoryAdapter RepositoryAdapter, archive ArchiveAdapter) {
+func Init(repositoryAdapter RepositoryAdapter, archive CArchiveAdapter) {
 	repositoryPort = repositoryAdapter
 	archivePort = archive
 }
@@ -33,7 +33,7 @@ type RepositoryAdapter interface {
 	TransferMedias(owner string, mediaIds []string, newFolderName string) error
 }
 
-// ArchiveAdapter forward events to archive package
-type ArchiveAdapter interface {
+// CArchiveAdapter forward events to archive package
+type CArchiveAdapter interface {
 	MoveMedias(owner string, ids []string, name string) error
 }

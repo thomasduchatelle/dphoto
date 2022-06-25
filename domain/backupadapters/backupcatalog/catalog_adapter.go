@@ -40,7 +40,7 @@ func (a *adapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapter, error
 	}, nil
 }
 
-func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[string]*backup.AnalysedMedia, error) {
+func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error) {
 	signatures := make([]*catalog.MediaSignature, len(medias), len(medias))
 	for i, media := range medias {
 		signatures[i] = &catalog.MediaSignature{
@@ -51,14 +51,14 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 
 	assignedIds, err := catalog.AssignIdsToNewMedias(owner, signatures)
 
-	mediasWithId := make(map[string]*backup.AnalysedMedia)
+	mediasWithId := make(map[*backup.AnalysedMedia]string)
 	for _, media := range medias {
 		sign := catalog.MediaSignature{
 			SignatureSha256: media.Sha256Hash,
 			SignatureSize:   media.FoundMedia.Size(),
 		}
 		if id, found := assignedIds[sign]; found {
-			mediasWithId[id] = media
+			mediasWithId[media] = id
 		}
 	}
 

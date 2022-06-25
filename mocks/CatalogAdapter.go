@@ -15,15 +15,15 @@ type CatalogAdapter struct {
 }
 
 // AssignIdsToNewMedias provides a mock function with given fields: owner, medias
-func (_m *CatalogAdapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[string]*backup.AnalysedMedia, error) {
+func (_m *CatalogAdapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error) {
 	ret := _m.Called(owner, medias)
 
-	var r0 map[string]*backup.AnalysedMedia
-	if rf, ok := ret.Get(0).(func(string, []*backup.AnalysedMedia) map[string]*backup.AnalysedMedia); ok {
+	var r0 map[*backup.AnalysedMedia]string
+	if rf, ok := ret.Get(0).(func(string, []*backup.AnalysedMedia) map[*backup.AnalysedMedia]string); ok {
 		r0 = rf(owner, medias)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]*backup.AnalysedMedia)
+			r0 = ret.Get(0).(map[*backup.AnalysedMedia]string)
 		}
 	}
 

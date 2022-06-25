@@ -7,35 +7,22 @@ func newCreatorCataloger(owner string) (runnerCataloger, error) {
 	timeline, err := catalogPort.GetAlbumsTimeline(owner)
 
 	return func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
-		var requests []*BackingUpMediaRequest
 		idsMap, err := catalogPort.AssignIdsToNewMedias(owner, medias)
 		if err != nil {
 			return nil, err
 		}
 
-		for id, media := range idsMap {
+		return buildRequestsAndFireEvents(progressChannel, medias, idsMap, func(media *AnalysedMedia) (string, error) {
 			folderName, created, err := timeline.FindOrCreateAlbum(media.Details.DateTime)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to find or create album for date %s", media.Details.DateTime)
+				return "", errors.Wrapf(err, "failed to find or create album for date %s", media.Details.DateTime)
 			}
 			if created {
 				progressChannel <- &ProgressEvent{Type: ProgressEventAlbumCreated, Count: 1, Album: folderName}
 			}
 
-			requests = append(requests, &BackingUpMediaRequest{
-				AnalysedMedia: media,
-				Id:            id,
-				FolderName:    folderName,
-			})
-		}
-
-		progressChannel <- &ProgressEvent{Type: ProgressEventCatalogued, Count: len(idsMap)}
-		skippedEvent := &ProgressEvent{Type: ProgressEventAlreadyExists, Count: len(medias) - len(idsMap)}
-		if skippedEvent.Count > 0 {
-			progressChannel <- skippedEvent
-		}
-
-		return requests, nil
+			return folderName, nil
+		})
 
 	}, err
 }
@@ -65,55 +52,62 @@ func newAlbumFilterCataloger(owner string, albums map[string]interface{}) (runne
 			}
 		}
 
-		var requests []*BackingUpMediaRequest
-
 		idsMap, err := catalogPort.AssignIdsToNewMedias(owner, filteredMedias)
 		if err != nil {
 			return nil, err
 		}
 
-		for id, media := range idsMap {
-			requests = append(requests, &BackingUpMediaRequest{
-				AnalysedMedia: media,
-				Id:            id,
-				FolderName:    mediaAlbums[media],
-			})
-		}
-
-		progressChannel <- &ProgressEvent{Type: ProgressEventCatalogued, Count: len(idsMap)}
-		skippedEvent := &ProgressEvent{Type: ProgressEventAlreadyExists, Count: len(filteredMedias) - len(idsMap)}
-		if skippedEvent.Count > 0 {
-			progressChannel <- skippedEvent
-		}
-
-		return requests, nil
+		return buildRequestsAndFireEvents(progressChannel, filteredMedias, idsMap, func(media *AnalysedMedia) (string, error) {
+			return mediaAlbums[media], nil
+		})
 
 	}, err
 }
 
+// buildRequestsAndFireEvents populate the list of BackingUpMediaRequest by keeping the same order as medias parameters (to simplify the testing)
+func buildRequestsAndFireEvents(progressChannel chan *ProgressEvent, medias []*AnalysedMedia, idsMap map[*AnalysedMedia]string, getAlbum func(*AnalysedMedia) (string, error)) ([]*BackingUpMediaRequest, error) {
+	var requests []*BackingUpMediaRequest
+
+	catalogedCount := MediaCounterZero
+	skippedCount := MediaCounterZero
+	for _, media := range medias {
+		if id, newMedia := idsMap[media]; newMedia {
+			catalogedCount = catalogedCount.Add(1, media.FoundMedia.Size())
+
+			album, err := getAlbum(media)
+			if err != nil {
+				return nil, err
+			}
+
+			requests = append(requests, &BackingUpMediaRequest{
+				AnalysedMedia: media,
+				Id:            id,
+				FolderName:    album,
+			})
+		} else {
+			skippedCount = skippedCount.Add(1, media.FoundMedia.Size())
+		}
+	}
+
+	if catalogedCount.Count > 0 {
+		progressChannel <- &ProgressEvent{Type: ProgressEventCatalogued, Count: catalogedCount.Count, Size: catalogedCount.Size}
+	}
+	if skippedCount.Count > 0 {
+		progressChannel <- &ProgressEvent{Type: ProgressEventAlreadyExists, Count: skippedCount.Count, Size: skippedCount.Size}
+	}
+
+	return requests, nil
+}
+
 func newScannerCataloger(owner string) runnerCataloger {
 	return func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
-		var requests []*BackingUpMediaRequest
-
 		idsMap, err := catalogPort.AssignIdsToNewMedias(owner, medias)
 		if err != nil {
 			return nil, err
 		}
 
-		count := MediaCounterZero
-		for id, media := range idsMap {
-			requests = append(requests, &BackingUpMediaRequest{
-				AnalysedMedia: media,
-				Id:            id,
-				FolderName:    "",
-			})
-
-			count = count.Add(1, media.FoundMedia.Size())
-		}
-
-		progressChannel <- &ProgressEvent{Type: ProgressEventCatalogued, Count: count.Count, Size: count.Size}
-		progressChannel <- &ProgressEvent{Type: ProgressEventAlreadyExists, Count: len(medias) - count.Count}
-
-		return requests, nil
+		return buildRequestsAndFireEvents(progressChannel, medias, idsMap, func(media *AnalysedMedia) (string, error) {
+			return "", nil
+		})
 	}
 }

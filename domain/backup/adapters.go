@@ -7,7 +7,7 @@ import (
 
 var (
 	catalogPort    CatalogAdapter
-	archivePort    ArchiveAdapter
+	archivePort    BArchiveAdapter
 	detailsReaders []DetailsReaderAdapter // DetailsReaders is a list of specific details extractor can auto-register
 )
 
@@ -15,7 +15,7 @@ func RegisterDetailsReader(reader DetailsReaderAdapter) {
 	detailsReaders = append(detailsReaders, reader)
 }
 
-func Init(catalog CatalogAdapter, archive ArchiveAdapter) {
+func Init(catalog CatalogAdapter, archive BArchiveAdapter) {
 	catalogPort = catalog
 	archivePort = archive
 }
@@ -30,13 +30,13 @@ type CatalogAdapter interface {
 	GetAlbumsTimeline(owner string) (TimelineAdapter, error)
 
 	// AssignIdsToNewMedias filter out existing medias and generate an ID for new ones.
-	AssignIdsToNewMedias(owner string, medias []*AnalysedMedia) (map[string]*AnalysedMedia, error)
+	AssignIdsToNewMedias(owner string, medias []*AnalysedMedia) (map[*AnalysedMedia]string, error)
 
 	// IndexMedias add to the catalog following medias
 	IndexMedias(owner string, requests []*CatalogMediaRequest) error
 }
 
-type ArchiveAdapter interface {
+type BArchiveAdapter interface {
 	// ArchiveMedia uploads the file in the right folder but might change the name to avoid clash with other existing files. Use files name is always returned.
 	ArchiveMedia(owner string, media *BackingUpMediaRequest) (string, error)
 }

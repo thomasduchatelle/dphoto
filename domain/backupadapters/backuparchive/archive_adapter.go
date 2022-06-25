@@ -9,7 +9,7 @@ import (
 type adapter struct {
 }
 
-func New() backup.ArchiveAdapter {
+func New() backup.BArchiveAdapter {
 	return new(adapter)
 }
 
