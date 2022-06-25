@@ -1,10 +1,10 @@
 package backup_adapter
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/daemon"
-	log "github.com/sirupsen/logrus"
 )
 
 func init() {

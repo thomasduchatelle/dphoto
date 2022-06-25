@@ -25,7 +25,7 @@ type rep struct {
 }
 
 // NewRepository creates the repository and connect to the database
-func NewRepository(awsSession *session.Session, tableName string) (catalog.RepositoryPort, error) {
+func NewRepository(awsSession *session.Session, tableName string) (catalog.RepositoryAdapter, error) {
 	rep := &rep{
 		db:                      dynamodb.New(awsSession),
 		table:                   tableName,
@@ -38,12 +38,12 @@ func NewRepository(awsSession *session.Session, tableName string) (catalog.Repos
 }
 
 // Must panics if there is an error
-func Must(rep *rep, err error) *rep {
+func Must(repository catalog.RepositoryAdapter, err error) catalog.RepositoryAdapter {
 	if err != nil {
 		panic(err)
 	}
 
-	return rep
+	return repository
 }
 
 // CreateTableIfNecessary creates the table if it doesn't exists ; or update it.

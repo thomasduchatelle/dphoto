@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+const (
+	RecommendedBatchSize = 25
+)
+
 func New() backup.CatalogAdapter {
 	return &adapter{}
 }
@@ -41,7 +45,7 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 	for i, media := range medias {
 		signatures[i] = &catalog.MediaSignature{
 			SignatureSha256: media.Sha256Hash,
-			SignatureSize:   uint(media.FoundMedia.Size()),
+			SignatureSize:   media.FoundMedia.Size(),
 		}
 	}
 
@@ -51,7 +55,7 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 	for _, media := range medias {
 		sign := catalog.MediaSignature{
 			SignatureSha256: media.Sha256Hash,
-			SignatureSize:   uint(media.FoundMedia.Size()),
+			SignatureSize:   media.FoundMedia.Size(),
 		}
 		if id, found := assignedIds[sign]; found {
 			mediasWithId[id] = media
@@ -70,7 +74,7 @@ func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaReque
 			Id: request.BackingUpMediaRequest.Id,
 			Signature: catalog.MediaSignature{
 				SignatureSha256: request.BackingUpMediaRequest.AnalysedMedia.Sha256Hash,
-				SignatureSize:   uint(request.BackingUpMediaRequest.AnalysedMedia.FoundMedia.Size()),
+				SignatureSize:   request.BackingUpMediaRequest.AnalysedMedia.FoundMedia.Size(),
 			},
 			FolderName: request.BackingUpMediaRequest.FolderName,
 			Filename:   request.ArchiveFilename,

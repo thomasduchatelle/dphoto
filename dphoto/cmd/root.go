@@ -18,7 +18,6 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "dphoto",
 	Short: "Backup photos and videos to your personal AWS Cloud",
-	Long:  `Backup photos and videos to your personal AWS Cloud.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// send all logging to a file to not pollute STDOUT
 		err := os.MkdirAll(path.Dir(os.ExpandEnv(LogFile)), 0766)

@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package main
 
 import (
-	_ "github.com/thomasduchatelle/dphoto/dphoto/backup/adapters"
 	_ "github.com/thomasduchatelle/dphoto/dphoto/bootstrap"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd"
 )

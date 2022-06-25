@@ -2,10 +2,10 @@
 package daemon
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"fmt"
 	"github.com/godbus/dbus/v5"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"strings"
 )
 

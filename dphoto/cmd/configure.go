@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/dphoto/printer"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )

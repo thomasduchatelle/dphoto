@@ -14,7 +14,7 @@ var (
 
 func mockAdapters() {
 	RepositoryMock = new(mocks.RepositoryPort)
-	catalog.dbPort = RepositoryMock
+	catalog.repositoryPort = RepositoryMock
 }
 
 const layout = "2006-01-02T15"

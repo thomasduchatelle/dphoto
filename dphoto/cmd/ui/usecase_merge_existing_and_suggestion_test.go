@@ -15,10 +15,10 @@ func Test_createFlattenTree(t *testing.T) {
 			Name:       "",
 			Start:      parseDate("2021-07-20"),
 			End:        parseDate("2021-07-24"),
-			Distribution: map[string]uint{
-				"2021-07-20": uint(4),
-				"2021-07-21": uint(3),
-				"2021-07-22": uint(12),
+			Distribution: map[string]int{
+				"2021-07-20": 4,
+				"2021-07-21": 3,
+				"2021-07-22": 12,
 			},
 		},
 	}
@@ -52,9 +52,9 @@ func Test_createFlattenTree(t *testing.T) {
 			Name:       "",
 			Start:      parseDate("2021-02-12"),
 			End:        parseDate("2021-02-19"),
-			Distribution: map[string]uint{
-				"2021-02-12": uint(4),
-				"2021-02-17": uint(3),
+			Distribution: map[string]int{
+				"2021-02-12": 4,
+				"2021-02-17": 3,
 			},
 		},
 		{
@@ -62,11 +62,11 @@ func Test_createFlattenTree(t *testing.T) {
 			Name:       "",
 			Start:      parseDate("2021-01-04"),
 			End:        parseDate("2021-04-12"),
-			Distribution: map[string]uint{
-				"2021-01-04": uint(1),
-				"2021-02-17": uint(10),
-				"2021-03-05": uint(100),
-				"2021-04-10": uint(1000),
+			Distribution: map[string]int{
+				"2021-01-04": 1,
+				"2021-02-17": 10,
+				"2021-03-05": 100,
+				"2021-04-10": 1000,
 			},
 		},
 	}

@@ -7,14 +7,14 @@ import (
 )
 
 type ProgressBarSegment struct {
-	done  uint
-	total uint
+	done  int
+	total int
 	lock  sync.RWMutex
 }
 
-func NewProgressBarSegment() (Segment, func(uint, uint)) {
+func NewProgressBarSegment() (Segment, func(int, int)) {
 	segment := &ProgressBarSegment{lock: sync.RWMutex{}}
-	return segment, func(done, total uint) {
+	return segment, func(done, total int) {
 		segment.lock.Lock()
 		defer segment.lock.Unlock()
 		segment.done = done

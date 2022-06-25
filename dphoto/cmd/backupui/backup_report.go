@@ -1,14 +1,14 @@
 package backupui
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
 	"fmt"
 	"github.com/alexeyco/simpletable"
 	"github.com/logrusorgru/aurora/v3"
+	"github.com/thomasduchatelle/dphoto/domain/backup"
+	"github.com/thomasduchatelle/dphoto/dphoto/printer"
 )
 
-func PrintBackupStats(tracker backupmodel.BackupReport, volumePath string) {
+func PrintBackupStats(tracker backup.CompletionReport, volumePath string) {
 	if len(tracker.CountPerAlbum()) == 0 {
 		printer.Success("\n\nBackup of %s complete: %s.", aurora.Cyan(volumePath), aurora.Bold(aurora.Yellow("no new medias")))
 		return
@@ -31,7 +31,7 @@ func PrintBackupStats(tracker backupmodel.BackupReport, volumePath string) {
 		newAlbums[album] = nil
 	}
 
-	var totals [3]backupmodel.MediaCounter
+	var totals [3]backup.MediaCounter
 	i := 0
 	for folderName, counts := range tracker.CountPerAlbum() {
 		newMarker := ""
@@ -42,13 +42,13 @@ func PrintBackupStats(tracker backupmodel.BackupReport, volumePath string) {
 		table.Body.Cells[i] = []*simpletable.Cell{
 			{Align: simpletable.AlignCenter, Text: newMarker},
 			{Text: folderName},
-			countAndSize(counts.OfType(backupmodel.MediaTypeImage)),
-			countAndSize(counts.OfType(backupmodel.MediaTypeVideo)),
+			countAndSize(counts.OfType(backup.MediaTypeImage)),
+			countAndSize(counts.OfType(backup.MediaTypeVideo)),
 			countAndSize(counts.Total()),
 		}
 
-		totals[0] = totals[0].AddCounter(counts.OfType(backupmodel.MediaTypeImage))
-		totals[1] = totals[1].AddCounter(counts.OfType(backupmodel.MediaTypeVideo))
+		totals[0] = totals[0].AddCounter(counts.OfType(backup.MediaTypeImage))
+		totals[1] = totals[1].AddCounter(counts.OfType(backup.MediaTypeVideo))
 		totals[2] = totals[2].AddCounter(counts.Total())
 		i++
 	}
@@ -63,7 +63,7 @@ func PrintBackupStats(tracker backupmodel.BackupReport, volumePath string) {
 	fmt.Println(table.String())
 }
 
-func countAndSize(counter backupmodel.MediaCounter) *simpletable.Cell {
+func countAndSize(counter backup.MediaCounter) *simpletable.Cell {
 	if counter.Count == 0 {
 		return &simpletable.Cell{Align: simpletable.AlignCenter, Text: "-"}
 	}
@@ -73,7 +73,7 @@ func countAndSize(counter backupmodel.MediaCounter) *simpletable.Cell {
 	}
 }
 
-func byteCountIEC(b uint) string {
+func byteCountIEC(b int) string {
 	const unit = 1024
 	if b < unit {
 		return fmt.Sprintf("%d B", b)

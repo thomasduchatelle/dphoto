@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/dphoto/backup"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/screen"
+	"github.com/thomasduchatelle/dphoto/dphoto/printer"
+	"github.com/thomasduchatelle/dphoto/dphoto/screen"
 	"strings"
 )
 

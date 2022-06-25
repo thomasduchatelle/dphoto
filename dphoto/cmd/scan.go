@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
+	"github.com/thomasduchatelle/dphoto/domain/backup"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/adapters/backupadapter"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/adapters/backupproxy"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/dphoto/printer"
 	"os"
 	"path"
 	"time"
@@ -26,14 +25,12 @@ var (
 var scan = &cobra.Command{
 	Use:   "scan <folder to scan>",
 	Short: "Discover directory structure to suggest new albums to create",
-	Long:  "Discover directory structure to suggest new album to create",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		volume := args[0]
 
-		recordRepository, rejects, err := backupadapter.ScanWithCache(Owner, newSmartVolume(volume), backup.ScanOptions{
-			SkipRejects: scanArgs.skipRejects,
-		})
+		smartVolume, err := newSmartVolume(volume)
+		recordRepository, rejects, err := backupproxy.ScanWithCache(Owner, smartVolume, backup.OptionSkipRejects(scanArgs.skipRejects))
 		printer.FatalIfError(err, 2)
 
 		if len(rejects) > 0 && scanArgs.rejectFile != "" {
@@ -44,10 +41,10 @@ var scan = &cobra.Command{
 		if recordRepository.Count() == 0 {
 			fmt.Println(aurora.Red(fmt.Sprintf("No media found on path %s .", volume)))
 		} else if scanArgs.nonInteractive {
-			err = ui.NewSimpleSession(backupadapter.NewAlbumRepository(Owner), recordRepository).Render()
+			err = ui.NewSimpleSession(backupproxy.NewAlbumRepository(Owner), recordRepository).Render()
 			printer.FatalIfError(err, 1)
 		} else {
-			err = ui.NewInteractiveSession(&uiCatalogAdapter{backupadapter.NewBackupHandler(Owner)}, backupadapter.NewAlbumRepository(Owner), recordRepository, Owner).Start()
+			err = ui.NewInteractiveSession(&uiCatalogAdapter{backupproxy.NewBackupHandler(Owner)}, backupproxy.NewAlbumRepository(Owner), recordRepository, Owner).Start()
 			printer.FatalIfError(err, 1)
 		}
 
@@ -55,7 +52,7 @@ var scan = &cobra.Command{
 	},
 }
 
-func writeRejectsInFile(rejects []backupmodel.FoundMedia, file string) error {
+func writeRejectsInFile(rejects []backup.FoundMedia, file string) error {
 	err := os.MkdirAll(path.Dir(file), 0744)
 	if err != nil {
 		return err

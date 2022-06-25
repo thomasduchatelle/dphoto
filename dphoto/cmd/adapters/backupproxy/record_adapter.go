@@ -1,17 +1,17 @@
-package backupadapter
+package backupproxy
 
 import (
+	"github.com/thomasduchatelle/dphoto/domain/backup"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 )
 
-func NewSuggestionRepository(owner string, folders []*backupmodel.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {
+func NewSuggestionRepository(owner string, folders []*backup.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {
 	records := make([]*ui.SuggestionRecord, len(folders))
 
 	for i, folder := range folders {
 
-		simplifiedDistribution := make(map[string]uint)
+		simplifiedDistribution := make(map[string]int)
 		for day, dayCounter := range folder.Distribution {
 			simplifiedDistribution[day] = dayCounter.Count
 		}
@@ -62,17 +62,12 @@ type dynamicAlbumRepository struct {
 }
 
 func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, error) {
-	albums, err := catalog.FindAllAlbumsWithStats(r.owner)
+	albums, err := catalog.FindAllAlbums(r.owner)
 	if err != nil {
 		return nil, err
 	}
 
-	albumsWithoutStats := make([]*catalog.Album, len(albums))
-	for i, a := range albums {
-		albumsWithoutStats[i] = &a.Album
-	}
-
-	timeline, err := catalog.NewTimeline(albumsWithoutStats)
+	timeline, err := catalog.NewTimeline(albums)
 	if err != nil {
 		return nil, err
 	}
@@ -81,22 +76,22 @@ func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, er
 	for i, album := range albums {
 
 		records[i] = &ui.ExistingRecord{
-			FolderName:    album.Album.FolderName,
-			Name:          album.Album.Name,
-			Start:         album.Album.Start,
-			End:           album.Album.End,
-			Count:         uint(album.TotalCount),
+			FolderName:    album.FolderName,
+			Name:          album.Name,
+			Start:         album.Start,
+			End:           album.End,
+			Count:         album.TotalCount,
 			ActivePeriods: r.activePeriods(timeline, album),
 		}
 	}
 	return records, err
 }
 
-func (r *dynamicAlbumRepository) activePeriods(timeline *catalog.Timeline, album *catalog.AlbumStat) []ui.Period {
-	actives, _ := timeline.FindBetween(album.Album.Start, album.Album.End)
+func (r *dynamicAlbumRepository) activePeriods(timeline *catalog.Timeline, album *catalog.Album) []ui.Period {
+	actives, _ := timeline.FindBetween(album.Start, album.End)
 	var periods []ui.Period
 	for _, active := range actives {
-		if len(active.Albums) > 0 && active.Albums[0].FolderName == album.Album.FolderName {
+		if len(active.Albums) > 0 && active.Albums[0].FolderName == album.FolderName {
 			periods = append(periods, ui.Period{
 				Start: active.Start,
 				End:   active.End,

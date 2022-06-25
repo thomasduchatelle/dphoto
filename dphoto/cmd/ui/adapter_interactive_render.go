@@ -2,8 +2,8 @@ package ui
 
 import (
 	"bufio"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/screen"
 	"github.com/buger/goterm"
+	"github.com/thomasduchatelle/dphoto/dphoto/screen"
 	"os"
 	"strings"
 )

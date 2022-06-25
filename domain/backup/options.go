@@ -3,6 +3,7 @@ package backup
 type Options struct {
 	RestrictedAlbumFolderName map[string]interface{} // RestrictedAlbumFolderName will restrict the media to only back up medias that are in one of these albums
 	Listener                  interface{}            // Listener will receive progress events.
+	SkipRejects               bool                   // SkipRejects mode will report any analysis error, or missing timestamp, and continue.
 }
 
 func readOptions(optionSlice []Options) Options {
@@ -17,6 +18,8 @@ func readOptions(optionSlice []Options) Options {
 		if o.Listener != nil {
 			opt.Listener = o.Listener
 		}
+
+		opt.SkipRejects = opt.SkipRejects || o.SkipRejects
 	}
 
 	return opt
@@ -40,4 +43,11 @@ func OptionOnlyAlbums(albums ...string) Options {
 	}
 
 	return options
+}
+
+// OptionSkipRejects disables the strict mode and ignores invalid files (wrong / no date, ...)
+func OptionSkipRejects(skip bool) Options {
+	return Options{
+		SkipRejects: skip,
+	}
 }

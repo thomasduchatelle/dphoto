@@ -18,7 +18,7 @@ var (
 
 // FindAllAlbums find all albums owned by root user
 func FindAllAlbums(owner string) ([]*Album, error) {
-	return dbPort.FindAllAlbums(owner)
+	return repositoryPort.FindAllAlbums(owner)
 }
 
 // Create creates a new album
@@ -52,12 +52,12 @@ func Create(createRequest CreateAlbum) error {
 		createdAlbum.FolderName = normaliseFolderName(createdAlbum.FolderName)
 	}
 
-	albums, err := dbPort.FindAllAlbums(createRequest.Owner)
+	albums, err := repositoryPort.FindAllAlbums(createRequest.Owner)
 	if err != nil {
 		return err
 	}
 
-	err = dbPort.InsertAlbum(createdAlbum)
+	err = repositoryPort.InsertAlbum(createdAlbum)
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func Create(createRequest CreateAlbum) error {
 	count, err := transferMedias(filter, createdAlbum.FolderName)
 
 	log.WithFields(log.Fields{
-		"Album":           createdAlbum.FolderName,
-		"MediaCount":      count,
+		"Album":      createdAlbum.FolderName,
+		"MediaCount": count,
 	}).Infof("Album %s has been created, and %d medias has been virtually moved to it\n", createdAlbum.FolderName, count)
 
 	return err
@@ -99,14 +99,14 @@ func normaliseFolderName(name string) string {
 
 // FindAlbum get an album by its business key (its folder name), or returns NotFoundError
 func FindAlbum(owner string, folderName string) (*Album, error) {
-	return dbPort.FindAlbum(owner, normaliseFolderName(folderName))
+	return repositoryPort.FindAlbum(owner, normaliseFolderName(folderName))
 }
 
 // DeleteAlbum delete an album, medias it contains are dispatched to other albums.
 func DeleteAlbum(owner string, folderNameToDelete string, emptyOnly bool) error {
 	folderNameToDelete = normaliseFolderName(folderNameToDelete)
 	if !emptyOnly {
-		albums, err := dbPort.FindAllAlbums(owner)
+		albums, err := repositoryPort.FindAllAlbums(owner)
 		if err != nil {
 			return err
 		}
@@ -125,14 +125,14 @@ func DeleteAlbum(owner string, folderNameToDelete string, emptyOnly bool) error 
 		}
 	}
 
-	return dbPort.DeleteEmptyAlbum(owner, folderNameToDelete)
+	return repositoryPort.DeleteEmptyAlbum(owner, folderNameToDelete)
 }
 
 func filterMissedSegmentWithMedias(owner string, folderName string, missed []PrioritySegment) ([]PrioritySegment, error) {
 	var reallyMissed []PrioritySegment
 	for _, m := range missed {
 		request := NewFindMediaRequest(owner).WithAlbum(normaliseFolderName(folderName)).WithinRange(m.Start, m.End)
-		medias, err := dbPort.FindMediaIds(request)
+		medias, err := repositoryPort.FindMediaIds(request)
 
 		if err != nil {
 			return nil, err
@@ -151,7 +151,7 @@ func filterMissedSegmentWithMedias(owner string, folderName string, missed []Pri
 func RenameAlbum(owner string, folderName, newName string, renameFolder bool) error {
 	folderName = normaliseFolderName(folderName)
 
-	found, err := dbPort.FindAlbum(owner, folderName)
+	found, err := repositoryPort.FindAlbum(owner, folderName)
 	if err != nil {
 		return err // can be NotFoundError
 	}
@@ -165,7 +165,7 @@ func RenameAlbum(owner string, folderName, newName string, renameFolder bool) er
 			End:        found.End,
 		}
 
-		err = dbPort.InsertAlbum(album)
+		err = repositoryPort.InsertAlbum(album)
 		if err != nil {
 			return err
 		}
@@ -180,18 +180,18 @@ func RenameAlbum(owner string, folderName, newName string, renameFolder bool) er
 			"PreviousFolderName": folderName,
 			"AlbumMoved":         count,
 		}).Infof("Album renamed and %d medias moved\n", count)
-		return dbPort.DeleteEmptyAlbum(owner, folderName)
+		return repositoryPort.DeleteEmptyAlbum(owner, folderName)
 	}
 
 	found.Name = newName
-	return dbPort.UpdateAlbum(*found)
+	return repositoryPort.UpdateAlbum(*found)
 }
 
 // UpdateAlbum updates the dates of an album, medias will be re-assign between albums accordingly
 func UpdateAlbum(owner string, folderName string, start, end time.Time) error {
 	folderName = normaliseFolderName(folderName)
 
-	albums, err := dbPort.FindAllAlbums(owner)
+	albums, err := repositoryPort.FindAllAlbums(owner)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func UpdateAlbum(owner string, folderName string, start, end time.Time) error {
 		return errors.Wrapf(err, "Album dates couldn't be updated.")
 	}
 
-	err = dbPort.UpdateAlbum(*updated)
+	err = repositoryPort.UpdateAlbum(*updated)
 	if err != nil {
 		return err
 	}

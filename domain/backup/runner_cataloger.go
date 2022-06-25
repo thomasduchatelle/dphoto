@@ -4,11 +4,11 @@ import "github.com/pkg/errors"
 
 // newCreatorCataloger creates missing albums
 func newCreatorCataloger(owner string) (runnerCataloger, error) {
-	timeline, err := CatalogPort.GetAlbumsTimeline(owner)
+	timeline, err := catalogPort.GetAlbumsTimeline(owner)
 
 	return func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 		var requests []*BackingUpMediaRequest
-		idsMap, err := CatalogPort.AssignIdsToNewMedias(owner, medias)
+		idsMap, err := catalogPort.AssignIdsToNewMedias(owner, medias)
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +42,7 @@ func newCreatorCataloger(owner string) (runnerCataloger, error) {
 
 // newReadOnlyCataloger doesn't create any album, and filters media not listed in 'albums'
 func newReadOnlyCataloger(owner string, albums map[string]interface{}) (runnerCataloger, error) {
-	timeline, err := CatalogPort.GetAlbumsTimeline(owner)
+	timeline, err := catalogPort.GetAlbumsTimeline(owner)
 
 	return func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 		var filteredMedias []*AnalysedMedia
@@ -65,7 +65,7 @@ func newReadOnlyCataloger(owner string, albums map[string]interface{}) (runnerCa
 
 		var requests []*BackingUpMediaRequest
 
-		idsMap, err := CatalogPort.AssignIdsToNewMedias(owner, filteredMedias)
+		idsMap, err := catalogPort.AssignIdsToNewMedias(owner, filteredMedias)
 		if err != nil {
 			return nil, err
 		}

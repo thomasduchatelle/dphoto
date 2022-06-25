@@ -1,18 +1,18 @@
 package catalog
 
 var (
-	dbPort      RepositoryPort
-	archivePort ArchivePort
+	repositoryPort RepositoryAdapter
+	archivePort    ArchiveAdapter
 )
 
 // Init must be called before using this package.
-func Init(repositoryAdapter RepositoryPort, archive ArchivePort) {
-	dbPort = repositoryAdapter
+func Init(repositoryAdapter RepositoryAdapter, archive ArchiveAdapter) {
+	repositoryPort = repositoryAdapter
 	archivePort = archive
 }
 
-// RepositoryPort brings persistence layer to catalog package
-type RepositoryPort interface {
+// RepositoryAdapter brings persistence layer to catalog package
+type RepositoryAdapter interface {
 	FindAllAlbums(owner string) ([]*Album, error)
 	InsertAlbum(album Album) error
 	DeleteEmptyAlbum(owner string, folderName string) error
@@ -33,7 +33,7 @@ type RepositoryPort interface {
 	TransferMedias(owner string, mediaIds []string, newFolderName string) error
 }
 
-// ArchivePort forward events to archive package
-type ArchivePort interface {
+// ArchiveAdapter forward events to archive package
+type ArchiveAdapter interface {
 	MoveMedias(owner string, ids []string, name string) error
 }

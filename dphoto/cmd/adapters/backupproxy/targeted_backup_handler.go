@@ -1,13 +1,12 @@
-package backupadapter
+package backupproxy
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/backupui"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/domain/backup"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/backupui"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 	"strings"
 )
 
@@ -25,17 +24,19 @@ type BackupAlbumFilter struct {
 	FolderName string
 }
 
-func (b *BackupAlbumFilter) AcceptAnalysedMedia(media *backupmodel.AnalysedMedia, folderName string) bool {
+func (b *BackupAlbumFilter) AcceptAnalysedMedia(media *backup.AnalysedMedia, folderName string) bool {
 	return folderName == b.FolderName
 }
 
 func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, existing *ui.ExistingRecord, renderer ui.InteractiveRendererPort) error {
-	if folder, ok := record.Original.(*backupmodel.ScannedFolder); ok {
+	if folder, ok := record.Original.(*backup.ScannedFolder); ok {
+		subVolume := folder.Volume()
+
 		restriction := ""
 		if existing != nil {
 			restriction = fmt.Sprintf(", restrictited to album %s [%s -> %s]", existing.Name, existing.Start.Format("2006-01-02"), existing.End.Format("2006-01-02"))
 		}
-		renderer.Print(fmt.Sprintf("Backing up %s%s [Y/n] ?", aurora.Cyan(folder.BackupVolume.Path), restriction))
+		renderer.Print(fmt.Sprintf("Backing up %s%s [Y/n] ?", aurora.Cyan(subVolume), restriction))
 		val, err := renderer.ReadAnswer()
 		if err != nil || strings.ToLower(val) != "y\n" && strings.ToLower(val) != "\n" {
 			return err
@@ -44,19 +45,21 @@ func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, ex
 		renderer.TakeOverScreen()
 
 		listener := backupui.NewProgress()
-		options := backup.Options{Listener: listener}
+		options := []backup.Options{
+			backup.OptionWithListener(listener),
+		}
 		if existing != nil {
-			options.PostAnalyseFilter = &BackupAlbumFilter{FolderName: existing.FolderName}
+			options = append(options, backup.OptionOnlyAlbums(existing.FolderName))
 		}
 
-		report, err := backup.StartBackupRunner(t.Owner, *folder.BackupVolume, options)
+		report, err := backup.Backup(t.Owner, subVolume, options...)
 		listener.Stop()
 
 		if err != nil {
 			return err
 		}
 
-		backupui.PrintBackupStats(report, folder.BackupVolume.Path)
+		backupui.PrintBackupStats(report, subVolume.String())
 		renderer.Print("Hit enter to go back.")
 		_, err = renderer.ReadAnswer()
 		return err

@@ -3,7 +3,7 @@ package screen
 type ProgressLine struct {
 	SwapSpinner    func(int)
 	SetLabel       func(string)
-	SetBar         func(uint, uint)
+	SetBar         func(int, int)
 	SetExplanation func(string)
 }
 

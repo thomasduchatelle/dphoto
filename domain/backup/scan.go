@@ -1,9 +1,6 @@
 package backup
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/interactors/analyser"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"regexp"
@@ -11,26 +8,12 @@ import (
 	"sync"
 )
 
-type scanCompleteListener interface {
-	OnScanComplete(total uint)
-}
-
-type analyseProgressListener interface {
-	OnAnalyseProgress(count, total uint)
-}
-
-type ScanOptions struct {
-	Listeners   []interface{}
-	SkipRejects bool // SkipRejects mode will report any analysis error, or missing timestamp, and continue.
-}
-
 var (
 	datePrefix = regexp.MustCompile("^[0-9]{4}-[01Q][0-9][-_]")
 )
 
-// ScanVolume scan a source to discover albums based on original folder structure.
-// Listeners will be notified on the progress of the scan.
-func ScanVolume(volume backupmodel.VolumeToBackup, options ScanOptions) ([]*backupmodel.ScannedFolder, []backupmodel.FoundMedia, error) {
+// Scan a source to discover albums based on original folder structure. Use listeners will be notified on the progress of the scan.
+func Scan(volume SourceVolume, options ...Options) ([]*ScannedFolder, []FoundMedia, error) {
 	analyser.DefaultMediaTimestamp = !options.SkipRejects
 
 	medias, err := scanMediaSource(volume)

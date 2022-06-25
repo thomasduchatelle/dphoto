@@ -13,8 +13,8 @@ type SuggestionRecord struct {
 	FolderName   string // FolderName is a suggested name when Suggestion is true, not a unique key
 	Name         string
 	Start, End   time.Time
-	Distribution map[string]uint // Distribution is the number of media found for each day (format YYYY-MM-DD)
-	Original     interface{}     // Original is used by adapter for targeted backup
+	Distribution map[string]int // Distribution is the number of media found for each day (format YYYY-MM-DD)
+	Original     interface{}    // Original is used by adapter for targeted backup
 }
 
 // ExistingRecord is an album already existing
@@ -22,7 +22,7 @@ type ExistingRecord struct {
 	FolderName    string // FolderName is a suggested name when Suggestion is true, not a unique key
 	Name          string
 	Start, End    time.Time
-	Count         uint
+	Count         int
 	ActivePeriods []Period
 }
 
@@ -32,8 +32,8 @@ type Record struct {
 	FolderName           string // FolderName is a suggested name when Suggestion is true, not a unique key
 	Name                 string
 	Start, End           time.Time
-	Count                uint              // Count is the number of files relevant to the context (if in a tree branch)
-	TotalCount           uint              // TotalCount is the total number of file
+	Count                int               // Count is the number of files relevant to the context (if in a tree branch)
+	TotalCount           int               // TotalCount is the total number of file
 	ParentExistingRecord *ExistingRecord   // ParentExistingRecord is the album if the suggestion is a child (used to limit the backup to a single album)
 	SuggestionRecord     *SuggestionRecord // SuggestionRecord is the original when Suggestion is true (used for backup)
 }

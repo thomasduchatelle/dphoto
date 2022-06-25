@@ -12,10 +12,6 @@ type TrackScanComplete interface {
 	OnScanComplete(total MediaCounter)
 }
 
-type TrackDownloaded interface {
-	OnDownloaded(done, total MediaCounter)
-}
-
 type TrackAnalysed interface {
 	OnAnalysed(done, total MediaCounter)
 }

@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	CatalogPort    CatalogAdapter
-	ArchivePort    ArchiveAdapter
+	catalogPort    CatalogAdapter
+	archivePort    ArchiveAdapter
 	detailsReaders []DetailsReaderAdapter // DetailsReaders is a list of specific details extractor can auto-register
 )
 
@@ -16,8 +16,8 @@ func RegisterDetailsReader(reader DetailsReaderAdapter) {
 }
 
 func Init(catalogPort CatalogAdapter, archivePort ArchiveAdapter) {
-	CatalogPort = catalogPort
-	ArchivePort = archivePort
+	catalogPort = catalogPort
+	archivePort = archivePort
 }
 
 type TimelineAdapter interface {

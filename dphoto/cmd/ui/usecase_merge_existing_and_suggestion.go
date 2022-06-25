@@ -10,15 +10,15 @@ func createFlattenTree(existing []*ExistingRecord, suggestions []*SuggestionReco
 	nodes := buildRecordTree(existing)
 
 	for _, suggestion := range suggestions {
-		totalCount := uint(0)
-		distribution := make(map[string]uint)
+		totalCount := 0
+		distribution := make(map[string]int)
 		for k, v := range suggestion.Distribution {
 			distribution[k] = v
 			totalCount += v
 		}
 
 		for _, node := range nodes {
-			count := uint(0)
+			count := 0
 			for day, numberInTheDay := range suggestion.Distribution {
 				if _, present := node.activeDays[day]; present {
 					count += numberInTheDay
@@ -42,7 +42,7 @@ func createFlattenTree(existing []*ExistingRecord, suggestions []*SuggestionReco
 			}
 		}
 
-		left := uint(0)
+		left := 0
 		for _, d := range distribution {
 			left += d
 		}

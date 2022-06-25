@@ -11,11 +11,11 @@ type ScannedFolder struct {
 	FolderName   string                   // FolderName is the original folder name (Name with date prefix that have been removed)
 	Start, End   time.Time                // Start and End are the beginning of the day of the first media, and the beginning of the day following the last media.
 	Distribution map[string]*MediaCounter // Distribution is the number of media found for each day (format YYYY-MM-DD)
-	BackupVolume *VolumeToBackup          // BackupVolume is the volume to use to back up only this specific folder,
+	Volume       func() SourceVolume      // Volume returns a SourceVolume of this children folder.
 }
 
 // PushBoundaries is updating the ScannedFolder dates, and update the counter.
-func (f *ScannedFolder) PushBoundaries(date time.Time, size uint) {
+func (f *ScannedFolder) PushBoundaries(date time.Time, size int) {
 	if f.Start.IsZero() || f.Start.After(date) {
 		f.Start = atStartOfDay(date)
 	}

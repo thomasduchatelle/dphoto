@@ -2,7 +2,7 @@ package catalog
 
 // ListMedias return a page of medias within an album
 func ListMedias(owner string, folderName string, request PageRequest) (*MediaPage, error) {
-	medias, err := dbPort.FindMedias(NewFindMediaRequest(owner).WithAlbum(normaliseFolderName(folderName)))
+	medias, err := repositoryPort.FindMedias(NewFindMediaRequest(owner).WithAlbum(normaliseFolderName(folderName)))
 	return &MediaPage{
 		Content: medias,
 	}, err
@@ -10,12 +10,12 @@ func ListMedias(owner string, folderName string, request PageRequest) (*MediaPag
 
 // InsertMedias stores metadata and location of photo and videos
 func InsertMedias(owner string, medias []CreateMediaRequest) error {
-	return dbPort.InsertMedias(owner, medias)
+	return repositoryPort.InsertMedias(owner, medias)
 }
 
 // FindSignatures returns a list of the medias already known ; they can't be duplicated
 func FindSignatures(owner string, signatures []*MediaSignature) ([]*MediaSignature, error) {
-	return dbPort.FindExistingSignatures(owner, signatures)
+	return repositoryPort.FindExistingSignatures(owner, signatures)
 }
 
 // AssignIdsToNewMedias filters out signatures that are already known and compute a unique ID for the others.

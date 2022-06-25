@@ -1,23 +1,20 @@
 package cmd
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/backupui"
-	"github.com/thomasduchatelle/dphoto/dphoto/cmd/printer"
 	"github.com/spf13/cobra"
-	"path/filepath"
+	"github.com/thomasduchatelle/dphoto/domain/backup"
+	"github.com/thomasduchatelle/dphoto/domain/backupadapters/filesystemvolume"
+	"github.com/thomasduchatelle/dphoto/domain/backupadapters/s3volume"
+	"github.com/thomasduchatelle/dphoto/dphoto/cmd/backupui"
+	"github.com/thomasduchatelle/dphoto/dphoto/config"
+	"github.com/thomasduchatelle/dphoto/dphoto/printer"
 	"strings"
 )
 
-var (
-	backupArgs = struct {
-		remote bool
-	}{}
-)
+var newS3Volume func(volumePath string) (backup.SourceVolume, error)
 
 var backupCmd = &cobra.Command{
-	Use:   "backup [--remote] <source path>",
+	Use:   "backup <source path>",
 	Short: "Backup photos and videos to personal cloud",
 	Long:  `Backup photos and videos to personal cloud`,
 	Args:  cobra.ExactArgs(1),
@@ -26,12 +23,11 @@ var backupCmd = &cobra.Command{
 
 		progress := backupui.NewProgress()
 
-		volume := newSmartVolume(volumePath)
-		if backupArgs.remote {
-			volume.Local = false
-		}
-		report, err := backup.StartBackupRunner(Owner, volume, backup.Options{Listener: progress})
+		volume, err := newSmartVolume(volumePath)
 		printer.FatalIfError(err, 1)
+
+		report, err := backup.Backup(Owner, volume, backup.OptionWithListener(progress))
+		printer.FatalIfError(err, 2)
 
 		progress.Stop()
 
@@ -42,27 +38,17 @@ var backupCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(backupCmd)
 
-	backupCmd.Flags().BoolVarP(&backupArgs.remote, "remote", "r", false, "mark the source as remote ; a local buffer will be used to read files only once")
+	config.Listen(func(cfg config.Config) {
+		newS3Volume = func(volumePath string) (backup.SourceVolume, error) {
+			return s3volume.New(cfg.GetAWSSession(), volumePath)
+		}
+	})
 }
 
-func newSmartVolume(volumePath string) backupmodel.VolumeToBackup {
-	volumeType := VolumeTypeFromPath(volumePath)
-	volumeId := volumePath
-	if volumeType == backupmodel.VolumeTypeFileSystem {
-		volumeId, _ = filepath.Abs(volumePath)
-	}
-	return backupmodel.VolumeToBackup{
-		UniqueId: volumeId,
-		Type:     volumeType,
-		Path:     volumePath,
-		Local:    true,
-	}
-}
-
-func VolumeTypeFromPath(arg string) backupmodel.VolumeType {
-	if strings.HasPrefix(arg, "s3://") {
-		return backupmodel.VolumeTypeS3
+func newSmartVolume(volumePath string) (backup.SourceVolume, error) {
+	if strings.HasPrefix(volumePath, "s3://") {
+		return newS3Volume(volumePath)
 	}
 
-	return backupmodel.VolumeTypeFileSystem
+	return filesystemvolume.New(volumePath), nil
 }

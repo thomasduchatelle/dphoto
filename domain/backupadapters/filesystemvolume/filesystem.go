@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func NewVolume(path string) backup.SourceVolume {
+func New(path string) backup.SourceVolume {
 	return &volume{
 		path:                path,
 		supportedExtensions: backup.SupportedExtensions,

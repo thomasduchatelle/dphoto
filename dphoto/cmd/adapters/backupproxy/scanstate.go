@@ -1,10 +1,10 @@
-package backupadapter
+package backupproxy
 
 import (
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/backupmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/config"
 	"encoding/json"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/domain/backup"
+	"github.com/thomasduchatelle/dphoto/dphoto/config"
 	"io/ioutil"
 	"os"
 	"path"
@@ -18,7 +18,7 @@ var (
 
 type stateContent struct {
 	VolumeId    string
-	ScanResult  []*backupmodel.ScannedFolder
+	ScanResult  []*backup.ScannedFolder
 	RejectCount int
 }
 
@@ -35,7 +35,7 @@ func init() {
 	})
 }
 
-func Store(volumeId string, result []*backupmodel.ScannedFolder, rejectCount int) error {
+func Store(volumeId string, result []*backup.ScannedFolder, rejectCount int) error {
 	if storeFile == "" {
 		return errors.Errorf("local.home must have been set before using this function.")
 	}
@@ -52,7 +52,7 @@ func Store(volumeId string, result []*backupmodel.ScannedFolder, rejectCount int
 	return ioutil.WriteFile(storeFile, jsonValue, 0644)
 }
 
-func restore(volumeId string) ([]*backupmodel.ScannedFolder, int, error) {
+func restore(volumeId string) ([]*backup.ScannedFolder, int, error) {
 	content, err := ioutil.ReadFile(storeFile)
 	if err != nil && os.IsNotExist(err) {
 		return nil, 0, nil
