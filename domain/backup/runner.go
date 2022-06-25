@@ -159,7 +159,7 @@ func (r *runner) catalogueMedias(analysedChannel chan []*AnalysedMedia, requests
 				return
 
 			case buffer, more := <-analysedChannel:
-				if more && len(r.errors) == 0 {
+				if more && r.hasAnyErrors() == 0 {
 					catalogedMedias, err := r.Cataloger(buffer, r.progressEventChannel)
 					r.appendError(errors.Wrap(err, "error in cataloguer"))
 
@@ -174,6 +174,13 @@ func (r *runner) catalogueMedias(analysedChannel chan []*AnalysedMedia, requests
 	}, func() {
 		close(requestsChannel)
 	})
+}
+
+func (r *runner) hasAnyErrors() int {
+	r.errorsMutex.Lock()
+	defer r.errorsMutex.Unlock()
+
+	return len(r.errors)
 }
 
 func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *BackingUpMediaRequest, bufferedChannel chan []*BackingUpMediaRequest) {
@@ -206,7 +213,7 @@ func (r *runner) uploadMedias(bufferedChannel chan []*BackingUpMediaRequest, com
 				return
 
 			case buffer, more := <-bufferedChannel:
-				if more && len(r.errors) == 0 {
+				if more && r.hasAnyErrors() == 0 {
 					err := r.Uploader(buffer, r.progressEventChannel)
 					r.appendError(errors.Wrap(err, "error in uploader"))
 				} else if !more {
@@ -215,7 +222,13 @@ func (r *runner) uploadMedias(bufferedChannel chan []*BackingUpMediaRequest, com
 			}
 		}
 	}, func() {
-		completionChannel <- r.errors
+		r.errorsMutex.Lock()
+		defer r.errorsMutex.Unlock()
+
+		errs := make([]error, len(r.errors), len(r.errors))
+		copy(errs, r.errors)
+
+		completionChannel <- errs
 		close(completionChannel)
 		close(r.progressEventChannel)
 	})
