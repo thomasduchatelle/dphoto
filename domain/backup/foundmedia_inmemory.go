@@ -29,7 +29,7 @@ func (i *InmemoryMedia) String() string {
 
 func (i *InmemoryMedia) MediaPath() MediaPath {
 	return MediaPath{
-		ParentFullPath: path.Join("/ram", i.filename),
+		ParentFullPath: path.Join("/ram", path.Dir(i.filename)),
 		Root:           "/ram",
 		Path:           path.Dir(i.filename),
 		Filename:       path.Base(i.filename),

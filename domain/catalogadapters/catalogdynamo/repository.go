@@ -18,19 +18,17 @@ const (
 )
 
 type rep struct {
-	db                      *dynamodb.DynamoDB
-	table                   string
-	localDynamodb           bool // localDynamodb is set to true to disable some feature - not available on localstack - like tagging
-	findMovedMediaBatchSize int64
+	db            *dynamodb.DynamoDB
+	table         string
+	localDynamodb bool // localDynamodb is set to true to disable some feature - not available on localstack - like tagging
 }
 
 // NewRepository creates the repository and connect to the database
 func NewRepository(awsSession *session.Session, tableName string) (catalog.RepositoryAdapter, error) {
 	rep := &rep{
-		db:                      dynamodb.New(awsSession),
-		table:                   tableName,
-		localDynamodb:           false,
-		findMovedMediaBatchSize: int64(dynamoWriteBatchSize),
+		db:            dynamodb.New(awsSession),
+		table:         tableName,
+		localDynamodb: false,
 	}
 
 	err := rep.CreateTableIfNecessary()

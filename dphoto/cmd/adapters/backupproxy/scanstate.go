@@ -32,17 +32,22 @@ func init() {
 		}
 
 		storeFile = path.Join(storeDir, "last_scan.json")
+
+		err = os.MkdirAll(path.Dir(storeFile), 0744)
+		if err != nil {
+			panic(err)
+		}
 	})
 }
 
-func Store(volumeId string, result []*backup.ScannedFolder, rejectCount int) error {
+func Store(volumeId string, folders []*backup.ScannedFolder, rejectCount int) error {
 	if storeFile == "" {
 		return errors.Errorf("local.home must have been set before using this function.")
 	}
 
 	jsonValue, err := json.Marshal(stateContent{
 		VolumeId:    volumeId,
-		ScanResult:  result,
+		ScanResult:  folders,
 		RejectCount: rejectCount,
 	})
 	if err != nil {

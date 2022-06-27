@@ -22,7 +22,6 @@ var backupCmd = &cobra.Command{
 		volumePath := args[0]
 
 		progress := backupui.NewProgress()
-
 		volume, err := newSmartVolume(volumePath)
 		printer.FatalIfError(err, 1)
 

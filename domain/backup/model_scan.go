@@ -7,11 +7,11 @@ import (
 // ScannedFolder represents a (sub)folder in the scanned target
 type ScannedFolder struct {
 	Name         string
-	RelativePath string                       // RelativePath can be used for display purpose
-	FolderName   string                       // FolderName is the original folder name (Name with date prefix that have been removed)
-	Start, End   time.Time                    // Start and End are the beginning of the day of the first media, and the beginning of the day following the last media.
-	Distribution map[string]MediaCounter      // Distribution is the number of media found for each day (format YYYY-MM-DD)
-	Volume       func() (SourceVolume, error) // Volume returns a SourceVolume of this children folder.
+	RelativePath string                  // RelativePath can be used for display purpose
+	FolderName   string                  // FolderName is the original folder name (Name with date prefix that have been removed)
+	AbsolutePath string                  // AbsolutePath is used to create a new SourceVolume
+	Start, End   time.Time               // Start and End are the beginning of the day of the first media, and the beginning of the day following the last media.
+	Distribution map[string]MediaCounter // Distribution is the number of media found for each day (format YYYY-MM-DD)
 }
 
 // PushBoundaries is updating the ScannedFolder dates, and update the counter.

@@ -146,7 +146,7 @@ func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]*
 		return nil, errors.Wrapf(err, "failed to encode details values from media %+v", media.Details)
 	}
 
-	mediaEntry, err := dynamodbattribute.MarshalMap(&MediaRecord{
+	return dynamodbattribute.MarshalMap(&MediaRecord{
 		TablePk:       MediaPrimaryKey(owner, media.Id),
 		AlbumIndexKey: mediaAlbumIndexedKey(owner, media.FolderName, media.Details.DateTime, media.Id),
 		Id:            media.Id,
@@ -157,11 +157,6 @@ func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]*
 		SignatureSize: media.Signature.SignatureSize,
 		SignatureHash: media.Signature.SignatureSha256,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return mediaEntry, err
 }
 
 func unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalog.MediaMeta, error) {

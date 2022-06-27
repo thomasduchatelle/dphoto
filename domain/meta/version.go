@@ -2,7 +2,7 @@
 package meta
 
 const (
-	version = "1.6.0-alpha"
+	version = "1.6.0-beta"
 )
 
 // Version returns the version of the app, updated by ci/pre-release.sh

@@ -11,12 +11,14 @@ import (
 )
 
 type TargetedBackupHandler struct {
-	Owner string
+	Owner             string
+	SubVolumeResolver func(absolutePath string) (backup.SourceVolume, error)
 }
 
-func NewBackupHandler(owner string) ui.BackupSuggestionPort {
+func NewBackupHandler(owner string, resolver func(absolutePath string) (backup.SourceVolume, error)) ui.BackupSuggestionPort {
 	return &TargetedBackupHandler{
-		Owner: owner,
+		Owner:             owner,
+		SubVolumeResolver: resolver,
 	}
 }
 
@@ -30,7 +32,7 @@ func (b *BackupAlbumFilter) AcceptAnalysedMedia(media *backup.AnalysedMedia, fol
 
 func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, existing *ui.ExistingRecord, renderer ui.InteractiveRendererPort) error {
 	if folder, ok := record.Original.(*backup.ScannedFolder); ok {
-		subVolume, err := folder.Volume()
+		subVolume, err := t.SubVolumeResolver(folder.AbsolutePath)
 		if err != nil {
 			return err
 		}

@@ -111,15 +111,12 @@ func TestShouldReportScannedItems(t *testing.T) {
 	// then
 	name := "it should find 2 folders"
 	if a.NoError(err) {
-		for _, folder := range folders {
-			folder.Volume = nil
-		}
-
 		a.Equal([]*backup.ScannedFolder{
 			{
 				Name:         "folder1",
 				RelativePath: "folder1",
 				FolderName:   "folder1",
+				AbsolutePath: "/ram/folder1",
 				Start:        time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC),
 				End:          time.Date(2022, 6, 20, 0, 0, 0, 0, time.UTC),
 				Distribution: map[string]backup.MediaCounter{
@@ -131,6 +128,7 @@ func TestShouldReportScannedItems(t *testing.T) {
 				Name:         "folder1a",
 				RelativePath: "folder1/folder1a",
 				FolderName:   "folder1a",
+				AbsolutePath: "/ram/folder1/folder1a",
 				Start:        time.Date(2022, 6, 21, 0, 0, 0, 0, time.UTC),
 				End:          time.Date(2022, 6, 22, 0, 0, 0, 0, time.UTC),
 				Distribution: map[string]backup.MediaCounter{

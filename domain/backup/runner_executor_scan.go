@@ -71,9 +71,7 @@ func (s *scanReceiver) newFoundAlbum(mediaPath MediaPath) *ScannedFolder {
 		Name:         mediaPath.ParentDir,
 		RelativePath: mediaPath.Path,
 		FolderName:   mediaPath.ParentDir,
+		AbsolutePath: mediaPath.ParentFullPath,
 		Distribution: make(map[string]MediaCounter),
-		Volume: func() (SourceVolume, error) {
-			return s.volume.Children(mediaPath)
-		},
 	}
 }

@@ -13,7 +13,6 @@ import (
 type SourceVolume interface {
 	String() string
 	FindMedias() ([]FoundMedia, error)
-	Children(path MediaPath) (SourceVolume, error)
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.

@@ -11,9 +11,10 @@ import (
 )
 
 type ScanProgress struct {
-	screen       *screen.AutoRefreshScreen
-	scanningLine *screen.ProgressLine
-	analysedLine *screen.ProgressLine
+	screen           *screen.AutoRefreshScreen
+	scanningLine     *screen.ProgressLine
+	analysedLine     *screen.ProgressLine
+	onAnalysedCalled bool
 }
 
 func ScanWithCache(owner string, volume backup.SourceVolume, options ...backup.Options) (ui.SuggestionRecordRepositoryPort, []backup.FoundMedia, error) {
@@ -42,7 +43,7 @@ func doScan(owner string, volume backup.SourceVolume, options ...backup.Options)
 	options = append(options, backup.OptionWithListener(progress))
 
 	suggestions, rejects, err := backup.Scan(owner, volume, options...)
-	progress.screen.Stop()
+	progress.stop()
 
 	if err != nil {
 		return nil, nil, err
@@ -55,7 +56,7 @@ func doScan(owner string, volume backup.SourceVolume, options ...backup.Options)
 func newScanProgress() *ScanProgress {
 	table := screen.NewTable(" ", 2, 20, 80, 25)
 	scanningLine, scanningSegment := screen.NewProgressLine(table, "Scanning...")
-	analysedLine, analysedSegment := screen.NewProgressLine(table, "Analysed...")
+	analysedLine, analysedSegment := screen.NewProgressLine(table, "Analysing...")
 
 	progressScreen := screen.NewAutoRefreshScreen(
 		screen.RenderingOptions{Width: 180},
@@ -70,19 +71,28 @@ func newScanProgress() *ScanProgress {
 	}
 }
 
-func (s *ScanProgress) OnScanComplete(total int) {
+func (s *ScanProgress) OnScanComplete(total backup.MediaCounter) {
 	s.scanningLine.SwapSpinner(1)
-	s.scanningLine.SetLabel(aurora.Sprintf("%d files has been found.", aurora.Cyan(total)))
+	s.scanningLine.SetLabel(aurora.Sprintf("%d files has been found.", aurora.Cyan(total.Count)))
 }
 
-func (s *ScanProgress) OnAnalyseProgress(count, total int) {
-	s.analysedLine.SetBar(count, total)
-	s.analysedLine.SetExplanation(fmt.Sprintf("%d / %d", count, total))
+func (s *ScanProgress) OnAnalysed(done, total backup.MediaCounter) {
+	s.onAnalysedCalled = true
+	if !total.IsZero() {
+		s.analysedLine.SetBar(done.Count, total.Count)
+		s.analysedLine.SetExplanation(fmt.Sprintf("%d / %d files", done.Count, total.Count))
 
-	if count < total {
-		s.analysedLine.SetLabel("Reading...")
-	} else {
-		s.analysedLine.SwapSpinner(1)
-		s.analysedLine.SetLabel("Reading completed.")
+		if done.Count == total.Count {
+			s.analysedLine.SwapSpinner(1)
+			s.analysedLine.SetLabel("Analyse complete")
+		}
 	}
+}
+
+func (s *ScanProgress) stop() {
+	if !s.onAnalysedCalled {
+		s.analysedLine.SwapSpinner(1)
+		s.analysedLine.SetLabel("Analyse skipped")
+	}
+	s.screen.Stop()
 }

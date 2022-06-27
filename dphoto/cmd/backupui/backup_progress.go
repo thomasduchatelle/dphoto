@@ -7,20 +7,22 @@ import (
 )
 
 type BackupProgress struct {
-	screen      *screen.AutoRefreshScreen
-	scanLine    *screen.ProgressLine
-	analyseLine *screen.ProgressLine
-	uploadLine  *screen.ProgressLine
+	screen           *screen.AutoRefreshScreen
+	scanLine         *screen.ProgressLine
+	analyseLine      *screen.ProgressLine
+	uploadLine       *screen.ProgressLine
+	onAnalysedCalled bool
+	onUploadCalled   bool
 }
 
 func NewProgress() *BackupProgress {
 	table := screen.NewTable(" ", 2, 20, 80, 25)
 
-	segments := make([]screen.Segment, 4)
+	segments := make([]screen.Segment, 3)
 	p := &BackupProgress{}
 	p.scanLine, segments[0] = screen.NewProgressLine(table, "Scanning...")
-	p.analyseLine, segments[2] = screen.NewProgressLine(table, "Analysing...")
-	p.uploadLine, segments[3] = screen.NewProgressLine(table, "Uploading ...")
+	p.analyseLine, segments[1] = screen.NewProgressLine(table, "Analysing...")
+	p.uploadLine, segments[2] = screen.NewProgressLine(table, "Uploading ...")
 
 	p.screen = screen.NewAutoRefreshScreen(
 		screen.RenderingOptions{Width: 180},
@@ -34,12 +36,6 @@ func (p *BackupProgress) OnScanComplete(total backup.MediaCounter) {
 	if total.Count == 0 {
 		p.scanLine.SwapSpinner(1)
 		p.scanLine.SetLabel(fmt.Sprintf("Scan complete: no new files found"))
-
-		p.analyseLine.SwapSpinner(1)
-		p.analyseLine.SetLabel("Analyse skipped")
-
-		p.uploadLine.SwapSpinner(1)
-		p.uploadLine.SetLabel("Upload skipped")
 	} else {
 		p.scanLine.SwapSpinner(1)
 		p.scanLine.SetLabel(fmt.Sprintf("Scan complete: %d files found", total.Count))
@@ -47,6 +43,7 @@ func (p *BackupProgress) OnScanComplete(total backup.MediaCounter) {
 }
 
 func (p *BackupProgress) OnAnalysed(done, total backup.MediaCounter) {
+	p.onAnalysedCalled = true
 	if !total.IsZero() {
 		p.analyseLine.SetBar(done.Count, total.Count)
 		p.analyseLine.SetExplanation(fmt.Sprintf("%d / %d files", done.Count, total.Count))
@@ -59,6 +56,7 @@ func (p *BackupProgress) OnAnalysed(done, total backup.MediaCounter) {
 }
 
 func (p *BackupProgress) OnUploaded(done, total backup.MediaCounter) {
+	p.onUploadCalled = true
 	if !total.IsZero() {
 		p.uploadLine.SetBar(done.Size, total.Size)
 		p.uploadLine.SetExplanation(fmt.Sprintf("%s / %s", byteCountIEC(done.Size), byteCountIEC(total.Size)))
@@ -73,5 +71,13 @@ func (p *BackupProgress) OnUploaded(done, total backup.MediaCounter) {
 }
 
 func (p *BackupProgress) Stop() {
+	if !p.onAnalysedCalled {
+		p.analyseLine.SwapSpinner(1)
+		p.analyseLine.SetLabel("Analyse skipped")
+	}
+	if !p.onUploadCalled {
+		p.uploadLine.SwapSpinner(1)
+		p.uploadLine.SetLabel("Upload skipped")
+	}
 	p.screen.Stop()
 }

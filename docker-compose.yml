@@ -10,5 +10,5 @@ services:
       - DATA_DIR=/tmp/localstack/data
       - DEBUG=1
     volumes:
-      - "./dphoto/.build/localstack:/tmp/localstack"
+      - "./.build/localstack:/tmp/localstack"
       - '/var/run/docker.sock:/var/run/docker.sock'

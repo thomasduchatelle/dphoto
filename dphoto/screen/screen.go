@@ -99,7 +99,7 @@ func (s *SimpleScreen) Print(page PagePrint) {
 		footerHeight += strings.Count(footer[i], "\n") + 1
 	}
 
-	content := make([]string, len(page.Content))
+	content := make([]string, len(page.Content), len(page.Content))
 	contentHeight := 0
 	for i, line := range page.Content {
 		content[i] = strings.Trim(line.Content(s.renderingOptions), "\n")

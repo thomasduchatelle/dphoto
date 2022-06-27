@@ -93,7 +93,7 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 	group := sync.WaitGroup{}
 
 	group.Add(parallel)
-	for i := 0; i < r.ConcurrentAnalyser; i++ {
+	for i := 0; i < parallel; i++ {
 		go func() {
 			defer group.Done()
 

@@ -39,12 +39,12 @@ var scan = &cobra.Command{
 		}
 
 		if recordRepository.Count() == 0 {
-			fmt.Println(aurora.Red(fmt.Sprintf("No media found on path %s .", volume)))
+			fmt.Println(aurora.Yellow(fmt.Sprintf("No new media found on volume %s.", aurora.Cyan(volume))))
 		} else if scanArgs.nonInteractive {
 			err = ui.NewSimpleSession(backupproxy.NewAlbumRepository(Owner), recordRepository).Render()
 			printer.FatalIfError(err, 1)
 		} else {
-			err = ui.NewInteractiveSession(&uiCatalogAdapter{backupproxy.NewBackupHandler(Owner)}, backupproxy.NewAlbumRepository(Owner), recordRepository, Owner).Start()
+			err = ui.NewInteractiveSession(&uiCatalogAdapter{backupproxy.NewBackupHandler(Owner, newSmartVolume)}, backupproxy.NewAlbumRepository(Owner), recordRepository, Owner).Start()
 			printer.FatalIfError(err, 1)
 		}
 
