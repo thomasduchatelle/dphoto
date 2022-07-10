@@ -108,12 +108,18 @@ deploy-cli-local:
 ## UTILS
 #######################################
 
-.PHONY: mocks clearlocal
+.PHONY: mocks clearlocal dcdown dcup
 
 mocks:
 	mockery --all -r
 
-clearlocal:
-	aws --endpoint "http://localhost:4566" --region eu-west-1 s3 rm --recursive "s3://dphoto-local" || echo "skipping"
-	aws --endpoint http://localhost:4566 --region eu-west-1 dynamodb delete-table --table dphoto-local || echo "skipping"
-	rm -rf .build/volumes/*
+clearlocal: dcdown dcup
+
+dcdown:
+	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region eu-west-1 s3 rm --recursive "s3://dphoto-local" | cat || echo "skipping"
+	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region eu-west-1 dynamodb delete-table --table dphoto-local | cat || echo "skipping"
+	docker-compose down -v || echo "skipping"
+	rm -rf .build/localstack
+
+dcup:
+	docker-compose up -d

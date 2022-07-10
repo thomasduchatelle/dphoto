@@ -4,12 +4,14 @@ package s3store
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"io"
+	"path"
 	"strings"
 )
 
@@ -55,6 +57,38 @@ func (s *store) Upload(keyHint archive.DestructuredKey, content io.Reader) (stri
 	})
 
 	return key, errors.Wrapf(err, "upload failed")
+}
+
+func (s *store) Copy(origin string, destination archive.DestructuredKey) (string, error) {
+	if strings.HasPrefix(destination.Prefix, "/") {
+		return "", errors.Errorf("Prefix must not start with a '/' in key hint %+v", destination)
+	}
+
+	destinationKey, err := s.findUniqueFilename(destination)
+	if err != nil {
+		return "", errors.Wrapf(err, "cannot find a unique destination key")
+	}
+
+	_, err = s.s3.CopyObject(&s3.CopyObjectInput{
+		Bucket:     &s.bucketName,
+		CopySource: aws.String(strings.Trim(path.Join(s.bucketName, origin), "/")),
+		Key:        &destinationKey,
+	})
+	return destinationKey, errors.Wrapf(err, "failed to copy %s -> %s", origin, destinationKey)
+}
+
+func (s *store) Delete(keys []string) error {
+	for _, key := range keys {
+		_, err := s.s3.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: &s.bucketName,
+			Key:    &key,
+		})
+		if err != nil && !s.isNotFound(err) {
+			return errors.Wrapf(err, "failed to remove moved file %s", key)
+		}
+	}
+
+	return nil
 }
 
 //func (s *store) FetchFile(owner string, folderName, filename string) ([]byte, error) {
@@ -104,6 +138,11 @@ func (s *store) findUniqueFilename(keyHint archive.DestructuredKey) (string, err
 	}
 
 	return candidate, errors.Wrapf(err, "could not determine a unique name for %s?%s", keyHint.Prefix, keyHint.Suffix)
+}
+
+func (s *store) isNotFound(err error) bool {
+	aerr, ok := err.(awserr.Error)
+	return ok && aerr.Code() == s3.ErrCodeNoSuchKey
 }
 
 //func (s *store) MoveFile(owner string, folderName string, filename string, destFolderName string) (string, error) {

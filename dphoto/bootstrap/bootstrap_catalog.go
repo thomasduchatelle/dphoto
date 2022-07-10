@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	_ "github.com/thomasduchatelle/dphoto/domain/backupadapters/analysers"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
 	"github.com/thomasduchatelle/dphoto/dphoto/config"
 )

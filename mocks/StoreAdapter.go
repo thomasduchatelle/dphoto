@@ -17,6 +17,41 @@ type StoreAdapter struct {
 	mock.Mock
 }
 
+// Copy provides a mock function with given fields: origin, destination
+func (_m *StoreAdapter) Copy(origin string, destination archive.DestructuredKey) (string, error) {
+	ret := _m.Called(origin, destination)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, archive.DestructuredKey) string); ok {
+		r0 = rf(origin, destination)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, archive.DestructuredKey) error); ok {
+		r1 = rf(origin, destination)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Delete provides a mock function with given fields: locations
+func (_m *StoreAdapter) Delete(locations []string) error {
+	ret := _m.Called(locations)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]string) error); ok {
+		r0 = rf(locations)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Upload provides a mock function with given fields: values, content
 func (_m *StoreAdapter) Upload(values archive.DestructuredKey, content io.Reader) (string, error) {
 	ret := _m.Called(values, content)

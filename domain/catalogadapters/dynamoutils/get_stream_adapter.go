@@ -19,11 +19,16 @@ func NewGetBatchItem(delegate DynamoBatchGetItem, tableName string, projectionEx
 }
 
 func (s *simpleBatchGetExecutor) BatchGet(keys []map[string]*dynamodb.AttributeValue) (*dynamodb.BatchGetItemOutput, error) {
+	var expression *string
+	if s.projectionExpression != "" {
+		expression = &s.projectionExpression
+	}
+
 	return s.delegate.BatchGetItem(&dynamodb.BatchGetItemInput{
 		RequestItems: map[string]*dynamodb.KeysAndAttributes{
 			s.tableName: {
 				Keys:                 keys,
-				ProjectionExpression: &s.projectionExpression,
+				ProjectionExpression: expression,
 			},
 		},
 	})

@@ -18,12 +18,13 @@ var (
 )
 
 var newCmd = &cobra.Command{
-	Use:   "new --name <display name> --start <ISO date> --end <ISO date> [--folder-name <forced physical name>]",
+	Use:   "create --name <display name> --start <ISO date> --end <ISO date> [--folder-name <forced physical name>]",
 	Short: "Create a new album",
 	Long: `Create a new album
 
 When not specified, folder name is generated from the pattern 'YYYY-MM_<normalised_display_name>'.
 `,
+	Aliases: []string{"new"},
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		creationRequest.Start, err = parseDate(newArgs.startDate)
@@ -31,6 +32,7 @@ When not specified, folder name is generated from the pattern 'YYYY-MM_<normalis
 		creationRequest.End, err = parseDate(newArgs.endDate)
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
+		creationRequest.Owner = Owner
 		err = catalog.Create(creationRequest)
 		printer.FatalWithMessageIfError(err, 1, "Failed to create the album, or to migrate medias to it.")
 

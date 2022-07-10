@@ -1,7 +1,10 @@
 // Package catalogarchivesync is calling archive domain directly
 package catalogarchivesync
 
-import "github.com/thomasduchatelle/dphoto/domain/catalog"
+import (
+	"github.com/thomasduchatelle/dphoto/domain/archive"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
+)
 
 func New() catalog.CArchiveAdapter {
 	return new(adapter)
@@ -10,7 +13,6 @@ func New() catalog.CArchiveAdapter {
 type adapter struct {
 }
 
-func (a *adapter) MoveMedias(owner string, ids []string, name string) error {
-	//TODO implement me
-	panic("implement me")
+func (a *adapter) MoveMedias(owner string, ids []string, targetFolder string) error {
+	return archive.Relocate(owner, ids, targetFolder)
 }

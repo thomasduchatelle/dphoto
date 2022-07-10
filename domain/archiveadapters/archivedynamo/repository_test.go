@@ -1,6 +1,7 @@
 package archivedynamo
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -59,26 +60,18 @@ func TestShouldAddAndFindLocations(t *testing.T) {
 		},
 	}
 
-	repo, err := New(
-		session.Must(session.NewSession(&aws.Config{
-			CredentialsChainVerboseErrors: aws.Bool(true),
-			Endpoint:                      aws.String("http://localhost:4566"),
-			Credentials:                   credentials.NewStaticCredentials("localstack", "localstack", ""),
-			Region:                        aws.String("eu-west-1"),
-		})),
-		"dphoto-unittest-"+time.Now().Format("20060102150405.000"),
+	repo := Must(New(
+		session.Must(session.NewSession(awsConfig())),
+		"dphoto-unittest-archive-"+time.Now().Format("20060102150405.000"),
 		true,
-	)
-	if err != nil {
-		panic(err)
-	}
+	))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 
 			for _, add := range tt.addArgs {
-				err = repo.AddLocation(add.owner, add.id, add.key)
+				err := repo.AddLocation(add.owner, add.id, add.key)
 				if !a.NoError(err, tt.name) {
 					a.FailNow(err.Error())
 				}
@@ -91,5 +84,80 @@ func TestShouldAddAndFindLocations(t *testing.T) {
 				a.Equal(tt.wantErr, err, tt.name)
 			}
 		})
+	}
+}
+
+func TestUpdateLocations(t *testing.T) {
+	tests := []struct {
+		name    string
+		updates []map[string]string
+		ids     []string
+		want    map[string]string
+	}{
+		{
+			name: "it should creates non-existing locations",
+			updates: []map[string]string{
+				{
+					"id-01": "key-01",
+					"id-02": "key-02",
+				},
+			},
+			ids: []string{"id-01", "id-02"},
+			want: map[string]string{
+				"id-01": "key-01",
+				"id-02": "key-02",
+			},
+		},
+		{
+			name: "it should creates non-existing locations, then update some",
+			updates: []map[string]string{
+				{
+					"id-11": "key-11",
+					"id-12": "key-12",
+				},
+				{
+					"id-12": "key-12",
+					"id-13": "key-13",
+				},
+			},
+			ids: []string{"id-11", "id-12", "id-13"},
+			want: map[string]string{
+				"id-11": "key-11",
+				"id-12": "key-12",
+				"id-13": "key-13",
+			},
+		},
+	}
+
+	repo := Must(New(
+		session.Must(session.NewSession(awsConfig())),
+		"dphoto-unittest-archive",
+		true,
+	))
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			owner := fmt.Sprintf("owner-%s", time.Now().Format("20060102150405.000"))
+			for _, update := range tt.updates {
+				err := repo.UpdateLocations(owner, update)
+				if !assert.NoError(t, err, tt.name) {
+					assert.FailNow(t, err.Error())
+				}
+			}
+
+			got, err := repo.FindByIds(owner, tt.ids)
+			if assert.NoError(t, err, tt.name) {
+				assert.Equal(t, tt.want, got, tt.name)
+			}
+		})
+	}
+}
+
+func awsConfig() *aws.Config {
+	return &aws.Config{
+		CredentialsChainVerboseErrors: aws.Bool(true),
+		Endpoint:                      aws.String("http://localhost:4566"),
+		Credentials:                   credentials.NewStaticCredentials("localstack", "localstack", ""),
+		Region:                        aws.String("eu-west-1"),
 	}
 }

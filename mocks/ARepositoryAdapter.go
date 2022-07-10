@@ -48,6 +48,43 @@ func (_m *ARepositoryAdapter) FindById(owner string, id string) (string, error) 
 	return r0, r1
 }
 
+// FindByIds provides a mock function with given fields: owner, ids
+func (_m *ARepositoryAdapter) FindByIds(owner string, ids []string) (map[string]string, error) {
+	ret := _m.Called(owner, ids)
+
+	var r0 map[string]string
+	if rf, ok := ret.Get(0).(func(string, []string) map[string]string); ok {
+		r0 = rf(owner, ids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]string)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, []string) error); ok {
+		r1 = rf(owner, ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateLocations provides a mock function with given fields: owner, locations
+func (_m *ARepositoryAdapter) UpdateLocations(owner string, locations map[string]string) error {
+	ret := _m.Called(owner, locations)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, map[string]string) error); ok {
+		r0 = rf(owner, locations)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewARepositoryAdapter creates a new instance of ARepositoryAdapter. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewARepositoryAdapter(t testing.TB) *ARepositoryAdapter {
 	mock := &ARepositoryAdapter{}

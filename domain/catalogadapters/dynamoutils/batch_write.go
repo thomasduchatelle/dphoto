@@ -10,8 +10,14 @@ import (
 
 // BufferedWriteItems writes items in batch with backoff and replay unprocessed items
 func BufferedWriteItems(db DynamoBatchWriteItem, requests []*dynamodb.WriteRequest, table string, dynamoWriteBatchSize int) error {
+	batchSize := dynamoWriteBatchSize
+	if batchSize > DynamoWriteBatchSize {
+		batchSize = DynamoWriteBatchSize
+	}
+
+	buffer := make([]*dynamodb.WriteRequest, 0, batchSize)
+
 	retry := backoff.NewExponentialBackOff()
-	buffer := make([]*dynamodb.WriteRequest, 0, dynamoWriteBatchSize)
 
 	for len(buffer) > 0 || len(requests) > 0 {
 		end := cap(buffer) - len(buffer)
@@ -24,32 +30,20 @@ func BufferedWriteItems(db DynamoBatchWriteItem, requests []*dynamodb.WriteReque
 			requests = requests[end:]
 		}
 
-		err := backoff.RetryNotify(func() error {
-			result, err := db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
-				RequestItems: map[string][]*dynamodb.WriteRequest{
-					table: buffer,
-				},
-			})
-
-			if err != nil {
-				return err
-			}
-
-			buffer = buffer[:0]
-			if unprocessed, ok := result.UnprocessedItems[table]; ok && len(unprocessed) > 0 {
-				buffer = append(buffer, unprocessed...)
-			}
-
-			return nil
-
-		}, retry, func(err error, duration time.Duration) {
-			log.WithFields(log.Fields{
-				"Table":    table,
-				"Duration": duration,
-			}).WithError(err).Warnf("Retrying inserting media (buffer len %d)", len(buffer))
+		result, err := db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]*dynamodb.WriteRequest{
+				table: buffer,
+			},
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to insert batch %+v", buffer)
+		}
+
+		buffer = buffer[:0]
+		if unprocessed, ok := result.UnprocessedItems[table]; ok && len(unprocessed) > 0 {
+			buffer = append(buffer, unprocessed...)
+			log.WithField("Table", table).Warnf("%d unprocessed item(s) while inserting in dynamodb table '%s'. Will retry with exponential backoff.", len(unprocessed), table)
+			time.Sleep(retry.NextBackOff())
 		}
 	}
 
