@@ -13,9 +13,15 @@ import (
 	"io"
 	"path"
 	"strings"
+	"time"
 )
 
-func New(sess *session.Session, bucketName string) (archive.StoreAdapter, error) {
+type StoreAndCache interface {
+	archive.StoreAdapter
+	archive.CacheAdapter
+}
+
+func New(sess *session.Session, bucketName string) (StoreAndCache, error) {
 	s3client := s3.New(sess)
 	uploader := s3manager.NewUploader(sess)
 
@@ -26,7 +32,7 @@ func New(sess *session.Session, bucketName string) (archive.StoreAdapter, error)
 	}, nil
 }
 
-func Must(storage archive.StoreAdapter, err error) archive.StoreAdapter {
+func Must(storage StoreAndCache, err error) StoreAndCache {
 	if err != nil {
 		panic(err)
 	}
@@ -38,25 +44,6 @@ type store struct {
 	s3         *s3.S3
 	s3Uploader *s3manager.Uploader
 	bucketName string
-}
-
-func (s *store) Upload(keyHint archive.DestructuredKey, content io.Reader) (string, error) {
-	if strings.HasPrefix(keyHint.Prefix, "/") {
-		return "", errors.Errorf("Prefix must not start with a '/' in key hint %+v", keyHint)
-	}
-
-	key, err := s.findUniqueFilename(keyHint)
-	if err != nil {
-		return "", err
-	}
-
-	_, err = s.s3Uploader.Upload(&s3manager.UploadInput{
-		Body:   aws.ReadSeekCloser(content),
-		Bucket: &s.bucketName,
-		Key:    &key,
-	})
-
-	return key, errors.Wrapf(err, "upload failed")
 }
 
 func (s *store) Copy(origin string, destination archive.DestructuredKey) (string, error) {
@@ -91,31 +78,61 @@ func (s *store) Delete(keys []string) error {
 	return nil
 }
 
-//func (s *store) FetchFile(owner string, folderName, filename string) ([]byte, error) {
-//	data, err := s.s3.GetObject(&s3.GetObjectInput{
-//		Bucket: &s.bucketName,
-//		Key:    aws.String(path.Join(owner, strings.Trim(folderName, "/"), filename)),
-//	})
-//	if err != nil {
-//		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == s3.ErrCodeNoSuchKey {
-//			return nil, backup.MediaNotFoundError
-//		}
-//		return nil, err
-//	}
-//
-//	defer data.Body.Close()
-//
-//	return ioutil.ReadAll(data.Body)
-//}
-//
-//func (s *store) ContentSignedUrl(owner string, folderName string, filename string, duration time.Duration) (string, error) {
-//	request, _ := s.s3.GetObjectRequest(&s3.GetObjectInput{
-//		Bucket: &s.bucketName,
-//		Key:    aws.String(path.Join(owner, strings.Trim(folderName, "/"), filename)),
-//	})
-//
-//	return request.Presign(duration)
-//}
+func (s *store) Download(key string) (io.ReadCloser, error) {
+	reader, _, _, err := s.Get(key)
+	return reader, err
+}
+
+func (s *store) Get(key string) (io.ReadCloser, int, string, error) {
+	object, err := s.s3.GetObject(&s3.GetObjectInput{
+		Bucket: &s.bucketName,
+		Key:    &key,
+	})
+
+	if aerr, isAwsError := err.(awserr.Error); isAwsError && aerr.Code() == s3.ErrCodeNoSuchKey {
+		return nil, 0, "", archive.NotFoundError
+	}
+
+	return object.Body, int(*object.ContentLength), *object.ContentType, errors.Wrapf(err, "couldn't access key %s in %s bucket", key, s.bucketName)
+}
+
+func (s *store) Put(key string, mediaType string, content io.Reader) error {
+	_, err := s.s3.PutObject(&s3.PutObjectInput{
+		Body:        aws.ReadSeekCloser(content),
+		Bucket:      &s.bucketName,
+		ContentType: &mediaType,
+		Key:         &key,
+	})
+	return errors.Wrapf(err, "failed to PUT %s in bucket %s", key, s.bucketName)
+}
+
+func (s *store) SignedURL(key string, duration time.Duration) (string, error) {
+	request, _ := s.s3.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: &s.bucketName,
+		Key:    &key,
+	})
+
+	return request.Presign(duration)
+}
+
+func (s *store) Upload(keyHint archive.DestructuredKey, content io.Reader) (string, error) {
+	if strings.HasPrefix(keyHint.Prefix, "/") {
+		return "", errors.Errorf("Prefix must not start with a '/' in key hint %+v", keyHint)
+	}
+
+	key, err := s.findUniqueFilename(keyHint)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = s.s3Uploader.Upload(&s3manager.UploadInput{
+		Body:   aws.ReadSeekCloser(content),
+		Bucket: &s.bucketName,
+		Key:    &key,
+	})
+
+	return key, errors.Wrapf(err, "upload failed")
+}
 
 func (s *store) findUniqueFilename(keyHint archive.DestructuredKey) (string, error) {
 	filenames := make(map[string]interface{})
@@ -144,29 +161,3 @@ func (s *store) isNotFound(err error) bool {
 	aerr, ok := err.(awserr.Error)
 	return ok && aerr.Code() == s3.ErrCodeNoSuchKey
 }
-
-//func (s *store) MoveFile(owner string, folderName string, filename string, destFolderName string) (string, error) {
-//	cleanedFolderName := strings.Trim(destFolderName, "/")
-//
-//	destKey, filename, err := s.findUniqueFilename(owner, cleanedFolderName, filename)
-//	if err != nil {
-//		return "", errors.Wrapf(err, "failed getting unique prefix for media %s/%s", destFolderName, filename)
-//	}
-//
-//	origKey := strings.Trim(path.Join(s.bucketName, owner, folderName, filename), "/")
-//
-//	_, err = s.s3.CopyObject(&s3.CopyObjectInput{
-//		Bucket:     &s.bucketName,
-//		CopySource: &origKey,
-//		Key:        &destKey,
-//	})
-//	if err != nil {
-//		return destKey, errors.Wrapf(err, "failed to copy file %s to %s", origKey, destKey)
-//	}
-//
-//	_, err = s.s3.DeleteObject(&s3.DeleteObjectInput{
-//		Bucket: &s.bucketName,
-//		Key:    aws.String(strings.Trim(path.Join(owner, folderName, filename), "/")),
-//	})
-//	return filename, errors.Wrapf(err, "failed to remove moved file %s", origKey)
-//}

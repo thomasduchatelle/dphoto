@@ -1,4 +1,4 @@
-// Package dynamodb package store all the data in a single multi-tenant table:
+// Package catalogdynamo package store all the data in a single multi-tenant table:
 package catalogdynamo
 
 import (
@@ -18,6 +18,7 @@ import (
 //   > Album Y meta
 // - MEDIA (OWNER#ID)
 //   > #META = SIGNATURE + ALBUM + DETAILS
+// 	 > #LOCATION = key (see archive extension)
 
 const (
 	IsoTime = "2006-01-02T15:04:05"

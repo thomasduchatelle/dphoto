@@ -9,8 +9,9 @@ import (
 
 func init() {
 	config.Listen(func(cfg config.Config) {
-		repositoryAdapter := archivedynamo.Must(archivedynamo.New(cfg.GetAWSSession(), cfg.GetString("catalog.dynamodb.table"), false))
-		storeAdapter := s3store.Must(s3store.New(cfg.GetAWSSession(), cfg.GetString("backup.s3.bucket")))
-		archive.Init(repositoryAdapter, storeAdapter)
+		repositoryAdapter := archivedynamo.Must(archivedynamo.New(cfg.GetAWSSession(), cfg.GetString(config.ArchiveDynamodbTable), false))
+		storeAdapter := s3store.Must(s3store.New(cfg.GetAWSSession(), cfg.GetString(config.ArchiveMainBucketName)))
+		cacheAdapter := s3store.Must(s3store.New(cfg.GetAWSSession(), cfg.GetString(config.ArchiveCacheBucketName)))
+		archive.Init(repositoryAdapter, storeAdapter, cacheAdapter)
 	})
 }

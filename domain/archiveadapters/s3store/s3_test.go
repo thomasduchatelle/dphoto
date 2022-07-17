@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"io"
+	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
@@ -205,59 +206,58 @@ func newKey(prefix, suffix string) archive.DestructuredKey {
 	}
 }
 
-//func TestMoveFile(t *testing.T) {
-//	a := assert.New(t)
-//
-//	s, err := New("dphoto-unit-move-"+time.Now().Format("20060102150405"), awsSession)
-//	must(a, err)
-//
-//	_, err = s.s3.CreateBucket(&s3.CreateBucketInput{Bucket: &s.bucketName})
-//	must(a, err)
-//
-//	name := "it should copy a file and delete the original"
-//
-//	_, err = s.UploadFile("unittest", newMedia("skywalker"), "jedi", "anakin.jpg")
-//	if a.NoError(err) {
-//		_, err = s.MoveFile("unittest", "jedi", "anakin.jpg", "sith")
-//		a.NoError(err, name)
-//
-//		_, err = s.s3.GetObject(&s3.GetObjectInput{
-//			Bucket: &s.bucketName,
-//			Key:    aws.String("unittest/jedi/anakin.jpg"),
-//		})
-//		a.Equal(s3.ErrCodeNoSuchKey, err.(awserr.Error).Code(), name)
-//
-//		_, err = s.s3.GetObject(&s3.GetObjectInput{
-//			Bucket: &s.bucketName,
-//			Key:    aws.String("unittest/sith/anakin.jpg"),
-//		})
-//		a.NoError(err, name, name)
-//	}
-//}
+func Test_store_Get_And_Put(t *testing.T) {
+	adapter := createSess("get")
 
-//func must(a *assert.Assertions, err error) {
-//	if !a.NoError(err) {
-//		a.FailNow(err.Error())
-//	}
-//}
-//
-//type InMemoryMedia struct {
-//	content string
-//}
-//
-//func (i *InMemoryMedia) SimpleSignature() *backup.SimpleMediaSignature {
-//	return &backup.SimpleMediaSignature{
-//		RelativePath: "not-used",
-//		Size:         uint(len(i.content)),
-//	}
-//}
-//
-//func (i *InMemoryMedia) ReadMedia() (io.ReadCloser, error) {
-//	return io.NopCloser(strings.NewReader(i.content)), nil
-//}
-//
-//func newMedia(content string) backup.ReadableMedia {
-//	return &InMemoryMedia{
-//		content: content,
-//	}
-//}
+	err := adapter.Put("a/key/that/exists", "hero/avenger", strings.NewReader("I am Ironman"))
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	tests := []struct {
+		name            string
+		key             string
+		wantContent     []byte
+		wantLength      int
+		wantContentType string
+		wantErr         assert.ErrorAssertionFunc
+	}{
+		{
+			name:            "it should return not found if the object doesn't exist",
+			key:             "a/key/that/doesnt/exist",
+			wantContent:     nil,
+			wantLength:      0,
+			wantContentType: "",
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.Equal(t, archive.NotFoundError, err, i)
+			},
+		},
+		{
+			name:            "it should return the object with the size and media type",
+			key:             "a/key/that/exists",
+			wantContent:     []byte("I am Ironman"),
+			wantLength:      12,
+			wantContentType: "hero/avenger",
+			wantErr:         assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotReader, gotLength, gotType, err := adapter.Get(tt.key)
+			if !tt.wantErr(t, err, fmt.Sprintf("Get(%v)", tt.key)) {
+				return
+			}
+			var gotContent []byte
+			if gotReader != nil {
+				gotContent, err = ioutil.ReadAll(gotReader)
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+			assert.Equalf(t, tt.wantContent, gotContent, "Get(%v)", tt.key)
+			assert.Equalf(t, tt.wantLength, gotLength, "Get(%v)", tt.key)
+			assert.Equalf(t, tt.wantContentType, gotType, "Get(%v)", tt.key)
+		})
+	}
+}

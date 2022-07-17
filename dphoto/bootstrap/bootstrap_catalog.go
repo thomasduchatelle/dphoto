@@ -12,6 +12,6 @@ import (
 func init() {
 	config.Listen(func(cfg config.Config) {
 		log.Debugln("connecting catalog adapters (dynamodb)")
-		catalog.Init(catalogdynamo.Must(catalogdynamo.NewRepository(cfg.GetAWSSession(), cfg.GetString("catalog.dynamodb.table"))), catalogarchivesync.New())
+		catalog.Init(catalogdynamo.Must(catalogdynamo.NewRepository(cfg.GetAWSSession(), cfg.GetString(config.CatalogDynamodbTable))), catalogarchivesync.New())
 	})
 }

@@ -13,8 +13,8 @@ import (
 const (
 	versionTagName       = "Version"
 	tableVersion         = "2.0" // tableVersion must be bumped manually when schema is updated
-	dynamoWriteBatchSize = 25
-	dynamoReadBatchSize  = 100
+	DynamoWriteBatchSize = 25
+	DynamoReadBatchSize  = 100
 )
 
 type rep struct {

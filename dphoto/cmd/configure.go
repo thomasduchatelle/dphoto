@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/dphoto/printer"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -51,12 +52,14 @@ The configuration is stored in '~/.dphoto/dphoto.yaml'.
 		}
 
 		fields := []configField{
-			{key: "owner", description: "Owner of the medias (an email address)"},
-			{key: "aws.region", description: "AWS_REGION where dphoto is deployed", outputName: "region"},
-			{key: "aws.key", description: "AWS_ACCESS_KEY_ID to use with dphoto", outputName: "delegate_access_key_id"},
-			{key: "aws.secret", description: "AWS_SECRET_ACCESS_KEY to use with dphoto"},
-			{key: "catalog.dynamodb.table", description: "DynamoDB table where catalog is stored", outputName: "dynamodb_name"},
-			{key: "backup.s3.bucket", description: "S3 bucket where medias are stored", outputName: "bucket_name"},
+			{key: config.Owner, description: "Owner of the medias (an email address)"},
+			{key: config.AwsRegion, description: "AWS_REGION where dphoto is deployed", outputName: "region"},
+			{key: config.AwsKey, description: "AWS_ACCESS_KEY_ID to use with dphoto", outputName: "delegate_access_key_id"},
+			{key: config.AwsSecret, description: "AWS_SECRET_ACCESS_KEY to use with dphoto"},
+			{key: config.CatalogDynamodbTable, description: "DynamoDB table where catalog is stored", outputName: "dynamodb_name"},
+			{key: config.ArchiveDynamodbTable, description: "DynamoDB table where index are stored", outputName: "dynamodb_name"},
+			{key: config.ArchiveMainBucketName, description: "S3 bucket where medias are stored", outputName: "archive_bucket_name"},
+			{key: config.ArchiveCacheBucketName, description: "S3 bucket where medias are stored", outputName: "cache_bucket_name"},
 		}
 
 		form := ui.NewSimpleForm()

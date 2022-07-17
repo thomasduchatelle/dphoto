@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-const (
-	RecommendedBatchSize = 25
-)
-
 func New() backup.CatalogAdapter {
 	return &adapter{}
 }

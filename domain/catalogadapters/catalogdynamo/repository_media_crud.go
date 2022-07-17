@@ -27,7 +27,7 @@ func (r *rep) InsertMedias(owner string, medias []catalog.CreateMediaRequest) er
 		}
 	}
 
-	return dynamoutils.BufferedWriteItems(r.db, requests, r.table, dynamoWriteBatchSize)
+	return dynamoutils.BufferedWriteItems(r.db, requests, r.table, DynamoWriteBatchSize)
 }
 
 func (r *rep) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
@@ -114,7 +114,7 @@ func (r *rep) FindExistingSignatures(owner string, signatures []*catalog.MediaSi
 		keys[index] = key
 	}
 
-	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, *aws.String("Id")), keys, dynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, *aws.String("Id")), keys, DynamoReadBatchSize)
 
 	found := make([]*catalog.MediaSignature, 0, len(signatures))
 	for stream.HasNext() {

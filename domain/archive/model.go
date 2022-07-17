@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	NotFoundError = errors.New("media is not present in the archive")
+	NotFoundError      = errors.New("media is not present in the archive")
+	MediaOverflowError = errors.New("media at the requested width is bigger that what the consumer can support")
 )
 
 // DestructuredKey indicates the preferred key: Prefix + Suffix. A counter can be added between the 2 to make the name unique.

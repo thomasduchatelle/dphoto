@@ -89,7 +89,7 @@ func TestStore(t *testing.T) {
 
 			repository := mocks.NewARepositoryAdapter(t)
 			store := mocks.NewStoreAdapter(t)
-			archive.Init(repository, store)
+			archive.Init(repository, store, mocks.NewCacheAdapter(t))
 
 			tt.mocksExpectation(repository, store)
 
