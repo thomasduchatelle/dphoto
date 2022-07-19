@@ -1,4 +1,4 @@
-output "bucket_name" {
+output "archive_bucket_name" {
   description = "Name of the bucket where medias can be uploaded"
   value       = aws_s3_bucket.storage.bucket
 }

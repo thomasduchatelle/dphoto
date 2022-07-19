@@ -91,6 +91,5 @@ To release a new version:
 
 ### Tech debt
 
-1. infra-data is using AWS provider v3.x, should be upgraded to v4.x
-2. go cli is using AWS SDK 1.x and should use 2.x
-3. `go install github...` doesn't work anymore: go modules are not properly defined.
+1. go cli is using AWS SDK 1.x and should use 2.x
+2. `go install github...` doesn't work anymore: go modules are not properly defined.

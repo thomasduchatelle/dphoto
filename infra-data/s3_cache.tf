@@ -1,0 +1,67 @@
+resource "aws_s3_bucket" "cache" {
+  bucket = "${local.prefix}-cache"
+  tags   = local.tags
+}
+
+resource "aws_s3_bucket_acl" "cache" {
+  bucket = aws_s3_bucket.cache.id
+  acl    = "private"
+}
+
+# Ensure bucket and objects are not public
+resource "aws_s3_bucket_public_access_block" "s3_cache_block_public_access" {
+  bucket                  = aws_s3_bucket.cache.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_versioning" "cache" {
+  bucket = aws_s3_bucket.cache.id
+  versioning_configuration {
+    status = "Disabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "cache_expiration" {
+  bucket = aws_s3_bucket.cache.id
+  rule {
+    id     = "1-month-eviction"
+    status = "Enabled"
+    filter {
+      prefix = "w="
+    }
+
+    expiration {
+      days = 31
+    }
+  }
+}
+
+resource "aws_iam_policy" "cache_rw" {
+  name   = "${local.prefix}-cache-rw"
+  path   = local.path
+  policy = data.aws_iam_policy_document.cache_rw.json
+}
+
+data "aws_iam_policy_document" "cache_rw" {
+  statement {
+    effect  = "Allow"
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      aws_s3_bucket.cache.arn,
+    ]
+  }
+  statement {
+    effect  = "Allow"
+    actions = [
+      "s3:*Object",
+    ]
+    resources = [
+      "${aws_s3_bucket.cache.arn}/*",
+    ]
+  }
+}

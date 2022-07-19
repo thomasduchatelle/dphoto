@@ -2,20 +2,21 @@
 # Manual edits may be lost in future updates.
 
 provider "registry.terraform.io/hashicorp/aws" {
-  version     = "3.75.1"
-  constraints = "~> 3.75.1"
-  hashes = [
-    "h1:KH2z3YjNuXa+Konx4W6Za2vu581E/9VaV7kNTkZw9mU=",
-    "zh:11c2ee541ca1da923356c9225575ba294523d7b6af82d6171c912470ef0f90cd",
-    "zh:19fe975993664252b4a2ff1079546f2b186b01d1a025a94a4f15c37e023806c5",
-    "zh:442e7fc145b2debebe9279b283d07f5f736dc1776c2e5b1702728a6eb03789d0",
-    "zh:7a77991b204ae2c16ac29a32226135d5fdbda40c8dafa77c5adf5439a346be77",
-    "zh:89a257933181c15293c15a858fbfe7252129cc57cc2ec05b6c0b595d1bfe9d38",
-    "zh:b1813ea5b6b0fd88ea85b1b21b8e4119566d1bc34feca297b4fb39d0536893cb",
-    "zh:c519f3292ae431bd2381f88a95bd37c52f7a56d91feef88511e929344c180549",
-    "zh:d3dbe88b661c073c174f04f73adc2720372143bdfa12f4fe8f411332e64662cf",
-    "zh:e92a27e3c7295b031b5d62dd9428966c96e3157fc768b3d848a9ac60d1661c8e",
-    "zh:ecd664c0d664fcf2d8a89a01462cb00bcae37da200305aef2de1b8fe185c9cd8",
-    "zh:ed6ce1f9fa96aa28dd65842f852abed25f919d20b5cf53d26cec5b3f4d845725",
+  version     = "4.22.0"
+  constraints = "~> 4.22"
+  hashes      = [
+    "h1:BF8L000SD8CNn13cQdSl9TUC8e+CKkkqwoipjv0X3wM=",
+    "zh:299efb8ba733b7742f0ef1c5c5467819e0c7bf46264f5f36ba6b6674304a5244",
+    "zh:4db198a41d248491204d4ca644662c32f748177d5cbe01f3c7adbb957d4d77f0",
+    "zh:62ebc2b05b25eafecb1a75f19d6fc5551faf521ada9df9e5682440d927f642e1",
+    "zh:636b590840095b4f817c176034cf649f543c0ce514dc051d6d0994f0a05c53ef",
+    "zh:8594bd8d442288873eee56c0b4535cbdf02cacfcf8f6ddcf8cd5f45bb1d3bc80",
+    "zh:8e18a370949799f20ba967eec07a84aaedf95b3ee5006fe5af6eae13fbf39dc3",
+    "zh:9b12af85486a96aedd8d7984b0ff811a4b42e3d88dad1a3fb4c0b580d04fa425",
+    "zh:aa968514231e404fb53311d8eae2e8b6bde1fdad1f4dd5a592ab93d9cbf11af4",
+    "zh:af8e5c48bf36d4fff1a6fca760d5b85f14d657cbdf95e9cd5e898c68104bad31",
+    "zh:d8a75ba36bf8b6f2e49be5682f48eccb6c667a4484afd676ae347213ae208622",
+    "zh:dd7c419674a47e587dabe98b150a8f1f7e31c248c68e8bf5e9ca0a400b5e2c4e",
+    "zh:fdeb6314a2ce97489bbbece59511f78306955e8a23b02cbd1485bd04185a3673",
   ]
 }

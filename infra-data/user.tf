@@ -9,6 +9,11 @@ resource "aws_iam_user_policy_attachment" "cli_bucket" {
   user       = aws_iam_user.cli.name
 }
 
+resource "aws_iam_user_policy_attachment" "cli_cache" {
+  policy_arn = aws_iam_policy.cache_rw.arn
+  user       = aws_iam_user.cli.name
+}
+
 resource "aws_iam_user_policy_attachment" "cli_table" {
   policy_arn = aws_iam_policy.index_rw.arn
   user       = aws_iam_user.cli.name
