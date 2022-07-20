@@ -72,7 +72,7 @@ func lookupCode(err error) (string, int) {
 }
 
 func main() {
-	common.Bootstrap()
+	common.BootstrapOAuthDomain()
 
 	lambda.Start(Handler)
 }

@@ -36,13 +36,8 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 
 	resp := make([]Media, len(medias.Content), len(medias.Content))
 	for i, media := range medias.Content {
-		id, err := common.EncodeMediaId(media.Signature)
-		if err != nil {
-			return common.InternalError(err)
-		}
-
 		resp[i] = Media{
-			Id:       id,
+			Id:       media.Id,
 			Type:     string(media.Type),
 			Filename: media.Filename,
 			Time:     media.Details.DateTime,
@@ -54,7 +49,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 }
 
 func main() {
-	common.Bootstrap()
+	common.BootstrapCatalogDomain()
 
 	lambda.Start(Handler)
 }

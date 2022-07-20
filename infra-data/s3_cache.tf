@@ -17,6 +17,14 @@ resource "aws_s3_bucket_public_access_block" "s3_cache_block_public_access" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_ownership_controls" "cache" {
+  bucket = aws_s3_bucket.cache.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
 resource "aws_s3_bucket_versioning" "cache" {
   bucket = aws_s3_bucket.cache.id
   versioning_configuration {

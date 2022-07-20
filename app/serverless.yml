@@ -2,6 +2,60 @@ service: dphoto-app
 frameworkVersion: '2'
 variablesResolutionMode: 20210326
 
+functions:
+  letsencrypt:
+    handler: bin/letsencrypt
+    role: LetsencryptLambdaRole
+    timeout: 900
+    memorySize: 128
+    events:
+      - schedule: cron(42 9 ? * 2 *)
+    environment:
+      DPHOTO_DOMAIN: ${file('./sls-config.js'):DPHOTO_DOMAIN}
+      DPHOTO_CERTIFICATE_EMAIL: 'duchatelle.thomas@gmail.com'
+      DPHOTO_ENVIRONMENT: ${sls:stage}
+  oauth-token:
+    handler: bin/oauth
+    events:
+      - httpApi:
+          path: /api/oauth/token
+          method: post
+  env-config:
+    handler: bin/env-config
+    environment:
+      GOOGLE_LOGIN_CLIENT_ID: ${ssm:/dphoto/${sls:stage}/googleLogin/clientId}
+    events:
+      - httpApi:
+          path: /env-config.json
+          method: get
+
+  list-albums:
+    handler: bin/list-albums
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums
+          method: get
+  list-medias:
+    handler: bin/list-medias
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums/{folderName}/medias
+          method: get
+  get-media:
+    handler: bin/get-media
+    memorySize: 1024
+    timeout: 29 # maximum allowed by API gateway
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/medias/{mediaId}/{filename}
+          method: get
+  version:
+    handler: bin/version
+    events:
+      - httpApi:
+          path: /api/v1/version
+          method: get
+
 provider:
   name: aws
   region: eu-west-1
@@ -24,8 +78,9 @@ provider:
       name: dphoto-app-${sls:stage}-lambdas-role
       path: /dphoto/${sls:stage}/
       managedPolicies:
-        - ${ssm:/dphoto/${sls:stage}/iam/policies/storageROArn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/cacheRWArn}
         - ${ssm:/dphoto/${sls:stage}/iam/policies/indexRWArn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/storageROArn}
       tags:
         Application: dphoto-app
         Environment: ${sls:stage}
@@ -198,68 +253,15 @@ package:
     - '!./**'
     - ./bin/**
 
-functions:
-  letsencrypt:
-    handler: bin/letsencrypt
-    role: LetsencryptLambdaRole
-    timeout: 900
-    memorySize: 128
-    events:
-      - schedule: cron(42 9 ? * 2 *)
-    environment:
-      DPHOTO_DOMAIN: ${file('./sls-config.js'):DPHOTO_DOMAIN}
-      DPHOTO_CERTIFICATE_EMAIL: 'duchatelle.thomas@gmail.com'
-      DPHOTO_ENVIRONMENT: ${sls:stage}
-  oauth-token:
-    handler: bin/oauth
-    events:
-      - httpApi:
-          path: /api/oauth/token
-          method: post
-  env-config:
-    handler: bin/env-config
-    environment:
-      GOOGLE_LOGIN_CLIENT_ID: ${ssm:/dphoto/${sls:stage}/googleLogin/clientId}
-    events:
-      - httpApi:
-          path: /env-config.json
-          method: get
-
-  list-albums:
-    handler: bin/list-albums
-    events:
-      - httpApi:
-          path: /api/v1/owners/{owner}/albums
-          method: get
-  list-medias:
-    handler: bin/list-medias
-    events:
-      - httpApi:
-          path: /api/v1/owners/{owner}/albums/{folderName}/medias
-          method: get
-  get-media:
-    handler: bin/get-media
-    memorySize: 1024
-    timeout: 29 # maximum allowed by API gateway
-    events:
-      - httpApi:
-          path: /api/v1/owners/{owner}/medias/{encodedId}/{filename}
-          method: get
-  version:
-    handler: bin/version
-    events:
-      - httpApi:
-          path: /api/v1/version
-          method: get
-
 plugins:
   - serverless-ssm-fetch
   - serverless-s3-sync
 
 custom:
   serverlessSsmFetch:
-    STORAGE_BUCKET_NAME: /dphoto/${sls:stage}/storage/bucketName
-    CATALOG_TABLE_NAME: /dphoto/${sls:stage}/catalog/tableName
+    CATALOG_TABLE_NAME: /dphoto/${sls:stage}/dynamodb/catalog/tableName
+    CACHE_BUCKET_NAME: /dphoto/${sls:stage}/s3/cache/bucketName
+    STORAGE_BUCKET_NAME: /dphoto/${sls:stage}/s3/storage/bucketName
   s3Sync:
     - bucketNameKey: ViewerUiBucketName
       localDir: viewer_ui/build/

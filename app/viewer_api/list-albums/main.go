@@ -25,7 +25,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return resp, nil
 	}
 
-	albums, err := catalog.FindAllAlbumsWithStats(owner)
+	albums, err := catalog.FindAllAlbums(owner)
 	if err != nil {
 		return common.InternalError(errors.Wrapf(err, "failed to fetch albums"))
 	}
@@ -33,11 +33,11 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	restAlbums := make([]Album, len(albums))
 	for i, a := range albums {
 		restAlbums[i] = Album{
-			Name:       a.Album.Name,
+			End:        a.End,
+			FolderName: a.FolderName,
+			Name:       a.Name,
 			Owner:      owner,
-			FolderName: a.Album.FolderName,
-			Start:      a.Album.Start,
-			End:        a.Album.End,
+			Start:      a.Start,
 			TotalCount: a.TotalCount,
 		}
 	}
@@ -45,7 +45,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 }
 
 func main() {
-	common.Bootstrap()
+	common.BootstrapCatalogDomain()
 
 	lambda.Start(Handler)
 }

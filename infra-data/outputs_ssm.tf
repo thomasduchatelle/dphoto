@@ -20,15 +20,22 @@ resource "aws_ssm_parameter" "iam_policy_cache_rw" {
 }
 
 resource "aws_ssm_parameter" "storage_bucket_name" {
-  name  = "/dphoto/${var.environment_name}/storage/bucketName"
+  name  = "/dphoto/${var.environment_name}/s3/storage/bucketName"
   type  = "String"
   value = aws_s3_bucket.storage.bucket
   tags  = local.tags
 }
 
+resource "aws_ssm_parameter" "cache_bucket_name" {
+  name  = "/dphoto/${var.environment_name}/s3/cache/bucketName"
+  type  = "String"
+  value = aws_s3_bucket.cache.bucket
+  tags  = local.tags
+}
+
 resource "aws_ssm_parameter" "catalog_table_name" {
-  name  = "/dphoto/${var.environment_name}/catalog/tableName"
+  name  = "/dphoto/${var.environment_name}/dynamodb/catalog/tableName"
   type  = "String"
   value = local.dynamodb_table_name
-  tags = local.tags
+  tags  = local.tags
 }

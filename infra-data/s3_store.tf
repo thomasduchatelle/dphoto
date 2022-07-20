@@ -15,6 +15,14 @@ resource "aws_s3_bucket_public_access_block" "s3_storage_block_public_access" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_ownership_controls" "storage" {
+  bucket = aws_s3_bucket.storage.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
 resource "aws_s3_bucket" "storage" {
   bucket = "${local.prefix}-storage"
   tags   = local.tags
@@ -27,7 +35,6 @@ resource "aws_s3_bucket_acl" "storage" {
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "storage" {
   for_each = toset([for k in aws_kms_key.storage : k.arn])
-  #  for_each = toset(aws_kms_key.storage)
   bucket   = aws_s3_bucket.storage.id
   rule {
     apply_server_side_encryption_by_default {
@@ -40,11 +47,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "storage" {
 resource "aws_s3_bucket_versioning" "storage" {
   bucket = aws_s3_bucket.storage.id
   versioning_configuration {
-    status = var.simple_s3 ? "Disabled" : "Enabled"
+    status = var.simple_s3 ? "Suspended" : "Enabled"
   }
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "storage_non_current" {
+resource "aws_s3_bucket_lifecycle_configuration" "storage" {
   bucket = aws_s3_bucket.storage.id
   rule {
     id     = "non-current-eviction"
@@ -59,12 +66,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "storage_non_current" {
       noncurrent_days = 30
     }
   }
-}
 
-resource "aws_s3_bucket_lifecycle_configuration" "storage_current" {
-  bucket = aws_s3_bucket.storage.id
   rule {
-    id     = "non-current-eviction"
+    id     = "current-transition"
     status = var.simple_s3 ? "Disabled" : "Enabled"
 
     transition {

@@ -61,6 +61,12 @@ func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, st
 	)
 }
 
+// GetResizedImageURL returns a pre-signed URL to download the resized image ; GetResizedImage must have been called before.
+func GetResizedImageURL(owner, mediaId string, width int) (string, error) {
+	cacheId := generateCacheId(owner, mediaId, width)
+	return cachePort.SignedURL(cacheId, DownloadUrlValidityDuration)
+}
+
 func generateCacheId(owner, id string, width int) string {
 	size := fmt.Sprintf("w=%d", width)
 	if width <= 400 {

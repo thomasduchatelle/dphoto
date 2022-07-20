@@ -2,7 +2,7 @@ package archive
 
 import "time"
 
-const DownloadUrlValidityDuration = 15 * time.Minute
+const DownloadUrlValidityDuration = 5 * time.Minute
 
 // GetMediaOriginalURL returns a pre-signed URL to download the content. URL only valid a certain time.
 func GetMediaOriginalURL(owner, mediaId string) (string, error) {

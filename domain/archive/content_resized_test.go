@@ -173,3 +173,17 @@ func TestGetResizedImage(t *testing.T) {
 		})
 	}
 }
+
+func TestGetResizedImageURL(t *testing.T) {
+	t.Run("it should passthrough the request to the cache", func(t *testing.T) {
+		cacheAdapter := mocks.NewCacheAdapter(t)
+		archive.Init(mocks.NewARepositoryAdapter(t), mocks.NewStoreAdapter(t), cacheAdapter)
+
+		cacheAdapter.On("SignedURL", "miniatures/ironman@avenger.hero/id-01", archive.DownloadUrlValidityDuration).Once().Return("https://id-01.example.com", nil)
+
+		gotUrl, gotErr := archive.GetResizedImageURL("ironman@avenger.hero", "id-01", 200)
+		if assert.NoError(t, gotErr) {
+			assert.Equal(t, "https://id-01.example.com", gotUrl)
+		}
+	})
+}

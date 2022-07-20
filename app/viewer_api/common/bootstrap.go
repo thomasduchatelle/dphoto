@@ -3,31 +3,33 @@ package common
 import (
 	"encoding/base64"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/thomasduchatelle/dphoto/domain/backup"
+	"github.com/thomasduchatelle/dphoto/domain/archive"
+	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
+	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/s3store"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
 	"github.com/thomasduchatelle/dphoto/domain/oauth"
 	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/googleoauth"
 	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/userrepositorystatic"
 	"github.com/thomasduchatelle/dphoto/domain/oauthmodel"
-	"github.com/thomasduchatelle/dphoto/dphoto/backup/adapters/onlinestorage"
 	"os"
 )
 
-func Bootstrap() {
+// BootstrapCatalogAndArchiveDomains bootstraps all domains
+func BootstrapCatalogAndArchiveDomains() {
 	BootstrapOAuthDomain()
-	BootstrapCatalogDomain()
-	BootstrapBackupDomain()
+	bootstrapCatalogDomain()
+	bootstrapArchiveDomain()
 }
 
+// BootstrapCatalogDomain bootstraps both oauth and catalog
 func BootstrapCatalogDomain() {
-	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
-	if !ok || tableName == "" {
-		panic("CATALOG_TABLE_NAME environment variable must be set.")
-	}
-	catalog.db = catalogdynamo.Must(catalogdynamo.NewRepository(newSession(), tableName))
+	BootstrapOAuthDomain()
+	bootstrapCatalogDomain()
 }
 
+// BootstrapOAuthDomain only bootstraps oauth
 func BootstrapOAuthDomain() {
 	secretJwtKeyB64, b := os.LookupEnv("DPHOTO_JWT_KEY_B64")
 	if !b {
@@ -60,9 +62,35 @@ func BootstrapOAuthDomain() {
 	}
 }
 
-func BootstrapBackupDomain() {
-	bucketName, _ := os.LookupEnv("STORAGE_BUCKET_NAME")
-	backup.Storage = onlinestorage.Must(onlinestorage.NewS3OnlineStorage(bucketName, newSession()))
+func bootstrapCatalogDomain() {
+	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
+	if !ok || tableName == "" {
+		panic("CATALOG_TABLE_NAME environment variable must be set.")
+	}
+	dynamoAdapter := catalogdynamo.Must(catalogdynamo.NewRepository(newSession(), tableName))
+	catalog.Init(dynamoAdapter, catalogarchivesync.New())
+}
+
+func bootstrapArchiveDomain() {
+	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
+	if !ok || tableName == "" {
+		panic("CATALOG_TABLE_NAME environment variable must be set.")
+	}
+	storeBucketName, ok := os.LookupEnv("STORAGE_BUCKET_NAME")
+	if !ok && storeBucketName != "" {
+		panic("STORAGE_BUCKET_NAME must be set and non-empty")
+	}
+	cacheBucketName, ok := os.LookupEnv("CACHE_BUCKET_NAME")
+	if !ok && cacheBucketName != "" {
+		panic("CACHE_BUCKET_NAME must be set and non-empty")
+	}
+
+	sess := newSession()
+	archive.Init(
+		archivedynamo.Must(archivedynamo.New(sess, tableName, false)),
+		s3store.Must(s3store.New(sess, storeBucketName)),
+		s3store.Must(s3store.New(sess, cacheBucketName)),
+	)
 }
 
 func newSession() *session.Session {
