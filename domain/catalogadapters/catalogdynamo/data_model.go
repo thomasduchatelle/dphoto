@@ -13,12 +13,18 @@ import (
 )
 
 // DynamoDB table structure
-// - OWNER (OWNER)
-//   > Album X meta
-//   > Album Y meta
-// - MEDIA (OWNER#ID)
-//   > #META = SIGNATURE + ALBUM + DETAILS
-// 	 > #LOCATION = key (see archive extension)
+// - OWNER's ALBUMS
+//   > Album X
+//   > Album Y
+// - MEDIA
+//   > '#METADATA' = SIGNATURE + ALBUM + DETAILS
+// 	 > 'LOCATION#' = key (see archive extension)
+//
+// Index AlbumIndex
+// - ALBUM
+//   > '#METADATA'
+//   > MEDIA Jan
+//   > MEDIA Feb
 
 const (
 	IsoTime = "2006-01-02T15:04:05"
@@ -60,7 +66,7 @@ type MediaRecord struct {
 
 func AlbumPrimaryKey(owner string, folderName string) TablePk {
 	return TablePk{
-		PK: owner,
+		PK: fmt.Sprintf("%s#ALBUM", owner),
 		SK: fmt.Sprintf("ALBUM#%s", folderName),
 	}
 }
@@ -83,11 +89,11 @@ func AlbumIndexedKeyPK(owner string, folderName string) string {
 func AlbumIndexedKey(owner, folderName string) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: AlbumIndexedKeyPK(owner, folderName),
-		AlbumIndexSK: fmt.Sprintf("#METADATA#ALBUM#%s", folderName),
+		AlbumIndexSK: "#METADATA",
 	}
 }
 
-func mediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, id string) AlbumIndexKey {
+func MediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, id string) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: AlbumIndexedKeyPK(owner, folderName),
 		AlbumIndexSK: fmt.Sprintf("MEDIA#%s#%s", dateTime.Format(IsoTime), id),
@@ -149,7 +155,7 @@ func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]*
 
 	return dynamodbattribute.MarshalMap(&MediaRecord{
 		TablePk:       MediaPrimaryKey(owner, media.Id),
-		AlbumIndexKey: mediaAlbumIndexedKey(owner, media.FolderName, media.Details.DateTime, media.Id),
+		AlbumIndexKey: MediaAlbumIndexedKey(owner, media.FolderName, media.Details.DateTime, media.Id),
 		Id:            media.Id,
 		Type:          string(media.Type),
 		DateTime:      media.Details.DateTime,

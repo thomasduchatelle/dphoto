@@ -74,12 +74,14 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 
 	if ignite {
 		// use explicit config to avoid creating unwanted environment
-		sess := session.Must(session.NewSession(&aws.Config{
-			Credentials:      credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
-			Endpoint:         awsString(viper.GetString("aws.endpoint")),
-			Region:           aws.String(viper.GetString("aws.region")),
-			S3ForcePathStyle: aws.Bool(true), // prevent using S3 bucket name in HOST (incompatible with localstack on macOS)
-		}))
+		sess := session.Must(session.NewSession(
+			&aws.Config{
+				Endpoint:         awsString(viper.GetString("aws.endpoint")),
+				Region:           aws.String(viper.GetString("aws.region")),
+				S3ForcePathStyle: aws.Bool(true), // prevent using S3 bucket name in HOST (incompatible with localstack on macOS)
+			},
+			awsCredentialsConfig(),
+		))
 
 		config = &viperConfig{
 			Viper:      viper.GetViper(),
@@ -93,6 +95,18 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 	}
 
 	return nil
+}
+
+func awsCredentialsConfig() *aws.Config {
+	if viper.GetString("aws.key") != "" || viper.GetString("aws.secret") != "" {
+		log.Info("AWS Credentials > using static key")
+		return &aws.Config{
+			Credentials: credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
+		}
+	}
+
+	log.Info("AWS Credentials > using default config")
+	return new(aws.Config)
 }
 
 func awsString(value string) *string {

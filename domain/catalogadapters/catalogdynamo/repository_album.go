@@ -1,6 +1,7 @@
 package catalogdynamo
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -12,7 +13,7 @@ import (
 func (r *rep) FindAllAlbums(owner string) ([]*catalog.Album, error) {
 	query := &dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":owner":     mustAttribute(owner),
+			":owner":     mustAttribute(fmt.Sprintf("%s#ALBUM", owner)),
 			":albumOnly": mustAttribute("ALBUM#"),
 		},
 		KeyConditionExpression: aws.String("PK = :owner AND begins_with(SK, :albumOnly)"),
@@ -87,6 +88,7 @@ func (r *rep) DeleteEmptyAlbum(owner string, folderName string) error {
 	return err
 }
 
+// CountMedias provides an accurate number of medias and can be used to update the count stored in the album record
 func (r *rep) CountMedias(owner string, folderName string) (int, error) {
 	albumIndexKey, err := dynamodbattribute.MarshalMap(AlbumIndexedKey(owner, folderName))
 	if err != nil {

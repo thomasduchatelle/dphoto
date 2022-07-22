@@ -3,6 +3,11 @@ output "archive_bucket_name" {
   value       = aws_s3_bucket.storage.bucket
 }
 
+output "cache_bucket_name" {
+  description = "Name of the bucket where miniatures are cached"
+  value       = aws_s3_bucket.cache.bucket
+}
+
 output "delegate_access_key_id" {
   description = "AWS access Key to authenticate with dphoto CLI"
   value       = aws_iam_access_key.cli.id

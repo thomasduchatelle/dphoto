@@ -179,12 +179,18 @@ func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest)
 func (a *MediaCrudTestSuite) TestFindAlbums() {
 	albums, err := a.repo.FindAllAlbums(a.owner)
 	if a.NoError(err) {
-		names := make([]string, 0, len(albums))
+		names := make(map[string]int)
 		for _, a := range albums {
-			names = append(names, a.FolderName)
+			names[a.FolderName] = a.TotalCount
 		}
 
-		a.Equal([]string{"/media/2021-jan", "/media/2021-feb", "/media/2021-mar"}, names, "it should list all albums no matter how many medias are also stored")
+		a.Equal(map[string]int{
+			"/media/2021-jan": 2,
+			"/media/2021-feb": 1,
+			"/media/2021-mar": 0},
+			names,
+			"it should list all albums no matter how many medias are also stored",
+		)
 	}
 }
 
