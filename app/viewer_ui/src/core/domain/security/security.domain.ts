@@ -3,6 +3,7 @@ export interface AuthenticatedUser {
   email: string
   picture?: string
   accessToken: string
+  expiresIn: number
 }
 
 export interface UIStatePort {

@@ -12,6 +12,7 @@ interface IdentityResponse {
 interface TokenResponse {
   access_token: string
   identity: IdentityResponse
+  expires_in: number
 }
 
 export class OauthServiceImpl implements OAuthService {
@@ -44,6 +45,7 @@ export class OauthServiceImpl implements OAuthService {
         email: resp.data.identity.email,
         picture: resp.data.identity.picture,
         accessToken: resp.data.access_token,
+        expiresIn: resp.data.expires_in
       }
     })
   }

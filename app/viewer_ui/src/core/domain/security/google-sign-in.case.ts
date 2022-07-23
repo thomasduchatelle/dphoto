@@ -6,6 +6,8 @@ interface ErrorBody {
   error: string
 }
 
+export let authenticationTimeoutIds: NodeJS.Timeout[] = []
+
 function lookupErrorMessage(code?: string, message?: string): string {
   switch (code) {
     case 'oauth.user-not-preregistered':
@@ -25,6 +27,14 @@ export class GoogleSignInCase {
   public googleSignIn = (identityToken: string): Promise<void> => {
     return this.oauthService.authenticateWithGoogleId(identityToken)
       .then(user => {
+        const timeoutId = setTimeout(() => {
+          authenticationTimeoutIds = authenticationTimeoutIds.filter(id => id !== timeoutId)
+          this.googleSignIn(identityToken).then()
+
+        }, (user.expiresIn - 60) * 1000)
+
+        authenticationTimeoutIds.push(timeoutId)
+
         this.oauthService.dispatchAccessToken(user.accessToken)
         this.stateManager.storeUser(user)
       })
@@ -33,5 +43,4 @@ export class GoogleSignInCase {
         this.stateManager.displayAuthenticationError(lookupErrorMessage(err.response?.data?.code, err.response?.data?.error))
       })
   }
-
 }
