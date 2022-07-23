@@ -8,6 +8,10 @@ import (
 	"io"
 )
 
+const (
+	resizeMaxDimensionBreakPoint = 360
+)
+
 func NewResizer() *Resizer {
 	return new(Resizer)
 }
@@ -21,24 +25,12 @@ func (r Resizer) ResizeImage(reader io.Reader, width int, fast bool) ([]byte, st
 
 // ResizeImage downscales (or upscales) the dimensions of an image to fit the requested width.
 func ResizeImage(reader io.Reader, width int, fast bool) ([]byte, string, error) {
-	onHold := bytes.NewBuffer(nil)
-	teeReader := io.TeeReader(reader, onHold)
-
-	_, format, err := image.DecodeConfig(teeReader)
+	img, format, err := readImage(reader)
 	if err != nil {
-		return nil, "", errors.Wrapf(err, "couldn't determine image format from its content")
+		return nil, "", err
 	}
 
-	img, err := imaging.Decode(io.MultiReader(bytes.NewReader(onHold.Bytes()), reader), imaging.AutoOrientation(true))
-	if err != nil {
-		return nil, "", errors.Wrapf(err, "failed to decode the image")
-	}
-
-	algorithm := imaging.Lanczos
-	if fast {
-		algorithm = imaging.Box
-	}
-	resized := imaging.Resize(img, width, 0, algorithm)
+	resized := resizeImage(img, width, fast)
 
 	encodingFormat, err := imaging.FormatFromExtension(format)
 	if err != nil {
@@ -48,4 +40,40 @@ func ResizeImage(reader io.Reader, width int, fast bool) ([]byte, string, error)
 	dest := bytes.NewBuffer(nil)
 	err = imaging.Encode(dest, resized, encodingFormat)
 	return dest.Bytes(), "image/" + format, err
+}
+
+func resizeImage(img image.Image, width int, fast bool) image.Image {
+	resizedWidth := width
+	resizedHeight := 0
+	if width > resizeMaxDimensionBreakPoint && img.Bounds().Dx() < img.Bounds().Dy() {
+		// portrait images weight are HUGE when resized by their small dimension,
+		// but it's ok for miniatures that are used on mobile phone
+		resizedWidth = 0
+		resizedHeight = width
+	}
+
+	if resizedWidth > img.Bounds().Dx() || resizedHeight > img.Bounds().Dy() {
+		return img
+	}
+
+	algorithm := imaging.Lanczos
+	if fast {
+		algorithm = imaging.Box
+	}
+
+	return imaging.Resize(img, resizedWidth, resizedHeight, algorithm)
+}
+
+func readImage(reader io.Reader) (image.Image, string, error) {
+	onHold := bytes.NewBuffer(nil)
+	teeReader := io.TeeReader(reader, onHold)
+
+	_, format, err := image.DecodeConfig(teeReader)
+	if err != nil {
+		return nil, "", errors.Wrapf(err, "couldn't determine image format from its content")
+	}
+
+	img, err := imaging.Decode(io.MultiReader(bytes.NewReader(onHold.Bytes()), reader), imaging.AutoOrientation(true))
+
+	return img, format, errors.Wrapf(err, "failed to decode the image")
 }

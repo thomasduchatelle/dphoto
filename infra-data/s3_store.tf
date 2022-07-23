@@ -69,10 +69,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "storage" {
 
   rule {
     id     = "current-transition"
-    status = var.simple_s3 ? "Disabled" : "Enabled"
+    status = "Disabled" // TODO set it to "Enabled" once miniatures will be generated
 
     transition {
-      days          = 28
+      days          = 7
       storage_class = "GLACIER_IR"
     }
   }

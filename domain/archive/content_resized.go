@@ -8,7 +8,9 @@ import (
 	"strings"
 )
 
-const MiniatureCachedWidth = 360 // MiniatureCachedWidth is the minimum size in which images are stored. Under that, the MiniatureCachedWidth is stored and the image will be re-scaled down on the fly
+const (
+	MiniatureCachedWidth = 360 // MiniatureCachedWidth is the minimum size in which images are stored. Under that, the MiniatureCachedWidth is stored and the image will be re-scaled down on the fly
+)
 
 // GetResizedImage returns the image in the requested size (or rounded up), and the media type.
 func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, string, error) {
