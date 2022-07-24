@@ -100,7 +100,7 @@ func TestStore(t *testing.T) {
 			tt.mocksExpectation(repository, store, cache, resizer)
 
 			archive.ResizerPort = resizer
-			archive.Init(repository, store, cache)
+			archive.Init(repository, store, cache, mocks.NewJobQueueAdapter(t))
 
 			got, err := archive.Store(tt.request)
 			if !tt.wantErr && a.NoError(err, tt.name) {

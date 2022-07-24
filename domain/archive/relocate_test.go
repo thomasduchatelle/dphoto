@@ -185,7 +185,7 @@ func TestRelocate(t *testing.T) {
 
 			tt.spec(repositoryAdapter, storeAdapter)
 
-			archive.Init(repositoryAdapter, storeAdapter, mocks.NewCacheAdapter(t))
+			archive.Init(repositoryAdapter, storeAdapter, mocks.NewCacheAdapter(t), mocks.NewJobQueueAdapter(t))
 
 			err := archive.Relocate(owner, tt.ids, tt.targetFolder)
 

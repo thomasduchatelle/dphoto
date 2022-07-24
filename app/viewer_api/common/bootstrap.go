@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
+	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/jobqueuesns"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/s3store"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogarchivesync"
@@ -77,12 +78,16 @@ func bootstrapArchiveDomain() {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
 	storeBucketName, ok := os.LookupEnv("STORAGE_BUCKET_NAME")
-	if !ok && storeBucketName != "" {
+	if !ok || storeBucketName == "" {
 		panic("STORAGE_BUCKET_NAME must be set and non-empty")
 	}
 	cacheBucketName, ok := os.LookupEnv("CACHE_BUCKET_NAME")
-	if !ok && cacheBucketName != "" {
+	if !ok || cacheBucketName == "" {
 		panic("CACHE_BUCKET_NAME must be set and non-empty")
+	}
+	archiveJobsSnsARN, ok := os.LookupEnv("ARCHIVE_JOBS_SNS_ARN")
+	if !ok || archiveJobsSnsARN == "" {
+		panic("ARCHIVE_JOBS_SNS_ARN must be set and non-empty")
 	}
 
 	sess := newSession()
@@ -90,6 +95,7 @@ func bootstrapArchiveDomain() {
 		archivedynamo.Must(archivedynamo.New(sess, tableName, false)),
 		s3store.Must(s3store.New(sess, storeBucketName)),
 		s3store.Must(s3store.New(sess, cacheBucketName)),
+		jobqueuesns.New(sess, archiveJobsSnsARN),
 	)
 }
 

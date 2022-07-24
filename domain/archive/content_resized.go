@@ -3,6 +3,7 @@ package archive
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -20,9 +21,28 @@ func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, st
 	return NewCache().GetOrStore(
 		cacheKey,
 		func() ([]byte, string, error) {
+			cachedSize := width
+			if cachedSize < MiniatureCachedWidth {
+				cachedSize = MiniatureCachedWidth
+			}
+
 			key, err := repositoryPort.FindById(owner, mediaId)
 			if err != nil {
 				return nil, "", err
+			}
+
+			log.WithFields(log.Fields{
+				"Owner":    owner,
+				"Width":    width,
+				"StoreKey": key,
+			}).Infof("Missed archive cache")
+
+			err = jobQueuePort.ReportMisfiredCache(owner, key, cachedSize)
+			if err != nil {
+				log.WithError(err).WithFields(log.Fields{
+					"Owner":    owner,
+					"StoreKey": key,
+				}).Warnf("Queuing message for misfired archive cache failed: %s", err.Error())
 			}
 
 			originalReader, err := storePort.Download(key)
@@ -31,12 +51,7 @@ func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, st
 			}
 			defer originalReader.Close()
 
-			cachedSize := width
-			if cachedSize < MiniatureCachedWidth {
-				cachedSize = MiniatureCachedWidth
-			}
 			return ResizerPort.ResizeImage(originalReader, cachedSize, false)
-
 		},
 		func(reader io.ReadCloser, size int, mediaType string, err error) ([]byte, string, error) {
 			defer func() {

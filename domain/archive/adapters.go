@@ -10,13 +10,15 @@ var (
 	repositoryPort ARepositoryAdapter
 	storePort      StoreAdapter
 	cachePort      CacheAdapter
+	jobQueuePort   JobQueueAdapter
 	ResizerPort    ResizerAdapter = image_resize.NewResizer() // ResizerPort can be overrided for testing purpose
 )
 
-func Init(repository ARepositoryAdapter, store StoreAdapter, cache CacheAdapter) {
+func Init(repository ARepositoryAdapter, store StoreAdapter, cache CacheAdapter, jobQueue JobQueueAdapter) {
 	repositoryPort = repository
 	storePort = store
 	cachePort = cache
+	jobQueuePort = jobQueue
 }
 
 // ARepositoryAdapter is storing the mapping between keys in the main storage and the media ids.
@@ -64,6 +66,12 @@ type CacheAdapter interface {
 	SignedURL(key string, duration time.Duration) (string, error)
 }
 
+// ResizerAdapter reduces the image weight and dimensions
 type ResizerAdapter interface {
 	ResizeImage(reader io.Reader, width int, fast bool) ([]byte, string, error)
+}
+
+// JobQueueAdapter queues job to perform asynchronously
+type JobQueueAdapter interface {
+	ReportMisfiredCache(owner, storeKey string, width int) error
 }

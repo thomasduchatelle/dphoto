@@ -60,6 +60,7 @@ The configuration is stored in '~/.dphoto/dphoto.yaml'.
 			{key: config.ArchiveDynamodbTable, description: "DynamoDB table where archive index are stored", outputName: "dynamodb_name"},
 			{key: config.ArchiveMainBucketName, description: "S3 bucket where medias are archived", outputName: "archive_bucket_name"},
 			{key: config.ArchiveCacheBucketName, description: "S3 bucket where medias are cached", outputName: "cache_bucket_name"},
+			{key: config.ArchiveJobsSNSARN, description: "SNS ARN where async jobs are queued before being processed", outputName: "archive_jobs_sns_arn"},
 		}
 
 		form := ui.NewSimpleForm()
