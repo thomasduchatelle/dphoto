@@ -1,3 +1,10 @@
+resource "aws_ssm_parameter" "iam_policy_archive_sns_publish" {
+  name  = "/dphoto/${var.environment_name}/iam/policies/archive_sns_publish/arn"
+  type  = "String"
+  value = aws_iam_policy.archive_sns_publish.arn
+  tags  = local.tags
+}
+
 resource "aws_ssm_parameter" "iam_policy_bucket_ro" {
   name  = "/dphoto/${var.environment_name}/iam/policies/storageROArn"
   type  = "String"
@@ -37,5 +44,19 @@ resource "aws_ssm_parameter" "catalog_table_name" {
   name  = "/dphoto/${var.environment_name}/dynamodb/catalog/tableName"
   type  = "String"
   value = local.dynamodb_table_name
+  tags  = local.tags
+}
+
+resource "aws_ssm_parameter" "async_archive_caching_jobs_arn" {
+  name  = "/dphoto/${var.environment_name}/sqs/async_archive_caching_jobs/arn"
+  type  = "String"
+  value = aws_sqs_queue.async_archive_caching_jobs.arn
+  tags  = local.tags
+}
+
+resource "aws_ssm_parameter" "archive_async_job_sns" {
+  name  = "/dphoto/${var.environment_name}/sns/archive/arn"
+  type  = "String"
+  value = aws_sns_topic.archive.arn
   tags  = local.tags
 }

@@ -32,3 +32,13 @@ output "region" {
   description = "AWS Region (from vars)"
   value       = var.region
 }
+
+output "sqs_async_archive_jobs_arn" {
+  description = "SQS topic used to subscribe lambdas"
+  value       = aws_sqs_queue.async_archive_caching_jobs.arn
+}
+
+output "sns_archive_arn" {
+  description = "SNS topic ARN where are queued asynchronous jobs"
+  value       = aws_sns_topic.archive.arn
+}

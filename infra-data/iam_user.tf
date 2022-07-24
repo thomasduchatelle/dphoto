@@ -19,6 +19,11 @@ resource "aws_iam_user_policy_attachment" "cli_table" {
   user       = aws_iam_user.cli.name
 }
 
+resource "aws_iam_user_policy_attachment" "archive_sns_publish" {
+  policy_arn = aws_iam_policy.archive_sns_publish.arn
+  user       = aws_iam_user.cli.name
+}
+
 resource "aws_iam_access_key" "cli" {
   user    = aws_iam_user.cli.name
   pgp_key = var.keybase_user

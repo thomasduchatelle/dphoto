@@ -42,8 +42,8 @@ func (a *adapter) ReportMisfiredCache(owner, storeKey string, width int) error {
 	_, err = a.snsClient.Publish(&sns.PublishInput{
 		Message: aws.String(string(mess)),
 		MessageAttributes: map[string]*sns.MessageAttributeValue{
-			"owner":   aStringAttribute(owner),
-			"routing": aStringAttribute("MisfiredCacheMessageV1"),
+			"owner": aStringAttribute(owner),
+			"event": aStringAttribute("MisfiredCacheMessageV1"),
 		},
 		MessageDeduplicationId: aws.String(fmt.Sprintf("misfired-cache-%s", path.Dir(storeKey))),
 		MessageGroupId:         &owner,

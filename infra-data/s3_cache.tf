@@ -44,7 +44,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "cache_expiration" {
     expiration {
       // with: GI retrieval $0.03 / GB, STD storage $0.023 / GB / month, and store / cache = 4 times
       // break even point is => 5 months
-      days = 364 * 4 / 12
+      days = 120
     }
   }
 }
