@@ -44,6 +44,36 @@ func (_m *ResizerAdapter) ResizeImage(reader io.Reader, width int, fast bool) ([
 	return r0, r1, r2
 }
 
+// ResizeImageAtDifferentWidths provides a mock function with given fields: reader, width
+func (_m *ResizerAdapter) ResizeImageAtDifferentWidths(reader io.Reader, width []int) (map[int][]byte, string, error) {
+	ret := _m.Called(reader, width)
+
+	var r0 map[int][]byte
+	if rf, ok := ret.Get(0).(func(io.Reader, []int) map[int][]byte); ok {
+		r0 = rf(reader, width)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int][]byte)
+		}
+	}
+
+	var r1 string
+	if rf, ok := ret.Get(1).(func(io.Reader, []int) string); ok {
+		r1 = rf(reader, width)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(io.Reader, []int) error); ok {
+		r2 = rf(reader, width)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // NewResizerAdapter creates a new instance of ResizerAdapter. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewResizerAdapter(t testing.TB) *ResizerAdapter {
 	mock := &ResizerAdapter{}

@@ -71,6 +71,29 @@ func (_m *ARepositoryAdapter) FindByIds(owner string, ids []string) (map[string]
 	return r0, r1
 }
 
+// FindIdsFromKeyPrefix provides a mock function with given fields: keyPrefix
+func (_m *ARepositoryAdapter) FindIdsFromKeyPrefix(keyPrefix string) (map[string]string, error) {
+	ret := _m.Called(keyPrefix)
+
+	var r0 map[string]string
+	if rf, ok := ret.Get(0).(func(string) map[string]string); ok {
+		r0 = rf(keyPrefix)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]string)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(keyPrefix)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateLocations provides a mock function with given fields: owner, locations
 func (_m *ARepositoryAdapter) UpdateLocations(owner string, locations map[string]string) error {
 	ret := _m.Called(owner, locations)

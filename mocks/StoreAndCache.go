@@ -170,6 +170,20 @@ func (_m *StoreAndCache) Upload(values archive.DestructuredKey, content io.Reade
 	return r0, r1
 }
 
+// WalkCacheByPrefix provides a mock function with given fields: prefix, observer
+func (_m *StoreAndCache) WalkCacheByPrefix(prefix string, observer func(string)) error {
+	ret := _m.Called(prefix, observer)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, func(string)) error); ok {
+		r0 = rf(prefix, observer)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewStoreAndCache creates a new instance of StoreAndCache. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewStoreAndCache(t testing.TB) *StoreAndCache {
 	mock := &StoreAndCache{}

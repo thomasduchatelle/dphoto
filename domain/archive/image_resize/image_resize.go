@@ -18,6 +18,11 @@ func NewResizer() *Resizer {
 
 type Resizer struct{}
 
+func (r Resizer) ResizeImageAtDifferentWidths(reader io.Reader, width []int) (map[int][]byte, string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r Resizer) ResizeImage(reader io.Reader, width int, fast bool) ([]byte, string, error) {
 	// ResizeImage downscales (or upscales) the dimensions of an image to fit the requested width.
 	return ResizeImage(reader, width, fast)

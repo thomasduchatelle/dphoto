@@ -10,15 +10,15 @@ var (
 	repositoryPort ARepositoryAdapter
 	storePort      StoreAdapter
 	cachePort      CacheAdapter
-	jobQueuePort   JobQueueAdapter
+	asyncJobPort   AsyncJobAdapter
 	ResizerPort    ResizerAdapter = image_resize.NewResizer() // ResizerPort can be overrided for testing purpose
 )
 
-func Init(repository ARepositoryAdapter, store StoreAdapter, cache CacheAdapter, jobQueue JobQueueAdapter) {
+func Init(repository ARepositoryAdapter, store StoreAdapter, cache CacheAdapter, jobQueue AsyncJobAdapter) {
 	repositoryPort = repository
 	storePort = store
 	cachePort = cache
-	jobQueuePort = jobQueue
+	asyncJobPort = jobQueue
 }
 
 // ARepositoryAdapter is storing the mapping between keys in the main storage and the media ids.
@@ -34,6 +34,9 @@ type ARepositoryAdapter interface {
 
 	// UpdateLocations will update or set location for each id
 	UpdateLocations(owner string, locations map[string]string) error
+
+	// FindIdsFromKeyPrefix returns a map id -> storeKey
+	FindIdsFromKeyPrefix(keyPrefix string) (map[string]string, error)
 }
 
 // StoreAdapter is the adapter where the original medias are stored (cool storage - safe for long term)
@@ -64,14 +67,20 @@ type CacheAdapter interface {
 
 	// SignedURL returns a pre-authorised URL to download the content
 	SignedURL(key string, duration time.Duration) (string, error)
+
+	// WalkCacheByPrefix call the observer for each key found in the cache
+	WalkCacheByPrefix(prefix string, observer func(string)) error
 }
 
 // ResizerAdapter reduces the image weight and dimensions
 type ResizerAdapter interface {
 	ResizeImage(reader io.Reader, width int, fast bool) ([]byte, string, error)
+	ResizeImageAtDifferentWidths(reader io.Reader, width []int) (map[int][]byte, string, error)
 }
 
-// JobQueueAdapter queues job to perform asynchronously
-type JobQueueAdapter interface {
-	ReportMisfiredCache(owner, storeKey string, width int) error
+// AsyncJobAdapter gives an opportunity to detach heavy processes and run them asynchronously
+type AsyncJobAdapter interface {
+	WarmUpCacheByFolder(owner, missedStoreKey string, width int) error
+
+	LoadImagesInCache(images ...*ImageToResize) error
 }

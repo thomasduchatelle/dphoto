@@ -88,6 +88,20 @@ func (_m *CacheAdapter) SignedURL(key string, duration time.Duration) (string, e
 	return r0, r1
 }
 
+// WalkCacheByPrefix provides a mock function with given fields: prefix, observer
+func (_m *CacheAdapter) WalkCacheByPrefix(prefix string, observer func(string)) error {
+	ret := _m.Called(prefix, observer)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, func(string)) error); ok {
+		r0 = rf(prefix, observer)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewCacheAdapter creates a new instance of CacheAdapter. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewCacheAdapter(t testing.TB) *CacheAdapter {
 	mock := &CacheAdapter{}

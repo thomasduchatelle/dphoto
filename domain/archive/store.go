@@ -1,10 +1,8 @@
 package archive
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
-	"io"
 	"path"
 	"strings"
 )
@@ -16,12 +14,12 @@ func Store(request *StoreRequest) (string, error) {
 		return filename, err
 	}
 
-	reader, err := request.Open()
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to read for the second time the reader %s/%s to generate a miniature", request.Owner, request.Id)
-	}
-
-	err = generateMiniature(request.Owner, request.Id, reader)
+	err = asyncJobPort.LoadImagesInCache(&ImageToResize{
+		Owner:   request.Owner,
+		MediaId: request.Id,
+		Widths:  CommonlyRequestedWidths,
+		Open:    request.Open,
+	})
 	return filename, err
 }
 
@@ -52,14 +50,4 @@ func storeInArchive(request *StoreRequest) (string, bool, error) {
 
 	err = repositoryPort.AddLocation(request.Owner, request.Id, key)
 	return path.Base(key), true, err
-}
-
-func generateMiniature(owner, mediaId string, reader io.Reader) error {
-	content, mediaType, err := ResizerPort.ResizeImage(reader, MiniatureCachedWidth, false)
-	if err != nil {
-		return errors.Wrapf(err, "failed to generate minature")
-	}
-
-	cacheId := generateCacheId(owner, mediaId, MiniatureCachedWidth)
-	return cachePort.Put(cacheId, mediaType, bytes.NewReader(content))
 }

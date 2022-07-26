@@ -23,21 +23,22 @@ var awsSession = session.Must(session.NewSession(&aws.Config{
 	S3ForcePathStyle: aws.Bool(true),
 }))
 
-func createSess(purpose string) *store {
-	storeInterface := Must(New(awsSession, fmt.Sprintf("dphoto-unit-archive-%s-%s", purpose, time.Now().Format("20060102150405"))))
-
-	adapter := storeInterface.(*store)
+func createSess(purpose string) (*store, func()) {
+	adapter := Must(New(awsSession, fmt.Sprintf("dphoto-unit-archive-%s-%s", purpose, time.Now().Format("20060102150405")))).(*store)
 
 	_, err := adapter.s3.CreateBucket(&s3.CreateBucketInput{Bucket: &adapter.bucketName})
 	if err != nil {
 		panic(err)
 	}
 
-	return adapter
+	return adapter, func() {
+		_, _ = adapter.s3.DeleteBucket(&s3.DeleteBucketInput{Bucket: &adapter.bucketName})
+	}
 }
 
 func TestUpload(t *testing.T) {
-	adapter := createSess("upload")
+	adapter, clean := createSess("upload")
+	defer clean()
 
 	for _, name := range []string{"/unittest/2021/img-2021-1.jpg", "/unittest/2021/img-2021-1_01.jpg", "/unittest/2021/img-002.jpg"} {
 		_, err := adapter.s3.PutObject(&s3.PutObjectInput{
@@ -77,7 +78,8 @@ func TestUpload(t *testing.T) {
 }
 
 func TestCopy(t *testing.T) {
-	adapter := createSess("copy")
+	adapter, clean := createSess("copy")
+	defer clean()
 
 	for _, name := range []string{"unittest/2021/img-2021-1.jpg", "unittest/2021/img-2021-2.jpg"} {
 		_, err := adapter.s3.PutObject(&s3.PutObjectInput{
@@ -156,7 +158,8 @@ func TestCopy(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	adapter := createSess("delete")
+	adapter, clean := createSess("delete")
+	defer clean()
 
 	for _, name := range []string{"unittest/2021/img-2021-1.jpg", "unittest/2021/img-2021-2.jpg", "unittest/2021/img-2021-3.jpg", "unittest/2021/img-2021-4.jpg"} {
 		_, err := adapter.s3.PutObject(&s3.PutObjectInput{
@@ -207,7 +210,8 @@ func newKey(prefix, suffix string) archive.DestructuredKey {
 }
 
 func Test_store_Get_And_Put(t *testing.T) {
-	adapter := createSess("get")
+	adapter, clean := createSess("get")
+	defer clean()
 
 	err := adapter.Put("a/key/that/exists", "hero/avenger", strings.NewReader("I am Ironman"))
 	if err != nil {
@@ -258,6 +262,80 @@ func Test_store_Get_And_Put(t *testing.T) {
 			assert.Equalf(t, tt.wantContent, gotContent, "Get(%v)", tt.key)
 			assert.Equalf(t, tt.wantLength, gotLength, "Get(%v)", tt.key)
 			assert.Equalf(t, tt.wantContentType, gotType, "Get(%v)", tt.key)
+		})
+	}
+}
+
+func TestWalkCacheByPrefix(t *testing.T) {
+	tests := []struct {
+		name        string
+		prefix      string
+		withObjects []string
+		want        []string
+		wantErr     assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "it should not find anything",
+			prefix:  "w=1024/ironman/",
+			wantErr: assert.NoError,
+		},
+		{
+			name:   "it should not return keys of a different owner",
+			prefix: "w=1024/ironman/",
+			withObjects: []string{
+				"w=1024/thor/im1.jpg",
+				"w=1024/blackwindow/im2.jpg",
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:   "it should not return keys of a sub folder",
+			prefix: "w=1024/ironman/",
+			withObjects: []string{
+				"w=1024/iron/im1.jpg",
+				"w=1024/ironmanistonystark/im2.jpg",
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:   "it should only return keys of the requests prefix",
+			prefix: "w=1024/ironman/",
+			withObjects: []string{
+				"w=1024/thor/im1.jpg",
+				"w=1024/ironman/im2.jpg",
+				"w=1024/ironman/im3.jpg",
+				"w=1024/blackwidow/im4.jpg",
+			},
+			want: []string{
+				"w=1024/ironman/im2.jpg",
+				"w=1024/ironman/im3.jpg",
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			adapter, clean := createSess(fmt.Sprintf("get-%d", i))
+			defer clean()
+
+			for _, obj := range tt.withObjects {
+				err := adapter.Put(obj, "foo/bar", strings.NewReader("content of "+obj))
+				if !assert.NoError(t, err) {
+					return
+				}
+			}
+
+			var got []string
+			gotErr := adapter.WalkCacheByPrefix(tt.prefix, func(s string) {
+				got = append(got, s)
+			})
+
+			if !tt.wantErr(t, gotErr) {
+				return
+			}
+
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

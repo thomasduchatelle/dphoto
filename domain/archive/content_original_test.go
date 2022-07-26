@@ -49,7 +49,7 @@ func TestGetMediaOriginalURL(t *testing.T) {
 			repository := mocks.NewARepositoryAdapter(t)
 			store := mocks.NewStoreAdapter(t)
 			tt.initMocks(repository, store)
-			archive.Init(repository, store, mocks.NewCacheAdapter(t), mocks.NewJobQueueAdapter(t))
+			archive.Init(repository, store, mocks.NewCacheAdapter(t), mocks.NewAsyncJobAdapter(t))
 
 			got, err := archive.GetMediaOriginalURL(tt.args.owner, tt.args.mediaId)
 			if !tt.wantErr(t, err, fmt.Sprintf("GetMediaOriginalURL(%v, %v)", tt.args.owner, tt.args.mediaId)) {

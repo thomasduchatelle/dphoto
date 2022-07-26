@@ -1,4 +1,4 @@
-package jobqueuesns
+package asyncjobadapter
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ type MisfiredCacheMessageV1 struct {
 	Width    int    `json:"width"`
 }
 
-func New(sess *session.Session, topicARN string) archive.JobQueueAdapter {
+func New(sess *session.Session, topicARN string) archive.AsyncJobAdapter {
 	return &adapter{
 		snsClient: sns.New(sess),
 		topicARN:  topicARN,

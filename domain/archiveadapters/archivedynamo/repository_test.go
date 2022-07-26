@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"testing"
@@ -64,7 +65,8 @@ func TestShouldAddAndFindLocations(t *testing.T) {
 		session.Must(session.NewSession(awsConfig())),
 		"dphoto-unittest-archive-"+time.Now().Format("20060102150405.000"),
 		true,
-	))
+	)).(*repository)
+	defer repo.db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &repo.table})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -131,9 +133,10 @@ func TestUpdateLocations(t *testing.T) {
 
 	repo := Must(New(
 		session.Must(session.NewSession(awsConfig())),
-		"dphoto-unittest-archive",
+		"dphoto-unittest-archive-location"+time.Now().Format("20060102150405.000"),
 		true,
-	))
+	)).(*repository)
+	defer repo.db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &repo.table})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -159,5 +162,87 @@ func awsConfig() *aws.Config {
 		Endpoint:                      aws.String("http://localhost:4566"),
 		Credentials:                   credentials.NewStaticCredentials("localstack", "localstack", ""),
 		Region:                        aws.String("eu-west-1"),
+	}
+}
+
+func TestFindIdsFromKeyPrefix(t *testing.T) {
+	tests := []struct {
+		name          string
+		keyPrefix     string
+		withLocations map[string]string
+		want          map[string]string
+		wantErr       assert.ErrorAssertionFunc
+	}{
+		{
+			name:      "it should not return anything if table is empty",
+			keyPrefix: "ironman/album-01",
+			wantErr:   assert.NoError,
+		},
+		{
+			name:      "it should not return anything if location is for a different owner",
+			keyPrefix: "ironman/album-01",
+			withLocations: map[string]string{
+				"img1.jpg": "thor/album-01/image-01",
+				"img2.jpg": "blackwindow/album-01/image-02",
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:      "it should not return anything if location is for a different album",
+			keyPrefix: "ironman/album-02",
+			withLocations: map[string]string{
+				"img1.jpg": "ironman/album-01/image-01",
+				"img2.jpg": "ironman/album-03/image-02",
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:      "it should not return anything if an album starts with the same values",
+			keyPrefix: "ironman/album-02",
+			withLocations: map[string]string{
+				"img1.jpg": "ironman/album-020/image-01",
+				"img2.jpg": "ironman/album-021/image-02",
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:      "it should only return what on the folder",
+			keyPrefix: "ironman/album-02",
+			withLocations: map[string]string{
+				"img1.jpg": "ironman/album-01/image-01",
+				"img2.jpg": "ironman/album-02/image-02",
+				"img3.jpg": "ironman/album-02/image-03",
+				"img4.jpg": "ironman/album-03/image-04",
+			},
+			want: map[string]string{
+				"img2.jpg": "ironman/album-02/image-02",
+				"img3.jpg": "ironman/album-02/image-03",
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := Must(New(
+				session.Must(session.NewSession(awsConfig())),
+				"dphoto-unittest-archive-key-prefix-"+time.Now().Format("20060102150405.000"),
+				true,
+			)).(*repository)
+			defer repo.db.DeleteTable(&dynamodb.DeleteTableInput{
+				TableName: &repo.table,
+			})
+
+			err := repo.UpdateLocations(owner, tt.withLocations)
+			if !assert.NoError(t, err) {
+				assert.FailNow(t, err.Error())
+			}
+
+			got, err := repo.FindIdsFromKeyPrefix(tt.keyPrefix)
+			if !tt.wantErr(t, err, fmt.Sprintf("FindIdsFromKeyPrefix(%v)", tt.keyPrefix)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "FindIdsFromKeyPrefix(%v)", tt.keyPrefix)
+		})
 	}
 }

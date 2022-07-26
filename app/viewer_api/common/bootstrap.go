@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/jobqueuesns"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/s3store"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogarchivesync"
@@ -95,7 +94,8 @@ func bootstrapArchiveDomain() {
 		archivedynamo.Must(archivedynamo.New(sess, tableName, false)),
 		s3store.Must(s3store.New(sess, storeBucketName)),
 		s3store.Must(s3store.New(sess, cacheBucketName)),
-		jobqueuesns.New(sess, archiveJobsSnsARN),
+		archive.NewSyncJobAdapter(), // FIXME replace with the async adapter
+		//asyncjobadapter.New(sess, archiveJobsSnsARN),
 	)
 }
 

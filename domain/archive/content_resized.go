@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-const (
-	MiniatureCachedWidth = 360 // MiniatureCachedWidth is the minimum size in which images are stored. Under that, the MiniatureCachedWidth is stored and the image will be re-scaled down on the fly
-)
-
 // GetResizedImage returns the image in the requested size (or rounded up), and the media type.
 func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, string, error) {
 	cacheKey := generateCacheId(owner, mediaId, width)
@@ -37,7 +33,7 @@ func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, st
 				"StoreKey": key,
 			}).Infof("Missed archive cache")
 
-			err = jobQueuePort.ReportMisfiredCache(owner, key, cachedSize)
+			err = asyncJobPort.WarmUpCacheByFolder(owner, key, cachedSize)
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
 					"Owner":    owner,

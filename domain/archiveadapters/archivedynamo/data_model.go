@@ -11,8 +11,8 @@ import (
 
 type MediaLocation struct {
 	catalogdynamo.TablePk
-	Id  string // Id is also part of the primary key
-	Key string // Key is the physical location
+	LocationId  string // LocationId is also part of the primary key
+	LocationKey string // LocationKey is the physical location
 }
 
 func MediaLocationPk(owner, id string) catalogdynamo.TablePk {
@@ -39,16 +39,16 @@ func marshalMediaLocation(owner, id, key string) (map[string]*dynamodb.Attribute
 	}
 
 	return dynamodbattribute.MarshalMap(&MediaLocation{
-		TablePk: MediaLocationPk(owner, id),
-		Id:      id,
-		Key:     key,
+		TablePk:     MediaLocationPk(owner, id),
+		LocationId:  id,
+		LocationKey: key,
 	})
 }
 
 func unmarshalMediaLocation(attributes map[string]*dynamodb.AttributeValue) (string, string, error) {
 	location := MediaLocation{}
 	err := dynamodbattribute.UnmarshalMap(attributes, &location)
-	return location.Id, location.Key, errors.Wrapf(err, "MediaLocation cannot be unmarchaled from %+v", attributes)
+	return location.LocationId, location.LocationKey, errors.Wrapf(err, "MediaLocation cannot be unmarchaled from %+v", attributes)
 }
 
 // isBlank returns true is value is empty, or contains only spaces

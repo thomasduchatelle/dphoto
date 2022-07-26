@@ -161,3 +161,15 @@ func (s *store) isNotFound(err error) bool {
 	aerr, ok := err.(awserr.Error)
 	return ok && aerr.Code() == s3.ErrCodeNoSuchKey
 }
+
+func (s *store) WalkCacheByPrefix(prefix string, observer func(string)) error {
+	return s.s3.ListObjectsV2Pages(&s3.ListObjectsV2Input{
+		Bucket: &s.bucketName,
+		Prefix: &prefix,
+	}, func(output *s3.ListObjectsV2Output, _ bool) bool {
+		for _, content := range output.Contents {
+			observer(*content.Key)
+		}
+		return true
+	})
+}

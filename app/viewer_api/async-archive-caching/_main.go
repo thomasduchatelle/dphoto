@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/jobqueuesns"
 )
 
 func Handler(request events.SQSEvent) error {
@@ -32,14 +31,14 @@ func Handler(request events.SQSEvent) error {
 	return nil
 }
 
-func unpackMessage(record events.SQSMessage) (*jobqueuesns.MisfiredCacheMessageV1, error) {
+func unpackMessage(record events.SQSMessage) (*asyncjobadapter.MisfiredCacheMessageV1, error) {
 	snsEntity := &events.SNSEntity{}
 	err := json.Unmarshal([]byte(record.Body), snsEntity)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unmarshaling events.SNSEntity '%s'", record.Body)
 	}
 
-	mess := &jobqueuesns.MisfiredCacheMessageV1{}
+	mess := &asyncjobadapter.MisfiredCacheMessageV1{}
 	err = json.Unmarshal([]byte(snsEntity.Message), mess)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unmarshaling jobqueuesns.MisfiredCacheMessageV1 '%s'", snsEntity.Message)
