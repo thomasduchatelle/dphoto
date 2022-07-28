@@ -6,7 +6,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
+	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
@@ -15,7 +17,7 @@ import (
 	"strings"
 )
 
-func Migrate(tableName string) (int, error) {
+func Migrate(tableName string, arn string, repopulateCache bool) (int, error) {
 	log.Infoln("Updating indexes ...")
 	awsSession := session.Must(session.NewSession())
 	_, err := catalogdynamo.NewRepository(awsSession, tableName)
@@ -29,6 +31,8 @@ func Migrate(tableName string) (int, error) {
 
 	types := make(map[string]int)
 	var patches []*dynamodb.WriteRequest
+
+	var imageToResizes []*archive.ImageToResize
 
 	err = client.ScanPages(&dynamodb.ScanInput{
 		TableName: &tableName,
@@ -55,6 +59,9 @@ func Migrate(tableName string) (int, error) {
 						patches, err = migrateOldLocation(patches, item)
 					} else if sk == "LOCATION#" {
 						types["LOCATION_NEW"]++
+						if repopulateCache {
+							imageToResizes = foundNewLocation(imageToResizes, item)
+						}
 					} else {
 						types["UNKNOWN"]++
 					}
@@ -88,7 +95,37 @@ func Migrate(tableName string) (int, error) {
 		total += count
 	}
 
+	asyncAdapter := asyncjobadapter.New(awsSession, arn, "", 300)
+	if len(imageToResizes) > 0 {
+		log.Infof("%d medias to miniaturise ...", len(imageToResizes))
+		err = asyncAdapter.LoadImagesInCache(imageToResizes...)
+		if err != nil {
+			return 0, errors.Wrapf(err, "sending SNS messages")
+		}
+	}
+
 	return total, nil
+}
+
+func foundNewLocation(images []*archive.ImageToResize, item map[string]*dynamodb.AttributeValue) []*archive.ImageToResize {
+	locationKey := *item["LocationKey"].S
+	locationId := *item["LocationId"].S
+
+	if !archive.SupportResize(locationKey) {
+		return images
+	}
+
+	widths := []int{archive.MiniatureCachedWidth}
+	if path.Base(locationKey)[:4] == "2022" {
+		widths = archive.CacheableWidths
+	}
+
+	return append(images, &archive.ImageToResize{
+		Owner:    path.Dir(path.Dir(locationKey)),
+		MediaId:  locationId,
+		StoreKey: locationKey,
+		Widths:   widths,
+	})
 }
 
 func migrateOldAlbum(patches []*dynamodb.WriteRequest, item map[string]*dynamodb.AttributeValue) ([]*dynamodb.WriteRequest, error) {

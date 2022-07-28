@@ -12,7 +12,9 @@ import (
 )
 
 var (
-	tableName string
+	tableName  string
+	snsARN     string
+	repopulate bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -27,7 +29,7 @@ var rootCmd = &cobra.Command{
 
 		printer.Info("Start to migrate table %s ...", aurora.Cyan(tableName))
 		start := time.Now()
-		count, err := migrator.Migrate(tableName)
+		count, err := migrator.Migrate(tableName, snsARN, repopulate)
 		printer.FatalIfError(err, 1)
 
 		elapsed := int(time.Now().Sub(start).Seconds())
@@ -43,5 +45,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().StringVar(&tableName, "table", "", "Help message for toggle")
+	rootCmd.Flags().StringVar(&tableName, "table", "", "Table name")
+	rootCmd.Flags().StringVar(&snsARN, "sns", "", "SNS ARN")
+	rootCmd.Flags().BoolVar(&repopulate, "caching", false, "TRUE to populate the cache")
 }

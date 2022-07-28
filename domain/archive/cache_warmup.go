@@ -79,14 +79,17 @@ func LoadImagesInCache(ctx context.Context, images ...*ImageToResize) (int, erro
 
 			reader, err := opener()
 			if err != nil {
-				return 0, errors.Wrapf(err, "opening %s / %s", img.Owner, img.MediaId)
+				log.WithField("Owner", img.Owner).WithError(err).Errorf("opening %s/%s [%s] failed: %s", img.Owner, img.MediaId, storeKey, err.Error())
+				continue
 			}
 
 			err = generateMiniature(img.Owner, img.MediaId, reader, img.Widths)
 			_ = reader.Close()
 			if err != nil {
-				return 0, errors.Wrapf(err, "failed to cache resized version of %s/%s from store '%s'", img.Owner, img.MediaId, storeKey)
+				log.WithField("Owner", img.Owner).WithError(err).Errorf("failed to cache resized version of %s/%s from store '%s'", img.Owner, img.MediaId, storeKey)
+				continue
 			}
+			log.WithField("Owner", img.Owner).Infof("[%d/%d] miniaturised %s into %v", index+1, len(images), storeKey, img.Widths)
 		}
 	}
 
@@ -104,7 +107,6 @@ func contentOpener(owner, mediaId string, storeKey *string) func() (io.ReadClose
 			}
 		}
 
-		log.WithField("Owner", owner).Infof("downloading %s", *storeKey)
 		return storePort.Download(*storeKey)
 	}
 }

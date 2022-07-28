@@ -39,14 +39,14 @@ func Handler(ctx context.Context, request events.SNSEvent) {
 	cachingContext := ctx
 	if deadline, ok := ctx.Deadline(); ok {
 		var cancel context.CancelFunc
-		newDeadline := deadline.Add(-1 * time.Minute)
+		newDeadline := deadline.Add(-30 * time.Second)
 		cachingContext, cancel = context.WithDeadline(cachingContext, newDeadline)
 		defer cancel()
 
-		log.Infof("resize images with timebox %ds", int(newDeadline.Sub(time.Now()).Seconds()))
+		log.Infof("resize %d images with timebox %ds", len(images), int(newDeadline.Sub(time.Now()).Seconds()))
 	}
 
-	processed, err := archive.LoadImagesInCache(ctx, images...)
+	processed, err := archive.LoadImagesInCache(cachingContext, images...)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to load image in caches: %s", err.Error())
 		return
