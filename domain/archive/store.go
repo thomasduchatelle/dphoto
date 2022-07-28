@@ -14,12 +14,14 @@ func Store(request *StoreRequest) (string, error) {
 		return filename, err
 	}
 
-	err = asyncJobPort.LoadImagesInCache(&ImageToResize{
-		Owner:   request.Owner,
-		MediaId: request.Id,
-		Widths:  CommonlyRequestedWidths,
-		Open:    request.Open,
-	})
+	if SupportResize(filename) {
+		err = asyncJobPort.LoadImagesInCache(&ImageToResize{
+			Owner:   request.Owner,
+			MediaId: request.Id,
+			Widths:  CacheableWidths,
+			Open:    request.Open,
+		})
+	}
 	return filename, err
 }
 

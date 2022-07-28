@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
+	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/s3store"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogarchivesync"
@@ -20,7 +21,7 @@ import (
 func BootstrapCatalogAndArchiveDomains() {
 	BootstrapOAuthDomain()
 	bootstrapCatalogDomain()
-	bootstrapArchiveDomain()
+	BootstrapArchiveDomain()
 }
 
 // BootstrapCatalogDomain bootstraps both oauth and catalog
@@ -71,7 +72,7 @@ func bootstrapCatalogDomain() {
 	catalog.Init(dynamoAdapter, catalogarchivesync.New())
 }
 
-func bootstrapArchiveDomain() {
+func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
@@ -84,19 +85,25 @@ func bootstrapArchiveDomain() {
 	if !ok || cacheBucketName == "" {
 		panic("CACHE_BUCKET_NAME must be set and non-empty")
 	}
-	archiveJobsSnsARN, ok := os.LookupEnv("ARCHIVE_JOBS_SNS_ARN")
+	archiveJobsSnsARN, ok := os.LookupEnv("SNS_ARCHIVE_ARN")
 	if !ok || archiveJobsSnsARN == "" {
-		panic("ARCHIVE_JOBS_SNS_ARN must be set and non-empty")
+		panic("SNS_ARCHIVE_ARN must be set and non-empty")
+	}
+	archiveJobsSqsURL, ok := os.LookupEnv("SQS_ARCHIVE_URL")
+	if !ok || archiveJobsSnsARN == "" {
+		panic("SQS_ARCHIVE_URL must be set and non-empty")
 	}
 
 	sess := newSession()
+	archiveAsyncAdapter := asyncjobadapter.New(sess, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobadapter.DefaultImagesPerMessage)
 	archive.Init(
 		archivedynamo.Must(archivedynamo.New(sess, tableName, false)),
 		s3store.Must(s3store.New(sess, storeBucketName)),
 		s3store.Must(s3store.New(sess, cacheBucketName)),
-		archive.NewSyncJobAdapter(), // FIXME replace with the async adapter
-		//asyncjobadapter.New(sess, archiveJobsSnsARN),
+		archiveAsyncAdapter,
 	)
+
+	return archiveAsyncAdapter
 }
 
 func newSession() *session.Session {

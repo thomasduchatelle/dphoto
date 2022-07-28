@@ -18,9 +18,29 @@ func NewResizer() *Resizer {
 
 type Resizer struct{}
 
-func (r Resizer) ResizeImageAtDifferentWidths(reader io.Reader, width []int) (map[int][]byte, string, error) {
-	//TODO implement me
-	panic("implement me")
+func (r Resizer) ResizeImageAtDifferentWidths(reader io.Reader, widths []int) (map[int][]byte, string, error) {
+	resized := make(map[int][]byte)
+
+	img, format, err := readImage(reader)
+	if err != nil {
+		return nil, "", err
+	}
+
+	for _, width := range widths {
+		resizedImage := resizeImage(img, width, false)
+
+		encodingFormat, err := imaging.FormatFromExtension(format)
+		if err != nil {
+			return nil, "", errors.Wrapf(err, "failed to find format from extention '%s'", format)
+		}
+
+		dest := bytes.NewBuffer(nil)
+		err = imaging.Encode(dest, resizedImage, encodingFormat)
+
+		resized[width] = dest.Bytes()
+	}
+
+	return resized, "image/" + format, err
 }
 
 func (r Resizer) ResizeImage(reader io.Reader, width int, fast bool) ([]byte, string, error) {

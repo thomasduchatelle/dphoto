@@ -39,6 +39,11 @@ output "sqs_async_archive_jobs_arn" {
 }
 
 output "sns_archive_arn" {
-  description = "SNS topic ARN where are queued asynchronous jobs"
+  description = "SNS topic ARN where are dispatched asynchronous jobs"
   value       = aws_sns_topic.archive.arn
+}
+
+output "sqs_archive_url" {
+  description = "SQS topic URL where are de-duplicated messages"
+  value       = aws_sqs_queue.async_archive_caching_jobs.url
 }

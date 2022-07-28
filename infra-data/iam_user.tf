@@ -24,6 +24,11 @@ resource "aws_iam_user_policy_attachment" "archive_sns_publish" {
   user       = aws_iam_user.cli.name
 }
 
+resource "aws_iam_user_policy_attachment" "archive_sqs_send" {
+  policy_arn = aws_iam_policy.archive_sqs_send.arn
+  user       = aws_iam_user.cli.name
+}
+
 resource "aws_iam_access_key" "cli" {
   user    = aws_iam_user.cli.name
   pgp_key = var.keybase_user

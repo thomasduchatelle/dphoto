@@ -60,7 +60,7 @@ func (r *rep) CreateTableIfNecessary() error {
 			{AttributeName: aws.String("AlbumIndexPK"), AttributeType: s},
 			{AttributeName: aws.String("AlbumIndexSK"), AttributeType: s},
 			{AttributeName: aws.String("LocationId"), AttributeType: s},
-			{AttributeName: aws.String("LocationKey"), AttributeType: s},
+			{AttributeName: aws.String("LocationKeyPrefix"), AttributeType: s},
 		},
 		BillingMode: aws.String(dynamodb.BillingModePayPerRequest),
 		GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndex{
@@ -75,10 +75,10 @@ func (r *rep) CreateTableIfNecessary() error {
 			{
 				IndexName: aws.String("ReverseLocationIndex"), // from 'archivedynamo' extension
 				KeySchema: []*dynamodb.KeySchemaElement{
-					{AttributeName: aws.String("LocationKey"), KeyType: aws.String(dynamodb.KeyTypeHash)},
+					{AttributeName: aws.String("LocationKeyPrefix"), KeyType: aws.String(dynamodb.KeyTypeHash)},
 					{AttributeName: aws.String("LocationId"), KeyType: aws.String(dynamodb.KeyTypeRange)},
 				},
-				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeKeysOnly)},
+				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
 			},
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{

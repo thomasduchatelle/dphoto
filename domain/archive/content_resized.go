@@ -11,29 +11,27 @@ import (
 
 // GetResizedImage returns the image in the requested size (or rounded up), and the media type.
 func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, string, error) {
-	cacheKey := generateCacheId(owner, mediaId, width)
+	cachedWidth, err := findCacheableSize(width)
+	if err != nil {
+		return nil, "", err
+	}
+
+	cacheKey := generateCacheId(owner, mediaId, cachedWidth)
 
 	// note: retention and storage class is managed at infrastructure level
 	return NewCache().GetOrStore(
 		cacheKey,
 		func() ([]byte, string, error) {
-			cachedSize := width
-			if cachedSize < MiniatureCachedWidth {
-				cachedSize = MiniatureCachedWidth
-			}
-
 			key, err := repositoryPort.FindById(owner, mediaId)
 			if err != nil {
 				return nil, "", err
 			}
 
 			log.WithFields(log.Fields{
-				"Owner":    owner,
-				"Width":    width,
-				"StoreKey": key,
-			}).Infof("Missed archive cache")
+				"Owner": owner,
+			}).Infof("%s is missing in the cache at size %d (requested %d)", key, cachedWidth, width)
 
-			err = asyncJobPort.WarmUpCacheByFolder(owner, key, cachedSize)
+			err = asyncJobPort.WarmUpCacheByFolder(owner, key, cachedWidth)
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
 					"Owner":    owner,
@@ -47,7 +45,7 @@ func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, st
 			}
 			defer originalReader.Close()
 
-			return ResizerPort.ResizeImage(originalReader, cachedSize, false)
+			return ResizerPort.ResizeImage(originalReader, cachedWidth, false)
 		},
 		func(reader io.ReadCloser, size int, mediaType string, err error) ([]byte, string, error) {
 			defer func() {
@@ -56,33 +54,60 @@ func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, st
 				}
 			}()
 
-			switch {
-			case err != nil:
+			if err != nil {
 				return nil, "", err
-
-			case width < MiniatureCachedWidth:
-				return ResizerPort.ResizeImage(reader, width, true)
-
-			case maxBytes > 0 && size > maxBytes:
-				return nil, mediaType, MediaOverflowError
-
-			default:
-				content, err := ioutil.ReadAll(reader)
-				return content, mediaType, errors.Wrapf(err, "failed to read content from key '%s'", cacheKey)
 			}
+
+			var content []byte
+			if width < cachedWidth {
+				content, _, err = ResizerPort.ResizeImage(reader, width, true)
+				size = len(content)
+			} else if maxBytes == 0 || size <= maxBytes {
+				content, err = ioutil.ReadAll(reader)
+			}
+			if err != nil {
+				return nil, "", err
+			}
+
+			if maxBytes > 0 && size > maxBytes {
+				return nil, mediaType, MediaOverflowError
+			}
+
+			return content, mediaType, nil
 		},
 	)
 }
 
 // GetResizedImageURL returns a pre-signed URL to download the resized image ; GetResizedImage must have been called before.
 func GetResizedImageURL(owner, mediaId string, width int) (string, error) {
-	cacheId := generateCacheId(owner, mediaId, width)
+	cachedWidth, err := findCacheableSize(width)
+	if err != nil {
+		return "", err
+	}
+
+	cacheId := generateCacheId(owner, mediaId, cachedWidth)
 	return cachePort.SignedURL(cacheId, DownloadUrlValidityDuration)
+}
+
+func findCacheableSize(width int) (int, error) {
+	if len(CacheableWidths) == 0 {
+		return width, nil
+	}
+
+	i := 0
+	for i+1 < len(CacheableWidths) && width <= CacheableWidths[i+1] {
+		i++
+	}
+
+	if width > CacheableWidths[i] {
+		return 0, errors.Errorf("width %d is not supported ; maximum size is %d", width, CacheableWidths[0])
+	}
+	return CacheableWidths[i], nil
 }
 
 func generateCacheId(owner, id string, width int) string {
 	size := fmt.Sprintf("w=%d", width)
-	if width <= 400 {
+	if width == MiniatureCachedWidth {
 		size = "miniatures"
 	}
 

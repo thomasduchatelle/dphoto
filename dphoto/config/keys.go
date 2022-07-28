@@ -8,6 +8,7 @@ const (
 	ArchiveMainBucketName       = "archive.main.bucketName"
 	ArchiveCacheBucketName      = "archive.cache.bucketName"
 	ArchiveJobsSNSARN           = "archive.sns.arn"
+	ArchiveJobsSQSURL           = "archive.sqs.url"
 	BackupConcurrencyAnalyser   = "backup.concurrency.analyser"
 	BackupConcurrencyCataloguer = "backup.concurrency.cataloguer"
 	BackupConcurrencyUploader   = "backup.concurrency.uploader"

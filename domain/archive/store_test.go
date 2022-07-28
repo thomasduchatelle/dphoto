@@ -39,7 +39,7 @@ func TestStore(t *testing.T) {
 					if assert.Len(t, images, 1) {
 						assert.Equal(t, owner, images[0].Owner)
 						assert.Equal(t, "media-1", images[0].MediaId)
-						assert.Equal(t, archive.CommonlyRequestedWidths, images[0].Widths)
+						assert.Equal(t, archive.CacheableWidths, images[0].Widths)
 						assert.NotNil(t, images[0].Open)
 					}
 					return nil
@@ -89,6 +89,24 @@ func TestStore(t *testing.T) {
 			},
 			want:    "",
 			wantErr: true,
+		},
+		{
+			name: "it should store a media online without caching it if it extension is not supported",
+			mocksExpectation: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter, cache *mocks.CacheAdapter, resizer *mocks.ResizerAdapter, asyncJob *mocks.AsyncJobAdapter) {
+				repository.On("FindById", owner, "video-1").Once().Return("", archive.NotFoundError)
+				repository.On("AddLocation", owner, "video-1", owner+"/folder-1/my_choice.mpeg").Once().Return(nil)
+				store.On("Upload", archive.DestructuredKey{Prefix: owner + "/folder-1/2022-06-26_15-48-42_qwertyui", Suffix: ".mpeg"}, mock.Anything).Once().Return(owner+"/folder-1/my_choice.mpeg", nil)
+			},
+			request: &archive.StoreRequest{
+				DateTime:         time.Date(2022, 6, 26, 15, 48, 42, 0, time.UTC),
+				FolderName:       "/folder-1",
+				Id:               "video-1",
+				Open:             opener,
+				OriginalFilename: "randomName.photo.Mpeg",
+				Owner:            owner,
+				SignatureSha256:  "qwertyuiopasdfghjklzxcvbnm",
+			},
+			want: "my_choice.mpeg",
 		},
 	}
 	for _, tt := range tests {

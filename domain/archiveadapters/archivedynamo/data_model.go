@@ -6,13 +6,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
+	"path"
 	"strings"
 )
 
 type MediaLocation struct {
 	catalogdynamo.TablePk
-	LocationId  string // LocationId is also part of the primary key
-	LocationKey string // LocationKey is the physical location
+	LocationKeyPrefix string // LocationKeyPrefix is used for indexing
+	LocationId        string // LocationId is also part of the primary key
+	LocationKey       string // LocationKey is the physical location
 }
 
 func MediaLocationPk(owner, id string) catalogdynamo.TablePk {
@@ -39,9 +41,10 @@ func marshalMediaLocation(owner, id, key string) (map[string]*dynamodb.Attribute
 	}
 
 	return dynamodbattribute.MarshalMap(&MediaLocation{
-		TablePk:     MediaLocationPk(owner, id),
-		LocationId:  id,
-		LocationKey: key,
+		TablePk:           MediaLocationPk(owner, id),
+		LocationKeyPrefix: path.Dir(key),
+		LocationId:        id,
+		LocationKey:       key,
 	})
 }
 

@@ -59,15 +59,25 @@ functions:
           method: get
 
   # ASYNC lambdas - using FIFO for deduplication made a SQS required
-  async-archive-caching-jobs:
-    handler: bin/async-archive-caching
-    memorySize: 1024
+  async-warmup-cache:
+    handler: bin/async-warmup-cache
     timeout: 900
     events:
       - sqs:
-          arn: ${ssm:/dphoto/${sls:stage}/sqs/async_archive_caching_jobs/arn}
+          arn: ${ssm:/dphoto/${sls:stage}/sqs/archive/arn}
           batchSize: 1
           maximumRetryAttempts: 3
+
+  async-resize-image:
+    handler: bin/async-resize-image
+    memorySize: 1024
+    timeout: 900
+    events:
+      - sns:
+          arn: ${ssm:/dphoto/${sls:stage}/sns/archive/arn}
+          filterPolicy:
+            ContentType:
+              - "[]ImageToResizeMessageV1"
 
 provider:
   name: aws
@@ -95,6 +105,7 @@ provider:
         - ${ssm:/dphoto/${sls:stage}/iam/policies/indexRWArn}
         - ${ssm:/dphoto/${sls:stage}/iam/policies/storageROArn}
         - ${ssm:/dphoto/${sls:stage}/iam/policies/archive_sns_publish/arn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/archive_sqs_send/arn}
       tags:
         Application: dphoto-app
         Environment: ${sls:stage}
@@ -276,7 +287,8 @@ custom:
     CATALOG_TABLE_NAME: /dphoto/${sls:stage}/dynamodb/catalog/tableName
     CACHE_BUCKET_NAME: /dphoto/${sls:stage}/s3/cache/bucketName
     STORAGE_BUCKET_NAME: /dphoto/${sls:stage}/s3/storage/bucketName
-    ARCHIVE_JOBS_SNS_ARN: /dphoto/${sls:stage}/sns/archive/arn
+    SNS_ARCHIVE_ARN: /dphoto/${sls:stage}/sns/archive/arn
+    SQS_ARCHIVE_URL: /dphoto/${sls:stage}/sqs/archive/url
   s3Sync:
     - bucketNameKey: ViewerUiBucketName
       localDir: viewer_ui/build/

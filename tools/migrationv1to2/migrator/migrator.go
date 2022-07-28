@@ -185,9 +185,10 @@ func migrateOldLocation(patches []*dynamodb.WriteRequest, item map[string]*dynam
 	})
 
 	location := archivedynamo.MediaLocation{
-		TablePk:     archivedynamo.MediaLocationPk(owner, mediaId),
-		LocationId:  mediaId,
-		LocationKey: path.Join(owner, data.FolderName, data.Filename),
+		TablePk:           archivedynamo.MediaLocationPk(owner, mediaId),
+		LocationKeyPrefix: path.Dir(path.Join(owner, data.FolderName, data.Filename)),
+		LocationId:        mediaId,
+		LocationKey:       path.Join(owner, data.FolderName, data.Filename),
 	}
 	newItem, err := dynamodbattribute.MarshalMap(location)
 	if err != nil {

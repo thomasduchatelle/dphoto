@@ -10,7 +10,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
-	"strings"
 )
 
 func New(sess *session.Session, tableName string, createTable bool) (archive.ARepositoryAdapter, error) {
@@ -114,27 +113,20 @@ func (r *repository) UpdateLocations(owner string, locations map[string]string) 
 func (r *repository) FindIdsFromKeyPrefix(keyPrefix string) (map[string]string, error) {
 	pairs := make(map[string]string)
 
-	prefix := keyPrefix + "/"
-	err := r.db.ScanPages(&dynamodb.ScanInput{
-		ExclusiveStartKey: map[string]*dynamodb.AttributeValue{
-			"LocationKey": {S: aws.String(prefix)},
-			"LocationId":  {S: aws.String("#")},
-			"PK":          {S: aws.String("#")},
-			"SK":          {S: aws.String("#")},
+	err := r.db.QueryPages(&dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":prefix": {S: &keyPrefix},
 		},
-		IndexName: aws.String("ReverseLocationIndex"),
-		Limit:     aws.Int64(100), // limit size of a page to not pay too much extra when reaching the last location of the folder
-		TableName: &r.table,
-	}, func(output *dynamodb.ScanOutput, last bool) bool {
+		KeyConditionExpression: aws.String("LocationKeyPrefix = :prefix"),
+		IndexName:              aws.String("ReverseLocationIndex"),
+		TableName:              &r.table,
+	}, func(output *dynamodb.QueryOutput, last bool) bool {
 		for _, item := range output.Items {
 			mediaId, storeKey, err := unmarshalMediaLocation(item)
-			if err == nil && strings.HasPrefix(storeKey, prefix) {
-				pairs[mediaId] = storeKey
+			if err != nil {
+				log.WithError(err).Errorf("failed unmarshaling item %+v for prefix %s - skipping", item, keyPrefix)
 			} else {
-				if err != nil {
-					log.Errorf("swallowed error %s when unmarshaling", err.Error())
-				}
-				return false
+				pairs[mediaId] = storeKey
 			}
 		}
 

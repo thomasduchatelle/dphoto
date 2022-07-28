@@ -114,8 +114,8 @@ export default function MediaPage() {
             }}>
             {isImage ? (<img
               className="picture"
-              src={`${src}&w=1920`}
-              srcSet={`${src}&w=360 360w, ${src}&w=1920 1920w ${src}&w=3200 3200w`}
+              src={`${src}&w=360`}
+              srcSet={`${src}&w=360 360w, ${src}&w=1440 1440w, ${src}&w=2400 2400w`}
               sizes='100vw'
               alt='previous media'/>) : (
               <img src="/video-placeholder.png" alt="video placeholder" style={{
