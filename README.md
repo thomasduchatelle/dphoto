@@ -16,7 +16,8 @@ Backup photo to your private AWS Cloud, and share them with family and friends. 
 | Organise by album | v1.0    | Photos and videos are organised by album based on their creation date. Each album is a directory in S3.                 |
 | Migration script  | v1.0    | Medias already uploaded in S3 are re-ordered by albums and de-duplicated (with interactive command line interface)      |
 | Web viewer        | v1.5    | See photos by albums, tag them, search by tag or dates                                                                  |
-| Faster UI         | -       | Pre-generate miniatures, supports browser caching (miniature + medium quality) and backend cache medium-quality images. |
+| Faster UI         | v2.0    | Pre-generate miniatures, supports browser caching (miniature + medium quality) and backend cache medium-quality images. |
+| Offlne Mode       | -       | Backup medias to local harddrive with option to sync back online later (when broadband available)                       |
 | API Driven        | -       | Provide enhanced API to tip the business on the backend side: CLI authenticated by Google Token (vs AWS Credentials)    |
 | Android App       | -       | Minimalist app to synchronise local medias to DPhoto.                                                                   |
 | Media sharing     | -       | Albums can be shared and contributed by several users.                                                                  |
