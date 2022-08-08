@@ -1,25 +1,25 @@
-package archivedynamo
+package arepositorydynamo
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/repositorydynamo"
 	"path"
 	"strings"
 )
 
 type MediaLocation struct {
-	catalogdynamo.TablePk
+	repositorydynamo.TablePk
 	LocationKeyPrefix string // LocationKeyPrefix is used for indexing
 	LocationId        string // LocationId is also part of the primary key
 	LocationKey       string // LocationKey is the physical location
 }
 
-func MediaLocationPk(owner, id string) catalogdynamo.TablePk {
-	return catalogdynamo.TablePk{
-		PK: catalogdynamo.MediaPrimaryKeyPK(owner, id),
+func MediaLocationPk(owner, id string) repositorydynamo.TablePk {
+	return repositorydynamo.TablePk{
+		PK: repositorydynamo.MediaPrimaryKeyPK(owner, id),
 		SK: "LOCATION#",
 	}
 }

@@ -45,7 +45,7 @@ type StoreAdapter interface {
 	Download(key string) (io.ReadCloser, error)
 
 	// Upload stores online the file and return the final key used
-	Upload(values DestructuredKey, content io.Reader) (string, error)
+	Upload(keyHint DestructuredKey, content io.Reader) (string, error)
 
 	// Copy copied the file to a different location, without overriding existing file
 	Copy(origin string, destination DestructuredKey) (string, error)

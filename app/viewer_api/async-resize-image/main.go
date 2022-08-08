@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
 	"time"
 )
 
@@ -19,7 +18,7 @@ var (
 func Handler(ctx context.Context, request events.SNSEvent) {
 	record := request.Records[0]
 
-	var mess []asyncjobadapter.ImageToResizeMessageV1
+	var mess []asyncjobsns.ImageToResizeMessageV1
 	err := json.Unmarshal([]byte(record.SNS.Message), &mess)
 	if err != nil {
 		log.WithError(err).Errorf("failed to parse SQS message '%s': %s", record.SNS.Message, err.Error())

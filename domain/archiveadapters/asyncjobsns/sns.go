@@ -1,4 +1,5 @@
-package asyncjobadapter
+// Package asyncjobsns use SNS and SQS to queue and process jobs on AWS
+package asyncjobsns
 
 import (
 	"encoding/json"

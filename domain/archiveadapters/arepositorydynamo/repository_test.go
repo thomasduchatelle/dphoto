@@ -1,4 +1,4 @@
-package archivedynamo
+package arepositorydynamo
 
 import (
 	"fmt"

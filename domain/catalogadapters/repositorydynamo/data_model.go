@@ -1,17 +1,4 @@
-// Package catalogdynamo package store all the data in a single multi-tenant table:
-package catalogdynamo
-
-import (
-	"fmt"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"strings"
-	"time"
-)
-
+// Package repositorydynamo package store all the data in a single multi-tenant table:
 // DynamoDB table structure
 // - OWNER's ALBUMS
 //   > Album X
@@ -25,6 +12,22 @@ import (
 //   > '#METADATA'
 //   > MEDIA Jan
 //   > MEDIA Feb
+//
+// Index ReverseLocationIndex (see archive extension)
+// - OWNER/ALBUM (i.e.: prefix of archive key for the album)
+//   > LOCATION ID
+package repositorydynamo
+
+import (
+	"fmt"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"strings"
+	"time"
+)
 
 const (
 	IsoTime = "2006-01-02T15:04:05"

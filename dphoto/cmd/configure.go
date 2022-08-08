@@ -57,7 +57,7 @@ The configuration is stored in '~/.dphoto/dphoto.yaml'.
 			{key: config.AwsKey, description: "AWS_ACCESS_KEY_ID to use with dphoto", outputName: "delegate_access_key_id"},
 			{key: config.AwsSecret, description: "AWS_SECRET_ACCESS_KEY to use with dphoto"},
 			{key: config.CatalogDynamodbTable, description: "DynamoDB table where catalog is stored", outputName: "dynamodb_name"},
-			{key: config.ArchiveDynamodbTable, description: "DynamoDB table where archive index are stored", outputName: "dynamodb_name"},
+			{key: config.arepositorydynamodbTable, description: "DynamoDB table where archive index are stored", outputName: "dynamodb_name"},
 			{key: config.ArchiveMainBucketName, description: "S3 bucket where medias are archived", outputName: "archive_bucket_name"},
 			{key: config.ArchiveCacheBucketName, description: "S3 bucket where medias are cached", outputName: "cache_bucket_name"},
 			{key: config.ArchiveJobsSNSARN, description: "SNS ARN where async jobs are dispatched across workers", outputName: "sns_archive_arn"},

@@ -1,4 +1,4 @@
-package catalogdynamo
+package repositorydynamo
 
 import (
 	"encoding/base64"
@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/domain/dynamoutils"
 )
 
 func (r *rep) InsertMedias(owner string, medias []catalog.CreateMediaRequest) error {

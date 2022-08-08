@@ -1,4 +1,4 @@
-package catalogdynamo
+package repositorydynamo
 
 import (
 	"github.com/aws/aws-sdk-go/aws"

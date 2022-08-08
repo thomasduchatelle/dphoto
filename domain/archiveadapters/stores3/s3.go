@@ -1,5 +1,5 @@
 // Package s3store implements archive.StoreAdapter with AWS S3 backend
-package s3store
+package stores3
 
 import (
 	"fmt"

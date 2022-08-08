@@ -37,3 +37,7 @@ type RepositoryAdapter interface {
 type CArchiveAdapter interface {
 	MoveMedias(owner string, ids []string, name string) error
 }
+
+// CRecorder is recording commands that have been run in order to be replayed on a different system (online) or to rebuild in-memory database
+type CRecorder interface {
+}

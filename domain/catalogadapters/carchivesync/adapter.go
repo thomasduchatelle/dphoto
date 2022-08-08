@@ -1,5 +1,5 @@
-// Package catalogarchivesync is calling archive domain directly
-package catalogarchivesync
+// Package carchivesync is calling archive domain directly
+package carchivesync
 
 import (
 	"github.com/thomasduchatelle/dphoto/domain/archive"

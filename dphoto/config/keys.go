@@ -4,7 +4,7 @@ const (
 	AwsRegion                   = "aws.region"
 	AwsKey                      = "aws.key"
 	AwsSecret                   = "aws.secret"
-	ArchiveDynamodbTable        = "archive.dynamodb.table"
+	arepositorydynamodbTable    = "archive.dynamodb.table"
 	ArchiveMainBucketName       = "archive.main.bucketName"
 	ArchiveCacheBucketName      = "archive.cache.bucketName"
 	ArchiveJobsSNSARN           = "archive.sns.arn"

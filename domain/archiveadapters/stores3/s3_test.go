@@ -1,4 +1,4 @@
-package s3store
+package stores3
 
 import (
 	"fmt"

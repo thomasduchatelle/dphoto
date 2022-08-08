@@ -7,11 +7,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/repositorydynamo"
+	"github.com/thomasduchatelle/dphoto/domain/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/tools/migrationv1to2/datamodelv1"
 	"path"
 	"strings"
@@ -20,7 +18,7 @@ import (
 func Migrate(tableName string, arn string, repopulateCache bool) (int, error) {
 	log.Infoln("Updating indexes ...")
 	awsSession := session.Must(session.NewSession())
-	_, err := catalogdynamo.NewRepository(awsSession, tableName)
+	_, err := repositorydynamo.NewRepository(awsSession, tableName)
 	if err != nil {
 		return 0, errors.Wrapf(err, "updating indexes failed ...")
 	}
@@ -95,7 +93,7 @@ func Migrate(tableName string, arn string, repopulateCache bool) (int, error) {
 		total += count
 	}
 
-	asyncAdapter := asyncjobadapter.New(awsSession, arn, "", 300)
+	asyncAdapter := asyncjobsns.New(awsSession, arn, "", 300)
 	if len(imageToResizes) > 0 {
 		log.Infof("%d medias to miniaturise ...", len(imageToResizes))
 		err = asyncAdapter.LoadImagesInCache(imageToResizes...)
@@ -135,8 +133,8 @@ func migrateOldAlbum(patches []*dynamodb.WriteRequest, item map[string]*dynamodb
 		"SK": item["SK"],
 	}
 
-	tablePK := catalogdynamo.AlbumPrimaryKey(owner, *item["AlbumFolderName"].S)
-	tableAlbumIndex := catalogdynamo.AlbumIndexedKey(owner, *item["AlbumFolderName"].S)
+	tablePK := repositorydynamo.AlbumPrimaryKey(owner, *item["AlbumFolderName"].S)
+	tableAlbumIndex := repositorydynamo.AlbumIndexedKey(owner, *item["AlbumFolderName"].S)
 
 	item["PK"] = stringAttribute(tablePK.PK)
 	item["SK"] = stringAttribute(tablePK.SK)
@@ -174,9 +172,9 @@ func migrateOldMedia(patches []*dynamodb.WriteRequest, item map[string]*dynamodb
 		SignatureSize:   data.SignatureSize,
 	})
 
-	media := &catalogdynamo.MediaRecord{
-		TablePk:       catalogdynamo.MediaPrimaryKey(owner, mediaId),
-		AlbumIndexKey: catalogdynamo.MediaAlbumIndexedKey(owner, folderName, data.DateTime, mediaId),
+	media := &repositorydynamo.MediaRecord{
+		TablePk:       repositorydynamo.MediaPrimaryKey(owner, mediaId),
+		AlbumIndexKey: repositorydynamo.MediaAlbumIndexedKey(owner, folderName, data.DateTime, mediaId),
 		Id:            mediaId,
 		Type:          data.Type,
 		DateTime:      data.DateTime,
@@ -221,8 +219,8 @@ func migrateOldLocation(patches []*dynamodb.WriteRequest, item map[string]*dynam
 		SignatureSize:   data.SignatureSize,
 	})
 
-	location := archivedynamo.MediaLocation{
-		TablePk:           archivedynamo.MediaLocationPk(owner, mediaId),
+	location := arepositorydynamo.MediaLocation{
+		TablePk:           arepositorydynamo.MediaLocationPk(owner, mediaId),
 		LocationKeyPrefix: path.Dir(path.Join(owner, data.FolderName, data.Filename)),
 		LocationId:        mediaId,
 		LocationKey:       path.Join(owner, data.FolderName, data.Filename),

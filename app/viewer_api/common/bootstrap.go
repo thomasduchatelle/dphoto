@@ -4,12 +4,10 @@ import (
 	"encoding/base64"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/s3store"
+	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/stores3"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogarchivesync"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/carchivesync"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/repositorydynamo"
 	"github.com/thomasduchatelle/dphoto/domain/oauth"
 	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/googleoauth"
 	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/userrepositorystatic"
@@ -68,8 +66,8 @@ func bootstrapCatalogDomain() {
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
-	dynamoAdapter := catalogdynamo.Must(catalogdynamo.NewRepository(newSession(), tableName))
-	catalog.Init(dynamoAdapter, catalogarchivesync.New())
+	dynamoAdapter := repositorydynamo.Must(repositorydynamo.NewRepository(newSession(), tableName))
+	catalog.Init(dynamoAdapter, carchivesync.New())
 }
 
 func BootstrapArchiveDomain() archive.AsyncJobAdapter {
@@ -95,11 +93,11 @@ func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 	}
 
 	sess := newSession()
-	archiveAsyncAdapter := asyncjobadapter.New(sess, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobadapter.DefaultImagesPerMessage)
+	archiveAsyncAdapter := asyncjobsns.New(sess, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobsns.DefaultImagesPerMessage)
 	archive.Init(
-		archivedynamo.Must(archivedynamo.New(sess, tableName, false)),
-		s3store.Must(s3store.New(sess, storeBucketName)),
-		s3store.Must(s3store.New(sess, cacheBucketName)),
+		arepositorydynamo.Must(arepositorydynamo.New(sess, tableName, false)),
+		stores3.Must(stores3.New(sess, storeBucketName)),
+		stores3.Must(stores3.New(sess, cacheBucketName)),
 		archiveAsyncAdapter,
 	)
 

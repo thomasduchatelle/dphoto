@@ -1,5 +1,5 @@
-// Package archivedynamo extends catalogdynamo to add media locations to the main table
-package archivedynamo
+// Package arepositorydynamo extends catalogdynamo to add media locations to the main table
+package arepositorydynamo
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -8,13 +8,13 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/repositorydynamo"
+	"github.com/thomasduchatelle/dphoto/domain/dynamoutils"
 )
 
 func New(sess *session.Session, tableName string, createTable bool) (archive.ARepositoryAdapter, error) {
 	if createTable {
-		_, err := catalogdynamo.NewRepository(sess, tableName)
+		_, err := repositorydynamo.NewRepository(sess, tableName)
 		if err != nil {
 			return nil, err
 		}

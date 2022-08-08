@@ -1,4 +1,4 @@
-package catalogdynamo
+package repositorydynamo
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/domain/dynamoutils"
 	"time"
 )
 
@@ -73,7 +73,7 @@ func (r *rep) CreateTableIfNecessary() error {
 				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
 			},
 			{
-				IndexName: aws.String("ReverseLocationIndex"), // from 'archivedynamo' extension
+				IndexName: aws.String("ReverseLocationIndex"), // from 'arepositorydynamo' extension
 				KeySchema: []*dynamodb.KeySchemaElement{
 					{AttributeName: aws.String("LocationKeyPrefix"), KeyType: aws.String(dynamodb.KeyTypeHash)},
 					{AttributeName: aws.String("LocationId"), KeyType: aws.String(dynamodb.KeyTypeRange)},

@@ -7,12 +7,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
-	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
 )
 
 func Handler(request events.SQSEvent) error {
 	for _, record := range request.Records {
-		mess := &asyncjobadapter.WarmUpCacheByFolderMessageV1{}
+		mess := &asyncjobsns.WarmUpCacheByFolderMessageV1{}
 		err := json.Unmarshal([]byte(record.Body), mess)
 		if err != nil {
 			log.WithError(err).Errorf("failed to parse SQS message '%s': %s", record.Body, err.Error())
