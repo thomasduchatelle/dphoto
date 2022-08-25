@@ -54,8 +54,8 @@ resource "aws_s3_bucket_versioning" "storage" {
 resource "aws_s3_bucket_lifecycle_configuration" "storage" {
   bucket = aws_s3_bucket.storage.id
   rule {
-    id     = "non-current-eviction"
-    status = var.simple_s3 ? "Disabled" : "Enabled"
+    id     = "deleted-eviction"
+    status = "Enabled"
 
     noncurrent_version_transition {
       noncurrent_days = 0
@@ -68,8 +68,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "storage" {
   }
 
   rule {
-    id     = "current-transition"
-    status = "Disabled" // TODO set it to "Enabled" once miniatures will be generated
+    id     = "current-cost-saving"
+    status = var.simple_s3 ? "Disabled" : "Enabled"
 
     transition {
       days          = 7
