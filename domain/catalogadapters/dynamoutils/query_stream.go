@@ -54,7 +54,7 @@ func (s *queryStream) populateNextChunk() {
 	query.ExclusiveStartKey = s.nextPageToken
 	result, err := s.executor.Query(&query)
 	if err != nil {
-		s.internalStream.WithError(errors.Wrap(err, "executor returned an error"))
+		s.internalStream.WithError(errors.Wrapf(err, "couldn't query %+v", query))
 		return
 	}
 

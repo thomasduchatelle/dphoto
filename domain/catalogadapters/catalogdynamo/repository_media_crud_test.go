@@ -177,7 +177,7 @@ func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest)
 }
 
 func (a *MediaCrudTestSuite) TestFindAlbums() {
-	albums, err := a.repo.FindAllAlbums(a.owner)
+	albums, err := a.repo.FindAlbumsByOwner(a.owner)
 	if a.NoError(err) {
 		names := make(map[string]int)
 		for _, a := range albums {

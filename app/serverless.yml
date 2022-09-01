@@ -35,7 +35,7 @@ functions:
     handler: bin/list-albums
     events:
       - httpApi:
-          path: /api/v1/owners/{owner}/albums
+          path: /api/v1/albums
           method: get
   list-medias:
     handler: bin/list-medias

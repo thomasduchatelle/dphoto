@@ -1,7 +1,7 @@
 import {AppBar, Box, Container, Toolbar, useScrollTrigger} from "@mui/material";
 import {cloneElement, ReactElement, ReactNode} from "react";
 
-const appVersion = "2.0.1"
+const appVersion = "2.1.0-alpha"
 
 const ElevationScroll = ({children}: {
   children: ReactElement;

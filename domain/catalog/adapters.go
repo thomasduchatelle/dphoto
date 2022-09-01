@@ -13,7 +13,7 @@ func Init(repositoryAdapter RepositoryAdapter, archive CArchiveAdapter) {
 
 // RepositoryAdapter brings persistence layer to catalog package
 type RepositoryAdapter interface {
-	FindAllAlbums(owner string) ([]*Album, error)
+	FindAlbumsByOwner(owner string) ([]*Album, error)
 	InsertAlbum(album Album) error
 	DeleteEmptyAlbum(owner string, folderName string) error
 	// FindAlbum returns (nil, NotFoundError) when not found

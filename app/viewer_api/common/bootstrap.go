@@ -2,7 +2,13 @@ package common
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/spf13/viper"
+	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauthgoogle"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontroladapters/jwks"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontroladapters/scoperepository"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
@@ -10,28 +16,73 @@ import (
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
-	"github.com/thomasduchatelle/dphoto/domain/oauth"
-	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/googleoauth"
-	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/userrepositorystatic"
-	"github.com/thomasduchatelle/dphoto/domain/oauthmodel"
 	"os"
 )
 
+const (
+	JWTIssuer         = "DPHOTO_JWT_ISSUER"
+	JWTKeyB64         = "DPHOTO_JWT_KEY_B64"
+	JWTValidity       = "DPHOTO_JWT_VALIDITY"
+	DynamoDBTableName = "CATALOG_TABLE_NAME"
+)
+
+func init() {
+	viper.AutomaticEnv()
+
+	viper.SetDefault(JWTValidity, "8h")
+}
+
+func appOAuthConfig() accesscontrol.OAuthConfig {
+	jwtKey, err := base64.StdEncoding.DecodeString(viper.GetString(JWTKeyB64))
+	if err != nil {
+		panic(fmt.Sprintf("environment variable '%s' must be encoded in base 64 [value was %s]", JWTKeyB64, viper.GetString(JWTKeyB64)))
+	}
+
+	return accesscontrol.OAuthConfig{
+		ValidityDuration: viper.GetDuration(JWTValidity),
+		Issuer:           viper.GetString(JWTIssuer),
+		SecretJwtKey:     jwtKey,
+	}
+}
+
+func ssoAuthenticatorPermissionReader() scoperepository.GrantRepository {
+	return scoperepository.Must(scoperepository.New(newSession(), viper.GetString(DynamoDBTableName), true))
+}
+
+func NewSSOAuthenticator() *accesscontrol.SSOAuthenticator {
+	config, err := jwks.LoadIssuerConfig(accesscontrol.TrustedIdentityProvider...)
+	if err != nil {
+		panic(err)
+	}
+
+	return &accesscontrol.SSOAuthenticator{
+		TokenGenerator: accesscontrol.TokenGenerator{
+			PermissionsReader: ssoAuthenticatorPermissionReader(),
+			Config:            appOAuthConfig(),
+		},
+		TrustedIdentityIssuers: config,
+	}
+}
+
 // BootstrapCatalogAndArchiveDomains bootstraps all domains
-func BootstrapCatalogAndArchiveDomains() {
-	BootstrapOAuthDomain()
+func BootstrapCatalogAndArchiveDomains() (accesscontrol.Oauth, archive.AsyncJobAdapter) {
+	oauth := BootstrapOAuthDomain()
 	bootstrapCatalogDomain()
-	BootstrapArchiveDomain()
+	archiveJobAdapter := BootstrapArchiveDomain()
+
+	return oauth, archiveJobAdapter
 }
 
 // BootstrapCatalogDomain bootstraps both oauth and catalog
-func BootstrapCatalogDomain() {
-	BootstrapOAuthDomain()
+func BootstrapCatalogDomain() accesscontrol.Oauth {
+	oauth := BootstrapOAuthDomain()
 	bootstrapCatalogDomain()
+
+	return oauth
 }
 
 // BootstrapOAuthDomain only bootstraps oauth
-func BootstrapOAuthDomain() {
+func BootstrapOAuthDomain() accesscontrol.Oauth {
 	secretJwtKeyB64, b := os.LookupEnv("DPHOTO_JWT_KEY_B64")
 	if !b {
 		panic("environment variable 'DPHOTO_JWT_KEY_B64' is mandatory.")
@@ -41,30 +92,33 @@ func BootstrapOAuthDomain() {
 		panic("environment variable 'DPHOTO_JWT_KEY_B64' must be encoded in base 64.")
 	}
 
-	jwtIssuer, b := os.LookupEnv("DPHOTO_JWT_ISSUER")
+	jwtIssuer, b := os.LookupEnv(JWTIssuer)
 	if !b {
 		panic("environment variable 'DPHOTO_JWT_ISSUER' is mandatory.")
 	}
-	jwtValidity, b := os.LookupEnv("DPHOTO_JWT_VALIDITY")
+	jwtValidity, b := os.LookupEnv(JWTValidity)
 	if !b {
 		jwtValidity = "8h"
 	}
 
-	oauth.UserRepository = userrepositorystatic.New()
-	oauth.Config = oauthmodel.Config{
-		Issuer:           jwtIssuer,
-		ValidityDuration: jwtValidity,
-		SecretJwtKey:     secretJwtKey,
-	}
-
-	err = googleoauth.NewGoogle().Read(&oauth.Config)
+	name, issuer, err := oauthgoogle.NewGoogle().Read()
 	if err != nil {
 		panic(err)
 	}
+
+	oauth = accesscontrol.NewOAuth(accesscontrol.OAuthConfig{
+		Issuer:           jwtIssuer,
+		ValidityDuration: jwtValidity,
+		SecretJwtKey:     secretJwtKey,
+		TrustedIssuers: map[string]accesscontrol.OAuth2IssuerConfig{
+			name: issuer,
+		},
+	})
+	return oauth
 }
 
 func bootstrapCatalogDomain() {
-	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
+	tableName, ok := os.LookupEnv(DynamoDBTableName)
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
@@ -73,7 +127,7 @@ func bootstrapCatalogDomain() {
 }
 
 func BootstrapArchiveDomain() archive.AsyncJobAdapter {
-	tableName, ok := os.LookupEnv("CATALOG_TABLE_NAME")
+	tableName, ok := os.LookupEnv(DynamoDBTableName)
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}

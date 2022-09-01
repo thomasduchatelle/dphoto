@@ -4,29 +4,56 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/oauth"
+	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
+	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
 	"strings"
 )
 
-// ValidateRequest make sure authorisation is valid for the expected actions. Return [response, TRUE] when the consumer is not authorised.
-func ValidateRequest(request *events.APIGatewayProxyRequest, query *oauth.AuthoriseQuery) (Response, bool) {
-	tokenString, err := readToken(request)
+// RequiresAuthorisation read the bearer token, parse it, and creates a Catalog View from it (enforcing catalog ACL).
+//
+// accesscontrol.AccessForbiddenError errors will be converted into 403 responses.
+func RequiresAuthorisation(request *events.APIGatewayProxyRequest, process func(catalogView catalogacl.View) (Response, error), authorisationRules ...func(authContext catalogacl.View) error) (Response, error) {
+
+	catalogView := catalogacl.NewUserView("TODO") // TODO token should be decoded and used !
 	if err != nil {
 		response, _ := NewJsonResponse(401, map[string]string{
 			"error": fmt.Sprintf("access denied: %s", err.Error()),
 		}, nil)
-		return response, true
+		return response, nil
 	}
 
-	_, err = oauth.Authorise(tokenString, query)
-	if err != nil {
-		response, _ := NewJsonResponse(403, map[string]string{
+	for i, rule := range authorisationRules {
+		err = rule(catalogView)
+		if err != nil {
+			log.Warnf("Failed to authorise request at rule %d/%d %+v: %s", i+1, len(authorisationRules), request, err.Error())
+			response, _ := NewJsonResponse(403, map[string]string{
+				"error": fmt.Sprintf("access forbidden: %s", err.Error()),
+			}, nil)
+			return response, nil
+		}
+	}
+
+	response, err := process(catalogView)
+	if errors.Is(err, accesscontrol.AccessForbiddenError) {
+		response, _ = NewJsonResponse(403, map[string]string{
 			"error": fmt.Sprintf("access forbidden: %s", err.Error()),
 		}, nil)
-		return response, true
+		return response, nil
+	}
+	return response, err
+}
+
+func parseAuthorisation(request *events.APIGatewayProxyRequest) {
+	token, err := readToken(request)
+	if err != nil {
+		response, _ := NewJsonResponse(401, map[string]string{
+			"error": fmt.Sprintf("access denied: %s", err.Error()),
+		}, nil)
+		return response, nil
 	}
 
-	return Response{}, false
+	oauth.DecodeAndValidate(token)
 }
 
 func readToken(request *events.APIGatewayProxyRequest) (string, error) {
