@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
-	"github.com/thomasduchatelle/dphoto/domain/oauth"
 	"strings"
 	"time"
 )
@@ -24,7 +23,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	owner, _ := request.PathParameters["owner"]
 	folderName, _ := request.PathParameters["folderName"]
 
-	if resp, deny := common.ValidateRequest(&request, oauth.NewAuthoriseQuery("owner").WithOwner(owner, "READ")); deny {
+	if resp, deny := common.ValidateRequest(&request, common.Or(common.CanReadAsOwner(owner), common.CanReadAlbum(owner, folderName))); deny {
 		return resp, nil
 	}
 

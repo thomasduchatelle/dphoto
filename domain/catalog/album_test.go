@@ -44,7 +44,7 @@ func TestShouldCreateAnAlbumAndMoveMediasToIt(t *testing.T) {
 			start := time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC)
 			end := time.Date(2021, 1, 03, 0, 0, 0, 0, time.UTC)
 
-			mockRepository.On("FindAllAlbums", owner).Maybe().Return(catalog.AlbumCollection(), nil)
+			mockRepository.On("FindAlbumsByOwner", owner).Maybe().Return(catalog.AlbumCollection(), nil)
 
 			mockRepository.On("InsertAlbum", catalog.Album{
 				Owner:      owner,
@@ -84,7 +84,7 @@ func TestShouldReassignMediasToOtherAlbumsWhenDeletingAnAlbum(t *testing.T) {
 	const q4 = "/2020-Q4"
 	const q1 = "/2021-Q1"
 
-	mockRepository.On("FindAllAlbums", owner).Maybe().Return(catalog.AlbumCollection(), nil)
+	mockRepository.On("FindAlbumsByOwner", owner).Maybe().Return(catalog.AlbumCollection(), nil)
 	mockRepository.On("DeleteEmptyAlbum", owner, deletedFolder).Return(nil)
 
 	expectTransferredMedias(mockRepository, mockArchive,
@@ -155,7 +155,7 @@ func TestFindAll(t *testing.T) {
 		End:        time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC),
 	}
 
-	mockRepository.On("FindAllAlbums", owner).Return([]*catalog.Album{album}, nil)
+	mockRepository.On("FindAlbumsByOwner", owner).Return([]*catalog.Album{album}, nil)
 
 	got, err := catalog.FindAllAlbums(owner)
 	if a.NoError(err) {
@@ -226,7 +226,7 @@ func TestShouldTransferAppropriatelyMediasBetweenAlbumsWhenDatesAreChanged(t *te
 	a := assert.New(t)
 	mockRepository, mockArchive := mockAdapters(t)
 
-	mockRepository.On("FindAllAlbums", owner).Maybe().Return(catalog.AlbumCollection(), nil)
+	mockRepository.On("FindAlbumsByOwner", owner).Maybe().Return(catalog.AlbumCollection(), nil)
 
 	updatedFolder := "/Christmas_First_Week"
 	updatedStart := catalog.MustParse(layout, "2020-12-21T00")

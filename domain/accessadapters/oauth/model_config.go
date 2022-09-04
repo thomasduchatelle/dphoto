@@ -1,28 +1,6 @@
-package oauthmodel
+package oauth
 
-import (
-	"fmt"
-	"time"
-)
-
-// Authentication is generated open successful authentication
-type Authentication struct {
-	AccessToken string
-	ExpiryTime  time.Time
-	ExpiresIn   int64 // ExpiresIn is the number of seconds before access token expires
-}
-
-type Identity struct {
-	Email   string
-	Name    string
-	Picture string
-}
-
-// Claims custom to DPhoto used for authorisation
-type Claims struct {
-	Owners map[string]string `json:"owners,omitempty"`
-	Scopes string            `json:"scopes"`
-}
+import "fmt"
 
 type TokenMethod struct {
 	Algorithm string
@@ -44,10 +22,6 @@ type Config struct {
 type UserRoles struct {
 	IsUserManager bool
 	Owners        map[string]string
-}
-
-type UserRepository interface {
-	FindUserRoles(email string) (*UserRoles, error)
 }
 
 func (t *TokenMethod) String() string {

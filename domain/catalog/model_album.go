@@ -2,9 +2,14 @@ package catalog
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"time"
 )
 
+var (
+	NotFoundError = errors.New("Album hasn't been found")
+	NotEmptyError = errors.New("Album is not empty")
+)
 
 // Album defines how medias are physically re-grouped.
 type Album struct {
@@ -14,7 +19,6 @@ type Album struct {
 	Start      time.Time // Start is datetime inclusive
 	End        time.Time // End is the datetime exclusive
 	TotalCount int       // TotalCount is the number of media (of any type)
-
 }
 
 type CreateAlbum struct {
@@ -23,6 +27,12 @@ type CreateAlbum struct {
 	Start            time.Time
 	End              time.Time
 	ForcedFolderName string
+}
+
+// GetAlbum is used to get details of a specific album
+type GetAlbum struct {
+	Owner      string
+	FolderName string // FolderName is optional, all album owned by this owner will be returned
 }
 
 func (a *Album) String() string {

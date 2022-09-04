@@ -11,14 +11,43 @@ import (
 	"time"
 )
 
-var (
-	NotFoundError = errors.New("Album hasn't been found")
-	NotEmptyError = errors.New("Album is not empty")
-)
-
 // FindAllAlbums find all albums owned by root user
 func FindAllAlbums(owner string) ([]*Album, error) {
-	return repositoryPort.FindAllAlbums(owner)
+	return repositoryPort.FindAlbumsByOwner(owner)
+}
+
+// FindAlbums finds all albums owned by a user, or specific albums
+func FindAlbums(requests ...GetAlbum) ([]*Album, error) {
+	unique := make(map[GetAlbum]interface{})
+
+	var albums []*Album
+	for _, request := range requests {
+		if _, notUnique := unique[request]; !notUnique {
+			unique[request] = nil
+
+			if request.FolderName != "" {
+				albs, err := repositoryPort.FindAlbumsByOwner(request.Owner)
+				if err != nil {
+					return nil, err
+				}
+
+				albums = append(albums, albs...)
+			} else {
+				album, err := repositoryPort.FindAlbum(request.Owner, request.FolderName)
+				if err != nil {
+					return nil, err
+				}
+
+				albums = append(albums, album)
+			}
+		}
+	}
+
+	sort.Slice(albums, func(i, j int) bool {
+		return albums[i].Start.Before(albums[j].Start)
+	})
+
+	return albums, nil
 }
 
 // Create creates a new album
@@ -52,7 +81,7 @@ func Create(createRequest CreateAlbum) error {
 		createdAlbum.FolderName = normaliseFolderName(createdAlbum.FolderName)
 	}
 
-	albums, err := repositoryPort.FindAllAlbums(createRequest.Owner)
+	albums, err := repositoryPort.FindAlbumsByOwner(createRequest.Owner)
 	if err != nil {
 		return err
 	}
@@ -106,7 +135,7 @@ func FindAlbum(owner string, folderName string) (*Album, error) {
 func DeleteAlbum(owner string, folderNameToDelete string, emptyOnly bool) error {
 	folderNameToDelete = normaliseFolderName(folderNameToDelete)
 	if !emptyOnly {
-		albums, err := repositoryPort.FindAllAlbums(owner)
+		albums, err := repositoryPort.FindAlbumsByOwner(owner)
 		if err != nil {
 			return err
 		}
@@ -191,7 +220,7 @@ func RenameAlbum(owner string, folderName, newName string, renameFolder bool) er
 func UpdateAlbum(owner string, folderName string, start, end time.Time) error {
 	folderName = normaliseFolderName(folderName)
 
-	albums, err := repositoryPort.FindAllAlbums(owner)
+	albums, err := repositoryPort.FindAlbumsByOwner(owner)
 	if err != nil {
 		return err
 	}

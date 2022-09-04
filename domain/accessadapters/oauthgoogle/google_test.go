@@ -1,8 +1,7 @@
-package googleoauth
+package oauthgoogle
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/domain/oauthmodel"
 	"testing"
 )
 
@@ -11,11 +10,9 @@ func TestOAuth2ConfigReader_Read(t *testing.T) {
 	a := assert.New(t)
 
 	// this test requires access to internet (google API)
-	config := oauthmodel.Config{}
-	err := NewGoogle().Read(&config)
+	gotName, _, err := NewGoogle().Read()
 	if a.NoError(err) {
-		auth2Config, ok := config.TrustedIssuers["accounts.google.com"]
-		a.Truef(ok, "issuer not found in %+v", auth2Config)
+		a.Equal("accounts.google.com", gotName)
 
 		// KID are dynamic and can't be asserting here
 	}

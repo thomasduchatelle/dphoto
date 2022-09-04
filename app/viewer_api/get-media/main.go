@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
-	"github.com/thomasduchatelle/dphoto/domain/oauth"
 )
 
 const (
@@ -25,7 +24,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return parser.BadRequest()
 	}
 
-	if resp, deny := common.ValidateRequest(&request, oauth.NewAuthoriseQuery("owner").WithOwner(owner, "READ")); deny {
+	if resp, deny := common.ValidateRequest(&request, common.Or(common.CanReadAsOwner(owner), common.CanReadMedia(owner, mediaId))); deny {
 		return resp, nil
 	}
 

@@ -1,4 +1,4 @@
-package googleoauth
+package oauthgoogle
 
 import (
 	"crypto/rsa"
@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/oauthmodel"
+	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauth"
 	"math/big"
 	"net/http"
 	"strings"
@@ -45,28 +45,20 @@ func NewGoogle() *OAuth2ConfigReader {
 	}
 }
 
-func (o *OAuth2ConfigReader) Read(config *oauthmodel.Config) error {
-	if config == nil {
-		return errors.Errorf("config argument must not be nil")
-	}
-
+func (o *OAuth2ConfigReader) Read() (string, oauth.IssuerOAuth2Config, error) {
 	index, err := o.readConfigIndex(o.OpenIdConfigUrl)
 	if err != nil {
-		return errors.Wrapf(err, "failed to read JWKS config from %s", o.OpenIdConfigUrl)
+		return "", oauth.IssuerOAuth2Config{}, errors.Wrapf(err, "failed to read JWKS config from %s", o.OpenIdConfigUrl)
 	}
 
 	jwks, err := o.readJWKS(index.JwksUri)
 	if err != nil {
-		return errors.Wrapf(err, "invalid JWKS URL %s", index.JwksUri)
+		return "", oauth.IssuerOAuth2Config{}, errors.Wrapf(err, "invalid JWKS URL %s", index.JwksUri)
 	}
 
-	if len(config.TrustedIssuers) == 0 {
-		config.TrustedIssuers = make(map[string]oauthmodel.IssuerOAuth2Config)
-	}
-
-	config.TrustedIssuers[strings.TrimLeft(index.Issuer, "https://")] = oauthmodel.IssuerOAuth2Config{
+	return strings.TrimLeft(index.Issuer, "https://"), oauth.IssuerOAuth2Config{
 		ConfigSource: o.OpenIdConfigUrl,
-		PublicKeysLookup: func(method oauthmodel.TokenMethod) (interface{}, error) {
+		PublicKeysLookup: func(method oauth.TokenMethod) (interface{}, error) {
 			if method.Algorithm != jwt.SigningMethodRS256.Alg() {
 				return nil, errors.Errorf("[OAuth2JwksConfigReader] %s algorithm is not supported.", method.Algorithm)
 			}
@@ -82,9 +74,7 @@ func (o *OAuth2ConfigReader) Read(config *oauthmodel.Config) error {
 
 			return nil, errors.Errorf("kid '%s' is not defined in %s [%s] config. Available kids are: %s.", method.Kid, index.Issuer, o.OpenIdConfigUrl, strings.Join(kids, ", "))
 		},
-	}
-
-	return nil
+	}, nil
 }
 
 func (o *OAuth2ConfigReader) readConfigIndex(url string) (*openIdConfiguration, error) {

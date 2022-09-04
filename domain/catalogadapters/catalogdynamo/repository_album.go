@@ -10,7 +10,7 @@ import (
 	"sort"
 )
 
-func (r *rep) FindAllAlbums(owner string) ([]*catalog.Album, error) {
+func (r *rep) FindAlbumsByOwner(owner string) ([]*catalog.Album, error) {
 	query := &dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":owner":     mustAttribute(fmt.Sprintf("%s#ALBUM", owner)),

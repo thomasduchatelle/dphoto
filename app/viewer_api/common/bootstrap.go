@@ -3,6 +3,8 @@ package common
 import (
 	"encoding/base64"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauth"
+	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauthgoogle"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
@@ -10,11 +12,11 @@ import (
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/catalogdynamo"
-	"github.com/thomasduchatelle/dphoto/domain/oauth"
-	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/googleoauth"
-	"github.com/thomasduchatelle/dphoto/domain/oauthadapters/userrepositorystatic"
-	"github.com/thomasduchatelle/dphoto/domain/oauthmodel"
 	"os"
+)
+
+var (
+	OAuthClient oauth.Oauth
 )
 
 // BootstrapCatalogAndArchiveDomains bootstraps all domains
@@ -50,17 +52,18 @@ func BootstrapOAuthDomain() {
 		jwtValidity = "8h"
 	}
 
-	oauth.UserRepository = userrepositorystatic.New()
-	oauth.Config = oauthmodel.Config{
-		Issuer:           jwtIssuer,
-		ValidityDuration: jwtValidity,
-		SecretJwtKey:     secretJwtKey,
-	}
-
-	err = googleoauth.NewGoogle().Read(&oauth.Config)
+	name, issuer, err := oauthgoogle.NewGoogle().Read()
 	if err != nil {
 		panic(err)
 	}
+	OAuthClient = oauth.New(oauth.Config{
+		Issuer:           jwtIssuer,
+		ValidityDuration: jwtValidity,
+		SecretJwtKey:     secretJwtKey,
+		TrustedIssuers: map[string]oauth.IssuerOAuth2Config{
+			name: issuer,
+		},
+	})
 }
 
 func bootstrapCatalogDomain() {

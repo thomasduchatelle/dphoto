@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/oauth"
+	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauth"
 	"strings"
 )
 
 // ValidateRequest make sure authorisation is valid for the expected actions. Return [response, TRUE] when the consumer is not authorised.
-func ValidateRequest(request *events.APIGatewayProxyRequest, query *oauth.AuthoriseQuery) (Response, bool) {
+func ValidateRequest(request *events.APIGatewayProxyRequest, authoriseFct func(claims oauth.Claims) error) (Response, bool) {
 	tokenString, err := readToken(request)
 	if err != nil {
 		response, _ := NewJsonResponse(401, map[string]string{
@@ -18,7 +18,7 @@ func ValidateRequest(request *events.APIGatewayProxyRequest, query *oauth.Author
 		return response, true
 	}
 
-	_, err = oauth.Authorise(tokenString, query)
+	err = OAuthClient.Authorise(tokenString, authoriseFct)
 	if err != nil {
 		response, _ := NewJsonResponse(403, map[string]string{
 			"error": fmt.Sprintf("access forbidden: %s", err.Error()),
