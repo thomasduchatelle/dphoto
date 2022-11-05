@@ -1,11 +1,11 @@
 package common
 
 import (
-	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauth"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 )
 
-func Or(expressions ...func(claims oauth.Claims) error) func(claims oauth.Claims) error {
-	return func(claims oauth.Claims) error {
+func Or(expressions ...func(claims accesscontrol.Claims) error) func(claims accesscontrol.Claims) error {
+	return func(claims accesscontrol.Claims) error {
 		for _, expr := range expressions {
 			err := expr(claims)
 			if err != nil {
@@ -17,14 +17,14 @@ func Or(expressions ...func(claims oauth.Claims) error) func(claims oauth.Claims
 	}
 }
 
-func CanReadAsOwner(owner string) func(claims oauth.Claims) error {
-	return func(claims oauth.Claims) error {
+func CanReadAsOwner(owner string) func(claims accesscontrol.Claims) error {
+	return func(claims accesscontrol.Claims) error {
 		return claims.IsOwnerOf(owner)
 	}
 }
 
-func CanReadAlbum(owner, album string) func(claims oauth.Claims) error {
-	return func(claims oauth.Claims) error {
+func CanReadAlbum(owner, album string) func(claims accesscontrol.Claims) error {
+	return func(claims accesscontrol.Claims) error {
 		//granted, err := access.IsGranted("foobar", access.Resource{
 		//	Type:  access.AlbumResource,
 		//	Owner: owner,
@@ -34,8 +34,8 @@ func CanReadAlbum(owner, album string) func(claims oauth.Claims) error {
 	}
 }
 
-func CanReadMedia(owner, mediaId string) func(claims oauth.Claims) error {
-	return func(claims oauth.Claims) error {
+func CanReadMedia(owner, mediaId string) func(claims accesscontrol.Claims) error {
+	return func(claims accesscontrol.Claims) error {
 		//var details catalog.MediaMeta
 		//var err error
 		//details, err = catalog.GetMediaDetails(owner, mediaId)

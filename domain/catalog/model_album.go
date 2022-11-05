@@ -29,8 +29,8 @@ type CreateAlbum struct {
 	ForcedFolderName string
 }
 
-// GetAlbum is used to get details of a specific album
-type GetAlbum struct {
+// ListAlbumsInput is used to get details of a specific album
+type ListAlbumsInput struct {
 	Owner      string
 	FolderName string // FolderName is optional, all album owned by this owner will be returned
 }

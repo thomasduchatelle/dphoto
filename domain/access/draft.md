@@ -40,6 +40,18 @@ Permission:
 
 # Version 3
 
+```
 Medias <- Album <- Family <- user
-^---- Owner  <|
+       ^---- Owner  <|
+```
+
+# Version 4 -- associations
+
+| Attached to | Type   | resource id   | role                 | resource name |
+|-------------|--------|---------------|----------------------|---------------|
+| User        |        |               |                      |               |
+| -           | owner  | <owner email> | manage               | -             |
+| -           | family | <family name> | manage / contributor | -             |
+| -           | media  | <media id>    | view                 | <filename>    |
+| -           | api    | viewer / ...  | consumer             |               |
 

@@ -3,8 +3,8 @@ package common
 import (
 	"encoding/base64"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauth"
 	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauthgoogle"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
@@ -16,24 +16,28 @@ import (
 )
 
 var (
-	OAuthClient oauth.Oauth
+	oauth accesscontrol.Oauth
 )
 
 // BootstrapCatalogAndArchiveDomains bootstraps all domains
-func BootstrapCatalogAndArchiveDomains() {
-	BootstrapOAuthDomain()
+func BootstrapCatalogAndArchiveDomains() (accesscontrol.Oauth, archive.AsyncJobAdapter) {
+	oauth := BootstrapOAuthDomain()
 	bootstrapCatalogDomain()
-	BootstrapArchiveDomain()
+	archiveJobAdapter := BootstrapArchiveDomain()
+
+	return oauth, archiveJobAdapter
 }
 
 // BootstrapCatalogDomain bootstraps both oauth and catalog
-func BootstrapCatalogDomain() {
-	BootstrapOAuthDomain()
+func BootstrapCatalogDomain() accesscontrol.Oauth {
+	oauth := BootstrapOAuthDomain()
 	bootstrapCatalogDomain()
+
+	return oauth
 }
 
 // BootstrapOAuthDomain only bootstraps oauth
-func BootstrapOAuthDomain() {
+func BootstrapOAuthDomain() accesscontrol.Oauth {
 	secretJwtKeyB64, b := os.LookupEnv("DPHOTO_JWT_KEY_B64")
 	if !b {
 		panic("environment variable 'DPHOTO_JWT_KEY_B64' is mandatory.")
@@ -56,14 +60,16 @@ func BootstrapOAuthDomain() {
 	if err != nil {
 		panic(err)
 	}
-	OAuthClient = oauth.New(oauth.Config{
+
+	oauth = accesscontrol.NewOAuth(accesscontrol.OAuthConfig{
 		Issuer:           jwtIssuer,
 		ValidityDuration: jwtValidity,
 		SecretJwtKey:     secretJwtKey,
-		TrustedIssuers: map[string]oauth.IssuerOAuth2Config{
+		TrustedIssuers: map[string]accesscontrol.OAuth2IssuerConfig{
 			name: issuer,
 		},
 	})
+	return oauth
 }
 
 func bootstrapCatalogDomain() {

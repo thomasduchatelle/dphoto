@@ -1,4 +1,4 @@
-package oauth
+package accesscontrol
 
 import (
 	"github.com/golang-jwt/jwt/v4"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (o *oauth) Authorise(accessJWT string, validator func(claims Claims) error) error {
+func (o *oauth) DecodeAndValidate(accessJWT string, validator func(claims Claims) error) error {
 	claims, err := o.parseAccessToken(accessJWT)
 	if err != nil {
 		return err

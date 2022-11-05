@@ -1,4 +1,4 @@
-package oauth
+package accesscontrol
 
 import (
 	"fmt"
@@ -63,18 +63,18 @@ func (o *oauth) AuthenticateFromExternalIDProvider(identityJWT string) (Authenti
 func (o *oauth) loadUserScopes(email string) ([]string, error) {
 	var scopes []string
 
-	grants, err := o.listGrants(email, access.SoftwareResource, access.OwnerResource)
+	grants, err := o.listGrants(email, access.ApiRole, access.OwnerRole)
 	if err != nil {
 		return nil, errors.Wrapf(err, "couldn't list grants for %s", email)
 	}
 	for _, grant := range grants {
 		var scope string
 		switch grant.Type {
-		case access.SoftwareResource:
-			scope = fmt.Sprintf("api:%s", grant.Id)
+		case access.ApiRole:
+			scope = fmt.Sprintf("api:%s", grant.ResourceId)
 
-		case access.OwnerResource:
-			scope = fmt.Sprintf("owner:self:%s", grant.Owner)
+		case access.OwnerRole:
+			scope = fmt.Sprintf("owner:self:%s", grant.ResourceOwner)
 
 		}
 		if scope != "" {
@@ -125,7 +125,7 @@ func (o *oauth) keyLookup(token *jwt.Token) (interface{}, error) {
 			kid, _ = kidObj.(string)
 		}
 
-		return issuerConfig.PublicKeysLookup(TokenMethod{
+		return issuerConfig.PublicKeysLookup(OAuthTokenMethod{
 			Algorithm: token.Method.Alg(),
 			Kid:       kid,
 		})

@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/tencentyun/scf-go-lib/events"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauth"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 )
 
 func TestOauthRouting(t *testing.T) {
 	noopAuthenticate := func(t *testing.T, oauthMock *mocks.Oauth) {
-		oauthMock.On("AuthenticateFromExternalIDProvider", mock.Anything).Maybe().Return(oauth.Authentication{}, oauth.Identity{}, errors.Errorf("user must be pre-registered"))
+		oauthMock.On("AuthenticateFromExternalIDProvider", mock.Anything).Maybe().Return(accesscontrol.Authentication{}, accesscontrol.Identity{}, errors.Errorf("user must be pre-registered"))
 	}
 
 	tests := []struct {
@@ -34,11 +34,11 @@ func TestOauthRouting(t *testing.T) {
 			},
 			initMocks: func(t *testing.T, oauthMock *mocks.Oauth) {
 				oauthMock.On("AuthenticateFromExternalIDProvider", "qwertyuiop").Once().Return(
-					oauth.Authentication{
+					accesscontrol.Authentication{
 						AccessToken: "asdfghjkl",
 						ExpiresIn:   42,
 					},
-					oauth.Identity{
+					accesscontrol.Identity{
 						Email:   "tony@stark.com",
 						Name:    "Ironman",
 						Picture: "https://stark.com/ceo",

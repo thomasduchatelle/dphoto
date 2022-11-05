@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
+	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
 )
 
 const (
@@ -18,41 +19,42 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	parser := common.NewArgParser(&request)
 	owner := parser.ReadPathParameterString("owner")
 	mediaId := parser.ReadPathParameterString("mediaId")
-	width := parser.ReadQueryParameterInteger("w", false)
+	width := parser.ReadQueryParameterInt("w", false)
 
 	if parser.HasViolations() {
 		return parser.BadRequest()
 	}
 
-	if resp, deny := common.ValidateRequest(&request, common.Or(common.CanReadAsOwner(owner), common.CanReadMedia(owner, mediaId))); deny {
-		return resp, nil
-	}
+	return common.RequiresAuthorisation(&request, func(catalogacl.View) (common.Response, error) {
+		if width == 0 {
+			return redirectTo(archive.GetMediaOriginalURL(owner, mediaId))
+		}
 
-	if width == 0 {
-		return redirectTo(archive.GetMediaOriginalURL(owner, mediaId))
-	}
+		content, contentType, err := archive.GetResizedImage(owner, mediaId, width, responseMaxContent)
+		if err == archive.NotFoundError {
+			return common.NotFound(nil)
+		}
+		if err == archive.MediaOverflowError {
+			log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is over max allowed payload. Redirecting.", owner, mediaId, width)
+			return redirectTo(archive.GetResizedImageURL(owner, mediaId, width))
+		}
+		if err != nil {
+			return common.InternalError(err)
+		}
 
-	content, contentType, err := archive.GetResizedImage(owner, mediaId, width, responseMaxContent)
-	if err == archive.NotFoundError {
-		return common.NotFound(nil)
-	}
-	if err == archive.MediaOverflowError {
-		log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is over max allowed payload. Redirecting.", owner, mediaId, width)
-		return redirectTo(archive.GetResizedImageURL(owner, mediaId, width))
-	}
-	if err != nil {
-		return common.InternalError(err)
-	}
+		return common.Response{
+			StatusCode: 200,
+			Headers: map[string]string{
+				"Content-Type":  contentType,
+				"Cache-Control": fmt.Sprintf("max-age=%d", 3600*24),
+			},
+			Body:            base64.StdEncoding.EncodeToString(content),
+			IsBase64Encoded: true,
+		}, nil
 
-	return common.Response{
-		StatusCode: 200,
-		Headers: map[string]string{
-			"Content-Type":  contentType,
-			"Cache-Control": fmt.Sprintf("max-age=%d", 3600*24),
-		},
-		Body:            base64.StdEncoding.EncodeToString(content),
-		IsBase64Encoded: true,
-	}, nil
+	}, func(authContext catalogacl.View) error {
+		return authContext.CanReadMedia(owner, mediaId)
+	})
 }
 
 func redirectTo(url string, err error) (common.Response, error) {
@@ -66,7 +68,7 @@ func redirectTo(url string, err error) (common.Response, error) {
 	return common.Response{
 		StatusCode: 307,
 		Headers: map[string]string{
-			"Location": url,
+			"FolderName": url,
 		},
 	}, nil
 }

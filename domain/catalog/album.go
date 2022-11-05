@@ -16,12 +16,16 @@ func FindAllAlbums(owner string) ([]*Album, error) {
 	return repositoryPort.FindAlbumsByOwner(owner)
 }
 
-// FindAlbums finds all albums owned by a user, or specific albums
-func FindAlbums(requests ...GetAlbum) ([]*Album, error) {
-	unique := make(map[GetAlbum]interface{})
+// ListAlbums finds all albums owned by a user, or specific albums
+func ListAlbums(requests ...ListAlbumsInput) ([]*Album, error) {
+	unique := make(map[ListAlbumsInput]interface{})
 
 	var albums []*Album
 	for _, request := range requests {
+		if request.Owner == "" {
+			return nil, errors.Errorf("invalid argument, 'owner' must be non empty")
+		}
+
 		if _, notUnique := unique[request]; !notUnique {
 			unique[request] = nil
 

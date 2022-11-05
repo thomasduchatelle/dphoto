@@ -5,7 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tencentyun/scf-go-lib/events"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauth"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"strings"
 )
 
@@ -18,8 +18,9 @@ type identityDTO struct {
 }
 
 var (
-	isNotPreregisteredError = oauth.IsNotPreregisteredError
-	isInvalidTokenError     = oauth.IsInvalidTokenError
+	Oauth                   accesscontrol.Oauth
+	isNotPreregisteredError = accesscontrol.IsNotPreregisteredError
+	isInvalidTokenError     = accesscontrol.IsInvalidTokenError
 )
 
 func Handler(request events.APIGatewayRequest) (common.Response, error) {
@@ -37,7 +38,7 @@ func Handler(request events.APIGatewayRequest) (common.Response, error) {
 	}
 
 	tokenString := strings.Trim(authorisation, " ")[len(bearerPrefix):]
-	authentication, identity, err := common.OAuthClient.AuthenticateFromExternalIDProvider(tokenString)
+	authentication, identity, err := Oauth.AuthenticateFromExternalIDProvider(tokenString)
 	if err != nil {
 		log.WithError(err).Infof("Authentication rejected: %+v", request)
 
@@ -70,8 +71,9 @@ func lookupCode(err error) (string, int) {
 	}
 }
 
+
 func main() {
-	common.BootstrapOAuthDomain()
+	Oauth = common.BootstrapOAuthDomain()
 
 	lambda.Start(Handler)
 }

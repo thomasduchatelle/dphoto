@@ -38,7 +38,7 @@ func (a *ArgParser) ReadPathParameterString(key string) string {
 	return ""
 }
 
-func (a *ArgParser) ReadQueryParameterInteger(key string, mandatory bool) int {
+func (a *ArgParser) ReadQueryParameterInt(key string, mandatory bool) int {
 	return a.readParameterInteger(a.request.QueryStringParameters, key, mandatory)
 }
 
@@ -46,8 +46,12 @@ func (a *ArgParser) ReadPathParameterInt(key string) int {
 	return a.readParameterInteger(a.request.PathParameters, key, true)
 }
 
-func (a *ArgParser) readParameterInteger(params map[string]string, key string, mandatory bool) int {
-	if value, ok := params[key]; ok {
+func (a *ArgParser) ReadQueryParameterBool(key string, mandatory bool) bool {
+	return a.readParameterBool(a.request.QueryStringParameters, key, mandatory)
+}
+
+func (a *ArgParser) readParameterInteger(parameters map[string]string, key string, mandatory bool) int {
+	if value, ok := parameters[key]; ok {
 		num, err := strconv.Atoi(value)
 		if err != nil {
 			a.violations = append(a.violations, fmt.Sprintf("%s must be a number, got '%s'", key, value))
@@ -61,4 +65,21 @@ func (a *ArgParser) readParameterInteger(params map[string]string, key string, m
 	}
 
 	return 0
+}
+
+func (a *ArgParser) readParameterBool(parameters map[string]string, key string, mandatory bool) bool {
+	if value, ok := parameters[key]; ok {
+		num, err := strconv.ParseBool(value)
+		if err != nil {
+			a.violations = append(a.violations, fmt.Sprintf("%s must be a number, got '%s'", key, value))
+		}
+
+		return num
+	}
+
+	if mandatory {
+		a.violations = append(a.violations, fmt.Sprintf("%s is mandatory", key))
+	}
+
+	return false
 }

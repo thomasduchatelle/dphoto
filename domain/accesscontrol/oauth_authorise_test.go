@@ -1,4 +1,4 @@
-package oauth
+package accesscontrol
 
 import (
 	"github.com/golang-jwt/jwt/v4"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestAuthorise(t *testing.T) {
-	config := Config{
+	config := OAuthConfig{
 		TrustedIssuers:   nil,
 		Issuer:           "unit-tests.dphoto.com",
 		ValidityDuration: "10s",
@@ -57,18 +57,18 @@ func TestAuthorise(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			adapter := NewOverride(
+			adapter := NewOAuthOverride(
 				config,
 				func() time.Time {
 					return time.Unix(1641403360, 0)
 				},
-				func(email string, resourceType ...access.ResourceType) ([]*access.Resource, error) {
-					return nil, errors.Errorf("Unexpected call to ListGrants")
+				func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
+					return nil, errors.Errorf("Unexpected call to ListUserPermissions")
 				},
 			).(*oauth)
 			jwt.TimeFunc = adapter.now
 
-			err := adapter.Authorise(tt.args.tokenString, func(claims Claims) error {
+			err := adapter.DecodeAndValidate(tt.args.tokenString, func(claims Claims) error {
 				return nil
 			})
 

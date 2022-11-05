@@ -1,4 +1,4 @@
-package oauth
+package accesscontrol
 
 import (
 	"github.com/golang-jwt/jwt/v4"
@@ -36,31 +36,4 @@ func (a *accessTokenClaims) containsScope(expectedScope string) error {
 	}
 
 	return errors.Errorf("'%s' scope not found in [%s]", expectedScope, a.customClaims.Scopes)
-}
-
-// IsInvalidTokenError returns true if authenticated failed because of an invalid token.
-func IsInvalidTokenError(err error) bool {
-	return err.Error() == invalidTokenError || err.Error() == invalidTokenExplicitError
-}
-
-// IsNotPreregisteredError returns true when authentication failed because user is not pre-registered
-func IsNotPreregisteredError(err error) bool {
-	return err.Error() == notPreregisteredError
-}
-
-// MergeErrors is a utility to use in the Oauth.Authorise validator to merge several errors
-func MergeErrors(errorsList ...error) error {
-	var first error
-	var messages []string
-
-	for _, err := range errorsList {
-		if err != nil {
-			if first == nil {
-				first = err
-			}
-			messages = append(messages, err.Error())
-		}
-	}
-
-	return errors.Wrapf(first, strings.Join(messages, ", "))
 }

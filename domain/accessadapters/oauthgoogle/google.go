@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauth"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"math/big"
 	"net/http"
 	"strings"
@@ -45,20 +45,20 @@ func NewGoogle() *OAuth2ConfigReader {
 	}
 }
 
-func (o *OAuth2ConfigReader) Read() (string, oauth.IssuerOAuth2Config, error) {
+func (o *OAuth2ConfigReader) Read() (string, accesscontrol.OAuth2IssuerConfig, error) {
 	index, err := o.readConfigIndex(o.OpenIdConfigUrl)
 	if err != nil {
-		return "", oauth.IssuerOAuth2Config{}, errors.Wrapf(err, "failed to read JWKS config from %s", o.OpenIdConfigUrl)
+		return "", accesscontrol.OAuth2IssuerConfig{}, errors.Wrapf(err, "failed to read JWKS config from %s", o.OpenIdConfigUrl)
 	}
 
 	jwks, err := o.readJWKS(index.JwksUri)
 	if err != nil {
-		return "", oauth.IssuerOAuth2Config{}, errors.Wrapf(err, "invalid JWKS URL %s", index.JwksUri)
+		return "", accesscontrol.OAuth2IssuerConfig{}, errors.Wrapf(err, "invalid JWKS URL %s", index.JwksUri)
 	}
 
-	return strings.TrimLeft(index.Issuer, "https://"), oauth.IssuerOAuth2Config{
+	return strings.TrimLeft(index.Issuer, "https://"), accesscontrol.OAuth2IssuerConfig{
 		ConfigSource: o.OpenIdConfigUrl,
-		PublicKeysLookup: func(method oauth.TokenMethod) (interface{}, error) {
+		PublicKeysLookup: func(method accesscontrol.OAuthTokenMethod) (interface{}, error) {
 			if method.Algorithm != jwt.SigningMethodRS256.Alg() {
 				return nil, errors.Errorf("[OAuth2JwksConfigReader] %s algorithm is not supported.", method.Algorithm)
 			}

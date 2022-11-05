@@ -1,20 +1,13 @@
-package access
+package accesscontrol
 
 import "time"
 
 const (
-	//Viewer Permission = "viewer" // Viewer is an account allowed to access medias shared with him but not backup his own
-	//Owner2 Permission = "owner"  // Owner is an account super seeding Viewer and who's allowed to back up his media, shared them
-	//Admin  Permission = "admin"  // Admin is an account allowed to manage users
-
 	ApiRole   PermissionType = "api"
 	OwnerRole PermissionType = "owner"
 	AlbumRole PermissionType = "album"
 	MediaRole PermissionType = "media"
 )
-
-// Permission is defining a set of permissions a user has
-//type Permission string
 
 // PermissionType is defining a set of permissions a user has
 type PermissionType string
@@ -27,5 +20,5 @@ type Permission struct {
 	ResourceId    string         // ResourceId is optional but used for all catalog resources
 	ResourceName  string         // ResourceName is optional and is not used to identify a resource.
 	GrantedAt     time.Time      // GrantedAt is the date the role was created for the first time
+	GrantedTo     string         // GrantedTo is the consumer to which this has been shared with
 }
-

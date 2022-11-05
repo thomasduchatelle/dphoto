@@ -1,4 +1,4 @@
-package oauth
+package accesscontrol
 
 import (
 	"github.com/golang-jwt/jwt/v4"
@@ -12,11 +12,11 @@ import (
 )
 
 func TestAuthenticate(t *testing.T) {
-	config := Config{
-		TrustedIssuers: map[string]IssuerOAuth2Config{
+	config := OAuthConfig{
+		TrustedIssuers: map[string]OAuth2IssuerConfig{
 			"accounts.google.com": {
 				ConfigSource: "unitTest",
-				PublicKeysLookup: func(method TokenMethod) (interface{}, error) {
+				PublicKeysLookup: func(method OAuthTokenMethod) (interface{}, error) {
 					if method.Algorithm == "HS512" {
 						return []byte("ExternalJWTSecret"), nil
 					}
@@ -47,7 +47,7 @@ func TestAuthenticate(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		mockedListGrant func(email string, resourceType ...access.ResourceType) ([]*access.Resource, error)
+		mockedListGrant func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error)
 		argToken        string
 		assertAuth      func(*testing.T, string, Authentication)
 		wantIdentity    Identity
@@ -55,19 +55,19 @@ func TestAuthenticate(t *testing.T) {
 	}{
 		{
 			name: "it should exchange a valid identity JWT into an access token",
-			mockedListGrant: func(email string, resourceType ...access.ResourceType) ([]*access.Resource, error) {
+			mockedListGrant: func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
 				if email != "tony@stark.com" {
 					return nil, errors.Errorf("Unexpected email %s", email)
 				}
 
-				return []*access.Resource{
+				return []*access.Permission{
 					{
-						Type: access.SoftwareResource,
-						Id:   "admin",
+						Type:       access.ApiRole,
+						ResourceId: "admin",
 					},
 					{
-						Type:  access.OwnerResource,
-						Owner: email,
+						Type:          access.OwnerRole,
+						ResourceOwner: email,
 					},
 				}, nil
 			},
@@ -105,7 +105,7 @@ func TestAuthenticate(t *testing.T) {
 		},
 		{
 			name: "it should not let unregistered user log in",
-			mockedListGrant: func(email string, resourceType ...access.ResourceType) ([]*access.Resource, error) {
+			mockedListGrant: func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
 				return nil, nil
 			},
 			argToken:        unregisteredJwtString,
@@ -113,11 +113,11 @@ func TestAuthenticate(t *testing.T) {
 		},
 		{
 			name: "it should not accept JWT from non-approved issuers",
-			mockedListGrant: func(email string, resourceType ...access.ResourceType) ([]*access.Resource, error) {
-				return []*access.Resource{
+			mockedListGrant: func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
+				return []*access.Permission{
 					{
-						Type: access.SoftwareResource,
-						Id:   "viewer",
+						Type:       access.ApiRole,
+						ResourceId: "viewer",
 					},
 				}, nil
 			},
@@ -126,11 +126,11 @@ func TestAuthenticate(t *testing.T) {
 		},
 		{
 			name: "it should not accept expired JWT",
-			mockedListGrant: func(email string, resourceType ...access.ResourceType) ([]*access.Resource, error) {
-				return []*access.Resource{
+			mockedListGrant: func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
+				return []*access.Permission{
 					{
-						Type: access.SoftwareResource,
-						Id:   "viewer",
+						Type:       access.ApiRole,
+						ResourceId: "viewer",
 					},
 				}, nil
 			},
@@ -143,7 +143,7 @@ func TestAuthenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 
-			adapter := NewOverride(
+			adapter := NewOAuthOverride(
 				config,
 				func() time.Time {
 					return time.Unix(315532800, 0)
