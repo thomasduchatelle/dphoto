@@ -6,15 +6,10 @@ import (
 	"strings"
 )
 
-const (
-	invalidTokenError         = "authenticated failed"
-	invalidTokenExplicitError = "authentication failed: token invalid"
-	notPreregisteredError     = "user must be pre-registered"
-)
-
 type customClaims struct {
 	Scopes string
 }
+
 type accessTokenClaims struct {
 	customClaims
 	jwt.RegisteredClaims

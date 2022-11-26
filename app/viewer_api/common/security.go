@@ -13,14 +13,7 @@ import (
 // RequiresAuthorisation read the bearer token, parse it, and creates a Catalog View from it (enforcing catalog ACL).
 //
 // accesscontrol.AccessForbiddenError errors will be converted into 403 responses.
-func RequiresAuthorisation(request *events.APIGatewayProxyRequest, process func(catalogView catalogacl.View) (Response, error), authorisationRules ...func(authContext catalogacl.View) error, ) (Response, error) {
-	_, err := readToken(request)
-	if err != nil {
-		response, _ := NewJsonResponse(401, map[string]string{
-			"error": fmt.Sprintf("access denied: %s", err.Error()),
-		}, nil)
-		return response, nil
-	}
+func RequiresAuthorisation(request *events.APIGatewayProxyRequest, process func(catalogView catalogacl.View) (Response, error), authorisationRules ...func(authContext catalogacl.View) error) (Response, error) {
 
 	catalogView := catalogacl.NewUserView("TODO") // TODO token should be decoded and used !
 	if err != nil {
@@ -49,6 +42,18 @@ func RequiresAuthorisation(request *events.APIGatewayProxyRequest, process func(
 		return response, nil
 	}
 	return response, err
+}
+
+func parseAuthorisation(request *events.APIGatewayProxyRequest) {
+	token, err := readToken(request)
+	if err != nil {
+		response, _ := NewJsonResponse(401, map[string]string{
+			"error": fmt.Sprintf("access denied: %s", err.Error()),
+		}, nil)
+		return response, nil
+	}
+
+	oauth.DecodeAndValidate(token)
 }
 
 func readToken(request *events.APIGatewayProxyRequest) (string, error) {

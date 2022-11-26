@@ -17,6 +17,8 @@ type AlbumDTO struct {
 	Start      time.Time `json:"start"`
 	End        time.Time `json:"end"`
 	TotalCount int       `json:"totalCount"`
+	SharedTo   []string  `json:"sharedTo,omitempty"`
+	SharedBy   string    `json:"sharedBy,omitempty"`
 }
 
 func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
@@ -45,6 +47,8 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 				Owner:      a.Owner,
 				Start:      a.Start,
 				TotalCount: a.TotalCount,
+				SharedTo:   a.SharedTo,
+				SharedBy:   a.SharedBy,
 			}
 		}
 		return common.Ok(restAlbums)

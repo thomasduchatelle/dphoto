@@ -1,4 +1,4 @@
-package oauthgoogle
+package jwks
 
 import (
 	"crypto/rsa"
@@ -11,21 +11,6 @@ import (
 	"net/http"
 	"strings"
 )
-
-func NewGoogle() *OAuth2ConfigReader {
-	return &OAuth2ConfigReader{
-		OpenIdConfigUrl: "https://accounts.google.com/.well-known/openid-configuration",
-	}
-}
-
-type OAuth2Config struct {
-	Issuers     map[string]interface{}
-	KeySupplier func() ([]byte, error)
-}
-
-type OAuth2ConfigReader struct {
-	OpenIdConfigUrl string
-}
 
 type openIdConfiguration struct {
 	Issuer  string `json:"issuer"`
@@ -45,19 +30,19 @@ type jwksResponse struct {
 	Keys []jwksKey `json:"keys"`
 }
 
-func (o *OAuth2ConfigReader) Read() (string, accesscontrol.OAuth2IssuerConfig, error) {
-	index, err := o.readConfigIndex(o.OpenIdConfigUrl)
+func readUrl(openIdConfigUrl string) (string, accesscontrol.OAuth2IssuerConfig, error) {
+	index, err := readConfigIndex(openIdConfigUrl)
 	if err != nil {
-		return "", accesscontrol.OAuth2IssuerConfig{}, errors.Wrapf(err, "failed to read JWKS config from %s", o.OpenIdConfigUrl)
+		return "", accesscontrol.OAuth2IssuerConfig{}, errors.Wrapf(err, "failed to read JWKS config from %s", openIdConfigUrl)
 	}
 
-	jwks, err := o.readJWKS(index.JwksUri)
+	jwks, err := readJWKS(index.JwksUri)
 	if err != nil {
 		return "", accesscontrol.OAuth2IssuerConfig{}, errors.Wrapf(err, "invalid JWKS URL %s", index.JwksUri)
 	}
 
 	return strings.TrimLeft(index.Issuer, "https://"), accesscontrol.OAuth2IssuerConfig{
-		ConfigSource: o.OpenIdConfigUrl,
+		ConfigSource: openIdConfigUrl,
 		PublicKeysLookup: func(method accesscontrol.OAuthTokenMethod) (interface{}, error) {
 			if method.Algorithm != jwt.SigningMethodRS256.Alg() {
 				return nil, errors.Errorf("[OAuth2JwksConfigReader] %s algorithm is not supported.", method.Algorithm)
@@ -68,17 +53,17 @@ func (o *OAuth2ConfigReader) Read() (string, accesscontrol.OAuth2IssuerConfig, e
 				kids = append(kids, key.Kid)
 
 				if key.Kid == method.Kid {
-					return o.parseJwks(key)
+					return parseJwks(key)
 				}
 			}
 
-			return nil, errors.Errorf("kid '%s' is not defined in %s [%s] config. Available kids are: %s.", method.Kid, index.Issuer, o.OpenIdConfigUrl, strings.Join(kids, ", "))
+			return nil, errors.Errorf("kid '%s' is not defined in %s [%s] config. Available kids are: %s.", method.Kid, index.Issuer, openIdConfigUrl, strings.Join(kids, ", "))
 		},
 	}, nil
 }
 
-func (o *OAuth2ConfigReader) readConfigIndex(url string) (*openIdConfiguration, error) {
-	response, err := http.Get(url)
+func readConfigIndex(openIdConfigUrl string) (*openIdConfiguration, error) {
+	response, err := http.Get(openIdConfigUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +74,7 @@ func (o *OAuth2ConfigReader) readConfigIndex(url string) (*openIdConfiguration, 
 	return config, err
 }
 
-func (o *OAuth2ConfigReader) readJWKS(uri string) (*jwksResponse, error) {
+func readJWKS(uri string) (*jwksResponse, error) {
 	response, err := http.Get(uri)
 	if err != nil {
 		return nil, err
@@ -101,7 +86,7 @@ func (o *OAuth2ConfigReader) readJWKS(uri string) (*jwksResponse, error) {
 	return jwks, err
 }
 
-func (o *OAuth2ConfigReader) parseJwks(key jwksKey) (*rsa.PublicKey, error) {
+func parseJwks(key jwksKey) (*rsa.PublicKey, error) {
 	n, err := base64.RawURLEncoding.DecodeString(key.N)
 	if err != nil {
 		return nil, err

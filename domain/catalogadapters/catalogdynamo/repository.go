@@ -44,7 +44,7 @@ func Must(repository catalog.RepositoryAdapter, err error) catalog.RepositoryAda
 	return repository
 }
 
-// CreateTableIfNecessary creates the table if it doesn't exists ; or update it.
+// CreateTableIfNecessary creates the table if it doesn't exist ; or update it.
 func (r *rep) CreateTableIfNecessary() error {
 	mdc := log.WithFields(log.Fields{
 		"TableBackup":  r.table,

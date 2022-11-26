@@ -1,10 +1,12 @@
-package accesscontrol
+package accesscontrol_test
 
 import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/domain/access"
+	"github.com/stretchr/testify/mock"
+	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
+	"github.com/thomasduchatelle/dphoto/mocks"
 	"sort"
 	"strings"
 	"testing"
@@ -12,72 +14,51 @@ import (
 )
 
 func TestAuthenticate(t *testing.T) {
-	config := OAuthConfig{
-		TrustedIssuers: map[string]OAuth2IssuerConfig{
-			"accounts.google.com": {
-				ConfigSource: "unitTest",
-				PublicKeysLookup: func(method OAuthTokenMethod) (interface{}, error) {
-					if method.Algorithm == "HS512" {
-						return []byte("ExternalJWTSecret"), nil
-					}
-					return nil, errors.Errorf("key for %s not found", method)
-				},
-			},
-		},
-		Issuer:           "https://dphoto.unit.test",
-		ValidityDuration: "12s",
-		SecretJwtKey:     []byte("DPhotoJwtSecret"),
+	accesscontrol.TimeFunc = func() time.Time {
+		return time.Unix(315532800, 0)
 	}
-
-	//userRepositoryMock.On("FindUserRoles", "tony@stark.com").Return(&UserRoles{
-	//	IsUserManager: true,
-	//	Owners: map[string]string{
-	//		"tony@stark.com": "ADMIN",
-	//	},
-	//}, nil)
-	//userRepositoryMock.On("FindUserRoles", "peter@stark.com").Return(&UserRoles{
-	//	IsUserManager: false,
-	//	Owners:        nil,
-	//}, nil)
+	jwt.TimeFunc = accesscontrol.TimeFunc
 
 	okJwtString := "eyJhbGciOiJIUzUxMiIsImtpZCI6IjAzZTg0YWVkNGVmNDQzMTAxNGU4NjE3NTY3ODY0YzRlZmFhYWVkZTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImVtYWlsIjoidG9ueUBzdGFyay5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IlFBWldTWEVEQ1JGViIsIm5hbWUiOiJUb255IFN0YXJrIGFrYSBJcm9ubWFuIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hLS90b255c3RhcmstcGljdHVyZSIsImdpdmVuX25hbWUiOiJUb255IiwiZmFtaWx5X25hbWUiOiJTdGFyayIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjozMTU1MzI3MDAsImV4cCI6MzE1NTMyODk5LCJqdGkiOiIzZGU3OTk4NjEzYTFhNGZiOGRhM2RlNzk5ODYxM2ExYTRmYjhkYSJ9.m4fmV7k63JhFwT_ZNtAg6O5xvJZQvGt3yx_Xrr5Yjln4PeXF70jcp31A3qDwIA5ah2X9ZmjZWRbU3_Xbm3LTlg"
 	unregisteredJwtString := "eyJhbGciOiJIUzUxMiIsImtpZCI6IjAzZTg0YWVkNGVmNDQzMTAxNGU4NjE3NTY3ODY0YzRlZmFhYWVkZTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImVtYWlsIjoicGV0ZXJAc3RhcmsuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJRQVpXU1hFRENSRlYiLCJuYW1lIjoiVG9ueSBTdGFyayBha2EgSXJvbm1hbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS0vdG9ueXN0YXJrLXBpY3R1cmUiLCJnaXZlbl9uYW1lIjoiVG9ueSIsImZhbWlseV9uYW1lIjoiU3RhcmsiLCJsb2NhbGUiOiJlbi1HQiIsImlhdCI6MzE1NTMyNzAwLCJleHAiOjMxNTUzMjg5OSwianRpIjoiM2RlNzk5ODYxM2ExYTRmYjhkYTNkZTc5OTg2MTNhMWE0ZmI4ZGEifQ.0-6HL6oW7MyCyXq-yXtYTXThvk90AIAQaJ9MkARiE4I6ixXF-UQnCQtl29jBA-xrwFet6D9NCFmBR95KUNOI4w"
 	wrongISSJwtString := "eyJhbGciOiJIUzUxMiIsImtpZCI6IjAzZTg0YWVkNGVmNDQzMTAxNGU4NjE3NTY3ODY0YzRlZmFhYWVkZTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJ3cm9uZ0lTUyIsImF6cCI6InF3ZXJ0eS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6InF3ZXJ0eS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEyMzQ1Njc4OTAiLCJlbWFpbCI6InRvbnlAc3RhcmsuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJRQVpXU1hFRENSRlYiLCJuYW1lIjoiVG9ueSBTdGFyayBha2EgSXJvbm1hbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS0vdG9ueXN0YXJrLXBpY3R1cmUiLCJnaXZlbl9uYW1lIjoiVG9ueSIsImZhbWlseV9uYW1lIjoiU3RhcmsiLCJsb2NhbGUiOiJlbi1HQiIsImlhdCI6MzE1NTMyNzAwLCJleHAiOjMxNTUzMjg5OSwianRpIjoiM2RlNzk5ODYxM2ExYTRmYjhkYTNkZTc5OTg2MTNhMWE0ZmI4ZGEifQ.Olo5ok8FOMk3jP1aJlQG2l4rrVtiPfVxKXky_tcRWM3BCZmdQvJ-m5sgmztc-hwy6Dm-SQpSeWvc7Jgf_neC-w"
 	expiredJwtString := "eyJhbGciOiJIUzUxMiIsImtpZCI6IjAzZTg0YWVkNGVmNDQzMTAxNGU4NjE3NTY3ODY0YzRlZmFhYWVkZTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImVtYWlsIjoidG9ueUBzdGFyay5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IlFBWldTWEVEQ1JGViIsIm5hbWUiOiJUb255IFN0YXJrIGFrYSBJcm9ubWFuIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hLS90b255c3RhcmstcGljdHVyZSIsImdpdmVuX25hbWUiOiJUb255IiwiZmFtaWx5X25hbWUiOiJTdGFyayIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjozMTU1MzI3MDAsImV4cCI6MzE1NTMyNzk5LCJqdGkiOiIzZGU3OTk4NjEzYTFhNGZiOGRhM2RlNzk5ODYxM2ExYTRmYjhkYSJ9.8DWKVd3Xh2WXgwTaRONhpxLZs_G2dRLJkz6Qtw3VC-SJYzVivHGyWbUt1TG8GrKq5-a_CZC_UvbpSxzV68skng"
 
+	config := accesscontrol.OAuthConfig{
+		Issuer:           "https://dphoto.unit.test",
+		ValidityDuration: 12 * time.Second,
+		SecretJwtKey:     []byte("DPhotoJwtSecret"),
+	}
+
 	tests := []struct {
 		name            string
-		mockedListGrant func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error)
+		initMocks       func(permissionReaderMock *mocks.ListUserPermissions)
 		argToken        string
-		assertAuth      func(*testing.T, string, Authentication)
-		wantIdentity    Identity
+		assertAuth      func(*testing.T, string, accesscontrol.Authentication)
+		wantIdentity    accesscontrol.Identity
 		wantErrContains string
 	}{
 		{
 			name: "it should exchange a valid identity JWT into an access token",
-			mockedListGrant: func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
-				if email != "tony@stark.com" {
-					return nil, errors.Errorf("Unexpected email %s", email)
-				}
-
-				return []*access.Permission{
+			initMocks: func(permissionReaderMock *mocks.ListUserPermissions) {
+				permissionReaderMock.On("ListUserScopes", "tony@stark.com", accesscontrol.ApiScope, accesscontrol.MainOwnerScope).Return([]*accesscontrol.Scope{
 					{
-						Type:       access.ApiRole,
+						Type:       accesscontrol.ApiScope,
 						ResourceId: "admin",
 					},
 					{
-						Type:          access.OwnerRole,
-						ResourceOwner: email,
+						Type:          accesscontrol.MainOwnerScope,
+						ResourceOwner: "tony@stark.com",
 					},
-				}, nil
+				}, nil)
 			},
 			argToken: okJwtString,
-			assertAuth: func(t *testing.T, name string, auth Authentication) {
+			assertAuth: func(t *testing.T, name string, auth accesscontrol.Authentication) {
 				assert.Equal(t, time.Date(1980, 1, 1, 0, 0, 12, 0, time.UTC), auth.ExpiryTime, name)
 				assert.Equal(t, int64(12), auth.ExpiresIn, name)
 
 				type decodedClaims struct {
-					customClaims
+					Scopes string
 					jwt.RegisteredClaims
 				}
 
@@ -97,7 +78,7 @@ func TestAuthenticate(t *testing.T) {
 					assert.Equal(t, []string{"api:admin", "owner:self:tony@stark.com"}, scopes)
 				}
 			},
-			wantIdentity: Identity{
+			wantIdentity: accesscontrol.Identity{
 				Email:   "tony@stark.com",
 				Name:    "Tony Stark aka Ironman",
 				Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
@@ -105,34 +86,35 @@ func TestAuthenticate(t *testing.T) {
 		},
 		{
 			name: "it should not let unregistered user log in",
-			mockedListGrant: func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
-				return nil, nil
+			initMocks: func(permissionReaderMock *mocks.ListUserPermissions) {
+				permissionReaderMock.On("ListUserScopes", mock.Anything, accesscontrol.ApiScope, accesscontrol.MainOwnerScope).Return(nil, nil)
 			},
 			argToken:        unregisteredJwtString,
 			wantErrContains: "must be pre-registered",
 		},
 		{
 			name: "it should not accept JWT from non-approved issuers",
-			mockedListGrant: func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
-				return []*access.Permission{
+			initMocks: func(permissionReaderMock *mocks.ListUserPermissions) {
+				permissionReaderMock.On("ListUserScopes", mock.Anything, accesscontrol.ApiScope, accesscontrol.MainOwnerScope).Return([]*accesscontrol.Scope{
 					{
-						Type:       access.ApiRole,
+						Type:       accesscontrol.ApiScope,
 						ResourceId: "viewer",
 					},
-				}, nil
+				}, nil)
+
 			},
 			argToken:        wrongISSJwtString,
 			wantErrContains: "Issuer 'wrongISS' is not supported",
 		},
 		{
 			name: "it should not accept expired JWT",
-			mockedListGrant: func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
-				return []*access.Permission{
+			initMocks: func(permissionReaderMock *mocks.ListUserPermissions) {
+				permissionReaderMock.On("ListUserScopes", mock.Anything, accesscontrol.ApiScope, accesscontrol.MainOwnerScope).Return([]*accesscontrol.Scope{
 					{
-						Type:       access.ApiRole,
+						Type:       accesscontrol.ApiScope,
 						ResourceId: "viewer",
 					},
-				}, nil
+				}, nil)
 			},
 			argToken:        expiredJwtString,
 			wantErrContains: "token is expired",
@@ -143,22 +125,33 @@ func TestAuthenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 
-			adapter := NewOAuthOverride(
-				config,
-				func() time.Time {
-					return time.Unix(315532800, 0)
+			authenticator := accesscontrol.SSOAuthenticator{
+				TokenGenerator: accesscontrol.TokenGenerator{
+					PermissionsReader: new(mocks.ListUserPermissions),
+					Config:            config,
 				},
-				tt.mockedListGrant,
-			).(*oauth)
-			jwt.TimeFunc = adapter.now
+				TrustedIdentityIssuers: map[string]accesscontrol.OAuth2IssuerConfig{
+					"accounts.google.com": {
+						ConfigSource: "unitTest",
+						PublicKeysLookup: func(method accesscontrol.OAuthTokenMethod) (interface{}, error) {
+							if method.Algorithm == "HS512" {
+								return []byte("ExternalJWTSecret"), nil
+							}
+							return nil, errors.Errorf("key for %s not found", method)
+						},
+					},
+				},
+			}
 
-			gotAuth, gotIdentity, err := adapter.AuthenticateFromExternalIDProvider(tt.argToken)
+			tt.initMocks(authenticator.TokenGenerator.PermissionsReader.(*mocks.ListUserPermissions))
+
+			gotAuth, gotIdentity, err := authenticator.AuthenticateFromExternalIDProvider(tt.argToken)
 			if tt.wantErrContains != "" && a.Error(err, tt.name) {
 				a.Contains(err.Error(), tt.wantErrContains, tt.name)
 
 			} else if tt.wantErrContains == "" && a.NoError(err, tt.name) {
-				a.Equal(tt.wantIdentity, gotIdentity, tt.name)
-				tt.assertAuth(t, tt.name, gotAuth)
+				a.Equal(tt.wantIdentity, *gotIdentity, tt.name)
+				tt.assertAuth(t, tt.name, *gotAuth)
 			}
 		})
 	}

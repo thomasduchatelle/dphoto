@@ -18,7 +18,7 @@ func (v *viewimpl) ListAlbums(filter ListAlbumsFilter) ([]*AlbumInView, error) {
 	}
 
 	if !filter.OnlyDirectlyOwned {
-		sharedMedia, oldest, mostRecent, err := accesscontrol.CountUserPermissions(v.userEmail, accesscontrol.MediaRole)
+		sharedMedia, oldest, mostRecent, err := accesscontrol.CountUserPermissions(v.userEmail, accesscontrol.MediaVisitorScope)
 		if err != nil {
 			return nil, err
 		}
@@ -44,7 +44,7 @@ func (v *viewimpl) ListAlbums(filter ListAlbumsFilter) ([]*AlbumInView, error) {
 }
 
 func (v *viewimpl) listAccessibleAlbums(filter ListAlbumsFilter) ([]*AlbumInView, error) {
-	roles, err := accesscontrol.ListUserPermissions(v.userEmail, accesscontrol.OwnerRole, accesscontrol.AlbumRole)
+	roles, err := accesscontrol.ScopesReader(v.userEmail, accesscontrol.MainOwnerScope, accesscontrol.AlbumVisitorScope)
 	if err != nil {
 		return nil, err
 	}
@@ -54,13 +54,13 @@ func (v *viewimpl) listAccessibleAlbums(filter ListAlbumsFilter) ([]*AlbumInView
 	sharedByOwner := make(map[AlbumId]string)
 	for _, role := range roles {
 		switch role.Type {
-		case accesscontrol.OwnerRole:
+		case accesscontrol.MainOwnerScope:
 			ownerOf = append(ownerOf, role.ResourceOwner)
 			requests = append(requests, catalog.ListAlbumsInput{
 				Owner: role.ResourceOwner,
 			})
 
-		case accesscontrol.AlbumRole:
+		case accesscontrol.AlbumVisitorScope:
 			if !filter.OnlyDirectlyOwned {
 				sharedByOwner[NewAlbumId(role.ResourceOwner, role.ResourceId)] = role.ResourceOwner
 				requests = append(requests, catalog.ListAlbumsInput{
@@ -96,7 +96,7 @@ func (v *viewimpl) listAccessibleAlbums(filter ListAlbumsFilter) ([]*AlbumInView
 }
 
 func (v *viewimpl) listAlbumSharing(owners []string) (map[AlbumId][]string, error) {
-	permissions, err := accesscontrol.ListResourcesPermissionsByOwner(owners, accesscontrol.AlbumRole)
+	permissions, err := accesscontrol.ListResourcesPermissionsByOwner(owners, accesscontrol.AlbumVisitorScope)
 
 	sharingWith := make(map[AlbumId][]string)
 	for _, permission := range permissions {

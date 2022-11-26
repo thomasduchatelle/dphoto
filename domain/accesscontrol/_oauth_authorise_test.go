@@ -63,7 +63,7 @@ func TestAuthorise(t *testing.T) {
 					return time.Unix(1641403360, 0)
 				},
 				func(email string, resourceType ...access.PermissionType) ([]*access.Permission, error) {
-					return nil, errors.Errorf("Unexpected call to ListUserPermissions")
+					return nil, errors.Errorf("Unexpected call to ListUserScopes")
 				},
 			).(*oauth)
 			jwt.TimeFunc = adapter.now

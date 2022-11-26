@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tencentyun/scf-go-lib/events"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
@@ -18,27 +19,26 @@ type identityDTO struct {
 }
 
 var (
-	Oauth                   accesscontrol.Oauth
-	isNotPreregisteredError = accesscontrol.IsNotPreregisteredError
-	isInvalidTokenError     = accesscontrol.IsInvalidTokenError
+	authenticator *accesscontrol.SSOAuthenticator
 )
 
 func Handler(request events.APIGatewayRequest) (common.Response, error) {
 	authorisation, ok := request.Headers["authorization"]
+	authorisation = strings.Trim(authorisation, " ")
 	if !ok {
 		return common.NewJsonResponse(401, map[string]string{
 			"error": "Authorization header is required.",
 		}, nil)
 	}
 
-	if !strings.HasPrefix(strings.Trim(strings.ToLower(authorisation), " "), bearerPrefix) {
+	if !strings.HasPrefix(strings.ToLower(authorisation), bearerPrefix) {
 		return common.BadRequest(map[string]string{
 			"error": "Authorization header must be of Bearer type.",
 		})
 	}
 
-	tokenString := strings.Trim(authorisation, " ")[len(bearerPrefix):]
-	authentication, identity, err := Oauth.AuthenticateFromExternalIDProvider(tokenString)
+	tokenString := authorisation[len(bearerPrefix):]
+	authentication, identity, err := authenticator.AuthenticateFromExternalIDProvider(tokenString)
 	if err != nil {
 		log.WithError(err).Infof("Authentication rejected: %+v", request)
 
@@ -62,18 +62,17 @@ func Handler(request events.APIGatewayRequest) (common.Response, error) {
 
 func lookupCode(err error) (string, int) {
 	switch {
-	case isNotPreregisteredError(err):
+	case errors.Is(err, accesscontrol.NotPreregisteredError):
 		return "oauth.user-not-preregistered", 403
-	case isInvalidTokenError(err):
+	case errors.Is(err, accesscontrol.InvalidTokenError) || errors.Is(err, accesscontrol.InvalidTokenExplicitError):
 		return "oauth.invalid-token", 403
 	default:
 		return "", 500
 	}
 }
 
-
 func main() {
-	Oauth = common.BootstrapOAuthDomain()
+	authenticator = common.NewSSOAuthenticator()
 
 	lambda.Start(Handler)
 }
