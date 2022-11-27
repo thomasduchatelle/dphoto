@@ -27,7 +27,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return parser.BadRequest()
 	}
 
-	return common.RequiresCatalogACL(&request, func(catalogView *catalogacl.View) (common.Response, error) {
+	return common.RequiresCatalogView(&request, func(catalogView *catalogacl.View) (common.Response, error) {
 		albums, err := catalogView.ListAlbums(catalogacl.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned})
 		if err != nil {
 			return common.Response{}, err

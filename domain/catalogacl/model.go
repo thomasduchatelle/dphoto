@@ -15,6 +15,7 @@ type AccessControlAdapter interface {
 	SharedWithUserAlbum() ([]catalog.AlbumId, error)
 	SharedByUserGrid(owner string) (map[string][]string, error)
 	CanListMediasFromAlbum(owner string, folderName string) error
+	CanReadMedia(owner string, id string) error
 }
 
 type ListAlbumsFilter struct {

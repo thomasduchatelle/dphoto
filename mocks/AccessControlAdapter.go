@@ -13,6 +13,34 @@ type AccessControlAdapter struct {
 	mock.Mock
 }
 
+// CanListMediasFromAlbum provides a mock function with given fields: owner, folderName
+func (_m *AccessControlAdapter) CanListMediasFromAlbum(owner string, folderName string) error {
+	ret := _m.Called(owner, folderName)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(owner, folderName)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CanReadMedia provides a mock function with given fields: owner, id
+func (_m *AccessControlAdapter) CanReadMedia(owner string, id string) error {
+	ret := _m.Called(owner, id)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(owner, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Owner provides a mock function with given fields:
 func (_m *AccessControlAdapter) Owner() (string, error) {
 	ret := _m.Called()

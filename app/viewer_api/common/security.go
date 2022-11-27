@@ -10,12 +10,12 @@ import (
 	"strings"
 )
 
-// RequiresCatalogACL read the bearer token, parse it, and creates a Catalog View from it (enforcing catalog ACL).
+// RequiresCatalogACL parses the token and instantiate the ACL extension for 'catalog' domain
 //
 // accesscontrol.AccessUnauthorisedError errors will be converted into 401 responses
 // accesscontrol.AccessForbiddenError errors will be converted into 403 responses
 // any other errors will be converted into 500
-func RequiresCatalogACL(request *events.APIGatewayProxyRequest, process func(catalogView *catalogacl.View) (Response, error)) (Response, error) {
+func RequiresCatalogACL(request *events.APIGatewayProxyRequest, process func(claims accesscontrol.Claims, catalogACL catalogacl.AccessControlAdapter) (Response, error)) (Response, error) {
 	token, err := readToken(request)
 	if err != nil {
 		return UnauthorizedResponse(err.Error())
@@ -26,12 +26,9 @@ func RequiresCatalogACL(request *events.APIGatewayProxyRequest, process func(cat
 		return UnauthorizedResponse(err.Error())
 	}
 
-	catalogView := &catalogacl.View{
-		UserEmail:     claims.Subject,
-		AccessControl: catalogacllogic.NewAccessControlAdapterFromToken(grantRepository, claims),
-	}
+	catalogACL := catalogacllogic.NewAccessControlAdapterFromToken(grantRepository, claims)
 
-	response, err := process(catalogView)
+	response, err := process(claims, catalogACL)
 
 	switch {
 	case errors.Is(err, accesscontrol.AccessUnauthorisedError):
@@ -46,6 +43,18 @@ func RequiresCatalogACL(request *events.APIGatewayProxyRequest, process func(cat
 	default:
 		return response, nil
 	}
+}
+
+// RequiresCatalogView is based on RequiresCatalogACL but creates a convenient Catalog View
+func RequiresCatalogView(request *events.APIGatewayProxyRequest, process func(catalogView *catalogacl.View) (Response, error)) (Response, error) {
+	return RequiresCatalogACL(request, func(claims accesscontrol.Claims, catalogACL catalogacl.AccessControlAdapter) (Response, error) {
+		view := &catalogacl.View{
+			UserEmail:     claims.Subject,
+			AccessControl: catalogacllogic.NewAccessControlAdapterFromToken(grantRepository, claims),
+		}
+
+		return process(view)
+	})
 }
 
 func readToken(request *events.APIGatewayProxyRequest) (string, error) {

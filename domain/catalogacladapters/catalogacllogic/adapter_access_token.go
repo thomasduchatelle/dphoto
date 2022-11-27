@@ -30,3 +30,11 @@ func (a *accessTokenAdapter) CanListMediasFromAlbum(owner string, folderName str
 
 	return a.AccessControlAdapter.CanListMediasFromAlbum(owner, folderName)
 }
+
+func (a *accessTokenAdapter) CanReadMedia(owner string, mediaId string) error {
+	if a.owner == owner {
+		return nil
+	}
+
+	return a.AccessControlAdapter.CanReadMedia(owner, mediaId)
+}

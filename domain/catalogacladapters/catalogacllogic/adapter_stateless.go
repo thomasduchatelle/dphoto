@@ -88,3 +88,27 @@ func (a *adapter) CanListMediasFromAlbum(owner string, folderName string) error 
 
 	return nil
 }
+
+func (a *adapter) CanReadMedia(owner string, mediaId string) error {
+	scopes, err := a.scopeRepository.FindScopesById(
+		accesscontrol.ScopeId{
+			Type:          accesscontrol.MainOwnerScope,
+			GrantedTo:     a.email,
+			ResourceOwner: owner,
+		},
+		accesscontrol.ScopeId{
+			Type:          accesscontrol.MediaVisitorScope,
+			GrantedTo:     a.email,
+			ResourceOwner: owner,
+			ResourceId:    mediaId,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if len(scopes) == 0 {
+		return errors.Wrapf(accesscontrol.AccessForbiddenError, "reading media %s/%s has been denied.", owner, mediaId)
+	}
+
+	return nil
+}

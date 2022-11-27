@@ -13,6 +13,35 @@ type ScopeRepository struct {
 	mock.Mock
 }
 
+// FindScopesById provides a mock function with given fields: ids
+func (_m *ScopeRepository) FindScopesById(ids ...accesscontrol.ScopeId) ([]*accesscontrol.Scope, error) {
+	_va := make([]interface{}, len(ids))
+	for _i := range ids {
+		_va[_i] = ids[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 []*accesscontrol.Scope
+	if rf, ok := ret.Get(0).(func(...accesscontrol.ScopeId) []*accesscontrol.Scope); ok {
+		r0 = rf(ids...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*accesscontrol.Scope)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(...accesscontrol.ScopeId) error); ok {
+		r1 = rf(ids...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListOwnerScopes provides a mock function with given fields: owner, types
 func (_m *ScopeRepository) ListOwnerScopes(owner string, types ...accesscontrol.ScopeType) ([]*accesscontrol.Scope, error) {
 	_va := make([]interface{}, len(types))
