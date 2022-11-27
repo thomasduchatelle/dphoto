@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
 	"strings"
 	"time"
@@ -22,18 +20,14 @@ type Media struct {
 }
 
 func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
-	parser := common.NewArgParser(&request)
-	owner := parser.ReadPathParameterString("owner")
-	folderName := parser.ReadPathParameterString("folderName")
+	owner := request.PathParameters["owner"]
+	folderName := request.PathParameters["folderName"]
 
-	return common.RequiresCatalogACL(&request, func(catalogView catalogacl.View) (common.Response, error) {
-		log.Infof("find medias for album %s/%s", owner, folderName)
+	return common.RequiresCatalogACL(&request, func(catalogView *catalogacl.View) (common.Response, error) {
+		log.Infof("list medias for album %s/%s", owner, folderName)
 		medias, err := catalogView.ListMediasFromAlbum(owner, fmt.Sprintf("/%s", folderName))
 		if err != nil {
-			if errors.Is(err, accesscontrol.AccessForbiddenError) {
-				return common.Response{}, err
-			}
-			return common.InternalError(err)
+			return common.Response{}, err
 		}
 
 		resp := make([]Media, len(medias.Content), len(medias.Content))
@@ -43,7 +37,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 				Type:     string(media.Type),
 				Filename: media.Filename,
 				Time:     media.Details.DateTime,
-				Source:   strings.Trim(fmt.Sprintf("%s %s", media.Details.Make, media.Details.Model), " "),
+				Source:   strings.Join([]string{media.Details.Make, media.Details.Model}, " "),
 			}
 		}
 

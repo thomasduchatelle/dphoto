@@ -103,3 +103,23 @@ func (r *repository) ListOwnerScopes(owner string, types ...accesscontrol.ScopeT
 
 	return scopes, stream.Error()
 }
+
+func (r *repository) FindScopesById(ids ...accesscontrol.ScopeId) ([]*accesscontrol.Scope, error) {
+	keys := make([]map[string]*dynamodb.AttributeValue, len(ids), len(ids))
+	for i, id := range ids {
+		keys[i] = MarshalScopeId(id)
+	}
+
+	var scopes []*accesscontrol.Scope
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	for stream.HasNext() {
+		scope, err := UnmarshalScope(stream.Next())
+		if err != nil {
+			return nil, err
+		}
+
+		scopes = append(scopes, scope)
+	}
+
+	return scopes, stream.Error()
+}

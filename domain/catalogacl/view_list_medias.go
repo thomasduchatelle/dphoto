@@ -1,9 +1,15 @@
 package catalogacl
 
-import "github.com/thomasduchatelle/dphoto/domain/catalog"
+import (
+	"github.com/thomasduchatelle/dphoto/domain/catalog"
+)
 
 // ListMediasFromAlbum returns medias contained on the album if user is allowed
-func (v *View) ListMediasFromAlbum(owner, album string) (*catalog.MediaPage, error) {
-	//TODO implement me
-	panic("implement me")
+func (v *View) ListMediasFromAlbum(owner, folderName string) (*catalog.MediaPage, error) {
+	err := v.AccessControl.CanListMediasFromAlbum(owner, folderName)
+	if err != nil {
+		return nil, err
+	}
+
+	return catalog.ListMedias(owner, folderName, catalog.PageRequest{})
 }

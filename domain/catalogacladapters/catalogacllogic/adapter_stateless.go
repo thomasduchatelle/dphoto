@@ -1,4 +1,5 @@
-package cacl2ac
+// Package catalogacllogic contains the logic to authorise access to catalog resources based on user requesting it.
+package catalogacllogic
 
 import (
 	"github.com/pkg/errors"
@@ -12,18 +13,11 @@ type ScopeRepository interface {
 	accesscontrol.ReverseScopesReader
 }
 
+// NewAccessControlAdapter creates an adapter catalogacl -> accesscontrol which will always request DB layer
 func NewAccessControlAdapter(repository ScopeRepository, email string) catalogacl.AccessControlAdapter {
 	return &adapter{
 		email:           email,
 		scopeRepository: repository,
-	}
-}
-
-func NewAccessControlAdapterFromToken(repository ScopeRepository, claims accesscontrol.Claims) catalogacl.AccessControlAdapter {
-	delegate := NewAccessControlAdapter(repository, claims.Subject)
-	return &accessTokenAdapter{
-		AccessControlAdapter: delegate,
-		owner:                claims.Owner,
 	}
 }
 
@@ -71,11 +65,26 @@ func (a *adapter) SharedByUserGrid(owner string) (map[string][]string, error) {
 	return grid, err
 }
 
-type accessTokenAdapter struct {
-	catalogacl.AccessControlAdapter
-	owner string
-}
+func (a *adapter) CanListMediasFromAlbum(owner string, folderName string) error {
+	scopes, err := a.scopeRepository.FindScopesById(
+		accesscontrol.ScopeId{
+			Type:          accesscontrol.MainOwnerScope,
+			GrantedTo:     a.email,
+			ResourceOwner: owner,
+		},
+		accesscontrol.ScopeId{
+			Type:          accesscontrol.AlbumVisitorScope,
+			GrantedTo:     a.email,
+			ResourceOwner: owner,
+			ResourceId:    folderName,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if len(scopes) == 0 {
+		return errors.Wrapf(accesscontrol.AccessForbiddenError, "listing medias in %s/%s denied.", owner, folderName)
+	}
 
-func (a *accessTokenAdapter) Owner() (string, error) {
-	return a.owner, nil
+	return nil
 }

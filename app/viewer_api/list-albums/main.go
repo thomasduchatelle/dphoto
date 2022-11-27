@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
 	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
+	"strings"
 	"time"
 )
 
@@ -36,7 +37,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		for i, a := range albums {
 			restAlbums[i] = AlbumDTO{
 				End:        a.End,
-				FolderName: a.FolderName,
+				FolderName: strings.TrimPrefix(a.FolderName, "/"),
 				Name:       a.Name,
 				Owner:      a.Owner,
 				Start:      a.Start,

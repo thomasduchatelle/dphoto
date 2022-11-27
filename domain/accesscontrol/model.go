@@ -51,6 +51,14 @@ type Scope struct {
 	ResourceName  string    // ResourceName (optional) used for user-friendly display of the shared albums
 }
 
+// ScopeId are the properties of a Scope that identity it
+type ScopeId struct {
+	Type          ScopeType // Type is mandatory, it defines what fields on this structure is used and allow to filter the results
+	GrantedTo     string    // GrantedTo is the consumer, usually an email address
+	ResourceOwner string    // ResourceOwner (optional) is used has part of the ID of the catalog resources
+	ResourceId    string    // ResourceId if a unique identifier of the resource (in conjunction of the ResourceOwner for most catalog resources) ; ex: 'admin' (for 'api' type)
+}
+
 type OAuthConfig struct {
 	ValidityDuration time.Duration // ValidityDuration for generated access token
 	Issuer           string        // Issuer is the application instance ID, used in both 'iss' and 'aud'

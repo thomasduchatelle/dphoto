@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
-	"github.com/thomasduchatelle/dphoto/domain/catalogacladapters/cacl2ac"
+	"github.com/thomasduchatelle/dphoto/domain/catalogacladapters/catalogacllogic"
 	"strings"
 )
 
@@ -28,7 +28,7 @@ func RequiresCatalogACL(request *events.APIGatewayProxyRequest, process func(cat
 
 	catalogView := &catalogacl.View{
 		UserEmail:     claims.Subject,
-		AccessControl: cacl2ac.NewAccessControlAdapterFromToken(grantRepository, claims),
+		AccessControl: catalogacllogic.NewAccessControlAdapterFromToken(grantRepository, claims),
 	}
 
 	response, err := process(catalogView)
