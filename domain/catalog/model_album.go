@@ -29,10 +29,9 @@ type CreateAlbum struct {
 	ForcedFolderName string
 }
 
-// ListAlbumsInput is used to get details of a specific album
-type ListAlbumsInput struct {
+type AlbumId struct {
 	Owner      string
-	FolderName string // FolderName is optional, all album owned by this owner will be returned
+	FolderName string
 }
 
 func (a *Album) String() string {
@@ -43,6 +42,10 @@ func (a *Album) String() string {
 // IsEqual uses unique identifier to compare both albums
 func (a *Album) IsEqual(other *Album) bool {
 	return a.Owner == a.Owner && a.FolderName == other.FolderName
+}
+
+func (a *AlbumId) String() string {
+	return fmt.Sprintf("%s/%s", a.Owner, a.FolderName)
 }
 
 func NewTimeRangeFromAlbum(album Album) TimeRange {

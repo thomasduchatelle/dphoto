@@ -16,44 +16,6 @@ func FindAllAlbums(owner string) ([]*Album, error) {
 	return repositoryPort.FindAlbumsByOwner(owner)
 }
 
-// ListAlbums finds all albums owned by a user, or specific albums
-func ListAlbums(requests ...ListAlbumsInput) ([]*Album, error) {
-	unique := make(map[ListAlbumsInput]interface{})
-
-	var albums []*Album
-	for _, request := range requests {
-		if request.Owner == "" {
-			return nil, errors.Errorf("invalid argument, 'owner' must be non empty")
-		}
-
-		if _, notUnique := unique[request]; !notUnique {
-			unique[request] = nil
-
-			if request.FolderName != "" {
-				albs, err := repositoryPort.FindAlbumsByOwner(request.Owner)
-				if err != nil {
-					return nil, err
-				}
-
-				albums = append(albums, albs...)
-			} else {
-				album, err := repositoryPort.FindAlbum(request.Owner, request.FolderName)
-				if err != nil {
-					return nil, err
-				}
-
-				albums = append(albums, album)
-			}
-		}
-	}
-
-	sort.Slice(albums, func(i, j int) bool {
-		return albums[i].Start.Before(albums[j].Start)
-	})
-
-	return albums, nil
-}
-
 // Create creates a new album
 func Create(createRequest CreateAlbum) error {
 	if createRequest.Owner == "" {
@@ -130,9 +92,24 @@ func normaliseFolderName(name string) string {
 	return "/" + strings.Trim(nonAlphaNumeric.ReplaceAllString(name, "_"), "_")
 }
 
+// FindAlbums get several albums by their business keys
+func FindAlbums(keys []AlbumId) ([]*Album, error) {
+	return repositoryPort.FindAlbums(keys...)
+}
+
 // FindAlbum get an album by its business key (its folder name), or returns NotFoundError
 func FindAlbum(owner string, folderName string) (*Album, error) {
-	return repositoryPort.FindAlbum(owner, normaliseFolderName(folderName))
+	albums, err := repositoryPort.FindAlbums(AlbumId{
+		Owner:      owner,
+		FolderName: folderName,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(albums) == 0 {
+		return nil, NotFoundError
+	}
+	return albums[0], nil
 }
 
 // DeleteAlbum delete an album, medias it contains are dispatched to other albums.
@@ -184,7 +161,7 @@ func filterMissedSegmentWithMedias(owner string, folderName string, missed []Pri
 func RenameAlbum(owner string, folderName, newName string, renameFolder bool) error {
 	folderName = normaliseFolderName(folderName)
 
-	found, err := repositoryPort.FindAlbum(owner, folderName)
+	found, err := FindAlbum(owner, folderName)
 	if err != nil {
 		return err // can be NotFoundError
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
 	"sort"
 )
 
@@ -111,24 +112,34 @@ func (r *rep) CountMedias(owner string, folderName string) (int, error) {
 	return int(*query.Count), nil
 }
 
-func (r *rep) FindAlbum(owner string, folderName string) (*catalog.Album, error) {
-	key, err := dynamodbattribute.MarshalMap(AlbumPrimaryKey(owner, folderName))
-	if err != nil {
-		return nil, err
+func (r *rep) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error) {
+	var keys []map[string]*dynamodb.AttributeValue
+	for _, id := range ids {
+		key, err := dynamodbattribute.MarshalMap(AlbumPrimaryKey(id.Owner, id.FolderName))
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
 	}
 
-	attributes, err := r.db.GetItem(&dynamodb.GetItemInput{
-		Key:       key,
-		TableName: &r.table,
-	})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to find album '%s'", folderName)
-	}
-	if len(attributes.Item) == 0 {
-		return nil, catalog.NotFoundError
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	var albums []*catalog.Album
+	for stream.HasNext() {
+		album, err := unmarshalAlbum(stream.Next())
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO Media should be counted when inserted, not at every request
+		album.TotalCount, err = r.CountMedias(album.Owner, album.FolderName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", album.Owner, album.FolderName)
+		}
+
+		albums = append(albums, album)
 	}
 
-	return unmarshalAlbum(attributes.Item)
+	return albums, stream.Error()
 }
 
 func (r *rep) UpdateAlbum(album catalog.Album) error {

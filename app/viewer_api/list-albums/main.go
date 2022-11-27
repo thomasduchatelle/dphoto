@@ -3,10 +3,9 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
+	"strings"
 	"time"
 )
 
@@ -18,7 +17,6 @@ type AlbumDTO struct {
 	End        time.Time `json:"end"`
 	TotalCount int       `json:"totalCount"`
 	SharedTo   []string  `json:"sharedTo,omitempty"`
-	SharedBy   string    `json:"sharedBy,omitempty"`
 }
 
 func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
@@ -29,26 +27,22 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return parser.BadRequest()
 	}
 
-	return common.RequiresAuthorisation(&request, func(catalogView catalogacl.View) (common.Response, error) {
+	return common.RequiresCatalogView(&request, func(catalogView *catalogacl.View) (common.Response, error) {
 		albums, err := catalogView.ListAlbums(catalogacl.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned})
 		if err != nil {
-			if errors.Is(err, accesscontrol.AccessForbiddenError) {
-				return common.Response{}, err
-			}
-			return common.InternalError(errors.Wrapf(err, "failed to fetch albums"))
+			return common.Response{}, err
 		}
 
 		restAlbums := make([]AlbumDTO, len(albums))
 		for i, a := range albums {
 			restAlbums[i] = AlbumDTO{
 				End:        a.End,
-				FolderName: a.FolderName,
+				FolderName: strings.TrimPrefix(a.FolderName, "/"),
 				Name:       a.Name,
 				Owner:      a.Owner,
 				Start:      a.Start,
 				TotalCount: a.TotalCount,
 				SharedTo:   a.SharedTo,
-				SharedBy:   a.SharedBy,
 			}
 		}
 		return common.Ok(restAlbums)

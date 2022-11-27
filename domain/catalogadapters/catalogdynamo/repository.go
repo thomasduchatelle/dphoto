@@ -61,6 +61,7 @@ func (r *rep) CreateTableIfNecessary() error {
 			{AttributeName: aws.String("AlbumIndexSK"), AttributeType: s},
 			{AttributeName: aws.String("LocationId"), AttributeType: s},
 			{AttributeName: aws.String("LocationKeyPrefix"), AttributeType: s},
+			{AttributeName: aws.String("ResourceOwner"), AttributeType: s},
 		},
 		BillingMode: aws.String(dynamodb.BillingModePayPerRequest),
 		GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndex{
@@ -77,6 +78,14 @@ func (r *rep) CreateTableIfNecessary() error {
 				KeySchema: []*dynamodb.KeySchemaElement{
 					{AttributeName: aws.String("LocationKeyPrefix"), KeyType: aws.String(dynamodb.KeyTypeHash)},
 					{AttributeName: aws.String("LocationId"), KeyType: aws.String(dynamodb.KeyTypeRange)},
+				},
+				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
+			},
+			{
+				IndexName: aws.String("ReverseScopeIndex"), // from 'accesscontrol' extension
+				KeySchema: []*dynamodb.KeySchemaElement{
+					{AttributeName: aws.String("ResourceOwner"), KeyType: aws.String(dynamodb.KeyTypeHash)},
+					{AttributeName: aws.String("SK"), KeyType: aws.String(dynamodb.KeyTypeRange)},
 				},
 				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
 			},

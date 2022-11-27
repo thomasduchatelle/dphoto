@@ -63,7 +63,7 @@ func (t *TokenGenerator) loadUserScopes(email string) ([]string, error) {
 			scopes = append(scopes, fmt.Sprintf("api:%s", grant.ResourceId))
 
 		case MainOwnerScope:
-			scopes = append(scopes, fmt.Sprintf("owner:%s", grant.ResourceOwner))
+			scopes = append(scopes, fmt.Sprintf("%s%s", JWTScopeOwnerPrefix, grant.ResourceOwner))
 		}
 	}
 

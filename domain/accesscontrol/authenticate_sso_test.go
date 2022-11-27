@@ -32,7 +32,7 @@ func TestAuthenticate(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		initMocks       func(permissionReaderMock *mocks.ListUserPermissions)
+		initMocks       func(permissionReaderMock *mocks.ScopesReader)
 		argToken        string
 		assertAuth      func(*testing.T, string, accesscontrol.Authentication)
 		wantIdentity    accesscontrol.Identity
@@ -40,7 +40,7 @@ func TestAuthenticate(t *testing.T) {
 	}{
 		{
 			name: "it should exchange a valid identity JWT into an access token",
-			initMocks: func(permissionReaderMock *mocks.ListUserPermissions) {
+			initMocks: func(permissionReaderMock *mocks.ScopesReader) {
 				permissionReaderMock.On("ListUserScopes", "tony@stark.com", accesscontrol.ApiScope, accesscontrol.MainOwnerScope).Return([]*accesscontrol.Scope{
 					{
 						Type:       accesscontrol.ApiScope,
@@ -75,7 +75,7 @@ func TestAuthenticate(t *testing.T) {
 					sort.Slice(scopes, func(i, j int) bool {
 						return scopes[i] < scopes[j]
 					})
-					assert.Equal(t, []string{"api:admin", "owner:self:tony@stark.com"}, scopes)
+					assert.Equal(t, []string{"api:admin", "owner:tony@stark.com"}, scopes)
 				}
 			},
 			wantIdentity: accesscontrol.Identity{
@@ -86,36 +86,21 @@ func TestAuthenticate(t *testing.T) {
 		},
 		{
 			name: "it should not let unregistered user log in",
-			initMocks: func(permissionReaderMock *mocks.ListUserPermissions) {
+			initMocks: func(permissionReaderMock *mocks.ScopesReader) {
 				permissionReaderMock.On("ListUserScopes", mock.Anything, accesscontrol.ApiScope, accesscontrol.MainOwnerScope).Return(nil, nil)
 			},
 			argToken:        unregisteredJwtString,
 			wantErrContains: "must be pre-registered",
 		},
 		{
-			name: "it should not accept JWT from non-approved issuers",
-			initMocks: func(permissionReaderMock *mocks.ListUserPermissions) {
-				permissionReaderMock.On("ListUserScopes", mock.Anything, accesscontrol.ApiScope, accesscontrol.MainOwnerScope).Return([]*accesscontrol.Scope{
-					{
-						Type:       accesscontrol.ApiScope,
-						ResourceId: "viewer",
-					},
-				}, nil)
-
-			},
+			name:            "it should not accept JWT from non-approved issuers",
+			initMocks:       func(permissionReaderMock *mocks.ScopesReader) {},
 			argToken:        wrongISSJwtString,
 			wantErrContains: "Issuer 'wrongISS' is not supported",
 		},
 		{
-			name: "it should not accept expired JWT",
-			initMocks: func(permissionReaderMock *mocks.ListUserPermissions) {
-				permissionReaderMock.On("ListUserScopes", mock.Anything, accesscontrol.ApiScope, accesscontrol.MainOwnerScope).Return([]*accesscontrol.Scope{
-					{
-						Type:       accesscontrol.ApiScope,
-						ResourceId: "viewer",
-					},
-				}, nil)
-			},
+			name:            "it should not accept expired JWT",
+			initMocks:       func(permissionReaderMock *mocks.ScopesReader) {},
 			argToken:        expiredJwtString,
 			wantErrContains: "token is expired",
 		},
@@ -125,9 +110,10 @@ func TestAuthenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 
+			reader := mocks.NewScopesReader(t)
 			authenticator := accesscontrol.SSOAuthenticator{
 				TokenGenerator: accesscontrol.TokenGenerator{
-					PermissionsReader: new(mocks.ListUserPermissions),
+					PermissionsReader: reader,
 					Config:            config,
 				},
 				TrustedIdentityIssuers: map[string]accesscontrol.OAuth2IssuerConfig{
@@ -143,7 +129,7 @@ func TestAuthenticate(t *testing.T) {
 				},
 			}
 
-			tt.initMocks(authenticator.TokenGenerator.PermissionsReader.(*mocks.ListUserPermissions))
+			tt.initMocks(authenticator.TokenGenerator.PermissionsReader.(*mocks.ScopesReader))
 
 			gotAuth, gotIdentity, err := authenticator.AuthenticateFromExternalIDProvider(tt.argToken)
 			if tt.wantErrContains != "" && a.Error(err, tt.name) {

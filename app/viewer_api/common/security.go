@@ -4,56 +4,57 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
+	"github.com/thomasduchatelle/dphoto/domain/catalogacladapters/catalogacllogic"
 	"strings"
 )
 
-// RequiresAuthorisation read the bearer token, parse it, and creates a Catalog View from it (enforcing catalog ACL).
+// RequiresCatalogACL parses the token and instantiate the ACL extension for 'catalog' domain
 //
-// accesscontrol.AccessForbiddenError errors will be converted into 403 responses.
-func RequiresAuthorisation(request *events.APIGatewayProxyRequest, process func(catalogView catalogacl.View) (Response, error), authorisationRules ...func(authContext catalogacl.View) error) (Response, error) {
-
-	catalogView := catalogacl.NewUserView("TODO") // TODO token should be decoded and used !
-	if err != nil {
-		response, _ := NewJsonResponse(401, map[string]string{
-			"error": fmt.Sprintf("access denied: %s", err.Error()),
-		}, nil)
-		return response, nil
-	}
-
-	for i, rule := range authorisationRules {
-		err = rule(catalogView)
-		if err != nil {
-			log.Warnf("Failed to authorise request at rule %d/%d %+v: %s", i+1, len(authorisationRules), request, err.Error())
-			response, _ := NewJsonResponse(403, map[string]string{
-				"error": fmt.Sprintf("access forbidden: %s", err.Error()),
-			}, nil)
-			return response, nil
-		}
-	}
-
-	response, err := process(catalogView)
-	if errors.Is(err, accesscontrol.AccessForbiddenError) {
-		response, _ = NewJsonResponse(403, map[string]string{
-			"error": fmt.Sprintf("access forbidden: %s", err.Error()),
-		}, nil)
-		return response, nil
-	}
-	return response, err
-}
-
-func parseAuthorisation(request *events.APIGatewayProxyRequest) {
+// accesscontrol.AccessUnauthorisedError errors will be converted into 401 responses
+// accesscontrol.AccessForbiddenError errors will be converted into 403 responses
+// any other errors will be converted into 500
+func RequiresCatalogACL(request *events.APIGatewayProxyRequest, process func(claims accesscontrol.Claims, catalogACL catalogacl.AccessControlAdapter) (Response, error)) (Response, error) {
 	token, err := readToken(request)
 	if err != nil {
-		response, _ := NewJsonResponse(401, map[string]string{
-			"error": fmt.Sprintf("access denied: %s", err.Error()),
-		}, nil)
-		return response, nil
+		return UnauthorizedResponse(err.Error())
 	}
 
-	oauth.DecodeAndValidate(token)
+	claims, err := jwtDecoder.Decode(token)
+	if err != nil {
+		return UnauthorizedResponse(err.Error())
+	}
+
+	catalogACL := catalogacllogic.NewAccessControlAdapterFromToken(grantRepository, claims)
+
+	response, err := process(claims, catalogACL)
+
+	switch {
+	case errors.Is(err, accesscontrol.AccessUnauthorisedError):
+		return UnauthorizedResponse(err.Error())
+
+	case errors.Is(err, accesscontrol.AccessForbiddenError):
+		return ForbiddenResponse(err.Error())
+
+	case err != nil:
+		return InternalError(err)
+
+	default:
+		return response, nil
+	}
+}
+
+// RequiresCatalogView is based on RequiresCatalogACL but creates a convenient Catalog View
+func RequiresCatalogView(request *events.APIGatewayProxyRequest, process func(catalogView *catalogacl.View) (Response, error)) (Response, error) {
+	return RequiresCatalogACL(request, func(claims accesscontrol.Claims, catalogACL catalogacl.AccessControlAdapter) (Response, error) {
+		view := &catalogacl.View{
+			UserEmail:     claims.Subject,
+			AccessControl: catalogacllogic.NewAccessControlAdapterFromToken(grantRepository, claims),
+		}
+
+		return process(view)
+	})
 }
 
 func readToken(request *events.APIGatewayProxyRequest) (string, error) {
@@ -74,4 +75,18 @@ func readToken(request *events.APIGatewayProxyRequest) (string, error) {
 	}
 
 	return authorisation[len(bearerPrefix):], nil
+}
+
+func UnauthorizedResponse(message string) (Response, error) {
+	response, _ := NewJsonResponse(401, map[string]string{
+		"error": fmt.Sprintf("access unauthorised: %s", message),
+	}, nil)
+	return response, nil
+}
+
+func ForbiddenResponse(message string) (Response, error) {
+	response, _ := NewJsonResponse(403, map[string]string{
+		"error": fmt.Sprintf("access forbidden: %s", message),
+	}, nil)
+	return response, nil
 }

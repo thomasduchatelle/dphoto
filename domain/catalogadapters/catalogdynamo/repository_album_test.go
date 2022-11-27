@@ -61,15 +61,15 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	}
 
 	name := "it should find previously saved album"
-	found, err := a.repo.FindAlbum(a.owner, folderName)
-	if a.NoError(err, name) {
+	found, err := a.repo.FindAlbums(catalog.AlbumId{Owner: a.owner, FolderName: folderName})
+	if a.NoError(err, name) && a.Len(found, 1, name) {
 		a.Equal(&catalog.Album{
 			Owner:      a.owner,
 			Name:       "Christmas",
 			FolderName: folderName,
 			Start:      mustParseDate("2020-12-24"),
 			End:        mustParseDate("2020-12-26"),
-		}, found, name)
+		}, found[0], name)
 	}
 }
 
@@ -100,9 +100,9 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 
 func (a *AlbumCrudTestSuite) TestFindNotFound() {
 	ttName := "it should return [?, NotFoundError] when searched album do not exists"
-	_, err := a.repo.FindAlbum(a.owner, "_donotexist")
-	if a.Error(err, ttName) {
-		a.Equal(catalog.NotFoundError, err)
+	albums, err := a.repo.FindAlbums(catalog.AlbumId{Owner: a.owner, FolderName: "_donotexist"})
+	if a.NoError(err, ttName) {
+		a.Empty(albums)
 	}
 }
 
@@ -147,9 +147,9 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 	err = a.repo.UpdateAlbum(update)
 	name := "it should update an exiting album"
 	if a.NoError(err, name) {
-		updated, err := a.repo.FindAlbum(a.owner, folderName)
-		if a.NoError(err, name) {
-			a.Equal(&update, updated, name)
+		updated, err := a.repo.FindAlbums(catalog.AlbumId{Owner: a.owner, FolderName: folderName})
+		if a.NoError(err, name) && a.Len(updated, 1) {
+			a.Equal(&update, updated[0], name)
 		}
 	}
 }

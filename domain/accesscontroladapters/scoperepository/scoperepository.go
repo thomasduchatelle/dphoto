@@ -12,6 +12,7 @@ import (
 
 type GrantRepository interface {
 	accesscontrol.ScopesReader
+	accesscontrol.ReverseScopesReader
 }
 
 func New(sess *session.Session, tableName string, createTable bool) (GrantRepository, error) {
@@ -60,7 +61,59 @@ func (r *repository) ListUserScopes(email string, types ...accesscontrol.ScopeTy
 	var scopes []*accesscontrol.Scope
 	stream := dynamoutils.NewQueryStream(r.db, queries)
 	for stream.HasNext() {
-		scope, _, err := UnmarshalScope(stream.Next())
+		scope, err := UnmarshalScope(stream.Next())
+		if err != nil {
+			return nil, err
+		}
+
+		scopes = append(scopes, scope)
+	}
+
+	return scopes, stream.Error()
+}
+
+func (r *repository) ListOwnerScopes(owner string, types ...accesscontrol.ScopeType) ([]*accesscontrol.Scope, error) {
+	if len(types) == 0 {
+		return nil, nil
+	}
+
+	var queries []*dynamodb.QueryInput
+	for _, mediaType := range types {
+		queries = append(queries, &dynamodb.QueryInput{
+			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+				":owner":    {S: aws.String(userPk(owner))},
+				":skPrefix": {S: aws.String(fmt.Sprintf("%s%s", scopePrefix, mediaType))},
+			},
+			IndexName:              aws.String("ReverseGrantIndex"),
+			KeyConditionExpression: aws.String("ResourceOwner = :owner AND begins_with(SK, :skPrefix)"),
+			TableName:              &r.table,
+		})
+	}
+
+	var scopes []*accesscontrol.Scope
+	stream := dynamoutils.NewQueryStream(r.db, queries)
+	for stream.HasNext() {
+		scope, err := UnmarshalScope(stream.Next())
+		if err != nil {
+			return nil, err
+		}
+
+		scopes = append(scopes, scope)
+	}
+
+	return scopes, stream.Error()
+}
+
+func (r *repository) FindScopesById(ids ...accesscontrol.ScopeId) ([]*accesscontrol.Scope, error) {
+	keys := make([]map[string]*dynamodb.AttributeValue, len(ids), len(ids))
+	for i, id := range ids {
+		keys[i] = MarshalScopeId(id)
+	}
+
+	var scopes []*accesscontrol.Scope
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	for stream.HasNext() {
+		scope, err := UnmarshalScope(stream.Next())
 		if err != nil {
 			return nil, err
 		}

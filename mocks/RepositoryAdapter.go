@@ -26,22 +26,28 @@ func (_m *RepositoryAdapter) DeleteEmptyAlbum(owner string, folderName string) e
 	return r0
 }
 
-// FindAlbum provides a mock function with given fields: owner, folderName
-func (_m *RepositoryAdapter) FindAlbum(owner string, folderName string) (*catalog.Album, error) {
-	ret := _m.Called(owner, folderName)
+// FindAlbums provides a mock function with given fields: ids
+func (_m *RepositoryAdapter) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error) {
+	_va := make([]interface{}, len(ids))
+	for _i := range ids {
+		_va[_i] = ids[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
-	var r0 *catalog.Album
-	if rf, ok := ret.Get(0).(func(string, string) *catalog.Album); ok {
-		r0 = rf(owner, folderName)
+	var r0 []*catalog.Album
+	if rf, ok := ret.Get(0).(func(...catalog.AlbumId) []*catalog.Album); ok {
+		r0 = rf(ids...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*catalog.Album)
+			r0 = ret.Get(0).([]*catalog.Album)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(owner, folderName)
+	if rf, ok := ret.Get(1).(func(...catalog.AlbumId) error); ok {
+		r1 = rf(ids...)
 	} else {
 		r1 = ret.Error(1)
 	}

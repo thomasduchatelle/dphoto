@@ -121,7 +121,7 @@ func TestShouldReassignMediasToOtherAlbumsWhenDeletingAnAlbum(t *testing.T) {
 	a.NoError(err)
 }
 
-func TestFind(t *testing.T) {
+func TestFind_Found(t *testing.T) {
 	a := assert.New(t)
 	mockRepository, _ := mockAdapters(t)
 	const owner = "stark"
@@ -134,12 +134,23 @@ func TestFind(t *testing.T) {
 		End:        time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC),
 	}
 
-	mockRepository.On("FindAlbum", owner, "/MyAlbum").Return(&album, nil)
+	mockRepository.On("FindAlbums", catalog.AlbumId{Owner: owner, FolderName: "/MyAlbum"}).Return([]*catalog.Album{&album}, nil)
 
 	got, err := catalog.FindAlbum(owner, "/MyAlbum")
 	if a.NoError(err) {
 		a.Equal(&album, got)
 	}
+}
+
+func TestFind_NotFound(t *testing.T) {
+	a := assert.New(t)
+	mockRepository, _ := mockAdapters(t)
+	const owner = "stark"
+
+	mockRepository.On("FindAlbums", catalog.AlbumId{Owner: owner, FolderName: "/MyAlbum"}).Return(nil, nil)
+
+	_, err := catalog.FindAlbum(owner, "/MyAlbum")
+	a.ErrorIs(err, catalog.NotFoundError)
 }
 
 func TestFindAll(t *testing.T) {
@@ -176,7 +187,7 @@ func TestRename_sameFolderName(t *testing.T) {
 		End:        time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC),
 	}
 
-	mockRepository.On("FindAlbum", owner, "/MyAlbum").Return(&album, nil)
+	mockRepository.On("FindAlbums", catalog.AlbumId{Owner: owner, FolderName: "/MyAlbum"}).Return([]*catalog.Album{&album}, nil)
 	mockRepository.On("UpdateAlbum", catalog.Album{
 		Owner:      owner,
 		Name:       "/My_Other_Album",
@@ -202,7 +213,7 @@ func TestShouldTransferMediasToNewAlbumWhenRenamingItsFolder(t *testing.T) {
 		End:        time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC),
 	}
 
-	mockRepository.On("FindAlbum", owner, "/Christmas_Holidays").Return(&album, nil)
+	mockRepository.On("FindAlbums", catalog.AlbumId{Owner: owner, FolderName: "/Christmas_Holidays"}).Return([]*catalog.Album{&album}, nil)
 	mockRepository.On("DeleteEmptyAlbum", owner, "/Christmas_Holidays").Return(nil)
 	mockRepository.On("InsertAlbum", catalog.Album{
 		Owner:      owner,
