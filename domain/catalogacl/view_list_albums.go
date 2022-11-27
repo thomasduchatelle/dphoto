@@ -1,112 +1,79 @@
 package catalogacl
 
 import (
-	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
+	"sort"
 )
 
-type AlbumId struct {
-	Owner      string
-	FolderName string
-}
-
-func (v *viewimpl) ListAlbums(filter ListAlbumsFilter) ([]*AlbumInView, error) {
-	accessibleAlbums, err := v.listAccessibleAlbums(filter)
+// ListAlbums returns albums visible by the user (owned by current user, and shared to him)
+func (v *View) ListAlbums(filter ListAlbumsFilter) ([]*AlbumInView, error) {
+	view, err := v.listOwnedAlbums()
 	if err != nil {
-		return nil, errors.Wrapf(err, "couldn't list accessible albums of '%s'", v.userEmail)
+		return nil, err
 	}
 
 	if !filter.OnlyDirectlyOwned {
-		sharedMedia, oldest, mostRecent, err := accesscontrol.CountUserPermissions(v.userEmail, accesscontrol.MediaVisitorScope)
+		albums, err := v.listSharedWithUserAlbums()
 		if err != nil {
 			return nil, err
 		}
 
-		if sharedMedia > 0 {
-			sharedWithMe := &AlbumInView{
-				Album: &catalog.Album{
-					Owner:      v.userEmail,
-					Name:       "Shared with me",
-					FolderName: "",
-					Start:      oldest,
-					End:        mostRecent,
-					TotalCount: sharedMedia,
-				},
-				SharedTo: nil,
-				SharedBy: "",
-			}
-			accessibleAlbums = append([]*AlbumInView{sharedWithMe}, accessibleAlbums...)
-		}
+		view = append(view, albums...)
+		sort.Slice(view, func(i, j int) bool {
+			return view[i].Start.Before(view[j].Start)
+		})
 	}
 
-	return accessibleAlbums, err
+	return view, nil
 }
 
-func (v *viewimpl) listAccessibleAlbums(filter ListAlbumsFilter) ([]*AlbumInView, error) {
-	roles, err := accesscontrol.ScopesReader(v.userEmail, accesscontrol.MainOwnerScope, accesscontrol.AlbumVisitorScope)
+func (v *View) listOwnedAlbums() ([]*AlbumInView, error) {
+	owner, err := v.AccessControl.Owner()
 	if err != nil {
 		return nil, err
 	}
 
-	var ownerOf []string
-	var requests []catalog.ListAlbumsInput
-	sharedByOwner := make(map[AlbumId]string)
-	for _, role := range roles {
-		switch role.Type {
-		case accesscontrol.MainOwnerScope:
-			ownerOf = append(ownerOf, role.ResourceOwner)
-			requests = append(requests, catalog.ListAlbumsInput{
-				Owner: role.ResourceOwner,
-			})
-
-		case accesscontrol.AlbumVisitorScope:
-			if !filter.OnlyDirectlyOwned {
-				sharedByOwner[NewAlbumId(role.ResourceOwner, role.ResourceId)] = role.ResourceOwner
-				requests = append(requests, catalog.ListAlbumsInput{
-					Owner:      role.ResourceOwner,
-					FolderName: role.ResourceId,
-				})
-			}
-		}
-	}
-
-	sharing, err := v.listAlbumSharing(ownerOf)
+	ownedAlbums, err := catalog.FindAllAlbums(owner)
 	if err != nil {
 		return nil, err
 	}
 
-	accessibleAlbums, err := catalog.ListAlbums(requests...)
-	if err != nil {
-		return nil, err
-	}
+	sharing, err := v.AccessControl.SharedByUserGrid(owner)
 
 	var view []*AlbumInView
-	for _, album := range accessibleAlbums {
-		sharedTo, _ := sharing[NewAlbumId(album.Owner, album.FolderName)]
-		sharedBy, _ := sharedByOwner[NewAlbumId(album.Owner, album.FolderName)]
+	for _, album := range ownedAlbums {
+		sharedTo, _ := sharing[album.FolderName]
 		view = append(view, &AlbumInView{
 			Album:    album,
 			SharedTo: sharedTo,
-			SharedBy: sharedBy,
 		})
 	}
 
 	return view, err
 }
 
-func (v *viewimpl) listAlbumSharing(owners []string) (map[AlbumId][]string, error) {
-	permissions, err := accesscontrol.ListResourcesPermissionsByOwner(owners, accesscontrol.AlbumVisitorScope)
-
-	sharingWith := make(map[AlbumId][]string)
-	for _, permission := range permissions {
-		sharedTo, _ := sharingWith[NewAlbumId(permission.ResourceOwner, permission.ResourceId)]
-		sharingWith[NewAlbumId(permission.ResourceOwner, permission.ResourceId)] = append(sharedTo, permission.GrantedTo)
+func (v *View) listSharedWithUserAlbums() ([]*AlbumInView, error) {
+	shares, err := v.AccessControl.SharedWithUserAlbum()
+	if err != nil {
+		return nil, err
 	}
 
-	return sharingWith, err
-}
+	ids := make([]catalog.AlbumId, len(shares), len(shares))
+	for i, alb := range shares {
+		ids[i] = catalog.AlbumId{
+			Owner:      alb.Owner,
+			FolderName: alb.FolderName,
+		}
+	}
 
-func NewAlbumId(owner, folderName string) AlbumId {
-	return AlbumId{Owner: owner, FolderName: folderName}
+	albums, err := catalog.FindAlbums(ids)
+
+	var view []*AlbumInView
+	for _, album := range albums {
+		view = append(view, &AlbumInView{
+			Album: album,
+		})
+	}
+
+	return view, err
 }

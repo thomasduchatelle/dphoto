@@ -16,8 +16,8 @@ type RepositoryAdapter interface {
 	FindAlbumsByOwner(owner string) ([]*Album, error)
 	InsertAlbum(album Album) error
 	DeleteEmptyAlbum(owner string, folderName string) error
-	// FindAlbum returns (nil, NotFoundError) when not found
-	FindAlbum(owner string, folderName string) (*Album, error)
+	// FindAlbums only returns found albums
+	FindAlbums(ids ...AlbumId) ([]*Album, error)
 	// UpdateAlbum updates data of matching Album.FolderName
 	UpdateAlbum(album Album) error
 

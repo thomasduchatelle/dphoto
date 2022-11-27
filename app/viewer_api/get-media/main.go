@@ -25,7 +25,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return parser.BadRequest()
 	}
 
-	return common.RequiresAuthorisation(&request, func(catalogacl.View) (common.Response, error) {
+	return common.RequiresCatalogACL(&request, func(catalogacl.View) (common.Response, error) {
 		if width == 0 {
 			return redirectTo(archive.GetMediaOriginalURL(owner, mediaId))
 		}

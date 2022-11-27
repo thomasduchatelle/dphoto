@@ -36,9 +36,9 @@ func userPk(user string) string {
 	return fmt.Sprintf("USER#%s", user)
 }
 
-func MarshalScope(user string, scope accesscontrol.Scope) (map[string]*dynamodb.AttributeValue, error) {
-	if isBlank(user) {
-		return nil, errors.New("Type is mandatory to store a scope")
+func MarshalScope(scope accesscontrol.Scope) (map[string]*dynamodb.AttributeValue, error) {
+	if isBlank(scope.GrantedTo) {
+		return nil, errors.New("GrantedTo is mandatory to store a scope")
 	}
 	if isBlank(string(scope.Type)) {
 		return nil, errors.New("Type is mandatory to store a scope")
@@ -48,28 +48,28 @@ func MarshalScope(user string, scope accesscontrol.Scope) (map[string]*dynamodb.
 	}
 
 	return dynamodbattribute.MarshalMap(&ScopeRecord{
-		TablePk:       ScopeRecordPk(user, string(scope.Type), scope.ResourceOwner, scope.ResourceId),
+		TablePk:       ScopeRecordPk(scope.GrantedTo, string(scope.Type), scope.ResourceOwner, scope.ResourceId),
 		Type:          string(scope.Type),
 		GrantedAt:     scope.GrantedAt,
-		GrantedTo:     user,
+		GrantedTo:     scope.GrantedTo,
 		ResourceOwner: scope.ResourceOwner,
 		ResourceId:    scope.ResourceId,
 		ResourceName:  scope.ResourceName,
 	})
 }
 
-func UnmarshalScope(attributes map[string]*dynamodb.AttributeValue) (*accesscontrol.Scope, string, error) {
+func UnmarshalScope(attributes map[string]*dynamodb.AttributeValue) (*accesscontrol.Scope, error) {
 	record := new(ScopeRecord)
 	err := dynamodbattribute.UnmarshalMap(attributes, record)
 
 	return &accesscontrol.Scope{
 			Type:          accesscontrol.ScopeType(record.Type),
 			GrantedAt:     record.GrantedAt,
+			GrantedTo:     record.GrantedTo,
 			ResourceOwner: record.ResourceOwner,
 			ResourceId:    record.ResourceId,
 			ResourceName:  record.ResourceName,
 		},
-		record.GrantedTo,
 		errors.Wrapf(err, "failed to unmarshal %+v", attributes)
 }
 

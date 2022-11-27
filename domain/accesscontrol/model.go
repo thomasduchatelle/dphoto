@@ -20,6 +20,8 @@ var (
 	InvalidTokenError         = errors.New("authenticated failed")
 	InvalidTokenExplicitError = errors.New("authentication failed: token invalid")
 	NotPreregisteredError     = errors.New("user must be pre-registered")
+	AccessUnauthorisedError   = errors.New("access unauthorised")
+	AccessForbiddenError      = errors.New("access forbidden")
 
 	// TrustedIdentityProvider is the default list of trusted identity providers
 	TrustedIdentityProvider = []string{
@@ -32,6 +34,8 @@ const (
 	MainOwnerScope    ScopeType = "owner:main"    // MainOwnerScope is limited to 1 per user, it's the tenant all backups of the user will be stored against
 	AlbumVisitorScope ScopeType = "album:visitor" // AlbumVisitorScope gives read access to an album and the media it contains
 	MediaVisitorScope ScopeType = "media:visitor" // MediaVisitorScope gives read access to medias directly
+
+	JWTScopeOwnerPrefix = "owner:"
 )
 
 // ScopeType is a type of API (admin) or a catalog resource (owner, album, ...)
@@ -39,17 +43,17 @@ type ScopeType string
 
 // Scope is attached to a user (a consumer of the API) and define the role it has on resource basis
 type Scope struct {
-	Type      ScopeType // Type is mandatory, it defines what fields on this structure is used and allow to filter the results
-	GrantedAt time.Time // GrantedAt is the date the scope has been granted to the user for the first time
-	//GrantedTo     string    // GrantedTo is the consumer, usually an email address
-	ResourceOwner string // ResourceOwner (optional) is used has part of the ID of the catalog resources
-	ResourceId    string // ResourceId if a unique identifier of the resource (in conjunction of the ResourceOwner for most catalog resources) ; ex: 'admin' (for 'api' type)
-	ResourceName  string // ResourceName (optional) used for user-friendly display of the shared albums
+	Type          ScopeType // Type is mandatory, it defines what fields on this structure is used and allow to filter the results
+	GrantedAt     time.Time // GrantedAt is the date the scope has been granted to the user for the first time
+	GrantedTo     string    // GrantedTo is the consumer, usually an email address
+	ResourceOwner string    // ResourceOwner (optional) is used has part of the ID of the catalog resources
+	ResourceId    string    // ResourceId if a unique identifier of the resource (in conjunction of the ResourceOwner for most catalog resources) ; ex: 'admin' (for 'api' type)
+	ResourceName  string    // ResourceName (optional) used for user-friendly display of the shared albums
 }
 
 type OAuthConfig struct {
 	ValidityDuration time.Duration // ValidityDuration for generated access token
-	Issuer           string        // Issuer is user in the generated JWT for both 'iss' and 'aud'
+	Issuer           string        // Issuer is the application instance ID, used in both 'iss' and 'aud'
 	SecretJwtKey     []byte        // SecretJwtKey is the key used to sign and validate DPhoto JWT
 }
 
@@ -88,4 +92,5 @@ type Identity struct {
 type Claims struct {
 	Subject string                 // Subject is the user id (its email)
 	Scopes  map[string]interface{} // Scopes is the list of permissions stored eagerly in access token
+	Owner   string                 // Owner is deviated from Scopes (extract of the MainOwnerScope)
 }

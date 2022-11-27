@@ -10,6 +10,11 @@ type ScopesReader interface {
 	ListUserScopes(email string, types ...ScopeType) ([]*Scope, error)
 }
 
+type ReverseScopesReader interface {
+	// ListOwnerScopes is a reverse query to find to whom has been shared owner resources.
+	ListOwnerScopes(owner string, types ...ScopeType) ([]*Scope, error)
+}
+
 // GrantRepository stores the permissions attached to a user.
 type GrantRepository interface {
 	// IsGranted takes a resource with the form 'drn:<type>:<owner>:<id>'

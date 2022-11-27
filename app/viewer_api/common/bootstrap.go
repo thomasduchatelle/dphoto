@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/spf13/viper"
-	"github.com/thomasduchatelle/dphoto/domain/accessadapters/oauthgoogle"
 	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
 	"github.com/thomasduchatelle/dphoto/domain/accesscontroladapters/jwks"
 	"github.com/thomasduchatelle/dphoto/domain/accesscontroladapters/scoperepository"
@@ -26,13 +25,18 @@ const (
 	DynamoDBTableName = "CATALOG_TABLE_NAME"
 )
 
+var (
+	jwtDecoder      *accesscontrol.AccessTokenDecoder
+	grantRepository scoperepository.GrantRepository
+)
+
 func init() {
 	viper.AutomaticEnv()
 
 	viper.SetDefault(JWTValidity, "8h")
 }
 
-func appOAuthConfig() accesscontrol.OAuthConfig {
+func appAuthConfig() accesscontrol.OAuthConfig {
 	jwtKey, err := base64.StdEncoding.DecodeString(viper.GetString(JWTKeyB64))
 	if err != nil {
 		panic(fmt.Sprintf("environment variable '%s' must be encoded in base 64 [value was %s]", JWTKeyB64, viper.GetString(JWTKeyB64)))
@@ -58,63 +62,37 @@ func NewSSOAuthenticator() *accesscontrol.SSOAuthenticator {
 	return &accesscontrol.SSOAuthenticator{
 		TokenGenerator: accesscontrol.TokenGenerator{
 			PermissionsReader: ssoAuthenticatorPermissionReader(),
-			Config:            appOAuthConfig(),
+			Config:            appAuthConfig(),
 		},
 		TrustedIdentityIssuers: config,
 	}
 }
 
+func AccessTokenDecoder() *accesscontrol.AccessTokenDecoder {
+	return &accesscontrol.AccessTokenDecoder{
+		Config: appAuthConfig(),
+	}
+}
+
 // BootstrapCatalogAndArchiveDomains bootstraps all domains
-func BootstrapCatalogAndArchiveDomains() (accesscontrol.Oauth, archive.AsyncJobAdapter) {
-	oauth := BootstrapOAuthDomain()
+func BootstrapCatalogAndArchiveDomains() archive.AsyncJobAdapter {
+	BootstrapOAuthDomain()
 	bootstrapCatalogDomain()
 	archiveJobAdapter := BootstrapArchiveDomain()
 
-	return oauth, archiveJobAdapter
+	return archiveJobAdapter
 }
 
 // BootstrapCatalogDomain bootstraps both oauth and catalog
-func BootstrapCatalogDomain() accesscontrol.Oauth {
-	oauth := BootstrapOAuthDomain()
+func BootstrapCatalogDomain() {
+	BootstrapOAuthDomain()
 	bootstrapCatalogDomain()
-
-	return oauth
 }
 
 // BootstrapOAuthDomain only bootstraps oauth
-func BootstrapOAuthDomain() accesscontrol.Oauth {
-	secretJwtKeyB64, b := os.LookupEnv("DPHOTO_JWT_KEY_B64")
-	if !b {
-		panic("environment variable 'DPHOTO_JWT_KEY_B64' is mandatory.")
-	}
-	secretJwtKey, err := base64.StdEncoding.DecodeString(secretJwtKeyB64)
-	if err != nil {
-		panic("environment variable 'DPHOTO_JWT_KEY_B64' must be encoded in base 64.")
-	}
-
-	jwtIssuer, b := os.LookupEnv(JWTIssuer)
-	if !b {
-		panic("environment variable 'DPHOTO_JWT_ISSUER' is mandatory.")
-	}
-	jwtValidity, b := os.LookupEnv(JWTValidity)
-	if !b {
-		jwtValidity = "8h"
-	}
-
-	name, issuer, err := oauthgoogle.NewGoogle().Read()
-	if err != nil {
-		panic(err)
-	}
-
-	oauth = accesscontrol.NewOAuth(accesscontrol.OAuthConfig{
-		Issuer:           jwtIssuer,
-		ValidityDuration: jwtValidity,
-		SecretJwtKey:     secretJwtKey,
-		TrustedIssuers: map[string]accesscontrol.OAuth2IssuerConfig{
-			name: issuer,
-		},
-	})
-	return oauth
+func BootstrapOAuthDomain() {
+	jwtDecoder = AccessTokenDecoder()
+	grantRepository = ssoAuthenticatorPermissionReader()
 }
 
 func bootstrapCatalogDomain() {

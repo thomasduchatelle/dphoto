@@ -26,7 +26,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	owner := parser.ReadPathParameterString("owner")
 	folderName := parser.ReadPathParameterString("folderName")
 
-	return common.RequiresAuthorisation(&request, func(catalogView catalogacl.View) (common.Response, error) {
+	return common.RequiresCatalogACL(&request, func(catalogView catalogacl.View) (common.Response, error) {
 		log.Infof("find medias for album %s/%s", owner, folderName)
 		medias, err := catalogView.ListMediasFromAlbum(owner, fmt.Sprintf("/%s", folderName))
 		if err != nil {
