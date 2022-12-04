@@ -3,25 +3,23 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/tencentyun/scf-go-lib/events"
-	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
+	"github.com/thomasduchatelle/dphoto/domain/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 )
 
 func TestOauthRouting(t *testing.T) {
-	noopAuthenticate := func(t *testing.T, oauthMock *mocks.Oauth) {
-		oauthMock.On("AuthenticateFromExternalIDProvider", mock.Anything).Maybe().Return(accesscontrol.Authentication{}, accesscontrol.Identity{}, errors.Errorf("user must be pre-registered"))
+	noopAuthenticate := func(t *testing.T, oauthMock *mocks.SSOAuthenticator) {
+		oauthMock.On("AuthenticateFromExternalIDProvider", mock.Anything).Maybe().Return(nil, nil, aclcore.NotPreregisteredError)
 	}
 
 	tests := []struct {
 		name      string
 		request   events.APIGatewayRequest
-		initMocks func(t *testing.T, oauthMock *mocks.Oauth)
+		initMocks func(t *testing.T, oauthMock *mocks.SSOAuthenticator)
 		wantCode  int
 		wantBody  map[string]interface{}
 	}{
@@ -32,13 +30,13 @@ func TestOauthRouting(t *testing.T) {
 					"authorization": "Bearer qwertyuiop",
 				},
 			},
-			initMocks: func(t *testing.T, oauthMock *mocks.Oauth) {
+			initMocks: func(t *testing.T, oauthMock *mocks.SSOAuthenticator) {
 				oauthMock.On("AuthenticateFromExternalIDProvider", "qwertyuiop").Once().Return(
-					accesscontrol.Authentication{
+					&aclcore.Authentication{
 						AccessToken: "asdfghjkl",
 						ExpiresIn:   42,
 					},
-					accesscontrol.Identity{
+					&aclcore.Identity{
 						Email:   "tony@stark.com",
 						Name:    "Ironman",
 						Picture: "https://stark.com/ceo",
@@ -95,9 +93,8 @@ func TestOauthRouting(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 
-			oauthClient := mocks.NewOauth(t)
-			tt.initMocks(t, oauthClient)
-			common.OAuthClient = oauthClient
+			authenticator = mocks.NewSSOAuthenticator(t)
+			tt.initMocks(t, authenticator.(*mocks.SSOAuthenticator))
 
 			got, err := Handler(tt.request)
 

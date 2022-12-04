@@ -4,7 +4,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
+	"github.com/thomasduchatelle/dphoto/domain/acl/catalogaclview"
 	"strings"
 	"time"
 )
@@ -27,8 +27,8 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return parser.BadRequest()
 	}
 
-	return common.RequiresCatalogView(&request, func(catalogView *catalogacl.View) (common.Response, error) {
-		albums, err := catalogView.ListAlbums(catalogacl.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned})
+	return common.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common.Response, error) {
+		albums, err := catalogView.ListAlbums(catalogaclview.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned})
 		if err != nil {
 			return common.Response{}, err
 		}

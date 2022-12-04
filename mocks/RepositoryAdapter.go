@@ -101,6 +101,27 @@ func (_m *RepositoryAdapter) FindExistingSignatures(owner string, signatures []*
 	return r0, r1
 }
 
+// FindMediaCurrentAlbum provides a mock function with given fields: owner, mediaId
+func (_m *RepositoryAdapter) FindMediaCurrentAlbum(owner string, mediaId string) (string, error) {
+	ret := _m.Called(owner, mediaId)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, string) string); ok {
+		r0 = rf(owner, mediaId)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(owner, mediaId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindMediaIds provides a mock function with given fields: request
 func (_m *RepositoryAdapter) FindMediaIds(request *catalog.FindMediaRequest) ([]string, error) {
 	ret := _m.Called(request)

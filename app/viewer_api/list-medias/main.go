@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
+	"github.com/thomasduchatelle/dphoto/domain/acl/catalogaclview"
 	"strings"
 	"time"
 )
@@ -23,7 +23,7 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 	owner := request.PathParameters["owner"]
 	folderName := request.PathParameters["folderName"]
 
-	return common.RequiresCatalogView(&request, func(catalogView *catalogacl.View) (common.Response, error) {
+	return common.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common.Response, error) {
 		log.Infof("list medias for album %s/%s", owner, folderName)
 		medias, err := catalogView.ListMediasFromAlbum(owner, fmt.Sprintf("/%s", folderName))
 		if err != nil {

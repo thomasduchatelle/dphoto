@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/spf13/viper"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontroladapters/jwks"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontroladapters/scoperepository"
+	"github.com/thomasduchatelle/dphoto/domain/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/domain/acl/acldynamodb"
+	"github.com/thomasduchatelle/dphoto/domain/acl/jwks"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/domain/archiveadapters/asyncjobadapter"
@@ -26,8 +26,8 @@ const (
 )
 
 var (
-	jwtDecoder      *accesscontrol.AccessTokenDecoder
-	grantRepository scoperepository.GrantRepository
+	jwtDecoder      *aclcore.AccessTokenDecoder
+	grantRepository acldynamodb.GrantRepository
 )
 
 func init() {
@@ -36,31 +36,31 @@ func init() {
 	viper.SetDefault(JWTValidity, "8h")
 }
 
-func appAuthConfig() accesscontrol.OAuthConfig {
+func appAuthConfig() aclcore.OAuthConfig {
 	jwtKey, err := base64.StdEncoding.DecodeString(viper.GetString(JWTKeyB64))
 	if err != nil {
 		panic(fmt.Sprintf("environment variable '%s' must be encoded in base 64 [value was %s]", JWTKeyB64, viper.GetString(JWTKeyB64)))
 	}
 
-	return accesscontrol.OAuthConfig{
+	return aclcore.OAuthConfig{
 		ValidityDuration: viper.GetDuration(JWTValidity),
 		Issuer:           viper.GetString(JWTIssuer),
 		SecretJwtKey:     jwtKey,
 	}
 }
 
-func ssoAuthenticatorPermissionReader() scoperepository.GrantRepository {
-	return scoperepository.Must(scoperepository.New(newSession(), viper.GetString(DynamoDBTableName), true))
+func ssoAuthenticatorPermissionReader() acldynamodb.GrantRepository {
+	return acldynamodb.Must(acldynamodb.New(newSession(), viper.GetString(DynamoDBTableName), true))
 }
 
-func NewSSOAuthenticator() *accesscontrol.SSOAuthenticator {
-	config, err := jwks.LoadIssuerConfig(accesscontrol.TrustedIdentityProvider...)
+func NewSSOAuthenticator() *aclcore.SSOAuthenticator {
+	config, err := jwks.LoadIssuerConfig(aclcore.TrustedIdentityProvider...)
 	if err != nil {
 		panic(err)
 	}
 
-	return &accesscontrol.SSOAuthenticator{
-		TokenGenerator: accesscontrol.TokenGenerator{
+	return &aclcore.SSOAuthenticator{
+		TokenGenerator: aclcore.TokenGenerator{
 			PermissionsReader: ssoAuthenticatorPermissionReader(),
 			Config:            appAuthConfig(),
 		},
@@ -68,8 +68,8 @@ func NewSSOAuthenticator() *accesscontrol.SSOAuthenticator {
 	}
 }
 
-func AccessTokenDecoder() *accesscontrol.AccessTokenDecoder {
-	return &accesscontrol.AccessTokenDecoder{
+func AccessTokenDecoder() *aclcore.AccessTokenDecoder {
+	return &aclcore.AccessTokenDecoder{
 		Config: appAuthConfig(),
 	}
 }
@@ -136,6 +136,26 @@ func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 	)
 
 	return archiveAsyncAdapter
+}
+
+type mediaAlbumResolver struct{}
+
+func (m mediaAlbumResolver) FindAlbumOfMedia(owner, mediaId string) (string, error) {
+	return catalog.FindMediaOwnership(owner, mediaId)
+}
+
+type catalogAdapter struct{}
+
+func (c catalogAdapter) FindAllAlbums(owner string) ([]*catalog.Album, error) {
+	return catalog.FindAllAlbums(owner)
+}
+
+func (c catalogAdapter) FindAlbums(keys []catalog.AlbumId) ([]*catalog.Album, error) {
+	return catalog.FindAlbums(keys)
+}
+
+func (c catalogAdapter) ListMedias(owner string, folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
+	return catalog.ListMedias(owner, folderName, request)
 }
 
 func newSession() *session.Session {

@@ -82,7 +82,7 @@ func (r *rep) CreateTableIfNecessary() error {
 				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
 			},
 			{
-				IndexName: aws.String("ReverseScopeIndex"), // from 'accesscontrol' extension
+				IndexName: aws.String("ReverseGrantIndex"), // from 'acl' extension
 				KeySchema: []*dynamodb.KeySchemaElement{
 					{AttributeName: aws.String("ResourceOwner"), KeyType: aws.String(dynamodb.KeyTypeHash)},
 					{AttributeName: aws.String("SK"), KeyType: aws.String(dynamodb.KeyTypeRange)},

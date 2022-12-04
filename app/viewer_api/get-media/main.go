@@ -7,9 +7,9 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
+	"github.com/thomasduchatelle/dphoto/domain/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/domain/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/domain/archive"
-	"github.com/thomasduchatelle/dphoto/domain/catalogacl"
 )
 
 const (
@@ -26,8 +26,8 @@ func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
 		return parser.BadRequest()
 	}
 
-	return common.RequiresCatalogACL(&request, func(claims accesscontrol.Claims, catalogACL catalogacl.AccessControlAdapter) (common.Response, error) {
-		if err := catalogACL.CanReadMedia(owner, mediaId); err != nil {
+	return common.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common.Response, error) {
+		if err := rules.CanReadMedia(owner, mediaId); err != nil {
 			return common.Response{}, err
 		}
 

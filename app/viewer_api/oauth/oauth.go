@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tencentyun/scf-go-lib/events"
 	"github.com/thomasduchatelle/dphoto/app/viewer_api/common"
-	"github.com/thomasduchatelle/dphoto/domain/accesscontrol"
+	"github.com/thomasduchatelle/dphoto/domain/acl/aclcore"
 	"strings"
 )
 
@@ -19,8 +19,12 @@ type identityDTO struct {
 }
 
 var (
-	authenticator *accesscontrol.SSOAuthenticator
+	authenticator SSOAuthenticator
 )
+
+type SSOAuthenticator interface {
+	AuthenticateFromExternalIDProvider(identityJWT string) (*aclcore.Authentication, *aclcore.Identity, error)
+}
 
 func Handler(request events.APIGatewayRequest) (common.Response, error) {
 	authorisation, ok := request.Headers["authorization"]
@@ -62,9 +66,9 @@ func Handler(request events.APIGatewayRequest) (common.Response, error) {
 
 func lookupCode(err error) (string, int) {
 	switch {
-	case errors.Is(err, accesscontrol.NotPreregisteredError):
+	case errors.Is(err, aclcore.NotPreregisteredError):
 		return "oauth.user-not-preregistered", 403
-	case errors.Is(err, accesscontrol.InvalidTokenError) || errors.Is(err, accesscontrol.InvalidTokenExplicitError):
+	case errors.Is(err, aclcore.InvalidTokenError) || errors.Is(err, aclcore.InvalidTokenExplicitError):
 		return "oauth.invalid-token", 403
 	default:
 		return "", 500

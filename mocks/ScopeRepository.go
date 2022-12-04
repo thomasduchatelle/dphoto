@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	accesscontrol "github.com/thomasduchatelle/dphoto/domain/accesscontrol"
+	aclcore "github.com/thomasduchatelle/dphoto/domain/acl/aclcore"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -14,7 +14,7 @@ type ScopeRepository struct {
 }
 
 // FindScopesById provides a mock function with given fields: ids
-func (_m *ScopeRepository) FindScopesById(ids ...accesscontrol.ScopeId) ([]*accesscontrol.Scope, error) {
+func (_m *ScopeRepository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(ids))
 	for _i := range ids {
 		_va[_i] = ids[_i]
@@ -23,17 +23,17 @@ func (_m *ScopeRepository) FindScopesById(ids ...accesscontrol.ScopeId) ([]*acce
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 []*accesscontrol.Scope
-	if rf, ok := ret.Get(0).(func(...accesscontrol.ScopeId) []*accesscontrol.Scope); ok {
+	var r0 []*aclcore.Scope
+	if rf, ok := ret.Get(0).(func(...aclcore.ScopeId) []*aclcore.Scope); ok {
 		r0 = rf(ids...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*accesscontrol.Scope)
+			r0 = ret.Get(0).([]*aclcore.Scope)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(...accesscontrol.ScopeId) error); ok {
+	if rf, ok := ret.Get(1).(func(...aclcore.ScopeId) error); ok {
 		r1 = rf(ids...)
 	} else {
 		r1 = ret.Error(1)
@@ -43,7 +43,7 @@ func (_m *ScopeRepository) FindScopesById(ids ...accesscontrol.ScopeId) ([]*acce
 }
 
 // ListOwnerScopes provides a mock function with given fields: owner, types
-func (_m *ScopeRepository) ListOwnerScopes(owner string, types ...accesscontrol.ScopeType) ([]*accesscontrol.Scope, error) {
+func (_m *ScopeRepository) ListOwnerScopes(owner string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))
 	for _i := range types {
 		_va[_i] = types[_i]
@@ -53,17 +53,17 @@ func (_m *ScopeRepository) ListOwnerScopes(owner string, types ...accesscontrol.
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 []*accesscontrol.Scope
-	if rf, ok := ret.Get(0).(func(string, ...accesscontrol.ScopeType) []*accesscontrol.Scope); ok {
+	var r0 []*aclcore.Scope
+	if rf, ok := ret.Get(0).(func(string, ...aclcore.ScopeType) []*aclcore.Scope); ok {
 		r0 = rf(owner, types...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*accesscontrol.Scope)
+			r0 = ret.Get(0).([]*aclcore.Scope)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, ...accesscontrol.ScopeType) error); ok {
+	if rf, ok := ret.Get(1).(func(string, ...aclcore.ScopeType) error); ok {
 		r1 = rf(owner, types...)
 	} else {
 		r1 = ret.Error(1)
@@ -73,7 +73,7 @@ func (_m *ScopeRepository) ListOwnerScopes(owner string, types ...accesscontrol.
 }
 
 // ListUserScopes provides a mock function with given fields: email, types
-func (_m *ScopeRepository) ListUserScopes(email string, types ...accesscontrol.ScopeType) ([]*accesscontrol.Scope, error) {
+func (_m *ScopeRepository) ListUserScopes(email string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))
 	for _i := range types {
 		_va[_i] = types[_i]
@@ -83,17 +83,17 @@ func (_m *ScopeRepository) ListUserScopes(email string, types ...accesscontrol.S
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 []*accesscontrol.Scope
-	if rf, ok := ret.Get(0).(func(string, ...accesscontrol.ScopeType) []*accesscontrol.Scope); ok {
+	var r0 []*aclcore.Scope
+	if rf, ok := ret.Get(0).(func(string, ...aclcore.ScopeType) []*aclcore.Scope); ok {
 		r0 = rf(email, types...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*accesscontrol.Scope)
+			r0 = ret.Get(0).([]*aclcore.Scope)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, ...accesscontrol.ScopeType) error); ok {
+	if rf, ok := ret.Get(1).(func(string, ...aclcore.ScopeType) error); ok {
 		r1 = rf(email, types...)
 	} else {
 		r1 = ret.Error(1)

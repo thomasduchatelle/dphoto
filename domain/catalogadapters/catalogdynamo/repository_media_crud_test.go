@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"path"
@@ -323,6 +324,82 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 	signatures, err = a.repo.FindExistingSignatures(a.owner, search)
 	if a.NoError(err) {
 		a.Equal(exiting, signatures, "it should filter out any non exiting signature to keep the only 2 that exist")
+	}
+}
+
+func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
+	type args struct {
+		owner   string
+		mediaId string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "it should find the folder name of a media (sinple case)",
+			args:    args{owner: a.owner, mediaId: a.medias[0].Id},
+			want:    a.jan21,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "it should find the folder name even when there is a lot of # everywhere",
+			args:    args{owner: "this#is#my#owner", mediaId: "a#random#id"},
+			want:    "this#is#my#folder",
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return NotFound when the media doesn't ",
+			args: args{owner: "this#is#my#owner", mediaId: "foobar"},
+			want: "",
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, catalog.NotFoundError)
+			},
+		},
+	}
+
+	err := a.repo.InsertAlbum(catalog.Album{
+		Owner:      "this#is#my#owner",
+		Name:       "Media Container Jan",
+		FolderName: "this#is#my#folder",
+		Start:      mustParseDate("2021-01-01"),
+		End:        mustParseDate("2021-02-01"),
+	})
+	if !assert.NoError(a.T(), err, "failed album initialisation") {
+		assert.FailNow(a.T(), err.Error())
+	}
+	err = a.repo.InsertMedias("this#is#my#owner", []catalog.CreateMediaRequest{
+		{
+			Id:         "a#random#id",
+			Signature:  catalog.MediaSignature{SignatureSha256: "qwertyuiop", SignatureSize: 42},
+			FolderName: "this#is#my#folder",
+			Filename:   "img001.jpeg",
+			Type:       "Image",
+			Details: catalog.MediaDetails{
+				Width:        1280,
+				Height:       720,
+				DateTime:     time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+				Orientation:  "TopLeft",
+				Make:         "Google",
+				Model:        "Pixel",
+				GPSLatitude:  0.123,
+				GPSLongitude: 0.456,
+			},
+		},
+	})
+	if !assert.NoError(a.T(), err) {
+		assert.FailNow(a.T(), err.Error())
+	}
+
+	for _, tt := range tests {
+		a.T().Run(tt.name, func(t *testing.T) {
+			got, err := a.repo.FindMediaCurrentAlbum(tt.args.owner, tt.args.mediaId)
+			if tt.wantErr(t, err) && err == nil {
+				assert.Equal(t, tt.want, got)
+			}
+		})
 	}
 }
 

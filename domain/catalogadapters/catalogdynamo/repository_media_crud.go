@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/domain/catalog"
 	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
+	"strings"
 )
 
 func (r *rep) InsertMedias(owner string, medias []catalog.CreateMediaRequest) error {
@@ -49,6 +50,32 @@ func (r *rep) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.MediaMet
 	}
 
 	return medias, err
+}
+
+func (r *rep) FindMediaCurrentAlbum(owner, mediaId string) (string, error) {
+	key, err := dynamodbattribute.MarshalMap(MediaPrimaryKey(owner, mediaId))
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to marshal media key %s/%s", owner, mediaId)
+	}
+
+	item, err := r.db.GetItem(&dynamodb.GetItemInput{
+		Key:                  key,
+		ProjectionExpression: aws.String("AlbumIndexPK"),
+		TableName:            &r.table,
+	})
+	if err != nil {
+		return "", errors.Wrapf(err, "couldn't get media metadata for media %+v", key)
+	}
+
+	if len(item.Item) == 0 {
+		return "", catalog.NotFoundError
+	}
+
+	if albumIndexPk, ok := item.Item["AlbumIndexPK"]; ok && strings.HasPrefix(*albumIndexPk.S, owner) {
+		return (*albumIndexPk.S)[len(owner)+1:], nil
+	}
+
+	return "", errors.Errorf("invalid AlbumIndexPK format expected to start with %s ; value: %+v", owner, item.Item)
 }
 
 func (r *rep) FindMediaIds(request *catalog.FindMediaRequest) ([]string, error) {
