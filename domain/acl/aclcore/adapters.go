@@ -12,3 +12,11 @@ type ReverseScopesReader interface {
 	// ListOwnerScopes is a reverse query to find to whom has been shared owner resources.
 	ListOwnerScopes(owner string, types ...ScopeType) ([]*Scope, error)
 }
+
+type ScopeWriter interface {
+	// DeleteScopes deletes the scope(s) if it exists, do nothing otherwise
+	DeleteScopes(id ...ScopeId) error
+
+	// SaveIfNewScope persists the scope if it doesn't already exist, no error is returned if it does exist
+	SaveIfNewScope(scope Scope) error
+}

@@ -23,7 +23,12 @@ func Error(err error, format string, args ...interface{}) {
 	fmt.Println(aurora.Sprintf(aurora.Red(format), args...))
 }
 
-// FatalIfError prints the the error and exits the program if err is not nil
+// ErrorText prints an error message
+func ErrorText(format string, args ...interface{}) {
+	fmt.Println(aurora.Red(fmt.Sprintf("error: "+format, args...)))
+}
+
+// FatalIfError prints the error and exits the program if err is not nil
 func FatalIfError(err error, code int) {
 	if err != nil {
 		fmt.Println(fmt.Sprintf("%s: %s", aurora.Red("error"), err.Error()))

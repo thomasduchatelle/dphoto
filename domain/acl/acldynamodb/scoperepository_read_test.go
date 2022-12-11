@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+const (
+	ironmanEmail = "ironman@stark.com"
+	pepperEmail  = "pepperpotts@stark.com"
+)
+
 func awsSession() *session.Session {
 	return session.Must(session.NewSession(&aws.Config{
 		CredentialsChainVerboseErrors: aws.Bool(true),
@@ -39,31 +44,31 @@ func Test_repository_ListUserScopes(t *testing.T) {
 		},
 		{
 			name:    "it should not find any scope when user has no grant of that type",
-			args:    args{"ironman@stark.com", []aclcore.ScopeType{aclcore.MediaVisitorScope}},
+			args:    args{ironmanEmail, []aclcore.ScopeType{aclcore.MediaVisitorScope}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "it should not find grants for all requested scopes",
-			args:    args{"ironman@stark.com", []aclcore.ScopeType{aclcore.ApiScope, aclcore.MainOwnerScope, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope}},
+			args:    args{ironmanEmail, []aclcore.ScopeType{aclcore.ApiScope, aclcore.MainOwnerScope, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope}},
 			wantErr: assert.NoError,
 			want: []*aclcore.Scope{
 				{
 					Type:          aclcore.MainOwnerScope,
 					GrantedAt:     time.Date(2006, 1, 1, 15, 4, 5, 0, time.UTC),
-					GrantedTo:     "ironman@stark.com",
-					ResourceOwner: "ironman@stark.com",
+					GrantedTo:     ironmanEmail,
+					ResourceOwner: ironmanEmail,
 				},
 				{
 					Type:          aclcore.AlbumVisitorScope,
 					GrantedAt:     time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-					GrantedTo:     "ironman@stark.com",
-					ResourceOwner: "pepperpotts@stark.com",
+					GrantedTo:     ironmanEmail,
+					ResourceOwner: pepperEmail,
 					ResourceId:    "wedding",
 					ResourceName:  "Wedding Before EndGame",
 				},
 				{
 					Type:       aclcore.ApiScope,
-					GrantedTo:  "ironman@stark.com",
+					GrantedTo:  ironmanEmail,
 					GrantedAt:  time.Date(2006, 1, 3, 15, 4, 5, 0, time.UTC),
 					ResourceId: "usermanagement",
 				},
@@ -71,33 +76,33 @@ func Test_repository_ListUserScopes(t *testing.T) {
 		},
 		{
 			name:    "it should not find grants for 2 specific scopes",
-			args:    args{"ironman@stark.com", []aclcore.ScopeType{aclcore.ApiScope, aclcore.MainOwnerScope}},
+			args:    args{ironmanEmail, []aclcore.ScopeType{aclcore.ApiScope, aclcore.MainOwnerScope}},
 			wantErr: assert.NoError,
 			want: []*aclcore.Scope{
 				{
 					Type:          aclcore.MainOwnerScope,
 					GrantedAt:     time.Date(2006, 1, 1, 15, 4, 5, 0, time.UTC),
-					GrantedTo:     "ironman@stark.com",
-					ResourceOwner: "ironman@stark.com",
+					GrantedTo:     ironmanEmail,
+					ResourceOwner: ironmanEmail,
 				},
 				{
 					Type:       aclcore.ApiScope,
 					GrantedAt:  time.Date(2006, 1, 3, 15, 4, 5, 0, time.UTC),
-					GrantedTo:  "ironman@stark.com",
+					GrantedTo:  ironmanEmail,
 					ResourceId: "usermanagement",
 				},
 			},
 		},
 		{
 			name:    "it should not find grants for 2 specific scopes",
-			args:    args{"ironman@stark.com", []aclcore.ScopeType{aclcore.MainOwnerScope}},
+			args:    args{ironmanEmail, []aclcore.ScopeType{aclcore.MainOwnerScope}},
 			wantErr: assert.NoError,
 			want: []*aclcore.Scope{
 				{
 					Type:          aclcore.MainOwnerScope,
 					GrantedAt:     time.Date(2006, 1, 1, 15, 4, 5, 0, time.UTC),
-					GrantedTo:     "ironman@stark.com",
-					ResourceOwner: "ironman@stark.com",
+					GrantedTo:     ironmanEmail,
+					ResourceOwner: ironmanEmail,
 				},
 			},
 		},
@@ -115,8 +120,8 @@ func Test_repository_ListUserScopes(t *testing.T) {
 						"SK":            {S: aws.String("SCOPE#album:visitor#pepperpotts@stark.com#wedding")},
 						"Type":          {S: aws.String("album:visitor")},
 						"GrantedAt":     {S: aws.String("2006-01-02T15:04:05.000000000Z")},
-						"GrantedTo":     {S: aws.String("ironman@stark.com")},
-						"ResourceOwner": {S: aws.String("pepperpotts@stark.com")},
+						"GrantedTo":     {S: aws.String(ironmanEmail)},
+						"ResourceOwner": {S: aws.String(pepperEmail)},
 						"ResourceId":    {S: aws.String("wedding")},
 						"ResourceName":  {S: aws.String("Wedding Before EndGame")},
 					}},
@@ -127,7 +132,7 @@ func Test_repository_ListUserScopes(t *testing.T) {
 						"SK":         {S: aws.String("SCOPE#api##usermanagement")},
 						"Type":       {S: aws.String("api")},
 						"GrantedAt":  {S: aws.String("2006-01-03T15:04:05.000000000Z")},
-						"GrantedTo":  {S: aws.String("ironman@stark.com")},
+						"GrantedTo":  {S: aws.String(ironmanEmail)},
 						"ResourceId": {S: aws.String("usermanagement")},
 					}},
 				},
@@ -137,8 +142,8 @@ func Test_repository_ListUserScopes(t *testing.T) {
 						"SK":            {S: aws.String("SCOPE#owner:main#ironman@stark.com#")},
 						"Type":          {S: aws.String("owner:main")},
 						"GrantedAt":     {S: aws.String("2006-01-01T15:04:05.000000000Z")},
-						"GrantedTo":     {S: aws.String("ironman@stark.com")},
-						"ResourceOwner": {S: aws.String("ironman@stark.com")},
+						"GrantedTo":     {S: aws.String(ironmanEmail)},
+						"ResourceOwner": {S: aws.String(ironmanEmail)},
 					}},
 				},
 				{
@@ -147,8 +152,8 @@ func Test_repository_ListUserScopes(t *testing.T) {
 						"SK":            {S: aws.String("SCOPE#owner:main#pepperpotts@stark.com#")},
 						"Type":          {S: aws.String("owner:main")},
 						"GrantedAt":     {S: aws.String("2006-01-05T15:04:05.000000000Z")},
-						"GrantedTo":     {S: aws.String("pepperpotts@stark.com")},
-						"ResourceOwner": {S: aws.String("pepperpotts@stark.com")},
+						"GrantedTo":     {S: aws.String(pepperEmail)},
+						"ResourceOwner": {S: aws.String(pepperEmail)},
 					}},
 				},
 			},

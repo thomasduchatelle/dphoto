@@ -22,6 +22,7 @@ var (
 	NotPreregisteredError     = errors.New("user must be pre-registered")
 	AccessUnauthorisedError   = errors.New("access unauthorised")
 	AccessForbiddenError      = errors.New("access forbidden")
+	InvalidUserEmailError     = errors.New("user email is mandatory")
 
 	// TrustedIdentityProvider is the default list of trusted identity providers
 	TrustedIdentityProvider = []string{

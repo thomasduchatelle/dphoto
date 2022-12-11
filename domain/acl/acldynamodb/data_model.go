@@ -51,8 +51,8 @@ func MarshalScope(scope aclcore.Scope) (map[string]*dynamodb.AttributeValue, err
 	if isBlank(string(scope.Type)) {
 		return nil, errors.New("Type is mandatory to store a scope")
 	}
-	if isBlank(scope.ResourceId) {
-		return nil, errors.New("ResourceId is mandatory")
+	if isBlank(scope.ResourceOwner) {
+		return nil, errors.New("ResourceOwner is mandatory")
 	}
 
 	return dynamodbattribute.MarshalMap(&ScopeRecord{
