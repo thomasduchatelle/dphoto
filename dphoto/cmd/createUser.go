@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"github.com/logrusorgru/aurora/v3"
-	"github.com/thomasduchatelle/dphoto/dphoto/bootstrap"
-	"github.com/thomasduchatelle/dphoto/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/dphoto/printer"
 	"strings"
 
@@ -15,6 +13,8 @@ var (
 		email string
 		owner string
 	}{}
+
+	CreateUserCase func(email, ownerOptional string) error
 )
 var createUserCmd = &cobra.Command{
 	Use:   "create-user",
@@ -24,13 +24,10 @@ var createUserCmd = &cobra.Command{
 		if email == "" {
 			printer.ErrorText("--email is mandatory")
 		}
-		config.Listen(func(cfg config.Config) {
-			createUserCase := bootstrap.CreateUserCase(cfg)
-			err := createUserCase.CreateUser(email, createUserArg.owner)
-			printer.FatalIfError(err, 1)
+		err := CreateUserCase(email, createUserArg.owner)
+		printer.FatalIfError(err, 1)
 
-			printer.Success("User %s has been created", aurora.Cyan(email))
-		})
+		printer.Success("User %s has been created", aurora.Cyan(email))
 	},
 }
 

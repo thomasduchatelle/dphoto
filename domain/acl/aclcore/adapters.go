@@ -17,6 +17,6 @@ type ScopeWriter interface {
 	// DeleteScopes deletes the scope(s) if it exists, do nothing otherwise
 	DeleteScopes(id ...ScopeId) error
 
-	// SaveIfNewScope persists the scope if it doesn't already exist, no error is returned if it does exist
+	// SaveIfNewScope persists the scope if it doesn't exist yet, no error is returned if it already exists
 	SaveIfNewScope(scope Scope) error
 }

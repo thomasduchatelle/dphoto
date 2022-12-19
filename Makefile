@@ -1,11 +1,11 @@
-.PHONY: all clean install test build deploy test-go
+.PHONY: all clean setup test build deploy test-go
 
 all: test build
 
 clean: clean-app
 	go clean -testcache
 
-install: install-infra-data install-domain install-app
+setup: setup-infra-data setup-domain setup-app
 
 test: test-infra-data test-domain test-cli test-app
 
@@ -19,9 +19,9 @@ test-go: test-domain test-cli test-app-api
 ## INFRA DATA
 #######################################
 
-.PHONY: install-infra-data test-infra-data deploy-infra-data
+.PHONY: setup-infra-data test-infra-data deploy-infra-data
 
-install-infra-data:
+setup-infra-data:
 	command -v tfenv > /dev/null \
 		cd infra-data && \
 		tfenv install && tfenv use
@@ -40,9 +40,9 @@ deploy-infra-data:
 ## DOMAIN
 #######################################
 
-.PHONY: install-domain test-domain
+.PHONY: setup-domain test-domain
 
-install-domain:
+setup-domain:
 	docker-compose pull
 	docker-compose up -d
 
@@ -53,13 +53,13 @@ test-domain:
 ## APP
 #######################################
 
-.PHONY: clean-app install-app test-app test-app-api test-app-ui build-app build-app-api build-app-ui deploy-app
+.PHONY: clean-app setup-app test-app test-app-api test-app-ui build-app build-app-api build-app-ui deploy-app
 
 clean-app:
 	cd app && rm -rf ./bin ./vendor
 	cd app/viewer_ui && yarn clean
 
-install-app:
+setup-app:
 	cd app && npm install
 	cd app/viewer_ui && yarn install
 

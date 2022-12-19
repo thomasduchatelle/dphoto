@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	NotFoundError = errors.New("Album hasn't been found")
-	NotEmptyError = errors.New("Album is not empty")
+	NotFoundError = errors.New("album hasn't been found")
+	NotEmptyError = errors.New("album is not empty")
 )
 
 // Album defines how medias are physically re-grouped.
