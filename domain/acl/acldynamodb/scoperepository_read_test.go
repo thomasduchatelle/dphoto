@@ -106,6 +106,19 @@ func Test_repository_ListUserScopes(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "it should not find the 'owner:main' scope during authentication [bug: ApiScope being empty, the query stream was returning directly]",
+			args:    args{pepperEmail, []aclcore.ScopeType{aclcore.ApiScope, aclcore.MainOwnerScope}},
+			wantErr: assert.NoError,
+			want: []*aclcore.Scope{
+				{
+					Type:          aclcore.MainOwnerScope,
+					GrantedAt:     time.Date(2006, 1, 5, 15, 4, 5, 0, time.UTC),
+					GrantedTo:     pepperEmail,
+					ResourceOwner: pepperEmail,
+				},
+			},
+		},
 	}
 
 	r := Must(New(awsSession(), "accesscontroladapter-scoperepository-listuserscopes-"+time.Now().Format("20060102150405.000"), true)).(*repository)

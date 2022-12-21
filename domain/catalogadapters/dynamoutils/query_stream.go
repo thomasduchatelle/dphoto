@@ -35,31 +35,30 @@ func (s *queryStream) HasNext() bool {
 func (s *queryStream) Next() map[string]*dynamodb.AttributeValue {
 	next := s.internalStream.Next()
 
-	for !s.internalStream.HasNext() && len(s.queries) > 0 {
-
-		if len(s.nextPageToken) == 0 {
-			s.queries = s.queries[1:]
-		}
-
-		if len(s.queries) > 0 {
-			s.populateNextChunk()
-		}
+	if !s.internalStream.HasNext() {
+		s.populateNextChunk()
 	}
 
 	return next
 }
 
 func (s *queryStream) populateNextChunk() {
-	query := *s.queries[0]
-	query.ExclusiveStartKey = s.nextPageToken
-	result, err := s.executor.Query(&query)
-	if err != nil {
-		s.internalStream.WithError(errors.Wrapf(err, "couldn't query %+v", query))
-		return
-	}
+	for !s.internalStream.HasNext() && len(s.queries) > 0 {
+		query := *s.queries[0]
+		query.ExclusiveStartKey = s.nextPageToken
+		result, err := s.executor.Query(&query)
+		if err != nil {
+			s.internalStream.WithError(errors.Wrapf(err, "couldn't query %+v", query))
+			return
+		}
 
-	s.nextPageToken = result.LastEvaluatedKey
-	s.internalStream.appendNextChunk(result.Items)
+		s.nextPageToken = result.LastEvaluatedKey
+		s.internalStream.appendNextChunk(result.Items)
+
+		if len(s.nextPageToken) == 0 {
+			s.queries = s.queries[1:]
+		}
+	}
 }
 
 func (s *queryStream) Count() int64 {

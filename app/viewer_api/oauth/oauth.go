@@ -44,7 +44,7 @@ func Handler(request events.APIGatewayRequest) (common.Response, error) {
 	tokenString := authorisation[len(bearerPrefix):]
 	authentication, identity, err := authenticator.AuthenticateFromExternalIDProvider(tokenString)
 	if err != nil {
-		log.WithError(err).Infof("Authentication rejected: %+v", request)
+		log.WithError(err).Infof("Authentication rejected: %s", tokenString)
 
 		code, status := lookupCode(err)
 		return common.NewJsonResponse(status, map[string]string{

@@ -14,11 +14,11 @@ func (r *repository) ListUserScopes(email string, types ...aclcore.ScopeType) ([
 	}
 
 	var queries []*dynamodb.QueryInput
-	for _, mediaType := range types {
+	for _, scopeType := range types {
 		queries = append(queries, &dynamodb.QueryInput{
 			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 				":user":     {S: aws.String(userPk(email))},
-				":skPrefix": {S: aws.String(fmt.Sprintf("%s%s", scopePrefix, mediaType))},
+				":skPrefix": {S: aws.String(fmt.Sprintf("%s%s", scopePrefix, scopeType))},
 			},
 			KeyConditionExpression: aws.String("PK = :user AND begins_with(SK, :skPrefix)"),
 			TableName:              &r.table,
