@@ -32,5 +32,5 @@ func init() {
 
 	shareAlbumCmd.Flags().StringVarP(&shareAlbumArg.owner, "owner", "o", "", "owner of the album to be shared")
 	shareAlbumCmd.Flags().StringVarP(&shareAlbumArg.folderName, "album", "a", "", "folder name of the album (expected to start with a /)")
-	shareAlbumCmd.Flags().StringVarP(&shareAlbumArg.owner, "owner", "o", "", "email of the user")
+	shareAlbumCmd.Flags().StringVarP(&shareAlbumArg.owner, "email", "e", "", "email of the user")
 }

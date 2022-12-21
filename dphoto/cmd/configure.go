@@ -1,12 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/dphoto/printer"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
 
@@ -17,7 +17,7 @@ var (
 )
 
 type OutputParam struct {
-	Value string `yaml:"value"`
+	Value interface{} `yaml:"value"`
 }
 
 type configField struct {
@@ -31,10 +31,10 @@ var configureCmd = &cobra.Command{
 	Short: "Configuration wizard to grant dphoto access AWS resources.",
 	Long: `DPhoto requires specific AWS key and secret, and name of the DynamoDB table and S3 bucket to use.
 
-To set them fro terraform output:
+To set them from terraform output:
 
     $ terraform output -json > output.json
-    $ terraform output -raw delegate_secret_access_key | base64 --decode | keybase pgp decrypt
+    $ terraform output -json |jq -r '.delegate_secret_access_key.value["2022-12"]' | base64 --decode | keybase pgp decrypt
     (copy the output, it will be required later)
     $ dphoto configure --terraform-output output.json
 
@@ -47,7 +47,7 @@ The configuration is stored in '~/.dphoto/dphoto.yaml'.
 			content, err := ioutil.ReadFile(configureArgs.terraformOutput)
 			printer.FatalIfError(err, 2)
 
-			err = yaml.Unmarshal(content, &output)
+			err = json.Unmarshal(content, &output)
 			printer.FatalIfError(err, 3)
 		}
 
@@ -72,7 +72,9 @@ The configuration is stored in '~/.dphoto/dphoto.yaml'.
 			defaultValue := current
 			if field.outputName != "" {
 				if val, ok := output[field.outputName]; ok {
-					defaultValue = val.Value
+					if strVal, ok := val.Value.(string); ok {
+						defaultValue = strVal
+					}
 				}
 			}
 
