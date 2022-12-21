@@ -17,6 +17,17 @@ resource "aws_s3_bucket_public_access_block" "s3_cache_block_public_access" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "cache" {
+  for_each = toset([for k in aws_kms_key.storage : k.arn])
+  bucket   = aws_s3_bucket.cache.id
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = each.key
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
 resource "aws_s3_bucket_ownership_controls" "cache" {
   bucket = aws_s3_bucket.cache.id
 

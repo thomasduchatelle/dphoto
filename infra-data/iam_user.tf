@@ -29,7 +29,8 @@ resource "aws_iam_user_policy_attachment" "archive_sqs_send" {
   user       = aws_iam_user.cli.name
 }
 
-resource "aws_iam_access_key" "cli" {
-  user    = aws_iam_user.cli.name
-  pgp_key = var.keybase_user
+resource "aws_iam_access_key" "rolling_cli" {
+  for_each = var.cli_access_keys
+  user     = aws_iam_user.cli.name
+  pgp_key  = var.keybase_user
 }
