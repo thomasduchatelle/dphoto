@@ -92,17 +92,17 @@ export class AlbumsLogic {
   }
 
   private fetchAlbums(owner: string): Promise<Album[]> {
-    return this.mustBeAuthenticated.authenticatedAxios.get<RestAlbum[]>(`/api/v1/owners/${owner}/albums`)
-      .then(resp => {
-        const maxTemperature = resp.data.map(a => a.totalCount / numberOfDays(new Date(a.start), new Date(a.end))).reduce(function (p, v) {
-          return (p > v ? p : v);
-        })
+    return this.mustBeAuthenticated.authenticatedAxios.get<RestAlbum[]>(`/api/v1/albums`)
+        .then(resp => {
+          const maxTemperature = resp.data.map(a => a.totalCount / numberOfDays(new Date(a.start), new Date(a.end))).reduce(function (p, v) {
+            return (p > v ? p : v);
+          })
 
-        return resp.data.map(album => {
-          const temperature = album.totalCount / numberOfDays(new Date(album.start), new Date(album.end));
-          return {
-            albumId: {owner: album.owner, folderName: album.folderName.replace(/^\//, "")},
-            name: album.name,
+          return resp.data.map(album => {
+            const temperature = album.totalCount / numberOfDays(new Date(album.start), new Date(album.end));
+            return {
+              albumId: {owner: album.owner, folderName: album.folderName.replace(/^\//, "")},
+              name: album.name,
             start: new Date(album.start),
             end: new Date(album.end),
             totalCount: album.totalCount,

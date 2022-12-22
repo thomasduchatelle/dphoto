@@ -74,10 +74,10 @@ test-app-ui:
 build-app: build-app-api build-app-ui
 
 build-app-api:
-	cd app && \
-		mkdir -p bin && \
+	cd app/viewer_api && \
+		mkdir -p ../bin && \
 		export GO111MODULE=on && \
-		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o bin ./...
+		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o ../bin ./...
 
 build-app-ui:
 	cd app/viewer_ui && CI=true yarn build

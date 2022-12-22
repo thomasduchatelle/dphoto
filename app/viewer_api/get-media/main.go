@@ -70,7 +70,7 @@ func redirectTo(url string, err error) (common.Response, error) {
 	return common.Response{
 		StatusCode: 307,
 		Headers: map[string]string{
-			"FolderName": url,
+			"Location": url,
 		},
 	}, nil
 }

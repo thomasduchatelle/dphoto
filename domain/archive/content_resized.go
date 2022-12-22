@@ -29,7 +29,7 @@ func GetResizedImage(owner, mediaId string, width int, maxBytes int) ([]byte, st
 
 			log.WithFields(log.Fields{
 				"Owner": owner,
-			}).Infof("%s is missing in the cache at size %d (requested %d)", key, cachedWidth, width)
+			}).Infof("%s [%s] is missing in the cache at size %d (requested %d)", key, cacheKey, cachedWidth, width)
 
 			err = asyncJobPort.WarmUpCacheByFolder(owner, key, cachedWidth)
 			if err != nil {
