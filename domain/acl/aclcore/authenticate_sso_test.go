@@ -85,9 +85,50 @@ func TestAuthenticate(t *testing.T) {
 			},
 		},
 		{
+			name: "it should let a pure visitor authenticate",
+			initMocks: func(permissionReaderMock *mocks.ScopesReader) {
+				permissionReaderMock.On("ListUserScopes", mock.Anything, aclcore.ApiScope, aclcore.MainOwnerScope).Return(nil, nil)
+				permissionReaderMock.On("ListUserScopes", mock.Anything, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope).Return([]*aclcore.Scope{
+					{},
+				}, nil)
+			},
+			argToken: okJwtString,
+			assertAuth: func(t *testing.T, name string, auth aclcore.Authentication) {
+				assert.Equal(t, time.Date(1980, 1, 1, 0, 0, 12, 0, time.UTC), auth.ExpiryTime, name)
+				assert.Equal(t, int64(12), auth.ExpiresIn, name)
+
+				type decodedClaims struct {
+					Scopes string
+					jwt.RegisteredClaims
+				}
+
+				token, err := jwt.ParseWithClaims(auth.AccessToken, &decodedClaims{}, func(token *jwt.Token) (interface{}, error) {
+					return config.SecretJwtKey, nil
+				})
+				if assert.NoError(t, err, name) {
+					claims := token.Claims.(*decodedClaims)
+					assert.Equal(t, config.Issuer, claims.Issuer, name)
+					assert.Equal(t, jwt.ClaimStrings{config.Issuer}, claims.Audience, name)
+					assert.Equal(t, "tony@stark.com", claims.Subject, name)
+
+					scopes := strings.Split(claims.Scopes, " ")
+					sort.Slice(scopes, func(i, j int) bool {
+						return scopes[i] < scopes[j]
+					})
+					assert.Equal(t, []string{"visitor"}, scopes)
+				}
+			},
+			wantIdentity: aclcore.Identity{
+				Email:   "tony@stark.com",
+				Name:    "Tony Stark aka Ironman",
+				Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
+			},
+		},
+		{
 			name: "it should not let unregistered user log in",
 			initMocks: func(permissionReaderMock *mocks.ScopesReader) {
 				permissionReaderMock.On("ListUserScopes", mock.Anything, aclcore.ApiScope, aclcore.MainOwnerScope).Return(nil, nil)
+				permissionReaderMock.On("ListUserScopes", mock.Anything, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope).Return(nil, nil)
 			},
 			argToken:        unregisteredJwtString,
 			wantErrContains: "must be pre-registered",

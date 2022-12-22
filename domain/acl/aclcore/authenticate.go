@@ -67,5 +67,14 @@ func (t *TokenGenerator) loadUserScopes(email string) ([]string, error) {
 		}
 	}
 
-	return scopes, errors.Wrapf(err, "couldn't list grants of '%s'", email)
+	if len(scopes) > 0 || err != nil {
+		return scopes, errors.Wrapf(err, "couldn't list grants of '%s'", email)
+	}
+
+	// second change for visitors
+	grants, err = t.PermissionsReader.ListUserScopes(email, AlbumVisitorScope, MediaVisitorScope)
+	if len(grants) > 0 {
+		scopes = []string{"visitor"}
+	}
+	return scopes, errors.Wrapf(err, "couldn't list [AlbumVisitorScope, MediaVisitorScope] grants of %s", email)
 }
