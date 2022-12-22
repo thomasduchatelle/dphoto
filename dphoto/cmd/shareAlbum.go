@@ -11,19 +11,28 @@ var (
 		owner      string
 		folderName string
 		userEmail  string
+		revoke     bool
 	}{}
 
-	ShareAlbumCase func(owner, folderName, userEmail string) error
+	ShareAlbumCase   func(owner, folderName, userEmail string) error
+	UnShareAlbumCase func(owner, folderName, userEmail string) error
 )
 
 var shareAlbumCmd = &cobra.Command{
 	Use:   "share-album",
-	Short: "Share an album to a user (different from the the owner)",
+	Short: "Share [or un-share] an album to a user (different from the the owner)",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := ShareAlbumCase(shareAlbumArg.owner, shareAlbumArg.folderName, shareAlbumArg.userEmail)
-		printer.FatalIfError(err, 1)
+		if !shareAlbumArg.revoke {
+			err := ShareAlbumCase(shareAlbumArg.owner, shareAlbumArg.folderName, shareAlbumArg.userEmail)
+			printer.FatalIfError(err, 1)
 
-		printer.Success("Album %s/%s has been shared to %s", aurora.Cyan(shareAlbumArg.owner), aurora.Cyan(shareAlbumArg.folderName), aurora.Cyan(shareAlbumArg.userEmail))
+			printer.Success("Album %s/%s has been shared to %s", aurora.Cyan(shareAlbumArg.owner), aurora.Cyan(shareAlbumArg.folderName), aurora.Cyan(shareAlbumArg.userEmail))
+		} else {
+			err := UnShareAlbumCase(shareAlbumArg.owner, shareAlbumArg.folderName, shareAlbumArg.userEmail)
+			printer.FatalIfError(err, 1)
+
+			printer.Success("Access to album %s/%s has been revoked from %s", aurora.Cyan(shareAlbumArg.owner), aurora.Cyan(shareAlbumArg.folderName), aurora.Cyan(shareAlbumArg.userEmail))
+		}
 	},
 }
 
@@ -33,4 +42,5 @@ func init() {
 	shareAlbumCmd.Flags().StringVarP(&shareAlbumArg.owner, "owner", "o", "", "owner of the album to be shared")
 	shareAlbumCmd.Flags().StringVarP(&shareAlbumArg.folderName, "album", "a", "", "folder name of the album (expected to start with a /)")
 	shareAlbumCmd.Flags().StringVarP(&shareAlbumArg.userEmail, "email", "e", "", "email of the user")
+	shareAlbumCmd.Flags().BoolVar(&shareAlbumArg.revoke, "revoke", false, "revoke access instead or granting it")
 }

@@ -30,5 +30,10 @@ func init() {
 			CatalogPort: new(catalogPort),
 		}
 		cmd.ShareAlbumCase = sharedAlbum.ShareAlbumWith
+
+		unSharedAlbum := &catalogacl.UnShareAlbumCase{
+			RevokeScopeRepository: repository,
+		}
+		cmd.UnShareAlbumCase = unSharedAlbum.StopSharingAlbum
 	})
 }
