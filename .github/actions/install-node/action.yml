@@ -20,7 +20,7 @@ runs:
           app/node_modules
         key: ${{ runner.os }}-npm-${{ hashFiles('app/viewer_ui/yarn.lock', 'app/package-lock.json') }}
     - name: Download deps
-      run: make install-app
+      run: make setup-app
       shell: bash
     - name: Install SLS
       if: inputs.sls == 'true'
