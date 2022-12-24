@@ -17,7 +17,7 @@ const (
 	DynamoReadBatchSize  = 100
 )
 
-type rep struct {
+type Repository struct {
 	db            *dynamodb.DynamoDB
 	table         string
 	localDynamodb bool // localDynamodb is set to true to disable some feature - not available on localstack - like tagging
@@ -25,14 +25,13 @@ type rep struct {
 
 // NewRepository creates the repository and connect to the database
 func NewRepository(awsSession *session.Session, tableName string) (catalog.RepositoryAdapter, error) {
-	rep := &rep{
+	rep := &Repository{
 		db:            dynamodb.New(awsSession),
 		table:         tableName,
 		localDynamodb: false,
 	}
 
-	err := rep.CreateTableIfNecessary()
-	return rep, err
+	return rep, nil
 }
 
 // Must panics if there is an error
@@ -45,7 +44,7 @@ func Must(repository catalog.RepositoryAdapter, err error) catalog.RepositoryAda
 }
 
 // CreateTableIfNecessary creates the table if it doesn't exist ; or update it.
-func (r *rep) CreateTableIfNecessary() error {
+func (r *Repository) CreateTableIfNecessary() error {
 	mdc := log.WithFields(log.Fields{
 		"TableBackup":  r.table,
 		"TableVersion": tableVersion,

@@ -15,7 +15,7 @@ import (
 type AlbumCrudTestSuite struct {
 	suite.Suite
 	suffix string
-	repo   *rep
+	repo   *Repository
 	owner  string
 }
 
@@ -27,7 +27,7 @@ func (a *AlbumCrudTestSuite) SetupSuite() {
 	a.suffix = time.Now().Format("20060102150405")
 
 	a.owner = "UNITTEST#1"
-	a.repo = &rep{
+	a.repo = &Repository{
 		db: dynamodb.New(session.Must(session.NewSession(
 			&aws.Config{
 				CredentialsChainVerboseErrors: aws.Bool(true),

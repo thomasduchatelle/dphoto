@@ -11,7 +11,7 @@ import (
 	"sort"
 )
 
-func (r *rep) FindAlbumsByOwner(owner string) ([]*catalog.Album, error) {
+func (r *Repository) FindAlbumsByOwner(owner string) ([]*catalog.Album, error) {
 	query := &dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":owner":     mustAttribute(fmt.Sprintf("%s#ALBUM", owner)),
@@ -49,7 +49,7 @@ func (r *rep) FindAlbumsByOwner(owner string) ([]*catalog.Album, error) {
 	return albums, nil
 }
 
-func (r *rep) InsertAlbum(album catalog.Album) error {
+func (r *Repository) InsertAlbum(album catalog.Album) error {
 	if album.Owner == "" || album.FolderName == "" {
 		return errors.Errorf("Owner and Foldername are mandatory")
 	}
@@ -68,7 +68,7 @@ func (r *rep) InsertAlbum(album catalog.Album) error {
 	return errors.WithStack(errors.Wrapf(err, "failed inserting album '%s'", album.FolderName))
 }
 
-func (r *rep) DeleteEmptyAlbum(owner string, folderName string) error {
+func (r *Repository) DeleteEmptyAlbum(owner string, folderName string) error {
 	count, err := r.CountMedias(owner, folderName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to count number of medias in album %s", folderName)
@@ -90,7 +90,7 @@ func (r *rep) DeleteEmptyAlbum(owner string, folderName string) error {
 }
 
 // CountMedias provides an accurate number of medias and can be used to update the count stored in the album record
-func (r *rep) CountMedias(owner string, folderName string) (int, error) {
+func (r *Repository) CountMedias(owner string, folderName string) (int, error) {
 	albumIndexKey, err := dynamodbattribute.MarshalMap(AlbumIndexedKey(owner, folderName))
 	if err != nil {
 		return 0, err
@@ -112,7 +112,7 @@ func (r *rep) CountMedias(owner string, folderName string) (int, error) {
 	return int(*query.Count), nil
 }
 
-func (r *rep) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error) {
+func (r *Repository) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error) {
 	var keys []map[string]*dynamodb.AttributeValue
 	for _, id := range ids {
 		key, err := dynamodbattribute.MarshalMap(AlbumPrimaryKey(id.Owner, id.FolderName))
@@ -142,7 +142,7 @@ func (r *rep) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error) {
 	return albums, stream.Error()
 }
 
-func (r *rep) UpdateAlbum(album catalog.Album) error {
+func (r *Repository) UpdateAlbum(album catalog.Album) error {
 	item, err := marshalAlbum(&album)
 	if err != nil {
 		return err

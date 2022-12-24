@@ -12,6 +12,18 @@ import (
 func init() {
 	config.Listen(func(cfg config.Config) {
 		log.Debugln("connecting catalog adapters (dynamodb)")
-		catalog.Init(catalogdynamo.Must(catalogdynamo.NewRepository(cfg.GetAWSSession(), cfg.GetString(config.CatalogDynamodbTable))), catalogarchivesync.New())
+		repository := catalogdynamo.Must(catalogdynamo.NewRepository(cfg.GetAWSSession(), cfg.GetString(config.CatalogDynamodbTable)))
+		if repo, ok := repository.(*catalogdynamo.Repository); ok {
+			log.Infoln("Updating indexes ...")
+			err := repo.CreateTableIfNecessary()
+			if err != nil {
+				panic("Failed while updating indexes: " + err.Error())
+			}
+
+		} else {
+			log.Warn("catalogdynamo.NewRepository hasn't return the right type to update indexes")
+		}
+
+		catalog.Init(repository, catalogarchivesync.New())
 	})
 }

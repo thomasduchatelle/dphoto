@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func (r *rep) InsertMedias(owner string, medias []catalog.CreateMediaRequest) error {
+func (r *Repository) InsertMedias(owner string, medias []catalog.CreateMediaRequest) error {
 	requests := make([]*dynamodb.WriteRequest, len(medias))
 	for index, media := range medias {
 		mediaEntry, err := marshalMedia(owner, &media)
@@ -31,7 +31,7 @@ func (r *rep) InsertMedias(owner string, medias []catalog.CreateMediaRequest) er
 	return dynamoutils.BufferedWriteItems(r.db, requests, r.table, DynamoWriteBatchSize)
 }
 
-func (r *rep) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
+func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
 	queries, err := newMediaQueryBuilders(r.table, request, "")
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (r *rep) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.MediaMet
 	return medias, err
 }
 
-func (r *rep) FindMediaCurrentAlbum(owner, mediaId string) (string, error) {
+func (r *Repository) FindMediaCurrentAlbum(owner, mediaId string) (string, error) {
 	key, err := dynamodbattribute.MarshalMap(MediaPrimaryKey(owner, mediaId))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to marshal media key %s/%s", owner, mediaId)
@@ -78,7 +78,7 @@ func (r *rep) FindMediaCurrentAlbum(owner, mediaId string) (string, error) {
 	return "", errors.Errorf("invalid AlbumIndexPK format expected to start with %s ; value: %+v", owner, item.Item)
 }
 
-func (r *rep) FindMediaIds(request *catalog.FindMediaRequest) ([]string, error) {
+func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]string, error) {
 	queries, err := newMediaQueryBuilders(r.table, request, "Id")
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (r *rep) FindMediaIds(request *catalog.FindMediaRequest) ([]string, error) 
 	return mediaIds, err
 }
 
-func (r *rep) TransferMedias(owner string, mediaIds []string, newFolderName string) error {
+func (r *Repository) TransferMedias(owner string, mediaIds []string, newFolderName string) error {
 	for _, id := range mediaIds {
 		mediaKey, err := dynamodbattribute.MarshalMap(MediaPrimaryKey(owner, id))
 		if err != nil {
@@ -123,7 +123,7 @@ func (r *rep) TransferMedias(owner string, mediaIds []string, newFolderName stri
 	return nil
 }
 
-func (r *rep) FindExistingSignatures(owner string, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
+func (r *Repository) FindExistingSignatures(owner string, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	// note: this implementation expects media id to be an encoded version of its signature
 
 	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
@@ -179,12 +179,12 @@ func unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeVal
 	return startKey, nil
 }
 
-func (r *rep) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
+func (r *Repository) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
 	return unmarshalPageToken(nextPageToken)
 }
 
 // marshalPageToken take a dynamodb key and encode it (JSON+BASE64) to be used by service. Return empty string when key is empty
-func (r *rep) marshalPageToken(key map[string]*dynamodb.AttributeValue) (string, error) {
+func (r *Repository) marshalPageToken(key map[string]*dynamodb.AttributeValue) (string, error) {
 	if len(key) == 0 {
 		return "", nil
 	}

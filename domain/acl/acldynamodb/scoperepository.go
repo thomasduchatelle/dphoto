@@ -15,9 +15,15 @@ type GrantRepository interface {
 
 func New(sess *session.Session, tableName string, createTable bool) (GrantRepository, error) {
 	if createTable {
-		_, err := catalogdynamo.NewRepository(sess, tableName)
+		catalogRepository, err := catalogdynamo.NewRepository(sess, tableName)
 		if err != nil {
 			return nil, err
+		}
+		if tableCreator, ok := catalogRepository.(*catalogdynamo.Repository); ok {
+			err = tableCreator.CreateTableIfNecessary()
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

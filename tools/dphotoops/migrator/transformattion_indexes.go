@@ -9,7 +9,13 @@ import (
 type TransformationUpDateIndex struct{}
 
 func (i TransformationUpDateIndex) PreScan(run *TransformationRun) error {
-	log.Infoln("Updating indexes ...")
-	_, err := catalogdynamo.NewRepository(run.Session, run.DynamoDBTableName)
-	return errors.Wrap(err, "failed to init DynamoDb structure (indexes, ...)")
+	repository := catalogdynamo.Must(catalogdynamo.NewRepository(run.Session, run.DynamoDBTableName))
+	if repo, ok := repository.(*catalogdynamo.Repository); ok {
+		log.Infoln("Updating indexes ...")
+		return errors.Wrap(repo.CreateTableIfNecessary(), "failed to init DynamoDb structure (indexes, ...)")
+	} else {
+		log.Warn("catalogdynamo.NewRepository hasn't return the right type")
+	}
+
+	return nil
 }
