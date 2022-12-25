@@ -1,0 +1,294 @@
+service: dphoto-app
+frameworkVersion: '2'
+variablesResolutionMode: 20210326
+
+functions:
+  # system lambdas
+  letsencrypt:
+    handler: bin/letsencrypt
+    role: LetsencryptLambdaRole
+    timeout: 900
+    memorySize: 128
+    events:
+      - schedule: cron(42 9 ? * 2 *)
+    environment:
+      DPHOTO_DOMAIN: ${file('./sls-config.js'):DPHOTO_DOMAIN}
+      DPHOTO_CERTIFICATE_EMAIL: 'duchatelle.thomas@gmail.com'
+      DPHOTO_ENVIRONMENT: ${sls:stage}
+  oauth-token:
+    handler: bin/oauth
+    events:
+      - httpApi:
+          path: /api/oauth/token
+          method: post
+  env-config:
+    handler: bin/env-config
+    environment:
+      GOOGLE_LOGIN_CLIENT_ID: ${ssm:/dphoto/${sls:stage}/googleLogin/clientId}
+    events:
+      - httpApi:
+          path: /env-config.json
+          method: get
+
+  # REST lambdas
+  list-albums:
+    handler: bin/list-albums
+    events:
+      - httpApi:
+          path: /api/v1/albums
+          method: get
+  list-medias:
+    handler: bin/list-medias
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums/{folderName}/medias
+          method: get
+  get-media:
+    handler: bin/get-media
+    memorySize: 1024
+    timeout: 29 # maximum allowed by API gateway
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/medias/{mediaId}/{filename}
+          method: get
+  version:
+    handler: bin/version
+    events:
+      - httpApi:
+          path: /api/v1/version
+          method: get
+
+  # ASYNC lambdas - using FIFO for deduplication made a SQS required
+  async-warmup-cache:
+    handler: bin/async-warmup-cache
+    timeout: 900
+    events:
+      - sqs:
+          arn: ${ssm:/dphoto/${sls:stage}/sqs/archive/arn}
+          batchSize: 1
+          maximumRetryAttempts: 3
+
+  async-resize-image:
+    handler: bin/async-resize-image
+    memorySize: 1024
+    timeout: 900
+    events:
+      - sns:
+          arn: ${ssm:/dphoto/${sls:stage}/sns/archive/arn}
+          filterPolicy:
+            ContentType:
+              - "[]ImageToResizeMessageV1"
+
+provider:
+  name: aws
+  region: eu-west-1
+  runtime: go1.x
+  #  runtime: provided.al2 # custom runtime available for ARM64
+  #  architecture: x86_64
+  memorySize: 256
+  lambdaHashingVersion: 20201221
+  environment:
+    DPHOTO_JWT_KEY_B64: ${file('./sls-config.js'):DPHOTO_JWT_KEY_B64}
+    DPHOTO_JWT_ISSUER: ${file('./sls-config.js'):DPHOTO_JWT_ISSUER}
+  deploymentBucket:
+    blockPublicAccess: true
+    tags:
+      Application: dphoto-app
+      Environment: ${sls:stage}
+
+  iam:
+    role:
+      name: dphoto-app-${sls:stage}-lambdas-role
+      path: /dphoto/${sls:stage}/
+      managedPolicies:
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/cacheRWArn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/indexRWArn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/storageROArn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/archive_sns_publish/arn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/archive_sqs_send/arn}
+      tags:
+        Application: dphoto-app
+        Environment: ${sls:stage}
+  tags:
+    Application: dphoto-app
+    Environment: ${sls:stage}
+  httpApi:
+    useProviderTags: true
+
+resources:
+  Resources:
+    ViewerUiBucket:
+      Type: 'AWS::S3::Bucket'
+      Properties:
+        BucketName: dphoto-app-${sls:stage}-ui-static-public
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        Tags:
+          - Key: Application
+            Value: dphoto-app
+          - Key: Environment
+            Value: ${sls:stage}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+          RoutingRules:
+            - RoutingRuleCondition:
+                HttpErrorCodeReturnedEquals: '404'
+              RedirectRule:
+                # redirect back to / of the original domain ; url is passed as an argument
+                HostName: ${file('./sls-config.js'):DPHOTO_DOMAIN}
+                Protocol: https
+                HttpRedirectCode: "307"
+                ReplaceKeyPrefixWith: "?path="
+
+    ViewerUiBucketPolicy:
+      Type: 'AWS::S3::BucketPolicy'
+      Properties:
+        Bucket: !Ref ViewerUiBucket
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Action:
+                - 's3:GetObject'
+              Effect: Allow
+              Resource: !Join
+                - ''
+                - - !GetAtt ViewerUiBucket.Arn
+                  - /*
+              Principal: '*'
+
+    ApiGatewayStaticDefaultRoute:
+      Type: AWS::ApiGatewayV2::Route
+      Properties:
+        ApiId: !Ref HttpApi
+        RouteKey: '$default'
+        Target: !Join
+          - ''
+          - - integrations/
+            - !Ref ApiGatewayStaticDefaultRouteIntegration
+
+    ApiGatewayStaticDefaultRouteIntegration:
+      Type: AWS::ApiGatewayV2::Integration
+      Properties:
+        ApiId: !Ref HttpApi
+        Description: Redirect any non-api calls to static website served by S3
+        IntegrationMethod: GET
+        IntegrationType: HTTP_PROXY
+        IntegrationUri: !GetAtt ViewerUiBucket.WebsiteURL
+        PayloadFormatVersion: '1.0'
+
+    ApiGatewayDomainName:
+      Type: AWS::ApiGatewayV2::DomainName
+      Properties:
+        DomainName: ${file('./sls-config.js'):DPHOTO_DOMAIN}
+        DomainNameConfigurations:
+          - EndpointType: REGIONAL
+            CertificateArn: ${ssm:/dphoto/${sls:stage}/acm/domainCertARN}
+
+    ApiGatewayDomainNameMapping:
+      Type: AWS::ApiGatewayV2::ApiMapping
+      Properties:
+        ApiId: !Ref HttpApi
+        DomainName: !Ref ApiGatewayDomainName
+        Stage: $default
+
+    DnsRecord:
+      Type: "AWS::Route53::RecordSet"
+      Properties:
+        AliasTarget:
+          DNSName: !GetAtt ApiGatewayDomainName.RegionalDomainName
+          HostedZoneId: !GetAtt ApiGatewayDomainName.RegionalHostedZoneId
+        HostedZoneName: ${file('./sls-config.js'):DPHOTO_ROOT_DOMAIN}.
+        Name: ${file('./sls-config.js'):DPHOTO_DOMAIN}.
+        Type: 'A'
+
+    LetsencryptLambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /dphoto/${sls:stage}/
+        RoleName: dphoto-app-${sls:stage}-lambdas-letsencrypt-role
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: lambda-logs
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:logs'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'log-group:/aws/lambda/*:*:*'
+          - PolicyName: lambda-certs
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - acm:AddTagsToCertificate
+                    - acm:DescribeCertificate
+                    - acm:ImportCertificate
+                    - acm:ListCertificates
+                    - acm:ListTagsForCertificate
+                    - acm:RemoveTagsFromCertificate
+                    - route53:ListHostedZonesByName
+                    - route53:ListResourceRecordSets
+                    - route53:ChangeResourceRecordSets
+                    - route53:GetChange
+                  Resource: '*'
+                - Effect: Allow
+                  Action:
+                    - ssm:GetParameter
+                    - ssm:PutParameter
+                    - ssm:AddTagsToResource
+                    - ssm:RemoveTagsFromResource
+                  Resource:
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:ssm'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - "parameter/dphoto/${sls:stage}/*"
+  Outputs:
+    ViewerUiBucketName:
+      Description: "Bucket name where static resources of DPhoto are stored"
+      Value: !Ref ViewerUiBucket
+    PublicURL:
+      Description: "User friendly HTTPS url where the application has been deployed"
+      Value: https://${file('./sls-config.js'):DPHOTO_DOMAIN}
+
+package:
+  patterns:
+    - '!./**'
+    - ./bin/**
+
+plugins:
+  - serverless-ssm-fetch
+  - serverless-s3-sync
+
+custom:
+  serverlessSsmFetch:
+    CATALOG_TABLE_NAME: /dphoto/${sls:stage}/dynamodb/catalog/tableName
+    CACHE_BUCKET_NAME: /dphoto/${sls:stage}/s3/cache/bucketName
+    STORAGE_BUCKET_NAME: /dphoto/${sls:stage}/s3/storage/bucketName
+    SNS_ARCHIVE_ARN: /dphoto/${sls:stage}/sns/archive/arn
+    SQS_ARCHIVE_URL: /dphoto/${sls:stage}/sqs/archive/url
+  s3Sync:
+    - bucketNameKey: ViewerUiBucketName
+      localDir: web/build/

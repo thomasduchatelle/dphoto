@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	aclcore "github.com/thomasduchatelle/dphoto/domain/acl/aclcore"
+	aclcore "github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 
 	mock "github.com/stretchr/testify/mock"
 )

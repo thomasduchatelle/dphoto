@@ -5,7 +5,7 @@ package mocks
 import (
 	io "io"
 
-	archive "github.com/thomasduchatelle/dphoto/domain/archive"
+	archive "github.com/thomasduchatelle/dphoto/pkg/archive"
 
 	mock "github.com/stretchr/testify/mock"
 

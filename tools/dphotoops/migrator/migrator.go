@@ -4,7 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/domain/catalogadapters/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/dynamoutils"
 )
 
 func Migrate(tableName string, arn string, repopulateCache bool, scripts []interface{}) (int, error) {

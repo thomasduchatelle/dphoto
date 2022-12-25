@@ -9,9 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/domain/dns"
-	"github.com/thomasduchatelle/dphoto/domain/dnsadapters/letsencrypt"
-	"github.com/thomasduchatelle/dphoto/domain/dnsadapters/route53_adapter"
+	"github.com/thomasduchatelle/dphoto/pkg/dns"
+	"github.com/thomasduchatelle/dphoto/pkg/dnsadapters/letsencrypt"
+	"github.com/thomasduchatelle/dphoto/pkg/dnsadapters/route53_adapter"
 )
 
 func main() {

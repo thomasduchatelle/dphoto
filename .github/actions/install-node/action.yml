@@ -16,9 +16,9 @@ runs:
       uses: actions/cache@v3
       with:
         path: |
-          app/viewer_ui/node_modules
-          app/node_modules
-        key: ${{ runner.os }}-npm-${{ hashFiles('app/viewer_ui/yarn.lock', 'app/package-lock.json') }}
+          web/node_modules
+          deployments/sls/node_modules
+        key: ${{ runner.os }}-npm-${{ hashFiles('web/yarn.lock', 'deployments/sls/package-lock.json') }}
     - name: Download deps
       run: make setup-app
       shell: bash

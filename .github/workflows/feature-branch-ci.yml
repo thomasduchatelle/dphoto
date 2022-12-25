@@ -16,7 +16,7 @@ jobs:
         uses: ./.github/actions/install-go
       - name: start mock services
         run: docker-compose up -d
-      - run: make test-domain test-app-api test-cli
+      - run: make test-go
 
   test-ts-code:
     runs-on: ubuntu-latest
@@ -25,4 +25,4 @@ jobs:
       - name: Setup NODE
         uses: ./.github/actions/install-node
       - name: Test and build WEB UI
-        run: make test-app-ui build-app-ui
+        run: make test-web build-web

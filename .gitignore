@@ -1,7 +1,6 @@
 .idea
-delegate/dphoto
-infra-data/.terraform/
+deployments/infra-data/.terraform/
 /dist/
 /.build/
 .DS_Store
-
+bin/

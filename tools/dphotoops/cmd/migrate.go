@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/dphoto/printer"
+	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/tools/dphotoops/migrator"
 	"os"
 	"time"

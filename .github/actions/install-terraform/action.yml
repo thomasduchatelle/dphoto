@@ -10,7 +10,7 @@ runs:
     - name: Get terraform version
       id: vars
       run: |
-        echo "::set-output name=terraform-version::$(cat infra-data/.terraform-version)"
+        echo "::set-output name=terraform-version::$(cat deployments/infra-data/.terraform-version)"
         echo "TF_API_TOKEN: ${{ inputs.tf-api-token }}"
       shell: sh
     - uses: hashicorp/setup-terraform@v1

@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	catalog "github.com/thomasduchatelle/dphoto/domain/catalog"
+	catalog "github.com/thomasduchatelle/dphoto/pkg/catalog"
 
 	mock "github.com/stretchr/testify/mock"
 )

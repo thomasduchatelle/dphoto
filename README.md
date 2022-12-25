@@ -28,7 +28,7 @@ Getting Started
 
 Install 'dphoto' command line interface and configure it using the following:
 
-    go install github.com/thomasduchatelle/dphoto/dphoto@latest
+    go install github.com/thomasduchatelle/dphoto/cmd/dphoto@latest
     dphoto configure
 
 Then use command `backup` to upload media in a directory, or scan to interactively organise the albums.
@@ -41,10 +41,10 @@ Contribute
 
 Components:
 
-* `infra-data`: terraform project to create required infrastructure on AWS for the CLI to work. Project won't be re-usable in a different context without overriding backend and some other defaults.
-* `domain`: core domain model and business logic from Hexagonal Architecture. This domain is integrated and used from both CLI and app's APIs
-* [DPhoto CLI](./dphoto/README.md): installed on the end-user computer, backup photos and videos using command line interface
-* [APP](./app/README.md): deployed on top of `infra-data`, contains the viewer UI, and APIs for the UI and the CLI
+* `deployments/infra-data`: terraform project to create required infrastructure on AWS for the CLI to work. Project won't be re-usable in a different context without overriding backend and some other defaults.
+* `pkg`: core domain model and business logic from Hexagonal Architecture. This domain is used from both CLI and app's APIs
+* [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line interface
+* [APP](deployments/sls/README.md): deployed on top of `infra-data`, contains the APP (API deployed on AWS lambdas, and WEB)
 
 ### Install development environment
 
@@ -59,10 +59,11 @@ Required tools:
   * GoLang: `brew install golang`
   * Yarn: `brew install yarn`
 * Docker and Docker Compose
+  * `brew install docker docker-compose`
 
 Setup the environment:
 
-    make install all
+    make setup all
 
     # Run tests & build (all sub-projects)
     make
@@ -77,14 +78,14 @@ To release a new version:
 
 1. make changes on a feature branch and bump the CLI version:
    ```
-   ./ci/pre-release.sh 1.5.0
+   ./scripts/pre-release.sh 1.5.0
    ```
 
 2. create a pull request to `develop`, review the terraform plan and tests then merge -> it will deploy to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
 3. create a pull request `develop -> main`, review the terraform plan then merge -> it will deploy to [https://dphoto.duchatelle.net](https://dphoto.duchatelle.net) and create a tag for the CLI
 4. (optional) update local versions of `dphoto` by running
    ```
-   go install github.com/thomasduchatelle/dphoto/dphoto@latest
+   go install github.com/thomasduchatelle/dphoto/cmd/...@latest
    ```
    
 5. to avoid confusion, next development iteration can be started by running `./ci/pre-release.sh 1.6.0-alpha`.
@@ -92,4 +93,3 @@ To release a new version:
 ### Tech debt
 
 1. go cli is using AWS SDK 1.x and should use 2.x
-2. `go install github...` doesn't work anymore: go modules are not properly defined.

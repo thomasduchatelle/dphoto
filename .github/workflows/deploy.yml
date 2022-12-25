@@ -26,10 +26,10 @@ jobs:
 
       - name: Terraform init
         id: init
-        run: cd infra-data && terraform init
+        run: cd deployments/infra-data && terraform init
 
       - name: Terraform apply
-        run: cd infra-data && terraform apply -auto-approve
+        run: cd deployments/infra-data && terraform apply -auto-approve
 
   deploy-app:
     name: Deploy / ${{ needs.choose-env.outputs.environment-name }} / app
@@ -53,7 +53,7 @@ jobs:
         run: make clean-app test-app build-app
 
       - name: Deploy
-        run: cd app && sls deploy --stage ${{ needs.choose-env.outputs.environment-workspace }}
+        run: cd deployments/sls && sls deploy --stage ${{ needs.choose-env.outputs.environment-workspace }}
         env:
           AWS_DEFAULT_REGION: eu-west-1
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -61,14 +61,14 @@ jobs:
 
   cli-tag:
     runs-on: ubuntu-latest
-    name: Create a TAG for CLI
+    name: TAGGING Codebase
     if: needs.choose-env.outputs.environment-name == 'live'
     needs: [choose-env]
     steps:
       - uses: actions/checkout@v3
       - name: Get version
         id: version
-        run: echo "::set-output name=version::$(./ci/pre-release.sh)"
+        run: echo "::set-output name=version::$(./scripts/pre-release.sh)"
       - name: Create tag
         uses: actions/github-script@v6
         with:
@@ -76,6 +76,6 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/dphoto/${{ steps.version.outputs.version }}',
+              ref: 'refs/tags/${{ steps.version.outputs.version }}',
               sha: context.sha
             })

@@ -1,108 +1,116 @@
 .PHONY: all clean setup test build deploy test-go
 
-all: test build
+all: clean test build
 
-clean: clean-app
+clean: clean-web clean-api
 	go clean -testcache
 
-setup: setup-infra-data setup-domain setup-app
+setup: setup-infra-data setup-app
 
-test: test-infra-data test-domain test-cli test-app
+test: test-infra-data test-go test-web
 
-build: build-cli build-app
+build: build-go build-app
 
-deploy: deploy-infra-data deploy-app deploy-cli-local
-
-test-go: test-domain test-cli test-app-api
+deploy: deploy-infra-data deploy-app install-cli
 
 #######################################
 ## INFRA DATA
 #######################################
 
 .PHONY: setup-infra-data test-infra-data deploy-infra-data
+INFRA_DATA := deployments/infra-data
 
 setup-infra-data:
 	command -v tfenv > /dev/null \
-		cd infra-data && \
+		cd $(INFRA_DATA) && \
 		tfenv install && tfenv use
-	cd infra-data && \
+	cd $(INFRA_DATA) && \
 		terraform init
 
 test-infra-data:
-	cd infra-data && \
+	cd $(INFRA_DATA) && \
 		terraform validate
 
 deploy-infra-data:
-	cd infra-data && \
+	cd $(INFRA_DATA) && \
 		terraform apply
 
 #######################################
-## DOMAIN
+## PKG & CLI
 #######################################
 
-.PHONY: setup-domain test-domain
+.PHONY: setup-go test-go build-go install-go
 
-setup-domain:
+setup-go:
 	docker-compose pull
 	docker-compose up -d
 
-test-domain:
-	AWS_PROFILE="" go test ./domain/... -race -cover
+test-go:
+	AWS_PROFILE="" go test ./... -race -cover
+
+build-go:
+	go build ./cmd/...
+
+install-cli:
+	go install ./cmd/...
 
 #######################################
-## APP
+## WEB
 #######################################
 
-.PHONY: clean-app setup-app test-app test-app-api test-app-ui build-app build-app-api build-app-ui deploy-app
+.PHONY: clean-web setup-web test-web build-web
 
-clean-app:
-	cd app && rm -rf ./bin ./vendor
-	cd app/viewer_ui && yarn clean
+clean-web:
+	cd web && yarn clean
 
-setup-app:
-	cd app && npm install
-	cd app/viewer_ui && yarn install
+setup-web:
+	cd web && npm install
+	cd web && yarn install
 
-test-app: test-app-api test-app-ui
+test-web:
+	+echo "No tests implemented for WEB"
 
-test-app-api: test-domain
-	AWS_PROFILE="" go test ./app/viewer_api/...
-
-test-app-ui:
-	+echo "Implement tests for APP VIEWER UI"
-
-build-app: build-app-api build-app-ui
-
-build-app-api:
-	cd app/viewer_api && \
-		mkdir -p ../bin && \
-		export GO111MODULE=on && \
-		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o ../bin ./...
-
-build-app-ui:
-	cd app/viewer_ui && CI=true yarn build
-
-AWS_PROFILE ?= dphoto
-deploy-app: clean-app test-app build-app
-	export AWS_PROFILE="$(AWS_PROFILE)" && cd app && sls deploy --debug
+build-web:
+	cd web && CI=true yarn build
 
 start:
-	cd app/viewer_ui && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
+	cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
+
 
 #######################################
-## CLI
+## API
 #######################################
 
-.PHONY: test-cli build-cli deploy-cli-local
+.PHONY: clean-api test-api build-api
 
-test-cli: test-domain
-	AWS_PROFILE="" go test ./dphoto/... -race -cover
+clean-api:
+	cd api && rm -rf ./bin ./vendor
 
-build-cli:
-	cd dphoto && go build
+test-api:
+	cd api && AWS_PROFILE="" go test ./...
 
-deploy-cli-local:
-	cd dphoto && go install
+build-api:
+	cd api/lambdas && \
+		mkdir -p ../../bin && \
+		export GO111MODULE=on && \
+		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin ./...
+
+#######################################
+## APP = WEB + API
+#######################################
+
+.PHONY: setup-app test-app build-app deploy-app
+
+setup-app: setup-web
+	cd deployments/sls && npm install
+
+test-app: test-api test-web
+
+build-app: build-api build-web
+
+AWS_PROFILE ?= dphoto
+deploy-app: clean-web clean-api test-app build-app
+	export AWS_PROFILE="$(AWS_PROFILE)" && cd deployments/sls && sls deploy --debug
 
 #######################################
 ## UTILS
