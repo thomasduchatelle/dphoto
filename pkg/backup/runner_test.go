@@ -121,14 +121,14 @@ func TestShouldStopAtFirstError(t *testing.T) {
 
 		if tt.wantErr == "" {
 			a.Empty(caughtErrors, tt.name)
+
+			a.Equal(tt.want, capture.requests, tt.name)
+			a.Empty(events, tt.name)
 		} else {
 			if a.Len(caughtErrors, 1, tt.name) {
 				a.Equal(tt.wantErr, caughtErrors[0].Error(), tt.name)
 			}
 		}
-
-		a.Equal(tt.want, capture.requests, tt.name)
-		a.Empty(events, tt.name)
 	}
 }
 
