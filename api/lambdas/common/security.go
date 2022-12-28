@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/ephoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/ephoto/pkg/acl/catalogacl"
-	"github.com/thomasduchatelle/ephoto/pkg/acl/catalogaclview"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"strings"
 )
 

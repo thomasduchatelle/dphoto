@@ -6,9 +6,9 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/ephoto/api/lambdas/common"
-	"github.com/thomasduchatelle/ephoto/pkg/archive"
-	"github.com/thomasduchatelle/ephoto/pkg/archiveadapters/asyncjobadapter"
+	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/pkg/archive"
+	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/asyncjobadapter"
 	"time"
 )
 

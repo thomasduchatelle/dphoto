@@ -5,8 +5,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tencentyun/scf-go-lib/events"
-	common2 "github.com/thomasduchatelle/ephoto/api/lambdas/common"
-	"github.com/thomasduchatelle/ephoto/pkg/acl/aclcore"
+	common2 "github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"strings"
 )
 

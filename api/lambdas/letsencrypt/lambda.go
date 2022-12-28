@@ -5,9 +5,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/gophercloud/utils/env"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/ephoto/pkg/dns"
-	"github.com/thomasduchatelle/ephoto/pkg/dnsadapters/letsencrypt"
-	"github.com/thomasduchatelle/ephoto/pkg/dnsadapters/route53_adapter"
+	"github.com/thomasduchatelle/dphoto/pkg/dns"
+	"github.com/thomasduchatelle/dphoto/pkg/dnsadapters/letsencrypt"
+	"github.com/thomasduchatelle/dphoto/pkg/dnsadapters/route53_adapter"
 )
 
 func Handler() error {

@@ -1,3 +1,3 @@
-module github.com/thomasduchatelle/ephoto/web
+module github.com/thomasduchatelle/dphoto/web
 
 go 1.19

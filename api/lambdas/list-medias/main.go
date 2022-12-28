@@ -5,8 +5,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
-	common2 "github.com/thomasduchatelle/ephoto/api/lambdas/common"
-	"github.com/thomasduchatelle/ephoto/pkg/acl/catalogaclview"
+	common2 "github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"strings"
 	"time"
 )

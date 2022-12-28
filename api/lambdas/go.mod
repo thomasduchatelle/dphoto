@@ -1,4 +1,4 @@
-module github.com/thomasduchatelle/ephoto/api/lambdas
+module github.com/thomasduchatelle/dphoto/api/lambdas
 
 go 1.19
 
@@ -11,7 +11,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tencentyun/scf-go-lib v0.0.0-20211123032342-f972dcd16ff6
-	github.com/thomasduchatelle/ephoto v0.1.0
+	github.com/thomasduchatelle/dphoto v0.0.0
 )
 
 require (
@@ -52,3 +52,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/thomasduchatelle/dphoto => ./../../

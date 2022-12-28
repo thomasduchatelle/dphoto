@@ -6,10 +6,10 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
-	common2 "github.com/thomasduchatelle/ephoto/api/lambdas/common"
-	"github.com/thomasduchatelle/ephoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/ephoto/pkg/acl/catalogacl"
-	"github.com/thomasduchatelle/ephoto/pkg/archive"
+	common2 "github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
+	"github.com/thomasduchatelle/dphoto/pkg/archive"
 )
 
 const (

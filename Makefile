@@ -87,7 +87,7 @@ clean-api:
 	cd api && rm -rf ./bin ./vendor
 
 test-api:
-	cd api && AWS_PROFILE="" go test ./...
+	cd api/lambdas && AWS_PROFILE="" go test ./...
 
 build-api:
 	cd api/lambdas && \

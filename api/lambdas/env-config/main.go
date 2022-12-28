@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/thomasduchatelle/ephoto/api/lambdas/common"
-	"github.com/thomasduchatelle/ephoto/pkg/meta"
+	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/pkg/meta"
 	"os"
 )
 

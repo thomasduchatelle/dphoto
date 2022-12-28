@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/tencentyun/scf-go-lib/events"
-	"github.com/thomasduchatelle/ephoto/mocks"
-	"github.com/thomasduchatelle/ephoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/mocks"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"testing"
 )
 
