@@ -104,6 +104,8 @@ build-api:
 setup-app: setup-web
 	cd deployments/sls && npm install
 
+clean-app: clean-api clean-web
+
 test-app: test-api test-web
 
 build-app: build-api build-web
