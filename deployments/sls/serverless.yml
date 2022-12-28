@@ -5,7 +5,7 @@ variablesResolutionMode: 20210326
 functions:
   # system lambdas
   letsencrypt:
-    handler: ../../bin/letsencrypt
+    handler: bin/letsencrypt
     role: LetsencryptLambdaRole
     timeout: 900
     memorySize: 128
@@ -16,13 +16,13 @@ functions:
       DPHOTO_CERTIFICATE_EMAIL: 'duchatelle.thomas@gmail.com'
       DPHOTO_ENVIRONMENT: ${sls:stage}
   oauth-token:
-    handler: ../../bin/oauth
+    handler: bin/oauth
     events:
       - httpApi:
           path: /api/oauth/token
           method: post
   env-config:
-    handler: ../../bin/env-config
+    handler: bin/env-config
     environment:
       GOOGLE_LOGIN_CLIENT_ID: ${ssm:/dphoto/${sls:stage}/googleLogin/clientId}
     events:
@@ -32,19 +32,19 @@ functions:
 
   # REST lambdas
   list-albums:
-    handler: ../../bin/list-albums
+    handler: bin/list-albums
     events:
       - httpApi:
           path: /api/v1/albums
           method: get
   list-medias:
-    handler: ../../bin/list-medias
+    handler: bin/list-medias
     events:
       - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/medias
           method: get
   get-media:
-    handler: ../../bin/get-media
+    handler: bin/get-media
     memorySize: 1024
     timeout: 29 # maximum allowed by API gateway
     events:
@@ -52,7 +52,7 @@ functions:
           path: /api/v1/owners/{owner}/medias/{mediaId}/{filename}
           method: get
   version:
-    handler: ../../bin/version
+    handler: bin/version
     events:
       - httpApi:
           path: /api/v1/version
@@ -60,7 +60,7 @@ functions:
 
   # ASYNC lambdas - using FIFO for deduplication made a SQS required
   async-warmup-cache:
-    handler: ../../bin/async-warmup-cache
+    handler: bin/async-warmup-cache
     timeout: 900
     events:
       - sqs:
@@ -69,7 +69,7 @@ functions:
           maximumRetryAttempts: 3
 
   async-resize-image:
-    handler: ../../bin/async-resize-image
+    handler: bin/async-resize-image
     memorySize: 1024
     timeout: 900
     events:
@@ -276,7 +276,7 @@ resources:
 package:
   patterns:
     - '!./**'
-    - ./../../bin/**
+    - ../../bin/**
 
 plugins:
   - serverless-ssm-fetch
