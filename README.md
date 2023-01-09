@@ -10,25 +10,26 @@ DPhoto
 
 Backup photo to your private AWS Cloud, and share them with family and friends. Core features:
 
-| Feature           | Version | Description                                                                                                             |
-|-------------------|---------|-------------------------------------------------------------------------------------------------------------------------|
-| Backup medias     | v1.0    | Backup photos and videos from USB Sticks, Flash drives, and Camera (USB) when they're plugged                           |
-| Organise by album | v1.0    | Photos and videos are organised by album based on their creation date. Each album is a directory in S3.                 |
-| Migration script  | v1.0    | Medias already uploaded in S3 are re-ordered by albums and de-duplicated (with interactive command line interface)      |
-| Web viewer        | v1.5    | See photos by albums, tag them, search by tag or dates                                                                  |
-| Faster UI         | -       | Pre-generate miniatures, supports browser caching (miniature + medium quality) and backend cache medium-quality images. |
-| API Driven        | -       | Provide enhanced API to tip the business on the backend side: CLI authenticated by Google Token (vs AWS Credentials)    |
-| Android App       | -       | Minimalist app to synchronise local medias to DPhoto.                                                                   |
-| Media sharing     | -       | Albums can be shared and contributed by several users.                                                                  |
-| Tagging           | -       | Adding tags to medias to find them later, share them, or print them                                                     |
-| Google Photo      | -       | Support Google Photo to push images and video, or import from Google Photo.                                             |
+| Feature            | Version | Description                                                                                                             |
+|--------------------|---------|-------------------------------------------------------------------------------------------------------------------------|
+| Backup medias      | v0.1    | Backup photos and videos from USB Sticks, Flash drives, and Camera (USB) when they're plugged                           |
+| Organise by album  | v0.1    | Photos and videos are organised by album based on their creation date. Each album is a directory in S3.                 |
+| Migration script   | v0.1    | Medias already uploaded in S3 are re-ordered by albums and de-duplicated (with interactive command line interface)      |
+| Web viewer         | v0.5    | See photos by albums, tag them, search by tag or dates                                                                  |
+| Faster UI          | v1.0    | Pre-generate miniatures, supports browser caching (miniature + medium quality) and backend cache medium-quality images. |
+| Album sharing      | v1.3    | Albums can be shared to other users                                                                                     |
+| Album contribution | -       | Several users can contribute to the same album (families, friend group)                                                 |
+| API Driven         | -       | Provide enhanced API to tip the business on the backend side: CLI authenticated by Google Token (vs AWS Credentials)    |
+| Android App        | -       | Minimalist app to synchronise local medias to DPhoto.                                                                   |
+| Tagging            | -       | Adding tags to medias to find them later, share them, or print them                                                     |
+| Google Photo       | -       | Support Google Photo to push images and video, or import from Google Photo.                                             |
 
 Getting Started
 ------------------------------------
 
 Install 'dphoto' command line interface and configure it using the following:
 
-    go install github.com/thomasduchatelle/dphoto/cmd/dphoto@latest
+    go install github.com/thomasduchatelle/dphoto/cmd/...@latest
     dphoto configure
 
 Then use command `backup` to upload media in a directory, or scan to interactively organise the albums.
