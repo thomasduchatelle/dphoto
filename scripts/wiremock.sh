@@ -22,6 +22,7 @@ Options:
   --version <version>    use wiremock version
   --port <port>          start wiremock on specific port (default $PORT)
   --project <path>       use wiremock definitions (default $PROJECT)
+  --track                restart wiremocks when mocks are changed
 EOF
 }
 # Args: message [color] [exit=-1]
