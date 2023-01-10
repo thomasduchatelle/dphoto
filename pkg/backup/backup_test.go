@@ -2,8 +2,8 @@ package backup_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )
@@ -16,10 +16,10 @@ func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 	readerAdapter := mockDetailsReaderAdapter(t)
 	backup.RegisterDetailsReader(readerAdapter)
 
-	catalogMock := mocks.NewCatalogAdapter(t)
-	timelineMock := mocks.NewTimelineAdapter(t)
+	catalogMock := mocks2.NewCatalogAdapter(t)
+	timelineMock := mocks2.NewTimelineAdapter(t)
 	catalogMock.On("GetAlbumsTimeline", owner).Return(timelineMock, nil)
-	archiveMock := mocks.NewBArchiveAdapter(t)
+	archiveMock := mocks2.NewBArchiveAdapter(t)
 	backup.Init(catalogMock, archiveMock)
 	backup.BatchSize = 4
 
@@ -156,10 +156,10 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 	readerAdapter := mockDetailsReaderAdapter(t)
 	backup.RegisterDetailsReader(readerAdapter)
 
-	catalogMock := mocks.NewCatalogAdapter(t)
-	timelineMock := mocks.NewTimelineAdapter(t)
+	catalogMock := mocks2.NewCatalogAdapter(t)
+	timelineMock := mocks2.NewTimelineAdapter(t)
 	catalogMock.On("GetAlbumsTimeline", owner).Return(timelineMock, nil)
-	archiveMock := mocks.NewBArchiveAdapter(t)
+	archiveMock := mocks2.NewBArchiveAdapter(t)
 	backup.Init(catalogMock, archiveMock)
 	backup.BatchSize = 4
 

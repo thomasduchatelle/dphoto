@@ -2,15 +2,15 @@ package catalog_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )
 
-func mockAdapters(t *testing.T) (*mocks.RepositoryAdapter, *mocks.CArchiveAdapter) {
-	mockRepository := mocks.NewRepositoryAdapter(t)
-	mockArchive := mocks.NewCArchiveAdapter(t)
+func mockAdapters(t *testing.T) (*mocks2.RepositoryAdapter, *mocks2.CArchiveAdapter) {
+	mockRepository := mocks2.NewRepositoryAdapter(t)
+	mockArchive := mocks2.NewCArchiveAdapter(t)
 	catalog.Init(mockRepository, mockArchive)
 
 	return mockRepository, mockArchive
@@ -27,13 +27,13 @@ func TestShouldCreateAnAlbumAndMoveMediasToIt(t *testing.T) {
 	tests := []struct {
 		name             string
 		mediaIds         []string
-		mockExpectations func(*mocks.RepositoryAdapter, *mocks.CArchiveAdapter)
+		mockExpectations func(*mocks2.RepositoryAdapter, *mocks2.CArchiveAdapter)
 	}{
-		{"it should move medias to the newly created album", []string{"file_1", "file_2"}, func(mockRepository *mocks.RepositoryAdapter, mockArchive *mocks.CArchiveAdapter) {
+		{"it should move medias to the newly created album", []string{"file_1", "file_2"}, func(mockRepository *mocks2.RepositoryAdapter, mockArchive *mocks2.CArchiveAdapter) {
 			mockRepository.On("TransferMedias", owner, []string{"file_1", "file_2"}, "/2020-12_Christm_s_2nd-week").Once().Return(nil)
 			mockArchive.On("MoveMedias", owner, []string{"file_1", "file_2"}, "/2020-12_Christm_s_2nd-week").Once().Return(nil)
 		}},
-		{"it should not call adapters to move medias if there is no media to move", nil, func(mockRepository *mocks.RepositoryAdapter, mockArchive *mocks.CArchiveAdapter) {}},
+		{"it should not call adapters to move medias if there is no media to move", nil, func(mockRepository *mocks2.RepositoryAdapter, mockArchive *mocks2.CArchiveAdapter) {}},
 	}
 
 	for _, tt := range tests {
@@ -276,7 +276,7 @@ func TestShouldTransferAppropriatelyMediasBetweenAlbumsWhenDatesAreChanged(t *te
 	}
 }
 
-func expectTransferredMedias(mockRepository *mocks.RepositoryAdapter, mockArchive *mocks.CArchiveAdapter, filter *catalog.FindMediaRequest, target string) {
+func expectTransferredMedias(mockRepository *mocks2.RepositoryAdapter, mockArchive *mocks2.CArchiveAdapter, filter *catalog.FindMediaRequest, target string) {
 	ids := []string{"to_" + target}
 	mockRepository.On("FindMediaIds", filter).Once().Return(ids, nil)
 	mockRepository.On("TransferMedias", owner, ids, target).Once().Return(nil)

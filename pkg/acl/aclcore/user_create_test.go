@@ -3,8 +3,8 @@ package aclcore_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )
@@ -34,10 +34,10 @@ func TestCreateUser_CreateUser(t *testing.T) {
 		{
 			name: "it should create the scope when no scope already exists",
 			initMocks: func(t *testing.T) fields {
-				reader := mocks.NewScopesReader(t)
+				reader := mocks2.NewScopesReader(t)
 				reader.On("ListUserScopes", tonyEmail, aclcore.MainOwnerScope).Return(nil, nil)
 
-				writer := mocks.NewScopeWriter(t)
+				writer := mocks2.NewScopeWriter(t)
 				writer.On("SaveIfNewScope", aclcore.Scope{
 					Type:          aclcore.MainOwnerScope,
 					GrantedAt:     mockedDate,
@@ -53,7 +53,7 @@ func TestCreateUser_CreateUser(t *testing.T) {
 		{
 			name: "it should override a scope for a different owner (and remove noise)",
 			initMocks: func(t *testing.T) fields {
-				reader := mocks.NewScopesReader(t)
+				reader := mocks2.NewScopesReader(t)
 				reader.On("ListUserScopes", tonyEmail, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Now(), GrantedTo: tonyEmail, ResourceOwner: tonyEmail},
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Now(), GrantedTo: tonyEmail, ResourceOwner: "someoneelse"},
@@ -63,7 +63,7 @@ func TestCreateUser_CreateUser(t *testing.T) {
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Now(), GrantedTo: "pepper@stark.com", ResourceOwner: ironmanOwner},
 				}, nil)
 
-				writer := mocks.NewScopeWriter(t)
+				writer := mocks2.NewScopeWriter(t)
 				writer.On(
 					"DeleteScopes",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: tonyEmail, ResourceOwner: tonyEmail},
@@ -85,12 +85,12 @@ func TestCreateUser_CreateUser(t *testing.T) {
 		{
 			name: "it should skip if the scope already exists",
 			initMocks: func(t *testing.T) fields {
-				reader := mocks.NewScopesReader(t)
+				reader := mocks2.NewScopesReader(t)
 				reader.On("ListUserScopes", tonyEmail, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Now(), GrantedTo: tonyEmail, ResourceOwner: ironmanOwner},
 				}, nil)
 
-				return fields{reader, mocks.NewScopeWriter(t)}
+				return fields{reader, mocks2.NewScopeWriter(t)}
 			},
 			args:    args{email: tonyEmail, owner: ironmanOwner},
 			wantErr: assert.NoError,
@@ -98,10 +98,10 @@ func TestCreateUser_CreateUser(t *testing.T) {
 		{
 			name: "it should default the owner to the email",
 			initMocks: func(t *testing.T) fields {
-				reader := mocks.NewScopesReader(t)
+				reader := mocks2.NewScopesReader(t)
 				reader.On("ListUserScopes", tonyEmail, aclcore.MainOwnerScope).Return(nil, nil)
 
-				writer := mocks.NewScopeWriter(t)
+				writer := mocks2.NewScopeWriter(t)
 				writer.On("SaveIfNewScope", aclcore.Scope{
 					Type:          aclcore.MainOwnerScope,
 					GrantedAt:     mockedDate,
@@ -117,7 +117,7 @@ func TestCreateUser_CreateUser(t *testing.T) {
 		{
 			name: "it should return an error if the email is empty / invalid",
 			initMocks: func(t *testing.T) fields {
-				return fields{mocks.NewScopesReader(t), mocks.NewScopeWriter(t)}
+				return fields{mocks2.NewScopesReader(t), mocks2.NewScopeWriter(t)}
 			},
 			args: args{email: "   "},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {

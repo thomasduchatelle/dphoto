@@ -2,9 +2,9 @@ package dns_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/dns"
 	"github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )
@@ -18,16 +18,16 @@ func TestRenewCertificate(t *testing.T) {
 	)
 	tests := []struct {
 		name     string
-		setMocks func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority)
+		setMocks func(certManager *mocks2.CertificateManager, certAuthority *mocks2.CertificateAuthority)
 	}{
-		{"it should not create a new certificate if one already exists", func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority) {
+		{"it should not create a new certificate if one already exists", func(certManager *mocks2.CertificateManager, certAuthority *mocks2.CertificateAuthority) {
 			certManager.On("FindCertificate", domain).Return(&dnsdomain.ExistingCertificate{
 				ID:     "arn::132456",
 				Domain: domain,
 				Expiry: time.Now().Add(dns.MinimumExpiryDelay * 2),
 			}, nil)
 		}},
-		{"it should create a new certificate if the existing one has or is about to expire, and override it", func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority) {
+		{"it should create a new certificate if the existing one has or is about to expire, and override it", func(certManager *mocks2.CertificateManager, certAuthority *mocks2.CertificateAuthority) {
 			certManager.On("FindCertificate", domain).Return(&dnsdomain.ExistingCertificate{
 				ID:     "arn::132456",
 				Domain: domain,
@@ -46,7 +46,7 @@ func TestRenewCertificate(t *testing.T) {
 				PrivateKey:  []byte("private-key-123"),
 			}, nil)
 		}},
-		{"it should create a new certificate if none were there", func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority) {
+		{"it should create a new certificate if none were there", func(certManager *mocks2.CertificateManager, certAuthority *mocks2.CertificateAuthority) {
 			certManager.On("FindCertificate", domain).Return(nil, dnsdomain.CertificateNotFoundError)
 
 			certManager.On("InstallCertificate", "", dnsdomain.CompleteCertificate{
@@ -65,9 +65,9 @@ func TestRenewCertificate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		certManager := new(mocks.CertificateManager)
+		certManager := new(mocks2.CertificateManager)
 		dns.CertificateManager = certManager
-		certAuthority := new(mocks.CertificateAuthority)
+		certAuthority := new(mocks2.CertificateAuthority)
 		dns.CertificateAuthority = certAuthority
 
 		tt.setMocks(certManager, certAuthority)

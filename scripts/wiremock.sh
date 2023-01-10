@@ -51,7 +51,7 @@ function info() {
 DEBUG=0
 VERSION="2.33.1"
 PORT="8080"
-PROJECT="$(dirname "$DIR")/app/wiremock"
+PROJECT="$(dirname "$DIR")/test/wiremock"
 TRACK=0
 ARGS=()
 

@@ -5,8 +5,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"io"
 	"testing"
 	"time"
@@ -23,14 +23,14 @@ func TestStore(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		mocksExpectation func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter, cache *mocks.CacheAdapter, resizer *mocks.ResizerAdapter, asyncJob *mocks.AsyncJobAdapter)
+		mocksExpectation func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter)
 		request          *archive.StoreRequest
 		want             string
 		wantErr          bool
 	}{
 		{
 			name: "it should store a media online with the right names",
-			mocksExpectation: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter, cache *mocks.CacheAdapter, resizer *mocks.ResizerAdapter, asyncJob *mocks.AsyncJobAdapter) {
+			mocksExpectation: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter) {
 				repository.On("FindById", owner, "media-1").Once().Return("", archive.NotFoundError)
 				repository.On("AddLocation", owner, "media-1", owner+"/folder-1/my_choice.jpg").Once().Return(nil)
 				store.On("Upload", archive.DestructuredKey{Prefix: owner + "/folder-1/2022-06-26_15-48-42_qwertyui", Suffix: ".jpg"}, mock.Anything).Once().Return(owner+"/folder-1/my_choice.jpg", nil)
@@ -58,7 +58,7 @@ func TestStore(t *testing.T) {
 		},
 		{
 			name: "it should not store anything is the media is already present",
-			mocksExpectation: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter, cache *mocks.CacheAdapter, resizer *mocks.ResizerAdapter, asyncJob *mocks.AsyncJobAdapter) {
+			mocksExpectation: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter) {
 				repository.On("FindById", owner, "media-1").Once().Return(owner+"/folder-1/previous_id.jpg", nil)
 			},
 			request: &archive.StoreRequest{
@@ -74,7 +74,7 @@ func TestStore(t *testing.T) {
 		},
 		{
 			name: "it should not index the new location if the upload failed",
-			mocksExpectation: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter, cache *mocks.CacheAdapter, resizer *mocks.ResizerAdapter, asyncJob *mocks.AsyncJobAdapter) {
+			mocksExpectation: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter) {
 				repository.On("FindById", owner, "media-1").Once().Return("", archive.NotFoundError)
 				store.On("Upload", mock.Anything, mock.Anything).Once().Return("", errors.Errorf("TEST - simulate failure while uploading"))
 			},
@@ -92,7 +92,7 @@ func TestStore(t *testing.T) {
 		},
 		{
 			name: "it should store a media online without caching it if it extension is not supported",
-			mocksExpectation: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter, cache *mocks.CacheAdapter, resizer *mocks.ResizerAdapter, asyncJob *mocks.AsyncJobAdapter) {
+			mocksExpectation: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter) {
 				repository.On("FindById", owner, "video-1").Once().Return("", archive.NotFoundError)
 				repository.On("AddLocation", owner, "video-1", owner+"/folder-1/my_choice.mpeg").Once().Return(nil)
 				store.On("Upload", archive.DestructuredKey{Prefix: owner + "/folder-1/2022-06-26_15-48-42_qwertyui", Suffix: ".mpeg"}, mock.Anything).Once().Return(owner+"/folder-1/my_choice.mpeg", nil)
@@ -113,11 +113,11 @@ func TestStore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 
-			repository := mocks.NewARepositoryAdapter(t)
-			store := mocks.NewStoreAdapter(t)
-			cache := mocks.NewCacheAdapter(t)
-			resizer := mocks.NewResizerAdapter(t)
-			asyncJob := mocks.NewAsyncJobAdapter(t)
+			repository := mocks2.NewARepositoryAdapter(t)
+			store := mocks2.NewStoreAdapter(t)
+			cache := mocks2.NewCacheAdapter(t)
+			resizer := mocks2.NewResizerAdapter(t)
+			asyncJob := mocks2.NewAsyncJobAdapter(t)
 
 			tt.mocksExpectation(repository, store, cache, resizer, asyncJob)
 

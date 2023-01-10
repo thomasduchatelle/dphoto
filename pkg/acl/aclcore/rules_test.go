@@ -3,8 +3,8 @@ package aclcore_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )

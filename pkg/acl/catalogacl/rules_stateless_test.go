@@ -2,10 +2,10 @@ package catalogacl_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )
@@ -24,13 +24,13 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 	}
 	tests := []struct {
 		name      string
-		initMocks func(repository *mocks.ScopeRepository)
+		initMocks func(repository *mocks2.ScopeRepository)
 		args      args
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should GRANT for the owner of the album",
-			initMocks: func(repository *mocks.ScopeRepository) {
+			initMocks: func(repository *mocks2.ScopeRepository) {
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
 					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
@@ -47,7 +47,7 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 		},
 		{
 			name: "it should GRANT for the visitor of the album",
-			initMocks: func(repository *mocks.ScopeRepository) {
+			initMocks: func(repository *mocks2.ScopeRepository) {
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
 					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
@@ -65,7 +65,7 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 		},
 		{
 			name: "it should DENY for others",
-			initMocks: func(repository *mocks.ScopeRepository) {
+			initMocks: func(repository *mocks2.ScopeRepository) {
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
 					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
@@ -80,7 +80,7 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := mocks.NewScopeRepository(t)
+			repository := mocks2.NewScopeRepository(t)
 			tt.initMocks(repository)
 
 			rules := catalogacl.NewCatalogRules(repository, nil, userEmail)
@@ -98,13 +98,13 @@ func Test_rules_CanReadMedia(t *testing.T) {
 	}
 	tests := []struct {
 		name      string
-		initMocks func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver)
+		initMocks func(repository *mocks2.ScopeRepository, resolver *mocks2.MediaAlbumResolver)
 		args      args
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should GRANT for the owner of the media",
-			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
+			initMocks: func(repository *mocks2.ScopeRepository, resolver *mocks2.MediaAlbumResolver) {
 				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(folderName, nil)
 
 				repository.On("FindScopesById",
@@ -124,7 +124,7 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		},
 		{
 			name: "it should GRANT for the visitor of the album",
-			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
+			initMocks: func(repository *mocks2.ScopeRepository, resolver *mocks2.MediaAlbumResolver) {
 				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(folderName, nil)
 
 				repository.On("FindScopesById",
@@ -145,7 +145,7 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		},
 		{
 			name: "it should GRANT for the visitor of the media",
-			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
+			initMocks: func(repository *mocks2.ScopeRepository, resolver *mocks2.MediaAlbumResolver) {
 				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(folderName, nil)
 
 				repository.On("FindScopesById",
@@ -166,7 +166,7 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		},
 		{
 			name: "it should DENY if media not found",
-			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
+			initMocks: func(repository *mocks2.ScopeRepository, resolver *mocks2.MediaAlbumResolver) {
 				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return("", catalog.NotFoundError)
 			},
 			args: args{owner: ownerEmail, mediaId: mediaId},
@@ -176,7 +176,7 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		},
 		{
 			name: "it should DENY for others",
-			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
+			initMocks: func(repository *mocks2.ScopeRepository, resolver *mocks2.MediaAlbumResolver) {
 				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(folderName, nil)
 
 				repository.On("FindScopesById",
@@ -194,8 +194,8 @@ func Test_rules_CanReadMedia(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := mocks.NewScopeRepository(t)
-			resolver := mocks.NewMediaAlbumResolver(t)
+			repository := mocks2.NewScopeRepository(t)
+			resolver := mocks2.NewMediaAlbumResolver(t)
 			tt.initMocks(repository, resolver)
 
 			rules := catalogacl.NewCatalogRules(repository, resolver, userEmail)
@@ -209,13 +209,13 @@ func Test_rules_CanReadMedia(t *testing.T) {
 func Test_rules_SharedByUserGrid(t *testing.T) {
 	tests := []struct {
 		name      string
-		initMocks func(repository *mocks.ScopeRepository)
+		initMocks func(repository *mocks2.ScopeRepository)
 		want      map[string][]string
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should show an album shared with 2 users, and another with 1",
-			initMocks: func(repository *mocks.ScopeRepository) {
+			initMocks: func(repository *mocks2.ScopeRepository) {
 				repository.On("ListOwnerScopes", ownerEmail, aclcore.AlbumVisitorScope).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.AlbumVisitorScope,
@@ -248,7 +248,7 @@ func Test_rules_SharedByUserGrid(t *testing.T) {
 		},
 		{
 			name: "it should return empty map if no album is shared",
-			initMocks: func(repository *mocks.ScopeRepository) {
+			initMocks: func(repository *mocks2.ScopeRepository) {
 				repository.On("ListOwnerScopes", ownerEmail, aclcore.AlbumVisitorScope).Return(nil, nil)
 			},
 			want:    nil,
@@ -258,7 +258,7 @@ func Test_rules_SharedByUserGrid(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := mocks.NewScopeRepository(t)
+			repository := mocks2.NewScopeRepository(t)
 			tt.initMocks(repository)
 
 			rules := catalogacl.NewCatalogRules(repository, nil, userEmail)
@@ -274,13 +274,13 @@ func Test_rules_SharedByUserGrid(t *testing.T) {
 func Test_rules_SharedWithUserAlbum(t *testing.T) {
 	tests := []struct {
 		name      string
-		initMocks func(repository *mocks.ScopeRepository)
+		initMocks func(repository *mocks2.ScopeRepository)
 		want      []catalog.AlbumId
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should return list of albums shared to current users",
-			initMocks: func(repository *mocks.ScopeRepository) {
+			initMocks: func(repository *mocks2.ScopeRepository) {
 				repository.On("ListUserScopes", userEmail, aclcore.AlbumVisitorScope).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.AlbumVisitorScope,
@@ -306,7 +306,7 @@ func Test_rules_SharedWithUserAlbum(t *testing.T) {
 		},
 		{
 			name: "it should return nil list if nothing has been shared",
-			initMocks: func(repository *mocks.ScopeRepository) {
+			initMocks: func(repository *mocks2.ScopeRepository) {
 				repository.On("ListUserScopes", userEmail, aclcore.AlbumVisitorScope).Return(nil, nil)
 			},
 			want:    nil,
@@ -316,7 +316,7 @@ func Test_rules_SharedWithUserAlbum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := mocks.NewScopeRepository(t)
+			repository := mocks2.NewScopeRepository(t)
 			tt.initMocks(repository)
 
 			rules := catalogacl.NewCatalogRules(repository, nil, userEmail)

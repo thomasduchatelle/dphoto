@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 	"time"
 )
@@ -36,13 +36,13 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should create the ACL rule when the album exists",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort) {
-				catalogMock := mocks.NewShareAlbumCatalogPort(t)
+				catalogMock := mocks2.NewShareAlbumCatalogPort(t)
 				catalogMock.On("FindAlbum", owner, folderName).Return(&catalog.Album{
 					Owner:      owner,
 					FolderName: folderName,
 				}, nil)
 
-				scopeWriter := mocks.NewScopeWriter(t)
+				scopeWriter := mocks2.NewScopeWriter(t)
 				scopeWriter.On("SaveIfNewScope", aclcore.Scope{
 					Type:          aclcore.AlbumVisitorScope,
 					GrantedAt:     theDate,
@@ -59,10 +59,10 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should return an error if the album doesn't exists",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort) {
-				catalogMock := mocks.NewShareAlbumCatalogPort(t)
+				catalogMock := mocks2.NewShareAlbumCatalogPort(t)
 				catalogMock.On("FindAlbum", owner, folderName).Return(nil, catalog.NotFoundError)
 
-				return mocks.NewScopeWriter(t), catalogMock
+				return mocks2.NewScopeWriter(t), catalogMock
 			},
 			args: args{owner, folderName, userEmail},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -72,10 +72,10 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should passthroughs an other error",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort) {
-				catalogMock := mocks.NewShareAlbumCatalogPort(t)
+				catalogMock := mocks2.NewShareAlbumCatalogPort(t)
 				catalogMock.On("FindAlbum", owner, folderName).Return(nil, errors.New("TEST Something else"))
 
-				return mocks.NewScopeWriter(t), catalogMock
+				return mocks2.NewScopeWriter(t), catalogMock
 			},
 			args: args{owner, folderName, userEmail},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {

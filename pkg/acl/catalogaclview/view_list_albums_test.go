@@ -2,10 +2,10 @@ package catalogaclview_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 )
 
@@ -38,7 +38,7 @@ func TestView_ListAlbums(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks.NewCatalogRules(t)
+					rules := mocks2.NewCatalogRules(t)
 					rules.On("Owner").Return(pepper, nil)
 					rules.On("SharedWithUserAlbum").Return([]catalog.AlbumId{
 						{Owner: tonyAlbum.Owner, FolderName: tonyAlbum.FolderName},
@@ -48,7 +48,7 @@ func TestView_ListAlbums(t *testing.T) {
 						"something/else":  {tony},
 					}, nil)
 
-					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
+					catalogAdapter := mocks2.NewACLViewCatalogAdapter(t)
 					catalogAdapter.On("FindAllAlbums", pepper).Return([]*catalog.Album{album1, album2}, nil)
 					catalogAdapter.On("FindAlbums", []catalog.AlbumId{
 						{Owner: tonyAlbum.Owner, FolderName: tonyAlbum.FolderName},
@@ -79,14 +79,14 @@ func TestView_ListAlbums(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks.NewCatalogRules(t)
+					rules := mocks2.NewCatalogRules(t)
 					rules.On("Owner").Return(pepper, nil)
 					rules.On("SharedByUserGrid", pepper).Return(map[string][]string{
 						album2.FolderName: {hulk},
 						"something/else":  {tony},
 					}, nil)
 
-					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
+					catalogAdapter := mocks2.NewACLViewCatalogAdapter(t)
 					catalogAdapter.On("FindAllAlbums", pepper).Return([]*catalog.Album{album1, album2}, nil)
 
 					return rules, catalogAdapter
@@ -110,13 +110,13 @@ func TestView_ListAlbums(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks.NewCatalogRules(t)
+					rules := mocks2.NewCatalogRules(t)
 					rules.On("Owner").Return("", nil)
 					rules.On("SharedWithUserAlbum").Return([]catalog.AlbumId{
 						{Owner: tonyAlbum.Owner, FolderName: tonyAlbum.FolderName},
 					}, nil)
 
-					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
+					catalogAdapter := mocks2.NewACLViewCatalogAdapter(t)
 					catalogAdapter.On("FindAlbums", []catalog.AlbumId{
 						{Owner: tonyAlbum.Owner, FolderName: tonyAlbum.FolderName},
 					}).Return([]*catalog.Album{tonyAlbum}, nil)
@@ -138,12 +138,12 @@ func TestView_ListAlbums(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks.NewCatalogRules(t)
+					rules := mocks2.NewCatalogRules(t)
 					rules.On("Owner").Return(pepper, nil)
 					rules.On("SharedWithUserAlbum").Return(nil, nil)
 					rules.On("SharedByUserGrid", pepper).Return(nil, nil)
 
-					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
+					catalogAdapter := mocks2.NewACLViewCatalogAdapter(t)
 					catalogAdapter.On("FindAllAlbums", pepper).Return([]*catalog.Album{album1, album2}, nil)
 
 					return rules, catalogAdapter
@@ -167,12 +167,12 @@ func TestView_ListAlbums(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks.NewCatalogRules(t)
+					rules := mocks2.NewCatalogRules(t)
 					rules.On("Owner").Return(pepper, nil)
 					rules.On("SharedWithUserAlbum").Return(nil, nil)
 					rules.On("SharedByUserGrid", pepper).Return(nil, nil)
 
-					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
+					catalogAdapter := mocks2.NewACLViewCatalogAdapter(t)
 					catalogAdapter.On("FindAllAlbums", pepper).Return(nil, nil)
 
 					return rules, catalogAdapter

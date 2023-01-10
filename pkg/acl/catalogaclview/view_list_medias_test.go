@@ -5,10 +5,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 )
 
@@ -36,10 +36,10 @@ func TestView_ListMediasFromAlbum(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				mocks: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks.NewCatalogRules(t)
+					rules := mocks2.NewCatalogRules(t)
 					rules.On("CanListMediasFromAlbum", pepper, infinityWarAlbum).Return(nil)
 
-					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
+					catalogAdapter := mocks2.NewACLViewCatalogAdapter(t)
 					catalogAdapter.On("ListMedias", pepper, infinityWarAlbum, mock.Anything).Return(&page, nil)
 					return rules, catalogAdapter
 				},
@@ -53,10 +53,10 @@ func TestView_ListMediasFromAlbum(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				mocks: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks.NewCatalogRules(t)
+					rules := mocks2.NewCatalogRules(t)
 					rules.On("CanListMediasFromAlbum", pepper, infinityWarAlbum).Return(nopeError)
 
-					return rules, mocks.NewACLViewCatalogAdapter(t)
+					return rules, mocks2.NewACLViewCatalogAdapter(t)
 				},
 			},
 			args: args{owner: pepper, folderName: infinityWarAlbum},

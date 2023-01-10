@@ -2,8 +2,8 @@ package backup_test
 
 import (
 	"github.com/stretchr/testify/mock"
+	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"io"
 	"testing"
 	"time"

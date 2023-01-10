@@ -47,6 +47,8 @@ Components:
 * [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line interface
 * [APP](deployments/sls/README.md): deployed on top of `infra-data`, contains the APP (API deployed on AWS lambdas, and WEB)
 
+Note: the repository follow https://github.com/golang-standards/project-layout structure convention.
+
 ### Install development environment
 
 Required tools:

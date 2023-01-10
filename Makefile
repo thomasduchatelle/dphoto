@@ -121,7 +121,8 @@ deploy-app: clean-web clean-api test-app build-app
 .PHONY: mocks clearlocal dcdown dcup
 
 mocks:
-	mockery --all -r
+	mockery --all --dir pkg -r --output internal/mocks
+	mockery --all --dir cmd -r --output internal/mocks
 
 clearlocal: dcdown dcup
 

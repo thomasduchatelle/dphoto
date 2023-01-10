@@ -3,8 +3,8 @@ package archive_test
 import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
-	"github.com/thomasduchatelle/dphoto/mocks"
 	"testing"
 )
 
@@ -15,14 +15,14 @@ func TestRelocate(t *testing.T) {
 		name         string
 		ids          []string
 		targetFolder string
-		spec         func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter)
+		spec         func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter)
 		wantErr      bool
 	}{
 		{
 			name:         "it should relocate an image from both physical store and index",
 			ids:          []string{"id-01"},
 			targetFolder: "/newFolder",
-			spec: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter) {
+			spec: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter) {
 				const previousLocation = owner + "/deep/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"
 
 				repository.On("FindByIds", owner, []string{"id-01"}).Once().Return(map[string]string{
@@ -45,7 +45,7 @@ func TestRelocate(t *testing.T) {
 			name:         "it should not do anything if the image belongs to someone else",
 			ids:          []string{"id-01"},
 			targetFolder: "/newFolder",
-			spec: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter) {
+			spec: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter) {
 				const previousLocation = "captainamerica@avenger.marvel/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"
 
 				repository.On("FindByIds", owner, []string{"id-01"}).Once().Return(map[string]string{
@@ -57,7 +57,7 @@ func TestRelocate(t *testing.T) {
 			name:         "it should ignore extra responses from GetLocation and ignore (log) unknown media ids",
 			ids:          []string{"id-01", "id-02"},
 			targetFolder: "/newFolder",
-			spec: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter) {
+			spec: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter) {
 				const previousLocation = owner + "/01.jpg"
 				repository.On("FindByIds", owner, []string{"id-01", "id-02"}).Once().Return(map[string]string{
 					"id-01": previousLocation,
@@ -80,7 +80,7 @@ func TestRelocate(t *testing.T) {
 			name:         "it should clean the location from any suffix",
 			ids:          []string{"id-01"},
 			targetFolder: "/newFolder",
-			spec: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter) {
+			spec: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter) {
 				const previousLocation = owner + "/oldFolder1/2022-06-19_15-02-10_16c6dfa0_something_might_have_had_been_added_to_make_it_unique.jpg"
 				repository.On("FindByIds", owner, []string{"id-01"}).Once().Return(map[string]string{
 					"id-01": previousLocation,
@@ -102,7 +102,7 @@ func TestRelocate(t *testing.T) {
 			name:         "it should support files now following a proper format",
 			ids:          []string{"id-01"},
 			targetFolder: "/newFolder",
-			spec: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter) {
+			spec: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter) {
 				const previousLocation = owner + "//this/is/a_really-strange^format"
 				repository.On("FindByIds", owner, []string{"id-01"}).Once().Return(map[string]string{
 					"id-01": previousLocation,
@@ -124,7 +124,7 @@ func TestRelocate(t *testing.T) {
 			name:         "it should batch finding, indexing, and s3 deletion operations",
 			ids:          []string{"id-01", "id-02", "id-03"},
 			targetFolder: "/newFolder",
-			spec: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter) {
+			spec: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter) {
 				previousLocations := []string{owner + "/01.jpg", owner + "/02.jpg", owner + "/03.jpg"}
 				repository.On("FindByIds", owner, []string{"id-01", "id-02", "id-03"}).Once().Return(map[string]string{
 					"id-01": previousLocations[0],
@@ -158,7 +158,7 @@ func TestRelocate(t *testing.T) {
 			name:         "it should not delete anything if the index cannot be updated",
 			ids:          []string{"id-01"},
 			targetFolder: "/newFolder",
-			spec: func(repository *mocks.ARepositoryAdapter, store *mocks.StoreAdapter) {
+			spec: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter) {
 				const previousLocation = owner + "/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"
 
 				repository.On("FindByIds", owner, []string{"id-01"}).Once().Return(map[string]string{
@@ -180,12 +180,12 @@ func TestRelocate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repositoryAdapter := mocks.NewARepositoryAdapter(t)
-			storeAdapter := mocks.NewStoreAdapter(t)
+			repositoryAdapter := mocks2.NewARepositoryAdapter(t)
+			storeAdapter := mocks2.NewStoreAdapter(t)
 
 			tt.spec(repositoryAdapter, storeAdapter)
 
-			archive.Init(repositoryAdapter, storeAdapter, mocks.NewCacheAdapter(t), mocks.NewAsyncJobAdapter(t))
+			archive.Init(repositoryAdapter, storeAdapter, mocks2.NewCacheAdapter(t), mocks2.NewAsyncJobAdapter(t))
 
 			err := archive.Relocate(owner, tt.ids, tt.targetFolder)
 
