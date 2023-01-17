@@ -39,6 +39,7 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 		ConcurrentCataloguer: ConcurrentCataloguer,
 		ConcurrentUploader:   1,
 		BatchSize:            BatchSize,
+		SkipRejects:          options.SkipRejects,
 	}
 
 	progressChannel, _ := run.start(context.TODO(), hintSize)
