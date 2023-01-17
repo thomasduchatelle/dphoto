@@ -325,6 +325,12 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 	if a.NoError(err) {
 		a.Equal(exiting, signatures, "it should filter out any non exiting signature to keep the only 2 that exist")
 	}
+
+	search[1] = exiting[1]
+	signatures, err = a.repo.FindExistingSignatures(a.owner, search)
+	if a.NoError(err, "it should ignore duplicated keys") {
+		a.Equal(exiting, signatures, "it should ignore duplicated keys")
+	}
 }
 
 func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {

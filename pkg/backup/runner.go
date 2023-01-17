@@ -24,6 +24,7 @@ type runner struct {
 	ConcurrentCataloguer int // ConcurrentAnalyser is the number of goroutines that analyse the medias
 	ConcurrentUploader   int // ConcurrentUploader is the number of goroutine that upload files online
 	BatchSize            int // BatchSize is the size of the buffer for the uploader
+	SkipRejects          bool
 	context              context.Context
 	cancel               context.CancelFunc
 	progressEventChannel chan *ProgressEvent
@@ -116,7 +117,9 @@ func (r *runner) analyseMedias(foundChannel chan FoundMedia, analysedChannel cha
 				if more {
 					r.MDC.Debugf("Runner > analysing %s", media)
 					analysed, err := r.Analyser(media, r.progressEventChannel)
-					if err != nil {
+					if err != nil && r.SkipRejects {
+						r.MDC.Infof("silently skip %s: %s", media, err.Error()) // not strictly correct as the file won't be counted
+					} else if err != nil {
 						r.appendError(errors.Wrap(err, "error in analyser"))
 					} else {
 						analysedChannel <- analysed

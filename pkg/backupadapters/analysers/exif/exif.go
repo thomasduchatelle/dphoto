@@ -25,7 +25,7 @@ func (p *Parser) Supports(media backup.FoundMedia, mediaType backup.MediaType) b
 	return mediaType == backup.MediaTypeImage
 }
 
-func (p *Parser) ReadDetails(reader io.Reader, options backup.DetailsReaderOptions) (*backup.MediaDetails, error) {
+func (p *Parser) ReadDetails(reader io.Reader, _ backup.DetailsReaderOptions) (*backup.MediaDetails, error) {
 	buffer := bytes.NewBuffer(nil)
 	teeReader := io.TeeReader(reader, buffer)
 

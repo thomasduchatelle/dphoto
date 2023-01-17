@@ -44,6 +44,7 @@ func Backup(owner string, volume SourceVolume, optionsSlice ...Options) (Complet
 		ConcurrentCataloguer: ConcurrentCataloguer,
 		ConcurrentUploader:   ConcurrentUploader,
 		BatchSize:            BatchSize,
+		SkipRejects:          options.SkipRejects,
 	}
 
 	progressChannel, _ := run.start(context.TODO(), hintSize)

@@ -126,19 +126,23 @@ func (r *Repository) TransferMedias(owner string, mediaIds []string, newFolderNa
 func (r *Repository) FindExistingSignatures(owner string, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	// note: this implementation expects media id to be an encoded version of its signature
 
-	keys := make([]map[string]*dynamodb.AttributeValue, len(signatures))
-	for index, signature := range signatures {
-		id, err := catalog.GenerateMediaId(*signature)
-		if err != nil {
-			return nil, err
-		}
+	var keys []map[string]*dynamodb.AttributeValue
+	uniqueSignatures := make(map[catalog.MediaSignature]interface{})
+	for _, signature := range signatures {
+		if _, found := uniqueSignatures[*signature]; !found {
+			id, err := catalog.GenerateMediaId(*signature)
+			if err != nil {
+				return nil, err
+			}
 
-		key, err := dynamodbattribute.MarshalMap(MediaPrimaryKey(owner, id))
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
-		}
+			key, err := dynamodbattribute.MarshalMap(MediaPrimaryKey(owner, id))
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
+			}
 
-		keys[index] = key
+			keys = append(keys, key)
+		}
+		uniqueSignatures[*signature] = nil
 	}
 
 	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, *aws.String("Id")), keys, DynamoReadBatchSize)
