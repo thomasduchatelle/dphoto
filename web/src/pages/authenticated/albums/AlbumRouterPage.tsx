@@ -1,14 +1,14 @@
 import {Box, Toolbar} from "@mui/material";
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useNavigate, useParams} from "react-router-dom"
-import AppNavComponent from "../../../components/AppNav";
+import AppNav from "../../../components/AppNav";
 import UserMenu from "../../../components/user.menu";
-import {useMustBeAuthenticated} from "../../../core/application";
-import useWindowDimensions from "../../../core/window-utils";
+import useWindowDimensions from "../../../core/utils/window-utils";
 import AlbumsList from "./AlbumsList";
 import {Album, AlbumId, AlbumsLogic, AlbumsLogicCache, MediaWithinADay} from "./logic";
 import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
+import {useMustBeAuthenticated} from "../../../core/application";
 
 type AlbumPageUrlParams = {
   owner: string | undefined,
@@ -100,7 +100,7 @@ export default function AlbumRouterPage() {
 
   return (
     <Box>
-      <AppNavComponent
+      <AppNav
         rightContent={<UserMenu user={mustBeAuthenticated.loggedUser} onLogout={mustBeAuthenticated.signOutCase.logout}/>}
       />
       <Toolbar/>

@@ -1,7 +1,7 @@
 import {Alert, ImageList, ImageListItem, ListSubheader, Skeleton} from "@mui/material";
 import {Fragment} from "react";
-import {toLocaleDateWithDay} from "../../../../core/date-utils";
-import useWindowDimensions from "../../../../core/window-utils";
+import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
+import useWindowDimensions from "../../../../core/utils/window-utils";
 import {MediaWithinADay, mobileBreakpoint} from "../logic";
 import {ImageInList} from "./ImageInList";
 

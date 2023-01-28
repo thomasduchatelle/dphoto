@@ -11,7 +11,7 @@ import {
   Skeleton
 } from "@mui/material";
 import {Link} from "react-router-dom";
-import {toLocaleDateWithDay} from "../../../../core/date-utils";
+import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
 import {Album, AlbumId} from "../logic";
 import {HotIndicator} from "./HotIndicator";
 

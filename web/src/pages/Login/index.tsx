@@ -1,71 +1,82 @@
-import {Alert, Container, Paper, Toolbar} from "@mui/material";
-import {useState} from "react";
-import {GoogleLogin, GoogleLoginResponse, GoogleLoginResponseOffline} from "react-google-login";
-import AppNavComponent from "../../components/AppNav";
-import BackdropLoading from "../../components/BackdropLoading";
-import {useConfigContext} from "../../core/application/app-config.context";
+import {Alert, Box, LinearProgress, Paper, Typography} from "@mui/material";
+import React from "react";
+import GoogleLoginIntegration from "./GoogleLoginButton";
+import useLoginController from "./domain";
 
 
-function isGoogleLoginResponse(value: GoogleLoginResponse | GoogleLoginResponseOffline): value is GoogleLoginResponse {
-  return value.hasOwnProperty('profileObj');
-}
-
-const Login = ({googleSignIn, authenticationError}: {
-  authenticationError?: string
-  googleSignIn(identityToken: string): Promise<void>
+const Login = ({onSuccessfulAuthentication}: {
+    onSuccessfulAuthentication(): void
 }) => {
-  const [ready, setReady] = useState(false)
-  const [failureMessage, setFailureMessage] = useState("")
-  const appConfig = useConfigContext();
+    const ctrl = useLoginController(onSuccessfulAuthentication);
+    const {error, loading, loginWithIdentityToken, onError, onWaitingForUserInput, stage, timeout} = ctrl
 
-  const errorToDisplay = authenticationError ?? failureMessage
+    return (
+        <Box sx={{
+            height: '100vh',
+        }}>
+            <Box sx={(theme) => ({
+                margin: 'auto',
+                maxWidth: {
+                    sm: 'sm',
+                },
+                marginTop: {
+                    sm: theme.spacing(10),
+                },
+            })}>
+                <Paper elevation={3} sx={(theme) => ({
+                    textAlign: 'center',
+                    paddingBottom: theme.spacing(3),
+                    '& a, & > div, & h4': {
+                        marginTop: theme.spacing(3),
+                    },
+                    height: {
+                        xs: '100vh',
+                        sm: null,
+                    },
+                })}>
+                    <Box sx={{
+                        height: '4px',
+                        marginTop: '0px !important',
+                    }}>
+                        {loading && <LinearProgress sx={{
+                            borderRadius: {
+                                sm: '4px 4px 0px 0px'
+                            },
+                        }}/>}
+                    </Box>
 
-  const handleFailure = (error: any) => {
-    setFailureMessage(JSON.stringify(error))
-  }
+                    <Box component='a' href='/' sx={theme => ({
+                        display: 'block',
+                        paddingTop: theme.spacing(3).sub(),
+                    })}>
+                        <img src='/dphoto-fulllogo-medium.png' alt='DPhoto Logo'/>
+                    </Box>
 
-  const handleSuccess = (response: GoogleLoginResponse | GoogleLoginResponseOffline): void => {
-    if (isGoogleLoginResponse(response)) {
-      googleSignIn(response.tokenId).then()
-    }
-  }
+                    <Box>
+                        <Typography variant='body1'>This is an invitation only application. Sign in with your Google
+                            account.</Typography>
+                    </Box>
 
-  const handleAutoLoadFinished = (successLogin: boolean): void => {
-    // note: component will be unmounted in case of a successful authentication
-    setReady(true)
-  }
+                    {stage && (
+                        <Box>
+                            <Typography variant='caption'>{stage}</Typography>
+                        </Box>
+                    )}
+                    {error && (
+                        <Alert severity='error'>{error}</Alert>
+                    )}
+                    {timeout && (
+                        <Alert severity={"warning"}>Your session has timed out, thank you to reconnect</Alert>
+                    )}
 
-  return (
-    <div>
-      <Toolbar/>
-      <BackdropLoading loading={!ready}/>
-      <AppNavComponent
-        rightContent={<GoogleLogin
-          clientId={appConfig.googleClientId}
-          uxMode={appConfig.googleLoginUxMode}
-          onFailure={handleFailure}
-          onSuccess={handleSuccess}
-          onAutoLoadFinished={handleAutoLoadFinished}
-          isSignedIn={true}
-        />}
-      />
-      <Container maxWidth='md'>
-        {errorToDisplay ? (
-          <Paper>
-            <Alert severity="error" sx={{mt: 3}}>
-              {errorToDisplay}
-            </Alert>
-          </Paper>
-        ) : (
-          <Paper sx={{mt: 3}}>
-            <Alert severity='info'>
-              This is an invitation only application. Sign in with your Google account.
-            </Alert>
-          </Paper>
-        )}
-      </Container>
-    </div>
-  )
+                    <GoogleLoginIntegration onError={onError}
+                                            onIdentitySuccess={loginWithIdentityToken}
+                                            onWaitingUserInput={onWaitingForUserInput}
+                    />
+                </Paper>
+            </Box>
+        </Box>
+    )
 }
 
 export default Login

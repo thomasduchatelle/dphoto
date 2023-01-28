@@ -64,7 +64,6 @@ clean-web:
 	cd web && yarn clean
 
 setup-web:
-	cd web && npm install
 	cd web && yarn install
 
 test-web:
