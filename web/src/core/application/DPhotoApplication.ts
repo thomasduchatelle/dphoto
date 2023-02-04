@@ -1,5 +1,5 @@
 import {AccessToken, LogoutListener} from "../security";
-import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
+import axios, {AxiosInstance, InternalAxiosRequestConfig} from "axios";
 
 export class DPhotoApplication {
     private accessToken?: AccessToken
@@ -14,7 +14,7 @@ export class DPhotoApplication {
     public renewRefreshToken(accessToken: AccessToken) {
         this.accessToken = accessToken
         if (!this.axiosInterceptorId) {
-            this.axiosInterceptorId = this.axiosInstance.interceptors.request.use(this.axiosRequestInterceptor);
+            this.axiosInterceptorId = this.axiosInstance.interceptors.request.use(this.axiosRequestInterceptor, error => Promise.reject(error));
         }
     }
 
@@ -28,18 +28,11 @@ export class DPhotoApplication {
         return this.accessToken?.accessToken ?? ''
     }
 
-    private axiosRequestInterceptor = (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
-        if (!this.accessToken) {
-            // safeguard - interceptor should have been ejected before
-            return Promise.resolve(config)
+    private axiosRequestInterceptor = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+        if (this.accessToken) {
+            config.headers['Authorization'] = `Bearer ${this.accessToken}`
         }
 
-        return Promise.resolve({
-            ...config,
-            headers: {
-                ...config.headers,
-                'Authorization': `Bearer ${this.accessToken}`
-            }
-        })
+        return config
     };
 }

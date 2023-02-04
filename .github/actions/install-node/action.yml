@@ -10,7 +10,7 @@ runs:
   steps:
     - uses: actions/setup-node@v3
       with:
-        node-version: '17'
+        node-version: '19'
         # note - directly caching node_modules is MUCH faster
     - name: YARN and NPM Cache
       uses: actions/cache@v3
