@@ -2,9 +2,10 @@ import {Alert, ImageList, ImageListItem, ListSubheader, Skeleton} from "@mui/mat
 import {Fragment} from "react";
 import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
 import useWindowDimensions from "../../../../core/utils/window-utils";
-import {MediaWithinADay, mobileBreakpoint} from "../logic";
 import {ImageInList} from "./ImageInList";
+import {MediaWithinADay} from "../../../../core/catalog";
 
+const mobileBreakpoint = 1200;
 
 const drawerWidth = 498;
 const marginsWidth = 33;

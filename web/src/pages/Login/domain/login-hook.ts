@@ -3,6 +3,7 @@ import {useAuthenticationCase, useSecurityState} from "../../../core/application
 import {useReducer, useRef} from "react";
 import {LoginController} from "./login-controller";
 import {initialPageState, reduce} from "./login-reducer";
+import {useCatalogLoader} from "../../../core/catalog";
 
 export interface LoginPageState extends PageState, LoginPageActions {
 }
@@ -11,6 +12,7 @@ export const useLoginPageCase = (onSuccessfulAuthentication: () => void): LoginP
     const {hasTimedOut} = useSecurityState();
     const [state, dispatch] = useReducer(reduce, {...initialPageState, timeout: hasTimedOut})
     const authenticationCase = useAuthenticationCase()
+    const catalogLoader = useCatalogLoader()
 
     const loginController = useRef<LoginPageActions>(new LoginController(
         action => {
@@ -22,7 +24,7 @@ export const useLoginPageCase = (onSuccessfulAuthentication: () => void): LoginP
         },
         authenticationCase,
         {
-            warmupApplication: () => Promise.resolve()
+            warmupApplication: catalogLoader
         },
     ))
 

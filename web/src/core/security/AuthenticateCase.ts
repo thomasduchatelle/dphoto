@@ -31,7 +31,7 @@ export class AuthenticateCase {
     ) {
     }
 
-    public authenticate = (identityToken: string, logoutListener: LogoutListener | undefined = undefined): Promise<void> => {
+    public authenticate = (identityToken: string, logoutListener: LogoutListener | undefined = undefined): Promise<AuthenticatedUser> => {
         return this.authenticateAPI.authenticateWithIdentityToken(identityToken)
             .then(user => {
                 const timeoutId = this.refreshToken(identityToken, user.expiresIn)
@@ -46,6 +46,7 @@ export class AuthenticateCase {
                     user: user,
                     type: 'authenticated'
                 })
+                return user
             })
             .catch((err: AxiosError<ErrorBody>) => {
                 console.log(`ERROR: authentication failed ${JSON.stringify(err)}`)

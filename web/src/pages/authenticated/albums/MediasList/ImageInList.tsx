@@ -2,7 +2,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
 import {Link} from "react-router-dom";
 import {dateTimeToString} from "../../../../core/utils/date-utils";
-import {Media, MediaType} from "../logic";
+import {Media, MediaType} from "../../../../core/catalog";
 
 export function ImageInList({media, imageViewportPercentage}: {
   media: Media,

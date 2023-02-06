@@ -1,4 +1,6 @@
 import {ApplicationContextType} from "./application-context";
+import {InternalError} from "./application-errors";
+import {ErrorWithPublicMessage} from "./application-model";
 
 export type ConfigLoadedAction = {
     type: 'config-loaded'
@@ -24,11 +26,16 @@ export function applicationGenericReducer(current: ApplicationContextType, actio
             }
 
         case "unrecoverable-error":
+            let error = action.error as any as ErrorWithPublicMessage
+            if (!error || !error.publicMessage) {
+                error = new InternalError(action.error.message, action.error)
+            }
+
             return {
                 ...current,
                 general: {
                     ...current.general,
-                    error: action.error,
+                    error: error ,
                 }
             }
     }

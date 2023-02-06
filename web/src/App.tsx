@@ -3,6 +3,7 @@ import {BrowserRouter} from "react-router-dom";
 import DPhotoTheme from "./components/DPhotoTheme";
 import GeneralRouter from "./pages/GeneralRouter";
 import {ApplicationContextComponent} from "./core/application";
+import {CatalogContextComponent} from "./core/catalog";
 
 const App = () => {
     // TODO - add React error boundary
@@ -12,7 +13,9 @@ const App = () => {
                 <CssBaseline/>
                 <BrowserRouter>
                     <ApplicationContextComponent>
-                        <GeneralRouter/>
+                        <CatalogContextComponent>
+                            <GeneralRouter/>
+                        </CatalogContextComponent>
                     </ApplicationContextComponent>
                 </BrowserRouter>
             </DPhotoTheme>

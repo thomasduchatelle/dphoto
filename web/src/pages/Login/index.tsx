@@ -7,8 +7,7 @@ import useLoginController from "./domain";
 const Login = ({onSuccessfulAuthentication}: {
     onSuccessfulAuthentication(): void
 }) => {
-    const ctrl = useLoginController(onSuccessfulAuthentication);
-    const {error, loading, loginWithIdentityToken, onError, onWaitingForUserInput, stage, timeout} = ctrl
+    const {error, loading, loginWithIdentityToken, onError, onWaitingForUserInput, stage, timeout} = useLoginController(onSuccessfulAuthentication)
 
     return (
         <Box sx={{

@@ -60,9 +60,14 @@ const GoogleLoginIntegration = memo(function ({onError, onIdentitySuccess, onWai
                         },
                     });
                     window.google.accounts.id.prompt(res => {
-                        if (res.isDisplayMoment()) {
-                            onWaitingUserInput();
-                        } else if (res.isNotDisplayed() || res.isSkippedMoment() || (res.isDismissedMoment() && res.getDismissedReason() !== "credential_returned")) {
+                        if (res.isDismissedMoment() && res.getDismissedReason() !== "credential_returned") {
+                            // do nothing - callback handler will do the rest
+
+                        } else if (res.isDisplayMoment() && res.isDisplayed()) {
+                            onWaitingUserInput(); // loading signal and messages are built-in
+
+                        } else if (res.isNotDisplayed() || res.isSkippedMoment()) {
+                            // fallback on native button
                             onWaitingUserInput();
                             if (window.google && buttonRef.current) {
                                 window.google.accounts.id.renderButton(buttonRef.current, {

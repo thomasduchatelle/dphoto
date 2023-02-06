@@ -1,8 +1,8 @@
 import {Alert, Box, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
-import {Album, AlbumId, MediaWithinADay} from "../logic";
 import MediaList from "../MediasList";
+import {Album, AlbumId, MediaWithinADay} from "../../../../core/catalog";
 
 export default function MediasPage({
                                      albums,
@@ -35,9 +35,8 @@ export default function MediasPage({
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
         >
-          <Toolbar/>
-          <AlbumsList albums={albums} loaded={fullyLoaded} selected={selectedAlbum}
-                      onSelect={selectAlbum}/>
+            <Toolbar/>
+            <AlbumsList albums={albums} loaded={fullyLoaded} selected={selectedAlbum}/>
         </Drawer>
       </Box>
       <Box

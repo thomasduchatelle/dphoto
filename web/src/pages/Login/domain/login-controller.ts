@@ -16,9 +16,9 @@ export class LoginController implements LoginPageActions {
 
     public loginWithIdentityToken = (identityToken: string, logoutListener?: LogoutListener): void => {
         this.authenticationPort.authenticate(identityToken, logoutListener)
-            .then(() => {
+            .then(user => {
                 this.dispatch({type: 'update-loading', message: "Please wait, loading your catalog..."})
-                return this.loadingPort.warmupApplication()
+                return this.loadingPort.warmupApplication(user)
             })
             .then(() => {
                 this.dispatch({type: 'on-successful-authentication'})
