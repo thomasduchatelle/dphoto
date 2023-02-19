@@ -41,7 +41,7 @@ func readUrl(openIdConfigUrl string) (string, aclcore.OAuth2IssuerConfig, error)
 		return "", aclcore.OAuth2IssuerConfig{}, errors.Wrapf(err, "invalid JWKS URL %s", index.JwksUri)
 	}
 
-	return strings.TrimLeft(index.Issuer, "https://"), aclcore.OAuth2IssuerConfig{
+	return index.Issuer, aclcore.OAuth2IssuerConfig{
 		ConfigSource: openIdConfigUrl,
 		PublicKeysLookup: func(method aclcore.OAuthTokenMethod) (interface{}, error) {
 			if method.Algorithm != jwt.SigningMethodRS256.Alg() {
