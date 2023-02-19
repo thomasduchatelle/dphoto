@@ -31,7 +31,7 @@ export class DPhotoApplication implements AccessTokenHolder {
 
     private axiosRequestInterceptor = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
         if (this.accessToken) {
-            config.headers['Authorization'] = `Bearer ${this.accessToken}`
+            config.headers['Authorization'] = `Bearer ${this.accessToken.accessToken}`
         }
 
         return config
