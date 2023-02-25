@@ -1,7 +1,7 @@
 import {PageState} from "./login-model";
 
-type StopLoadingAction = {
-    type: 'on-waiting-for-user-input'
+type OnUnsuccessfulAutoLoginAttemptAction = {
+    type: 'OnUnsuccessfulAutoLoginAttempt'
 }
 
 type ErrorAction = {
@@ -18,25 +18,33 @@ type OnSuccessfulAuthenticationAction = {
     type: 'on-successful-authentication'
 }
 
-export type PageAction = StopLoadingAction | ErrorAction | UpdateLoadingAction | OnSuccessfulAuthenticationAction
+export type PageAction =
+    OnUnsuccessfulAutoLoginAttemptAction
+    | ErrorAction
+    | UpdateLoadingAction
+    | OnSuccessfulAuthenticationAction
 
 export const initialPageState: PageState = {
-    error: "", loading: true, stage: "Please wait, authenticating...", timeout: false
+    error: "",
+    loading: true,
+    stage: "Please wait, authenticating...",
+    timeout: false,
+    promptForLogin: false,
 }
 
 export function reduce(current: PageState, action: PageAction): PageState {
     switch (action.type) {
         case "error":
             return {
-                error: action.message, loading: false, stage: "", timeout: false
+                error: action.message, loading: false, stage: "", timeout: false, promptForLogin: true,
             }
         case "update-loading":
             return {
                 ...current, loading: true, stage: action.message, error: "",
             }
-        case 'on-waiting-for-user-input':
+        case 'OnUnsuccessfulAutoLoginAttempt':
             return {
-                ...current, loading: false, stage: "",
+                ...current, loading: false, stage: "", promptForLogin: true,
             }
     }
 

@@ -1,6 +1,6 @@
 import {LoginPageActions, PageState} from "./login-model";
 import {useAuthenticationCase, useSecurityState} from "../../../core/application";
-import {useReducer, useRef} from "react";
+import {useEffect, useMemo, useReducer} from "react";
 import {LoginController} from "./login-controller";
 import {initialPageState, reduce} from "./login-reducer";
 import {useCatalogLoader} from "../../../core/catalog";
@@ -14,7 +14,7 @@ export const useLoginPageCase = (onSuccessfulAuthentication: () => void): LoginP
     const authenticationCase = useAuthenticationCase()
     const catalogLoader = useCatalogLoader()
 
-    const loginController = useRef<LoginPageActions>(new LoginController(
+    const loginController = useMemo<LoginPageActions>(() => new LoginController(
         action => {
             if (action.type === "on-successful-authentication") {
                 onSuccessfulAuthentication()
@@ -26,10 +26,14 @@ export const useLoginPageCase = (onSuccessfulAuthentication: () => void): LoginP
         {
             warmupApplication: catalogLoader
         },
-    ))
+    ), [dispatch, onSuccessfulAuthentication, authenticationCase, catalogLoader])
+
+    useEffect(() => {
+        loginController.attemptToAutoAuthenticate()
+    }, [loginController])
 
     return {
         ...state,
-        ...loginController.current,
+        ...loginController,
     }
 }

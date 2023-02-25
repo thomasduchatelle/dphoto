@@ -1,7 +1,9 @@
 import {AuthenticationPort, IdentityProviderError, LoadingPort, LoginPageActions} from "./login-model";
-import {AppAuthenticationError, LogoutListener} from "../../../core/security";
+import {AppAuthenticationError, AuthenticatedUser, LogoutListener} from "../../../core/security";
 import {Dispatch} from "react";
 import {PageAction} from "./login-reducer";
+
+const IDENTITY_TOKEN_KEY = "identityToken";
 
 export class LoginController implements LoginPageActions {
     constructor(
@@ -10,16 +12,47 @@ export class LoginController implements LoginPageActions {
         private loadingPort: LoadingPort) {
     }
 
-    public onWaitingForUserInput = (): void => {
-        this.dispatch({type: 'on-waiting-for-user-input'})
+    public attemptToAutoAuthenticate = () => {
+        const identityToken = localStorage.getItem(IDENTITY_TOKEN_KEY)
+        if (identityToken) {
+            this.authenticationPort
+                .authenticate(identityToken, {
+                    onLogout() {
+                        localStorage.removeItem(IDENTITY_TOKEN_KEY)
+                    }
+                })
+                .then(this.onSuccessfulAuthentication)
+                .catch(err => {
+                    console.log(`WARN: couldn't restore the session from identity token: ${err.message}`)
+                    localStorage.removeItem(IDENTITY_TOKEN_KEY)
+
+                    this.dispatch({type: "OnUnsuccessfulAutoLoginAttempt"})
+                })
+
+        } else {
+            this.dispatch({type: "OnUnsuccessfulAutoLoginAttempt"})
+        }
     }
 
     public loginWithIdentityToken = (identityToken: string, logoutListener?: LogoutListener): void => {
-        this.authenticationPort.authenticate(identityToken, logoutListener)
-            .then(user => {
-                this.dispatch({type: 'update-loading', message: "Please wait, loading your catalog..."})
-                return this.loadingPort.warmupApplication(user)
+        this.authenticationPort
+            .authenticate(identityToken, {
+                onLogout() {
+                    localStorage.removeItem(IDENTITY_TOKEN_KEY)
+                    return logoutListener?.onLogout()
+                }
             })
+            .then(user => {
+                localStorage.setItem(IDENTITY_TOKEN_KEY, identityToken)
+                return user
+            })
+            .then(this.onSuccessfulAuthentication)
+            .catch(this.onError)
+    }
+
+    private onSuccessfulAuthentication = (user: AuthenticatedUser): void => {
+        this.dispatch({type: 'update-loading', message: "Please wait, loading your catalog..."})
+        this.loadingPort.warmupApplication(user)
             .then(() => {
                 this.dispatch({type: 'on-successful-authentication'})
             })

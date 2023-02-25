@@ -4,7 +4,7 @@ export class IdentityProviderError extends Error {
 }
 
 export interface LoginPageActions {
-    onWaitingForUserInput(): void
+    attemptToAutoAuthenticate(): void
 
     loginWithIdentityToken(identityToken: string): void
 
@@ -15,6 +15,8 @@ export interface PageState {
     loading: boolean
 
     stage: string
+
+    promptForLogin: boolean
 
     error: string
 

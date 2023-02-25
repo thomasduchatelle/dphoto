@@ -1,13 +1,21 @@
 import {Alert, Box, LinearProgress, Paper, Typography} from "@mui/material";
 import React from "react";
-import GoogleLoginIntegration from "./GoogleLoginButton";
 import useLoginController from "./domain";
+import GoogleLoginButton from "./GoogleLoginButton";
 
 
 const Login = ({onSuccessfulAuthentication}: {
     onSuccessfulAuthentication(): void
 }) => {
-    const {error, loading, loginWithIdentityToken, onError, onWaitingForUserInput, stage, timeout} = useLoginController(onSuccessfulAuthentication)
+    const {
+        error,
+        loading,
+        loginWithIdentityToken,
+        onError,
+        promptForLogin,
+        stage,
+        timeout
+    } = useLoginController(onSuccessfulAuthentication)
 
     return (
         <Box sx={{
@@ -68,10 +76,11 @@ const Login = ({onSuccessfulAuthentication}: {
                         <Alert severity={"warning"}>Your session has timed out, thank you to reconnect</Alert>
                     )}
 
-                    <GoogleLoginIntegration onError={onError}
-                                            onIdentitySuccess={loginWithIdentityToken}
-                                            onWaitingUserInput={onWaitingForUserInput}
-                    />
+                    {promptForLogin && (
+                        <GoogleLoginButton onError={onError}
+                                           onIdentitySuccess={loginWithIdentityToken}
+                        />
+                    )}
                 </Paper>
             </Box>
         </Box>

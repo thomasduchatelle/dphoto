@@ -1,27 +1,15 @@
 import React, {memo, useEffect, useRef} from "react";
-import {Box} from "@mui/material";
-import useWindowDimensions from "../../../core/utils/window-utils";
-import {IdentityProviderError} from "../domain";
 import {LogoutListener} from "../../../core/security";
-import {googleLogout} from "./google-logout";
 import {useConfigContext} from "../../../core/application";
+import useWindowDimensions from "../../../core/utils/window-utils";
+import {loadScript} from "./loadScript";
+import {IdentityProviderError} from "../domain";
+import {googleLogout} from "./google-logout";
+import {Box} from "@mui/material";
 
-export const loadScript = (src: string) => {
-    return new Promise<void>((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) return resolve()
-
-        const script = document.createElement('script')
-        script.src = src
-        script.onload = () => resolve()
-        script.onerror = (err) => reject(err)
-        document.body.appendChild(script)
-    })
-}
-
-const GoogleLoginIntegration = memo(function ({onError, onIdentitySuccess, onWaitingUserInput}: {
+export const GoogleLoginIntegration = memo(function ({onError, onIdentitySuccess}: {
     onError(error: Error): void
     onIdentitySuccess(identityToken: string, logoutListener: LogoutListener): void
-    onWaitingUserInput(): void
 }) {
     const buttonRef = useRef<HTMLDivElement>(null);
     const {googleClientId} = useConfigContext();
@@ -59,25 +47,14 @@ const GoogleLoginIntegration = memo(function ({onError, onIdentitySuccess, onWai
                             }
                         },
                     });
-                    window.google.accounts.id.prompt(res => {
-                        if (res.isDismissedMoment() && res.getDismissedReason() !== "credential_returned") {
-                            // do nothing - callback handler will do the rest
 
-                        } else if (res.isDisplayMoment() && res.isDisplayed()) {
-                            onWaitingUserInput(); // loading signal and messages are built-in
-
-                        } else if (res.isNotDisplayed() || res.isSkippedMoment()) {
-                            // fallback on native button
-                            onWaitingUserInput();
-                            if (window.google && buttonRef.current) {
-                                window.google.accounts.id.renderButton(buttonRef.current, {
-                                    type: 'standard',
-                                    width: `${buttonSize}px`, // this is not reactive without refresh
-                                    text: 'continue_with',
-                                });
-                            }
-                        }
-                    });
+                    if (window.google && buttonRef.current) {
+                        window.google.accounts.id.renderButton(buttonRef.current, {
+                            type: 'standard',
+                            width: `${buttonSize}px`, // this is not reactive without refresh
+                            text: 'continue_with',
+                        });
+                    }
                 } catch (error) {
                     onError(new IdentityProviderError("Google Login button cannot be generated"))
                 }
@@ -89,12 +66,10 @@ const GoogleLoginIntegration = memo(function ({onError, onIdentitySuccess, onWai
                 currentButtonRef.innerText = ''
             }
         }
-    }, [buttonSize, googleClientId, onError, onWaitingUserInput, onIdentitySuccess])
+    }, [buttonSize, googleClientId, onError, onIdentitySuccess])
 
     return <Box ref={buttonRef} id='google-login-prompt' sx={{
         width: `${buttonSize}px`,
         margin: 'auto',
     }}></Box>
 })
-
-export default GoogleLoginIntegration

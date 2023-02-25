@@ -1,4 +1,4 @@
-import {loadScript} from "./index";
+import {loadScript} from "./loadScript";
 
 export const googleLogout = (email?: string): Promise<void> => {
     return loadScript('https://accounts.google.com/gsi/client')
