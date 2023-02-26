@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"regexp"
 	"strings"
 	"testing"
@@ -32,6 +33,11 @@ func NewDbContext(t *testing.T) (*session.Session, *dynamodb.DynamoDB, string) {
 	awsSession := NewLocalstackSession()
 	tableName := NewTestTableName(t)
 	db := dynamodb.New(awsSession)
+
+	err := appdynamodb.CreateTableIfNecessary(tableName, db, true)
+	if err != nil {
+		panic(err)
+	}
 
 	t.Cleanup(func() {
 		_, _ = db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &tableName})

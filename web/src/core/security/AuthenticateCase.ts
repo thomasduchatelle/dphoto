@@ -8,7 +8,8 @@ interface ErrorBody {
     error: string
 }
 
-export interface SuccessfulAuthenticationResponse extends AuthenticatedUser {
+export interface SuccessfulAuthenticationResponse {
+    details: AuthenticatedUser
     accessToken: string
     expiresIn: number
 }
@@ -31,7 +32,7 @@ export class AuthenticateCase {
     ) {
     }
 
-    public authenticate = (identityToken: string, logoutListener: LogoutListener | undefined = undefined): Promise<AuthenticatedUser> => {
+    public authenticate = (identityToken: string, logoutListener: LogoutListener | undefined = undefined): Promise<SuccessfulAuthenticationResponse> => {
         return this.authenticateAPI.authenticateWithIdentityToken(identityToken)
             .then(user => {
                 const timeoutId = this.refreshToken(identityToken, user.expiresIn)
@@ -43,7 +44,7 @@ export class AuthenticateCase {
                     },
                     logoutListener: logoutListener,
                     refreshTimeoutId: timeoutId,
-                    user: user,
+                    user: user.details,
                     type: 'authenticated'
                 })
                 return user

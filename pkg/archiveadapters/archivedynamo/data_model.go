@@ -5,21 +5,21 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"path"
 	"strings"
 )
 
-type MediaLocation struct {
-	catalogdynamo.TablePk
+type MediaLocationRecord struct {
+	appdynamodb.TablePk
 	LocationKeyPrefix string // LocationKeyPrefix is used for indexing
 	LocationId        string // LocationId is also part of the primary key
 	LocationKey       string // LocationKey is the physical location
 }
 
-func MediaLocationPk(owner, id string) catalogdynamo.TablePk {
-	return catalogdynamo.TablePk{
-		PK: catalogdynamo.MediaPrimaryKeyPK(owner, id),
+func MediaLocationPk(owner, id string) appdynamodb.TablePk {
+	return appdynamodb.TablePk{
+		PK: appdynamodb.MediaPrimaryKeyPK(owner, id),
 		SK: "LOCATION#",
 	}
 }
@@ -40,7 +40,7 @@ func marshalMediaLocation(owner, id, key string) (map[string]*dynamodb.Attribute
 		return nil, errors.Errorf("media id is mndatory")
 	}
 
-	return dynamodbattribute.MarshalMap(&MediaLocation{
+	return dynamodbattribute.MarshalMap(&MediaLocationRecord{
 		TablePk:           MediaLocationPk(owner, id),
 		LocationKeyPrefix: path.Dir(key),
 		LocationId:        id,
@@ -49,7 +49,7 @@ func marshalMediaLocation(owner, id, key string) (map[string]*dynamodb.Attribute
 }
 
 func unmarshalMediaLocation(attributes map[string]*dynamodb.AttributeValue) (string, string, error) {
-	location := MediaLocation{}
+	location := MediaLocationRecord{}
 	err := dynamodbattribute.UnmarshalMap(attributes, &location)
 	return location.LocationId, location.LocationKey, errors.Wrapf(err, "MediaLocation cannot be unmarchaled from %+v", attributes)
 }

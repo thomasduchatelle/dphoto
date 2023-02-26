@@ -1,4 +1,4 @@
-package acldynamodb
+package aclscopedynamodb
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/dynamoutils"
+	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
 func (r *repository) DeleteScopes(ids ...aclcore.ScopeId) error {
@@ -18,7 +18,7 @@ func (r *repository) DeleteScopes(ids ...aclcore.ScopeId) error {
 	}
 
 	return errors.Wrapf(
-		dynamoutils.BufferedWriteItems(r.db, requests, r.table, dynamoutils.DynamoWriteBatchSize),
+		dynamoutils2.BufferedWriteItems(r.db, requests, r.table, dynamoutils2.DynamoWriteBatchSize),
 		"failed to delete scopes %+v",
 		ids,
 	)

@@ -8,24 +8,10 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/dynamoutils"
+	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
-func New(sess *session.Session, tableName string, createTable bool) (archive.ARepositoryAdapter, error) {
-	if createTable {
-		catalogRepository, err := catalogdynamo.NewRepository(sess, tableName)
-		if err != nil {
-			return nil, err
-		}
-		if tableCreator, ok := catalogRepository.(*catalogdynamo.Repository); ok {
-			err = tableCreator.CreateTableIfNecessary()
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
+func New(sess *session.Session, tableName string) (archive.ARepositoryAdapter, error) {
 	return &repository{
 		db:    dynamodb.New(sess),
 		table: tableName,
@@ -83,7 +69,7 @@ func (r *repository) FindByIds(owner string, ids []string) (map[string]string, e
 
 	locations := make(map[string]string)
 
-	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	stream := dynamoutils2.NewGetStream(dynamoutils2.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils2.DynamoReadBatchSize)
 	for stream.HasNext() {
 		id, key, err := unmarshalMediaLocation(stream.Next())
 		if err != nil {
@@ -113,7 +99,7 @@ func (r *repository) UpdateLocations(owner string, locations map[string]string) 
 		i++
 	}
 
-	return dynamoutils.BufferedWriteItems(r.db, requests, r.table, dynamoutils.DynamoWriteBatchSize)
+	return dynamoutils2.BufferedWriteItems(r.db, requests, r.table, dynamoutils2.DynamoWriteBatchSize)
 }
 
 func (r *repository) FindIdsFromKeyPrefix(keyPrefix string) (map[string]string, error) {

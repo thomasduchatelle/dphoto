@@ -1,12 +1,11 @@
-package acldynamodb
+package aclscopedynamodb
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"sort"
 	"testing"
 	"time"
@@ -16,15 +15,6 @@ const (
 	ironmanEmail = "ironman@stark.com"
 	pepperEmail  = "pepperpotts@stark.com"
 )
-
-func awsSession() *session.Session {
-	return session.Must(session.NewSession(&aws.Config{
-		CredentialsChainVerboseErrors: aws.Bool(true),
-		Endpoint:                      aws.String("http://localhost:4566"),
-		Credentials:                   credentials.NewStaticCredentials("localstack", "localstack", ""),
-		Region:                        aws.String("eu-west-1"),
-	}))
-}
 
 func Test_repository_ListUserScopes(t *testing.T) {
 	type args struct {
@@ -121,8 +111,8 @@ func Test_repository_ListUserScopes(t *testing.T) {
 		},
 	}
 
-	r := Must(New(awsSession(), "accesscontroladapter-scoperepository-listuserscopes-"+time.Now().Format("20060102150405.000"), true)).(*repository)
-	defer r.db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &r.table})
+	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	r := Must(New(awsSession, table)).(*repository)
 
 	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]*dynamodb.WriteRequest{
@@ -228,8 +218,8 @@ func Test_repository_ListOwnerScopes(t *testing.T) {
 		},
 	}
 
-	r := Must(New(awsSession(), "accesscontroladapter-scoperepository-listuserscopes-"+time.Now().Format("20060102150405.000"), true)).(*repository)
-	defer r.db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &r.table})
+	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	r := Must(New(awsSession, table)).(*repository)
 
 	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]*dynamodb.WriteRequest{
@@ -355,8 +345,8 @@ func Test_repository_FindScopesById(t *testing.T) {
 		},
 	}
 
-	r := Must(New(awsSession(), "accesscontroladapter-scoperepository-findscopesbyid-"+time.Now().Format("20060102150405.000"), true)).(*repository)
-	defer r.db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &r.table})
+	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	r := Must(New(awsSession, table)).(*repository)
 
 	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]*dynamodb.WriteRequest{

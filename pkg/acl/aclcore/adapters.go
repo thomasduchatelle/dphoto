@@ -20,3 +20,18 @@ type ScopeWriter interface {
 	// SaveIfNewScope persists the scope if it doesn't exist yet, no error is returned if it already exists
 	SaveIfNewScope(scope Scope) error
 }
+
+type RefreshTokenRepository interface {
+	StoreRefreshToken(token string, spec RefreshTokenSpec) error
+
+	FindRefreshToken(token string) (*RefreshTokenSpec, error)
+	DeleteRefreshToken(token string) error
+
+	// HouseKeepRefreshToken removes any token that have expired
+	HouseKeepRefreshToken() (int, error)
+}
+
+type IdentityDetailsStore interface {
+	StoreIdentity(identity Identity) error
+	FindIdentity(email string) (*Identity, error)
+}

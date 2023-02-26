@@ -24,7 +24,7 @@ export type PageAction =
     | UpdateLoadingAction
     | OnSuccessfulAuthenticationAction
 
-export const initialPageState: PageState = {
+export const initialLoginPageState: PageState = {
     error: "",
     loading: true,
     stage: "Please wait, authenticating...",

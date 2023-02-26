@@ -10,7 +10,7 @@ import (
 
 func init() {
 	config2.Listen(func(cfg config2.Config) {
-		repositoryAdapter := archivedynamo.Must(archivedynamo.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveDynamodbTable), false))
+		repositoryAdapter := archivedynamo.Must(archivedynamo.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveDynamodbTable)))
 		storeAdapter := s3store.Must(s3store.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveMainBucketName)))
 		cacheAdapter := s3store.Must(s3store.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveCacheBucketName)))
 		archiveAsyncAdapter := asyncjobadapter.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveJobsSNSARN), cfg.GetString(config2.ArchiveJobsSQSURL), asyncjobadapter.DefaultImagesPerMessage)

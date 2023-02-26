@@ -2,20 +2,27 @@ import {Alert, Box, LinearProgress, Paper, Typography} from "@mui/material";
 import React from "react";
 import useLoginController from "./domain";
 import GoogleLoginButton from "./GoogleLoginButton";
+import {LoginPageState} from "./domain/login-hook";
 
 
 const Login = ({onSuccessfulAuthentication}: {
     onSuccessfulAuthentication(): void
 }) => {
-    const {
-        error,
-        loading,
-        loginWithIdentityToken,
-        onError,
-        promptForLogin,
-        stage,
-        timeout
-    } = useLoginController(onSuccessfulAuthentication)
+    const ctrl = useLoginController(onSuccessfulAuthentication)
+
+    return (
+        <LoginInternal {...ctrl} />
+    )
+}
+export const LoginInternal = ({
+                                  error,
+                                  loading,
+                                  loginWithIdentityToken,
+                                  onError,
+                                  promptForLogin,
+                                  stage,
+                                  timeout
+                              }: LoginPageState) => {
 
     return (
         <Box sx={{

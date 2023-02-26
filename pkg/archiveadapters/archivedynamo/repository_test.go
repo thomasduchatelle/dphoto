@@ -2,12 +2,9 @@ package archivedynamo
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"testing"
 	"time"
 )
@@ -61,12 +58,8 @@ func TestShouldAddAndFindLocations(t *testing.T) {
 		},
 	}
 
-	repo := Must(New(
-		session.Must(session.NewSession(awsConfig())),
-		"dphoto-unittest-archive-"+time.Now().Format("20060102150405.000"),
-		true,
-	)).(*repository)
-	defer repo.db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &repo.table})
+	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	repo := Must(New(awsSession, table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -131,12 +124,8 @@ func TestUpdateLocations(t *testing.T) {
 		},
 	}
 
-	repo := Must(New(
-		session.Must(session.NewSession(awsConfig())),
-		"dphoto-unittest-archive-location"+time.Now().Format("20060102150405.000"),
-		true,
-	)).(*repository)
-	defer repo.db.DeleteTable(&dynamodb.DeleteTableInput{TableName: &repo.table})
+	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	repo := Must(New(awsSession, table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -153,15 +142,6 @@ func TestUpdateLocations(t *testing.T) {
 				assert.Equal(t, tt.want, got, tt.name)
 			}
 		})
-	}
-}
-
-func awsConfig() *aws.Config {
-	return &aws.Config{
-		CredentialsChainVerboseErrors: aws.Bool(true),
-		Endpoint:                      aws.String("http://localhost:4566"),
-		Credentials:                   credentials.NewStaticCredentials("localstack", "localstack", ""),
-		Region:                        aws.String("eu-west-1"),
 	}
 }
 
@@ -224,14 +204,8 @@ func TestFindIdsFromKeyPrefix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := Must(New(
-				session.Must(session.NewSession(awsConfig())),
-				"dphoto-unittest-archive-key-prefix-"+time.Now().Format("20060102150405.000"),
-				true,
-			)).(*repository)
-			defer repo.db.DeleteTable(&dynamodb.DeleteTableInput{
-				TableName: &repo.table,
-			})
+			awsSession, _, table := dynamotestutils.NewDbContext(t)
+			repo := Must(New(awsSession, table)).(*repository)
 
 			err := repo.UpdateLocations(owner, tt.withLocations)
 			if !assert.NoError(t, err) {

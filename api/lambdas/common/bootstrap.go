@@ -6,7 +6,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/acldynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclidentitydynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclrefreshdynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclscopedynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/jwks"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/archivedynamo"
@@ -16,24 +18,27 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
 	"os"
+	"time"
 )
 
 const (
-	JWTIssuer         = "DPHOTO_JWT_ISSUER"
-	JWTKeyB64         = "DPHOTO_JWT_KEY_B64"
-	JWTValidity       = "DPHOTO_JWT_VALIDITY"
-	DynamoDBTableName = "CATALOG_TABLE_NAME"
+	JWTIssuer            = "DPHOTO_JWT_ISSUER"
+	JWTKeyB64            = "DPHOTO_JWT_KEY_B64"
+	JWTValidity          = "DPHOTO_JWT_VALIDITY"
+	RefreshTokenValidity = "DPHOTO_REFRESH_TOKEN_VALIDITY"
+	DynamoDBTableName    = "CATALOG_TABLE_NAME"
 )
 
 var (
 	jwtDecoder      *aclcore.AccessTokenDecoder
-	grantRepository acldynamodb.GrantRepository
+	grantRepository aclscopedynamodb.GrantRepository
 )
 
 func init() {
 	viper.AutomaticEnv()
 
-	viper.SetDefault(JWTValidity, "8h")
+	viper.SetDefault(JWTValidity, "15m")
+	viper.SetDefault(RefreshTokenValidity, "")
 }
 
 func appAuthConfig() aclcore.OAuthConfig {
@@ -42,30 +47,55 @@ func appAuthConfig() aclcore.OAuthConfig {
 		panic(fmt.Sprintf("environment variable '%s' must be encoded in base 64 [value was %s]", JWTKeyB64, viper.GetString(JWTKeyB64)))
 	}
 
+	refreshDurations := map[aclcore.RefreshTokenPurpose]time.Duration{
+		aclcore.RefreshTokenPurposeWeb: 90 * 24 * time.Hour,
+	}
+	for token, validity := range viper.GetStringMapString(RefreshTokenValidity) {
+		refreshDurations[aclcore.RefreshTokenPurpose(token)], err = time.ParseDuration(validity)
+	}
+
 	return aclcore.OAuthConfig{
-		ValidityDuration: viper.GetDuration(JWTValidity),
-		Issuer:           viper.GetString(JWTIssuer),
-		SecretJwtKey:     jwtKey,
+		AccessDuration:  viper.GetDuration(JWTValidity),
+		RefreshDuration: refreshDurations,
+		Issuer:          viper.GetString(JWTIssuer),
+		SecretJwtKey:    jwtKey,
 	}
 }
 
-func ssoAuthenticatorPermissionReader() acldynamodb.GrantRepository {
-	return acldynamodb.Must(acldynamodb.New(newSession(), viper.GetString(DynamoDBTableName), true))
+func ssoAuthenticatorPermissionReader() aclscopedynamodb.GrantRepository {
+	return aclscopedynamodb.Must(aclscopedynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
 }
 
-func NewSSOAuthenticator() *aclcore.SSOAuthenticator {
+func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthenticator) {
 	config, err := jwks.LoadIssuerConfig(aclcore.TrustedIdentityProvider...)
 	if err != nil {
 		panic(err)
 	}
 
-	return &aclcore.SSOAuthenticator{
-		TokenGenerator: aclcore.TokenGenerator{
-			PermissionsReader: ssoAuthenticatorPermissionReader(),
-			Config:            appAuthConfig(),
-		},
-		TrustedIdentityIssuers: config,
+	identityDetailsStore := aclidentitydynamodb.Must(aclidentitydynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
+	refreshTokenRepository := aclrefreshdynamodb.Must(aclrefreshdynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
+
+	refreshTokenGenerator := aclcore.RefreshTokenGenerator{
+		RefreshTokenRepository: refreshTokenRepository,
+		RefreshDuration:        appAuthConfig().RefreshDuration,
 	}
+	accessTokenGenerator := aclcore.AccessTokenGenerator{
+		PermissionsReader: ssoAuthenticatorPermissionReader(),
+		Config:            appAuthConfig(),
+	}
+
+	return &aclcore.SSOAuthenticator{
+			AccessTokenGenerator:   accessTokenGenerator,
+			RefreshTokenGenerator:  &refreshTokenGenerator,
+			IdentityDetailsStore:   identityDetailsStore,
+			TrustedIdentityIssuers: config,
+		},
+		&aclcore.RefreshTokenAuthenticator{
+			AccessTokenGenerator:   &accessTokenGenerator,
+			RefreshTokenGenerator:  &refreshTokenGenerator,
+			RefreshTokenRepository: refreshTokenRepository,
+			IdentityDetailsStore:   identityDetailsStore,
+		}
 }
 
 func AccessTokenDecoder() *aclcore.AccessTokenDecoder {
@@ -129,7 +159,7 @@ func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 	sess := newSession()
 	archiveAsyncAdapter := asyncjobadapter.New(sess, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobadapter.DefaultImagesPerMessage)
 	archive.Init(
-		archivedynamo.Must(archivedynamo.New(sess, tableName, false)),
+		archivedynamo.Must(archivedynamo.New(sess, tableName)),
 		s3store.Must(s3store.New(sess, storeBucketName)),
 		s3store.Must(s3store.New(sess, cacheBucketName)),
 		archiveAsyncAdapter,

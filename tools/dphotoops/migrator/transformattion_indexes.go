@@ -1,21 +1,16 @@
 package migrator
 
 import (
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 )
 
 type TransformationUpDateIndex struct{}
 
 func (i TransformationUpDateIndex) PreScan(run *TransformationRun) error {
-	repository := catalogdynamo.Must(catalogdynamo.NewRepository(run.Session, run.DynamoDBTableName))
-	if repo, ok := repository.(*catalogdynamo.Repository); ok {
-		log.Infoln("Updating indexes ...")
-		return errors.Wrap(repo.CreateTableIfNecessary(), "failed to init DynamoDb structure (indexes, ...)")
-	} else {
-		log.Warn("catalogdynamo.NewRepository hasn't return the right type")
-	}
-
-	return nil
+	log.Infoln("Updating indexes ...")
+	err := appdynamodb.CreateTableIfNecessary(run.DynamoDBTableName, dynamodb.New(run.Session), false)
+	return errors.Wrapf(err, "failed to init DynamoDb structure (indexes, ...)")
 }

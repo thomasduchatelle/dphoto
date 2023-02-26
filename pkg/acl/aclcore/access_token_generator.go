@@ -5,18 +5,25 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"math/rand"
 	"strings"
+	"time"
 )
 
-// TokenGenerator generate an access token pre-authorising consumer to perform most operations
-type TokenGenerator struct {
-	PermissionsReader ScopesReader
-	Config            OAuthConfig
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
 
-func (t *TokenGenerator) GenerateAccessToken(email string) (*Authentication, error) {
+// AccessTokenGenerator generate an access token pre-authorising consumer to perform most operations
+type AccessTokenGenerator struct {
+	PermissionsReader     ScopesReader
+	Config                OAuthConfig
+	AccessTokenRepository RefreshTokenRepository
+}
+
+func (t *AccessTokenGenerator) GenerateAccessToken(email string) (*Authentication, error) {
 	issuedAt := TimeFunc().UTC()
-	expiresAt := issuedAt.Add(t.Config.ValidityDuration)
+	expiresAt := issuedAt.Add(t.Config.AccessDuration)
 
 	scopes, err := t.loadUserScopes(email)
 	if err != nil {
@@ -49,11 +56,11 @@ func (t *TokenGenerator) GenerateAccessToken(email string) (*Authentication, err
 	return &Authentication{
 		AccessToken: signedJwt,
 		ExpiryTime:  expiresAt,
-		ExpiresIn:   int64(t.Config.ValidityDuration.Seconds()),
+		ExpiresIn:   int64(t.Config.AccessDuration.Seconds()),
 	}, errors.Wrapf(err, "couldn't sign the generated JWT")
 }
 
-func (t *TokenGenerator) loadUserScopes(email string) ([]string, error) {
+func (t *AccessTokenGenerator) loadUserScopes(email string) ([]string, error) {
 	grants, err := t.PermissionsReader.ListUserScopes(email, ApiScope, MainOwnerScope)
 
 	var scopes []string

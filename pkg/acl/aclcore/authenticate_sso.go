@@ -3,12 +3,15 @@ package aclcore
 import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
 // SSOAuthenticator use a known identity token issued by a known and trusted identity provider (google, facebook, ...) to create an access token
 type SSOAuthenticator struct {
-	TokenGenerator
+	AccessTokenGenerator
+	RefreshTokenGenerator  IRefreshTokenGenerator
+	IdentityDetailsStore   IdentityDetailsStore
 	TrustedIdentityIssuers map[string]OAuth2IssuerConfig // TrustedIdentityIssuers is the list of accepted 'iss', and their public key
 }
 
@@ -19,13 +22,26 @@ type googleClaims struct {
 	Picture string `json:"picture"`
 }
 
-func (s *SSOAuthenticator) AuthenticateFromExternalIDProvider(identityJWT string) (*Authentication, *Identity, error) {
+func (s *SSOAuthenticator) AuthenticateFromExternalIDProvider(identityJWT string, refreshTokenPurpose RefreshTokenPurpose) (*Authentication, *Identity, error) {
 	identity, err := s.parseGoogleIdentity(identityJWT)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	authentication, err := s.TokenGenerator.GenerateAccessToken(identity.Email)
+	authentication, err := s.AccessTokenGenerator.GenerateAccessToken(identity.Email)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err = s.IdentityDetailsStore.StoreIdentity(identity); err != nil {
+		log.WithError(err).Warnf("failed to store identity of %s. Skipping.", identity.Email)
+	}
+
+	authentication.RefreshToken, err = s.RefreshTokenGenerator.GenerateRefreshToken(RefreshTokenSpec{
+		Email:               identity.Email,
+		RefreshTokenPurpose: refreshTokenPurpose,
+	})
+
 	return authentication, &identity, err
 }
 

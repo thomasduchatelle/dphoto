@@ -1,4 +1,4 @@
-package acldynamodb
+package aclscopedynamodb
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"strings"
 	"time"
 )
@@ -16,7 +16,7 @@ const (
 )
 
 type ScopeRecord struct {
-	catalogdynamo.TablePk
+	appdynamodb.TablePk
 	Type          string
 	GrantedAt     time.Time
 	GrantedTo     string
@@ -25,15 +25,11 @@ type ScopeRecord struct {
 	ResourceName  string
 }
 
-func ScopeRecordPk(user, scopeType, owner, id string) catalogdynamo.TablePk {
-	return catalogdynamo.TablePk{
-		PK: userPk(user),
+func ScopeRecordPk(user, scopeType, owner, id string) appdynamodb.TablePk {
+	return appdynamodb.TablePk{
+		PK: appdynamodb.UserPk(user),
 		SK: fmt.Sprintf("%s%s#%s#%s", scopePrefix, scopeType, owner, id),
 	}
-}
-
-func userPk(user string) string {
-	return fmt.Sprintf("USER#%s", user)
 }
 
 func MarshalScopeId(id aclcore.ScopeId) map[string]*dynamodb.AttributeValue {

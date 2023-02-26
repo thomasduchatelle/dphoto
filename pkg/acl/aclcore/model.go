@@ -17,12 +17,15 @@ import (
 var TimeFunc = time.Now
 
 var (
-	InvalidTokenError         = errors.New("authenticated failed")
-	InvalidTokenExplicitError = errors.New("authentication failed: token invalid")
-	NotPreregisteredError     = errors.New("user must be pre-registered")
-	AccessUnauthorisedError   = errors.New("access unauthorised")
-	AccessForbiddenError      = errors.New("access forbidden")
-	InvalidUserEmailError     = errors.New("user email is mandatory")
+	InvalidTokenError            = errors.New("authenticated failed")
+	InvalidTokenExplicitError    = errors.New("authentication failed: token invalid")
+	NotPreregisteredError        = errors.New("user must be pre-registered")
+	AccessUnauthorisedError      = errors.New("access unauthorised")
+	AccessForbiddenError         = errors.New("access forbidden")
+	InvalidUserEmailError        = errors.New("user email is mandatory")
+	ExpiredRefreshTokenError     = errors.New("refresh token has expired")
+	InvalidRefreshTokenError     = errors.New("refresh token is not valid")
+	IdentityDetailsNotFoundError = errors.New("no identity details stored for this identity") // IdentityDetailsNotFoundError is an internal error between the domain and the repository
 
 	// TrustedIdentityProvider is the default list of trusted identity providers
 	TrustedIdentityProvider = []string{
@@ -37,10 +40,13 @@ const (
 	MediaVisitorScope ScopeType = "media:visitor" // MediaVisitorScope gives read access to medias directly
 
 	JWTScopeOwnerPrefix = "owner:"
+
+	RefreshTokenPurposeWeb RefreshTokenPurpose = "web" // RefreshTokenPurposeWeb is used for WEB sessions
 )
 
 // ScopeType is a type of API (admin) or a catalog resource (owner, album, ...)
 type ScopeType string
+type RefreshTokenPurpose string
 
 // Scope is attached to a user (a consumer of the API) and define the role it has on resource basis
 type Scope struct {
@@ -61,9 +67,10 @@ type ScopeId struct {
 }
 
 type OAuthConfig struct {
-	ValidityDuration time.Duration // ValidityDuration for generated access token
-	Issuer           string        // Issuer is the application instance ID, used in both 'iss' and 'aud'
-	SecretJwtKey     []byte        // SecretJwtKey is the key used to sign and validate DPhoto JWT
+	AccessDuration  time.Duration                         // AccessDuration for generated access tokens
+	RefreshDuration map[RefreshTokenPurpose]time.Duration // RefreshDuration for generated refresh token (based on the purpose)
+	Issuer          string                                // Issuer is the application instance ID, used in both 'iss' and 'aud'
+	SecretJwtKey    []byte                                // SecretJwtKey is the key used to sign and validate DPhoto JWT
 }
 
 type OAuthTokenMethod struct {
@@ -86,9 +93,10 @@ func (i *OAuth2IssuerConfig) String() string {
 
 // Authentication is generated upon successful authentication
 type Authentication struct {
-	AccessToken string
-	ExpiryTime  time.Time
-	ExpiresIn   int64 // ExpiresIn is the number of seconds before access token expires
+	AccessToken  string
+	RefreshToken string // RefreshToken is optional
+	ExpiryTime   time.Time
+	ExpiresIn    int64 // ExpiresIn is the number of seconds before access token expires
 }
 
 // Identity is read from token created by the Identity Provider (google, ...)
@@ -102,4 +110,11 @@ type Claims struct {
 	Subject string                 // Subject is the user id (its email)
 	Scopes  map[string]interface{} // Scopes is the list of permissions stored eagerly in access token
 	Owner   string                 // Owner is deviated from Scopes (extract of the MainOwnerScope)
+}
+
+type RefreshTokenSpec struct {
+	Email               string
+	RefreshTokenPurpose RefreshTokenPurpose // RefreshTokenPurpose is mandatory
+	AbsoluteExpiryTime  time.Time           // AbsoluteExpiryTime will be generated from RefreshTokenPurpose if not defined
+	Scopes              []string            // Scopes is the list of scopes for which an access token can be generated
 }

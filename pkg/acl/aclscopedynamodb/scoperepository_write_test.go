@@ -1,12 +1,12 @@
-package acldynamodb
+package aclscopedynamodb
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/dynamotestutils"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/dynamoutils"
+	dynamotestutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
+	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"testing"
 	"time"
 )
@@ -77,14 +77,14 @@ func Test_repository_DeleteScopes(t *testing.T) {
 	}
 
 	awsSession, _, tableName := dynamotestutils.NewDbContext(t)
-	repo := Must(New(awsSession, tableName, true)).(*repository)
+	repo := Must(New(awsSession, tableName)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dynamotestutils.SetContent(t, repo.db, repo.table, tt.givenBefore...)
+			dynamotestutils.SetContent(t, repo.db, repo.table, tt.givenBefore)
 			err := repo.DeleteScopes(tt.args.ids...)
 			if tt.wantErr(t, err) && err == nil {
-				got, err := dynamoutils.AsSlice(dynamoutils.NewScanStream(repo.db, repo.table))
+				got, err := dynamoutils2.AsSlice(dynamoutils2.NewScanStream(repo.db, repo.table))
 				if assert.NoError(t, err) {
 					assert.Equal(t, tt.wantAfter, got)
 				}
@@ -167,15 +167,15 @@ func Test_repository_SaveIfNewScope(t *testing.T) {
 	}
 
 	awsSession, _, tableName := dynamotestutils.NewDbContext(t)
-	repo := Must(New(awsSession, tableName, true)).(*repository)
+	repo := Must(New(awsSession, tableName)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dynamotestutils.SetContent(t, repo.db, repo.table, tt.givenBefore...)
+			dynamotestutils.SetContent(t, repo.db, repo.table, tt.givenBefore)
 
 			err := repo.SaveIfNewScope(tt.args.scope)
 			if tt.wantErr(t, err) && err == nil {
-				got, err := dynamoutils.AsSlice(dynamoutils.NewScanStream(repo.db, repo.table))
+				got, err := dynamoutils2.AsSlice(dynamoutils2.NewScanStream(repo.db, repo.table))
 				if assert.NoError(t, err) {
 					assert.Equal(t, tt.wantAfter, got)
 				}

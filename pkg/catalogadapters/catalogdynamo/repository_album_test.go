@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"testing"
 	"time"
@@ -40,7 +41,7 @@ func (a *AlbumCrudTestSuite) SetupSuite() {
 		localDynamodb: true,
 	}
 
-	err := a.repo.CreateTableIfNecessary()
+	err := appdynamodb.CreateTableIfNecessary(a.repo.table, a.repo.db, true)
 	if err != nil {
 		panic(err)
 	}

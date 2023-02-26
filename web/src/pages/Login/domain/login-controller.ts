@@ -1,7 +1,7 @@
 import {AuthenticationPort, IdentityProviderError, LoadingPort, LoginPageActions} from "./login-model";
-import {AppAuthenticationError, AuthenticatedUser, LogoutListener} from "../../../core/security";
+import {AppAuthenticationError, LogoutListener, SuccessfulAuthenticationResponse} from "../../../core/security";
 import {Dispatch} from "react";
-import {PageAction} from "./login-reducer";
+import {initialLoginPageState, PageAction} from "./login-reducer";
 
 const IDENTITY_TOKEN_KEY = "identityToken";
 
@@ -35,6 +35,7 @@ export class LoginController implements LoginPageActions {
     }
 
     public loginWithIdentityToken = (identityToken: string, logoutListener?: LogoutListener): void => {
+        this.dispatch({type: "update-loading", message: initialLoginPageState.stage})
         this.authenticationPort
             .authenticate(identityToken, {
                 onLogout() {
@@ -50,9 +51,9 @@ export class LoginController implements LoginPageActions {
             .catch(this.onError)
     }
 
-    private onSuccessfulAuthentication = (user: AuthenticatedUser): void => {
+    private onSuccessfulAuthentication = (user: SuccessfulAuthenticationResponse): void => {
         this.dispatch({type: 'update-loading', message: "Please wait, loading your catalog..."})
-        this.loadingPort.warmupApplication(user)
+        this.loadingPort.warmupApplication(user.details)
             .then(() => {
                 this.dispatch({type: 'on-successful-authentication'})
             })

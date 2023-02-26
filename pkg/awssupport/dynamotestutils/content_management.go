@@ -3,11 +3,12 @@ package dynamotestutils
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/dynamoutils"
+	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"sort"
 	"testing"
 )
 
-func SetContent(t *testing.T, db *dynamodb.DynamoDB, table string, entries ...map[string]*dynamodb.AttributeValue) {
+func SetContent(t *testing.T, db *dynamodb.DynamoDB, table string, entries []map[string]*dynamodb.AttributeValue) {
 	err := clearContent(db, table)
 	if err != nil {
 		assert.FailNow(t, err.Error())
@@ -21,7 +22,7 @@ func SetContent(t *testing.T, db *dynamodb.DynamoDB, table string, entries ...ma
 func clearContent(db *dynamodb.DynamoDB, table string) error {
 	var deletionRequests []*dynamodb.WriteRequest
 
-	stream := dynamoutils.NewScanStream(db, table)
+	stream := dynamoutils2.NewScanStream(db, table)
 	for stream.HasNext() {
 		entry := stream.Next()
 		key := make(map[string]*dynamodb.AttributeValue)
@@ -30,7 +31,7 @@ func clearContent(db *dynamodb.DynamoDB, table string) error {
 		deletionRequests = append(deletionRequests, &dynamodb.WriteRequest{DeleteRequest: &dynamodb.DeleteRequest{Key: key}})
 	}
 
-	return dynamoutils.BufferedWriteItems(db, deletionRequests, table, dynamoutils.DynamoWriteBatchSize)
+	return dynamoutils2.BufferedWriteItems(db, deletionRequests, table, dynamoutils2.DynamoWriteBatchSize)
 }
 
 func insertAll(db *dynamodb.DynamoDB, table string, entries []map[string]*dynamodb.AttributeValue) error {
@@ -50,4 +51,20 @@ func insertAll(db *dynamodb.DynamoDB, table string, entries []map[string]*dynamo
 			table: requests,
 		}})
 	return err
+}
+
+func AssertAfter(t *testing.T, db *dynamodb.DynamoDB, table string, expected []map[string]*dynamodb.AttributeValue) bool {
+	content, err := dynamoutils2.AsSlice(dynamoutils2.NewScanStream(db, table))
+	if !assert.NoError(t, err) {
+		return false
+	}
+
+	sort.Slice(content, func(i, j int) bool {
+		if *content[i]["PK"].S == *content[j]["PK"].S {
+			return *content[i]["SK"].S < *content[j]["SK"].S
+		}
+		return *content[i]["PK"].S < *content[j]["PK"].S
+	})
+
+	return assert.Equal(t, expected, content)
 }

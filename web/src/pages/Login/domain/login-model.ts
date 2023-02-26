@@ -1,4 +1,4 @@
-import {AuthenticatedUser, LogoutListener} from "../../../core/security";
+import {AuthenticatedUser, LogoutListener, SuccessfulAuthenticationResponse} from "../../../core/security";
 
 export class IdentityProviderError extends Error {
 }
@@ -25,7 +25,7 @@ export interface PageState {
 
 export interface AuthenticationPort {
 
-    authenticate(identityToken: string, logoutListener: LogoutListener | undefined): Promise<AuthenticatedUser>
+    authenticate(identityToken: string, logoutListener: LogoutListener | undefined): Promise<SuccessfulAuthenticationResponse>
 }
 
 export interface LoadingPort {

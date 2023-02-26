@@ -7,34 +7,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"strings"
 	"time"
 )
 
-// DynamoDB table structure
-// - OWNER's ALBUMS
-//   > Album X
-//   > Album Y
-// - MEDIA
-//   > '#METADATA' = SIGNATURE + ALBUM + DETAILS
-// 	 > 'LOCATION#' = key (see archive extension)
-//
-// Index AlbumIndex
-// - ALBUM
-//   > '#METADATA'
-//   > MEDIA Jan
-//   > MEDIA Feb
-
 const (
 	IsoTime = "2006-01-02T15:04:05"
 )
-
-// TablePk are the primary and sort keys of the table
-type TablePk struct {
-	PK string // PK is the Partition key ; see what's used depending on object types
-	SK string // SK is the Sort key ; see what's used depending on object types
-}
 
 // AlbumIndexKey is a secondary key to index medias per albums
 type AlbumIndexKey struct {
@@ -43,7 +24,7 @@ type AlbumIndexKey struct {
 }
 
 type AlbumRecord struct {
-	TablePk
+	appdynamodb.TablePk
 	AlbumIndexKey
 	AlbumOwner      string // AlbumOwner has been added to the data structure on 18 Apr 2022
 	AlbumName       string
@@ -53,7 +34,7 @@ type AlbumRecord struct {
 }
 
 type MediaRecord struct {
-	TablePk
+	appdynamodb.TablePk
 	AlbumIndexKey
 	Id            string                 // Id is the unique identifier of the media
 	Type          string                 // Type is either PHOTO or VIDEO
@@ -64,20 +45,16 @@ type MediaRecord struct {
 	SignatureHash string
 }
 
-func AlbumPrimaryKey(owner string, folderName string) TablePk {
-	return TablePk{
+func AlbumPrimaryKey(owner string, folderName string) appdynamodb.TablePk {
+	return appdynamodb.TablePk{
 		PK: fmt.Sprintf("%s#ALBUM", owner),
 		SK: fmt.Sprintf("ALBUM#%s", folderName),
 	}
 }
 
-func MediaPrimaryKeyPK(owner string, id string) string {
-	return fmt.Sprintf("%s#MEDIA#%s", owner, id)
-}
-
-func MediaPrimaryKey(owner string, id string) TablePk {
-	return TablePk{
-		PK: MediaPrimaryKeyPK(owner, id),
+func MediaPrimaryKey(owner string, id string) appdynamodb.TablePk {
+	return appdynamodb.TablePk{
+		PK: appdynamodb.MediaPrimaryKeyPK(owner, id),
 		SK: "#METADATA",
 	}
 }

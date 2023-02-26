@@ -16,10 +16,10 @@ functions:
       DPHOTO_CERTIFICATE_EMAIL: 'duchatelle.thomas@gmail.com'
       DPHOTO_ENVIRONMENT: ${sls:stage}
   oauth-token:
-    handler: bin/oauth
+    handler: bin/oauth-token
     events:
       - httpApi:
-          path: /api/oauth/token
+          path: /oauth/token
           method: post
   env-config:
     handler: bin/env-config

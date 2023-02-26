@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"path"
 	"testing"
@@ -54,7 +55,7 @@ func (a *MediaCrudTestSuite) SetupSuite() {
 		localDynamodb: true,
 	}
 
-	err := a.repo.CreateTableIfNecessary()
+	err := appdynamodb.CreateTableIfNecessary(a.repo.table, a.repo.db, true)
 	if err != nil {
 		panic(err)
 	}

@@ -4,7 +4,7 @@ import (
 	cmd2 "github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd"
 	config2 "github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/acldynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclscopedynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
@@ -18,7 +18,7 @@ func (c catalogPort) FindAlbum(owner, folderName string) (*catalog.Album, error)
 
 func init() {
 	config2.Listen(func(cfg config2.Config) {
-		repository := acldynamodb.Must(acldynamodb.New(cfg.GetAWSSession(), cfg.GetString(config2.CatalogDynamodbTable), false))
+		repository := aclscopedynamodb.Must(aclscopedynamodb.New(cfg.GetAWSSession(), cfg.GetString(config2.CatalogDynamodbTable)))
 		createUser := &aclcore.CreateUser{
 			ScopesReader: repository,
 			ScopeWriter:  repository,

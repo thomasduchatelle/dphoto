@@ -84,14 +84,22 @@ To release a new version:
    ./scripts/pre-release.sh 1.5.0
    ```
 
-2. create a pull request to `develop`, review the terraform plan and tests then merge -> it will deploy to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
-3. create a pull request `develop -> main`, review the terraform plan then merge -> it will deploy to [https://dphoto.duchatelle.net](https://dphoto.duchatelle.net) and create a tag for the CLI
+2. create a pull request to `develop`, review the terraform plan and tests then merge -> it will deploy
+   to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
+3. create a pull request `develop -> main`, review the terraform plan then merge -> it will deploy
+   to [https://dphoto.duchatelle.net](https://dphoto.duchatelle.net) and create a tag for the CLI
 4. (optional) update local versions of `dphoto` by running
    ```
    go install github.com/thomasduchatelle/dphoto/cmd/...@latest
    ```
-   
+
 5. to avoid confusion, next development iteration can be started by running `./ci/pre-release.sh 1.6.0-alpha`.
+
+### AWS Support
+
+DPhoto only supports AWS to be deployed as a serverless application using AWS Gateway, Lambdas, DynamoDB, and S3.
+
+DynamoDB is a single table documented in [README.md](pkg/awssupport/appdynamodb/README.md).
 
 ### Tech debt
 

@@ -22,9 +22,11 @@ export class AuthenticationAPIAdapter implements AuthenticateAPI {
             }
         }).then(resp => {
             return {
-                name: resp.data.identity.name,
-                email: resp.data.identity.email,
-                picture: resp.data.identity.picture,
+                details: {
+                    name: resp.data.identity.name,
+                    email: resp.data.identity.email,
+                    picture: resp.data.identity.picture,
+                },
                 accessToken: resp.data.access_token,
                 expiresIn: resp.data.expires_in
             }

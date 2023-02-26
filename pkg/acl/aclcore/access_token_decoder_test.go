@@ -9,9 +9,9 @@ import (
 
 func TestAccessTokenDecoder_Decode(t *testing.T) {
 	config := OAuthConfig{
-		Issuer:           "https://dphoto.unit.test",
-		ValidityDuration: 12 * time.Second,
-		SecretJwtKey:     []byte("DPhotoJwtSecret"),
+		Issuer:         "https://dphoto.unit.test",
+		AccessDuration: 12 * time.Second,
+		SecretJwtKey:   []byte("DPhotoJwtSecret"),
 	}
 
 	tests := []struct {
