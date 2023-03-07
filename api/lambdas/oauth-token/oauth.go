@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
@@ -34,7 +35,11 @@ type RefreshAuthenticator interface {
 }
 
 func Handler(request events.APIGatewayRequest) (common.Response, error) {
-	grantType, scopes, attributes, err := parseBody(request.Headers, request.Body)
+	body, err := base64.StdEncoding.DecodeString(request.Body)
+	if err != nil {
+		return common.InternalError(errors.New("lambda body was expected to be base 64 encoded"))
+	}
+	grantType, scopes, attributes, err := parseBody(request.Headers, string(body))
 	if err != nil {
 		log.WithError(err).Infof("invalid request: %s", request.Body)
 		return common.BadRequest(err.Error())
@@ -48,30 +53,33 @@ func Handler(request events.APIGatewayRequest) (common.Response, error) {
 		return authenticateFromRefreshToken(scopes, attributes)
 
 	default:
-		log.Warnf("invalid grant type received: %s", grantType)
+		log.Warnf("invalid grant type received: '%s'", grantType)
 		return common.BadRequest(fmt.Sprintf("%s grant type is not supported. Supported are only 'identity' and 'refresh_token'", grantType))
 	}
 }
 
 func parseBody(headers map[string]string, body string) (string, []string, map[string]string, error) {
-	contentType, _ := headers["Content-Type"]
+	contentType, _ := headers["content-type"]
 	if contentType != "application/x-www-form-urlencoded" {
 		return "", nil, nil, errors.Errorf("'%s' encoding is not supported. Supported encoding are: application/x-www-form-urlencoded", contentType)
 	}
 
+	const grantTypeKey = "grant_type"
 	query, err := url.ParseQuery(body)
 	if err != nil {
-		return "", nil, nil, errors.Wrapf(err, "body '%s' is invalid", body)
+		return "", nil, nil, errors.Wrapf(err, "body is invalid [%s]", body)
+	} else if !query.Has(grantTypeKey) {
+		return "", nil, nil, errors.Errorf("body must define the grant_type %+v", query)
 	}
 
 	args := make(map[string]string)
 	for k, v := range query {
-		if len(v) > 0 && k != "grant_type" && k != "scope" {
-			args[k] = v[0]
+		if len(v) > 0 && k != grantTypeKey && k != "scope" {
+			args[strings.ToLower(k)] = v[0]
 		}
 	}
 
-	return query.Get("grant_type"), strings.Split(query.Get("scope"), " "), args, nil
+	return query.Get(grantTypeKey), strings.Split(query.Get("scope"), " "), args, nil
 }
 
 func authenticateFromIdentityToken(scopes []string, attributes map[string]string) (common.Response, error) {

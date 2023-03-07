@@ -3,7 +3,7 @@ import {AppAuthenticationError, LogoutListener, SuccessfulAuthenticationResponse
 import {Dispatch} from "react";
 import {initialLoginPageState, PageAction} from "./login-reducer";
 
-const IDENTITY_TOKEN_KEY = "identityToken";
+export const REFRESH_TOKEN_KEY = "refreshToken";
 
 export class LoginController implements LoginPageActions {
     constructor(
@@ -13,18 +13,18 @@ export class LoginController implements LoginPageActions {
     }
 
     public attemptToAutoAuthenticate = () => {
-        const identityToken = localStorage.getItem(IDENTITY_TOKEN_KEY)
-        if (identityToken) {
+        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+        if (refreshToken) {
             this.authenticationPort
-                .authenticate(identityToken, {
+                .restoreSession(refreshToken, {
                     onLogout() {
-                        localStorage.removeItem(IDENTITY_TOKEN_KEY)
+                        localStorage.removeItem(REFRESH_TOKEN_KEY)
                     }
                 })
                 .then(this.onSuccessfulAuthentication)
                 .catch(err => {
-                    console.log(`WARN: couldn't restore the session from identity token: ${err.message}`)
-                    localStorage.removeItem(IDENTITY_TOKEN_KEY)
+                    console.log(`WARN: couldn't restore the session from refresh token: ${err.message}`)
+                    localStorage.removeItem(REFRESH_TOKEN_KEY)
 
                     this.dispatch({type: "OnUnsuccessfulAutoLoginAttempt"})
                 })
@@ -39,19 +39,17 @@ export class LoginController implements LoginPageActions {
         this.authenticationPort
             .authenticate(identityToken, {
                 onLogout() {
-                    localStorage.removeItem(IDENTITY_TOKEN_KEY)
+                    localStorage.removeItem(REFRESH_TOKEN_KEY)
                     return logoutListener?.onLogout()
                 }
-            })
-            .then(user => {
-                localStorage.setItem(IDENTITY_TOKEN_KEY, identityToken)
-                return user
             })
             .then(this.onSuccessfulAuthentication)
             .catch(this.onError)
     }
 
     private onSuccessfulAuthentication = (user: SuccessfulAuthenticationResponse): void => {
+        localStorage.setItem(REFRESH_TOKEN_KEY, user.refreshToken)
+
         this.dispatch({type: 'update-loading', message: "Please wait, loading your catalog..."})
         this.loadingPort.warmupApplication(user.details)
             .then(() => {

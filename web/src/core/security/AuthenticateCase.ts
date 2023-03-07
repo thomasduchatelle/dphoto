@@ -2,6 +2,8 @@ import {AxiosError} from "axios";
 import {Dispatch} from "react";
 import {ApplicationAction} from "../application";
 import {AuthenticatedUser, LogoutListener} from "./security-state";
+import {AuthenticationPort} from "../../pages/Login/domain";
+import {REFRESH_TOKEN_KEY} from "../../pages/Login/domain/login-controller";
 
 interface ErrorBody {
     code: string
@@ -11,11 +13,14 @@ interface ErrorBody {
 export interface SuccessfulAuthenticationResponse {
     details: AuthenticatedUser
     accessToken: string
+    refreshToken: string
     expiresIn: number
 }
 
 export interface AuthenticateAPI {
     authenticateWithIdentityToken(identityToken: string): Promise<SuccessfulAuthenticationResponse>
+
+    refreshTokens(refreshToken: string): Promise<SuccessfulAuthenticationResponse>
 }
 
 export class AppAuthenticationError extends Error {
@@ -25,7 +30,7 @@ export class AppAuthenticationError extends Error {
     }
 }
 
-export class AuthenticateCase {
+export class AuthenticateCase implements AuthenticationPort {
     constructor(
         private dispatch: Dispatch<ApplicationAction>,
         private authenticateAPI: AuthenticateAPI,
@@ -35,7 +40,7 @@ export class AuthenticateCase {
     public authenticate = (identityToken: string, logoutListener: LogoutListener | undefined = undefined): Promise<SuccessfulAuthenticationResponse> => {
         return this.authenticateAPI.authenticateWithIdentityToken(identityToken)
             .then(user => {
-                const timeoutId = this.refreshToken(identityToken, user.expiresIn)
+                const timeoutId = this.scheduleTokensRefresh(user.refreshToken, user.expiresIn)
 
                 this.dispatch({
                     accessToken: {
@@ -55,11 +60,34 @@ export class AuthenticateCase {
             })
     }
 
-    private refreshToken = (identityToken: string, expiresIn: number): NodeJS.Timeout => {
+    public restoreSession = (refreshToken: string, logoutListener: LogoutListener | undefined): Promise<SuccessfulAuthenticationResponse> => {
+        return this.authenticateAPI.refreshTokens(refreshToken)
+            .then(user => {
+                const timeoutId = this.scheduleTokensRefresh(user.refreshToken, user.expiresIn)
+
+                this.dispatch({
+                    accessToken: {
+                        accessToken: user.accessToken,
+                        expiryTime: user.expiresIn,
+                    },
+                    logoutListener: logoutListener,
+                    refreshTimeoutId: timeoutId,
+                    user: user.details,
+                    type: 'authenticated'
+                })
+                return user
+            })
+            .catch((err: AxiosError<ErrorBody>) => {
+                return Promise.reject(new AppAuthenticationError(err.response?.data?.code, err.response?.data?.error))
+            })
+    }
+
+    private scheduleTokensRefresh = (refreshToken: string, expiresIn: number): NodeJS.Timeout => {
         const timeoutId = setTimeout(() => {
-            this.authenticateAPI.authenticateWithIdentityToken(identityToken)
+            this.authenticateAPI.refreshTokens(refreshToken)
                 .then(user => {
-                    const nextTimeoutId = this.refreshToken(identityToken, user.expiresIn)
+                    const nextTimeoutId = this.scheduleTokensRefresh(user.refreshToken, user.expiresIn)
+                    localStorage.setItem(REFRESH_TOKEN_KEY, user.refreshToken)
 
                     this.dispatch({
                         accessToken: {
@@ -80,4 +108,5 @@ export class AuthenticateCase {
 
         return timeoutId
     }
+
 }
