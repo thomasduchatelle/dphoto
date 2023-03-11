@@ -19,9 +19,10 @@ func (p PES) Valid() error {
 
 // PESLength is the number of bytes the PES header is. The Following bytes are the stream payload.
 // Example:
-//    00000000  00 00 01 e0 00 00 85 c0  0a 31 00 07 13 81 11 00  |.........1......|
-//    00000010  05 bf 21 00 00 00 01 09  10 00 00 00 01 27 64 00  |..!..........'d.|
-//                       ^ Video Stream starts here
+//
+//	00000000  00 00 01 e0 00 00 85 c0  0a 31 00 07 13 81 11 00  |.........1......|
+//	00000010  05 bf 21 00 00 00 01 09  10 00 00 00 01 27 64 00  |..!..........'d.|
+//	                   ^ Video Stream starts here
 func (p PES) PESLength() int {
 	startCodeLength := 4
 	pesPacketCounterLength := 2

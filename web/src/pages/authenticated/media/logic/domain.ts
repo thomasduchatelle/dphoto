@@ -1,16 +1,16 @@
 export const MediaPageMediasStateInit: MediaPageMediasState = {
-  owner: "",
-  folderName: "",
-  medias: [],
+    owner: "",
+    folderName: "",
+    medias: [],
 }
 
 export interface MediaPageMediasState {
-  owner: string
-  folderName: string
-  medias: MediaRef[]
+    owner: string
+    folderName: string
+    medias: MediaRef[]
 }
 
 export interface MediaRef {
-  encodedId: string
-  filename: string
+    encodedId: string
+    filename: string
 }

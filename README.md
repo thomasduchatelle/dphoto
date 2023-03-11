@@ -42,10 +42,14 @@ Contribute
 
 Components:
 
-* `deployments/infra-data`: terraform project to create required infrastructure on AWS for the CLI to work. Project won't be re-usable in a different context without overriding backend and some other defaults.
-* `pkg`: core domain model and business logic from Hexagonal Architecture. This domain is used from both CLI and app's APIs
-* [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line interface
-* [APP](deployments/sls/README.md): deployed on top of `infra-data`, contains the APP (API deployed on AWS lambdas, and WEB)
+* `deployments/infra-data`: terraform project to create required infrastructure on AWS for the CLI to work. Project
+  won't be re-usable in a different context without overriding backend and some other defaults.
+* `pkg`: core domain model and business logic from Hexagonal Architecture. This domain is used from both CLI and app's
+  APIs
+* [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line
+  interface
+* [APP](deployments/sls/README.md): deployed on top of `infra-data`, contains the APP (API deployed on AWS lambdas, and
+  WEB)
 
 Note: the repository follow https://github.com/golang-standards/project-layout structure convention.
 
@@ -54,15 +58,15 @@ Note: the repository follow https://github.com/golang-standards/project-layout s
 Required tools:
 
 * Infra:
-  * terraform: `brew install tfenv`, [Makefile](./Makefile)
-  * Serverless Framework: `npm install -g serverless`
-  * AWS CLI: `brew install awscli`
+    * terraform: `brew install tfenv`, [Makefile](./Makefile)
+    * Serverless Framework: `npm install -g serverless`
+    * AWS CLI: `brew install awscli`
 * Languages & build tools:
-  * `make`
-  * GoLang: `brew install golang`
-  * Yarn: `brew install yarn`
+    * `make`
+    * GoLang: `brew install golang`
+    * Yarn: `brew install yarn`
 * Docker and Docker Compose
-  * `brew install docker docker-compose`
+    * `brew install docker docker-compose`
 
 Setup the environment:
 

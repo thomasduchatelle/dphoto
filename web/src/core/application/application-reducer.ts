@@ -35,7 +35,7 @@ export function applicationGenericReducer(current: ApplicationContextType, actio
                 ...current,
                 general: {
                     ...current.general,
-                    error: error ,
+                    error: error,
                 }
             }
     }
