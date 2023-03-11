@@ -66,6 +66,10 @@ func ssoAuthenticatorPermissionReader() aclscopedynamodb.GrantRepository {
 	return aclscopedynamodb.Must(aclscopedynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
 }
 
+func newRefreshTokenRepository() aclcore.RefreshTokenRepository {
+	return aclrefreshdynamodb.Must(aclrefreshdynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
+}
+
 func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthenticator) {
 	config, err := jwks.LoadIssuerConfig(aclcore.TrustedIdentityProvider...)
 	if err != nil {
@@ -73,7 +77,7 @@ func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthen
 	}
 
 	identityDetailsStore := aclidentitydynamodb.Must(aclidentitydynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
-	refreshTokenRepository := aclrefreshdynamodb.Must(aclrefreshdynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
+	refreshTokenRepository := newRefreshTokenRepository()
 
 	refreshTokenGenerator := aclcore.RefreshTokenGenerator{
 		RefreshTokenRepository: refreshTokenRepository,
@@ -96,6 +100,10 @@ func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthen
 			RefreshTokenRepository: refreshTokenRepository,
 			IdentityDetailsStore:   identityDetailsStore,
 		}
+}
+
+func NewLogout() *aclcore.Logout {
+	return &aclcore.Logout{RevokeAccessTokenAdapter: newRefreshTokenRepository()}
 }
 
 func AccessTokenDecoder() *aclcore.AccessTokenDecoder {

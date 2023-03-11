@@ -13,8 +13,6 @@ import (
 	"strings"
 )
 
-const bearerPrefix = "bearer "
-
 type identityDTO struct {
 	Email   string `json:"email"`
 	Name    string `json:"name"`

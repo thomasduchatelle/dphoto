@@ -23,3 +23,5 @@ export interface SecurityState {
 
     hasTimedOut: boolean
 }
+
+export const REFRESH_TOKEN_KEY = "refreshToken";

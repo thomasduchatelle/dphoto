@@ -1,9 +1,12 @@
 import {AuthenticationPort, IdentityProviderError, LoadingPort, LoginPageActions} from "./login-model";
-import {AppAuthenticationError, LogoutListener, SuccessfulAuthenticationResponse} from "../../../core/security";
+import {
+    AppAuthenticationError,
+    LogoutListener,
+    REFRESH_TOKEN_KEY,
+    SuccessfulAuthenticationResponse
+} from "../../../core/security";
 import {Dispatch} from "react";
 import {initialLoginPageState, PageAction} from "./login-reducer";
-
-export const REFRESH_TOKEN_KEY = "refreshToken";
 
 export class LoginController implements LoginPageActions {
     constructor(
@@ -13,25 +16,14 @@ export class LoginController implements LoginPageActions {
     }
 
     public attemptToAutoAuthenticate = () => {
-        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-        if (refreshToken) {
-            this.authenticationPort
-                .restoreSession(refreshToken, {
-                    onLogout() {
-                        localStorage.removeItem(REFRESH_TOKEN_KEY)
-                    }
-                })
-                .then(this.onSuccessfulAuthentication)
-                .catch(err => {
-                    console.log(`WARN: couldn't restore the session from refresh token: ${err.message}`)
-                    localStorage.removeItem(REFRESH_TOKEN_KEY)
+        this.authenticationPort
+            .restoreSession()
+            .then(this.onSuccessfulAuthentication)
+            .catch(err => {
+                console.log(`WARN: couldn't restore the session from refresh token: ${err.message}`)
 
-                    this.dispatch({type: "OnUnsuccessfulAutoLoginAttempt"})
-                })
-
-        } else {
-            this.dispatch({type: "OnUnsuccessfulAutoLoginAttempt"})
-        }
+                this.dispatch({type: "OnUnsuccessfulAutoLoginAttempt"})
+            })
     }
 
     public loginWithIdentityToken = (identityToken: string, logoutListener?: LogoutListener): void => {
@@ -39,7 +31,6 @@ export class LoginController implements LoginPageActions {
         this.authenticationPort
             .authenticate(identityToken, {
                 onLogout() {
-                    localStorage.removeItem(REFRESH_TOKEN_KEY)
                     return logoutListener?.onLogout()
                 }
             })
@@ -48,8 +39,6 @@ export class LoginController implements LoginPageActions {
     }
 
     private onSuccessfulAuthentication = (user: SuccessfulAuthenticationResponse): void => {
-        localStorage.setItem(REFRESH_TOKEN_KEY, user.refreshToken)
-
         this.dispatch({type: 'update-loading', message: "Please wait, loading your catalog..."})
         this.loadingPort.warmupApplication(user.details)
             .then(() => {

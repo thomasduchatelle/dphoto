@@ -27,7 +27,7 @@ export interface AuthenticationPort {
 
     authenticate(identityToken: string, logoutListener: LogoutListener | undefined): Promise<SuccessfulAuthenticationResponse>
 
-    restoreSession(refreshToken: string, logoutListener: LogoutListener | undefined): Promise<SuccessfulAuthenticationResponse>
+    restoreSession(): Promise<SuccessfulAuthenticationResponse>
 }
 
 export interface LoadingPort {

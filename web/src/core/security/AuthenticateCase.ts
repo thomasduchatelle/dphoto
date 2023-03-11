@@ -1,9 +1,8 @@
 import {AxiosError} from "axios";
 import {Dispatch} from "react";
 import {ApplicationAction} from "../application";
-import {AuthenticatedUser, LogoutListener} from "./security-state";
+import {AuthenticatedUser, LogoutListener, REFRESH_TOKEN_KEY} from "./security-state";
 import {AuthenticationPort} from "../../pages/Login/domain";
-import {REFRESH_TOKEN_KEY} from "../../pages/Login/domain/login-controller";
 
 interface ErrorBody {
     code: string
@@ -21,6 +20,8 @@ export interface AuthenticateAPI {
     authenticateWithIdentityToken(identityToken: string): Promise<SuccessfulAuthenticationResponse>
 
     refreshTokens(refreshToken: string): Promise<SuccessfulAuthenticationResponse>
+
+    logout(refreshToken: string): Promise<void>;
 }
 
 export class AppAuthenticationError extends Error {
@@ -40,6 +41,7 @@ export class AuthenticateCase implements AuthenticationPort {
     public authenticate = (identityToken: string, logoutListener: LogoutListener | undefined = undefined): Promise<SuccessfulAuthenticationResponse> => {
         return this.authenticateAPI.authenticateWithIdentityToken(identityToken)
             .then(user => {
+                localStorage.setItem(REFRESH_TOKEN_KEY, user.refreshToken)
                 const timeoutId = this.scheduleTokensRefresh(user.refreshToken, user.expiresIn)
 
                 this.dispatch({
@@ -60,9 +62,16 @@ export class AuthenticateCase implements AuthenticationPort {
             })
     }
 
-    public restoreSession = (refreshToken: string, logoutListener: LogoutListener | undefined): Promise<SuccessfulAuthenticationResponse> => {
+    public restoreSession = (logoutListener: LogoutListener | undefined = undefined): Promise<SuccessfulAuthenticationResponse> => {
+        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+        if (!refreshToken) {
+            return Promise.reject(new AppAuthenticationError("no active session to restore."))
+        }
+
         return this.authenticateAPI.refreshTokens(refreshToken)
             .then(user => {
+                localStorage.setItem(REFRESH_TOKEN_KEY, user.refreshToken)
+
                 const timeoutId = this.scheduleTokensRefresh(user.refreshToken, user.expiresIn)
 
                 this.dispatch({
@@ -78,8 +87,9 @@ export class AuthenticateCase implements AuthenticationPort {
                 return user
             })
             .catch((err: AxiosError<ErrorBody>) => {
+                localStorage.removeItem(REFRESH_TOKEN_KEY)
                 return Promise.reject(new AppAuthenticationError(err.response?.data?.code, err.response?.data?.error))
-            })
+            });
     }
 
     private scheduleTokensRefresh = (refreshToken: string, expiresIn: number): NodeJS.Timeout => {

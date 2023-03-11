@@ -21,6 +21,12 @@ functions:
       - httpApi:
           path: /oauth/token
           method: post
+  oauth-logout:
+    handler: bin/oauth-logout
+    events:
+      - httpApi:
+          path: /oauth/logout
+          method: post
   env-config:
     handler: bin/env-config
     environment:

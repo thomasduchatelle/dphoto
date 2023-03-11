@@ -1,12 +1,13 @@
 {
   "request": {
     "method": "POST",
-    "urlPath": "/api/oauth/token"
+    "urlPath": "/oauth/token"
   },
   "response": {
     "status": 200,
     "jsonBody": {
-      "access_token": "asecret.token",
+      "access_token": "asecret.access.token",
+      "refresh_token": "asecret.refresh.token",
       "expires_in": 28800,
       "identity": {
         "email": "tony@stark.com",

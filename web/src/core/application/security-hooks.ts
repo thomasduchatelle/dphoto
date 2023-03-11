@@ -1,5 +1,5 @@
 import {AuthenticateCase, AuthenticatedUser, SecurityState} from "../security";
-import {useContext, useMemo, useRef} from "react";
+import {useContext, useMemo} from "react";
 import {ApplicationContext} from "./application-context";
 import {AuthenticationAPIAdapter} from "../../apis/oauthapi/AuthenticationAPIAdapter";
 import {LogoutCase} from "../security/LogoutCase";
@@ -31,8 +31,7 @@ export const useAuthenticationCase = (): AuthenticateCase => {
 
 export const useLogoutCase = (): LogoutCase => {
     const {dispatch, context: {application}} = useContext(ApplicationContext);
-    const logout = useRef(new LogoutCase(dispatch, application));
-    return logout.current
+    return useMemo(() => new LogoutCase(dispatch, application, new AuthenticationAPIAdapter()), [dispatch, application]);
 }
 
 export interface MustBeAuthenticated {

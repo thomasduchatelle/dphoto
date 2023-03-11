@@ -60,4 +60,14 @@ export class AuthenticationAPIAdapter implements AuthenticateAPI {
         })
     }
 
+    public logout(refreshToken: string): Promise<void> {
+        return axios.post<void>("/oauth/logout", {
+            refreshToken,
+        }, {
+            headers: {
+                "Content-Type": "application/json",
+            }
+        }).then()
+    }
+
 }

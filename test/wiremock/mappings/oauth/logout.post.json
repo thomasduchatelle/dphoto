@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/oauth/logout"
+  },
+  "response": {
+    "status": 204
+  }
+}
