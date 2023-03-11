@@ -13,7 +13,7 @@ jobs:
   provision-data-infrastructure:
     name: Deploy / ${{ needs.choose-env.outputs.environment-name }} / infra-data
     runs-on: ubuntu-latest
-    needs: [choose-env]
+    needs: [ choose-env ]
     environment: ${{ needs.choose-env.outputs.environment-name }}
     env:
       TF_WORKSPACE: ${{ needs.choose-env.outputs.environment-workspace }}
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     name: TAGGING Codebase
     if: needs.choose-env.outputs.environment-name == 'live'
-    needs: [choose-env]
+    needs: [ choose-env ]
     steps:
       - uses: actions/checkout@v3
       - name: Get version

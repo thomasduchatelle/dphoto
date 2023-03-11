@@ -1,3 +1,3 @@
 export interface Cache<T> {
-  current: T;
+    current: T;
 }

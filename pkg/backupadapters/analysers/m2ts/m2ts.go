@@ -40,9 +40,12 @@ func (p *Parser) Supports(media backup.FoundMedia, mediaType backup.MediaType) b
 // ReadDetails unmux M2TS (MTS) file, with h264 support, to collect the Make, Model, and DateTime of the video flux.
 // Example:
 // 00 00 00 00 | 47 40 00 10 | 00 00 b0 11 00 00 c1 00 00 00 00 e0 1f 00 01 e1 00 23 5a ab 82 ffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff
-//               M2TS HEADER-- PAT HEADER- SECTION------- #1--------- #2--------- CRC--------
+//
+//	M2TS HEADER-- PAT HEADER- SECTION------- #1--------- #2--------- CRC--------
+//
 // 00 00 06 9c | 47 | 41 00 10 | 00 02 b0 3e | 00 01 c1 00 00 | f0 01 f0 0c | 05 04 48 44 | 4d 56 88 04 | 0f ff fc fc | 1b f0 11 f0 0a | 05 08 48 44 4d 56 ff 1b 43 3f | 81 f1 00 f0 0c | 05 04 41 43 2d 33 81 04 04 30 04 00 90 f2 00 f0 00 | 0c d3 f4 dc
-//               M2TS HEADER---  PAT HEADER--  SECTION-------   PMT-------- | Program Descriptors -------------------   #1 1011=>1b-----------------------------------                                                                         CRC--------
+//
+//	M2TS HEADER---  PAT HEADER--  SECTION-------   PMT-------- | Program Descriptors -------------------   #1 1011=>1b-----------------------------------                                                                         CRC--------
 func (p *Parser) ReadDetails(reader io.Reader, options backup.DetailsReaderOptions) (*backup.MediaDetails, error) {
 	details := new(backup.MediaDetails)
 

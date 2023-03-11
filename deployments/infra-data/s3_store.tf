@@ -86,8 +86,8 @@ resource "aws_iam_policy" "storage_rw" {
 
 data "aws_iam_policy_document" "storage_rw" {
   statement {
-    effect    = "Allow"
-    actions   = [
+    effect  = "Allow"
+    actions = [
       "s3:ListBucket",
     ]
     resources = [
@@ -95,8 +95,8 @@ data "aws_iam_policy_document" "storage_rw" {
     ]
   }
   statement {
-    effect    = "Allow"
-    actions   = [
+    effect  = "Allow"
+    actions = [
       "s3:*Object",
     ]
     resources = [
@@ -107,8 +107,8 @@ data "aws_iam_policy_document" "storage_rw" {
   dynamic "statement" {
     for_each = var.simple_s3 ? [] : [1]
     content {
-      effect    = "Allow"
-      actions   = [
+      effect  = "Allow"
+      actions = [
         "kms:Decrypt",
         "kms:GenerateDataKey"
       ]
@@ -127,8 +127,8 @@ resource "aws_iam_policy" "storage_ro" {
 
 data "aws_iam_policy_document" "storage_ro" {
   statement {
-    effect    = "Allow"
-    actions   = [
+    effect  = "Allow"
+    actions = [
       "s3:ListBucket",
     ]
     resources = [
@@ -136,8 +136,8 @@ data "aws_iam_policy_document" "storage_ro" {
     ]
   }
   statement {
-    effect    = "Allow"
-    actions   = [
+    effect  = "Allow"
+    actions = [
       "s3:GetObject",
     ]
     resources = [
@@ -148,8 +148,8 @@ data "aws_iam_policy_document" "storage_ro" {
   dynamic "statement" {
     for_each = var.simple_s3 ? [] : [1]
     content {
-      effect    = "Allow"
-      actions   = [
+      effect  = "Allow"
+      actions = [
         "kms:Decrypt",
         "kms:GenerateDataKey"
       ]
