@@ -60,16 +60,19 @@ func TestView_ListAlbums(t *testing.T) {
 			filter: catalogaclview.ListAlbumsFilter{},
 			want: []*catalogaclview.AlbumInView{
 				{
-					Album:    album1,
-					SharedTo: nil,
+					Album:         album1,
+					SharedTo:      nil,
+					DirectlyOwned: true,
 				},
 				{
-					Album:    album2,
-					SharedTo: []string{hulk},
+					Album:         album2,
+					SharedTo:      []string{hulk},
+					DirectlyOwned: true,
 				},
 				{
-					Album:    tonyAlbum,
-					SharedTo: nil,
+					Album:         tonyAlbum,
+					SharedTo:      nil,
+					DirectlyOwned: false,
 				},
 			},
 			wantErr: assert.NoError,
@@ -95,12 +98,14 @@ func TestView_ListAlbums(t *testing.T) {
 			filter: catalogaclview.ListAlbumsFilter{OnlyDirectlyOwned: true},
 			want: []*catalogaclview.AlbumInView{
 				{
-					Album:    album1,
-					SharedTo: nil,
+					Album:         album1,
+					SharedTo:      nil,
+					DirectlyOwned: true,
 				},
 				{
-					Album:    album2,
-					SharedTo: []string{hulk},
+					Album:         album2,
+					SharedTo:      []string{hulk},
+					DirectlyOwned: true,
 				},
 			},
 			wantErr: assert.NoError,
@@ -152,12 +157,14 @@ func TestView_ListAlbums(t *testing.T) {
 			filter: catalogaclview.ListAlbumsFilter{},
 			want: []*catalogaclview.AlbumInView{
 				{
-					Album:    album1,
-					SharedTo: nil,
+					Album:         album1,
+					SharedTo:      nil,
+					DirectlyOwned: true,
 				},
 				{
-					Album:    album2,
-					SharedTo: nil,
+					Album:         album2,
+					SharedTo:      nil,
+					DirectlyOwned: true,
 				},
 			},
 			wantErr: assert.NoError,

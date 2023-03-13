@@ -41,12 +41,18 @@ export default function MediasPage({
             </Box>
             <Box
                 component="main"
-                sx={{flexGrow: 1, p: 2, width: {lg: `calc(100% - ${drawerWidth}px)`}}}
+                sx={theme => ({
+                    padding: theme.spacing(1),
+                    flexGrow: 1,
+                    width: {lg: `calc(100% - ${drawerWidth}px)`},
+                    backgroundColor: theme.palette.background.paper,
+                })}
             >
                 {(fullyLoaded && !albums && (
-                    <Alert severity='info' sx={{mt: 3}}>Your account is empty, start to create new albums and upload
-                        your
-                        photos with the command line interface.</Alert>
+                    <Alert severity='info' sx={{mt: 3}}>
+                        Your account is empty, start to create new albums and upload your photos with the command line
+                        interface.
+                    </Alert>
                 )) || (
                     <Box>
                         <MediaList medias={medias} loaded={fullyLoaded}

@@ -11,6 +11,19 @@ export interface Album {
     totalCount: number
     temperature: number // number of media per day
     relativeTemperature: number
+    ownedBy?: OwnerDetails // only present when not owned by current user
+    sharedWith: UserDetails[]
+}
+
+export interface OwnerDetails {
+    name?: string
+    users: UserDetails[]
+}
+
+export interface UserDetails {
+    name: string
+    email: string
+    picture?: string
 }
 
 export enum MediaType {
@@ -63,28 +76,6 @@ export interface CatalogAPI {
     fetchMedias(albumId: AlbumId): Promise<Media[]>
 }
 
-// ---------------------------------
-// TODO Delete beneath this line
-// ---------------------------------
-
-
-export interface WebAdapter {
-    redirectToAlbum(albumId: AlbumId): void;
-
-    renderNoAlbums(): void;
-
-    renderAlbumNotPresent(albums: Album[], albumId: AlbumId): void;
-
-    renderAlbumsWithMedia(albums: Album[], selectedAlbum: Album, medias: MediaWithinADay[]): void;
-
-    renderAlbumsList(albums: Album[]): void;
-}
-
-export interface AlbumsLogicCache {
-    owner: string
-    albums: Album[]
-}
-
-export function albumIdEquals(a: AlbumId, b: AlbumId): boolean {
-    return a.owner === b.owner && a.folderName === b.folderName
+export function albumIdEquals(a?: AlbumId, b?: AlbumId): boolean {
+    return !!a && a?.owner === b?.owner && a?.folderName === b?.folderName
 }

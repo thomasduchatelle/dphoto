@@ -1,5 +1,5 @@
 import {AccessToken, LogoutListener} from "../security";
-import axios, {AxiosInstance, InternalAxiosRequestConfig} from "axios";
+import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
 import {AccessTokenHolder} from "./application-model";
 
 export class DPhotoApplication implements AccessTokenHolder {
@@ -29,9 +29,12 @@ export class DPhotoApplication implements AccessTokenHolder {
         return this.accessToken?.accessToken ?? ''
     }
 
-    private axiosRequestInterceptor = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+    private axiosRequestInterceptor = (config: AxiosRequestConfig): AxiosRequestConfig => {
         if (this.accessToken) {
-            config.headers['Authorization'] = `Bearer ${this.accessToken.accessToken}`
+            config.headers = {
+                ...config.headers,
+                'Authorization': `Bearer ${this.accessToken.accessToken}`,
+            }
         }
 
         return config

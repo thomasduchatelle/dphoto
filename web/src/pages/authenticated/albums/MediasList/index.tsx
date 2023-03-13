@@ -1,4 +1,4 @@
-import {Alert, ImageList, ImageListItem, ListSubheader, Skeleton} from "@mui/material";
+import {Alert, ImageList, ImageListItem, Skeleton, Typography} from "@mui/material";
 import {Fragment} from "react";
 import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
 import useWindowDimensions from "../../../../core/utils/window-utils";
@@ -35,10 +35,10 @@ export default function MediaList({medias, loaded, albumNotFound}: {
 
     if (albumNotFound) {
         return (
-            <Alert severity='warning' sx={{mt: 3}}>Album doesn't exist or is not accessible, ask his owner to grant you
-                access
-                or choose
-                another one on the left.</Alert>
+            <Alert severity='warning' sx={{mt: 3}}>
+                Album doesn't exist or is not accessible, ask his owner to grant you access or choose another one on the
+                left.
+            </Alert>
         )
     }
     return (
@@ -48,10 +48,16 @@ export default function MediaList({medias, loaded, albumNotFound}: {
             )) || (
                 medias.map((day, index) => (
                     <Fragment key={day.day.getTime()}>
-                        <ListSubheader component="div">
+                        <Typography variant="h6" sx={theme => ({
+                            // fontSize: '28px',
+                            fontWeight: 'normal',
+                            margin: theme.spacing(3, 0, 1, 0),
+                            '&:first-of-type': {
+                                marginTop: theme.spacing(1),
+                            }
+                        })}>
                             {toLocaleDateWithDay(day.day)}
-                            {/*{ index === 0 && `- album`}*/}
-                        </ListSubheader>
+                        </Typography>
                         <ImageList cols={cols} gap={0} rowHeight={estimatedWidth}>
                             {day.medias.map((media) => (
                                 <ImageInList media={media} key={media.id}

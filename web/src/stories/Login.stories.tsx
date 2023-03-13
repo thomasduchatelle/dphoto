@@ -3,31 +3,39 @@ import {ComponentMeta, ComponentStory} from '@storybook/react';
 
 import {LoginInternal} from "../pages/Login";
 import {initialLoginPageState, reduce} from "../pages/Login/domain/login-reducer";
+import {Button} from "@mui/material";
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
     title: 'Pages/Login',
     component: LoginInternal,
-    // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-    argTypes: {
-        backgroundColor: {control: 'color'},
-    },
 } as ComponentMeta<typeof LoginInternal>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof LoginInternal> = (args) => <LoginInternal {...args} />;
+const Template: ComponentStory<typeof LoginInternal> = (args) => (<LoginInternal {...args} >
+    <Button sx={{
+        width: '100%',
+        maxWidth: '400px',
+        marginTop: '24px',
+    }} variant='outlined' color='primary'>SSO Placeholder</Button>
+</LoginInternal>);
 
 const stateWhilePrompting = reduce(initialLoginPageState, {type: "OnUnsuccessfulAutoLoginAttempt"});
 
-export const Initial = Template.bind({});
+export const Loading = Template.bind({});
 
-Initial.args = initialLoginPageState;
+Loading.args = initialLoginPageState;
+Loading.parameters = {
+    storyshots: {disable: true},
+};
+
 export const PromptUser = Template.bind({});
 PromptUser.args = stateWhilePrompting;
 
 export const OnTimeout = Template.bind({});
 OnTimeout.args = {
     timeout: true,
+    promptForLogin: true,
 };
 
 export const OnError = Template.bind({});

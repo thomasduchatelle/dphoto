@@ -18,7 +18,8 @@ type ListAlbumsFilter struct {
 
 type AlbumInView struct {
 	*catalog.Album
-	SharedTo []string // SharedTo is the list of emails to which this album is shared
+	SharedTo      []string // SharedTo is the list of emails to which this album is shared
+	DirectlyOwned bool     // DirectlyOwned is set to true when the user is an owner of the album
 }
 
 // Sharing is caring.

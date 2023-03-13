@@ -1,6 +1,7 @@
 import React from 'react';
 import {ComponentMeta, ComponentStory} from '@storybook/react';
 import UserMenu from "../components/user.menu";
+import {userEvent, within} from "@storybook/testing-library";
 
 export default {
     title: 'Components/UserMenu',
@@ -18,4 +19,13 @@ DefaultMenu.args = {
     },
     onLogout: () => {
     },
+};
+DefaultMenu.parameters = {
+    storyshots: {disable: true},
+    delay: 300,
+};
+DefaultMenu.play = async ({canvasElement}) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button"));
 };

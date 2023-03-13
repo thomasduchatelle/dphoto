@@ -1,4 +1,4 @@
-import {Album, AlbumId, CatalogAPI, Media, MediaType} from "../../core/catalog";
+import {Album, AlbumId, CatalogAPI, Media, MediaType, OwnerDetails, UserDetails} from "../../core/catalog";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../core/application";
 
@@ -9,6 +9,8 @@ interface RestAlbum {
     start: Date
     end: Date
     totalCount: number
+    sharedWith?: string[]
+    directlyOwned?: boolean
 }
 
 interface RestMedia {
@@ -19,6 +21,18 @@ interface RestMedia {
     source: string
 }
 
+interface RestUserDetails {
+    name: string
+    email: string
+    picture?: string
+}
+
+interface RestOwnerDetails {
+    id: string
+    name?: string
+    users: RestUserDetails[]
+}
+
 export class CatalogAPIAdapter implements CatalogAPI {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
@@ -27,13 +41,40 @@ export class CatalogAPIAdapter implements CatalogAPI {
     }
 
     public fetchAlbums(email: string): Promise<Album[]> {
-        return this.authenticatedAxios.get<RestAlbum[]>(`/api/v1/albums`)
+        return this.authenticatedAxios.get<RestAlbum[]>('/api/v1/albums')
             .then(resp => {
-                const maxTemperature = resp.data.map(a => a.totalCount / numberOfDays(new Date(a.start), new Date(a.end))).reduce(function (p, v) {
+                const albums = resp.data;
+
+                return Promise.allSettled([
+                    this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),
+                    this.findUserDetails(new Set<string>(albums.flatMap(a => a.sharedWith ?? []))),
+                ]).then(([ownersResp, usersResp]) => {
+                    const owners = ownersResp.status === "fulfilled" ? ownersResp.value.reduce(
+                        (map, owner) => {
+                            map.set(owner.id, owner)
+                            return map
+                        },
+                        new Map<string, OwnerDetails>()
+                    ) : new Map<string, OwnerDetails>()
+
+                    const users = usersResp.status === "fulfilled" ? usersResp.value.reduce(
+                        (map, user) => {
+                            map.set(user.email, user)
+                            return map
+                        },
+                        new Map<string, UserDetails>()
+                    ) : new Map<string, UserDetails>()
+
+                    return {albums, owners, users}
+                })
+            })
+            .then(({albums, owners, users}) => {
+
+                const maxTemperature = albums.map(a => a.totalCount / numberOfDays(new Date(a.start), new Date(a.end))).reduce(function (p, v) {
                     return (p > v ? p : v);
                 })
 
-                return resp.data.map(album => {
+                return albums.map(album => {
                     const temperature = album.totalCount / numberOfDays(new Date(album.start), new Date(album.end));
                     return {
                         albumId: {owner: album.owner, folderName: album.folderName.replace(/^\//, "")},
@@ -43,9 +84,37 @@ export class CatalogAPIAdapter implements CatalogAPI {
                         totalCount: album.totalCount,
                         temperature: temperature,
                         relativeTemperature: temperature / maxTemperature,
+                        sharedWith: album.sharedWith ? album.sharedWith.map(email => users.get(email) ?? {
+                            name: email,
+                            email: email,
+                        }) : [],
+                        ownedBy: album.directlyOwned ? undefined : owners.get(album.owner) ?? {
+                            name: album.owner,
+                            users: [],
+                        }
                     }
                 }).sort((a, b) => b.start.getTime() - a.start.getTime());
             });
+    }
+
+    private findOwnerDetails(owners: Set<string>): Promise<RestOwnerDetails[]> {
+        if (!owners) {
+            return Promise.resolve([])
+        }
+
+        return this.authenticatedAxios
+            .get<RestOwnerDetails[]>(`/api/v1/owners?ids=${[...owners.values()].join(',')}`)
+            .then(resp => resp.data);
+    }
+
+    private findUserDetails(emails: Set<string>): Promise<RestUserDetails[]> {
+        if (!emails) {
+            return Promise.resolve([])
+        }
+
+        return this.authenticatedAxios
+            .get<RestUserDetails[]>(`/api/v1/users?emails=${[...emails.values()].join(',')}`)
+            .then(resp => resp.data);
     }
 
     public fetchMedias(albumId: AlbumId): Promise<Media[]> {

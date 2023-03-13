@@ -1,28 +1,34 @@
 import {Alert, Box, LinearProgress, Paper, Typography} from "@mui/material";
-import React from "react";
+import React, {ReactNode} from "react";
 import useLoginController from "./domain";
-import GoogleLoginButton from "./GoogleLoginButton";
 import {LoginPageState} from "./domain/login-hook";
+import GoogleLoginButton from "./GoogleLoginButton";
 
 
 const Login = ({onSuccessfulAuthentication}: {
     onSuccessfulAuthentication(): void
 }) => {
     const ctrl = useLoginController(onSuccessfulAuthentication)
+    const {loginWithIdentityToken, onError} = ctrl
 
     return (
-        <LoginInternal {...ctrl} />
+        <LoginInternal {...ctrl}>
+            <GoogleLoginButton onError={onError}
+                               onIdentitySuccess={loginWithIdentityToken}
+            />
+        </LoginInternal>
     )
 }
 export const LoginInternal = ({
                                   error,
                                   loading,
-                                  loginWithIdentityToken,
-                                  onError,
                                   promptForLogin,
                                   stage,
-                                  timeout
-                              }: LoginPageState) => {
+                                  timeout,
+                                  children,
+                              }: LoginPageState & {
+    children?: ReactNode,
+}) => {
 
     return (
         <Box sx={{
@@ -83,11 +89,7 @@ export const LoginInternal = ({
                         <Alert severity={"warning"}>Your session has timed out, thank you to reconnect</Alert>
                     )}
 
-                    {promptForLogin && (
-                        <GoogleLoginButton onError={onError}
-                                           onIdentitySuccess={loginWithIdentityToken}
-                        />
-                    )}
+                    {promptForLogin && children}
                 </Paper>
             </Box>
         </Box>

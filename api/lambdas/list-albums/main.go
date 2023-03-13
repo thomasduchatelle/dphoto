@@ -3,54 +3,56 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	common2 "github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"strings"
 	"time"
 )
 
 type AlbumDTO struct {
-	Name       string    `json:"name"`
-	Owner      string    `json:"owner"`
-	FolderName string    `json:"folderName"`
-	Start      time.Time `json:"start"`
-	End        time.Time `json:"end"`
-	TotalCount int       `json:"totalCount"`
-	SharedTo   []string  `json:"sharedTo,omitempty"`
+	Name          string    `json:"name"`
+	Owner         string    `json:"owner"`
+	FolderName    string    `json:"folderName"`
+	Start         time.Time `json:"start"`
+	End           time.Time `json:"end"`
+	TotalCount    int       `json:"totalCount"`
+	SharedTo      []string  `json:"sharedTo,omitempty"`
+	DirectlyOwned bool      `json:"directlyOwned"`
 }
 
-func Handler(request events.APIGatewayProxyRequest) (common2.Response, error) {
-	parser := common2.NewArgParser(&request)
+func Handler(request events.APIGatewayProxyRequest) (common.Response, error) {
+	parser := common.NewArgParser(&request)
 	onlyDirectlyOwned := parser.ReadQueryParameterBool("onlyDirectlyOwned", false)
 
 	if parser.HasViolations() {
 		return parser.BadRequest()
 	}
 
-	return common2.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common2.Response, error) {
+	return common.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common.Response, error) {
 		albums, err := catalogView.ListAlbums(catalogaclview.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned})
 		if err != nil {
-			return common2.Response{}, err
+			return common.Response{}, err
 		}
 
 		restAlbums := make([]AlbumDTO, len(albums))
 		for i, a := range albums {
 			restAlbums[i] = AlbumDTO{
-				End:        a.End,
-				FolderName: strings.TrimPrefix(a.FolderName, "/"),
-				Name:       a.Name,
-				Owner:      a.Owner,
-				Start:      a.Start,
-				TotalCount: a.TotalCount,
-				SharedTo:   a.SharedTo,
+				End:           a.End,
+				FolderName:    strings.TrimPrefix(a.FolderName, "/"),
+				Name:          a.Name,
+				Owner:         a.Owner,
+				Start:         a.Start,
+				TotalCount:    a.TotalCount,
+				SharedTo:      a.SharedTo,
+				DirectlyOwned: a.DirectlyOwned,
 			}
 		}
-		return common2.Ok(restAlbums)
+		return common.Ok(restAlbums)
 	})
 }
 
 func main() {
-	common2.BootstrapCatalogDomain()
+	common.BootstrapCatalogDomain()
 
 	lambda.Start(Handler)
 }

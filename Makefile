@@ -64,16 +64,20 @@ clean-web:
 	cd web && yarn clean
 
 setup-web:
-	cd web && yarn install
+	cd web && yarn
 
 test-web:
-	+echo "No tests implemented for WEB"
+	cd web && CI=true yarn test:ci
 
 build-web:
 	cd web && CI=true yarn build
 
 start:
-	cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
+	./scripts/wiremock.sh --track & \
+		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
+
+storybook:
+	cd web && yarn storybook
 
 
 #######################################
