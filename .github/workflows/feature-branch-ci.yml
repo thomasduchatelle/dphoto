@@ -2,7 +2,7 @@ name: Feature branch continuous integration
 on:
   push:
     branches-ignore:
-      - develop
+      - next
       - main
       - actions
   workflow_call:
