@@ -28,13 +28,15 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "test:ci": "start-server-and-test storybook http://localhost:6006 test",
+    "test:nowatch": "react-scripts test --watchAll=false --detectOpenHandles",
+    "test:ci": "yarn storybook:build && CI=true yarn test:nowatch",
+    "test:ci:live": "start-server-and-test storybook http://localhost:6006 test:nowatch",
     "test:storybook": "test-storybook",
     "test:storyshot": "test ./src/stories/storyshots.test.js",
     "eject": "react-scripts eject",
     "clean": "rm -rf build/",
     "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "storybook:build": "build-storybook"
   },
   "eslintConfig": {
     "extends": [

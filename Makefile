@@ -79,6 +79,10 @@ start:
 storybook:
 	cd web && yarn storybook
 
+test-web-ci:
+	docker build -t dphoto-puppeteer ./tools/puppeteer/
+	docker run --rm -v "$(shell pwd):/app" -it dphoto-puppeteer yarn test:ci
+
 
 #######################################
 ## API

@@ -1,0 +1,1616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2">
+    <font id="SFR Italic">
+        <font-face font-family="SFR" units-per-em="1000" ascent="900" descent="-300" font-style="italic"
+                   font-weight="400" font-stretch="normal" slope="-10" cap-height="678" x-height="524"
+                   underline-position="-72" underline-thickness="78"/>
+        <hkern u1="&#x20;" u2="&#x201c;" k="90"/>
+        <hkern u1="&#x20;" u2="&#x201d;" k="90"/>
+        <hkern u1="&#x26;" u2="A" k="-5"/>
+        <hkern u1="&#x26;" u2="J" k="-5"/>
+        <hkern u1="&#x26;" u2="O" k="15"/>
+        <hkern u1="&#x26;" u2="S" k="14"/>
+        <hkern u1="&#x26;" u2="T" k="112"/>
+        <hkern u1="&#x26;" u2="U" k="32"/>
+        <hkern u1="&#x26;" u2="V" k="67"/>
+        <hkern u1="&#x26;" u2="X" k="-6"/>
+        <hkern u1="&#x26;" u2="Y" k="94"/>
+        <hkern u1="&#x26;" u2="Z" k="-5"/>
+        <hkern u1="&#x26;" u2="f" k="5"/>
+        <hkern u1="&#x26;" u2="o" k="9"/>
+        <hkern u1="&#x26;" u2="t" k="26"/>
+        <hkern u1="&#x26;" u2="u" k="15"/>
+        <hkern u1="&#x26;" u2="v" k="32"/>
+        <hkern u1="&#x26;" u2="w" k="26"/>
+        <hkern u1="&#x28;" u2="f" k="10"/>
+        <hkern u1="&#x28;" u2="j" k="-100"/>
+        <hkern u1="&#x28;" u2="o" k="20"/>
+        <hkern u1="&#x2a;" u2="&#x2e;" k="110"/>
+        <hkern u1="&#x2a;" u2="A" k="60"/>
+        <hkern u1="&#x2a;" u2="J" k="90"/>
+        <hkern u1="&#x2a;" u2="O" k="10"/>
+        <hkern u1="&#x2a;" u2="X" k="9"/>
+        <hkern u1="&#x2a;" u2="Z" k="5"/>
+        <hkern u1="&#x2a;" u2="f" k="-25"/>
+        <hkern u1="&#x2a;" u2="g" k="20"/>
+        <hkern u1="&#x2a;" u2="n" k="3"/>
+        <hkern u1="&#x2a;" u2="o" k="34"/>
+        <hkern u1="&#x2a;" u2="s" k="30"/>
+        <hkern u1="&#x2a;" u2="u" k="2"/>
+        <hkern u1="&#x2a;" u2="z" k="5"/>
+        <hkern u1="&#x2a;" u2="&#xc6;" k="115"/>
+        <hkern u1="&#x2d;" u2="A" k="25"/>
+        <hkern u1="&#x2d;" u2="J" k="49"/>
+        <hkern u1="&#x2d;" u2="O" k="-5"/>
+        <hkern u1="&#x2d;" u2="S" k="35"/>
+        <hkern u1="&#x2d;" u2="T" k="105"/>
+        <hkern u1="&#x2d;" u2="V" k="37"/>
+        <hkern u1="&#x2d;" u2="X" k="55"/>
+        <hkern u1="&#x2d;" u2="Y" k="74"/>
+        <hkern u1="&#x2d;" u2="Z" k="48"/>
+        <hkern u1="&#x2d;" u2="g" k="-15"/>
+        <hkern u1="&#x2d;" u2="o" k="-16"/>
+        <hkern u1="&#x2d;" u2="v" k="26"/>
+        <hkern u1="&#x2d;" u2="x" k="20"/>
+        <hkern u1="&#x2d;" u2="z" k="40"/>
+        <hkern u1="&#x2d;" u2="&#xc6;" k="50"/>
+        <hkern u1="&#x2e;" u2="&#x20;" k="129"/>
+        <hkern u1="&#x2e;" u2="O" k="67"/>
+        <hkern u1="&#x2e;" u2="S" k="20"/>
+        <hkern u1="&#x2e;" u2="T" k="116"/>
+        <hkern u1="&#x2e;" u2="U" k="30"/>
+        <hkern u1="&#x2e;" u2="V" k="122"/>
+        <hkern u1="&#x2e;" u2="W" k="41"/>
+        <hkern u1="&#x2e;" u2="X" k="5"/>
+        <hkern u1="&#x2e;" u2="Y" k="150"/>
+        <hkern u1="&#x2e;" u2="o" k="29"/>
+        <hkern u1="&#x2e;" u2="s" k="10"/>
+        <hkern u1="&#x2e;" u2="t" k="17"/>
+        <hkern u1="&#x2e;" u2="v" k="90"/>
+        <hkern u1="&#x2e;" u2="x" k="-15"/>
+        <hkern u1="&#x2e;" u2="&#x201c;" k="130"/>
+        <hkern u1="&#x2e;" u2="&#x201d;" k="127"/>
+        <hkern u1="&#x2f;" u2="&#x2f;" k="53"/>
+        <hkern u1="&#x2f;" u2="A" k="100"/>
+        <hkern u1="&#x2f;" u2="J" k="90"/>
+        <hkern u1="&#x2f;" u2="O" k="15"/>
+        <hkern u1="&#x2f;" u2="T" k="-60"/>
+        <hkern u1="&#x2f;" u2="U" k="-20"/>
+        <hkern u1="&#x2f;" u2="V" k="-55"/>
+        <hkern u1="&#x2f;" u2="Y" k="-50"/>
+        <hkern u1="&#x2f;" u2="f" k="-30"/>
+        <hkern u1="&#x2f;" u2="g" k="50"/>
+        <hkern u1="&#x2f;" u2="h" k="-11"/>
+        <hkern u1="&#x2f;" u2="i" k="-30"/>
+        <hkern u1="&#x2f;" u2="n" k="30"/>
+        <hkern u1="&#x2f;" u2="o" k="43"/>
+        <hkern u1="&#x2f;" u2="s" k="40"/>
+        <hkern u1="&#x2f;" u2="t" k="2"/>
+        <hkern u1="&#x2f;" u2="u" k="20"/>
+        <hkern u1="&#x2f;" u2="x" k="17"/>
+        <hkern u1="&#x2f;" u2="z" k="40"/>
+        <hkern u1="&#x2f;" u2="&#xec;" k="-15"/>
+        <hkern u1="&#x3a;" u2="T" k="90"/>
+        <hkern u1="&#x3a;" u2="V" k="15"/>
+        <hkern u1="&#x3a;" u2="Y" k="45"/>
+        <hkern u1="&#x3a;" u2="&#x201c;" k="10"/>
+        <hkern u1="&#x3a;" u2="&#x201d;" k="30"/>
+        <hkern u1="&#x3f;" u2="A" k="45"/>
+        <hkern u1="&#x3f;" u2="J" k="40"/>
+        <hkern u1="&#x3f;" u2="Z" k="20"/>
+        <hkern u1="&#x3f;" u2="g" k="15"/>
+        <hkern u1="&#x3f;" u2="o" k="6"/>
+        <hkern u1="&#x3f;" u2="&#xab;" k="25"/>
+        <hkern u1="&#x3f;" u2="&#xbb;" k="25"/>
+        <hkern u1="&#x3f;" u2="&#xc6;" k="65"/>
+        <hkern u1="&#x40;" u2="A" k="29"/>
+        <hkern u1="&#x40;" u2="J" k="20"/>
+        <hkern u1="&#x40;" u2="O" k="2"/>
+        <hkern u1="&#x40;" u2="T" k="55"/>
+        <hkern u1="&#x40;" u2="V" k="27"/>
+        <hkern u1="&#x40;" u2="X" k="10"/>
+        <hkern u1="&#x40;" u2="Y" k="48"/>
+        <hkern u1="&#x40;" u2="Z" k="4"/>
+        <hkern u1="&#x40;" u2="g" k="10"/>
+        <hkern u1="&#x40;" u2="h" k="5"/>
+        <hkern u1="&#x40;" u2="s" k="20"/>
+        <hkern u1="&#x40;" u2="u" k="10"/>
+        <hkern u1="&#x40;" u2="v" k="5"/>
+        <hkern u1="&#x40;" u2="x" k="10"/>
+        <hkern u1="&#x40;" u2="z" k="30"/>
+        <hkern u1="&#x40;" u2="&#xc6;" k="5"/>
+        <hkern u1="A" u2="&#x26;" k="11"/>
+        <hkern u1="A" u2="&#x2a;" k="60"/>
+        <hkern u1="A" u2="&#x2d;" k="25"/>
+        <hkern u1="A" u2="&#x2e;" k="-3"/>
+        <hkern u1="A" u2="&#x2f;" k="-20"/>
+        <hkern u1="A" u2="&#x3f;" k="40"/>
+        <hkern u1="A" u2="&#x40;" k="36"/>
+        <hkern u1="A" u2="A" k="-9"/>
+        <hkern u1="A" u2="J" k="-8"/>
+        <hkern u1="A" u2="O" k="25"/>
+        <hkern u1="A" u2="T" k="90"/>
+        <hkern u1="A" u2="U" k="25"/>
+        <hkern u1="A" u2="V" k="56"/>
+        <hkern u1="A" u2="W" k="21"/>
+        <hkern u1="A" u2="Y" k="86"/>
+        <hkern u1="A" u2="&#x5c;" k="100"/>
+        <hkern u1="A" u2="j" k="5"/>
+        <hkern u1="A" u2="o" k="10"/>
+        <hkern u1="A" u2="v" k="40"/>
+        <hkern u1="A" u2="&#x2020;" k="25"/>
+        <hkern u1="A" u2="&#x2021;" k="-8"/>
+        <hkern u1="A" u2="&#x201c;" k="131"/>
+        <hkern u1="A" u2="&#x201d;" k="131"/>
+        <hkern u1="A" u2="&#x2122;" k="115"/>
+        <hkern u1="A" u2="&#xab;" k="25"/>
+        <hkern u1="A" u2="&#xae;" k="42"/>
+        <hkern u1="A" u2="&#xbb;" k="40"/>
+        <hkern u1="A" u2="&#xc6;" k="-50"/>
+        <hkern u1="B" u2="&#x26;" k="-5"/>
+        <hkern u1="B" u2="&#x2e;" k="21"/>
+        <hkern u1="B" u2="&#x2f;" k="5"/>
+        <hkern u1="B" u2="S" k="-5"/>
+        <hkern u1="B" u2="T" k="30"/>
+        <hkern u1="B" u2="V" k="5"/>
+        <hkern u1="B" u2="Y" k="25"/>
+        <hkern u1="B" u2="Z" k="9"/>
+        <hkern u1="B" u2="&#x5c;" k="30"/>
+        <hkern u1="B" u2="&#x2021;" k="-3"/>
+        <hkern u1="B" u2="&#x201c;" k="2"/>
+        <hkern u1="B" u2="&#x2122;" k="30"/>
+        <hkern u1="B" u2="&#xc6;" k="-5"/>
+        <hkern u1="C" u2="&#x26;" k="-5"/>
+        <hkern u1="C" u2="&#x2e;" k="32"/>
+        <hkern u1="C" u2="O" k="5"/>
+        <hkern u1="C" u2="T" k="25"/>
+        <hkern u1="C" u2="V" k="4"/>
+        <hkern u1="C" u2="Y" k="36"/>
+        <hkern u1="C" u2="g" k="5"/>
+        <hkern u1="C" u2="o" k="5"/>
+        <hkern u1="C" u2="&#x2021;" k="-9"/>
+        <hkern u1="C" u2="&#x2022;" k="-3"/>
+        <hkern u1="C" u2="&#x2122;" k="20"/>
+        <hkern u1="E" u2="&#x26;" k="10"/>
+        <hkern u1="E" u2="O" k="10"/>
+        <hkern u1="E" u2="S" k="5"/>
+        <hkern u1="E" u2="V" k="-10"/>
+        <hkern u1="E" u2="Z" k="-20"/>
+        <hkern u1="E" u2="&#x5c;" k="-10"/>
+        <hkern u1="E" u2="&#x201c;" k="8"/>
+        <hkern u1="E" u2="&#xef;" k="-14"/>
+        <hkern u1="F" u2="&#x26;" k="40"/>
+        <hkern u1="F" u2="&#x2d;" k="5"/>
+        <hkern u1="F" u2="&#x2e;" k="160"/>
+        <hkern u1="F" u2="&#x2f;" k="80"/>
+        <hkern u1="F" u2="&#x3a;" k="35"/>
+        <hkern u1="F" u2="&#x40;" k="12"/>
+        <hkern u1="F" u2="A" k="55"/>
+        <hkern u1="F" u2="J" k="80"/>
+        <hkern u1="F" u2="O" k="10"/>
+        <hkern u1="F" u2="Y" k="-15"/>
+        <hkern u1="F" u2="&#x5c;" k="-30"/>
+        <hkern u1="F" u2="g" k="35"/>
+        <hkern u1="F" u2="n" k="25"/>
+        <hkern u1="F" u2="o" k="20"/>
+        <hkern u1="F" u2="s" k="30"/>
+        <hkern u1="F" u2="u" k="20"/>
+        <hkern u1="F" u2="v" k="13"/>
+        <hkern u1="F" u2="x" k="25"/>
+        <hkern u1="F" u2="z" k="50"/>
+        <hkern u1="F" u2="&#x2122;" k="-25"/>
+        <hkern u1="F" u2="&#xab;" k="15"/>
+        <hkern u1="F" u2="&#xc6;" k="70"/>
+        <hkern u1="F" u2="&#xee;" k="-9"/>
+        <hkern u1="F" u2="&#xef;" k="-14"/>
+        <hkern u1="G" u2="&#x2e;" k="10"/>
+        <hkern u1="G" u2="T" k="40"/>
+        <hkern u1="G" u2="V" k="9"/>
+        <hkern u1="G" u2="Y" k="45"/>
+        <hkern u1="G" u2="&#x5c;" k="20"/>
+        <hkern u1="G" u2="&#x201c;" k="20"/>
+        <hkern u1="G" u2="&#x201d;" k="14"/>
+        <hkern u1="G" u2="&#x2022;" k="-2"/>
+        <hkern u1="G" u2="&#x2122;" k="35"/>
+        <hkern u1="H" u2="&#x2122;" k="10"/>
+        <hkern u1="H" u2="&#xef;" k="-14"/>
+        <hkern u1="J" u2="&#x26;" k="10"/>
+        <hkern u1="J" u2="&#x2e;" k="25"/>
+        <hkern u1="J" u2="&#xc6;" k="37"/>
+        <hkern u1="J" u2="&#xef;" k="-14"/>
+        <hkern u1="K" u2="&#x26;" k="20"/>
+        <hkern u1="K" u2="&#x2a;" k="5"/>
+        <hkern u1="K" u2="&#x2d;" k="55"/>
+        <hkern u1="K" u2="&#x40;" k="20"/>
+        <hkern u1="K" u2="A" k="-12"/>
+        <hkern u1="K" u2="J" k="-6"/>
+        <hkern u1="K" u2="O" k="30"/>
+        <hkern u1="K" u2="S" k="5"/>
+        <hkern u1="K" u2="V" k="-3"/>
+        <hkern u1="K" u2="X" k="-14"/>
+        <hkern u1="K" u2="f" k="5"/>
+        <hkern u1="K" u2="g" k="10"/>
+        <hkern u1="K" u2="n" k="10"/>
+        <hkern u1="K" u2="o" k="30"/>
+        <hkern u1="K" u2="s" k="15"/>
+        <hkern u1="K" u2="t" k="22"/>
+        <hkern u1="K" u2="u" k="15"/>
+        <hkern u1="K" u2="v" k="30"/>
+        <hkern u1="K" u2="x" k="-6"/>
+        <hkern u1="K" u2="&#x2020;" k="11"/>
+        <hkern u1="K" u2="&#x201c;" k="18"/>
+        <hkern u1="K" u2="&#x201d;" k="18"/>
+        <hkern u1="K" u2="&#xab;" k="30"/>
+        <hkern u1="K" u2="&#xae;" k="30"/>
+        <hkern u1="K" u2="&#xbb;" k="35"/>
+        <hkern u1="K" u2="&#xef;" k="-14"/>
+        <hkern u1="L" u2="&#x26;" k="25"/>
+        <hkern u1="L" u2="&#x2a;" k="121"/>
+        <hkern u1="L" u2="&#x2d;" k="75"/>
+        <hkern u1="L" u2="&#x3f;" k="70"/>
+        <hkern u1="L" u2="&#x40;" k="30"/>
+        <hkern u1="L" u2="O" k="50"/>
+        <hkern u1="L" u2="S" k="15"/>
+        <hkern u1="L" u2="T" k="99"/>
+        <hkern u1="L" u2="U" k="40"/>
+        <hkern u1="L" u2="V" k="96"/>
+        <hkern u1="L" u2="Y" k="129"/>
+        <hkern u1="L" u2="&#x5c;" k="115"/>
+        <hkern u1="L" u2="n" k="10"/>
+        <hkern u1="L" u2="o" k="30"/>
+        <hkern u1="L" u2="s" k="10"/>
+        <hkern u1="L" u2="t" k="19"/>
+        <hkern u1="L" u2="u" k="40"/>
+        <hkern u1="L" u2="v" k="66"/>
+        <hkern u1="L" u2="&#x2020;" k="24"/>
+        <hkern u1="L" u2="&#x201c;" k="118"/>
+        <hkern u1="L" u2="&#x201d;" k="118"/>
+        <hkern u1="L" u2="&#x2022;" k="12"/>
+        <hkern u1="L" u2="&#x2122;" k="170"/>
+        <hkern u1="L" u2="&#xab;" k="60"/>
+        <hkern u1="L" u2="&#xae;" k="70"/>
+        <hkern u1="L" u2="&#xb7;" k="15"/>
+        <hkern u1="O" u2="&#x26;" k="7"/>
+        <hkern u1="O" u2="&#x2a;" k="10"/>
+        <hkern u1="O" u2="&#x2d;" k="-5"/>
+        <hkern u1="O" u2="&#x2e;" k="59"/>
+        <hkern u1="O" u2="&#x2f;" k="15"/>
+        <hkern u1="O" u2="&#x3f;" k="25"/>
+        <hkern u1="O" u2="&#x40;" k="-5"/>
+        <hkern u1="O" u2="A" k="25"/>
+        <hkern u1="O" u2="J" k="25"/>
+        <hkern u1="O" u2="S" k="3"/>
+        <hkern u1="O" u2="T" k="39"/>
+        <hkern u1="O" u2="V" k="35"/>
+        <hkern u1="O" u2="X" k="20"/>
+        <hkern u1="O" u2="Y" k="53"/>
+        <hkern u1="O" u2="Z" k="34"/>
+        <hkern u1="O" u2="&#x5c;" k="15"/>
+        <hkern u1="O" u2="o" k="10"/>
+        <hkern u1="O" u2="z" k="35"/>
+        <hkern u1="O" u2="&#x2020;" k="-5"/>
+        <hkern u1="O" u2="&#x2021;" k="-3"/>
+        <hkern u1="O" u2="&#x201c;" k="26"/>
+        <hkern u1="O" u2="&#x201d;" k="26"/>
+        <hkern u1="O" u2="&#x2022;" k="-9"/>
+        <hkern u1="O" u2="&#x2122;" k="70"/>
+        <hkern u1="O" u2="&#xc6;" k="20"/>
+        <hkern u1="P" u2="&#x26;" k="31"/>
+        <hkern u1="P" u2="&#x2d;" k="25"/>
+        <hkern u1="P" u2="&#x2e;" k="160"/>
+        <hkern u1="P" u2="&#x2f;" k="100"/>
+        <hkern u1="P" u2="&#x3f;" k="5"/>
+        <hkern u1="P" u2="&#x40;" k="5"/>
+        <hkern u1="P" u2="A" k="65"/>
+        <hkern u1="P" u2="J" k="105"/>
+        <hkern u1="P" u2="S" k="15"/>
+        <hkern u1="P" u2="T" k="15"/>
+        <hkern u1="P" u2="V" k="15"/>
+        <hkern u1="P" u2="X" k="33"/>
+        <hkern u1="P" u2="Y" k="24"/>
+        <hkern u1="P" u2="Z" k="54"/>
+        <hkern u1="P" u2="g" k="35"/>
+        <hkern u1="P" u2="n" k="25"/>
+        <hkern u1="P" u2="o" k="25"/>
+        <hkern u1="P" u2="s" k="24"/>
+        <hkern u1="P" u2="u" k="15"/>
+        <hkern u1="P" u2="z" k="20"/>
+        <hkern u1="P" u2="&#x2022;" k="-6"/>
+        <hkern u1="P" u2="&#x2122;" k="15"/>
+        <hkern u1="P" u2="&#xab;" k="20"/>
+        <hkern u1="P" u2="&#xae;" k="-20"/>
+        <hkern u1="P" u2="&#xc6;" k="110"/>
+        <hkern u1="R" u2="&#x26;" k="10"/>
+        <hkern u1="R" u2="A" k="-3"/>
+        <hkern u1="R" u2="J" k="-6"/>
+        <hkern u1="R" u2="O" k="2"/>
+        <hkern u1="R" u2="T" k="15"/>
+        <hkern u1="R" u2="V" k="18"/>
+        <hkern u1="R" u2="X" k="-6"/>
+        <hkern u1="R" u2="Y" k="33"/>
+        <hkern u1="R" u2="&#x5c;" k="10"/>
+        <hkern u1="R" u2="g" k="5"/>
+        <hkern u1="R" u2="o" k="15"/>
+        <hkern u1="R" u2="s" k="10"/>
+        <hkern u1="R" u2="u" k="10"/>
+        <hkern u1="R" u2="v" k="5"/>
+        <hkern u1="R" u2="&#x201c;" k="17"/>
+        <hkern u1="R" u2="&#x201d;" k="20"/>
+        <hkern u1="R" u2="&#x2122;" k="25"/>
+        <hkern u1="R" u2="&#xab;" k="15"/>
+        <hkern u1="R" u2="&#xae;" k="-3"/>
+        <hkern u1="R" u2="&#xb7;" k="6"/>
+        <hkern u1="R" u2="&#xbb;" k="20"/>
+        <hkern u1="S" u2="&#x2a;" k="25"/>
+        <hkern u1="S" u2="&#x2d;" k="5"/>
+        <hkern u1="S" u2="&#x2e;" k="24"/>
+        <hkern u1="S" u2="&#x40;" k="21"/>
+        <hkern u1="S" u2="O" k="8"/>
+        <hkern u1="S" u2="T" k="36"/>
+        <hkern u1="S" u2="U" k="25"/>
+        <hkern u1="S" u2="V" k="25"/>
+        <hkern u1="S" u2="Y" k="36"/>
+        <hkern u1="S" u2="Z" k="10"/>
+        <hkern u1="S" u2="&#x5c;" k="10"/>
+        <hkern u1="S" u2="n" k="5"/>
+        <hkern u1="S" u2="o" k="10"/>
+        <hkern u1="S" u2="&#x2020;" k="6"/>
+        <hkern u1="S" u2="&#x201c;" k="35"/>
+        <hkern u1="S" u2="&#x201d;" k="27"/>
+        <hkern u1="S" u2="&#x2022;" k="-2"/>
+        <hkern u1="S" u2="&#x2122;" k="33"/>
+        <hkern u1="S" u2="&#xab;" k="20"/>
+        <hkern u1="S" u2="&#xae;" k="15"/>
+        <hkern u1="S" u2="&#xc6;" k="5"/>
+        <hkern u1="T" u2="&#x26;" k="59"/>
+        <hkern u1="T" u2="&#x2d;" k="105"/>
+        <hkern u1="T" u2="&#x2e;" k="110"/>
+        <hkern u1="T" u2="&#x2f;" k="105"/>
+        <hkern u1="T" u2="&#x3a;" k="90"/>
+        <hkern u1="T" u2="&#x40;" k="44"/>
+        <hkern u1="T" u2="A" k="99"/>
+        <hkern u1="T" u2="J" k="110"/>
+        <hkern u1="T" u2="O" k="31"/>
+        <hkern u1="T" u2="S" k="25"/>
+        <hkern u1="T" u2="V" k="-3"/>
+        <hkern u1="T" u2="Y" k="-5"/>
+        <hkern u1="T" u2="Z" k="25"/>
+        <hkern u1="T" u2="&#x5c;" k="-60"/>
+        <hkern u1="T" u2="g" k="101"/>
+        <hkern u1="T" u2="n" k="42"/>
+        <hkern u1="T" u2="o" k="95"/>
+        <hkern u1="T" u2="s" k="71"/>
+        <hkern u1="T" u2="t" k="30"/>
+        <hkern u1="T" u2="u" k="75"/>
+        <hkern u1="T" u2="v" k="28"/>
+        <hkern u1="T" u2="x" k="68"/>
+        <hkern u1="T" u2="z" k="40"/>
+        <hkern u1="T" u2="&#x2020;" k="35"/>
+        <hkern u1="T" u2="&#x201c;" k="6"/>
+        <hkern u1="T" u2="&#x2122;" k="-40"/>
+        <hkern u1="T" u2="&#xab;" k="90"/>
+        <hkern u1="T" u2="&#xae;" k="18"/>
+        <hkern u1="T" u2="&#xbb;" k="90"/>
+        <hkern u1="T" u2="&#xc6;" k="87"/>
+        <hkern u1="T" u2="&#xee;" k="-12"/>
+        <hkern u1="T" u2="&#xef;" k="-21"/>
+        <hkern u1="U" u2="&#x26;" k="17"/>
+        <hkern u1="U" u2="&#x2e;" k="28"/>
+        <hkern u1="U" u2="&#x2f;" k="30"/>
+        <hkern u1="U" u2="&#x40;" k="10"/>
+        <hkern u1="U" u2="A" k="25"/>
+        <hkern u1="U" u2="S" k="25"/>
+        <hkern u1="U" u2="&#xc6;" k="10"/>
+        <hkern u1="U" u2="&#xef;" k="-14"/>
+        <hkern u1="V" u2="&#x26;" k="39"/>
+        <hkern u1="V" u2="&#x2d;" k="35"/>
+        <hkern u1="V" u2="&#x2e;" k="114"/>
+        <hkern u1="V" u2="&#x2f;" k="80"/>
+        <hkern u1="V" u2="&#x3a;" k="15"/>
+        <hkern u1="V" u2="&#x40;" k="20"/>
+        <hkern u1="V" u2="A" k="75"/>
+        <hkern u1="V" u2="J" k="73"/>
+        <hkern u1="V" u2="O" k="5"/>
+        <hkern u1="V" u2="S" k="14"/>
+        <hkern u1="V" u2="T" k="-3"/>
+        <hkern u1="V" u2="V" k="-13"/>
+        <hkern u1="V" u2="X" k="-6"/>
+        <hkern u1="V" u2="Y" k="-9"/>
+        <hkern u1="V" u2="Z" k="35"/>
+        <hkern u1="V" u2="&#x5c;" k="-40"/>
+        <hkern u1="V" u2="g" k="55"/>
+        <hkern u1="V" u2="n" k="15"/>
+        <hkern u1="V" u2="o" k="35"/>
+        <hkern u1="V" u2="s" k="13"/>
+        <hkern u1="V" u2="u" k="15"/>
+        <hkern u1="V" u2="v" k="-5"/>
+        <hkern u1="V" u2="x" k="2"/>
+        <hkern u1="V" u2="z" k="12"/>
+        <hkern u1="V" u2="&#x2020;" k="10"/>
+        <hkern u1="V" u2="&#x2021;" k="10"/>
+        <hkern u1="V" u2="&#x201c;" k="1"/>
+        <hkern u1="V" u2="&#x201d;" k="-10"/>
+        <hkern u1="V" u2="&#x2122;" k="-55"/>
+        <hkern u1="V" u2="&#xab;" k="35"/>
+        <hkern u1="V" u2="&#xae;" k="2"/>
+        <hkern u1="V" u2="&#xbb;" k="60"/>
+        <hkern u1="V" u2="&#xc6;" k="60"/>
+        <hkern u1="V" u2="&#xee;" k="-11"/>
+        <hkern u1="V" u2="&#xef;" k="-29"/>
+        <hkern u1="W" u2="&#x2e;" k="35"/>
+        <hkern u1="W" u2="A" k="17"/>
+        <hkern u1="W" u2="&#x2022;" k="6"/>
+        <hkern u1="X" u2="&#x26;" k="10"/>
+        <hkern u1="X" u2="&#x2a;" k="8"/>
+        <hkern u1="X" u2="&#x2d;" k="55"/>
+        <hkern u1="X" u2="&#x40;" k="20"/>
+        <hkern u1="X" u2="O" k="20"/>
+        <hkern u1="X" u2="S" k="10"/>
+        <hkern u1="X" u2="V" k="-6"/>
+        <hkern u1="X" u2="X" k="-20"/>
+        <hkern u1="X" u2="Y" k="-6"/>
+        <hkern u1="X" u2="Z" k="10"/>
+        <hkern u1="X" u2="&#x5c;" k="-25"/>
+        <hkern u1="X" u2="g" k="10"/>
+        <hkern u1="X" u2="o" k="30"/>
+        <hkern u1="X" u2="s" k="2"/>
+        <hkern u1="X" u2="t" k="6"/>
+        <hkern u1="X" u2="u" k="10"/>
+        <hkern u1="X" u2="v" k="25"/>
+        <hkern u1="X" u2="x" k="-9"/>
+        <hkern u1="X" u2="&#x2020;" k="35"/>
+        <hkern u1="X" u2="&#x201c;" k="12"/>
+        <hkern u1="X" u2="&#x2122;" k="-30"/>
+        <hkern u1="X" u2="&#xab;" k="40"/>
+        <hkern u1="X" u2="&#xae;" k="19"/>
+        <hkern u1="X" u2="&#xbb;" k="60"/>
+        <hkern u1="X" u2="&#xc6;" k="-20"/>
+        <hkern u1="X" u2="&#xee;" k="-3"/>
+        <hkern u1="X" u2="&#xef;" k="-24"/>
+        <hkern u1="Y" u2="&#x26;" k="55"/>
+        <hkern u1="Y" u2="&#x2d;" k="80"/>
+        <hkern u1="Y" u2="&#x2e;" k="141"/>
+        <hkern u1="Y" u2="&#x2f;" k="100"/>
+        <hkern u1="Y" u2="&#x3a;" k="45"/>
+        <hkern u1="Y" u2="&#x3f;" k="5"/>
+        <hkern u1="Y" u2="&#x40;" k="40"/>
+        <hkern u1="Y" u2="A" k="105"/>
+        <hkern u1="Y" u2="J" k="100"/>
+        <hkern u1="Y" u2="O" k="41"/>
+        <hkern u1="Y" u2="S" k="15"/>
+        <hkern u1="Y" u2="T" k="-8"/>
+        <hkern u1="Y" u2="V" k="-11"/>
+        <hkern u1="Y" u2="X" k="-6"/>
+        <hkern u1="Y" u2="Y" k="-20"/>
+        <hkern u1="Y" u2="Z" k="28"/>
+        <hkern u1="Y" u2="&#x5c;" k="-30"/>
+        <hkern u1="Y" u2="f" k="10"/>
+        <hkern u1="Y" u2="g" k="75"/>
+        <hkern u1="Y" u2="n" k="45"/>
+        <hkern u1="Y" u2="o" k="72"/>
+        <hkern u1="Y" u2="p" k="21"/>
+        <hkern u1="Y" u2="s" k="52"/>
+        <hkern u1="Y" u2="t" k="9"/>
+        <hkern u1="Y" u2="u" k="30"/>
+        <hkern u1="Y" u2="v" k="20"/>
+        <hkern u1="Y" u2="x" k="36"/>
+        <hkern u1="Y" u2="z" k="38"/>
+        <hkern u1="Y" u2="&#x2020;" k="35"/>
+        <hkern u1="Y" u2="&#x2021;" k="35"/>
+        <hkern u1="Y" u2="&#x201c;" k="6"/>
+        <hkern u1="Y" u2="&#x2122;" k="-24"/>
+        <hkern u1="Y" u2="&#xab;" k="85"/>
+        <hkern u1="Y" u2="&#xae;" k="15"/>
+        <hkern u1="Y" u2="&#xb7;" k="33"/>
+        <hkern u1="Y" u2="&#xbb;" k="110"/>
+        <hkern u1="Y" u2="&#xc6;" k="103"/>
+        <hkern u1="Y" u2="&#xee;" k="-6"/>
+        <hkern u1="Y" u2="&#xef;" k="-32"/>
+        <hkern u1="Y" u2="&#x131;" k="18"/>
+        <hkern u1="Z" u2="&#x26;" k="6"/>
+        <hkern u1="Z" u2="&#x2d;" k="89"/>
+        <hkern u1="Z" u2="&#x2f;" k="-20"/>
+        <hkern u1="Z" u2="&#x40;" k="25"/>
+        <hkern u1="Z" u2="O" k="30"/>
+        <hkern u1="Z" u2="Y" k="6"/>
+        <hkern u1="Z" u2="Z" k="-15"/>
+        <hkern u1="Z" u2="g" k="15"/>
+        <hkern u1="Z" u2="o" k="25"/>
+        <hkern u1="Z" u2="t" k="6"/>
+        <hkern u1="Z" u2="z" k="12"/>
+        <hkern u1="Z" u2="&#x2020;" k="40"/>
+        <hkern u1="Z" u2="&#x2021;" k="13"/>
+        <hkern u1="Z" u2="&#x201c;" k="15"/>
+        <hkern u1="Z" u2="&#x201d;" k="11"/>
+        <hkern u1="Z" u2="&#x2022;" k="9"/>
+        <hkern u1="Z" u2="&#x2122;" k="-14"/>
+        <hkern u1="Z" u2="&#xab;" k="45"/>
+        <hkern u1="Z" u2="&#xae;" k="20"/>
+        <hkern u1="Z" u2="&#xb7;" k="9"/>
+        <hkern u1="Z" u2="&#xbb;" k="60"/>
+        <hkern u1="Z" u2="&#xc6;" k="-20"/>
+        <hkern u1="Z" u2="&#xef;" k="-17"/>
+        <hkern u1="&#x5b;" u2="f" k="15"/>
+        <hkern u1="&#x5b;" u2="j" k="-100"/>
+        <hkern u1="&#x5b;" u2="o" k="9"/>
+        <hkern u1="&#x5b;" u2="&#xec;" k="-15"/>
+        <hkern u1="&#x5c;" u2="A" k="-20"/>
+        <hkern u1="&#x5c;" u2="J" k="-30"/>
+        <hkern u1="&#x5c;" u2="O" k="15"/>
+        <hkern u1="&#x5c;" u2="T" k="105"/>
+        <hkern u1="&#x5c;" u2="U" k="30"/>
+        <hkern u1="&#x5c;" u2="V" k="85"/>
+        <hkern u1="&#x5c;" u2="X" k="-25"/>
+        <hkern u1="&#x5c;" u2="Y" k="105"/>
+        <hkern u1="&#x5c;" u2="Z" k="-20"/>
+        <hkern u1="&#x5c;" u2="&#x5c;" k="35"/>
+        <hkern u1="&#x5c;" u2="g" k="-65"/>
+        <hkern u1="&#x5c;" u2="h" k="-45"/>
+        <hkern u1="&#x5c;" u2="i" k="-40"/>
+        <hkern u1="&#x5c;" u2="j" k="-100"/>
+        <hkern u1="&#x5c;" u2="n" k="-45"/>
+        <hkern u1="&#x5c;" u2="o" k="-20"/>
+        <hkern u1="&#x5c;" u2="s" k="-35"/>
+        <hkern u1="&#x5c;" u2="t" k="-35"/>
+        <hkern u1="&#x5c;" u2="u" k="-10"/>
+        <hkern u1="&#x5c;" u2="v" k="15"/>
+        <hkern u1="&#x5c;" u2="x" k="-60"/>
+        <hkern u1="&#x5c;" u2="z" k="-55"/>
+        <hkern u1="a" u2="&#x26;" k="5"/>
+        <hkern u1="a" u2="&#x2a;" k="35"/>
+        <hkern u1="a" u2="&#x2d;" k="-10"/>
+        <hkern u1="a" u2="&#x2e;" k="-20"/>
+        <hkern u1="a" u2="&#x2f;" k="-43"/>
+        <hkern u1="a" u2="&#x3f;" k="27"/>
+        <hkern u1="a" u2="&#x40;" k="5"/>
+        <hkern u1="a" u2="A" k="-40"/>
+        <hkern u1="a" u2="S" k="10"/>
+        <hkern u1="a" u2="T" k="90"/>
+        <hkern u1="a" u2="V" k="42"/>
+        <hkern u1="a" u2="X" k="-15"/>
+        <hkern u1="a" u2="Y" k="88"/>
+        <hkern u1="a" u2="&#x5c;" k="50"/>
+        <hkern u1="a" u2="&#x5d;" k="6"/>
+        <hkern u1="a" u2="f" k="-5"/>
+        <hkern u1="a" u2="h" k="-10"/>
+        <hkern u1="a" u2="o" k="5"/>
+        <hkern u1="a" u2="s" k="-15"/>
+        <hkern u1="a" u2="v" k="20"/>
+        <hkern u1="a" u2="x" k="-10"/>
+        <hkern u1="a" u2="z" k="-10"/>
+        <hkern u1="a" u2="&#x201c;" k="49"/>
+        <hkern u1="a" u2="&#x201d;" k="21"/>
+        <hkern u1="a" u2="&#x2122;" k="94"/>
+        <hkern u1="a" u2="&#xab;" k="9"/>
+        <hkern u1="a" u2="&#xae;" k="8"/>
+        <hkern u1="a" u2="&#xbf;" k="-10"/>
+        <hkern u1="c" u2="&#x2a;" k="15"/>
+        <hkern u1="c" u2="&#x3f;" k="23"/>
+        <hkern u1="c" u2="T" k="75"/>
+        <hkern u1="c" u2="V" k="20"/>
+        <hkern u1="c" u2="Y" k="76"/>
+        <hkern u1="c" u2="Z" k="5"/>
+        <hkern u1="c" u2="o" k="3"/>
+        <hkern u1="c" u2="v" k="-3"/>
+        <hkern u1="c" u2="&#x201c;" k="8"/>
+        <hkern u1="c" u2="&#x2122;" k="79"/>
+        <hkern u1="c" u2="&#xab;" k="3"/>
+        <hkern u1="d" u2="&#x2f;" k="6"/>
+        <hkern u1="d" u2="&#xae;" k="-3"/>
+        <hkern u1="d" u2="&#xbf;" k="6"/>
+        <hkern u1="d" u2="&#xef;" k="-11"/>
+        <hkern u1="e" u2="&#x26;" k="5"/>
+        <hkern u1="e" u2="&#x2a;" k="27"/>
+        <hkern u1="e" u2="&#x2d;" k="-3"/>
+        <hkern u1="e" u2="&#x2f;" k="-10"/>
+        <hkern u1="e" u2="&#x3f;" k="24"/>
+        <hkern u1="e" u2="O" k="-5"/>
+        <hkern u1="e" u2="S" k="10"/>
+        <hkern u1="e" u2="T" k="65"/>
+        <hkern u1="e" u2="V" k="28"/>
+        <hkern u1="e" u2="X" k="5"/>
+        <hkern u1="e" u2="Y" k="66"/>
+        <hkern u1="e" u2="&#x5c;" k="30"/>
+        <hkern u1="e" u2="&#x201c;" k="41"/>
+        <hkern u1="e" u2="&#x2022;" k="-9"/>
+        <hkern u1="e" u2="&#x2122;" k="83"/>
+        <hkern u1="e" u2="&#xbf;" k="6"/>
+        <hkern u1="f" u2="&#x26;" k="6"/>
+        <hkern u1="f" u2="&#x29;" k="-70"/>
+        <hkern u1="f" u2="&#x2a;" k="-47"/>
+        <hkern u1="f" u2="&#x2d;" k="36"/>
+        <hkern u1="f" u2="&#x2e;" k="76"/>
+        <hkern u1="f" u2="&#x2f;" k="14"/>
+        <hkern u1="f" u2="&#x3f;" k="-16"/>
+        <hkern u1="f" u2="&#x40;" k="5"/>
+        <hkern u1="f" u2="A" k="45"/>
+        <hkern u1="f" u2="J" k="64"/>
+        <hkern u1="f" u2="T" k="-25"/>
+        <hkern u1="f" u2="V" k="-40"/>
+        <hkern u1="f" u2="X" k="-30"/>
+        <hkern u1="f" u2="Y" k="-50"/>
+        <hkern u1="f" u2="&#x5c;" k="-85"/>
+        <hkern u1="f" u2="&#x5d;" k="-60"/>
+        <hkern u1="f" u2="g" k="25"/>
+        <hkern u1="f" u2="o" k="29"/>
+        <hkern u1="f" u2="s" k="5"/>
+        <hkern u1="f" u2="t" k="-15"/>
+        <hkern u1="f" u2="v" k="-10"/>
+        <hkern u1="f" u2="z" k="5"/>
+        <hkern u1="f" u2="&#x7d;" k="-60"/>
+        <hkern u1="f" u2="&#x201c;" k="-34"/>
+        <hkern u1="f" u2="&#x201d;" k="-50"/>
+        <hkern u1="f" u2="&#x2122;" k="-52"/>
+        <hkern u1="f" u2="&#xab;" k="40"/>
+        <hkern u1="f" u2="&#xae;" k="-13"/>
+        <hkern u1="f" u2="&#xb7;" k="15"/>
+        <hkern u1="f" u2="&#xbb;" k="28"/>
+        <hkern u1="g" u2="&#x2e;" k="-10"/>
+        <hkern u1="g" u2="&#x2f;" k="-61"/>
+        <hkern u1="g" u2="&#x3f;" k="15"/>
+        <hkern u1="g" u2="O" k="-10"/>
+        <hkern u1="g" u2="T" k="53"/>
+        <hkern u1="g" u2="V" k="3"/>
+        <hkern u1="g" u2="Y" k="37"/>
+        <hkern u1="g" u2="g" k="-15"/>
+        <hkern u1="g" u2="j" k="-30"/>
+        <hkern u1="g" u2="o" k="5"/>
+        <hkern u1="g" u2="t" k="-10"/>
+        <hkern u1="g" u2="v" k="-25"/>
+        <hkern u1="g" u2="z" k="-10"/>
+        <hkern u1="g" u2="&#x7d;" k="-3"/>
+        <hkern u1="g" u2="&#x201c;" k="-10"/>
+        <hkern u1="g" u2="&#x201d;" k="-30"/>
+        <hkern u1="g" u2="&#x2122;" k="40"/>
+        <hkern u1="g" u2="&#xab;" k="5"/>
+        <hkern u1="g" u2="&#xb7;" k="6"/>
+        <hkern u1="g" u2="&#xbf;" k="-29"/>
+        <hkern u1="i" u2="&#x2f;" k="-39"/>
+        <hkern u1="i" u2="&#x3f;" k="8"/>
+        <hkern u1="i" u2="&#x5c;" k="-40"/>
+        <hkern u1="i" u2="&#xae;" k="-8"/>
+        <hkern u1="i" u2="&#xef;" k="-11"/>
+        <hkern u1="j" u2="j" k="-17"/>
+        <hkern u1="j" u2="&#xae;" k="-6"/>
+        <hkern u1="k" u2="&#x26;" k="15"/>
+        <hkern u1="k" u2="&#x2a;" k="15"/>
+        <hkern u1="k" u2="&#x2d;" k="60"/>
+        <hkern u1="k" u2="&#x2f;" k="-20"/>
+        <hkern u1="k" u2="&#x40;" k="10"/>
+        <hkern u1="k" u2="O" k="5"/>
+        <hkern u1="k" u2="S" k="10"/>
+        <hkern u1="k" u2="T" k="50"/>
+        <hkern u1="k" u2="V" k="5"/>
+        <hkern u1="k" u2="Y" k="31"/>
+        <hkern u1="k" u2="o" k="15"/>
+        <hkern u1="k" u2="s" k="5"/>
+        <hkern u1="k" u2="u" k="10"/>
+        <hkern u1="k" u2="z" k="6"/>
+        <hkern u1="k" u2="&#x2122;" k="61"/>
+        <hkern u1="k" u2="&#xab;" k="40"/>
+        <hkern u1="k" u2="&#xae;" k="-1"/>
+        <hkern u1="k" u2="&#xbf;" k="-20"/>
+        <hkern u1="k" u2="&#xf0;" k="25"/>
+        <hkern u1="l" u2="&#x2a;" k="12"/>
+        <hkern u1="l" u2="&#x2d;" k="10"/>
+        <hkern u1="l" u2="&#x2e;" k="-45"/>
+        <hkern u1="l" u2="&#x2f;" k="-51"/>
+        <hkern u1="l" u2="T" k="40"/>
+        <hkern u1="l" u2="&#x5c;" k="-20"/>
+        <hkern u1="l" u2="g" k="-10"/>
+        <hkern u1="l" u2="o" k="6"/>
+        <hkern u1="l" u2="v" k="7"/>
+        <hkern u1="l" u2="x" k="-2"/>
+        <hkern u1="l" u2="&#x201c;" k="10"/>
+        <hkern u1="l" u2="&#x2122;" k="20"/>
+        <hkern u1="l" u2="&#xab;" k="9"/>
+        <hkern u1="l" u2="&#xae;" k="8"/>
+        <hkern u1="l" u2="&#xbf;" k="-20"/>
+        <hkern u1="n" u2="&#x2a;" k="36"/>
+        <hkern u1="n" u2="&#x2d;" k="-2"/>
+        <hkern u1="n" u2="&#x2f;" k="-22"/>
+        <hkern u1="n" u2="&#x3f;" k="29"/>
+        <hkern u1="n" u2="T" k="75"/>
+        <hkern u1="n" u2="V" k="29"/>
+        <hkern u1="n" u2="Y" k="78"/>
+        <hkern u1="n" u2="&#x5c;" k="45"/>
+        <hkern u1="n" u2="&#x201c;" k="41"/>
+        <hkern u1="n" u2="&#x201d;" k="28"/>
+        <hkern u1="n" u2="&#x2022;" k="-5"/>
+        <hkern u1="n" u2="&#x2122;" k="75"/>
+        <hkern u1="n" u2="&#xaa;" k="30"/>
+        <hkern u1="n" u2="&#xab;" k="2"/>
+        <hkern u1="n" u2="&#xba;" k="30"/>
+        <hkern u1="o" u2="&#x26;" k="7"/>
+        <hkern u1="o" u2="&#x29;" k="20"/>
+        <hkern u1="o" u2="&#x2a;" k="44"/>
+        <hkern u1="o" u2="&#x2d;" k="-19"/>
+        <hkern u1="o" u2="&#x2e;" k="40"/>
+        <hkern u1="o" u2="&#x2f;" k="-1"/>
+        <hkern u1="o" u2="&#x3f;" k="46"/>
+        <hkern u1="o" u2="A" k="5"/>
+        <hkern u1="o" u2="S" k="15"/>
+        <hkern u1="o" u2="T" k="85"/>
+        <hkern u1="o" u2="V" k="45"/>
+        <hkern u1="o" u2="X" k="35"/>
+        <hkern u1="o" u2="Y" k="90"/>
+        <hkern u1="o" u2="Z" k="30"/>
+        <hkern u1="o" u2="&#x5c;" k="60"/>
+        <hkern u1="o" u2="&#x5d;" k="9"/>
+        <hkern u1="o" u2="f" k="10"/>
+        <hkern u1="o" u2="g" k="5"/>
+        <hkern u1="o" u2="v" k="15"/>
+        <hkern u1="o" u2="x" k="30"/>
+        <hkern u1="o" u2="z" k="25"/>
+        <hkern u1="o" u2="&#x7d;" k="30"/>
+        <hkern u1="o" u2="&#x201c;" k="58"/>
+        <hkern u1="o" u2="&#x201d;" k="33"/>
+        <hkern u1="o" u2="&#x2022;" k="-9"/>
+        <hkern u1="o" u2="&#x2122;" k="122"/>
+        <hkern u1="o" u2="&#xaa;" k="35"/>
+        <hkern u1="o" u2="&#xba;" k="35"/>
+        <hkern u1="o" u2="&#xbf;" k="11"/>
+        <hkern u1="o" u2="&#xc6;" k="-15"/>
+        <hkern u1="o" u2="&#xf0;" k="5"/>
+        <hkern u1="q" u2="&#x2a;" k="11"/>
+        <hkern u1="q" u2="&#x2f;" k="-38"/>
+        <hkern u1="q" u2="T" k="50"/>
+        <hkern u1="q" u2="V" k="10"/>
+        <hkern u1="q" u2="Y" k="38"/>
+        <hkern u1="q" u2="j" k="-14"/>
+        <hkern u1="q" u2="&#x2122;" k="50"/>
+        <hkern u1="r" u2="&#x26;" k="35"/>
+        <hkern u1="r" u2="&#x2d;" k="41"/>
+        <hkern u1="r" u2="&#x2e;" k="85"/>
+        <hkern u1="r" u2="&#x2f;" k="59"/>
+        <hkern u1="r" u2="&#x3f;" k="12"/>
+        <hkern u1="r" u2="&#x40;" k="25"/>
+        <hkern u1="r" u2="T" k="40"/>
+        <hkern u1="r" u2="X" k="32"/>
+        <hkern u1="r" u2="Y" k="9"/>
+        <hkern u1="r" u2="Z" k="40"/>
+        <hkern u1="r" u2="f" k="-10"/>
+        <hkern u1="r" u2="g" k="19"/>
+        <hkern u1="r" u2="o" k="30"/>
+        <hkern u1="r" u2="t" k="-10"/>
+        <hkern u1="r" u2="v" k="-14"/>
+        <hkern u1="r" u2="x" k="5"/>
+        <hkern u1="r" u2="&#x201c;" k="-15"/>
+        <hkern u1="r" u2="&#x201d;" k="-20"/>
+        <hkern u1="r" u2="&#x2022;" k="-1"/>
+        <hkern u1="r" u2="&#x2122;" k="29"/>
+        <hkern u1="r" u2="&#xab;" k="6"/>
+        <hkern u1="r" u2="&#xae;" k="-20"/>
+        <hkern u1="r" u2="&#xbb;" k="14"/>
+        <hkern u1="r" u2="&#xbf;" k="50"/>
+        <hkern u1="s" u2="&#x26;" k="-5"/>
+        <hkern u1="s" u2="&#x2a;" k="36"/>
+        <hkern u1="s" u2="&#x2d;" k="5"/>
+        <hkern u1="s" u2="&#x2e;" k="10"/>
+        <hkern u1="s" u2="&#x2f;" k="-28"/>
+        <hkern u1="s" u2="&#x3f;" k="27"/>
+        <hkern u1="s" u2="T" k="65"/>
+        <hkern u1="s" u2="V" k="31"/>
+        <hkern u1="s" u2="Y" k="80"/>
+        <hkern u1="s" u2="&#x5c;" k="30"/>
+        <hkern u1="s" u2="o" k="20"/>
+        <hkern u1="s" u2="v" k="5"/>
+        <hkern u1="s" u2="z" k="10"/>
+        <hkern u1="s" u2="&#x201c;" k="27"/>
+        <hkern u1="s" u2="&#x201d;" k="5"/>
+        <hkern u1="s" u2="&#x2122;" k="79"/>
+        <hkern u1="s" u2="&#xab;" k="5"/>
+        <hkern u1="t" u2="&#x2a;" k="13"/>
+        <hkern u1="t" u2="&#x2d;" k="35"/>
+        <hkern u1="t" u2="&#x2e;" k="-30"/>
+        <hkern u1="t" u2="&#x2f;" k="-53"/>
+        <hkern u1="t" u2="&#x3f;" k="8"/>
+        <hkern u1="t" u2="T" k="50"/>
+        <hkern u1="t" u2="V" k="10"/>
+        <hkern u1="t" u2="X" k="-6"/>
+        <hkern u1="t" u2="Y" k="29"/>
+        <hkern u1="t" u2="o" k="10"/>
+        <hkern u1="t" u2="z" k="-10"/>
+        <hkern u1="t" u2="&#x7d;" k="-10"/>
+        <hkern u1="t" u2="&#x201c;" k="-10"/>
+        <hkern u1="t" u2="&#x201d;" k="-2"/>
+        <hkern u1="t" u2="&#x2122;" k="30"/>
+        <hkern u1="t" u2="&#xab;" k="5"/>
+        <hkern u1="t" u2="&#xae;" k="-5"/>
+        <hkern u1="t" u2="&#xb7;" k="8"/>
+        <hkern u1="u" u2="&#x2a;" k="36"/>
+        <hkern u1="u" u2="&#x3f;" k="21"/>
+        <hkern u1="u" u2="S" k="10"/>
+        <hkern u1="u" u2="T" k="75"/>
+        <hkern u1="u" u2="V" k="30"/>
+        <hkern u1="u" u2="X" k="25"/>
+        <hkern u1="u" u2="Y" k="50"/>
+        <hkern u1="u" u2="g" k="5"/>
+        <hkern u1="u" u2="v" k="15"/>
+        <hkern u1="u" u2="&#x201d;" k="33"/>
+        <hkern u1="u" u2="&#x2022;" k="-5"/>
+        <hkern u1="u" u2="&#x2122;" k="60"/>
+        <hkern u1="u" u2="&#xae;" k="-3"/>
+        <hkern u1="u" u2="&#xbb;" k="2"/>
+        <hkern u1="v" u2="&#x26;" k="35"/>
+        <hkern u1="v" u2="&#x2d;" k="15"/>
+        <hkern u1="v" u2="&#x2e;" k="90"/>
+        <hkern u1="v" u2="&#x2f;" k="24"/>
+        <hkern u1="v" u2="&#x3f;" k="12"/>
+        <hkern u1="v" u2="&#x40;" k="5"/>
+        <hkern u1="v" u2="A" k="40"/>
+        <hkern u1="v" u2="T" k="28"/>
+        <hkern u1="v" u2="V" k="15"/>
+        <hkern u1="v" u2="X" k="30"/>
+        <hkern u1="v" u2="Y" k="20"/>
+        <hkern u1="v" u2="Z" k="25"/>
+        <hkern u1="v" u2="&#x5c;" k="-20"/>
+        <hkern u1="v" u2="f" k="-10"/>
+        <hkern u1="v" u2="g" k="20"/>
+        <hkern u1="v" u2="l" k="-3"/>
+        <hkern u1="v" u2="o" k="10"/>
+        <hkern u1="v" u2="s" k="-10"/>
+        <hkern u1="v" u2="t" k="-10"/>
+        <hkern u1="v" u2="u" k="-10"/>
+        <hkern u1="v" u2="v" k="-13"/>
+        <hkern u1="v" u2="z" k="20"/>
+        <hkern u1="v" u2="&#x201c;" k="-15"/>
+        <hkern u1="v" u2="&#x201d;" k="-30"/>
+        <hkern u1="v" u2="&#x2022;" k="2"/>
+        <hkern u1="v" u2="&#x2122;" k="20"/>
+        <hkern u1="v" u2="&#xab;" k="20"/>
+        <hkern u1="v" u2="&#xae;" k="-20"/>
+        <hkern u1="v" u2="&#xb7;" k="6"/>
+        <hkern u1="v" u2="&#xbb;" k="2"/>
+        <hkern u1="v" u2="&#xbf;" k="36"/>
+        <hkern u1="v" u2="&#xf0;" k="25"/>
+        <hkern u1="w" u2="&#xf0;" k="20"/>
+        <hkern u1="x" u2="&#x26;" k="30"/>
+        <hkern u1="x" u2="&#x2a;" k="3"/>
+        <hkern u1="x" u2="&#x2d;" k="20"/>
+        <hkern u1="x" u2="&#x2e;" k="-15"/>
+        <hkern u1="x" u2="&#x2f;" k="-39"/>
+        <hkern u1="x" u2="&#x3f;" k="11"/>
+        <hkern u1="x" u2="&#x40;" k="5"/>
+        <hkern u1="x" u2="S" k="10"/>
+        <hkern u1="x" u2="T" k="68"/>
+        <hkern u1="x" u2="V" k="8"/>
+        <hkern u1="x" u2="X" k="-11"/>
+        <hkern u1="x" u2="Y" k="36"/>
+        <hkern u1="x" u2="o" k="20"/>
+        <hkern u1="x" u2="x" k="-5"/>
+        <hkern u1="x" u2="&#x201c;" k="-10"/>
+        <hkern u1="x" u2="&#x2122;" k="50"/>
+        <hkern u1="x" u2="&#xae;" k="-10"/>
+        <hkern u1="x" u2="&#xf0;" k="30"/>
+        <hkern u1="y" u2="&#xf0;" k="25"/>
+        <hkern u1="z" u2="&#x26;" k="20"/>
+        <hkern u1="z" u2="&#x2a;" k="5"/>
+        <hkern u1="z" u2="&#x2d;" k="31"/>
+        <hkern u1="z" u2="&#x2f;" k="-31"/>
+        <hkern u1="z" u2="&#x3f;" k="17"/>
+        <hkern u1="z" u2="&#x40;" k="10"/>
+        <hkern u1="z" u2="S" k="10"/>
+        <hkern u1="z" u2="T" k="35"/>
+        <hkern u1="z" u2="V" k="5"/>
+        <hkern u1="z" u2="Y" k="29"/>
+        <hkern u1="z" u2="Z" k="-13"/>
+        <hkern u1="z" u2="&#x5c;" k="15"/>
+        <hkern u1="z" u2="f" k="-10"/>
+        <hkern u1="z" u2="o" k="15"/>
+        <hkern u1="z" u2="t" k="-10"/>
+        <hkern u1="z" u2="v" k="-10"/>
+        <hkern u1="z" u2="z" k="-10"/>
+        <hkern u1="z" u2="&#x201c;" k="-30"/>
+        <hkern u1="z" u2="&#x201d;" k="-13"/>
+        <hkern u1="z" u2="&#x2022;" k="3"/>
+        <hkern u1="z" u2="&#x2122;" k="36"/>
+        <hkern u1="z" u2="&#xab;" k="29"/>
+        <hkern u1="z" u2="&#xae;" k="-1"/>
+        <hkern u1="z" u2="&#xbb;" k="3"/>
+        <hkern u1="z" u2="&#xf0;" k="30"/>
+        <hkern u1="&#x7b;" u2="j" k="-100"/>
+        <hkern u1="&#x7b;" u2="o" k="20"/>
+        <hkern u1="&#x7b;" u2="t" k="10"/>
+        <hkern u1="&#x2020;" u2="A" k="26"/>
+        <hkern u1="&#x2020;" u2="J" k="50"/>
+        <hkern u1="&#x2020;" u2="O" k="-8"/>
+        <hkern u1="&#x2020;" u2="S" k="-9"/>
+        <hkern u1="&#x2020;" u2="T" k="35"/>
+        <hkern u1="&#x2020;" u2="V" k="10"/>
+        <hkern u1="&#x2020;" u2="Y" k="35"/>
+        <hkern u1="&#x2020;" u2="Z" k="40"/>
+        <hkern u1="&#x2020;" u2="&#xc6;" k="37"/>
+        <hkern u1="&#x2021;" u2="O" k="-6"/>
+        <hkern u1="&#x2021;" u2="V" k="10"/>
+        <hkern u1="&#x2021;" u2="Y" k="35"/>
+        <hkern u1="&#x201c;" u2="&#x20;" k="90"/>
+        <hkern u1="&#x201c;" u2="&#x2e;" k="85"/>
+        <hkern u1="&#x201c;" u2="&#x3a;" k="45"/>
+        <hkern u1="&#x201c;" u2="A" k="131"/>
+        <hkern u1="&#x201c;" u2="J" k="100"/>
+        <hkern u1="&#x201c;" u2="O" k="2"/>
+        <hkern u1="&#x201c;" u2="S" k="7"/>
+        <hkern u1="&#x201c;" u2="T" k="-32"/>
+        <hkern u1="&#x201c;" u2="V" k="-42"/>
+        <hkern u1="&#x201c;" u2="X" k="-20"/>
+        <hkern u1="&#x201c;" u2="Y" k="-29"/>
+        <hkern u1="&#x201c;" u2="Z" k="11"/>
+        <hkern u1="&#x201c;" u2="f" k="-8"/>
+        <hkern u1="&#x201c;" u2="g" k="51"/>
+        <hkern u1="&#x201c;" u2="h" k="-6"/>
+        <hkern u1="&#x201c;" u2="i" k="-5"/>
+        <hkern u1="&#x201c;" u2="n" k="35"/>
+        <hkern u1="&#x201c;" u2="o" k="41"/>
+        <hkern u1="&#x201c;" u2="s" k="27"/>
+        <hkern u1="&#x201c;" u2="t" k="-3"/>
+        <hkern u1="&#x201c;" u2="v" k="-3"/>
+        <hkern u1="&#x201c;" u2="&#xbf;" k="130"/>
+        <hkern u1="&#x201c;" u2="&#xc6;" k="150"/>
+        <hkern u1="&#x201c;" u2="&#xec;" k="-17"/>
+        <hkern u1="&#x201d;" u2="&#x20;" k="90"/>
+        <hkern u1="&#x201d;" u2="&#x2e;" k="100"/>
+        <hkern u1="&#x201d;" u2="&#x3a;" k="45"/>
+        <hkern u1="&#x201d;" u2="A" k="140"/>
+        <hkern u1="&#x201d;" u2="J" k="140"/>
+        <hkern u1="&#x201d;" u2="O" k="34"/>
+        <hkern u1="&#x201d;" u2="S" k="4"/>
+        <hkern u1="&#x201d;" u2="T" k="-20"/>
+        <hkern u1="&#x201d;" u2="V" k="-36"/>
+        <hkern u1="&#x201d;" u2="X" k="-5"/>
+        <hkern u1="&#x201d;" u2="Y" k="-30"/>
+        <hkern u1="&#x201d;" u2="g" k="49"/>
+        <hkern u1="&#x201d;" u2="h" k="-3"/>
+        <hkern u1="&#x201d;" u2="n" k="16"/>
+        <hkern u1="&#x201d;" u2="o" k="59"/>
+        <hkern u1="&#x201d;" u2="s" k="28"/>
+        <hkern u1="&#x201d;" u2="t" k="2"/>
+        <hkern u1="&#x201d;" u2="u" k="45"/>
+        <hkern u1="&#x201d;" u2="x" k="12"/>
+        <hkern u1="&#x201d;" u2="z" k="36"/>
+        <hkern u1="&#x201d;" u2="&#xbf;" k="130"/>
+        <hkern u1="&#x201d;" u2="&#xc6;" k="165"/>
+        <hkern u1="&#x201d;" u2="&#xec;" k="-18"/>
+        <hkern u1="&#x2022;" u2="O" k="-3"/>
+        <hkern u1="&#x2022;" u2="V" k="26"/>
+        <hkern u1="&#x2022;" u2="W" k="20"/>
+        <hkern u1="&#x2022;" u2="Y" k="36"/>
+        <hkern u1="&#x2022;" u2="o" k="-5"/>
+        <hkern u1="&#x2022;" u2="s" k="3"/>
+        <hkern u1="&#x2022;" u2="t" k="6"/>
+        <hkern u1="&#x2022;" u2="v" k="9"/>
+        <hkern u1="&#x2022;" u2="z" k="9"/>
+        <hkern u1="&#x2022;" u2="&#xc6;" k="9"/>
+        <hkern u1="&#x2022;" u2="&#x142;" k="-17"/>
+        <hkern u1="&#x2122;" u2="&#x2e;" k="35"/>
+        <hkern u1="&#x2122;" u2="A" k="30"/>
+        <hkern u1="&#x2122;" u2="H" k="-35"/>
+        <hkern u1="&#x2122;" u2="J" k="50"/>
+        <hkern u1="&#x2122;" u2="O" k="-45"/>
+        <hkern u1="&#x2122;" u2="S" k="-15"/>
+        <hkern u1="&#x2122;" u2="T" k="5"/>
+        <hkern u1="&#x2122;" u2="X" k="20"/>
+        <hkern u1="&#x2122;" u2="Y" k="3"/>
+        <hkern u1="&#x2122;" u2="Z" k="21"/>
+        <hkern u1="&#x2122;" u2="f" k="-35"/>
+        <hkern u1="&#x2122;" u2="h" k="-20"/>
+        <hkern u1="&#x2122;" u2="i" k="-3"/>
+        <hkern u1="&#x2122;" u2="n" k="-9"/>
+        <hkern u1="&#x2122;" u2="o" k="-34"/>
+        <hkern u1="&#x2122;" u2="s" k="-8"/>
+        <hkern u1="&#x2122;" u2="t" k="-30"/>
+        <hkern u1="&#x2122;" u2="u" k="-23"/>
+        <hkern u1="&#x2122;" u2="v" k="-40"/>
+        <hkern u1="&#x2122;" u2="x" k="-20"/>
+        <hkern u1="&#x2122;" u2="z" k="-15"/>
+        <hkern u1="&#x2122;" u2="&#xc6;" k="65"/>
+        <hkern u1="&#xa9;" u2="Z" k="28"/>
+        <hkern u1="&#xab;" u2="A" k="40"/>
+        <hkern u1="&#xab;" u2="J" k="45"/>
+        <hkern u1="&#xab;" u2="T" k="100"/>
+        <hkern u1="&#xab;" u2="V" k="60"/>
+        <hkern u1="&#xab;" u2="X" k="60"/>
+        <hkern u1="&#xab;" u2="Y" k="90"/>
+        <hkern u1="&#xab;" u2="Z" k="55"/>
+        <hkern u1="&#xab;" u2="u" k="-3"/>
+        <hkern u1="&#xab;" u2="v" k="-5"/>
+        <hkern u1="&#xab;" u2="&#xbf;" k="29"/>
+        <hkern u1="&#xae;" u2="A" k="8"/>
+        <hkern u1="&#xae;" u2="J" k="10"/>
+        <hkern u1="&#xae;" u2="O" k="-10"/>
+        <hkern u1="&#xae;" u2="S" k="3"/>
+        <hkern u1="&#xae;" u2="T" k="61"/>
+        <hkern u1="&#xae;" u2="V" k="47"/>
+        <hkern u1="&#xae;" u2="X" k="8"/>
+        <hkern u1="&#xae;" u2="Y" k="71"/>
+        <hkern u1="&#xae;" u2="Z" k="21"/>
+        <hkern u1="&#xae;" u2="v" k="8"/>
+        <hkern u1="&#xae;" u2="x" k="9"/>
+        <hkern u1="&#xae;" u2="z" k="2"/>
+        <hkern u1="&#xae;" u2="&#xc6;" k="9"/>
+        <hkern u1="&#xb7;" u2="J" k="3"/>
+        <hkern u1="&#xb7;" u2="S" k="6"/>
+        <hkern u1="&#xb7;" u2="Y" k="38"/>
+        <hkern u1="&#xb7;" u2="Z" k="3"/>
+        <hkern u1="&#xb7;" u2="t" k="8"/>
+        <hkern u1="&#xb7;" u2="u" k="-3"/>
+        <hkern u1="&#xb7;" u2="v" k="9"/>
+        <hkern u1="&#xb7;" u2="&#x17e;" k="9"/>
+        <hkern u1="&#xbb;" u2="A" k="25"/>
+        <hkern u1="&#xbb;" u2="J" k="50"/>
+        <hkern u1="&#xbb;" u2="S" k="20"/>
+        <hkern u1="&#xbb;" u2="T" k="90"/>
+        <hkern u1="&#xbb;" u2="V" k="35"/>
+        <hkern u1="&#xbb;" u2="X" k="40"/>
+        <hkern u1="&#xbb;" u2="Y" k="85"/>
+        <hkern u1="&#xbb;" u2="o" k="-3"/>
+        <hkern u1="&#xbb;" u2="s" k="4"/>
+        <hkern u1="&#xbb;" u2="t" k="3"/>
+        <hkern u1="&#xbb;" u2="z" k="6"/>
+        <hkern u1="&#xbb;" u2="&#xbf;" k="50"/>
+        <hkern u1="&#xbb;" u2="&#x142;" k="-12"/>
+        <hkern u1="&#xbf;" u2="O" k="50"/>
+        <hkern u1="&#xbf;" u2="T" k="100"/>
+        <hkern u1="&#xbf;" u2="U" k="40"/>
+        <hkern u1="&#xbf;" u2="V" k="80"/>
+        <hkern u1="&#xbf;" u2="Y" k="100"/>
+        <hkern u1="&#xbf;" u2="f" k="11"/>
+        <hkern u1="&#xbf;" u2="h" k="12"/>
+        <hkern u1="&#xbf;" u2="j" k="-68"/>
+        <hkern u1="&#xbf;" u2="n" k="25"/>
+        <hkern u1="&#xbf;" u2="o" k="75"/>
+        <hkern u1="&#xbf;" u2="s" k="50"/>
+        <hkern u1="&#xbf;" u2="t" k="60"/>
+        <hkern u1="&#xbf;" u2="u" k="24"/>
+        <hkern u1="&#xbf;" u2="v" k="53"/>
+        <hkern u1="&#xbf;" u2="x" k="31"/>
+        <hkern u1="&#xbf;" u2="y" k="5"/>
+        <hkern u1="&#xbf;" u2="z" k="40"/>
+        <hkern u1="&#xbf;" u2="&#xfd;" k="5"/>
+        <hkern u1="&#xde;" u2="A" k="61"/>
+        <hkern u1="&#xde;" u2="J" k="79"/>
+        <hkern u1="&#xde;" u2="O" k="-5"/>
+        <hkern u1="&#xde;" u2="T" k="79"/>
+        <hkern u1="&#xde;" u2="V" k="44"/>
+        <hkern u1="&#xde;" u2="X" k="55"/>
+        <hkern u1="&#xde;" u2="Y" k="75"/>
+        <hkern u1="&#xde;" u2="Z" k="60"/>
+        <hkern u1="&#xdf;" u2="T" k="50"/>
+        <hkern u1="&#xdf;" u2="V" k="65"/>
+        <hkern u1="&#xdf;" u2="Y" k="80"/>
+        <hkern u1="&#xdf;" u2="f" k="10"/>
+        <hkern u1="&#xdf;" u2="g" k="3"/>
+        <hkern u1="&#xdf;" u2="o" k="9"/>
+        <hkern u1="&#xdf;" u2="t" k="21"/>
+        <hkern u1="&#xdf;" u2="v" k="51"/>
+        <hkern u1="&#xdf;" u2="x" k="8"/>
+        <hkern u1="&#xdf;" u2="y" k="48"/>
+        <hkern u1="&#xe0;" u2="&#x201c;" k="9"/>
+        <hkern u1="&#xee;" u2="T" k="-12"/>
+        <hkern u1="&#xee;" u2="V" k="-6"/>
+        <hkern u1="&#xee;" u2="Y" k="-3"/>
+        <hkern u1="&#xef;" u2="H" k="-14"/>
+        <hkern u1="&#xef;" u2="L" k="-14"/>
+        <hkern u1="&#xef;" u2="T" k="-21"/>
+        <hkern u1="&#xef;" u2="U" k="-14"/>
+        <hkern u1="&#xef;" u2="V" k="-24"/>
+        <hkern u1="&#xef;" u2="X" k="-21"/>
+        <hkern u1="&#xef;" u2="Y" k="-29"/>
+        <hkern u1="&#xef;" u2="Z" k="-17"/>
+        <hkern u1="&#xef;" u2="b" k="-11"/>
+        <hkern u1="&#xef;" u2="h" k="-11"/>
+        <hkern u1="&#xef;" u2="i" k="-11"/>
+        <hkern u1="&#xf0;" u2="T" k="17"/>
+        <hkern u1="&#xf0;" u2="Y" k="18"/>
+        <hkern u1="&#xf0;" u2="a" k="-10"/>
+        <hkern u1="&#xf0;" u2="o" k="2"/>
+        <hkern u1="&#xf0;" u2="v" k="5"/>
+        <hkern u1="&#xf0;" u2="x" k="25"/>
+        <hkern u1="&#xf0;" u2="z" k="15"/>
+        <hkern u1="&#x131;" u2="Y" k="23"/>
+        <hkern u1="&#x142;" u2="&#x2a;" k="8"/>
+        <hkern u1="&#x142;" u2="&#x201d;" k="-5"/>
+        <hkern u1="&#x142;" u2="&#xab;" k="8"/>
+        <hkern u1="&#xf11d;" u2="Z" k="40"/>
+        <hkern u1="&#xf12e;" u2="Z" k="40"/>
+        <missing-glyph horiz-adv-x="505"
+                       d="M64 0 L64 714 L561 714 L561 0 L64 0 Z M467 62 Q428 121 390.5 178.5 Q353 236 312 299 Q310 294 298 276 Q286 258 270 233.5 Q254 209 235 180.5 Q216 152 200 127.5 Q184 103 172 85 Q160 67 158 62 L467 62 Z M158 651 Q161 646 172.5 628 Q184 610 200 585.5 Q216 561 235 533 Q254 505 270 480.5 Q286 456 298 438 Q310 420 312 415 L467 651 L158 651 Z M124 125 Q201 239 277 356 Q257 388 238.5 416 Q220 444 201.5 471.5 Q183 499 164 527.5 Q145 556 124 589 L124 125 Z M500 125 L500 588 Q497 584 486 567 Q475 549 458.5 524.5 Q442 500 423.5 472.5 Q405 445 389 420.5 Q373 396 361.5 378 Q350 360 347 356 L500 125 Z "/>
+        <glyph glyph-name=".null" d=""/>
+        <glyph glyph-name="nonmarkingreturn" unicode="&#xd;" horiz-adv-x="249" d=""/>
+        <glyph glyph-name="space" unicode="&#x20;" horiz-adv-x="297" d=""/>
+        <glyph glyph-name="exclam" unicode="&#x21;" horiz-adv-x="284"
+               d="M94 -5 Q67 -5 53 10.5 Q39 26 39 48 Q39 77 58 96 Q77 115 105 115 Q131 115 144.5 99 Q158 83 158 63 Q158 34 140 14.5 Q122 -5 94 -5 Z M94 203 L128 490 L169 725 L265 725 L224 490 L155 203 L94 203 Z "/>
+        <glyph glyph-name="quotedbl" unicode="&#x22;" horiz-adv-x="390"
+               d="M115 469 L145 710 L228 710 L176 469 L115 469 Z M272 469 L303 710 L386 710 L333 469 L272 469 Z "/>
+        <glyph glyph-name="numbersign" unicode="&#x23;" horiz-adv-x="541"
+               d="M183 264 L310 264 L368 422 L241 422 L183 264 Z M19 0 L88 200 L-13 200 L2 264 L109 264 L168 422 L66 422 L81 487 L188 487 L260 690 L333 690 L261 487 L388 487 L460 690 L534 690 L462 487 L564 487 L550 422 L441 422 L384 264 L485 264 L469 200 L362 200 L292 0 L219 0 L288 200 L161 200 L92 0 L19 0 Z "/>
+        <glyph glyph-name="dollar" unicode="&#x24;" horiz-adv-x="594"
+               d="M326 618 Q300 617 277 609 Q254 601 237 588 Q220 575 210 557 Q200 539 200 516 Q200 497 205 483 Q210 469 220.5 457.5 Q231 446 248 435.5 Q265 425 289 413 L326 618 Z M291 62 Q317 65 340.5 73.5 Q364 82 382.5 96.5 Q401 111 412 131.5 Q423 152 423 180 Q423 200 416 215.5 Q409 231 396.5 244 Q384 257 367 267 Q350 277 331 287 L291 62 Z M196 -115 L214 -11 Q179 -7 146.5 6 Q114 19 88 40.5 Q62 62 45.5 92.5 Q29 123 27 161 L109 182 Q115 137 142.5 104.5 Q170 72 226 64 L271 316 L255 324 Q226 338 200 353.5 Q174 369 154 389.5 Q134 410 122.5 437 Q111 464 111 500 Q111 544 128 580 Q145 616 175.5 641.5 Q206 667 248 681 Q290 695 339 696 L358 805 L423 805 L403 691 Q469 678 508.5 640.5 Q548 603 562 552 L485 526 Q464 598 389 614 L348 385 L353 383 Q382 369 410.5 352.5 Q439 336 461.5 314.5 Q484 293 498.5 264.5 Q513 236 513 198 Q513 152 495 114 Q477 76 445.5 48 Q414 20 371.5 4 Q329 -12 279 -15 L261 -115 L196 -115 Z "/>
+        <glyph glyph-name="percent" unicode="&#x25;" horiz-adv-x="862"
+               d="M155 345 Q172 320 204 320 Q238 320 262.5 343.5 Q287 367 302.5 402 Q318 437 325 477.5 Q332 518 332 551 Q332 594 315 618.5 Q298 643 263 643 Q229 643 205 619.5 Q181 596 166 561 Q151 526 144.5 486 Q138 446 138 413 Q138 370 155 345 Z M196 262 Q134 262 102 302.5 Q70 343 70 412 Q70 459 81 509.5 Q92 560 116 603 Q140 646 178.5 673.5 Q217 701 272 701 Q335 701 367 662.5 Q399 624 399 552 Q399 506 388 455 Q377 404 352.5 361 Q328 318 289.5 290 Q251 262 196 262 Z M549 72 Q566 47 599 47 Q633 47 657 70.5 Q681 94 696.5 129 Q712 164 719 204.5 Q726 245 726 278 Q726 321 709.5 345.5 Q693 370 658 370 Q624 370 600 346.5 Q576 323 561 288.5 Q546 254 539 213.5 Q532 173 532 140 Q532 97 549 72 Z M590 -11 Q528 -11 496 29.5 Q464 70 464 140 Q464 187 475 237.5 Q486 288 510.5 331 Q535 374 573.5 401.5 Q612 429 667 429 Q729 429 761 390 Q793 351 793 279 Q793 233 782 182 Q771 131 746.5 88 Q722 45 683.5 17 Q645 -11 590 -11 Z M151 -20 L650 717 L714 717 L216 -20 L151 -20 Z "/>
+        <glyph glyph-name="ampersand" unicode="&#x26;" horiz-adv-x="670"
+               d="M278 401 Q316 412 346.5 424.5 Q377 437 399 453.5 Q421 470 433 491.5 Q445 513 445 542 Q445 560 438.5 576.5 Q432 593 419.5 605.5 Q407 618 388 626 Q369 634 343 634 Q292 634 260 605.5 Q228 577 228 528 Q228 466 275 405 L278 401 Z M232 323 Q206 315 183 302.5 Q160 290 142.5 273 Q125 256 115 233.5 Q105 211 105 182 Q105 152 116.5 129.5 Q128 107 148 92 Q168 77 194.5 69.5 Q221 62 251 62 Q294 62 330 75 Q366 88 397 111 L232 323 Z M484 0 L443 53 Q400 21 348.5 4.5 Q297 -12 235 -12 Q190 -12 149.5 -0.5 Q109 11 79 33.5 Q49 56 31.5 89.5 Q14 123 14 166 Q14 209 27.5 243 Q41 277 65 302.5 Q89 328 122 346 Q155 364 194 374 Q171 409 157 444.5 Q143 480 143 517 Q143 562 158.5 596.5 Q174 631 202.5 654.5 Q231 678 270 690 Q309 702 355 702 Q397 702 429.5 689.5 Q462 677 484.5 656.5 Q507 636 519 609 Q531 582 531 552 Q531 475 474.5 426 Q418 377 317 351 L457 170 Q491 213 513.5 265 Q536 317 548 371 L621 344 Q602 275 573.5 216 Q545 157 504 110 L590 0 L484 0 Z "/>
+        <glyph glyph-name="quotesingle" unicode="&#x27;" horiz-adv-x="230"
+               d="M115 469 L145 710 L229 710 L177 469 L115 469 Z "/>
+        <glyph glyph-name="parenleft" unicode="&#x28;" horiz-adv-x="345"
+               d="M150 -187 Q109 -128 79.5 -44.5 Q50 39 50 149 Q50 227 67.5 307.5 Q85 388 118.5 463.5 Q152 539 200 607.5 Q248 676 309 731 L392 731 Q334 676 285.5 609.5 Q237 543 202 469 Q167 395 148 316.5 Q129 238 129 158 Q129 45 156.5 -38 Q184 -121 228 -187 L150 -187 Z "/>
+        <glyph glyph-name="parenright" unicode="&#x29;" horiz-adv-x="345"
+               d="M-66 -187 Q-8 -132 40.5 -65 Q89 2 124 75.5 Q159 149 178 228 Q197 307 197 386 Q197 499 169.5 582.5 Q142 666 98 731 L176 731 Q217 672 246 589 Q275 506 275 395 Q275 317 257.5 237 Q240 157 207 81 Q174 5 126 -63.5 Q78 -132 17 -187 L-66 -187 Z "/>
+        <glyph glyph-name="asterisk" unicode="&#x2a;" horiz-adv-x="441"
+               d="M86 382 L204 513 L71 559 L99 619 L234 572 L260 731 L328 731 L299 573 L449 619 L458 557 L306 512 L376 380 L320 343 L250 472 L133 343 L86 382 Z "/>
+        <glyph glyph-name="plus" unicode="&#x2b;" horiz-adv-x="624"
+               d="M275 63 L275 304 L34 304 L34 383 L275 383 L275 625 L348 625 L348 383 L590 383 L590 304 L348 304 L348 63 L275 63 Z "/>
+        <glyph glyph-name="comma" unicode="&#x2c;" horiz-adv-x="297"
+               d="M-11 -125 L81 120 L176 120 L56 -125 L-11 -125 Z "/>
+        <glyph glyph-name="hyphen" unicode="&#x2d;" horiz-adv-x="297" d="M13 232 L27 323 L256 323 L242 232 L13 232 Z "/>
+        <glyph glyph-name="period" unicode="&#x2e;" horiz-adv-x="297"
+               d="M94 -5 Q70 -5 56.5 10.5 Q43 26 43 48 Q43 77 62.5 96 Q82 115 112 115 Q136 115 149 99 Q162 83 162 63 Q162 34 143.5 14.5 Q125 -5 94 -5 Z "/>
+        <glyph glyph-name="slash" unicode="&#x2f;" horiz-adv-x="372"
+               d="M-52 -59 L361 731 L437 731 L22 -59 L-52 -59 Z "/>
+        <glyph glyph-name="zero" unicode="0" horiz-adv-x="594"
+               d="M154 2 Q116 17 89 48 Q62 79 47 126 Q32 173 32 238 Q32 324 52 407 Q72 490 112.5 555.5 Q153 621 214.5 661.5 Q276 702 360 702 Q406 702 444 687.5 Q482 673 509 642.5 Q536 612 550.5 565 Q565 518 565 453 Q565 367 545.5 283.5 Q526 200 485.5 134.5 Q445 69 383.5 28.5 Q322 -12 238 -12 Q192 -12 154 2 Z M155 106 Q187 66 251 66 Q304 66 345.5 97 Q387 128 415.5 181.5 Q444 235 459.5 306.5 Q475 378 475 458 Q475 544 443 584.5 Q411 625 347 625 Q295 625 253 593.5 Q211 562 182.5 508.5 Q154 455 138.5 384 Q123 313 123 233 Q123 147 155 106 Z "/>
+        <glyph glyph-name="one" unicode="1" horiz-adv-x="594"
+               d="M232 0 L338 595 L170 524 L155 600 L360 690 L441 690 L320 0 L232 0 Z "/>
+        <glyph glyph-name="two" unicode="2" horiz-adv-x="594"
+               d="M-2 0 L9 73 L177 189 Q239 231 289 269 Q339 307 374.5 345 Q410 383 429 422 Q448 461 448 505 Q448 527 441.5 548 Q435 569 420 585.5 Q405 602 381.5 612 Q358 622 324 622 Q264 622 226.5 594.5 Q189 567 169 516 L93 544 Q108 587 133 617 Q158 647 190.5 666 Q223 685 261 693.5 Q299 702 339 702 Q386 702 423.5 687.5 Q461 673 487 647.5 Q513 622 527 589 Q541 556 541 518 Q541 464 522 417.5 Q503 371 464 326.5 Q425 282 366 236.5 Q307 191 228 139 L142 82 L479 82 L466 0 L-2 0 Z "/>
+        <glyph glyph-name="three" unicode="3" horiz-adv-x="594"
+               d="M112 171 Q120 125 157 96.5 Q194 68 254 68 Q286 68 316.5 76.5 Q347 85 370 102.5 Q393 120 407 146 Q421 172 421 207 Q421 263 372.5 291.5 Q324 320 249 320 L191 320 L204 395 L263 395 Q298 395 333 401.5 Q368 408 396 423.5 Q424 439 441 463.5 Q458 488 458 524 Q458 551 447.5 569.5 Q437 588 419.5 600 Q402 612 380.5 617 Q359 622 338 622 Q284 622 240.5 597 Q197 572 174 520 L99 547 Q116 592 144.5 622 Q173 652 207.5 670 Q242 688 280 695 Q318 702 353 702 Q392 702 427.5 691 Q463 680 491 659 Q519 638 535.5 607 Q552 576 552 536 Q552 470 508.5 422 Q465 374 389 358 Q413 352 435 339.5 Q457 327 474 308 Q491 289 501 264 Q511 239 511 207 Q511 156 491 115.5 Q471 75 436.5 46.5 Q402 18 355 3 Q308 -12 254 -12 Q216 -12 178 -4 Q140 4 108 22.5 Q76 41 53.5 72 Q31 103 25 148 L112 171 Z "/>
+        <glyph glyph-name="four" unicode="4" horiz-adv-x="594"
+               d="M104 238 L349 238 L415 591 L104 238 Z M13 161 L26 246 L405 690 L518 690 L438 238 L560 238 L547 161 L425 161 L396 0 L309 0 L337 161 L13 161 Z "/>
+        <glyph glyph-name="five" unicode="5" horiz-adv-x="594"
+               d="M107 172 Q114 127 150 97.5 Q186 68 248 68 Q284 68 316.5 78.5 Q349 89 374 109.5 Q399 130 413.5 160 Q428 190 428 230 Q428 293 386.5 328 Q345 363 265 363 Q223 363 183 355 Q143 347 98 333 L166 690 L551 690 L539 612 L231 612 L191 428 Q226 437 253.5 439.5 Q281 442 308 442 Q362 442 402 426.5 Q442 411 467.5 384.5 Q493 358 505.5 322 Q518 286 518 245 Q518 188 498 141 Q478 94 442 60 Q406 26 355.5 7 Q305 -12 244 -12 Q207 -12 170.5 -3.5 Q134 5 103.5 23.5 Q73 42 51.5 73 Q30 104 24 149 L107 172 Z "/>
+        <glyph glyph-name="six" unicode="6" horiz-adv-x="594"
+               d="M138 252 Q138 214 146 180.5 Q154 147 171 122 Q188 97 215 82.5 Q242 68 280 68 Q316 68 345 81 Q374 94 394.5 116.5 Q415 139 426 169 Q437 199 437 234 Q437 291 404.5 323 Q372 355 310 355 Q275 355 228.5 337.5 Q182 320 138 278 L138 252 Z M545 579 Q512 600 470 610.5 Q428 621 394 621 Q337 621 294.5 599 Q252 577 222 540.5 Q192 504 174 457 Q156 410 147 360 Q197 404 249 419.5 Q301 435 344 435 Q388 435 422 421 Q456 407 479 382.5 Q502 358 514 324 Q526 290 526 251 Q526 194 508.5 145.5 Q491 97 458 62 Q425 27 378.5 7.5 Q332 -12 275 -12 Q215 -12 172 10 Q129 32 101.5 69 Q74 106 61.5 154.5 Q49 203 49 255 Q49 305 57 357 Q65 409 82.5 459 Q100 509 127.5 553 Q155 597 193.5 630 Q232 663 282.5 682.5 Q333 702 397 702 Q451 702 493 691 Q535 680 570 660 L545 579 Z "/>
+        <glyph glyph-name="seven" unicode="7" horiz-adv-x="594"
+               d="M32 0 L468 607 L118 607 L131 690 L580 690 L568 617 L137 0 L32 0 Z "/>
+        <glyph glyph-name="eight" unicode="8" horiz-adv-x="594"
+               d="M200 519 Q200 473 227.5 445.5 Q255 418 314 397 Q343 406 369.5 418.5 Q396 431 416 448 Q436 465 448 487 Q460 509 460 536 Q460 574 430.5 602.5 Q401 631 341 631 Q272 631 236 599 Q200 567 200 519 Z M115 173 Q115 126 150 94.5 Q185 63 256 63 Q289 63 319 72 Q349 81 372.5 97.5 Q396 114 409.5 138.5 Q423 163 423 193 Q423 241 387.5 273 Q352 305 285 323 Q207 303 161 268 Q115 233 115 173 Z M143 335 Q179 353 221 364 Q163 390 138.5 430 Q114 470 114 515 Q114 560 132 595 Q150 630 181.5 654 Q213 678 256 690 Q299 702 350 702 Q398 702 434.5 690 Q471 678 496 657 Q521 636 534 607.5 Q547 579 547 546 Q547 487 507.5 439.5 Q468 392 383 363 Q447 338 480.5 297 Q514 256 514 202 Q514 151 493 111 Q472 71 435 44 Q398 17 349.5 2.5 Q301 -12 245 -12 Q191 -12 150.5 2 Q110 16 82 39.5 Q54 63 40 94.5 Q26 126 26 161 Q26 202 40.5 234.5 Q55 267 81 292 Q107 317 143 335 Z "/>
+        <glyph glyph-name="nine" unicode="9" horiz-adv-x="594"
+               d="M45 111 Q78 90 120 79.5 Q162 69 196 69 Q253 69 295.5 91 Q338 113 367.5 149 Q397 185 415.5 232 Q434 279 443 329 Q393 285 341 270 Q289 255 246 255 Q202 255 168 269 Q134 283 111 307.5 Q88 332 76 366 Q64 400 64 439 Q64 496 81.5 544.5 Q99 593 132 628 Q165 663 211.5 682.5 Q258 702 315 702 Q375 702 418 680 Q461 658 488.5 621 Q516 584 528.5 535.5 Q541 487 541 435 Q541 386 533 333.5 Q525 281 507.5 231 Q490 181 462.5 137 Q435 93 396.5 60 Q358 27 307.5 7.5 Q257 -12 193 -12 Q139 -12 97 -1 Q55 10 20 30 L45 111 Z M452 438 Q452 476 444 509.5 Q436 543 419 568 Q402 593 375 607.5 Q348 622 310 622 Q274 622 245 609 Q216 596 195.5 573.5 Q175 551 164 521 Q153 491 153 456 Q153 399 185.5 367 Q218 335 280 335 Q315 335 361.5 352 Q408 369 451 411 Q452 418 452 424 L452 438 Z "/>
+        <glyph glyph-name="colon" unicode="&#x3a;" horiz-adv-x="297"
+               d="M71 -5 Q47 -5 33.5 10.5 Q20 26 20 48 Q20 77 39.5 96 Q59 115 89 115 Q112 115 125.5 99 Q139 83 139 63 Q139 34 120 14.5 Q101 -5 71 -5 Z M139 379 Q115 379 101.5 394.5 Q88 410 88 432 Q88 461 107.5 480.5 Q127 500 156 500 Q180 500 193.5 483.5 Q207 467 207 447 Q207 418 188 398.5 Q169 379 139 379 Z "/>
+        <glyph glyph-name="semicolon" unicode="&#x3b;" horiz-adv-x="297"
+               d="M170 379 Q143 379 129 394.5 Q115 410 115 432 Q115 461 134 480.5 Q153 500 181 500 Q207 500 220.5 483.5 Q234 467 234 447 Q234 418 215.5 398.5 Q197 379 170 379 Z M-23 -125 L69 120 L164 120 L44 -125 L-23 -125 Z "/>
+        <glyph glyph-name="less" unicode="&#x3c;" horiz-adv-x="535"
+               d="M28 304 L28 383 L507 584 L507 494 L123 344 L507 193 L507 103 L28 304 Z "/>
+        <glyph glyph-name="equal" unicode="&#x3d;" horiz-adv-x="535"
+               d="M28 430 L28 508 L507 508 L507 430 L28 430 Z M28 180 L28 259 L507 259 L507 180 L28 180 Z "/>
+        <glyph glyph-name="greater" unicode="&#x3e;" horiz-adv-x="535"
+               d="M28 102 L28 192 L413 343 L28 493 L28 583 L507 382 L507 304 L28 102 Z "/>
+        <glyph glyph-name="question" unicode="&#x3f;" horiz-adv-x="515"
+               d="M187 -5 Q163 -5 149.5 10.5 Q136 26 136 48 Q136 77 155.5 96 Q175 115 205 115 Q228 115 241.5 99 Q255 83 255 63 Q255 34 236 14.5 Q217 -5 187 -5 Z M177 201 Q183 237 196 265 Q209 293 225.5 315.5 Q242 338 261 356 Q280 374 300 389 Q324 407 345.5 425 Q367 443 382.5 463.5 Q398 484 407.5 507 Q417 530 417 558 Q417 603 388 627 Q359 651 313 651 Q261 651 220 622.5 Q179 594 162 529 L82 547 Q105 638 172 684.5 Q239 731 329 731 Q368 731 400 720 Q432 709 455.5 688.5 Q479 668 491.5 640 Q504 612 504 578 Q504 535 491 500.5 Q478 466 457 437 Q436 408 409 383.5 Q382 359 353 337 Q318 311 293 279.5 Q268 248 260 201 L177 201 Z "/>
+        <glyph glyph-name="at" unicode="&#x40;" horiz-adv-x="862"
+               d="M676 -47 Q630 -88 566 -107.5 Q502 -127 424 -127 Q345 -127 276.5 -101.5 Q208 -76 157.5 -26.5 Q107 23 78 95 Q49 167 49 260 Q49 366 80 450.5 Q111 535 165.5 594.5 Q220 654 293.5 685.5 Q367 717 452 717 Q546 717 614 687 Q682 657 726.5 608.5 Q771 560 792 499 Q813 438 813 376 Q813 298 793.5 239 Q774 180 742 141 Q710 102 669.5 82 Q629 62 587 62 Q545 62 527 78.5 Q509 95 512 130 Q483 100 444.5 81 Q406 62 361 62 Q297 62 261 107 Q225 152 225 226 Q225 298 243.5 355 Q262 412 296 452.5 Q330 493 378.5 514.5 Q427 536 487 536 Q541 536 581.5 525.5 Q622 515 645 503 L587 173 Q584 154 587.5 142.5 Q591 131 614 131 Q635 131 659.5 143 Q684 155 705 183.5 Q726 212 740 258 Q754 304 754 371 Q754 440 732 494 Q710 548 669.5 585.5 Q629 623 573 642.5 Q517 662 449 662 Q393 662 333.5 641 Q274 620 225 572.5 Q176 525 144.5 447.5 Q113 370 113 257 Q113 168 141 105.5 Q169 43 214 4 Q259 -35 316.5 -53 Q374 -71 433 -71 Q459 -71 488 -67.5 Q517 -64 545.5 -56 Q574 -48 600 -35 Q626 -22 645 -3 L676 -47 Z M557 449 Q540 457 520.5 461 Q501 465 477 465 Q435 465 403.5 448 Q372 431 351.5 401 Q331 371 321 329.5 Q311 288 311 239 Q311 183 333.5 159.5 Q356 136 391 136 Q433 136 465.5 159 Q498 182 516 215 L557 449 Z "/>
+        <glyph glyph-name="A" unicode="A" horiz-adv-x="659"
+               d="M201 244 L451 244 L386 574 L201 244 Z M-27 0 L351 678 L454 678 L592 0 L494 0 L462 164 L165 164 L76 0 L-27 0 Z "/>
+        <glyph glyph-name="B" unicode="B" horiz-adv-x="623"
+               d="M26 0 L145 678 L381 678 Q421 678 458.5 669.5 Q496 661 524.5 642.5 Q553 624 570 594.5 Q587 565 587 523 Q587 452 544 410.5 Q501 369 433 353 Q489 339 523.5 302 Q558 265 558 204 Q558 160 542.5 122.5 Q527 85 494 58 Q461 31 409.5 15.5 Q358 0 287 0 L26 0 Z M130 80 L288 80 Q379 80 422 114.5 Q465 149 465 210 Q465 242 449.5 262 Q434 282 410.5 293 Q387 304 360.5 308 Q334 312 312 312 L173 312 L130 80 Z M184 386 L324 386 Q361 386 391.5 393 Q422 400 444.5 414.5 Q467 429 479.5 451.5 Q492 474 492 505 Q492 531 481 548.5 Q470 566 451 577 Q432 588 408 593 Q384 598 358 598 L224 598 L184 386 Z "/>
+        <glyph glyph-name="C" unicode="C" horiz-adv-x="640"
+               d="M582 179 Q563 131 532.5 95 Q502 59 464.5 34 Q427 9 383 -3.5 Q339 -16 292 -16 Q231 -16 185 4.5 Q139 25 108.5 62.5 Q78 100 63 153 Q48 206 48 270 Q48 351 70.5 427 Q93 503 137.5 562.5 Q182 622 247 658 Q312 694 396 694 Q487 694 545.5 646.5 Q604 599 617 518 L529 499 Q518 556 478.5 582 Q439 608 387 608 Q329 608 283 579.5 Q237 551 206 504.5 Q175 458 158.5 399 Q142 340 142 278 Q142 175 184.5 122.5 Q227 70 305 70 Q331 70 358 78 Q385 86 411 102.5 Q437 119 460 145 Q483 171 500 207 L582 179 Z "/>
+        <glyph glyph-name="D" unicode="D" horiz-adv-x="677"
+               d="M26 0 L146 678 L347 678 Q430 678 485 655 Q540 632 573.5 594 Q607 556 621 506 Q635 456 635 403 Q635 321 612 247.5 Q589 174 542 119 Q495 64 424 32 Q353 0 257 0 L26 0 Z M132 88 L263 88 Q331 88 383 111.5 Q435 135 470 176.5 Q505 218 523 275 Q541 332 541 399 Q541 459 521 496.5 Q501 534 469.5 555 Q438 576 399.5 583 Q361 590 323 590 L223 590 L132 88 Z "/>
+        <glyph glyph-name="E" unicode="E" horiz-adv-x="537"
+               d="M26 0 L145 678 L546 678 L533 593 L223 593 L184 389 L452 389 L438 306 L172 306 L130 85 L460 85 L445 0 L26 0 Z "/>
+        <glyph glyph-name="F" unicode="F" horiz-adv-x="518"
+               d="M26 0 L145 678 L557 678 L543 590 L223 590 L182 370 L460 370 L446 284 L169 284 L117 0 L26 0 Z "/>
+        <glyph glyph-name="G" unicode="G" horiz-adv-x="684"
+               d="M565 24 Q502 2 440 -7 Q378 -16 321 -16 Q252 -16 200.5 5.5 Q149 27 115 65.5 Q81 104 64 156.5 Q47 209 47 271 Q47 356 71.5 433 Q96 510 142.5 568 Q189 626 255.5 660 Q322 694 407 694 Q505 694 564.5 647 Q624 600 638 521 L553 501 Q540 558 498 584.5 Q456 611 400 611 Q337 611 289 583.5 Q241 556 208 510 Q175 464 158 404.5 Q141 345 141 281 Q141 182 189 124 Q237 66 332 66 Q374 66 414 71.5 Q454 77 490 89 L523 255 L362 255 L375 333 L620 333 L565 24 Z "/>
+        <glyph glyph-name="H" unicode="H" horiz-adv-x="683"
+               d="M26 0 L145 678 L236 678 L186 394 L514 394 L565 678 L657 678 L538 0 L446 0 L501 306 L172 306 L117 0 L26 0 Z "/>
+        <glyph glyph-name="I" unicode="I" horiz-adv-x="263" d="M26 0 L145 678 L237 678 L118 0 L26 0 Z "/>
+        <glyph glyph-name="J" unicode="J" horiz-adv-x="435"
+               d="M-4 105 Q13 94 39.5 84.5 Q66 75 97 75 Q151 75 185.5 102 Q220 129 233 196 L319 678 L410 678 L324 194 Q305 83 248 33.5 Q191 -16 95 -16 Q60 -16 26.5 -8.5 Q-7 -1 -29 12 L-4 105 Z "/>
+        <glyph glyph-name="K" unicode="K" horiz-adv-x="619"
+               d="M26 0 L145 678 L242 678 L192 399 L267 399 L542 678 L654 678 L341 359 Q346 348 362.5 320.5 Q379 293 402 256.5 Q425 220 451 179.5 Q477 139 500 103 Q523 67 539.5 39 Q556 11 561 0 L449 0 L260 308 L178 308 L123 0 L26 0 Z "/>
+        <glyph glyph-name="L" unicode="L" horiz-adv-x="503"
+               d="M26 0 L145 678 L236 678 L131 88 L435 88 L420 0 L26 0 Z "/>
+        <glyph glyph-name="M" unicode="M" horiz-adv-x="788"
+               d="M26 0 L145 678 L251 678 L395 340 L656 678 L762 678 L643 0 L555 0 L652 540 L404 216 L350 216 L211 540 L114 0 L26 0 Z "/>
+        <glyph glyph-name="N" unicode="N" horiz-adv-x="698"
+               d="M26 0 L145 678 L247 678 L488 150 L584 678 L673 678 L553 0 L458 0 L211 535 L114 0 L26 0 Z "/>
+        <glyph glyph-name="O" unicode="O" horiz-adv-x="693"
+               d="M180 119 Q225 70 302 70 Q367 70 414.5 101.5 Q462 133 493.5 182 Q525 231 540.5 292 Q556 353 556 411 Q556 509 512 558.5 Q468 608 391 608 Q326 608 278 576.5 Q230 545 198.5 496 Q167 447 151.5 386.5 Q136 326 136 267 Q136 169 180 119 Z M185 4 Q138 24 106.5 60.5 Q75 97 58.5 148 Q42 199 42 262 Q42 339 64.5 416 Q87 493 131.5 555 Q176 617 243.5 655.5 Q311 694 401 694 Q461 694 508 674 Q555 654 586.5 617.5 Q618 581 634.5 530 Q651 479 651 416 Q651 339 628.5 262 Q606 185 561 123 Q516 61 449 22.5 Q382 -16 292 -16 Q232 -16 185 4 Z "/>
+        <glyph glyph-name="P" unicode="P" horiz-adv-x="602"
+               d="M26 0 L145 678 L384 678 Q417 678 452.5 667.5 Q488 657 517.5 634 Q547 611 566 573.5 Q585 536 585 482 Q585 424 565 378 Q545 332 508.5 299.5 Q472 267 421 250 Q370 233 308 233 L160 233 L117 0 L26 0 Z M173 318 L312 318 Q362 318 396 332 Q430 346 451 368.5 Q472 391 481.5 419.5 Q491 448 491 476 Q491 498 483.5 518.5 Q476 539 460 555 Q444 571 420.5 580.5 Q397 590 365 590 L223 590 L173 318 Z "/>
+        <glyph glyph-name="Q" unicode="Q" horiz-adv-x="693"
+               d="M180 119 Q225 70 302 70 Q367 70 414.5 101.5 Q462 133 493.5 182 Q525 231 540.5 292 Q556 353 556 411 Q556 509 512 558.5 Q468 608 391 608 Q326 608 278 576.5 Q230 545 198.5 496 Q167 447 151.5 386.5 Q136 326 136 267 Q136 169 180 119 Z M465 -168 Q378 -165 329.5 -127.5 Q281 -90 272 -15 Q217 -12 174 9.5 Q131 31 101.5 67 Q72 103 57 152.5 Q42 202 42 262 Q42 339 64.5 416 Q87 493 131.5 555 Q176 617 243.5 655.5 Q311 694 401 694 Q461 694 508 674 Q555 654 586.5 617.5 Q618 581 634.5 530 Q651 479 651 416 Q651 346 632.5 275.5 Q614 205 576.5 146 Q539 87 483 45 Q427 3 352 -9 Q362 -45 393 -64 Q424 -83 486 -85 L465 -168 Z "/>
+        <glyph glyph-name="R" unicode="R" horiz-adv-x="617"
+               d="M179 352 L326 352 Q376 352 409 365.5 Q442 379 462 399.5 Q482 420 490 445 Q498 470 498 493 Q498 508 493 526.5 Q488 545 474.5 560.5 Q461 576 437.5 586.5 Q414 597 377 597 L224 597 L179 352 Z M26 0 L145 678 L400 678 Q433 678 467 669 Q501 660 529 639 Q557 618 574.5 584 Q592 550 592 501 Q592 456 576.5 420 Q561 384 535 357.5 Q509 331 473.5 314 Q438 297 398 290 L534 0 L434 0 L307 274 L167 274 L117 0 L26 0 Z "/>
+        <glyph glyph-name="S" unicode="S" horiz-adv-x="585"
+               d="M106 183 Q109 153 123.5 131 Q138 109 159.5 94.5 Q181 80 208.5 73 Q236 66 264 66 Q290 66 316.5 73.5 Q343 81 364.5 95.5 Q386 110 399.5 132 Q413 154 413 184 Q413 225 380 252 Q347 279 298 301 L243 326 Q215 339 189 355 Q163 371 143.5 391.5 Q124 412 112.5 438.5 Q101 465 101 499 Q101 547 120 583.5 Q139 620 171.5 644.5 Q204 669 246.5 681.5 Q289 694 335 694 Q422 694 481.5 655 Q541 616 555 549 L471 521 Q466 545 452.5 562 Q439 579 420 590 Q401 601 378.5 606.5 Q356 612 332 612 Q308 612 284.5 606.5 Q261 601 242 589 Q223 577 211 558.5 Q199 540 199 513 Q199 475 229 450 Q259 425 307 402 L352 382 Q382 369 410.5 353 Q439 337 461.5 315.5 Q484 294 497.5 265.5 Q511 237 511 198 Q511 149 491 109.5 Q471 70 436 42 Q401 14 354.5 -1 Q308 -16 255 -16 Q212 -16 170.5 -5 Q129 6 96.5 28.5 Q64 51 43 84 Q22 117 19 160 L106 183 Z "/>
+        <glyph glyph-name="T" unicode="T" horiz-adv-x="557"
+               d="M172 0 L277 590 L69 590 L83 678 L589 678 L575 590 L369 590 L264 0 L172 0 Z "/>
+        <glyph glyph-name="U" unicode="U" horiz-adv-x="674"
+               d="M159 254 Q150 203 157 168 Q164 133 183 111 Q202 89 231 79.5 Q260 70 293 70 Q329 70 360 79 Q391 88 416 109 Q441 130 458.5 165.5 Q476 201 486 254 L560 678 L652 678 L577 250 Q554 118 482 51 Q410 -16 285 -16 Q226 -16 180.5 1.5 Q135 19 106 53 Q77 87 66.5 136.5 Q56 186 67 250 L142 678 L233 678 L159 254 Z "/>
+        <glyph glyph-name="V" unicode="V" horiz-adv-x="625"
+               d="M197 0 L76 678 L172 678 L269 107 L573 678 L672 678 L310 0 L197 0 Z "/>
+        <glyph glyph-name="W" unicode="W" horiz-adv-x="953"
+               d="M159 0 L88 678 L186 678 L235 120 L489 678 L590 678 L639 120 L894 678 L989 678 L678 0 L569 0 L520 547 L269 0 L159 0 Z "/>
+        <glyph glyph-name="X" unicode="X" horiz-adv-x="618"
+               d="M-36 0 L261 351 L100 678 L202 678 L329 428 L546 678 L652 678 L369 352 L547 0 L443 0 L305 273 L70 0 L-36 0 Z "/>
+        <glyph glyph-name="Y" unicode="Y" horiz-adv-x="602"
+               d="M193 0 L244 281 Q236 297 222.5 328 Q209 359 193 398 Q177 437 160 480 Q143 523 127 562 Q111 601 98 632 Q85 663 77 678 L180 678 L307 375 L542 678 L649 678 L342 281 L292 0 L193 0 Z "/>
+        <glyph glyph-name="Z" unicode="Z" horiz-adv-x="581"
+               d="M-10 0 L2 75 L445 590 L119 590 L133 678 L585 678 L573 604 L129 88 L498 88 L484 0 L-10 0 Z "/>
+        <glyph glyph-name="bracketleft" unicode="&#x5b;" horiz-adv-x="345"
+               d="M18 -183 L179 731 L366 731 L354 657 L245 657 L107 -109 L217 -109 L205 -183 L18 -183 Z "/>
+        <glyph glyph-name="backslash" unicode="&#x5c;" horiz-adv-x="372"
+               d="M234 -59 L77 731 L148 731 L305 -59 L234 -59 Z "/>
+        <glyph glyph-name="bracketright" unicode="&#x5d;" horiz-adv-x="345"
+               d="M-35 -183 L-23 -109 L86 -109 L224 657 L115 657 L126 731 L312 731 L151 -183 L-35 -183 Z "/>
+        <glyph glyph-name="asciicircum" unicode="&#x5e;" horiz-adv-x="535"
+               d="M43 272 L232 706 L304 706 L492 272 L409 272 L267 610 L126 272 L43 272 Z "/>
+        <glyph glyph-name="underscore" unicode="&#x5f;" horiz-adv-x="594"
+               d="M-84 -150 L-72 -72 L521 -72 L508 -150 L-84 -150 Z "/>
+        <glyph glyph-name="grave" unicode="&#x60;" horiz-adv-x="500"
+               d="M254 585 L184 751 L268 751 L316 585 L254 585 Z "/>
+        <glyph glyph-name="a" unicode="a" horiz-adv-x="566"
+               d="M411 442 Q390 450 366 455 Q342 460 313 460 Q263 460 225.5 439.5 Q188 419 163.5 383 Q139 347 126.5 298 Q114 249 114 192 Q114 128 140 96 Q166 64 214 64 Q238 64 260 72 Q282 80 301 93.5 Q320 107 335 124.5 Q350 142 361 161 L411 442 Z M497 2 Q480 -6 460 -9 Q440 -12 424 -12 Q387 -12 367 7 Q347 26 350 68 Q317 33 274.5 10.5 Q232 -12 179 -12 Q107 -12 66.5 40.5 Q26 93 26 179 Q26 261 46.5 327 Q67 393 105.5 439.5 Q144 486 199.5 511 Q255 536 325 536 Q383 536 430.5 523 Q478 510 505 494 L438 115 Q434 93 439 78.5 Q444 64 465 64 Q480 64 497 71 L497 2 Z "/>
+        <glyph glyph-name="b" unicode="b" horiz-adv-x="551"
+               d="M113 86 Q129 75 153.5 69.5 Q178 64 207 64 Q262 64 301.5 85 Q341 106 366.5 142 Q392 178 404 225.5 Q416 273 416 325 Q416 389 389.5 424 Q363 459 306 459 Q262 459 225.5 436 Q189 413 166 385 L113 86 Z M181 473 Q210 501 252 518.5 Q294 536 342 536 Q416 536 460.5 485 Q505 434 505 340 Q505 258 483 193 Q461 128 420.5 82.5 Q380 37 324.5 12.5 Q269 -12 201 -12 Q141 -12 96.5 2 Q52 16 20 40 L140 725 L226 725 L181 473 Z "/>
+        <glyph glyph-name="c" unicode="c" horiz-adv-x="480"
+               d="M393 20 Q355 3 312 -4.5 Q269 -12 230 -12 Q179 -12 141 3 Q103 18 77.5 45 Q52 72 39 110 Q26 148 26 194 Q26 251 41.5 311.5 Q57 372 89.5 422 Q122 472 172 504 Q222 536 292 536 Q335 536 365 524 Q395 512 414.5 491.5 Q434 471 443.5 443.5 Q453 416 454 384 L379 368 Q374 413 348.5 436.5 Q323 460 283 460 Q236 460 204 433 Q172 406 152 367.5 Q132 329 123 286 Q114 243 114 210 Q114 180 121 153.5 Q128 127 144 108 Q160 89 187 78 Q214 67 254 67 Q285 67 325 77 Q365 87 393 101 L393 20 Z "/>
+        <glyph glyph-name="d" unicode="d" horiz-adv-x="555"
+               d="M417 427 Q400 441 370.5 450.5 Q341 460 316 460 Q267 460 229.5 440.5 Q192 421 167 386.5 Q142 352 129 304.5 Q116 257 116 202 Q116 175 123 150.5 Q130 126 145.5 106.5 Q161 87 186 75.5 Q211 64 246 64 Q275 64 303.5 69.5 Q332 75 355 86 L417 427 Z M433 34 Q338 -12 236 -12 Q185 -12 146 3.5 Q107 19 80.5 46.5 Q54 74 41 112 Q28 150 28 195 Q28 286 52.5 350.5 Q77 415 117 456.5 Q157 498 208 517 Q259 536 311 536 Q343 536 377 527 Q411 518 430 504 L469 725 L555 725 L433 34 Z "/>
+        <glyph glyph-name="e" unicode="e" horiz-adv-x="494"
+               d="M107 210 Q107 64 241 64 Q287 64 330 76 Q373 88 405 103 L405 27 Q364 7 317.5 -2.5 Q271 -12 223 -12 Q126 -12 76 44 Q26 100 26 203 Q26 265 43.5 324.5 Q61 384 96 431 Q131 478 183.5 507 Q236 536 305 536 Q380 536 425.5 500 Q471 464 471 395 Q471 350 454.5 317.5 Q438 285 408.5 264.5 Q379 244 338.5 234.5 Q298 225 249 225 Q204 225 168 228 Q132 231 108 236 Q107 229 107 222 L107 210 Z M143 368 Q128 339 119 306 Q142 302 175.5 298.5 Q209 295 249 295 Q277 295 303 299.5 Q329 304 349 314.5 Q369 325 381 342.5 Q393 360 393 386 Q393 423 368.5 445 Q344 467 293 467 Q259 467 230.5 454.5 Q202 442 180 420 Q158 398 143 368 Z "/>
+        <glyph glyph-name="f" unicode="f" horiz-adv-x="350"
+               d="M1 -192 L115 452 L48 452 L60 524 L126 524 L138 586 Q153 665 203 698 Q253 731 325 731 Q350 731 374.5 726.5 Q399 722 421 714 L398 643 Q381 650 362 654 Q343 658 327 658 Q281 658 255.5 640 Q230 622 222 577 L212 524 L365 524 L352 452 L201 452 L87 -192 L1 -192 Z "/>
+        <glyph glyph-name="g" unicode="g" horiz-adv-x="533"
+               d="M176 264 Q201 239 248 239 Q284 239 309.5 250 Q335 261 351.5 280 Q368 299 375.5 324 Q383 349 383 377 Q383 419 358.5 444.5 Q334 470 287 470 Q251 470 225.5 459 Q200 448 183.5 429 Q167 410 159.5 385 Q152 360 152 332 Q152 290 176 264 Z M180 15 Q155 15 131.5 10 Q108 5 89 -6 Q70 -17 58.5 -35 Q47 -53 47 -78 Q47 -99 59 -114 Q71 -129 90.5 -138.5 Q110 -148 133.5 -152.5 Q157 -157 181 -157 Q217 -157 251 -151 Q285 -145 310.5 -132 Q336 -119 351.5 -98.5 Q367 -78 367 -50 Q367 -15 343 0 Q319 15 256 15 L180 15 Z M288 91 Q381 91 419.5 58.5 Q458 26 458 -27 Q458 -117 382 -166.5 Q306 -216 169 -216 Q132 -216 95 -209 Q58 -202 29 -187 Q0 -172 -18.5 -148.5 Q-37 -125 -37 -92 Q-37 -36 -3.5 -1 Q30 34 88 47 Q69 57 57.5 78.5 Q46 100 46 123 Q46 157 61.5 186 Q77 215 100 236 Q67 274 67 326 Q67 371 81 409.5 Q95 448 123.5 476 Q152 504 195 520 Q238 536 296 536 Q333 536 364 524 L545 524 L535 456 L449 456 Q468 423 468 385 Q468 340 454 302 Q440 264 411.5 236 Q383 208 340 192 Q297 176 238 176 Q213 176 190.5 181.5 Q168 187 148 197 Q133 183 126.5 167 Q120 151 120 141 Q120 121 137 106 Q154 91 198 91 L288 91 Z "/>
+        <glyph glyph-name="h" unicode="h" horiz-adv-x="552"
+               d="M14 0 L142 731 L228 731 L176 440 Q190 457 208.5 474 Q227 491 250 505 Q273 519 302 527.5 Q331 536 366 536 Q406 536 433.5 521 Q461 506 477 481 Q493 456 497 423 Q501 390 495 354 L433 0 L347 0 L404 319 Q409 345 409 369 Q409 393 401 411 Q393 429 373.5 440 Q354 451 319 451 Q272 451 229.5 421.5 Q187 392 161 346 L100 0 L14 0 Z "/>
+        <glyph glyph-name="i" unicode="i" horiz-adv-x="225"
+               d="M170 633 Q149 633 137.5 646.5 Q126 660 126 678 Q126 701 141 719 Q156 737 185 737 Q205 737 216 723.5 Q227 710 227 692 Q227 670 213 651.5 Q199 633 170 633 Z M13 0 L105 524 L191 524 L99 0 L13 0 Z "/>
+        <glyph glyph-name="j" unicode="j" horiz-adv-x="227"
+               d="M172 633 Q151 633 139.5 646.5 Q128 660 128 678 Q128 701 143.5 719 Q159 737 187 737 Q207 737 218 723.5 Q229 710 229 693 Q229 670 215 651.5 Q201 633 172 633 Z M-118 -116 Q-96 -128 -70 -128 Q-10 -128 4 -53 L108 524 L194 524 L88 -70 Q76 -141 35 -172.5 Q-6 -204 -61 -204 Q-82 -204 -102.5 -199.5 Q-123 -195 -140 -186 L-118 -116 Z "/>
+        <glyph glyph-name="k" unicode="k" horiz-adv-x="510"
+               d="M14 0 L143 731 L228 731 L156 326 L225 326 L422 524 L524 524 L290 287 L454 0 L353 0 L216 241 L143 241 L99 0 L14 0 Z "/>
+        <glyph glyph-name="l" unicode="l" horiz-adv-x="273"
+               d="M214 6 Q172 -12 124 -12 Q71 -12 47 20.5 Q23 53 35 124 L143 731 L229 731 L123 140 Q117 105 124.5 84.5 Q132 64 162 64 Q187 64 214 76 L214 6 Z "/>
+        <glyph glyph-name="m" unicode="m" horiz-adv-x="844"
+               d="M14 0 L106 524 L190 524 L176 440 Q188 457 204.5 474 Q221 491 241.5 505 Q262 519 287.5 527.5 Q313 536 344 536 Q406 536 437 505.5 Q468 475 475 427 Q491 448 510 468 Q529 488 551.5 503 Q574 518 600.5 527 Q627 536 657 536 Q698 536 725.5 521.5 Q753 507 769 482 Q785 457 789 424 Q793 391 787 354 L725 0 L639 0 L696 319 Q701 345 701 369 Q701 393 693 411 Q685 429 665.5 440 Q646 451 611 451 Q569 451 533 421.5 Q497 392 473 346 L412 0 L326 0 L383 319 Q388 345 388.5 369 Q389 393 381 411 Q373 429 353.5 440 Q334 451 299 451 Q257 451 220.5 421.5 Q184 392 161 346 L100 0 L14 0 Z "/>
+        <glyph glyph-name="n" unicode="n" horiz-adv-x="557"
+               d="M16 0 L108 524 L193 524 L178 440 Q192 457 210.5 474 Q229 491 252.5 505 Q276 519 305 527.5 Q334 536 369 536 Q409 536 436.5 521.5 Q464 507 479.5 482.5 Q495 458 499.5 425 Q504 392 498 354 L436 0 L349 0 L406 319 Q411 345 411 369 Q411 393 403 411 Q395 429 375.5 440 Q356 451 321 451 Q274 451 232 421.5 Q190 392 164 346 L103 0 L16 0 Z "/>
+        <glyph glyph-name="o" unicode="o" horiz-adv-x="552"
+               d="M135 105 Q149 86 172 74.5 Q195 63 229 63 Q276 63 312 88 Q348 113 372 151.5 Q396 190 408 236 Q420 282 420 325 Q420 351 414.5 375 Q409 399 395.5 418.5 Q382 438 359.5 449.5 Q337 461 302 461 Q255 461 219 436 Q183 411 159 372.5 Q135 334 123 288 Q111 242 111 199 Q111 174 116.5 149.5 Q122 125 135 105 Z M131 4 Q94 21 71 50 Q48 79 37 117.5 Q26 156 26 199 Q26 262 45 323 Q64 384 101 431 Q138 478 191 507 Q244 536 312 536 Q363 536 400 519.5 Q437 503 460.5 474 Q484 445 495 407 Q506 369 506 325 Q506 262 486.5 201 Q467 140 430.5 93 Q394 46 340.5 17 Q287 -12 219 -12 Q168 -12 131 4 Z "/>
+        <glyph glyph-name="p" unicode="p" horiz-adv-x="557"
+               d="M122 97 Q139 83 168.5 73.5 Q198 64 223 64 Q272 64 309.5 83.5 Q347 103 372 137.5 Q397 172 410 219.5 Q423 267 423 322 Q423 349 416 373.5 Q409 398 393.5 417.5 Q378 437 353.5 448.5 Q329 460 293 460 Q265 460 236.5 454.5 Q208 449 185 438 L122 97 Z M-14 -192 L107 490 Q201 536 303 536 Q354 536 393 520.5 Q432 505 458.5 477.5 Q485 450 498 412 Q511 374 511 329 Q511 238 486.5 173.5 Q462 109 422 67.5 Q382 26 331.5 7 Q281 -12 229 -12 Q197 -12 163 -3 Q129 6 110 20 L72 -192 L-14 -192 Z "/>
+        <glyph glyph-name="q" unicode="q" horiz-adv-x="540"
+               d="M418 443 Q400 451 378.5 455.5 Q357 460 328 460 Q277 460 237 441 Q197 422 169.5 388 Q142 354 128 307.5 Q114 261 114 205 Q114 138 142.5 101 Q171 64 229 64 Q272 64 305.5 84.5 Q339 105 361 128 L418 443 Z M305 -192 L347 40 Q319 19 280.5 3.5 Q242 -12 197 -12 Q120 -12 73 40 Q26 92 26 194 Q26 275 49 338.5 Q72 402 113 446 Q154 490 211.5 513 Q269 536 338 536 Q392 536 433 525 Q474 514 513 495 L391 -192 L305 -192 Z "/>
+        <glyph glyph-name="r" unicode="r" horiz-adv-x="379"
+               d="M16 0 L109 524 L189 524 L172 425 Q216 487 263 510.5 Q310 534 352 534 Q363 534 374.5 532.5 Q386 531 397 527 L370 440 Q360 444 348.5 445.5 Q337 447 328 447 Q286 447 243 421 Q200 395 161 337 L102 0 L16 0 Z "/>
+        <glyph glyph-name="s" unicode="s" horiz-adv-x="469"
+               d="M79 146 Q87 100 123 78.5 Q159 57 203 57 Q221 57 241 61 Q261 65 278 74.5 Q295 84 306 99.5 Q317 115 317 137 Q317 153 309.5 165.5 Q302 178 290 188.5 Q278 199 261.5 207.5 Q245 216 227 225 L177 249 Q155 259 134.5 271.5 Q114 284 98 299.5 Q82 315 72.5 335 Q63 355 63 381 Q63 422 79 451 Q95 480 121 499 Q147 518 180.5 527 Q214 536 250 536 Q326 536 375 505 Q424 474 438 423 L363 400 Q350 436 317 451.5 Q284 467 244 467 Q228 467 211.5 463 Q195 459 181.5 450.5 Q168 442 159 428.5 Q150 415 150 395 Q150 369 172 350.5 Q194 332 228 318 L272 298 Q297 287 321 274.5 Q345 262 364 245 Q383 228 395 205.5 Q407 183 407 153 Q407 109 388.5 77.5 Q370 46 340.5 26 Q311 6 273.5 -3 Q236 -12 198 -12 Q120 -12 66.5 23 Q13 58 2 125 L79 146 Z "/>
+        <glyph glyph-name="t" unicode="t" horiz-adv-x="370"
+               d="M143 168 Q133 114 152.5 90 Q172 66 216 66 Q263 66 308 80 L307 7 Q278 -4 246 -8 Q214 -12 182 -12 Q113 -12 76.5 25.5 Q40 63 55 146 L110 452 L56 452 L62 494 L195 623 L223 623 L207 524 L369 524 L357 452 L195 452 L143 168 Z "/>
+        <glyph glyph-name="u" unicode="u" horiz-adv-x="539"
+               d="M125 196 Q121 172 121.5 150 Q122 128 130.5 111 Q139 94 157 83.5 Q175 73 206 73 Q256 73 292.5 101.5 Q329 130 357 171 L420 524 L506 524 L413 0 L330 0 L344 77 Q331 62 314 46 Q297 30 275.5 17 Q254 4 226 -4 Q198 -12 162 -12 Q121 -12 93.5 3 Q66 18 51 43 Q36 68 32.5 101 Q29 134 35 170 L97 524 L184 524 L125 196 Z "/>
+        <glyph glyph-name="v" unicode="v" horiz-adv-x="503"
+               d="M149 0 Q144 28 136 70 Q128 112 119.5 161 Q111 210 101.5 262 Q92 314 83 363 Q74 412 66 454 Q58 496 52 524 L142 524 L214 96 L434 524 L522 524 Q506 496 484 454 Q462 412 437 363 Q412 314 385 262 Q358 210 332.5 161 Q307 112 285 70 Q263 28 247 0 L149 0 Z "/>
+        <glyph glyph-name="w" unicode="w" horiz-adv-x="749"
+               d="M115 0 L56 524 L140 524 L180 111 L369 524 L452 524 L492 112 L681 524 L765 524 L518 0 L432 0 Q428 38 423 91.5 Q418 145 412 201 Q406 257 400.5 310.5 Q395 364 391 403 L204 0 L115 0 Z "/>
+        <glyph glyph-name="x" unicode="x" horiz-adv-x="513"
+               d="M-30 0 L198 273 L76 524 L174 524 L262 337 L418 524 L517 524 L307 275 L440 0 L339 0 L241 211 L67 0 L-30 0 Z "/>
+        <glyph glyph-name="y" unicode="y" horiz-adv-x="509"
+               d="M-39 -116 Q-15 -128 16 -128 Q66 -128 98.5 -99 Q131 -70 162 -7 L54 524 L144 524 L223 95 L443 524 L529 524 L227 -52 Q186 -132 137.5 -168 Q89 -204 18 -204 Q-2 -204 -22 -199.5 Q-42 -195 -59 -187 L-39 -116 Z "/>
+        <glyph glyph-name="z" unicode="z" horiz-adv-x="469"
+               d="M-11 0 L-1 63 L340 449 L90 449 L103 524 L459 524 L450 458 L111 75 L397 75 L385 0 L-11 0 Z "/>
+        <glyph glyph-name="braceleft" unicode="&#x7b;" horiz-adv-x="345"
+               d="M176 -183 Q109 -183 80.5 -146.5 Q52 -110 65 -32 L85 73 Q93 118 93.5 149.5 Q94 181 86.5 200 Q79 219 64 227.5 Q49 236 26 236 L38 312 Q60 312 77.5 318.5 Q95 325 109 343 Q123 361 134.5 392.5 Q146 424 155 475 L174 580 Q181 621 193.5 650 Q206 679 225.5 697 Q245 715 272.5 723 Q300 731 337 731 L382 731 L370 659 L344 659 Q317 659 300 653 Q283 647 272.5 634.5 Q262 622 255.5 602 Q249 582 244 553 L226 453 Q217 399 204 366 Q191 333 176 313.5 Q161 294 145 286 Q129 278 113 274 Q148 266 162.5 222.5 Q177 179 163 95 L145 -3 Q134 -60 146 -85.5 Q158 -111 205 -111 L232 -111 L221 -183 L176 -183 Z "/>
+        <glyph glyph-name="bar" unicode="&#x7c;" horiz-adv-x="246" d="M87 -183 L87 731 L159 731 L159 -183 L87 -183 Z "/>
+        <glyph glyph-name="braceright" unicode="&#x7d;" horiz-adv-x="345"
+               d="M-50 -183 L-39 -111 L-13 -111 Q14 -111 31 -105 Q48 -99 58.5 -85.5 Q69 -72 75.5 -52 Q82 -32 87 -3 L106 104 Q115 157 128 188.5 Q141 220 155.5 238 Q170 256 186 263 Q202 270 218 274 Q183 282 169 328 Q155 374 169 457 L186 549 Q197 608 183.5 633.5 Q170 659 124 659 L99 659 L111 731 L148 731 Q217 731 248 693 Q279 655 264 570 L247 479 Q230 387 245 349.5 Q260 312 305 312 L293 236 Q271 236 253.5 230 Q236 224 222 207.5 Q208 191 197 160.5 Q186 130 177 81 L157 -32 Q150 -75 137.5 -104 Q125 -133 106.5 -150.5 Q88 -168 62.5 -175.5 Q37 -183 4 -183 L-50 -183 Z "/>
+        <glyph glyph-name="asciitilde" unicode="&#x7e;" horiz-adv-x="535"
+               d="M33 359 Q56 385 87.5 400.5 Q119 416 154 416 Q184 416 212.5 405.5 Q241 395 269 382.5 Q297 370 325 359.5 Q353 349 380 349 Q422 349 449.5 368 Q477 387 503 415 L503 328 Q480 303 448.5 287 Q417 271 381 271 Q351 271 322.5 281.5 Q294 292 266 304.5 Q238 317 210 327.5 Q182 338 155 338 Q113 338 85.5 319 Q58 300 33 272 L33 359 Z "/>
+        <glyph glyph-name="Euro" unicode="&#x20ac;" horiz-adv-x="594"
+               d="M39 229 L50 296 L154 296 Q157 340 166 385 L67 385 L77 452 L183 452 Q199 502 224.5 547 Q250 592 286 626.5 Q322 661 369.5 681.5 Q417 702 477 702 Q515 702 551.5 694 Q588 686 614 664 L591 586 Q562 606 533.5 614.5 Q505 623 474 623 Q435 623 404 609.5 Q373 596 348.5 572.5 Q324 549 306 518 Q288 487 276 452 L513 452 L503 385 L257 385 Q252 362 249 339.5 Q246 317 244 296 L486 296 L475 229 L243 229 Q245 192 253.5 162 Q262 132 279.5 111 Q297 90 323.5 78.5 Q350 67 389 67 Q424 67 458 77.5 Q492 88 522 108 L522 28 Q485 5 447 -3.5 Q409 -12 374 -12 Q318 -12 277 5 Q236 22 209 53.5 Q182 85 168 129.5 Q154 174 152 229 L39 229 Z "/>
+        <glyph glyph-name="quotesinglbase" unicode="&#x201a;" horiz-adv-x="240"
+               d="M-33 -125 L59 120 L154 120 L34 -125 L-33 -125 Z "/>
+        <glyph glyph-name="florin" unicode="&#x192;" horiz-adv-x="594"
+               d="M168 0 L223 309 L103 309 L114 376 L234 376 L259 514 Q278 621 335 674 Q392 727 484 727 Q523 727 551.5 716.5 Q580 706 602 686 L565 613 Q552 627 532 637 Q512 647 486 647 Q427 647 393 612.5 Q359 578 346 510 L322 376 L480 376 L469 309 L311 309 L256 0 L168 0 Z "/>
+        <glyph glyph-name="quotedblbase" unicode="&#x201e;" horiz-adv-x="405"
+               d="M-30 -125 L62 120 L156 120 L36 -125 L-30 -125 Z M138 -125 L229 120 L324 120 L204 -125 L138 -125 Z "/>
+        <glyph glyph-name="ellipsis" unicode="&#x2026;" horiz-adv-x="1188"
+               d="M836 -5 Q812 -5 798 10.5 Q784 26 784 48 Q784 77 804 96 Q824 115 853 115 Q877 115 890.5 99 Q904 83 904 63 Q904 34 885 14.5 Q866 -5 836 -5 Z M466 -5 Q442 -5 428.5 10.5 Q415 26 415 48 Q415 77 434.5 96 Q454 115 484 115 Q508 115 521 99 Q534 83 534 63 Q534 34 515.5 14.5 Q497 -5 466 -5 Z M94 -5 Q70 -5 56.5 10.5 Q43 26 43 48 Q43 77 62.5 96 Q82 115 112 115 Q136 115 149 99 Q162 83 162 63 Q162 34 143.5 14.5 Q125 -5 94 -5 Z "/>
+        <glyph glyph-name="dagger" unicode="&#x2020;" horiz-adv-x="517"
+               d="M142 -140 Q158 -41 174 54 Q181 95 188 139 Q195 183 202 226.5 Q209 270 216 311 Q223 352 229 386 L37 386 L49 463 L241 463 Q247 495 255.5 536.5 Q264 578 272 616 Q282 660 291 706 L364 706 Q358 660 351 615 Q345 577 338.5 535.5 Q332 494 327 463 L521 463 L509 386 L315 386 Q309 351 301.5 310 Q294 269 286 225.5 Q278 182 269.5 138 Q261 94 253 53 Q235 -42 215 -140 L142 -140 Z "/>
+        <glyph glyph-name="daggerdbl" unicode="&#x2021;" horiz-adv-x="517"
+               d="M142 -140 Q148 -97 154 -56 Q159 -21 165.5 19 Q172 59 177 89 L-16 89 L-3 165 L190 165 L232 400 L40 400 L52 476 L244 476 Q250 508 258 548 Q266 588 274 623 Q283 664 291 706 L365 706 Q359 662 353 621 Q348 586 341.5 546.5 Q335 507 330 476 L522 476 L510 400 L318 400 L275 165 L467 165 L454 89 L262 89 Q257 57 249 17.5 Q241 -22 233 -57 Q224 -98 216 -140 L142 -140 Z "/>
+        <glyph glyph-name="circumflex" unicode="&#x2c6;" horiz-adv-x="500"
+               d="M104 585 L239 751 L321 751 L397 585 L334 585 L273 694 L171 585 L104 585 Z "/>
+        <glyph glyph-name="perthousand" unicode="&#x2030;" horiz-adv-x="1228"
+               d="M155 345 Q172 320 204 320 Q238 320 262.5 343.5 Q287 367 302.5 402 Q318 437 325 477.5 Q332 518 332 551 Q332 594 315 618.5 Q298 643 263 643 Q229 643 205 619.5 Q181 596 166 561 Q151 526 144.5 486 Q138 446 138 413 Q138 370 155 345 Z M196 262 Q134 262 102 302.5 Q70 343 70 412 Q70 459 81 509.5 Q92 560 116 603 Q140 646 178.5 673.5 Q217 701 272 701 Q335 701 367 662.5 Q399 624 399 552 Q399 506 388 455 Q377 404 352.5 361 Q328 318 289.5 290 Q251 262 196 262 Z M549 72 Q566 47 599 47 Q633 47 657 70.5 Q681 94 696.5 129 Q712 164 719 204.5 Q726 245 726 278 Q726 321 709.5 345.5 Q693 370 658 370 Q624 370 600 346.5 Q576 323 561 288.5 Q546 254 539 213.5 Q532 173 532 140 Q532 97 549 72 Z M590 -11 Q528 -11 496 29.5 Q464 70 464 140 Q464 187 475 237.5 Q486 288 510.5 331 Q535 374 573.5 401.5 Q612 429 667 429 Q729 429 761 390 Q793 351 793 279 Q793 233 782 182 Q771 131 746.5 88 Q722 45 683.5 17 Q645 -11 590 -11 Z M915 72 Q932 47 965 47 Q999 47 1023 70.5 Q1047 94 1062.5 129 Q1078 164 1085 204.5 Q1092 245 1092 278 Q1092 321 1075.5 345.5 Q1059 370 1024 370 Q990 370 966 346.5 Q942 323 927 288.5 Q912 254 905 213.5 Q898 173 898 140 Q898 97 915 72 Z M957 -11 Q894 -11 862 29.5 Q830 70 830 140 Q830 187 841 237.5 Q852 288 876.5 331 Q901 374 939.5 401.5 Q978 429 1033 429 Q1095 429 1127 390 Q1159 351 1159 279 Q1159 233 1148 182 Q1137 131 1112.5 88 Q1088 45 1049.5 17 Q1011 -11 957 -11 Z M151 -20 L650 717 L714 717 L216 -20 L151 -20 Z "/>
+        <glyph glyph-name="Scaron" unicode="&#x160;" horiz-adv-x="585"
+               d="M106 183 Q109 153 123.5 131 Q138 109 159.5 94.5 Q181 80 208.5 73 Q236 66 264 66 Q290 66 316.5 73.5 Q343 81 364.5 95.5 Q386 110 399.5 132 Q413 154 413 184 Q413 225 380 252 Q347 279 298 301 L243 326 Q215 339 189 355 Q163 371 143.5 391.5 Q124 412 112.5 438.5 Q101 465 101 499 Q101 547 120 583.5 Q139 620 171.5 644.5 Q204 669 246.5 681.5 Q289 694 335 694 Q422 694 481.5 655 Q541 616 555 549 L471 521 Q466 545 452.5 562 Q439 579 420 590 Q401 601 378.5 606.5 Q356 612 332 612 Q308 612 284.5 606.5 Q261 601 242 589 Q223 577 211 558.5 Q199 540 199 513 Q199 475 229 450 Q259 425 307 402 L352 382 Q382 369 410.5 353 Q439 337 461.5 315.5 Q484 294 497.5 265.5 Q511 237 511 198 Q511 149 491 109.5 Q471 70 436 42 Q401 14 354.5 -1 Q308 -16 255 -16 Q212 -16 170.5 -5 Q129 6 96.5 28.5 Q64 51 43 84 Q22 117 19 160 L106 183 Z M319 717 L243 883 L305 883 L366 774 L469 883 L537 883 L402 717 L319 717 Z "/>
+        <glyph glyph-name="guilsinglleft" unicode="&#x2039;" horiz-adv-x="286"
+               d="M111 98 L43 270 L171 444 L257 444 L124 262 L189 98 L111 98 Z "/>
+        <glyph glyph-name="OE" unicode="&#x152;" horiz-adv-x="935"
+               d="M439 88 L527 590 L414 590 Q346 590 294 566.5 Q242 543 207 501.5 Q172 460 154 403 Q136 346 136 279 Q136 219 156 181.5 Q176 144 207.5 123 Q239 102 277.5 95 Q316 88 354 88 L439 88 Z M330 0 Q248 0 193 23 Q138 46 104.5 84.5 Q71 123 56.5 172.5 Q42 222 42 275 Q42 357 65 430.5 Q88 504 135 559 Q182 614 253 646 Q324 678 420 678 L944 678 L931 593 L620 593 L582 389 L850 389 L836 306 L570 306 L528 85 L858 85 L843 0 L330 0 Z "/>
+        <glyph glyph-name="Zcaron" unicode="&#x17d;" horiz-adv-x="581"
+               d="M246 735 L170 901 L232 901 L293 792 L396 901 L464 901 L329 735 L246 735 Z M-10 0 L2 75 L445 590 L119 590 L133 678 L585 678 L573 604 L129 88 L498 88 L484 0 L-10 0 Z "/>
+        <glyph glyph-name="quoteleft" unicode="&#x2018;" horiz-adv-x="232"
+               d="M79 465 L199 710 L266 710 L174 465 L79 465 Z "/>
+        <glyph glyph-name="quoteright" unicode="&#x2019;" horiz-adv-x="232"
+               d="M77 463 L169 708 L265 708 L145 463 L77 463 Z "/>
+        <glyph glyph-name="quotedblleft" unicode="&#x201c;" horiz-adv-x="395"
+               d="M240 465 L360 710 L427 710 L335 465 L240 465 Z M71 465 L191 710 L258 710 L166 465 L71 465 Z "/>
+        <glyph glyph-name="quotedblright" unicode="&#x201d;" horiz-adv-x="395"
+               d="M73 463 L165 708 L260 708 L140 463 L73 463 Z M242 463 L333 708 L429 708 L309 463 L242 463 Z "/>
+        <glyph glyph-name="bullet" unicode="&#x2022;" horiz-adv-x="339"
+               d="M120 161 Q100 170 84.5 186 Q69 202 60 224 Q51 246 51 271 Q51 295 60 316.5 Q69 338 84 354 Q99 370 120 379.5 Q141 389 165 389 Q189 389 209.5 379.5 Q230 370 245.5 354 Q261 338 270 316.5 Q279 295 279 271 Q279 247 270 225 Q261 203 245.5 187 Q230 171 209.5 161.5 Q189 152 165 152 Q141 152 120 161 Z "/>
+        <glyph glyph-name="endash" unicode="&#x2013;" horiz-adv-x="594"
+               d="M16 229 L27 303 L554 303 L543 229 L16 229 Z "/>
+        <glyph glyph-name="emdash" unicode="&#x2014;" horiz-adv-x="1188"
+               d="M16 229 L27 303 L1155 303 L1144 229 L16 229 Z "/>
+        <glyph glyph-name="tilde" unicode="&#x2dc;" horiz-adv-x="500"
+               d="M83 599 Q97 647 123 679 Q149 711 189 711 Q209 711 224.5 703.5 Q240 696 253 687 L277 671 Q287 664 296.5 660 Q306 656 317 656 Q335 656 347 670.5 Q359 685 370 710 L416 700 Q402 652 376 620 Q350 588 309 588 Q289 588 274.5 595.5 Q260 603 247 612 L223 628 Q213 635 203 639 Q193 643 183 643 Q165 643 152.5 629 Q140 615 129 589 L83 599 Z "/>
+        <glyph glyph-name="trademark" unicode="&#x2122;" horiz-adv-x="896"
+               d="M453 263 L453 678 L533 678 L666 480 L797 678 L878 678 L878 263 L808 263 L808 570 L683 385 L647 385 L523 569 L523 263 L453 263 Z M188 263 L188 612 L61 612 L61 678 L388 678 L388 612 L260 612 L260 263 L188 263 Z "/>
+        <glyph glyph-name="scaron" unicode="&#x161;" horiz-adv-x="469"
+               d="M79 146 Q87 100 123 78.5 Q159 57 203 57 Q221 57 241 61 Q261 65 278 74.5 Q295 84 306 99.5 Q317 115 317 137 Q317 153 309.5 165.5 Q302 178 290 188.5 Q278 199 261.5 207.5 Q245 216 227 225 L177 249 Q155 259 134.5 271.5 Q114 284 98 299.5 Q82 315 72.5 335 Q63 355 63 381 Q63 422 79 451 Q95 480 121 499 Q147 518 180.5 527 Q214 536 250 536 Q326 536 375 505 Q424 474 438 423 L363 400 Q350 436 317 451.5 Q284 467 244 467 Q228 467 211.5 463 Q195 459 181.5 450.5 Q168 442 159 428.5 Q150 415 150 395 Q150 369 172 350.5 Q194 332 228 318 L272 298 Q297 287 321 274.5 Q345 262 364 245 Q383 228 395 205.5 Q407 183 407 153 Q407 109 388.5 77.5 Q370 46 340.5 26 Q311 6 273.5 -3 Q236 -12 198 -12 Q120 -12 66.5 23 Q13 58 2 125 L79 146 Z M245 585 L169 751 L231 751 L292 642 L395 751 L463 751 L328 585 L245 585 Z "/>
+        <glyph glyph-name="guilsinglright" unicode="&#x203a;" horiz-adv-x="286"
+               d="M18 98 L151 279 L87 444 L165 444 L232 270 L105 98 L18 98 Z "/>
+        <glyph glyph-name="oe" unicode="&#x153;" horiz-adv-x="890"
+               d="M498 210 Q498 64 632 64 Q678 64 721 76 Q764 88 796 103 L796 27 Q755 7 708.5 -2.5 Q662 -12 614 -12 Q543 -12 499 19 Q455 50 438 108 Q403 55 348.5 21.5 Q294 -12 222 -12 Q171 -12 134 4.5 Q97 21 73.5 50 Q50 79 39 117.5 Q28 156 28 199 Q28 262 47.5 323 Q67 384 103.5 431 Q140 478 193.5 507 Q247 536 315 536 Q387 536 427.5 503.5 Q468 471 485 421 Q519 472 571.5 504 Q624 536 696 536 Q771 536 816.5 500 Q862 464 862 395 Q862 350 845.5 317.5 Q829 285 799.5 264.5 Q770 244 729.5 234.5 Q689 225 640 225 Q608 225 568.5 227.5 Q529 230 499 235 Q498 229 498 222 L498 210 Z M138 105 Q152 86 175 74.5 Q198 63 232 63 Q279 63 315 88 Q351 113 375 151.5 Q399 190 411 236 Q423 282 423 325 Q423 351 417.5 375 Q412 399 398.5 418.5 Q385 438 362 449.5 Q339 461 304 461 Q257 461 221.5 436 Q186 411 162 372.5 Q138 334 126 288 Q114 242 114 199 Q114 174 119.5 149.5 Q125 125 138 105 Z M534 368 Q519 339 510 306 Q537 301 575 298 Q613 295 640 295 Q668 295 694 299.5 Q720 304 740 314.5 Q760 325 772 342.5 Q784 360 784 386 Q784 423 759.5 445 Q735 467 684 467 Q650 467 621.5 454.5 Q593 442 571.5 420 Q550 398 534 368 Z "/>
+        <glyph glyph-name="zcaron" unicode="&#x17e;" horiz-adv-x="469"
+               d="M249 585 L173 751 L235 751 L296 642 L399 751 L467 751 L332 585 L249 585 Z M-11 0 L-1 63 L340 449 L90 449 L103 524 L459 524 L450 458 L111 75 L397 75 L385 0 L-11 0 Z "/>
+        <glyph glyph-name="Ydieresis" unicode="&#x178;" horiz-adv-x="602"
+               d="M193 0 L244 281 Q236 297 222.5 328 Q209 359 193 398 Q177 437 160 480 Q143 523 127 562 Q111 601 98 632 Q85 663 77 678 L180 678 L307 375 L542 678 L649 678 L342 281 L292 0 L193 0 Z M460 739 Q441 739 430.5 751.5 Q420 764 420 781 Q420 802 434 819 Q448 836 474 836 Q493 836 503 824 Q513 812 513 795 Q513 775 499.5 757 Q486 739 460 739 Z M287 739 Q268 739 257.5 751.5 Q247 764 247 781 Q247 802 261 819 Q275 836 301 836 Q320 836 330 824 Q340 812 340 795 Q340 774 326.5 756.5 Q313 739 287 739 Z "/>
+        <glyph glyph-name="exclamdown" unicode="&#xa1;" horiz-adv-x="284"
+               d="M169 415 Q142 415 128 430.5 Q114 446 114 469 Q114 498 133 517 Q152 536 180 536 Q206 536 219.5 520 Q233 504 233 484 Q233 455 214.5 435 Q196 415 169 415 Z M6 -194 L49 41 L116 327 L178 327 L144 41 L102 -194 L6 -194 Z "/>
+        <glyph glyph-name="cent" unicode="&#xa2;" horiz-adv-x="594"
+               d="M308 455 Q271 446 242 421.5 Q213 397 193.5 363.5 Q174 330 164 291 Q154 252 154 215 Q154 155 176.5 119 Q199 83 239 71 L308 455 Z M208 -115 L226 -7 Q154 7 110 63 Q66 119 66 206 Q66 265 82.5 321 Q99 377 131 422.5 Q163 468 211 498 Q259 528 322 534 L341 639 L405 639 L386 532 Q446 523 487 487 Q528 451 542 389 L463 369 Q455 407 431.5 428.5 Q408 450 372 456 L303 66 Q345 71 378 97 Q411 123 432 168 L509 147 Q497 117 477 89.5 Q457 62 430 40.5 Q403 19 368 5.5 Q333 -8 290 -11 L271 -115 L208 -115 Z "/>
+        <glyph glyph-name="sterling" unicode="&#xa3;" horiz-adv-x="594"
+               d="M23 0 L34 67 Q65 80 92.5 97.5 Q120 115 141 138 Q162 161 174 189 Q186 217 186 251 Q186 265 184.5 278 Q183 291 180 308 L180 309 L67 309 L78 376 L165 376 Q160 401 156 425 Q152 449 152 474 Q152 522 167.5 563.5 Q183 605 213 636 Q243 667 287 685 Q331 703 388 703 Q436 703 470.5 690 Q505 677 528.5 654.5 Q552 632 565 603 Q578 574 584 541 L504 522 Q494 573 463.5 597.5 Q433 622 384 622 Q314 622 277.5 580.5 Q241 539 241 473 Q241 449 245 423 Q249 397 254 376 L447 376 L436 309 L266 309 Q272 278 272 256 Q272 202 240.5 156.5 Q209 111 157 82 L502 82 L489 0 L23 0 Z "/>
+        <glyph glyph-name="currency" unicode="&#xa4;" horiz-adv-x="526"
+               d="M209 268 Q218 257 231.5 250 Q245 243 263 243 Q280 243 294 250 Q308 257 317.5 268 Q327 279 332.5 293 Q338 307 338 322 Q338 337 333 351 Q328 365 318.5 376 Q309 387 295 393.5 Q281 400 264 400 Q228 400 209.5 375.5 Q191 351 191 322 Q191 307 195.5 293 Q200 279 209 268 Z M89 93 L37 149 L143 253 Q124 285 124 322 Q124 358 143 390 L38 494 L90 551 L193 447 Q223 468 264 468 Q302 468 334 448 L438 551 L489 495 L385 392 Q405 361 405 322 Q405 283 385 252 L488 151 L437 94 L333 196 Q301 176 263 176 Q243 176 225.5 181.5 Q208 187 193 196 L89 93 Z "/>
+        <glyph glyph-name="yen" unicode="&#xa5;" horiz-adv-x="594"
+               d="M202 0 L242 229 L47 229 L58 296 L247 296 L213 384 L75 384 L85 451 L190 451 L91 690 L183 690 L308 371 L541 690 L635 690 L456 451 L564 451 L553 384 L413 384 L349 296 L537 296 L526 229 L330 229 L290 0 L202 0 Z "/>
+        <glyph glyph-name="brokenbar" unicode="&#xa6;" horiz-adv-x="246"
+               d="M87 401 L87 731 L159 731 L159 401 L87 401 Z M87 -183 L87 147 L159 147 L159 -183 L87 -183 Z "/>
+        <glyph glyph-name="section" unicode="&#xa7;" horiz-adv-x="577"
+               d="M113 -18 Q121 -60 157 -84 Q193 -108 244 -108 Q270 -108 293.5 -100 Q317 -92 334 -78.5 Q351 -65 361 -46 Q371 -27 371 -4 Q371 27 351 49.5 Q331 72 284 98 L210 140 Q187 153 164 168.5 Q141 184 122 203.5 Q103 223 91.5 247 Q80 271 80 301 Q80 355 109 396.5 Q138 438 180 467 Q148 502 148 545 Q148 585 164 619 Q180 653 208.5 678 Q237 703 276.5 717 Q316 731 364 731 Q444 731 490.5 693.5 Q537 656 549 600 L468 574 Q458 616 428 636 Q398 656 355 656 Q332 656 311 649.5 Q290 643 274 631 Q258 619 248.5 602.5 Q239 586 239 565 Q239 535 257.5 516 Q276 497 315 474 L394 430 Q418 416 441 400.5 Q464 385 481.5 365.5 Q499 346 510 323 Q521 300 521 271 Q521 223 495 178 Q469 133 424 102 Q441 83 451 61.5 Q461 40 461 14 Q461 -30 442.5 -66.5 Q424 -103 392.5 -129 Q361 -155 318.5 -169 Q276 -183 227 -183 Q188 -183 155 -172.5 Q122 -162 96.5 -144 Q71 -126 55 -101 Q39 -76 35 -47 L113 -18 Z M346 162 L356 156 Q361 153 366 149 Q392 166 412 192 Q432 218 432 251 Q432 283 408 307.5 Q384 332 338 359 L265 403 L237 420 Q211 404 190.5 379.5 Q170 355 170 319 Q170 287 190.5 265.5 Q211 244 260 215 L346 162 Z "/>
+        <glyph glyph-name="dieresis" unicode="&#xa8;" horiz-adv-x="500"
+               d="M329 607 Q310 607 299.5 619.5 Q289 632 289 649 Q289 670 303 687 Q317 704 343 704 Q362 704 372 692 Q382 680 382 663 Q382 643 368.5 625 Q355 607 329 607 Z M156 607 Q137 607 126.5 619.5 Q116 632 116 649 Q116 670 130 687 Q144 704 170 704 Q189 704 199 692 Q209 680 209 663 Q209 642 195.5 624.5 Q182 607 156 607 Z "/>
+        <glyph glyph-name="copyright" unicode="&#xa9;" horiz-adv-x="807"
+               d="M574 263 Q561 207 519.5 171.5 Q478 136 412 136 Q358 136 321 154 Q284 172 261 202.5 Q238 233 227.5 274 Q217 315 217 360 Q217 407 228.5 446.5 Q240 486 264 515.5 Q288 545 324.5 561.5 Q361 578 410 578 Q447 578 474 569 Q501 560 520.5 544.5 Q540 529 552 508.5 Q564 488 571 466 L509 452 Q498 478 474 497 Q450 516 409 516 Q373 516 349 502 Q325 488 311.5 465.5 Q298 443 292.5 415 Q287 387 287 360 Q287 330 292 301 Q297 272 311.5 249 Q326 226 350.5 212 Q375 198 414 198 Q453 198 479 218.5 Q505 239 516 277 L574 263 Z M179 133 Q220 90 277 65 Q334 40 403 40 Q473 40 530 65 Q587 90 627.5 133 Q668 176 690.5 233.5 Q713 291 713 357 Q713 423 690.5 481 Q668 539 627.5 581.5 Q587 624 530 649 Q473 674 403 674 Q334 674 277 649 Q220 624 179.5 581.5 Q139 539 116.5 481 Q94 423 94 357 Q94 291 116.5 233.5 Q139 176 179 133 Z M254 12 Q186 41 137 91.5 Q88 142 60.5 210.5 Q33 279 33 357 Q33 435 60.5 503.5 Q88 572 137 622.5 Q186 673 254 702 Q322 731 403 731 Q484 731 552.5 702 Q621 673 670 622.5 Q719 572 746.5 503.5 Q774 435 774 357 Q774 279 746.5 210.5 Q719 142 670 91.5 Q621 41 552.5 12 Q484 -17 403 -17 Q322 -17 254 12 Z "/>
+        <glyph glyph-name="ordfeminine" unicode="&#xaa;" horiz-adv-x="352"
+               d="M291 636 Q279 641 266.5 643.5 Q254 646 238 646 Q211 646 190.5 634.5 Q170 623 156.5 602.5 Q143 582 136 554 Q129 526 129 494 Q129 459 143 441.5 Q157 424 183 424 Q209 424 230 440.5 Q251 457 262 479 L291 636 Z M353 377 Q342 372 329 370 Q316 368 304 368 Q257 368 257 415 Q237 394 212 381 Q187 368 155 368 Q111 368 86.5 399 Q62 430 62 480 Q62 583 111.5 642.5 Q161 702 248 702 Q284 702 312.5 694.5 Q341 687 358 677 L319 456 Q317 442 319.5 433 Q322 424 334 424 Q344 424 353 428 L353 377 Z "/>
+        <glyph glyph-name="guillemotleft" unicode="&#xab;" horiz-adv-x="473"
+               d="M299 98 L231 270 L359 444 L445 444 L312 262 L377 98 L299 98 Z M111 98 L43 270 L171 444 L257 444 L124 262 L189 98 L111 98 Z "/>
+        <glyph glyph-name="logicalnot" unicode="&#xac;" horiz-adv-x="535"
+               d="M28 304 L28 384 L507 384 L507 82 L434 82 L434 304 L28 304 Z "/>
+        <glyph glyph-name="registered" unicode="&#xae;" horiz-adv-x="807"
+               d="M324 367 L408 367 Q464 367 484 385.5 Q504 404 504 439 Q504 472 481 489 Q458 506 407 506 L324 506 L324 367 Z M256 148 L256 565 L415 565 Q498 565 535 532 Q572 499 572 444 Q572 402 550 368 Q528 334 469 323 L587 148 L507 148 L400 310 L324 310 L324 148 L256 148 Z M182 133 Q223 90 279.5 65 Q336 40 403 40 Q470 40 526.5 65 Q583 90 624.5 133 Q666 176 689 233.5 Q712 291 712 357 Q712 423 689 481 Q666 539 624.5 581.5 Q583 624 526.5 649 Q470 674 403 674 Q336 674 279.5 649 Q223 624 182 581.5 Q141 539 117.5 481 Q94 423 94 357 Q94 291 117.5 233.5 Q141 176 182 133 Z M257 12 Q189 41 139.5 91.5 Q90 142 61.5 210.5 Q33 279 33 357 Q33 435 61.5 503.5 Q90 572 139.5 622.5 Q189 673 257 702 Q325 731 403 731 Q482 731 549.5 702 Q617 673 667 622.5 Q717 572 745.5 503.5 Q774 435 774 357 Q774 279 745.5 210.5 Q717 142 667 91.5 Q617 41 549.5 12 Q482 -17 403 -17 Q325 -17 257 12 Z "/>
+        <glyph glyph-name="macron" unicode="&#xaf;" horiz-adv-x="500"
+               d="M105 631 L114 685 L394 685 L385 631 L105 631 Z "/>
+        <glyph glyph-name="degree" unicode="&#xb0;" horiz-adv-x="405"
+               d="M182 416 Q156 428 137 448 Q118 468 107 495 Q96 522 96 552 Q96 582 107 609 Q118 636 137 656 Q156 676 182.5 687.5 Q209 699 240 699 Q271 699 297.5 687.5 Q324 676 343 656 Q362 636 373 609 Q384 582 384 552 Q384 522 373 495 Q362 468 343 448 Q324 428 297.5 416.5 Q271 405 240 405 Q209 405 182 416 Z M173 489 Q185 476 201.5 468 Q218 460 239 460 Q260 460 276.5 468 Q293 476 304.5 489 Q316 502 322 518.5 Q328 535 328 552 Q328 569 322 585.5 Q316 602 304.5 615 Q293 628 276.5 636 Q260 644 239 644 Q218 644 201.5 636 Q185 628 173.5 615 Q162 602 156 585.5 Q150 569 150 552 Q150 535 156 518.5 Q162 502 173 489 Z "/>
+        <glyph glyph-name="plusminus" unicode="&#xb1;" horiz-adv-x="535"
+               d="M28 5 L28 83 L507 83 L507 5 L28 5 Z M28 304 L28 383 L231 383 L231 567 L303 567 L303 383 L507 383 L507 304 L303 304 L303 121 L231 121 L231 304 L28 304 Z "/>
+        <glyph glyph-name="twosuperior" unicode="&#xb2;" horiz-adv-x="415"
+               d="M59 270 L68 326 L191 411 Q220 431 246 450 Q272 469 291.5 489 Q311 509 322.5 531.5 Q334 554 334 580 Q334 602 319 622 Q304 642 269 642 Q231 642 209 626.5 Q187 611 175 583 L116 603 Q125 631 143 650 Q161 669 183 680.5 Q205 692 230 697 Q255 702 279 702 Q308 702 331 693 Q354 684 370 669 Q386 654 394.5 634 Q403 614 403 592 Q403 531 366.5 486 Q330 441 261 395 L165 331 L370 331 L360 270 L59 270 Z "/>
+        <glyph glyph-name="threesuperior" unicode="&#xb3;" horiz-adv-x="394"
+               d="M126 382 Q128 356 148 338 Q168 320 206 320 Q251 320 277 342.5 Q303 365 303 401 Q303 433 278 448 Q253 463 208 463 L169 463 L178 518 L217 518 Q234 518 253.5 521 Q273 524 289.5 532 Q306 540 316.5 554.5 Q327 569 327 593 Q327 618 308.5 632 Q290 646 261 646 Q193 646 168 587 L113 603 Q133 659 176.5 680 Q220 701 272 701 Q324 701 359 675 Q394 649 394 604 Q394 564 369 532.5 Q344 501 297 492 Q326 484 348.5 463 Q371 442 371 404 Q371 371 358 344.5 Q345 318 322.5 300 Q300 282 268.5 272 Q237 262 200 262 Q177 262 154 267.5 Q131 273 112 285 Q93 297 80.5 317 Q68 337 66 366 L126 382 Z "/>
+        <glyph glyph-name="acute" unicode="&#xb4;" horiz-adv-x="500"
+               d="M153 585 L260 751 L347 751 L219 585 L153 585 Z "/>
+        <glyph glyph-name="mu" unicode="&#xb5;" horiz-adv-x="535"
+               d="M-30 -200 L98 524 L182 524 L122 187 Q111 127 137.5 100 Q164 73 212 73 Q249 73 281.5 88.5 Q314 104 342 138 Q355 153 361 166.5 Q367 180 372 207 L428 524 L514 524 L436 88 Q434 74 437 65 Q440 56 455 56 Q468 56 477 60 L474 1 Q447 -7 422 -7 Q402 -7 389 -0.5 Q376 6 369 18 Q362 30 359.5 46 Q357 62 357 81 Q328 38 284.5 13 Q241 -12 190 -12 Q159 -12 130 0 Q101 12 93 39 L55 -200 L-30 -200 Z "/>
+        <glyph glyph-name="paragraph" unicode="&#xb6;" horiz-adv-x="543"
+               d="M121 -215 Q113 -215 105 -214 L119 -138 Q123 -138 126.5 -138.5 Q130 -139 134 -139 Q210 -139 250 -96 Q290 -53 306 32 L336 188 L269 188 Q214 188 174 201.5 Q134 215 108 239 Q82 263 70 297 Q58 331 58 371 Q58 432 74 487.5 Q90 543 123.5 585.5 Q157 628 210 653 Q263 678 337 678 L595 678 L582 598 L490 598 L388 24 Q367 -96 309.5 -155.5 Q252 -215 138 -215 L121 -215 Z "/>
+        <glyph glyph-name="periodcentered" unicode="&#xb7;" horiz-adv-x="221"
+               d="M96 199 Q71 199 57 216.5 Q43 234 43 258 Q43 283 59 302 Q75 321 103 321 Q128 321 141.5 304 Q155 287 155 264 Q155 238 140.5 218.5 Q126 199 96 199 Z "/>
+        <glyph glyph-name="cedilla" unicode="&#xb8;" horiz-adv-x="500"
+               d="M166 -162 Q181 -170 199 -174.5 Q217 -179 234 -179 Q256 -179 276 -169.5 Q296 -160 296 -137 Q296 -117 281 -109.5 Q266 -102 251 -102 Q234 -102 215 -110 L200 -64 Q233 -50 263 -50 Q280 -50 296.5 -54.5 Q313 -59 326 -69.5 Q339 -80 346.5 -96 Q354 -112 354 -134 Q354 -182 320 -205.5 Q286 -229 238 -229 Q181 -229 146 -209 L166 -162 Z "/>
+        <glyph glyph-name="onesuperior" unicode="&#xb9;" horiz-adv-x="305"
+               d="M134 270 L197 622 L94 579 L83 637 L215 695 L277 695 L202 270 L134 270 Z "/>
+        <glyph glyph-name="ordmasculine" unicode="&#xba;" horiz-adv-x="345"
+               d="M143 445 Q151 435 163 429 Q175 423 194 423 Q221 423 241 437.5 Q261 452 274 474 Q287 496 293.5 522 Q300 548 300 571 Q300 601 286.5 624 Q273 647 235 647 Q208 647 188.5 632.5 Q169 618 156 596 Q143 574 136.5 548 Q130 522 130 498 Q130 483 133 469.5 Q136 456 143 445 Z M186 368 Q122 368 93 405.5 Q64 443 64 498 Q64 537 76 574 Q88 611 111 639.5 Q134 668 167.5 685 Q201 702 243 702 Q275 702 298.5 692 Q322 682 337 664 Q352 646 359 622.5 Q366 599 366 572 Q366 533 354 496 Q342 459 318.5 430.5 Q295 402 261.5 385 Q228 368 186 368 Z "/>
+        <glyph glyph-name="guillemotright" unicode="&#xbb;" horiz-adv-x="471"
+               d="M197 98 L330 279 L266 444 L344 444 L411 270 L284 98 L197 98 Z M9 98 L142 279 L78 444 L156 444 L223 270 L96 98 L9 98 Z "/>
+        <glyph glyph-name="onequarter" unicode="&#xbc;" horiz-adv-x="810"
+               d="M448 153 L588 153 L625 358 L448 153 Z M378 96 L387 153 L621 425 L703 425 L655 153 L721 153 L711 96 L645 96 L629 0 L562 0 L578 96 L378 96 Z M142 270 L206 622 L103 579 L91 637 L223 695 L285 695 L210 270 L142 270 Z M103 -20 L602 717 L666 717 L168 -20 L103 -20 Z "/>
+        <glyph glyph-name="onehalf" unicode="&#xbd;" horiz-adv-x="848"
+               d="M423 0 L432 56 L555 141 Q584 161 610 180 Q636 199 655.5 219 Q675 239 686.5 261.5 Q698 284 698 310 Q698 332 683 352 Q668 372 633 372 Q595 372 573 356.5 Q551 341 539 313 L479 333 Q488 361 506 380 Q524 399 546.5 410.5 Q569 422 594 427 Q619 432 643 432 Q672 432 695 423 Q718 414 734 399 Q750 384 758.5 364 Q767 344 767 322 Q767 261 730.5 216 Q694 171 625 125 L529 61 L734 61 L724 0 L423 0 Z M135 270 L198 622 L95 579 L84 637 L216 695 L278 695 L203 270 L135 270 Z M95 -20 L594 717 L659 717 L161 -20 L95 -20 Z "/>
+        <glyph glyph-name="threequarters" unicode="&#xbe;" horiz-adv-x="904"
+               d="M555 153 L695 153 L732 358 L555 153 Z M484 96 L494 153 L728 425 L810 425 L762 153 L827 153 L818 96 L752 96 L736 0 L669 0 L685 96 L484 96 Z M139 382 Q141 356 161 338 Q181 320 220 320 Q265 320 291 342.5 Q317 365 317 401 Q317 433 291.5 448 Q266 463 222 463 L182 463 L192 518 L230 518 Q247 518 266.5 521 Q286 524 302.5 532 Q319 540 329.5 554.5 Q340 569 340 593 Q340 618 321.5 632 Q303 646 275 646 Q205 646 182 587 L126 603 Q146 659 189.5 680 Q233 701 285 701 Q337 701 372 675 Q407 649 407 604 Q407 564 382.5 532.5 Q358 501 310 492 Q339 484 361.5 463 Q384 442 384 404 Q384 371 371 344.5 Q358 318 335.5 300 Q313 282 281.5 272 Q250 262 213 262 Q190 262 167 267.5 Q144 273 125 285 Q106 297 93.5 317 Q81 337 79 366 L139 382 Z M209 -20 L708 717 L772 717 L273 -20 L209 -20 Z "/>
+        <glyph glyph-name="questiondown" unicode="&#xbf;" horiz-adv-x="515"
+               d="M280 415 Q257 415 243.5 431 Q230 447 230 467 Q230 496 249 515.5 Q268 535 298 535 Q322 535 335.5 519.5 Q349 504 349 482 Q349 453 329.5 434 Q310 415 280 415 Z M403 -17 Q380 -108 313 -154.5 Q246 -201 156 -201 Q117 -201 85 -190 Q53 -179 29.5 -158.5 Q6 -138 -6.5 -110 Q-19 -82 -19 -48 Q-19 -5 -6 29.5 Q7 64 28 93 Q49 122 76 146.5 Q103 171 132 193 Q167 219 192 250.5 Q217 282 225 329 L308 329 Q302 293 289.5 265 Q277 237 260.5 214.5 Q244 192 224.5 174 Q205 156 185 141 Q161 123 139.5 105 Q118 87 102.5 66.5 Q87 46 77.5 23 Q68 0 68 -28 Q68 -73 97 -97 Q126 -121 172 -121 Q224 -121 265 -92.5 Q306 -64 323 1 L403 -17 Z "/>
+        <glyph glyph-name="Agrave" unicode="&#xc0;" horiz-adv-x="659"
+               d="M201 244 L451 244 L386 574 L201 244 Z M-27 0 L351 678 L454 678 L592 0 L494 0 L462 164 L165 164 L76 0 L-27 0 Z M378 717 L308 883 L392 883 L440 717 L378 717 Z "/>
+        <glyph glyph-name="Aacute" unicode="&#xc1;" horiz-adv-x="659"
+               d="M201 244 L451 244 L386 574 L201 244 Z M-27 0 L351 678 L454 678 L592 0 L494 0 L462 164 L165 164 L76 0 L-27 0 Z M374 717 L481 883 L568 883 L440 717 L374 717 Z "/>
+        <glyph glyph-name="Acircumflex" unicode="&#xc2;" horiz-adv-x="659"
+               d="M201 244 L451 244 L386 574 L201 244 Z M-27 0 L351 678 L454 678 L592 0 L494 0 L462 164 L165 164 L76 0 L-27 0 Z M258 717 L393 883 L475 883 L551 717 L488 717 L427 826 L325 717 L258 717 Z "/>
+        <glyph glyph-name="Atilde" unicode="&#xc3;" horiz-adv-x="659"
+               d="M201 244 L451 244 L386 574 L201 244 Z M-27 0 L351 678 L454 678 L592 0 L494 0 L462 164 L165 164 L76 0 L-27 0 Z M253 731 Q267 779 293 811 Q319 843 359 843 Q379 843 394.5 835.5 Q410 828 423 819 L447 803 Q457 796 466.5 792 Q476 788 487 788 Q505 788 517 802.5 Q529 817 540 842 L586 832 Q572 784 546 752 Q520 720 479 720 Q459 720 444.5 727.5 Q430 735 417 744 L393 760 Q383 767 373 771 Q363 775 353 775 Q335 775 322.5 761 Q310 747 299 721 L253 731 Z "/>
+        <glyph glyph-name="Adieresis" unicode="&#xc4;" horiz-adv-x="659"
+               d="M201 244 L451 244 L386 574 L201 244 Z M-27 0 L351 678 L454 678 L592 0 L494 0 L462 164 L165 164 L76 0 L-27 0 Z M501 739 Q482 739 471.5 751.5 Q461 764 461 781 Q461 802 475 819 Q489 836 515 836 Q534 836 544 824 Q554 812 554 795 Q554 775 540.5 757 Q527 739 501 739 Z M328 739 Q309 739 298.5 751.5 Q288 764 288 781 Q288 802 302 819 Q316 836 342 836 Q361 836 371 824 Q381 812 381 795 Q381 774 367.5 756.5 Q354 739 328 739 Z "/>
+        <glyph glyph-name="Aring" unicode="&#xc5;" horiz-adv-x="659"
+               d="M201 244 L451 244 L386 574 L201 244 Z M-27 0 L351 678 L454 678 L592 0 L494 0 L462 164 L165 164 L76 0 L-27 0 Z M342 729 Q317 752 317 787 Q317 835 348.5 869 Q380 903 438 903 Q480 903 505 880.5 Q530 858 530 823 Q530 775 498.5 741 Q467 707 409 707 Q367 707 342 729 Z M377 793 Q377 756 415 756 Q444 756 457 774.5 Q470 793 470 816 Q470 833 460 843.5 Q450 854 432 854 Q403 854 390 835.5 Q377 817 377 793 Z "/>
+        <glyph glyph-name="AE" unicode="&#xc6;" horiz-adv-x="891"
+               d="M260 345 L440 345 L485 593 L435 593 L260 345 Z M-76 0 L385 678 L900 678 L887 593 L576 593 L534 366 L802 366 L788 282 L521 282 L484 85 L814 85 L799 0 L380 0 L427 261 L210 261 L27 0 L-76 0 Z "/>
+        <glyph glyph-name="Ccedilla" unicode="&#xc7;" horiz-adv-x="640"
+               d="M582 179 Q563 131 532.5 95 Q502 59 464.5 34 Q427 9 383 -3.5 Q339 -16 292 -16 Q231 -16 185 4.5 Q139 25 108.5 62.5 Q78 100 63 153 Q48 206 48 270 Q48 351 70.5 427 Q93 503 137.5 562.5 Q182 622 247 658 Q312 694 396 694 Q487 694 545.5 646.5 Q604 599 617 518 L529 499 Q518 556 478.5 582 Q439 608 387 608 Q329 608 283 579.5 Q237 551 206 504.5 Q175 458 158.5 399 Q142 340 142 278 Q142 175 184.5 122.5 Q227 70 305 70 Q331 70 358 78 Q385 86 411 102.5 Q437 119 460 145 Q483 171 500 207 L582 179 Z M172 -162 Q187 -170 205 -174.5 Q223 -179 240 -179 Q262 -179 282 -169.5 Q302 -160 302 -137 Q302 -117 287 -109.5 Q272 -102 257 -102 Q240 -102 221 -110 L206 -64 Q239 -50 269 -50 Q286 -50 302.5 -54.5 Q319 -59 332 -69.5 Q345 -80 352.5 -96 Q360 -112 360 -134 Q360 -182 326 -205.5 Q292 -229 244 -229 Q187 -229 152 -209 L172 -162 Z "/>
+        <glyph glyph-name="Egrave" unicode="&#xc8;" horiz-adv-x="537"
+               d="M26 0 L145 678 L546 678 L533 593 L223 593 L184 389 L452 389 L438 306 L172 306 L130 85 L460 85 L445 0 L26 0 Z M319 717 L249 883 L333 883 L381 717 L319 717 Z "/>
+        <glyph glyph-name="Eacute" unicode="&#xc9;" horiz-adv-x="537"
+               d="M26 0 L145 678 L546 678 L533 593 L223 593 L184 389 L452 389 L438 306 L172 306 L130 85 L460 85 L445 0 L26 0 Z M316 717 L423 883 L510 883 L382 717 L316 717 Z "/>
+        <glyph glyph-name="Ecircumflex" unicode="&#xca;" horiz-adv-x="537"
+               d="M26 0 L145 678 L546 678 L533 593 L223 593 L184 389 L452 389 L438 306 L172 306 L130 85 L460 85 L445 0 L26 0 Z M200 717 L335 883 L417 883 L493 717 L430 717 L369 826 L267 717 L200 717 Z "/>
+        <glyph glyph-name="Edieresis" unicode="&#xcb;" horiz-adv-x="537"
+               d="M26 0 L145 678 L546 678 L533 593 L223 593 L184 389 L452 389 L438 306 L172 306 L130 85 L460 85 L445 0 L26 0 Z M442 739 Q423 739 412.5 751.5 Q402 764 402 781 Q402 802 416 819 Q430 836 456 836 Q475 836 485 824 Q495 812 495 795 Q495 775 481.5 757 Q468 739 442 739 Z M269 739 Q250 739 239.5 751.5 Q229 764 229 781 Q229 802 243 819 Q257 836 283 836 Q302 836 312 824 Q322 812 322 795 Q322 774 308.5 756.5 Q295 739 269 739 Z "/>
+        <glyph glyph-name="Igrave" unicode="&#xcc;" horiz-adv-x="263"
+               d="M26 0 L145 678 L237 678 L118 0 L26 0 Z M168 717 L98 883 L182 883 L230 717 L168 717 Z "/>
+        <glyph glyph-name="Iacute" unicode="&#xcd;" horiz-adv-x="263"
+               d="M26 0 L145 678 L237 678 L118 0 L26 0 Z M164 717 L271 883 L358 883 L230 717 L164 717 Z "/>
+        <glyph glyph-name="Icircumflex" unicode="&#xce;" horiz-adv-x="263"
+               d="M26 0 L145 678 L237 678 L118 0 L26 0 Z M49 717 L184 883 L266 883 L342 717 L279 717 L218 826 L116 717 L49 717 Z "/>
+        <glyph glyph-name="Idieresis" unicode="&#xcf;" horiz-adv-x="263"
+               d="M26 0 L145 678 L237 678 L118 0 L26 0 Z M291 739 Q272 739 261.5 751.5 Q251 764 251 781 Q251 802 265 819 Q279 836 305 836 Q324 836 334 824 Q344 812 344 795 Q344 775 330.5 757 Q317 739 291 739 Z M118 739 Q99 739 88.5 751.5 Q78 764 78 781 Q78 802 92 819 Q106 836 132 836 Q151 836 161 824 Q171 812 171 795 Q171 774 157.5 756.5 Q144 739 118 739 Z "/>
+        <glyph glyph-name="Eth" unicode="&#xd0;" horiz-adv-x="677"
+               d="M132 88 L263 88 Q331 88 383 111.5 Q435 135 470 176.5 Q505 218 523 275 Q541 332 541 399 Q541 459 521 496.5 Q501 534 469.5 555 Q438 576 399.5 583 Q361 590 323 590 L223 590 L185 384 L349 384 L336 312 L172 312 L132 88 Z M26 0 L81 312 L11 312 L23 384 L94 384 L146 678 L347 678 Q430 678 485 655 Q540 632 573.5 594 Q607 556 621 506 Q635 456 635 403 Q635 321 612 247.5 Q589 174 542 119 Q495 64 424 32 Q353 0 257 0 L26 0 Z "/>
+        <glyph glyph-name="Ntilde" unicode="&#xd1;" horiz-adv-x="698"
+               d="M26 0 L145 678 L247 678 L488 150 L584 678 L673 678 L553 0 L458 0 L211 535 L114 0 L26 0 Z M264 731 Q278 779 304 811 Q330 843 370 843 Q390 843 405.5 835.5 Q421 828 434 819 L458 803 Q468 796 477.5 792 Q487 788 498 788 Q516 788 528 802.5 Q540 817 551 842 L597 832 Q583 784 557 752 Q531 720 490 720 Q470 720 455.5 727.5 Q441 735 428 744 L404 760 Q394 767 384 771 Q374 775 364 775 Q346 775 333.5 761 Q321 747 310 721 L264 731 Z "/>
+        <glyph glyph-name="Ograve" unicode="&#xd2;" horiz-adv-x="693"
+               d="M180 119 Q225 70 302 70 Q367 70 414.5 101.5 Q462 133 493.5 182 Q525 231 540.5 292 Q556 353 556 411 Q556 509 512 558.5 Q468 608 391 608 Q326 608 278 576.5 Q230 545 198.5 496 Q167 447 151.5 386.5 Q136 326 136 267 Q136 169 180 119 Z M185 4 Q138 24 106.5 60.5 Q75 97 58.5 148 Q42 199 42 262 Q42 339 64.5 416 Q87 493 131.5 555 Q176 617 243.5 655.5 Q311 694 401 694 Q461 694 508 674 Q555 654 586.5 617.5 Q618 581 634.5 530 Q651 479 651 416 Q651 339 628.5 262 Q606 185 561 123 Q516 61 449 22.5 Q382 -16 292 -16 Q232 -16 185 4 Z M382 717 L312 883 L396 883 L444 717 L382 717 Z "/>
+        <glyph glyph-name="Oacute" unicode="&#xd3;" horiz-adv-x="693"
+               d="M180 119 Q225 70 302 70 Q367 70 414.5 101.5 Q462 133 493.5 182 Q525 231 540.5 292 Q556 353 556 411 Q556 509 512 558.5 Q468 608 391 608 Q326 608 278 576.5 Q230 545 198.5 496 Q167 447 151.5 386.5 Q136 326 136 267 Q136 169 180 119 Z M185 4 Q138 24 106.5 60.5 Q75 97 58.5 148 Q42 199 42 262 Q42 339 64.5 416 Q87 493 131.5 555 Q176 617 243.5 655.5 Q311 694 401 694 Q461 694 508 674 Q555 654 586.5 617.5 Q618 581 634.5 530 Q651 479 651 416 Q651 339 628.5 262 Q606 185 561 123 Q516 61 449 22.5 Q382 -16 292 -16 Q232 -16 185 4 Z M378 717 L485 883 L572 883 L444 717 L378 717 Z "/>
+        <glyph glyph-name="Ocircumflex" unicode="&#xd4;" horiz-adv-x="693"
+               d="M180 119 Q225 70 302 70 Q367 70 414.5 101.5 Q462 133 493.5 182 Q525 231 540.5 292 Q556 353 556 411 Q556 509 512 558.5 Q468 608 391 608 Q326 608 278 576.5 Q230 545 198.5 496 Q167 447 151.5 386.5 Q136 326 136 267 Q136 169 180 119 Z M185 4 Q138 24 106.5 60.5 Q75 97 58.5 148 Q42 199 42 262 Q42 339 64.5 416 Q87 493 131.5 555 Q176 617 243.5 655.5 Q311 694 401 694 Q461 694 508 674 Q555 654 586.5 617.5 Q618 581 634.5 530 Q651 479 651 416 Q651 339 628.5 262 Q606 185 561 123 Q516 61 449 22.5 Q382 -16 292 -16 Q232 -16 185 4 Z M262 717 L397 883 L479 883 L555 717 L492 717 L431 826 L329 717 L262 717 Z "/>
+        <glyph glyph-name="Otilde" unicode="&#xd5;" horiz-adv-x="693"
+               d="M180 119 Q225 70 302 70 Q367 70 414.5 101.5 Q462 133 493.5 182 Q525 231 540.5 292 Q556 353 556 411 Q556 509 512 558.5 Q468 608 391 608 Q326 608 278 576.5 Q230 545 198.5 496 Q167 447 151.5 386.5 Q136 326 136 267 Q136 169 180 119 Z M185 4 Q138 24 106.5 60.5 Q75 97 58.5 148 Q42 199 42 262 Q42 339 64.5 416 Q87 493 131.5 555 Q176 617 243.5 655.5 Q311 694 401 694 Q461 694 508 674 Q555 654 586.5 617.5 Q618 581 634.5 530 Q651 479 651 416 Q651 339 628.5 262 Q606 185 561 123 Q516 61 449 22.5 Q382 -16 292 -16 Q232 -16 185 4 Z M257 731 Q271 779 297 811 Q323 843 363 843 Q383 843 398.5 835.5 Q414 828 427 819 L451 803 Q461 796 470.5 792 Q480 788 491 788 Q509 788 521 802.5 Q533 817 544 842 L590 832 Q576 784 550 752 Q524 720 483 720 Q463 720 448.5 727.5 Q434 735 421 744 L397 760 Q387 767 377 771 Q367 775 357 775 Q339 775 326.5 761 Q314 747 303 721 L257 731 Z "/>
+        <glyph glyph-name="Odieresis" unicode="&#xd6;" horiz-adv-x="693"
+               d="M180 119 Q225 70 302 70 Q367 70 414.5 101.5 Q462 133 493.5 182 Q525 231 540.5 292 Q556 353 556 411 Q556 509 512 558.5 Q468 608 391 608 Q326 608 278 576.5 Q230 545 198.5 496 Q167 447 151.5 386.5 Q136 326 136 267 Q136 169 180 119 Z M185 4 Q138 24 106.5 60.5 Q75 97 58.5 148 Q42 199 42 262 Q42 339 64.5 416 Q87 493 131.5 555 Q176 617 243.5 655.5 Q311 694 401 694 Q461 694 508 674 Q555 654 586.5 617.5 Q618 581 634.5 530 Q651 479 651 416 Q651 339 628.5 262 Q606 185 561 123 Q516 61 449 22.5 Q382 -16 292 -16 Q232 -16 185 4 Z M505 739 Q486 739 475.5 751.5 Q465 764 465 781 Q465 802 479 819 Q493 836 519 836 Q538 836 548 824 Q558 812 558 795 Q558 775 544.5 757 Q531 739 505 739 Z M332 739 Q313 739 302.5 751.5 Q292 764 292 781 Q292 802 306 819 Q320 836 346 836 Q365 836 375 824 Q385 812 385 795 Q385 774 371.5 756.5 Q358 739 332 739 Z "/>
+        <glyph glyph-name="multiply" unicode="&#xd7;" horiz-adv-x="535"
+               d="M93 115 L42 170 L216 343 L42 515 L94 572 L267 400 L443 573 L494 516 L319 343 L493 172 L441 115 L267 288 L93 115 Z "/>
+        <glyph glyph-name="Oslash" unicode="&#xd8;" horiz-adv-x="698"
+               d="M496 575 Q456 608 393 608 Q328 608 280 576.5 Q232 545 200.5 496 Q169 447 153.5 386.5 Q138 326 138 267 Q138 204 158 159 L496 575 Z M200 103 Q241 70 304 70 Q369 70 416.5 101.5 Q464 133 495.5 182 Q527 231 542.5 292 Q558 353 558 411 Q558 474 538 519 L200 103 Z M10 -24 L94 79 Q44 150 44 262 Q44 339 66.5 416 Q89 493 133.5 555 Q178 617 245.5 655.5 Q313 694 403 694 Q494 694 555 648 L600 704 L688 704 L603 599 Q653 528 653 416 Q653 339 630.5 262 Q608 185 563 123 Q518 61 451 22.5 Q384 -16 294 -16 Q201 -16 141 30 L97 -24 L10 -24 Z "/>
+        <glyph glyph-name="Ugrave" unicode="&#xd9;" horiz-adv-x="674"
+               d="M159 254 Q150 203 157 168 Q164 133 183 111 Q202 89 231 79.5 Q260 70 293 70 Q329 70 360 79 Q391 88 416 109 Q441 130 458.5 165.5 Q476 201 486 254 L560 678 L652 678 L577 250 Q554 118 482 51 Q410 -16 285 -16 Q226 -16 180.5 1.5 Q135 19 106 53 Q77 87 66.5 136.5 Q56 186 67 250 L142 678 L233 678 L159 254 Z M373 717 L303 883 L387 883 L435 717 L373 717 Z "/>
+        <glyph glyph-name="Uacute" unicode="&#xda;" horiz-adv-x="674"
+               d="M159 254 Q150 203 157 168 Q164 133 183 111 Q202 89 231 79.5 Q260 70 293 70 Q329 70 360 79 Q391 88 416 109 Q441 130 458.5 165.5 Q476 201 486 254 L560 678 L652 678 L577 250 Q554 118 482 51 Q410 -16 285 -16 Q226 -16 180.5 1.5 Q135 19 106 53 Q77 87 66.5 136.5 Q56 186 67 250 L142 678 L233 678 L159 254 Z M369 717 L476 883 L563 883 L435 717 L369 717 Z "/>
+        <glyph glyph-name="Ucircumflex" unicode="&#xdb;" horiz-adv-x="674"
+               d="M159 254 Q150 203 157 168 Q164 133 183 111 Q202 89 231 79.5 Q260 70 293 70 Q329 70 360 79 Q391 88 416 109 Q441 130 458.5 165.5 Q476 201 486 254 L560 678 L652 678 L577 250 Q554 118 482 51 Q410 -16 285 -16 Q226 -16 180.5 1.5 Q135 19 106 53 Q77 87 66.5 136.5 Q56 186 67 250 L142 678 L233 678 L159 254 Z M253 717 L388 883 L470 883 L546 717 L483 717 L422 826 L320 717 L253 717 Z "/>
+        <glyph glyph-name="Udieresis" unicode="&#xdc;" horiz-adv-x="674"
+               d="M159 254 Q150 203 157 168 Q164 133 183 111 Q202 89 231 79.5 Q260 70 293 70 Q329 70 360 79 Q391 88 416 109 Q441 130 458.5 165.5 Q476 201 486 254 L560 678 L652 678 L577 250 Q554 118 482 51 Q410 -16 285 -16 Q226 -16 180.5 1.5 Q135 19 106 53 Q77 87 66.5 136.5 Q56 186 67 250 L142 678 L233 678 L159 254 Z M495 739 Q476 739 465.5 751.5 Q455 764 455 781 Q455 802 469 819 Q483 836 509 836 Q528 836 538 824 Q548 812 548 795 Q548 775 534.5 757 Q521 739 495 739 Z M322 739 Q303 739 292.5 751.5 Q282 764 282 781 Q282 802 296 819 Q310 836 336 836 Q355 836 365 824 Q375 812 375 795 Q375 774 361.5 756.5 Q348 739 322 739 Z "/>
+        <glyph glyph-name="Yacute" unicode="&#xdd;" horiz-adv-x="602"
+               d="M193 0 L244 281 Q236 297 222.5 328 Q209 359 193 398 Q177 437 160 480 Q143 523 127 562 Q111 601 98 632 Q85 663 77 678 L180 678 L307 375 L542 678 L649 678 L342 281 L292 0 L193 0 Z M334 717 L441 883 L528 883 L400 717 L334 717 Z "/>
+        <glyph glyph-name="Thorn" unicode="&#xde;" horiz-adv-x="584"
+               d="M156 219 L295 219 Q345 219 379 233.5 Q413 248 434 270.5 Q455 293 464 321 Q473 349 473 377 Q473 399 465.5 420 Q458 441 442.5 457 Q427 473 403.5 482.5 Q380 492 348 492 L206 492 L156 219 Z M26 0 L145 678 L237 678 L219 579 L367 579 Q400 579 435.5 569 Q471 559 500.5 535.5 Q530 512 549 474.5 Q568 437 568 383 Q568 325 548 279 Q528 233 491.5 201 Q455 169 404 152 Q353 135 291 135 L141 135 L117 0 L26 0 Z "/>
+        <glyph glyph-name="germandbls" unicode="&#xdf;" horiz-adv-x="641"
+               d="M-7 -192 L130 586 Q144 665 197.5 698 Q251 731 345 731 Q376 731 413 726 Q450 721 481.5 707 Q513 693 534 669 Q555 645 555 607 Q555 560 523.5 524.5 Q492 489 428 451 Q416 444 404 436.5 Q392 429 381.5 420 Q371 411 364.5 401.5 Q358 392 358 380 Q358 361 374 346 Q390 331 425 314 L469 292 Q490 281 510 268.5 Q530 256 545.5 239.5 Q561 223 570 202 Q579 181 579 153 Q579 111 561.5 80 Q544 49 515.5 28.5 Q487 8 451 -2 Q415 -12 379 -12 Q310 -12 261 15 Q212 42 193 92 L268 126 Q279 91 312.5 74 Q346 57 381 57 Q398 57 416.5 61 Q435 65 451.5 74.5 Q468 84 478.5 99.5 Q489 115 489 137 Q489 169 466 188.5 Q443 208 402 229 L363 249 Q346 258 329.5 268.5 Q313 279 299.5 293 Q286 307 278 324.5 Q270 342 270 365 Q270 408 295 437 Q320 466 360 488 Q376 496 394.5 507 Q413 518 429 531 Q445 544 455.5 559.5 Q466 575 466 593 Q466 611 456 623.5 Q446 636 429 643.5 Q412 651 390 654.5 Q368 658 345 658 Q312 658 289 654 Q266 650 250.5 640 Q235 630 226.5 614 Q218 598 213 575 L78 -192 L-7 -192 Z "/>
+        <glyph glyph-name="agrave" unicode="&#xe0;" horiz-adv-x="566"
+               d="M411 442 Q390 450 366 455 Q342 460 313 460 Q263 460 225.5 439.5 Q188 419 163.5 383 Q139 347 126.5 298 Q114 249 114 192 Q114 128 140 96 Q166 64 214 64 Q238 64 260 72 Q282 80 301 93.5 Q320 107 335 124.5 Q350 142 361 161 L411 442 Z M497 2 Q480 -6 460 -9 Q440 -12 424 -12 Q387 -12 367 7 Q347 26 350 68 Q317 33 274.5 10.5 Q232 -12 179 -12 Q107 -12 66.5 40.5 Q26 93 26 179 Q26 261 46.5 327 Q67 393 105.5 439.5 Q144 486 199.5 511 Q255 536 325 536 Q383 536 430.5 523 Q478 510 505 494 L438 115 Q434 93 439 78.5 Q444 64 465 64 Q480 64 497 71 L497 2 Z M295 585 L225 751 L309 751 L357 585 L295 585 Z "/>
+        <glyph glyph-name="aacute" unicode="&#xe1;" horiz-adv-x="566"
+               d="M411 442 Q390 450 366 455 Q342 460 313 460 Q263 460 225.5 439.5 Q188 419 163.5 383 Q139 347 126.5 298 Q114 249 114 192 Q114 128 140 96 Q166 64 214 64 Q238 64 260 72 Q282 80 301 93.5 Q320 107 335 124.5 Q350 142 361 161 L411 442 Z M497 2 Q480 -6 460 -9 Q440 -12 424 -12 Q387 -12 367 7 Q347 26 350 68 Q317 33 274.5 10.5 Q232 -12 179 -12 Q107 -12 66.5 40.5 Q26 93 26 179 Q26 261 46.5 327 Q67 393 105.5 439.5 Q144 486 199.5 511 Q255 536 325 536 Q383 536 430.5 523 Q478 510 505 494 L438 115 Q434 93 439 78.5 Q444 64 465 64 Q480 64 497 71 L497 2 Z M292 585 L399 751 L486 751 L358 585 L292 585 Z "/>
+        <glyph glyph-name="acircumflex" unicode="&#xe2;" horiz-adv-x="566"
+               d="M411 442 Q390 450 366 455 Q342 460 313 460 Q263 460 225.5 439.5 Q188 419 163.5 383 Q139 347 126.5 298 Q114 249 114 192 Q114 128 140 96 Q166 64 214 64 Q238 64 260 72 Q282 80 301 93.5 Q320 107 335 124.5 Q350 142 361 161 L411 442 Z M497 2 Q480 -6 460 -9 Q440 -12 424 -12 Q387 -12 367 7 Q347 26 350 68 Q317 33 274.5 10.5 Q232 -12 179 -12 Q107 -12 66.5 40.5 Q26 93 26 179 Q26 261 46.5 327 Q67 393 105.5 439.5 Q144 486 199.5 511 Q255 536 325 536 Q383 536 430.5 523 Q478 510 505 494 L438 115 Q434 93 439 78.5 Q444 64 465 64 Q480 64 497 71 L497 2 Z M176 585 L311 751 L393 751 L469 585 L406 585 L345 694 L243 585 L176 585 Z "/>
+        <glyph glyph-name="atilde" unicode="&#xe3;" horiz-adv-x="566"
+               d="M411 442 Q390 450 366 455 Q342 460 313 460 Q263 460 225.5 439.5 Q188 419 163.5 383 Q139 347 126.5 298 Q114 249 114 192 Q114 128 140 96 Q166 64 214 64 Q238 64 260 72 Q282 80 301 93.5 Q320 107 335 124.5 Q350 142 361 161 L411 442 Z M497 2 Q480 -6 460 -9 Q440 -12 424 -12 Q387 -12 367 7 Q347 26 350 68 Q317 33 274.5 10.5 Q232 -12 179 -12 Q107 -12 66.5 40.5 Q26 93 26 179 Q26 261 46.5 327 Q67 393 105.5 439.5 Q144 486 199.5 511 Q255 536 325 536 Q383 536 430.5 523 Q478 510 505 494 L438 115 Q434 93 439 78.5 Q444 64 465 64 Q480 64 497 71 L497 2 Z M171 599 Q185 647 211 679 Q237 711 277 711 Q297 711 312.5 703.5 Q328 696 341 687 L365 671 Q375 664 384.5 660 Q394 656 405 656 Q423 656 435 670.5 Q447 685 458 710 L504 700 Q490 652 464 620 Q438 588 397 588 Q377 588 362.5 595.5 Q348 603 335 612 L311 628 Q301 635 291 639 Q281 643 271 643 Q253 643 240.5 629 Q228 615 217 589 L171 599 Z "/>
+        <glyph glyph-name="adieresis" unicode="&#xe4;" horiz-adv-x="566"
+               d="M411 442 Q390 450 366 455 Q342 460 313 460 Q263 460 225.5 439.5 Q188 419 163.5 383 Q139 347 126.5 298 Q114 249 114 192 Q114 128 140 96 Q166 64 214 64 Q238 64 260 72 Q282 80 301 93.5 Q320 107 335 124.5 Q350 142 361 161 L411 442 Z M497 2 Q480 -6 460 -9 Q440 -12 424 -12 Q387 -12 367 7 Q347 26 350 68 Q317 33 274.5 10.5 Q232 -12 179 -12 Q107 -12 66.5 40.5 Q26 93 26 179 Q26 261 46.5 327 Q67 393 105.5 439.5 Q144 486 199.5 511 Q255 536 325 536 Q383 536 430.5 523 Q478 510 505 494 L438 115 Q434 93 439 78.5 Q444 64 465 64 Q480 64 497 71 L497 2 Z M418 607 Q399 607 388.5 619.5 Q378 632 378 649 Q378 670 392 687 Q406 704 432 704 Q451 704 461 692 Q471 680 471 663 Q471 643 457.5 625 Q444 607 418 607 Z M245 607 Q226 607 215.5 619.5 Q205 632 205 649 Q205 670 219 687 Q233 704 259 704 Q278 704 288 692 Q298 680 298 663 Q298 642 284.5 624.5 Q271 607 245 607 Z "/>
+        <glyph glyph-name="aring" unicode="&#xe5;" horiz-adv-x="566"
+               d="M411 442 Q390 450 366 455 Q342 460 313 460 Q263 460 225.5 439.5 Q188 419 163.5 383 Q139 347 126.5 298 Q114 249 114 192 Q114 128 140 96 Q166 64 214 64 Q238 64 260 72 Q282 80 301 93.5 Q320 107 335 124.5 Q350 142 361 161 L411 442 Z M497 2 Q480 -6 460 -9 Q440 -12 424 -12 Q387 -12 367 7 Q347 26 350 68 Q317 33 274.5 10.5 Q232 -12 179 -12 Q107 -12 66.5 40.5 Q26 93 26 179 Q26 261 46.5 327 Q67 393 105.5 439.5 Q144 486 199.5 511 Q255 536 325 536 Q383 536 430.5 523 Q478 510 505 494 L438 115 Q434 93 439 78.5 Q444 64 465 64 Q480 64 497 71 L497 2 Z M259 597 Q234 620 234 655 Q234 703 265.5 737 Q297 771 355 771 Q397 771 422 748.5 Q447 726 447 691 Q447 643 415.5 609 Q384 575 326 575 Q284 575 259 597 Z M294 661 Q294 624 332 624 Q361 624 374 642.5 Q387 661 387 684 Q387 701 377 711.5 Q367 722 349 722 Q320 722 307 703.5 Q294 685 294 661 Z "/>
+        <glyph glyph-name="ae" unicode="&#xe6;" horiz-adv-x="811"
+               d="M74 380 Q81 427 103.5 457 Q126 487 156.5 504.5 Q187 522 221.5 529 Q256 536 287 536 Q321 536 346 529 Q371 522 388 510 Q405 498 415.5 482.5 Q426 467 432 451 Q462 488 510.5 512 Q559 536 622 536 Q697 536 742.5 500 Q788 464 788 395 Q788 350 771.5 317.5 Q755 285 725.5 264.5 Q696 244 655.5 234.5 Q615 225 566 225 Q530 225 491.5 227.5 Q453 230 425 235 Q424 229 424 222 L424 210 Q424 64 558 64 Q604 64 647 76 Q690 88 722 103 L722 27 Q681 7 634.5 -2.5 Q588 -12 540 -12 Q476 -12 434.5 12 Q393 36 370 79 Q343 51 314.5 33.5 Q286 16 258 6 Q230 -4 204 -7.5 Q178 -11 155 -11 Q130 -11 104.5 -3.5 Q79 4 59.5 19.5 Q40 35 27.5 58.5 Q15 82 15 113 Q15 180 45 218.5 Q75 257 124 276.5 Q173 296 234.5 302 Q296 308 360 309 L368 355 Q372 378 369.5 398 Q367 418 357 433 Q347 448 328 456.5 Q309 465 280 465 Q224 465 192.5 442.5 Q161 420 150 367 L74 380 Z M459 369 Q444 340 435 306 Q460 301 494 298 Q528 295 566 295 Q594 295 620 299.5 Q646 304 666 314.5 Q686 325 698 342.5 Q710 360 710 386 Q710 423 685.5 445 Q661 467 610 467 Q575 467 546.5 454.5 Q518 442 496.5 420.5 Q475 399 459 369 Z M307 101 Q330 115 349 136 Q344 158 342.5 185.5 Q341 213 346 243 Q310 243 267 241 Q224 239 187 228.5 Q150 218 125 195 Q100 172 100 130 Q100 98 124.5 80.5 Q149 63 183 63 Q198 63 218.5 66.5 Q239 70 261.5 78.5 Q284 87 307 101 Z "/>
+        <glyph glyph-name="ccedilla" unicode="&#xe7;" horiz-adv-x="480"
+               d="M393 20 Q355 3 312 -4.5 Q269 -12 230 -12 Q179 -12 141 3 Q103 18 77.5 45 Q52 72 39 110 Q26 148 26 194 Q26 251 41.5 311.5 Q57 372 89.5 422 Q122 472 172 504 Q222 536 292 536 Q335 536 365 524 Q395 512 414.5 491.5 Q434 471 443.5 443.5 Q453 416 454 384 L379 368 Q374 413 348.5 436.5 Q323 460 283 460 Q236 460 204 433 Q172 406 152 367.5 Q132 329 123 286 Q114 243 114 210 Q114 180 121 153.5 Q128 127 144 108 Q160 89 187 78 Q214 67 254 67 Q285 67 325 77 Q365 87 393 101 L393 20 Z M105 -162 Q120 -170 138 -174.5 Q156 -179 173 -179 Q195 -179 215 -169.5 Q235 -160 235 -137 Q235 -117 220 -109.5 Q205 -102 190 -102 Q173 -102 154 -110 L139 -64 Q172 -50 202 -50 Q219 -50 235.5 -54.5 Q252 -59 265 -69.5 Q278 -80 285.5 -96 Q293 -112 293 -134 Q293 -182 259 -205.5 Q225 -229 177 -229 Q120 -229 85 -209 L105 -162 Z "/>
+        <glyph glyph-name="egrave" unicode="&#xe8;" horiz-adv-x="494"
+               d="M107 210 Q107 64 241 64 Q287 64 330 76 Q373 88 405 103 L405 27 Q364 7 317.5 -2.5 Q271 -12 223 -12 Q126 -12 76 44 Q26 100 26 203 Q26 265 43.5 324.5 Q61 384 96 431 Q131 478 183.5 507 Q236 536 305 536 Q380 536 425.5 500 Q471 464 471 395 Q471 350 454.5 317.5 Q438 285 408.5 264.5 Q379 244 338.5 234.5 Q298 225 249 225 Q204 225 168 228 Q132 231 108 236 Q107 229 107 222 L107 210 Z M143 368 Q128 339 119 306 Q142 302 175.5 298.5 Q209 295 249 295 Q277 295 303 299.5 Q329 304 349 314.5 Q369 325 381 342.5 Q393 360 393 386 Q393 423 368.5 445 Q344 467 293 467 Q259 467 230.5 454.5 Q202 442 180 420 Q158 398 143 368 Z M279 585 L209 751 L293 751 L341 585 L279 585 Z "/>
+        <glyph glyph-name="eacute" unicode="&#xe9;" horiz-adv-x="494"
+               d="M107 210 Q107 64 241 64 Q287 64 330 76 Q373 88 405 103 L405 27 Q364 7 317.5 -2.5 Q271 -12 223 -12 Q126 -12 76 44 Q26 100 26 203 Q26 265 43.5 324.5 Q61 384 96 431 Q131 478 183.5 507 Q236 536 305 536 Q380 536 425.5 500 Q471 464 471 395 Q471 350 454.5 317.5 Q438 285 408.5 264.5 Q379 244 338.5 234.5 Q298 225 249 225 Q204 225 168 228 Q132 231 108 236 Q107 229 107 222 L107 210 Z M143 368 Q128 339 119 306 Q142 302 175.5 298.5 Q209 295 249 295 Q277 295 303 299.5 Q329 304 349 314.5 Q369 325 381 342.5 Q393 360 393 386 Q393 423 368.5 445 Q344 467 293 467 Q259 467 230.5 454.5 Q202 442 180 420 Q158 398 143 368 Z M275 585 L382 751 L469 751 L341 585 L275 585 Z "/>
+        <glyph glyph-name="ecircumflex" unicode="&#xea;" horiz-adv-x="494"
+               d="M107 210 Q107 64 241 64 Q287 64 330 76 Q373 88 405 103 L405 27 Q364 7 317.5 -2.5 Q271 -12 223 -12 Q126 -12 76 44 Q26 100 26 203 Q26 265 43.5 324.5 Q61 384 96 431 Q131 478 183.5 507 Q236 536 305 536 Q380 536 425.5 500 Q471 464 471 395 Q471 350 454.5 317.5 Q438 285 408.5 264.5 Q379 244 338.5 234.5 Q298 225 249 225 Q204 225 168 228 Q132 231 108 236 Q107 229 107 222 L107 210 Z M143 368 Q128 339 119 306 Q142 302 175.5 298.5 Q209 295 249 295 Q277 295 303 299.5 Q329 304 349 314.5 Q369 325 381 342.5 Q393 360 393 386 Q393 423 368.5 445 Q344 467 293 467 Q259 467 230.5 454.5 Q202 442 180 420 Q158 398 143 368 Z M159 585 L294 751 L376 751 L452 585 L389 585 L328 694 L226 585 L159 585 Z "/>
+        <glyph glyph-name="edieresis" unicode="&#xeb;" horiz-adv-x="494"
+               d="M107 210 Q107 64 241 64 Q287 64 330 76 Q373 88 405 103 L405 27 Q364 7 317.5 -2.5 Q271 -12 223 -12 Q126 -12 76 44 Q26 100 26 203 Q26 265 43.5 324.5 Q61 384 96 431 Q131 478 183.5 507 Q236 536 305 536 Q380 536 425.5 500 Q471 464 471 395 Q471 350 454.5 317.5 Q438 285 408.5 264.5 Q379 244 338.5 234.5 Q298 225 249 225 Q204 225 168 228 Q132 231 108 236 Q107 229 107 222 L107 210 Z M143 368 Q128 339 119 306 Q142 302 175.5 298.5 Q209 295 249 295 Q277 295 303 299.5 Q329 304 349 314.5 Q369 325 381 342.5 Q393 360 393 386 Q393 423 368.5 445 Q344 467 293 467 Q259 467 230.5 454.5 Q202 442 180 420 Q158 398 143 368 Z M389 607 Q370 607 359.5 619.5 Q349 632 349 649 Q349 670 363 687 Q377 704 403 704 Q422 704 432 692 Q442 680 442 663 Q442 643 428.5 625 Q415 607 389 607 Z M216 607 Q197 607 186.5 619.5 Q176 632 176 649 Q176 670 190 687 Q204 704 230 704 Q249 704 259 692 Q269 680 269 663 Q269 642 255.5 624.5 Q242 607 216 607 Z "/>
+        <glyph glyph-name="igrave" unicode="&#xec;" horiz-adv-x="231"
+               d="M16 0 L108 524 L194 524 L102 0 L16 0 Z M132 585 L62 751 L146 751 L194 585 L132 585 Z "/>
+        <glyph glyph-name="iacute" unicode="&#xed;" horiz-adv-x="231"
+               d="M16 0 L108 524 L194 524 L102 0 L16 0 Z M128 585 L235 751 L322 751 L194 585 L128 585 Z "/>
+        <glyph glyph-name="icircumflex" unicode="&#xee;" horiz-adv-x="231"
+               d="M16 0 L108 524 L194 524 L102 0 L16 0 Z M12 585 L147 751 L229 751 L305 585 L242 585 L181 694 L79 585 L12 585 Z "/>
+        <glyph glyph-name="idieresis" unicode="&#xef;" horiz-adv-x="231"
+               d="M16 0 L108 524 L194 524 L102 0 L16 0 Z M254 607 Q235 607 224.5 619.5 Q214 632 214 649 Q214 670 228 687 Q242 704 268 704 Q287 704 297 692 Q307 680 307 663 Q307 643 293.5 625 Q280 607 254 607 Z M81 607 Q62 607 51.5 619.5 Q41 632 41 649 Q41 670 55 687 Q69 704 95 704 Q114 704 124 692 Q134 680 134 663 Q134 642 120.5 624.5 Q107 607 81 607 Z "/>
+        <glyph glyph-name="eth" unicode="&#xf0;" horiz-adv-x="545"
+               d="M173 541 L183 607 L283 628 Q260 646 235.5 661 Q211 676 184 690 L258 731 Q289 715 319 694.5 Q349 674 376 648 L513 677 L503 611 L424 594 Q461 546 483 489 Q505 432 505 366 Q505 295 487 227 Q469 159 433 106 Q397 53 342.5 20.5 Q288 -12 214 -12 Q168 -12 133 3.5 Q98 19 74 46 Q50 73 38 109 Q26 145 26 185 Q26 247 44 306 Q62 365 96 411 Q130 457 179.5 484.5 Q229 512 292 512 Q319 512 346 505.5 Q373 499 396 484 Q375 536 339 576 L173 541 Z M420 371 Q420 379 419 387 Q402 405 384.5 415 Q367 425 351 430 Q335 435 321.5 436.5 Q308 438 299 438 Q254 438 218.5 416.5 Q183 395 158.5 360.5 Q134 326 121.5 283.5 Q109 241 109 198 Q109 173 115.5 148.5 Q122 124 136 105 Q150 86 171.5 74.5 Q193 63 224 63 Q277 63 314 92.5 Q351 122 374.5 166 Q398 210 409 261 Q420 312 420 356 L420 371 Z "/>
+        <glyph glyph-name="ntilde" unicode="&#xf1;" horiz-adv-x="557"
+               d="M16 0 L108 524 L193 524 L178 440 Q192 457 210.5 474 Q229 491 252.5 505 Q276 519 305 527.5 Q334 536 369 536 Q409 536 436.5 521.5 Q464 507 479.5 482.5 Q495 458 499.5 425 Q504 392 498 354 L436 0 L349 0 L406 319 Q411 345 411 369 Q411 393 403 411 Q395 429 375.5 440 Q356 451 321 451 Q274 451 232 421.5 Q190 392 164 346 L103 0 L16 0 Z M177 599 Q191 647 217 679 Q243 711 283 711 Q303 711 318.5 703.5 Q334 696 347 687 L371 671 Q381 664 390.5 660 Q400 656 411 656 Q429 656 441 670.5 Q453 685 464 710 L510 700 Q496 652 470 620 Q444 588 403 588 Q383 588 368.5 595.5 Q354 603 341 612 L317 628 Q307 635 297 639 Q287 643 277 643 Q259 643 246.5 629 Q234 615 223 589 L177 599 Z "/>
+        <glyph glyph-name="ograve" unicode="&#xf2;" horiz-adv-x="552"
+               d="M135 105 Q149 86 172 74.5 Q195 63 229 63 Q276 63 312 88 Q348 113 372 151.5 Q396 190 408 236 Q420 282 420 325 Q420 351 414.5 375 Q409 399 395.5 418.5 Q382 438 359.5 449.5 Q337 461 302 461 Q255 461 219 436 Q183 411 159 372.5 Q135 334 123 288 Q111 242 111 199 Q111 174 116.5 149.5 Q122 125 135 105 Z M131 4 Q94 21 71 50 Q48 79 37 117.5 Q26 156 26 199 Q26 262 45 323 Q64 384 101 431 Q138 478 191 507 Q244 536 312 536 Q363 536 400 519.5 Q437 503 460.5 474 Q484 445 495 407 Q506 369 506 325 Q506 262 486.5 201 Q467 140 430.5 93 Q394 46 340.5 17 Q287 -12 219 -12 Q168 -12 131 4 Z M292 585 L222 751 L306 751 L354 585 L292 585 Z "/>
+        <glyph glyph-name="oacute" unicode="&#xf3;" horiz-adv-x="552"
+               d="M135 105 Q149 86 172 74.5 Q195 63 229 63 Q276 63 312 88 Q348 113 372 151.5 Q396 190 408 236 Q420 282 420 325 Q420 351 414.5 375 Q409 399 395.5 418.5 Q382 438 359.5 449.5 Q337 461 302 461 Q255 461 219 436 Q183 411 159 372.5 Q135 334 123 288 Q111 242 111 199 Q111 174 116.5 149.5 Q122 125 135 105 Z M131 4 Q94 21 71 50 Q48 79 37 117.5 Q26 156 26 199 Q26 262 45 323 Q64 384 101 431 Q138 478 191 507 Q244 536 312 536 Q363 536 400 519.5 Q437 503 460.5 474 Q484 445 495 407 Q506 369 506 325 Q506 262 486.5 201 Q467 140 430.5 93 Q394 46 340.5 17 Q287 -12 219 -12 Q168 -12 131 4 Z M288 585 L395 751 L482 751 L354 585 L288 585 Z "/>
+        <glyph glyph-name="ocircumflex" unicode="&#xf4;" horiz-adv-x="552"
+               d="M135 105 Q149 86 172 74.5 Q195 63 229 63 Q276 63 312 88 Q348 113 372 151.5 Q396 190 408 236 Q420 282 420 325 Q420 351 414.5 375 Q409 399 395.5 418.5 Q382 438 359.5 449.5 Q337 461 302 461 Q255 461 219 436 Q183 411 159 372.5 Q135 334 123 288 Q111 242 111 199 Q111 174 116.5 149.5 Q122 125 135 105 Z M131 4 Q94 21 71 50 Q48 79 37 117.5 Q26 156 26 199 Q26 262 45 323 Q64 384 101 431 Q138 478 191 507 Q244 536 312 536 Q363 536 400 519.5 Q437 503 460.5 474 Q484 445 495 407 Q506 369 506 325 Q506 262 486.5 201 Q467 140 430.5 93 Q394 46 340.5 17 Q287 -12 219 -12 Q168 -12 131 4 Z M173 585 L308 751 L390 751 L466 585 L403 585 L342 694 L240 585 L173 585 Z "/>
+        <glyph glyph-name="otilde" unicode="&#xf5;" horiz-adv-x="552"
+               d="M135 105 Q149 86 172 74.5 Q195 63 229 63 Q276 63 312 88 Q348 113 372 151.5 Q396 190 408 236 Q420 282 420 325 Q420 351 414.5 375 Q409 399 395.5 418.5 Q382 438 359.5 449.5 Q337 461 302 461 Q255 461 219 436 Q183 411 159 372.5 Q135 334 123 288 Q111 242 111 199 Q111 174 116.5 149.5 Q122 125 135 105 Z M131 4 Q94 21 71 50 Q48 79 37 117.5 Q26 156 26 199 Q26 262 45 323 Q64 384 101 431 Q138 478 191 507 Q244 536 312 536 Q363 536 400 519.5 Q437 503 460.5 474 Q484 445 495 407 Q506 369 506 325 Q506 262 486.5 201 Q467 140 430.5 93 Q394 46 340.5 17 Q287 -12 219 -12 Q168 -12 131 4 Z M167 599 Q181 647 207 679 Q233 711 273 711 Q293 711 308.5 703.5 Q324 696 337 687 L361 671 Q371 664 380.5 660 Q390 656 401 656 Q419 656 431 670.5 Q443 685 454 710 L500 700 Q486 652 460 620 Q434 588 393 588 Q373 588 358.5 595.5 Q344 603 331 612 L307 628 Q297 635 287 639 Q277 643 267 643 Q249 643 236.5 629 Q224 615 213 589 L167 599 Z "/>
+        <glyph glyph-name="odieresis" unicode="&#xf6;" horiz-adv-x="552"
+               d="M135 105 Q149 86 172 74.5 Q195 63 229 63 Q276 63 312 88 Q348 113 372 151.5 Q396 190 408 236 Q420 282 420 325 Q420 351 414.5 375 Q409 399 395.5 418.5 Q382 438 359.5 449.5 Q337 461 302 461 Q255 461 219 436 Q183 411 159 372.5 Q135 334 123 288 Q111 242 111 199 Q111 174 116.5 149.5 Q122 125 135 105 Z M131 4 Q94 21 71 50 Q48 79 37 117.5 Q26 156 26 199 Q26 262 45 323 Q64 384 101 431 Q138 478 191 507 Q244 536 312 536 Q363 536 400 519.5 Q437 503 460.5 474 Q484 445 495 407 Q506 369 506 325 Q506 262 486.5 201 Q467 140 430.5 93 Q394 46 340.5 17 Q287 -12 219 -12 Q168 -12 131 4 Z M415 607 Q396 607 385.5 619.5 Q375 632 375 649 Q375 670 389 687 Q403 704 429 704 Q448 704 458 692 Q468 680 468 663 Q468 643 454.5 625 Q441 607 415 607 Z M242 607 Q223 607 212.5 619.5 Q202 632 202 649 Q202 670 216 687 Q230 704 256 704 Q275 704 285 692 Q295 680 295 663 Q295 642 281.5 624.5 Q268 607 242 607 Z "/>
+        <glyph glyph-name="divide" unicode="&#xf7;" horiz-adv-x="535"
+               d="M268 97 Q244 97 229 112 Q214 127 214 151 Q214 173 228 188.5 Q242 204 268 204 Q293 204 307 189 Q321 174 321 151 Q321 126 306.5 111.5 Q292 97 268 97 Z M28 304 L28 383 L507 383 L507 304 L28 304 Z M229 498 Q214 513 214 537 Q214 559 228 574.5 Q242 590 268 590 Q293 590 307 576 Q321 562 321 537 Q321 513 306.5 498.5 Q292 484 268 484 Q244 484 229 498 Z "/>
+        <glyph glyph-name="oslash" unicode="&#xf8;" horiz-adv-x="552"
+               d="M158 82 Q172 73 189 68 Q206 63 229 63 Q276 63 312 88 Q348 113 372 151.5 Q396 190 408 236 Q420 282 420 325 Q420 360 410 389 L158 82 Z M372 441 Q346 461 302 461 Q255 461 219 436 Q183 411 159 372.5 Q135 334 123 288 Q111 242 111 199 Q111 182 113 166 Q115 150 120 135 L372 441 Z M-10 -23 L61 63 Q43 91 34.5 125.5 Q26 160 26 199 Q26 262 45 323 Q64 384 101 431 Q138 478 191 507 Q244 536 312 536 Q347 536 375 528 Q403 520 425 506 L457 544 L538 544 L470 461 Q489 433 497.5 398.5 Q506 364 506 325 Q506 262 486.5 201 Q467 140 430.5 93 Q394 46 340.5 17 Q287 -12 219 -12 Q184 -12 156 -4 Q128 4 106 18 L72 -23 L-10 -23 Z "/>
+        <glyph glyph-name="ugrave" unicode="&#xf9;" horiz-adv-x="539"
+               d="M125 196 Q121 172 121.5 150 Q122 128 130.5 111 Q139 94 157 83.5 Q175 73 206 73 Q256 73 292.5 101.5 Q329 130 357 171 L420 524 L506 524 L413 0 L330 0 L344 77 Q331 62 314 46 Q297 30 275.5 17 Q254 4 226 -4 Q198 -12 162 -12 Q121 -12 93.5 3 Q66 18 51 43 Q36 68 32.5 101 Q29 134 35 170 L97 524 L184 524 L125 196 Z M288 585 L218 751 L302 751 L350 585 L288 585 Z "/>
+        <glyph glyph-name="uacute" unicode="&#xfa;" horiz-adv-x="539"
+               d="M125 196 Q121 172 121.5 150 Q122 128 130.5 111 Q139 94 157 83.5 Q175 73 206 73 Q256 73 292.5 101.5 Q329 130 357 171 L420 524 L506 524 L413 0 L330 0 L344 77 Q331 62 314 46 Q297 30 275.5 17 Q254 4 226 -4 Q198 -12 162 -12 Q121 -12 93.5 3 Q66 18 51 43 Q36 68 32.5 101 Q29 134 35 170 L97 524 L184 524 L125 196 Z M284 585 L391 751 L478 751 L350 585 L284 585 Z "/>
+        <glyph glyph-name="ucircumflex" unicode="&#xfb;" horiz-adv-x="539"
+               d="M125 196 Q121 172 121.5 150 Q122 128 130.5 111 Q139 94 157 83.5 Q175 73 206 73 Q256 73 292.5 101.5 Q329 130 357 171 L420 524 L506 524 L413 0 L330 0 L344 77 Q331 62 314 46 Q297 30 275.5 17 Q254 4 226 -4 Q198 -12 162 -12 Q121 -12 93.5 3 Q66 18 51 43 Q36 68 32.5 101 Q29 134 35 170 L97 524 L184 524 L125 196 Z M169 585 L304 751 L386 751 L462 585 L399 585 L338 694 L236 585 L169 585 Z "/>
+        <glyph glyph-name="udieresis" unicode="&#xfc;" horiz-adv-x="539"
+               d="M125 196 Q121 172 121.5 150 Q122 128 130.5 111 Q139 94 157 83.5 Q175 73 206 73 Q256 73 292.5 101.5 Q329 130 357 171 L420 524 L506 524 L413 0 L330 0 L344 77 Q331 62 314 46 Q297 30 275.5 17 Q254 4 226 -4 Q198 -12 162 -12 Q121 -12 93.5 3 Q66 18 51 43 Q36 68 32.5 101 Q29 134 35 170 L97 524 L184 524 L125 196 Z M411 607 Q392 607 381.5 619.5 Q371 632 371 649 Q371 670 385 687 Q399 704 425 704 Q444 704 454 692 Q464 680 464 663 Q464 643 450.5 625 Q437 607 411 607 Z M238 607 Q219 607 208.5 619.5 Q198 632 198 649 Q198 670 212 687 Q226 704 252 704 Q271 704 281 692 Q291 680 291 663 Q291 642 277.5 624.5 Q264 607 238 607 Z "/>
+        <glyph glyph-name="yacute" unicode="&#xfd;" horiz-adv-x="509"
+               d="M-39 -116 Q-15 -128 16 -128 Q66 -128 98.5 -99 Q131 -70 162 -7 L54 524 L144 524 L223 95 L443 524 L529 524 L227 -52 Q186 -132 137.5 -168 Q89 -204 18 -204 Q-2 -204 -22 -199.5 Q-42 -195 -59 -187 L-39 -116 Z M275 585 L382 751 L469 751 L341 585 L275 585 Z "/>
+        <glyph glyph-name="thorn" unicode="&#xfe;" horiz-adv-x="557"
+               d="M122 97 Q139 83 168.5 73.5 Q198 64 223 64 Q272 64 309.5 83.5 Q347 103 372 137.5 Q397 172 410 219.5 Q423 267 423 322 Q423 349 416 373.5 Q409 398 393.5 417.5 Q378 437 353.5 448.5 Q329 460 293 460 Q265 460 236.5 454.5 Q208 449 185 438 L122 97 Z M-14 -192 L148 725 L234 725 L197 521 Q250 536 303 536 Q354 536 393 520.5 Q432 505 458.5 477.5 Q485 450 498 412 Q511 374 511 329 Q511 238 486.5 173.5 Q462 109 422 67.5 Q382 26 331.5 7 Q281 -12 229 -12 Q197 -12 163 -3 Q129 6 110 20 L72 -192 L-14 -192 Z "/>
+        <glyph glyph-name="ydieresis" unicode="&#xff;" horiz-adv-x="509"
+               d="M-39 -116 Q-15 -128 16 -128 Q66 -128 98.5 -99 Q131 -70 162 -7 L54 524 L144 524 L223 95 L443 524 L529 524 L227 -52 Q186 -132 137.5 -168 Q89 -204 18 -204 Q-2 -204 -22 -199.5 Q-42 -195 -59 -187 L-39 -116 Z M401 607 Q382 607 371.5 619.5 Q361 632 361 649 Q361 670 375 687 Q389 704 415 704 Q434 704 444 692 Q454 680 454 663 Q454 643 440.5 625 Q427 607 401 607 Z M228 607 Q209 607 198.5 619.5 Q188 632 188 649 Q188 670 202 687 Q216 704 242 704 Q261 704 271 692 Q281 680 281 663 Q281 642 267.5 624.5 Q254 607 228 607 Z "/>
+        <glyph glyph-name="Lslash" unicode="&#x141;" horiz-adv-x="503"
+               d="M26 0 L70 254 L-12 211 L2 294 L85 338 L145 678 L236 678 L185 391 L354 480 L341 396 L170 306 L131 88 L435 88 L420 0 L26 0 Z "/>
+        <glyph glyph-name="dotlessi" unicode="&#x131;" horiz-adv-x="231" d="M16 0 L108 524 L194 524 L102 0 L16 0 Z "/>
+        <glyph glyph-name="lslash" unicode="&#x142;" horiz-adv-x="273"
+               d="M214 6 Q172 -12 124 -12 Q71 -12 47 20.5 Q23 53 35 124 L73 337 L10 304 L23 385 L87 419 L143 731 L229 731 L182 469 L276 519 L263 439 L167 388 L123 140 Q117 105 124.5 84.5 Q132 64 162 64 Q187 64 214 76 L214 6 Z "/>
+        <glyph glyph-name="caron" unicode="&#x2c7;" horiz-adv-x="500"
+               d="M179 585 L103 751 L165 751 L226 642 L329 751 L397 751 L262 585 L179 585 Z "/>
+        <glyph glyph-name="breve" unicode="&#x2d8;" horiz-adv-x="500"
+               d="M162 734 Q163 719 167 703.5 Q171 688 180 675 Q189 662 203.5 653.5 Q218 645 240 645 Q283 645 304 669.5 Q325 694 339 734 L391 734 Q385 706 373 680 Q361 654 342 634 Q323 614 295.5 601.5 Q268 589 230 589 Q197 589 173.5 601.5 Q150 614 135.5 634.5 Q121 655 115 681 Q109 707 110 734 L162 734 Z "/>
+        <glyph glyph-name="ring" unicode="&#x2da;" horiz-adv-x="500"
+               d="M168 597 Q143 620 143 655 Q143 703 174.5 737 Q206 771 264 771 Q306 771 331 748.5 Q356 726 356 691 Q356 643 324.5 609 Q293 575 235 575 Q193 575 168 597 Z M203 661 Q203 624 241 624 Q270 624 283 642.5 Q296 661 296 684 Q296 701 286 711.5 Q276 722 258 722 Q229 722 216 703.5 Q203 685 203 661 Z "/>
+        <glyph glyph-name="hungarumlaut" unicode="&#x2dd;" horiz-adv-x="500"
+               d="M229 584 L335 751 L424 751 L295 584 L229 584 Z M75 584 L181 751 L271 751 L142 584 L75 584 Z "/>
+        <glyph glyph-name="dotaccent" unicode="&#x2d9;" horiz-adv-x="500"
+               d="M242 609 Q221 609 210 622.5 Q199 636 199 654 Q199 677 214 695 Q229 713 258 713 Q278 713 289 699.5 Q300 686 300 668 Q300 646 285.5 627.5 Q271 609 242 609 Z "/>
+        <glyph glyph-name="ogonek" unicode="&#x2db;" horiz-adv-x="500"
+               d="M338 -211 Q322 -218 302 -223 Q282 -228 259 -228 Q217 -228 188.5 -208.5 Q160 -189 160 -151 Q160 -128 168.5 -106.5 Q177 -85 192 -66 Q207 -47 226.5 -30.5 Q246 -14 268 0 L337 0 Q319 -10 299.5 -23.5 Q280 -37 263.5 -53.5 Q247 -70 236.5 -89 Q226 -108 226 -129 Q226 -151 239.5 -162 Q253 -173 277 -173 Q303 -173 338 -157 L338 -211 Z "/>
+        <glyph glyph-name="&amp;#xf11d;" unicode="&#xf11d;" horiz-adv-x="807"
+               d="M341 349 L422 349 Q479 349 499 371 Q519 393 519 428 Q519 463 495.5 483.5 Q472 504 421 504 L341 504 L341 349 Z M273 148 L273 565 L430 565 Q509 565 548 529.5 Q587 494 587 432 Q587 393 574.5 366 Q562 339 541 322 Q520 305 492 297 Q464 289 433 289 L341 289 L341 148 L273 148 Z M182 133 Q223 90 279.5 65 Q336 40 403 40 Q470 40 527 65 Q584 90 625 133 Q666 176 689.5 233.5 Q713 291 713 357 Q713 423 689.5 481 Q666 539 625 581.5 Q584 624 527 649 Q470 674 403 674 Q336 674 279.5 649 Q223 624 182 581.5 Q141 539 117.5 481 Q94 423 94 357 Q94 291 117.5 233.5 Q141 176 182 133 Z M257 12 Q189 41 139.5 91.5 Q90 142 61.5 210.5 Q33 279 33 357 Q33 435 61.5 503.5 Q90 572 139.5 622.5 Q189 673 257 702 Q325 731 403 731 Q482 731 549.5 702 Q617 673 667 622.5 Q717 572 745.5 503.5 Q774 435 774 357 Q774 279 745.5 210.5 Q717 142 667 91.5 Q617 41 549.5 12 Q482 -17 403 -17 Q325 -17 257 12 Z "/>
+        <glyph glyph-name="&amp;#xf12e;" unicode="&#xf12e;" horiz-adv-x="807"
+               d="M341 349 L422 349 Q479 349 499 371 Q519 393 519 428 Q519 463 495.5 483.5 Q472 504 421 504 L341 504 L341 349 Z M273 148 L273 565 L430 565 Q509 565 548 529.5 Q587 494 587 432 Q587 393 574.5 366 Q562 339 541 322 Q520 305 492 297 Q464 289 433 289 L341 289 L341 148 L273 148 Z M182 133 Q223 90 279.5 65 Q336 40 403 40 Q470 40 527 65 Q584 90 625 133 Q666 176 689.5 233.5 Q713 291 713 357 Q713 423 689.5 481 Q666 539 625 581.5 Q584 624 527 649 Q470 674 403 674 Q336 674 279.5 649 Q223 624 182 581.5 Q141 539 117.5 481 Q94 423 94 357 Q94 291 117.5 233.5 Q141 176 182 133 Z M257 12 Q189 41 139.5 91.5 Q90 142 61.5 210.5 Q33 279 33 357 Q33 435 61.5 503.5 Q90 572 139.5 622.5 Q189 673 257 702 Q325 731 403 731 Q482 731 549.5 702 Q617 673 667 622.5 Q717 572 745.5 503.5 Q774 435 774 357 Q774 279 745.5 210.5 Q717 142 667 91.5 Q617 41 549.5 12 Q482 -17 403 -17 Q325 -17 257 12 Z "/>
+        <glyph glyph-name="fraction" unicode="&#x2044;" horiz-adv-x="190"
+               d="M-180 -20 L319 717 L383 717 L-114 -20 L-180 -20 Z "/>
+        <glyph glyph-name="minus" unicode="&#x2212;" horiz-adv-x="535"
+               d="M28 304 L28 384 L507 384 L507 304 L28 304 Z "/>
+        <glyph glyph-name="notequal" unicode="&#x2260;" horiz-adv-x="535"
+               d="M125 40 L180 180 L28 180 L28 259 L209 259 L276 429 L28 429 L28 507 L305 507 L362 652 L427 652 L371 507 L507 507 L507 429 L342 429 L274 259 L507 259 L507 180 L245 180 L190 40 L125 40 Z "/>
+        <glyph glyph-name="approxequal" unicode="&#x2248;" horiz-adv-x="535"
+               d="M33 484 Q56 510 87.5 526 Q119 542 154 542 Q184 542 212.5 531 Q241 520 269 507.5 Q297 495 325 484 Q353 473 380 473 Q422 473 449.5 492 Q477 511 503 540 L503 453 Q480 428 448.5 412 Q417 396 381 396 Q351 396 322.5 406.5 Q294 417 266 430 Q238 443 210 453.5 Q182 464 155 464 Q113 464 85.5 445 Q58 426 33 397 L33 484 Z M33 235 Q56 260 87.5 276 Q119 292 154 292 Q184 292 212.5 281.5 Q241 271 269 258.5 Q297 246 325 235.5 Q353 225 380 225 Q422 225 449.5 244 Q477 263 503 291 L503 204 Q480 179 448.5 163 Q417 147 381 147 Q351 147 322.5 157.5 Q294 168 266 180.5 Q238 193 210 203.5 Q182 214 155 214 Q113 214 85.5 195 Q58 176 33 148 L33 235 Z "/>
+        <glyph glyph-name="lessequal" unicode="&#x2264;" horiz-adv-x="535"
+               d="M28 4 L28 82 L507 82 L507 4 L28 4 Z M28 383 L507 566 L507 483 L118 343 L507 203 L507 121 Q467 137 402 161.5 Q337 186 267 212 Q197 238 132.5 262.5 Q68 287 28 304 L28 383 Z "/>
+        <glyph glyph-name="greaterequal" unicode="&#x2265;" horiz-adv-x="535"
+               d="M27 4 L27 82 L506 82 L506 4 L27 4 Z M27 120 L27 202 L416 343 L27 483 L27 565 L506 382 L506 303 L27 120 Z "/>
+        <glyph glyph-name="infinity" unicode="&#x221e;" horiz-adv-x="727"
+               d="M129 234 Q140 219 157 209.5 Q174 200 196 200 Q219 200 237.5 208.5 Q256 217 271.5 231.5 Q287 246 299.5 265 Q312 284 324 305 Q312 326 299 345 Q286 364 271 378.5 Q256 393 237.5 401.5 Q219 410 196 410 Q174 410 157.5 401 Q141 392 130 377 Q119 362 113.5 343.5 Q108 325 108 306 Q108 287 113.5 268 Q119 249 129 234 Z M432 343 Q421 324 410 304 Q421 284 432.5 265.5 Q444 247 457.5 232.5 Q471 218 487.5 209 Q504 200 525 200 Q573 200 596.5 231.5 Q620 263 620 306 Q620 349 596.5 379.5 Q573 410 525 410 Q504 410 487.5 401 Q471 392 457.5 377 Q444 362 432 343 Z M400 198 Q383 222 368 250 Q353 224 335 200.5 Q317 177 296 159.5 Q275 142 249.5 131.5 Q224 121 193 121 Q154 121 124.5 136 Q95 151 76 176.5 Q57 202 47.5 236 Q38 270 38 307 Q38 343 48 376 Q58 409 77.5 434.5 Q97 460 126 475 Q155 490 193 490 Q224 490 249 479.5 Q274 469 295 451.5 Q316 434 333.5 411 Q351 388 366 362 Q380 388 395.5 411 Q411 434 430.5 451.5 Q450 469 473.5 479.5 Q497 490 528 490 Q568 490 598 476 Q628 462 648.5 437 Q669 412 679 378.5 Q689 345 689 307 Q689 266 678 231.5 Q667 197 647 172.5 Q627 148 598 134.5 Q569 121 533 121 Q505 121 481.5 131 Q458 141 438 158 Q418 175 400 198 Z "/>
+        <glyph glyph-name="lozenge" unicode="&#x25ca;" horiz-adv-x="535"
+               d="M267 111 L461 323 L267 533 L74 323 L267 111 Z M267 4 L-14 323 L267 640 L549 323 L267 4 Z "/>
+        <glyph glyph-name="Delta" unicode="&#x2206;" horiz-adv-x="570"
+               d="M59 76 L426 76 L352 480 Q349 497 346.5 515 Q344 533 342 550 Q340 567 338.5 581 Q337 595 337 604 L333 604 Q330 595 324 581.5 Q318 568 310.5 551 Q303 534 294 515.5 Q285 497 276 479 L59 76 Z M-67 0 L285 678 L409 678 L529 0 L-67 0 Z "/>
+        <glyph glyph-name="Omega" unicode="&#x2126;" horiz-adv-x="718"
+               d="M-16 0 L-4 75 L194 75 L199 100 Q126 129 89.5 188 Q53 247 53 333 Q53 424 83 492 Q113 560 162.5 605 Q212 650 274.5 672 Q337 694 401 694 Q457 694 506.5 676 Q556 658 593 624.5 Q630 591 651 544 Q672 497 672 439 Q672 385 657 331.5 Q642 278 611.5 231.5 Q581 185 534 150 Q487 115 423 100 L418 75 L617 75 L605 0 L351 0 L375 150 Q425 161 463 189 Q501 217 526 254.5 Q551 292 563.5 334 Q576 376 576 415 Q576 452 567 487.5 Q558 523 536.5 551.5 Q515 580 479.5 597.5 Q444 615 391 615 Q332 615 286.5 592 Q241 569 210 530.5 Q179 492 163 441 Q147 390 147 334 Q147 265 174 218.5 Q201 172 263 150 L239 0 L-16 0 Z "/>
+        <glyph glyph-name="partialdiff" unicode="&#x2202;" horiz-adv-x="517"
+               d="M117 95 Q132 72 156 57.5 Q180 43 215 43 Q267 43 302.5 70.5 Q338 98 360.5 139.5 Q383 181 393 230.5 Q403 280 403 323 Q403 349 396 374 Q389 399 374 419 Q359 439 335.5 451.5 Q312 464 279 464 Q231 464 195.5 439.5 Q160 415 136.5 377 Q113 339 101.5 292.5 Q90 246 90 202 Q90 174 96.5 146 Q103 118 117 95 Z M159 732 Q179 741 205.5 745.5 Q232 750 260 750 Q324 750 370 723 Q416 696 445 650.5 Q474 605 488 545.5 Q502 486 502 421 Q502 372 496.5 320.5 Q491 269 477.5 220 Q464 171 442 128 Q420 85 387 52.5 Q354 20 309 1 Q264 -18 206 -18 Q158 -18 121 -0.5 Q84 17 59.5 46.5 Q35 76 22 114.5 Q9 153 9 196 Q9 259 26.5 318 Q44 377 78 423 Q112 469 162 497 Q212 525 277 525 Q328 525 368 501.5 Q408 478 423 440 Q423 488 414 531.5 Q405 575 384 609 Q363 643 329.5 663 Q296 683 248 683 Q228 683 204.5 679.5 Q181 676 160 665 L159 732 Z "/>
+        <glyph glyph-name="integral" unicode="&#x222b;" horiz-adv-x="401"
+               d="M-118 -114 Q-107 -126 -88.5 -135.5 Q-70 -145 -43 -145 Q20 -145 54.5 -105 Q89 -65 99 -5 L196 540 Q214 645 271.5 698 Q329 751 423 751 Q461 751 488 741 Q515 731 536 713 L504 649 Q493 661 474 671 Q455 681 428 681 Q365 681 330 640.5 Q295 600 284 539 L187 -6 Q169 -112 110 -163.5 Q51 -215 -43 -215 Q-77 -215 -102 -206 Q-127 -197 -150 -178 L-118 -114 Z "/>
+        <glyph glyph-name="radical" unicode="&#x221a;" horiz-adv-x="535"
+               d="M245 0 L89 455 L-16 455 L-16 533 L151 533 L284 123 L480 750 L556 750 L320 0 L245 0 Z "/>
+        <glyph glyph-name="summation" unicode="&#x2211;" horiz-adv-x="516"
+               d="M-66 -136 L-55 -56 L285 293 L82 625 L95 706 L575 706 L562 626 L194 626 L402 286 L72 -56 L442 -56 L430 -136 L-66 -136 Z "/>
+        <glyph glyph-name="product" unicode="&#x220f;" horiz-adv-x="642"
+               d="M15 -136 L149 625 L79 625 L92 706 L688 706 L674 625 L604 625 L469 -136 L377 -136 L512 625 L241 625 L107 -136 L15 -136 Z "/>
+        <glyph glyph-name="pi" unicode="&#x3c0;" horiz-adv-x="542"
+               d="M-7 0 Q42 129 71 240 Q100 351 120 456 L49 456 L60 524 L558 524 L547 456 L476 456 L395 0 L310 0 L391 456 L206 456 Q186 346 157 235 Q128 124 81 0 L-7 0 Z "/>
+        <glyph glyph-name="fi" unicode="&#xfb01;" horiz-adv-x="541"
+               d="M1 -192 L115 452 L48 452 L60 524 L126 524 L138 586 Q153 665 207 698 Q261 731 342 731 Q381 731 418.5 726.5 Q456 722 492 711 L469 638 Q441 645 412.5 651.5 Q384 658 346 658 Q286 658 258.5 639.5 Q231 621 222 574 L212 524 L507 524 L415 0 L328 0 L409 452 L201 452 L87 -192 L1 -192 Z "/>
+        <glyph glyph-name="fl" unicode="&#xfb02;" horiz-adv-x="577"
+               d="M1 -192 L115 452 L48 452 L60 524 L126 524 L138 586 Q153 665 204.5 698 Q256 731 331 731 Q386 731 444 713 L532 725 L428 140 Q422 105 429 84.5 Q436 64 466 64 Q491 64 519 76 L519 6 Q477 -12 429 -12 Q375 -12 351 20.5 Q327 53 340 124 L432 640 Q409 648 385.5 653 Q362 658 333 658 Q283 658 256.5 640 Q230 622 222 577 L212 524 L353 524 L341 452 L201 452 L87 -192 L1 -192 Z "/>
+        <glyph glyph-name="f_f" unicode="&#xfb00;" horiz-adv-x="663"
+               d="M1 -192 L115 452 L48 452 L60 524 L126 524 L138 586 Q153 665 203 698 Q253 731 325 731 Q371 731 413 717 L392 646 Q376 651 358.5 654.5 Q341 658 327 658 Q281 658 255.5 640 Q230 622 222 577 L212 524 L439 524 L451 586 Q466 665 516 698 Q566 731 638 731 Q663 731 687.5 726.5 Q712 722 734 714 L711 643 Q694 650 675 654 Q656 658 640 658 Q594 658 568.5 640 Q543 622 535 577 L525 524 L677 524 L665 452 L514 452 L400 -192 L314 -192 L427 452 L201 452 L87 -192 L1 -192 Z "/>
+        <glyph glyph-name="f_f_i" unicode="&#xfb03;" horiz-adv-x="854"
+               d="M1 -192 L115 452 L48 452 L60 524 L126 524 L138 586 Q153 665 203 698 Q253 731 325 731 Q371 731 413 717 L392 646 Q376 651 358.5 654.5 Q341 658 327 658 Q281 658 255.5 640 Q230 622 222 577 L212 524 L439 524 L451 586 Q466 665 520 698 Q574 731 655 731 Q694 731 731.5 726.5 Q769 722 805 711 L782 638 Q754 645 725.5 651.5 Q697 658 659 658 Q629 658 607.5 653.5 Q586 649 571 639 Q556 629 547.5 613 Q539 597 535 574 L525 524 L820 524 L727 0 L641 0 L722 452 L514 452 L400 -192 L314 -192 L427 452 L201 452 L87 -192 L1 -192 Z "/>
+        <glyph glyph-name="f_f_l" unicode="&#xfb04;" horiz-adv-x="890"
+               d="M1 -192 L115 452 L48 452 L60 524 L126 524 L138 586 Q153 665 203 698 Q253 731 325 731 Q371 731 413 717 L392 646 Q376 651 358.5 654.5 Q341 658 327 658 Q281 658 255.5 640 Q230 622 222 577 L212 524 L439 524 L451 586 Q466 665 517.5 698 Q569 731 644 731 Q699 731 757 713 L845 725 L741 140 Q735 105 742 84.5 Q749 64 779 64 Q804 64 832 76 L832 6 Q790 -12 742 -12 Q688 -12 664 20.5 Q640 53 653 124 L745 640 Q722 648 698.5 653 Q675 658 646 658 Q596 658 569.5 640 Q543 622 535 577 L525 524 L666 524 L654 452 L514 452 L400 -192 L314 -192 L427 452 L201 452 L87 -192 L1 -192 Z "/>
+        <glyph glyph-name="litre" unicode="&#x2113;" horiz-adv-x="480"
+               d="M41 211 Q61 222 81 232.5 Q101 243 119 255 Q117 278 116 300.5 Q115 323 115 349 Q115 444 127 519 Q139 594 162 646 Q185 698 219 725.5 Q253 753 296 753 Q350 753 380.5 713 Q411 673 411 601 Q411 489 352 394.5 Q293 300 194 230 Q205 143 235 98.5 Q265 54 319 54 Q353 54 377.5 68.5 Q402 83 421 108 L445 51 Q419 20 386 2.5 Q353 -15 309 -15 Q235 -15 191.5 37.5 Q148 90 131 184 Q116 175 100 167 Q84 159 67 151 L41 211 Z M186 336 Q186 324 187 310 Q221 337 249.5 368.5 Q278 400 299 436 Q320 472 331.5 512 Q343 552 343 596 Q343 634 331 661 Q319 688 289 688 Q266 688 247 665 Q228 642 214.5 599.5 Q201 557 193.5 497 Q186 437 186 363 L186 336 Z "/>
+        <glyph glyph-name="estimated" unicode="&#x212e;" horiz-adv-x="866"
+               d="M152 402 L738 402 L738 516 Q696 586 619 626 Q542 666 445 666 Q348 666 271 627 Q194 588 152 519 L152 402 Z M152 193 Q195 123 272 83.5 Q349 44 445 44 Q530 44 597 73 Q664 102 712 155 L787 155 Q731 74 643.5 28.5 Q556 -17 445 -17 Q361 -17 288 9.5 Q215 36 161 85 Q107 134 75.5 202.5 Q44 271 44 355 Q44 439 75.5 507.5 Q107 576 161 624.5 Q215 673 288 699.5 Q361 726 445 726 Q529 726 602.5 700 Q676 674 730 624 Q784 574 815 502.5 Q846 431 846 339 L152 339 L152 193 Z "/>
+    </font>
+</svg>

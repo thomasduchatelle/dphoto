@@ -1,5 +1,7 @@
 import {AppBar, Box, Container, Toolbar, useScrollTrigger} from "@mui/material";
 import {cloneElement, ReactElement, ReactNode} from "react";
+import fullLogo from "../../images/dphoto-fulllogo-reversed-50px.png"
+import shortLogo from "../../images/dphoto-logo-reversed-50px.png"
 
 const appVersion = "1.4.0-alpha"
 
@@ -25,12 +27,12 @@ const AppNav = ({rightContent, middleContent}: {
             <Container maxWidth={false}>
                 <Toolbar disableGutters>
                     <Box component='a' href='/' sx={{flexGrow: 0, display: {xs: 'none', lg: 'flex'}}}>
-                        <img src='/dphoto-fulllogo-reversed-50px.png' alt='DPhoto Logo'
+                        <img src={fullLogo} alt='DPhoto Logo'
                              style={{height: '50px', marginTop: '5px'}}
                              title={"version: " + appVersion}/>
                     </Box>
                     <Box component='a' href='/' sx={{flexGrow: 0, display: {lg: 'none'}}}>
-                        <img src='/dphoto-logo-reversed-50px.png' alt='DPhoto Logo'
+                        <img src={shortLogo} alt='DPhoto Logo'
                              style={{height: '50px', marginTop: '5px'}}
                              title={"version: " + appVersion}/>
                     </Box>

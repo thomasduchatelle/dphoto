@@ -13,5 +13,5 @@ module.exports = {
     "core": {
         "builder": "@storybook/builder-webpack5"
     },
-    "staticDirs": ['../public', "../../test/wiremock/__files/api/static"],
+    "staticDirs": ['../public', '../src/images', "../../test/wiremock/__files/api/static"],
 }

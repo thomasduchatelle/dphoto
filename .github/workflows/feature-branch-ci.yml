@@ -26,3 +26,9 @@ jobs:
         uses: ./.github/actions/install-node
       - name: Test and build WEB UI
         run: make test-web build-web
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: storybook-snapshots
+          path: web/src/stories/__image_snapshots__/__diff_output__/

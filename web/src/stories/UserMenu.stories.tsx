@@ -21,7 +21,6 @@ DefaultMenu.args = {
     },
 };
 DefaultMenu.parameters = {
-    storyshots: {disable: true},
     delay: 300,
 };
 DefaultMenu.play = async ({canvasElement}) => {

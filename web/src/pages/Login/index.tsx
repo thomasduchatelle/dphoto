@@ -3,6 +3,7 @@ import React, {ReactNode} from "react";
 import useLoginController from "./domain";
 import {LoginPageState} from "./domain/login-hook";
 import GoogleLoginButton from "./GoogleLoginButton";
+import logo from "../../images/dphoto-fulllogo-medium.png"
 
 
 const Login = ({onSuccessfulAuthentication}: {
@@ -69,7 +70,7 @@ export const LoginInternal = ({
                         display: 'block',
                         paddingTop: theme.spacing(3).sub(),
                     })}>
-                        <img src='/dphoto-fulllogo-medium.png' alt='DPhoto Logo'/>
+                        <img src={logo} alt='DPhoto Logo'/>
                     </Box>
 
                     <Box>
