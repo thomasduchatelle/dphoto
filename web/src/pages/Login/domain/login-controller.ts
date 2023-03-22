@@ -1,5 +1,10 @@
 import {AuthenticationPort, IdentityProviderError, LoadingPort, LoginPageActions} from "./login-model";
-import {AppAuthenticationError, LogoutListener, SuccessfulAuthenticationResponse} from "../../../core/security";
+import {
+    AppAuthenticationError,
+    ExpiredSessionError,
+    LogoutListener,
+    SuccessfulAuthenticationResponse
+} from "../../../core/security";
 import {Dispatch} from "react";
 import {initialLoginPageState, PageAction} from "./login-reducer";
 
@@ -17,7 +22,12 @@ export class LoginController implements LoginPageActions {
             .catch(err => {
                 console.log(`WARN: couldn't restore the session from refresh token: ${err.message}`)
 
-                this.dispatch({type: "OnUnsuccessfulAutoLoginAttempt"})
+                if (err instanceof ExpiredSessionError) {
+                    this.dispatch({type: "OnExpiredSession"});
+
+                } else {
+                    this.dispatch({type: "OnUnsuccessfulAutoLoginAttempt"});
+                }
             })
     }
 

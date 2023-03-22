@@ -31,6 +31,13 @@ export class AppAuthenticationError extends Error {
     }
 }
 
+export class ExpiredSessionError extends Error {
+    constructor(public readonly code?: string,
+                message ?: string) {
+        super(message);
+    }
+}
+
 export class AuthenticateCase implements AuthenticationPort {
     constructor(
         private dispatch: Dispatch<ApplicationAction>,
@@ -88,7 +95,10 @@ export class AuthenticateCase implements AuthenticationPort {
             })
             .catch((err: AxiosError<ErrorBody>) => {
                 localStorage.removeItem(REFRESH_TOKEN_KEY)
-                return Promise.reject(new AppAuthenticationError(err.response?.data?.code, err.response?.data?.error))
+                if (err.response?.data?.code === 'oauth.refresh.expired') {
+                    return Promise.reject(new ExpiredSessionError(err.response?.data?.code, err.response?.data?.error))
+                }
+                return Promise.reject(new AppAuthenticationError(err.response?.data?.code, err.response?.data?.error));
             });
     }
 

@@ -4,6 +4,10 @@ type OnUnsuccessfulAutoLoginAttemptAction = {
     type: 'OnUnsuccessfulAutoLoginAttempt'
 }
 
+type OnExpiredSessionAction = {
+    type: 'OnExpiredSession'
+}
+
 type ErrorAction = {
     type: 'error'
     message: string
@@ -23,6 +27,7 @@ export type PageAction =
     | ErrorAction
     | UpdateLoadingAction
     | OnSuccessfulAuthenticationAction
+    | OnExpiredSessionAction
 
 export const initialLoginPageState: PageState = {
     error: "",
@@ -45,6 +50,14 @@ export function reduce(current: PageState, action: PageAction): PageState {
         case 'OnUnsuccessfulAutoLoginAttempt':
             return {
                 ...current, loading: false, stage: "", promptForLogin: true,
+            }
+        case 'OnExpiredSession':
+            return {
+                error: "",
+                timeout: true,
+                loading: false,
+                stage: "",
+                promptForLogin: true,
             }
     }
 

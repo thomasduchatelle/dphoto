@@ -33,10 +33,7 @@ export const PromptUser = Template.bind({});
 PromptUser.args = stateWhilePrompting;
 
 export const OnTimeout = Template.bind({});
-OnTimeout.args = {
-    timeout: true,
-    promptForLogin: true,
-};
+OnTimeout.args = reduce(initialLoginPageState, {type: "OnExpiredSession"});
 
 export const OnError = Template.bind({});
 OnError.args = reduce(stateWhilePrompting, {type: "error", message: "This is an error"});
