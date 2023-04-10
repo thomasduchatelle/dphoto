@@ -6,7 +6,7 @@ on:
 
 jobs:
   choose-env:
-    uses: ./.github/workflows/choose-environment.yml
+    uses: ./.github/workflows/lib-choose-environment.yml
     with:
       ref: ${{ github.ref_name }}
 

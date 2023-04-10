@@ -58,7 +58,7 @@ install-cli:
 ## WEB
 #######################################
 
-.PHONY: clean-web setup-web test-web build-web
+.PHONY: clean-web setup-web test-web build-web update-snapshots
 
 clean-web:
 	cd web && yarn clean
@@ -67,8 +67,11 @@ setup-web:
 	cd web && yarn
 
 test-web:
-	@echo "skipping UI tests"
-	#cd web && CI=true yarn test:ci
+	cd web && CI=true yarn test:ci
+
+update-snapshots:
+	@echo "Update snapshots [should only be used on CI]"
+	cd web && CI=true yarn test:ci -u
 
 build-web:
 	cd web && CI=true yarn build

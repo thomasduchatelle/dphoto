@@ -6,10 +6,10 @@ on:
 
 jobs:
   tests:
-    uses: ./.github/workflows/feature-branch-ci.yml
+    uses: ./.github/workflows/ci-feature-branch.yml
 
   choose-env:
-    uses: ./.github/workflows/choose-environment.yml
+    uses: ./.github/workflows/lib-choose-environment.yml
     with:
       ref: ${{ github.base_ref }}
 

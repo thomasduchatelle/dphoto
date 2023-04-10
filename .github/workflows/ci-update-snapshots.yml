@@ -1,0 +1,40 @@
+# EXPERIMENTAL
+name: Update Snapshots [Branch]
+
+on:
+  push:
+    branches:
+      - update-snapshots
+
+jobs:
+  update-snapshots:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Target Branch
+        id: get-branch-and-sha
+        run: |
+          git branch --remotes --contains HEAD --merged
+          target_branch="$(git branch --remotes --contains HEAD --merged |grep -v 'update-snapshots' | sed 's|^ *origin/||' |head -1)"
+          [[ -z "$target_branch" ]] && echo "ERROR: Another branch must point on the same commit" && exit 1
+          echo "branch=$target_branch" >> $GITHUB_OUTPUT
+
+      - name: Checkout Branch
+        run: git checkout ${{ steps.get-branch-and-sha.outputs.branch }}
+
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+      - name: Generate snapshots
+        run: make update-snapshots
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "web/snapshots - update from CI"
+
+      - name: Delete branch
+        run: git push origin -d "$GITHUB_REF"

@@ -1,0 +1,63 @@
+name: Feature branch continuous integration
+on:
+  push:
+    branches-ignore:
+      - next
+      - main
+      - actions
+      - update-snapshots
+  workflow_call:
+
+jobs:
+  update-snapshots:
+    timeout-minutes: 10
+    if: ${{ contains(github.event.head_commit.message, '/update-snapshots') }}
+    runs-on: ubuntu-latest
+    outputs:
+      skip_downstream: ${{ steps.auto-commit.outputs.changes_detected }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_AUTO_COMMIT }}
+
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+      - name: Generate snapshots
+        run: make update-snapshots
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        id: auto-commit
+        with:
+          commit_message: "web/snapshots - update from CI"
+
+  test-go-code:
+    runs-on: ubuntu-latest
+    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
+    needs:
+      - update-snapshots
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup GO
+        uses: ./.github/actions/install-go
+      - name: start mock services
+        run: docker-compose up -d
+      - run: make test-go
+
+  test-ts-code:
+    runs-on: ubuntu-latest
+    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
+    needs:
+      - update-snapshots
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+      - name: Test and build WEB UI
+        run: make test-web build-web
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: storybook-snapshots
+          path: web/src/stories/__image_snapshots__/__diff_output__/
