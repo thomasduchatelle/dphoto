@@ -88,9 +88,9 @@ To release a new version:
    ./scripts/pre-release.sh 1.5.0
    ```
 
-2. create a pull request to `develop`, review the terraform plan and tests then merge -> it will deploy
+2. create a pull request to `next`, review the terraform plan and tests then merge -> it will deploy
    to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
-3. create a pull request `develop -> main`, review the terraform plan then merge -> it will deploy
+3. create a pull request `next -> main`, review the terraform plan then merge -> it will deploy
    to [https://dphoto.duchatelle.net](https://dphoto.duchatelle.net) and create a tag for the CLI
 4. (optional) update local versions of `dphoto` by running
    ```

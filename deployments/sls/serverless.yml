@@ -1,6 +1,6 @@
 service: dphoto-app
-frameworkVersion: '2'
-variablesResolutionMode: 20210326
+frameworkVersion: '3'
+configValidationMode: error
 
 functions:
   # system lambdas
@@ -68,11 +68,11 @@ functions:
   async-warmup-cache:
     handler: bin/async-warmup-cache
     timeout: 900
+    maximumRetryAttempts: 2
     events:
       - sqs:
           arn: ${ssm:/dphoto/${sls:stage}/sqs/archive/arn}
           batchSize: 1
-          maximumRetryAttempts: 3
 
   async-resize-image:
     handler: bin/async-resize-image
@@ -92,7 +92,6 @@ provider:
   #  runtime: provided.al2 # custom runtime available for ARM64
   #  architecture: x86_64
   memorySize: 256
-  lambdaHashingVersion: 20201221
   environment:
     DPHOTO_JWT_KEY_B64: ${file('./sls-config.js'):DPHOTO_JWT_KEY_B64}
     DPHOTO_JWT_ISSUER: ${file('./sls-config.js'):DPHOTO_JWT_ISSUER}
@@ -118,8 +117,6 @@ provider:
   tags:
     Application: dphoto-app
     Environment: ${sls:stage}
-  httpApi:
-    useProviderTags: true
 
 resources:
   Resources:

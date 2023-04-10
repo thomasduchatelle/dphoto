@@ -11,9 +11,9 @@ runs:
     - uses: actions/setup-node@v3
       with:
         node-version: '19'
-        # note - directly caching node_modules is MUCH faster
-    - name: YARN and NPM Cache
-      uses: actions/cache@v3
+        # cache: yarn # note - directly caching node_modules is MUCH faster (60s -> 1.5s)
+    - name: YARN Cache (restore)
+      uses: actions/cache/restore@v3
       with:
         path: |
           web/node_modules
@@ -26,3 +26,11 @@ runs:
       if: inputs.sls == 'true'
       run: npm install -g serverless
       shell: bash
+    - name: YARN Cache (always save)
+      uses: actions/cache/save@v3
+      if: always()
+      with:
+        path: |
+          web/node_modules
+          deployments/sls/node_modules
+        key: ${{ runner.os }}-npm-${{ hashFiles('web/yarn.lock', 'deployments/sls/package-lock.json') }}

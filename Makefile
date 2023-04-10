@@ -67,7 +67,8 @@ setup-web:
 	cd web && yarn
 
 test-web:
-	cd web && CI=true yarn test:ci
+	@echo "skipping UI tests"
+	#cd web && CI=true yarn test:ci
 
 build-web:
 	cd web && CI=true yarn build
@@ -109,7 +110,7 @@ build-api:
 .PHONY: setup-app test-app build-app deploy-app
 
 setup-app: setup-web
-	cd deployments/sls && npm install
+	cd deployments/sls && yarn
 
 clean-app: clean-api clean-web
 

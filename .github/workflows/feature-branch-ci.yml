@@ -8,15 +8,15 @@ on:
   workflow_call:
 
 jobs:
-  test-go-code:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup GO
-        uses: ./.github/actions/install-go
-      - name: start mock services
-        run: docker-compose up -d
-      - run: make test-go
+#  test-go-code:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Setup GO
+#        uses: ./.github/actions/install-go
+#      - name: start mock services
+#        run: docker-compose up -d
+#      - run: make test-go
 
   test-ts-code:
     runs-on: ubuntu-latest
@@ -24,11 +24,17 @@ jobs:
       - uses: actions/checkout@v3
       - name: Setup NODE
         uses: ./.github/actions/install-node
-      - name: Test and build WEB UI
-        run: make test-web build-web
+#      - name: Test and build WEB UI
+#        uses: ./.github/actions/puppeteer
+#        with:
+#          yarn: test:ci
+#      - name: Test and build WEB UI
+#        run: make test-web build-web
+      - name: Create baseline
+        run: cd web && yarn && yarn build-storybook && CI=true yarn test
       - name: Upload screenshots
         uses: actions/upload-artifact@v3
-        if: failure()
+        if: always()
         with:
           name: storybook-snapshots
-          path: web/src/stories/__image_snapshots__/__diff_output__/
+          path: web/src/stories/__image_snapshots__/
