@@ -3,7 +3,7 @@ package dynamotestutils
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
-	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"sort"
 	"testing"
 )
@@ -22,7 +22,7 @@ func SetContent(t *testing.T, db *dynamodb.DynamoDB, table string, entries []map
 func clearContent(db *dynamodb.DynamoDB, table string) error {
 	var deletionRequests []*dynamodb.WriteRequest
 
-	stream := dynamoutils2.NewScanStream(db, table)
+	stream := dynamoutils.NewScanStream(db, table)
 	for stream.HasNext() {
 		entry := stream.Next()
 		key := make(map[string]*dynamodb.AttributeValue)
@@ -31,7 +31,7 @@ func clearContent(db *dynamodb.DynamoDB, table string) error {
 		deletionRequests = append(deletionRequests, &dynamodb.WriteRequest{DeleteRequest: &dynamodb.DeleteRequest{Key: key}})
 	}
 
-	return dynamoutils2.BufferedWriteItems(db, deletionRequests, table, dynamoutils2.DynamoWriteBatchSize)
+	return dynamoutils.BufferedWriteItems(db, deletionRequests, table, dynamoutils.DynamoWriteBatchSize)
 }
 
 func insertAll(db *dynamodb.DynamoDB, table string, entries []map[string]*dynamodb.AttributeValue) error {
@@ -54,7 +54,7 @@ func insertAll(db *dynamodb.DynamoDB, table string, entries []map[string]*dynamo
 }
 
 func AssertAfter(t *testing.T, db *dynamodb.DynamoDB, table string, expected []map[string]*dynamodb.AttributeValue) bool {
-	content, err := dynamoutils2.AsSlice(dynamoutils2.NewScanStream(db, table))
+	content, err := dynamoutils.AsSlice(dynamoutils.NewScanStream(db, table))
 	if !assert.NoError(t, err) {
 		return false
 	}

@@ -12,12 +12,22 @@ export interface Album {
     temperature: number // number of media per day
     relativeTemperature: number
     ownedBy?: OwnerDetails // only present when not owned by current user
-    sharedWith: UserDetails[]
+    sharedWith: Sharing[]
 }
 
 export interface OwnerDetails {
     name?: string
     users: UserDetails[]
+}
+
+export enum SharingType {
+    visitor = "visitor",
+    contributor = "contributor",
+}
+
+export interface Sharing {
+    user: UserDetails
+    role: SharingType
 }
 
 export interface UserDetails {

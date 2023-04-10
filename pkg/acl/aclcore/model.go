@@ -20,8 +20,8 @@ var (
 	InvalidTokenError            = errors.New("authenticated failed")
 	InvalidTokenExplicitError    = errors.New("authentication failed: token invalid")
 	NotPreregisteredError        = errors.New("user must be pre-registered")
-	AccessUnauthorisedError      = errors.New("access unauthorised")
-	AccessForbiddenError         = errors.New("access forbidden")
+	AccessUnauthorisedError      = errors.New("access unauthorised") // AccessUnauthorisedError is used when the request doesn't have valid credentials (no bearer token, or invalid token)
+	AccessForbiddenError         = errors.New("access forbidden")    // AccessForbiddenError is used when the request has valid credentials, but the access to the resource has been denied
 	InvalidUserEmailError        = errors.New("user email is mandatory")
 	ExpiredRefreshTokenError     = errors.New("refresh token has expired")
 	InvalidRefreshTokenError     = errors.New("refresh token is not valid")
@@ -34,10 +34,11 @@ var (
 )
 
 const (
-	ApiScope          ScopeType = "api"           // ApiScope represents a set of API endpoints, like 'admin'
-	MainOwnerScope    ScopeType = "owner:main"    // MainOwnerScope is limited to 1 per user, it's the tenant all backups of the user will be stored against
-	AlbumVisitorScope ScopeType = "album:visitor" // AlbumVisitorScope gives read access to an album and the media it contains
-	MediaVisitorScope ScopeType = "media:visitor" // MediaVisitorScope gives read access to medias directly
+	ApiScope              ScopeType = "api"               // ApiScope represents a set of API endpoints, like 'admin'
+	MainOwnerScope        ScopeType = "owner:main"        // MainOwnerScope is limited to 1 per user, it's the tenant all backups of the user will be stored against
+	AlbumVisitorScope     ScopeType = "album:visitor"     // AlbumVisitorScope gives read access to an album and the media it contains FIXME The role is NOT YET MAPPED
+	AlbumContributorScope ScopeType = "album:contributor" // AlbumContributorScope gives read access and ability to contribute (add medias) to an album
+	MediaVisitorScope     ScopeType = "media:visitor"     // MediaVisitorScope gives read access to medias directly
 
 	JWTScopeOwnerPrefix = "owner:"
 

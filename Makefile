@@ -67,17 +67,17 @@ setup-web:
 	cd web && yarn
 
 test-web:
-	cd web && CI=true yarn test:ci
+	cd web && yarn test:ci
 
 update-snapshots:
 	@echo "Update snapshots [should only be used on CI]"
-	cd web && CI=true yarn test:ci -u
+	rm -rf web/src/stories/__image_snapshots__ && cd web && CI=true yarn test:ci -u
 
 build-web:
 	cd web && CI=true yarn build
 
 start:
-	./scripts/wiremock.sh --track & \
+	docker-compose up -d wiremock && \
 		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
 
 storybook:
@@ -110,7 +110,7 @@ build-api:
 ## APP = WEB + API
 #######################################
 
-.PHONY: setup-app test-app build-app deploy-app
+.PHONY: setup-app test-app build-app deploy-app bg down
 
 setup-app: setup-web
 	cd deployments/sls && yarn
@@ -122,8 +122,14 @@ test-app: test-api test-web
 build-app: build-api build-web
 
 AWS_PROFILE ?= dphoto
-deploy-app: clean-web clean-api test-app build-app
+deploy-app: clean-web clean-api build-app
 	export AWS_PROFILE="$(AWS_PROFILE)" && cd deployments/sls && sls deploy
+
+bg:
+	docker-compose --profile bg up -d
+
+down:
+	docker-compose --profile bg down
 
 #######################################
 ## UTILS
@@ -132,8 +138,10 @@ deploy-app: clean-web clean-api test-app build-app
 .PHONY: mocks clearlocal dcdown dcup
 
 mocks:
+	rm -rf internal/mocks
 	mockery --all --dir pkg -r --output internal/mocks
 	mockery --all --dir cmd -r --output internal/mocks
+	git add internal/mocks
 
 clearlocal: dcdown dcup
 

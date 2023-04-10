@@ -10,10 +10,10 @@ import (
 // ArgParser is a helper to read several parameters from the request
 type ArgParser struct {
 	violations []string
-	request    *events.APIGatewayProxyRequest
+	request    *events.APIGatewayV2HTTPRequest
 }
 
-func NewArgParser(request *events.APIGatewayProxyRequest) *ArgParser {
+func NewArgParser(request *events.APIGatewayV2HTTPRequest) *ArgParser {
 	return &ArgParser{
 		request: request,
 	}

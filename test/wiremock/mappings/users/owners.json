@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/v1/owners?ids=natashaandbruce%40avenger.com"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": [
+      {
+        "id": "natashaandbruce@avenger.com",
+        "name": "Natasha and Bruce",
+        "users": [
+          {
+            "name": "Black Window",
+            "email": "blackwindow@avenger.com",
+            "picture": "/api/static/black-widow-profile.jpg"
+          },
+          {
+            "name": "Hulk",
+            "email": "hulk@avenger.com",
+            "picture": "/api/static/hulk-profile.webp"
+          }
+        ]
+      }
+    ]
+  }
+}

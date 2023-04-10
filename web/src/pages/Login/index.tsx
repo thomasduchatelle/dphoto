@@ -32,16 +32,17 @@ export const LoginInternal = ({
 }) => {
 
     return (
-        <Box sx={{
+        <Box sx={theme => ({
             height: '100vh',
-        }}>
+            backgroundColor: '#F0F0F0',
+            paddingTop: {
+                sm: theme.spacing(10)
+            },
+        })}>
             <Box sx={(theme) => ({
                 margin: 'auto',
                 maxWidth: {
                     sm: 'sm',
-                },
-                marginTop: {
-                    sm: theme.spacing(10),
                 },
             })}>
                 <Paper elevation={3} sx={(theme) => ({

@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "DELETE",
+    "urlPattern": "/api/v1/owners/[^/]+/albums/[^/]+/shares/[^/]+"
+  },
+  "response": {
+    "status": 204
+  }
+}

@@ -4,6 +4,7 @@ import (
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 )
 
 var (
@@ -14,7 +15,7 @@ var (
 		revoke     bool
 	}{}
 
-	ShareAlbumCase   func(owner, folderName, userEmail string) error
+	ShareAlbumCase   func(owner, folderName, userEmail string, scope aclcore.ScopeType) error
 	UnShareAlbumCase func(owner, folderName, userEmail string) error
 )
 
@@ -23,7 +24,7 @@ var shareAlbumCmd = &cobra.Command{
 	Short: "Share [or un-share] an album to a user (different from the the owner)",
 	Run: func(cmd *cobra.Command, args []string) {
 		if !shareAlbumArg.revoke {
-			err := ShareAlbumCase(shareAlbumArg.owner, shareAlbumArg.folderName, shareAlbumArg.userEmail)
+			err := ShareAlbumCase(shareAlbumArg.owner, shareAlbumArg.folderName, shareAlbumArg.userEmail, aclcore.MainOwnerScope)
 			printer.FatalIfError(err, 1)
 
 			printer.Success("Album %s/%s has been shared to %s", aurora.Cyan(shareAlbumArg.owner), aurora.Cyan(shareAlbumArg.folderName), aurora.Cyan(shareAlbumArg.userEmail))

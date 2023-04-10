@@ -1,6 +1,7 @@
-import {Album, AlbumId, CatalogAPI, Media, MediaType, OwnerDetails, UserDetails} from "../../core/catalog";
+import {Album, AlbumId, CatalogAPI, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../core/catalog";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../core/application";
+import {SharingAPI} from "../../pages/authenticated/albums/share-controller";
 
 interface RestAlbum {
     owner: string
@@ -9,7 +10,7 @@ interface RestAlbum {
     start: Date
     end: Date
     totalCount: number
-    sharedWith?: string[]
+    sharedWith?: Record<string, string>
     directlyOwned?: boolean
 }
 
@@ -33,7 +34,7 @@ interface RestOwnerDetails {
     users: RestUserDetails[]
 }
 
-export class CatalogAPIAdapter implements CatalogAPI {
+export class CatalogAPIAdapter implements CatalogAPI, SharingAPI {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,
@@ -47,7 +48,7 @@ export class CatalogAPIAdapter implements CatalogAPI {
 
                 return Promise.allSettled([
                     this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),
-                    this.findUserDetails(new Set<string>(albums.flatMap(a => a.sharedWith ?? []))),
+                    this.findUserDetails(new Set<string>(albums.flatMap(a => Object.entries(a.sharedWith ?? {}).map(([email, role]) => email)))),
                 ]).then(([ownersResp, usersResp]) => {
                     const owners = ownersResp.status === "fulfilled" ? ownersResp.value.reduce(
                         (map, owner) => {
@@ -84,10 +85,13 @@ export class CatalogAPIAdapter implements CatalogAPI {
                         totalCount: album.totalCount,
                         temperature: temperature,
                         relativeTemperature: temperature / maxTemperature,
-                        sharedWith: album.sharedWith ? album.sharedWith.map(email => users.get(email) ?? {
-                            name: email,
-                            email: email,
-                        }) : [],
+                        sharedWith: Object.entries(album.sharedWith ?? {}).map(([email, role]) => ({
+                            user: users.get(email) ?? {
+                                name: email,
+                                email: email,
+                            },
+                            role: castAsSharingType(role, SharingType.visitor),
+                        })),
                         ownedBy: album.directlyOwned ? undefined : owners.get(album.owner) ?? {
                             name: album.owner,
                             users: [],
@@ -98,22 +102,30 @@ export class CatalogAPIAdapter implements CatalogAPI {
     }
 
     private findOwnerDetails(owners: Set<string>): Promise<RestOwnerDetails[]> {
-        if (!owners) {
+        if (owners.size === 0) {
             return Promise.resolve([])
         }
 
         return this.authenticatedAxios
-            .get<RestOwnerDetails[]>(`/api/v1/owners?ids=${[...owners.values()].join(',')}`)
+            .get<RestOwnerDetails[]>(`/api/v1/owners`, {
+                params: {
+                    ids: [...owners.values()].join(','),
+                }
+            })
             .then(resp => resp.data);
     }
 
     private findUserDetails(emails: Set<string>): Promise<RestUserDetails[]> {
-        if (!emails) {
+        if (emails.size === 0) {
             return Promise.resolve([])
         }
 
         return this.authenticatedAxios
-            .get<RestUserDetails[]>(`/api/v1/users?emails=${[...emails.values()].join(',')}`)
+            .get<RestUserDetails[]>(`/api/v1/users`, {
+                params: {
+                    emails: [...emails.values()].join(','),
+                }
+            })
             .then(resp => resp.data);
     }
 
@@ -136,6 +148,29 @@ export class CatalogAPIAdapter implements CatalogAPI {
                     contentPath: `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}?access_token=${this.accessTokenHolder.getAccessToken()}`,
                 })).sort((a, b) => b.time.getTime() - a.time.getTime())
             })
+    }
+
+    public grantAccessToAlbum(albumId: AlbumId, email: string, role: SharingType): Promise<void> {
+        return this.authenticatedAxios
+            .put(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`, {
+                role,
+            })
+    }
+
+    public loadUserDetails(email: string): Promise<UserDetails> {
+        return this.findUserDetails(new Set<string>([email]))
+            .then(details => {
+                if (details && details.length > 0) {
+                    return Promise.resolve({...details[0]})
+                }
+
+                return Promise.reject("user details not found.")
+            })
+    }
+
+    public revokeSharingAlbum(albumId: AlbumId, email: string): Promise<void> {
+        return this.authenticatedAxios
+            .delete(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`)
     }
 }
 
@@ -160,4 +195,8 @@ function convertToType(type: string): MediaType {
         default:
             return MediaType.OTHER
     }
+}
+
+function castAsSharingType(value: string, defaultValue: SharingType): SharingType {
+    return (SharingType as any)[value] ?? defaultValue
 }

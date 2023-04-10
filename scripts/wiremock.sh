@@ -113,17 +113,18 @@ fi
 
 cmd=(java -jar "$JAR" --port "$PORT" --root-dir "$PROJECT" "${ARGS[@]}")
 if [[ "$TRACK" -eq 0 ]] ; then
-  debug "running: ${cmd[*]}"
+  debug "running [tracking OFF]: ${cmd[*]}"
   "${cmd[@]}"
 else
 #  trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
-  debug "running: ${cmd[*]}"
+  debug "running [tracking ON: $PROJECT]: ${cmd[*]}"
   "${cmd[@]}" &
   pid=$!
   debug "PID $pid"
   trap "kill $pid" SIGINT SIGTERM EXIT
-  fswatch -o "$PROJECT" | \
-      while read; do
+  fswatch -0 "$PROJECT" | \
+      while read -d "" event; do
+        debug "triggered by event: $event"
         kill "$pid" || echoe "Failed to stop wiremock" RED 1
         "${cmd[@]}" &
         pid=$!

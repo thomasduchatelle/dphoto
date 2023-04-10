@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
-	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"sort"
 )
@@ -122,7 +122,7 @@ func (r *Repository) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error
 		keys = append(keys, key)
 	}
 
-	stream := dynamoutils2.NewGetStream(dynamoutils2.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils2.DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
 	var albums []*catalog.Album
 	for stream.HasNext() {
 		album, err := unmarshalAlbum(stream.Next())

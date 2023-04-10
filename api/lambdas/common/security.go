@@ -15,7 +15,7 @@ import (
 // accesscontrol.AccessUnauthorisedError errors will be converted into 401 responses
 // accesscontrol.AccessForbiddenError errors will be converted into 403 responses
 // any other errors will be converted into 500
-func RequiresCatalogACL(request *events.APIGatewayProxyRequest, process func(claims aclcore.Claims, rules catalogacl.CatalogRules) (Response, error)) (Response, error) {
+func RequiresCatalogACL(request *events.APIGatewayV2HTTPRequest, process func(claims aclcore.Claims, rules catalogacl.CatalogRules) (Response, error)) (Response, error) {
 	token, err := readToken(request)
 	if err != nil {
 		return UnauthorizedResponse(err.Error())
@@ -46,7 +46,7 @@ func RequiresCatalogACL(request *events.APIGatewayProxyRequest, process func(cla
 }
 
 // RequiresCatalogView is based on RequiresCatalogACL but creates a convenient Catalog View
-func RequiresCatalogView(request *events.APIGatewayProxyRequest, process func(catalogView *catalogaclview.View) (Response, error)) (Response, error) {
+func RequiresCatalogView(request *events.APIGatewayV2HTTPRequest, process func(catalogView *catalogaclview.View) (Response, error)) (Response, error) {
 	return RequiresCatalogACL(request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (Response, error) {
 		view := &catalogaclview.View{
 			UserEmail:      claims.Subject,
@@ -58,7 +58,7 @@ func RequiresCatalogView(request *events.APIGatewayProxyRequest, process func(ca
 	})
 }
 
-func readToken(request *events.APIGatewayProxyRequest) (string, error) {
+func readToken(request *events.APIGatewayV2HTTPRequest) (string, error) {
 	authorisation, ok := request.Headers["authorization"]
 	if !ok {
 		// allow to pass tokens in the Query parameters for images loaded in <img /> tags

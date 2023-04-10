@@ -13,7 +13,8 @@
         "folderName": "/2021-12_christmas",
         "start": "2021-12-24T00:00:00Z",
         "end": "2022-01-04T00:00:00Z",
-        "totalCount": 360
+        "totalCount": 360,
+        "directlyOwned": true
       },
       {
         "name": "Subnautica",
@@ -21,11 +22,16 @@
         "folderName": "/2022-02_Subnautica",
         "start": "2022-02-19T00:00:00Z",
         "end": "2022-02-26T00:00:00Z",
-        "totalCount": 420
+        "totalCount": 420,
+        "directlyOwned": true,
+        "sharedWith": {
+          "blackwindow@avenger.com": "contributor",
+          "hulk@avenger.com": "visitor"
+        }
       },
       {
         "name": "Horizon Zero Down",
-        "owner": "tony@stark.com",
+        "owner": "natashaandbruce@avenger.com",
         "folderName": "/2022-Q1",
         "start": "2022-01-01T00:00:00Z",
         "end": "2022-04-01T00:00:00Z",
@@ -37,7 +43,8 @@
         "folderName": "/2021-Q4",
         "start": "2021-10-01T00:00:00Z",
         "end": "2022-01-01T00:00:00Z",
-        "totalCount": 32
+        "totalCount": 32,
+        "directlyOwned": true
       }
     ]
   }

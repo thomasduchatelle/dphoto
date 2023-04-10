@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
-	common2 "github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
@@ -16,8 +16,8 @@ const (
 	responseMaxContent = 6 * 1024 * 1024
 )
 
-func Handler(request events.APIGatewayProxyRequest) (common2.Response, error) {
-	parser := common2.NewArgParser(&request)
+func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
+	parser := common.NewArgParser(&request)
 	owner := parser.ReadPathParameterString("owner")
 	mediaId := parser.ReadPathParameterString("mediaId")
 	width := parser.ReadQueryParameterInt("w", false)
@@ -26,9 +26,9 @@ func Handler(request events.APIGatewayProxyRequest) (common2.Response, error) {
 		return parser.BadRequest()
 	}
 
-	return common2.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common2.Response, error) {
+	return common.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common.Response, error) {
 		if err := rules.CanReadMedia(owner, mediaId); err != nil {
-			return common2.Response{}, err
+			return common.Response{}, err
 		}
 
 		if width == 0 {
@@ -37,17 +37,17 @@ func Handler(request events.APIGatewayProxyRequest) (common2.Response, error) {
 
 		content, contentType, err := archive.GetResizedImage(owner, mediaId, width, responseMaxContent)
 		if err == archive.NotFoundError {
-			return common2.NotFound(nil)
+			return common.NotFound(nil)
 		}
 		if err == archive.MediaOverflowError {
 			log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is over max allowed payload. Redirecting.", owner, mediaId, width)
 			return redirectTo(archive.GetResizedImageURL(owner, mediaId, width))
 		}
 		if err != nil {
-			return common2.InternalError(err)
+			return common.InternalError(err)
 		}
 
-		return common2.Response{
+		return common.Response{
 			StatusCode: 200,
 			Headers: map[string]string{
 				"Content-Type":  contentType,
@@ -59,15 +59,15 @@ func Handler(request events.APIGatewayProxyRequest) (common2.Response, error) {
 	})
 }
 
-func redirectTo(url string, err error) (common2.Response, error) {
+func redirectTo(url string, err error) (common.Response, error) {
 	if err == archive.NotFoundError {
-		return common2.NotFound(nil)
+		return common.NotFound(nil)
 	}
 	if err != nil {
 		log.WithError(err).Error("GetMediaOriginalURL failed with", err)
 	}
 
-	return common2.Response{
+	return common.Response{
 		StatusCode: 307,
 		Headers: map[string]string{
 			"Location": url,
@@ -76,7 +76,7 @@ func redirectTo(url string, err error) (common2.Response, error) {
 }
 
 func main() {
-	common2.BootstrapCatalogAndArchiveDomains()
+	common.BootstrapCatalogAndArchiveDomains()
 
 	lambda.Start(Handler)
 }

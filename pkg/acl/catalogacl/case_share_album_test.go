@@ -90,7 +90,7 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 				ScopeWriter: scopeWriter,
 				CatalogPort: catalogPort,
 			}
-			tt.wantErr(t, s.ShareAlbumWith(tt.args.owner, tt.args.folderName, tt.args.userEmail), fmt.Sprintf("ShareAlbumWith(%v, %v, %v)", tt.args.owner, tt.args.folderName, tt.args.userEmail))
+			tt.wantErr(t, s.ShareAlbumWith(tt.args.owner, tt.args.folderName, tt.args.userEmail, aclcore.AlbumVisitorScope), fmt.Sprintf("ShareAlbumWith(%v, %v, %v)", tt.args.owner, tt.args.folderName, tt.args.userEmail))
 		})
 	}
 }

@@ -2,21 +2,19 @@ import {Alert, Box, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
-import {Album, AlbumId, MediaWithinADay} from "../../../../core/catalog";
+import {Album, MediaWithinADay} from "../../../../core/catalog";
 
 export default function MediasPage({
                                        albums,
                                        albumNotFound,
                                        fullyLoaded,
                                        medias,
-                                       selectAlbum,
                                        selectedAlbum,
                                    }: {
     albums: Album[]
     albumNotFound: boolean
     fullyLoaded: boolean
     medias: MediaWithinADay[]
-    selectAlbum(albumId: AlbumId): void
     selectedAlbum?: Album
 }) {
     const drawerWidth = 450
@@ -32,7 +30,11 @@ export default function MediasPage({
                     variant="permanent"
                     sx={{
                         display: {xs: 'none', lg: 'block'},
-                        '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
+                        '& .MuiDrawer-paper': {
+                            boxSizing: 'border-box',
+                            width: drawerWidth,
+                            border: 'none',
+                        },
                     }}
                 >
                     <Toolbar/>

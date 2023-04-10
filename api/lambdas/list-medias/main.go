@@ -5,7 +5,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
-	common2 "github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"strings"
 	"time"
@@ -19,15 +19,15 @@ type Media struct {
 	Source   string    `json:"source"`   // Source is the camera that capture the media, taken from the file metadata
 }
 
-func Handler(request events.APIGatewayProxyRequest) (common2.Response, error) {
+func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	owner := request.PathParameters["owner"]
 	folderName := request.PathParameters["folderName"]
 
-	return common2.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common2.Response, error) {
+	return common.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common.Response, error) {
 		log.Infof("list medias for album %s/%s", owner, folderName)
 		medias, err := catalogView.ListMediasFromAlbum(owner, fmt.Sprintf("/%s", folderName))
 		if err != nil {
-			return common2.Response{}, err
+			return common.Response{}, err
 		}
 
 		resp := make([]Media, len(medias.Content), len(medias.Content))
@@ -41,12 +41,12 @@ func Handler(request events.APIGatewayProxyRequest) (common2.Response, error) {
 			}
 		}
 
-		return common2.Ok(resp)
+		return common.Ok(resp)
 	})
 }
 
 func main() {
-	common2.BootstrapCatalogDomain()
+	common.BootstrapCatalogDomain()
 
 	lambda.Start(Handler)
 }

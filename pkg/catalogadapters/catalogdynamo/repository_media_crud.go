@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
-	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"strings"
 )
@@ -28,7 +28,7 @@ func (r *Repository) InsertMedias(owner string, medias []catalog.CreateMediaRequ
 		}
 	}
 
-	return dynamoutils2.BufferedWriteItems(r.db, requests, r.table, DynamoWriteBatchSize)
+	return dynamoutils.BufferedWriteItems(r.db, requests, r.table, DynamoWriteBatchSize)
 }
 
 func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
@@ -39,7 +39,7 @@ func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.M
 
 	var medias []*catalog.MediaMeta
 
-	crawler := dynamoutils2.NewQueryStream(r.db, queries)
+	crawler := dynamoutils.NewQueryStream(r.db, queries)
 	for crawler.HasNext() {
 		media, err := unmarshalMediaMetaData(crawler.Next())
 		if err != nil {
@@ -86,7 +86,7 @@ func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]string, 
 
 	var mediaIds []string
 
-	crawler := dynamoutils2.NewQueryStream(r.db, queries)
+	crawler := dynamoutils.NewQueryStream(r.db, queries)
 	for crawler.HasNext() {
 		record := crawler.Next()
 		mediaIds = append(mediaIds, *record["Id"].S)
@@ -145,7 +145,7 @@ func (r *Repository) FindExistingSignatures(owner string, signatures []*catalog.
 		uniqueSignatures[*signature] = nil
 	}
 
-	stream := dynamoutils2.NewGetStream(dynamoutils2.NewGetBatchItem(r.db, r.table, *aws.String("Id")), keys, DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, *aws.String("Id")), keys, DynamoReadBatchSize)
 
 	found := make([]*catalog.MediaSignature, 0, len(signatures))
 	for stream.HasNext() {

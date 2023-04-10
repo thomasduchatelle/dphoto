@@ -6,7 +6,7 @@ import UserMenu from "../components/user.menu";
 import {DefaultMenu} from './UserMenu.stories';
 
 export default {
-    title: 'Components/AppNav',
+    title: 'Layout/AppNav',
     component: AppNav,
     subcomponents: {UserMenu},
 } as ComponentMeta<typeof AppNav>;

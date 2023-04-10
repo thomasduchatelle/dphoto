@@ -10,6 +10,7 @@ type GrantRepository interface {
 	aclcore.ScopesReader
 	aclcore.ReverseScopesReader
 	aclcore.ScopeWriter
+	aclcore.IdentityQueriesScopeRepository
 }
 
 func New(sess *session.Session, tableName string) (GrantRepository, error) {

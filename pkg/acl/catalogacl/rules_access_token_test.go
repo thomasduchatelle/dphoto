@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
@@ -144,6 +143,61 @@ func Test_rulesWithAccessToken_CanReadMedia(t *testing.T) {
 	}
 }
 
+func Test_rulesWithAccessToken_CanManageAlbum(t *testing.T) {
+	nopeError := errors.Errorf("an error")
+
+	type fields struct {
+		catalogRules func(t *testing.T) catalogacl.CatalogRules
+	}
+	type args struct {
+		owner      string
+		folderName string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		claims  aclcore.Claims
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should directly authorise if the owner is pre-authorised in the token",
+			fields: fields{
+				catalogRules: func(t *testing.T) catalogacl.CatalogRules {
+					return mocks.NewCatalogRules(t)
+				},
+			},
+			args:    args{ownerEmail, folderName},
+			claims:  aclcore.Claims{Subject: userEmail, Scopes: nil, Owner: ownerEmail},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should delegate authorisation if not in the token [APPROVED]",
+			fields: fields{
+				catalogRules: func(t *testing.T) catalogacl.CatalogRules {
+					rules := mocks.NewCatalogRules(t)
+					rules.On("CanManageAlbum", ownerEmail, folderName).Return(nopeError)
+					return rules
+				},
+			},
+			args:   args{ownerEmail, folderName},
+			claims: aclcore.Claims{Subject: userEmail, Scopes: nil, Owner: "some@else.com"},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, nopeError, i)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rules := catalogacl.OptimiseRulesWithAccessToken(tt.fields.catalogRules(t), tt.claims)
+
+			err := rules.CanManageAlbum(tt.args.owner, tt.args.folderName)
+			tt.wantErr(t, err, fmt.Sprintf("Owner()"))
+		})
+	}
+}
+
 func Test_rulesWithAccessToken_Owner(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -187,9 +241,4 @@ func Test_rulesWithAccessToken_Owner(t *testing.T) {
 			assert.Equalf(t, tt.want, got, "Owner()")
 		})
 	}
-}
-
-type mockConstructorTestingTNewCatalogRules interface {
-	mock.TestingT
-	Cleanup(func())
 }

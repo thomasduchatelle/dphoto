@@ -18,7 +18,7 @@ type IRefreshTokenGenerator interface {
 	GenerateRefreshToken(spec RefreshTokenSpec) (string, error)
 }
 
-func (s *RefreshTokenAuthenticator) AuthenticateFromAccessToken(refreshToken string) (*Authentication, *Identity, error) {
+func (s *RefreshTokenAuthenticator) AuthenticateFromRefreshToken(refreshToken string) (*Authentication, *Identity, error) {
 	spec, err := s.RefreshTokenRepository.FindRefreshToken(refreshToken)
 	if err != nil {
 		return nil, nil, err // can be an InvalidRefreshTokenError

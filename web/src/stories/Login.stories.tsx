@@ -7,7 +7,7 @@ import {Button} from "@mui/material";
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
-    title: 'Pages/Login',
+    title: 'Layout/Login',
     component: LoginInternal,
 } as ComponentMeta<typeof LoginInternal>;
 

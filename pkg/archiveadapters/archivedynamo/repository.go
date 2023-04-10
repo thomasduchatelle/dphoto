@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
-	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
 func New(sess *session.Session, tableName string) (archive.ARepositoryAdapter, error) {
@@ -69,7 +69,7 @@ func (r *repository) FindByIds(owner string, ids []string) (map[string]string, e
 
 	locations := make(map[string]string)
 
-	stream := dynamoutils2.NewGetStream(dynamoutils2.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils2.DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
 	for stream.HasNext() {
 		id, key, err := unmarshalMediaLocation(stream.Next())
 		if err != nil {
@@ -99,7 +99,7 @@ func (r *repository) UpdateLocations(owner string, locations map[string]string) 
 		i++
 	}
 
-	return dynamoutils2.BufferedWriteItems(r.db, requests, r.table, dynamoutils2.DynamoWriteBatchSize)
+	return dynamoutils.BufferedWriteItems(r.db, requests, r.table, dynamoutils.DynamoWriteBatchSize)
 }
 
 func (r *repository) FindIdsFromKeyPrefix(keyPrefix string) (map[string]string, error) {

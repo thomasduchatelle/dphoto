@@ -62,7 +62,7 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 					return generator
 				},
 				AccessTokenRepository: func(t *testing.T) aclcore.RefreshTokenRepository {
-					repository := mocks.NewAccessTokenRepository(t)
+					repository := mocks.NewRefreshTokenRepository(t)
 					repository.On("FindRefreshToken", refreshToken).Return(&fullSpec, nil)
 					repository.On("DeleteRefreshToken", refreshToken).Return(nil)
 					return repository
@@ -107,7 +107,7 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 					return generator
 				},
 				AccessTokenRepository: func(t *testing.T) aclcore.RefreshTokenRepository {
-					repository := mocks.NewAccessTokenRepository(t)
+					repository := mocks.NewRefreshTokenRepository(t)
 					repository.On("FindRefreshToken", refreshToken).Return(&fullSpec, nil)
 					repository.On("DeleteRefreshToken", refreshToken).Return(nil)
 					return repository
@@ -139,7 +139,7 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 					return mocks.NewIRefreshTokenGenerator(t)
 				},
 				AccessTokenRepository: func(t *testing.T) aclcore.RefreshTokenRepository {
-					repository := mocks.NewAccessTokenRepository(t)
+					repository := mocks.NewRefreshTokenRepository(t)
 					repository.On("FindRefreshToken", refreshToken).Return(&fullSpec, nil)
 					return repository
 				},
@@ -168,7 +168,7 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 					return mocks.NewIRefreshTokenGenerator(t)
 				},
 				AccessTokenRepository: func(t *testing.T) aclcore.RefreshTokenRepository {
-					repository := mocks.NewAccessTokenRepository(t)
+					repository := mocks.NewRefreshTokenRepository(t)
 					repository.On("FindRefreshToken", refreshToken).Return(&aclcore.RefreshTokenSpec{
 						AbsoluteExpiryTime: time.Date(2020, 12, 31, 23, 59, 59, 999, time.UTC),
 					}, nil)
@@ -198,7 +198,7 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 					return mocks.NewIRefreshTokenGenerator(t)
 				},
 				AccessTokenRepository: func(t *testing.T) aclcore.RefreshTokenRepository {
-					repository := mocks.NewAccessTokenRepository(t)
+					repository := mocks.NewRefreshTokenRepository(t)
 					repository.On("FindRefreshToken", refreshToken).Return(nil, aclcore.InvalidRefreshTokenError)
 					return repository
 				},
@@ -225,12 +225,12 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 				RefreshTokenRepository: tt.fields.AccessTokenRepository(t),
 				IdentityDetailsStore:   tt.fields.IdentityDetailsStore(t),
 			}
-			gotToken, gotIdentity, err := s.AuthenticateFromAccessToken(tt.args.refreshToken)
-			if !tt.wantErr(t, err, fmt.Sprintf("AuthenticateFromAccessToken(%v)", tt.args.refreshToken)) {
+			gotToken, gotIdentity, err := s.AuthenticateFromRefreshToken(tt.args.refreshToken)
+			if !tt.wantErr(t, err, fmt.Sprintf("AuthenticateFromRefreshToken(%v)", tt.args.refreshToken)) {
 				return
 			}
-			assert.Equalf(t, tt.wantAuthentication, gotToken, "AuthenticateFromAccessToken(%v)", tt.args.refreshToken)
-			assert.Equalf(t, tt.wantIdentity, gotIdentity, "AuthenticateFromAccessToken(%v)", tt.args.refreshToken)
+			assert.Equalf(t, tt.wantAuthentication, gotToken, "AuthenticateFromRefreshToken(%v)", tt.args.refreshToken)
+			assert.Equalf(t, tt.wantIdentity, gotIdentity, "AuthenticateFromRefreshToken(%v)", tt.args.refreshToken)
 		})
 	}
 }

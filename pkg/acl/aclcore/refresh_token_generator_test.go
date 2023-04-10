@@ -39,7 +39,7 @@ func TestRefreshTokenGenerator_GenerateRefreshToken(t1 *testing.T) {
 			name: "it should generate a key with specified expiry time",
 			fields: fields{
 				AccessTokenRepository: func(t *testing.T) aclcore.RefreshTokenRepository {
-					repository := mocks.NewAccessTokenRepository(t)
+					repository := mocks.NewRefreshTokenRepository(t)
 					repository.On("StoreRefreshToken", mock.Anything, aclcore.RefreshTokenSpec{
 						Email:               email,
 						RefreshTokenPurpose: aclcore.RefreshTokenPurposeWeb,
@@ -65,7 +65,7 @@ func TestRefreshTokenGenerator_GenerateRefreshToken(t1 *testing.T) {
 			name: "it should generate a token with default '1 hour' expiry time",
 			fields: fields{
 				AccessTokenRepository: func(t *testing.T) aclcore.RefreshTokenRepository {
-					repository := mocks.NewAccessTokenRepository(t)
+					repository := mocks.NewRefreshTokenRepository(t)
 					repository.On("StoreRefreshToken", mock.Anything, aclcore.RefreshTokenSpec{
 						Email:              email,
 						AbsoluteExpiryTime: time.Date(2021, 12, 24, 1, 0, 0, 0, time.UTC),
@@ -87,7 +87,7 @@ func TestRefreshTokenGenerator_GenerateRefreshToken(t1 *testing.T) {
 			name: "it should generate a key with specified expiry time",
 			fields: fields{
 				AccessTokenRepository: func(t *testing.T) aclcore.RefreshTokenRepository {
-					repository := mocks.NewAccessTokenRepository(t)
+					repository := mocks.NewRefreshTokenRepository(t)
 					repository.On("StoreRefreshToken", mock.Anything, aclcore.RefreshTokenSpec{
 						Email:               email,
 						RefreshTokenPurpose: aclcore.RefreshTokenPurposeWeb,

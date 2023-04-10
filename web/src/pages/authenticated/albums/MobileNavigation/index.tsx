@@ -5,7 +5,7 @@ import {Album} from "../../../../core/catalog";
 export default function MobileNavigation({album}: {
     album?: Album
 }) {
-    return (album && (
+    return album ? (
         <Breadcrumbs aria-label="breadcrumb">
             <Link underline="hover" color="inherit" href="/albums" sx={{display: 'flex', alignItems: 'center'}}>
                 <HomeIcon sx={{mr: 0.5}} fontSize="inherit"/>
@@ -13,7 +13,7 @@ export default function MobileNavigation({album}: {
             </Link>
             <Typography color="text.primary">{album.name}</Typography>
         </Breadcrumbs>
-    )) || (
+    ) : (
         <Breadcrumbs aria-label="breadcrumb">
             <Typography color="text.primary" sx={{display: 'flex', alignItems: 'center'}}>
                 <HomeIcon sx={{mr: 0.5}} fontSize="inherit"/> Albums

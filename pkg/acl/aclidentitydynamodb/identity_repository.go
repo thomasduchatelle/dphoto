@@ -5,16 +5,23 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"strings"
 )
 
-func New(sess *session.Session, tableName string) (aclcore.IdentityDetailsStore, error) {
+type IdentityRepository interface {
+	aclcore.IdentityDetailsStore
+	aclcore.IdentityQueriesIdentityRepository
+}
+
+func New(sess *session.Session, tableName string) (IdentityRepository, error) {
 	return &repository{
 		db:    dynamodb.New(sess),
 		table: tableName,
 	}, nil
 }
 
-func Must(repository aclcore.IdentityDetailsStore, err error) aclcore.IdentityDetailsStore {
+func Must(repository IdentityRepository, err error) IdentityRepository {
 	if err != nil {
 		panic(err)
 	}
@@ -44,13 +51,8 @@ func (r *repository) StoreIdentity(identity aclcore.Identity) error {
 }
 
 func (r *repository) FindIdentity(email string) (*aclcore.Identity, error) {
-	pk := IdentityRecordPk(email)
-
 	item, err := r.db.GetItem(&dynamodb.GetItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"PK": {S: &pk.PK},
-			"SK": {S: &pk.SK},
-		},
+		Key:       identityRecordPkAttributes(email),
 		TableName: &r.table,
 	})
 	if err != nil {
@@ -61,4 +63,32 @@ func (r *repository) FindIdentity(email string) (*aclcore.Identity, error) {
 	}
 
 	return unmarshalIdentity(item.Item)
+}
+
+func (r *repository) FindIdentities(emails []string) ([]*aclcore.Identity, error) {
+	if len(emails) == 0 {
+		return nil, nil
+	}
+
+	uniqueEmails := make(map[string]interface{})
+	var keys []map[string]*dynamodb.AttributeValue
+	for _, email := range emails {
+		email = strings.ToLower(email)
+		if _, notUnique := uniqueEmails[email]; !notUnique {
+			uniqueEmails[email] = nil
+			keys = append(keys, identityRecordPkAttributes(email))
+		}
+	}
+
+	var identities []*aclcore.Identity
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	for stream.HasNext() {
+		identity, err := unmarshalIdentity(stream.Next())
+		if err != nil {
+			return nil, err
+		}
+		identities = append(identities, identity)
+	}
+
+	return identities, errors.Wrapf(stream.Error(), "failed to list identities from provided email.")
 }

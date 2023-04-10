@@ -2,6 +2,7 @@
 package catalogacl
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
@@ -19,9 +20,11 @@ type MediaAlbumResolver interface {
 type CatalogRules interface {
 	Owner() (string, error)
 	SharedWithUserAlbum() ([]catalog.AlbumId, error)
-	SharedByUserGrid(owner string) (map[string][]string, error)
+	SharedByUserGrid(owner string) (map[string]map[string]aclcore.ScopeType, error)
 	CanListMediasFromAlbum(owner string, folderName string) error
 	CanReadMedia(owner string, id string) error
+
+	CanManageAlbum(owner string, folderName string) error
 }
 
 // NewCatalogRules creates an adapter catalogacl -> aclcore which will always request DB layer
@@ -58,17 +61,22 @@ func (r *rules) SharedWithUserAlbum() ([]catalog.AlbumId, error) {
 	return albums, err
 }
 
-func (r *rules) SharedByUserGrid(owner string) (map[string][]string, error) {
-	scopes, err := r.scopeRepository.ListOwnerScopes(owner, aclcore.AlbumVisitorScope)
+func (r *rules) SharedByUserGrid(owner string) (map[string]map[string]aclcore.ScopeType, error) {
+	scopes, err := r.scopeRepository.ListOwnerScopes(owner, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope)
 
 	if err != nil || len(scopes) == 0 {
 		return nil, err
 	}
 
-	grid := make(map[string][]string)
+	grid := make(map[string]map[string]aclcore.ScopeType)
 	for _, scope := range scopes {
-		list, _ := grid[scope.ResourceId]
-		grid[scope.ResourceId] = append(list, scope.GrantedTo)
+		list, ok := grid[scope.ResourceId]
+		if !ok || len(list) == 0 {
+			list = make(map[string]aclcore.ScopeType)
+			grid[scope.ResourceId] = list
+		}
+
+		list[scope.GrantedTo] = scope.Type
 	}
 
 	return grid, nil
@@ -130,5 +138,19 @@ func (r *rules) CanReadMedia(owner string, mediaId string) error {
 		return errors.Wrapf(aclcore.AccessForbiddenError, "reading media %s/%s has been denied.", owner, mediaId)
 	}
 
+	return nil
+}
+
+func (r *rules) CanManageAlbum(owner string, folderName string) error {
+	scopes, err := r.scopeRepository.FindScopesById(
+		aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: r.email, ResourceOwner: owner},
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(scopes) == 0 {
+		return errors.Wrapf(aclcore.AccessForbiddenError, fmt.Sprintf("%s is not allowed to managed album %s/%s", r.email, owner, folderName))
+	}
 	return nil
 }

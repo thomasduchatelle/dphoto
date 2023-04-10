@@ -45,7 +45,7 @@ func (v *View) listOwnedAlbums() ([]*AlbumInView, error) {
 		sharedTo, _ := sharing[album.FolderName]
 		view = append(view, &AlbumInView{
 			Album:         album,
-			SharedTo:      sharedTo,
+			SharedWith:    sharedTo,
 			DirectlyOwned: true,
 		})
 	}

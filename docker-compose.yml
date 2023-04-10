@@ -13,3 +13,32 @@ services:
       - "./.build/localstack:/var/lib/localstack"
       - '/var/run/docker.sock:/var/run/docker.sock'
       - './tools/localstack-init:/docker-entrypoint-initaws.d'
+
+  wiremock:
+    profiles: ["bg"]
+    image: amazoncorretto:17-alpine
+    command:
+      - sh
+      - -c
+      # no --track: fswatch doesn't work on mounted volumes :(
+      - |
+        apk add --no-cache bash && \
+        ./scripts/wiremock.sh --debug
+    working_dir: /src
+    ports:
+      - "8080:8080"
+    volumes:
+      - "./:/src"
+
+  storybook:
+    profiles: ["bg"]
+    image: node:20-alpine
+    command:
+      - sh
+      - -c
+      - yarn storybook
+    working_dir: /src/web
+    ports:
+      - "6006:6006"
+    volumes:
+      - "./:/src"

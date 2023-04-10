@@ -4,7 +4,7 @@ import UserMenu from "../components/user.menu";
 import {userEvent, within} from "@storybook/testing-library";
 
 export default {
-    title: 'Components/UserMenu',
+    title: 'Layout/UserMenu',
     component: UserMenu,
 } as ComponentMeta<typeof UserMenu>;
 
@@ -15,7 +15,7 @@ DefaultMenu.args = {
     user: {
         name: "Tony Ironman Stark",
         email: "tomy@stark.com",
-        picture: "/tonystark-profile.jpg"
+        picture: "tonystark-profile.jpg"
     },
     onLogout: () => {
     },

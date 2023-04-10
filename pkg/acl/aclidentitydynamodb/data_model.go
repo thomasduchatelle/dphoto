@@ -26,6 +26,16 @@ func IdentityRecordPk(user string) appdynamodb.TablePk {
 	}
 }
 
+func identityRecordPkAttributes(email string) map[string]*dynamodb.AttributeValue {
+	pk := IdentityRecordPk(email)
+
+	key := map[string]*dynamodb.AttributeValue{
+		"PK": {S: &pk.PK},
+		"SK": {S: &pk.SK},
+	}
+	return key
+}
+
 func marshalIdentity(identity *aclcore.Identity) (map[string]*dynamodb.AttributeValue, error) {
 	item, err := dynamodbattribute.MarshalMap(IdentityRecord{
 		TablePk: IdentityRecordPk(identity.Email),

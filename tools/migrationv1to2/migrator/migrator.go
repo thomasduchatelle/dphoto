@@ -9,7 +9,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/asyncjobadapter"
-	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
 	"github.com/thomasduchatelle/dphoto/tools/migrationv1to2/datamodelv1"
@@ -82,7 +82,7 @@ func Migrate(tableName string, arn string, repopulateCache bool) (int, error) {
 
 	if len(patches) > 0 {
 		log.Infof("Running %d updates ... ", len(patches))
-		err = dynamoutils2.BufferedWriteItems(client, patches, tableName, dynamoutils2.DynamoWriteBatchSize)
+		err = dynamoutils.BufferedWriteItems(client, patches, tableName, dynamoutils.DynamoWriteBatchSize)
 		if err != nil {
 			return 0, err
 		}

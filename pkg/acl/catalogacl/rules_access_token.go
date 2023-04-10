@@ -36,3 +36,11 @@ func (a *rulesWithAccessToken) CanReadMedia(owner string, mediaId string) error 
 
 	return a.CatalogRules.CanReadMedia(owner, mediaId)
 }
+
+func (a *rulesWithAccessToken) CanManageAlbum(owner string, folderName string) error {
+	if a.owner == owner {
+		return nil
+	}
+
+	return a.CatalogRules.CanManageAlbum(owner, folderName)
+}

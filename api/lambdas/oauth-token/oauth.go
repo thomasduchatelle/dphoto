@@ -29,7 +29,7 @@ type SSOAuthenticator interface {
 }
 
 type RefreshAuthenticator interface {
-	AuthenticateFromAccessToken(refreshToken string) (*aclcore.Authentication, *aclcore.Identity, error)
+	AuthenticateFromRefreshToken(refreshToken string) (*aclcore.Authentication, *aclcore.Identity, error)
 }
 
 func Handler(request events.APIGatewayRequest) (common.Response, error) {
@@ -112,7 +112,7 @@ func authenticateFromRefreshToken(scopes []string, attributes map[string]string)
 		}, nil)
 	}
 
-	tokens, identity, err := refreshAuthenticator.AuthenticateFromAccessToken(refreshToken)
+	tokens, identity, err := refreshAuthenticator.AuthenticateFromRefreshToken(refreshToken)
 	if err != nil {
 		log.WithError(err).Infof("Refresh token rejected")
 

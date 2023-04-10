@@ -4,7 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
-	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
 func Migrate(tableName string, arn string, repopulateCache bool, scripts []interface{}) (int, error) {
@@ -64,7 +64,7 @@ func Migrate(tableName string, arn string, repopulateCache bool, scripts []inter
 
 	if len(patches) > 0 {
 		log.Infof("Running %d updates ... ", len(patches))
-		err = dynamoutils2.BufferedWriteItems(run.DynamoDBClient, patches, tableName, dynamoutils2.DynamoWriteBatchSize)
+		err = dynamoutils.BufferedWriteItems(run.DynamoDBClient, patches, tableName, dynamoutils.DynamoWriteBatchSize)
 		if err != nil {
 			return 0, err
 		}

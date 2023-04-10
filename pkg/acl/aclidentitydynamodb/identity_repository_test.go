@@ -7,8 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	dynamotestutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
-	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"sort"
 	"testing"
 )
 
@@ -66,6 +67,74 @@ func Test_repository_FindIdentity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := r.FindIdentity(tt.args.email)
+			if tt.wantErr(t, err) && err == nil {
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_repository_FindIdentities(t *testing.T) {
+	sess, db, table := dynamotestutils.NewDbContext(t)
+	r := Must(New(sess, table)).(*repository)
+
+	dynamotestutils.SetContent(t, db, table, []map[string]*dynamodb.AttributeValue{
+		{
+			"PK":      {S: aws.String("USER#tony@stark.com")},
+			"SK":      {S: aws.String("IDENTITY#")},
+			"Email":   {S: aws.String("tony@stark.com")},
+			"Name":    {S: aws.String("Tony Stark")},
+			"Picture": {S: aws.String("/you/know/me.jpg")},
+		},
+		{
+			"PK":      {S: aws.String("USER#natasha@banner.com")},
+			"SK":      {S: aws.String("IDENTITY#")},
+			"Email":   {S: aws.String("natasha@banner.com")},
+			"Name":    {S: aws.String("Natasha")},
+			"Picture": {S: aws.String("/black-widow.jpg")},
+		},
+	})
+
+	type args struct {
+		email []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []*aclcore.Identity
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should de-duplicate input list of emails",
+			args: args{[]string{"tony@stark.com", "tony@stark.com"}},
+			want: []*aclcore.Identity{
+				{Email: "tony@stark.com", Name: "Tony Stark", Picture: "/you/know/me.jpg"},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should find several identities",
+			args: args{[]string{"tony@stark.com", "natasha@banner.com"}},
+			want: []*aclcore.Identity{
+				{Email: "natasha@banner.com", Name: "Natasha", Picture: "/black-widow.jpg"},
+				{Email: "tony@stark.com", Name: "Tony Stark", Picture: "/you/know/me.jpg"},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "it should return an empty list when not found",
+			args:    args{[]string{"pepper@stark.com"}},
+			want:    nil,
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := r.FindIdentities(tt.args.email)
+			sort.Slice(got, func(i, j int) bool {
+				return got[i].Email < got[j].Email
+			})
 			if tt.wantErr(t, err) && err == nil {
 				assert.Equal(t, tt.want, got)
 			}
@@ -145,7 +214,7 @@ func Test_repository_StoreIdentity(t *testing.T) {
 
 			err := r.StoreIdentity(tt.args.identity)
 			if tt.wantErr(t, err) && err == nil {
-				after, err := dynamoutils2.AsSlice(dynamoutils2.NewScanStream(r.db, r.table))
+				after, err := dynamoutils.AsSlice(dynamoutils.NewScanStream(r.db, r.table))
 				if assert.NoError(t, err) {
 					assert.Equal(t, tt.wantAfter, after)
 				}

@@ -76,7 +76,7 @@ func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthen
 		panic(err)
 	}
 
-	identityDetailsStore := aclidentitydynamodb.Must(aclidentitydynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
+	identityDetailsStore := getIdentityDetailsStore()
 	refreshTokenRepository := newRefreshTokenRepository()
 
 	refreshTokenGenerator := aclcore.RefreshTokenGenerator{
@@ -100,6 +100,10 @@ func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthen
 			RefreshTokenRepository: refreshTokenRepository,
 			IdentityDetailsStore:   identityDetailsStore,
 		}
+}
+
+func getIdentityDetailsStore() aclidentitydynamodb.IdentityRepository {
+	return aclidentitydynamodb.Must(aclidentitydynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
 }
 
 func NewLogout() *aclcore.Logout {

@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
-	dynamoutils2 "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
 func (r *repository) ListUserScopes(email string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
@@ -27,7 +27,7 @@ func (r *repository) ListUserScopes(email string, types ...aclcore.ScopeType) ([
 	}
 
 	var scopes []*aclcore.Scope
-	stream := dynamoutils2.NewQueryStream(r.db, queries)
+	stream := dynamoutils.NewQueryStream(r.db, queries)
 	for stream.HasNext() {
 		scope, err := UnmarshalScope(stream.Next())
 		if err != nil {
@@ -41,25 +41,31 @@ func (r *repository) ListUserScopes(email string, types ...aclcore.ScopeType) ([
 }
 
 func (r *repository) ListOwnerScopes(owner string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
+	return r.ListScopesByOwners([]string{owner}, types...)
+}
+
+func (r *repository) ListScopesByOwners(owners []string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	if len(types) == 0 {
 		return nil, nil
 	}
 
 	var queries []*dynamodb.QueryInput
-	for _, mediaType := range types {
-		queries = append(queries, &dynamodb.QueryInput{
-			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-				":owner":    {S: aws.String(owner)},
-				":skPrefix": {S: aws.String(fmt.Sprintf("%s%s", scopePrefix, mediaType))},
-			},
-			IndexName:              aws.String("ReverseGrantIndex"),
-			KeyConditionExpression: aws.String("ResourceOwner = :owner AND begins_with(SK, :skPrefix)"),
-			TableName:              &r.table,
-		})
+	for _, owner := range owners {
+		for _, scopeType := range types {
+			queries = append(queries, &dynamodb.QueryInput{
+				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+					":owner":    {S: aws.String(owner)},
+					":skPrefix": {S: aws.String(fmt.Sprintf("%s%s", scopePrefix, scopeType))},
+				},
+				IndexName:              aws.String("ReverseGrantIndex"),
+				KeyConditionExpression: aws.String("ResourceOwner = :owner AND begins_with(SK, :skPrefix)"),
+				TableName:              &r.table,
+			})
+		}
 	}
 
 	var scopes []*aclcore.Scope
-	stream := dynamoutils2.NewQueryStream(r.db, queries)
+	stream := dynamoutils.NewQueryStream(r.db, queries)
 	for stream.HasNext() {
 		scope, err := UnmarshalScope(stream.Next())
 		if err != nil {
@@ -79,7 +85,7 @@ func (r *repository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope, e
 	}
 
 	var scopes []*aclcore.Scope
-	stream := dynamoutils2.NewGetStream(dynamoutils2.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils2.DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
 	for stream.HasNext() {
 		scope, err := UnmarshalScope(stream.Next())
 		if err != nil {

@@ -2,6 +2,7 @@
 package catalogaclview
 
 import (
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
@@ -18,8 +19,8 @@ type ListAlbumsFilter struct {
 
 type AlbumInView struct {
 	*catalog.Album
-	SharedTo      []string // SharedTo is the list of emails to which this album is shared
-	DirectlyOwned bool     // DirectlyOwned is set to true when the user is an owner of the album
+	SharedWith    map[string]aclcore.ScopeType // SharedWith is the list of emails to which this album is shared with the scope (Visitor or Contributor)
+	DirectlyOwned bool                         // DirectlyOwned is set to true when the user is an owner of the album
 }
 
 // Sharing is caring.

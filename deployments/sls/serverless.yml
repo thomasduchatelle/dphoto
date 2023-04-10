@@ -22,7 +22,7 @@ functions:
           path: /oauth/token
           method: post
   oauth-logout:
-    handler: bin/oauth-logout
+    handler: bin/oauth-revoke
     events:
       - httpApi:
           path: /oauth/logout
@@ -34,6 +34,12 @@ functions:
     events:
       - httpApi:
           path: /env-config.json
+          method: get
+  version:
+    handler: bin/version
+    events:
+      - httpApi:
+          path: /api/v1/version
           method: get
   not-found:
     handler: bin/not-found
@@ -49,11 +55,33 @@ functions:
       - httpApi:
           path: /api/v1/albums
           method: get
+  share-album:
+    handler: bin/share-album
+    events:
+      - httpApi:
+          # /api/v1/owners/tomdush@gmail.com/albums/2018-Q1/shares/claire.magnier@gmail.com
+          path: /api/v1/owners/{owner}/albums/{folderName}/shares/{email}
+          method: put
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums/{folderName}/shares/{email}
+          method: delete
   list-medias:
     handler: bin/list-medias
     events:
       - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/medias
+          method: get
+  list-users:
+    handler: bin/list-users
+    events:
+      - httpApi:
+          path: /api/v1/users
+          method: get
+  list-owners:
+    handler: bin/list-owners
+    events:
+      - httpApi:
+          path: /api/v1/owners
           method: get
   get-media:
     handler: bin/get-media
@@ -62,12 +90,6 @@ functions:
     events:
       - httpApi:
           path: /api/v1/owners/{owner}/medias/{mediaId}/{filename}
-          method: get
-  version:
-    handler: bin/version
-    events:
-      - httpApi:
-          path: /api/v1/version
           method: get
 
   # ASYNC lambdas - using FIFO for deduplication made a SQS required

@@ -1,0 +1,17 @@
+{
+  "priority": 20,
+  "request": {
+    "method": "GET",
+    "url": "/api/v1/users?emails=tony%40stark.com"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": [
+      {
+        "name": "Tony Stark",
+        "email": "tony@stark.com",
+        "picture": "/api/static/tonystark-profile.jpg"
+      }
+    ]
+  }
+}

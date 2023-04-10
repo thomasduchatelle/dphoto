@@ -1,6 +1,7 @@
 package catalogacl
 
 import (
+	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
@@ -14,14 +15,18 @@ type ShareAlbumCase struct {
 	CatalogPort ShareAlbumCatalogPort
 }
 
-func (s *ShareAlbumCase) ShareAlbumWith(owner, folderName, userEmail string) error {
+func (s *ShareAlbumCase) ShareAlbumWith(owner, folderName, userEmail string, scope aclcore.ScopeType) error {
+	if scope != aclcore.AlbumVisitorScope && scope != aclcore.AlbumContributorScope {
+		return errors.Errorf("'%s' scope is not allowed for album shring.", scope)
+	}
+
 	_, err := s.CatalogPort.FindAlbum(owner, folderName)
 	if err != nil {
 		return err // it can be a catalog.NotFoundError
 	}
 
 	return s.ScopeWriter.SaveIfNewScope(aclcore.Scope{
-		Type:          aclcore.AlbumVisitorScope,
+		Type:          scope,
 		GrantedAt:     aclcore.TimeFunc(),
 		GrantedTo:     userEmail,
 		ResourceOwner: owner,

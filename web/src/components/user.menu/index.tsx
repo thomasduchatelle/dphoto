@@ -24,7 +24,7 @@ const UserMenu = ({user, onLogout}: {
         <>
             <Tooltip title="Open settings">
                 <IconButton sx={{p: 0}} onClick={handleOpen}>
-                    <Avatar alt={user.name} src={user.picture ?? "/static/images/avatar/2.jpg"}/>
+                    <Avatar alt={user.name} src={user.picture}/>
                 </IconButton>
             </Tooltip>
             <Menu
