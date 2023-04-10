@@ -120,7 +120,7 @@ build-app: build-api build-web
 
 AWS_PROFILE ?= dphoto
 deploy-app: clean-web clean-api test-app build-app
-	export AWS_PROFILE="$(AWS_PROFILE)" && cd deployments/sls && sls deploy --debug
+	export AWS_PROFILE="$(AWS_PROFILE)" && cd deployments/sls && sls deploy
 
 #######################################
 ## UTILS

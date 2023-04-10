@@ -35,6 +35,12 @@ functions:
       - httpApi:
           path: /env-config.json
           method: get
+  not-found:
+    handler: bin/not-found
+    events:
+      - httpApi:
+          path: /api/{path+}
+          method: any
 
   # REST lambdas
   list-albums:
