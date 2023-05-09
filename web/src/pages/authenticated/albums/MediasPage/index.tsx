@@ -10,12 +10,14 @@ export default function MediasPage({
                                        fullyLoaded,
                                        medias,
                                        selectedAlbum,
+                                       scrollToMedia,
                                    }: {
     albums: Album[]
     albumNotFound: boolean
     fullyLoaded: boolean
     medias: MediaWithinADay[]
     selectedAlbum?: Album
+    scrollToMedia?: string
 }) {
     const drawerWidth = 450
 
@@ -57,8 +59,12 @@ export default function MediasPage({
                     </Alert>
                 )) || (
                     <Box>
-                        <MediaList medias={medias} loaded={fullyLoaded}
-                                   albumNotFound={albumNotFound}/>
+                        <MediaList
+                            medias={medias}
+                            loaded={fullyLoaded}
+                            albumNotFound={albumNotFound}
+                            scrollToMedia={scrollToMedia}
+                        />
                     </Box>
                 )}
             </Box>

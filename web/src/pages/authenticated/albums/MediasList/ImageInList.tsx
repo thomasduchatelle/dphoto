@@ -3,15 +3,26 @@ import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
 import {Link} from "react-router-dom";
 import {dateTimeToString} from "../../../../core/utils/date-utils";
 import {Media, MediaType} from "../../../../core/catalog";
+import {useEffect, useRef} from "react";
 
-export function ImageInList({media, imageViewportPercentage}: {
+export function ImageInList({media, imageViewportPercentage, autoFocus = false}: {
     media: Media,
     imageViewportPercentage: number,
+    autoFocus?: boolean,
 }) {
+    const itemRef = useRef<HTMLLIElement | null>(null)
     const imageSrc = media.type === MediaType.IMAGE ? `${media.contentPath}` : '/video-placeholder.png';
     const imageSrcSet = media.type === MediaType.IMAGE ? `${media.contentPath}&w=180 180w, ${media.contentPath}&w=360 360w` : '/video-placeholder.png';
+
+    useEffect(() => {
+        if (autoFocus && itemRef.current) {
+            itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+    }, [autoFocus, itemRef])
+
     return (
         <ImageListItem
+            ref={itemRef}
             sx={{
                 overflow: 'hidden',
                 '& .MuiImageListItemBar-root': {

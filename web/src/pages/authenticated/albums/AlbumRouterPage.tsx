@@ -7,7 +7,7 @@ import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogController} from "../../../core/catalog";
-import {useLocation} from "react-router-dom";
+import {useLocation, useSearchParams} from "react-router-dom";
 
 export default function AlbumRouterPage() {
     const {albums, selectedAlbum, albumNotFound, medias} = useCatalogController()
@@ -15,6 +15,8 @@ export default function AlbumRouterPage() {
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()
+    const [search] = useSearchParams()
+
     const theme = useTheme()
 
     // '/albums' page is only available on small devices
@@ -41,6 +43,7 @@ export default function AlbumRouterPage() {
                     fullyLoaded={true}
                     medias={medias}
                     selectedAlbum={selectedAlbum}
+                    scrollToMedia={search.get("mediaId") ?? undefined}
                 />
             )}
         </Box>

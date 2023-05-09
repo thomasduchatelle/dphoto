@@ -1,25 +1,28 @@
-import {Alert, ImageList, ImageListItem, Skeleton, Typography} from "@mui/material";
+import {Alert, ImageList, ImageListItem, Skeleton, Typography, useMediaQuery, useTheme} from "@mui/material";
 import {Fragment} from "react";
 import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
 import useWindowDimensions from "../../../../core/utils/window-utils";
 import {ImageInList} from "./ImageInList";
 import {MediaWithinADay} from "../../../../core/catalog";
 
-const mobileBreakpoint = 1200;
-
 const drawerWidth = 498;
 const marginsWidth = 33;
 
-export default function MediaList({medias, loaded, albumNotFound}: {
+export default function MediaList({medias, loaded, albumNotFound, scrollToMedia = undefined}: {
     medias: MediaWithinADay[]
     loaded: boolean
     albumNotFound: boolean
+    scrollToMedia?: string
 }) {
     const {width} = useWindowDimensions()
-    // keep images ~200px wide for non-mobile and ~100px for mobile
-    const cols = width > mobileBreakpoint ? Math.floor((width - drawerWidth) / 200) : Math.max(Math.floor((width - marginsWidth) / 100), 2)
 
-    const estimatedWidth = width > mobileBreakpoint ? (width - drawerWidth) / cols : (width - marginsWidth) / cols
+    const theme = useTheme()
+    const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
+
+    // keep images ~200px wide for non-mobile and ~100px for mobile
+    const cols = isMobileDevice ? Math.max(Math.floor((width - marginsWidth) / 100), 2) : Math.floor((width - drawerWidth) / 200)
+
+    const estimatedWidth = isMobileDevice ? (width - marginsWidth) / cols : (width - drawerWidth) / cols
 
     if (!loaded) {
         return (
@@ -60,8 +63,12 @@ export default function MediaList({medias, loaded, albumNotFound}: {
                         </Typography>
                         <ImageList cols={cols} gap={0} rowHeight={estimatedWidth}>
                             {day.medias.map((media) => (
-                                <ImageInList media={media} key={media.id}
-                                             imageViewportPercentage={100 * estimatedWidth / width}/>
+                                <ImageInList
+                                    media={media}
+                                    key={media.id}
+                                    imageViewportPercentage={100 * estimatedWidth / width}
+                                    autoFocus={media.id === scrollToMedia}
+                                />
                             ))}
                         </ImageList>
                     </Fragment>

@@ -46,12 +46,16 @@ export class MediaPageLogic {
         let previousMediaLink = "", nextMediaLink = "", previousMediaSrc = "", nextMediaSrc = "",
             previousIsImage = false,
             nextIsImage = false
+        let backToAlbumLink= `/albums/${owner}/${album}`
 
         if (mediasState.owner === owner && mediasState.folderName === album && mediasState.medias) {
+
             let index = mediasState.medias.findIndex(media => media.encodedId === encodedId)
             if (index < 0) {
                 index = 0
             }
+
+            backToAlbumLink = `/albums/${owner}/${album}?mediaId=${mediasState.medias[index].encodedId}`
 
             if (index > 0) {
                 const media = mediasState.medias[index - 1];
@@ -69,7 +73,7 @@ export class MediaPageLogic {
         }
 
         return {
-            backToAlbumLink: `/albums/${owner}/${album}`,
+            backToAlbumLink,
             imgSrc: `/api/v1/owners/${owner}/medias/${encodedId}/${filename}?access_token=${this.mustBeAuthenticated.accessToken}`,
             currentIsImage: this.isAnImage(filename),
             previousMediaLink,
