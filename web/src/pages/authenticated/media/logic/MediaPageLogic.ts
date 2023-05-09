@@ -55,7 +55,7 @@ export class MediaPageLogic {
                 index = 0
             }
 
-            backToAlbumLink = `/albums/${owner}/${album}?mediaId=${mediasState.medias[index].encodedId}`
+            backToAlbumLink = `/albums/${owner}/${album}?mediaId=${encodeURIComponent(mediasState.medias[index].encodedId)}`
 
             if (index > 0) {
                 const media = mediasState.medias[index - 1];

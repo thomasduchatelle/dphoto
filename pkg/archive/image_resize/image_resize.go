@@ -68,16 +68,7 @@ func ResizeImage(reader io.Reader, width int, fast bool) ([]byte, string, error)
 }
 
 func resizeImage(img image.Image, width int, fast bool) image.Image {
-	resizedWidth := width
-	resizedHeight := 0
-	if width > resizeMaxDimensionBreakPoint && img.Bounds().Dx() < img.Bounds().Dy() {
-		// portrait images weight are HUGE when resized by their small dimension,
-		// but it's ok for miniatures that are used on mobile phone
-		resizedWidth = 0
-		resizedHeight = width
-	}
-
-	if resizedWidth > img.Bounds().Dx() || resizedHeight > img.Bounds().Dy() {
+	if width > img.Bounds().Dx() {
 		return img
 	}
 
@@ -86,7 +77,7 @@ func resizeImage(img image.Image, width int, fast bool) image.Image {
 		algorithm = imaging.Box
 	}
 
-	return imaging.Resize(img, resizedWidth, resizedHeight, algorithm)
+	return imaging.Resize(img, width, 0, algorithm)
 }
 
 func readImage(reader io.Reader) (image.Image, string, error) {
