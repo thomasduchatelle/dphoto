@@ -68,7 +68,7 @@ type CacheAdapter interface {
 	// SignedURL returns a pre-authorised URL to download the content
 	SignedURL(key string, duration time.Duration) (string, error)
 
-	// WalkCacheByPrefix call the observer for each key found in the cache
+	// WalkCacheByPrefix call the observer for each key found in the analysiscache
 	WalkCacheByPrefix(prefix string, observer func(string)) error
 }
 

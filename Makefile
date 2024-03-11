@@ -153,3 +153,5 @@ dcdown:
 
 dcup:
 	docker-compose up -d
+	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region eu-west-1 s3 mb s3://dphoto-local
+	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region eu-west-1 sns create-topic --name dphoto-local-archive-jobs

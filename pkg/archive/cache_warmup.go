@@ -16,7 +16,7 @@ func SupportResize(filename string) bool {
 	return supported
 }
 
-// WarmUpCacheByFolder list medias missing in the cache and load them
+// WarmUpCacheByFolder list medias missing in the analysiscache and load them
 func WarmUpCacheByFolder(owner, missedStoreKey string, width int) error {
 	if !strings.HasPrefix(missedStoreKey, owner) {
 		return errors.Errorf("cannot load the cache: %s is not the owner of %s media", owner, missedStoreKey)
@@ -62,7 +62,7 @@ func WarmUpCacheByFolder(owner, missedStoreKey string, width int) error {
 	return nil
 }
 
-// LoadImagesInCache generates resized images and store them in the cache. Returns how many has been processed
+// LoadImagesInCache generates resized images and store them in the analysiscache. Returns how many has been processed
 func LoadImagesInCache(ctx context.Context, images ...*ImageToResize) (int, error) {
 	for index, img := range images {
 		select {

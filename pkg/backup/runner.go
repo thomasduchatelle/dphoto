@@ -8,22 +8,22 @@ import (
 )
 
 type runnerPublisher func(chan FoundMedia, chan *ProgressEvent) error
-type runnerAnalyser func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
+type RunnerAnalyserFunc func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
 type runnerCataloger func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool
 type runnerUploader func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
 
 type runner struct {
-	MDC                  *log.Entry // MDC is log.WithFields({}) that contains Mapped Diagnostic Context
-	Publisher            runnerPublisher
-	Analyser             runnerAnalyser
-	Cataloger            runnerCataloger
-	UniqueFilter         runnerUniqueFilter
-	Uploader             runnerUploader
-	ConcurrentAnalyser   int // ConcurrentAnalyser is the number of goroutines that analyse the medias
-	ConcurrentCataloguer int // ConcurrentAnalyser is the number of goroutines that analyse the medias
-	ConcurrentUploader   int // ConcurrentUploader is the number of goroutine that upload files online
-	BatchSize            int // BatchSize is the size of the buffer for the uploader
+	MDC                  *log.Entry         // MDC is log.WithFields({}) that contains Mapped Diagnostic Context
+	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
+	Analyser             RunnerAnalyserFunc // Analyser is extracting metadata from the file
+	Cataloger            runnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
+	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
+	Uploader             runnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
+	ConcurrentAnalyser   int                // ConcurrentAnalyser is the number of goroutines that analyse the medias
+	ConcurrentCataloguer int                // ConcurrentAnalyser is the number of goroutines that analyse the medias
+	ConcurrentUploader   int                // ConcurrentUploader is the number of goroutine that upload files online
+	BatchSize            int                // BatchSize is the size of the buffer for the uploader
 	SkipRejects          bool
 	context              context.Context
 	cancel               context.CancelFunc

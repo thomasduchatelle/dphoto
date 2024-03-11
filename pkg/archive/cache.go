@@ -16,7 +16,7 @@ func NewCache() *Cache {
 	}
 }
 
-// GetOrStore will return cached value if present, or call contentGenerator to cache and return its result.
+// GetOrStore will return cached value if present, or call contentGenerator to analysiscache and return its result.
 func (c *Cache) GetOrStore(cacheKey string, contentGenerator func() ([]byte, string, error), postProcess func(io.ReadCloser, int, string, error) ([]byte, string, error)) ([]byte, string, error) {
 	reader, size, mediaType, err := c.storage.Get(cacheKey)
 	if err != NotFoundError {
@@ -32,7 +32,7 @@ func (c *Cache) GetOrStore(cacheKey string, contentGenerator func() ([]byte, str
 	return postProcess(io.NopCloser(bytes.NewReader(content)), len(content), mediaType, errors.Wrapf(err, "failed caching media %s", cacheKey))
 }
 
-// Store calls and cache the value only if it wasn't already present.
+// Store calls and analysiscache the value only if it wasn't already present.
 func (c *Cache) Store(cacheKey string, contentGenerator func() ([]byte, string, error)) error {
 	_, _, _, err := c.storage.Get(cacheKey)
 	if err != NotFoundError {

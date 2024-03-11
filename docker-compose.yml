@@ -6,7 +6,7 @@ services:
       - '4563-4599:4563-4599'
       - '8055:8080'
     environment:
-      - SERVICES=s3,dynamodb,acm,ssm
+      - SERVICES=s3,dynamodb,acm,ssm,sns,sqs
       - DATA_DIR=/tmp/localstack/data
       - DEBUG=1
     volumes:

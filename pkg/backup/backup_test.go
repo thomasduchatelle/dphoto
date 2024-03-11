@@ -27,11 +27,11 @@ func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 
 	// given
 	volume := mockVolume{
-		backup.NewInmemoryMedia("file_1.jpg", time.Now(), []byte("2022-06-18")),
-		backup.NewInmemoryMedia("file_2.mp4", time.Now(), []byte("2022-06-19A")),
-		backup.NewInmemoryMedia("file_3.avi", time.Now(), []byte("2022-06-20AB")),
-		backup.NewInmemoryMedia("file_4.jpg", time.Now(), []byte("2022-06-21ABC")),
-		backup.NewInmemoryMedia("file_4.jpg", time.Now(), []byte("2022-06-22ABCD")),
+		backup.NewInMemoryMedia("file_1.jpg", time.Now(), []byte("2022-06-18")),
+		backup.NewInMemoryMedia("file_2.mp4", time.Now(), []byte("2022-06-19A")),
+		backup.NewInMemoryMedia("file_3.avi", time.Now(), []byte("2022-06-20AB")),
+		backup.NewInMemoryMedia("file_4.jpg", time.Now(), []byte("2022-06-21ABC")),
+		backup.NewInMemoryMedia("file_4.jpg", time.Now(), []byte("2022-06-22ABCD")),
 	}
 	expectedCatalogRequests := []*backup.CatalogMediaRequest{
 		{
@@ -167,10 +167,10 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 
 	// given
 	volume := mockVolume{
-		backup.NewInmemoryMedia("file_1.jpg", time.Now(), []byte("2022-06-18")),
-		backup.NewInmemoryMedia("file_2.jpg", time.Now(), []byte("2022-06-19A")),
-		backup.NewInmemoryMedia("file_3.jpg", time.Now(), []byte("2022-06-20AB")),
-		backup.NewInmemoryMedia("file_4.jpg", time.Now(), []byte("2022-06-21ABC")),
+		backup.NewInMemoryMedia("file_1.jpg", time.Now(), []byte("2022-06-18")),
+		backup.NewInMemoryMedia("file_2.jpg", time.Now(), []byte("2022-06-19A")),
+		backup.NewInMemoryMedia("file_3.jpg", time.Now(), []byte("2022-06-20AB")),
+		backup.NewInMemoryMedia("file_4.jpg", time.Now(), []byte("2022-06-21ABC")),
 	}
 	expectedCatalogRequests := []*backup.CatalogMediaRequest{
 		{

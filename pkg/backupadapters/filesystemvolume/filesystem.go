@@ -1,4 +1,4 @@
-// Package filesystemvolume scan a local filesystem to find medias in it
+// Package filesystemvolume scans a local filesystem to find medias in it
 package filesystemvolume
 
 import (
@@ -81,22 +81,23 @@ func (v *volume) collect(mcd *log.Entry, mediaChannel chan backup.FoundMedia, er
 	go func() {
 		defer close(done)
 
-		closed := 0
-		for closed < 0x11 {
+		noMoreError := false
+		noMoreMedia := false
+		for !noMoreError && !noMoreMedia {
 			select {
 			case err, more := <-errorsChannel:
 				if more {
 					mcd.WithError(err).Warnln("scan error")
 					caughtErrors = append(caughtErrors, err)
 				} else {
-					closed = closed | 0x01
+					noMoreError = true
 				}
 
 			case media, more := <-mediaChannel:
 				if more {
 					medias = append(medias, media)
 				} else {
-					closed = closed | 0x10
+					noMoreMedia = true
 				}
 			}
 		}
@@ -166,6 +167,10 @@ type fsMedia struct {
 	absolutePath         string
 	size                 int
 	lastModificationDate time.Time
+}
+
+func (f *fsMedia) LastModification() time.Time {
+	return f.lastModificationDate
 }
 
 func (f *fsMedia) Size() int {

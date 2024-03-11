@@ -40,7 +40,7 @@ type StoreRequest struct {
 	SignatureSha256  string                        // SignatureSha256 is the hash of file content, mainly used to generate the filename
 }
 
-// ImageToResize is a request to cache resized image ; optional arguments might be used when processed synchronously but not when queued.
+// ImageToResize is a request to analysiscache resized image ; optional arguments might be used when processed synchronously but not when queued.
 type ImageToResize struct {
 	Owner    string                        // Owner is mandatory
 	MediaId  string                        // MediaId is mandatory

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/adapters/backupproxy"
-	ui2 "github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/scanui"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 )
 
@@ -20,10 +20,10 @@ var albumCmd = &cobra.Command{
 	Long:    `Organise your collection into albums.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if listArgs.interactive {
-			err := ui2.NewInteractiveSession(new(uiCatalogAdapter), backupproxy.NewAlbumRepository(Owner), ui2.NewNoopRepository(), Owner).Start()
+			err := ui.NewInteractiveSession(new(uiCatalogAdapter), scanui.NewAlbumRepository(Owner), ui.NewNoopRepository(), Owner).Start()
 			printer.FatalIfError(err, 1)
 		} else {
-			err := ui2.NewSimpleSession(backupproxy.NewAlbumRepository(Owner), ui2.NewNoopRepository()).Render()
+			err := ui.NewSimpleSession(scanui.NewAlbumRepository(Owner), ui.NewNoopRepository()).Render()
 			printer.FatalIfError(err, 1)
 		}
 	},

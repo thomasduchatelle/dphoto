@@ -13,7 +13,7 @@ type TrackAnalysed struct {
 }
 
 // OnAnalysed provides a mock function with given fields: done, total
-func (_m *TrackAnalysed) OnAnalysed(done backup.MediaCounter, total backup.MediaCounter) {
+func (_m *TrackAnalysed) OnAnalysed(done, total, cached backup.MediaCounter) {
 	_m.Called(done, total)
 }
 

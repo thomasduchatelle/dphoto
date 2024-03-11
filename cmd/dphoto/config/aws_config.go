@@ -88,8 +88,8 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 			awsSession: sess,
 		}
 
-		for _, l := range listeners {
-			l(config)
+		for _, listener := range listeners {
+			listener(config)
 		}
 		log.Debugf("Config > %d adapters connected", len(listeners))
 	}

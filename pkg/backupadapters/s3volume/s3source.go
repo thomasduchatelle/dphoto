@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 )
 
 // New creates a new backup.SourceVolume that will find files on an S3 bucket.
@@ -66,10 +67,11 @@ func (s *volume) FindMedias() ([]backup.FoundMedia, error) {
 			ext := strings.TrimPrefix(strings.ToLower(path.Ext(*obj.Key)), ".")
 			if _, supported := s.supportedExtensions[ext]; supported {
 				medias = append(medias, &s3Media{
-					bucket:    s.bucket,
-					keyPrefix: s.keyPrefix,
-					s3:        s.s3,
-					S3Object:  obj,
+					bucket:           s.bucket,
+					keyPrefix:        s.keyPrefix,
+					s3:               s.s3,
+					S3Object:         obj,
+					lastModification: *obj.LastModified,
 				})
 			}
 		}
@@ -80,10 +82,15 @@ func (s *volume) FindMedias() ([]backup.FoundMedia, error) {
 }
 
 type s3Media struct {
-	bucket    string
-	keyPrefix string
-	s3        *s3.S3
-	S3Object  *s3.Object
+	bucket           string
+	keyPrefix        string
+	s3               *s3.S3
+	S3Object         *s3.Object
+	lastModification time.Time
+}
+
+func (s *s3Media) LastModification() time.Time {
+	return s.lastModification
 }
 
 func (s *s3Media) Size() int {
@@ -96,17 +103,6 @@ func (s *s3Media) MediaPath() backup.MediaPath {
 	if pathMiddle == "." {
 		pathMiddle = ""
 	}
-
-	//root := strings.Join([]string{"s3:/", s.bucket, s.keyPrefix}, "/") + "/"
-	//fullPath := fmt.Sprintf("s3://%s/%s", s.bucket, *s.S3Object.Key)
-	//filename := path.Base(*s.S3Object.Key)
-	//
-	//relativePath := strings.TrimSuffix(path.Dir(*s.S3Object.Key), "/")
-	//
-	//parent := path.Base(relativePath)
-	//if parent == "" {
-	//	parent = s.bucket
-	//}
 
 	parentDir := path.Base(path.Dir(*s.S3Object.Key))
 	if parentDir == "" {

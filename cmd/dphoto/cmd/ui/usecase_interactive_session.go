@@ -172,6 +172,18 @@ func (i *InteractiveSession) BackupSelected() {
 	}
 }
 
+func (i *InteractiveSession) BackupAll() {
+	record := *i.state.Records[i.state.Selected]
+	if record.Suggestion {
+		// take control of the screen
+		if i.must(i.actionsPort.BackupSuggestion(record.SuggestionRecord, nil, i.renderer)) {
+
+			// hand over screen control
+			i.must(i.reloadRecords())
+		}
+	}
+}
+
 func (i *InteractiveSession) reloadRecords() error {
 	existing, err := i.existingRepository.FindExistingRecords()
 	if err != nil {
@@ -210,9 +222,9 @@ func (i *InteractiveSession) updateActions() {
 	if len(i.state.Records) == 0 {
 		// no specific action
 	} else if i.state.Records[i.state.Selected].Suggestion {
-		actions = append(actions, "C: create", "B: backup")
+		actions = append(actions, "C: create", "B: backup", "A: backup all")
 	} else {
-		actions = append(actions, "DEL: delete", "E: edit name", "D: edit dates")
+		actions = append(actions, "DEL: delete", "E: edit name", "D: edit dates", "A: backup all")
 	}
 
 	i.state.Actions = actions

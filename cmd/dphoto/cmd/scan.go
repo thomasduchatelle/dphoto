@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
-	backupproxy2 "github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/adapters/backupproxy"
-	ui2 "github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/scanui"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
@@ -19,6 +19,7 @@ var (
 		nonInteractive bool
 		skipRejects    bool
 		rejectFile     string
+		noCache        bool
 	}{}
 )
 
@@ -30,7 +31,8 @@ var scan = &cobra.Command{
 		volume := args[0]
 
 		smartVolume, err := newSmartVolume(volume)
-		recordRepository, rejects, err := backupproxy2.ScanWithCache(Owner, smartVolume, backup.OptionSkipRejects(scanArgs.skipRejects))
+		options := backup.OptionSkipRejects(scanArgs.skipRejects).WithCachedAnalysis(addCacheAnalysis(!scanArgs.noCache))
+		recordRepository, rejects, err := scanui.ScanWithProgress(Owner, smartVolume, options)
 		printer.FatalIfError(err, 2)
 
 		if len(rejects) > 0 && scanArgs.rejectFile != "" {
@@ -41,14 +43,12 @@ var scan = &cobra.Command{
 		if recordRepository.Count() == 0 {
 			fmt.Println(aurora.Yellow(fmt.Sprintf("No new media found on volume %s.", aurora.Cyan(volume))))
 		} else if scanArgs.nonInteractive {
-			err = ui2.NewSimpleSession(backupproxy2.NewAlbumRepository(Owner), recordRepository).Render()
+			err = ui.NewSimpleSession(scanui.NewAlbumRepository(Owner), recordRepository).Render()
 			printer.FatalIfError(err, 1)
 		} else {
-			err = ui2.NewInteractiveSession(&uiCatalogAdapter{backupproxy2.NewBackupHandler(Owner, newSmartVolume)}, backupproxy2.NewAlbumRepository(Owner), recordRepository, Owner).Start()
+			err = ui.NewInteractiveSession(&uiCatalogAdapter{scanui.NewBackupHandler(Owner, newSmartVolume, options)}, scanui.NewAlbumRepository(Owner), recordRepository, Owner).Start()
 			printer.FatalIfError(err, 1)
 		}
-
-		os.Exit(0)
 	},
 }
 
@@ -81,13 +81,14 @@ func init() {
 	scan.Flags().BoolVarP(&scanArgs.nonInteractive, "non-interactive", "I", false, "Disable interactive output and only display the scan results.")
 	scan.Flags().BoolVarP(&scanArgs.skipRejects, "skip-errors", "s", false, "Unreadable files, or files without date, will be reported as 'rejects' and printed in rejected file.")
 	scan.Flags().StringVar(&scanArgs.rejectFile, "rejects", "", "Unreadable files, or files without date, will be listed in the given file. Requires to use --skip-errors.")
+	scan.Flags().BoolVarP(&scanArgs.noCache, "no-cache", "c", false, "set to true to ignore cache (and not building it)")
 }
 
 type uiCatalogAdapter struct {
-	ui2.BackupSuggestionPort
+	ui.BackupSuggestionPort
 }
 
-func (o uiCatalogAdapter) Create(request ui2.RecordCreation) error {
+func (o *uiCatalogAdapter) Create(request ui.RecordCreation) error {
 	return catalog.Create(catalog.CreateAlbum{
 		Owner:            request.Owner,
 		Name:             request.Name,

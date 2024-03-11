@@ -13,6 +13,8 @@ var (
 	LogFile = "$HOME/.dphoto/logs/dphoto.log"
 	debug   = false
 	Owner   string // Owner source of truce is viper config, for convenience, other commands can get it from here.
+
+	postRunFunctions []func() error
 )
 
 var rootCmd = &cobra.Command{
@@ -64,6 +66,12 @@ var rootCmd = &cobra.Command{
 		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		log.Debugf("Running %d postRunFunction ...", len(postRunFunctions))
+		for _, callbacks := range postRunFunctions {
+			err := callbacks()
+			log.Warnf("A function failed to complete: %s", err.Error())
+		}
+
 		log.Debugln("Program complete.")
 		log.Exit(0)
 	},

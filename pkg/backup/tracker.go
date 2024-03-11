@@ -13,7 +13,7 @@ type TrackScanComplete interface {
 }
 
 type TrackAnalysed interface {
-	OnAnalysed(done, total MediaCounter)
+	OnAnalysed(done, total, cached MediaCounter)
 }
 
 // TrackUploaded includes both uploaded and skipped
@@ -78,6 +78,7 @@ func (t *Tracker) consume(progressChannel chan *ProgressEvent) {
 			t.fireScanComplete()
 
 		case ProgressEventAnalysed:
+		case ProgressEventAnalysedFromCache:
 		case ProgressEventCatalogued:
 			// nothing
 
@@ -119,12 +120,13 @@ func (t *Tracker) fireAnalysedEvent() {
 	exists, _ := t.eventCount[ProgressEventAlreadyExists]
 	duplicates, _ := t.eventCount[ProgressEventDuplicate]
 	wrongAlbum, _ := t.eventCount[ProgressEventWrongAlbum]
+	analysedFromCache, _ := t.eventCount[ProgressEventAnalysedFromCache]
 
 	done := passed.AddCounter(exists).AddCounter(duplicates).AddCounter(wrongAlbum)
 
 	for _, listener := range t.listeners {
 		if dispatch, ok := listener.(TrackAnalysed); ok {
-			dispatch.OnAnalysed(done, t.eventCount[ProgressEventScanComplete])
+			dispatch.OnAnalysed(done, t.eventCount[ProgressEventScanComplete], analysedFromCache)
 		}
 	}
 }
