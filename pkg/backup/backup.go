@@ -36,7 +36,7 @@ func Backup(owner string, volume SourceVolume, optionsSlice ...Options) (Complet
 	run := runner{
 		MDC:                  mdc,
 		Publisher:            publisher,
-		Analyser:             newBackupAnalyseMedia(),
+		Analyser:             options.GetAnalyserDecorator().Decorate(newBackupAnalyseMedia()),
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             newBackupUploader(owner),

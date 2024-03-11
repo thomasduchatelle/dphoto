@@ -9,10 +9,6 @@ import (
 	"time"
 )
 
-var (
-	datePrefix = regexp.MustCompile("^[0-9]{4}-[01Q][0-9][-_]")
-)
-
 // Scan a source to discover albums based on original folder structure. Use listeners will be notified on the progress of the scan.
 func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*ScannedFolder, []FoundMedia, error) {
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
@@ -31,7 +27,7 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 	run := runner{
 		MDC:                  mdc,
 		Publisher:            publisher,
-		Analyser:             newBackupAnalyseMedia(),
+		Analyser:             options.GetAnalyserDecorator().Decorate(newBackupAnalyseMedia()),
 		Cataloger:            newScannerCataloger(owner),
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             receiver.receive,

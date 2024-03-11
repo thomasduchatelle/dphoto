@@ -105,11 +105,11 @@ func TestShouldStopAtFirstError(t *testing.T) {
 
 	for _, tt := range tests {
 		run, capture := newMockedRun(mockPublisher(
-			NewInmemoryMedia("file_1.jpg", time.Now(), []byte("3.14")),
-			NewInmemoryMedia("file_2.jpg", time.Now(), []byte("3.1415")),
-			NewInmemoryMedia("file_3.jpg", time.Now(), []byte("3.141592")),
-			NewInmemoryMedia("file_4.jpg", time.Now(), []byte("3.141592")),
-			NewInmemoryMedia("file_5.jpg", time.Now(), []byte("3.141592")),
+			NewInMemoryMedia("file_1.jpg", time.Now(), []byte("3.14")),
+			NewInMemoryMedia("file_2.jpg", time.Now(), []byte("3.1415")),
+			NewInMemoryMedia("file_3.jpg", time.Now(), []byte("3.141592")),
+			NewInMemoryMedia("file_4.jpg", time.Now(), []byte("3.141592")),
+			NewInMemoryMedia("file_5.jpg", time.Now(), []byte("3.141592")),
 		))
 
 		tt.modifier(run)

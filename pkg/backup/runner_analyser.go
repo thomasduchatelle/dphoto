@@ -38,7 +38,7 @@ type analyseMedia struct {
 	options DetailsReaderOptions
 }
 
-func newBackupAnalyseMedia() runnerAnalyser {
+func newBackupAnalyseMedia() RunnerAnalyserFunc {
 	analyser := analyseMedia{
 		options: DetailsReaderOptions{Fast: false},
 	}

@@ -1,4 +1,4 @@
-package backupproxy
+package scanui
 
 import (
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"

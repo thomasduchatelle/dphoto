@@ -63,6 +63,10 @@ func (a *keyboardInteractionAdaptor) StartListening() {
 			case 'b':
 				a.session.BackupSelected()
 				a.session.Refresh()
+
+			case 'a':
+				a.session.BackupAll()
+				a.session.Refresh()
 			}
 
 		}

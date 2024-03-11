@@ -1,10 +1,10 @@
-package backupproxy
+package scanui
 
 import (
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
-	backupui2 "github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/backupui"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/backupui"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"strings"
@@ -13,21 +13,15 @@ import (
 type TargetedBackupHandler struct {
 	Owner             string
 	SubVolumeResolver func(absolutePath string) (backup.SourceVolume, error)
+	ScanOptions       backup.Options // ScanOptions are the options used for the original scan
 }
 
-func NewBackupHandler(owner string, resolver func(absolutePath string) (backup.SourceVolume, error)) ui.BackupSuggestionPort {
+func NewBackupHandler(owner string, resolver func(absolutePath string) (backup.SourceVolume, error), options backup.Options) ui.BackupSuggestionPort {
 	return &TargetedBackupHandler{
 		Owner:             owner,
 		SubVolumeResolver: resolver,
+		ScanOptions:       options,
 	}
-}
-
-type BackupAlbumFilter struct {
-	FolderName string
-}
-
-func (b *BackupAlbumFilter) AcceptAnalysedMedia(media *backup.AnalysedMedia, folderName string) bool {
-	return folderName == b.FolderName
 }
 
 func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, existing *ui.ExistingRecord, renderer ui.InteractiveRendererPort) error {
@@ -49,10 +43,12 @@ func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, ex
 
 		renderer.TakeOverScreen()
 
-		listener := backupui2.NewProgress()
+		listener := backupui.NewProgress()
 		options := []backup.Options{
 			backup.OptionWithListener(listener),
+			t.ScanOptions,
 		}
+
 		if existing != nil {
 			options = append(options, backup.OptionOnlyAlbums(existing.FolderName))
 		}
@@ -64,7 +60,7 @@ func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, ex
 			return err
 		}
 
-		backupui2.PrintBackupStats(report, subVolume.String())
+		backupui.PrintBackupStats(report, subVolume.String())
 		renderer.Print("Hit enter to go back.")
 		_, err = renderer.ReadAnswer()
 		return err

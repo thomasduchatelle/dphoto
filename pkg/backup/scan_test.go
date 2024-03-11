@@ -25,12 +25,12 @@ func TestShouldReportScannedItems(t *testing.T) {
 
 	// given
 	volume := mockVolume{
-		backup.NewInmemoryMedia("folder1/file_1.jpg", time.Now(), []byte("2022-06-18")),
-		backup.NewInmemoryMedia("folder1/file_2.jpg", time.Now(), []byte("2022-06-18A")),
-		backup.NewInmemoryMedia("folder1/file_3.jpg", time.Now(), []byte("2022-06-19AB")),
-		backup.NewInmemoryMedia("folder1/file_4.jpg", time.Now(), []byte("2022-06-20ABC")),
-		backup.NewInmemoryMedia("folder1/folder1a/file_5.jpg", time.Now(), []byte("2022-06-21ABCD")),
-		backup.NewInmemoryMedia("folder2/file_6.jpg", time.Now(), []byte("2022-06-22ABCDE")),
+		backup.NewInMemoryMedia("folder1/file_1.jpg", time.Now(), []byte("2022-06-18")),
+		backup.NewInMemoryMedia("folder1/file_2.jpg", time.Now(), []byte("2022-06-18A")),
+		backup.NewInMemoryMedia("folder1/file_3.jpg", time.Now(), []byte("2022-06-19AB")),
+		backup.NewInMemoryMedia("folder1/file_4.jpg", time.Now(), []byte("2022-06-20ABC")),
+		backup.NewInMemoryMedia("folder1/folder1a/file_5.jpg", time.Now(), []byte("2022-06-21ABCD")),
+		backup.NewInMemoryMedia("folder2/file_6.jpg", time.Now(), []byte("2022-06-22ABCDE")),
 	}
 	expectedCatalogRequests := []*backup.BackingUpMediaRequest{
 		{

@@ -179,9 +179,9 @@ func newTestRecords(selected, size, first int) RecordsState {
 }
 
 func newNoSuggestionActions(paging ...string) []string {
-	return append(paging, "ESC: exit", "N: new", "DEL: delete", "E: edit name", "D: edit dates")
+	return append(paging, "ESC: exit", "N: new", "DEL: delete", "E: edit name", "D: edit dates", "A: backup all")
 }
 
 func newSuggestionActions(paging ...string) []string {
-	return append(paging, "ESC: exit", "N: new", "C: create", "B: backup")
+	return append(paging, "ESC: exit", "N: new", "C: create", "B: backup", "A: backup all")
 }

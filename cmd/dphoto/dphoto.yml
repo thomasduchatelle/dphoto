@@ -20,6 +20,10 @@ archive:
     bucketName: dphoto-local
   cache:
     bucketName: dphoto-local
+  sns:
+    arn: arn:aws:sns:eu-west-1:000000000000:dphoto-local-archive-jobs
+  sqs:
+    url: https://sqs.eu-west-1.amazonaws.com/000000000000/dphoto-local-async-archive-caching-jobs.fifo
 
 backup:
   concurrency:

@@ -2,30 +2,30 @@ package backupui
 
 import (
 	"fmt"
-	screen3 "github.com/thomasduchatelle/dphoto/internal/screen"
+	"github.com/thomasduchatelle/dphoto/internal/screen"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 )
 
 type BackupProgress struct {
-	screen           *screen3.AutoRefreshScreen
-	scanLine         *screen3.ProgressLine
-	analyseLine      *screen3.ProgressLine
-	uploadLine       *screen3.ProgressLine
+	screen           *screen.AutoRefreshScreen
+	scanLine         *screen.ProgressLine
+	analyseLine      *screen.ProgressLine
+	uploadLine       *screen.ProgressLine
 	onAnalysedCalled bool
 	onUploadCalled   bool
 }
 
 func NewProgress() *BackupProgress {
-	table := screen3.NewTable(" ", 2, 20, 80, 25)
+	table := screen.NewTable(" ", 2, 20, 80, 25)
 
-	segments := make([]screen3.Segment, 3)
+	segments := make([]screen.Segment, 3)
 	p := &BackupProgress{}
-	p.scanLine, segments[0] = screen3.NewProgressLine(table, "Scanning...")
-	p.analyseLine, segments[1] = screen3.NewProgressLine(table, "Analysing...")
-	p.uploadLine, segments[2] = screen3.NewProgressLine(table, "Uploading ...")
+	p.scanLine, segments[0] = screen.NewProgressLine(table, "Scanning...")
+	p.analyseLine, segments[1] = screen.NewProgressLine(table, "Analysing...")
+	p.uploadLine, segments[2] = screen.NewProgressLine(table, "Uploading ...")
 
-	p.screen = screen3.NewAutoRefreshScreen(
-		screen3.RenderingOptions{Width: 180},
+	p.screen = screen.NewAutoRefreshScreen(
+		screen.RenderingOptions{Width: 180},
 		segments...,
 	)
 
@@ -42,11 +42,15 @@ func (p *BackupProgress) OnScanComplete(total backup.MediaCounter) {
 	}
 }
 
-func (p *BackupProgress) OnAnalysed(done, total backup.MediaCounter) {
+func (p *BackupProgress) OnAnalysed(done, total, cached backup.MediaCounter) {
 	p.onAnalysedCalled = true
 	if !total.IsZero() {
 		p.analyseLine.SetBar(done.Count, total.Count)
-		p.analyseLine.SetExplanation(fmt.Sprintf("%d / %d files", done.Count, total.Count))
+		cachedExplanation := ""
+		if cached.Count > 0 {
+			cachedExplanation = fmt.Sprintf(" [from cache: %d]", cached.Count)
+		}
+		p.analyseLine.SetExplanation(fmt.Sprintf("%d / %d files%s", done.Count, total.Count, cachedExplanation))
 
 		if done.Count == total.Count {
 			p.analyseLine.SwapSpinner(1)
