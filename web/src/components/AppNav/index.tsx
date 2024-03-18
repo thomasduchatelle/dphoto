@@ -3,7 +3,7 @@ import {cloneElement, ReactElement, ReactNode} from "react";
 import fullLogo from "../../images/dphoto-fulllogo-reversed-50px.png"
 import shortLogo from "../../images/dphoto-logo-reversed-50px.png"
 
-const appVersion = "1.5.2"
+const appVersion = "1.5.3"
 
 const ElevationScroll = ({children}: {
     children: ReactElement;

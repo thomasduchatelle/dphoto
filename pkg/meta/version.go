@@ -2,13 +2,14 @@
 package meta
 
 import (
+	"fmt"
 	"runtime/debug"
 	"strings"
 	"time"
 )
 
 const (
-	version = "1.5.2"
+	version = "1.5.3"
 )
 
 func init() {
@@ -48,7 +49,7 @@ var (
 
 // Version returns the version of the app, updated by ci/pre-release.sh
 func Version() string {
-	return version
+	return fmt.Sprintf("%s [%s]", version, BuildVersion)
 }
 
 func (b BuildStat) String() string {

@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	version "github.com/thomasduchatelle/dphoto/pkg/meta"
+
+	"github.com/spf13/cobra"
 )
 
 // versionCmd represents the version command
@@ -13,7 +14,7 @@ var versionCmd = &cobra.Command{
 	Short:   "Print the version",
 	Long:    `Print the version`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("%s [%s]", version.Version(), version.BuildVersion)
+		fmt.Println(version.Version())
 	},
 }
 
