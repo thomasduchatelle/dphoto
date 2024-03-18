@@ -1,4 +1,5 @@
 #!/bin/bash
+# Photos can be found in https://unsplash.com/
 
 if [[ $# -ne 1 || "$1" == "--help" || "$1" == "-h" ]] ; then
   echo "Usage: $0 <dir or file to randomise date-time>"

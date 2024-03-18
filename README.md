@@ -10,19 +10,23 @@ DPhoto
 
 Backup photo to your private AWS Cloud, and share them with family and friends. Core features:
 
-| Feature            | Version | Description                                                                                                             |
-|--------------------|---------|-------------------------------------------------------------------------------------------------------------------------|
-| Backup medias      | v0.1    | Backup photos and videos from USB Sticks, Flash drives, and Camera (USB) when they're plugged                           |
-| Organise by album  | v0.1    | Photos and videos are organised by album based on their creation date. Each album is a directory in S3.                 |
-| Migration script   | v0.1    | Medias already uploaded in S3 are re-ordered by albums and de-duplicated (with interactive command line interface)      |
-| Web viewer         | v0.5    | See photos by albums, tag them, search by tag or dates                                                                  |
-| Faster UI          | v1.0    | Pre-generate miniatures, supports browser caching (miniature + medium quality) and backend cache medium-quality images. |
-| Album sharing      | v1.3    | Albums can be shared to other users                                                                                     |
-| Album contribution | -       | Several users can contribute to the same album (families, friend group)                                                 |
-| API Driven         | -       | Provide enhanced API to tip the business on the backend side: CLI authenticated by Google Token (vs AWS Credentials)    |
-| Android App        | -       | Minimalist app to synchronise local medias to DPhoto.                                                                   |
-| Tagging            | -       | Adding tags to medias to find them later, share them, or print them                                                     |
-| Google Photo       | -       | Support Google Photo to push images and video, or import from Google Photo.                                             |
+| Feature              | Version | Description                                                                                                             |
+|----------------------|---------|-------------------------------------------------------------------------------------------------------------------------|
+| Backup medias        | v0.1    | Backup photos and videos from USB Sticks, Flash drives, and Camera (USB) when they're plugged                           |
+| Organise by album    | v0.1    | Photos and videos are organised by album based on their creation date. Each album is a directory in S3.                 |
+| Migration script     | v0.1    | Medias already uploaded in S3 are re-ordered by albums and de-duplicated (with interactive command line interface)      |
+| Web viewer           | v0.5    | See photos by albums, tag them, search by tag or dates                                                                  |
+| Faster UI            | v1.0    | Pre-generate miniatures, supports browser caching (miniature + medium quality) and backend cache medium-quality images. |
+| Album sharing        | v1.3    | Albums can be shared to other users                                                                                     |
+| Upgraded sharing     | -       | Pre-selected emails and globals views, merge owned and shared-with-me albums                                            |
+| Upgraded album views | -       | Albums are listed by most recent medias, medias can be listed by dates (without being grouped by albums                 |
+| Upgraded backup      | -       | Backup directly to the cloud (WebDAV), cleaning/filtering possible after backup                                         |
+| Photo Frame          | -       | Generate a random pick of media for a photo frame                                                                       |
+| Album contribution   | -       | Several users can contribute to the same album (families, friend group)                                                 |
+| API Driven           | -       | Provide enhanced API to tip the business on the backend side: CLI authenticated by Google Token (vs AWS Credentials)    |
+| Android App          | -       | Minimalist app to synchronise local medias to DPhoto.                                                                   |
+| Tagging              | -       | Adding tags to medias to find them later, share them, or print them                                                     |
+| Google Photo         | -       | Support Google Photo to push images and video, or import from Google Photo.                                             |
 
 Getting Started
 ------------------------------------
@@ -105,6 +109,7 @@ DPhoto only supports AWS to be deployed as a serverless application using AWS Ga
 
 DynamoDB is a single table documented in [README.md](pkg/awssupport/appdynamodb/README.md).
 
-### Tech debt
+### Required Upgrades
 
 1. go cli is using AWS SDK 1.x and should use 2.x
+2. React -> NextJS
