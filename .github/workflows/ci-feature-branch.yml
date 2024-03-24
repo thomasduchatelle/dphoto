@@ -6,10 +6,10 @@ on:
       - main
       - actions
       - update-snapshots
-  pull_request:
-    branches:
-      - main
-      - next
+#  pull_request:
+#    branches:
+#      - main
+#      - next
 
 jobs:
   update-snapshots:
@@ -57,7 +57,8 @@ jobs:
 
   test-go-code:
     runs-on: ubuntu-latest
-    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
+#    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
+    if: ${{ success() || ! cancelled() && needs.update-snapshots.conclusion == 'cancelled' }}
     needs:
       - update-snapshots
     steps:
@@ -70,7 +71,8 @@ jobs:
 
   test-ts-code:
     runs-on: ubuntu-latest
-    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
+#    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
+    if: ${{ success() || ! cancelled() && needs.update-snapshots.conclusion == 'cancelled' }}
     needs:
       - update-snapshots
     steps:
@@ -81,7 +83,7 @@ jobs:
       - name: Test and build WEB UI
         run: make test-web build-web
       - name: Upload screenshots
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: storybook-snapshots
