@@ -79,6 +79,22 @@ Setup the environment:
     # Run tests & build (all sub-projects)
     make
 
+
+### Commit messages & Github Actions
+
+Commit messages are following the convention:
+
+    <domain>[/<area>] [+tags] - <message>
+
+With:
+
+* domains: catalog, archive, backup
+* area: web, cli, proj, api, ...
+* supported tags are:
+  * `+update-snapshots`: snapshots used to test visual regression will be updated
+  * `+patch`, `+minor`, `+major`: control the version of the software
+  * `+mr`: creates a Pull Request if the pipeline is successful
+
 ### Releasing process
 
 Bootstrap an environment with built-in command (one-of pre-requisite):

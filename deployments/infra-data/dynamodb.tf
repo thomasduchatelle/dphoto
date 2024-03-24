@@ -6,7 +6,7 @@ resource "aws_iam_policy" "index_rw" {
 
 data "aws_iam_policy_document" "index_rw" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "dynamodb:List*",
       "dynamodb:DescribeReservedCapacity*",
@@ -18,7 +18,7 @@ data "aws_iam_policy_document" "index_rw" {
     ]
   }
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "dynamodb:BatchGet*",
       "dynamodb:DescribeStream",

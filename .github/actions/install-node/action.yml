@@ -5,32 +5,41 @@ inputs:
     description: install globally serverless cli
     required: false
     default: 'false'
+  build-cache:
+    description: build and publish the cache
+    required: false
+    default: 'false'
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       with:
         node-version: '19'
         # cache: yarn # note - directly caching node_modules is MUCH faster (60s -> 1.5s)
     - name: YARN Cache (restore)
-      uses: actions/cache/restore@v3
+      id: cache-restore
+      uses: actions/cache/restore@v4
       with:
         path: |
+          ~/.npm
           web/node_modules
           deployments/sls/node_modules
-        key: ${{ runner.os }}-npm-${{ hashFiles('web/yarn.lock', 'deployments/sls/package-lock.json') }}
+        key: ${{ runner.os }}-node-${{ hashFiles('.github/actions/install-node/action.yml', 'web/yarn.lock', 'deployments/sls/package-lock.json') }}
+        lookup-only: ${{ inputs.build-cache }}
     - name: Download deps
+      if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
       run: make setup-app
       shell: bash
     - name: Install SLS
-      if: inputs.sls == 'true'
+      if: ${{ inputs.sls == 'true' || inputs.build-cache == 'true' }}
       run: npm install -g serverless
       shell: bash
     - name: YARN Cache (always save)
-      uses: actions/cache/save@v3
-      if: always()
+      if: ${{ steps.cache-restore.outputs.cache-hit != 'true' && inputs.build-cache == 'true' }}
+      uses: actions/cache/save@v4
       with:
         path: |
+          ~/.npm
           web/node_modules
           deployments/sls/node_modules
-        key: ${{ runner.os }}-npm-${{ hashFiles('web/yarn.lock', 'deployments/sls/package-lock.json') }}
+        key: ${{ runner.os }}-node-${{ hashFiles('.github/actions/install-node/action.yml', 'web/yarn.lock', 'deployments/sls/package-lock.json') }}

@@ -11,9 +11,9 @@ runs:
       id: vars
       run: |
         echo "terraform-version=$(cat deployments/infra-data/.terraform-version)" >> $GITHUB_OUTPUT
-        echo "TF_API_TOKEN: ${{ inputs.tf-api-token }}"
       shell: sh
-    - uses: hashicorp/setup-terraform@v2
+
+    - uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: ${{ steps.vars.outputs.terraform-version }}
         cli_config_credentials_token: ${{ inputs.tf-api-token }}

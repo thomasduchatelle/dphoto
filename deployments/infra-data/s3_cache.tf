@@ -68,7 +68,7 @@ resource "aws_iam_policy" "cache_rw" {
 
 data "aws_iam_policy_document" "cache_rw" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "s3:ListBucket",
     ]
@@ -77,7 +77,7 @@ data "aws_iam_policy_document" "cache_rw" {
     ]
   }
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "s3:*Object",
     ]

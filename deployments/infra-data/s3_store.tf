@@ -1,7 +1,7 @@
 resource "aws_kms_key" "storage" {
   count                   = var.simple_s3 ? 0 : 1
   deletion_window_in_days = 30
-  tags                    = merge(local.tags, {
+  tags = merge(local.tags, {
     Name = "${local.prefix}-encryption-key"
   })
 }
@@ -86,7 +86,7 @@ resource "aws_iam_policy" "storage_rw" {
 
 data "aws_iam_policy_document" "storage_rw" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "s3:ListBucket",
     ]
@@ -95,7 +95,7 @@ data "aws_iam_policy_document" "storage_rw" {
     ]
   }
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "s3:*Object",
     ]
@@ -107,7 +107,7 @@ data "aws_iam_policy_document" "storage_rw" {
   dynamic "statement" {
     for_each = var.simple_s3 ? [] : [1]
     content {
-      effect  = "Allow"
+      effect = "Allow"
       actions = [
         "kms:Decrypt",
         "kms:GenerateDataKey"
@@ -127,7 +127,7 @@ resource "aws_iam_policy" "storage_ro" {
 
 data "aws_iam_policy_document" "storage_ro" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "s3:ListBucket",
     ]
@@ -136,7 +136,7 @@ data "aws_iam_policy_document" "storage_ro" {
     ]
   }
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "s3:GetObject",
     ]
@@ -148,7 +148,7 @@ data "aws_iam_policy_document" "storage_ro" {
   dynamic "statement" {
     for_each = var.simple_s3 ? [] : [1]
     content {
-      effect  = "Allow"
+      effect = "Allow"
       actions = [
         "kms:Decrypt",
         "kms:GenerateDataKey"

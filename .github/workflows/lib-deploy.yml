@@ -1,0 +1,112 @@
+name: Deploy to the target environment
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: "Target of the deployment: 'live' or 'next'"
+        required: true
+        type: string
+      skip_terraform:
+        description: "'true' to skip terraform apply ; the plan should have been computed and should be empty"
+        type: string
+        default: false
+
+concurrency:
+  group: deploy-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  set-env:
+    name: ${{ inputs.target }} - set deploy target
+    runs-on: ubuntu-latest
+    outputs:
+      environment-name: ${{ steps.setenv.outputs.environment-name }}
+      environment-workspace: ${{ steps.setenv.outputs.environment-workspace }}
+    steps:
+      - name: set environment based on the branch
+        id: setenv
+        run: |
+          case "${{ inputs.target }}" in
+            "live")
+              echo "environment-name=live" >> $GITHUB_OUTPUT
+              echo "environment-workspace=live" >> $GITHUB_OUTPUT
+              ;;
+
+            "next")
+              echo "environment-name=dev" >> $GITHUB_OUTPUT 
+              echo "environment-workspace=dev" >> $GITHUB_OUTPUT
+              ;;
+
+            *)
+              echo "Reference is not set to use any environment"
+              exit 1
+              ;;
+          esac
+
+  provision-infra:
+    name: ${{ needs.set-env.outputs.environment-name }} - provision infra
+    runs-on: ubuntu-latest
+    needs: [ set-env ]
+    environment:
+      name: ${{ needs.set-env.outputs.environment-name }}
+    env:
+      TF_WORKSPACE: ${{ needs.set-env.outputs.environment-workspace }}
+    if: ${{ success() && inputs.skip_terraform == 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup terraform
+        uses: ./.github/actions/install-terraform
+        with:
+          tf-api-token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform init
+        id: init
+        run: cd deployments/infra-data && terraform init
+
+      - name: Terraform apply
+        run: cd deployments/infra-data && terraform apply -auto-approve
+
+  deploy-app:
+    name: ${{ needs.set-env.outputs.environment-name }} - deploy app
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.set-env.outputs.environment-name }}
+    needs:
+      - provision-infra
+      - set-env
+    if: ${{ success() || needs.set-env.result == 'success' && needs.provision-infra.result == 'skipped' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup GO
+        uses: ./.github/actions/install-go
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+        with:
+          sls: true
+
+      - name: Download api
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-api
+          path: bin
+      - name: Download web
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-web
+          path: web/build
+
+      - name: Debug listing
+        run: |
+          echo "> ."
+          ls -al
+          echo "> web"
+          ls -al web
+          echo "> web/build/*"
+          ls -al web/build
+
+      - name: Deploy
+        run: cd deployments/sls && sls deploy --stage ${{ needs.set-env.outputs.environment-workspace }}
+        env:
+          AWS_DEFAULT_REGION: eu-west-1
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

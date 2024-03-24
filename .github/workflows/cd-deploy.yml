@@ -18,7 +18,7 @@ jobs:
     env:
       TF_WORKSPACE: ${{ needs.choose-env.outputs.environment-workspace }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup terraform
         uses: ./.github/actions/install-terraform
         with:
@@ -39,7 +39,7 @@ jobs:
       - provision-data-infrastructure
       - choose-env
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup GO
         uses: ./.github/actions/install-go
       - name: Setup NODE
@@ -65,7 +65,7 @@ jobs:
     if: needs.choose-env.outputs.environment-name == 'live'
     needs: [ choose-env ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Get version
         id: version
         run: echo "version=$(./scripts/pre-release.sh)" >> $GITHUB_OUTPUT

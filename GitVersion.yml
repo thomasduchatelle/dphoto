@@ -1,0 +1,12 @@
+assembly-versioning-scheme: MajorMinorPatch
+mode: Mainline
+ignore:
+  sha: []
+merge-message-formats: {}
+major-version-bump-message: '\+major'
+minor-version-bump-message: '\+minor'
+patch-version-bump-message: '\+patch'
+branches:
+  main:
+    increment: Patch
+    regex:  ^main$

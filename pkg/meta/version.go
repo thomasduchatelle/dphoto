@@ -8,8 +8,11 @@ import (
 	"time"
 )
 
-const (
-	version = "1.5.3"
+const defaultSemver = "devel"
+
+var (
+	SemVer   = ""     // SemVer is the target version, set during build with ld-flags
+	Snapshot = "true" // Snapshot is overridden by ld-flags, set to true, it will show the GIT status from where the bin has been built
 )
 
 func init() {
@@ -41,35 +44,51 @@ type BuildStat struct {
 }
 
 var (
-	BuildVersion = BuildStat{
-		Version:  "",
-		Revision: "",
-	}
+	BuildVersion = BuildStat{}
 )
 
 // Version returns the version of the app, updated by ci/pre-release.sh
 func Version() string {
-	return fmt.Sprintf("%s [%s]", version, BuildVersion)
+	version := VersionOrDefault(BuildVersion.Version, SemVer)
+
+	if Snapshot == "true" {
+		return fmt.Sprintf("%s%s", version, BuildVersion.GitInfoParts("-"))
+	}
+	return version
+}
+
+func VersionOrDefault(versions ...string) string {
+	for _, version := range versions {
+		if version != "" && version != "unknown" && version != "(devel)" {
+			return version
+		}
+	}
+
+	return defaultSemver
 }
 
 func (b BuildStat) String() string {
-	parts := make([]string, 0, 3)
-	if b.Version != "unknown" && b.Version != "(devel)" {
-		parts = append(parts, b.Version)
-	}
+	return fmt.Sprintf("%s %s %s", b.Version, b.GitInfoParts("#"), b.LastCommit)
+}
+
+func (b BuildStat) GitInfoParts(prefix string) string {
 	if b.Revision != "unknown" && b.Revision != "" {
-		parts = append(parts, "#")
+		parts := make([]string, 0, 3)
+
 		commit := b.Revision
 		if len(commit) > 7 {
 			commit = commit[:7]
 		}
+		parts = append(parts, prefix)
 		parts = append(parts, commit)
 		if b.DirtyBuild {
 			parts = append(parts, "*")
 		}
+
+		return strings.Join(parts, "")
+
+	} else {
+		return prefix + "run"
 	}
-	if len(parts) == 0 {
-		return "devel"
-	}
-	return strings.Join(parts, "")
+
 }

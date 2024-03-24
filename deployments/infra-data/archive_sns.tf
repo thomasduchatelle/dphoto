@@ -11,7 +11,7 @@ resource "aws_iam_policy" "archive_sns_publish" {
 
 data "aws_iam_policy_document" "archive_sns_publish" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "sns:Publish",
     ]
@@ -51,7 +51,7 @@ data "aws_iam_policy_document" "archive_sqs" {
       aws_sqs_queue.async_archive_caching_jobs.arn
     ]
     condition {
-      test   = "ArnEquals"
+      test = "ArnEquals"
       values = [
         aws_sns_topic.archive.arn,
       ]
@@ -68,7 +68,7 @@ resource "aws_iam_policy" "archive_sqs_send" {
 
 data "aws_iam_policy_document" "archive_sqs_send" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "sqs:SendMessage",
     ]
