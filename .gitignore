@@ -1,6 +1,7 @@
-.idea
-deployments/infra-data/.terraform/
-/dist/
-/.build/
 .DS_Store
+.idea
+/.build/
+/dist/
+/dphoto
 bin/
+deployments/infra-data/.terraform/

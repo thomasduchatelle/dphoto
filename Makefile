@@ -40,6 +40,11 @@ deploy-infra-data:
 #######################################
 
 .PHONY: setup-go test-go build-go install-go
+unquote = $(patsubst "%,%,$(patsubst %",%,$(1)))
+
+APPLICATION_VERSION ?= ""
+APPLICATION_VERSION_SNAPSHOT ?= "true"
+BUILD_LD_FLAGS = "-X 'github.com/thomasduchatelle/dphoto/pkg/meta.SemVer=$(call unquote,$(APPLICATION_VERSION))' -X 'github.com/thomasduchatelle/dphoto/pkg/meta.Snapshot=$(call unquote,$(APPLICATION_VERSION_SNAPSHOT))'"
 
 setup-go:
 	docker-compose pull
@@ -49,7 +54,7 @@ test-go:
 	AWS_PROFILE="" go test ./... -race -cover
 
 build-go:
-	go build ./cmd/...
+	go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))"  -o ./ ./cmd/...
 
 install-cli:
 	go install ./cmd/...
@@ -104,7 +109,7 @@ build-api:
 	cd api/lambdas && \
 		mkdir -p ../../bin && \
 		export GO111MODULE=on && \
-		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o ../../bin ./...
+		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ../../bin ./...
 
 #######################################
 ## APP = WEB + API

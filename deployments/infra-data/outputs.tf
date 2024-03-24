@@ -10,12 +10,12 @@ output "cache_bucket_name" {
 
 output "delegate_access_key_id" {
   description = "AWS access Key to authenticate with dphoto CLI"
-  value       = {for k, v in aws_iam_access_key.rolling_cli : k => v.id}
+  value       = { for k, v in aws_iam_access_key.rolling_cli : k => v.id }
 }
 
 output "delegate_secret_access_key" {
   description = "AWS secret access Key to authenticate with dphoto CLI"
-  value       = {for k, v in aws_iam_access_key.rolling_cli : k => v.encrypted_secret}
+  value       = { for k, v in aws_iam_access_key.rolling_cli : k => v.encrypted_secret }
 }
 
 output "delegate_secret_access_key_decrypt_cmd" {

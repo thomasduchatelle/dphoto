@@ -3,20 +3,20 @@ description: 'Setup Go and any caching required for this project'
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v5
       with:
-        go-version: '^1.17.8'
+        go-version-file: 'go.mod'
 
-    - id: go-cache-paths
-      shell: 'sh'
-      run: |
-        echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-        echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-    - name: Go Build Cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ${{ steps.go-cache-paths.outputs.go-build }}
-          ${{ steps.go-cache-paths.outputs.go-mod }}
-        key: ${{ runner.os }}-go-deps-${{ hashFiles('**/go.sum') }}
+#    - id: go-cache-paths
+#      shell: 'sh'
+#      run: |
+#        echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+#        echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+#
+#    - name: Go Build Cache
+#      uses: actions/cache@v4
+#      with:
+#        path: |
+#          ${{ steps.go-cache-paths.outputs.go-build }}
+#          ${{ steps.go-cache-paths.outputs.go-mod }}
+#        key: ${{ runner.os }}-go-deps-${{ hashFiles('**/go.sum') }}
