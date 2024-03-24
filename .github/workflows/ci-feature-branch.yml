@@ -6,10 +6,10 @@ on:
       - main
       - actions
       - update-snapshots
-  pull_request:
-    branches:
-      - main
-      - next
+#  pull_request:
+#    branches:
+#      - main
+#      - next
 
 jobs:
   semver:
@@ -83,7 +83,7 @@ jobs:
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
 
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: 10,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: output
