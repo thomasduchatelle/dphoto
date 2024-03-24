@@ -57,7 +57,7 @@ jobs:
   test-go-code:
     runs-on: ubuntu-latest
 #    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
-    if: ${{ success() && !needs.update-snapshots.outputs.skip_downstream || !cancelled() && needs.update-snapshots.result == 'skipped' }}
+    if: ${{ success() && needs.update-snapshots.outputs.skip_downstream == 'false' || !cancelled() && needs.update-snapshots.result == 'skipped' }}
     needs:
       - update-snapshots
     steps:
