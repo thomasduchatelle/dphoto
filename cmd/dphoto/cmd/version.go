@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var StaticVersion = "foo"
+
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:     "version",
@@ -14,6 +16,7 @@ var versionCmd = &cobra.Command{
 	Short:   "Print the version",
 	Long:    `Print the version`,
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(StaticVersion)
 		fmt.Println(version.Version())
 	},
 }

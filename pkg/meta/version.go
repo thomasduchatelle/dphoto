@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-const (
-	version = "1.5.3"
+var (
+	ManualVersion = ""
 )
 
 func init() {
@@ -41,15 +41,12 @@ type BuildStat struct {
 }
 
 var (
-	BuildVersion = BuildStat{
-		Version:  "",
-		Revision: "",
-	}
+	BuildVersion = BuildStat{}
 )
 
 // Version returns the version of the app, updated by ci/pre-release.sh
 func Version() string {
-	return fmt.Sprintf("%s [%s]", version, BuildVersion)
+	return fmt.Sprintf("%s [%s]", ManualVersion, BuildVersion)
 }
 
 func (b BuildStat) String() string {

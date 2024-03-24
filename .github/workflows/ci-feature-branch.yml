@@ -6,17 +6,20 @@ on:
       - main
       - actions
       - update-snapshots
-  workflow_call:
+  pull_request:
+    branches:
+      - main
+      - next
 
 jobs:
   update-snapshots:
     timeout-minutes: 10
-    if: ${{ contains(github.event.head_commit.message, '/update-snapshots') }}
+    if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
     runs-on: ubuntu-latest
     outputs:
       skip_downstream: ${{ steps.auto-commit.outputs.changes_detected }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT_AUTO_COMMIT }}
 
@@ -25,10 +28,32 @@ jobs:
       - name: Generate snapshots
         run: make update-snapshots
 
-      - uses: stefanzweifel/git-auto-commit-action@v4
+      - uses: stefanzweifel/git-auto-commit-action@v5
         id: auto-commit
         with:
-          commit_message: "web/snapshots - update from CI"
+          commit_message: "web/* - update visual regression snapshots using CI machines."
+
+  semver:
+    name: "Next SemVer version"
+    runs-on: ubuntu-latest
+    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
+    outputs:
+      semver: ${{ steps.semver.outputs.MajorMinorPatch }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v1.1.1
+        with:
+          versionSpec: '5.x'
+      - name: Determine Version
+        id: semver
+        uses: gittools/actions/gitversion/execute@v1.1.1
+        with:
+          useConfigFile: true
 
   test-go-code:
     runs-on: ubuntu-latest
@@ -36,7 +61,7 @@ jobs:
     needs:
       - update-snapshots
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup GO
         uses: ./.github/actions/install-go
       - name: start mock services
@@ -49,7 +74,7 @@ jobs:
     needs:
       - update-snapshots
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup NODE
         uses: ./.github/actions/install-node
