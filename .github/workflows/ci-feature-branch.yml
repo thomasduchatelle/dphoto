@@ -34,7 +34,7 @@ jobs:
           commit_message: "web/* - update visual regression snapshots using CI machines."
 
   semver:
-    name: "Next SemVer version"
+    name: "Next Semantic Version"
     runs-on: ubuntu-latest
     if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
     outputs:
@@ -58,7 +58,7 @@ jobs:
   test-go-code:
     runs-on: ubuntu-latest
 #    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
-    if: ${{ success() || ! cancelled() && needs.update-snapshots.conclusion == 'cancelled' }}
+    if: ${{ success() && !needs.update-snapshots.outputs.skip_downstream || needs.update-snapshots.result == 'skipped' }}
     needs:
       - update-snapshots
     steps:
@@ -72,7 +72,7 @@ jobs:
   test-ts-code:
     runs-on: ubuntu-latest
 #    if: ${{ always() && !needs.update-snapshots.outputs.skip_downstream }}
-    if: ${{ success() || ! cancelled() && needs.update-snapshots.conclusion == 'cancelled' }}
+    if: ${{ success() || ! (cancelled() && needs.update-snapshots.result == 'cancelled') }}
     needs:
       - update-snapshots
     steps:
