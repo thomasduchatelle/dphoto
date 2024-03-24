@@ -6,6 +6,10 @@ on:
       - main
       - actions
       - update-snapshots
+  pull_request:
+    branches:
+      - main
+      - next
 
 jobs:
   semver:
