@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: dev
+    env:
+      TF_WORKSPACE: dev
     steps:
       - uses: actions/checkout@v4
 
@@ -49,8 +51,6 @@ jobs:
 
       - name: Terraform Plan (dev)
         id: plan
-        env:
-          TF_WORKSPACE: dev
         #        if: github.event_name == 'pull_request'
         run: cd deployments/infra-data && terraform plan -no-color
         continue-on-error: true
