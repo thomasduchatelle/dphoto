@@ -96,7 +96,8 @@ jobs:
               base: '${{ github.ref }}'
             });
             
-            console.log("prs:" + JSON.stringify(prs));
+            console.log("PRs's keys:" + Object.keys(prs));
+            console.log("PRs:" + JSON.stringify(prs));
 
       - name: Publish Plan (dev)
         uses: actions/github-script@v7
