@@ -35,6 +35,8 @@ jobs:
       name: dev
     env:
       TF_WORKSPACE: dev
+    outputs:
+      no_change: ${{ steps.plan.outputs.no_change }}
     steps:
       - uses: actions/checkout@v4
 
@@ -68,7 +70,18 @@ jobs:
         continue-on-error: true
         run: |
           cd deployments/infra-data
-          terraform plan -no-color
+          RC=0
+          terraform plan -no-color || RC=$?
+
+          if [[ $RC -eq 0 ]] ; then
+           echo "no_change=true" >> $GITHUB_OUTPUT
+          else
+            if [[ $RC -eq 2 ]] ; then 
+              echo "no_change=false" >> $GITHUB_OUTPUT
+            else
+              return $RC
+            fi
+          fi
 
       - name: Save plan in file
         env:
@@ -101,15 +114,21 @@ jobs:
               return
             }
             
+            let summary = "";
+            if ('${{ step.plan.outputs.no_change }}' === 'false' ) {
+              summary = " - no change"
+            }
+              
+            
             const output = `
-            * ${{ steps.fmt.outcome == 'succeed' && ':white_check_mark:' || ':x:' }} - formatting
-            * ${{ steps.init.outcome == 'init' && ':white_check_mark:' || ':x:' }} - initialisation
-            * ${{ steps.validate.outcome == 'succeed' && ':white_check_mark:' || ':x:' }} - validation
-            * ${{ steps.plan.outcome == 'succeed' && ':white_check_mark:' || ':x:' }} - plan
+            * ${{ steps.fmt.outcome == 'success' && ':white_check_mark:' || ':x:' }} Formatting \`${{ steps.fmt.outcome }}\`
+            * ${{ steps.init.outcome == 'success' && ':white_check_mark:' || ':x:' }} Initialisation  \`${{ steps.init.outcome }}\`
+            * ${{ steps.validate.outcome == 'success' && ':white_check_mark:' || ':x:' }} Validation \`${{ steps.validate.outcome }}\`
+            * ${{ steps.plan.outcome == 'success' && ':white_check_mark:' || ':x:' }} Plan \`${{ steps.plan.outcome }}\`
             
             ### Dev Plan
             
-            <details><summary>Show Plan</summary>
+            <details><summary>Show Plan${summary}</summary>
 
             \`\`\`\n
             ${process.env.PLAN}
