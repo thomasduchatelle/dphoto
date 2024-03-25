@@ -90,12 +90,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             
-            const prs = async github.rest.pulls.list({
+            const prs = github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
               base: '${{ github.ref }}'
             });
+            console.log("PRs:" + prs);
 
       - name: Publish Plan (dev)
         uses: actions/github-script@v7
