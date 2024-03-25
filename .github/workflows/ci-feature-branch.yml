@@ -110,7 +110,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              base: '${{ github.ref }}'
+              head: 'thomasduchatelle:${{ github.ref_name }}'
             });
             
             if (prs.status !== 200 || prs.data.length == 0) {
