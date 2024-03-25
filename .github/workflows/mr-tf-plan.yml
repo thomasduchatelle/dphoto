@@ -5,9 +5,6 @@ on:
       - next
 
 jobs:
-  tests:
-    uses: ./.github/workflows/ci-feature-branch.yml
-
   choose-env:
     uses: ./.github/workflows/lib-choose-environment.yml
     with:
@@ -60,7 +57,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            const output = `From - mr-tf-plan.yml
+            #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
