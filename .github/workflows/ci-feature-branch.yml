@@ -92,8 +92,7 @@ jobs:
             const prs = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'open',
-              base: '${{ github.ref }}'
+              state: 'open'
             });
             
             console.log("PRs's keys:" + Object.keys(prs));
