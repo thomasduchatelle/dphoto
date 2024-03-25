@@ -115,7 +115,7 @@ jobs:
             }
             
             let summary = "";
-            if ('${{ step.plan.outputs.no_change }}' === 'false' ) {
+            if ('${{ steps.plan.outputs.no_change }}' === 'false' ) {
               summary = " - no change"
             }
               
