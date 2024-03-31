@@ -1,0 +1,55 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  semver:
+    uses: ./.github/workflows/lib-semver.yml
+
+  test-build-web:
+    uses: ./.github/workflows/lib-test-build-web.yml
+    needs:
+      - semver
+    with:
+      version: ${{ needs.semver.outputs.version }}
+      snapshot: ${{ needs.semver.outputs.snapshot }}
+    secrets: inherit
+
+  deploy-next:
+    needs:
+      - semver
+      - test-build-web
+    uses: ./.github/workflows/lib-deploy.yml
+    secrets: inherit
+    with:
+      target: next
+
+  deploy-live:
+    needs:
+      - semver
+      - test-build-web
+    uses: ./.github/workflows/lib-deploy.yml
+    secrets: inherit
+    with:
+      target: live
+
+  cli-tag:
+    runs-on: ubuntu-latest
+    name: TAGGING Codebase
+    needs:
+      - semver
+      - deploy-next
+      - deploy-live
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v${{ needs.semver.outputs.version }}',
+              sha: context.sha
+            })

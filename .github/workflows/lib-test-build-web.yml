@@ -1,0 +1,102 @@
+name: WEB - Build and Test
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version integrated in binaries"
+        type: string
+        required: true
+      snapshot:
+        description: "'false' if it's a released version"
+        type: string
+        required: true
+      build-disabled:
+        description: "'true' to disable some builds (when the app won't be deployed)"
+        type: string
+        default: "false"
+
+jobs:
+  test-go:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup GO
+        uses: ./.github/actions/install-go
+      - name: start mock services
+        run: docker-compose up -d
+      - run: make test-go
+
+  build-go-api:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    if: ${{ success() && inputs.build-disabled != 'false' }}
+    env:
+      APPLICATION_VERSION: ${{ inputs.version }}
+      APPLICATION_VERSION_SNAPSHOT: ${{ inputs.snapshot }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup GO
+        uses: ./.github/actions/install-go
+
+      - run: echo "$APPLICATION_VERSION (snapshot = $APPLICATION_VERSION_SNAPSHOT)"
+      - name: Build for release
+        run: make build-api
+      - name: Dist Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-api
+          path: |
+            bin/**
+
+  ts-cache-builder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+        with:
+          build-cache: "true"
+
+  test-ts:
+    runs-on: ubuntu-latest
+    needs:
+      - ts-cache-builder
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+
+      - name: Generate snapshots
+        if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+        run: make update-snapshots
+
+      - name: Test and build WEB UI
+        run: make test-web build-web
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: storybook-snapshots
+          path: web/src/stories/__image_snapshots__/__diff_output__/
+
+  build-ts-web:
+    runs-on: ubuntu-latest
+    if: ${{ success() && inputs.build-disabled != 'false' }}
+    needs:
+      - ts-cache-builder
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+
+      - name: Build for release
+        run: make build-web
+
+      - name: Dist Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-web
+          path: |
+            web/build/**

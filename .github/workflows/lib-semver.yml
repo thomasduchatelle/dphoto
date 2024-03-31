@@ -1,0 +1,30 @@
+name: Generate Version
+on:
+  workflow_call:
+    inputs:
+      snapshot:
+        description: "'false' if it's a final released version, false otherwise"
+        type: string
+        default: "true"
+
+jobs:
+  semver:
+    runs-on: ubuntu-latest
+    outputs:
+      semver: ${{ steps.semver.outputs.MajorMinorPatch }}
+      snapshot: ${{ inputs.snapshot }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v1.1.1
+        with:
+          versionSpec: '5.x'
+      - name: Determine Version
+        id: semver
+        uses: gittools/actions/gitversion/execute@v1.1.1
+        with:
+          useConfigFile: true
