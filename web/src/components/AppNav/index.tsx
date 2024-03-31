@@ -3,8 +3,6 @@ import {cloneElement, ReactElement, ReactNode} from "react";
 import fullLogo from "../../images/dphoto-fulllogo-reversed-50px.png"
 import shortLogo from "../../images/dphoto-logo-reversed-50px.png"
 
-const appVersion = "1.5.3"
-
 const ElevationScroll = ({children}: {
     children: ReactElement;
 }) => {
@@ -29,12 +27,12 @@ const AppNav = ({rightContent, middleContent}: {
                     <Box component='a' href='/' sx={{flexGrow: 0, display: {xs: 'none', lg: 'flex'}}}>
                         <img src={fullLogo} alt='DPhoto Logo'
                              style={{height: '50px', marginTop: '5px'}}
-                             title={"version: " + appVersion}/>
+                        />
                     </Box>
                     <Box component='a' href='/' sx={{flexGrow: 0, display: {lg: 'none'}}}>
                         <img src={shortLogo} alt='DPhoto Logo'
                              style={{height: '50px', marginTop: '5px'}}
-                             title={"version: " + appVersion}/>
+                        />
                     </Box>
                     <Box sx={{flexGrow: 1}}>
                         {middleContent}
