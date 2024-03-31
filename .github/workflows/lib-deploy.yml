@@ -6,7 +6,7 @@ on:
         description: "Target of the deployment: 'live' or 'next'"
         required: true
         type: string
-      skip_terraform:
+      terraform-disabled:
         description: "'true' to skip terraform apply ; the plan should have been computed and should be empty"
         type: string
         default: false
@@ -51,7 +51,7 @@ jobs:
       name: ${{ needs.set-env.outputs.environment-name }}
     env:
       TF_WORKSPACE: ${{ needs.set-env.outputs.environment-workspace }}
-    if: ${{ success() && inputs.skip_terraform == 'false' }}
+    if: ${{ success() && inputs.terraform-disabled == 'false' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup terraform
