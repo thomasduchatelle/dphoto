@@ -1,4 +1,4 @@
-name: Feature CI/CD
+name: Feature CI
 on:
   push:
     branches-ignore:
@@ -259,4 +259,6 @@ jobs:
                 title: title,
                 body: body,
               });
+            } else {
+              console.log("PR not updated, match = " + (pr.title !== title || pr.body !== body) + " ; +pr = ${{ contains(github.event.head_commit.message, '+pr') }}")
             }
