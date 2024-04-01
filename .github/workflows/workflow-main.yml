@@ -14,7 +14,6 @@ jobs:
     with:
       version: ${{ needs.semver.outputs.version }}
       snapshot: ${{ needs.semver.outputs.snapshot }}
-    secrets: inherit
 
   deploy-next:
     needs:
@@ -44,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create tag
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.git.createRef({
@@ -53,3 +52,28 @@ jobs:
               ref: 'refs/tags/v${{ needs.semver.outputs.version }}',
               sha: context.sha
             })
+      - name: Create release
+        run: |
+          gh release create 'v${{ needs.semver.outputs.version }}' --generate-notes
+#      - name: Create release
+#        uses: actions/github-script@v7
+#        with:
+#          script: |
+#            // TODO add the TF plan in the changelog ; with the details of each commit
+#            // name: 'DPhoto v${{ needs.semver.outputs.version }}',
+#
+#            const release = github.rest.repos.createRelease({
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              tag_name: 'v${{ needs.semver.outputs.version }}',
+#              generate_release_notes: true,
+#              make_latest: true,
+#            });
+#
+#            octokit.rest.repos.uploadReleaseAsset({
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              release_id,
+#              name,
+#              data,
+#            });

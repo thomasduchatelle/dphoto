@@ -31,7 +31,7 @@ runs:
       run: make setup-app
       shell: bash
     - name: Install SLS
-      if: ${{ inputs.sls == 'true' || inputs.build-cache == 'true' }}
+      if: ${{ steps.cache-restore.outputs.cache-hit != 'true' && (inputs.sls == 'true' || inputs.build-cache == 'true') }}
       run: npm install -g serverless
       shell: bash
     - name: YARN Cache (always save)
