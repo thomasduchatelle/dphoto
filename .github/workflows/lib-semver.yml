@@ -3,9 +3,9 @@ on:
   workflow_call:
     inputs:
       snapshot:
-        description: "'false' if it's a final released version, false otherwise"
+        description: "'true' if it's not a released version, false otherwise"
         type: string
-        default: "true"
+        default: "false"
     outputs:
       version:
         description: "Version generated from GIT history"

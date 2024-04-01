@@ -1,0 +1,88 @@
+name: 'Changelog'
+description: 'Generate a changelog from the GIT history'
+inputs:
+  version:
+    description: Software version (target or released)
+    required: true
+  tf-plan:
+    description: Terraform plan (for live)
+  tf-no-change:
+    description: "'true' if there is no change to be applied to the infrastructure ; 'false' if no change ; '' (empty) if it shouldn't be mentioned."
+    default: ""
+outputs:
+  title:
+    description: "Change title"
+    value: ${{ steps.changelog.outputs.title }}
+  changelog:
+    description: "Changelog in Markdown language"
+    value: ${{ steps.changelog.outputs.changelog }}
+  commits-count:
+    description: "Number of commits included"
+    value: ${{ steps.changelog.outputs.commits-count }}
+  description:
+    description: "Change description (might be empty)"
+    value: ${{ steps.changelog.outputs.description }}
+  description-others:
+    description: "Other changes associated"
+    value: ${{ steps.changelog.outputs.description-others }}
+runs:
+  using: "composite"
+  steps:
+    - name: changelog
+      id: changelog
+      shell: 'bash'
+      env:
+        PLAN: ${{ inputs.tf-plan }}
+      run: |
+        first_hash="$(git log origin/main..${{ github.ref_name }} --pretty=format:%h | tail -1)"
+        commits="$(git log origin/main..${{ github.ref_name }} --pretty=tformat:%h | wc -l)"
+
+        title="${{ inputs.version }} - $(git log -1 "$first_hash" '--pretty=format:%s' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
+        description="$(git log -1 "$first_hash" '--pretty=format:%b' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
+
+        if [[ "$commits" -gt 1 ]] ; then
+          description_others="$(git log origin/main..${{ github.ref_name }} '--pretty=tformat:* %s' | head -n -1 | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
+        fi
+
+        CHANGELOG='change.log'
+        touch $CHANGELOG
+        echo "# Changelog" >> $CHANGELOG
+        echo "" >> $CHANGELOG
+        echo "$title" >> $CHANGELOG
+        if [[ "$description" != "" ]] ; then
+          echo "" >> $CHANGELOG
+          echo "## Description" >> $CHANGELOG
+          echo "" >> $CHANGELOG
+          echo "$description" >> $CHANGELOG
+        fi
+        if [[ "$commits" -gt 1 ]] ; then
+          echo "" >> $CHANGELOG
+          echo "## $(($commits - 1)) other commits" >> $CHANGELOG
+          echo "" >> $CHANGELOG
+          echo "$description_others" >> $CHANGELOG
+        fi
+        if [[ "${{ inputs.tf-no-change }}" != "" ]] ; then
+          echo "" >> $CHANGELOG
+          echo "## Terraform plan" >> $CHANGELOG
+          echo "" >> $CHANGELOG
+          if [[ "${{ inputs.tf-no-change }}" == "true" ]] ; then
+            echo "_No change_" >> $CHANGELOG
+          else
+            echo '```' >> $CHANGELOG
+            echo "$PLAN" >> $CHANGELOG
+            echo '```' >> $CHANGELOG
+          fi
+        fi
+        cat $CHANGELOG
+
+        echo "title=$title" >> $GITHUB_OUTPUT
+        echo "commits-count=$commits" >> $GITHUB_OUTPUT
+        echo "description<<EOF" >> $GITHUB_OUTPUT
+        echo "$description" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        echo "description-others<<EOF" >> $GITHUB_OUTPUT
+        echo "$description_others" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        cat $CHANGELOG >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT

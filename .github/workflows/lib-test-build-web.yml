@@ -27,7 +27,8 @@ jobs:
         run: docker-compose up -d
       - run: make test-go
 
-  build-go-api:
+  build-go:
+    name: "Build API and CLI"
     timeout-minutes: 10
     runs-on: ubuntu-latest
     if: ${{ success() && inputs.build-disabled == 'false' }}
@@ -41,13 +42,19 @@ jobs:
 
       - run: echo "$APPLICATION_VERSION (snapshot = $APPLICATION_VERSION_SNAPSHOT)"
       - name: Build for release
-        run: make build-api
-      - name: Dist Artifact
+        run: make build-api build-cli
+      - name: Dist API
         uses: actions/upload-artifact@v4
         with:
           name: dist-api
           path: |
             bin/**
+      - name: Dist CLI
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin-cli
+          path: |
+            bin-cli/**
 
   ts-cache-builder:
     runs-on: ubuntu-latest

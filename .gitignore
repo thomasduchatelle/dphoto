@@ -4,4 +4,5 @@
 /dist/
 /dphoto
 bin/
+bin-cli/
 deployments/infra-data/.terraform/
