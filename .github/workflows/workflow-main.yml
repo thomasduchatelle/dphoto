@@ -1,3 +1,4 @@
+name: Release & Deploy
 on:
   push:
     branches:
