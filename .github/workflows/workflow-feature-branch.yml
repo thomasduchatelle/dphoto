@@ -67,7 +67,7 @@ jobs:
           if [[ $RC -eq 0 ]] ; then
            echo "no_change=true" >> $GITHUB_OUTPUT
           else
-            if [[ $RC -eq 2 ]] ; then 
+            if [[ $RC -eq 2 ]] ; then
               echo "no_change=false" >> $GITHUB_OUTPUT
             else
               return $RC
@@ -99,25 +99,25 @@ jobs:
               state: 'open',
               head: 'thomasduchatelle:${{ github.ref_name }}'
             });
-            
+
             if (prs.status !== 200 || prs.data.length == 0) {
               console.log("No open PR for this branch [${{ github.ref }}]");
               return
             }
-            
+
             let summary = "";
             if ('${{ steps.plan.outputs.no_change }}' === 'true' ) {
               summary = " - no change"
             }
-            
+
             const output = `
             * ${{ steps.fmt.outcome == 'success' && ':white_check_mark:' || ':x:' }} Formatting \`${{ steps.fmt.outcome }}\`
             * ${{ steps.init.outcome == 'success' && ':white_check_mark:' || ':x:' }} Initialisation  \`${{ steps.init.outcome }}\`
             * ${{ steps.validate.outcome == 'success' && ':white_check_mark:' || ':x:' }} Validation \`${{ steps.validate.outcome }}\`
             * ${{ steps.plan.outcome == 'success' && ':white_check_mark:' || ':x:' }} Plan \`${{ steps.plan.outcome }}\`
-            
+
             ### Dev Plan
-            
+
             <details><summary>Show Plan${summary}</summary>
 
             \`\`\`\n
@@ -150,3 +150,113 @@ jobs:
     with:
       target: next
       terraform-disabled: ${{ needs.test-terraform.outputs.no_change }}
+
+  pull-request:
+    runs-on: ubuntu-latest
+    needs:
+      - semver
+      - deploy-next
+    if: ${{ success() || needs.semver.result == 'success' && contains(github.event.head_commit.message, '+pr') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: git-info
+        id: git-info
+        run: |
+          first_hash="$(git log origin/main..${{ github.ref_name }} --pretty=format:%h | tail -1)"
+          commits="$(git log origin/main..${{ github.ref_name }} --pretty=tformat:%h | wc -l)"
+
+          title="${{ needs.semver.outputs.version }} - $(git log -1 "$first_hash" '--pretty=format:%s' | sed 's/[^ ]\?\(+next\|+pr\)[^ ]\?//')"
+          description="$(git log -1 "$first_hash" '--pretty=tformat:%b' | sed 's/[^ ]\?\(+next\|+pr\)[^ ]\?//')"
+          
+          if [[ "$commits" -gt 1 ]] ; then
+            description_others="$(git log origin/main..${{ github.ref_name }} '--pretty=tformat:* %s' | head -n -1 | sed 's/[^ ]\?\(+next\|+pr\)[^ ]\?//')"
+          fi
+          
+          echo "# Extracted info from GIT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Title" >> $GITHUB_STEP_SUMMARY
+          echo "$title" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Description" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "$description" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Other commit lines" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "$description_others" >> $GITHUB_STEP_SUMMARY
+          
+          echo "title=$title" >> $GITHUB_OUTPUT
+          echo "commits_count=$commits" >> $GITHUB_OUTPUT
+          echo "description<<EOF" >> $GITHUB_OUTPUT
+          echo "$description" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "description_others<<EOF" >> $GITHUB_OUTPUT
+          echo "$description_others" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create or Update PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: 'thomasduchatelle:${{ github.ref_name }}'
+            });
+            
+            const commitCount=`${{ steps.git-info.outputs.commits_count }}`
+            const title=`${{ steps.git-info.outputs.title }}`
+            const description=`${{ steps.git-info.outputs.description }}`
+            const descriptionOthers=`${{ steps.git-info.outputs.description_others }}`
+            
+            let body = description
+            if ( commitCount > 1 && descriptionOthers !== "") {
+              body=`### Main description
+            
+            ${description}
+            
+            ### ${commitCount - 1} other commits
+            
+            ${descriptionOthers}`
+            }
+            
+            if (prs.status !== 200) {
+              console.log("error fetching exiting PRs: " + JSON.stringify(prs))
+            
+            } else if (prs.data.length == 0) {
+              console.log("Creating a PR for ${{ github.ref }}");
+              github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head: 'thomasduchatelle:${{ github.ref_name }}',
+                base: 'main',
+                title: title,
+                body: body,
+              });
+            
+              return
+            }
+            
+            const pr = prs.data[0]
+            
+            if ('${{ contains(github.event.head_commit.message, '+pr') }}' === 'true' && 
+              (pr.title !== title || pr.body !== body)
+              ) {
+              console.log("PR will be updated ...")
+              console.log("Old title -> " + pr.title)
+              console.log("New title -> " + title)
+              console.log("Old body -> " + pr.body)
+              console.log("New body -> " + body)
+
+              github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                title: title,
+                body: body,
+              });
+            }
