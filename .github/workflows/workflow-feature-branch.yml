@@ -10,6 +10,8 @@ on:
 jobs:
   semver:
     uses: ./.github/workflows/lib-semver.yml
+    with:
+      snapshot: "true"
 
   test-build-web:
     uses: ./.github/workflows/lib-test-build-web.yml
@@ -27,7 +29,8 @@ jobs:
     env:
       TF_WORKSPACE: dev
     outputs:
-      no_change: ${{ steps.plan.outputs.no_change }}
+      no-change: ${{ steps.plan.outputs.no-change }}
+      plan: ${{ steps.plan.outputs.stdout }}
     steps:
       - uses: actions/checkout@v4
 
@@ -56,37 +59,42 @@ jobs:
           cd deployments/infra-data
           terraform fmt -check
 
-      - name: Terraform Plan (dev)
+      - name: Terraform Plan
         id: plan
         continue-on-error: true
         run: |
           cd deployments/infra-data
           RC=0
           terraform plan -no-color || RC=$?
+          
+          case "$RC" in 
+          0)
+            echo "no-change=true" >> $GITHUB_OUTPUT
+            ;;
+          1)
+            echo "no-change=false" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            return $RC
+            ;;
+          esac
 
-          if [[ $RC -eq 0 ]] ; then
-           echo "no_change=true" >> $GITHUB_OUTPUT
-          else
-            if [[ $RC -eq 2 ]] ; then
-              echo "no_change=false" >> $GITHUB_OUTPUT
-            else
-              return $RC
-            fi
-          fi
-
-      - name: Save plan in file
+      - name: Step Summary
+        id: summary
+        if: ${{ ! contains(github.event.head_commit.message, '+next') }}
         env:
           PLAN: "${{ steps.plan.outputs.stdout }}"
         run: |
-          echo "$PLAN" > terraform-plan-dev.log
+          echo '# `next` - Terraform plan' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$PLAN" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-      - name: Upload Plan (dev)
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-dev.log
-          path: terraform-plan-dev.log
-
-      - name: Publish Plan (dev)
+      - name: Comment Plan in PR (next)
+        if: ${{ steps.plan.outputs.no-change == 'false' }}
         uses: actions/github-script@v7
         env:
           PLAN: "${{ steps.plan.outputs.stdout }}"
@@ -106,7 +114,7 @@ jobs:
             }
 
             let summary = "";
-            if ('${{ steps.plan.outputs.no_change }}' === 'true' ) {
+            if ('${{ steps.plan.outputs.no-change }}' === 'true' ) {
               summary = " - no change"
             }
 
@@ -149,7 +157,7 @@ jobs:
     secrets: inherit
     with:
       target: next
-      terraform-disabled: ${{ needs.test-terraform.outputs.no_change }}
+      terraform-disabled: ${{ needs.test-terraform.outputs.no-change }}
 
   pull-request:
     runs-on: ubuntu-latest
@@ -161,43 +169,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: git-info
-        id: git-info
-        run: |
-          first_hash="$(git log origin/main..${{ github.ref_name }} --pretty=format:%h | tail -1)"
-          commits="$(git log origin/main..${{ github.ref_name }} --pretty=tformat:%h | wc -l)"
 
-          title="${{ needs.semver.outputs.version }} - $(git log -1 "$first_hash" '--pretty=format:%s' | sed 's/[^ ]\?\(+next\|+pr\)[^ ]\?//')"
-          description="$(git log -1 "$first_hash" '--pretty=tformat:%b' | sed 's/[^ ]\?\(+next\|+pr\)[^ ]\?//')"
-          
-          if [[ "$commits" -gt 1 ]] ; then
-            description_others="$(git log origin/main..${{ github.ref_name }} '--pretty=tformat:* %s' | head -n -1 | sed 's/[^ ]\?\(+next\|+pr\)[^ ]\?//')"
-          fi
-          
-          echo "# Extracted info from GIT" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Title" >> $GITHUB_STEP_SUMMARY
-          echo "$title" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Description" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "$description" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Other commit lines" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "$description_others" >> $GITHUB_STEP_SUMMARY
-          
-          echo "title=$title" >> $GITHUB_OUTPUT
-          echo "commits_count=$commits" >> $GITHUB_OUTPUT
-          echo "description<<EOF" >> $GITHUB_OUTPUT
-          echo "$description" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "description_others<<EOF" >> $GITHUB_OUTPUT
-          echo "$description_others" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Changelog
+        id: changelog
+        uses: ./.github/actions/generate-changelog
+        with:
+          version: ${{ needs.semver.outputs.version }}
 
       - name: Create or Update PR
         uses: actions/github-script@v7
+        env:
+          TITLE: ${{ steps.changelog.outputs.title }}
+          CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -208,22 +191,9 @@ jobs:
               head: 'thomasduchatelle:${{ github.ref_name }}'
             });
             
-            const commitCount=`${{ steps.git-info.outputs.commits_count }}`
-            const title=`${{ steps.git-info.outputs.title }}`
-            const description=`${{ steps.git-info.outputs.description }}`
-            const descriptionOthers=`${{ steps.git-info.outputs.description_others }}`
-            
-            let body = description
-            if ( commitCount > 1 && descriptionOthers !== "") {
-              body=`### Main description
-            
-            ${description}
-            
-            ### ${commitCount - 1} other commits
-            
-            ${descriptionOthers}`
-            }
-            
+            const title = process.env.TITLE
+            const body = process.env.CHANGELOG
+  
             if (prs.status !== 200) {
               console.log("error fetching exiting PRs: " + JSON.stringify(prs))
             
@@ -259,6 +229,7 @@ jobs:
                 title: title,
                 body: body,
               });
+
             } else {
               console.log("PR not updated, match = " + (pr.title !== title || pr.body !== body) + " ; +pr = ${{ contains(github.event.head_commit.message, '+pr') }}")
             }

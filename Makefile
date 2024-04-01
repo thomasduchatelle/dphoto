@@ -56,6 +56,11 @@ test-go:
 build-go:
 	go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))"  -o ./ ./cmd/...
 
+build-cli:
+	env GOARCH=amd64 GOOS=linux  CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-linux  ./cmd/dphoto
+	env GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-darwin ./cmd/dphoto
+	env GOARCH=arm64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-arm64-darwin ./cmd/dphoto
+
 install-cli:
 	go install ./cmd/...
 
@@ -100,7 +105,7 @@ test-web-ci:
 .PHONY: clean-api test-api build-api
 
 clean-api:
-	cd api && rm -rf ./bin ./vendor
+	rm -rf ./bin ./api/vendor
 
 test-api: test-go
 	cd api/lambdas && AWS_PROFILE="" go test ./...

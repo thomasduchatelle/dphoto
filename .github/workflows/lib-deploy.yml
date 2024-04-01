@@ -10,6 +10,13 @@ on:
         description: "'true' to skip terraform apply ; the plan should have been computed and should be empty"
         type: string
         default: false
+    outputs:
+      tf-plan:
+        description: Terraform plan
+        value: ${{ jobs.provision-infra.outputs.tf-plan }}
+      tf-no-change:
+        description: "'true' or 'false' depending if there is any change that will be applied"
+        value: ${{ jobs.provision-infra.outputs.tf-no-change }}
 
 concurrency:
   group: deploy-${{ inputs.target }}
@@ -52,6 +59,9 @@ jobs:
     env:
       TF_WORKSPACE: ${{ needs.set-env.outputs.environment-workspace }}
     if: ${{ success() && inputs.terraform-disabled == 'false' }}
+    outputs:
+      tf-plan: ${{ steps.plan.outputs.stdout }}
+      tf-no-change: ${{ steps.plan.outputs.no-change }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup terraform
@@ -63,7 +73,39 @@ jobs:
         id: init
         run: cd deployments/infra-data && terraform init
 
+      - name: Terraform Plan
+        id: plan
+        continue-on-error: true
+        run: |
+          cd deployments/infra-data
+          RC=0
+          terraform plan -no-color || RC=$?
+          
+          case "$RC" in 
+          0)
+            echo "no-change=true" >> $GITHUB_OUTPUT
+            ;;
+          1)
+            echo "no-change=false" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            return $RC
+            ;;
+          esac
+
+      - name: Step Summary
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        run: |
+          echo "# `${{ inputs.target }}` - Terraform" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "$PLAN" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
       - name: Terraform apply
+        if: ${{ steps.plan.outputs.no-change == 'false' }}
         run: cd deployments/infra-data && terraform apply -auto-approve
 
   deploy-app:
