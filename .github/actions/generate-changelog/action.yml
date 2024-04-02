@@ -28,20 +28,37 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: changelog
+    - name: Source
+      id: source
+      shell: bash
+      run: |
+        if [[ "${{ github.ref_name }}" == "main" ]] ; then
+          echo "before=${{ github.event.before }}" >> $GITHUB_OUTPUT
+          echo "after=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        else
+          echo "before=origin/main" >> $GITHUB_OUTPUT
+          echo "after=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Changelog
       id: changelog
       shell: 'bash'
       env:
         PLAN: ${{ inputs.tf-plan }}
       run: |
-        first_hash="$(git log origin/main..${{ github.ref_name }} --pretty=format:%h | tail -1)"
-        commits="$(git log origin/main..${{ github.ref_name }} --pretty=tformat:%h | wc -l)"
+        first_hash="$(git log "${{ steps.source.outputs.before }}..${{ steps.source.outputs.after }}" --pretty=format:%h | tail -1)"
+        commits="$(git log "${{ steps.source.outputs.before }}..${{ steps.source.outputs.after }}" --pretty=tformat:%h | wc -l)"
+        
+        if [[ "$first_hash" == "" || "$commits" -eq 0 ]] ; then
+          echo "No change found between ${{ steps.source.outputs.before }}..${{ steps.source.outputs.after }}"
+          return 0
+        fi
 
         title="${{ inputs.version }} - $(git log -1 "$first_hash" '--pretty=format:%s' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
         description="$(git log -1 "$first_hash" '--pretty=format:%b' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
 
         if [[ "$commits" -gt 1 ]] ; then
-          description_others="$(git log origin/main..${{ github.ref_name }} '--pretty=tformat:* %s' | head -n -1 | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
+          description_others="$(git log -$(( $commits - 1 )) "${{ steps.source.outputs.before }}..${{ steps.source.outputs.after }}" --pretty=tformat:'* %s%n      %n%w(0,6,6)%b%w(0,0,0)%n' | sed -e 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
         fi
 
         CHANGELOG='change.log'
