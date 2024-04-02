@@ -165,6 +165,8 @@ jobs:
       - semver
       - deploy-next
     if: ${{ success() || needs.semver.result == 'success' && contains(github.event.head_commit.message, '+pr') }}
+    outputs:
+      pr-created: ${{ steps.pr.outputs.result.pr-created }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -177,6 +179,7 @@ jobs:
           version: ${{ needs.semver.outputs.version }}
 
       - name: Create or Update PR
+        id: pr
         uses: actions/github-script@v7
         env:
           TITLE: ${{ steps.changelog.outputs.title }}
@@ -208,7 +211,7 @@ jobs:
                 body: body,
               });
             
-              return
+              return '{"pr-created": "true"}'
             }
             
             const pr = prs.data[0]
@@ -233,3 +236,9 @@ jobs:
             } else {
               console.log("PR not updated, match = " + (pr.title !== title || pr.body !== body) + " ; +pr = ${{ contains(github.event.head_commit.message, '+pr') }}")
             }
+
+  tf-plan-live:
+    needs:
+      - pull-request
+    if: ${{ needs.pull-request.outputs.pr-created == 'true' }}
+    uses: ./.github/workflows/workflow-pull-request-tf-plan.yml

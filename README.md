@@ -93,7 +93,7 @@ With:
 * supported tags are:
   * `+update-snapshots`: snapshots used to test visual regression will be updated
   * `+patch`, `+minor`, `+major`: control the version of the software
-  * `+mr`: creates a Pull Request if the pipeline is successful
+  * `+pr`: creates a Pull Request if the pipeline is successful
 
 ### Releasing process
 
