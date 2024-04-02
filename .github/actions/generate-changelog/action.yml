@@ -58,7 +58,7 @@ runs:
         description="$(git log -1 "$first_hash" '--pretty=format:%b' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
 
         if [[ "$commits" -gt 1 ]] ; then
-          description_others="$(git log -$(( $commits - 1 )) "${{ steps.source.outputs.before }}..${{ steps.source.outputs.after }}" --pretty=tformat:'* %s%n      %n%w(0,6,6)%b%w(0,0,0)%n' | sed -e 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
+          description_others="$(git log "${{ steps.source.outputs.before }}..${{ steps.source.outputs.after }}^" --pretty=tformat:'* %s%n      %n%w(0,6,6)%b%w(0,0,0)%n' | sed -e 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
         fi
 
         CHANGELOG='change.log'

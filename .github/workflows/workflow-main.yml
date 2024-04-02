@@ -34,7 +34,7 @@ jobs:
     with:
       target: live
 
-  cli-tag:
+  release:
     runs-on: ubuntu-latest
     name: Release
     needs:
@@ -43,6 +43,8 @@ jobs:
       - deploy-live
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Changelog
         id: changelog
