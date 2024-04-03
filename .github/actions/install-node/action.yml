@@ -24,7 +24,7 @@ runs:
           ~/.npm
           web/node_modules
           deployments/sls/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('.github/actions/install-node/action.yml', 'web/yarn.lock', 'deployments/sls/package-lock.json') }}
+        key: ${{ runner.os }}-node-${{ hashFiles('.github/actions/install-node/action.yml', 'web/yarn.lock', 'deployments/sls/yarn.lock') }}
         lookup-only: ${{ inputs.build-cache }}
     - name: Download deps
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
@@ -42,4 +42,4 @@ runs:
           ~/.npm
           web/node_modules
           deployments/sls/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('.github/actions/install-node/action.yml', 'web/yarn.lock', 'deployments/sls/package-lock.json') }}
+        key: ${{ runner.os }}-node-${{ hashFiles('.github/actions/install-node/action.yml', 'web/yarn.lock', 'deployments/sls/yarn.lock') }}
