@@ -75,4 +75,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         run: |
-          gh release create 'DPhoto v${{ needs.semver.outputs.version }}' --notes "$CHANGELOG" bin-cli/*
+          gh release create 'v${{ needs.semver.outputs.version }}' --title 'DPhoto v${{ needs.semver.outputs.version }}' --latest --notes "$CHANGELOG" bin-cli/*
