@@ -248,7 +248,7 @@ jobs:
   tf-plan-live:
     needs:
       - pull-request
-    if: ${{ success() && needs.pull-request.outputs.pr-created == 'true' }}
+    if: ${{ needs.pull-request.result == 'success' && needs.pull-request.outputs.pr-created == 'true' }}
     uses: ./.github/workflows/workflow-pull-request-tf-plan.yml
     secrets: inherit
     with:
