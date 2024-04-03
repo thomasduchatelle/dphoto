@@ -66,8 +66,8 @@ jobs:
           cd deployments/infra-data
           RC=0
           terraform plan -no-color || RC=$?
-          
-          case "$RC" in 
+
+          case "$RC" in
           0)
             echo "no-change=true" >> $GITHUB_OUTPUT
             ;;
@@ -165,6 +165,9 @@ jobs:
       - semver
       - deploy-next
     if: ${{ success() || needs.semver.result == 'success' && contains(github.event.head_commit.message, '+pr') }}
+    outputs:
+      pr-created: ${{ steps.pr.outputs.result != '' && 'true' || 'false' }}
+      pr-number: ${{ steps.pr.outputs.result }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -177,12 +180,14 @@ jobs:
           version: ${{ needs.semver.outputs.version }}
 
       - name: Create or Update PR
+        id: pr
         uses: actions/github-script@v7
         env:
           TITLE: ${{ steps.changelog.outputs.title }}
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
           script: |
             const prs = await github.rest.pulls.list({
               owner: context.repo.owner,
@@ -199,7 +204,7 @@ jobs:
             
             } else if (prs.data.length == 0) {
               console.log("Creating a PR for ${{ github.ref }}");
-              github.rest.pulls.create({
+              const created = await github.rest.pulls.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 head: 'thomasduchatelle:${{ github.ref_name }}',
@@ -208,7 +213,13 @@ jobs:
                 body: body,
               });
             
-              return
+              if (created.status == 201) {
+                console.log("PR '"+ created.data.number + "' has been created");
+                return created.data.number
+              } else {
+                console.log("Error when creating the PR: " + JSON.stringify(created));
+                return
+              }
             }
             
             const pr = prs.data[0]
@@ -233,3 +244,12 @@ jobs:
             } else {
               console.log("PR not updated, match = " + (pr.title !== title || pr.body !== body) + " ; +pr = ${{ contains(github.event.head_commit.message, '+pr') }}")
             }
+
+  tf-plan-live:
+    needs:
+      - pull-request
+    if: ${{ needs.pull-request.result == 'success' && needs.pull-request.outputs.pr-created == 'true' }}
+    uses: ./.github/workflows/workflow-pull-request-tf-plan.yml
+    secrets: inherit
+    with:
+      issue-number: ${{ needs.pull-request.outputs.pr-number }}

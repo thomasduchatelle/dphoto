@@ -54,7 +54,7 @@ runs:
           return 0
         fi
 
-        title="${{ inputs.version }} - $(git log -1 "$first_hash" '--pretty=format:%s' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
+        title="[${{ inputs.version }}] $(git log -1 "$first_hash" '--pretty=format:%s' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
         description="$(git log -1 "$first_hash" '--pretty=format:%b' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
 
         if [[ "$commits" -gt 1 ]] ; then
