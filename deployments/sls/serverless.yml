@@ -312,7 +312,7 @@ package:
 plugins:
   - serverless-ssm-fetch
   - serverless-s3-sync
-
+  - serverless-prune-plugin
 custom:
   serverlessSsmFetch:
     CATALOG_TABLE_NAME: /dphoto/${sls:stage}/dynamodb/catalog/tableName
@@ -323,3 +323,6 @@ custom:
   s3Sync:
     - bucketNameKey: ViewerUiBucketName
       localDir: ../../web/build/
+  prune:
+    automatic: true
+    number: 5
