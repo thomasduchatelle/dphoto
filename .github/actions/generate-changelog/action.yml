@@ -13,6 +13,9 @@ outputs:
   title:
     description: "Change title"
     value: ${{ steps.changelog.outputs.title }}
+  title-with-version:
+    description: "Change title prefixed by the version"
+    value: ${{ steps.changelog.outputs.title-with-version }}
   changelog:
     description: "Changelog in Markdown language"
     value: ${{ steps.changelog.outputs.changelog }}
@@ -54,7 +57,8 @@ runs:
           return 0
         fi
 
-        title="[${{ inputs.version }}] $(git log -1 "$first_hash" '--pretty=format:%s' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
+        title="$(git log -1 "$first_hash" '--pretty=format:%s' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
+        title_with_version="[${{ inputs.version }}] $title"
         description="$(git log -1 "$first_hash" '--pretty=format:%b' | sed 's/[ (]*\(+next\|+pr\)[ )]*/ /')"
 
         if [[ "$commits" -gt 1 ]] ; then
@@ -93,6 +97,7 @@ runs:
         cat $CHANGELOG
 
         echo "title=$title" >> $GITHUB_OUTPUT
+        echo "title-with-version=$title_with_version" >> $GITHUB_OUTPUT
         echo "commits-count=$commits" >> $GITHUB_OUTPUT
         echo "description<<EOF" >> $GITHUB_OUTPUT
         echo "$description" >> $GITHUB_OUTPUT

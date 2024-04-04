@@ -88,7 +88,7 @@ func (b BuildStat) GitInfoParts(prefix string) string {
 		return strings.Join(parts, "")
 
 	} else {
-		return prefix + "run"
+		return ""
 	}
 
 }
