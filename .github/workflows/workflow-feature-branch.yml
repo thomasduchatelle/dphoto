@@ -183,7 +183,7 @@ jobs:
         id: pr
         uses: actions/github-script@v7
         env:
-          TITLE: ${{ steps.changelog.outputs.title }}
+          TITLE: ${{ steps.changelog.outputs.title-with-version }}
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
