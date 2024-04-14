@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -36,10 +37,10 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		}
 
 		content, contentType, err := archive.GetResizedImage(owner, mediaId, width, responseMaxContent)
-		if err == archive.NotFoundError {
+		if errors.Is(err, archive.NotFoundError) {
 			return common.NotFound(nil)
 		}
-		if err == archive.MediaOverflowError {
+		if errors.Is(err, archive.MediaOverflowError) {
 			log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is over max allowed payload. Redirecting.", owner, mediaId, width)
 			return redirectTo(archive.GetResizedImageURL(owner, mediaId, width))
 		}
@@ -60,7 +61,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 }
 
 func redirectTo(url string, err error) (common.Response, error) {
-	if err == archive.NotFoundError {
+	if errors.Is(err, archive.NotFoundError) {
 		return common.NotFound(nil)
 	}
 	if err != nil {

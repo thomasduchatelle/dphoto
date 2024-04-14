@@ -2,10 +2,13 @@
 package config
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	awsv1 "github.com/aws/aws-sdk-go/aws"
+	credentialsv1 "github.com/aws/aws-sdk-go/aws/credentials"
+	sessionv1 "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -74,18 +77,38 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 
 	if ignite {
 		// use explicit config to avoid creating unwanted environment
-		sess := session.Must(session.NewSession(
-			&aws.Config{
+		sess := sessionv1.Must(sessionv1.NewSession(
+			&awsv1.Config{
 				Endpoint:         awsString(viper.GetString("aws.endpoint")),
-				Region:           aws.String(viper.GetString("aws.region")),
-				S3ForcePathStyle: aws.Bool(true), // prevent using S3 bucket name in HOST (incompatible with localstack on macOS)
+				Region:           awsv1.String(viper.GetString("aws.region")),
+				S3ForcePathStyle: awsv1.Bool(true), // prevent using S3 bucket name in HOST (incompatible with localstack on macOS)
 			},
 			awsCredentialsConfig(),
 		))
+		cfg, err := awsconfig.LoadDefaultConfig(context.TODO(),
+			awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+				endpoint := viper.GetString("aws.endpoint")
+				region = viper.GetString("aws.region")
+				if endpoint != "" {
+					return aws.Endpoint{
+						PartitionID:   "aws",
+						URL:           endpoint,
+						SigningRegion: region,
+					}, nil
+				}
+
+				// returning EndpointNotFoundError will allow the service to fallback to its default resolution
+				return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+			})),
+		)
+		if err != nil {
+			return err
+		}
 
 		config = &viperConfig{
 			Viper:      viper.GetViper(),
 			awsSession: sess,
+			awsConfig:  cfg,
 		}
 
 		for _, listener := range listeners {
@@ -97,16 +120,16 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 	return nil
 }
 
-func awsCredentialsConfig() *aws.Config {
+func awsCredentialsConfig() *awsv1.Config {
 	if viper.GetString("aws.key") != "" || viper.GetString("aws.secret") != "" {
 		log.Info("AWS Credentials > using static key")
-		return &aws.Config{
-			Credentials: credentials.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
+		return &awsv1.Config{
+			Credentials: credentialsv1.NewStaticCredentials(viper.GetString("aws.key"), viper.GetString("aws.secret"), viper.GetString("aws.token")),
 		}
 	}
 
 	log.Info("AWS Credentials > using default config")
-	return new(aws.Config)
+	return new(awsv1.Config)
 }
 
 func awsString(value string) *string {

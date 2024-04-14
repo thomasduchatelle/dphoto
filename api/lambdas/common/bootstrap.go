@@ -1,8 +1,11 @@
 package common
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
@@ -63,11 +66,11 @@ func appAuthConfig() aclcore.OAuthConfig {
 }
 
 func ssoAuthenticatorPermissionReader() aclscopedynamodb.GrantRepository {
-	return aclscopedynamodb.Must(aclscopedynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
+	return aclscopedynamodb.Must(aclscopedynamodb.New(newV1Session(), viper.GetString(DynamoDBTableName)))
 }
 
 func newRefreshTokenRepository() aclcore.RefreshTokenRepository {
-	return aclrefreshdynamodb.Must(aclrefreshdynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
+	return aclrefreshdynamodb.Must(aclrefreshdynamodb.New(newV1Session(), viper.GetString(DynamoDBTableName)))
 }
 
 func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthenticator) {
@@ -103,7 +106,7 @@ func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthen
 }
 
 func getIdentityDetailsStore() aclidentitydynamodb.IdentityRepository {
-	return aclidentitydynamodb.Must(aclidentitydynamodb.New(newSession(), viper.GetString(DynamoDBTableName)))
+	return aclidentitydynamodb.Must(aclidentitydynamodb.New(newV1Session(), viper.GetString(DynamoDBTableName)))
 }
 
 func NewLogout() *aclcore.Logout {
@@ -142,7 +145,7 @@ func bootstrapCatalogDomain() {
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
-	dynamoAdapter := catalogdynamo.Must(catalogdynamo.NewRepository(newSession(), tableName))
+	dynamoAdapter := catalogdynamo.Must(catalogdynamo.NewRepository(newV1Session(), tableName))
 	catalog.Init(dynamoAdapter, catalogarchivesync.New())
 }
 
@@ -168,12 +171,13 @@ func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 		panic("SQS_ARCHIVE_URL must be set and non-empty")
 	}
 
-	sess := newSession()
-	archiveAsyncAdapter := asyncjobadapter.New(sess, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobadapter.DefaultImagesPerMessage)
+	sess := newV1Session()
+	cfg := newV2Config()
+	archiveAsyncAdapter := asyncjobadapter.New(cfg, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobadapter.DefaultImagesPerMessage)
 	archive.Init(
 		archivedynamo.Must(archivedynamo.New(sess, tableName)),
-		s3store.Must(s3store.New(sess, storeBucketName)),
-		s3store.Must(s3store.New(sess, cacheBucketName)),
+		s3store.Must(s3store.New(cfg, storeBucketName)),
+		s3store.Must(s3store.New(cfg, cacheBucketName)),
 		archiveAsyncAdapter,
 	)
 
@@ -200,6 +204,13 @@ func (c catalogAdapter) ListMedias(owner string, folderName string, request cata
 	return catalog.ListMedias(owner, folderName, request)
 }
 
-func newSession() *session.Session {
+func newV1Session() *session.Session {
 	return session.Must(session.NewSession())
+}
+func newV2Config() aws.Config {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		panic(err)
+	}
+	return cfg
 }

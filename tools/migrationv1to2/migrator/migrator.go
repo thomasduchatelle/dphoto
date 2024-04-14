@@ -1,9 +1,11 @@
 package migrator
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/config"
+	sessionv1 "github.com/aws/aws-sdk-go/aws/session"
+	dynamodbv1 "github.com/aws/aws-sdk-go/service/dynamodb"
+	dynamodbattributev1 "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
@@ -19,24 +21,29 @@ import (
 
 func Migrate(tableName string, arn string, repopulateCache bool) (int, error) {
 	log.Infoln("Updating indexes ...")
-	awsSession := session.Must(session.NewSession())
+	awsSession := sessionv1.Must(sessionv1.NewSession())
 	_, err := catalogdynamo.NewRepository(awsSession, tableName)
 	if err != nil {
 		return 0, errors.Wrapf(err, "updating indexes failed ...")
 	}
 
-	client := dynamodb.New(awsSession)
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return 0, err
+	}
+
+	client := dynamodbv1.New(awsSession)
 
 	log.Infof("Scanning through the all records")
 
 	types := make(map[string]int)
-	var patches []*dynamodb.WriteRequest
+	var patches []*dynamodbv1.WriteRequest
 
 	var imageToResizes []*archive.ImageToResize
 
-	err = client.ScanPages(&dynamodb.ScanInput{
+	err = client.ScanPages(&dynamodbv1.ScanInput{
 		TableName: &tableName,
-	}, func(output *dynamodb.ScanOutput, _ bool) bool {
+	}, func(output *dynamodbv1.ScanOutput, _ bool) bool {
 		for _, item := range output.Items {
 			pk := *item["PK"].S
 			if idx := strings.Index(pk, "#"); idx > 0 {
@@ -95,7 +102,7 @@ func Migrate(tableName string, arn string, repopulateCache bool) (int, error) {
 		total += count
 	}
 
-	asyncAdapter := asyncjobadapter.New(awsSession, arn, "", 300)
+	asyncAdapter := asyncjobadapter.New(cfg, arn, "", 300)
 	if len(imageToResizes) > 0 {
 		log.Infof("%d medias to miniaturise ...", len(imageToResizes))
 		err = asyncAdapter.LoadImagesInCache(imageToResizes...)
@@ -107,7 +114,7 @@ func Migrate(tableName string, arn string, repopulateCache bool) (int, error) {
 	return total, nil
 }
 
-func foundNewLocation(images []*archive.ImageToResize, item map[string]*dynamodb.AttributeValue) []*archive.ImageToResize {
+func foundNewLocation(images []*archive.ImageToResize, item map[string]*dynamodbv1.AttributeValue) []*archive.ImageToResize {
 	locationKey := *item["LocationKey"].S
 	locationId := *item["LocationId"].S
 
@@ -128,9 +135,9 @@ func foundNewLocation(images []*archive.ImageToResize, item map[string]*dynamodb
 	})
 }
 
-func migrateOldAlbum(patches []*dynamodb.WriteRequest, item map[string]*dynamodb.AttributeValue) ([]*dynamodb.WriteRequest, error) {
+func migrateOldAlbum(patches []*dynamodbv1.WriteRequest, item map[string]*dynamodbv1.AttributeValue) ([]*dynamodbv1.WriteRequest, error) {
 	owner := *item["PK"].S
-	previousKey := map[string]*dynamodb.AttributeValue{
+	previousKey := map[string]*dynamodbv1.AttributeValue{
 		"PK": item["PK"],
 		"SK": item["SK"],
 	}
@@ -145,13 +152,13 @@ func migrateOldAlbum(patches []*dynamodb.WriteRequest, item map[string]*dynamodb
 
 	patches = append(
 		patches,
-		&dynamodb.WriteRequest{
-			PutRequest: &dynamodb.PutRequest{
+		&dynamodbv1.WriteRequest{
+			PutRequest: &dynamodbv1.PutRequest{
 				Item: item,
 			},
 		},
-		&dynamodb.WriteRequest{
-			DeleteRequest: &dynamodb.DeleteRequest{
+		&dynamodbv1.WriteRequest{
+			DeleteRequest: &dynamodbv1.DeleteRequest{
 				Key: previousKey,
 			},
 		},
@@ -159,9 +166,9 @@ func migrateOldAlbum(patches []*dynamodb.WriteRequest, item map[string]*dynamodb
 	return patches, nil
 }
 
-func migrateOldMedia(patches []*dynamodb.WriteRequest, item map[string]*dynamodb.AttributeValue) ([]*dynamodb.WriteRequest, error) {
+func migrateOldMedia(patches []*dynamodbv1.WriteRequest, item map[string]*dynamodbv1.AttributeValue) ([]*dynamodbv1.WriteRequest, error) {
 	data := &datamodelv1.MediaData{}
-	err := dynamodbattribute.UnmarshalMap(item, data)
+	err := dynamodbattributev1.UnmarshalMap(item, data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "migrateOldMedia/unmarshal")
 	}
@@ -185,20 +192,20 @@ func migrateOldMedia(patches []*dynamodb.WriteRequest, item map[string]*dynamodb
 		SignatureSize: data.SignatureSize,
 		SignatureHash: data.SignatureHash,
 	}
-	newItem, err := dynamodbattribute.MarshalMap(media)
+	newItem, err := dynamodbattributev1.MarshalMap(media)
 	if err != nil {
 		return nil, errors.Wrapf(err, "migrateOldMedia/marshal")
 	}
 
 	patches = append(
 		patches,
-		&dynamodb.WriteRequest{
-			PutRequest: &dynamodb.PutRequest{
+		&dynamodbv1.WriteRequest{
+			PutRequest: &dynamodbv1.PutRequest{
 				Item: newItem,
 			},
 		},
-		&dynamodb.WriteRequest{
-			DeleteRequest: &dynamodb.DeleteRequest{Key: map[string]*dynamodb.AttributeValue{
+		&dynamodbv1.WriteRequest{
+			DeleteRequest: &dynamodbv1.DeleteRequest{Key: map[string]*dynamodbv1.AttributeValue{
 				"PK": item["PK"],
 				"SK": item["SK"],
 			}},
@@ -208,9 +215,9 @@ func migrateOldMedia(patches []*dynamodb.WriteRequest, item map[string]*dynamodb
 	return patches, nil
 }
 
-func migrateOldLocation(patches []*dynamodb.WriteRequest, item map[string]*dynamodb.AttributeValue) ([]*dynamodb.WriteRequest, error) {
+func migrateOldLocation(patches []*dynamodbv1.WriteRequest, item map[string]*dynamodbv1.AttributeValue) ([]*dynamodbv1.WriteRequest, error) {
 	data := &datamodelv1.MediaLocationData{}
-	err := dynamodbattribute.UnmarshalMap(item, data)
+	err := dynamodbattributev1.UnmarshalMap(item, data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "migrateOldLocation/unmarshal")
 	}
@@ -227,20 +234,20 @@ func migrateOldLocation(patches []*dynamodb.WriteRequest, item map[string]*dynam
 		LocationId:        mediaId,
 		LocationKey:       path.Join(owner, data.FolderName, data.Filename),
 	}
-	newItem, err := dynamodbattribute.MarshalMap(location)
+	newItem, err := dynamodbattributev1.MarshalMap(location)
 	if err != nil {
 		return nil, errors.Wrapf(err, "migrateOldLocation/marshal")
 	}
 
 	patches = append(
 		patches,
-		&dynamodb.WriteRequest{
-			PutRequest: &dynamodb.PutRequest{
+		&dynamodbv1.WriteRequest{
+			PutRequest: &dynamodbv1.PutRequest{
 				Item: newItem,
 			},
 		},
-		&dynamodb.WriteRequest{
-			DeleteRequest: &dynamodb.DeleteRequest{Key: map[string]*dynamodb.AttributeValue{
+		&dynamodbv1.WriteRequest{
+			DeleteRequest: &dynamodbv1.DeleteRequest{Key: map[string]*dynamodbv1.AttributeValue{
 				"PK": item["PK"],
 				"SK": item["SK"],
 			}},
@@ -250,8 +257,8 @@ func migrateOldLocation(patches []*dynamodb.WriteRequest, item map[string]*dynam
 	return patches, nil
 }
 
-func stringAttribute(value string) *dynamodb.AttributeValue {
-	return &dynamodb.AttributeValue{
+func stringAttribute(value string) *dynamodbv1.AttributeValue {
+	return &dynamodbv1.AttributeValue{
 		S: &value,
 	}
 }
