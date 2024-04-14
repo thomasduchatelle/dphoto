@@ -1,12 +1,14 @@
 package asyncjobadapter
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sns"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
+	snstypes "github.com/aws/aws-sdk-go-v2/service/sns/types"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"path"
@@ -29,10 +31,10 @@ type ImageToResizeMessageV1 struct {
 	Widths   []int  `json:"widths"`
 }
 
-func New(sess *session.Session, topicARN string, queueURL string, imagesPerMessage int) archive.AsyncJobAdapter {
+func New(cfg aws.Config, topicARN string, queueURL string, imagesPerMessage int) archive.AsyncJobAdapter {
 	return &adapter{
-		snsClient:        sns.New(sess),
-		sqsClient:        sqs.New(sess),
+		snsClient:        sns.NewFromConfig(cfg),
+		sqsClient:        sqs.NewFromConfig(cfg),
 		topicARN:         topicARN,
 		queueURL:         queueURL,
 		imagesPerMessage: imagesPerMessage,
@@ -40,8 +42,8 @@ func New(sess *session.Session, topicARN string, queueURL string, imagesPerMessa
 }
 
 type adapter struct {
-	snsClient        *sns.SNS
-	sqsClient        *sqs.SQS
+	snsClient        *sns.Client
+	sqsClient        *sqs.Client
 	topicARN         string
 	queueURL         string
 	imagesPerMessage int
@@ -57,8 +59,8 @@ func (a *adapter) WarmUpCacheByFolder(owner, missedStoreKey string, width int) e
 		return errors.Wrapf(err, "marshaling [%s, %s, %d]", owner, missedStoreKey, width)
 	}
 
-	_, err = a.sqsClient.SendMessage(&sqs.SendMessageInput{
-		MessageAttributes: map[string]*sqs.MessageAttributeValue{
+	_, err = a.sqsClient.SendMessage(context.TODO(), &sqs.SendMessageInput{
+		MessageAttributes: map[string]sqstypes.MessageAttributeValue{
 			"ContentType": aSQSStringAttribute("WarmUpCacheByFolderMessageV1"),
 		},
 		MessageBody:            aws.String(string(mess)),
@@ -90,9 +92,9 @@ func (a *adapter) LoadImagesInCache(images ...*archive.ImageToResize) error {
 			return errors.Wrapf(err, "marshaling %d images", len(images))
 		}
 
-		_, err = a.snsClient.Publish(&sns.PublishInput{
+		_, err = a.snsClient.Publish(context.TODO(), &sns.PublishInput{
 			Message: aws.String(string(messageJson)),
-			MessageAttributes: map[string]*sns.MessageAttributeValue{
+			MessageAttributes: map[string]snstypes.MessageAttributeValue{
 				"ContentType": aSNSStringAttribute("[]ImageToResizeMessageV1"),
 			},
 			TopicArn: &a.topicARN,
@@ -105,14 +107,15 @@ func (a *adapter) LoadImagesInCache(images ...*archive.ImageToResize) error {
 	return nil
 }
 
-func aSQSStringAttribute(value string) *sqs.MessageAttributeValue {
-	return &sqs.MessageAttributeValue{
+func aSQSStringAttribute(value string) sqstypes.MessageAttributeValue {
+	return sqstypes.MessageAttributeValue{
 		DataType:    aws.String("String"),
 		StringValue: &value,
 	}
 }
-func aSNSStringAttribute(value string) *sns.MessageAttributeValue {
-	return &sns.MessageAttributeValue{
+
+func aSNSStringAttribute(value string) snstypes.MessageAttributeValue {
+	return snstypes.MessageAttributeValue{
 		DataType:    aws.String("String"),
 		StringValue: &value,
 	}

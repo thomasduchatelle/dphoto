@@ -2,12 +2,12 @@
 package s3store
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"io"
@@ -21,12 +21,18 @@ type StoreAndCache interface {
 	archive.CacheAdapter
 }
 
-func New(sess *session.Session, bucketName string) (StoreAndCache, error) {
-	s3client := s3.New(sess)
-	uploader := s3manager.NewUploader(sess)
+func New(cfg aws.Config, bucketName string, optFns ...func(options *s3.Options)) (StoreAndCache, error) {
+	s3client := s3.NewFromConfig(cfg, func(options *s3.Options) {
+		for _, optFn := range optFns {
+			optFn(options)
+		}
+	})
+	presign := s3.NewPresignClient(s3client)
+	uploader := manager.NewUploader(s3client)
 
 	return &store{
-		s3:         s3client,
+		client:     s3client,
+		presign:    presign,
 		s3Uploader: uploader,
 		bucketName: bucketName,
 	}, nil
@@ -41,9 +47,10 @@ func Must(storage StoreAndCache, err error) StoreAndCache {
 }
 
 type store struct {
-	s3         *s3.S3
-	s3Uploader *s3manager.Uploader
+	client     *s3.Client
+	s3Uploader *manager.Uploader
 	bucketName string
+	presign    *s3.PresignClient
 }
 
 func (s *store) Copy(origin string, destination archive.DestructuredKey) (string, error) {
@@ -56,7 +63,7 @@ func (s *store) Copy(origin string, destination archive.DestructuredKey) (string
 		return "", errors.Wrapf(err, "cannot find a unique destination key")
 	}
 
-	_, err = s.s3.CopyObject(&s3.CopyObjectInput{
+	_, err = s.client.CopyObject(context.TODO(), &s3.CopyObjectInput{
 		Bucket:     &s.bucketName,
 		CopySource: aws.String(strings.Trim(path.Join(s.bucketName, origin), "/")),
 		Key:        &destinationKey,
@@ -66,7 +73,7 @@ func (s *store) Copy(origin string, destination archive.DestructuredKey) (string
 
 func (s *store) Delete(keys []string) error {
 	for _, key := range keys {
-		_, err := s.s3.DeleteObject(&s3.DeleteObjectInput{
+		_, err := s.client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
 			Bucket: &s.bucketName,
 			Key:    &key,
 		})
@@ -84,21 +91,24 @@ func (s *store) Download(key string) (io.ReadCloser, error) {
 }
 
 func (s *store) Get(key string) (io.ReadCloser, int, string, error) {
-	object, err := s.s3.GetObject(&s3.GetObjectInput{
+	object, err := s.client.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: &s.bucketName,
 		Key:    &key,
 	})
 
-	if aerr, isAwsError := err.(awserr.Error); isAwsError && aerr.Code() == s3.ErrCodeNoSuchKey {
+	if s.isNotFound(err) {
 		return nil, 0, "", archive.NotFoundError
+	}
+	if err != nil {
+		return nil, 0, "", errors.Wrapf(err, "couldn't access key %s in %s bucket", key, s.bucketName)
 	}
 
 	return object.Body, int(*object.ContentLength), *object.ContentType, errors.Wrapf(err, "couldn't access key %s in %s bucket", key, s.bucketName)
 }
 
 func (s *store) Put(key string, mediaType string, content io.Reader) error {
-	_, err := s.s3.PutObject(&s3.PutObjectInput{
-		Body:        aws.ReadSeekCloser(content),
+	_, err := s.client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Body:        manager.ReadSeekCloser(content),
 		Bucket:      &s.bucketName,
 		ContentType: &mediaType,
 		Key:         &key,
@@ -107,12 +117,14 @@ func (s *store) Put(key string, mediaType string, content io.Reader) error {
 }
 
 func (s *store) SignedURL(key string, duration time.Duration) (string, error) {
-	request, _ := s.s3.GetObjectRequest(&s3.GetObjectInput{
+	request, err := s.presign.PresignGetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: &s.bucketName,
 		Key:    &key,
+	}, func(options *s3.PresignOptions) {
+		options.Expires = duration
 	})
 
-	return request.Presign(duration)
+	return request.URL, err
 }
 
 func (s *store) Upload(keyHint archive.DestructuredKey, content io.Reader) (string, error) {
@@ -125,8 +137,8 @@ func (s *store) Upload(keyHint archive.DestructuredKey, content io.Reader) (stri
 		return "", err
 	}
 
-	_, err = s.s3Uploader.Upload(&s3manager.UploadInput{
-		Body:   aws.ReadSeekCloser(content),
+	_, err = s.s3Uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Body:   manager.ReadSeekCloser(content),
 		Bucket: &s.bucketName,
 		Key:    &key,
 	})
@@ -137,15 +149,19 @@ func (s *store) Upload(keyHint archive.DestructuredKey, content io.Reader) (stri
 func (s *store) findUniqueFilename(keyHint archive.DestructuredKey) (string, error) {
 	filenames := make(map[string]interface{})
 
-	err := s.s3.ListObjectsV2Pages(&s3.ListObjectsV2Input{
+	paginator := s3.NewListObjectsV2Paginator(s.client, &s3.ListObjectsV2Input{
 		Bucket: &s.bucketName,
 		Prefix: &keyHint.Prefix,
-	}, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
-		for _, obj := range output.Contents {
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return "", errors.Wrapf(err, "could not determine a unique name for %s?%s: failed listing s3://%s/%s*", keyHint.Prefix, keyHint.Suffix, s.bucketName, keyHint.Prefix)
+		}
+		for _, obj := range page.Contents {
 			filenames[*obj.Key] = nil
 		}
-		return true
-	})
+	}
 
 	candidate := keyHint.Prefix + keyHint.Suffix
 	_, clash := filenames[candidate]
@@ -154,22 +170,30 @@ func (s *store) findUniqueFilename(keyHint archive.DestructuredKey) (string, err
 		_, clash = filenames[candidate]
 	}
 
-	return candidate, errors.Wrapf(err, "could not determine a unique name for %s?%s", keyHint.Prefix, keyHint.Suffix)
+	return candidate, nil
 }
 
 func (s *store) isNotFound(err error) bool {
-	aerr, ok := err.(awserr.Error)
-	return ok && aerr.Code() == s3.ErrCodeNoSuchKey
+	var noSuchKeyErr *types.NoSuchKey
+	return errors.As(err, &noSuchKeyErr)
 }
 
 func (s *store) WalkCacheByPrefix(prefix string, observer func(string)) error {
-	return s.s3.ListObjectsV2Pages(&s3.ListObjectsV2Input{
+	paginator := s3.NewListObjectsV2Paginator(s.client, &s3.ListObjectsV2Input{
 		Bucket: &s.bucketName,
 		Prefix: &prefix,
-	}, func(output *s3.ListObjectsV2Output, _ bool) bool {
-		for _, content := range output.Contents {
-			observer(*content.Key)
-		}
-		return true
 	})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return err
+		}
+
+		for _, obj := range page.Contents {
+			observer(*obj.Key)
+		}
+	}
+
+	return nil
 }

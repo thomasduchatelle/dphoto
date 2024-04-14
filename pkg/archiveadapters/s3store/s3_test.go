@@ -1,12 +1,14 @@
 package s3store
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"io"
@@ -16,33 +18,52 @@ import (
 	"time"
 )
 
-var awsSession = session.Must(session.NewSession(&aws.Config{
-	Credentials:      credentials.NewStaticCredentials("localstack", "localstack", ""),
-	Endpoint:         aws.String("http://localhost:4566"),
-	Region:           aws.String("eu-west-1"),
-	S3ForcePathStyle: aws.Bool(true),
-}))
+var (
+	localstack aws.Config
+	ctx        = context.Background()
+)
 
-func createSess(purpose string) (*store, func()) {
-	adapter := Must(New(awsSession, fmt.Sprintf("dphoto-unit-archive-%s-%s", purpose, time.Now().Format("20060102150405")))).(*store)
+func init() {
+	var err error
+	region := "us-east-1"
+	localstack, err = config.LoadDefaultConfig(ctx,
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("localstack", "localstack", "")),
+		config.WithRegion(region),
+		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				URL:           "http://localhost:4566",
+				PartitionID:   "aws",
+				SigningRegion: region,
+			}, nil
+		})),
+	)
+	if err != nil {
+		panic(err)
+	}
+}
 
-	_, err := adapter.s3.CreateBucket(&s3.CreateBucketInput{Bucket: &adapter.bucketName})
+func newMockedStore(purpose string) (*store, func()) {
+	adapter := Must(New(localstack, fmt.Sprintf("dphoto-unit-archive-%s-%s", purpose, time.Now().Format("20060102150405")), func(options *s3.Options) {
+		options.UsePathStyle = true // required for localstack testing on UNIX
+	})).(*store)
+
+	_, err := adapter.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &adapter.bucketName})
 	if err != nil {
 		panic(err)
 	}
 
 	return adapter, func() {
-		_, _ = adapter.s3.DeleteBucket(&s3.DeleteBucketInput{Bucket: &adapter.bucketName})
+		_, _ = adapter.client.DeleteBucket(ctx, &s3.DeleteBucketInput{Bucket: &adapter.bucketName})
 	}
 }
 
 func TestUpload(t *testing.T) {
-	adapter, clean := createSess("upload")
-	defer clean()
+	adapter, _ := newMockedStore("upload")
+	//defer clean()
 
-	for _, name := range []string{"/unittest/2021/img-2021-1.jpg", "/unittest/2021/img-2021-1_01.jpg", "/unittest/2021/img-002.jpg"} {
-		_, err := adapter.s3.PutObject(&s3.PutObjectInput{
-			Body:   aws.ReadSeekCloser(strings.NewReader("content of " + name)),
+	for _, name := range []string{"unittest/2021/img-2021-1.jpg", "unittest/2021/img-2021-1_01.jpg", "unittest/2021/img-002.jpg"} {
+		_, err := adapter.client.PutObject(ctx, &s3.PutObjectInput{
+			Body:   manager.ReadSeekCloser(strings.NewReader("content of " + name)),
 			Bucket: &adapter.bucketName,
 			Key:    aws.String(name),
 		})
@@ -67,23 +88,21 @@ func TestUpload(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := assert.New(t)
-
 			got, err := adapter.Upload(tt.args.key, tt.args.content)
-			if a.NoError(err, tt.name) {
-				a.Equal(tt.want, got, tt.name)
+			if assert.NoError(t, err, tt.name) {
+				assert.Equal(t, tt.want, got, tt.name)
 			}
 		})
 	}
 }
 
 func TestCopy(t *testing.T) {
-	adapter, clean := createSess("copy")
+	adapter, clean := newMockedStore("copy")
 	defer clean()
 
 	for _, name := range []string{"unittest/2021/img-2021-1.jpg", "unittest/2021/img-2021-2.jpg"} {
-		_, err := adapter.s3.PutObject(&s3.PutObjectInput{
-			Body:   aws.ReadSeekCloser(strings.NewReader("content of " + name)),
+		_, err := adapter.client.PutObject(ctx, &s3.PutObjectInput{
+			Body:   manager.ReadSeekCloser(strings.NewReader("content of " + name)),
 			Bucket: &adapter.bucketName,
 			Key:    aws.String(name),
 		})
@@ -144,7 +163,7 @@ func TestCopy(t *testing.T) {
 			if !tt.wantErr && assert.NoError(t, err, tt.name) {
 				assert.Equal(t, tt.want, got, tt.name)
 
-				_, err = adapter.s3.GetObject(&s3.GetObjectInput{
+				_, err = adapter.client.GetObject(ctx, &s3.GetObjectInput{
 					Bucket: &adapter.bucketName,
 					Key:    aws.String(got),
 				})
@@ -158,12 +177,12 @@ func TestCopy(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	adapter, clean := createSess("delete")
+	adapter, clean := newMockedStore("delete")
 	defer clean()
 
 	for _, name := range []string{"unittest/2021/img-2021-1.jpg", "unittest/2021/img-2021-2.jpg", "unittest/2021/img-2021-3.jpg", "unittest/2021/img-2021-4.jpg"} {
-		_, err := adapter.s3.PutObject(&s3.PutObjectInput{
-			Body:   aws.ReadSeekCloser(strings.NewReader("content of " + name)),
+		_, err := adapter.client.PutObject(ctx, &s3.PutObjectInput{
+			Body:   manager.ReadSeekCloser(strings.NewReader("content of " + name)),
 			Bucket: &adapter.bucketName,
 			Key:    aws.String(name),
 		})
@@ -188,14 +207,13 @@ func TestDelete(t *testing.T) {
 
 			if assert.NoError(t, err, tt.name) {
 				for _, key := range tt.ids {
-					_, err = adapter.s3.GetObject(&s3.GetObjectInput{
+					_, err = adapter.client.GetObject(ctx, &s3.GetObjectInput{
 						Bucket: &adapter.bucketName,
 						Key:    &key,
 					})
 
-					aerr, ok := err.(awserr.Error)
-					assert.True(t, ok, tt.name, key, err)
-					assert.Equal(t, s3.ErrCodeNoSuchKey, aerr.Code(), tt.name, key)
+					var noSuchKeyError *types.NoSuchKey
+					assert.ErrorAs(t, err, &noSuchKeyError, tt.name)
 				}
 			}
 		})
@@ -210,7 +228,7 @@ func newKey(prefix, suffix string) archive.DestructuredKey {
 }
 
 func Test_store_Get_And_Put(t *testing.T) {
-	adapter, clean := createSess("get")
+	adapter, clean := newMockedStore("get")
 	defer clean()
 
 	err := adapter.Put("a/key/that/exists", "hero/avenger", strings.NewReader("I am Ironman"))
@@ -233,7 +251,7 @@ func Test_store_Get_And_Put(t *testing.T) {
 			wantLength:      0,
 			wantContentType: "",
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Equal(t, archive.NotFoundError, err, i)
+				return assert.ErrorIs(t, err, archive.NotFoundError, i)
 			},
 		},
 		{
@@ -316,7 +334,7 @@ func TestWalkCacheByPrefix(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			adapter, clean := createSess(fmt.Sprintf("get-%d", i))
+			adapter, clean := newMockedStore(fmt.Sprintf("get-%d", i))
 			defer clean()
 
 			for _, obj := range tt.withObjects {

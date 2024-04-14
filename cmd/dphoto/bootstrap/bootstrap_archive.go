@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	config2 "github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/asyncjobadapter"
@@ -9,11 +9,11 @@ import (
 )
 
 func init() {
-	config2.Listen(func(cfg config2.Config) {
-		repositoryAdapter := archivedynamo.Must(archivedynamo.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveDynamodbTable)))
-		storeAdapter := s3store.Must(s3store.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveMainBucketName)))
-		cacheAdapter := s3store.Must(s3store.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveCacheBucketName)))
-		archiveAsyncAdapter := asyncjobadapter.New(cfg.GetAWSSession(), cfg.GetString(config2.ArchiveJobsSNSARN), cfg.GetString(config2.ArchiveJobsSQSURL), asyncjobadapter.DefaultImagesPerMessage)
+	config.Listen(func(cfg config.Config) {
+		repositoryAdapter := archivedynamo.Must(archivedynamo.New(cfg.GetAWSSession(), cfg.GetString(config.ArchiveDynamodbTable)))
+		storeAdapter := s3store.Must(s3store.New(cfg.GetAWSV2Config(), cfg.GetString(config.ArchiveMainBucketName)))
+		cacheAdapter := s3store.Must(s3store.New(cfg.GetAWSV2Config(), cfg.GetString(config.ArchiveCacheBucketName)))
+		archiveAsyncAdapter := asyncjobadapter.New(cfg.GetAWSV2Config(), cfg.GetString(config.ArchiveJobsSNSARN), cfg.GetString(config.ArchiveJobsSQSURL), asyncjobadapter.DefaultImagesPerMessage)
 		archive.Init(
 			repositoryAdapter,
 			storeAdapter,
