@@ -17,18 +17,27 @@ functions:
       DPHOTO_ENVIRONMENT: ${sls:stage}
   oauth-token:
     handler: bin/oauth-token
+    package:
+      include:
+      - ../../bin/oauth-token
     events:
       - httpApi:
           path: /oauth/token
           method: post
   oauth-logout:
     handler: bin/oauth-revoke
+    package:
+      include:
+        - ../../bin/oauth-revoke
     events:
       - httpApi:
           path: /oauth/logout
           method: post
   env-config:
     handler: bin/env-config
+    package:
+      include:
+        - ../../bin/env-config
     environment:
       GOOGLE_LOGIN_CLIENT_ID: ${ssm:/dphoto/${sls:stage}/googleLogin/clientId}
     events:
@@ -37,12 +46,18 @@ functions:
           method: get
   version:
     handler: bin/version
+    package:
+      include:
+        - ../../bin/version
     events:
       - httpApi:
           path: /api/v1/version
           method: get
   not-found:
     handler: bin/not-found
+    package:
+      include:
+        - ../../bin/not-found
     events:
       - httpApi:
           path: /api/{path+}
@@ -51,12 +66,18 @@ functions:
   # REST lambdas
   list-albums:
     handler: bin/list-albums
+    package:
+      include:
+        - ../../bin/list-albums
     events:
       - httpApi:
           path: /api/v1/albums
           method: get
   share-album:
     handler: bin/share-album
+    package:
+      include:
+        - ../../bin/share-album
     events:
       - httpApi:
           # /api/v1/owners/tomdush@gmail.com/albums/2018-Q1/shares/claire.magnier@gmail.com
@@ -67,24 +88,36 @@ functions:
           method: delete
   list-medias:
     handler: bin/list-medias
+    package:
+      include:
+        - ../../bin/list-medias
     events:
       - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/medias
           method: get
   list-users:
     handler: bin/list-users
+    package:
+      include:
+        - ../../bin/list-users
     events:
       - httpApi:
           path: /api/v1/users
           method: get
   list-owners:
     handler: bin/list-owners
+    package:
+      include:
+        - ../../bin/list-owners
     events:
       - httpApi:
           path: /api/v1/owners
           method: get
   get-media:
     handler: bin/get-media
+    package:
+      include:
+        - ../../bin/get-media
     memorySize: 1024
     timeout: 29 # maximum allowed by API gateway
     events:
@@ -95,6 +128,9 @@ functions:
   # ASYNC lambdas - using FIFO for deduplication made a SQS required
   async-warmup-cache:
     handler: bin/async-warmup-cache
+    package:
+      include:
+        - ../../bin/async-warmup-cache
     timeout: 900
     maximumRetryAttempts: 2
     events:
@@ -104,6 +140,9 @@ functions:
 
   async-resize-image:
     handler: bin/async-resize-image
+    package:
+      include:
+        - ../../bin/async-resize-image
     memorySize: 1024
     timeout: 900
     events:
@@ -305,9 +344,10 @@ resources:
       Value: https://${file('./sls-config.js'):DPHOTO_DOMAIN}
 
 package:
+  individually: true
   patterns:
     - '!./**'
-    - ../../bin/**
+    - ../../README.md
 
 plugins:
   - serverless-ssm-fetch
