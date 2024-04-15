@@ -2,18 +2,20 @@
 package archivedynamo
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 )
 
-func New(sess *session.Session, tableName string) (archive.ARepositoryAdapter, error) {
+func New(cfg aws.Config, tableName string) (archive.ARepositoryAdapter, error) {
 	return &repository{
-		db:    dynamodb.New(sess),
+		db:    dynamodb.NewFromConfig(cfg),
 		table: tableName,
 	}, nil
 }
@@ -27,12 +29,12 @@ func Must(a archive.ARepositoryAdapter, err error) archive.ARepositoryAdapter {
 }
 
 type repository struct {
-	db    *dynamodb.DynamoDB
+	db    *dynamodb.Client
 	table string
 }
 
 func (r *repository) FindById(owner, id string) (string, error) {
-	item, err := r.db.GetItem(&dynamodb.GetItemInput{
+	item, err := r.db.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		Key:       marshalMediaLocationPK(owner, id),
 		TableName: &r.table,
 	})
@@ -54,7 +56,7 @@ func (r *repository) AddLocation(owner, id, key string) error {
 		return errors.Wrapf(err, "failed to marshal location")
 	}
 
-	_, err = r.db.PutItem(&dynamodb.PutItemInput{
+	_, err = r.db.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		Item:      location,
 		TableName: &r.table,
 	})
@@ -62,14 +64,14 @@ func (r *repository) AddLocation(owner, id, key string) error {
 }
 
 func (r *repository) FindByIds(owner string, ids []string) (map[string]string, error) {
-	keys := make([]map[string]*dynamodb.AttributeValue, len(ids), len(ids))
+	keys := make([]map[string]types.AttributeValue, len(ids), len(ids))
 	for i, id := range ids {
 		keys[i] = marshalMediaLocationPK(owner, id)
 	}
 
 	locations := make(map[string]string)
 
-	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(context.TODO(), dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
 	for stream.HasNext() {
 		id, key, err := unmarshalMediaLocation(stream.Next())
 		if err != nil {
@@ -83,12 +85,12 @@ func (r *repository) FindByIds(owner string, ids []string) (map[string]string, e
 }
 
 func (r *repository) UpdateLocations(owner string, locations map[string]string) error {
-	requests := make([]*dynamodb.WriteRequest, len(locations), len(locations))
+	requests := make([]types.WriteRequest, len(locations), len(locations))
 	i := 0
 	for id, key := range locations {
 		location, err := marshalMediaLocation(owner, id, key)
-		requests[i] = &dynamodb.WriteRequest{
-			PutRequest: &dynamodb.PutRequest{
+		requests[i] = types.WriteRequest{
+			PutRequest: &types.PutRequest{
 				Item: location,
 			},
 		}
@@ -99,21 +101,34 @@ func (r *repository) UpdateLocations(owner string, locations map[string]string) 
 		i++
 	}
 
-	return dynamoutils.BufferedWriteItems(r.db, requests, r.table, dynamoutils.DynamoWriteBatchSize)
+	return dynamoutils.BufferedWriteItems(context.TODO(), r.db, requests, r.table, dynamoutils.DynamoWriteBatchSize)
 }
 
 func (r *repository) FindIdsFromKeyPrefix(keyPrefix string) (map[string]string, error) {
 	pairs := make(map[string]string)
 
-	err := r.db.QueryPages(&dynamodb.QueryInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":prefix": {S: &keyPrefix},
-		},
-		KeyConditionExpression: aws.String("LocationKeyPrefix = :prefix"),
-		IndexName:              aws.String("ReverseLocationIndex"),
-		TableName:              &r.table,
-	}, func(output *dynamodb.QueryOutput, last bool) bool {
-		for _, item := range output.Items {
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(expression.Key("LocationKeyPrefix").Equal(expression.Value(keyPrefix))).
+		Build()
+	if err != nil {
+		return nil, err
+	}
+
+	paginator := dynamodb.NewQueryPaginator(r.db, &dynamodb.QueryInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		IndexName:                 aws.String("ReverseLocationIndex"),
+		TableName:                 &r.table,
+	})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range page.Items {
 			mediaId, storeKey, err := unmarshalMediaLocation(item)
 			if err != nil {
 				log.WithError(err).Errorf("failed unmarshaling item %+v for prefix %s - skipping", item, keyPrefix)
@@ -121,12 +136,10 @@ func (r *repository) FindIdsFromKeyPrefix(keyPrefix string) (map[string]string, 
 				pairs[mediaId] = storeKey
 			}
 		}
-
-		return true
-	})
+	}
 
 	if len(pairs) == 0 {
 		pairs = nil
 	}
-	return pairs, err
+	return pairs, nil
 }

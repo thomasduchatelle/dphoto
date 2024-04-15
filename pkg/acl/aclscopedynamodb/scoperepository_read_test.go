@@ -111,7 +111,7 @@ func Test_repository_ListUserScopes(t *testing.T) {
 		},
 	}
 
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	awsSession, _, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(awsSession, table)).(*repository)
 
 	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
@@ -218,7 +218,7 @@ func Test_repository_ListOwnerScopes(t *testing.T) {
 		},
 	}
 
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	awsSession, _, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(awsSession, table)).(*repository)
 
 	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
@@ -345,7 +345,7 @@ func Test_repository_FindScopesById(t *testing.T) {
 		},
 	}
 
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	awsSession, _, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(awsSession, table)).(*repository)
 
 	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{

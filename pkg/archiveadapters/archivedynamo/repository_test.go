@@ -58,8 +58,8 @@ func TestShouldAddAndFindLocations(t *testing.T) {
 		},
 	}
 
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
-	repo := Must(New(awsSession, table)).(*repository)
+	cfg, _, table := dynamotestutils.NewClientV2(t)
+	repo := Must(New(cfg, table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -124,8 +124,8 @@ func TestUpdateLocations(t *testing.T) {
 		},
 	}
 
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
-	repo := Must(New(awsSession, table)).(*repository)
+	cfg, _, table := dynamotestutils.NewClientV2(t)
+	repo := Must(New(cfg, table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -204,8 +204,8 @@ func TestFindIdsFromKeyPrefix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			awsSession, _, table := dynamotestutils.NewDbContext(t)
-			repo := Must(New(awsSession, table)).(*repository)
+			cfg, _, table := dynamotestutils.NewClientV2(t)
+			repo := Must(New(cfg, table)).(*repository)
 
 			err := repo.UpdateLocations(owner, tt.withLocations)
 			if !assert.NoError(t, err) {

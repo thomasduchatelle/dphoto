@@ -11,7 +11,7 @@ import (
 )
 
 func Test_repository_DeleteRefreshToken(t *testing.T) {
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	awsSession, _, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(awsSession, table)).(*repository)
 
 	const secretRefreshToken = "1234567890qwertyuiop"
@@ -59,7 +59,7 @@ func Test_repository_DeleteRefreshToken(t *testing.T) {
 }
 
 func Test_repository_FindRefreshToken(t *testing.T) {
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	awsSession, _, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(awsSession, table)).(*repository)
 
 	const secretRefreshToken = "1234567890qwertyuiop"
@@ -120,7 +120,7 @@ func Test_repository_FindRefreshToken(t *testing.T) {
 }
 
 func Test_repository_HouseKeepRefreshToken(t *testing.T) {
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	awsSession, _, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(awsSession, table)).(*repository)
 
 	const firstRefreshToken = "1234567890qwertyuiop"
@@ -209,7 +209,7 @@ func Test_repository_HouseKeepRefreshToken(t *testing.T) {
 }
 
 func Test_repository_StoreRefreshToken(t *testing.T) {
-	awsSession, _, table := dynamotestutils.NewDbContext(t)
+	awsSession, _, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(awsSession, table)).(*repository)
 
 	const firstRefreshToken = "1234567890qwertyuiop"
