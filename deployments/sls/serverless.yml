@@ -6,6 +6,9 @@ functions:
   # system lambdas
   letsencrypt:
     handler: bin/letsencrypt
+    package:
+      include:
+        - ../../bin/letsencrypt
     role: LetsencryptLambdaRole
     timeout: 900
     memorySize: 128
@@ -347,7 +350,6 @@ package:
   individually: true
   patterns:
     - '!./**'
-    - ../../README.md
 
 plugins:
   - serverless-ssm-fetch
