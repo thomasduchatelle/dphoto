@@ -23,7 +23,7 @@ func awsSession() *session.Session {
 }
 
 func Test_repository_FindIdentity(t *testing.T) {
-	sess, db, table := dynamotestutils.NewDbContext(t)
+	sess, db, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(sess, table)).(*repository)
 
 	dynamotestutils.SetContent(t, db, table, []map[string]*dynamodb.AttributeValue{
@@ -75,7 +75,7 @@ func Test_repository_FindIdentity(t *testing.T) {
 }
 
 func Test_repository_FindIdentities(t *testing.T) {
-	sess, db, table := dynamotestutils.NewDbContext(t)
+	sess, db, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(sess, table)).(*repository)
 
 	dynamotestutils.SetContent(t, db, table, []map[string]*dynamodb.AttributeValue{
@@ -143,7 +143,7 @@ func Test_repository_FindIdentities(t *testing.T) {
 }
 
 func Test_repository_StoreIdentity(t *testing.T) {
-	sess, _, table := dynamotestutils.NewDbContext(t)
+	sess, _, table := dynamotestutils.NewClientV1(t)
 	r := Must(New(sess, table)).(*repository)
 
 	type args struct {

@@ -171,11 +171,10 @@ func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 		panic("SQS_ARCHIVE_URL must be set and non-empty")
 	}
 
-	sess := newV1Session()
 	cfg := newV2Config()
 	archiveAsyncAdapter := asyncjobadapter.New(cfg, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobadapter.DefaultImagesPerMessage)
 	archive.Init(
-		archivedynamo.Must(archivedynamo.New(sess, tableName)),
+		archivedynamo.Must(archivedynamo.New(cfg, tableName)),
 		s3store.Must(s3store.New(cfg, storeBucketName)),
 		s3store.Must(s3store.New(cfg, cacheBucketName)),
 		archiveAsyncAdapter,

@@ -76,7 +76,7 @@ func Test_repository_DeleteScopes(t *testing.T) {
 		},
 	}
 
-	awsSession, _, tableName := dynamotestutils.NewDbContext(t)
+	awsSession, _, tableName := dynamotestutils.NewClientV1(t)
 	repo := Must(New(awsSession, tableName)).(*repository)
 
 	for _, tt := range tests {
@@ -166,7 +166,7 @@ func Test_repository_SaveIfNewScope(t *testing.T) {
 		},
 	}
 
-	awsSession, _, tableName := dynamotestutils.NewDbContext(t)
+	awsSession, _, tableName := dynamotestutils.NewClientV1(t)
 	repo := Must(New(awsSession, tableName)).(*repository)
 
 	for _, tt := range tests {
