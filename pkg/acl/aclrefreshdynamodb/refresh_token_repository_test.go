@@ -1,18 +1,20 @@
 package aclrefreshdynamodb
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"testing"
 	"time"
 )
 
 func Test_repository_DeleteRefreshToken(t *testing.T) {
-	awsSession, _, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(awsSession, table)).(*repository)
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	r := Must(New(dyn.Cfg, dyn.Table))
 
 	const secretRefreshToken = "1234567890qwertyuiop"
 
@@ -22,17 +24,17 @@ func Test_repository_DeleteRefreshToken(t *testing.T) {
 	tests := []struct {
 		name        string
 		args        args
-		givenBefore []map[string]*dynamodb.AttributeValue
-		wantAfter   []map[string]*dynamodb.AttributeValue
+		givenBefore []map[string]types.AttributeValue
+		wantAfter   []map[string]types.AttributeValue
 		wantErr     assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should delete an existing token",
 			args: args{secretRefreshToken},
-			givenBefore: []map[string]*dynamodb.AttributeValue{
+			givenBefore: []map[string]types.AttributeValue{
 				{
-					"PK": {S: aws.String("REFRESH#" + secretRefreshToken)},
-					"SK": {S: aws.String("#REFRESH_SPEC")},
+					"PK": dynamoutils.AttributeValueMemberS("REFRESH#" + secretRefreshToken),
+					"SK": dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
 				},
 			},
 			wantAfter: nil,
@@ -48,19 +50,21 @@ func Test_repository_DeleteRefreshToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dynamotestutils.SetContent(t, r.db, r.table, tt.givenBefore)
+			dyn = dyn.Subtest(t)
+			dyn.Must(dyn.WithDbContent(ctx, tt.givenBefore))
 
 			err := r.DeleteRefreshToken(tt.args.token)
 			if tt.wantErr(t, err, "DeleteRefreshToken() error = %v, wantErr %v", err, tt.wantErr) && err == nil {
-				dynamotestutils.AssertAfter(t, r.db, r.table, tt.wantAfter)
+				dyn.MustBool(dyn.EqualContent(ctx, tt.wantAfter))
 			}
 		})
 	}
 }
 
 func Test_repository_FindRefreshToken(t *testing.T) {
-	awsSession, _, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(awsSession, table)).(*repository)
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	r := Must(New(dyn.Cfg, dyn.Table))
 
 	const secretRefreshToken = "1234567890qwertyuiop"
 
@@ -71,7 +75,7 @@ func Test_repository_FindRefreshToken(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		givenBefore []map[string]*dynamodb.AttributeValue
+		givenBefore []map[string]types.AttributeValue
 		args        args
 		want        *aclcore.RefreshTokenSpec
 		wantErr     assert.ErrorAssertionFunc
@@ -79,14 +83,14 @@ func Test_repository_FindRefreshToken(t *testing.T) {
 		{
 			name: "it should find a token that exists",
 			args: args{secretRefreshToken},
-			givenBefore: []map[string]*dynamodb.AttributeValue{
+			givenBefore: []map[string]types.AttributeValue{
 				{
-					"PK":                  {S: aws.String("REFRESH#" + secretRefreshToken)},
-					"SK":                  {S: aws.String("#REFRESH_SPEC")},
-					"Email":               {S: aws.String("tony@stark.com")},
-					"RefreshTokenPurpose": {S: aws.String("web")},
-					"AbsoluteExpiryTime":  {S: aws.String(someday.Format(time.RFC3339Nano))},
-					"Scopes":              {S: aws.String("foo bar")},
+					"PK":                  dynamoutils.AttributeValueMemberS("REFRESH#" + secretRefreshToken),
+					"SK":                  dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"Email":               dynamoutils.AttributeValueMemberS("tony@stark.com"),
+					"RefreshTokenPurpose": dynamoutils.AttributeValueMemberS("web"),
+					"AbsoluteExpiryTime":  dynamoutils.AttributeValueMemberS(someday.Format(time.RFC3339Nano)),
+					"Scopes":              dynamoutils.AttributeValueMemberS("foo bar"),
 				},
 			},
 			want: &aclcore.RefreshTokenSpec{
@@ -109,7 +113,8 @@ func Test_repository_FindRefreshToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dynamotestutils.SetContent(t, r.db, r.table, tt.givenBefore)
+			dyn := dyn.Subtest(t)
+			dyn.Must(dyn.WithDbContent(ctx, tt.givenBefore))
 
 			got, err := r.FindRefreshToken(tt.args.token)
 			if tt.wantErr(t, err) {
@@ -120,8 +125,9 @@ func Test_repository_FindRefreshToken(t *testing.T) {
 }
 
 func Test_repository_HouseKeepRefreshToken(t *testing.T) {
-	awsSession, _, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(awsSession, table)).(*repository)
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	r := Must(New(dyn.Cfg, dyn.Table))
 
 	const firstRefreshToken = "1234567890qwertyuiop"
 	const secondRefreshToken = "poiuytrewq0987654321"
@@ -134,35 +140,35 @@ func Test_repository_HouseKeepRefreshToken(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		givenBefore []map[string]*dynamodb.AttributeValue
-		wantAfter   []map[string]*dynamodb.AttributeValue
+		givenBefore []map[string]types.AttributeValue
+		wantAfter   []map[string]types.AttributeValue
 		wantErr     assert.ErrorAssertionFunc
 		want        int
 	}{
 		{
 			name: "it should delete any token that already have expired",
-			givenBefore: []map[string]*dynamodb.AttributeValue{
+			givenBefore: []map[string]types.AttributeValue{
 				{
-					"PK":                 {S: aws.String("REFRESH#" + firstRefreshToken)},
-					"SK":                 {S: aws.String("#REFRESH_SPEC")},
-					"AbsoluteExpiryTime": {S: aws.String(someday.Add(-1 * time.Hour).Format(time.RFC3339Nano))},
+					"PK":                 dynamoutils.AttributeValueMemberS("REFRESH#" + firstRefreshToken),
+					"SK":                 dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"AbsoluteExpiryTime": dynamoutils.AttributeValueMemberS(someday.Add(-1 * time.Hour).Format(time.RFC3339Nano)),
 				},
 				{
-					"PK":                 {S: aws.String("REFRESH#" + secondRefreshToken)},
-					"SK":                 {S: aws.String("#REFRESH_SPEC")},
-					"AbsoluteExpiryTime": {S: aws.String(someday.Format(time.RFC3339Nano))},
+					"PK":                 dynamoutils.AttributeValueMemberS("REFRESH#" + secondRefreshToken),
+					"SK":                 dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"AbsoluteExpiryTime": dynamoutils.AttributeValueMemberS(someday.Format(time.RFC3339Nano)),
 				},
 				{
-					"PK":                 {S: aws.String("REFRESH#" + thirdRefreshToken)},
-					"SK":                 {S: aws.String("#REFRESH_SPEC")},
-					"AbsoluteExpiryTime": {S: aws.String(someday.Add(1 * time.Hour).Format(time.RFC3339Nano))},
+					"PK":                 dynamoutils.AttributeValueMemberS("REFRESH#" + thirdRefreshToken),
+					"SK":                 dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"AbsoluteExpiryTime": dynamoutils.AttributeValueMemberS(someday.Add(1 * time.Hour).Format(time.RFC3339Nano)),
 				},
 			},
-			wantAfter: []map[string]*dynamodb.AttributeValue{
+			wantAfter: []map[string]types.AttributeValue{
 				{
-					"PK":                 {S: aws.String("REFRESH#" + thirdRefreshToken)},
-					"SK":                 {S: aws.String("#REFRESH_SPEC")},
-					"AbsoluteExpiryTime": {S: aws.String(someday.Add(1 * time.Hour).Format(time.RFC3339Nano))},
+					"PK":                 dynamoutils.AttributeValueMemberS("REFRESH#" + thirdRefreshToken),
+					"SK":                 dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"AbsoluteExpiryTime": dynamoutils.AttributeValueMemberS(someday.Add(1 * time.Hour).Format(time.RFC3339Nano)),
 				},
 			},
 			want:    2,
@@ -170,18 +176,18 @@ func Test_repository_HouseKeepRefreshToken(t *testing.T) {
 		},
 		{
 			name: "it should not delete anything if nothing has expired",
-			givenBefore: []map[string]*dynamodb.AttributeValue{
+			givenBefore: []map[string]types.AttributeValue{
 				{
-					"PK":                 {S: aws.String("REFRESH#" + thirdRefreshToken)},
-					"SK":                 {S: aws.String("#REFRESH_SPEC")},
-					"AbsoluteExpiryTime": {S: aws.String(someday.Add(1 * time.Hour).Format(time.RFC3339Nano))},
+					"PK":                 dynamoutils.AttributeValueMemberS("REFRESH#" + thirdRefreshToken),
+					"SK":                 dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"AbsoluteExpiryTime": dynamoutils.AttributeValueMemberS(someday.Add(1 * time.Hour).Format(time.RFC3339Nano)),
 				},
 			},
-			wantAfter: []map[string]*dynamodb.AttributeValue{
+			wantAfter: []map[string]types.AttributeValue{
 				{
-					"PK":                 {S: aws.String("REFRESH#" + thirdRefreshToken)},
-					"SK":                 {S: aws.String("#REFRESH_SPEC")},
-					"AbsoluteExpiryTime": {S: aws.String(someday.Add(1 * time.Hour).Format(time.RFC3339Nano))},
+					"PK":                 dynamoutils.AttributeValueMemberS("REFRESH#" + thirdRefreshToken),
+					"SK":                 dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"AbsoluteExpiryTime": dynamoutils.AttributeValueMemberS(someday.Add(1 * time.Hour).Format(time.RFC3339Nano)),
 				},
 			},
 			want:    0,
@@ -197,20 +203,22 @@ func Test_repository_HouseKeepRefreshToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dynamotestutils.SetContent(t, r.db, r.table, tt.givenBefore)
+			dyn := dyn.Subtest(t)
+			dyn.Must(dyn.WithDbContent(ctx, tt.givenBefore))
 
 			got, err := r.HouseKeepRefreshToken()
 			if tt.wantErr(t, err) {
-				dynamotestutils.AssertAfter(t, r.db, r.table, tt.wantAfter)
 				assert.Equal(t, tt.want, got)
+				dyn.MustBool(dyn.EqualContent(ctx, tt.wantAfter))
 			}
 		})
 	}
 }
 
 func Test_repository_StoreRefreshToken(t *testing.T) {
-	awsSession, _, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(awsSession, table)).(*repository)
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	r := Must(New(dyn.Cfg, dyn.Table))
 
 	const firstRefreshToken = "1234567890qwertyuiop"
 	const secondRefreshToken = "poiuytrewq0987654321"
@@ -223,8 +231,8 @@ func Test_repository_StoreRefreshToken(t *testing.T) {
 	tests := []struct {
 		name        string
 		args        args
-		givenBefore []map[string]*dynamodb.AttributeValue
-		wantAfter   []map[string]*dynamodb.AttributeValue
+		givenBefore []map[string]types.AttributeValue
+		wantAfter   []map[string]types.AttributeValue
 		wantErr     assert.ErrorAssertionFunc
 	}{
 		{
@@ -236,14 +244,14 @@ func Test_repository_StoreRefreshToken(t *testing.T) {
 				Scopes:              []string{"foo", "bar"},
 			}},
 			givenBefore: nil,
-			wantAfter: []map[string]*dynamodb.AttributeValue{
+			wantAfter: []map[string]types.AttributeValue{
 				{
-					"PK":                  {S: aws.String("REFRESH#" + firstRefreshToken)},
-					"SK":                  {S: aws.String("#REFRESH_SPEC")},
-					"Email":               {S: aws.String("tony@stark.com")},
-					"RefreshTokenPurpose": {S: aws.String("web")},
-					"AbsoluteExpiryTime":  {S: aws.String(someday.Format(time.RFC3339Nano))},
-					"Scopes":              {S: aws.String("foo bar")},
+					"PK":                  dynamoutils.AttributeValueMemberS("REFRESH#" + firstRefreshToken),
+					"SK":                  dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"Email":               dynamoutils.AttributeValueMemberS("tony@stark.com"),
+					"RefreshTokenPurpose": dynamoutils.AttributeValueMemberS("web"),
+					"AbsoluteExpiryTime":  dynamoutils.AttributeValueMemberS(someday.Format(time.RFC3339Nano)),
+					"Scopes":              dynamoutils.AttributeValueMemberS("foo bar"),
 				},
 			},
 			wantErr: assert.NoError,
@@ -255,32 +263,32 @@ func Test_repository_StoreRefreshToken(t *testing.T) {
 				RefreshTokenPurpose: aclcore.RefreshTokenPurposeWeb,
 				AbsoluteExpiryTime:  someday,
 			}},
-			givenBefore: []map[string]*dynamodb.AttributeValue{
+			givenBefore: []map[string]types.AttributeValue{
 				{
-					"PK":                  {S: aws.String("REFRESH#" + firstRefreshToken)},
-					"SK":                  {S: aws.String("#REFRESH_SPEC")},
-					"Email":               {S: aws.String("tony@stark.com")},
-					"RefreshTokenPurpose": {S: aws.String("web")},
-					"AbsoluteExpiryTime":  {S: aws.String(someday.Format(time.RFC3339Nano))},
-					"Scopes":              {S: aws.String("foo bar")},
+					"PK":                  dynamoutils.AttributeValueMemberS("REFRESH#" + firstRefreshToken),
+					"SK":                  dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"Email":               dynamoutils.AttributeValueMemberS("tony@stark.com"),
+					"RefreshTokenPurpose": dynamoutils.AttributeValueMemberS("web"),
+					"AbsoluteExpiryTime":  dynamoutils.AttributeValueMemberS(someday.Format(time.RFC3339Nano)),
+					"Scopes":              dynamoutils.AttributeValueMemberS("foo bar"),
 				},
 			},
-			wantAfter: []map[string]*dynamodb.AttributeValue{
+			wantAfter: []map[string]types.AttributeValue{
 				{
-					"PK":                  {S: aws.String("REFRESH#" + firstRefreshToken)},
-					"SK":                  {S: aws.String("#REFRESH_SPEC")},
-					"Email":               {S: aws.String("tony@stark.com")},
-					"RefreshTokenPurpose": {S: aws.String("web")},
-					"AbsoluteExpiryTime":  {S: aws.String(someday.Format(time.RFC3339Nano))},
-					"Scopes":              {S: aws.String("foo bar")},
+					"PK":                  dynamoutils.AttributeValueMemberS("REFRESH#" + firstRefreshToken),
+					"SK":                  dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"Email":               dynamoutils.AttributeValueMemberS("tony@stark.com"),
+					"RefreshTokenPurpose": dynamoutils.AttributeValueMemberS("web"),
+					"AbsoluteExpiryTime":  dynamoutils.AttributeValueMemberS(someday.Format(time.RFC3339Nano)),
+					"Scopes":              dynamoutils.AttributeValueMemberS("foo bar"),
 				},
 				{
-					"PK":                  {S: aws.String("REFRESH#" + secondRefreshToken)},
-					"SK":                  {S: aws.String("#REFRESH_SPEC")},
-					"Email":               {S: aws.String("tony@stark.com")},
-					"RefreshTokenPurpose": {S: aws.String("web")},
-					"AbsoluteExpiryTime":  {S: aws.String(someday.Format(time.RFC3339Nano))},
-					"Scopes":              {NULL: aws.Bool(true)},
+					"PK":                  dynamoutils.AttributeValueMemberS("REFRESH#" + secondRefreshToken),
+					"SK":                  dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"Email":               dynamoutils.AttributeValueMemberS("tony@stark.com"),
+					"RefreshTokenPurpose": dynamoutils.AttributeValueMemberS("web"),
+					"AbsoluteExpiryTime":  dynamoutils.AttributeValueMemberS(someday.Format(time.RFC3339Nano)),
+					"Scopes":              &types.AttributeValueMemberNULL{Value: true},
 				},
 			},
 			wantErr: assert.NoError,
@@ -291,24 +299,24 @@ func Test_repository_StoreRefreshToken(t *testing.T) {
 				Email:               "peppa@stark.com",
 				RefreshTokenPurpose: aclcore.RefreshTokenPurposeWeb,
 			}},
-			givenBefore: []map[string]*dynamodb.AttributeValue{
+			givenBefore: []map[string]types.AttributeValue{
 				{
-					"PK":                  {S: aws.String("REFRESH#" + firstRefreshToken)},
-					"SK":                  {S: aws.String("#REFRESH_SPEC")},
-					"Email":               {S: aws.String("tony@stark.com")},
-					"RefreshTokenPurpose": {S: aws.String("web")},
-					"AbsoluteExpiryTime":  {S: aws.String(someday.Format(time.RFC3339Nano))},
-					"Scopes":              {S: aws.String("foo bar")},
+					"PK":                  dynamoutils.AttributeValueMemberS("REFRESH#" + firstRefreshToken),
+					"SK":                  dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"Email":               dynamoutils.AttributeValueMemberS("tony@stark.com"),
+					"RefreshTokenPurpose": dynamoutils.AttributeValueMemberS("web"),
+					"AbsoluteExpiryTime":  dynamoutils.AttributeValueMemberS(someday.Format(time.RFC3339Nano)),
+					"Scopes":              dynamoutils.AttributeValueMemberS("foo bar"),
 				},
 			},
-			wantAfter: []map[string]*dynamodb.AttributeValue{
+			wantAfter: []map[string]types.AttributeValue{
 				{
-					"PK":                  {S: aws.String("REFRESH#" + firstRefreshToken)},
-					"SK":                  {S: aws.String("#REFRESH_SPEC")},
-					"Email":               {S: aws.String("tony@stark.com")},
-					"RefreshTokenPurpose": {S: aws.String("web")},
-					"AbsoluteExpiryTime":  {S: aws.String(someday.Format(time.RFC3339Nano))},
-					"Scopes":              {S: aws.String("foo bar")},
+					"PK":                  dynamoutils.AttributeValueMemberS("REFRESH#" + firstRefreshToken),
+					"SK":                  dynamoutils.AttributeValueMemberS("#REFRESH_SPEC"),
+					"Email":               dynamoutils.AttributeValueMemberS("tony@stark.com"),
+					"RefreshTokenPurpose": dynamoutils.AttributeValueMemberS("web"),
+					"AbsoluteExpiryTime":  dynamoutils.AttributeValueMemberS(someday.Format(time.RFC3339Nano)),
+					"Scopes":              dynamoutils.AttributeValueMemberS("foo bar"),
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -318,11 +326,12 @@ func Test_repository_StoreRefreshToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dynamotestutils.SetContent(t, r.db, r.table, tt.givenBefore)
+			dyn := dyn.Subtest(t)
+			dyn.Must(dyn.WithDbContent(ctx, tt.givenBefore))
 
 			err := r.StoreRefreshToken(tt.args.token, tt.args.spec)
-			if tt.wantErr(t, err) {
-				dynamotestutils.AssertAfter(t, r.db, r.table, tt.wantAfter)
+			if tt.wantErr(t, err) && err == nil {
+				dyn.MustBool(dyn.EqualContent(ctx, tt.wantAfter))
 			}
 		})
 	}

@@ -18,7 +18,7 @@ func (c catalogPort) FindAlbum(owner, folderName string) (*catalog.Album, error)
 
 func init() {
 	config.Listen(func(cfg config.Config) {
-		repository := aclscopedynamodb.Must(aclscopedynamodb.New(cfg.GetAWSSession(), cfg.GetString(config.CatalogDynamodbTable)))
+		repository := aclscopedynamodb.Must(aclscopedynamodb.New(cfg.GetAWSV2Config(), cfg.GetString(config.CatalogDynamodbTable)))
 		createUser := &aclcore.CreateUser{
 			ScopesReader: repository,
 			ScopeWriter:  repository,

@@ -2,11 +2,12 @@ package aclscopedynamodb
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"strings"
 	"time"
 )
@@ -32,15 +33,15 @@ func ScopeRecordPk(user, scopeType, owner, id string) appdynamodb.TablePk {
 	}
 }
 
-func MarshalScopeId(id aclcore.ScopeId) map[string]*dynamodb.AttributeValue {
+func MarshalScopeId(id aclcore.ScopeId) map[string]types.AttributeValue {
 	pk := ScopeRecordPk(id.GrantedTo, string(id.Type), id.ResourceOwner, id.ResourceId)
-	return map[string]*dynamodb.AttributeValue{
-		"PK": {S: &pk.PK},
-		"SK": {S: &pk.SK},
+	return map[string]types.AttributeValue{
+		"PK": dynamoutils.AttributeValueMemberS(pk.PK),
+		"SK": dynamoutils.AttributeValueMemberS(pk.SK),
 	}
 }
 
-func MarshalScope(scope aclcore.Scope) (map[string]*dynamodb.AttributeValue, error) {
+func MarshalScope(scope aclcore.Scope) (map[string]types.AttributeValue, error) {
 	if isBlank(scope.GrantedTo) {
 		return nil, errors.New("GrantedTo is mandatory to store a scope")
 	}
@@ -51,7 +52,7 @@ func MarshalScope(scope aclcore.Scope) (map[string]*dynamodb.AttributeValue, err
 		return nil, errors.New("ResourceOwner is mandatory")
 	}
 
-	return dynamodbattribute.MarshalMap(&ScopeRecord{
+	return attributevalue.MarshalMap(&ScopeRecord{
 		TablePk:       ScopeRecordPk(scope.GrantedTo, string(scope.Type), scope.ResourceOwner, scope.ResourceId),
 		Type:          string(scope.Type),
 		GrantedAt:     scope.GrantedAt,
@@ -62,9 +63,9 @@ func MarshalScope(scope aclcore.Scope) (map[string]*dynamodb.AttributeValue, err
 	})
 }
 
-func UnmarshalScope(attributes map[string]*dynamodb.AttributeValue) (*aclcore.Scope, error) {
+func UnmarshalScope(attributes map[string]types.AttributeValue) (*aclcore.Scope, error) {
 	record := new(ScopeRecord)
-	err := dynamodbattribute.UnmarshalMap(attributes, record)
+	err := attributevalue.UnmarshalMap(attributes, record)
 
 	return &aclcore.Scope{
 			Type:          aclcore.ScopeType(record.Type),

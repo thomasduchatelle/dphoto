@@ -50,8 +50,10 @@ setup-go:
 	docker-compose pull
 	docker-compose up -d
 
-test-go:
+test-pkg:
 	AWS_PROFILE="" go test ./... -race -cover
+
+test-go: test-pkg test-api
 
 build-go:
 	go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))"  -o ./ ./cmd/...
@@ -107,7 +109,7 @@ test-web-ci:
 clean-api:
 	rm -rf ./bin ./api/vendor
 
-test-api: test-go
+test-api:
 	cd api/lambdas && AWS_PROFILE="" go test ./...
 
 build-api:

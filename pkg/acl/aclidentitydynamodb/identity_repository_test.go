@@ -1,40 +1,30 @@
 package aclidentitydynamodb
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"sort"
 	"testing"
 )
 
-func awsSession() *session.Session {
-	return session.Must(session.NewSession(&aws.Config{
-		CredentialsChainVerboseErrors: aws.Bool(true),
-		Endpoint:                      aws.String("http://localhost:4566"),
-		Credentials:                   credentials.NewStaticCredentials("localstack", "localstack", ""),
-		Region:                        aws.String("eu-west-1"),
-	}))
-}
-
 func Test_repository_FindIdentity(t *testing.T) {
-	sess, db, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(sess, table)).(*repository)
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	r := Must(New(dyn.Cfg, dyn.Table))
 
-	dynamotestutils.SetContent(t, db, table, []map[string]*dynamodb.AttributeValue{
+	dyn.Must(dyn.WithDbContent(ctx, []map[string]types.AttributeValue{
 		{
-			"PK":      {S: aws.String("USER#tony@stark.com")},
-			"SK":      {S: aws.String("IDENTITY#")},
-			"Email":   {S: aws.String("tony+other@stark.com")},
-			"Name":    {S: aws.String("Tony Stark")},
-			"Picture": {S: aws.String("/you/know/me.jpg")},
+			"PK":      dynamoutils.AttributeValueMemberS("USER#tony@stark.com"),
+			"SK":      dynamoutils.AttributeValueMemberS("IDENTITY#"),
+			"Email":   dynamoutils.AttributeValueMemberS("tony+other@stark.com"),
+			"Name":    dynamoutils.AttributeValueMemberS("Tony Stark"),
+			"Picture": dynamoutils.AttributeValueMemberS("/you/know/me.jpg"),
 		},
-	})
+	}))
 
 	type args struct {
 		email string
@@ -75,25 +65,26 @@ func Test_repository_FindIdentity(t *testing.T) {
 }
 
 func Test_repository_FindIdentities(t *testing.T) {
-	sess, db, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(sess, table)).(*repository)
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	r := Must(New(dyn.Cfg, dyn.Table))
 
-	dynamotestutils.SetContent(t, db, table, []map[string]*dynamodb.AttributeValue{
+	dyn.Must(dyn.WithDbContent(ctx, []map[string]types.AttributeValue{
 		{
-			"PK":      {S: aws.String("USER#tony@stark.com")},
-			"SK":      {S: aws.String("IDENTITY#")},
-			"Email":   {S: aws.String("tony@stark.com")},
-			"Name":    {S: aws.String("Tony Stark")},
-			"Picture": {S: aws.String("/you/know/me.jpg")},
+			"PK":      dynamoutils.AttributeValueMemberS("USER#tony@stark.com"),
+			"SK":      dynamoutils.AttributeValueMemberS("IDENTITY#"),
+			"Email":   dynamoutils.AttributeValueMemberS("tony@stark.com"),
+			"Name":    dynamoutils.AttributeValueMemberS("Tony Stark"),
+			"Picture": dynamoutils.AttributeValueMemberS("/you/know/me.jpg"),
 		},
 		{
-			"PK":      {S: aws.String("USER#natasha@banner.com")},
-			"SK":      {S: aws.String("IDENTITY#")},
-			"Email":   {S: aws.String("natasha@banner.com")},
-			"Name":    {S: aws.String("Natasha")},
-			"Picture": {S: aws.String("/black-widow.jpg")},
+			"PK":      dynamoutils.AttributeValueMemberS("USER#natasha@banner.com"),
+			"SK":      dynamoutils.AttributeValueMemberS("IDENTITY#"),
+			"Email":   dynamoutils.AttributeValueMemberS("natasha@banner.com"),
+			"Name":    dynamoutils.AttributeValueMemberS("Natasha"),
+			"Picture": dynamoutils.AttributeValueMemberS("/black-widow.jpg"),
 		},
-	})
+	}))
 
 	type args struct {
 		email []string
@@ -143,8 +134,9 @@ func Test_repository_FindIdentities(t *testing.T) {
 }
 
 func Test_repository_StoreIdentity(t *testing.T) {
-	sess, _, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(sess, table)).(*repository)
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	r := Must(New(dyn.Cfg, dyn.Table))
 
 	type args struct {
 		identity aclcore.Identity
@@ -153,7 +145,7 @@ func Test_repository_StoreIdentity(t *testing.T) {
 		name      string
 		args      args
 		wantErr   assert.ErrorAssertionFunc
-		wantAfter []map[string]*dynamodb.AttributeValue
+		wantAfter []map[string]types.AttributeValue
 	}{
 		{
 			name: "it should create a brand-new identity details",
@@ -163,20 +155,20 @@ func Test_repository_StoreIdentity(t *testing.T) {
 				Picture: "/pepper.jpg",
 			}},
 			wantErr: assert.NoError,
-			wantAfter: []map[string]*dynamodb.AttributeValue{
+			wantAfter: []map[string]types.AttributeValue{
 				{
-					"PK":      {S: aws.String("USER#tony@stark.com")},
-					"SK":      {S: aws.String("IDENTITY#")},
-					"Email":   {S: aws.String("tony+other@stark.com")},
-					"Name":    {S: aws.String("Tony Stark")},
-					"Picture": {S: aws.String("/you/know/me.jpg")},
+					"PK":      dynamoutils.AttributeValueMemberS("USER#pepper@stark.com"),
+					"SK":      dynamoutils.AttributeValueMemberS("IDENTITY#"),
+					"Email":   dynamoutils.AttributeValueMemberS("pepper@stark.com"),
+					"Name":    dynamoutils.AttributeValueMemberS("Pepper"),
+					"Picture": dynamoutils.AttributeValueMemberS("/pepper.jpg"),
 				},
 				{
-					"PK":      {S: aws.String("USER#pepper@stark.com")},
-					"SK":      {S: aws.String("IDENTITY#")},
-					"Email":   {S: aws.String("pepper@stark.com")},
-					"Name":    {S: aws.String("Pepper")},
-					"Picture": {S: aws.String("/pepper.jpg")},
+					"PK":      dynamoutils.AttributeValueMemberS("USER#tony@stark.com"),
+					"SK":      dynamoutils.AttributeValueMemberS("IDENTITY#"),
+					"Email":   dynamoutils.AttributeValueMemberS("tony+other@stark.com"),
+					"Name":    dynamoutils.AttributeValueMemberS("Tony Stark"),
+					"Picture": dynamoutils.AttributeValueMemberS("/you/know/me.jpg"),
 				},
 			},
 		},
@@ -188,13 +180,13 @@ func Test_repository_StoreIdentity(t *testing.T) {
 				Picture: "/ironman-3.jpg",
 			}},
 			wantErr: assert.NoError,
-			wantAfter: []map[string]*dynamodb.AttributeValue{
+			wantAfter: []map[string]types.AttributeValue{
 				{
-					"PK":      {S: aws.String("USER#tony@stark.com")},
-					"SK":      {S: aws.String("IDENTITY#")},
-					"Email":   {S: aws.String("tony@stark.com")},
-					"Name":    {S: aws.String("Ironman")},
-					"Picture": {S: aws.String("/ironman-3.jpg")},
+					"PK":      dynamoutils.AttributeValueMemberS("USER#tony@stark.com"),
+					"SK":      dynamoutils.AttributeValueMemberS("IDENTITY#"),
+					"Email":   dynamoutils.AttributeValueMemberS("tony@stark.com"),
+					"Name":    dynamoutils.AttributeValueMemberS("Ironman"),
+					"Picture": dynamoutils.AttributeValueMemberS("/ironman-3.jpg"),
 				},
 			},
 		},
@@ -202,22 +194,20 @@ func Test_repository_StoreIdentity(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dynamotestutils.SetContent(t, r.db, table, []map[string]*dynamodb.AttributeValue{
+			dyn = dyn.Subtest(t)
+			dyn.Must(dyn.WithDbContent(ctx, []map[string]types.AttributeValue{
 				{
-					"PK":      {S: aws.String("USER#tony@stark.com")},
-					"SK":      {S: aws.String("IDENTITY#")},
-					"Email":   {S: aws.String("tony+other@stark.com")},
-					"Name":    {S: aws.String("Tony Stark")},
-					"Picture": {S: aws.String("/you/know/me.jpg")},
+					"PK":      dynamoutils.AttributeValueMemberS("USER#tony@stark.com"),
+					"SK":      dynamoutils.AttributeValueMemberS("IDENTITY#"),
+					"Email":   dynamoutils.AttributeValueMemberS("tony+other@stark.com"),
+					"Name":    dynamoutils.AttributeValueMemberS("Tony Stark"),
+					"Picture": dynamoutils.AttributeValueMemberS("/you/know/me.jpg"),
 				},
-			})
+			}))
 
 			err := r.StoreIdentity(tt.args.identity)
 			if tt.wantErr(t, err) && err == nil {
-				after, err := dynamoutils.AsSlice(dynamoutils.NewScanStream(r.db, r.table))
-				if assert.NoError(t, err) {
-					assert.Equal(t, tt.wantAfter, after)
-				}
+				dyn.MustBool(dyn.EqualContent(ctx, tt.wantAfter))
 			}
 		})
 	}

@@ -1,11 +1,13 @@
 package aclscopedynamodb
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"sort"
 	"testing"
 	"time"
@@ -111,52 +113,52 @@ func Test_repository_ListUserScopes(t *testing.T) {
 		},
 	}
 
-	awsSession, _, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(awsSession, table)).(*repository)
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	r := Must(New(dyn.Cfg, dyn.Table)).(*repository)
 
-	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]*dynamodb.WriteRequest{
+	_, err := r.client.BatchWriteItem(dyn.Ctx, &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
 			r.table: {
 				{
-					PutRequest: &dynamodb.PutRequest{Item: map[string]*dynamodb.AttributeValue{
-						"PK":            {S: aws.String("USER#ironman@stark.com")},
-						"SK":            {S: aws.String("SCOPE#album:visitor#pepperpotts@stark.com#wedding")},
-						"Type":          {S: aws.String("album:visitor")},
-						"GrantedAt":     {S: aws.String("2006-01-02T15:04:05.000000000Z")},
-						"GrantedTo":     {S: aws.String(ironmanEmail)},
-						"ResourceOwner": {S: aws.String(pepperEmail)},
-						"ResourceId":    {S: aws.String("wedding")},
-						"ResourceName":  {S: aws.String("Wedding Before EndGame")},
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#ironman@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#album:visitor#pepperpotts@stark.com#wedding"),
+						"Type":          dynamoutils.AttributeValueMemberS("album:visitor"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2006-01-02T15:04:05.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS(ironmanEmail),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS(pepperEmail),
+						"ResourceId":    dynamoutils.AttributeValueMemberS("wedding"),
+						"ResourceName":  dynamoutils.AttributeValueMemberS("Wedding Before EndGame"),
 					}},
 				},
 				{
-					PutRequest: &dynamodb.PutRequest{Item: map[string]*dynamodb.AttributeValue{
-						"PK":         {S: aws.String("USER#ironman@stark.com")},
-						"SK":         {S: aws.String("SCOPE#api##usermanagement")},
-						"Type":       {S: aws.String("api")},
-						"GrantedAt":  {S: aws.String("2006-01-03T15:04:05.000000000Z")},
-						"GrantedTo":  {S: aws.String(ironmanEmail)},
-						"ResourceId": {S: aws.String("usermanagement")},
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":         dynamoutils.AttributeValueMemberS("USER#ironman@stark.com"),
+						"SK":         dynamoutils.AttributeValueMemberS("SCOPE#api##usermanagement"),
+						"Type":       dynamoutils.AttributeValueMemberS("api"),
+						"GrantedAt":  dynamoutils.AttributeValueMemberS("2006-01-03T15:04:05.000000000Z"),
+						"GrantedTo":  dynamoutils.AttributeValueMemberS(ironmanEmail),
+						"ResourceId": dynamoutils.AttributeValueMemberS("usermanagement"),
 					}},
 				},
 				{
-					PutRequest: &dynamodb.PutRequest{Item: map[string]*dynamodb.AttributeValue{
-						"PK":            {S: aws.String("USER#ironman@stark.com")},
-						"SK":            {S: aws.String("SCOPE#owner:main#ironman@stark.com#")},
-						"Type":          {S: aws.String("owner:main")},
-						"GrantedAt":     {S: aws.String("2006-01-01T15:04:05.000000000Z")},
-						"GrantedTo":     {S: aws.String(ironmanEmail)},
-						"ResourceOwner": {S: aws.String(ironmanEmail)},
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#ironman@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#owner:main#ironman@stark.com#"),
+						"Type":          dynamoutils.AttributeValueMemberS("owner:main"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2006-01-01T15:04:05.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS(ironmanEmail),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS(ironmanEmail),
 					}},
 				},
 				{
-					PutRequest: &dynamodb.PutRequest{Item: map[string]*dynamodb.AttributeValue{
-						"PK":            {S: aws.String("USER#pepperpotts@stark.com")},
-						"SK":            {S: aws.String("SCOPE#owner:main#pepperpotts@stark.com#")},
-						"Type":          {S: aws.String("owner:main")},
-						"GrantedAt":     {S: aws.String("2006-01-05T15:04:05.000000000Z")},
-						"GrantedTo":     {S: aws.String(pepperEmail)},
-						"ResourceOwner": {S: aws.String(pepperEmail)},
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#pepperpotts@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#owner:main#pepperpotts@stark.com#"),
+						"Type":          dynamoutils.AttributeValueMemberS("owner:main"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2006-01-05T15:04:05.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS(pepperEmail),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS(pepperEmail),
 					}},
 				},
 			},
@@ -218,32 +220,32 @@ func Test_repository_ListOwnerScopes(t *testing.T) {
 		},
 	}
 
-	awsSession, _, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(awsSession, table)).(*repository)
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	r := Must(New(dyn.Cfg, dyn.Table)).(*repository)
 
-	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]*dynamodb.WriteRequest{
+	_, err := r.client.BatchWriteItem(dyn.Ctx, &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
 			r.table: {
 				{
-					PutRequest: &dynamodb.PutRequest{Item: map[string]*dynamodb.AttributeValue{
-						"PK":            {S: aws.String("USER#ironman@stark.com")},
-						"SK":            {S: aws.String("SCOPE#album:visitor#pepperpotts@stark.com#wedding")},
-						"Type":          {S: aws.String("album:visitor")},
-						"GrantedAt":     {S: aws.String("2006-01-02T15:04:05.000000000Z")},
-						"GrantedTo":     {S: aws.String("ironman@stark.com")},
-						"ResourceOwner": {S: aws.String("pepperpotts@stark.com")},
-						"ResourceId":    {S: aws.String("wedding")},
-						"ResourceName":  {S: aws.String("Wedding Before EndGame")},
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#ironman@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#album:visitor#pepperpotts@stark.com#wedding"),
+						"Type":          dynamoutils.AttributeValueMemberS("album:visitor"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2006-01-02T15:04:05.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS("ironman@stark.com"),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS("pepperpotts@stark.com"),
+						"ResourceId":    dynamoutils.AttributeValueMemberS("wedding"),
+						"ResourceName":  dynamoutils.AttributeValueMemberS("Wedding Before EndGame"),
 					}},
 				},
 				{
-					PutRequest: &dynamodb.PutRequest{Item: map[string]*dynamodb.AttributeValue{
-						"PK":            {S: aws.String("USER#pepperpotts@stark.com")},
-						"SK":            {S: aws.String("SCOPE#owner:main#pepperpotts@stark.com#")},
-						"Type":          {S: aws.String("owner:main")},
-						"GrantedAt":     {S: aws.String("2006-01-05T15:04:05.000000000Z")},
-						"GrantedTo":     {S: aws.String("pepperpotts@stark.com")},
-						"ResourceOwner": {S: aws.String("pepperpotts@stark.com")},
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#pepperpotts@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#owner:main#pepperpotts@stark.com#"),
+						"Type":          dynamoutils.AttributeValueMemberS("owner:main"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2006-01-05T15:04:05.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS("pepperpotts@stark.com"),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS("pepperpotts@stark.com"),
 					}},
 				},
 			},
@@ -345,32 +347,32 @@ func Test_repository_FindScopesById(t *testing.T) {
 		},
 	}
 
-	awsSession, _, table := dynamotestutils.NewClientV1(t)
-	r := Must(New(awsSession, table)).(*repository)
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	r := Must(New(dyn.Cfg, dyn.Table)).(*repository)
 
-	_, err := r.db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]*dynamodb.WriteRequest{
+	_, err := r.client.BatchWriteItem(dyn.Ctx, &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
 			r.table: {
 				{
-					PutRequest: &dynamodb.PutRequest{Item: map[string]*dynamodb.AttributeValue{
-						"PK":            {S: aws.String("USER#pepperpotts@stark.com")},
-						"SK":            {S: aws.String("SCOPE#owner:main#pepperpotts@stark.com#")},
-						"Type":          {S: aws.String("owner:main")},
-						"GrantedAt":     {S: aws.String("2022-12-24T00:00:00.000000000Z")},
-						"GrantedTo":     {S: aws.String("pepperpotts@stark.com")},
-						"ResourceOwner": {S: aws.String("pepperpotts@stark.com")},
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#pepperpotts@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#owner:main#pepperpotts@stark.com#"),
+						"Type":          dynamoutils.AttributeValueMemberS("owner:main"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2022-12-24T00:00:00.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS("pepperpotts@stark.com"),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS("pepperpotts@stark.com"),
 					}},
 				},
 				{
-					PutRequest: &dynamodb.PutRequest{Item: map[string]*dynamodb.AttributeValue{
-						"PK":            {S: aws.String("USER#ironman@stark.com")},
-						"SK":            {S: aws.String("SCOPE#album:visitor#pepperpotts@stark.com#wedding")},
-						"Type":          {S: aws.String("album:visitor")},
-						"GrantedAt":     {S: aws.String("2022-12-24T01:00:00.000000000Z")},
-						"GrantedTo":     {S: aws.String("ironman@stark.com")},
-						"ResourceOwner": {S: aws.String("pepperpotts@stark.com")},
-						"ResourceId":    {S: aws.String("wedding")},
-						"ResourceName":  {S: aws.String("Wedding Before EndGame")},
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#ironman@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#album:visitor#pepperpotts@stark.com#wedding"),
+						"Type":          dynamoutils.AttributeValueMemberS("album:visitor"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2022-12-24T01:00:00.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS("ironman@stark.com"),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS("pepperpotts@stark.com"),
+						"ResourceId":    dynamoutils.AttributeValueMemberS("wedding"),
+						"ResourceName":  dynamoutils.AttributeValueMemberS("Wedding Before EndGame"),
 					}},
 				},
 			},

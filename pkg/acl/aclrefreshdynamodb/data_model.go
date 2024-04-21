@@ -1,8 +1,8 @@
 package aclrefreshdynamodb
 
 import (
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
@@ -30,20 +30,24 @@ func RefreshTokenRecordPk(refreshToken string) appdynamodb.TablePk {
 	}
 }
 
-func marshalToken(token string, spec aclcore.RefreshTokenSpec) (map[string]*dynamodb.AttributeValue, error) {
-	item, err := dynamodbattribute.MarshalMap(RefreshTokenRecord{
+func marshalToken(token string, spec aclcore.RefreshTokenSpec) (map[string]types.AttributeValue, error) {
+	item, err := attributevalue.MarshalMap(RefreshTokenRecord{
 		TablePk:             RefreshTokenRecordPk(token),
 		Email:               spec.Email,
 		RefreshTokenPurpose: string(spec.RefreshTokenPurpose),
 		AbsoluteExpiryTime:  spec.AbsoluteExpiryTime,
 		Scopes:              strings.Join(spec.Scopes, " "),
 	})
+	if err == nil && len(spec.Scopes) == 0 {
+		item["Scopes"] = &types.AttributeValueMemberNULL{Value: true}
+	}
+
 	return item, errors.Wrapf(err, "failed to marshal %+v", spec)
 }
 
-func unmarshalToken(item map[string]*dynamodb.AttributeValue) (*aclcore.RefreshTokenSpec, error) {
+func unmarshalToken(item map[string]types.AttributeValue) (*aclcore.RefreshTokenSpec, error) {
 	record := new(RefreshTokenRecord)
-	err := dynamodbattribute.UnmarshalMap(item, record)
+	err := attributevalue.UnmarshalMap(item, record)
 
 	return &aclcore.RefreshTokenSpec{
 		Email:               record.Email,
