@@ -38,14 +38,14 @@ type analyseMedia struct {
 	options DetailsReaderOptions
 }
 
-func newBackupAnalyseMedia() RunnerAnalyserFunc {
+func newBackupAnalyseMedia() RunnerAnalyser {
 	analyser := analyseMedia{
 		options: DetailsReaderOptions{Fast: false},
 	}
-	return analyser.analyseMedia
+	return &analyser
 }
 
-func (a *analyseMedia) analyseMedia(found FoundMedia, eventChannel chan *ProgressEvent) (*AnalysedMedia, error) {
+func (a *analyseMedia) Analyse(found FoundMedia, eventChannel chan *ProgressEvent) (*AnalysedMedia, error) {
 	reader, hasher, err := readerSpyingForHash(found)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open file %s for analyse", found)

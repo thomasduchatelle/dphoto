@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysiscache"
 	"testing"
@@ -58,7 +56,7 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 	}
 
 	type fields struct {
-		Delegate backup.RunnerAnalyserFunc
+		Delegate backup.RunnerAnalyser
 	}
 	type args struct {
 		found backup.FoundMedia
@@ -74,25 +72,25 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 	}
 	doesNotCallTheDelegate := func(t *testing.T) fields {
 		return fields{
-			Delegate: mocks.NewRunnerAnalyserFunc(t).Execute,
+			Delegate: backup.RunnerAnalyserFunc(func(found backup.FoundMedia, progressChannel chan *backup.ProgressEvent) (*backup.AnalysedMedia, error) {
+				assert.Fail(t, "Unexpected call on Analyse", "unexpected Analyse(%+v, ...))", found)
+				return nil, nil
+			}),
 		}
 	}
 	doesCallTheDelegate := func(t *testing.T) fields {
-		analyserFunc := mocks.NewRunnerAnalyserFunc(t)
-		analyserFunc.On("Execute", mock.Anything, mock.Anything).Return(func(media backup.FoundMedia, progress chan *backup.ProgressEvent) *backup.AnalysedMedia {
-			return &backup.AnalysedMedia{
-				FoundMedia: media,
-				Type:       backup.MediaTypeImage,
-				Sha256Hash: computedMediaHash,
-				Details: &backup.MediaDetails{
-					Width:  120,
-					Height: 42,
-				},
-			}
-		}, nil)
-
 		return fields{
-			Delegate: analyserFunc.Execute,
+			Delegate: backup.RunnerAnalyserFunc(func(found backup.FoundMedia, progressChannel chan *backup.ProgressEvent) (*backup.AnalysedMedia, error) {
+				return &backup.AnalysedMedia{
+					FoundMedia: found,
+					Type:       backup.MediaTypeImage,
+					Sha256Hash: computedMediaHash,
+					Details: &backup.MediaDetails{
+						Width:  120,
+						Height: 42,
+					},
+				}, nil
+			}),
 		}
 
 	}
