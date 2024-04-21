@@ -1,9 +1,10 @@
 package s3volume
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"io"
@@ -14,11 +15,11 @@ import (
 )
 
 // New creates a new backup.SourceVolume that will find files on an S3 bucket.
-func New(sess *session.Session, path string) (backup.SourceVolume, error) {
-	return newWithS3Client(s3.New(sess), path)
+func New(client *s3.Client, path string) (backup.SourceVolume, error) {
+	return newWithS3Client(client, path)
 }
 
-func newWithS3Client(client *s3.S3, path string) (backup.SourceVolume, error) {
+func newWithS3Client(client *s3.Client, path string) (backup.SourceVolume, error) {
 	s3Url, err := url.Parse(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid s3 path, '%s' must be a valid URL (s3://<bucket-name>[/...])", path)
@@ -42,7 +43,7 @@ func newWithS3Client(client *s3.S3, path string) (backup.SourceVolume, error) {
 }
 
 type volume struct {
-	s3                  *s3.S3
+	s3                  *s3.Client
 	bucket              string
 	keyPrefix           string
 	supportedExtensions map[string]backup.MediaType
@@ -59,33 +60,38 @@ func (s *volume) String() string {
 func (s *volume) FindMedias() ([]backup.FoundMedia, error) {
 	var medias []backup.FoundMedia
 
-	err := s.s3.ListObjectsV2Pages(&s3.ListObjectsV2Input{
+	paginator := s3.NewListObjectsV2Paginator(s.s3, &s3.ListObjectsV2Input{
 		Bucket: &s.bucket,
 		Prefix: &s.keyPrefix,
-	}, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
-		for _, obj := range output.Contents {
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to list medias in %s", s.String())
+		}
+
+		for _, obj := range page.Contents {
 			ext := strings.TrimPrefix(strings.ToLower(path.Ext(*obj.Key)), ".")
 			if _, supported := s.supportedExtensions[ext]; supported {
 				medias = append(medias, &s3Media{
 					bucket:           s.bucket,
 					keyPrefix:        s.keyPrefix,
 					s3:               s.s3,
-					S3Object:         obj,
+					S3Object:         &obj,
 					lastModification: *obj.LastModified,
 				})
 			}
 		}
-		return true
-	})
+	}
 
-	return medias, errors.Wrapf(err, "Failed to list medias in %s", s.String())
+	return medias, nil
 }
 
 type s3Media struct {
 	bucket           string
 	keyPrefix        string
-	s3               *s3.S3
-	S3Object         *s3.Object
+	s3               *s3.Client
+	S3Object         *types.Object
 	lastModification time.Time
 }
 
@@ -119,7 +125,7 @@ func (s *s3Media) MediaPath() backup.MediaPath {
 }
 
 func (s *s3Media) ReadMedia() (io.ReadCloser, error) {
-	object, err := s.s3.GetObject(&s3.GetObjectInput{
+	object, err := s.s3.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: &s.bucket,
 		Key:    s.S3Object.Key,
 	})

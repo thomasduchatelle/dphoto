@@ -2,13 +2,12 @@ package s3volume
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/internal/localstack"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"io/ioutil"
 	"path"
@@ -17,14 +16,11 @@ import (
 
 func TestShouldFindMediasInS3(t *testing.T) {
 	a := assert.New(t)
+	ctx := context.Background()
 
 	// given
-	sess := session.Must(session.NewSession(&aws.Config{
-		Credentials:      credentials.NewStaticCredentials("localstack", "localstack", ""),
-		Endpoint:         aws.String("http://localhost:4566"),
-		Region:           aws.String("eu-west-1"),
-		S3ForcePathStyle: aws.Bool(true),
-	}))
+	cfg := localstack.Config(ctx)
+	s3Client := localstack.S3(cfg)
 
 	mockBucket := fmt.Sprintf("dphoto-unit-s3source-%s", uuid.Must(uuid.NewUUID()))
 	mockFiles := []struct {
@@ -37,16 +33,14 @@ func TestShouldFindMediasInS3(t *testing.T) {
 		{"my_images/video_1.mp4", nil},
 		{"my_images_before/image_4.jpg", nil},
 	}
-
-	s3Client := s3.New(sess)
-	_, err := s3Client.CreateBucket(&s3.CreateBucketInput{
+	_, err := s3Client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: &mockBucket,
 	})
 	if err != nil {
 		a.FailNow(err.Error())
 	}
 	for _, file := range mockFiles {
-		_, err := s3Client.PutObject(&s3.PutObjectInput{
+		_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
 			Body:   bytes.NewReader(file.content),
 			Bucket: &mockBucket,
 			Key:    &file.key,
@@ -57,7 +51,7 @@ func TestShouldFindMediasInS3(t *testing.T) {
 	}
 
 	// when
-	sourceVolume, err := New(sess, fmt.Sprintf("s3://%s/my_images", mockBucket))
+	sourceVolume, err := New(s3Client, fmt.Sprintf("s3://%s/my_images", mockBucket))
 	if err != nil {
 		a.FailNow(err.Error())
 	}

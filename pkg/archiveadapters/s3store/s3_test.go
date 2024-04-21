@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/internal/localstack"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"io"
 	"io/ioutil"
@@ -19,33 +18,15 @@ import (
 )
 
 var (
-	localstack aws.Config
-	ctx        = context.Background()
+	ctx = context.Background()
 )
 
-func init() {
-	var err error
-	region := "us-east-1"
-	localstack, err = config.LoadDefaultConfig(ctx,
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("localstack", "localstack", "")),
-		config.WithRegion(region),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				URL:           "http://localhost:4566",
-				PartitionID:   "aws",
-				SigningRegion: region,
-			}, nil
-		})),
-	)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func newMockedStore(purpose string) (*store, func()) {
-	adapter := Must(New(localstack, fmt.Sprintf("dphoto-unit-archive-%s-%s", purpose, time.Now().Format("20060102150405")), func(options *s3.Options) {
-		options.UsePathStyle = true // required for localstack testing on UNIX
-	})).(*store)
+	adapter := Must(New(
+		localstack.Config(ctx),
+		fmt.Sprintf("dphoto-unit-archive-%s-%s", purpose, time.Now().Format("20060102150405")),
+		localstack.WithUsePathPrefix,
+	)).(*store)
 
 	_, err := adapter.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &adapter.bucketName})
 	if err != nil {
