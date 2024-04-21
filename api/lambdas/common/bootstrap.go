@@ -66,11 +66,11 @@ func appAuthConfig() aclcore.OAuthConfig {
 }
 
 func ssoAuthenticatorPermissionReader() aclscopedynamodb.GrantRepository {
-	return aclscopedynamodb.Must(aclscopedynamodb.New(newV1Session(), viper.GetString(DynamoDBTableName)))
+	return aclscopedynamodb.Must(aclscopedynamodb.New(newV2Config(), viper.GetString(DynamoDBTableName)))
 }
 
 func newRefreshTokenRepository() aclcore.RefreshTokenRepository {
-	return aclrefreshdynamodb.Must(aclrefreshdynamodb.New(newV1Session(), viper.GetString(DynamoDBTableName)))
+	return aclrefreshdynamodb.Must(aclrefreshdynamodb.New(newV2Config(), viper.GetString(DynamoDBTableName)))
 }
 
 func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthenticator) {
@@ -106,7 +106,7 @@ func NewAuthenticators() (*aclcore.SSOAuthenticator, *aclcore.RefreshTokenAuthen
 }
 
 func getIdentityDetailsStore() aclidentitydynamodb.IdentityRepository {
-	return aclidentitydynamodb.Must(aclidentitydynamodb.New(newV1Session(), viper.GetString(DynamoDBTableName)))
+	return aclidentitydynamodb.Must(aclidentitydynamodb.New(newV2Config(), viper.GetString(DynamoDBTableName)))
 }
 
 func NewLogout() *aclcore.Logout {

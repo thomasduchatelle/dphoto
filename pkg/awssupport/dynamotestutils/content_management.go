@@ -1,70 +1,107 @@
 package dynamotestutils
 
 import (
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"sort"
-	"testing"
 )
 
-func SetContent(t *testing.T, db *dynamodb.DynamoDB, table string, entries []map[string]*dynamodb.AttributeValue) {
-	err := clearContent(db, table)
+func (d *DynamodbTestContext) WithDbContent(ctx context.Context, entries []map[string]types.AttributeValue) error {
+	err := d.clearContent(ctx)
 	if err != nil {
-		assert.FailNow(t, err.Error())
+		return err
 	}
-	err = insertAll(db, table, entries)
-	if err != nil {
-		assert.FailNow(t, err.Error())
+
+	if len(entries) > 0 {
+		err = d.insertItems(ctx, entries, err)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func clearContent(db *dynamodb.DynamoDB, table string) error {
-	var deletionRequests []*dynamodb.WriteRequest
-
-	stream := dynamoutils.NewScanStream(db, table)
-	for stream.HasNext() {
-		entry := stream.Next()
-		key := make(map[string]*dynamodb.AttributeValue)
-		key["PK"], _ = entry["PK"]
-		key["SK"], _ = entry["SK"]
-		deletionRequests = append(deletionRequests, &dynamodb.WriteRequest{DeleteRequest: &dynamodb.DeleteRequest{Key: key}})
+func (d *DynamodbTestContext) insertItems(ctx context.Context, entries []map[string]types.AttributeValue, err error) error {
+	requests := make([]types.WriteRequest, len(entries), len(entries))
+	for i, item := range entries {
+		requests[i] = types.WriteRequest{
+			PutRequest: &types.PutRequest{Item: item},
+		}
 	}
 
-	return dynamoutils.BufferedWriteItems(db, deletionRequests, table, dynamoutils.DynamoWriteBatchSize)
-}
-
-func insertAll(db *dynamodb.DynamoDB, table string, entries []map[string]*dynamodb.AttributeValue) error {
-	if len(entries) == 0 {
-		return nil
-	}
-
-	var requests []*dynamodb.WriteRequest
-	for _, entry := range entries {
-		requests = append(requests, &dynamodb.WriteRequest{
-			PutRequest: &dynamodb.PutRequest{Item: entry},
-		})
-	}
-
-	_, err := db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]*dynamodb.WriteRequest{
-			table: requests,
-		}})
+	err = dynamoutils.BufferedWriteItems(ctx, d.Client, requests, d.Table, dynamoutils.DynamoWriteBatchSize)
 	return err
 }
 
-func AssertAfter(t *testing.T, db *dynamodb.DynamoDB, table string, expected []map[string]*dynamodb.AttributeValue) bool {
-	content, err := dynamoutils.AsSlice(dynamoutils.NewScanStream(db, table))
-	if !assert.NoError(t, err) {
-		return false
+func (d *DynamodbTestContext) clearContent(ctx context.Context) error {
+	var deletionRequests []types.WriteRequest
+
+	stream := dynamoutils.NewScanStream(ctx, d.Client, d.Table)
+	for stream.HasNext() {
+		entry := stream.Next()
+		key := make(map[string]types.AttributeValue)
+		key["PK"], _ = entry["PK"]
+		key["SK"], _ = entry["SK"]
+		deletionRequests = append(deletionRequests, types.WriteRequest{DeleteRequest: &types.DeleteRequest{Key: key}})
 	}
 
-	sort.Slice(content, func(i, j int) bool {
-		if *content[i]["PK"].S == *content[j]["PK"].S {
-			return *content[i]["SK"].S < *content[j]["SK"].S
+	if stream.Error() != nil {
+		return stream.Error()
+	}
+
+	return dynamoutils.BufferedWriteItems(ctx, d.Client, deletionRequests, d.Table, dynamoutils.DynamoWriteBatchSize)
+}
+
+func (d *DynamodbTestContext) Got(ctx context.Context) ([]map[string]types.AttributeValue, error) {
+	items, err := dynamoutils.AsSlice(dynamoutils.NewScanStream(ctx, d.Client, d.Table))
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		var iPK, jPK, iSK, jSK string
+
+		erriPK := attributevalue.Unmarshal(items[i]["PK"], &iPK)
+		errjPK := attributevalue.Unmarshal(items[j]["PK"], &jPK)
+		erriSK := attributevalue.Unmarshal(items[i]["SK"], &iSK)
+		errjSK := attributevalue.Unmarshal(items[j]["SK"], &jSK)
+		if erriPK != nil || errjPK != nil || erriSK != nil || errjSK != nil {
+			assert.FailNowf(d.T, "sorting-content", "Unmarshal silenty failed: erriPK = %s, errjPK = %s, erriSK = %s, errjSK = %s", erriPK, errjPK, erriSK, errjSK)
+			return false
 		}
-		return *content[i]["PK"].S < *content[j]["PK"].S
+
+		if iPK == jPK {
+			return iSK < jSK
+		}
+		return iPK < jPK
 	})
 
-	return assert.Equal(t, expected, content)
+	return items, err
+}
+
+func (d *DynamodbTestContext) EqualContent(ctx context.Context, wantItems []map[string]types.AttributeValue) (bool, error) {
+	gotItems, err := d.Got(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	got := make([]map[string]interface{}, 0)
+	want := make([]map[string]interface{}, 0)
+
+	err = attributevalue.UnmarshalListOfMaps(gotItems, &got)
+	if err != nil {
+		return false, err
+	}
+
+	err = attributevalue.UnmarshalListOfMaps(wantItems, &want)
+	if err != nil {
+		return false, err
+	}
+
+	return assert.Equal(d.T, want, got), nil
+
 }

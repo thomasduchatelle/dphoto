@@ -2,6 +2,7 @@ package dynamoutilsv2
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/cenkalti/backoff/v4"
@@ -9,6 +10,26 @@ import (
 	log "github.com/sirupsen/logrus"
 	"time"
 )
+
+func BufferedPutItems(ctx context.Context, db DynamoBatchWriteItem, items []interface{}, table string, dynamoWriteBatchSize int) error {
+	values, err := attributevalue.MarshalList(items)
+	if err != nil {
+		return err
+	}
+
+	requests := make([]types.WriteRequest, len(items), len(items))
+	for i, value := range values {
+		if ss, ok := value.(*types.AttributeValueMemberM); ok {
+			requests[i] = types.WriteRequest{
+				PutRequest: &types.PutRequest{Item: ss.Value},
+			}
+		} else {
+			return errors.Errorf("items must be structures or maps with a valid PK ; got %+v", items[i])
+		}
+	}
+
+	return BufferedWriteItems(ctx, db, requests, table, dynamoWriteBatchSize)
+}
 
 // BufferedWriteItems writes items in batch with backoff and replay unprocessed items
 func BufferedWriteItems(ctx context.Context, db DynamoBatchWriteItem, requests []types.WriteRequest, table string, dynamoWriteBatchSize int) error {

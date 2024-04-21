@@ -1,11 +1,13 @@
 package aclidentitydynamodb
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"strings"
 )
 
@@ -14,9 +16,9 @@ type IdentityRepository interface {
 	aclcore.IdentityQueriesIdentityRepository
 }
 
-func New(sess *session.Session, tableName string) (IdentityRepository, error) {
+func New(cfg aws.Config, tableName string) (IdentityRepository, error) {
 	return &repository{
-		db:    dynamodb.New(sess),
+		db:    dynamodb.NewFromConfig(cfg),
 		table: tableName,
 	}, nil
 }
@@ -29,7 +31,7 @@ func Must(repository IdentityRepository, err error) IdentityRepository {
 }
 
 type repository struct {
-	db    *dynamodb.DynamoDB
+	db    *dynamodb.Client
 	table string
 }
 
@@ -43,7 +45,7 @@ func (r *repository) StoreIdentity(identity aclcore.Identity) error {
 		return err
 	}
 
-	_, err = r.db.PutItem(&dynamodb.PutItemInput{
+	_, err = r.db.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		Item:      item,
 		TableName: &r.table,
 	})
@@ -51,7 +53,7 @@ func (r *repository) StoreIdentity(identity aclcore.Identity) error {
 }
 
 func (r *repository) FindIdentity(email string) (*aclcore.Identity, error) {
-	item, err := r.db.GetItem(&dynamodb.GetItemInput{
+	item, err := r.db.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		Key:       identityRecordPkAttributes(email),
 		TableName: &r.table,
 	})
@@ -71,7 +73,7 @@ func (r *repository) FindIdentities(emails []string) ([]*aclcore.Identity, error
 	}
 
 	uniqueEmails := make(map[string]interface{})
-	var keys []map[string]*dynamodb.AttributeValue
+	var keys []map[string]types.AttributeValue
 	for _, email := range emails {
 		email = strings.ToLower(email)
 		if _, notUnique := uniqueEmails[email]; !notUnique {
@@ -81,7 +83,7 @@ func (r *repository) FindIdentities(emails []string) ([]*aclcore.Identity, error
 	}
 
 	var identities []*aclcore.Identity
-	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(context.TODO(), dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
 	for stream.HasNext() {
 		identity, err := unmarshalIdentity(stream.Next())
 		if err != nil {

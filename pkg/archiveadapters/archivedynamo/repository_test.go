@@ -1,6 +1,7 @@
 package archivedynamo
 
 import (
+	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
@@ -58,8 +59,8 @@ func TestShouldAddAndFindLocations(t *testing.T) {
 		},
 	}
 
-	cfg, _, table := dynamotestutils.NewClientV2(t)
-	repo := Must(New(cfg, table)).(*repository)
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	repo := Must(New(dyn.Cfg, dyn.Table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -124,8 +125,8 @@ func TestUpdateLocations(t *testing.T) {
 		},
 	}
 
-	cfg, _, table := dynamotestutils.NewClientV2(t)
-	repo := Must(New(cfg, table)).(*repository)
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	repo := Must(New(dyn.Cfg, dyn.Table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -202,11 +203,11 @@ func TestFindIdsFromKeyPrefix(t *testing.T) {
 		},
 	}
 
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	repo := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg, _, table := dynamotestutils.NewClientV2(t)
-			repo := Must(New(cfg, table)).(*repository)
-
 			err := repo.UpdateLocations(owner, tt.withLocations)
 			if !assert.NoError(t, err) {
 				assert.FailNow(t, err.Error())
