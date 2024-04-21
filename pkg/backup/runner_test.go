@@ -60,13 +60,13 @@ func TestShouldStopAtFirstError(t *testing.T) {
 			name: "it should stop the process after an error on the analyser: buffers are NOT flushed",
 			modifier: func(run *runner) {
 				original := run.Analyser
-				run.Analyser = func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error) {
+				run.Analyser = RunnerAnalyserFunc(func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error) {
 					if found.MediaPath().Filename == "file_4.jpg" {
 						return nil, errors.Errorf("TEST")
 					}
 
-					return original(found, progressChannel)
-				}
+					return original.Analyse(found, progressChannel)
+				})
 			},
 			want:    [][]string{{"file_1.jpg", "file_2.jpg"}},
 			wantErr: "error in analyser: TEST",
@@ -154,7 +154,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 	run := &runner{
 		MDC:       log.WithField("Testing", "Test"),
 		Publisher: publisher,
-		Analyser: func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error) {
+		Analyser: RunnerAnalyserFunc(func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error) {
 			return &AnalysedMedia{
 				FoundMedia: found,
 				Type:       MediaTypeImage,
@@ -163,7 +163,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 					DateTime: time.Date(2022, 6, 18, 10, 42, 0, 0, time.UTC),
 				},
 			}, nil
-		},
+		}),
 		Cataloger: func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 			var requests []*BackingUpMediaRequest
 			for _, media := range medias {

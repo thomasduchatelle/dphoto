@@ -7,6 +7,10 @@ import (
 	"sync"
 )
 
+type RunnerAnalyser interface {
+	Analyse(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
+}
+
 type runnerPublisher func(chan FoundMedia, chan *ProgressEvent) error
 type RunnerAnalyserFunc func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
 type runnerCataloger func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
@@ -16,7 +20,7 @@ type runnerUploader func(buffer []*BackingUpMediaRequest, progressChannel chan *
 type runner struct {
 	MDC                  *log.Entry         // MDC is log.WithFields({}) that contains Mapped Diagnostic Context
 	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
-	Analyser             RunnerAnalyserFunc // Analyser is extracting metadata from the file
+	Analyser             RunnerAnalyser     // Analyser is extracting metadata from the file
 	Cataloger            runnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             runnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
@@ -116,7 +120,7 @@ func (r *runner) analyseMedias(foundChannel chan FoundMedia, analysedChannel cha
 			case media, more := <-foundChannel:
 				if more {
 					r.MDC.Debugf("Runner > analysing %s", media)
-					analysed, err := r.Analyser(media, r.progressEventChannel)
+					analysed, err := r.Analyser.Analyse(media, r.progressEventChannel)
 					if err != nil && r.SkipRejects {
 						r.MDC.Infof("silently skip %s: %s", media, err.Error()) // not strictly correct as the file won't be counted
 					} else if err != nil {
@@ -243,4 +247,8 @@ func (r *runner) startPublishing(foundChannel chan FoundMedia) {
 		r.appendError(err)
 		close(foundChannel)
 	}()
+}
+
+func (r RunnerAnalyserFunc) Analyse(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error) {
+	return r(found, progressChannel)
 }

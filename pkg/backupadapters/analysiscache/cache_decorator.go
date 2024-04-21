@@ -18,12 +18,11 @@ type Decorator struct {
 	db *badger.DB
 }
 
-func (d *Decorator) Decorate(analyseFunc backup.RunnerAnalyserFunc) backup.RunnerAnalyserFunc {
-	instance := DecoratorInstance{
+func (d *Decorator) Decorate(analyseFunc backup.RunnerAnalyser) backup.RunnerAnalyser {
+	return &DecoratorInstance{
 		DB:       d.db,
 		Delegate: analyseFunc,
 	}
-	return instance.Analyse
 }
 
 func (d *Decorator) Close() error {
@@ -43,7 +42,7 @@ func (d *Decorator) Close() error {
 
 type DecoratorInstance struct {
 	DB       *badger.DB
-	Delegate backup.RunnerAnalyserFunc
+	Delegate backup.RunnerAnalyser
 }
 
 func (d *DecoratorInstance) Analyse(found backup.FoundMedia, progressChannel chan *backup.ProgressEvent) (*backup.AnalysedMedia, error) {
@@ -60,7 +59,7 @@ func (d *DecoratorInstance) Analyse(found backup.FoundMedia, progressChannel cha
 
 	if missedCache || d.lastModificationMatchOrIsIgnored(found, payload) {
 		log.Debugf("Runner > missed analysis cache %s", key)
-		analysedMedia, err := d.Delegate(found, progressChannel)
+		analysedMedia, err := d.Delegate.Analyse(found, progressChannel)
 		if err == nil {
 			var details backup.MediaDetails
 			if analysedMedia.Details != nil {

@@ -8,7 +8,7 @@ type Options struct {
 }
 
 type AnalyserDecorator interface {
-	Decorate(analyseFunc RunnerAnalyserFunc) RunnerAnalyserFunc
+	Decorate(analyseFunc RunnerAnalyser) RunnerAnalyser
 }
 
 func readOptions(requestedOptions []Options) Options {
@@ -80,6 +80,6 @@ func (o Options) GetAnalyserDecorator() AnalyserDecorator {
 type NopeAnalyserDecorator struct {
 }
 
-func (n *NopeAnalyserDecorator) Decorate(analyseFunc RunnerAnalyserFunc) RunnerAnalyserFunc {
+func (n *NopeAnalyserDecorator) Decorate(analyseFunc RunnerAnalyser) RunnerAnalyser {
 	return analyseFunc
 }
