@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/backupui"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
@@ -75,7 +76,7 @@ func init() {
 
 	config.Listen(func(cfg config.Config) {
 		newS3Volume = func(volumePath string) (backup.SourceVolume, error) {
-			return s3volume.New(cfg.GetAWSSession(), volumePath)
+			return s3volume.New(s3.NewFromConfig(cfg.GetAWSV2Config()), volumePath)
 		}
 
 		defaultCacheDir := path.Join(cfg.GetStringOrDefault(config.LocalHome, os.ExpandEnv("$HOME/.dphoto")), "cache")

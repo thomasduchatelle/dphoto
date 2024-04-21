@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	dynamodbv1 "github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/thomasduchatelle/dphoto/internal/localstack"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"regexp"
 	"strings"
@@ -24,7 +23,7 @@ type DynamodbTestContext struct {
 }
 
 func NewTestContext(ctx context.Context, t *testing.T) *DynamodbTestContext {
-	cfg := localstackConfig(ctx)
+	cfg := localstack.Config(ctx)
 	client := dynamodb.NewFromConfig(cfg)
 	tableName := NewTestTableName(t)
 
@@ -59,24 +58,4 @@ func (d *DynamodbTestContext) Subtest(t *testing.T) *DynamodbTestContext {
 		Client: d.Client,
 		Table:  d.Table,
 	}
-}
-
-func localstackConfig(ctx context.Context) aws.Config {
-	cfg, err := config.LoadDefaultConfig(
-		ctx,
-		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("localstack", "localstack", "")),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				URL:           endpoint,
-				PartitionID:   "aws",
-				SigningRegion: region,
-			}, nil
-		})),
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	return cfg
 }

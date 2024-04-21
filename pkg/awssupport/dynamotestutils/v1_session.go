@@ -5,21 +5,17 @@ import (
 	credentialsv1 "github.com/aws/aws-sdk-go/aws/credentials"
 	sessionv1 "github.com/aws/aws-sdk-go/aws/session"
 	dynamodbv1 "github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/thomasduchatelle/dphoto/internal/localstack"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"testing"
-)
-
-const (
-	region   = "us-east-1"
-	endpoint = "http://localhost:4566"
 )
 
 func NewLocalstackSession() *sessionv1.Session {
 	return sessionv1.Must(sessionv1.NewSession(&awsv1.Config{
 		CredentialsChainVerboseErrors: awsv1.Bool(true),
-		Endpoint:                      awsv1.String(endpoint),
+		Endpoint:                      awsv1.String(localstack.Endpoint),
 		Credentials:                   credentialsv1.NewStaticCredentials("localstack", "localstack", ""),
-		Region:                        awsv1.String(region),
+		Region:                        awsv1.String(localstack.Region),
 	}))
 }
 
