@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
 func New(cfg aws.Config, tableName string) (aclcore.RefreshTokenRepository, error) {

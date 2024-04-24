@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	log "github.com/sirupsen/logrus"
-	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
 func Migrate(tableName string, arn string, repopulateCache bool, scripts []interface{}) (int, error) {

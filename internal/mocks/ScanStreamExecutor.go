@@ -3,7 +3,9 @@
 package mocks
 
 import (
-	dynamodb "github.com/aws/aws-sdk-go/service/dynamodb"
+	context "context"
+
+	dynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -13,9 +15,16 @@ type ScanStreamExecutor struct {
 	mock.Mock
 }
 
-// Scan provides a mock function with given fields: input
-func (_m *ScanStreamExecutor) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error) {
-	ret := _m.Called(input)
+// Scan provides a mock function with given fields: ctx, params, optFns
+func (_m *ScanStreamExecutor) Scan(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Scan")
@@ -23,19 +32,19 @@ func (_m *ScanStreamExecutor) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOut
 
 	var r0 *dynamodb.ScanOutput
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*dynamodb.ScanInput) (*dynamodb.ScanOutput, error)); ok {
-		return rf(input)
+	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.ScanInput, ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error)); ok {
+		return rf(ctx, params, optFns...)
 	}
-	if rf, ok := ret.Get(0).(func(*dynamodb.ScanInput) *dynamodb.ScanOutput); ok {
-		r0 = rf(input)
+	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.ScanInput, ...func(*dynamodb.Options)) *dynamodb.ScanOutput); ok {
+		r0 = rf(ctx, params, optFns...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dynamodb.ScanOutput)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*dynamodb.ScanInput) error); ok {
-		r1 = rf(input)
+	if rf, ok := ret.Get(1).(func(context.Context, *dynamodb.ScanInput, ...func(*dynamodb.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
 	} else {
 		r1 = ret.Error(1)
 	}

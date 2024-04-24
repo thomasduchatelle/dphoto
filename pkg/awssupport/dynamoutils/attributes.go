@@ -1,4 +1,4 @@
-package dynamoutilsv2
+package dynamoutils
 
 import "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 

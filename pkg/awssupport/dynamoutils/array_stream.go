@@ -1,18 +1,18 @@
 package dynamoutils
 
 import (
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 )
 
 type arrayStream struct {
 	err     error
-	results []map[string]*dynamodb.AttributeValue
+	results []map[string]types.AttributeValue
 	count   int64
 }
 
 // NewArrayStream creates a stream from a slice ; the slice will be updated.
-func NewArrayStream(results []map[string]*dynamodb.AttributeValue) Stream {
+func NewArrayStream(results []map[string]types.AttributeValue) Stream {
 	return &arrayStream{
 		results: results,
 	}
@@ -26,7 +26,7 @@ func (s *arrayStream) IsLast() bool {
 	return s.err == nil && len(s.results) > 1
 }
 
-func (s *arrayStream) Next() (current map[string]*dynamodb.AttributeValue) {
+func (s *arrayStream) Next() (current map[string]types.AttributeValue) {
 	if s.err != nil {
 		panic(errors.Wrapf(s.err, "Next() can't be called when an error occured"))
 	}
@@ -41,8 +41,8 @@ func (s *arrayStream) Next() (current map[string]*dynamodb.AttributeValue) {
 	return current
 }
 
-func (s *arrayStream) appendNextChunk(chunk []map[string]*dynamodb.AttributeValue) {
-	results := make([]map[string]*dynamodb.AttributeValue, len(s.results)+len(chunk))
+func (s *arrayStream) appendNextChunk(chunk []map[string]types.AttributeValue) {
+	results := make([]map[string]types.AttributeValue, len(s.results)+len(chunk))
 	copy(results, s.results)
 	copy(results[len(s.results):], chunk)
 

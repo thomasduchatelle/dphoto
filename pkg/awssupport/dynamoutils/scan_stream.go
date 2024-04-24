@@ -1,23 +1,27 @@
 package dynamoutils
 
 import (
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
 )
 
 type scanStream struct {
+	ctx            context.Context
 	executor       ScanStreamExecutor
 	internalStream arrayStream
-	nextPageToken  map[string]*dynamodb.AttributeValue
+	nextPageToken  map[string]types.AttributeValue
 	tableName      string
 }
 
 type ScanStreamExecutor interface {
-	Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error)
+	Scan(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error)
 }
 
-func NewScanStream(executor ScanStreamExecutor, tableName string) Stream {
+func NewScanStream(ctx context.Context, executor ScanStreamExecutor, tableName string) Stream {
 	stream := &scanStream{
+		ctx:            ctx,
 		executor:       executor,
 		internalStream: arrayStream{},
 		tableName:      tableName,
@@ -30,7 +34,7 @@ func (s *scanStream) HasNext() bool {
 	return s.internalStream.HasNext()
 }
 
-func (s *scanStream) Next() map[string]*dynamodb.AttributeValue {
+func (s *scanStream) Next() map[string]types.AttributeValue {
 	next := s.internalStream.Next()
 
 	if !s.internalStream.HasNext() {
@@ -43,7 +47,7 @@ func (s *scanStream) Next() map[string]*dynamodb.AttributeValue {
 }
 
 func (s *scanStream) populateNextChunk() {
-	result, err := s.executor.Scan(&dynamodb.ScanInput{
+	result, err := s.executor.Scan(s.ctx, &dynamodb.ScanInput{
 		ExclusiveStartKey: s.nextPageToken,
 		TableName:         &s.tableName,
 	})

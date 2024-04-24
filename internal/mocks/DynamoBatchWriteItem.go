@@ -3,7 +3,9 @@
 package mocks
 
 import (
-	dynamodb "github.com/aws/aws-sdk-go/service/dynamodb"
+	context "context"
+
+	dynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -13,9 +15,16 @@ type DynamoBatchWriteItem struct {
 	mock.Mock
 }
 
-// BatchWriteItem provides a mock function with given fields: _a0
-func (_m *DynamoBatchWriteItem) BatchWriteItem(_a0 *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
-	ret := _m.Called(_a0)
+// BatchWriteItem provides a mock function with given fields: ctx, params, optFns
+func (_m *DynamoBatchWriteItem) BatchWriteItem(ctx context.Context, params *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BatchWriteItem")
@@ -23,19 +32,19 @@ func (_m *DynamoBatchWriteItem) BatchWriteItem(_a0 *dynamodb.BatchWriteItemInput
 
 	var r0 *dynamodb.BatchWriteItemOutput
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error)); ok {
-		return rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.BatchWriteItemInput, ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error)); ok {
+		return rf(ctx, params, optFns...)
 	}
-	if rf, ok := ret.Get(0).(func(*dynamodb.BatchWriteItemInput) *dynamodb.BatchWriteItemOutput); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, *dynamodb.BatchWriteItemInput, ...func(*dynamodb.Options)) *dynamodb.BatchWriteItemOutput); ok {
+		r0 = rf(ctx, params, optFns...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dynamodb.BatchWriteItemOutput)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*dynamodb.BatchWriteItemInput) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, *dynamodb.BatchWriteItemInput, ...func(*dynamodb.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
 	} else {
 		r1 = ret.Error(1)
 	}
