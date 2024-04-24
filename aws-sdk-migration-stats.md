@@ -58,3 +58,22 @@ total 259M
 -rwxr-xr-x 1 thomasduchatelle  20M Apr 24 07:09 share-album
 -rwxr-xr-x 1 thomasduchatelle  15M Apr 24 07:09 version
 ```
+
+# SDK - v1 retired completely
+
+```
+-rwxr-xr-x 1 thomasduchatelle  20M Apr 24 19:13 async-resize-image
+-rwxr-xr-x 1 thomasduchatelle  20M Apr 24 19:13 async-warmup-cache
+-rwxr-xr-x 1 thomasduchatelle 9.0M Apr 24 19:13 env-config
+-rwxr-xr-x 1 thomasduchatelle  21M Apr 24 19:13 get-media
+-rwxr-xr-x 1 thomasduchatelle  19M Apr 24 19:13 letsencrypt
+-rwxr-xr-x 1 thomasduchatelle  14M Apr 24 19:13 list-albums
+-rwxr-xr-x 1 thomasduchatelle  14M Apr 24 19:13 list-medias
+-rwxr-xr-x 1 thomasduchatelle  14M Apr 24 19:13 list-owners
+-rwxr-xr-x 1 thomasduchatelle  14M Apr 24 19:13 list-users
+-rwxr-xr-x 1 thomasduchatelle 6.7M Apr 24 19:13 not-found
+-rwxr-xr-x 1 thomasduchatelle  14M Apr 24 19:13 oauth-revoke
+-rwxr-xr-x 1 thomasduchatelle  14M Apr 24 19:13 oauth-token
+-rwxr-xr-x 1 thomasduchatelle  14M Apr 24 19:13 share-album
+-rwxr-xr-x 1 thomasduchatelle 9.0M Apr 24 19:13 version
+```

@@ -4,7 +4,6 @@ go 1.22
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/aws/aws-sdk-go v1.51.21
 	github.com/aws/aws-sdk-go-v2 v1.26.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.11

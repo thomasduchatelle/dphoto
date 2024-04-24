@@ -1,6 +1,9 @@
 package dynamoutils
 
-import "github.com/aws/aws-sdk-go/service/dynamodb"
+import (
+	"context"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 // DynamoGetStreamExecutor creates the query and execute in on the dynamoDB
 type DynamoGetStreamExecutor struct {
@@ -10,17 +13,19 @@ type DynamoGetStreamExecutor struct {
 }
 
 type getStream struct {
+	ctx            context.Context
 	executor       GetStreamAdapter
 	internalStream arrayStream
-	keys           []map[string]*dynamodb.AttributeValue
-	buffer         []map[string]*dynamodb.AttributeValue
+	keys           []map[string]types.AttributeValue
+	buffer         []map[string]types.AttributeValue
 }
 
 // NewGetStream batches requests to get each item by their natural key
-func NewGetStream(executor GetStreamAdapter, keys []map[string]*dynamodb.AttributeValue, bufferSize int64) Stream {
+func NewGetStream(ctx context.Context, executor GetStreamAdapter, keys []map[string]types.AttributeValue, bufferSize int64) Stream {
 	stream := &getStream{
+		ctx:            ctx,
 		executor:       executor,
-		buffer:         make([]map[string]*dynamodb.AttributeValue, 0, bufferSize),
+		buffer:         make([]map[string]types.AttributeValue, 0, bufferSize),
 		internalStream: arrayStream{},
 		keys:           keys,
 	}
@@ -32,7 +37,7 @@ func (s *getStream) HasNext() bool {
 	return s.internalStream.HasNext()
 }
 
-func (s *getStream) Next() map[string]*dynamodb.AttributeValue {
+func (s *getStream) Next() map[string]types.AttributeValue {
 	next := s.internalStream.Next()
 
 	for !s.internalStream.HasNext() && (len(s.buffer) > 0 || len(s.keys) > 0) {
@@ -65,7 +70,7 @@ func (s *getStream) populateNextChunk() {
 		return
 	}
 
-	result, err := s.executor.BatchGet(s.buffer)
+	result, err := s.executor.BatchGet(s.ctx, s.buffer)
 	if err != nil {
 		s.internalStream.WithError(err)
 		return

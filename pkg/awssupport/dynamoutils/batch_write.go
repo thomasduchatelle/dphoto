@@ -1,21 +1,44 @@
 package dynamoutils
 
 import (
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
+func BufferedPutItems(ctx context.Context, db DynamoBatchWriteItem, items []interface{}, table string, dynamoWriteBatchSize int) error {
+	values, err := attributevalue.MarshalList(items)
+	if err != nil {
+		return err
+	}
+
+	requests := make([]types.WriteRequest, len(items), len(items))
+	for i, value := range values {
+		if ss, ok := value.(*types.AttributeValueMemberM); ok {
+			requests[i] = types.WriteRequest{
+				PutRequest: &types.PutRequest{Item: ss.Value},
+			}
+		} else {
+			return errors.Errorf("items must be structures or maps with a valid PK ; got %+v", items[i])
+		}
+	}
+
+	return BufferedWriteItems(ctx, db, requests, table, dynamoWriteBatchSize)
+}
+
 // BufferedWriteItems writes items in batch with backoff and replay unprocessed items
-func BufferedWriteItems(db DynamoBatchWriteItem, requests []*dynamodb.WriteRequest, table string, dynamoWriteBatchSize int) error {
+func BufferedWriteItems(ctx context.Context, db DynamoBatchWriteItem, requests []types.WriteRequest, table string, dynamoWriteBatchSize int) error {
 	batchSize := dynamoWriteBatchSize
 	if batchSize > DynamoWriteBatchSize {
 		batchSize = DynamoWriteBatchSize
 	}
 
-	buffer := make([]*dynamodb.WriteRequest, 0, batchSize)
+	buffer := make([]types.WriteRequest, 0, batchSize)
 
 	retry := backoff.NewExponentialBackOff()
 
@@ -30,8 +53,8 @@ func BufferedWriteItems(db DynamoBatchWriteItem, requests []*dynamodb.WriteReque
 			requests = requests[end:]
 		}
 
-		result, err := db.BatchWriteItem(&dynamodb.BatchWriteItemInput{
-			RequestItems: map[string][]*dynamodb.WriteRequest{
+		result, err := db.BatchWriteItem(ctx, &dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]types.WriteRequest{
 				table: buffer,
 			},
 		})
