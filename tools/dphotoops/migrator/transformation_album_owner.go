@@ -1,26 +1,24 @@
 package migrator
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"strings"
 )
 
 type TransformationAlbumOwner struct{}
 
-func (t *TransformationAlbumOwner) GeneratePatches(run *TransformationRun, item map[string]*dynamodb.AttributeValue) ([]*dynamodb.WriteRequest, error) {
-	pk := *item["PK"].S
-	if strings.HasSuffix(pk, "#ALBUM") {
+func (t *TransformationAlbumOwner) GeneratePatches(run *TransformationRun, item map[string]types.AttributeValue) ([]*types.WriteRequest, error) {
+	if pk, ok := item["PK"].(*types.AttributeValueMemberS); ok && strings.HasSuffix(pk.Value, "#ALBUM") {
 		run.Counter.Inc("ALBUM", 1)
 
 		const albumOwnerKey = "AlbumOwner"
-		if owner, ok := item[albumOwnerKey]; !ok || isNull(owner) || isEmpty(owner) {
+		if owner, ok := item[albumOwnerKey]; !ok || isNullOrEmpty(owner) {
 			run.Counter.Inc("ALBUM_WITHOUT_OWNER", 1)
 
-			item[albumOwnerKey] = &dynamodb.AttributeValue{S: aws.String(strings.TrimSuffix(pk, "#ALBUM"))}
-			return []*dynamodb.WriteRequest{
+			item[albumOwnerKey] = &types.AttributeValueMemberS{Value: strings.TrimSuffix(pk.Value, "#ALBUM")}
+			return []*types.WriteRequest{
 				{
-					PutRequest: &dynamodb.PutRequest{
+					PutRequest: &types.PutRequest{
 						Item: item,
 					},
 				},
@@ -31,10 +29,8 @@ func (t *TransformationAlbumOwner) GeneratePatches(run *TransformationRun, item 
 	return nil, nil
 }
 
-func isNull(attr *dynamodb.AttributeValue) bool {
-	return attr == nil || attr.NULL != nil && *attr.NULL
-}
-
-func isEmpty(attr *dynamodb.AttributeValue) bool {
-	return attr == nil || attr.S == nil || *attr.S == ""
+func isNullOrEmpty(attr types.AttributeValue) bool {
+	_, isNullAttribute := attr.(*types.AttributeValueMemberNULL)
+	stringValue, isString := attr.(*types.AttributeValueMemberS)
+	return isNullAttribute || isString && stringValue.Value == ""
 }

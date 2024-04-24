@@ -1,7 +1,8 @@
 package bootstrap
 
 import (
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
@@ -17,7 +18,7 @@ func init() {
 		table := cfg.GetString(config.CatalogDynamodbTable)
 
 		log.Infoln("Updating indexes ...")
-		err := appdynamodb.CreateTableIfNecessary(table, dynamodb.New(cfg.GetAWSSession()), false)
+		err := appdynamodb.CreateTableIfNecessary(context.TODO(), table, dynamodb.NewFromConfig(cfg.GetAWSV2Config()), false)
 		if err != nil {
 			panic("Failed while updating indexes: " + err.Error())
 		}

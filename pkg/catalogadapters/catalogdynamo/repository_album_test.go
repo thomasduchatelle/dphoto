@@ -3,6 +3,7 @@ package catalogdynamo
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
@@ -23,18 +24,16 @@ func TestRepositoryAlbum(t *testing.T) {
 
 func (a *AlbumCrudTestSuite) SetupSuite() {
 	dyn := dynamotestutils.NewTestContext(context.Background(), a.T())
+	err := appdynamodb.CreateTableIfNecessary(context.Background(), dyn.Table, dyn.Client, true)
+	if !assert.NoError(a.T(), err) {
+		assert.FailNow(a.T(), err.Error())
+	}
 
 	a.owner = "UNITTEST#1"
 	a.repo = &Repository{
 		client:        dyn.Client,
 		table:         dyn.Table,
 		localDynamodb: true,
-	}
-
-	_, clientV1, _ := dynamotestutils.NewClientV1(a.T())
-	err := appdynamodb.CreateTableIfNecessary(a.repo.table, clientV1, true)
-	if err != nil {
-		panic(err)
 	}
 }
 

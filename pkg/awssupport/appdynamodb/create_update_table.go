@@ -2,10 +2,11 @@ package appdynamodb
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"time"
 )
 
@@ -13,78 +14,91 @@ const (
 	tableVersion = "2.1" // tableVersion should be bumped manually when schema is updated
 )
 
+// TODO - manage how and where CreateTableIfNecessary is called ; it seems its done everywhere...
+
 // CreateTableIfNecessary creates the table if it doesn't exist ; or update it.
-func CreateTableIfNecessary(table string, db *dynamodb.DynamoDB, localDynamodb bool) error {
+func CreateTableIfNecessary(ctx context.Context, table string, client *dynamodb.Client, localDynamodb bool) error {
 	mdc := log.WithFields(log.Fields{
 		"TableBackup":  table,
 		"TableVersion": tableVersion,
 	})
 	mdc.Debugf("CreateTableIfNecessary > describe table '%s'", table)
 
-	s := aws.String(dynamodb.ScalarAttributeTypeS)
+	var secondaryIndexProvisionedThroughput *types.ProvisionedThroughput
+	if localDynamodb {
+		secondaryIndexProvisionedThroughput = &types.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(1),
+			WriteCapacityUnits: aws.Int64(1),
+		}
+	}
+
 	createTableInput := &dynamodb.CreateTableInput{
-		AttributeDefinitions: []*dynamodb.AttributeDefinition{
-			{AttributeName: aws.String("PK"), AttributeType: s},
-			{AttributeName: aws.String("SK"), AttributeType: s},
-			{AttributeName: aws.String("AlbumIndexPK"), AttributeType: s},
-			{AttributeName: aws.String("AlbumIndexSK"), AttributeType: s},
-			{AttributeName: aws.String("LocationId"), AttributeType: s},
-			{AttributeName: aws.String("LocationKeyPrefix"), AttributeType: s},
-			{AttributeName: aws.String("ResourceOwner"), AttributeType: s},
-			{AttributeName: aws.String("AbsoluteExpiryTime"), AttributeType: s},
+		AttributeDefinitions: []types.AttributeDefinition{
+			{AttributeName: aws.String("PK"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("SK"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("AlbumIndexPK"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("AlbumIndexSK"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("LocationId"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("LocationKeyPrefix"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("ResourceOwner"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("AbsoluteExpiryTime"), AttributeType: types.ScalarAttributeTypeS},
 		},
-		BillingMode: aws.String(dynamodb.BillingModePayPerRequest),
-		GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndex{
+		KeySchema: []types.KeySchemaElement{
+			{AttributeName: aws.String("PK"), KeyType: types.KeyTypeHash},
+			{AttributeName: aws.String("SK"), KeyType: types.KeyTypeRange},
+		},
+		TableName: &table,
+		GlobalSecondaryIndexes: []types.GlobalSecondaryIndex{
 			{
 				IndexName: aws.String("AlbumIndex"),
-				KeySchema: []*dynamodb.KeySchemaElement{
-					{AttributeName: aws.String("AlbumIndexPK"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-					{AttributeName: aws.String("AlbumIndexSK"), KeyType: aws.String(dynamodb.KeyTypeRange)},
+				KeySchema: []types.KeySchemaElement{
+					{AttributeName: aws.String("AlbumIndexPK"), KeyType: types.KeyTypeHash},
+					{AttributeName: aws.String("AlbumIndexSK"), KeyType: types.KeyTypeRange},
 				},
-				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
+				Projection:            &types.Projection{ProjectionType: types.ProjectionTypeAll},
+				ProvisionedThroughput: secondaryIndexProvisionedThroughput,
 			},
 			{
 				IndexName: aws.String("ReverseLocationIndex"), // from 'archivedynamo' extension
-				KeySchema: []*dynamodb.KeySchemaElement{
-					{AttributeName: aws.String("LocationKeyPrefix"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-					{AttributeName: aws.String("LocationId"), KeyType: aws.String(dynamodb.KeyTypeRange)},
+				KeySchema: []types.KeySchemaElement{
+					{AttributeName: aws.String("LocationKeyPrefix"), KeyType: types.KeyTypeHash},
+					{AttributeName: aws.String("LocationId"), KeyType: types.KeyTypeRange},
 				},
-				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
+				Projection:            &types.Projection{ProjectionType: types.ProjectionTypeAll},
+				ProvisionedThroughput: secondaryIndexProvisionedThroughput,
 			},
 			{
 				IndexName: aws.String("ReverseGrantIndex"), // from 'acl' extension
-				KeySchema: []*dynamodb.KeySchemaElement{
-					{AttributeName: aws.String("ResourceOwner"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-					{AttributeName: aws.String("SK"), KeyType: aws.String(dynamodb.KeyTypeRange)},
+				KeySchema: []types.KeySchemaElement{
+					{AttributeName: aws.String("ResourceOwner"), KeyType: types.KeyTypeHash},
+					{AttributeName: aws.String("SK"), KeyType: types.KeyTypeRange},
 				},
-				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
+				Projection:            &types.Projection{ProjectionType: types.ProjectionTypeAll},
+				ProvisionedThroughput: secondaryIndexProvisionedThroughput,
 			},
 			{
 				IndexName: aws.String("RefreshTokenExpiration"), // from 'acl' extension
-				KeySchema: []*dynamodb.KeySchemaElement{
-					{AttributeName: aws.String("SK"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-					{AttributeName: aws.String("AbsoluteExpiryTime"), KeyType: aws.String(dynamodb.KeyTypeRange)},
+				KeySchema: []types.KeySchemaElement{
+					{AttributeName: aws.String("SK"), KeyType: types.KeyTypeHash},
+					{AttributeName: aws.String("AbsoluteExpiryTime"), KeyType: types.KeyTypeRange},
 				},
-				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeInclude), NonKeyAttributes: []*string{aws.String("PK")}},
+				Projection:            &types.Projection{ProjectionType: types.ProjectionTypeInclude, NonKeyAttributes: []string{"PK"}},
+				ProvisionedThroughput: secondaryIndexProvisionedThroughput,
 			},
 		},
-		KeySchema: []*dynamodb.KeySchemaElement{
-			{AttributeName: aws.String("PK"), KeyType: aws.String(dynamodb.KeyTypeHash)},
-			{AttributeName: aws.String("SK"), KeyType: aws.String(dynamodb.KeyTypeRange)},
-		},
-		TableName: &table,
+		ProvisionedThroughput: secondaryIndexProvisionedThroughput,
 	}
 
 	if !localDynamodb {
 		// Localstack dynamodb doesn't support tags
-		createTableInput.Tags = []*dynamodb.Tag{
+		createTableInput.Tags = []types.Tag{
 			{Key: aws.String("Version"), Value: aws.String(tableVersion)},
 			{Key: aws.String("LastUpdated"), Value: aws.String(time.Now().Format("2006-01-02 15:04:05"))},
 		}
 	}
 
-	return dynamoutils.CreateOrUpdateTable(context.Background(), &dynamoutils.CreateOrUpdateTableInput{
-		Client:     db,
+	return dynamoutils.CreateOrUpdateTable(ctx, &dynamoutils.CreateOrUpdateTableInput{
+		Client:     client,
 		TableName:  table,
 		Definition: createTableInput,
 	})
