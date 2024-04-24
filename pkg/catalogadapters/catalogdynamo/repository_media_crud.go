@@ -1,34 +1,35 @@
 package catalogdynamo
 
 import (
-	"encoding/base64"
-	"encoding/json"
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"strings"
 )
 
 func (r *Repository) InsertMedias(owner string, medias []catalog.CreateMediaRequest) error {
-	requests := make([]*dynamodb.WriteRequest, len(medias))
+	requests := make([]types.WriteRequest, len(medias))
 	for index, media := range medias {
 		mediaEntry, err := marshalMedia(owner, &media)
 		if err != nil {
 			return errors.Wrapf(err, "Failed mapping media %s", fmt.Sprint(media))
 		}
 
-		requests[index] = &dynamodb.WriteRequest{
-			PutRequest: &dynamodb.PutRequest{
+		requests[index] = types.WriteRequest{
+			PutRequest: &types.PutRequest{
 				Item: mediaEntry,
 			},
 		}
 	}
 
-	return dynamoutils.BufferedWriteItems(r.db, requests, r.table, DynamoWriteBatchSize)
+	return dynamoutils.BufferedWriteItems(context.TODO(), r.client, requests, r.table, dynamoutils.DynamoWriteBatchSize)
 }
 
 func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
@@ -39,7 +40,7 @@ func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.M
 
 	var medias []*catalog.MediaMeta
 
-	crawler := dynamoutils.NewQueryStream(r.db, queries)
+	crawler := dynamoutils.NewQueryStream(context.TODO(), r.client, queries)
 	for crawler.HasNext() {
 		media, err := unmarshalMediaMetaData(crawler.Next())
 		if err != nil {
@@ -53,12 +54,12 @@ func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.M
 }
 
 func (r *Repository) FindMediaCurrentAlbum(owner, mediaId string) (string, error) {
-	key, err := dynamodbattribute.MarshalMap(MediaPrimaryKey(owner, mediaId))
+	key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, mediaId))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to marshal media key %s/%s", owner, mediaId)
 	}
 
-	item, err := r.db.GetItem(&dynamodb.GetItemInput{
+	item, err := r.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		Key:                  key,
 		ProjectionExpression: aws.String("AlbumIndexPK"),
 		TableName:            &r.table,
@@ -71,8 +72,10 @@ func (r *Repository) FindMediaCurrentAlbum(owner, mediaId string) (string, error
 		return "", catalog.NotFoundError
 	}
 
-	if albumIndexPk, ok := item.Item["AlbumIndexPK"]; ok && strings.HasPrefix(*albumIndexPk.S, owner) {
-		return (*albumIndexPk.S)[len(owner)+1:], nil
+	if albumIndexPk, ok := item.Item["AlbumIndexPK"]; ok {
+		if value, ok := albumIndexPk.(*types.AttributeValueMemberS); ok && strings.HasPrefix(value.Value, owner) {
+			return (value.Value)[len(owner)+1:], nil
+		}
 	}
 
 	return "", errors.Errorf("invalid AlbumIndexPK format expected to start with %s ; value: %+v", owner, item.Item)
@@ -86,10 +89,12 @@ func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]string, 
 
 	var mediaIds []string
 
-	crawler := dynamoutils.NewQueryStream(r.db, queries)
+	crawler := dynamoutils.NewQueryStream(context.TODO(), r.client, queries)
 	for crawler.HasNext() {
 		record := crawler.Next()
-		mediaIds = append(mediaIds, *record["Id"].S)
+		if id, ok := record["Id"].(*types.AttributeValueMemberS); ok {
+			mediaIds = append(mediaIds, id.Value)
+		}
 	}
 
 	return mediaIds, err
@@ -97,23 +102,19 @@ func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]string, 
 
 func (r *Repository) TransferMedias(owner string, mediaIds []string, newFolderName string) error {
 	for _, id := range mediaIds {
-		mediaKey, err := dynamodbattribute.MarshalMap(MediaPrimaryKey(owner, id))
+		mediaKey, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, id))
 		if err != nil {
 			return err
 		}
 
-		updateValues, err := dynamodbattribute.MarshalMap(map[string]string{
-			":albumPK": AlbumIndexedKeyPK(owner, newFolderName),
-		})
-		if err != nil {
-			return err
-		}
+		update, err := expression.NewBuilder().WithUpdate(expression.Set(expression.Name("AlbumIndexPK"), expression.Value(AlbumIndexedKeyPK(owner, newFolderName)))).Build()
 
-		_, err = r.db.UpdateItem(&dynamodb.UpdateItemInput{
-			ExpressionAttributeValues: updateValues,
+		_, err = r.client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
+			ExpressionAttributeValues: update.Values(),
+			ExpressionAttributeNames:  update.Names(),
 			Key:                       mediaKey,
 			TableName:                 &r.table,
-			UpdateExpression:          aws.String("SET AlbumIndexPK=:albumPK"),
+			UpdateExpression:          update.Update(),
 		})
 		if err != nil {
 			return err
@@ -126,7 +127,7 @@ func (r *Repository) TransferMedias(owner string, mediaIds []string, newFolderNa
 func (r *Repository) FindExistingSignatures(owner string, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	// note: this implementation expects media id to be an encoded version of its signature
 
-	var keys []map[string]*dynamodb.AttributeValue
+	var keys []map[string]types.AttributeValue
 	uniqueSignatures := make(map[catalog.MediaSignature]interface{})
 	for _, signature := range signatures {
 		if _, found := uniqueSignatures[*signature]; !found {
@@ -135,7 +136,7 @@ func (r *Repository) FindExistingSignatures(owner string, signatures []*catalog.
 				return nil, err
 			}
 
-			key, err := dynamodbattribute.MarshalMap(MediaPrimaryKey(owner, id))
+			key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, id))
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
 			}
@@ -145,63 +146,26 @@ func (r *Repository) FindExistingSignatures(owner string, signatures []*catalog.
 		uniqueSignatures[*signature] = nil
 	}
 
-	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, *aws.String("Id")), keys, DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(context.TODO(), dynamoutils.NewGetBatchItem(r.client, r.table, *aws.String("Id")), keys, dynamoutils.DynamoReadBatchSize)
 
 	found := make([]*catalog.MediaSignature, 0, len(signatures))
 	for stream.HasNext() {
 		attributes := stream.Next()
-		if awsAttr, ok := attributes["Id"]; ok && awsAttr.S != nil {
-			signature, err := catalog.DecodeMediaId(*awsAttr.S)
-			if err != nil {
-				return nil, err
-			}
+		if awsAttr, ok := attributes["Id"]; ok {
+			if value, ok := awsAttr.(*types.AttributeValueMemberS); ok && value.Value != "" {
+				signature, err := catalog.DecodeMediaId(value.Value)
+				if err != nil {
+					return nil, err
+				}
 
-			found = append(found, signature)
+				found = append(found, signature)
+			} else {
+				return nil, errors.Errorf("Records Id field is empty or not a String: %+v", attributes)
+			}
 		} else {
 			return nil, errors.Errorf("Records doesn't have an 'Id' field: %+v", attributes)
 		}
 	}
 
 	return found, stream.Error()
-}
-
-// unmarshalPageToken take a base64 page id and decode it into a dynamodb key. Return nil, nil if nextPageToken is blank
-func unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
-	var startKey map[string]*dynamodb.AttributeValue
-	if !isBlank(nextPageToken) {
-		startKeyJson, err := base64.StdEncoding.DecodeString(nextPageToken)
-		if err != nil {
-			return startKey, errors.Wrapf(err, "Invalid nextPageToken %s", nextPageToken)
-		}
-
-		err = json.Unmarshal(startKeyJson, &startKey)
-		if err != nil {
-			return startKey, errors.Wrapf(err, "Invalid nextPageToken %s", startKeyJson)
-		}
-	}
-
-	return startKey, nil
-}
-
-func (r *Repository) unmarshalPageToken(nextPageToken string) (map[string]*dynamodb.AttributeValue, error) {
-	return unmarshalPageToken(nextPageToken)
-}
-
-// marshalPageToken take a dynamodb key and encode it (JSON+BASE64) to be used by service. Return empty string when key is empty
-func (r *Repository) marshalPageToken(key map[string]*dynamodb.AttributeValue) (string, error) {
-	if len(key) == 0 {
-		return "", nil
-	}
-
-	keyJson, err := json.Marshal(key)
-	return base64.StdEncoding.EncodeToString(keyJson), err
-}
-
-// panic if value can't be converted into an attribute
-func mustAttribute(value interface{}) *dynamodb.AttributeValue {
-	attribute, err := dynamodbattribute.Marshal(value)
-	if err != nil {
-		panic(err)
-	}
-	return attribute
 }

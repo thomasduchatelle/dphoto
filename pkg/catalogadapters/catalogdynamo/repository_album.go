@@ -1,28 +1,37 @@
 package catalogdynamo
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"sort"
 )
 
 func (r *Repository) FindAlbumsByOwner(owner string) ([]*catalog.Album, error) {
-	query := &dynamodb.QueryInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":owner":     mustAttribute(fmt.Sprintf("%s#ALBUM", owner)),
-			":albumOnly": mustAttribute("ALBUM#"),
-		},
-		KeyConditionExpression: aws.String("PK = :owner AND begins_with(SK, :albumOnly)"),
-		TableName:              &r.table,
-	}
-	data, err := r.db.Query(query)
+	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
+		expression.Key("PK").Equal(expression.Value(fmt.Sprintf("%s#ALBUM", owner))),
+		expression.Key("SK").BeginsWith("ALBUM#"),
+	)).Build()
 	if err != nil {
-		return nil, errors.Wrapf(err, "DynamoDb Query failed: %s", query)
+		return nil, err
+	}
+
+	query := &dynamodb.QueryInput{
+		ExpressionAttributeValues: expr.Values(),
+		ExpressionAttributeNames:  expr.Names(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		TableName:                 &r.table,
+	}
+	data, err := r.client.Query(context.TODO(), query)
+	if err != nil {
+		return nil, errors.Wrapf(err, "DynamoDb Query failed: %+v", expr)
 	}
 
 	albums := make([]*catalog.Album, 0, len(data.Items))
@@ -59,7 +68,7 @@ func (r *Repository) InsertAlbum(album catalog.Album) error {
 		return err
 	}
 
-	_, err = r.db.PutItem(&dynamodb.PutItemInput{
+	_, err = r.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		ConditionExpression: aws.String("attribute_not_exists(PK)"),
 		Item:                item,
 		TableName:           &r.table,
@@ -78,11 +87,11 @@ func (r *Repository) DeleteEmptyAlbum(owner string, folderName string) error {
 		return catalog.NotEmptyError
 	}
 
-	primaryKey, err := dynamodbattribute.MarshalMap(AlbumPrimaryKey(owner, folderName))
+	primaryKey, err := attributevalue.MarshalMap(AlbumPrimaryKey(owner, folderName))
 	if err != nil {
 		return err
 	}
-	_, err = r.db.DeleteItem(&dynamodb.DeleteItemInput{
+	_, err = r.client.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
 		Key:       primaryKey,
 		TableName: &r.table,
 	})
@@ -91,38 +100,39 @@ func (r *Repository) DeleteEmptyAlbum(owner string, folderName string) error {
 
 // CountMedias provides an accurate number of medias and can be used to update the count stored in the album record
 func (r *Repository) CountMedias(owner string, folderName string) (int, error) {
-	albumIndexKey, err := dynamodbattribute.MarshalMap(AlbumIndexedKey(owner, folderName))
+	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
+		withinAlbum(owner, folderName),
+		withExcludingMetaRecord(),
+	)).Build()
 	if err != nil {
 		return 0, err
 	}
 
-	query, err := r.db.Query(&dynamodb.QueryInput{
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":albumKey":    albumIndexKey["AlbumIndexPK"],
-			":excludeMeta": mustAttribute("$"),
-		},
-		IndexName:              aws.String("AlbumIndex"),
-		KeyConditionExpression: aws.String("AlbumIndexPK = :albumKey AND AlbumIndexSK >= :excludeMeta"),
-		Select:                 aws.String(dynamodb.SelectCount),
-		TableName:              &r.table,
+	query, err := r.client.Query(context.TODO(), &dynamodb.QueryInput{
+		ExpressionAttributeValues: expr.Values(),
+		ExpressionAttributeNames:  expr.Names(),
+		IndexName:                 aws.String(albumIndex),
+		KeyConditionExpression:    expr.KeyCondition(),
+		Select:                    types.SelectCount,
+		TableName:                 &r.table,
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(*query.Count), nil
+	return int(query.Count), nil
 }
 
 func (r *Repository) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error) {
-	var keys []map[string]*dynamodb.AttributeValue
+	var keys []map[string]types.AttributeValue
 	for _, id := range ids {
-		key, err := dynamodbattribute.MarshalMap(AlbumPrimaryKey(id.Owner, id.FolderName))
+		key, err := attributevalue.MarshalMap(AlbumPrimaryKey(id.Owner, id.FolderName))
 		if err != nil {
 			return nil, err
 		}
 		keys = append(keys, key)
 	}
 
-	stream := dynamoutils.NewGetStream(dynamoutils.NewGetBatchItem(r.db, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(context.TODO(), dynamoutils.NewGetBatchItem(r.client, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
 	var albums []*catalog.Album
 	for stream.HasNext() {
 		album, err := unmarshalAlbum(stream.Next())
@@ -148,11 +158,11 @@ func (r *Repository) UpdateAlbum(album catalog.Album) error {
 		return err
 	}
 
-	_, err = r.db.PutItem(&dynamodb.PutItemInput{
+	_, err = r.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		ConditionExpression: aws.String("attribute_exists(PK)"),
 		Item:                item,
 		TableName:           &r.table,
 	})
 
-	return errors.WithStack(errors.Wrapf(err, "failed updating album '%s'", album.FolderName))
+	return errors.Wrapf(err, "failed updating album '%s'", album.FolderName)
 }
