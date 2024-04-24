@@ -33,7 +33,7 @@ Getting Started
 
 Install 'dphoto' command line interface and configure it using the following:
 
-    go install github.com/thomasduchatelle/dphoto/cmd/...@latest
+    go install github.com/thomasduchatelle/dphoto/cmd/dphoto@latest
     dphoto configure
 
 Then use command `backup` to upload media in a directory, or scan to interactively organise the albums.
@@ -103,21 +103,14 @@ Bootstrap an environment with built-in command (one-of pre-requisite):
 
 To release a new version:
 
-1. make changes on a feature branch and bump the CLI version:
-   ```
-   ./scripts/pre-release.sh 1.5.0
-   ```
+1. Push a change on a feature branch with `+pr` or `+next` in the commit message
+2. (optional) Verify "next" is working, check the terraform plan in the PR comment
+3. Accept and merge the PR (created automatically on step 1)
 
-2. create a pull request to `next`, review the terraform plan and tests then merge -> it will deploy
-   to [https://dphoto-dev.duchatelle.net](https://dphoto-dev.duchatelle.net)
-3. create a pull request `next -> main`, review the terraform plan then merge -> it will deploy
-   to [https://dphoto.duchatelle.net](https://dphoto.duchatelle.net) and create a tag for the CLI
-4. (optional) update local versions of `dphoto` by running
-   ```
-   go install github.com/thomasduchatelle/dphoto/cmd/...@latest
-   ```
+Any machine should update to the latest version of the CLI:
 
-5. to avoid confusion, next development iteration can be started by running `./ci/pre-release.sh 1.6.0-alpha`.
+    go install github.com/thomasduchatelle/dphoto/cmd/dphoto@latest
+
 
 ### AWS Support
 
@@ -127,5 +120,4 @@ DynamoDB is a single table documented in [README.md](pkg/awssupport/appdynamodb/
 
 ### Required Upgrades
 
-1. go cli is using AWS SDK 1.x and should use 2.x
-2. React -> NextJS
+1. React -> NextJS
