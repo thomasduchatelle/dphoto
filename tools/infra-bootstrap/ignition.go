@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/dns"
@@ -23,24 +24,28 @@ func main() {
 
 	flag.Parse()
 
-	sess := session.Must(session.NewSession())
+	ctx := context.TODO()
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		panic(errors.Wrapf(err, "invalid credetials for ignition"))
+	}
 
-	err := updateSSMParameter(sess, *googleClientId, *environment, *domain)
+	err = updateSSMParameter(ctx, cfg, *googleClientId, *environment, *domain)
 	if err != nil {
 		panic(err)
 	}
 
-	err = createAndInstallSSL(sess, domain, email, environment, force)
+	err = createAndInstallSSL(cfg, domain, email, environment, force)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func updateSSMParameter(sess *session.Session, googleClientId, environment, domain string) error {
-	ssmClient := ssm.New(sess)
+func updateSSMParameter(ctx context.Context, cfg aws.Config, googleClientId, environment, domain string) error {
+	ssmClient := ssm.NewFromConfig(cfg)
 
 	ssmName := fmt.Sprintf("/dphoto/%s/googleLogin/clientId", environment)
-	value, err := readSSM(ssmClient, ssmName)
+	value, err := readSSM(ctx, ssmClient, ssmName)
 	if err != nil {
 		return err
 	}
@@ -57,10 +62,10 @@ func updateSSMParameter(sess *session.Session, googleClientId, environment, doma
 
 	default:
 		log.WithField("Domain", domain).Infof("Updating google-clientid from '%s' to '%s'", value, googleClientId)
-		_, err = ssmClient.PutParameter(&ssm.PutParameterInput{
+		_, err = ssmClient.PutParameter(ctx, &ssm.PutParameterInput{
 			DataType:  aws.String("text"),
 			Name:      &ssmName,
-			Type:      aws.String("String"),
+			Type:      types.ParameterTypeString,
 			Value:     &googleClientId,
 			Overwrite: aws.Bool(value != ""),
 		})
@@ -70,28 +75,29 @@ func updateSSMParameter(sess *session.Session, googleClientId, environment, doma
 	return nil
 }
 
-func readSSM(ssmClient *ssm.SSM, key string) (string, error) {
-	parameter, err := ssmClient.GetParameter(&ssm.GetParameterInput{
+func readSSM(ctx context.Context, ssmClient *ssm.Client, key string) (string, error) {
+	parameter, err := ssmClient.GetParameter(ctx, &ssm.GetParameterInput{
 		Name: aws.String(key),
 	})
-	if err != nil {
-		if awsError, ok := err.(awserr.Error); ok && awsError.Code() == ssm.ErrCodeParameterNotFound {
-			return "", nil
-		}
 
+	var parameterNotFound *types.ParameterNotFound
+	if errors.As(err, &parameterNotFound) {
+		return "", nil
+
+	} else if err != nil {
 		return "", err
 	}
 
 	return *parameter.Parameter.Value, nil
 }
 
-func createAndInstallSSL(sess *session.Session, domain *string, email *string, environment *string, force *bool) error {
+func createAndInstallSSL(cfg aws.Config, domain *string, email *string, environment *string, force *bool) error {
 	if *domain == "" || *email == "" || *environment == "" {
 		flag.PrintDefaults()
 		return nil
 	}
 
-	dns.CertificateManager = route53_adapter.NewCertificateManager(sess, map[string]string{
+	dns.CertificateManager = route53_adapter.NewCertificateManager(cfg, map[string]string{
 		"Application": "dphoto-app",
 		"Environment": *environment,
 		"CreatedBy":   "lambda",

@@ -1,6 +1,7 @@
 package dnsdomain
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -25,12 +26,12 @@ type CompleteCertificate struct {
 
 type CertificateManager interface {
 	// FindCertificate returns CertificateNotFoundError if the certificate hasn't been found.
-	FindCertificate(domain string) (*ExistingCertificate, error)
+	FindCertificate(ctx context.Context, domain string) (*ExistingCertificate, error)
 
 	// InstallCertificate creates the certificate in ACM (or similar) ; empty 'id' will create a new certificate
-	InstallCertificate(id string, certificate CompleteCertificate) error
+	InstallCertificate(ctx context.Context, id string, certificate CompleteCertificate) error
 }
 
 type CertificateAuthority interface {
-	RequestCertificate(email, domain string) (*CompleteCertificate, error)
+	RequestCertificate(ctx context.Context, email, domain string) (*CompleteCertificate, error)
 }

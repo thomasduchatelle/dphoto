@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	dnsdomain "github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
 )
@@ -12,9 +14,9 @@ type CertificateManager struct {
 	mock.Mock
 }
 
-// FindCertificate provides a mock function with given fields: domain
-func (_m *CertificateManager) FindCertificate(domain string) (*dnsdomain.ExistingCertificate, error) {
-	ret := _m.Called(domain)
+// FindCertificate provides a mock function with given fields: ctx, domain
+func (_m *CertificateManager) FindCertificate(ctx context.Context, domain string) (*dnsdomain.ExistingCertificate, error) {
+	ret := _m.Called(ctx, domain)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindCertificate")
@@ -22,19 +24,19 @@ func (_m *CertificateManager) FindCertificate(domain string) (*dnsdomain.Existin
 
 	var r0 *dnsdomain.ExistingCertificate
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*dnsdomain.ExistingCertificate, error)); ok {
-		return rf(domain)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*dnsdomain.ExistingCertificate, error)); ok {
+		return rf(ctx, domain)
 	}
-	if rf, ok := ret.Get(0).(func(string) *dnsdomain.ExistingCertificate); ok {
-		r0 = rf(domain)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *dnsdomain.ExistingCertificate); ok {
+		r0 = rf(ctx, domain)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dnsdomain.ExistingCertificate)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(domain)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, domain)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,17 +44,17 @@ func (_m *CertificateManager) FindCertificate(domain string) (*dnsdomain.Existin
 	return r0, r1
 }
 
-// InstallCertificate provides a mock function with given fields: id, certificate
-func (_m *CertificateManager) InstallCertificate(id string, certificate dnsdomain.CompleteCertificate) error {
-	ret := _m.Called(id, certificate)
+// InstallCertificate provides a mock function with given fields: ctx, id, certificate
+func (_m *CertificateManager) InstallCertificate(ctx context.Context, id string, certificate dnsdomain.CompleteCertificate) error {
+	ret := _m.Called(ctx, id, certificate)
 
 	if len(ret) == 0 {
 		panic("no return value specified for InstallCertificate")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, dnsdomain.CompleteCertificate) error); ok {
-		r0 = rf(id, certificate)
+	if rf, ok := ret.Get(0).(func(context.Context, string, dnsdomain.CompleteCertificate) error); ok {
+		r0 = rf(ctx, id, certificate)
 	} else {
 		r0 = ret.Error(0)
 	}
