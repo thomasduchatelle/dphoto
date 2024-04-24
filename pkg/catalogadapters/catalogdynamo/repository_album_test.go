@@ -1,16 +1,13 @@
 package catalogdynamo
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"testing"
-	"time"
 )
 
 type AlbumCrudTestSuite struct {
@@ -25,23 +22,17 @@ func TestRepositoryAlbum(t *testing.T) {
 }
 
 func (a *AlbumCrudTestSuite) SetupSuite() {
-	a.suffix = time.Now().Format("20060102150405")
+	dyn := dynamotestutils.NewTestContext(context.Background(), a.T())
 
 	a.owner = "UNITTEST#1"
 	a.repo = &Repository{
-		db: dynamodb.New(session.Must(session.NewSession(
-			&aws.Config{
-				CredentialsChainVerboseErrors: aws.Bool(true),
-				Endpoint:                      aws.String("http://localhost:4566"),
-				Credentials:                   credentials.NewStaticCredentials("localstack", "localstack", ""),
-				Region:                        aws.String("eu-west-1"),
-			})),
-		),
-		table:         "test-albums-" + a.suffix,
+		client:        dyn.Client,
+		table:         dyn.Table,
 		localDynamodb: true,
 	}
 
-	err := appdynamodb.CreateTableIfNecessary(a.repo.table, a.repo.db, true)
+	_, clientV1, _ := dynamotestutils.NewClientV1(a.T())
+	err := appdynamodb.CreateTableIfNecessary(a.repo.table, clientV1, true)
 	if err != nil {
 		panic(err)
 	}

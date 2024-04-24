@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclidentitydynamodb"
@@ -145,7 +144,7 @@ func bootstrapCatalogDomain() {
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
-	dynamoAdapter := catalogdynamo.Must(catalogdynamo.NewRepository(newV1Session(), tableName))
+	dynamoAdapter := catalogdynamo.Must(catalogdynamo.NewRepository(newV2Config(), tableName))
 	catalog.Init(dynamoAdapter, catalogarchivesync.New())
 }
 
@@ -203,9 +202,6 @@ func (c catalogAdapter) ListMedias(owner string, folderName string, request cata
 	return catalog.ListMedias(owner, folderName, request)
 }
 
-func newV1Session() *session.Session {
-	return session.Must(session.NewSession())
-}
 func newV2Config() aws.Config {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {

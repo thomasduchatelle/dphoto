@@ -1,15 +1,14 @@
 package catalogdynamo
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"path"
 	"testing"
@@ -42,20 +41,17 @@ func TestRepositoryMediaCrud(t *testing.T) {
 }
 
 func (a *MediaCrudTestSuite) SetupSuite() {
-	suffix := time.Now().Format("20060102150405")
+	dyn := dynamotestutils.NewTestContext(context.Background(), a.T())
 
 	a.owner = "UNITTEST#2"
 	a.repo = &Repository{
-		db: dynamodb.New(session.Must(session.NewSession(&aws.Config{
-			Credentials: credentials.NewStaticCredentials("localstack", "localstack", ""),
-			Endpoint:    aws.String("http://localhost:4566"),
-			Region:      aws.String("eu-west-1"),
-		}))),
-		table:         "test-medias-crud-" + suffix,
+		client:        dyn.Client,
+		table:         dyn.Table,
 		localDynamodb: true,
 	}
 
-	err := appdynamodb.CreateTableIfNecessary(a.repo.table, a.repo.db, true)
+	_, clientV1, _ := dynamotestutils.NewClientV1(a.T())
+	err := appdynamodb.CreateTableIfNecessary(a.repo.table, clientV1, true)
 	if err != nil {
 		panic(err)
 	}
@@ -305,8 +301,8 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 		{SignatureSha256: "dc58865da1228b7a187693c702905d00d6a59439a07d52f2a8e7ae43764b55b9", SignatureSize: 16384},
 		{SignatureSha256: "4d37f8780f5f5f14b914683b1fd36a9a567f5ea63a835b76100d9970303d6ad6", SignatureSize: 32000},
 	}
-	search := make([]*catalog.MediaSignature, 0, DynamoReadBatchSize*2+20)
-	for i := 0; i < DynamoReadBatchSize*2+20; i++ {
+	search := make([]*catalog.MediaSignature, 0, dynamoutils.DynamoReadBatchSize*2+20)
+	for i := 0; i < dynamoutils.DynamoReadBatchSize*2+20; i++ {
 		search = append(search, &catalog.MediaSignature{
 			SignatureSha256: fmt.Sprintf("%064d", i),
 			SignatureSize:   42,

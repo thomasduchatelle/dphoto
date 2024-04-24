@@ -3,8 +3,8 @@ package catalogdynamo
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
@@ -77,12 +77,12 @@ func MediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, i
 	}
 }
 
-func marshalAlbum(album *catalog.Album) (map[string]*dynamodb.AttributeValue, error) {
+func marshalAlbum(album *catalog.Album) (map[string]types.AttributeValue, error) {
 	if isBlank(album.FolderName) {
 		return nil, errors.WithStack(errors.New("folderName must not be blank"))
 	}
 
-	return dynamodbattribute.MarshalMap(&AlbumRecord{
+	return attributevalue.MarshalMap(&AlbumRecord{
 		TablePk:         AlbumPrimaryKey(album.Owner, album.FolderName),
 		AlbumIndexKey:   AlbumIndexedKey(album.Owner, album.FolderName),
 		AlbumOwner:      album.Owner,
@@ -93,9 +93,9 @@ func marshalAlbum(album *catalog.Album) (map[string]*dynamodb.AttributeValue, er
 	})
 }
 
-func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*catalog.Album, error) {
+func unmarshalAlbum(attributes map[string]types.AttributeValue) (*catalog.Album, error) {
 	var data AlbumRecord
-	err := dynamodbattribute.UnmarshalMap(attributes, &data)
+	err := attributevalue.UnmarshalMap(attributes, &data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal attributes %+v", attributes)
 	}
@@ -110,7 +110,7 @@ func unmarshalAlbum(attributes map[string]*dynamodb.AttributeValue) (*catalog.Al
 }
 
 // marshalMedia return both Media metadata attributes and location attributes
-func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]*dynamodb.AttributeValue, error) {
+func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]types.AttributeValue, error) {
 	if isBlank(owner) {
 		return nil, errors.Errorf("owner is mandatory")
 	}
@@ -130,7 +130,7 @@ func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]*
 		return nil, errors.Wrapf(err, "failed to encode details values from media %+v", media.Details)
 	}
 
-	return dynamodbattribute.MarshalMap(&MediaRecord{
+	return attributevalue.MarshalMap(&MediaRecord{
 		TablePk:       MediaPrimaryKey(owner, media.Id),
 		AlbumIndexKey: MediaAlbumIndexedKey(owner, media.FolderName, media.Details.DateTime, media.Id),
 		Id:            media.Id,
@@ -143,9 +143,9 @@ func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]*
 	})
 }
 
-func unmarshalMediaMetaData(attributes map[string]*dynamodb.AttributeValue) (*catalog.MediaMeta, error) {
+func unmarshalMediaMetaData(attributes map[string]types.AttributeValue) (*catalog.MediaMeta, error) {
 	var data MediaRecord
-	err := dynamodbattribute.UnmarshalMap(attributes, &data)
+	err := attributevalue.UnmarshalMap(attributes, &data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal attributes %+v", attributes)
 	}

@@ -21,17 +21,18 @@ import (
 
 func Migrate(tableName string, arn string, repopulateCache bool) (int, error) {
 	log.Infoln("Updating indexes ...")
-	awsSession := sessionv1.Must(sessionv1.NewSession())
-	_, err := catalogdynamo.NewRepository(awsSession, tableName)
-	if err != nil {
-		return 0, errors.Wrapf(err, "updating indexes failed ...")
-	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return 0, err
 	}
 
+	_, err = catalogdynamo.NewRepository(cfg, tableName)
+	if err != nil {
+		return 0, errors.Wrapf(err, "updating indexes failed ...")
+	}
+
+	awsSession := sessionv1.Must(sessionv1.NewSession())
 	client := dynamodbv1.New(awsSession)
 
 	log.Infof("Scanning through the all records")

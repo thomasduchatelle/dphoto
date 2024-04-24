@@ -22,7 +22,7 @@ func init() {
 			panic("Failed while updating indexes: " + err.Error())
 		}
 
-		repository := catalogdynamo.Must(catalogdynamo.NewRepository(cfg.GetAWSSession(), table))
+		repository := catalogdynamo.Must(catalogdynamo.NewRepository(cfg.GetAWSV2Config(), table))
 		catalog.Init(repository, catalogarchivesync.New())
 	})
 }
