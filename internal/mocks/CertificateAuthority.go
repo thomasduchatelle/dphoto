@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	dnsdomain "github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
 )
@@ -12,9 +14,9 @@ type CertificateAuthority struct {
 	mock.Mock
 }
 
-// RequestCertificate provides a mock function with given fields: email, domain
-func (_m *CertificateAuthority) RequestCertificate(email string, domain string) (*dnsdomain.CompleteCertificate, error) {
-	ret := _m.Called(email, domain)
+// RequestCertificate provides a mock function with given fields: ctx, email, domain
+func (_m *CertificateAuthority) RequestCertificate(ctx context.Context, email string, domain string) (*dnsdomain.CompleteCertificate, error) {
+	ret := _m.Called(ctx, email, domain)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RequestCertificate")
@@ -22,19 +24,19 @@ func (_m *CertificateAuthority) RequestCertificate(email string, domain string) 
 
 	var r0 *dnsdomain.CompleteCertificate
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*dnsdomain.CompleteCertificate, error)); ok {
-		return rf(email, domain)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*dnsdomain.CompleteCertificate, error)); ok {
+		return rf(ctx, email, domain)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *dnsdomain.CompleteCertificate); ok {
-		r0 = rf(email, domain)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *dnsdomain.CompleteCertificate); ok {
+		r0 = rf(ctx, email, domain)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dnsdomain.CompleteCertificate)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(email, domain)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, email, domain)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/gophercloud/utils/env"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/dns"
 	"github.com/thomasduchatelle/dphoto/pkg/dnsadapters/letsencrypt"
@@ -20,9 +22,12 @@ func Handler() error {
 }
 
 func main() {
-	sess := session.Must(session.NewSession())
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		panic(errors.Wrapf(err, "invalid credentials").Error())
+	}
 	environment := env.Getenv("DPHOTO_ENVIRONMENT")
-	dns.CertificateManager = route53_adapter.NewCertificateManager(sess, map[string]string{
+	dns.CertificateManager = route53_adapter.NewCertificateManager(cfg, map[string]string{
 		"Application": "dphoto-app",
 		"Environment": environment,
 		"CreatedBy":   "lambda",

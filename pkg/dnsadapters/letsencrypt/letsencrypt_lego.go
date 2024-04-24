@@ -1,6 +1,7 @@
 package letsencrypt
 
 import (
+	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -36,7 +37,7 @@ func NewCertificateAuthority() dnsdomain.CertificateAuthority {
 	return &legoAdapter{}
 }
 
-func (l *legoAdapter) RequestCertificate(email, domain string) (*dnsdomain.CompleteCertificate, error) {
+func (l *legoAdapter) RequestCertificate(ctx context.Context, email, domain string) (*dnsdomain.CompleteCertificate, error) {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, err

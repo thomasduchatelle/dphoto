@@ -2,6 +2,7 @@
 package dns
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
@@ -20,9 +21,10 @@ func RenewCertificate(email, domain string, forced bool) error {
 	logCtx.Infoln("checking SSL certificate validity...")
 
 	id := ""
+	ctx := context.TODO()
 
-	existing, err := CertificateManager.FindCertificate(domain)
-	if err != nil && err != dnsdomain.CertificateNotFoundError {
+	existing, err := CertificateManager.FindCertificate(ctx, domain)
+	if err != nil && !errors.Is(err, dnsdomain.CertificateNotFoundError) {
 		return errors.Wrapf(err, "find existing certificate failed for domain %s", domain)
 	} else if err == nil {
 		id = existing.ID
@@ -31,12 +33,12 @@ func RenewCertificate(email, domain string, forced bool) error {
 	if forced || existing == nil || existing.Expiry.Before(time.Now().Add(MinimumExpiryDelay)) {
 		logCtx.Infoln("Renewing SSL certificate")
 
-		cert, err := CertificateAuthority.RequestCertificate(email, domain)
+		cert, err := CertificateAuthority.RequestCertificate(ctx, email, domain)
 		if err != nil {
 			return err
 		}
 
-		err = CertificateManager.InstallCertificate(id, *cert)
+		err = CertificateManager.InstallCertificate(ctx, id, *cert)
 		if err == nil {
 			logCtx.Infoln("Certificate installed.")
 		}
