@@ -1,17 +1,22 @@
 package migrator
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	dynamoutils "github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutilsv2"
 )
 
 func Migrate(tableName string, arn string, repopulateCache bool, scripts []interface{}) (int, error) {
-	awsSession := session.Must(session.NewSession())
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return 0, err
+	}
+
 	run := &TransformationRun{
-		Session:           awsSession,
-		DynamoDBClient:    dynamodb.New(awsSession),
+		DynamoDBClient:    dynamodb.NewFromConfig(cfg),
 		DynamoDBTableName: tableName,
 		TopicARN:          arn,
 		Counter:           make(map[string]int),
@@ -36,35 +41,37 @@ func Migrate(tableName string, arn string, repopulateCache bool, scripts []inter
 
 	log.Infof("Scanning through the all records")
 
-	var patches []*dynamodb.WriteRequest
+	var patches []types.WriteRequest
 
-	err := run.DynamoDBClient.ScanPages(&dynamodb.ScanInput{
+	paginator := dynamodb.NewScanPaginator(run.DynamoDBClient, &dynamodb.ScanInput{
 		TableName: &tableName,
-	}, func(output *dynamodb.ScanOutput, _ bool) bool {
-		for _, item := range output.Items {
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return 0, err
+		}
+
+		for _, item := range page.Items {
 			run.Counter.Inc("RECORDS", 1)
 			for _, tr := range scanTransformations {
 				newPatches, err := tr.GeneratePatches(run, item)
 				if err != nil {
 					log.WithError(err).Errorf("Failed to apply transformation %+v: %s", tr, err.Error())
-					return false
+					return 0, err
 				}
 
 				patches = append(patches, newPatches...)
 			}
 		}
 
-		return true
-	})
-	if err != nil {
-		return 0, err
 	}
 
 	log.Infof("Types count: %+v\n", run.Counter)
 
 	if len(patches) > 0 {
 		log.Infof("Running %d updates ... ", len(patches))
-		err = dynamoutils.BufferedWriteItems(run.DynamoDBClient, patches, tableName, dynamoutils.DynamoWriteBatchSize)
+		err = dynamoutils.BufferedWriteItems(context.TODO(), run.DynamoDBClient, patches, tableName, dynamoutils.DynamoWriteBatchSize)
 		if err != nil {
 			return 0, err
 		}

@@ -1,13 +1,12 @@
 package migrator
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type TransformationRun struct {
-	Session           *session.Session
-	DynamoDBClient    *dynamodb.DynamoDB
+	DynamoDBClient    *dynamodb.Client
 	DynamoDBTableName string
 	TopicARN          string
 	Counter           Counter
@@ -24,5 +23,5 @@ type PreScanTransformation interface {
 }
 
 type ScanTransformation interface {
-	GeneratePatches(run *TransformationRun, item map[string]*dynamodb.AttributeValue) ([]*dynamodb.WriteRequest, error)
+	GeneratePatches(run *TransformationRun, item map[string]types.AttributeValue) ([]types.WriteRequest, error)
 }

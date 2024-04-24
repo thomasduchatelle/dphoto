@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	dynamodbv1 "github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/thomasduchatelle/dphoto/internal/localstack"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"regexp"
@@ -27,7 +26,7 @@ func NewTestContext(ctx context.Context, t *testing.T) *DynamodbTestContext {
 	client := dynamodb.NewFromConfig(cfg)
 	tableName := NewTestTableName(t)
 
-	err := appdynamodb.CreateTableIfNecessary(tableName, dynamodbv1.New(NewLocalstackSession()), true)
+	err := appdynamodb.CreateTableIfNecessary(ctx, tableName, client, true)
 	if err != nil {
 		panic(err)
 	}

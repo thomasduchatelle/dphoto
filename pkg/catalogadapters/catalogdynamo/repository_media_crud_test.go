@@ -42,18 +42,16 @@ func TestRepositoryMediaCrud(t *testing.T) {
 
 func (a *MediaCrudTestSuite) SetupSuite() {
 	dyn := dynamotestutils.NewTestContext(context.Background(), a.T())
+	err := appdynamodb.CreateTableIfNecessary(context.Background(), dyn.Table, dyn.Client, true)
+	if !assert.NoError(a.T(), err) {
+		assert.FailNow(a.T(), err.Error())
+	}
 
 	a.owner = "UNITTEST#2"
 	a.repo = &Repository{
 		client:        dyn.Client,
 		table:         dyn.Table,
 		localDynamodb: true,
-	}
-
-	_, clientV1, _ := dynamotestutils.NewClientV1(a.T())
-	err := appdynamodb.CreateTableIfNecessary(a.repo.table, clientV1, true)
-	if err != nil {
-		panic(err)
 	}
 
 	err = a.preload()
