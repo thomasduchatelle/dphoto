@@ -4,12 +4,11 @@ package config
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsbootstrap"
 	"os"
 	"path"
 )
@@ -73,23 +72,14 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 	}
 
 	if ignite {
-		// use explicit config to avoid creating unwanted environment
-		cfg, err := awsconfig.LoadDefaultConfig(context.TODO(),
-			awsconfig.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				endpoint := viper.GetString("aws.endpoint")
-				region = viper.GetString("aws.region")
-				if endpoint != "" {
-					return aws.Endpoint{
-						PartitionID:   "aws",
-						URL:           endpoint,
-						SigningRegion: region,
-					}, nil
-				}
-
-				// returning EndpointNotFoundError will allow the service to fallback to its default resolution
-				return aws.Endpoint{}, &aws.EndpointNotFoundError{}
-			})),
-		)
+		staticConfig := awsbootstrap.StaticConfig{
+			Region:          viper.GetString("aws.region"),
+			AccessKeyID:     viper.GetString("aws.key"),
+			SecretAccessKey: viper.GetString("aws.secret"),
+			Token:           viper.GetString("aws.token"),
+			Endpoint:        viper.GetString("aws.endpoint"),
+		}
+		cfg, err := staticConfig.NewConfig(context.TODO())
 		if err != nil {
 			return err
 		}
@@ -106,12 +96,4 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 	}
 
 	return nil
-}
-
-func awsString(value string) *string {
-	if value == "" {
-		return nil
-	}
-
-	return &value
 }

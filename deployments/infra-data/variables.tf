@@ -9,7 +9,7 @@ variable "keybase_user" {
 
 variable "cli_access_keys" {
   description = "List of dates use to roll the access keys"
-  default     = ["2022-12"]
+  default     = ["2022-12", "2024-04"]
   type        = set(string)
 }
 
@@ -22,4 +22,3 @@ variable "region" {
   description = "AWS Region"
   default     = "eu-west-1"
 }
-
