@@ -14,8 +14,6 @@ const (
 	tableVersion = "2.1" // tableVersion should be bumped manually when schema is updated
 )
 
-// TODO - manage how and where CreateTableIfNecessary is called ; it seems its done everywhere...
-
 // CreateTableIfNecessary creates the table if it doesn't exist ; or update it.
 func CreateTableIfNecessary(ctx context.Context, table string, client *dynamodb.Client, localDynamodb bool) error {
 	mdc := log.WithFields(log.Fields{
