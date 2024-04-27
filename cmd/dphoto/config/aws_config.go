@@ -73,7 +73,7 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 
 	if ignite {
 		ctx := context.TODO()
-		factory, err := awsfactory.NewAWSFactory(ctx, awsfactory.NewContextualConfigFactory(ctx))
+		factory, err := awsfactory.NewAWSFactory(ctx, awsfactory.NewContextualConfigFactory())
 		if err != nil {
 			return err
 		}
