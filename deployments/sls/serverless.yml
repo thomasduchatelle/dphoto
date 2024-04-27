@@ -7,10 +7,9 @@ functions:
   #####################################
 
   letsencrypt:
-    handler: bin/sys-letsencrypt
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/sys-letsencrypt
+      artifact: ../../bin/sys-letsencrypt.zip
     role: LetsencryptLambdaRole
     timeout: 900
     memorySize: 128
@@ -22,29 +21,27 @@ functions:
       DPHOTO_ENVIRONMENT: ${sls:stage}
 
 #  dynamodb-upgrade:
-#    handler: bin/sys-dynamodb-upgrade
+#    handler: bin/sys-dynamodb-upgrade/bootstrap
 #    package:
 #      include:
-#        - ../../bin/sys-dynamodb-upgrade
+#        - ../../bin/sys-dynamodb-upgrade/bootstrap
 #    timeout: 900
 
   # API - Metadata
   #####################################
 
   version:
-    handler: bin/version
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/version
+      artifact: ../../bin/version.zip
     events:
       - httpApi:
           path: /api/v1/version
           method: get
   not-found:
-    handler: bin/not-found
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/not-found
+      artifact: ../../bin/not-found.zip
     events:
       - httpApi:
           path: /api/{path+}
@@ -54,28 +51,25 @@ functions:
   #####################################
 
   oauth-token:
-    handler: bin/oauth-token
+    handler: bootstrap
     package:
-      include:
-      - ../../bin/oauth-token
+      artifact: ../../bin/oauth-token.zip
     events:
       - httpApi:
           path: /oauth/token
           method: post
   oauth-logout:
-    handler: bin/oauth-revoke
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/oauth-revoke
+      artifact: ../../bin/oauth-revoke.zip
     events:
       - httpApi:
           path: /oauth/logout
           method: post
   env-config:
-    handler: bin/env-config
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/env-config
+      artifact: ../../bin/env-config.zip
     environment:
       GOOGLE_LOGIN_CLIENT_ID: ${ssm:/dphoto/${sls:stage}/googleLogin/clientId}
     events:
@@ -87,19 +81,17 @@ functions:
   #####################################
 
   list-albums:
-    handler: bin/list-albums
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/list-albums
+      artifact: ../../bin/list-albums.zip
     events:
       - httpApi:
           path: /api/v1/albums
           method: get
   share-album:
-    handler: bin/share-album
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/share-album
+      artifact: ../../bin/share-album.zip
     events:
       - httpApi:
           # /api/v1/owners/tomdush@gmail.com/albums/2018-Q1/shares/claire.magnier@gmail.com
@@ -109,37 +101,33 @@ functions:
           path: /api/v1/owners/{owner}/albums/{folderName}/shares/{email}
           method: delete
   list-medias:
-    handler: bin/list-medias
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/list-medias
+      artifact: ../../bin/list-medias.zip
     events:
       - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/medias
           method: get
   list-users:
-    handler: bin/list-users
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/list-users
+      artifact: ../../bin/list-users.zip
     events:
       - httpApi:
           path: /api/v1/users
           method: get
   list-owners:
-    handler: bin/list-owners
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/list-owners
+      artifact: ../../bin/list-owners.zip
     events:
       - httpApi:
           path: /api/v1/owners
           method: get
   get-media:
-    handler: bin/get-media
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/get-media
+      artifact: ../../bin/get-media.zip
     memorySize: 1024
     timeout: 29 # maximum allowed by API gateway
     events:
@@ -151,10 +139,9 @@ functions:
   #####################################
 
   async-warmup-cache:
-    handler: bin/async-warmup-cache
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/async-warmup-cache
+      artifact: ../../bin/async-warmup-cache.zip
     timeout: 900
     maximumRetryAttempts: 2
     events:
@@ -163,10 +150,9 @@ functions:
           batchSize: 1
 
   async-resize-image:
-    handler: bin/async-resize-image
+    handler: bootstrap
     package:
-      include:
-        - ../../bin/async-resize-image
+      artifact: ../../bin/async-resize-image.zip
     memorySize: 1024
     timeout: 900
     events:
@@ -179,9 +165,8 @@ functions:
 provider:
   name: aws
   region: eu-west-1
-  runtime: go1.x
-  #  runtime: provided.al2 # custom runtime available for ARM64
-  #  architecture: x86_64
+  runtime: provided.al2
+  architecture: arm64
   memorySize: 256
   environment:
     DPHOTO_JWT_KEY_B64: ${file('./sls-config.js'):DPHOTO_JWT_KEY_B64}
