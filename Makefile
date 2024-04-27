@@ -114,9 +114,14 @@ test-api:
 
 build-api:
 	cd api/lambdas && \
+		rm -rf ../../bin/* && \
 		mkdir -p ../../bin && \
 		export GO111MODULE=on && \
-		env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ../../bin ./...
+		env GOARCH=arm64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ../../bin ./...
+
+	cd bin/ && \
+		for bin in * ; do mv "$$bin" bootstrap && zip "$$bin.zip" bootstrap ; done
+	#for bin in bin/* ; do mv "$$bin" bin/bootstrap && mkdir "$$bin" && mv "bin/bootstrap" "$$bin/" ; done
 
 #######################################
 ## APP = WEB + API
