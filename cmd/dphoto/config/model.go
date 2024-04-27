@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/spf13/viper"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 )
 
 type Config interface {
@@ -13,15 +14,20 @@ type Config interface {
 	GetInt(key string) int
 	GetIntOrDefault(key string, defaultValue int) int
 	GetAWSV2Config() aws.Config
+	GetAWSFactory() *awsfactory.AWSFactory
 }
 
 type viperConfig struct {
 	*viper.Viper
-	awsConfig aws.Config
+	AWSFactory *awsfactory.AWSFactory
 }
 
 func (v *viperConfig) GetAWSV2Config() aws.Config {
-	return v.awsConfig
+	return v.AWSFactory.Cfg
+}
+
+func (v *viperConfig) GetAWSFactory() *awsfactory.AWSFactory {
+	return v.AWSFactory
 }
 
 func (v *viperConfig) GetStringOrDefault(key string, defaultValue string) string {

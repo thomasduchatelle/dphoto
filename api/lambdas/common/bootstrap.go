@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclidentitydynamodb"
@@ -16,9 +15,11 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/asyncjobadapter"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/s3store"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 	"os"
 	"time"
 )
@@ -170,10 +171,11 @@ func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 		panic("SQS_ARCHIVE_URL must be set and non-empty")
 	}
 
+	ctx := context.TODO()
 	cfg := newV2Config()
 	archiveAsyncAdapter := asyncjobadapter.New(cfg, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobadapter.DefaultImagesPerMessage)
 	archive.Init(
-		archivedynamo.Must(archivedynamo.New(cfg, tableName)),
+		must(archivedynamo.New(MustAWSFactory(ctx).GetDynamoDBClient(), tableName)),
 		s3store.Must(s3store.New(cfg, storeBucketName)),
 		s3store.Must(s3store.New(cfg, cacheBucketName)),
 		archiveAsyncAdapter,
@@ -203,9 +205,25 @@ func (c catalogAdapter) ListMedias(owner string, folderName string, request cata
 }
 
 func newV2Config() aws.Config {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	ctx := context.TODO()
+	return MustAWSFactory(ctx).Cfg
+}
+
+func MustAWSFactory(ctx context.Context) *awsfactory.AWSFactory {
+	singleton, err := singletons.Singleton(func() (*awsfactory.AWSFactory, error) {
+		return awsfactory.NewAWSFactory(ctx, awsfactory.NewContextualConfigFactory(ctx))
+	})
+
 	if err != nil {
 		panic(err)
 	}
-	return cfg
+	return singleton
+}
+
+func must[M any](value M, err error) M {
+	if err != nil {
+		panic(fmt.Sprintf("PANIC - %T couldn't be built: %s", *new(M), err))
+	}
+
+	return value
 }

@@ -3,6 +3,7 @@
 /.build/
 /dist/
 /dphoto
+/dphoto-ops
 bin/
 bin-cli/
 deployments/infra-data/.terraform/

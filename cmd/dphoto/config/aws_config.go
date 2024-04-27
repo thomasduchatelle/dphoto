@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsbootstrap"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"os"
 	"path"
 )
@@ -72,21 +72,15 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 	}
 
 	if ignite {
-		staticConfig := awsbootstrap.StaticConfig{
-			Region:          viper.GetString("aws.region"),
-			AccessKeyID:     viper.GetString("aws.key"),
-			SecretAccessKey: viper.GetString("aws.secret"),
-			Token:           viper.GetString("aws.token"),
-			Endpoint:        viper.GetString("aws.endpoint"),
-		}
-		cfg, err := staticConfig.NewConfig(context.TODO())
+		ctx := context.TODO()
+		factory, err := awsfactory.NewAWSFactory(ctx, awsfactory.NewContextualConfigFactory(ctx))
 		if err != nil {
 			return err
 		}
 
 		config = &viperConfig{
-			Viper:     viper.GetViper(),
-			awsConfig: cfg,
+			Viper:      viper.GetViper(),
+			AWSFactory: factory,
 		}
 
 		for _, listener := range listeners {

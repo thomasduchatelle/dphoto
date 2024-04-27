@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsbootstrap"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 )
 
 var (
@@ -32,13 +32,13 @@ Then run the command:
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
-		factory, names, err := awsbootstrap.FromTerraformOutputFile(ctx, upgradeCmdArgs.terraformOutput)
+		terraform, err := awsfactory.ReadTerraformOutputFile(ctx, upgradeCmdArgs.terraformOutput)
 		printer.FatalIfError(err, 10)
 
-		client, err := factory.GetDynamoDBClient(ctx)
+		awsFactory, err := awsfactory.NewAWSFactory(ctx, terraform)
 		printer.FatalIfError(err, 11)
 
-		err = appdynamodb.CreateTableIfNecessary(ctx, names.DynamoDBMainTable(), client, upgradeCmdArgs.localstack)
+		err = appdynamodb.CreateTableIfNecessary(ctx, terraform.DynamoDBMainTable(), awsFactory.GetDynamoDBClient(), upgradeCmdArgs.localstack)
 		printer.FatalIfError(err, 1)
 	},
 }

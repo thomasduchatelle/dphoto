@@ -13,9 +13,9 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
-func New(cfg aws.Config, tableName string) (archive.ARepositoryAdapter, error) {
+func New(client *dynamodb.Client, tableName string) (archive.ARepositoryAdapter, error) {
 	return &repository{
-		db:    dynamodb.NewFromConfig(cfg),
+		db:    client,
 		table: tableName,
 	}, nil
 }

@@ -1,4 +1,4 @@
-package awsbootstrap
+package awsfactory
 
 import (
 	"context"
@@ -152,10 +152,10 @@ func TestParseJSONTerraformOutput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, gotNames, err := ParseJSONTerraformOutput(tt.args.ctx, []byte(tt.args.jsonOutput), tt.args.decoder)
+			got, err := parseJsonContentAndDecode(tt.args.ctx, []byte(tt.args.jsonOutput), tt.args.decoder)
 			if tt.wantErr(t, err) {
-				assert.Equal(t, tt.want, got)
-				assert.Equal(t, tt.wantNames.DynamoDBMainTable, gotNames.DynamoDBMainTable())
+				assert.Equal(t, *tt.want, got.StaticConfig)
+				assert.Equal(t, tt.wantNames.DynamoDBMainTable, got.DynamoDBMainTable())
 			}
 		})
 	}

@@ -1,4 +1,4 @@
-package awsbootstrap
+package awsfactory
 
 type Names interface {
 	DynamoDBMainTable() string

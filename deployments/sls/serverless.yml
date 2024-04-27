@@ -3,7 +3,9 @@ frameworkVersion: '3'
 configValidationMode: error
 
 functions:
-  # system lambdas
+  # System lambdas
+  #####################################
+
   letsencrypt:
     handler: bin/letsencrypt
     package:
@@ -18,6 +20,32 @@ functions:
       DPHOTO_DOMAIN: ${file('./sls-config.js'):DPHOTO_DOMAIN}
       DPHOTO_CERTIFICATE_EMAIL: 'duchatelle.thomas@gmail.com'
       DPHOTO_ENVIRONMENT: ${sls:stage}
+
+  # API - Metadata
+  #####################################
+
+  version:
+    handler: bin/version
+    package:
+      include:
+        - ../../bin/version
+    events:
+      - httpApi:
+          path: /api/v1/version
+          method: get
+  not-found:
+    handler: bin/not-found
+    package:
+      include:
+        - ../../bin/not-found
+    events:
+      - httpApi:
+          path: /api/{path+}
+          method: any
+
+  # API - Authentication
+  #####################################
+
   oauth-token:
     handler: bin/oauth-token
     package:
@@ -47,26 +75,10 @@ functions:
       - httpApi:
           path: /env-config.json
           method: get
-  version:
-    handler: bin/version
-    package:
-      include:
-        - ../../bin/version
-    events:
-      - httpApi:
-          path: /api/v1/version
-          method: get
-  not-found:
-    handler: bin/not-found
-    package:
-      include:
-        - ../../bin/not-found
-    events:
-      - httpApi:
-          path: /api/{path+}
-          method: any
 
-  # REST lambdas
+  # API
+  #####################################
+
   list-albums:
     handler: bin/list-albums
     package:
@@ -129,6 +141,8 @@ functions:
           method: get
 
   # ASYNC lambdas - using FIFO for deduplication made a SQS required
+  #####################################
+
   async-warmup-cache:
     handler: bin/async-warmup-cache
     package:
