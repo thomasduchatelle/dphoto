@@ -7,10 +7,10 @@ functions:
   #####################################
 
   letsencrypt:
-    handler: bin/letsencrypt
+    handler: bin/sys-letsencrypt
     package:
       include:
-        - ../../bin/letsencrypt
+        - ../../bin/sys-letsencrypt
     role: LetsencryptLambdaRole
     timeout: 900
     memorySize: 128
@@ -20,6 +20,13 @@ functions:
       DPHOTO_DOMAIN: ${file('./sls-config.js'):DPHOTO_DOMAIN}
       DPHOTO_CERTIFICATE_EMAIL: 'duchatelle.thomas@gmail.com'
       DPHOTO_ENVIRONMENT: ${sls:stage}
+
+#  dynamodb-upgrade:
+#    handler: bin/sys-dynamodb-upgrade
+#    package:
+#      include:
+#        - ../../bin/sys-dynamodb-upgrade
+#    timeout: 900
 
   # API - Metadata
   #####################################
@@ -352,6 +359,13 @@ resources:
                           - Ref: 'AWS::Region'
                           - Ref: 'AWS::AccountId'
                           - "parameter/dphoto/${sls:stage}/*"
+
+#    DynamoDBUpgradeCustomResource:
+#      Type: AWS::CloudFormation::CustomResource
+#      DependsOn: DynamodbDashupgradeLambdaFunction
+#      Properties:
+#        ServiceToken: !GetAtt DynamodbDashupgradeLambdaFunction.Arn
+
   Outputs:
     ViewerUiBucketName:
       Description: "Bucket name where static resources of DPhoto are stored"
