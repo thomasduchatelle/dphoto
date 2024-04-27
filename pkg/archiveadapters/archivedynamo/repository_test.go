@@ -60,7 +60,7 @@ func TestShouldAddAndFindLocations(t *testing.T) {
 	}
 
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
-	repo := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+	repo := Must(New(dyn.Client, dyn.Table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -126,7 +126,7 @@ func TestUpdateLocations(t *testing.T) {
 	}
 
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
-	repo := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+	repo := Must(New(dyn.Client, dyn.Table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -204,7 +204,7 @@ func TestFindIdsFromKeyPrefix(t *testing.T) {
 	}
 
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
-	repo := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+	repo := Must(New(dyn.Client, dyn.Table)).(*repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

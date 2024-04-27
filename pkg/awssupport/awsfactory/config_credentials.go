@@ -1,4 +1,4 @@
-package awsbootstrap
+package awsfactory
 
 import (
 	"context"

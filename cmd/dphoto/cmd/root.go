@@ -4,7 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	config2 "github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
 	"os"
 	"path"
 )
@@ -53,13 +53,13 @@ var rootCmd = &cobra.Command{
 		// complete initialisation on components
 		if cmd.Name() != "version" {
 			ignite := cmd.Name() != "configure"
-			err = config2.Connect(ignite, cmd.Name() == "configure")
+			err = config.Connect(ignite, cmd.Name() == "configure")
 			if err != nil {
 				panic(fmt.Errorf("Fatal error while loading configuration: %s \n", err))
 			}
 
 			if ignite {
-				config2.Listen(func(c config2.Config) {
+				config.Listen(func(c config.Config) {
 					Owner = c.GetString("owner")
 				})
 			}
@@ -88,6 +88,6 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
-	rootCmd.PersistentFlags().StringVar(&config2.ForcedConfigFile, "config", "", "use configuration file provided instead of searching in ./ , $HOME/.dphoto, and /etc/dphoto")
-	rootCmd.PersistentFlags().StringVar(&config2.Environment, "env", "", "add suffix to configuration filename: '--env dev' would use $HOME/dphoto-dev.yml file.")
+	rootCmd.PersistentFlags().StringVar(&config.ForcedConfigFile, "config", "", "use configuration file provided instead of searching in ./ , $HOME/.dphoto, and /etc/dphoto")
+	rootCmd.PersistentFlags().StringVar(&config.Environment, "env", "", "add suffix to configuration filename: '--env dev' would use $HOME/dphoto-dev.yml file.")
 }
