@@ -210,14 +210,9 @@ func newV2Config() aws.Config {
 }
 
 func MustAWSFactory(ctx context.Context) *awsfactory.AWSFactory {
-	singleton, err := singletons.Singleton(func() (*awsfactory.AWSFactory, error) {
-		return awsfactory.NewAWSFactory(ctx, awsfactory.NewContextualConfigFactory(ctx))
-	})
-
-	if err != nil {
-		panic(err)
-	}
-	return singleton
+	return must(singletons.Singleton(func() (*awsfactory.AWSFactory, error) {
+		return awsfactory.NewAWSFactory(ctx, awsfactory.DefaultConfigFactory)
+	}))
 }
 
 func must[M any](value M, err error) M {
