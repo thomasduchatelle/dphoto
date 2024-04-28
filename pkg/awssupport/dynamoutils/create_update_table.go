@@ -45,6 +45,10 @@ func CreateOrUpdateTable(ctx context.Context, input *CreateOrUpdateTableInput) e
 
 	updates := generatedSecondaryUpdatesIndexes(table, input.Definition)
 
+	if len(updates) == 0 {
+		mdc.Infof("No change required on dynamodb table - update complete.")
+	}
+
 	for i, update := range updates {
 		if update.Delete != nil {
 			mdc.Infof("[%d/%d] Deleting table index %s", i+1, len(updates), *update.Delete.IndexName)
