@@ -6,7 +6,7 @@ functions:
   # System lambdas
   #####################################
 
-  letsencrypt:
+  sys-letsencrypt:
     handler: bootstrap
     package:
       artifact: ../../bin/sys-letsencrypt.zip
@@ -20,12 +20,11 @@ functions:
       DPHOTO_CERTIFICATE_EMAIL: 'duchatelle.thomas@gmail.com'
       DPHOTO_ENVIRONMENT: ${sls:stage}
 
-#  dynamodb-upgrade:
-#    handler: bin/sys-dynamodb-upgrade/bootstrap
-#    package:
-#      include:
-#        - ../../bin/sys-dynamodb-upgrade/bootstrap
-#    timeout: 900
+  sys-dynamodb-upgrade:
+    handler: bootstrap
+    package:
+      artifact: ../../bin/sys-dynamodb-upgrade.zip
+    timeout: 900
 
   # API - Metadata
   #####################################
@@ -345,11 +344,12 @@ resources:
                           - Ref: 'AWS::AccountId'
                           - "parameter/dphoto/${sls:stage}/*"
 
-#    DynamoDBUpgradeCustomResource:
-#      Type: AWS::CloudFormation::CustomResource
-#      DependsOn: DynamodbDashupgradeLambdaFunction
-#      Properties:
-#        ServiceToken: !GetAtt DynamodbDashupgradeLambdaFunction.Arn
+    DynamoDBUpgradeCustomResource:
+      Type: AWS::CloudFormation::CustomResource
+      DependsOn: SysDashdynamodbDashupgradeLambdaFunction
+      Properties:
+        ServiceToken: !GetAtt SysDashdynamodbDashupgradeLambdaFunction.Arn
+        Dummy: ${file('./sls-config.js'):DPHOTO_JWT_KEY_B64} # re-trigger the customer resource (and the lambda) each time the stack is applied
 
   Outputs:
     ViewerUiBucketName:
