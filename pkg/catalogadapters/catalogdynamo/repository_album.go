@@ -14,7 +14,7 @@ import (
 	"sort"
 )
 
-func (r *Repository) FindAlbumsByOwner(owner string) ([]*catalog.Album, error) {
+func (r *Repository) FindAlbumsByOwner(owner catalog.Owner) ([]*catalog.Album, error) {
 	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
 		expression.Key("PK").Equal(expression.Value(fmt.Sprintf("%s#ALBUM", owner))),
 		expression.Key("SK").BeginsWith("ALBUM#"),
@@ -42,7 +42,7 @@ func (r *Repository) FindAlbumsByOwner(owner string) ([]*catalog.Album, error) {
 		}
 
 		// TODO Media should be counted when inserted, not at every request
-		count, err := r.CountMedias(owner, album.FolderName)
+		count, err := r.CountMedias(catalog.AlbumId{Owner: owner, FolderName: album.FolderName})
 		if err != nil {
 			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", owner, album.FolderName)
 		}
@@ -77,17 +77,17 @@ func (r *Repository) InsertAlbum(album catalog.Album) error {
 	return errors.WithStack(errors.Wrapf(err, "failed inserting album '%s'", album.FolderName))
 }
 
-func (r *Repository) DeleteEmptyAlbum(owner string, folderName string) error {
-	count, err := r.CountMedias(owner, folderName)
+func (r *Repository) DeleteEmptyAlbum(albumId catalog.AlbumId) error {
+	count, err := r.CountMedias(albumId)
 	if err != nil {
-		return errors.Wrapf(err, "failed to count number of medias in album %s", folderName)
+		return errors.Wrapf(err, "failed to count number of medias in album %s", albumId.FolderName)
 	}
 
 	if count > 0 {
 		return catalog.NotEmptyError
 	}
 
-	primaryKey, err := attributevalue.MarshalMap(AlbumPrimaryKey(owner, folderName))
+	primaryKey, err := attributevalue.MarshalMap(AlbumPrimaryKey(albumId.Owner, albumId.FolderName))
 	if err != nil {
 		return err
 	}
@@ -99,9 +99,9 @@ func (r *Repository) DeleteEmptyAlbum(owner string, folderName string) error {
 }
 
 // CountMedias provides an accurate number of medias and can be used to update the count stored in the album record
-func (r *Repository) CountMedias(owner string, folderName string) (int, error) {
+func (r *Repository) CountMedias(albumId catalog.AlbumId) (int, error) {
 	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
-		withinAlbum(owner, folderName),
+		withinAlbum(albumId.Owner, albumId.FolderName),
 		withExcludingMetaRecord(),
 	)).Build()
 	if err != nil {
@@ -141,7 +141,7 @@ func (r *Repository) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error
 		}
 
 		// TODO Media should be counted when inserted, not at every request
-		album.TotalCount, err = r.CountMedias(album.Owner, album.FolderName)
+		album.TotalCount, err = r.CountMedias(album.AlbumId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", album.Owner, album.FolderName)
 		}

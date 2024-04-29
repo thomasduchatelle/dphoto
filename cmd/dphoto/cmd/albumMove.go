@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"strings"
 )
 
 var (
@@ -26,7 +25,7 @@ var moveCmd = &cobra.Command{
 		moveArgs.folderName = args[0]
 		moveArgs.newName = args[1]
 
-		err := catalog.RenameAlbum(Owner, strings.Trim(moveArgs.folderName, "/"), moveArgs.newName, moveArgs.renameFolder)
+		err := catalog.RenameAlbum(catalog.NewAlbumIdFromStrings(Owner, moveArgs.folderName), moveArgs.newName, moveArgs.renameFolder)
 		printer.FatalWithMessageIfError(err, 1, "renaming %s failed", moveArgs.folderName)
 
 		printer.Success("Album %s has been renamed.", aurora.Cyan(moveArgs.folderName))

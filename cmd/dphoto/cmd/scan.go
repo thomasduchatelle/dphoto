@@ -89,8 +89,8 @@ type uiCatalogAdapter struct {
 }
 
 func (o *uiCatalogAdapter) Create(request ui.RecordCreation) error {
-	return catalog.Create(catalog.CreateAlbum{
-		Owner:            request.Owner,
+	return catalog.Create(catalog.CreateAlbumRequest{
+		Owner:            catalog.Owner(request.Owner),
 		Name:             request.Name,
 		Start:            request.Start,
 		End:              request.End,
@@ -99,13 +99,13 @@ func (o *uiCatalogAdapter) Create(request ui.RecordCreation) error {
 }
 
 func (o *uiCatalogAdapter) RenameAlbum(folderName, newName string, renameFolder bool) error {
-	return catalog.RenameAlbum(Owner, folderName, newName, renameFolder)
+	return catalog.RenameAlbum(catalog.NewAlbumIdFromStrings(Owner, folderName), newName, renameFolder)
 }
 
 func (o *uiCatalogAdapter) UpdateAlbum(folderName string, start, end time.Time) error {
-	return catalog.UpdateAlbum(Owner, folderName, start, end)
+	return catalog.UpdateAlbum(catalog.NewAlbumIdFromStrings(Owner, folderName), start, end)
 }
 
 func (o *uiCatalogAdapter) DeleteAlbum(folderName string) error {
-	return catalog.DeleteAlbum(Owner, folderName, false)
+	return catalog.DeleteAlbum(catalog.NewAlbumIdFromStrings(Owner, folderName), false)
 }

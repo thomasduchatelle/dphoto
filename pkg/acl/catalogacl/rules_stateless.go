@@ -52,10 +52,7 @@ func (r *rules) SharedWithUserAlbum() ([]catalog.AlbumId, error) {
 
 	var albums []catalog.AlbumId
 	for _, share := range shared {
-		albums = append(albums, catalog.AlbumId{
-			Owner:      share.ResourceOwner,
-			FolderName: share.ResourceId,
-		})
+		albums = append(albums, catalog.NewAlbumIdFromStrings(share.ResourceOwner, share.ResourceId))
 	}
 
 	return albums, err

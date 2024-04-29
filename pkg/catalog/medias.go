@@ -1,25 +1,25 @@
 package catalog
 
 // ListMedias return a page of medias within an album
-func ListMedias(owner string, folderName string, request PageRequest) (*MediaPage, error) {
-	medias, err := repositoryPort.FindMedias(NewFindMediaRequest(owner).WithAlbum(normaliseFolderName(folderName)))
+func ListMedias(albumId AlbumId, request PageRequest) (*MediaPage, error) {
+	medias, err := repositoryPort.FindMedias(NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
 	return &MediaPage{
 		Content: medias,
 	}, err
 }
 
 // InsertMedias stores metadata and location of photo and videos
-func InsertMedias(owner string, medias []CreateMediaRequest) error {
+func InsertMedias(owner Owner, medias []CreateMediaRequest) error {
 	return repositoryPort.InsertMedias(owner, medias)
 }
 
 // FindSignatures returns a list of the medias already known ; they can't be duplicated
-func FindSignatures(owner string, signatures []*MediaSignature) ([]*MediaSignature, error) {
+func FindSignatures(owner Owner, signatures []*MediaSignature) ([]*MediaSignature, error) {
 	return repositoryPort.FindExistingSignatures(owner, signatures)
 }
 
 // AssignIdsToNewMedias filters out signatures that are already known and compute a unique ID for the others.
-func AssignIdsToNewMedias(owner string, signatures []*MediaSignature) (map[MediaSignature]string, error) {
+func AssignIdsToNewMedias(owner Owner, signatures []*MediaSignature) (map[MediaSignature]string, error) {
 	existingSignaturesSlice, err := FindSignatures(owner, signatures)
 	if err != nil {
 		return nil, err
@@ -44,6 +44,6 @@ func AssignIdsToNewMedias(owner string, signatures []*MediaSignature) (map[Media
 }
 
 // FindMediaOwnership returns the folderName containing the media, or NotFoundError.
-func FindMediaOwnership(owner, mediaId string) (string, error) {
+func FindMediaOwnership(owner Owner, mediaId MediaId) (*AlbumId, error) {
 	return repositoryPort.FindMediaCurrentAlbum(owner, mediaId)
 }

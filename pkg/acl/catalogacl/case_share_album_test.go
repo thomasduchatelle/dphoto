@@ -38,8 +38,10 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort) {
 				catalogMock := mocks2.NewShareAlbumCatalogPort(t)
 				catalogMock.On("FindAlbum", owner, folderName).Return(&catalog.Album{
-					Owner:      owner,
-					FolderName: folderName,
+					AlbumId: catalog.AlbumId{
+						Owner:      owner,
+						FolderName: folderName,
+					},
 				}, nil)
 
 				scopeWriter := mocks2.NewScopeWriter(t)

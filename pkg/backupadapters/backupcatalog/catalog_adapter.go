@@ -19,7 +19,7 @@ type adapter struct {
 }
 
 func (a *adapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapter, error) {
-	albums, err := catalog.FindAllAlbums(owner)
+	albums, err := catalog.FindAllAlbums(catalog.Owner(owner))
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 		}
 	}
 
-	assignedIds, err := catalog.AssignIdsToNewMedias(owner, signatures)
+	assignedIds, err := catalog.AssignIdsToNewMedias(catalog.Owner(owner), signatures)
 
 	mediasWithId := make(map[*backup.AnalysedMedia]string)
 	for _, media := range medias {
@@ -67,12 +67,12 @@ func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaReque
 		details := request.BackingUpMediaRequest.AnalysedMedia.Details
 
 		catalogRequests[i] = catalog.CreateMediaRequest{
-			Id: request.BackingUpMediaRequest.Id,
+			Id: catalog.MediaId(request.BackingUpMediaRequest.Id),
 			Signature: catalog.MediaSignature{
 				SignatureSha256: request.BackingUpMediaRequest.AnalysedMedia.Sha256Hash,
 				SignatureSize:   request.BackingUpMediaRequest.AnalysedMedia.FoundMedia.Size(),
 			},
-			FolderName: request.BackingUpMediaRequest.FolderName,
+			FolderName: catalog.NewFolderName(request.BackingUpMediaRequest.FolderName),
 			Filename:   request.ArchiveFilename,
 			Type:       catalog.MediaType(request.BackingUpMediaRequest.AnalysedMedia.Type),
 			Details: catalog.MediaDetails{
@@ -90,7 +90,7 @@ func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaReque
 		}
 	}
 
-	return errors.Wrapf(catalog.InsertMedias(owner, catalogRequests), "failed to insert %d medias", len(catalogRequests))
+	return errors.Wrapf(catalog.InsertMedias(catalog.Owner(owner), catalogRequests), "failed to insert %d medias", len(catalogRequests))
 }
 
 type timelineAdapter struct {
@@ -101,7 +101,7 @@ type timelineAdapter struct {
 
 func (u *timelineAdapter) FindAlbum(mediaTime time.Time) (string, bool, error) {
 	if album, exists := u.timeline.FindAt(mediaTime); exists {
-		return album.FolderName, exists, nil
+		return album.FolderName.String(), exists, nil
 	}
 
 	return "", false, nil
@@ -112,14 +112,14 @@ func (u *timelineAdapter) FindOrCreateAlbum(mediaTime time.Time) (string, bool, 
 	defer u.timelineLock.Unlock()
 
 	if album, ok := u.timeline.FindAt(mediaTime); ok {
-		return album.FolderName, false, nil
+		return album.FolderName.String(), false, nil
 	}
 
 	year := mediaTime.Year()
 	quarter := (mediaTime.Month() - 1) / 3
 
-	createRequest := catalog.CreateAlbum{
-		Owner:            u.owner,
+	createRequest := catalog.CreateAlbumRequest{
+		Owner:            catalog.Owner(u.owner),
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),
 		Start:            time.Date(year, quarter*3+1, 1, 0, 0, 0, 0, time.UTC),
 		End:              time.Date(year, (quarter+1)*3+1, 1, 0, 0, 0, 0, time.UTC),
@@ -134,11 +134,13 @@ func (u *timelineAdapter) FindOrCreateAlbum(mediaTime time.Time) (string, bool, 
 	}
 
 	u.timeline, err = u.timeline.AppendAlbum(&catalog.Album{
-		Owner:      createRequest.Owner,
-		Name:       createRequest.Name,
-		FolderName: createRequest.ForcedFolderName,
-		Start:      createRequest.Start,
-		End:        createRequest.End,
+		AlbumId: catalog.AlbumId{
+			Owner:      createRequest.Owner,
+			FolderName: catalog.NewFolderName(createRequest.ForcedFolderName),
+		},
+		Name:  createRequest.Name,
+		Start: createRequest.Start,
+		End:   createRequest.End,
 	})
 	return createRequest.ForcedFolderName, true, errors.Wrapf(err, "failed to update internal timeline")
 }

@@ -4,6 +4,7 @@ package mocks
 
 import (
 	aws "github.com/aws/aws-sdk-go-v2/aws"
+	awsfactory "github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -27,6 +28,26 @@ func (_m *Config) Get(key string) interface{} {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(interface{})
+		}
+	}
+
+	return r0
+}
+
+// GetAWSFactory provides a mock function with given fields:
+func (_m *Config) GetAWSFactory() *awsfactory.AWSFactory {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAWSFactory")
+	}
+
+	var r0 *awsfactory.AWSFactory
+	if rf, ok := ret.Get(0).(func() *awsfactory.AWSFactory); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*awsfactory.AWSFactory)
 		}
 	}
 

@@ -33,7 +33,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		resp := make([]Media, len(medias.Content), len(medias.Content))
 		for i, media := range medias.Content {
 			resp[i] = Media{
-				Id:       media.Id,
+				Id:       string(media.Id),
 				Type:     string(media.Type),
 				Filename: media.Filename,
 				Time:     media.Details.DateTime,

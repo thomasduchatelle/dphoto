@@ -2,7 +2,9 @@ package bootstrap
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
+	"github.com/thomasduchatelle/dphoto/internal/localstack"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/asyncjobadapter"
@@ -11,9 +13,15 @@ import (
 
 func init() {
 	config.Listen(func(cfg config.Config) {
+		var s3options []func(options *s3.Options)
+		if cfg.GetBool(config.Localstack) {
+			s3options = []func(options *s3.Options){
+				localstack.WithUsePathPrefix,
+			}
+		}
 		repositoryAdapter := archivedynamo.Must(archivedynamo.New(cfg.GetAWSFactory().GetDynamoDBClient(), cfg.GetString(config.ArchiveDynamodbTable)))
-		storeAdapter := s3store.Must(s3store.New(cfg.GetAWSV2Config(), cfg.GetString(config.ArchiveMainBucketName)))
-		cacheAdapter := s3store.Must(s3store.New(cfg.GetAWSV2Config(), cfg.GetString(config.ArchiveCacheBucketName)))
+		storeAdapter := s3store.Must(s3store.New(cfg.GetAWSV2Config(), cfg.GetString(config.ArchiveMainBucketName), s3options...))
+		cacheAdapter := s3store.Must(s3store.New(cfg.GetAWSV2Config(), cfg.GetString(config.ArchiveCacheBucketName), s3options...))
 		archiveAsyncAdapter := asyncjobadapter.New(cfg.GetAWSV2Config(), cfg.GetString(config.ArchiveJobsSNSARN), cfg.GetString(config.ArchiveJobsSQSURL), asyncjobadapter.DefaultImagesPerMessage)
 		archive.Init(
 			repositoryAdapter,

@@ -21,11 +21,11 @@ func (s MediaSignature) String() string {
 	return fmt.Sprintf("Signature[%s - %d]", s.SignatureSha256, s.SignatureSize)
 }
 
-// CreateMediaRequest is the request to add a new media to the  It's within an Owner context.
+// CreateMediaRequest is the request to add a new media to an album belonging to the same Owner
 type CreateMediaRequest struct {
-	Id         string         // Id is generated from its signature with GenerateMediaId(MediaSignature)
+	Id         MediaId        // Id is generated from its signature with GenerateMediaId(MediaSignature)
 	Signature  MediaSignature // Signature is the business key of a media
-	FolderName string         // FolderName is the name of the album the media is in
+	FolderName FolderName     // FolderName is the name of the album the media is in
 	Filename   string         // Filename is a user-friendly name that have the right extension.
 	Type       MediaType
 	Details    MediaDetails
@@ -33,7 +33,7 @@ type CreateMediaRequest struct {
 
 // MediaMeta is an entry (read) of a media in the catalog
 type MediaMeta struct {
-	Id        string         // Id is the unique identifier to use across all domains
+	Id        MediaId        // Id is the unique identifier to use across all domains
 	Signature MediaSignature // Signature is the key used to get the image (or its location)
 	Filename  string         // Filename original filename when image was uploaded
 	Type      MediaType

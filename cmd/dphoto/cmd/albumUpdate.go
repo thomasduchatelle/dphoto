@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"strings"
 )
 
 var (
@@ -33,7 +32,7 @@ Note: default quarter albums should not be updated unless the 3 months are cover
 		endDate, err := parseDate(updateArgs.end)
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
-		err = catalog.UpdateAlbum(Owner, strings.Trim(updateArgs.folderName, "/"), startDate, endDate)
+		err = catalog.UpdateAlbum(catalog.NewAlbumIdFromStrings(Owner, updateArgs.folderName), startDate, endDate)
 		printer.FatalWithMessageIfError(err, 1, "Couldn't update dates of folder %s", updateArgs.folderName)
 
 		printer.Success("Album %s has been updated.", aurora.Cyan(updateArgs.folderName))

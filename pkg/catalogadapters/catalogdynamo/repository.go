@@ -6,6 +6,11 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
+type RepositoryContract interface {
+	catalog.RepositoryAdapter
+	catalog.TransferMediasPort
+}
+
 type Repository struct {
 	client        *dynamodb.Client
 	table         string
@@ -13,7 +18,7 @@ type Repository struct {
 }
 
 // NewRepository creates the repository and connect to the database
-func NewRepository(cfg aws.Config, tableName string) (catalog.RepositoryAdapter, error) {
+func NewRepository(cfg aws.Config, tableName string) (RepositoryContract, error) {
 	rep := &Repository{
 		client:        dynamodb.NewFromConfig(cfg),
 		table:         tableName,

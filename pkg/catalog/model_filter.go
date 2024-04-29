@@ -9,19 +9,19 @@ import (
 
 // FindMediaRequest is a filter that is applied to find medias within a time range.
 type FindMediaRequest struct {
-	Owner            string
-	AlbumFolderNames map[string]interface{} // AlbumFolderNames is a set of folder names (map value is nil)
-	Ranges           []TimeRange            // Ranges is optional, if empty no restriction will be applied
+	Owner            Owner
+	AlbumFolderNames map[FolderName]interface{} // AlbumFolderNames is a set of folder names (map value is nil)
+	Ranges           []TimeRange                // Ranges is optional, if empty no restriction will be applied
 }
 
-func NewFindMediaRequest(owner string) *FindMediaRequest {
+func NewFindMediaRequest(owner Owner) *FindMediaRequest {
 	return &FindMediaRequest{
 		Owner:            owner,
-		AlbumFolderNames: make(map[string]interface{}),
+		AlbumFolderNames: make(map[FolderName]interface{}),
 	}
 }
 
-func (m *FindMediaRequest) WithAlbum(folderNames ...string) *FindMediaRequest {
+func (m *FindMediaRequest) WithAlbum(folderNames ...FolderName) *FindMediaRequest {
 	for _, name := range folderNames {
 		m.AlbumFolderNames[name] = nil
 	}
@@ -48,7 +48,7 @@ func (m *FindMediaRequest) WithinRange(start, end time.Time) *FindMediaRequest {
 func (m *FindMediaRequest) String() string {
 	albums := make([]string, 0, len(m.AlbumFolderNames))
 	for name, _ := range m.AlbumFolderNames {
-		albums = append(albums, name)
+		albums = append(albums, name.String())
 	}
 
 	sort.Slice(albums, func(i, j int) bool {

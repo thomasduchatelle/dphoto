@@ -160,9 +160,9 @@ func (t *Timeline) FindAt(date time.Time) (*Album, bool) {
 	return nil, false
 }
 
-func (t *Timeline) FindForAlbum(owner, folderName string) (segments []PrioritySegment) {
+func (t *Timeline) FindForAlbum(albumId AlbumId) (segments []PrioritySegment) {
 	for _, seg := range t.segments {
-		if seg.albums[0].Owner == owner && seg.albums[0].FolderName == folderName {
+		if seg.albums[0].AlbumId.IsEqual(albumId) {
 			segments = append(segments, PrioritySegment{
 				Start:  seg.from,
 				End:    seg.to,
