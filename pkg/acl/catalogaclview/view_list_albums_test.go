@@ -19,9 +19,9 @@ const (
 )
 
 func TestView_ListAlbums(t *testing.T) {
-	album1 := &catalog.Album{Owner: pepper, FolderName: "album1"}
-	album2 := &catalog.Album{Owner: pepper, FolderName: "album2"}
-	tonyAlbum := &catalog.Album{Owner: tony, FolderName: infinityWarAlbum}
+	album1 := &catalog.Album{AlbumId: catalog.AlbumId{Owner: pepper, FolderName: "album1"}}
+	album2 := &catalog.Album{AlbumId: catalog.AlbumId{Owner: pepper, FolderName: "album2"}}
+	tonyAlbum := &catalog.Album{AlbumId: catalog.AlbumId{Owner: tony, FolderName: infinityWarAlbum}}
 
 	type fields struct {
 		UserEmail    string
@@ -45,8 +45,8 @@ func TestView_ListAlbums(t *testing.T) {
 						{Owner: tonyAlbum.Owner, FolderName: tonyAlbum.FolderName},
 					}, nil)
 					rules.On("SharedByUserGrid", pepper).Return(map[string]map[string]aclcore.ScopeType{
-						album2.FolderName: {hulk: aclcore.AlbumVisitorScope},
-						"something/else":  {tony: aclcore.AlbumVisitorScope},
+						album2.FolderName.String(): {hulk: aclcore.AlbumVisitorScope},
+						"something/else":           {tony: aclcore.AlbumVisitorScope},
 					}, nil)
 
 					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
@@ -86,8 +86,8 @@ func TestView_ListAlbums(t *testing.T) {
 					rules := mocks.NewCatalogRules(t)
 					rules.On("Owner").Return(pepper, nil)
 					rules.On("SharedByUserGrid", pepper).Return(map[string]map[string]aclcore.ScopeType{
-						album2.FolderName: {hulk: aclcore.AlbumVisitorScope},
-						"something/else":  {tony: aclcore.AlbumVisitorScope},
+						album2.FolderName.String(): {hulk: aclcore.AlbumVisitorScope},
+						"something/else":           {tony: aclcore.AlbumVisitorScope},
 					}, nil)
 
 					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)

@@ -6,7 +6,7 @@
 [comment]: <> (Generate badges: https://michaelcurrin.github.io/badge-generator/#/generic or https://shields.io/)
 
 DPhoto
-====================================
+=======================================
 
 Backup photo to your private AWS Cloud, and share them with family and friends. Core features:
 
@@ -29,7 +29,7 @@ Backup photo to your private AWS Cloud, and share them with family and friends. 
 | Google Photo         | -       | Support Google Photo to push images and video, or import from Google Photo.                                             |
 
 Getting Started
-------------------------------------
+---------------------------------------
 
 Install 'dphoto' command line interface and configure it using the following:
 
@@ -41,8 +41,28 @@ Then use command `backup` to upload media in a directory, or scan to interactive
     dphoto scan /x/y/z
     dphoto backup /x/y/z
 
+Evaluate locally
+---------------------------------------
+
+To run the command line interface locally - using localstack:
+
+    # start and configure localstack
+    make dcup
+
+    # move to a directory with a default confi with localstack
+    cd cmd/dphoto
+
+    # backup some pictures
+    go run . backup <a directory of photo>
+
+    # interactively add/remove albums
+    go run . album -i
+
+    # verify album changes has been applied
+    AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 s3 --recursive s3://dphoto-local
+
 Contribute
-------------------------------------
+---------------------------------------
 
 Components:
 

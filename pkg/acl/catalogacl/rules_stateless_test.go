@@ -299,8 +299,8 @@ func Test_rules_SharedWithUserAlbum(t *testing.T) {
 				}, nil)
 			},
 			want: []catalog.AlbumId{
-				{Owner: ownerEmail, FolderName: "InfinityWar"},
-				{Owner: "blackwidow@avengers.com", FolderName: "Endgame"},
+				{Owner: ownerEmail, FolderName: "/InfinityWar"},
+				{Owner: "blackwidow@avengers.com", FolderName: "/Endgame"},
 			},
 			wantErr: assert.NoError,
 		},

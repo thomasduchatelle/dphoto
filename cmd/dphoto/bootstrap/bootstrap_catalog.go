@@ -18,7 +18,7 @@ func init() {
 		table := cfg.GetString(config.CatalogDynamodbTable)
 
 		log.Infoln("Updating indexes ...")
-		err := appdynamodb.CreateTableIfNecessary(context.TODO(), table, dynamodb.NewFromConfig(cfg.GetAWSV2Config()), false)
+		err := appdynamodb.CreateTableIfNecessary(context.TODO(), table, dynamodb.NewFromConfig(cfg.GetAWSV2Config()), cfg.GetBool(config.Localstack))
 		if err != nil {
 			panic("Failed while updating indexes: " + err.Error())
 		}

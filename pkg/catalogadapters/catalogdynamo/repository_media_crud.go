@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
@@ -14,7 +13,7 @@ import (
 	"strings"
 )
 
-func (r *Repository) InsertMedias(owner string, medias []catalog.CreateMediaRequest) error {
+func (r *Repository) InsertMedias(owner catalog.Owner, medias []catalog.CreateMediaRequest) error {
 	requests := make([]types.WriteRequest, len(medias))
 	for index, media := range medias {
 		mediaEntry, err := marshalMedia(owner, &media)
@@ -53,10 +52,10 @@ func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.M
 	return medias, err
 }
 
-func (r *Repository) FindMediaCurrentAlbum(owner, mediaId string) (string, error) {
+func (r *Repository) FindMediaCurrentAlbum(owner catalog.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {
 	key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, mediaId))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to marshal media key %s/%s", owner, mediaId)
+		return nil, errors.Wrapf(err, "failed to marshal media key %s/%s", owner, mediaId)
 	}
 
 	item, err := r.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
@@ -65,66 +64,49 @@ func (r *Repository) FindMediaCurrentAlbum(owner, mediaId string) (string, error
 		TableName:            &r.table,
 	})
 	if err != nil {
-		return "", errors.Wrapf(err, "couldn't get media metadata for media %+v", key)
+		return nil, errors.Wrapf(err, "couldn't get media metadata for media %+v", key)
 	}
 
 	if len(item.Item) == 0 {
-		return "", catalog.NotFoundError
+		return nil, catalog.NotFoundError
 	}
 
 	if albumIndexPk, ok := item.Item["AlbumIndexPK"]; ok {
-		if value, ok := albumIndexPk.(*types.AttributeValueMemberS); ok && strings.HasPrefix(value.Value, owner) {
-			return (value.Value)[len(owner)+1:], nil
+		if value, ok := albumIndexPk.(*types.AttributeValueMemberS); ok && strings.HasPrefix(value.Value, string(owner)) {
+			return &catalog.AlbumId{
+				Owner:      owner,
+				FolderName: catalog.NewFolderName((value.Value)[len(owner)+1:]),
+			}, nil
 		}
 	}
 
-	return "", errors.Errorf("invalid AlbumIndexPK format expected to start with %s ; value: %+v", owner, item.Item)
+	return nil, errors.Errorf("invalid AlbumIndexPK format expected to start with %s ; value: %+v", owner, item.Item)
 }
 
-func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]string, error) {
+func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]catalog.MediaId, error) {
 	queries, err := newMediaQueryBuilders(r.table, request, "Id")
 	if err != nil {
 		return nil, err
 	}
 
-	var mediaIds []string
+	var mediaIds []catalog.MediaId
 
 	crawler := dynamoutils.NewQueryStream(context.TODO(), r.client, queries)
 	for crawler.HasNext() {
 		record := crawler.Next()
 		if id, ok := record["Id"].(*types.AttributeValueMemberS); ok {
-			mediaIds = append(mediaIds, id.Value)
+			mediaIds = append(mediaIds, catalog.MediaId(id.Value))
 		}
 	}
 
 	return mediaIds, err
 }
 
-func (r *Repository) TransferMedias(owner string, mediaIds []string, newFolderName string) error {
-	for _, id := range mediaIds {
-		mediaKey, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, id))
-		if err != nil {
-			return err
-		}
-
-		update, err := expression.NewBuilder().WithUpdate(expression.Set(expression.Name("AlbumIndexPK"), expression.Value(AlbumIndexedKeyPK(owner, newFolderName)))).Build()
-
-		_, err = r.client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
-			ExpressionAttributeValues: update.Values(),
-			ExpressionAttributeNames:  update.Names(),
-			Key:                       mediaKey,
-			TableName:                 &r.table,
-			UpdateExpression:          update.Update(),
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+func (r *Repository) TransferMedias(owner catalog.Owner, mediaIds []catalog.MediaId, newFolderName catalog.FolderName) error {
+	return r.transferMedias(context.TODO(), catalog.AlbumId{Owner: owner, FolderName: newFolderName}, mediaIds)
 }
 
-func (r *Repository) FindExistingSignatures(owner string, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
+func (r *Repository) FindExistingSignatures(owner catalog.Owner, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	// note: this implementation expects media id to be an encoded version of its signature
 
 	var keys []map[string]types.AttributeValue
@@ -136,7 +118,7 @@ func (r *Repository) FindExistingSignatures(owner string, signatures []*catalog.
 				return nil, err
 			}
 
-			key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, id))
+			key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, catalog.MediaId(id)))
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
 			}

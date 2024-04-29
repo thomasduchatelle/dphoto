@@ -10,7 +10,7 @@ type catalogPort struct {
 }
 
 func (c catalogPort) FindAlbum(owner, folderName string) (*catalog.Album, error) {
-	return catalog.FindAlbum(owner, folderName)
+	return catalog.FindAlbum(catalog.NewAlbumIdFromStrings(owner, folderName))
 }
 
 func GetShareAlbumCase() *catalogacl.ShareAlbumCase {

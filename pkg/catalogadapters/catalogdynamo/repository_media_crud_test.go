@@ -28,12 +28,12 @@ func mustParseDate(date string) time.Time {
 
 type MediaCrudTestSuite struct {
 	suite.Suite
-	owner  string
+	owner  catalog.Owner
 	repo   *Repository
 	medias []catalog.CreateMediaRequest
-	jan21  string
-	feb21  string
-	mar21  string
+	jan21  catalog.FolderName
+	feb21  catalog.FolderName
+	mar21  catalog.FolderName
 }
 
 func TestRepositoryMediaCrud(t *testing.T) {
@@ -62,38 +62,44 @@ func (a *MediaCrudTestSuite) SetupSuite() {
 
 func (a *MediaCrudTestSuite) preload() error {
 	log.Infoln("Initialising dataset in dynamodb...")
-	a.jan21 = "/media/2021-jan"
-	a.feb21 = "/media/2021-feb"
-	a.mar21 = "/media/2021-mar"
+	a.jan21 = catalog.NewFolderName("/media/2021-jan")
+	a.feb21 = catalog.NewFolderName("/media/2021-feb")
+	a.mar21 = catalog.NewFolderName("/media/2021-mar")
 
 	err := a.repo.InsertAlbum(catalog.Album{
-		Owner:      a.owner,
-		Name:       "Media Container Jan",
-		FolderName: a.jan21,
-		Start:      mustParseDate("2021-01-01"),
-		End:        mustParseDate("2021-02-01"),
+		AlbumId: catalog.AlbumId{
+			Owner:      a.owner,
+			FolderName: a.jan21,
+		},
+		Name:  "Media Container Jan",
+		Start: mustParseDate("2021-01-01"),
+		End:   mustParseDate("2021-02-01"),
 	})
 	if !a.NoError(err, "failed album initialisation") {
 		return err
 	}
 
 	err = a.repo.InsertAlbum(catalog.Album{
-		Owner:      a.owner,
-		Name:       "Media Container Feb",
-		FolderName: a.feb21,
-		Start:      mustParseDate("2021-02-01"),
-		End:        mustParseDate("2021-03-01"),
+		AlbumId: catalog.AlbumId{
+			Owner:      a.owner,
+			FolderName: a.feb21,
+		},
+		Name:  "Media Container Feb",
+		Start: mustParseDate("2021-02-01"),
+		End:   mustParseDate("2021-03-01"),
 	})
 	if !a.NoError(err, "failed album initialisation") {
 		return err
 	}
 
 	err = a.repo.InsertAlbum(catalog.Album{
-		Owner:      a.owner,
-		Name:       "Media Container Mar",
-		FolderName: a.mar21,
-		Start:      mustParseDate("2021-03-01"),
-		End:        mustParseDate("2021-04-01"),
+		AlbumId: catalog.AlbumId{
+			Owner:      a.owner,
+			FolderName: a.mar21,
+		},
+		Name:  "Media Container Mar",
+		Start: mustParseDate("2021-03-01"),
+		End:   mustParseDate("2021-04-01"),
 	})
 	if !a.NoError(err, "failed album initialisation") {
 		return err
@@ -156,17 +162,17 @@ func (a *MediaCrudTestSuite) preload() error {
 	return err
 }
 
-func mustGenerateMediaId(id string, err error) string {
+func mustGenerateMediaId(id string, err error) catalog.MediaId {
 	if err != nil {
 		panic(err)
 	}
-	return id
+	return catalog.MediaId(id)
 }
 
 func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest) []string {
 	names := make([]string, 0, len(medias))
 	for _, a := range medias {
-		names = append(names, path.Join(a.FolderName, a.Filename))
+		names = append(names, path.Join(a.FolderName.String(), a.Filename))
 	}
 
 	return names
@@ -175,15 +181,15 @@ func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest)
 func (a *MediaCrudTestSuite) TestFindAlbums() {
 	albums, err := a.repo.FindAlbumsByOwner(a.owner)
 	if a.NoError(err) {
-		names := make(map[string]int)
+		names := make(map[catalog.FolderName]int)
 		for _, a := range albums {
 			names[a.FolderName] = a.TotalCount
 		}
 
-		a.Equal(map[string]int{
-			"/media/2021-jan": 2,
-			"/media/2021-feb": 1,
-			"/media/2021-mar": 0},
+		a.Equal(map[catalog.FolderName]int{
+			a.jan21: 2,
+			a.feb21: 1,
+			a.mar21: 0},
 			names,
 			"it should list all albums no matter how many medias are also stored",
 		)
@@ -194,7 +200,7 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 	allTime := catalog.TimeRange{}
 	tests := []struct {
 		name       string
-		folderName string
+		folderName catalog.FolderName
 		size       int64
 		timeRange  catalog.TimeRange
 		medias     [][]string // medias is a slice of slice to represent pages (that have been removed)
@@ -211,14 +217,14 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 			a.jan21,
 			0,
 			allTime,
-			[][]string{{"/media/2021-jan/img001.jpeg", "/media/2021-jan/img003.jpeg"}},
+			[][]string{{"/media_2021-jan/img001.jpeg", "/media_2021-jan/img003.jpeg"}},
 		},
 		{
 			"it should filter on the date to only get medias between 2 dates",
 			a.jan21,
 			42,
 			newDateRange("2021-01-12", "2021-01-13"),
-			[][]string{{"/media/2021-jan/img003.jpeg"}},
+			[][]string{{"/media_2021-jan/img003.jpeg"}},
 		},
 	}
 
@@ -238,32 +244,32 @@ func (a *MediaCrudTestSuite) TestFindMediaIds() {
 	allTime := catalog.TimeRange{}
 	tests := []struct {
 		name       string
-		folderName string
+		folderName catalog.FolderName
 		timeRange  catalog.TimeRange
-		medias     [][]string // medias is a slice of slice to represent pages (that have been removed)
+		medias     [][]catalog.MediaId // medias is a slice of slice to represent pages (that have been removed)
 	}{
 		{
 			"it should find no media in empty albums",
 			a.mar21,
 			allTime,
-			[][]string{nil},
+			[][]catalog.MediaId{nil},
 		},
 		{
 			"it should find 2 medias in Jan",
 			a.jan21,
 			allTime,
-			[][]string{{a.medias[0].Id, a.medias[2].Id}},
+			[][]catalog.MediaId{{a.medias[0].Id, a.medias[2].Id}},
 		},
 		{
 			"it should filter on the date to only get medias between 2 dates",
 			a.jan21,
 			newDateRange("2021-01-12", "2021-01-13"),
-			[][]string{{a.medias[2].Id}},
+			[][]catalog.MediaId{{a.medias[2].Id}},
 		},
 	}
 
 	for _, tt := range tests {
-		var pages [][]string
+		var pages [][]catalog.MediaId
 
 		ids, err := a.repo.FindMediaIds(catalog.NewFindMediaRequest(a.owner).WithAlbum(tt.folderName).WithinRange(tt.timeRange.Start, tt.timeRange.End))
 		if a.NoError(err, tt.name) {
@@ -290,7 +296,7 @@ func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 }
 
 func (a *MediaCrudTestSuite) TestDeleteNonEmpty() {
-	err := a.repo.DeleteEmptyAlbum(a.owner, a.jan21)
+	err := a.repo.DeleteEmptyAlbum(catalog.AlbumId{Owner: a.owner, FolderName: a.jan21})
 	a.Equal(catalog.NotEmptyError, err, "it should not delete an album with images in it")
 }
 
@@ -330,13 +336,13 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 
 func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 	type args struct {
-		owner   string
-		mediaId string
+		owner   catalog.Owner
+		mediaId catalog.MediaId
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    string
+		want    catalog.FolderName
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -348,7 +354,7 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 		{
 			name:    "it should find the folder name even when there is a lot of # everywhere",
 			args:    args{owner: "this#is#my#owner", mediaId: "a#random#id"},
-			want:    "this#is#my#folder",
+			want:    catalog.NewFolderName("this#is#my#folder"),
 			wantErr: assert.NoError,
 		},
 		{
@@ -362,11 +368,13 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 	}
 
 	err := a.repo.InsertAlbum(catalog.Album{
-		Owner:      "this#is#my#owner",
-		Name:       "Media Container Jan",
-		FolderName: "this#is#my#folder",
-		Start:      mustParseDate("2021-01-01"),
-		End:        mustParseDate("2021-02-01"),
+		AlbumId: catalog.AlbumId{
+			Owner:      "this#is#my#owner",
+			FolderName: catalog.NewFolderName("this#is#my#folder"),
+		},
+		Name:  "Media Container Jan",
+		Start: mustParseDate("2021-01-01"),
+		End:   mustParseDate("2021-02-01"),
 	})
 	if !assert.NoError(a.T(), err, "failed album initialisation") {
 		assert.FailNow(a.T(), err.Error())
@@ -398,7 +406,7 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 		a.T().Run(tt.name, func(t *testing.T) {
 			got, err := a.repo.FindMediaCurrentAlbum(tt.args.owner, tt.args.mediaId)
 			if tt.wantErr(t, err) && err == nil {
-				assert.Equal(t, tt.want, got)
+				assert.Equal(t, &catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.want}, got)
 			}
 		})
 	}
@@ -407,16 +415,16 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 func (a *MediaCrudTestSuite) TestTransferMedias() {
 	name := "it should find transferred media in the new album and not anymore on the previous album"
 
-	err := a.repo.TransferMedias(a.owner, []string{a.medias[0].Id, a.medias[1].Id}, a.mar21)
+	err := a.repo.TransferMedias(a.owner, []catalog.MediaId{a.medias[0].Id, a.medias[1].Id}, a.mar21)
 	if a.NoError(err, name) {
 		mediasInMar21, err := a.repo.FindMediaIds(catalog.NewFindMediaRequest(a.owner).WithAlbum(a.mar21))
 		if a.NoError(err, name) {
-			a.Equal([]string{a.medias[0].Id, a.medias[1].Id}, mediasInMar21, name)
+			a.Equal([]catalog.MediaId{a.medias[0].Id, a.medias[1].Id}, mediasInMar21, name)
 		}
 
 		mediasInJan21, err := a.repo.FindMediaIds(catalog.NewFindMediaRequest(a.owner).WithAlbum(a.jan21))
 		if a.NoError(err, name) {
-			a.Equal([]string{a.medias[2].Id}, mediasInJan21, name)
+			a.Equal([]catalog.MediaId{a.medias[2].Id}, mediasInJan21, name)
 		}
 
 		mediasInFeb21, err := a.repo.FindMediaIds(catalog.NewFindMediaRequest(a.owner).WithAlbum(a.feb21))
@@ -426,10 +434,10 @@ func (a *MediaCrudTestSuite) TestTransferMedias() {
 	}
 }
 
-func extractFilenames(albumFolderName string, medias []*catalog.MediaMeta) []string {
+func extractFilenames(albumFolderName catalog.FolderName, medias []*catalog.MediaMeta) []string {
 	filenames := make([]string, 0, len(medias))
 	for _, m := range medias {
-		filenames = append(filenames, path.Join(albumFolderName, m.Filename))
+		filenames = append(filenames, path.Join(albumFolderName.String(), m.Filename))
 	}
 
 	return filenames

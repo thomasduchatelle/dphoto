@@ -42,7 +42,7 @@ func (v *View) listOwnedAlbums() ([]*AlbumInView, error) {
 
 	var view []*AlbumInView
 	for _, album := range ownedAlbums {
-		sharedTo, _ := sharing[album.FolderName]
+		sharedTo, _ := sharing[album.FolderName.String()]
 		view = append(view, &AlbumInView{
 			Album:         album,
 			SharedWith:    sharedTo,

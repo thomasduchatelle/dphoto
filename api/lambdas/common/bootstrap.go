@@ -187,13 +187,14 @@ func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 type mediaAlbumResolver struct{}
 
 func (m mediaAlbumResolver) FindAlbumOfMedia(owner, mediaId string) (string, error) {
-	return catalog.FindMediaOwnership(owner, mediaId)
+	ownership, err := catalog.FindMediaOwnership(catalog.Owner(owner), catalog.MediaId(mediaId))
+	return string(ownership.Owner), err
 }
 
 type catalogAdapter struct{}
 
 func (c catalogAdapter) FindAllAlbums(owner string) ([]*catalog.Album, error) {
-	return catalog.FindAllAlbums(owner)
+	return catalog.FindAllAlbums(catalog.Owner(owner))
 }
 
 func (c catalogAdapter) FindAlbums(keys []catalog.AlbumId) ([]*catalog.Album, error) {
@@ -201,7 +202,7 @@ func (c catalogAdapter) FindAlbums(keys []catalog.AlbumId) ([]*catalog.Album, er
 }
 
 func (c catalogAdapter) ListMedias(owner string, folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
-	return catalog.ListMedias(owner, folderName, request)
+	return catalog.ListMedias(catalog.NewAlbumIdFromStrings(owner, folderName), request)
 }
 
 func newV2Config() aws.Config {

@@ -66,7 +66,7 @@ func newMediaQueryBuilders(table string, request *catalog.FindMediaRequest, proj
 	return queries, nil
 }
 
-func withinAlbum(owner string, folderName string) expression.KeyConditionBuilder {
+func withinAlbum(owner catalog.Owner, folderName catalog.FolderName) expression.KeyConditionBuilder {
 	return expression.Key("AlbumIndexPK").Equal(expression.Value(AlbumIndexedKey(owner, folderName).AlbumIndexPK))
 }
 

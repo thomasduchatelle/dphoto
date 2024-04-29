@@ -1,6 +1,8 @@
 package config
 
 const (
+	Localstack                  = "aws.localstack"
+	AwsEndpoint                 = "aws.endpoint"
 	AwsRegion                   = "aws.region"
 	AwsKey                      = "aws.key"
 	AwsSecret                   = "aws.secret"

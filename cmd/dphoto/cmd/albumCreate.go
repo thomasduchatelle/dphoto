@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	creationRequest catalog.CreateAlbum
+	creationRequest catalog.CreateAlbumRequest
 	newArgs         = struct {
 		startDate string
 		endDate   string
@@ -32,7 +32,7 @@ When not specified, folder name is generated from the pattern 'YYYY-MM_<normalis
 		creationRequest.End, err = parseDate(newArgs.endDate)
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
-		creationRequest.Owner = Owner
+		creationRequest.Owner = catalog.Owner(Owner)
 		err = catalog.Create(creationRequest)
 		printer.FatalWithMessageIfError(err, 1, "Failed to create the album, or to migrate medias to it.")
 

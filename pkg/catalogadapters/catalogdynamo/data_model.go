@@ -45,32 +45,32 @@ type MediaRecord struct {
 	SignatureHash string
 }
 
-func AlbumPrimaryKey(owner string, folderName string) appdynamodb.TablePk {
+func AlbumPrimaryKey(owner catalog.Owner, folderName catalog.FolderName) appdynamodb.TablePk {
 	return appdynamodb.TablePk{
 		PK: fmt.Sprintf("%s#ALBUM", owner),
 		SK: fmt.Sprintf("ALBUM#%s", folderName),
 	}
 }
 
-func MediaPrimaryKey(owner string, id string) appdynamodb.TablePk {
+func MediaPrimaryKey(owner catalog.Owner, id catalog.MediaId) appdynamodb.TablePk {
 	return appdynamodb.TablePk{
-		PK: appdynamodb.MediaPrimaryKeyPK(owner, id),
+		PK: appdynamodb.MediaPrimaryKeyPK(string(owner), string(id)),
 		SK: "#METADATA",
 	}
 }
 
-func AlbumIndexedKeyPK(owner string, folderName string) string {
+func AlbumIndexedKeyPK(owner catalog.Owner, folderName catalog.FolderName) string {
 	return fmt.Sprintf("%s#%s", owner, folderName)
 }
 
-func AlbumIndexedKey(owner, folderName string) AlbumIndexKey {
+func AlbumIndexedKey(owner catalog.Owner, folderName catalog.FolderName) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: AlbumIndexedKeyPK(owner, folderName),
 		AlbumIndexSK: "#METADATA",
 	}
 }
 
-func MediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, id string) AlbumIndexKey {
+func MediaAlbumIndexedKey(owner catalog.Owner, folderName catalog.FolderName, dateTime time.Time, id catalog.MediaId) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: AlbumIndexedKeyPK(owner, folderName),
 		AlbumIndexSK: fmt.Sprintf("MEDIA#%s#%s", dateTime.Format(IsoTime), id),
@@ -78,16 +78,16 @@ func MediaAlbumIndexedKey(owner string, folderName string, dateTime time.Time, i
 }
 
 func marshalAlbum(album *catalog.Album) (map[string]types.AttributeValue, error) {
-	if isBlank(album.FolderName) {
-		return nil, errors.WithStack(errors.New("folderName must not be blank"))
+	if err := album.FolderName.IsValid(); err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	return attributevalue.MarshalMap(&AlbumRecord{
 		TablePk:         AlbumPrimaryKey(album.Owner, album.FolderName),
 		AlbumIndexKey:   AlbumIndexedKey(album.Owner, album.FolderName),
-		AlbumOwner:      album.Owner,
+		AlbumOwner:      album.Owner.String(),
 		AlbumName:       album.Name,
-		AlbumFolderName: album.FolderName,
+		AlbumFolderName: album.FolderName.String(),
 		AlbumStart:      album.Start,
 		AlbumEnd:        album.End,
 	})
@@ -101,20 +101,22 @@ func unmarshalAlbum(attributes map[string]types.AttributeValue) (*catalog.Album,
 	}
 
 	return &catalog.Album{
-		Owner:      data.AlbumOwner,
-		Name:       data.AlbumName,
-		FolderName: data.AlbumFolderName,
-		Start:      data.AlbumStart,
-		End:        data.AlbumEnd,
+		AlbumId: catalog.AlbumId{
+			Owner:      catalog.Owner(data.AlbumOwner),
+			FolderName: catalog.NewFolderName(data.AlbumFolderName),
+		},
+		Name:  data.AlbumName,
+		Start: data.AlbumStart,
+		End:   data.AlbumEnd,
 	}, nil
 }
 
 // marshalMedia return both Media metadata attributes and location attributes
-func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]types.AttributeValue, error) {
-	if isBlank(owner) {
-		return nil, errors.Errorf("owner is mandatory")
+func marshalMedia(owner catalog.Owner, media *catalog.CreateMediaRequest) (map[string]types.AttributeValue, error) {
+	if err := owner.IsValid(); err != nil {
+		return nil, err
 	}
-	if isBlank(media.Id) {
+	if isBlank(string(media.Id)) {
 		return nil, errors.Errorf("media ID is mndatory")
 	}
 	if isBlank(media.Filename) {
@@ -133,7 +135,7 @@ func marshalMedia(owner string, media *catalog.CreateMediaRequest) (map[string]t
 	return attributevalue.MarshalMap(&MediaRecord{
 		TablePk:       MediaPrimaryKey(owner, media.Id),
 		AlbumIndexKey: MediaAlbumIndexedKey(owner, media.FolderName, media.Details.DateTime, media.Id),
-		Id:            media.Id,
+		Id:            string(media.Id),
 		Type:          string(media.Type),
 		DateTime:      media.Details.DateTime,
 		Details:       details,
@@ -158,7 +160,7 @@ func unmarshalMediaMetaData(attributes map[string]types.AttributeValue) (*catalo
 
 	details.DateTime = data.DateTime // note: mapstructure do not support times
 	media := catalog.MediaMeta{
-		Id: data.Id,
+		Id: catalog.MediaId(data.Id),
 		Signature: catalog.MediaSignature{
 			SignatureSha256: data.SignatureHash,
 			SignatureSize:   data.SignatureSize,
@@ -169,6 +171,14 @@ func unmarshalMediaMetaData(attributes map[string]types.AttributeValue) (*catalo
 	}
 
 	return &media, nil
+}
+
+func readMediaId(record map[string]types.AttributeValue) catalog.MediaId {
+	if id, ok := record["Id"].(*types.AttributeValueMemberS); ok && id.Value != "" {
+		return catalog.MediaId(id.Value)
+	}
+
+	return ""
 }
 
 // isBlank returns true is value is empty, or contains only spaces

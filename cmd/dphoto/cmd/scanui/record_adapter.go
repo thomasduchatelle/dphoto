@@ -62,7 +62,7 @@ type dynamicAlbumRepository struct {
 }
 
 func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, error) {
-	albums, err := catalog.FindAllAlbums(r.owner)
+	albums, err := catalog.FindAllAlbums(catalog.Owner(r.owner))
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, er
 	for i, album := range albums {
 
 		records[i] = &ui.ExistingRecord{
-			FolderName:    album.FolderName,
+			FolderName:    album.FolderName.String(),
 			Name:          album.Name,
 			Start:         album.Start,
 			End:           album.End,

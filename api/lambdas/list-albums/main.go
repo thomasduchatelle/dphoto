@@ -50,9 +50,9 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			}
 			restAlbums[i] = AlbumDTO{
 				End:           a.End,
-				FolderName:    strings.TrimPrefix(a.FolderName, "/"),
+				FolderName:    strings.TrimPrefix(a.FolderName.String(), "/"),
 				Name:          a.Name,
-				Owner:         a.Owner,
+				Owner:         a.Owner.String(),
 				Start:         a.Start,
 				TotalCount:    a.TotalCount,
 				SharedWith:    sharedWith,

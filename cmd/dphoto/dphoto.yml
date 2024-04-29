@@ -2,9 +2,10 @@
 owner: dphoto@example.com
 aws:
   endpoint: http://localhost:4566
-  key: key
-  secret: secret
-  region: eu-west-1
+  localstack: true
+  key: localhost-key
+  secret: localhost-secret
+  region: us-east-1
 
 home:
   dir: .build
@@ -21,9 +22,9 @@ archive:
   cache:
     bucketName: dphoto-local
   sns:
-    arn: arn:aws:sns:eu-west-1:000000000000:dphoto-local-archive-jobs
+    arn: arn:aws:sns:us-east-1:000000000000:dphoto-local-archive-jobs
   sqs:
-    url: https://sqs.eu-west-1.amazonaws.com/000000000000/dphoto-local-async-archive-caching-jobs.fifo
+    url: https://sqs.us-east-1.amazonaws.com/000000000000/dphoto-local-async-archive-caching-jobs.fifo
 
 backup:
   concurrency:

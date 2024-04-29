@@ -12,8 +12,8 @@ if ! command -v exiftool > /dev/null ; then
 fi
 
 function random_datetime() {
-    year=$((2022 + $RANDOM % 2))
-    month=$((1 + $RANDOM % 12))
+    year=$((2024 + $RANDOM % 1))
+    month=$((1 + $RANDOM % 4))
     day=$((1 + $RANDOM % 28))
     hour=$(($RANDOM % 24))
     minute=$(($RANDOM % 60))

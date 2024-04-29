@@ -18,7 +18,7 @@ type simplifiedSegment struct {
 func toSimplifiedSegment(s *segment) simplifiedSegment {
 	name := "<empty>"
 	if len(s.albums) > 0 {
-		name = s.albums[0].FolderName
+		name = s.albums[0].FolderName.String()
 	}
 
 	return simplifiedSegment{
@@ -187,12 +187,12 @@ func TestFindAt_FindAllAt(t *testing.T) {
 			if tt.want.name == "" {
 				a.False(ok, tt.name)
 			} else {
-				a.Equal(tt.want.name, album.FolderName, tt.name)
+				a.Equal(tt.want.name, album.FolderName.String(), tt.name)
 			}
 
 			var albums []string
 			for _, a := range timeline.FindAllAt(tt.args) {
-				albums = append(albums, a.FolderName)
+				albums = append(albums, a.FolderName.String())
 			}
 			sort.Strings(albums)
 
@@ -274,7 +274,7 @@ func TestFindAt_FindBetween(t *testing.T) {
 			for _, seg := range segments {
 				var names []string
 				for _, a := range seg.Albums {
-					names = append(names, a.FolderName)
+					names = append(names, a.FolderName.String())
 				}
 
 				got = append(got, Want{
@@ -308,13 +308,13 @@ func TestTimeline_FindForAlbum(t *testing.T) {
 
 	timeline, err := NewTimeline(AlbumCollection())
 	if a.NoError(err) {
-		segments := timeline.FindForAlbum(owner, "/Christmas_Holidays")
+		segments := timeline.FindForAlbum(AlbumId{Owner: owner, FolderName: "/Christmas_Holidays"})
 
 		var got []Want
 		for _, seg := range segments {
 			var names []string
 			for _, a := range seg.Albums {
-				names = append(names, a.FolderName)
+				names = append(names, a.FolderName.String())
 			}
 
 			got = append(got, Want{
@@ -337,22 +337,28 @@ func TestTimeline_AppendAlbum(t *testing.T) {
 
 	albums := []*Album{
 		{
-			Owner:      owner,
-			FolderName: "2020-Q3",
-			Start:      time.Date(2020, 7, 1, 0, 0, 0, 0, time.UTC),
-			End:        time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
+			AlbumId: AlbumId{
+				Owner:      owner,
+				FolderName: NewFolderName("2020-Q3"),
+			},
+			Start: time.Date(2020, 7, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			Owner:      owner,
-			FolderName: "/2020-Q4",
-			Start:      time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
-			End:        time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
+			AlbumId: AlbumId{
+				Owner:      owner,
+				FolderName: NewFolderName("/2020-Q4"),
+			},
+			Start: time.Date(2020, 10, 1, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			Owner:      owner,
-			FolderName: "/Christmas_Holidays",
-			Start:      time.Date(2020, 12, 18, 0, 0, 0, 0, time.UTC),
-			End:        time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC),
+			AlbumId: AlbumId{
+				Owner:      owner,
+				FolderName: NewFolderName("/Christmas_Holidays"),
+			},
+			Start: time.Date(2020, 12, 18, 0, 0, 0, 0, time.UTC),
+			End:   time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC),
 		},
 	}
 
@@ -397,10 +403,12 @@ func newAlbum(folder, start, end string) *Album {
 		panic(err)
 	}
 	return &Album{
-		Owner:      "stark",
-		Name:       folder,
-		FolderName: folder,
-		Start:      startTime,
-		End:        endTime,
+		AlbumId: AlbumId{
+			Owner:      "stark",
+			FolderName: NewFolderName(folder),
+		},
+		Name:  folder,
+		Start: startTime,
+		End:   endTime,
 	}
 }
