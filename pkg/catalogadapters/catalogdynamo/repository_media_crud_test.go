@@ -49,9 +49,8 @@ func (a *MediaCrudTestSuite) SetupSuite() {
 
 	a.owner = "UNITTEST#2"
 	a.repo = &Repository{
-		client:        dyn.Client,
-		table:         dyn.Table,
-		localDynamodb: true,
+		client: dyn.Client,
+		table:  dyn.Table,
 	}
 
 	err = a.preload()
@@ -66,7 +65,7 @@ func (a *MediaCrudTestSuite) preload() error {
 	a.feb21 = catalog.NewFolderName("/media/2021-feb")
 	a.mar21 = catalog.NewFolderName("/media/2021-mar")
 
-	err := a.repo.InsertAlbum(catalog.Album{
+	err := a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      a.owner,
 			FolderName: a.jan21,
@@ -79,7 +78,7 @@ func (a *MediaCrudTestSuite) preload() error {
 		return err
 	}
 
-	err = a.repo.InsertAlbum(catalog.Album{
+	err = a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      a.owner,
 			FolderName: a.feb21,
@@ -92,7 +91,7 @@ func (a *MediaCrudTestSuite) preload() error {
 		return err
 	}
 
-	err = a.repo.InsertAlbum(catalog.Album{
+	err = a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      a.owner,
 			FolderName: a.mar21,
@@ -179,7 +178,7 @@ func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest)
 }
 
 func (a *MediaCrudTestSuite) TestFindAlbums() {
-	albums, err := a.repo.FindAlbumsByOwner(a.owner)
+	albums, err := a.repo.FindAlbumsByOwner(context.Background(), a.owner)
 	if a.NoError(err) {
 		names := make(map[catalog.FolderName]int)
 		for _, a := range albums {
@@ -367,7 +366,7 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 		},
 	}
 
-	err := a.repo.InsertAlbum(catalog.Album{
+	err := a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      "this#is#my#owner",
 			FolderName: catalog.NewFolderName("this#is#my#folder"),

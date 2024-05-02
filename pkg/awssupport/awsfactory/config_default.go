@@ -6,10 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-var DefaultConfigFactory = ConfigFactoryFunc(func(ctx context.Context) (aws.Config, error) {
-	return config.LoadDefaultConfig(ctx)
-})
-
 func NewContextualConfigFactory() ConfigFactory {
-	return DefaultConfigFactory
+	return ConfigFactoryFunc(func(ctx context.Context) (aws.Config, error) {
+		return config.LoadDefaultConfig(ctx)
+	})
 }

@@ -1,11 +1,13 @@
 package backupcatalog
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"sync"
 	"time"
 )
@@ -19,6 +21,8 @@ type adapter struct {
 }
 
 func (a *adapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapter, error) {
+	ctx := context.TODO()
+
 	albums, err := catalog.FindAllAlbums(catalog.Owner(owner))
 	if err != nil {
 		return nil, err
@@ -33,6 +37,7 @@ func (a *adapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapter, error
 		owner:        owner,
 		timeline:     timeline,
 		timelineLock: sync.Mutex{},
+		createAlbum:  pkgfactory.CreateAlbumCase(ctx),
 	}, nil
 }
 
@@ -97,6 +102,7 @@ type timelineAdapter struct {
 	owner        string
 	timeline     *catalog.Timeline
 	timelineLock sync.Mutex
+	createAlbum  *catalog.CreateAlbum
 }
 
 func (u *timelineAdapter) FindAlbum(mediaTime time.Time) (string, bool, error) {
@@ -108,6 +114,8 @@ func (u *timelineAdapter) FindAlbum(mediaTime time.Time) (string, bool, error) {
 }
 
 func (u *timelineAdapter) FindOrCreateAlbum(mediaTime time.Time) (string, bool, error) {
+	ctx := context.TODO()
+
 	u.timelineLock.Lock()
 	defer u.timelineLock.Unlock()
 
@@ -128,7 +136,7 @@ func (u *timelineAdapter) FindOrCreateAlbum(mediaTime time.Time) (string, bool, 
 
 	log.Infof("Creates new album '%s' to accommodate media at %s", createRequest.ForcedFolderName, mediaTime.Format(time.RFC3339))
 
-	err := catalog.Create(createRequest)
+	err := u.createAlbum.Create(ctx, createRequest)
 	if err != nil {
 		return "", false, errors.Wrapf(err, "failed to create album containing %s [%s]", mediaTime.Format(time.RFC3339), createRequest.String())
 	}

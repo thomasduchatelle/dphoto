@@ -89,25 +89,6 @@ func (c *CreateAlbumRequest) IsValid() error {
 	return nil
 }
 
-// Create is a temporary plug before using UseCase classes.
-func Create(request CreateAlbumRequest) error {
-	useCase := CreateAlbum{
-		FindAlbumsByOwnerPort: FindAlbumsByOwnerPortFunc(func(ctx context.Context, owner Owner) ([]*Album, error) {
-			return repositoryPort.FindAlbumsByOwner(owner)
-
-		}),
-		InsertAlbumPort: InsertAlbumPortFunc(func(ctx context.Context, album Album) error {
-			return repositoryPort.InsertAlbum(album)
-		}),
-		TransferMediasPort: repositoryPort,
-		TimelineMutationObservers: []TimelineMutationObserver{
-			archivePort,
-		},
-	}
-
-	return useCase.Create(context.TODO(), request)
-}
-
 // Create creates a new album
 func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) error {
 	if err := request.IsValid(); err != nil {

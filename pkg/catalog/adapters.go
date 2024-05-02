@@ -1,5 +1,7 @@
 package catalog
 
+import "context"
+
 var (
 	repositoryPort RepositoryAdapter
 	archivePort    CArchiveAdapter
@@ -15,8 +17,8 @@ func Init(repositoryAdapter RepositoryAdapter, archive CArchiveAdapter) {
 type RepositoryAdapter interface {
 	TransferMediasPort
 
-	FindAlbumsByOwner(owner Owner) ([]*Album, error)
-	InsertAlbum(album Album) error
+	FindAlbumsByOwner(ctx context.Context, owner Owner) ([]*Album, error)
+	InsertAlbum(ctx context.Context, album Album) error
 	DeleteEmptyAlbum(id AlbumId) error
 	// FindAlbums only returns found albums
 	FindAlbums(ids ...AlbumId) ([]*Album, error)

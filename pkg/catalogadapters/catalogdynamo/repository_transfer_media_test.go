@@ -135,9 +135,8 @@ func TestRepository_TransferMediasFromRecords(t *testing.T) {
 			}
 
 			r := &Repository{
-				client:        dyn.Client,
-				table:         dyn.Table,
-				localDynamodb: true,
+				client: dyn.Client,
+				table:  dyn.Table,
 			}
 
 			got, err := r.TransferMediasFromRecords(dyn.Ctx, tt.args.records)

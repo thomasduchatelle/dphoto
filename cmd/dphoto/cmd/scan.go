@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
@@ -9,6 +10,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"os"
 	"path"
 	"time"
@@ -28,6 +30,8 @@ var scan = &cobra.Command{
 	Short: "Discover directory structure to suggest new albums to create",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
+
 		volume := args[0]
 
 		smartVolume, err := newSmartVolume(volume)
@@ -46,7 +50,10 @@ var scan = &cobra.Command{
 			err = ui.NewSimpleSession(scanui.NewAlbumRepository(Owner), recordRepository).Render()
 			printer.FatalIfError(err, 1)
 		} else {
-			err = ui.NewInteractiveSession(&uiCatalogAdapter{scanui.NewBackupHandler(Owner, newSmartVolume, options)}, scanui.NewAlbumRepository(Owner), recordRepository, Owner).Start()
+			err = ui.NewInteractiveSession(&uiCatalogAdapter{
+				BackupSuggestionPort: scanui.NewBackupHandler(Owner, newSmartVolume, options),
+				CreateAlbum:          pkgfactory.CreateAlbumCase(ctx),
+			}, scanui.NewAlbumRepository(Owner), recordRepository, Owner).Start()
 			printer.FatalIfError(err, 1)
 		}
 	},
@@ -86,10 +93,11 @@ func init() {
 
 type uiCatalogAdapter struct {
 	ui.BackupSuggestionPort
+	CreateAlbum *catalog.CreateAlbum
 }
 
 func (o *uiCatalogAdapter) Create(request ui.RecordCreation) error {
-	return catalog.Create(catalog.CreateAlbumRequest{
+	return o.CreateAlbum.Create(context.TODO(), catalog.CreateAlbumRequest{
 		Owner:            catalog.Owner(request.Owner),
 		Name:             request.Name,
 		Start:            request.Start,

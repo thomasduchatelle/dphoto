@@ -3,6 +3,7 @@ package catalog_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"testing"
@@ -35,7 +36,7 @@ func TestShouldReassignMediasToOtherAlbumsWhenDeletingAnAlbum(t *testing.T) {
 	q4 := catalog.NewFolderName("/2020-Q4")
 	q1 := catalog.NewFolderName("/2021-Q1")
 
-	mockRepository.On("FindAlbumsByOwner", owner).Maybe().Return(catalog.AlbumCollection(), nil)
+	mockRepository.On("FindAlbumsByOwner", mock.Anything, owner).Maybe().Return(catalog.AlbumCollection(), nil)
 	mockRepository.On("DeleteEmptyAlbum", catalog.AlbumId{Owner: owner, FolderName: deletedFolder}).Return(nil)
 
 	expectTransferredMedias(mockRepository, mockArchive,
@@ -115,7 +116,7 @@ func TestFindAll(t *testing.T) {
 		End:     time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC),
 	}
 
-	mockRepository.On("FindAlbumsByOwner", owner).Return([]*catalog.Album{album}, nil)
+	mockRepository.On("FindAlbumsByOwner", mock.Anything, owner).Return([]*catalog.Album{album}, nil)
 
 	got, err := catalog.FindAllAlbums(owner)
 	if a.NoError(err) {
@@ -160,7 +161,7 @@ func TestShouldTransferMediasToNewAlbumWhenRenamingItsFolder(t *testing.T) {
 
 	mockRepository.On("FindAlbums", catalog.AlbumId{Owner: owner, FolderName: "/Christmas_Holidays"}).Return([]*catalog.Album{&album}, nil)
 	mockRepository.On("DeleteEmptyAlbum", catalog.AlbumId{Owner: owner, FolderName: "/Christmas_Holidays"}).Return(nil)
-	mockRepository.On("InsertAlbum", catalog.Album{
+	mockRepository.On("InsertAlbum", mock.Anything, catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      owner,
 			FolderName: "/2020-12_Covid_Lockdown_3",
@@ -184,7 +185,7 @@ func TestShouldTransferAppropriatelyMediasBetweenAlbumsWhenDatesAreChanged(t *te
 	a := assert.New(t)
 	mockRepository, mockArchive := mockAdapters(t)
 
-	mockRepository.On("FindAlbumsByOwner", owner).Maybe().Return(catalog.AlbumCollection(), nil)
+	mockRepository.On("FindAlbumsByOwner", mock.Anything, owner).Maybe().Return(catalog.AlbumCollection(), nil)
 
 	updatedFolder := catalog.NewFolderName("/Christmas_First_Week")
 	updatedStart := catalog.MustParse(layout, "2020-12-21T00")
