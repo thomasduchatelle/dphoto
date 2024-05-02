@@ -20,7 +20,7 @@ output "delegate_secret_access_key" {
 
 output "delegate_secret_access_key_decrypt_cmd" {
   description = "Command to enter to decrypt 'delegate_secret_access_key'"
-  value       = "terraform output | jq -r '.delegate_secret_access_key.value[\"2022-12\"]' | base64 --decode | keybase pgp decrypt"
+  value       = "terraform output -json | jq -r '.delegate_secret_access_key.value[\"2024-04\"]' | base64 --decode | keybase pgp decrypt"
 }
 
 output "dynamodb_name" {

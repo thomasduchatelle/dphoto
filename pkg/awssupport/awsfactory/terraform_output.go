@@ -20,7 +20,11 @@ type mapValue struct {
 // TerraformOutput is the content of `infra-data` output and can be used as Names and as ConfigFactory.
 type TerraformOutput struct {
 	StaticConfig
-	DynamoDBName string
+	DynamoDBName           string
+	ArchiveMainBucketName  string
+	ArchiveCacheBucketName string
+	ArchiveJobsSNSARN      string
+	ArchiveJobsSQSURL      string
 }
 
 type output struct {
@@ -28,6 +32,10 @@ type output struct {
 	DelegateAccessKeyId     mapValue    `json:"delegate_access_key_id,omitempty"`
 	DelegateSecretAccessKey mapValue    `json:"delegate_secret_access_key,omitempty"`
 	DynamoDBName            stringValue `json:"dynamodb_name,omitempty"`
+	ArchiveMainBucketName   stringValue `json:"archive_bucket_name,omitempty"`
+	ArchiveCacheBucketName  stringValue `json:"cache_bucket_name,omitempty"`
+	ArchiveJobsSNSARN       stringValue `json:"sns_archive_arn,omitempty"`
+	ArchiveJobsSQSURL       stringValue `json:"sqs_archive_url,omitempty"`
 }
 
 func (t *TerraformOutput) DynamoDBMainTable() string {
@@ -75,7 +83,11 @@ func parseJsonContentAndDecode(ctx context.Context, jsonOutput []byte, decoder S
 			AccessKeyID:     tf.DelegateAccessKeyId.Value[latestKey],
 			SecretAccessKey: decodedSecretAccessKey,
 		},
-		DynamoDBName: tf.DynamoDBName.Value,
+		DynamoDBName:           tf.DynamoDBName.Value,
+		ArchiveMainBucketName:  tf.ArchiveMainBucketName.Value,
+		ArchiveCacheBucketName: tf.ArchiveCacheBucketName.Value,
+		ArchiveJobsSNSARN:      tf.ArchiveJobsSNSARN.Value,
+		ArchiveJobsSQSURL:      tf.ArchiveJobsSQSURL.Value,
 	}, errors.Wrapf(err, "failed to decode secret key")
 }
 
