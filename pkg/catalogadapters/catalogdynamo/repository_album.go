@@ -14,7 +14,7 @@ import (
 	"sort"
 )
 
-func (r *Repository) FindAlbumsByOwner(owner catalog.Owner) ([]*catalog.Album, error) {
+func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
 	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
 		expression.Key("PK").Equal(expression.Value(fmt.Sprintf("%s#ALBUM", owner))),
 		expression.Key("SK").BeginsWith("ALBUM#"),
@@ -29,7 +29,7 @@ func (r *Repository) FindAlbumsByOwner(owner catalog.Owner) ([]*catalog.Album, e
 		KeyConditionExpression:    expr.KeyCondition(),
 		TableName:                 &r.table,
 	}
-	data, err := r.client.Query(context.TODO(), query)
+	data, err := r.client.Query(ctx, query)
 	if err != nil {
 		return nil, errors.Wrapf(err, "DynamoDb Query failed: %+v", expr)
 	}
@@ -58,7 +58,7 @@ func (r *Repository) FindAlbumsByOwner(owner catalog.Owner) ([]*catalog.Album, e
 	return albums, nil
 }
 
-func (r *Repository) InsertAlbum(album catalog.Album) error {
+func (r *Repository) InsertAlbum(ctx context.Context, album catalog.Album) error {
 	if album.Owner == "" || album.FolderName == "" {
 		return errors.Errorf("Owner and Foldername are mandatory")
 	}
@@ -68,7 +68,7 @@ func (r *Repository) InsertAlbum(album catalog.Album) error {
 		return err
 	}
 
-	_, err = r.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = r.client.PutItem(ctx, &dynamodb.PutItemInput{
 		ConditionExpression: aws.String("attribute_not_exists(PK)"),
 		Item:                item,
 		TableName:           &r.table,

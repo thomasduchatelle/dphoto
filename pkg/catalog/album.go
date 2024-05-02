@@ -2,6 +2,7 @@
 package catalog
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -12,7 +13,7 @@ import (
 
 // FindAllAlbums find all albums owned by root user
 func FindAllAlbums(owner Owner) ([]*Album, error) {
-	return repositoryPort.FindAlbumsByOwner(owner)
+	return repositoryPort.FindAlbumsByOwner(context.TODO(), owner)
 }
 
 // FindAlbums get several albums by their business keys
@@ -35,7 +36,7 @@ func FindAlbum(id AlbumId) (*Album, error) {
 // DeleteAlbum delete an album, medias it contains are dispatched to other albums.
 func DeleteAlbum(albumId AlbumId, emptyOnly bool) error {
 	if !emptyOnly {
-		albums, err := repositoryPort.FindAlbumsByOwner(albumId.Owner)
+		albums, err := repositoryPort.FindAlbumsByOwner(context.TODO(), albumId.Owner)
 		if err != nil {
 			return err
 		}
@@ -94,7 +95,7 @@ func RenameAlbum(currentId AlbumId, newName string, renameFolder bool) error {
 			End:   found.End,
 		}
 
-		err = repositoryPort.InsertAlbum(album)
+		err = repositoryPort.InsertAlbum(context.TODO(), album)
 		if err != nil {
 			return err
 		}
@@ -118,7 +119,7 @@ func RenameAlbum(currentId AlbumId, newName string, renameFolder bool) error {
 
 // UpdateAlbum updates the dates of an album, medias will be re-assign between albums accordingly
 func UpdateAlbum(albumId AlbumId, start, end time.Time) error {
-	albums, err := repositoryPort.FindAlbumsByOwner(albumId.Owner)
+	albums, err := repositoryPort.FindAlbumsByOwner(context.TODO(), albumId.Owner)
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 	"os"
 	"time"
@@ -141,12 +141,13 @@ func BootstrapOAuthDomain() {
 }
 
 func bootstrapCatalogDomain() {
+	ctx := context.TODO()
+
 	tableName, ok := os.LookupEnv(DynamoDBTableName)
 	if !ok || tableName == "" {
 		panic("CATALOG_TABLE_NAME environment variable must be set.")
 	}
-	dynamoAdapter := catalogdynamo.Must(catalogdynamo.NewRepository(newV2Config(), tableName))
-	catalog.Init(dynamoAdapter, catalogarchivesync.New())
+	catalog.Init(pkgfactory.CatalogRepository(ctx), catalogarchivesync.New())
 }
 
 func BootstrapArchiveDomain() archive.AsyncJobAdapter {
@@ -212,7 +213,7 @@ func newV2Config() aws.Config {
 
 func MustAWSFactory(ctx context.Context) *awsfactory.AWSFactory {
 	return must(singletons.Singleton(func() (*awsfactory.AWSFactory, error) {
-		return awsfactory.NewAWSFactory(ctx, awsfactory.DefaultConfigFactory)
+		return awsfactory.NewAWSFactory(ctx, awsfactory.NewContextualConfigFactory())
 	}))
 }
 

@@ -31,16 +31,15 @@ func (a *AlbumCrudTestSuite) SetupSuite() {
 
 	a.owner = "UNITTEST#1"
 	a.repo = &Repository{
-		client:        dyn.Client,
-		table:         dyn.Table,
-		localDynamodb: true,
+		client: dyn.Client,
+		table:  dyn.Table,
 	}
 }
 
 func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	folderName := catalog.NewFolderName("/christmas")
 
-	err := a.repo.InsertAlbum(catalog.Album{
+	err := a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      a.owner,
 			FolderName: folderName,
@@ -71,7 +70,7 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 	folderName := catalog.NewFolderName("New Year")
 
-	err := a.repo.InsertAlbum(catalog.Album{
+	err := a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      a.owner,
 			FolderName: folderName,
@@ -84,7 +83,7 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 		return
 	}
 
-	err = a.repo.InsertAlbum(catalog.Album{
+	err = a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      a.owner,
 			FolderName: folderName,
@@ -112,7 +111,7 @@ func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 		FolderName: folderName,
 	}
 
-	err := a.repo.InsertAlbum(catalog.Album{
+	err := a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: albumId,
 		Name:    "ToBeDeleted",
 		Start:   mustParseDate("2020-12-24"),
@@ -129,7 +128,7 @@ func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 func (a *AlbumCrudTestSuite) TestUpdate() {
 	folderName := "Update1"
 
-	err := a.repo.InsertAlbum(catalog.Album{
+	err := a.repo.InsertAlbum(context.TODO(), catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      a.owner,
 			FolderName: catalog.NewFolderName("Update1"),

@@ -69,9 +69,9 @@ func (_m *RepositoryAdapter) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Albu
 	return r0, r1
 }
 
-// FindAlbumsByOwner provides a mock function with given fields: owner
-func (_m *RepositoryAdapter) FindAlbumsByOwner(owner catalog.Owner) ([]*catalog.Album, error) {
-	ret := _m.Called(owner)
+// FindAlbumsByOwner provides a mock function with given fields: ctx, owner
+func (_m *RepositoryAdapter) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
+	ret := _m.Called(ctx, owner)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindAlbumsByOwner")
@@ -79,19 +79,19 @@ func (_m *RepositoryAdapter) FindAlbumsByOwner(owner catalog.Owner) ([]*catalog.
 
 	var r0 []*catalog.Album
 	var r1 error
-	if rf, ok := ret.Get(0).(func(catalog.Owner) ([]*catalog.Album, error)); ok {
-		return rf(owner)
+	if rf, ok := ret.Get(0).(func(context.Context, catalog.Owner) ([]*catalog.Album, error)); ok {
+		return rf(ctx, owner)
 	}
-	if rf, ok := ret.Get(0).(func(catalog.Owner) []*catalog.Album); ok {
-		r0 = rf(owner)
+	if rf, ok := ret.Get(0).(func(context.Context, catalog.Owner) []*catalog.Album); ok {
+		r0 = rf(ctx, owner)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*catalog.Album)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(catalog.Owner) error); ok {
-		r1 = rf(owner)
+	if rf, ok := ret.Get(1).(func(context.Context, catalog.Owner) error); ok {
+		r1 = rf(ctx, owner)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -219,17 +219,17 @@ func (_m *RepositoryAdapter) FindMedias(request *catalog.FindMediaRequest) ([]*c
 	return r0, r1
 }
 
-// InsertAlbum provides a mock function with given fields: album
-func (_m *RepositoryAdapter) InsertAlbum(album catalog.Album) error {
-	ret := _m.Called(album)
+// InsertAlbum provides a mock function with given fields: ctx, album
+func (_m *RepositoryAdapter) InsertAlbum(ctx context.Context, album catalog.Album) error {
+	ret := _m.Called(ctx, album)
 
 	if len(ret) == 0 {
 		panic("no return value specified for InsertAlbum")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(catalog.Album) error); ok {
-		r0 = rf(album)
+	if rf, ok := ret.Get(0).(func(context.Context, catalog.Album) error); ok {
+		r0 = rf(ctx, album)
 	} else {
 		r0 = ret.Error(0)
 	}

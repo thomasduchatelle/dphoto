@@ -9,21 +9,24 @@ import (
 	_ "github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 func init() {
 	config.Listen(func(cfg config.Config) {
+		ctx := context.TODO()
+
 		log.Debugln("connecting catalog adapters (dynamodb)")
 		table := cfg.GetString(config.CatalogDynamodbTable)
 
-		log.Infoln("Updating indexes ...")
-		err := appdynamodb.CreateTableIfNecessary(context.TODO(), table, dynamodb.NewFromConfig(cfg.GetAWSV2Config()), cfg.GetBool(config.Localstack))
-		if err != nil {
-			panic("Failed while updating indexes: " + err.Error())
+		if cfg.GetBool(config.Localstack) {
+			log.Infoln("Updating indexes ...")
+			err := appdynamodb.CreateTableIfNecessary(ctx, table, dynamodb.NewFromConfig(cfg.GetAWSV2Config()), true)
+			if err != nil {
+				panic("Failed while updating indexes: " + err.Error())
+			}
 		}
 
-		repository := catalogdynamo.Must(catalogdynamo.NewRepository(cfg.GetAWSV2Config(), table))
-		catalog.Init(repository, catalogarchivesync.New())
+		catalog.Init(pkgfactory.CatalogRepository(ctx), catalogarchivesync.New())
 	})
 }

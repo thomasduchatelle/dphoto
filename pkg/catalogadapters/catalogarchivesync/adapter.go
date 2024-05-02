@@ -9,13 +9,13 @@ import (
 )
 
 func New() catalog.CArchiveAdapter {
-	return new(observer)
+	return new(Observer)
 }
 
-type observer struct {
+type Observer struct {
 }
 
-func (a *observer) Observe(ctx context.Context, transfers catalog.TransferredMedias) error {
+func (a *Observer) Observe(ctx context.Context, transfers catalog.TransferredMedias) error {
 	for targetAlbumId, ids := range transfers {
 		convertedIds := make([]string, len(ids), len(ids))
 		for i, id := range ids {
@@ -31,7 +31,7 @@ func (a *observer) Observe(ctx context.Context, transfers catalog.TransferredMed
 	return nil
 }
 
-func (a *observer) MoveMedias(owner catalog.Owner, ids []catalog.MediaId, targetFolder catalog.FolderName) error {
+func (a *Observer) MoveMedias(owner catalog.Owner, ids []catalog.MediaId, targetFolder catalog.FolderName) error {
 	convertedIds := make([]string, len(ids), len(ids))
 	for i, id := range ids {
 		convertedIds[i] = string(id)

@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"time"
 )
 
@@ -26,6 +28,7 @@ When not specified, folder name is generated from the pattern 'YYYY-MM_<normalis
 `,
 	Aliases: []string{"new"},
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
 		var err error
 		creationRequest.Start, err = parseDate(newArgs.startDate)
 		printer.FatalWithMessageIfError(err, 2, "Start date is mandatory")
@@ -33,7 +36,7 @@ When not specified, folder name is generated from the pattern 'YYYY-MM_<normalis
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
 		creationRequest.Owner = catalog.Owner(Owner)
-		err = catalog.Create(creationRequest)
+		err = pkgfactory.CreateAlbumCase(ctx).Create(ctx, creationRequest)
 		printer.FatalWithMessageIfError(err, 1, "Failed to create the album, or to migrate medias to it.")
 
 		printer.Success("Album %s created.", aurora.Cyan(creationRequest.Name))

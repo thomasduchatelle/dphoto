@@ -10,13 +10,15 @@ import (
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
-	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"strings"
 )
 
 func Handler(event *cfn.Event) error {
+	ctx := context.Background()
+
 	table := viper.GetString(common.DynamoDBTableName)
 	if table == "" {
 		return handleError(event, "DBStructureNoID", errors.Errorf("'%s' environment variable is required with the name of the table.", common.DynamoDBTableName))
@@ -28,13 +30,7 @@ func Handler(event *cfn.Event) error {
 			WithField("event.PhysicalResourceID", event.PhysicalResourceID).
 			Infof("Handling %s request.", event.RequestType)
 
-		ctx := context.Background()
-		factory, err := awsfactory.NewAWSFactory(ctx, awsfactory.DefaultConfigFactory)
-		if err != nil {
-			return handleError(event, physicalResourceID, errors.Wrapf(err, "intialisation failed"))
-		}
-
-		err = appdynamodb.CreateTableIfNecessary(ctx, table, factory.GetDynamoDBClient(), false)
+		err := appdynamodb.CreateTableIfNecessary(ctx, table, pkgfactory.AWSFactory(ctx).GetDynamoDBClient(), false)
 		if err != nil {
 			return handleError(event, physicalResourceID, errors.Wrapf(err, "table structure update failed"))
 		}

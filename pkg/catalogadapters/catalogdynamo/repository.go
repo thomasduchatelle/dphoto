@@ -1,7 +1,6 @@
 package catalogdynamo
 
 import (
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
@@ -12,20 +11,16 @@ type RepositoryContract interface {
 }
 
 type Repository struct {
-	client        *dynamodb.Client
-	table         string
-	localDynamodb bool // localDynamodb is set to true to disable some feature - not available on localstack - like tagging
+	client *dynamodb.Client
+	table  string
 }
 
 // NewRepository creates the repository and connect to the database
-func NewRepository(cfg aws.Config, tableName string) (RepositoryContract, error) {
-	rep := &Repository{
-		client:        dynamodb.NewFromConfig(cfg),
-		table:         tableName,
-		localDynamodb: false,
+func NewRepository(client *dynamodb.Client, tableName string) *Repository {
+	return &Repository{
+		client: client,
+		table:  tableName,
 	}
-
-	return rep, nil
 }
 
 // Must panics if there is an error
