@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"encoding/json"
+	"context"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
-	"io/ioutil"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 )
 
 var (
@@ -16,14 +16,9 @@ var (
 	}{}
 )
 
-type OutputParam struct {
-	Value interface{} `yaml:"value"`
-}
-
 type configField struct {
 	key         string
 	description string
-	outputName  string
 }
 
 var configureCmd = &cobra.Command{
@@ -31,37 +26,47 @@ var configureCmd = &cobra.Command{
 	Short: "Configuration wizard to grant dphoto access AWS resources.",
 	Long: `DPhoto requires specific AWS key and secret, and name of the DynamoDB table and S3 bucket to use.
 
-To set them from terraform output:
+To set them from terraform output, 'keybase' must be installed and configured:
 
     $ terraform output -json > output.json
-    $ terraform output -json |jq -r '.delegate_secret_access_key.value["2022-12"]' | base64 --decode | keybase pgp decrypt
-    (copy the output, it will be required later)
-    $ dphoto configure --terraform-output output.json
+    $ dphoto configure --terraform-output --terraform-output output.json
+
+Another way to read terraform output is:
+
+	$ terraform output -json |jq -r '.delegate_secret_access_key.value["2022-12"]' | base64 --decode | keybase pgp decrypt
 
 The configuration is stored in '~/.dphoto/dphoto.yaml'.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		output := make(map[string]OutputParam)
+		ctx := context.Background()
+		defaultValues := make(map[string]string)
 
 		if configureArgs.terraformOutput != "" {
-			content, err := ioutil.ReadFile(configureArgs.terraformOutput)
+			tfoutput, err := awsfactory.ReadTerraformOutputFile(ctx, configureArgs.terraformOutput)
 			printer.FatalIfError(err, 2)
 
-			err = json.Unmarshal(content, &output)
-			printer.FatalIfError(err, 3)
+			defaultValues[config.AwsRegion] = tfoutput.Region
+			defaultValues[config.AwsKey] = tfoutput.AccessKeyID
+			defaultValues[config.AwsSecret] = tfoutput.SecretAccessKey
+			defaultValues[config.CatalogDynamodbTable] = tfoutput.DynamoDBName
+			defaultValues[config.ArchiveDynamodbTable] = tfoutput.DynamoDBName
+			defaultValues[config.ArchiveMainBucketName] = tfoutput.ArchiveMainBucketName
+			defaultValues[config.ArchiveCacheBucketName] = tfoutput.ArchiveCacheBucketName
+			defaultValues[config.ArchiveJobsSNSARN] = tfoutput.ArchiveJobsSNSARN
+			defaultValues[config.ArchiveJobsSQSURL] = tfoutput.ArchiveJobsSQSURL
 		}
 
 		fields := []configField{
 			{key: config.Owner, description: "Owner of the medias (an email address)"},
-			{key: config.AwsRegion, description: "AWS_REGION where dphoto is deployed", outputName: "region"},
-			{key: config.AwsKey, description: "AWS_ACCESS_KEY_ID to use with dphoto", outputName: "delegate_access_key_id"},
+			{key: config.AwsRegion, description: "AWS_REGION where dphoto is deployed"},
+			{key: config.AwsKey, description: "AWS_ACCESS_KEY_ID to use with dphoto"},
 			{key: config.AwsSecret, description: "AWS_SECRET_ACCESS_KEY to use with dphoto"},
-			{key: config.CatalogDynamodbTable, description: "DynamoDB table where catalog is stored", outputName: "dynamodb_name"},
-			{key: config.ArchiveDynamodbTable, description: "DynamoDB table where archive index are stored", outputName: "dynamodb_name"},
-			{key: config.ArchiveMainBucketName, description: "S3 bucket where medias are archived", outputName: "archive_bucket_name"},
-			{key: config.ArchiveCacheBucketName, description: "S3 bucket where medias are cached", outputName: "cache_bucket_name"},
-			{key: config.ArchiveJobsSNSARN, description: "SNS ARN where async jobs are dispatched across workers", outputName: "sns_archive_arn"},
-			{key: config.ArchiveJobsSQSURL, description: "SQS URL where async jobs are queued and de-duplicated", outputName: "sqs_archive_url"},
+			{key: config.CatalogDynamodbTable, description: "DynamoDB table where catalog is stored"},
+			{key: config.ArchiveDynamodbTable, description: "DynamoDB table where archive index are stored"},
+			{key: config.ArchiveMainBucketName, description: "S3 bucket where medias are archived"},
+			{key: config.ArchiveCacheBucketName, description: "S3 bucket where medias are cached"},
+			{key: config.ArchiveJobsSNSARN, description: "SNS ARN where async jobs are dispatched across workers"},
+			{key: config.ArchiveJobsSQSURL, description: "SQS URL where async jobs are queued and de-duplicated"},
 		}
 
 		form := ui.NewSimpleForm()
@@ -69,14 +74,7 @@ The configuration is stored in '~/.dphoto/dphoto.yaml'.
 		for _, field := range fields {
 			current := viper.GetString(field.key)
 
-			defaultValue := current
-			if field.outputName != "" {
-				if val, ok := output[field.outputName]; ok {
-					if strVal, ok := val.Value.(string); ok {
-						defaultValue = strVal
-					}
-				}
-			}
+			defaultValue, _ := defaultValues[field.key]
 
 			if read, ok := form.ReadString(field.description, defaultValue); ok && read != current {
 				viper.Set(field.key, read)
