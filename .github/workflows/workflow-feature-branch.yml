@@ -20,6 +20,7 @@ jobs:
     with:
       version: ${{ needs.semver.outputs.version }}
       snapshot: ${{ needs.semver.outputs.snapshot }}
+      cache-suffix: ${{ needs.semver.outputs.major }}.${{ needs.semver.outputs.minor }}
       build-disabled: ${{ contains(github.event.head_commit.message, '+next') && 'false' || 'true' }}
 
   test-terraform:
@@ -158,6 +159,7 @@ jobs:
     with:
       target: next
       terraform-disabled: ${{ needs.test-terraform.outputs.no-change }}
+      cache-suffix: ${{ needs.semver.outputs.major }}.${{ needs.semver.outputs.minor }}
 
   pull-request:
     runs-on: ubuntu-latest
@@ -227,7 +229,7 @@ jobs:
             if ('${{ contains(github.event.head_commit.message, '+pr') }}' === 'true' && 
               (pr.title !== title || pr.body !== body)
               ) {
-              console.log("PR will be updated ...")
+              console.log("PR " + pr.number + " will be updated ...")
               console.log("Old title -> " + pr.title)
               console.log("New title -> " + title)
               console.log("Old body -> " + pr.body)
@@ -240,10 +242,12 @@ jobs:
                 title: title,
                 body: body,
               });
-
+            
             } else {
               console.log("PR not updated, match = " + (pr.title !== title || pr.body !== body) + " ; +pr = ${{ contains(github.event.head_commit.message, '+pr') }}")
             }
+            
+            return ""
 
   tf-plan-live:
     needs:

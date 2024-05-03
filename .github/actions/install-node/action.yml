@@ -9,6 +9,10 @@ inputs:
     description: build and publish the cache
     required: false
     default: 'false'
+  cache-suffix:
+    description: Suffix to add to the cache key (cache has a tendency to be locked otherwise)
+    required: false
+    default: '0.1'
 runs:
   using: "composite"
   steps:
@@ -24,7 +28,9 @@ runs:
           ~/.npm
           web/node_modules
           deployments/sls/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('.github/actions/install-node/action.yml', 'web/yarn.lock', 'deployments/sls/yarn.lock') }}
+        key: ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock', 'deployments/sls/yarn.lock') }}-${{ inputs.cache-suffix }}
+        restore-keys: |
+          ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock', 'deployments/sls/yarn.lock') }}
         lookup-only: ${{ inputs.build-cache }}
     - name: Download deps
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
@@ -42,4 +48,4 @@ runs:
           ~/.npm
           web/node_modules
           deployments/sls/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('.github/actions/install-node/action.yml', 'web/yarn.lock', 'deployments/sls/yarn.lock') }}
+        key: ${{ steps.cache-restore.outputs.cache-primary-key }}
