@@ -24,6 +24,7 @@ jobs:
     secrets: inherit
     with:
       target: next
+      cache-suffix: ${{ needs.semver.outputs.major }}.${{ needs.semver.outputs.minor }}
 
   deploy-live:
     needs:
@@ -33,6 +34,7 @@ jobs:
     secrets: inherit
     with:
       target: live
+      cache-suffix: ${{ needs.semver.outputs.major }}.${{ needs.semver.outputs.minor }}
 
   release:
     runs-on: ubuntu-latest

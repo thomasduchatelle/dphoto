@@ -10,6 +10,10 @@ on:
         description: "'true' to skip terraform apply ; the plan should have been computed and should be empty"
         type: string
         default: false
+      cache-suffix:
+        description: "Suffix to add to the cache key (cache has a tendency to be locked otherwise)"
+        type: string
+        default: "0.1"
     outputs:
       tf-plan:
         description: Terraform plan
@@ -125,6 +129,7 @@ jobs:
         uses: ./.github/actions/install-node
         with:
           sls: true
+          cache-suffix: ${{ inputs.cache-suffix }}
 
       - name: Download api
         uses: actions/download-artifact@v4
