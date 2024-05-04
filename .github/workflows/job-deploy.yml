@@ -1,0 +1,99 @@
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: "Target of the deployment: 'live' or 'next'"
+        required: true
+        type: string
+      skip-terraform:
+        description: "'true' to skip terraform apply ; the plan should have been computed and should be empty"
+        type: string
+        default: "false"
+      cache-suffix:
+        description: "Suffix to add to the cache key (cache has a tendency to be locked otherwise)"
+        type: string
+        default: "0.1"
+
+concurrency:
+  group: deploy-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: ${{ inputs.target }} - deployment
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.target == 'next' && 'dev' || inputs.target }}
+    env:
+      TF_WORKSPACE: ${{ inputs.target == 'next' && 'dev' || inputs.target }}
+      SLS_STAGE: ${{ inputs.target == 'next' && 'dev' || inputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup terraform
+        if: ${{ inputs.skip-terraform != 'true' }}
+        uses: ./.github/actions/install-terraform
+        with:
+          tf-api-token: ${{ secrets.TF_API_TOKEN }}
+      - name: Terraform init
+        id: init
+        run: cd deployments/infra-data && terraform init
+      - name: Terraform Plan
+        id: plan
+        continue-on-error: true
+        run: |
+          cd deployments/infra-data
+          RC=0
+          terraform plan -no-color || RC=$?
+          
+          case "$RC" in 
+          0)
+            echo "no-change=true" >> $GITHUB_OUTPUT
+            ;;
+          1)
+            echo "no-change=false" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            return $RC
+            ;;
+          esac
+      - name: Step Summary
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        run: |
+          echo '# `${{ inputs.target }}` - Terraform' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$PLAN" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      - name: Terraform apply
+        if: ${{ steps.plan.outputs.no-change == 'false' }}
+        run: cd deployments/infra-data && terraform apply -auto-approve
+
+      - name: Setup GO
+        if: ${{ success() || inputs.skip-terraform != 'true' }}
+        uses: ./.github/actions/install-go
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+        with:
+          sls: true
+          cache-suffix: ${{ inputs.cache-suffix }}
+
+      - name: Download api
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-api
+          path: bin
+      - name: Download web
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-web
+          path: web/build
+
+      - name: Deploy
+        run: cd deployments/sls && sls deploy --stage "$SLS_STAGE"
+        env:
+          AWS_DEFAULT_REGION: eu-west-1
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

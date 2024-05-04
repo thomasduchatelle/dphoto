@@ -1,0 +1,134 @@
+on:
+  workflow_call:
+    inputs:
+      summary:
+        description: "Set to 'false' if the summary shouldn't be posted on the Action."
+        type: string
+        required: true
+
+jobs:
+  terraform-next:
+    name: Test Terraform
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+    env:
+      TF_WORKSPACE: dev
+    outputs:
+      no-change: ${{ steps.plan.outputs.no-change }}
+      plan: ${{ steps.plan.outputs.stdout }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup terraform
+        uses: ./.github/actions/install-terraform
+        with:
+          tf-api-token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform init
+        id: init
+        run: |
+          cd deployments/infra-data
+          terraform init
+
+      - name: Terraform Validate
+        id: validate
+        continue-on-error: true
+        run: |
+          cd deployments/infra-data
+          terraform validate -no-color
+
+      - name: Terraform Format
+        id: fmt
+        continue-on-error: true
+        run: |
+          cd deployments/infra-data
+          terraform fmt -check
+
+      - name: Terraform Plan
+        id: plan
+        continue-on-error: true
+        run: |
+          cd deployments/infra-data
+          RC=0
+          terraform plan -no-color || RC=$?
+
+          case "$RC" in
+          0)
+            echo "no-change=true" >> $GITHUB_OUTPUT
+            ;;
+          1)
+            echo "no-change=false" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            return $RC
+            ;;
+          esac
+
+      - name: Step Summary
+        id: summary
+        if: ${{ inputs.summary == 'true' }}
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        run: |
+          echo '# `next` - Terraform plan' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$PLAN" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment Plan in PR (next)
+        if: ${{ steps.plan.outputs.no-change == 'false' }}
+        uses: actions/github-script@v7
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: 'thomasduchatelle:${{ github.ref_name }}'
+            });
+
+            if (prs.status !== 200 || prs.data.length == 0) {
+              console.log("No open PR for this branch [${{ github.ref }}]");
+              return
+            }
+
+            let summary = "";
+            if ('${{ steps.plan.outputs.no-change }}' === 'true' ) {
+              summary = " - no change"
+            }
+
+            const output = `
+            * ${{ steps.fmt.outcome == 'success' && ':white_check_mark:' || ':x:' }} Formatting \`${{ steps.fmt.outcome }}\`
+            * ${{ steps.init.outcome == 'success' && ':white_check_mark:' || ':x:' }} Initialisation  \`${{ steps.init.outcome }}\`
+            * ${{ steps.validate.outcome == 'success' && ':white_check_mark:' || ':x:' }} Validation \`${{ steps.validate.outcome }}\`
+            * ${{ steps.plan.outcome == 'success' && ':white_check_mark:' || ':x:' }} Plan \`${{ steps.plan.outcome }}\`
+
+            ### Dev Plan
+
+            <details><summary>Show Plan${summary}</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: prs.data[0].number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Terraform Plan Status
+        if: contains(steps.*.outcome, 'failure')
+        run: exit 1

@@ -1,0 +1,39 @@
+on:
+  workflow_call:
+    inputs: {}
+
+jobs:
+  test-ts:
+    name: Test WEBUI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: SemVer
+        id: semver
+        uses: ./.github/actions/semver
+      - name: Setup NodeJS
+        uses: ./.github/actions/install-node
+        with:
+          cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+
+      - name: Generate snapshots
+        if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+        run: make update-snapshots
+
+      - name: Test and build WEB UI
+        run: make test-web
+#        run: make test-web build-web
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: storybook-snapshots
+          path: web/src/stories/__image_snapshots__/__diff_output__/
+
+#    outputs:
+#      pr-created: ${{ steps.pr.outputs.result != '' && 'true' || 'false' }}
+#      pr-number: ${{ steps.pr.outputs.result }}

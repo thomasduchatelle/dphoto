@@ -1,0 +1,35 @@
+on:
+  workflow_call:
+    outputs:
+      cache-suffix:
+        description: Terraform plan
+        value: ${{ jobs.build-ts.outputs.cache-suffix }}
+
+jobs:
+  build-ts:
+    name: Build WEBUI
+    runs-on: ubuntu-latest
+    outputs:
+      cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: SemVer
+        id: semver
+        uses: ./.github/actions/semver
+      - name: Setup NodeJS
+        uses: ./.github/actions/install-node
+        with:
+          cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+
+      - name: Build for release
+        run: make build-web
+
+      - name: Dist Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-web
+          path: |
+            web/build/**

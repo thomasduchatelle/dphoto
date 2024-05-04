@@ -121,7 +121,6 @@ build-api:
 
 	cd bin/ && \
 		for bin in * ; do mv "$$bin" bootstrap && zip "$$bin.zip" bootstrap ; done
-	#for bin in bin/* ; do mv "$$bin" bin/bootstrap && mkdir "$$bin" && mv "bin/bootstrap" "$$bin/" ; done
 
 #######################################
 ## APP = WEB + API
