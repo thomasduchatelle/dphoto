@@ -8,252 +8,41 @@ on:
       - update-snapshots
 
 jobs:
-  semver:
-    uses: ./.github/workflows/lib-semver.yml
+  pull-request:
+    uses: ./.github/workflows/job-pull-request.yml
+    if: ${{ contains(github.event.head_commit.message, '+pr') || contains(github.event.head_commit.message, '+next') }}
+    secrets: inherit
+
+  test-go:
+    uses: ./.github/workflows/job-test-go.yml
+  test-ts:
+    uses: ./.github/workflows/job-test-ts.yml
+  test-terraform:
+    uses: ./.github/workflows/job-test-terraform.yml
+    secrets: inherit
+    with:
+      summary: ${{ contains(github.event.head_commit.message, '+next') && 'false' || 'true' }}
+
+  build-go:
+    uses: ./.github/workflows/job-build-go.yml
+    if: ${{ contains(github.event.head_commit.message, '+next') }}
     with:
       snapshot: "true"
-
-  test-build-web:
-    uses: ./.github/workflows/lib-test-build-web.yml
-    needs:
-      - semver
-    with:
-      version: ${{ needs.semver.outputs.version }}
-      snapshot: ${{ needs.semver.outputs.snapshot }}
-      cache-suffix: ${{ needs.semver.outputs.major }}.${{ needs.semver.outputs.minor }}
-      build-disabled: ${{ contains(github.event.head_commit.message, '+next') && 'false' || 'true' }}
-
-  test-terraform:
-    runs-on: ubuntu-latest
-    environment:
-      name: dev
-    env:
-      TF_WORKSPACE: dev
-    outputs:
-      no-change: ${{ steps.plan.outputs.no-change }}
-      plan: ${{ steps.plan.outputs.stdout }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup terraform
-        uses: ./.github/actions/install-terraform
-        with:
-          tf-api-token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform init
-        id: init
-        run: |
-          cd deployments/infra-data
-          terraform init
-
-      - name: Terraform Validate
-        id: validate
-        continue-on-error: true
-        run: |
-          cd deployments/infra-data
-          terraform validate -no-color
-
-      - name: Terraform Format
-        id: fmt
-        continue-on-error: true
-        run: |
-          cd deployments/infra-data
-          terraform fmt -check
-
-      - name: Terraform Plan
-        id: plan
-        continue-on-error: true
-        run: |
-          cd deployments/infra-data
-          RC=0
-          terraform plan -no-color || RC=$?
-
-          case "$RC" in
-          0)
-            echo "no-change=true" >> $GITHUB_OUTPUT
-            ;;
-          1)
-            echo "no-change=false" >> $GITHUB_OUTPUT
-            ;;
-          *)
-            return $RC
-            ;;
-          esac
-
-      - name: Step Summary
-        id: summary
-        if: ${{ ! contains(github.event.head_commit.message, '+next') }}
-        env:
-          PLAN: "${{ steps.plan.outputs.stdout }}"
-        run: |
-          echo '# `next` - Terraform plan' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "$PLAN" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-      - name: Comment Plan in PR (next)
-        if: ${{ steps.plan.outputs.no-change == 'false' }}
-        uses: actions/github-script@v7
-        env:
-          PLAN: "${{ steps.plan.outputs.stdout }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prs = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: 'thomasduchatelle:${{ github.ref_name }}'
-            });
-
-            if (prs.status !== 200 || prs.data.length == 0) {
-              console.log("No open PR for this branch [${{ github.ref }}]");
-              return
-            }
-
-            let summary = "";
-            if ('${{ steps.plan.outputs.no-change }}' === 'true' ) {
-              summary = " - no change"
-            }
-
-            const output = `
-            * ${{ steps.fmt.outcome == 'success' && ':white_check_mark:' || ':x:' }} Formatting \`${{ steps.fmt.outcome }}\`
-            * ${{ steps.init.outcome == 'success' && ':white_check_mark:' || ':x:' }} Initialisation  \`${{ steps.init.outcome }}\`
-            * ${{ steps.validate.outcome == 'success' && ':white_check_mark:' || ':x:' }} Validation \`${{ steps.validate.outcome }}\`
-            * ${{ steps.plan.outcome == 'success' && ':white_check_mark:' || ':x:' }} Plan \`${{ steps.plan.outcome }}\`
-
-            ### Dev Plan
-
-            <details><summary>Show Plan${summary}</summary>
-
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
-
-            *Action: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: prs.data[0].number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-
-      - name: Terraform Plan Status
-        if: contains(steps.*.outcome, 'failure')
-        run: exit 1
+  build-ts:
+    uses: ./.github/workflows/job-build-ts.yml
+    if: ${{ contains(github.event.head_commit.message, '+next') }}
 
   deploy-next:
+    uses: ./.github/workflows/job-deploy.yml
+    if: ${{ contains(github.event.head_commit.message, '+next') }}
     needs:
-      - semver
+      - test-go
+      - test-ts
       - test-terraform
-      - test-build-web
-    if: ${{ success() && contains(github.event.head_commit.message, '+next') }}
-    uses: ./.github/workflows/lib-deploy.yml
+      - build-go
+      - build-ts
     secrets: inherit
     with:
       target: next
-      terraform-disabled: ${{ needs.test-terraform.outputs.no-change }}
-      cache-suffix: ${{ needs.semver.outputs.major }}.${{ needs.semver.outputs.minor }}
-
-  pull-request:
-    runs-on: ubuntu-latest
-    needs:
-      - semver
-      - deploy-next
-    if: ${{ success() || needs.semver.result == 'success' && contains(github.event.head_commit.message, '+pr') }}
-    outputs:
-      pr-created: ${{ steps.pr.outputs.result != '' && 'true' || 'false' }}
-      pr-number: ${{ steps.pr.outputs.result }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Changelog
-        id: changelog
-        uses: ./.github/actions/generate-changelog
-        with:
-          version: ${{ needs.semver.outputs.version }}
-
-      - name: Create or Update PR
-        id: pr
-        uses: actions/github-script@v7
-        env:
-          TITLE: ${{ steps.changelog.outputs.title-with-version }}
-          CHANGELOG: ${{ steps.changelog.outputs.changelog }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          result-encoding: string
-          script: |
-            const prs = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: 'thomasduchatelle:${{ github.ref_name }}'
-            });
-            
-            const title = process.env.TITLE
-            const body = process.env.CHANGELOG
-  
-            if (prs.status !== 200) {
-              console.log("error fetching exiting PRs: " + JSON.stringify(prs))
-            
-            } else if (prs.data.length == 0) {
-              console.log("Creating a PR for ${{ github.ref }}");
-              const created = await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                head: 'thomasduchatelle:${{ github.ref_name }}',
-                base: 'main',
-                title: title,
-                body: body,
-              });
-            
-              if (created.status == 201) {
-                console.log("PR '"+ created.data.number + "' has been created");
-                return created.data.number
-              } else {
-                console.log("Error when creating the PR: " + JSON.stringify(created));
-                return
-              }
-            }
-            
-            const pr = prs.data[0]
-            
-            if ('${{ contains(github.event.head_commit.message, '+pr') }}' === 'true' && 
-              (pr.title !== title || pr.body !== body)
-              ) {
-              console.log("PR " + pr.number + " will be updated ...")
-              console.log("Old title -> " + pr.title)
-              console.log("New title -> " + title)
-              console.log("Old body -> " + pr.body)
-              console.log("New body -> " + body)
-
-              github.rest.pulls.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: pr.number,
-                title: title,
-                body: body,
-              });
-            
-            } else {
-              console.log("PR not updated, match = " + (pr.title !== title || pr.body !== body) + " ; +pr = ${{ contains(github.event.head_commit.message, '+pr') }}")
-            }
-            
-            return ""
-
-  tf-plan-live:
-    needs:
-      - pull-request
-    if: ${{ needs.pull-request.result == 'success' && needs.pull-request.outputs.pr-created == 'true' }}
-    uses: ./.github/workflows/workflow-pull-request-tf-plan.yml
-    secrets: inherit
-    with:
-      issue-number: ${{ needs.pull-request.outputs.pr-number }}
+      skip-terraform: ${{ needs.test-terraform.outputs.no-change }}
+      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}

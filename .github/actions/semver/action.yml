@@ -1,0 +1,31 @@
+name: 'Semantic Version'
+description: 'Generate SemVer compliant version based on GIT history.'
+outputs:
+  version:
+    description: "Version generated from GIT history"
+    value: ${{ steps.semver.outputs.MajorMinorPatch }}
+  cache-suffix:
+    description: "Suffix - version based - to use for caches"
+    value: ${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}
+  major:
+    description: "Major part of the semantic version"
+    value: ${{ steps.semver.outputs.major }}
+  minor:
+    description: "Minor part of the semantic version"
+    value: ${{ steps.semver.outputs.minor }}
+  patch:
+    description: "Patch part of the semantic version"
+    value: ${{ steps.semver.outputs.patch }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: '5.x'
+    - name: Determine Version
+      id: semver
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      with:
+        useConfigFile: true
+

@@ -1,0 +1,44 @@
+on:
+  workflow_call:
+    inputs:
+      snapshot:
+        description: "'false' if it's a released version"
+        type: string
+        required: true
+
+jobs:
+  build-go:
+    name: "Build GO"
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    env:
+      APPLICATION_VERSION: ${{ inputs.version }}
+      APPLICATION_VERSION_SNAPSHOT: ${{ inputs.snapshot }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: SemVer
+        id: semver
+        uses: ./.github/actions/semver
+      - name: Install GO
+        uses: ./.github/actions/install-go
+
+      - name: Build for release
+        run: |
+          export APPLICATION_VERSION="${{ steps.semver.outputs.version }}"
+          export APPLICATION_VERSION_SNAPSHOT="${{ inputs.snapshot }}"
+          make build-api build-cli
+      - name: Dist API
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-api
+          path: |
+            bin/**
+      - name: Dist CLI
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin-cli
+          path: |
+            bin-cli/**

@@ -5,54 +5,63 @@ on:
       - main
 
 jobs:
-  semver:
-    uses: ./.github/workflows/lib-semver.yml
-
-  test-build-web:
-    uses: ./.github/workflows/lib-test-build-web.yml
-    needs:
-      - semver
+  test-go:
+    uses: ./.github/workflows/job-test-go.yml
+  test-ts:
+    uses: ./.github/workflows/job-test-ts.yml
+  build-go:
+    uses: ./.github/workflows/job-build-go.yml
+    if: ${{ contains(github.event.head_commit.message, '+next') }}
     with:
-      version: ${{ needs.semver.outputs.version }}
-      snapshot: ${{ needs.semver.outputs.snapshot }}
+      snapshot: "true"
+  build-ts:
+    uses: ./.github/workflows/job-build-ts.yml
+    if: ${{ contains(github.event.head_commit.message, '+next') }}
 
   deploy-next:
+    uses: ./.github/workflows/job-deploy.yml
     needs:
-      - semver
-      - test-build-web
-    uses: ./.github/workflows/lib-deploy.yml
+      - test-go
+      - test-ts
+      - build-go
+      - build-ts
     secrets: inherit
     with:
       target: next
-      cache-suffix: ${{ needs.semver.outputs.major }}.${{ needs.semver.outputs.minor }}
+      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
 
   deploy-live:
+    uses: ./.github/workflows/job-deploy.yml
     needs:
-      - semver
-      - test-build-web
-    uses: ./.github/workflows/lib-deploy.yml
+      - test-go
+      - test-ts
+      - build-go
+      - build-ts
     secrets: inherit
     with:
       target: live
-      cache-suffix: ${{ needs.semver.outputs.major }}.${{ needs.semver.outputs.minor }}
+      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
 
   release:
     runs-on: ubuntu-latest
     name: Release
     needs:
-      - semver
       - deploy-next
       - deploy-live
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
+      - name: SemVer
+        id: semver
+        uses: ./.github/actions/semver
 
       - name: Changelog
         id: changelog
         uses: ./.github/actions/generate-changelog
         with:
-          version: ${{ needs.semver.outputs.version }}
+          version: ${{ steps.semver.outputs.version }}
           tf-plan: ${{ needs.deploy-live.outputs.plan }}
           tf-no-change: ${{ needs.deploy-live.outputs.no-change }}
 
@@ -69,7 +78,7 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/v${{ needs.semver.outputs.version }}',
+              ref: 'refs/tags/v${{ steps.semver.outputs.version }}',
               sha: context.sha
             })
       - name: Create release
@@ -77,4 +86,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         run: |
-          gh release create 'v${{ needs.semver.outputs.version }}' --title 'DPhoto v${{ needs.semver.outputs.version }}' --latest --notes "$CHANGELOG" bin-cli/*
+          gh release create 'v${{ steps.semver.outputs.version }}' --title 'DPhoto v${{ steps.semver.outputs.version }}' --latest --notes "$CHANGELOG" bin-cli/*
