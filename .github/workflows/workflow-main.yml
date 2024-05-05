@@ -12,7 +12,7 @@ jobs:
   build-go:
     uses: ./.github/workflows/job-build-go.yml
     with:
-      snapshot: "true"
+      snapshot: "false"
   build-ts:
     uses: ./.github/workflows/job-build-ts.yml
 

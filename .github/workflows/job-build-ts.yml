@@ -7,7 +7,6 @@ on:
 
 jobs:
   build-ts:
-    name: Build WEBUI
     runs-on: ubuntu-latest
     outputs:
       cache-suffix: ${{ steps.semver.outputs.cache-suffix }}

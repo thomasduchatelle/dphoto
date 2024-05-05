@@ -138,6 +138,6 @@ DPhoto only supports AWS to be deployed as a serverless application using AWS Ga
 
 DynamoDB is a single table documented in [README.md](pkg/awssupport/appdynamodb/README.md).
 
-### Required Upgrades
+### TODOs
 
-1. React -> NextJS
+[TODO.md](./TODO.md)

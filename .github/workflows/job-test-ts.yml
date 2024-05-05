@@ -4,7 +4,6 @@ on:
 
 jobs:
   test-ts:
-    name: Test WEBUI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +24,6 @@ jobs:
 
       - name: Test and build WEB UI
         run: make test-web
-#        run: make test-web build-web
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
@@ -33,7 +31,3 @@ jobs:
         with:
           name: storybook-snapshots
           path: web/src/stories/__image_snapshots__/__diff_output__/
-
-#    outputs:
-#      pr-created: ${{ steps.pr.outputs.result != '' && 'true' || 'false' }}
-#      pr-number: ${{ steps.pr.outputs.result }}
