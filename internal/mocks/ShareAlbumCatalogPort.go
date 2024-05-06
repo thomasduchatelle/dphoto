@@ -13,6 +13,14 @@ type ShareAlbumCatalogPort struct {
 	mock.Mock
 }
 
+type ShareAlbumCatalogPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ShareAlbumCatalogPort) EXPECT() *ShareAlbumCatalogPort_Expecter {
+	return &ShareAlbumCatalogPort_Expecter{mock: &_m.Mock}
+}
+
 // FindAlbum provides a mock function with given fields: owner, folderName
 func (_m *ShareAlbumCatalogPort) FindAlbum(owner string, folderName string) (*catalog.Album, error) {
 	ret := _m.Called(owner, folderName)
@@ -41,6 +49,35 @@ func (_m *ShareAlbumCatalogPort) FindAlbum(owner string, folderName string) (*ca
 	}
 
 	return r0, r1
+}
+
+// ShareAlbumCatalogPort_FindAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAlbum'
+type ShareAlbumCatalogPort_FindAlbum_Call struct {
+	*mock.Call
+}
+
+// FindAlbum is a helper method to define mock.On call
+//   - owner string
+//   - folderName string
+func (_e *ShareAlbumCatalogPort_Expecter) FindAlbum(owner interface{}, folderName interface{}) *ShareAlbumCatalogPort_FindAlbum_Call {
+	return &ShareAlbumCatalogPort_FindAlbum_Call{Call: _e.mock.On("FindAlbum", owner, folderName)}
+}
+
+func (_c *ShareAlbumCatalogPort_FindAlbum_Call) Run(run func(owner string, folderName string)) *ShareAlbumCatalogPort_FindAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *ShareAlbumCatalogPort_FindAlbum_Call) Return(_a0 *catalog.Album, _a1 error) *ShareAlbumCatalogPort_FindAlbum_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ShareAlbumCatalogPort_FindAlbum_Call) RunAndReturn(run func(string, string) (*catalog.Album, error)) *ShareAlbumCatalogPort_FindAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewShareAlbumCatalogPort creates a new instance of ShareAlbumCatalogPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

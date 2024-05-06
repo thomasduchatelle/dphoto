@@ -12,6 +12,14 @@ type RefreshTokenRepository struct {
 	mock.Mock
 }
 
+type RefreshTokenRepository_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *RefreshTokenRepository) EXPECT() *RefreshTokenRepository_Expecter {
+	return &RefreshTokenRepository_Expecter{mock: &_m.Mock}
+}
+
 // DeleteRefreshToken provides a mock function with given fields: token
 func (_m *RefreshTokenRepository) DeleteRefreshToken(token string) error {
 	ret := _m.Called(token)
@@ -28,6 +36,34 @@ func (_m *RefreshTokenRepository) DeleteRefreshToken(token string) error {
 	}
 
 	return r0
+}
+
+// RefreshTokenRepository_DeleteRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRefreshToken'
+type RefreshTokenRepository_DeleteRefreshToken_Call struct {
+	*mock.Call
+}
+
+// DeleteRefreshToken is a helper method to define mock.On call
+//   - token string
+func (_e *RefreshTokenRepository_Expecter) DeleteRefreshToken(token interface{}) *RefreshTokenRepository_DeleteRefreshToken_Call {
+	return &RefreshTokenRepository_DeleteRefreshToken_Call{Call: _e.mock.On("DeleteRefreshToken", token)}
+}
+
+func (_c *RefreshTokenRepository_DeleteRefreshToken_Call) Run(run func(token string)) *RefreshTokenRepository_DeleteRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *RefreshTokenRepository_DeleteRefreshToken_Call) Return(_a0 error) *RefreshTokenRepository_DeleteRefreshToken_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RefreshTokenRepository_DeleteRefreshToken_Call) RunAndReturn(run func(string) error) *RefreshTokenRepository_DeleteRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindRefreshToken provides a mock function with given fields: token
@@ -60,6 +96,34 @@ func (_m *RefreshTokenRepository) FindRefreshToken(token string) (*aclcore.Refre
 	return r0, r1
 }
 
+// RefreshTokenRepository_FindRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindRefreshToken'
+type RefreshTokenRepository_FindRefreshToken_Call struct {
+	*mock.Call
+}
+
+// FindRefreshToken is a helper method to define mock.On call
+//   - token string
+func (_e *RefreshTokenRepository_Expecter) FindRefreshToken(token interface{}) *RefreshTokenRepository_FindRefreshToken_Call {
+	return &RefreshTokenRepository_FindRefreshToken_Call{Call: _e.mock.On("FindRefreshToken", token)}
+}
+
+func (_c *RefreshTokenRepository_FindRefreshToken_Call) Run(run func(token string)) *RefreshTokenRepository_FindRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *RefreshTokenRepository_FindRefreshToken_Call) Return(_a0 *aclcore.RefreshTokenSpec, _a1 error) *RefreshTokenRepository_FindRefreshToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RefreshTokenRepository_FindRefreshToken_Call) RunAndReturn(run func(string) (*aclcore.RefreshTokenSpec, error)) *RefreshTokenRepository_FindRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HouseKeepRefreshToken provides a mock function with given fields:
 func (_m *RefreshTokenRepository) HouseKeepRefreshToken() (int, error) {
 	ret := _m.Called()
@@ -88,6 +152,33 @@ func (_m *RefreshTokenRepository) HouseKeepRefreshToken() (int, error) {
 	return r0, r1
 }
 
+// RefreshTokenRepository_HouseKeepRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HouseKeepRefreshToken'
+type RefreshTokenRepository_HouseKeepRefreshToken_Call struct {
+	*mock.Call
+}
+
+// HouseKeepRefreshToken is a helper method to define mock.On call
+func (_e *RefreshTokenRepository_Expecter) HouseKeepRefreshToken() *RefreshTokenRepository_HouseKeepRefreshToken_Call {
+	return &RefreshTokenRepository_HouseKeepRefreshToken_Call{Call: _e.mock.On("HouseKeepRefreshToken")}
+}
+
+func (_c *RefreshTokenRepository_HouseKeepRefreshToken_Call) Run(run func()) *RefreshTokenRepository_HouseKeepRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *RefreshTokenRepository_HouseKeepRefreshToken_Call) Return(_a0 int, _a1 error) *RefreshTokenRepository_HouseKeepRefreshToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RefreshTokenRepository_HouseKeepRefreshToken_Call) RunAndReturn(run func() (int, error)) *RefreshTokenRepository_HouseKeepRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // StoreRefreshToken provides a mock function with given fields: token, spec
 func (_m *RefreshTokenRepository) StoreRefreshToken(token string, spec aclcore.RefreshTokenSpec) error {
 	ret := _m.Called(token, spec)
@@ -104,6 +195,35 @@ func (_m *RefreshTokenRepository) StoreRefreshToken(token string, spec aclcore.R
 	}
 
 	return r0
+}
+
+// RefreshTokenRepository_StoreRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StoreRefreshToken'
+type RefreshTokenRepository_StoreRefreshToken_Call struct {
+	*mock.Call
+}
+
+// StoreRefreshToken is a helper method to define mock.On call
+//   - token string
+//   - spec aclcore.RefreshTokenSpec
+func (_e *RefreshTokenRepository_Expecter) StoreRefreshToken(token interface{}, spec interface{}) *RefreshTokenRepository_StoreRefreshToken_Call {
+	return &RefreshTokenRepository_StoreRefreshToken_Call{Call: _e.mock.On("StoreRefreshToken", token, spec)}
+}
+
+func (_c *RefreshTokenRepository_StoreRefreshToken_Call) Run(run func(token string, spec aclcore.RefreshTokenSpec)) *RefreshTokenRepository_StoreRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(aclcore.RefreshTokenSpec))
+	})
+	return _c
+}
+
+func (_c *RefreshTokenRepository_StoreRefreshToken_Call) Return(_a0 error) *RefreshTokenRepository_StoreRefreshToken_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RefreshTokenRepository_StoreRefreshToken_Call) RunAndReturn(run func(string, aclcore.RefreshTokenSpec) error) *RefreshTokenRepository_StoreRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewRefreshTokenRepository creates a new instance of RefreshTokenRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

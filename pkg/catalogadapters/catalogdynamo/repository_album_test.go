@@ -2,6 +2,8 @@ package catalogdynamo
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -9,6 +11,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"testing"
+	"time"
 )
 
 type AlbumCrudTestSuite struct {
@@ -174,4 +177,156 @@ func (a *AlbumCrudTestSuite) TestUpdateNotExisting() {
 	}
 	err := a.repo.UpdateAlbum(context.TODO(), update)
 	a.Error(err, "it should fail to update an album that do not exist.")
+}
+
+func TestRepository_CountMediasBySelectors(t *testing.T) {
+	const owner = "ironman"
+	mediaId1 := "media-1"
+	mediaId2 := "media-2"
+	jan24 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	may24 := time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
+	jun24 := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
+	may24the8th := "2024-05-08"
+	feb24the12th := "2024-02-12"
+	album1 := catalog.AlbumId{
+		Owner:      owner,
+		FolderName: catalog.NewFolderName("/album-1"),
+	}
+	album2 := catalog.AlbumId{
+		Owner:      owner,
+		FolderName: catalog.NewFolderName("/album-2"),
+	}
+
+	type args struct {
+		owner     catalog.Owner
+		selectors []catalog.MediaSelector
+	}
+	tests := []struct {
+		name          string
+		withDbContent []map[string]types.AttributeValue
+		args          args
+		want          int
+		wantErr       assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should return 0 when no selector is provided",
+			args: args{
+				owner:     owner,
+				selectors: nil,
+			},
+			want:    0,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return 1 when only one media is in the album",
+			withDbContent: []map[string]types.AttributeValue{
+				mediaEntry(album1, mediaId1, may24the8th),
+			},
+			args: args{
+				owner: owner,
+				selectors: []catalog.MediaSelector{
+					{
+						FromAlbums: []catalog.AlbumId{album1},
+						Start:      may24,
+						End:        jun24,
+					},
+				},
+			},
+			want:    1,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return 1 when one media is in the date range, not the other",
+			withDbContent: []map[string]types.AttributeValue{
+				mediaEntry(album1, mediaId1, may24the8th),
+				mediaEntry(album1, mediaId2, feb24the12th),
+			},
+			args: args{
+				owner: owner,
+				selectors: []catalog.MediaSelector{
+					{
+						FromAlbums: []catalog.AlbumId{album1},
+						Start:      may24,
+						End:        jun24,
+					},
+				},
+			},
+			want:    1,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return 2, one from each selector on different albums",
+			withDbContent: []map[string]types.AttributeValue{
+				mediaEntry(album1, mediaId1, may24the8th),
+				mediaEntry(album2, mediaId2, feb24the12th),
+			},
+			args: args{
+				owner: owner,
+				selectors: []catalog.MediaSelector{
+					{
+						FromAlbums: []catalog.AlbumId{album1},
+						Start:      may24,
+						End:        jun24,
+					},
+					{
+						FromAlbums: []catalog.AlbumId{album2},
+						Start:      jan24,
+						End:        may24,
+					},
+				},
+			},
+			want:    2,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return 2 from the first selector from 2 albums",
+			withDbContent: []map[string]types.AttributeValue{
+				mediaEntry(album1, mediaId1, may24the8th),
+				mediaEntry(album2, mediaId2, feb24the12th),
+			},
+			args: args{
+				owner: owner,
+				selectors: []catalog.MediaSelector{
+					{
+						FromAlbums: []catalog.AlbumId{album1, album2},
+						Start:      jan24,
+						End:        jun24,
+					},
+				},
+			},
+			want:    2,
+			wantErr: assert.NoError,
+		},
+	}
+
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(dyn.Ctx, tt.withDbContent)
+			if !assert.NoError(t, err, "WithDbContent") {
+				return
+			}
+
+			r := &Repository{
+				client: dyn.Client,
+				table:  dyn.Table,
+			}
+			got, err := r.CountMediasBySelectors(dyn.Ctx, tt.args.owner, tt.args.selectors)
+			if !tt.wantErr(t, err, fmt.Sprintf("CountMediasBySelectors(%v, %v)", tt.args.owner, tt.args.selectors)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "CountMediasBySelectors(%v, %v)", tt.args.owner, tt.args.selectors)
+		})
+	}
+}
+
+func mediaEntry(albumId catalog.AlbumId, mediaId1 string, mediaDateTime string) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"PK":           &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#MEDIA#%s", albumId.Owner, mediaId1)},
+		"SK":           &types.AttributeValueMemberS{Value: "#METADATA"},
+		"AlbumIndexPK": &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#%s", albumId.Owner, albumId.FolderName)},
+		"AlbumIndexSK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MEDIA#%s#%s", mediaDateTime, mediaId1)},
+	}
 }

@@ -17,6 +17,14 @@ type StoreAdapter struct {
 	mock.Mock
 }
 
+type StoreAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *StoreAdapter) EXPECT() *StoreAdapter_Expecter {
+	return &StoreAdapter_Expecter{mock: &_m.Mock}
+}
+
 // Copy provides a mock function with given fields: origin, destination
 func (_m *StoreAdapter) Copy(origin string, destination archive.DestructuredKey) (string, error) {
 	ret := _m.Called(origin, destination)
@@ -45,6 +53,35 @@ func (_m *StoreAdapter) Copy(origin string, destination archive.DestructuredKey)
 	return r0, r1
 }
 
+// StoreAdapter_Copy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Copy'
+type StoreAdapter_Copy_Call struct {
+	*mock.Call
+}
+
+// Copy is a helper method to define mock.On call
+//   - origin string
+//   - destination archive.DestructuredKey
+func (_e *StoreAdapter_Expecter) Copy(origin interface{}, destination interface{}) *StoreAdapter_Copy_Call {
+	return &StoreAdapter_Copy_Call{Call: _e.mock.On("Copy", origin, destination)}
+}
+
+func (_c *StoreAdapter_Copy_Call) Run(run func(origin string, destination archive.DestructuredKey)) *StoreAdapter_Copy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(archive.DestructuredKey))
+	})
+	return _c
+}
+
+func (_c *StoreAdapter_Copy_Call) Return(_a0 string, _a1 error) *StoreAdapter_Copy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StoreAdapter_Copy_Call) RunAndReturn(run func(string, archive.DestructuredKey) (string, error)) *StoreAdapter_Copy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function with given fields: locations
 func (_m *StoreAdapter) Delete(locations []string) error {
 	ret := _m.Called(locations)
@@ -61,6 +98,34 @@ func (_m *StoreAdapter) Delete(locations []string) error {
 	}
 
 	return r0
+}
+
+// StoreAdapter_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type StoreAdapter_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - locations []string
+func (_e *StoreAdapter_Expecter) Delete(locations interface{}) *StoreAdapter_Delete_Call {
+	return &StoreAdapter_Delete_Call{Call: _e.mock.On("Delete", locations)}
+}
+
+func (_c *StoreAdapter_Delete_Call) Run(run func(locations []string)) *StoreAdapter_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]string))
+	})
+	return _c
+}
+
+func (_c *StoreAdapter_Delete_Call) Return(_a0 error) *StoreAdapter_Delete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *StoreAdapter_Delete_Call) RunAndReturn(run func([]string) error) *StoreAdapter_Delete_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Download provides a mock function with given fields: key
@@ -93,6 +158,34 @@ func (_m *StoreAdapter) Download(key string) (io.ReadCloser, error) {
 	return r0, r1
 }
 
+// StoreAdapter_Download_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Download'
+type StoreAdapter_Download_Call struct {
+	*mock.Call
+}
+
+// Download is a helper method to define mock.On call
+//   - key string
+func (_e *StoreAdapter_Expecter) Download(key interface{}) *StoreAdapter_Download_Call {
+	return &StoreAdapter_Download_Call{Call: _e.mock.On("Download", key)}
+}
+
+func (_c *StoreAdapter_Download_Call) Run(run func(key string)) *StoreAdapter_Download_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *StoreAdapter_Download_Call) Return(_a0 io.ReadCloser, _a1 error) *StoreAdapter_Download_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StoreAdapter_Download_Call) RunAndReturn(run func(string) (io.ReadCloser, error)) *StoreAdapter_Download_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SignedURL provides a mock function with given fields: key, duration
 func (_m *StoreAdapter) SignedURL(key string, duration time.Duration) (string, error) {
 	ret := _m.Called(key, duration)
@@ -121,6 +214,35 @@ func (_m *StoreAdapter) SignedURL(key string, duration time.Duration) (string, e
 	return r0, r1
 }
 
+// StoreAdapter_SignedURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignedURL'
+type StoreAdapter_SignedURL_Call struct {
+	*mock.Call
+}
+
+// SignedURL is a helper method to define mock.On call
+//   - key string
+//   - duration time.Duration
+func (_e *StoreAdapter_Expecter) SignedURL(key interface{}, duration interface{}) *StoreAdapter_SignedURL_Call {
+	return &StoreAdapter_SignedURL_Call{Call: _e.mock.On("SignedURL", key, duration)}
+}
+
+func (_c *StoreAdapter_SignedURL_Call) Run(run func(key string, duration time.Duration)) *StoreAdapter_SignedURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(time.Duration))
+	})
+	return _c
+}
+
+func (_c *StoreAdapter_SignedURL_Call) Return(_a0 string, _a1 error) *StoreAdapter_SignedURL_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StoreAdapter_SignedURL_Call) RunAndReturn(run func(string, time.Duration) (string, error)) *StoreAdapter_SignedURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Upload provides a mock function with given fields: values, content
 func (_m *StoreAdapter) Upload(values archive.DestructuredKey, content io.Reader) (string, error) {
 	ret := _m.Called(values, content)
@@ -147,6 +269,35 @@ func (_m *StoreAdapter) Upload(values archive.DestructuredKey, content io.Reader
 	}
 
 	return r0, r1
+}
+
+// StoreAdapter_Upload_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Upload'
+type StoreAdapter_Upload_Call struct {
+	*mock.Call
+}
+
+// Upload is a helper method to define mock.On call
+//   - values archive.DestructuredKey
+//   - content io.Reader
+func (_e *StoreAdapter_Expecter) Upload(values interface{}, content interface{}) *StoreAdapter_Upload_Call {
+	return &StoreAdapter_Upload_Call{Call: _e.mock.On("Upload", values, content)}
+}
+
+func (_c *StoreAdapter_Upload_Call) Run(run func(values archive.DestructuredKey, content io.Reader)) *StoreAdapter_Upload_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(archive.DestructuredKey), args[1].(io.Reader))
+	})
+	return _c
+}
+
+func (_c *StoreAdapter_Upload_Call) Return(_a0 string, _a1 error) *StoreAdapter_Upload_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StoreAdapter_Upload_Call) RunAndReturn(run func(archive.DestructuredKey, io.Reader) (string, error)) *StoreAdapter_Upload_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewStoreAdapter creates a new instance of StoreAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -15,6 +15,14 @@ type MoveMediaPort struct {
 	mock.Mock
 }
 
+type MoveMediaPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *MoveMediaPort) EXPECT() *MoveMediaPort_Expecter {
+	return &MoveMediaPort_Expecter{mock: &_m.Mock}
+}
+
 // MoveMedia provides a mock function with given fields: ctx, albumId, mediaIds
 func (_m *MoveMediaPort) MoveMedia(ctx context.Context, albumId catalog.AlbumId, mediaIds []catalog.MediaId) error {
 	ret := _m.Called(ctx, albumId, mediaIds)
@@ -31,6 +39,36 @@ func (_m *MoveMediaPort) MoveMedia(ctx context.Context, albumId catalog.AlbumId,
 	}
 
 	return r0
+}
+
+// MoveMediaPort_MoveMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MoveMedia'
+type MoveMediaPort_MoveMedia_Call struct {
+	*mock.Call
+}
+
+// MoveMedia is a helper method to define mock.On call
+//   - ctx context.Context
+//   - albumId catalog.AlbumId
+//   - mediaIds []catalog.MediaId
+func (_e *MoveMediaPort_Expecter) MoveMedia(ctx interface{}, albumId interface{}, mediaIds interface{}) *MoveMediaPort_MoveMedia_Call {
+	return &MoveMediaPort_MoveMedia_Call{Call: _e.mock.On("MoveMedia", ctx, albumId, mediaIds)}
+}
+
+func (_c *MoveMediaPort_MoveMedia_Call) Run(run func(ctx context.Context, albumId catalog.AlbumId, mediaIds []catalog.MediaId)) *MoveMediaPort_MoveMedia_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.AlbumId), args[2].([]catalog.MediaId))
+	})
+	return _c
+}
+
+func (_c *MoveMediaPort_MoveMedia_Call) Return(_a0 error) *MoveMediaPort_MoveMedia_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MoveMediaPort_MoveMedia_Call) RunAndReturn(run func(context.Context, catalog.AlbumId, []catalog.MediaId) error) *MoveMediaPort_MoveMedia_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewMoveMediaPort creates a new instance of MoveMediaPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

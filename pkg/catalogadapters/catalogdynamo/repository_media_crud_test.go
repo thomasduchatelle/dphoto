@@ -296,7 +296,7 @@ func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 
 func (a *MediaCrudTestSuite) TestDeleteNonEmpty() {
 	err := a.repo.DeleteEmptyAlbum(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: a.jan21})
-	a.Equal(catalog.NotEmptyError, err, "it should not delete an album with images in it")
+	a.Equal(catalog.AlbumIsNotEmptyError, err, "it should not delete an album with images in it")
 }
 
 func (a *MediaCrudTestSuite) TestFindExistingSignatures() {

@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
@@ -12,8 +13,12 @@ const (
 	albumIndex = "AlbumIndex"
 )
 
-func newMediaQueryBuilders(table string, request *catalog.FindMediaRequest, projectionName string) ([]*dynamodb.QueryInput, error) {
+func newMediaQueryBuilders(table string, request *catalog.FindMediaRequest, projectionName string, querySelect types.Select) ([]*dynamodb.QueryInput, error) {
 	var queries []*dynamodb.QueryInput
+
+	if projectionName != "" {
+		querySelect = types.SelectSpecificAttributes
+	}
 
 	builderWithProjection := func() expression.Builder {
 		builder := expression.NewBuilder()
@@ -41,6 +46,7 @@ func newMediaQueryBuilders(table string, request *catalog.FindMediaRequest, proj
 				IndexName:                 aws.String(albumIndex),
 				KeyConditionExpression:    expr.KeyCondition(),
 				ProjectionExpression:      expr.Projection(),
+				Select:                    querySelect,
 			})
 		}
 

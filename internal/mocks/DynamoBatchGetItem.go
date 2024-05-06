@@ -15,6 +15,14 @@ type DynamoBatchGetItem struct {
 	mock.Mock
 }
 
+type DynamoBatchGetItem_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *DynamoBatchGetItem) EXPECT() *DynamoBatchGetItem_Expecter {
+	return &DynamoBatchGetItem_Expecter{mock: &_m.Mock}
+}
+
 // BatchGetItem provides a mock function with given fields: ctx, params, optFns
 func (_m *DynamoBatchGetItem) BatchGetItem(ctx context.Context, params *dynamodb.BatchGetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchGetItemOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -50,6 +58,43 @@ func (_m *DynamoBatchGetItem) BatchGetItem(ctx context.Context, params *dynamodb
 	}
 
 	return r0, r1
+}
+
+// DynamoBatchGetItem_BatchGetItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchGetItem'
+type DynamoBatchGetItem_BatchGetItem_Call struct {
+	*mock.Call
+}
+
+// BatchGetItem is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *dynamodb.BatchGetItemInput
+//   - optFns ...func(*dynamodb.Options)
+func (_e *DynamoBatchGetItem_Expecter) BatchGetItem(ctx interface{}, params interface{}, optFns ...interface{}) *DynamoBatchGetItem_BatchGetItem_Call {
+	return &DynamoBatchGetItem_BatchGetItem_Call{Call: _e.mock.On("BatchGetItem",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *DynamoBatchGetItem_BatchGetItem_Call) Run(run func(ctx context.Context, params *dynamodb.BatchGetItemInput, optFns ...func(*dynamodb.Options))) *DynamoBatchGetItem_BatchGetItem_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*dynamodb.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*dynamodb.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*dynamodb.BatchGetItemInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *DynamoBatchGetItem_BatchGetItem_Call) Return(_a0 *dynamodb.BatchGetItemOutput, _a1 error) *DynamoBatchGetItem_BatchGetItem_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DynamoBatchGetItem_BatchGetItem_Call) RunAndReturn(run func(context.Context, *dynamodb.BatchGetItemInput, ...func(*dynamodb.Options)) (*dynamodb.BatchGetItemOutput, error)) *DynamoBatchGetItem_BatchGetItem_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewDynamoBatchGetItem creates a new instance of DynamoBatchGetItem. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

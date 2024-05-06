@@ -13,6 +13,14 @@ type ACLViewCatalogAdapter struct {
 	mock.Mock
 }
 
+type ACLViewCatalogAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ACLViewCatalogAdapter) EXPECT() *ACLViewCatalogAdapter_Expecter {
+	return &ACLViewCatalogAdapter_Expecter{mock: &_m.Mock}
+}
+
 // FindAlbums provides a mock function with given fields: keys
 func (_m *ACLViewCatalogAdapter) FindAlbums(keys []catalog.AlbumId) ([]*catalog.Album, error) {
 	ret := _m.Called(keys)
@@ -41,6 +49,34 @@ func (_m *ACLViewCatalogAdapter) FindAlbums(keys []catalog.AlbumId) ([]*catalog.
 	}
 
 	return r0, r1
+}
+
+// ACLViewCatalogAdapter_FindAlbums_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAlbums'
+type ACLViewCatalogAdapter_FindAlbums_Call struct {
+	*mock.Call
+}
+
+// FindAlbums is a helper method to define mock.On call
+//   - keys []catalog.AlbumId
+func (_e *ACLViewCatalogAdapter_Expecter) FindAlbums(keys interface{}) *ACLViewCatalogAdapter_FindAlbums_Call {
+	return &ACLViewCatalogAdapter_FindAlbums_Call{Call: _e.mock.On("FindAlbums", keys)}
+}
+
+func (_c *ACLViewCatalogAdapter_FindAlbums_Call) Run(run func(keys []catalog.AlbumId)) *ACLViewCatalogAdapter_FindAlbums_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]catalog.AlbumId))
+	})
+	return _c
+}
+
+func (_c *ACLViewCatalogAdapter_FindAlbums_Call) Return(_a0 []*catalog.Album, _a1 error) *ACLViewCatalogAdapter_FindAlbums_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ACLViewCatalogAdapter_FindAlbums_Call) RunAndReturn(run func([]catalog.AlbumId) ([]*catalog.Album, error)) *ACLViewCatalogAdapter_FindAlbums_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindAllAlbums provides a mock function with given fields: owner
@@ -73,6 +109,34 @@ func (_m *ACLViewCatalogAdapter) FindAllAlbums(owner string) ([]*catalog.Album, 
 	return r0, r1
 }
 
+// ACLViewCatalogAdapter_FindAllAlbums_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllAlbums'
+type ACLViewCatalogAdapter_FindAllAlbums_Call struct {
+	*mock.Call
+}
+
+// FindAllAlbums is a helper method to define mock.On call
+//   - owner string
+func (_e *ACLViewCatalogAdapter_Expecter) FindAllAlbums(owner interface{}) *ACLViewCatalogAdapter_FindAllAlbums_Call {
+	return &ACLViewCatalogAdapter_FindAllAlbums_Call{Call: _e.mock.On("FindAllAlbums", owner)}
+}
+
+func (_c *ACLViewCatalogAdapter_FindAllAlbums_Call) Run(run func(owner string)) *ACLViewCatalogAdapter_FindAllAlbums_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *ACLViewCatalogAdapter_FindAllAlbums_Call) Return(_a0 []*catalog.Album, _a1 error) *ACLViewCatalogAdapter_FindAllAlbums_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ACLViewCatalogAdapter_FindAllAlbums_Call) RunAndReturn(run func(string) ([]*catalog.Album, error)) *ACLViewCatalogAdapter_FindAllAlbums_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListMedias provides a mock function with given fields: owner, folderName, request
 func (_m *ACLViewCatalogAdapter) ListMedias(owner string, folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
 	ret := _m.Called(owner, folderName, request)
@@ -101,6 +165,36 @@ func (_m *ACLViewCatalogAdapter) ListMedias(owner string, folderName string, req
 	}
 
 	return r0, r1
+}
+
+// ACLViewCatalogAdapter_ListMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListMedias'
+type ACLViewCatalogAdapter_ListMedias_Call struct {
+	*mock.Call
+}
+
+// ListMedias is a helper method to define mock.On call
+//   - owner string
+//   - folderName string
+//   - request catalog.PageRequest
+func (_e *ACLViewCatalogAdapter_Expecter) ListMedias(owner interface{}, folderName interface{}, request interface{}) *ACLViewCatalogAdapter_ListMedias_Call {
+	return &ACLViewCatalogAdapter_ListMedias_Call{Call: _e.mock.On("ListMedias", owner, folderName, request)}
+}
+
+func (_c *ACLViewCatalogAdapter_ListMedias_Call) Run(run func(owner string, folderName string, request catalog.PageRequest)) *ACLViewCatalogAdapter_ListMedias_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(catalog.PageRequest))
+	})
+	return _c
+}
+
+func (_c *ACLViewCatalogAdapter_ListMedias_Call) Return(_a0 *catalog.MediaPage, _a1 error) *ACLViewCatalogAdapter_ListMedias_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ACLViewCatalogAdapter_ListMedias_Call) RunAndReturn(run func(string, string, catalog.PageRequest) (*catalog.MediaPage, error)) *ACLViewCatalogAdapter_ListMedias_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewACLViewCatalogAdapter creates a new instance of ACLViewCatalogAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -12,6 +12,14 @@ type CreateAlbumPort struct {
 	mock.Mock
 }
 
+type CreateAlbumPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *CreateAlbumPort) EXPECT() *CreateAlbumPort_Expecter {
+	return &CreateAlbumPort_Expecter{mock: &_m.Mock}
+}
+
 // Create provides a mock function with given fields: createRequest
 func (_m *CreateAlbumPort) Create(createRequest ui.RecordCreation) error {
 	ret := _m.Called(createRequest)
@@ -28,6 +36,34 @@ func (_m *CreateAlbumPort) Create(createRequest ui.RecordCreation) error {
 	}
 
 	return r0
+}
+
+// CreateAlbumPort_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type CreateAlbumPort_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - createRequest ui.RecordCreation
+func (_e *CreateAlbumPort_Expecter) Create(createRequest interface{}) *CreateAlbumPort_Create_Call {
+	return &CreateAlbumPort_Create_Call{Call: _e.mock.On("Create", createRequest)}
+}
+
+func (_c *CreateAlbumPort_Create_Call) Run(run func(createRequest ui.RecordCreation)) *CreateAlbumPort_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(ui.RecordCreation))
+	})
+	return _c
+}
+
+func (_c *CreateAlbumPort_Create_Call) Return(_a0 error) *CreateAlbumPort_Create_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CreateAlbumPort_Create_Call) RunAndReturn(run func(ui.RecordCreation) error) *CreateAlbumPort_Create_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewCreateAlbumPort creates a new instance of CreateAlbumPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

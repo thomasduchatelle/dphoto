@@ -12,6 +12,14 @@ type ReverseScopesReader struct {
 	mock.Mock
 }
 
+type ReverseScopesReader_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ReverseScopesReader) EXPECT() *ReverseScopesReader_Expecter {
+	return &ReverseScopesReader_Expecter{mock: &_m.Mock}
+}
+
 // ListOwnerScopes provides a mock function with given fields: owner, types
 func (_m *ReverseScopesReader) ListOwnerScopes(owner string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))
@@ -47,6 +55,42 @@ func (_m *ReverseScopesReader) ListOwnerScopes(owner string, types ...aclcore.Sc
 	}
 
 	return r0, r1
+}
+
+// ReverseScopesReader_ListOwnerScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOwnerScopes'
+type ReverseScopesReader_ListOwnerScopes_Call struct {
+	*mock.Call
+}
+
+// ListOwnerScopes is a helper method to define mock.On call
+//   - owner string
+//   - types ...aclcore.ScopeType
+func (_e *ReverseScopesReader_Expecter) ListOwnerScopes(owner interface{}, types ...interface{}) *ReverseScopesReader_ListOwnerScopes_Call {
+	return &ReverseScopesReader_ListOwnerScopes_Call{Call: _e.mock.On("ListOwnerScopes",
+		append([]interface{}{owner}, types...)...)}
+}
+
+func (_c *ReverseScopesReader_ListOwnerScopes_Call) Run(run func(owner string, types ...aclcore.ScopeType)) *ReverseScopesReader_ListOwnerScopes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeType)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *ReverseScopesReader_ListOwnerScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ReverseScopesReader_ListOwnerScopes_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ReverseScopesReader_ListOwnerScopes_Call) RunAndReturn(run func(string, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ReverseScopesReader_ListOwnerScopes_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewReverseScopesReader creates a new instance of ReverseScopesReader. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

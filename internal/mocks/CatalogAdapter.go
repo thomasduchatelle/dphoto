@@ -12,6 +12,14 @@ type CatalogAdapter struct {
 	mock.Mock
 }
 
+type CatalogAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *CatalogAdapter) EXPECT() *CatalogAdapter_Expecter {
+	return &CatalogAdapter_Expecter{mock: &_m.Mock}
+}
+
 // AssignIdsToNewMedias provides a mock function with given fields: owner, medias
 func (_m *CatalogAdapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error) {
 	ret := _m.Called(owner, medias)
@@ -40,6 +48,35 @@ func (_m *CatalogAdapter) AssignIdsToNewMedias(owner string, medias []*backup.An
 	}
 
 	return r0, r1
+}
+
+// CatalogAdapter_AssignIdsToNewMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssignIdsToNewMedias'
+type CatalogAdapter_AssignIdsToNewMedias_Call struct {
+	*mock.Call
+}
+
+// AssignIdsToNewMedias is a helper method to define mock.On call
+//   - owner string
+//   - medias []*backup.AnalysedMedia
+func (_e *CatalogAdapter_Expecter) AssignIdsToNewMedias(owner interface{}, medias interface{}) *CatalogAdapter_AssignIdsToNewMedias_Call {
+	return &CatalogAdapter_AssignIdsToNewMedias_Call{Call: _e.mock.On("AssignIdsToNewMedias", owner, medias)}
+}
+
+func (_c *CatalogAdapter_AssignIdsToNewMedias_Call) Run(run func(owner string, medias []*backup.AnalysedMedia)) *CatalogAdapter_AssignIdsToNewMedias_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([]*backup.AnalysedMedia))
+	})
+	return _c
+}
+
+func (_c *CatalogAdapter_AssignIdsToNewMedias_Call) Return(_a0 map[*backup.AnalysedMedia]string, _a1 error) *CatalogAdapter_AssignIdsToNewMedias_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *CatalogAdapter_AssignIdsToNewMedias_Call) RunAndReturn(run func(string, []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error)) *CatalogAdapter_AssignIdsToNewMedias_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetAlbumsTimeline provides a mock function with given fields: owner
@@ -72,6 +109,34 @@ func (_m *CatalogAdapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapte
 	return r0, r1
 }
 
+// CatalogAdapter_GetAlbumsTimeline_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAlbumsTimeline'
+type CatalogAdapter_GetAlbumsTimeline_Call struct {
+	*mock.Call
+}
+
+// GetAlbumsTimeline is a helper method to define mock.On call
+//   - owner string
+func (_e *CatalogAdapter_Expecter) GetAlbumsTimeline(owner interface{}) *CatalogAdapter_GetAlbumsTimeline_Call {
+	return &CatalogAdapter_GetAlbumsTimeline_Call{Call: _e.mock.On("GetAlbumsTimeline", owner)}
+}
+
+func (_c *CatalogAdapter_GetAlbumsTimeline_Call) Run(run func(owner string)) *CatalogAdapter_GetAlbumsTimeline_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *CatalogAdapter_GetAlbumsTimeline_Call) Return(_a0 backup.TimelineAdapter, _a1 error) *CatalogAdapter_GetAlbumsTimeline_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *CatalogAdapter_GetAlbumsTimeline_Call) RunAndReturn(run func(string) (backup.TimelineAdapter, error)) *CatalogAdapter_GetAlbumsTimeline_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // IndexMedias provides a mock function with given fields: owner, requests
 func (_m *CatalogAdapter) IndexMedias(owner string, requests []*backup.CatalogMediaRequest) error {
 	ret := _m.Called(owner, requests)
@@ -88,6 +153,35 @@ func (_m *CatalogAdapter) IndexMedias(owner string, requests []*backup.CatalogMe
 	}
 
 	return r0
+}
+
+// CatalogAdapter_IndexMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IndexMedias'
+type CatalogAdapter_IndexMedias_Call struct {
+	*mock.Call
+}
+
+// IndexMedias is a helper method to define mock.On call
+//   - owner string
+//   - requests []*backup.CatalogMediaRequest
+func (_e *CatalogAdapter_Expecter) IndexMedias(owner interface{}, requests interface{}) *CatalogAdapter_IndexMedias_Call {
+	return &CatalogAdapter_IndexMedias_Call{Call: _e.mock.On("IndexMedias", owner, requests)}
+}
+
+func (_c *CatalogAdapter_IndexMedias_Call) Run(run func(owner string, requests []*backup.CatalogMediaRequest)) *CatalogAdapter_IndexMedias_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([]*backup.CatalogMediaRequest))
+	})
+	return _c
+}
+
+func (_c *CatalogAdapter_IndexMedias_Call) Return(_a0 error) *CatalogAdapter_IndexMedias_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CatalogAdapter_IndexMedias_Call) RunAndReturn(run func(string, []*backup.CatalogMediaRequest) error) *CatalogAdapter_IndexMedias_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewCatalogAdapter creates a new instance of CatalogAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

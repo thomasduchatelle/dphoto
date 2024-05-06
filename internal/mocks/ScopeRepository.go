@@ -13,6 +13,14 @@ type ScopeRepository struct {
 	mock.Mock
 }
 
+type ScopeRepository_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ScopeRepository) EXPECT() *ScopeRepository_Expecter {
+	return &ScopeRepository_Expecter{mock: &_m.Mock}
+}
+
 // FindScopesById provides a mock function with given fields: ids
 func (_m *ScopeRepository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(ids))
@@ -47,6 +55,41 @@ func (_m *ScopeRepository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Sc
 	}
 
 	return r0, r1
+}
+
+// ScopeRepository_FindScopesById_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindScopesById'
+type ScopeRepository_FindScopesById_Call struct {
+	*mock.Call
+}
+
+// FindScopesById is a helper method to define mock.On call
+//   - ids ...aclcore.ScopeId
+func (_e *ScopeRepository_Expecter) FindScopesById(ids ...interface{}) *ScopeRepository_FindScopesById_Call {
+	return &ScopeRepository_FindScopesById_Call{Call: _e.mock.On("FindScopesById",
+		append([]interface{}{}, ids...)...)}
+}
+
+func (_c *ScopeRepository_FindScopesById_Call) Run(run func(ids ...aclcore.ScopeId)) *ScopeRepository_FindScopesById_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeId, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeId)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *ScopeRepository_FindScopesById_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopeRepository_FindScopesById_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ScopeRepository_FindScopesById_Call) RunAndReturn(run func(...aclcore.ScopeId) ([]*aclcore.Scope, error)) *ScopeRepository_FindScopesById_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ListOwnerScopes provides a mock function with given fields: owner, types
@@ -86,6 +129,42 @@ func (_m *ScopeRepository) ListOwnerScopes(owner string, types ...aclcore.ScopeT
 	return r0, r1
 }
 
+// ScopeRepository_ListOwnerScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOwnerScopes'
+type ScopeRepository_ListOwnerScopes_Call struct {
+	*mock.Call
+}
+
+// ListOwnerScopes is a helper method to define mock.On call
+//   - owner string
+//   - types ...aclcore.ScopeType
+func (_e *ScopeRepository_Expecter) ListOwnerScopes(owner interface{}, types ...interface{}) *ScopeRepository_ListOwnerScopes_Call {
+	return &ScopeRepository_ListOwnerScopes_Call{Call: _e.mock.On("ListOwnerScopes",
+		append([]interface{}{owner}, types...)...)}
+}
+
+func (_c *ScopeRepository_ListOwnerScopes_Call) Run(run func(owner string, types ...aclcore.ScopeType)) *ScopeRepository_ListOwnerScopes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeType)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *ScopeRepository_ListOwnerScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopeRepository_ListOwnerScopes_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ScopeRepository_ListOwnerScopes_Call) RunAndReturn(run func(string, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ScopeRepository_ListOwnerScopes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListUserScopes provides a mock function with given fields: email, types
 func (_m *ScopeRepository) ListUserScopes(email string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))
@@ -121,6 +200,42 @@ func (_m *ScopeRepository) ListUserScopes(email string, types ...aclcore.ScopeTy
 	}
 
 	return r0, r1
+}
+
+// ScopeRepository_ListUserScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUserScopes'
+type ScopeRepository_ListUserScopes_Call struct {
+	*mock.Call
+}
+
+// ListUserScopes is a helper method to define mock.On call
+//   - email string
+//   - types ...aclcore.ScopeType
+func (_e *ScopeRepository_Expecter) ListUserScopes(email interface{}, types ...interface{}) *ScopeRepository_ListUserScopes_Call {
+	return &ScopeRepository_ListUserScopes_Call{Call: _e.mock.On("ListUserScopes",
+		append([]interface{}{email}, types...)...)}
+}
+
+func (_c *ScopeRepository_ListUserScopes_Call) Run(run func(email string, types ...aclcore.ScopeType)) *ScopeRepository_ListUserScopes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeType)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *ScopeRepository_ListUserScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopeRepository_ListUserScopes_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ScopeRepository_ListUserScopes_Call) RunAndReturn(run func(string, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ScopeRepository_ListUserScopes_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewScopeRepository creates a new instance of ScopeRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

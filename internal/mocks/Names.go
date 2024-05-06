@@ -9,6 +9,14 @@ type Names struct {
 	mock.Mock
 }
 
+type Names_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *Names) EXPECT() *Names_Expecter {
+	return &Names_Expecter{mock: &_m.Mock}
+}
+
 // DynamoDBMainTable provides a mock function with given fields:
 func (_m *Names) DynamoDBMainTable() string {
 	ret := _m.Called()
@@ -25,6 +33,33 @@ func (_m *Names) DynamoDBMainTable() string {
 	}
 
 	return r0
+}
+
+// Names_DynamoDBMainTable_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DynamoDBMainTable'
+type Names_DynamoDBMainTable_Call struct {
+	*mock.Call
+}
+
+// DynamoDBMainTable is a helper method to define mock.On call
+func (_e *Names_Expecter) DynamoDBMainTable() *Names_DynamoDBMainTable_Call {
+	return &Names_DynamoDBMainTable_Call{Call: _e.mock.On("DynamoDBMainTable")}
+}
+
+func (_c *Names_DynamoDBMainTable_Call) Run(run func()) *Names_DynamoDBMainTable_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Names_DynamoDBMainTable_Call) Return(_a0 string) *Names_DynamoDBMainTable_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Names_DynamoDBMainTable_Call) RunAndReturn(run func() string) *Names_DynamoDBMainTable_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewNames creates a new instance of Names. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

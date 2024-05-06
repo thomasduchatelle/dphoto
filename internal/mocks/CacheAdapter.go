@@ -14,6 +14,14 @@ type CacheAdapter struct {
 	mock.Mock
 }
 
+type CacheAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *CacheAdapter) EXPECT() *CacheAdapter_Expecter {
+	return &CacheAdapter_Expecter{mock: &_m.Mock}
+}
+
 // Get provides a mock function with given fields: key
 func (_m *CacheAdapter) Get(key string) (io.ReadCloser, int, string, error) {
 	ret := _m.Called(key)
@@ -58,6 +66,34 @@ func (_m *CacheAdapter) Get(key string) (io.ReadCloser, int, string, error) {
 	return r0, r1, r2, r3
 }
 
+// CacheAdapter_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type CacheAdapter_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - key string
+func (_e *CacheAdapter_Expecter) Get(key interface{}) *CacheAdapter_Get_Call {
+	return &CacheAdapter_Get_Call{Call: _e.mock.On("Get", key)}
+}
+
+func (_c *CacheAdapter_Get_Call) Run(run func(key string)) *CacheAdapter_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *CacheAdapter_Get_Call) Return(_a0 io.ReadCloser, _a1 int, _a2 string, _a3 error) *CacheAdapter_Get_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3)
+	return _c
+}
+
+func (_c *CacheAdapter_Get_Call) RunAndReturn(run func(string) (io.ReadCloser, int, string, error)) *CacheAdapter_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Put provides a mock function with given fields: key, mediaType, content
 func (_m *CacheAdapter) Put(key string, mediaType string, content io.Reader) error {
 	ret := _m.Called(key, mediaType, content)
@@ -74,6 +110,36 @@ func (_m *CacheAdapter) Put(key string, mediaType string, content io.Reader) err
 	}
 
 	return r0
+}
+
+// CacheAdapter_Put_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Put'
+type CacheAdapter_Put_Call struct {
+	*mock.Call
+}
+
+// Put is a helper method to define mock.On call
+//   - key string
+//   - mediaType string
+//   - content io.Reader
+func (_e *CacheAdapter_Expecter) Put(key interface{}, mediaType interface{}, content interface{}) *CacheAdapter_Put_Call {
+	return &CacheAdapter_Put_Call{Call: _e.mock.On("Put", key, mediaType, content)}
+}
+
+func (_c *CacheAdapter_Put_Call) Run(run func(key string, mediaType string, content io.Reader)) *CacheAdapter_Put_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(io.Reader))
+	})
+	return _c
+}
+
+func (_c *CacheAdapter_Put_Call) Return(_a0 error) *CacheAdapter_Put_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CacheAdapter_Put_Call) RunAndReturn(run func(string, string, io.Reader) error) *CacheAdapter_Put_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SignedURL provides a mock function with given fields: key, duration
@@ -104,6 +170,35 @@ func (_m *CacheAdapter) SignedURL(key string, duration time.Duration) (string, e
 	return r0, r1
 }
 
+// CacheAdapter_SignedURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignedURL'
+type CacheAdapter_SignedURL_Call struct {
+	*mock.Call
+}
+
+// SignedURL is a helper method to define mock.On call
+//   - key string
+//   - duration time.Duration
+func (_e *CacheAdapter_Expecter) SignedURL(key interface{}, duration interface{}) *CacheAdapter_SignedURL_Call {
+	return &CacheAdapter_SignedURL_Call{Call: _e.mock.On("SignedURL", key, duration)}
+}
+
+func (_c *CacheAdapter_SignedURL_Call) Run(run func(key string, duration time.Duration)) *CacheAdapter_SignedURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(time.Duration))
+	})
+	return _c
+}
+
+func (_c *CacheAdapter_SignedURL_Call) Return(_a0 string, _a1 error) *CacheAdapter_SignedURL_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *CacheAdapter_SignedURL_Call) RunAndReturn(run func(string, time.Duration) (string, error)) *CacheAdapter_SignedURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // WalkCacheByPrefix provides a mock function with given fields: prefix, observer
 func (_m *CacheAdapter) WalkCacheByPrefix(prefix string, observer func(string)) error {
 	ret := _m.Called(prefix, observer)
@@ -120,6 +215,35 @@ func (_m *CacheAdapter) WalkCacheByPrefix(prefix string, observer func(string)) 
 	}
 
 	return r0
+}
+
+// CacheAdapter_WalkCacheByPrefix_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WalkCacheByPrefix'
+type CacheAdapter_WalkCacheByPrefix_Call struct {
+	*mock.Call
+}
+
+// WalkCacheByPrefix is a helper method to define mock.On call
+//   - prefix string
+//   - observer func(string)
+func (_e *CacheAdapter_Expecter) WalkCacheByPrefix(prefix interface{}, observer interface{}) *CacheAdapter_WalkCacheByPrefix_Call {
+	return &CacheAdapter_WalkCacheByPrefix_Call{Call: _e.mock.On("WalkCacheByPrefix", prefix, observer)}
+}
+
+func (_c *CacheAdapter_WalkCacheByPrefix_Call) Run(run func(prefix string, observer func(string))) *CacheAdapter_WalkCacheByPrefix_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(func(string)))
+	})
+	return _c
+}
+
+func (_c *CacheAdapter_WalkCacheByPrefix_Call) Return(_a0 error) *CacheAdapter_WalkCacheByPrefix_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CacheAdapter_WalkCacheByPrefix_Call) RunAndReturn(run func(string, func(string)) error) *CacheAdapter_WalkCacheByPrefix_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewCacheAdapter creates a new instance of CacheAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

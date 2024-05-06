@@ -12,6 +12,14 @@ type runnerPublisher struct {
 	mock.Mock
 }
 
+type runnerPublisher_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *runnerPublisher) EXPECT() *runnerPublisher_Expecter {
+	return &runnerPublisher_Expecter{mock: &_m.Mock}
+}
+
 // Execute provides a mock function with given fields: _a0, _a1
 func (_m *runnerPublisher) Execute(_a0 chan backup.FoundMedia, _a1 chan *backup.ProgressEvent) error {
 	ret := _m.Called(_a0, _a1)
@@ -28,6 +36,35 @@ func (_m *runnerPublisher) Execute(_a0 chan backup.FoundMedia, _a1 chan *backup.
 	}
 
 	return r0
+}
+
+// runnerPublisher_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
+type runnerPublisher_Execute_Call struct {
+	*mock.Call
+}
+
+// Execute is a helper method to define mock.On call
+//   - _a0 chan backup.FoundMedia
+//   - _a1 chan *backup.ProgressEvent
+func (_e *runnerPublisher_Expecter) Execute(_a0 interface{}, _a1 interface{}) *runnerPublisher_Execute_Call {
+	return &runnerPublisher_Execute_Call{Call: _e.mock.On("Execute", _a0, _a1)}
+}
+
+func (_c *runnerPublisher_Execute_Call) Run(run func(_a0 chan backup.FoundMedia, _a1 chan *backup.ProgressEvent)) *runnerPublisher_Execute_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(chan backup.FoundMedia), args[1].(chan *backup.ProgressEvent))
+	})
+	return _c
+}
+
+func (_c *runnerPublisher_Execute_Call) Return(_a0 error) *runnerPublisher_Execute_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *runnerPublisher_Execute_Call) RunAndReturn(run func(chan backup.FoundMedia, chan *backup.ProgressEvent) error) *runnerPublisher_Execute_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // newRunnerPublisher creates a new instance of runnerPublisher. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

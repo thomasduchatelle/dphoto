@@ -13,6 +13,14 @@ type TimelineAdapter struct {
 	mock.Mock
 }
 
+type TimelineAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *TimelineAdapter) EXPECT() *TimelineAdapter_Expecter {
+	return &TimelineAdapter_Expecter{mock: &_m.Mock}
+}
+
 // FindAlbum provides a mock function with given fields: dateTime
 func (_m *TimelineAdapter) FindAlbum(dateTime time.Time) (string, bool, error) {
 	ret := _m.Called(dateTime)
@@ -48,6 +56,34 @@ func (_m *TimelineAdapter) FindAlbum(dateTime time.Time) (string, bool, error) {
 	return r0, r1, r2
 }
 
+// TimelineAdapter_FindAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAlbum'
+type TimelineAdapter_FindAlbum_Call struct {
+	*mock.Call
+}
+
+// FindAlbum is a helper method to define mock.On call
+//   - dateTime time.Time
+func (_e *TimelineAdapter_Expecter) FindAlbum(dateTime interface{}) *TimelineAdapter_FindAlbum_Call {
+	return &TimelineAdapter_FindAlbum_Call{Call: _e.mock.On("FindAlbum", dateTime)}
+}
+
+func (_c *TimelineAdapter_FindAlbum_Call) Run(run func(dateTime time.Time)) *TimelineAdapter_FindAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(time.Time))
+	})
+	return _c
+}
+
+func (_c *TimelineAdapter_FindAlbum_Call) Return(folderName string, exists bool, err error) *TimelineAdapter_FindAlbum_Call {
+	_c.Call.Return(folderName, exists, err)
+	return _c
+}
+
+func (_c *TimelineAdapter_FindAlbum_Call) RunAndReturn(run func(time.Time) (string, bool, error)) *TimelineAdapter_FindAlbum_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindOrCreateAlbum provides a mock function with given fields: mediaTime
 func (_m *TimelineAdapter) FindOrCreateAlbum(mediaTime time.Time) (string, bool, error) {
 	ret := _m.Called(mediaTime)
@@ -81,6 +117,34 @@ func (_m *TimelineAdapter) FindOrCreateAlbum(mediaTime time.Time) (string, bool,
 	}
 
 	return r0, r1, r2
+}
+
+// TimelineAdapter_FindOrCreateAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindOrCreateAlbum'
+type TimelineAdapter_FindOrCreateAlbum_Call struct {
+	*mock.Call
+}
+
+// FindOrCreateAlbum is a helper method to define mock.On call
+//   - mediaTime time.Time
+func (_e *TimelineAdapter_Expecter) FindOrCreateAlbum(mediaTime interface{}) *TimelineAdapter_FindOrCreateAlbum_Call {
+	return &TimelineAdapter_FindOrCreateAlbum_Call{Call: _e.mock.On("FindOrCreateAlbum", mediaTime)}
+}
+
+func (_c *TimelineAdapter_FindOrCreateAlbum_Call) Run(run func(mediaTime time.Time)) *TimelineAdapter_FindOrCreateAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(time.Time))
+	})
+	return _c
+}
+
+func (_c *TimelineAdapter_FindOrCreateAlbum_Call) Return(folderName string, created bool, err error) *TimelineAdapter_FindOrCreateAlbum_Call {
+	_c.Call.Return(folderName, created, err)
+	return _c
+}
+
+func (_c *TimelineAdapter_FindOrCreateAlbum_Call) RunAndReturn(run func(time.Time) (string, bool, error)) *TimelineAdapter_FindOrCreateAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewTimelineAdapter creates a new instance of TimelineAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

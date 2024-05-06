@@ -9,6 +9,14 @@ type ARepositoryAdapter struct {
 	mock.Mock
 }
 
+type ARepositoryAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ARepositoryAdapter) EXPECT() *ARepositoryAdapter_Expecter {
+	return &ARepositoryAdapter_Expecter{mock: &_m.Mock}
+}
+
 // AddLocation provides a mock function with given fields: owner, id, key
 func (_m *ARepositoryAdapter) AddLocation(owner string, id string, key string) error {
 	ret := _m.Called(owner, id, key)
@@ -25,6 +33,36 @@ func (_m *ARepositoryAdapter) AddLocation(owner string, id string, key string) e
 	}
 
 	return r0
+}
+
+// ARepositoryAdapter_AddLocation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddLocation'
+type ARepositoryAdapter_AddLocation_Call struct {
+	*mock.Call
+}
+
+// AddLocation is a helper method to define mock.On call
+//   - owner string
+//   - id string
+//   - key string
+func (_e *ARepositoryAdapter_Expecter) AddLocation(owner interface{}, id interface{}, key interface{}) *ARepositoryAdapter_AddLocation_Call {
+	return &ARepositoryAdapter_AddLocation_Call{Call: _e.mock.On("AddLocation", owner, id, key)}
+}
+
+func (_c *ARepositoryAdapter_AddLocation_Call) Run(run func(owner string, id string, key string)) *ARepositoryAdapter_AddLocation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *ARepositoryAdapter_AddLocation_Call) Return(_a0 error) *ARepositoryAdapter_AddLocation_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ARepositoryAdapter_AddLocation_Call) RunAndReturn(run func(string, string, string) error) *ARepositoryAdapter_AddLocation_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindById provides a mock function with given fields: owner, id
@@ -53,6 +91,35 @@ func (_m *ARepositoryAdapter) FindById(owner string, id string) (string, error) 
 	}
 
 	return r0, r1
+}
+
+// ARepositoryAdapter_FindById_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindById'
+type ARepositoryAdapter_FindById_Call struct {
+	*mock.Call
+}
+
+// FindById is a helper method to define mock.On call
+//   - owner string
+//   - id string
+func (_e *ARepositoryAdapter_Expecter) FindById(owner interface{}, id interface{}) *ARepositoryAdapter_FindById_Call {
+	return &ARepositoryAdapter_FindById_Call{Call: _e.mock.On("FindById", owner, id)}
+}
+
+func (_c *ARepositoryAdapter_FindById_Call) Run(run func(owner string, id string)) *ARepositoryAdapter_FindById_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *ARepositoryAdapter_FindById_Call) Return(_a0 string, _a1 error) *ARepositoryAdapter_FindById_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ARepositoryAdapter_FindById_Call) RunAndReturn(run func(string, string) (string, error)) *ARepositoryAdapter_FindById_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindByIds provides a mock function with given fields: owner, ids
@@ -85,6 +152,35 @@ func (_m *ARepositoryAdapter) FindByIds(owner string, ids []string) (map[string]
 	return r0, r1
 }
 
+// ARepositoryAdapter_FindByIds_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByIds'
+type ARepositoryAdapter_FindByIds_Call struct {
+	*mock.Call
+}
+
+// FindByIds is a helper method to define mock.On call
+//   - owner string
+//   - ids []string
+func (_e *ARepositoryAdapter_Expecter) FindByIds(owner interface{}, ids interface{}) *ARepositoryAdapter_FindByIds_Call {
+	return &ARepositoryAdapter_FindByIds_Call{Call: _e.mock.On("FindByIds", owner, ids)}
+}
+
+func (_c *ARepositoryAdapter_FindByIds_Call) Run(run func(owner string, ids []string)) *ARepositoryAdapter_FindByIds_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([]string))
+	})
+	return _c
+}
+
+func (_c *ARepositoryAdapter_FindByIds_Call) Return(_a0 map[string]string, _a1 error) *ARepositoryAdapter_FindByIds_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ARepositoryAdapter_FindByIds_Call) RunAndReturn(run func(string, []string) (map[string]string, error)) *ARepositoryAdapter_FindByIds_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindIdsFromKeyPrefix provides a mock function with given fields: keyPrefix
 func (_m *ARepositoryAdapter) FindIdsFromKeyPrefix(keyPrefix string) (map[string]string, error) {
 	ret := _m.Called(keyPrefix)
@@ -115,6 +211,34 @@ func (_m *ARepositoryAdapter) FindIdsFromKeyPrefix(keyPrefix string) (map[string
 	return r0, r1
 }
 
+// ARepositoryAdapter_FindIdsFromKeyPrefix_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindIdsFromKeyPrefix'
+type ARepositoryAdapter_FindIdsFromKeyPrefix_Call struct {
+	*mock.Call
+}
+
+// FindIdsFromKeyPrefix is a helper method to define mock.On call
+//   - keyPrefix string
+func (_e *ARepositoryAdapter_Expecter) FindIdsFromKeyPrefix(keyPrefix interface{}) *ARepositoryAdapter_FindIdsFromKeyPrefix_Call {
+	return &ARepositoryAdapter_FindIdsFromKeyPrefix_Call{Call: _e.mock.On("FindIdsFromKeyPrefix", keyPrefix)}
+}
+
+func (_c *ARepositoryAdapter_FindIdsFromKeyPrefix_Call) Run(run func(keyPrefix string)) *ARepositoryAdapter_FindIdsFromKeyPrefix_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *ARepositoryAdapter_FindIdsFromKeyPrefix_Call) Return(_a0 map[string]string, _a1 error) *ARepositoryAdapter_FindIdsFromKeyPrefix_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ARepositoryAdapter_FindIdsFromKeyPrefix_Call) RunAndReturn(run func(string) (map[string]string, error)) *ARepositoryAdapter_FindIdsFromKeyPrefix_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateLocations provides a mock function with given fields: owner, locations
 func (_m *ARepositoryAdapter) UpdateLocations(owner string, locations map[string]string) error {
 	ret := _m.Called(owner, locations)
@@ -131,6 +255,35 @@ func (_m *ARepositoryAdapter) UpdateLocations(owner string, locations map[string
 	}
 
 	return r0
+}
+
+// ARepositoryAdapter_UpdateLocations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateLocations'
+type ARepositoryAdapter_UpdateLocations_Call struct {
+	*mock.Call
+}
+
+// UpdateLocations is a helper method to define mock.On call
+//   - owner string
+//   - locations map[string]string
+func (_e *ARepositoryAdapter_Expecter) UpdateLocations(owner interface{}, locations interface{}) *ARepositoryAdapter_UpdateLocations_Call {
+	return &ARepositoryAdapter_UpdateLocations_Call{Call: _e.mock.On("UpdateLocations", owner, locations)}
+}
+
+func (_c *ARepositoryAdapter_UpdateLocations_Call) Run(run func(owner string, locations map[string]string)) *ARepositoryAdapter_UpdateLocations_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(map[string]string))
+	})
+	return _c
+}
+
+func (_c *ARepositoryAdapter_UpdateLocations_Call) Return(_a0 error) *ARepositoryAdapter_UpdateLocations_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ARepositoryAdapter_UpdateLocations_Call) RunAndReturn(run func(string, map[string]string) error) *ARepositoryAdapter_UpdateLocations_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewARepositoryAdapter creates a new instance of ARepositoryAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

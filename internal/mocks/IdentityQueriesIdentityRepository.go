@@ -12,6 +12,14 @@ type IdentityQueriesIdentityRepository struct {
 	mock.Mock
 }
 
+type IdentityQueriesIdentityRepository_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *IdentityQueriesIdentityRepository) EXPECT() *IdentityQueriesIdentityRepository_Expecter {
+	return &IdentityQueriesIdentityRepository_Expecter{mock: &_m.Mock}
+}
+
 // FindIdentities provides a mock function with given fields: emails
 func (_m *IdentityQueriesIdentityRepository) FindIdentities(emails []string) ([]*aclcore.Identity, error) {
 	ret := _m.Called(emails)
@@ -40,6 +48,34 @@ func (_m *IdentityQueriesIdentityRepository) FindIdentities(emails []string) ([]
 	}
 
 	return r0, r1
+}
+
+// IdentityQueriesIdentityRepository_FindIdentities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindIdentities'
+type IdentityQueriesIdentityRepository_FindIdentities_Call struct {
+	*mock.Call
+}
+
+// FindIdentities is a helper method to define mock.On call
+//   - emails []string
+func (_e *IdentityQueriesIdentityRepository_Expecter) FindIdentities(emails interface{}) *IdentityQueriesIdentityRepository_FindIdentities_Call {
+	return &IdentityQueriesIdentityRepository_FindIdentities_Call{Call: _e.mock.On("FindIdentities", emails)}
+}
+
+func (_c *IdentityQueriesIdentityRepository_FindIdentities_Call) Run(run func(emails []string)) *IdentityQueriesIdentityRepository_FindIdentities_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]string))
+	})
+	return _c
+}
+
+func (_c *IdentityQueriesIdentityRepository_FindIdentities_Call) Return(_a0 []*aclcore.Identity, _a1 error) *IdentityQueriesIdentityRepository_FindIdentities_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IdentityQueriesIdentityRepository_FindIdentities_Call) RunAndReturn(run func([]string) ([]*aclcore.Identity, error)) *IdentityQueriesIdentityRepository_FindIdentities_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewIdentityQueriesIdentityRepository creates a new instance of IdentityQueriesIdentityRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

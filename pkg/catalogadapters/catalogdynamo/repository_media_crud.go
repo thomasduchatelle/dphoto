@@ -32,7 +32,7 @@ func (r *Repository) InsertMedias(ctx context.Context, owner catalog.Owner, medi
 }
 
 func (r *Repository) FindMedias(ctx context.Context, request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
-	queries, err := newMediaQueryBuilders(r.table, request, "")
+	queries, err := newMediaQueryBuilders(r.table, request, "", types.SelectAllAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (r *Repository) FindMediaCurrentAlbum(ctx context.Context, owner catalog.Ow
 }
 
 func (r *Repository) FindMediaIds(ctx context.Context, request *catalog.FindMediaRequest) ([]catalog.MediaId, error) {
-	queries, err := newMediaQueryBuilders(r.table, request, "Id")
+	queries, err := newMediaQueryBuilders(r.table, request, "Id", types.SelectAllAttributes)
 	if err != nil {
 		return nil, err
 	}

@@ -17,6 +17,14 @@ type FoundMedia struct {
 	mock.Mock
 }
 
+type FoundMedia_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *FoundMedia) EXPECT() *FoundMedia_Expecter {
+	return &FoundMedia_Expecter{mock: &_m.Mock}
+}
+
 // LastModification provides a mock function with given fields:
 func (_m *FoundMedia) LastModification() time.Time {
 	ret := _m.Called()
@@ -35,6 +43,33 @@ func (_m *FoundMedia) LastModification() time.Time {
 	return r0
 }
 
+// FoundMedia_LastModification_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LastModification'
+type FoundMedia_LastModification_Call struct {
+	*mock.Call
+}
+
+// LastModification is a helper method to define mock.On call
+func (_e *FoundMedia_Expecter) LastModification() *FoundMedia_LastModification_Call {
+	return &FoundMedia_LastModification_Call{Call: _e.mock.On("LastModification")}
+}
+
+func (_c *FoundMedia_LastModification_Call) Run(run func()) *FoundMedia_LastModification_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *FoundMedia_LastModification_Call) Return(_a0 time.Time) *FoundMedia_LastModification_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *FoundMedia_LastModification_Call) RunAndReturn(run func() time.Time) *FoundMedia_LastModification_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MediaPath provides a mock function with given fields:
 func (_m *FoundMedia) MediaPath() backup.MediaPath {
 	ret := _m.Called()
@@ -51,6 +86,33 @@ func (_m *FoundMedia) MediaPath() backup.MediaPath {
 	}
 
 	return r0
+}
+
+// FoundMedia_MediaPath_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MediaPath'
+type FoundMedia_MediaPath_Call struct {
+	*mock.Call
+}
+
+// MediaPath is a helper method to define mock.On call
+func (_e *FoundMedia_Expecter) MediaPath() *FoundMedia_MediaPath_Call {
+	return &FoundMedia_MediaPath_Call{Call: _e.mock.On("MediaPath")}
+}
+
+func (_c *FoundMedia_MediaPath_Call) Run(run func()) *FoundMedia_MediaPath_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *FoundMedia_MediaPath_Call) Return(_a0 backup.MediaPath) *FoundMedia_MediaPath_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *FoundMedia_MediaPath_Call) RunAndReturn(run func() backup.MediaPath) *FoundMedia_MediaPath_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ReadMedia provides a mock function with given fields:
@@ -83,6 +145,33 @@ func (_m *FoundMedia) ReadMedia() (io.ReadCloser, error) {
 	return r0, r1
 }
 
+// FoundMedia_ReadMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReadMedia'
+type FoundMedia_ReadMedia_Call struct {
+	*mock.Call
+}
+
+// ReadMedia is a helper method to define mock.On call
+func (_e *FoundMedia_Expecter) ReadMedia() *FoundMedia_ReadMedia_Call {
+	return &FoundMedia_ReadMedia_Call{Call: _e.mock.On("ReadMedia")}
+}
+
+func (_c *FoundMedia_ReadMedia_Call) Run(run func()) *FoundMedia_ReadMedia_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *FoundMedia_ReadMedia_Call) Return(_a0 io.ReadCloser, _a1 error) *FoundMedia_ReadMedia_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *FoundMedia_ReadMedia_Call) RunAndReturn(run func() (io.ReadCloser, error)) *FoundMedia_ReadMedia_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Size provides a mock function with given fields:
 func (_m *FoundMedia) Size() int {
 	ret := _m.Called()
@@ -101,6 +190,33 @@ func (_m *FoundMedia) Size() int {
 	return r0
 }
 
+// FoundMedia_Size_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Size'
+type FoundMedia_Size_Call struct {
+	*mock.Call
+}
+
+// Size is a helper method to define mock.On call
+func (_e *FoundMedia_Expecter) Size() *FoundMedia_Size_Call {
+	return &FoundMedia_Size_Call{Call: _e.mock.On("Size")}
+}
+
+func (_c *FoundMedia_Size_Call) Run(run func()) *FoundMedia_Size_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *FoundMedia_Size_Call) Return(_a0 int) *FoundMedia_Size_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *FoundMedia_Size_Call) RunAndReturn(run func() int) *FoundMedia_Size_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // String provides a mock function with given fields:
 func (_m *FoundMedia) String() string {
 	ret := _m.Called()
@@ -117,6 +233,33 @@ func (_m *FoundMedia) String() string {
 	}
 
 	return r0
+}
+
+// FoundMedia_String_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'String'
+type FoundMedia_String_Call struct {
+	*mock.Call
+}
+
+// String is a helper method to define mock.On call
+func (_e *FoundMedia_Expecter) String() *FoundMedia_String_Call {
+	return &FoundMedia_String_Call{Call: _e.mock.On("String")}
+}
+
+func (_c *FoundMedia_String_Call) Run(run func()) *FoundMedia_String_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *FoundMedia_String_Call) Return(_a0 string) *FoundMedia_String_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *FoundMedia_String_Call) RunAndReturn(run func() string) *FoundMedia_String_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewFoundMedia creates a new instance of FoundMedia. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

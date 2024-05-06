@@ -12,6 +12,14 @@ type BArchiveAdapter struct {
 	mock.Mock
 }
 
+type BArchiveAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *BArchiveAdapter) EXPECT() *BArchiveAdapter_Expecter {
+	return &BArchiveAdapter_Expecter{mock: &_m.Mock}
+}
+
 // ArchiveMedia provides a mock function with given fields: owner, media
 func (_m *BArchiveAdapter) ArchiveMedia(owner string, media *backup.BackingUpMediaRequest) (string, error) {
 	ret := _m.Called(owner, media)
@@ -38,6 +46,35 @@ func (_m *BArchiveAdapter) ArchiveMedia(owner string, media *backup.BackingUpMed
 	}
 
 	return r0, r1
+}
+
+// BArchiveAdapter_ArchiveMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ArchiveMedia'
+type BArchiveAdapter_ArchiveMedia_Call struct {
+	*mock.Call
+}
+
+// ArchiveMedia is a helper method to define mock.On call
+//   - owner string
+//   - media *backup.BackingUpMediaRequest
+func (_e *BArchiveAdapter_Expecter) ArchiveMedia(owner interface{}, media interface{}) *BArchiveAdapter_ArchiveMedia_Call {
+	return &BArchiveAdapter_ArchiveMedia_Call{Call: _e.mock.On("ArchiveMedia", owner, media)}
+}
+
+func (_c *BArchiveAdapter_ArchiveMedia_Call) Run(run func(owner string, media *backup.BackingUpMediaRequest)) *BArchiveAdapter_ArchiveMedia_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(*backup.BackingUpMediaRequest))
+	})
+	return _c
+}
+
+func (_c *BArchiveAdapter_ArchiveMedia_Call) Return(_a0 string, _a1 error) *BArchiveAdapter_ArchiveMedia_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *BArchiveAdapter_ArchiveMedia_Call) RunAndReturn(run func(string, *backup.BackingUpMediaRequest) (string, error)) *BArchiveAdapter_ArchiveMedia_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewBArchiveAdapter creates a new instance of BArchiveAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

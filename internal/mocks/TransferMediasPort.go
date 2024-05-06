@@ -15,6 +15,14 @@ type TransferMediasPort struct {
 	mock.Mock
 }
 
+type TransferMediasPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *TransferMediasPort) EXPECT() *TransferMediasPort_Expecter {
+	return &TransferMediasPort_Expecter{mock: &_m.Mock}
+}
+
 // TransferMediasFromRecords provides a mock function with given fields: ctx, records
 func (_m *TransferMediasPort) TransferMediasFromRecords(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
 	ret := _m.Called(ctx, records)
@@ -43,6 +51,35 @@ func (_m *TransferMediasPort) TransferMediasFromRecords(ctx context.Context, rec
 	}
 
 	return r0, r1
+}
+
+// TransferMediasPort_TransferMediasFromRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransferMediasFromRecords'
+type TransferMediasPort_TransferMediasFromRecords_Call struct {
+	*mock.Call
+}
+
+// TransferMediasFromRecords is a helper method to define mock.On call
+//   - ctx context.Context
+//   - records catalog.MediaTransferRecords
+func (_e *TransferMediasPort_Expecter) TransferMediasFromRecords(ctx interface{}, records interface{}) *TransferMediasPort_TransferMediasFromRecords_Call {
+	return &TransferMediasPort_TransferMediasFromRecords_Call{Call: _e.mock.On("TransferMediasFromRecords", ctx, records)}
+}
+
+func (_c *TransferMediasPort_TransferMediasFromRecords_Call) Run(run func(ctx context.Context, records catalog.MediaTransferRecords)) *TransferMediasPort_TransferMediasFromRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.MediaTransferRecords))
+	})
+	return _c
+}
+
+func (_c *TransferMediasPort_TransferMediasFromRecords_Call) Return(_a0 catalog.TransferredMedias, _a1 error) *TransferMediasPort_TransferMediasFromRecords_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TransferMediasPort_TransferMediasFromRecords_Call) RunAndReturn(run func(context.Context, catalog.MediaTransferRecords) (catalog.TransferredMedias, error)) *TransferMediasPort_TransferMediasFromRecords_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewTransferMediasPort creates a new instance of TransferMediasPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

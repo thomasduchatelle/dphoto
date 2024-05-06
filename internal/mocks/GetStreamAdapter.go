@@ -17,6 +17,14 @@ type GetStreamAdapter struct {
 	mock.Mock
 }
 
+type GetStreamAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *GetStreamAdapter) EXPECT() *GetStreamAdapter_Expecter {
+	return &GetStreamAdapter_Expecter{mock: &_m.Mock}
+}
+
 // BatchGet provides a mock function with given fields: ctx, key
 func (_m *GetStreamAdapter) BatchGet(ctx context.Context, key []map[string]types.AttributeValue) (*dynamodb.BatchGetItemOutput, error) {
 	ret := _m.Called(ctx, key)
@@ -45,6 +53,35 @@ func (_m *GetStreamAdapter) BatchGet(ctx context.Context, key []map[string]types
 	}
 
 	return r0, r1
+}
+
+// GetStreamAdapter_BatchGet_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchGet'
+type GetStreamAdapter_BatchGet_Call struct {
+	*mock.Call
+}
+
+// BatchGet is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key []map[string]types.AttributeValue
+func (_e *GetStreamAdapter_Expecter) BatchGet(ctx interface{}, key interface{}) *GetStreamAdapter_BatchGet_Call {
+	return &GetStreamAdapter_BatchGet_Call{Call: _e.mock.On("BatchGet", ctx, key)}
+}
+
+func (_c *GetStreamAdapter_BatchGet_Call) Run(run func(ctx context.Context, key []map[string]types.AttributeValue)) *GetStreamAdapter_BatchGet_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]map[string]types.AttributeValue))
+	})
+	return _c
+}
+
+func (_c *GetStreamAdapter_BatchGet_Call) Return(_a0 *dynamodb.BatchGetItemOutput, _a1 error) *GetStreamAdapter_BatchGet_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *GetStreamAdapter_BatchGet_Call) RunAndReturn(run func(context.Context, []map[string]types.AttributeValue) (*dynamodb.BatchGetItemOutput, error)) *GetStreamAdapter_BatchGet_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewGetStreamAdapter creates a new instance of GetStreamAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

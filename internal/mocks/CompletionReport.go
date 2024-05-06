@@ -12,6 +12,14 @@ type CompletionReport struct {
 	mock.Mock
 }
 
+type CompletionReport_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *CompletionReport) EXPECT() *CompletionReport_Expecter {
+	return &CompletionReport_Expecter{mock: &_m.Mock}
+}
+
 // CountPerAlbum provides a mock function with given fields:
 func (_m *CompletionReport) CountPerAlbum() map[string]*backup.TypeCounter {
 	ret := _m.Called()
@@ -30,6 +38,33 @@ func (_m *CompletionReport) CountPerAlbum() map[string]*backup.TypeCounter {
 	}
 
 	return r0
+}
+
+// CompletionReport_CountPerAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountPerAlbum'
+type CompletionReport_CountPerAlbum_Call struct {
+	*mock.Call
+}
+
+// CountPerAlbum is a helper method to define mock.On call
+func (_e *CompletionReport_Expecter) CountPerAlbum() *CompletionReport_CountPerAlbum_Call {
+	return &CompletionReport_CountPerAlbum_Call{Call: _e.mock.On("CountPerAlbum")}
+}
+
+func (_c *CompletionReport_CountPerAlbum_Call) Run(run func()) *CompletionReport_CountPerAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *CompletionReport_CountPerAlbum_Call) Return(_a0 map[string]*backup.TypeCounter) *CompletionReport_CountPerAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CompletionReport_CountPerAlbum_Call) RunAndReturn(run func() map[string]*backup.TypeCounter) *CompletionReport_CountPerAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewAlbums provides a mock function with given fields:
@@ -52,6 +87,33 @@ func (_m *CompletionReport) NewAlbums() []string {
 	return r0
 }
 
+// CompletionReport_NewAlbums_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NewAlbums'
+type CompletionReport_NewAlbums_Call struct {
+	*mock.Call
+}
+
+// NewAlbums is a helper method to define mock.On call
+func (_e *CompletionReport_Expecter) NewAlbums() *CompletionReport_NewAlbums_Call {
+	return &CompletionReport_NewAlbums_Call{Call: _e.mock.On("NewAlbums")}
+}
+
+func (_c *CompletionReport_NewAlbums_Call) Run(run func()) *CompletionReport_NewAlbums_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *CompletionReport_NewAlbums_Call) Return(_a0 []string) *CompletionReport_NewAlbums_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CompletionReport_NewAlbums_Call) RunAndReturn(run func() []string) *CompletionReport_NewAlbums_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Skipped provides a mock function with given fields:
 func (_m *CompletionReport) Skipped() backup.MediaCounter {
 	ret := _m.Called()
@@ -68,6 +130,33 @@ func (_m *CompletionReport) Skipped() backup.MediaCounter {
 	}
 
 	return r0
+}
+
+// CompletionReport_Skipped_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Skipped'
+type CompletionReport_Skipped_Call struct {
+	*mock.Call
+}
+
+// Skipped is a helper method to define mock.On call
+func (_e *CompletionReport_Expecter) Skipped() *CompletionReport_Skipped_Call {
+	return &CompletionReport_Skipped_Call{Call: _e.mock.On("Skipped")}
+}
+
+func (_c *CompletionReport_Skipped_Call) Run(run func()) *CompletionReport_Skipped_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *CompletionReport_Skipped_Call) Return(_a0 backup.MediaCounter) *CompletionReport_Skipped_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CompletionReport_Skipped_Call) RunAndReturn(run func() backup.MediaCounter) *CompletionReport_Skipped_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewCompletionReport creates a new instance of CompletionReport. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

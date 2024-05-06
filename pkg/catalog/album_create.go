@@ -18,9 +18,9 @@ type FindAlbumsByOwnerPort interface {
 	FindAlbumsByOwner(ctx context.Context, owner Owner) ([]*Album, error)
 }
 
-type FindAlbumsByOwnerPortFunc func(ctx context.Context, owner Owner) ([]*Album, error)
+type FindAlbumsByOwnerFunc func(ctx context.Context, owner Owner) ([]*Album, error)
 
-func (f FindAlbumsByOwnerPortFunc) FindAlbumsByOwner(ctx context.Context, owner Owner) ([]*Album, error) {
+func (f FindAlbumsByOwnerFunc) FindAlbumsByOwner(ctx context.Context, owner Owner) ([]*Album, error) {
 	return f(ctx, owner)
 }
 
@@ -46,8 +46,23 @@ func (f MoveMediaPortFunc) MoveMedia(ctx context.Context, albumId AlbumId, media
 
 type TransferredMedias map[AlbumId][]MediaId
 
+func (t TransferredMedias) IsEmpty() bool {
+	count := 0
+	for _, ids := range t {
+		count += len(ids)
+	}
+
+	return count == 0
+}
+
 type TransferMediasPort interface {
 	TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
+}
+
+type TransferMediasFunc func(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
+
+func (f TransferMediasFunc) TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error) {
+	return f(ctx, records)
 }
 
 type CreateAlbum struct {
@@ -114,14 +129,13 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) er
 	if err != nil {
 		return err
 	}
-	mutator := NewTimelineMutator(albums)
 
 	err = c.InsertAlbumPort.InsertAlbum(ctx, createdAlbum)
 	if err != nil {
 		return err
 	}
 
-	records, err := mutator.AddNew(createdAlbum)
+	records, err := NewTimelineMutator().AddNew(albums, createdAlbum)
 	if err != nil {
 		return err
 	}

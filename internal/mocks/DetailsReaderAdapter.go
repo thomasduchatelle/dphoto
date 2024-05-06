@@ -15,6 +15,14 @@ type DetailsReaderAdapter struct {
 	mock.Mock
 }
 
+type DetailsReaderAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *DetailsReaderAdapter) EXPECT() *DetailsReaderAdapter_Expecter {
+	return &DetailsReaderAdapter_Expecter{mock: &_m.Mock}
+}
+
 // ReadDetails provides a mock function with given fields: reader, options
 func (_m *DetailsReaderAdapter) ReadDetails(reader io.Reader, options backup.DetailsReaderOptions) (*backup.MediaDetails, error) {
 	ret := _m.Called(reader, options)
@@ -45,6 +53,35 @@ func (_m *DetailsReaderAdapter) ReadDetails(reader io.Reader, options backup.Det
 	return r0, r1
 }
 
+// DetailsReaderAdapter_ReadDetails_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReadDetails'
+type DetailsReaderAdapter_ReadDetails_Call struct {
+	*mock.Call
+}
+
+// ReadDetails is a helper method to define mock.On call
+//   - reader io.Reader
+//   - options backup.DetailsReaderOptions
+func (_e *DetailsReaderAdapter_Expecter) ReadDetails(reader interface{}, options interface{}) *DetailsReaderAdapter_ReadDetails_Call {
+	return &DetailsReaderAdapter_ReadDetails_Call{Call: _e.mock.On("ReadDetails", reader, options)}
+}
+
+func (_c *DetailsReaderAdapter_ReadDetails_Call) Run(run func(reader io.Reader, options backup.DetailsReaderOptions)) *DetailsReaderAdapter_ReadDetails_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(io.Reader), args[1].(backup.DetailsReaderOptions))
+	})
+	return _c
+}
+
+func (_c *DetailsReaderAdapter_ReadDetails_Call) Return(_a0 *backup.MediaDetails, _a1 error) *DetailsReaderAdapter_ReadDetails_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DetailsReaderAdapter_ReadDetails_Call) RunAndReturn(run func(io.Reader, backup.DetailsReaderOptions) (*backup.MediaDetails, error)) *DetailsReaderAdapter_ReadDetails_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Supports provides a mock function with given fields: media, mediaType
 func (_m *DetailsReaderAdapter) Supports(media backup.FoundMedia, mediaType backup.MediaType) bool {
 	ret := _m.Called(media, mediaType)
@@ -61,6 +98,35 @@ func (_m *DetailsReaderAdapter) Supports(media backup.FoundMedia, mediaType back
 	}
 
 	return r0
+}
+
+// DetailsReaderAdapter_Supports_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Supports'
+type DetailsReaderAdapter_Supports_Call struct {
+	*mock.Call
+}
+
+// Supports is a helper method to define mock.On call
+//   - media backup.FoundMedia
+//   - mediaType backup.MediaType
+func (_e *DetailsReaderAdapter_Expecter) Supports(media interface{}, mediaType interface{}) *DetailsReaderAdapter_Supports_Call {
+	return &DetailsReaderAdapter_Supports_Call{Call: _e.mock.On("Supports", media, mediaType)}
+}
+
+func (_c *DetailsReaderAdapter_Supports_Call) Run(run func(media backup.FoundMedia, mediaType backup.MediaType)) *DetailsReaderAdapter_Supports_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(backup.FoundMedia), args[1].(backup.MediaType))
+	})
+	return _c
+}
+
+func (_c *DetailsReaderAdapter_Supports_Call) Return(_a0 bool) *DetailsReaderAdapter_Supports_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DetailsReaderAdapter_Supports_Call) RunAndReturn(run func(backup.FoundMedia, backup.MediaType) bool) *DetailsReaderAdapter_Supports_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewDetailsReaderAdapter creates a new instance of DetailsReaderAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -12,6 +12,14 @@ type runnerUniqueFilter struct {
 	mock.Mock
 }
 
+type runnerUniqueFilter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *runnerUniqueFilter) EXPECT() *runnerUniqueFilter_Expecter {
+	return &runnerUniqueFilter_Expecter{mock: &_m.Mock}
+}
+
 // Execute provides a mock function with given fields: medias, progressChannel
 func (_m *runnerUniqueFilter) Execute(medias *backup.BackingUpMediaRequest, progressChannel chan *backup.ProgressEvent) bool {
 	ret := _m.Called(medias, progressChannel)
@@ -28,6 +36,35 @@ func (_m *runnerUniqueFilter) Execute(medias *backup.BackingUpMediaRequest, prog
 	}
 
 	return r0
+}
+
+// runnerUniqueFilter_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
+type runnerUniqueFilter_Execute_Call struct {
+	*mock.Call
+}
+
+// Execute is a helper method to define mock.On call
+//   - medias *backup.BackingUpMediaRequest
+//   - progressChannel chan *backup.ProgressEvent
+func (_e *runnerUniqueFilter_Expecter) Execute(medias interface{}, progressChannel interface{}) *runnerUniqueFilter_Execute_Call {
+	return &runnerUniqueFilter_Execute_Call{Call: _e.mock.On("Execute", medias, progressChannel)}
+}
+
+func (_c *runnerUniqueFilter_Execute_Call) Run(run func(medias *backup.BackingUpMediaRequest, progressChannel chan *backup.ProgressEvent)) *runnerUniqueFilter_Execute_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*backup.BackingUpMediaRequest), args[1].(chan *backup.ProgressEvent))
+	})
+	return _c
+}
+
+func (_c *runnerUniqueFilter_Execute_Call) Return(_a0 bool) *runnerUniqueFilter_Execute_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *runnerUniqueFilter_Execute_Call) RunAndReturn(run func(*backup.BackingUpMediaRequest, chan *backup.ProgressEvent) bool) *runnerUniqueFilter_Execute_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // newRunnerUniqueFilter creates a new instance of runnerUniqueFilter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

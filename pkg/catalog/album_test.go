@@ -27,52 +27,6 @@ var (
 	myAlbumId = catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/MyAlbum")}
 )
 
-// TODO this test is unreadable ! Should move away from the mocks.
-func TestShouldReassignMediasToOtherAlbumsWhenDeletingAnAlbum(t *testing.T) {
-	a := assert.New(t)
-	mockRepository, mockArchive := mockAdapters(t)
-
-	deletedFolder := catalog.NewFolderName("/Christmas_Holidays")
-	q4 := catalog.NewFolderName("/2020-Q4")
-	q1 := catalog.NewFolderName("/2021-Q1")
-
-	mockRepository.On("FindAlbumsByOwner", mock.Anything, owner).Maybe().Return(catalog.AlbumCollection(), nil)
-	mockRepository.On("DeleteEmptyAlbum", mock.Anything, catalog.AlbumId{Owner: owner, FolderName: deletedFolder}).Return(nil)
-
-	expectTransferredMedias(mockRepository, mockArchive,
-		catalog.NewFindMediaRequest(owner).
-			WithAlbum(deletedFolder).
-			WithinRange(catalog.MustParse(layout, "2020-12-26T00"), catalog.MustParse(layout, "2020-12-31T18")),
-		q4)
-	expectTransferredMedias(mockRepository, mockArchive,
-		catalog.NewFindMediaRequest(owner).
-			WithAlbum(deletedFolder).
-			WithinRange(catalog.MustParse(layout, "2021-01-01T18"), catalog.MustParse(layout, "2021-01-04T00")),
-		q1)
-
-	// side effect - clear-up other assignments that might have been missed
-	expectTransferredMedias(mockRepository, mockArchive,
-		catalog.NewFindMediaRequest(owner).
-			WithAlbum(deletedFolder, q4).
-			WithinRange(catalog.MustParse(layout, "2020-12-18T00"), catalog.MustParse(layout, "2020-12-24T00")),
-		"/Christmas_First_Week")
-	expectTransferredMedias(mockRepository, mockArchive,
-		catalog.NewFindMediaRequest(owner).
-			WithAlbum(deletedFolder, q4, "/Christmas_First_Week").
-			WithinRange(catalog.MustParse(layout, "2020-12-24T00"), catalog.MustParse(layout, "2020-12-26T00")),
-		"/Christmas_Day")
-	expectTransferredMedias(mockRepository, mockArchive,
-		catalog.NewFindMediaRequest(owner).
-			WithAlbum(deletedFolder, q1, q4).
-			WithinRange(catalog.MustParse(layout, "2020-12-31T18"), catalog.MustParse(layout, "2021-01-01T18")),
-		"/New_Year")
-
-	// when
-	err := catalog.DeleteAlbum(catalog.AlbumId{Owner: owner, FolderName: deletedFolder}, false)
-
-	a.NoError(err)
-}
-
 func TestFind_Found(t *testing.T) {
 	a := assert.New(t)
 	mockRepository, _ := mockAdapters(t)

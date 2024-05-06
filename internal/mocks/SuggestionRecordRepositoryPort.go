@@ -12,6 +12,14 @@ type SuggestionRecordRepositoryPort struct {
 	mock.Mock
 }
 
+type SuggestionRecordRepositoryPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *SuggestionRecordRepositoryPort) EXPECT() *SuggestionRecordRepositoryPort_Expecter {
+	return &SuggestionRecordRepositoryPort_Expecter{mock: &_m.Mock}
+}
+
 // Count provides a mock function with given fields:
 func (_m *SuggestionRecordRepositoryPort) Count() int {
 	ret := _m.Called()
@@ -28,6 +36,33 @@ func (_m *SuggestionRecordRepositoryPort) Count() int {
 	}
 
 	return r0
+}
+
+// SuggestionRecordRepositoryPort_Count_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Count'
+type SuggestionRecordRepositoryPort_Count_Call struct {
+	*mock.Call
+}
+
+// Count is a helper method to define mock.On call
+func (_e *SuggestionRecordRepositoryPort_Expecter) Count() *SuggestionRecordRepositoryPort_Count_Call {
+	return &SuggestionRecordRepositoryPort_Count_Call{Call: _e.mock.On("Count")}
+}
+
+func (_c *SuggestionRecordRepositoryPort_Count_Call) Run(run func()) *SuggestionRecordRepositoryPort_Count_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *SuggestionRecordRepositoryPort_Count_Call) Return(_a0 int) *SuggestionRecordRepositoryPort_Count_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *SuggestionRecordRepositoryPort_Count_Call) RunAndReturn(run func() int) *SuggestionRecordRepositoryPort_Count_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindSuggestionRecords provides a mock function with given fields:
@@ -50,6 +85,33 @@ func (_m *SuggestionRecordRepositoryPort) FindSuggestionRecords() []*ui.Suggesti
 	return r0
 }
 
+// SuggestionRecordRepositoryPort_FindSuggestionRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindSuggestionRecords'
+type SuggestionRecordRepositoryPort_FindSuggestionRecords_Call struct {
+	*mock.Call
+}
+
+// FindSuggestionRecords is a helper method to define mock.On call
+func (_e *SuggestionRecordRepositoryPort_Expecter) FindSuggestionRecords() *SuggestionRecordRepositoryPort_FindSuggestionRecords_Call {
+	return &SuggestionRecordRepositoryPort_FindSuggestionRecords_Call{Call: _e.mock.On("FindSuggestionRecords")}
+}
+
+func (_c *SuggestionRecordRepositoryPort_FindSuggestionRecords_Call) Run(run func()) *SuggestionRecordRepositoryPort_FindSuggestionRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *SuggestionRecordRepositoryPort_FindSuggestionRecords_Call) Return(_a0 []*ui.SuggestionRecord) *SuggestionRecordRepositoryPort_FindSuggestionRecords_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *SuggestionRecordRepositoryPort_FindSuggestionRecords_Call) RunAndReturn(run func() []*ui.SuggestionRecord) *SuggestionRecordRepositoryPort_FindSuggestionRecords_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Rejects provides a mock function with given fields:
 func (_m *SuggestionRecordRepositoryPort) Rejects() int {
 	ret := _m.Called()
@@ -66,6 +128,33 @@ func (_m *SuggestionRecordRepositoryPort) Rejects() int {
 	}
 
 	return r0
+}
+
+// SuggestionRecordRepositoryPort_Rejects_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Rejects'
+type SuggestionRecordRepositoryPort_Rejects_Call struct {
+	*mock.Call
+}
+
+// Rejects is a helper method to define mock.On call
+func (_e *SuggestionRecordRepositoryPort_Expecter) Rejects() *SuggestionRecordRepositoryPort_Rejects_Call {
+	return &SuggestionRecordRepositoryPort_Rejects_Call{Call: _e.mock.On("Rejects")}
+}
+
+func (_c *SuggestionRecordRepositoryPort_Rejects_Call) Run(run func()) *SuggestionRecordRepositoryPort_Rejects_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *SuggestionRecordRepositoryPort_Rejects_Call) Return(_a0 int) *SuggestionRecordRepositoryPort_Rejects_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *SuggestionRecordRepositoryPort_Rejects_Call) RunAndReturn(run func() int) *SuggestionRecordRepositoryPort_Rejects_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewSuggestionRecordRepositoryPort creates a new instance of SuggestionRecordRepositoryPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
