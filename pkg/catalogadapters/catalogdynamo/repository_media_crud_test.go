@@ -155,7 +155,7 @@ func (a *MediaCrudTestSuite) preload() error {
 			},
 		},
 	}
-	err = a.repo.InsertMedias(a.owner, a.medias)
+	err = a.repo.InsertMedias(context.TODO(), a.owner, a.medias)
 	a.NoError(err, "failed media initialisation")
 
 	return err
@@ -230,7 +230,7 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 	for _, tt := range tests {
 		var pages [][]string
 
-		medias, err := a.repo.FindMedias(catalog.NewFindMediaRequest(a.owner).WithAlbum(tt.folderName).WithinRange(tt.timeRange.Start, tt.timeRange.End))
+		medias, err := a.repo.FindMedias(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(tt.folderName).WithinRange(tt.timeRange.Start, tt.timeRange.End))
 		if a.NoError(err, tt.name) {
 			pages = append(pages, extractFilenames(tt.folderName, medias))
 
@@ -270,7 +270,7 @@ func (a *MediaCrudTestSuite) TestFindMediaIds() {
 	for _, tt := range tests {
 		var pages [][]catalog.MediaId
 
-		ids, err := a.repo.FindMediaIds(catalog.NewFindMediaRequest(a.owner).WithAlbum(tt.folderName).WithinRange(tt.timeRange.Start, tt.timeRange.End))
+		ids, err := a.repo.FindMediaIds(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(tt.folderName).WithinRange(tt.timeRange.Start, tt.timeRange.End))
 		if a.NoError(err, tt.name) {
 			pages = append(pages, ids)
 
@@ -281,7 +281,7 @@ func (a *MediaCrudTestSuite) TestFindMediaIds() {
 
 func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 	name := "it should find a media with all its details"
-	medias, err := a.repo.FindMedias(catalog.NewFindMediaRequest(a.owner).WithAlbum(a.jan21))
+	medias, err := a.repo.FindMedias(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(a.jan21))
 	if a.NoError(err, name) {
 		a.Len(extractFilenames(a.jan21, medias), 2, name)
 		a.Equal(&catalog.MediaMeta{
@@ -295,7 +295,7 @@ func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 }
 
 func (a *MediaCrudTestSuite) TestDeleteNonEmpty() {
-	err := a.repo.DeleteEmptyAlbum(catalog.AlbumId{Owner: a.owner, FolderName: a.jan21})
+	err := a.repo.DeleteEmptyAlbum(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: a.jan21})
 	a.Equal(catalog.NotEmptyError, err, "it should not delete an album with images in it")
 }
 
@@ -312,7 +312,7 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 		})
 	}
 
-	signatures, err := a.repo.FindExistingSignatures(a.owner, search)
+	signatures, err := a.repo.FindExistingSignatures(context.TODO(), a.owner, search)
 	if a.NoError(err) {
 		a.Empty(signatures, "it should not find any of non-existing signature")
 	} else {
@@ -321,13 +321,13 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 
 	search[42] = exiting[0]
 	search[69] = exiting[1]
-	signatures, err = a.repo.FindExistingSignatures(a.owner, search)
+	signatures, err = a.repo.FindExistingSignatures(context.TODO(), a.owner, search)
 	if a.NoError(err) {
 		a.Equal(exiting, signatures, "it should filter out any non exiting signature to keep the only 2 that exist")
 	}
 
 	search[1] = exiting[1]
-	signatures, err = a.repo.FindExistingSignatures(a.owner, search)
+	signatures, err = a.repo.FindExistingSignatures(context.TODO(), a.owner, search)
 	if a.NoError(err, "it should ignore duplicated keys") {
 		a.Equal(exiting, signatures, "it should ignore duplicated keys")
 	}
@@ -378,7 +378,7 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 	if !assert.NoError(a.T(), err, "failed album initialisation") {
 		assert.FailNow(a.T(), err.Error())
 	}
-	err = a.repo.InsertMedias("this#is#my#owner", []catalog.CreateMediaRequest{
+	err = a.repo.InsertMedias(context.TODO(), "this#is#my#owner", []catalog.CreateMediaRequest{
 		{
 			Id:         "a#random#id",
 			Signature:  catalog.MediaSignature{SignatureSha256: "qwertyuiop", SignatureSize: 42},
@@ -403,7 +403,7 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 
 	for _, tt := range tests {
 		a.T().Run(tt.name, func(t *testing.T) {
-			got, err := a.repo.FindMediaCurrentAlbum(tt.args.owner, tt.args.mediaId)
+			got, err := a.repo.FindMediaCurrentAlbum(context.TODO(), tt.args.owner, tt.args.mediaId)
 			if tt.wantErr(t, err) && err == nil {
 				assert.Equal(t, &catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.want}, got)
 			}
@@ -414,19 +414,19 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 func (a *MediaCrudTestSuite) TestTransferMedias() {
 	name := "it should find transferred media in the new album and not anymore on the previous album"
 
-	err := a.repo.TransferMedias(a.owner, []catalog.MediaId{a.medias[0].Id, a.medias[1].Id}, a.mar21)
+	err := a.repo.TransferMedias(context.TODO(), a.owner, []catalog.MediaId{a.medias[0].Id, a.medias[1].Id}, a.mar21)
 	if a.NoError(err, name) {
-		mediasInMar21, err := a.repo.FindMediaIds(catalog.NewFindMediaRequest(a.owner).WithAlbum(a.mar21))
+		mediasInMar21, err := a.repo.FindMediaIds(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(a.mar21))
 		if a.NoError(err, name) {
 			a.Equal([]catalog.MediaId{a.medias[0].Id, a.medias[1].Id}, mediasInMar21, name)
 		}
 
-		mediasInJan21, err := a.repo.FindMediaIds(catalog.NewFindMediaRequest(a.owner).WithAlbum(a.jan21))
+		mediasInJan21, err := a.repo.FindMediaIds(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(a.jan21))
 		if a.NoError(err, name) {
 			a.Equal([]catalog.MediaId{a.medias[2].Id}, mediasInJan21, name)
 		}
 
-		mediasInFeb21, err := a.repo.FindMediaIds(catalog.NewFindMediaRequest(a.owner).WithAlbum(a.feb21))
+		mediasInFeb21, err := a.repo.FindMediaIds(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(a.feb21))
 		if a.NoError(err, name) {
 			a.Nil(mediasInFeb21, name)
 		}

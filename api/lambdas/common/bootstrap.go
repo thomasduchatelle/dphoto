@@ -20,29 +20,13 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
-	"os"
 	"time"
-)
-
-const (
-	JWTIssuer            = "DPHOTO_JWT_ISSUER"
-	JWTKeyB64            = "DPHOTO_JWT_KEY_B64"
-	JWTValidity          = "DPHOTO_JWT_VALIDITY"
-	RefreshTokenValidity = "DPHOTO_REFRESH_TOKEN_VALIDITY"
-	DynamoDBTableName    = "CATALOG_TABLE_NAME"
 )
 
 var (
 	jwtDecoder      *aclcore.AccessTokenDecoder
 	grantRepository aclscopedynamodb.GrantRepository
 )
-
-func init() {
-	viper.AutomaticEnv()
-
-	viper.SetDefault(JWTValidity, "15m")
-	viper.SetDefault(RefreshTokenValidity, "")
-}
 
 func appAuthConfig() aclcore.OAuthConfig {
 	jwtKey, err := base64.StdEncoding.DecodeString(viper.GetString(JWTKeyB64))
@@ -143,33 +127,29 @@ func BootstrapOAuthDomain() {
 func bootstrapCatalogDomain() {
 	ctx := context.TODO()
 
-	tableName, ok := os.LookupEnv(DynamoDBTableName)
-	if !ok || tableName == "" {
-		panic("CATALOG_TABLE_NAME environment variable must be set.")
-	}
 	catalog.Init(pkgfactory.CatalogRepository(ctx), catalogarchivesync.New())
 }
 
 func BootstrapArchiveDomain() archive.AsyncJobAdapter {
-	tableName, ok := os.LookupEnv(DynamoDBTableName)
-	if !ok || tableName == "" {
-		panic("CATALOG_TABLE_NAME environment variable must be set.")
+	tableName := viper.GetString(DynamoDBTableName)
+	if tableName == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", DynamoDBTableName))
 	}
-	storeBucketName, ok := os.LookupEnv("STORAGE_BUCKET_NAME")
-	if !ok || storeBucketName == "" {
-		panic("STORAGE_BUCKET_NAME must be set and non-empty")
+	storeBucketName := viper.GetString(StorageBucketName)
+	if storeBucketName == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", StorageBucketName))
 	}
-	cacheBucketName, ok := os.LookupEnv("CACHE_BUCKET_NAME")
-	if !ok || cacheBucketName == "" {
-		panic("CACHE_BUCKET_NAME must be set and non-empty")
+	cacheBucketName := viper.GetString(CacheBucketName)
+	if cacheBucketName == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", CacheBucketName))
 	}
-	archiveJobsSnsARN, ok := os.LookupEnv("SNS_ARCHIVE_ARN")
-	if !ok || archiveJobsSnsARN == "" {
-		panic("SNS_ARCHIVE_ARN must be set and non-empty")
+	archiveJobsSnsARN := viper.GetString(SNSArchiveARN)
+	if archiveJobsSnsARN == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", SNSArchiveARN))
 	}
-	archiveJobsSqsURL, ok := os.LookupEnv("SQS_ARCHIVE_URL")
-	if !ok || archiveJobsSnsARN == "" {
-		panic("SQS_ARCHIVE_URL must be set and non-empty")
+	archiveJobsSqsURL := viper.GetString(SQSArchiveURL)
+	if archiveJobsSqsURL == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", SQSArchiveURL))
 	}
 
 	ctx := context.TODO()

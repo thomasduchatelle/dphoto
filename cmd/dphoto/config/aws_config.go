@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"os"
 	"path"
 )
@@ -70,6 +71,8 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 			return err
 		}
 	}
+
+	pkgfactory.AWSNames = new(ViperAWSName)
 
 	if ignite {
 		ctx := context.TODO()

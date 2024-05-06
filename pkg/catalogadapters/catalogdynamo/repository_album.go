@@ -42,7 +42,7 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner)
 		}
 
 		// TODO Media should be counted when inserted, not at every request
-		count, err := r.CountMedias(catalog.AlbumId{Owner: owner, FolderName: album.FolderName})
+		count, err := r.CountMedias(ctx, catalog.AlbumId{Owner: owner, FolderName: album.FolderName})
 		if err != nil {
 			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", owner, album.FolderName)
 		}
@@ -77,8 +77,8 @@ func (r *Repository) InsertAlbum(ctx context.Context, album catalog.Album) error
 	return errors.WithStack(errors.Wrapf(err, "failed inserting album '%s'", album.FolderName))
 }
 
-func (r *Repository) DeleteEmptyAlbum(albumId catalog.AlbumId) error {
-	count, err := r.CountMedias(albumId)
+func (r *Repository) DeleteEmptyAlbum(ctx context.Context, albumId catalog.AlbumId) error {
+	count, err := r.CountMedias(ctx, albumId)
 	if err != nil {
 		return errors.Wrapf(err, "failed to count number of medias in album %s", albumId.FolderName)
 	}
@@ -91,7 +91,7 @@ func (r *Repository) DeleteEmptyAlbum(albumId catalog.AlbumId) error {
 	if err != nil {
 		return err
 	}
-	_, err = r.client.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
+	_, err = r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		Key:       primaryKey,
 		TableName: &r.table,
 	})
@@ -99,7 +99,7 @@ func (r *Repository) DeleteEmptyAlbum(albumId catalog.AlbumId) error {
 }
 
 // CountMedias provides an accurate number of medias and can be used to update the count stored in the album record
-func (r *Repository) CountMedias(albumId catalog.AlbumId) (int, error) {
+func (r *Repository) CountMedias(ctx context.Context, albumId catalog.AlbumId) (int, error) {
 	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
 		withinAlbum(albumId.Owner, albumId.FolderName),
 		withExcludingMetaRecord(),
@@ -108,7 +108,7 @@ func (r *Repository) CountMedias(albumId catalog.AlbumId) (int, error) {
 		return 0, err
 	}
 
-	query, err := r.client.Query(context.TODO(), &dynamodb.QueryInput{
+	query, err := r.client.Query(ctx, &dynamodb.QueryInput{
 		ExpressionAttributeValues: expr.Values(),
 		ExpressionAttributeNames:  expr.Names(),
 		IndexName:                 aws.String(albumIndex),
@@ -122,7 +122,7 @@ func (r *Repository) CountMedias(albumId catalog.AlbumId) (int, error) {
 	return int(query.Count), nil
 }
 
-func (r *Repository) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error) {
+func (r *Repository) FindAlbums(ctx context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {
 	var keys []map[string]types.AttributeValue
 	for _, id := range ids {
 		key, err := attributevalue.MarshalMap(AlbumPrimaryKey(id.Owner, id.FolderName))
@@ -132,7 +132,7 @@ func (r *Repository) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error
 		keys = append(keys, key)
 	}
 
-	stream := dynamoutils.NewGetStream(context.TODO(), dynamoutils.NewGetBatchItem(r.client, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(ctx, dynamoutils.NewGetBatchItem(r.client, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
 	var albums []*catalog.Album
 	for stream.HasNext() {
 		album, err := unmarshalAlbum(stream.Next())
@@ -141,7 +141,7 @@ func (r *Repository) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error
 		}
 
 		// TODO Media should be counted when inserted, not at every request
-		album.TotalCount, err = r.CountMedias(album.AlbumId)
+		album.TotalCount, err = r.CountMedias(ctx, album.AlbumId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", album.Owner, album.FolderName)
 		}
@@ -152,13 +152,13 @@ func (r *Repository) FindAlbums(ids ...catalog.AlbumId) ([]*catalog.Album, error
 	return albums, stream.Error()
 }
 
-func (r *Repository) UpdateAlbum(album catalog.Album) error {
+func (r *Repository) UpdateAlbum(ctx context.Context, album catalog.Album) error {
 	item, err := marshalAlbum(&album)
 	if err != nil {
 		return err
 	}
 
-	_, err = r.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = r.client.PutItem(ctx, &dynamodb.PutItemInput{
 		ConditionExpression: aws.String("attribute_exists(PK)"),
 		Item:                item,
 		TableName:           &r.table,

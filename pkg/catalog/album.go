@@ -18,12 +18,12 @@ func FindAllAlbums(owner Owner) ([]*Album, error) {
 
 // FindAlbums get several albums by their business keys
 func FindAlbums(keys []AlbumId) ([]*Album, error) {
-	return repositoryPort.FindAlbums(keys...)
+	return repositoryPort.FindAlbums(context.TODO(), keys...)
 }
 
 // FindAlbum get an album by its business key (its folder name), or returns NotFoundError
 func FindAlbum(id AlbumId) (*Album, error) {
-	albums, err := repositoryPort.FindAlbums(id)
+	albums, err := repositoryPort.FindAlbums(context.TODO(), id)
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +55,14 @@ func DeleteAlbum(albumId AlbumId, emptyOnly bool) error {
 		}
 	}
 
-	return repositoryPort.DeleteEmptyAlbum(albumId)
+	return repositoryPort.DeleteEmptyAlbum(context.TODO(), albumId)
 }
 
 func filterMissedSegmentWithMedias(albumId AlbumId, missed []PrioritySegment) ([]PrioritySegment, error) {
 	var reallyMissed []PrioritySegment
 	for _, m := range missed {
 		request := NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName).WithinRange(m.Start, m.End)
-		medias, err := repositoryPort.FindMediaIds(request)
+		medias, err := repositoryPort.FindMediaIds(context.TODO(), request)
 
 		if err != nil {
 			return nil, err
@@ -110,11 +110,11 @@ func RenameAlbum(currentId AlbumId, newName string, renameFolder bool) error {
 			"PreviousFolderName": currentId.FolderName,
 			"AlbumMoved":         count,
 		}).Infof("Album renamed and %d medias moved\n", count)
-		return repositoryPort.DeleteEmptyAlbum(currentId)
+		return repositoryPort.DeleteEmptyAlbum(context.TODO(), currentId)
 	}
 
 	found.Name = newName
-	return repositoryPort.UpdateAlbum(*found)
+	return repositoryPort.UpdateAlbum(context.TODO(), *found)
 }
 
 // UpdateAlbum updates the dates of an album, medias will be re-assign between albums accordingly
@@ -159,7 +159,7 @@ func UpdateAlbum(albumId AlbumId, start, end time.Time) error {
 		return errors.Wrapf(err, "Album dates couldn't be updated.")
 	}
 
-	err = repositoryPort.UpdateAlbum(*updated)
+	err = repositoryPort.UpdateAlbum(context.TODO(), *updated)
 	if err != nil {
 		return err
 	}

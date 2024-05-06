@@ -1,8 +1,10 @@
 package catalog
 
+import context "context"
+
 // ListMedias return a page of medias within an album
 func ListMedias(albumId AlbumId, request PageRequest) (*MediaPage, error) {
-	medias, err := repositoryPort.FindMedias(NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
+	medias, err := repositoryPort.FindMedias(context.TODO(), NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
 	return &MediaPage{
 		Content: medias,
 	}, err
@@ -10,12 +12,12 @@ func ListMedias(albumId AlbumId, request PageRequest) (*MediaPage, error) {
 
 // InsertMedias stores metadata and location of photo and videos
 func InsertMedias(owner Owner, medias []CreateMediaRequest) error {
-	return repositoryPort.InsertMedias(owner, medias)
+	return repositoryPort.InsertMedias(context.TODO(), owner, medias)
 }
 
 // FindSignatures returns a list of the medias already known ; they can't be duplicated
 func FindSignatures(owner Owner, signatures []*MediaSignature) ([]*MediaSignature, error) {
-	return repositoryPort.FindExistingSignatures(owner, signatures)
+	return repositoryPort.FindExistingSignatures(context.TODO(), owner, signatures)
 }
 
 // AssignIdsToNewMedias filters out signatures that are already known and compute a unique ID for the others.
@@ -45,5 +47,5 @@ func AssignIdsToNewMedias(owner Owner, signatures []*MediaSignature) (map[MediaS
 
 // FindMediaOwnership returns the folderName containing the media, or NotFoundError.
 func FindMediaOwnership(owner Owner, mediaId MediaId) (*AlbumId, error) {
-	return repositoryPort.FindMediaCurrentAlbum(owner, mediaId)
+	return repositoryPort.FindMediaCurrentAlbum(context.TODO(), owner, mediaId)
 }

@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func (r *Repository) InsertMedias(owner catalog.Owner, medias []catalog.CreateMediaRequest) error {
+func (r *Repository) InsertMedias(ctx context.Context, owner catalog.Owner, medias []catalog.CreateMediaRequest) error {
 	requests := make([]types.WriteRequest, len(medias))
 	for index, media := range medias {
 		mediaEntry, err := marshalMedia(owner, &media)
@@ -28,10 +28,10 @@ func (r *Repository) InsertMedias(owner catalog.Owner, medias []catalog.CreateMe
 		}
 	}
 
-	return dynamoutils.BufferedWriteItems(context.TODO(), r.client, requests, r.table, dynamoutils.DynamoWriteBatchSize)
+	return dynamoutils.BufferedWriteItems(ctx, r.client, requests, r.table, dynamoutils.DynamoWriteBatchSize)
 }
 
-func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
+func (r *Repository) FindMedias(ctx context.Context, request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
 	queries, err := newMediaQueryBuilders(r.table, request, "")
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.M
 
 	var medias []*catalog.MediaMeta
 
-	crawler := dynamoutils.NewQueryStream(context.TODO(), r.client, queries)
+	crawler := dynamoutils.NewQueryStream(ctx, r.client, queries)
 	for crawler.HasNext() {
 		media, err := unmarshalMediaMetaData(crawler.Next())
 		if err != nil {
@@ -52,13 +52,13 @@ func (r *Repository) FindMedias(request *catalog.FindMediaRequest) ([]*catalog.M
 	return medias, err
 }
 
-func (r *Repository) FindMediaCurrentAlbum(owner catalog.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {
+func (r *Repository) FindMediaCurrentAlbum(ctx context.Context, owner catalog.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {
 	key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, mediaId))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to marshal media key %s/%s", owner, mediaId)
 	}
 
-	item, err := r.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
+	item, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		Key:                  key,
 		ProjectionExpression: aws.String("AlbumIndexPK"),
 		TableName:            &r.table,
@@ -83,7 +83,7 @@ func (r *Repository) FindMediaCurrentAlbum(owner catalog.Owner, mediaId catalog.
 	return nil, errors.Errorf("invalid AlbumIndexPK format expected to start with %s ; value: %+v", owner, item.Item)
 }
 
-func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]catalog.MediaId, error) {
+func (r *Repository) FindMediaIds(ctx context.Context, request *catalog.FindMediaRequest) ([]catalog.MediaId, error) {
 	queries, err := newMediaQueryBuilders(r.table, request, "Id")
 	if err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]catalog.
 
 	var mediaIds []catalog.MediaId
 
-	crawler := dynamoutils.NewQueryStream(context.TODO(), r.client, queries)
+	crawler := dynamoutils.NewQueryStream(ctx, r.client, queries)
 	for crawler.HasNext() {
 		record := crawler.Next()
 		if id, ok := record["Id"].(*types.AttributeValueMemberS); ok {
@@ -102,11 +102,11 @@ func (r *Repository) FindMediaIds(request *catalog.FindMediaRequest) ([]catalog.
 	return mediaIds, err
 }
 
-func (r *Repository) TransferMedias(owner catalog.Owner, mediaIds []catalog.MediaId, newFolderName catalog.FolderName) error {
-	return r.transferMedias(context.TODO(), catalog.AlbumId{Owner: owner, FolderName: newFolderName}, mediaIds)
+func (r *Repository) TransferMedias(ctx context.Context, owner catalog.Owner, mediaIds []catalog.MediaId, newFolderName catalog.FolderName) error {
+	return r.transferMedias(ctx, catalog.AlbumId{Owner: owner, FolderName: newFolderName}, mediaIds)
 }
 
-func (r *Repository) FindExistingSignatures(owner catalog.Owner, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
+func (r *Repository) FindExistingSignatures(ctx context.Context, owner catalog.Owner, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	// note: this implementation expects media id to be an encoded version of its signature
 
 	var keys []map[string]types.AttributeValue
@@ -128,7 +128,7 @@ func (r *Repository) FindExistingSignatures(owner catalog.Owner, signatures []*c
 		uniqueSignatures[*signature] = nil
 	}
 
-	stream := dynamoutils.NewGetStream(context.TODO(), dynamoutils.NewGetBatchItem(r.client, r.table, *aws.String("Id")), keys, dynamoutils.DynamoReadBatchSize)
+	stream := dynamoutils.NewGetStream(ctx, dynamoutils.NewGetBatchItem(r.client, r.table, *aws.String("Id")), keys, dynamoutils.DynamoReadBatchSize)
 
 	found := make([]*catalog.MediaSignature, 0, len(signatures))
 	for stream.HasNext() {
