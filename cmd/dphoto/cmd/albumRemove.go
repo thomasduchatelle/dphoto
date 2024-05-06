@@ -1,40 +1,36 @@
 package cmd
 
 import (
+	"context"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-)
-
-var (
-	rmArgs = struct {
-		folderName string
-		notEmpty   bool
-	}{}
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 var removeCmd = &cobra.Command{
 	Use:   "remove <folder name> [--not-empty]",
 	Short: "Delete an album",
-	Long: `Delete an album only if there is no media in it.
+	Long: `Delete an album and re-distribute medias to other albums.
 
-Use --not-empty to redispatch medias to other albums before deletion. Default albums (quarters) can not be deleted 
-unless different albums fully cover the 3 months.`,
+Albums can only be deleted if all medias can be assigned to a different album.
+`,
 	Args:    cobra.ExactArgs(1),
 	Aliases: []string{"rm"},
 	Run: func(cmd *cobra.Command, args []string) {
-		rmArgs.folderName = args[0]
+		ctx := context.Background()
 
-		err := catalog.DeleteAlbum(catalog.NewAlbumIdFromStrings(Owner, rmArgs.folderName), !rmArgs.notEmpty)
-		printer.FatalWithMessageIfError(err, 1, "Album %s couldn't be deleted", rmArgs.folderName)
+		folderName := args[0]
 
-		printer.Success("Album %s has been deleted", aurora.Cyan(rmArgs.folderName))
+		deleteCase := pkgfactory.CreateAlbumDeleteCase(ctx)
+		err := deleteCase.DeleteAlbum(ctx, catalog.NewAlbumIdFromStrings(Owner, folderName))
+		printer.FatalWithMessageIfError(err, 1, "Album %s couldn't be deleted", folderName)
+
+		printer.Success("Album %s has been deleted", aurora.Cyan(folderName))
 	},
 }
 
 func init() {
 	albumCmd.AddCommand(removeCmd)
-
-	removeCmd.Flags().BoolVarP(&rmArgs.notEmpty, "not-empty", "n", false, "redispatch medias to different albums before deletion")
 }

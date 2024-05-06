@@ -13,6 +13,14 @@ type IdentityRepository struct {
 	mock.Mock
 }
 
+type IdentityRepository_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *IdentityRepository) EXPECT() *IdentityRepository_Expecter {
+	return &IdentityRepository_Expecter{mock: &_m.Mock}
+}
+
 // FindIdentities provides a mock function with given fields: emails
 func (_m *IdentityRepository) FindIdentities(emails []string) ([]*aclcore.Identity, error) {
 	ret := _m.Called(emails)
@@ -41,6 +49,34 @@ func (_m *IdentityRepository) FindIdentities(emails []string) ([]*aclcore.Identi
 	}
 
 	return r0, r1
+}
+
+// IdentityRepository_FindIdentities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindIdentities'
+type IdentityRepository_FindIdentities_Call struct {
+	*mock.Call
+}
+
+// FindIdentities is a helper method to define mock.On call
+//   - emails []string
+func (_e *IdentityRepository_Expecter) FindIdentities(emails interface{}) *IdentityRepository_FindIdentities_Call {
+	return &IdentityRepository_FindIdentities_Call{Call: _e.mock.On("FindIdentities", emails)}
+}
+
+func (_c *IdentityRepository_FindIdentities_Call) Run(run func(emails []string)) *IdentityRepository_FindIdentities_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]string))
+	})
+	return _c
+}
+
+func (_c *IdentityRepository_FindIdentities_Call) Return(_a0 []*aclcore.Identity, _a1 error) *IdentityRepository_FindIdentities_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IdentityRepository_FindIdentities_Call) RunAndReturn(run func([]string) ([]*aclcore.Identity, error)) *IdentityRepository_FindIdentities_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindIdentity provides a mock function with given fields: email
@@ -73,6 +109,34 @@ func (_m *IdentityRepository) FindIdentity(email string) (*aclcore.Identity, err
 	return r0, r1
 }
 
+// IdentityRepository_FindIdentity_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindIdentity'
+type IdentityRepository_FindIdentity_Call struct {
+	*mock.Call
+}
+
+// FindIdentity is a helper method to define mock.On call
+//   - email string
+func (_e *IdentityRepository_Expecter) FindIdentity(email interface{}) *IdentityRepository_FindIdentity_Call {
+	return &IdentityRepository_FindIdentity_Call{Call: _e.mock.On("FindIdentity", email)}
+}
+
+func (_c *IdentityRepository_FindIdentity_Call) Run(run func(email string)) *IdentityRepository_FindIdentity_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *IdentityRepository_FindIdentity_Call) Return(_a0 *aclcore.Identity, _a1 error) *IdentityRepository_FindIdentity_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IdentityRepository_FindIdentity_Call) RunAndReturn(run func(string) (*aclcore.Identity, error)) *IdentityRepository_FindIdentity_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // StoreIdentity provides a mock function with given fields: identity
 func (_m *IdentityRepository) StoreIdentity(identity aclcore.Identity) error {
 	ret := _m.Called(identity)
@@ -89,6 +153,34 @@ func (_m *IdentityRepository) StoreIdentity(identity aclcore.Identity) error {
 	}
 
 	return r0
+}
+
+// IdentityRepository_StoreIdentity_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StoreIdentity'
+type IdentityRepository_StoreIdentity_Call struct {
+	*mock.Call
+}
+
+// StoreIdentity is a helper method to define mock.On call
+//   - identity aclcore.Identity
+func (_e *IdentityRepository_Expecter) StoreIdentity(identity interface{}) *IdentityRepository_StoreIdentity_Call {
+	return &IdentityRepository_StoreIdentity_Call{Call: _e.mock.On("StoreIdentity", identity)}
+}
+
+func (_c *IdentityRepository_StoreIdentity_Call) Run(run func(identity aclcore.Identity)) *IdentityRepository_StoreIdentity_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(aclcore.Identity))
+	})
+	return _c
+}
+
+func (_c *IdentityRepository_StoreIdentity_Call) Return(_a0 error) *IdentityRepository_StoreIdentity_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *IdentityRepository_StoreIdentity_Call) RunAndReturn(run func(aclcore.Identity) error) *IdentityRepository_StoreIdentity_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewIdentityRepository creates a new instance of IdentityRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

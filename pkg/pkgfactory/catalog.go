@@ -31,3 +31,14 @@ func CreateAlbumCase(ctx context.Context) *catalog.CreateAlbum {
 		},
 	}
 }
+
+func CreateAlbumDeleteCase(ctx context.Context) *catalog.DeleteAlbum {
+	repository := CatalogRepository(ctx)
+	return catalog.NewDeleteAlbum(
+		repository,
+		repository,
+		repository,
+		repository,
+		ArchiveTimelineMutationObserver(),
+	)
+}

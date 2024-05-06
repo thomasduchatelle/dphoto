@@ -115,5 +115,8 @@ func (o *uiCatalogAdapter) UpdateAlbum(folderName string, start, end time.Time) 
 }
 
 func (o *uiCatalogAdapter) DeleteAlbum(folderName string) error {
-	return catalog.DeleteAlbum(catalog.NewAlbumIdFromStrings(Owner, folderName), false)
+	ctx := context.TODO()
+	deleteCase := pkgfactory.CreateAlbumDeleteCase(ctx)
+
+	return deleteCase.DeleteAlbum(ctx, catalog.NewAlbumIdFromStrings(Owner, folderName))
 }

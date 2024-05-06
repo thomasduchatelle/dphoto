@@ -15,6 +15,14 @@ type DynamoQuery struct {
 	mock.Mock
 }
 
+type DynamoQuery_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *DynamoQuery) EXPECT() *DynamoQuery_Expecter {
+	return &DynamoQuery_Expecter{mock: &_m.Mock}
+}
+
 // Query provides a mock function with given fields: ctx, d, optFns
 func (_m *DynamoQuery) Query(ctx context.Context, d *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -50,6 +58,43 @@ func (_m *DynamoQuery) Query(ctx context.Context, d *dynamodb.QueryInput, optFns
 	}
 
 	return r0, r1
+}
+
+// DynamoQuery_Query_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Query'
+type DynamoQuery_Query_Call struct {
+	*mock.Call
+}
+
+// Query is a helper method to define mock.On call
+//   - ctx context.Context
+//   - d *dynamodb.QueryInput
+//   - optFns ...func(*dynamodb.Options)
+func (_e *DynamoQuery_Expecter) Query(ctx interface{}, d interface{}, optFns ...interface{}) *DynamoQuery_Query_Call {
+	return &DynamoQuery_Query_Call{Call: _e.mock.On("Query",
+		append([]interface{}{ctx, d}, optFns...)...)}
+}
+
+func (_c *DynamoQuery_Query_Call) Run(run func(ctx context.Context, d *dynamodb.QueryInput, optFns ...func(*dynamodb.Options))) *DynamoQuery_Query_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*dynamodb.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*dynamodb.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*dynamodb.QueryInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *DynamoQuery_Query_Call) Return(_a0 *dynamodb.QueryOutput, _a1 error) *DynamoQuery_Query_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DynamoQuery_Query_Call) RunAndReturn(run func(context.Context, *dynamodb.QueryInput, ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error)) *DynamoQuery_Query_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewDynamoQuery creates a new instance of DynamoQuery. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

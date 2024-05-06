@@ -12,6 +12,14 @@ type runnerCataloger struct {
 	mock.Mock
 }
 
+type runnerCataloger_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *runnerCataloger) EXPECT() *runnerCataloger_Expecter {
+	return &runnerCataloger_Expecter{mock: &_m.Mock}
+}
+
 // Execute provides a mock function with given fields: medias, progressChannel
 func (_m *runnerCataloger) Execute(medias []*backup.AnalysedMedia, progressChannel chan *backup.ProgressEvent) ([]*backup.BackingUpMediaRequest, error) {
 	ret := _m.Called(medias, progressChannel)
@@ -40,6 +48,35 @@ func (_m *runnerCataloger) Execute(medias []*backup.AnalysedMedia, progressChann
 	}
 
 	return r0, r1
+}
+
+// runnerCataloger_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
+type runnerCataloger_Execute_Call struct {
+	*mock.Call
+}
+
+// Execute is a helper method to define mock.On call
+//   - medias []*backup.AnalysedMedia
+//   - progressChannel chan *backup.ProgressEvent
+func (_e *runnerCataloger_Expecter) Execute(medias interface{}, progressChannel interface{}) *runnerCataloger_Execute_Call {
+	return &runnerCataloger_Execute_Call{Call: _e.mock.On("Execute", medias, progressChannel)}
+}
+
+func (_c *runnerCataloger_Execute_Call) Run(run func(medias []*backup.AnalysedMedia, progressChannel chan *backup.ProgressEvent)) *runnerCataloger_Execute_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]*backup.AnalysedMedia), args[1].(chan *backup.ProgressEvent))
+	})
+	return _c
+}
+
+func (_c *runnerCataloger_Execute_Call) Return(_a0 []*backup.BackingUpMediaRequest, _a1 error) *runnerCataloger_Execute_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *runnerCataloger_Execute_Call) RunAndReturn(run func([]*backup.AnalysedMedia, chan *backup.ProgressEvent) ([]*backup.BackingUpMediaRequest, error)) *runnerCataloger_Execute_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // newRunnerCataloger creates a new instance of runnerCataloger. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

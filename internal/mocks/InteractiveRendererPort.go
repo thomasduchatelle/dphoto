@@ -12,6 +12,14 @@ type InteractiveRendererPort struct {
 	mock.Mock
 }
 
+type InteractiveRendererPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *InteractiveRendererPort) EXPECT() *InteractiveRendererPort_Expecter {
+	return &InteractiveRendererPort_Expecter{mock: &_m.Mock}
+}
+
 // Height provides a mock function with given fields:
 func (_m *InteractiveRendererPort) Height() int {
 	ret := _m.Called()
@@ -30,9 +38,64 @@ func (_m *InteractiveRendererPort) Height() int {
 	return r0
 }
 
+// InteractiveRendererPort_Height_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Height'
+type InteractiveRendererPort_Height_Call struct {
+	*mock.Call
+}
+
+// Height is a helper method to define mock.On call
+func (_e *InteractiveRendererPort_Expecter) Height() *InteractiveRendererPort_Height_Call {
+	return &InteractiveRendererPort_Height_Call{Call: _e.mock.On("Height")}
+}
+
+func (_c *InteractiveRendererPort_Height_Call) Run(run func()) *InteractiveRendererPort_Height_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *InteractiveRendererPort_Height_Call) Return(_a0 int) *InteractiveRendererPort_Height_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *InteractiveRendererPort_Height_Call) RunAndReturn(run func() int) *InteractiveRendererPort_Height_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Print provides a mock function with given fields: question
 func (_m *InteractiveRendererPort) Print(question string) {
 	_m.Called(question)
+}
+
+// InteractiveRendererPort_Print_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Print'
+type InteractiveRendererPort_Print_Call struct {
+	*mock.Call
+}
+
+// Print is a helper method to define mock.On call
+//   - question string
+func (_e *InteractiveRendererPort_Expecter) Print(question interface{}) *InteractiveRendererPort_Print_Call {
+	return &InteractiveRendererPort_Print_Call{Call: _e.mock.On("Print", question)}
+}
+
+func (_c *InteractiveRendererPort_Print_Call) Run(run func(question string)) *InteractiveRendererPort_Print_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *InteractiveRendererPort_Print_Call) Return() *InteractiveRendererPort_Print_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *InteractiveRendererPort_Print_Call) RunAndReturn(run func(string)) *InteractiveRendererPort_Print_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ReadAnswer provides a mock function with given fields:
@@ -63,6 +126,33 @@ func (_m *InteractiveRendererPort) ReadAnswer() (string, error) {
 	return r0, r1
 }
 
+// InteractiveRendererPort_ReadAnswer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReadAnswer'
+type InteractiveRendererPort_ReadAnswer_Call struct {
+	*mock.Call
+}
+
+// ReadAnswer is a helper method to define mock.On call
+func (_e *InteractiveRendererPort_Expecter) ReadAnswer() *InteractiveRendererPort_ReadAnswer_Call {
+	return &InteractiveRendererPort_ReadAnswer_Call{Call: _e.mock.On("ReadAnswer")}
+}
+
+func (_c *InteractiveRendererPort_ReadAnswer_Call) Run(run func()) *InteractiveRendererPort_ReadAnswer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *InteractiveRendererPort_ReadAnswer_Call) Return(_a0 string, _a1 error) *InteractiveRendererPort_ReadAnswer_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *InteractiveRendererPort_ReadAnswer_Call) RunAndReturn(run func() (string, error)) *InteractiveRendererPort_ReadAnswer_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Render provides a mock function with given fields: state
 func (_m *InteractiveRendererPort) Render(state *ui.InteractiveViewState) error {
 	ret := _m.Called(state)
@@ -81,9 +171,64 @@ func (_m *InteractiveRendererPort) Render(state *ui.InteractiveViewState) error 
 	return r0
 }
 
+// InteractiveRendererPort_Render_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Render'
+type InteractiveRendererPort_Render_Call struct {
+	*mock.Call
+}
+
+// Render is a helper method to define mock.On call
+//   - state *ui.InteractiveViewState
+func (_e *InteractiveRendererPort_Expecter) Render(state interface{}) *InteractiveRendererPort_Render_Call {
+	return &InteractiveRendererPort_Render_Call{Call: _e.mock.On("Render", state)}
+}
+
+func (_c *InteractiveRendererPort_Render_Call) Run(run func(state *ui.InteractiveViewState)) *InteractiveRendererPort_Render_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*ui.InteractiveViewState))
+	})
+	return _c
+}
+
+func (_c *InteractiveRendererPort_Render_Call) Return(_a0 error) *InteractiveRendererPort_Render_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *InteractiveRendererPort_Render_Call) RunAndReturn(run func(*ui.InteractiveViewState) error) *InteractiveRendererPort_Render_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TakeOverScreen provides a mock function with given fields:
 func (_m *InteractiveRendererPort) TakeOverScreen() {
 	_m.Called()
+}
+
+// InteractiveRendererPort_TakeOverScreen_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TakeOverScreen'
+type InteractiveRendererPort_TakeOverScreen_Call struct {
+	*mock.Call
+}
+
+// TakeOverScreen is a helper method to define mock.On call
+func (_e *InteractiveRendererPort_Expecter) TakeOverScreen() *InteractiveRendererPort_TakeOverScreen_Call {
+	return &InteractiveRendererPort_TakeOverScreen_Call{Call: _e.mock.On("TakeOverScreen")}
+}
+
+func (_c *InteractiveRendererPort_TakeOverScreen_Call) Run(run func()) *InteractiveRendererPort_TakeOverScreen_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *InteractiveRendererPort_TakeOverScreen_Call) Return() *InteractiveRendererPort_TakeOverScreen_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *InteractiveRendererPort_TakeOverScreen_Call) RunAndReturn(run func()) *InteractiveRendererPort_TakeOverScreen_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewInteractiveRendererPort creates a new instance of InteractiveRendererPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

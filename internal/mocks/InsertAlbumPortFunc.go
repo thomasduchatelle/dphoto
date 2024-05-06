@@ -15,6 +15,14 @@ type InsertAlbumPortFunc struct {
 	mock.Mock
 }
 
+type InsertAlbumPortFunc_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *InsertAlbumPortFunc) EXPECT() *InsertAlbumPortFunc_Expecter {
+	return &InsertAlbumPortFunc_Expecter{mock: &_m.Mock}
+}
+
 // Execute provides a mock function with given fields: ctx, album
 func (_m *InsertAlbumPortFunc) Execute(ctx context.Context, album catalog.Album) error {
 	ret := _m.Called(ctx, album)
@@ -31,6 +39,35 @@ func (_m *InsertAlbumPortFunc) Execute(ctx context.Context, album catalog.Album)
 	}
 
 	return r0
+}
+
+// InsertAlbumPortFunc_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
+type InsertAlbumPortFunc_Execute_Call struct {
+	*mock.Call
+}
+
+// Execute is a helper method to define mock.On call
+//   - ctx context.Context
+//   - album catalog.Album
+func (_e *InsertAlbumPortFunc_Expecter) Execute(ctx interface{}, album interface{}) *InsertAlbumPortFunc_Execute_Call {
+	return &InsertAlbumPortFunc_Execute_Call{Call: _e.mock.On("Execute", ctx, album)}
+}
+
+func (_c *InsertAlbumPortFunc_Execute_Call) Run(run func(ctx context.Context, album catalog.Album)) *InsertAlbumPortFunc_Execute_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Album))
+	})
+	return _c
+}
+
+func (_c *InsertAlbumPortFunc_Execute_Call) Return(_a0 error) *InsertAlbumPortFunc_Execute_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *InsertAlbumPortFunc_Execute_Call) RunAndReturn(run func(context.Context, catalog.Album) error) *InsertAlbumPortFunc_Execute_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewInsertAlbumPortFunc creates a new instance of InsertAlbumPortFunc. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

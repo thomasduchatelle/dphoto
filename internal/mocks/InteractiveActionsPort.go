@@ -15,6 +15,14 @@ type InteractiveActionsPort struct {
 	mock.Mock
 }
 
+type InteractiveActionsPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *InteractiveActionsPort) EXPECT() *InteractiveActionsPort_Expecter {
+	return &InteractiveActionsPort_Expecter{mock: &_m.Mock}
+}
+
 // BackupSuggestion provides a mock function with given fields: record, existing, listener
 func (_m *InteractiveActionsPort) BackupSuggestion(record *ui.SuggestionRecord, existing *ui.ExistingRecord, listener ui.InteractiveRendererPort) error {
 	ret := _m.Called(record, existing, listener)
@@ -31,6 +39,36 @@ func (_m *InteractiveActionsPort) BackupSuggestion(record *ui.SuggestionRecord, 
 	}
 
 	return r0
+}
+
+// InteractiveActionsPort_BackupSuggestion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BackupSuggestion'
+type InteractiveActionsPort_BackupSuggestion_Call struct {
+	*mock.Call
+}
+
+// BackupSuggestion is a helper method to define mock.On call
+//   - record *ui.SuggestionRecord
+//   - existing *ui.ExistingRecord
+//   - listener ui.InteractiveRendererPort
+func (_e *InteractiveActionsPort_Expecter) BackupSuggestion(record interface{}, existing interface{}, listener interface{}) *InteractiveActionsPort_BackupSuggestion_Call {
+	return &InteractiveActionsPort_BackupSuggestion_Call{Call: _e.mock.On("BackupSuggestion", record, existing, listener)}
+}
+
+func (_c *InteractiveActionsPort_BackupSuggestion_Call) Run(run func(record *ui.SuggestionRecord, existing *ui.ExistingRecord, listener ui.InteractiveRendererPort)) *InteractiveActionsPort_BackupSuggestion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*ui.SuggestionRecord), args[1].(*ui.ExistingRecord), args[2].(ui.InteractiveRendererPort))
+	})
+	return _c
+}
+
+func (_c *InteractiveActionsPort_BackupSuggestion_Call) Return(_a0 error) *InteractiveActionsPort_BackupSuggestion_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *InteractiveActionsPort_BackupSuggestion_Call) RunAndReturn(run func(*ui.SuggestionRecord, *ui.ExistingRecord, ui.InteractiveRendererPort) error) *InteractiveActionsPort_BackupSuggestion_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Create provides a mock function with given fields: createRequest
@@ -51,6 +89,34 @@ func (_m *InteractiveActionsPort) Create(createRequest ui.RecordCreation) error 
 	return r0
 }
 
+// InteractiveActionsPort_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type InteractiveActionsPort_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - createRequest ui.RecordCreation
+func (_e *InteractiveActionsPort_Expecter) Create(createRequest interface{}) *InteractiveActionsPort_Create_Call {
+	return &InteractiveActionsPort_Create_Call{Call: _e.mock.On("Create", createRequest)}
+}
+
+func (_c *InteractiveActionsPort_Create_Call) Run(run func(createRequest ui.RecordCreation)) *InteractiveActionsPort_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(ui.RecordCreation))
+	})
+	return _c
+}
+
+func (_c *InteractiveActionsPort_Create_Call) Return(_a0 error) *InteractiveActionsPort_Create_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *InteractiveActionsPort_Create_Call) RunAndReturn(run func(ui.RecordCreation) error) *InteractiveActionsPort_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteAlbum provides a mock function with given fields: folderName
 func (_m *InteractiveActionsPort) DeleteAlbum(folderName string) error {
 	ret := _m.Called(folderName)
@@ -67,6 +133,34 @@ func (_m *InteractiveActionsPort) DeleteAlbum(folderName string) error {
 	}
 
 	return r0
+}
+
+// InteractiveActionsPort_DeleteAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAlbum'
+type InteractiveActionsPort_DeleteAlbum_Call struct {
+	*mock.Call
+}
+
+// DeleteAlbum is a helper method to define mock.On call
+//   - folderName string
+func (_e *InteractiveActionsPort_Expecter) DeleteAlbum(folderName interface{}) *InteractiveActionsPort_DeleteAlbum_Call {
+	return &InteractiveActionsPort_DeleteAlbum_Call{Call: _e.mock.On("DeleteAlbum", folderName)}
+}
+
+func (_c *InteractiveActionsPort_DeleteAlbum_Call) Run(run func(folderName string)) *InteractiveActionsPort_DeleteAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *InteractiveActionsPort_DeleteAlbum_Call) Return(_a0 error) *InteractiveActionsPort_DeleteAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *InteractiveActionsPort_DeleteAlbum_Call) RunAndReturn(run func(string) error) *InteractiveActionsPort_DeleteAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // RenameAlbum provides a mock function with given fields: folderName, newName, renameFolder
@@ -87,6 +181,36 @@ func (_m *InteractiveActionsPort) RenameAlbum(folderName string, newName string,
 	return r0
 }
 
+// InteractiveActionsPort_RenameAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RenameAlbum'
+type InteractiveActionsPort_RenameAlbum_Call struct {
+	*mock.Call
+}
+
+// RenameAlbum is a helper method to define mock.On call
+//   - folderName string
+//   - newName string
+//   - renameFolder bool
+func (_e *InteractiveActionsPort_Expecter) RenameAlbum(folderName interface{}, newName interface{}, renameFolder interface{}) *InteractiveActionsPort_RenameAlbum_Call {
+	return &InteractiveActionsPort_RenameAlbum_Call{Call: _e.mock.On("RenameAlbum", folderName, newName, renameFolder)}
+}
+
+func (_c *InteractiveActionsPort_RenameAlbum_Call) Run(run func(folderName string, newName string, renameFolder bool)) *InteractiveActionsPort_RenameAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(bool))
+	})
+	return _c
+}
+
+func (_c *InteractiveActionsPort_RenameAlbum_Call) Return(_a0 error) *InteractiveActionsPort_RenameAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *InteractiveActionsPort_RenameAlbum_Call) RunAndReturn(run func(string, string, bool) error) *InteractiveActionsPort_RenameAlbum_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateAlbum provides a mock function with given fields: folderName, start, end
 func (_m *InteractiveActionsPort) UpdateAlbum(folderName string, start time.Time, end time.Time) error {
 	ret := _m.Called(folderName, start, end)
@@ -103,6 +227,36 @@ func (_m *InteractiveActionsPort) UpdateAlbum(folderName string, start time.Time
 	}
 
 	return r0
+}
+
+// InteractiveActionsPort_UpdateAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAlbum'
+type InteractiveActionsPort_UpdateAlbum_Call struct {
+	*mock.Call
+}
+
+// UpdateAlbum is a helper method to define mock.On call
+//   - folderName string
+//   - start time.Time
+//   - end time.Time
+func (_e *InteractiveActionsPort_Expecter) UpdateAlbum(folderName interface{}, start interface{}, end interface{}) *InteractiveActionsPort_UpdateAlbum_Call {
+	return &InteractiveActionsPort_UpdateAlbum_Call{Call: _e.mock.On("UpdateAlbum", folderName, start, end)}
+}
+
+func (_c *InteractiveActionsPort_UpdateAlbum_Call) Run(run func(folderName string, start time.Time, end time.Time)) *InteractiveActionsPort_UpdateAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(time.Time), args[2].(time.Time))
+	})
+	return _c
+}
+
+func (_c *InteractiveActionsPort_UpdateAlbum_Call) Return(_a0 error) *InteractiveActionsPort_UpdateAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *InteractiveActionsPort_UpdateAlbum_Call) RunAndReturn(run func(string, time.Time, time.Time) error) *InteractiveActionsPort_UpdateAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewInteractiveActionsPort creates a new instance of InteractiveActionsPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

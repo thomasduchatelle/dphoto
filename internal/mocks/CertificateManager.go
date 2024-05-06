@@ -14,6 +14,14 @@ type CertificateManager struct {
 	mock.Mock
 }
 
+type CertificateManager_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *CertificateManager) EXPECT() *CertificateManager_Expecter {
+	return &CertificateManager_Expecter{mock: &_m.Mock}
+}
+
 // FindCertificate provides a mock function with given fields: ctx, domain
 func (_m *CertificateManager) FindCertificate(ctx context.Context, domain string) (*dnsdomain.ExistingCertificate, error) {
 	ret := _m.Called(ctx, domain)
@@ -44,6 +52,35 @@ func (_m *CertificateManager) FindCertificate(ctx context.Context, domain string
 	return r0, r1
 }
 
+// CertificateManager_FindCertificate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindCertificate'
+type CertificateManager_FindCertificate_Call struct {
+	*mock.Call
+}
+
+// FindCertificate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - domain string
+func (_e *CertificateManager_Expecter) FindCertificate(ctx interface{}, domain interface{}) *CertificateManager_FindCertificate_Call {
+	return &CertificateManager_FindCertificate_Call{Call: _e.mock.On("FindCertificate", ctx, domain)}
+}
+
+func (_c *CertificateManager_FindCertificate_Call) Run(run func(ctx context.Context, domain string)) *CertificateManager_FindCertificate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *CertificateManager_FindCertificate_Call) Return(_a0 *dnsdomain.ExistingCertificate, _a1 error) *CertificateManager_FindCertificate_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *CertificateManager_FindCertificate_Call) RunAndReturn(run func(context.Context, string) (*dnsdomain.ExistingCertificate, error)) *CertificateManager_FindCertificate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // InstallCertificate provides a mock function with given fields: ctx, id, certificate
 func (_m *CertificateManager) InstallCertificate(ctx context.Context, id string, certificate dnsdomain.CompleteCertificate) error {
 	ret := _m.Called(ctx, id, certificate)
@@ -60,6 +97,36 @@ func (_m *CertificateManager) InstallCertificate(ctx context.Context, id string,
 	}
 
 	return r0
+}
+
+// CertificateManager_InstallCertificate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InstallCertificate'
+type CertificateManager_InstallCertificate_Call struct {
+	*mock.Call
+}
+
+// InstallCertificate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - certificate dnsdomain.CompleteCertificate
+func (_e *CertificateManager_Expecter) InstallCertificate(ctx interface{}, id interface{}, certificate interface{}) *CertificateManager_InstallCertificate_Call {
+	return &CertificateManager_InstallCertificate_Call{Call: _e.mock.On("InstallCertificate", ctx, id, certificate)}
+}
+
+func (_c *CertificateManager_InstallCertificate_Call) Run(run func(ctx context.Context, id string, certificate dnsdomain.CompleteCertificate)) *CertificateManager_InstallCertificate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(dnsdomain.CompleteCertificate))
+	})
+	return _c
+}
+
+func (_c *CertificateManager_InstallCertificate_Call) Return(_a0 error) *CertificateManager_InstallCertificate_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CertificateManager_InstallCertificate_Call) RunAndReturn(run func(context.Context, string, dnsdomain.CompleteCertificate) error) *CertificateManager_InstallCertificate_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewCertificateManager creates a new instance of CertificateManager. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

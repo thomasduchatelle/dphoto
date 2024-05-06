@@ -12,6 +12,14 @@ type PostAnalyseFilter struct {
 	mock.Mock
 }
 
+type PostAnalyseFilter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *PostAnalyseFilter) EXPECT() *PostAnalyseFilter_Expecter {
+	return &PostAnalyseFilter_Expecter{mock: &_m.Mock}
+}
+
 // AcceptAnalysedMedia provides a mock function with given fields: media, folderName
 func (_m *PostAnalyseFilter) AcceptAnalysedMedia(media *backup.AnalysedMedia, folderName string) bool {
 	ret := _m.Called(media, folderName)
@@ -28,6 +36,35 @@ func (_m *PostAnalyseFilter) AcceptAnalysedMedia(media *backup.AnalysedMedia, fo
 	}
 
 	return r0
+}
+
+// PostAnalyseFilter_AcceptAnalysedMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AcceptAnalysedMedia'
+type PostAnalyseFilter_AcceptAnalysedMedia_Call struct {
+	*mock.Call
+}
+
+// AcceptAnalysedMedia is a helper method to define mock.On call
+//   - media *backup.AnalysedMedia
+//   - folderName string
+func (_e *PostAnalyseFilter_Expecter) AcceptAnalysedMedia(media interface{}, folderName interface{}) *PostAnalyseFilter_AcceptAnalysedMedia_Call {
+	return &PostAnalyseFilter_AcceptAnalysedMedia_Call{Call: _e.mock.On("AcceptAnalysedMedia", media, folderName)}
+}
+
+func (_c *PostAnalyseFilter_AcceptAnalysedMedia_Call) Run(run func(media *backup.AnalysedMedia, folderName string)) *PostAnalyseFilter_AcceptAnalysedMedia_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*backup.AnalysedMedia), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *PostAnalyseFilter_AcceptAnalysedMedia_Call) Return(_a0 bool) *PostAnalyseFilter_AcceptAnalysedMedia_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *PostAnalyseFilter_AcceptAnalysedMedia_Call) RunAndReturn(run func(*backup.AnalysedMedia, string) bool) *PostAnalyseFilter_AcceptAnalysedMedia_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewPostAnalyseFilter creates a new instance of PostAnalyseFilter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

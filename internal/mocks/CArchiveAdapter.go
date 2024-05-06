@@ -15,6 +15,14 @@ type CArchiveAdapter struct {
 	mock.Mock
 }
 
+type CArchiveAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *CArchiveAdapter) EXPECT() *CArchiveAdapter_Expecter {
+	return &CArchiveAdapter_Expecter{mock: &_m.Mock}
+}
+
 // MoveMedias provides a mock function with given fields: owner, ids, name
 func (_m *CArchiveAdapter) MoveMedias(owner catalog.Owner, ids []catalog.MediaId, name catalog.FolderName) error {
 	ret := _m.Called(owner, ids, name)
@@ -33,6 +41,36 @@ func (_m *CArchiveAdapter) MoveMedias(owner catalog.Owner, ids []catalog.MediaId
 	return r0
 }
 
+// CArchiveAdapter_MoveMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MoveMedias'
+type CArchiveAdapter_MoveMedias_Call struct {
+	*mock.Call
+}
+
+// MoveMedias is a helper method to define mock.On call
+//   - owner catalog.Owner
+//   - ids []catalog.MediaId
+//   - name catalog.FolderName
+func (_e *CArchiveAdapter_Expecter) MoveMedias(owner interface{}, ids interface{}, name interface{}) *CArchiveAdapter_MoveMedias_Call {
+	return &CArchiveAdapter_MoveMedias_Call{Call: _e.mock.On("MoveMedias", owner, ids, name)}
+}
+
+func (_c *CArchiveAdapter_MoveMedias_Call) Run(run func(owner catalog.Owner, ids []catalog.MediaId, name catalog.FolderName)) *CArchiveAdapter_MoveMedias_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(catalog.Owner), args[1].([]catalog.MediaId), args[2].(catalog.FolderName))
+	})
+	return _c
+}
+
+func (_c *CArchiveAdapter_MoveMedias_Call) Return(_a0 error) *CArchiveAdapter_MoveMedias_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CArchiveAdapter_MoveMedias_Call) RunAndReturn(run func(catalog.Owner, []catalog.MediaId, catalog.FolderName) error) *CArchiveAdapter_MoveMedias_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Observe provides a mock function with given fields: ctx, transfers
 func (_m *CArchiveAdapter) Observe(ctx context.Context, transfers catalog.TransferredMedias) error {
 	ret := _m.Called(ctx, transfers)
@@ -49,6 +87,35 @@ func (_m *CArchiveAdapter) Observe(ctx context.Context, transfers catalog.Transf
 	}
 
 	return r0
+}
+
+// CArchiveAdapter_Observe_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Observe'
+type CArchiveAdapter_Observe_Call struct {
+	*mock.Call
+}
+
+// Observe is a helper method to define mock.On call
+//   - ctx context.Context
+//   - transfers catalog.TransferredMedias
+func (_e *CArchiveAdapter_Expecter) Observe(ctx interface{}, transfers interface{}) *CArchiveAdapter_Observe_Call {
+	return &CArchiveAdapter_Observe_Call{Call: _e.mock.On("Observe", ctx, transfers)}
+}
+
+func (_c *CArchiveAdapter_Observe_Call) Run(run func(ctx context.Context, transfers catalog.TransferredMedias)) *CArchiveAdapter_Observe_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.TransferredMedias))
+	})
+	return _c
+}
+
+func (_c *CArchiveAdapter_Observe_Call) Return(_a0 error) *CArchiveAdapter_Observe_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CArchiveAdapter_Observe_Call) RunAndReturn(run func(context.Context, catalog.TransferredMedias) error) *CArchiveAdapter_Observe_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewCArchiveAdapter creates a new instance of CArchiveAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

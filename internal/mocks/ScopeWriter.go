@@ -12,6 +12,14 @@ type ScopeWriter struct {
 	mock.Mock
 }
 
+type ScopeWriter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ScopeWriter) EXPECT() *ScopeWriter_Expecter {
+	return &ScopeWriter_Expecter{mock: &_m.Mock}
+}
+
 // DeleteScopes provides a mock function with given fields: id
 func (_m *ScopeWriter) DeleteScopes(id ...aclcore.ScopeId) error {
 	_va := make([]interface{}, len(id))
@@ -36,6 +44,41 @@ func (_m *ScopeWriter) DeleteScopes(id ...aclcore.ScopeId) error {
 	return r0
 }
 
+// ScopeWriter_DeleteScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteScopes'
+type ScopeWriter_DeleteScopes_Call struct {
+	*mock.Call
+}
+
+// DeleteScopes is a helper method to define mock.On call
+//   - id ...aclcore.ScopeId
+func (_e *ScopeWriter_Expecter) DeleteScopes(id ...interface{}) *ScopeWriter_DeleteScopes_Call {
+	return &ScopeWriter_DeleteScopes_Call{Call: _e.mock.On("DeleteScopes",
+		append([]interface{}{}, id...)...)}
+}
+
+func (_c *ScopeWriter_DeleteScopes_Call) Run(run func(id ...aclcore.ScopeId)) *ScopeWriter_DeleteScopes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeId, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeId)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *ScopeWriter_DeleteScopes_Call) Return(_a0 error) *ScopeWriter_DeleteScopes_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ScopeWriter_DeleteScopes_Call) RunAndReturn(run func(...aclcore.ScopeId) error) *ScopeWriter_DeleteScopes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveIfNewScope provides a mock function with given fields: scope
 func (_m *ScopeWriter) SaveIfNewScope(scope aclcore.Scope) error {
 	ret := _m.Called(scope)
@@ -52,6 +95,34 @@ func (_m *ScopeWriter) SaveIfNewScope(scope aclcore.Scope) error {
 	}
 
 	return r0
+}
+
+// ScopeWriter_SaveIfNewScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveIfNewScope'
+type ScopeWriter_SaveIfNewScope_Call struct {
+	*mock.Call
+}
+
+// SaveIfNewScope is a helper method to define mock.On call
+//   - scope aclcore.Scope
+func (_e *ScopeWriter_Expecter) SaveIfNewScope(scope interface{}) *ScopeWriter_SaveIfNewScope_Call {
+	return &ScopeWriter_SaveIfNewScope_Call{Call: _e.mock.On("SaveIfNewScope", scope)}
+}
+
+func (_c *ScopeWriter_SaveIfNewScope_Call) Run(run func(scope aclcore.Scope)) *ScopeWriter_SaveIfNewScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(aclcore.Scope))
+	})
+	return _c
+}
+
+func (_c *ScopeWriter_SaveIfNewScope_Call) Return(_a0 error) *ScopeWriter_SaveIfNewScope_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ScopeWriter_SaveIfNewScope_Call) RunAndReturn(run func(aclcore.Scope) error) *ScopeWriter_SaveIfNewScope_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewScopeWriter creates a new instance of ScopeWriter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

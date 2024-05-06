@@ -12,6 +12,14 @@ type SourceVolume struct {
 	mock.Mock
 }
 
+type SourceVolume_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *SourceVolume) EXPECT() *SourceVolume_Expecter {
+	return &SourceVolume_Expecter{mock: &_m.Mock}
+}
+
 // FindMedias provides a mock function with given fields:
 func (_m *SourceVolume) FindMedias() ([]backup.FoundMedia, error) {
 	ret := _m.Called()
@@ -42,6 +50,33 @@ func (_m *SourceVolume) FindMedias() ([]backup.FoundMedia, error) {
 	return r0, r1
 }
 
+// SourceVolume_FindMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindMedias'
+type SourceVolume_FindMedias_Call struct {
+	*mock.Call
+}
+
+// FindMedias is a helper method to define mock.On call
+func (_e *SourceVolume_Expecter) FindMedias() *SourceVolume_FindMedias_Call {
+	return &SourceVolume_FindMedias_Call{Call: _e.mock.On("FindMedias")}
+}
+
+func (_c *SourceVolume_FindMedias_Call) Run(run func()) *SourceVolume_FindMedias_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *SourceVolume_FindMedias_Call) Return(_a0 []backup.FoundMedia, _a1 error) *SourceVolume_FindMedias_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *SourceVolume_FindMedias_Call) RunAndReturn(run func() ([]backup.FoundMedia, error)) *SourceVolume_FindMedias_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // String provides a mock function with given fields:
 func (_m *SourceVolume) String() string {
 	ret := _m.Called()
@@ -58,6 +93,33 @@ func (_m *SourceVolume) String() string {
 	}
 
 	return r0
+}
+
+// SourceVolume_String_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'String'
+type SourceVolume_String_Call struct {
+	*mock.Call
+}
+
+// String is a helper method to define mock.On call
+func (_e *SourceVolume_Expecter) String() *SourceVolume_String_Call {
+	return &SourceVolume_String_Call{Call: _e.mock.On("String")}
+}
+
+func (_c *SourceVolume_String_Call) Run(run func()) *SourceVolume_String_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *SourceVolume_String_Call) Return(_a0 string) *SourceVolume_String_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *SourceVolume_String_Call) RunAndReturn(run func() string) *SourceVolume_String_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewSourceVolume creates a new instance of SourceVolume. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

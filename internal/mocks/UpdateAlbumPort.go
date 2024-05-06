@@ -13,6 +13,14 @@ type UpdateAlbumPort struct {
 	mock.Mock
 }
 
+type UpdateAlbumPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *UpdateAlbumPort) EXPECT() *UpdateAlbumPort_Expecter {
+	return &UpdateAlbumPort_Expecter{mock: &_m.Mock}
+}
+
 // UpdateAlbum provides a mock function with given fields: folderName, start, end
 func (_m *UpdateAlbumPort) UpdateAlbum(folderName string, start time.Time, end time.Time) error {
 	ret := _m.Called(folderName, start, end)
@@ -29,6 +37,36 @@ func (_m *UpdateAlbumPort) UpdateAlbum(folderName string, start time.Time, end t
 	}
 
 	return r0
+}
+
+// UpdateAlbumPort_UpdateAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAlbum'
+type UpdateAlbumPort_UpdateAlbum_Call struct {
+	*mock.Call
+}
+
+// UpdateAlbum is a helper method to define mock.On call
+//   - folderName string
+//   - start time.Time
+//   - end time.Time
+func (_e *UpdateAlbumPort_Expecter) UpdateAlbum(folderName interface{}, start interface{}, end interface{}) *UpdateAlbumPort_UpdateAlbum_Call {
+	return &UpdateAlbumPort_UpdateAlbum_Call{Call: _e.mock.On("UpdateAlbum", folderName, start, end)}
+}
+
+func (_c *UpdateAlbumPort_UpdateAlbum_Call) Run(run func(folderName string, start time.Time, end time.Time)) *UpdateAlbumPort_UpdateAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(time.Time), args[2].(time.Time))
+	})
+	return _c
+}
+
+func (_c *UpdateAlbumPort_UpdateAlbum_Call) Return(_a0 error) *UpdateAlbumPort_UpdateAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *UpdateAlbumPort_UpdateAlbum_Call) RunAndReturn(run func(string, time.Time, time.Time) error) *UpdateAlbumPort_UpdateAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewUpdateAlbumPort creates a new instance of UpdateAlbumPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

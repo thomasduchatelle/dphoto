@@ -14,6 +14,14 @@ type Config struct {
 	mock.Mock
 }
 
+type Config_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *Config) EXPECT() *Config_Expecter {
+	return &Config_Expecter{mock: &_m.Mock}
+}
+
 // Get provides a mock function with given fields: key
 func (_m *Config) Get(key string) interface{} {
 	ret := _m.Called(key)
@@ -32,6 +40,34 @@ func (_m *Config) Get(key string) interface{} {
 	}
 
 	return r0
+}
+
+// Config_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type Config_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - key string
+func (_e *Config_Expecter) Get(key interface{}) *Config_Get_Call {
+	return &Config_Get_Call{Call: _e.mock.On("Get", key)}
+}
+
+func (_c *Config_Get_Call) Run(run func(key string)) *Config_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *Config_Get_Call) Return(_a0 interface{}) *Config_Get_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Config_Get_Call) RunAndReturn(run func(string) interface{}) *Config_Get_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetAWSFactory provides a mock function with given fields:
@@ -54,6 +90,33 @@ func (_m *Config) GetAWSFactory() *awsfactory.AWSFactory {
 	return r0
 }
 
+// Config_GetAWSFactory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAWSFactory'
+type Config_GetAWSFactory_Call struct {
+	*mock.Call
+}
+
+// GetAWSFactory is a helper method to define mock.On call
+func (_e *Config_Expecter) GetAWSFactory() *Config_GetAWSFactory_Call {
+	return &Config_GetAWSFactory_Call{Call: _e.mock.On("GetAWSFactory")}
+}
+
+func (_c *Config_GetAWSFactory_Call) Run(run func()) *Config_GetAWSFactory_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Config_GetAWSFactory_Call) Return(_a0 *awsfactory.AWSFactory) *Config_GetAWSFactory_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Config_GetAWSFactory_Call) RunAndReturn(run func() *awsfactory.AWSFactory) *Config_GetAWSFactory_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAWSV2Config provides a mock function with given fields:
 func (_m *Config) GetAWSV2Config() aws.Config {
 	ret := _m.Called()
@@ -70,6 +133,33 @@ func (_m *Config) GetAWSV2Config() aws.Config {
 	}
 
 	return r0
+}
+
+// Config_GetAWSV2Config_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAWSV2Config'
+type Config_GetAWSV2Config_Call struct {
+	*mock.Call
+}
+
+// GetAWSV2Config is a helper method to define mock.On call
+func (_e *Config_Expecter) GetAWSV2Config() *Config_GetAWSV2Config_Call {
+	return &Config_GetAWSV2Config_Call{Call: _e.mock.On("GetAWSV2Config")}
+}
+
+func (_c *Config_GetAWSV2Config_Call) Run(run func()) *Config_GetAWSV2Config_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Config_GetAWSV2Config_Call) Return(_a0 aws.Config) *Config_GetAWSV2Config_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Config_GetAWSV2Config_Call) RunAndReturn(run func() aws.Config) *Config_GetAWSV2Config_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetBool provides a mock function with given fields: key
@@ -90,6 +180,34 @@ func (_m *Config) GetBool(key string) bool {
 	return r0
 }
 
+// Config_GetBool_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBool'
+type Config_GetBool_Call struct {
+	*mock.Call
+}
+
+// GetBool is a helper method to define mock.On call
+//   - key string
+func (_e *Config_Expecter) GetBool(key interface{}) *Config_GetBool_Call {
+	return &Config_GetBool_Call{Call: _e.mock.On("GetBool", key)}
+}
+
+func (_c *Config_GetBool_Call) Run(run func(key string)) *Config_GetBool_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *Config_GetBool_Call) Return(_a0 bool) *Config_GetBool_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Config_GetBool_Call) RunAndReturn(run func(string) bool) *Config_GetBool_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetInt provides a mock function with given fields: key
 func (_m *Config) GetInt(key string) int {
 	ret := _m.Called(key)
@@ -106,6 +224,34 @@ func (_m *Config) GetInt(key string) int {
 	}
 
 	return r0
+}
+
+// Config_GetInt_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetInt'
+type Config_GetInt_Call struct {
+	*mock.Call
+}
+
+// GetInt is a helper method to define mock.On call
+//   - key string
+func (_e *Config_Expecter) GetInt(key interface{}) *Config_GetInt_Call {
+	return &Config_GetInt_Call{Call: _e.mock.On("GetInt", key)}
+}
+
+func (_c *Config_GetInt_Call) Run(run func(key string)) *Config_GetInt_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *Config_GetInt_Call) Return(_a0 int) *Config_GetInt_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Config_GetInt_Call) RunAndReturn(run func(string) int) *Config_GetInt_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetIntOrDefault provides a mock function with given fields: key, defaultValue
@@ -126,6 +272,35 @@ func (_m *Config) GetIntOrDefault(key string, defaultValue int) int {
 	return r0
 }
 
+// Config_GetIntOrDefault_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetIntOrDefault'
+type Config_GetIntOrDefault_Call struct {
+	*mock.Call
+}
+
+// GetIntOrDefault is a helper method to define mock.On call
+//   - key string
+//   - defaultValue int
+func (_e *Config_Expecter) GetIntOrDefault(key interface{}, defaultValue interface{}) *Config_GetIntOrDefault_Call {
+	return &Config_GetIntOrDefault_Call{Call: _e.mock.On("GetIntOrDefault", key, defaultValue)}
+}
+
+func (_c *Config_GetIntOrDefault_Call) Run(run func(key string, defaultValue int)) *Config_GetIntOrDefault_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(int))
+	})
+	return _c
+}
+
+func (_c *Config_GetIntOrDefault_Call) Return(_a0 int) *Config_GetIntOrDefault_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Config_GetIntOrDefault_Call) RunAndReturn(run func(string, int) int) *Config_GetIntOrDefault_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetString provides a mock function with given fields: key
 func (_m *Config) GetString(key string) string {
 	ret := _m.Called(key)
@@ -144,6 +319,34 @@ func (_m *Config) GetString(key string) string {
 	return r0
 }
 
+// Config_GetString_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetString'
+type Config_GetString_Call struct {
+	*mock.Call
+}
+
+// GetString is a helper method to define mock.On call
+//   - key string
+func (_e *Config_Expecter) GetString(key interface{}) *Config_GetString_Call {
+	return &Config_GetString_Call{Call: _e.mock.On("GetString", key)}
+}
+
+func (_c *Config_GetString_Call) Run(run func(key string)) *Config_GetString_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *Config_GetString_Call) Return(_a0 string) *Config_GetString_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Config_GetString_Call) RunAndReturn(run func(string) string) *Config_GetString_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetStringOrDefault provides a mock function with given fields: key, defaultValue
 func (_m *Config) GetStringOrDefault(key string, defaultValue string) string {
 	ret := _m.Called(key, defaultValue)
@@ -160,6 +363,35 @@ func (_m *Config) GetStringOrDefault(key string, defaultValue string) string {
 	}
 
 	return r0
+}
+
+// Config_GetStringOrDefault_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStringOrDefault'
+type Config_GetStringOrDefault_Call struct {
+	*mock.Call
+}
+
+// GetStringOrDefault is a helper method to define mock.On call
+//   - key string
+//   - defaultValue string
+func (_e *Config_Expecter) GetStringOrDefault(key interface{}, defaultValue interface{}) *Config_GetStringOrDefault_Call {
+	return &Config_GetStringOrDefault_Call{Call: _e.mock.On("GetStringOrDefault", key, defaultValue)}
+}
+
+func (_c *Config_GetStringOrDefault_Call) Run(run func(key string, defaultValue string)) *Config_GetStringOrDefault_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Config_GetStringOrDefault_Call) Return(_a0 string) *Config_GetStringOrDefault_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Config_GetStringOrDefault_Call) RunAndReturn(run func(string, string) string) *Config_GetStringOrDefault_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewConfig creates a new instance of Config. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

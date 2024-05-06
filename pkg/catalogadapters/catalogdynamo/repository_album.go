@@ -51,6 +51,7 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner)
 		albums = append(albums, album)
 	}
 
+	// TODO Is it really necessary to sort here?
 	sort.Slice(albums, func(i, j int) bool {
 		return albums[i].Start.Before(albums[j].Start)
 	})
@@ -78,15 +79,20 @@ func (r *Repository) InsertAlbum(ctx context.Context, album catalog.Album) error
 }
 
 func (r *Repository) DeleteEmptyAlbum(ctx context.Context, albumId catalog.AlbumId) error {
+	// TODO DeleteEmptyAlbum method should not exists, DeleteAlbum should be used instead (no count check)
 	count, err := r.CountMedias(ctx, albumId)
 	if err != nil {
 		return errors.Wrapf(err, "failed to count number of medias in album %s", albumId.FolderName)
 	}
 
 	if count > 0 {
-		return catalog.NotEmptyError
+		return catalog.AlbumIsNotEmptyError
 	}
 
+	return r.DeleteAlbum(ctx, albumId)
+}
+
+func (r *Repository) DeleteAlbum(ctx context.Context, albumId catalog.AlbumId) error {
 	primaryKey, err := attributevalue.MarshalMap(AlbumPrimaryKey(albumId.Owner, albumId.FolderName))
 	if err != nil {
 		return err
@@ -120,6 +126,29 @@ func (r *Repository) CountMedias(ctx context.Context, albumId catalog.AlbumId) (
 		return 0, err
 	}
 	return int(query.Count), nil
+}
+
+func (r *Repository) CountMediasBySelectors(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
+	if len(selectors) == 0 {
+		return 0, nil
+	}
+
+	request := r.convertSelectorsIntoMediaRequest(owner, selectors)
+	queries, err := newMediaQueryBuilders(r.table, request, "", types.SelectCount)
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+	for _, query := range queries {
+		output, err := r.client.Query(ctx, query)
+		if err != nil {
+			return 0, err
+		}
+		count += int(output.Count)
+	}
+
+	return count, nil
 }
 
 func (r *Repository) FindAlbums(ctx context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {

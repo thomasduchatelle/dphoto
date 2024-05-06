@@ -12,6 +12,14 @@ type runnerUploader struct {
 	mock.Mock
 }
 
+type runnerUploader_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *runnerUploader) EXPECT() *runnerUploader_Expecter {
+	return &runnerUploader_Expecter{mock: &_m.Mock}
+}
+
 // Execute provides a mock function with given fields: buffer, progressChannel
 func (_m *runnerUploader) Execute(buffer []*backup.BackingUpMediaRequest, progressChannel chan *backup.ProgressEvent) error {
 	ret := _m.Called(buffer, progressChannel)
@@ -28,6 +36,35 @@ func (_m *runnerUploader) Execute(buffer []*backup.BackingUpMediaRequest, progre
 	}
 
 	return r0
+}
+
+// runnerUploader_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
+type runnerUploader_Execute_Call struct {
+	*mock.Call
+}
+
+// Execute is a helper method to define mock.On call
+//   - buffer []*backup.BackingUpMediaRequest
+//   - progressChannel chan *backup.ProgressEvent
+func (_e *runnerUploader_Expecter) Execute(buffer interface{}, progressChannel interface{}) *runnerUploader_Execute_Call {
+	return &runnerUploader_Execute_Call{Call: _e.mock.On("Execute", buffer, progressChannel)}
+}
+
+func (_c *runnerUploader_Execute_Call) Run(run func(buffer []*backup.BackingUpMediaRequest, progressChannel chan *backup.ProgressEvent)) *runnerUploader_Execute_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]*backup.BackingUpMediaRequest), args[1].(chan *backup.ProgressEvent))
+	})
+	return _c
+}
+
+func (_c *runnerUploader_Execute_Call) Return(_a0 error) *runnerUploader_Execute_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *runnerUploader_Execute_Call) RunAndReturn(run func([]*backup.BackingUpMediaRequest, chan *backup.ProgressEvent) error) *runnerUploader_Execute_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // newRunnerUploader creates a new instance of runnerUploader. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -14,6 +14,14 @@ type CertificateAuthority struct {
 	mock.Mock
 }
 
+type CertificateAuthority_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *CertificateAuthority) EXPECT() *CertificateAuthority_Expecter {
+	return &CertificateAuthority_Expecter{mock: &_m.Mock}
+}
+
 // RequestCertificate provides a mock function with given fields: ctx, email, domain
 func (_m *CertificateAuthority) RequestCertificate(ctx context.Context, email string, domain string) (*dnsdomain.CompleteCertificate, error) {
 	ret := _m.Called(ctx, email, domain)
@@ -42,6 +50,36 @@ func (_m *CertificateAuthority) RequestCertificate(ctx context.Context, email st
 	}
 
 	return r0, r1
+}
+
+// CertificateAuthority_RequestCertificate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RequestCertificate'
+type CertificateAuthority_RequestCertificate_Call struct {
+	*mock.Call
+}
+
+// RequestCertificate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - email string
+//   - domain string
+func (_e *CertificateAuthority_Expecter) RequestCertificate(ctx interface{}, email interface{}, domain interface{}) *CertificateAuthority_RequestCertificate_Call {
+	return &CertificateAuthority_RequestCertificate_Call{Call: _e.mock.On("RequestCertificate", ctx, email, domain)}
+}
+
+func (_c *CertificateAuthority_RequestCertificate_Call) Run(run func(ctx context.Context, email string, domain string)) *CertificateAuthority_RequestCertificate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *CertificateAuthority_RequestCertificate_Call) Return(_a0 *dnsdomain.CompleteCertificate, _a1 error) *CertificateAuthority_RequestCertificate_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *CertificateAuthority_RequestCertificate_Call) RunAndReturn(run func(context.Context, string, string) (*dnsdomain.CompleteCertificate, error)) *CertificateAuthority_RequestCertificate_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewCertificateAuthority creates a new instance of CertificateAuthority. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

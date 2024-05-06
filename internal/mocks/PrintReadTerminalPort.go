@@ -9,9 +9,45 @@ type PrintReadTerminalPort struct {
 	mock.Mock
 }
 
+type PrintReadTerminalPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *PrintReadTerminalPort) EXPECT() *PrintReadTerminalPort_Expecter {
+	return &PrintReadTerminalPort_Expecter{mock: &_m.Mock}
+}
+
 // Print provides a mock function with given fields: question
 func (_m *PrintReadTerminalPort) Print(question string) {
 	_m.Called(question)
+}
+
+// PrintReadTerminalPort_Print_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Print'
+type PrintReadTerminalPort_Print_Call struct {
+	*mock.Call
+}
+
+// Print is a helper method to define mock.On call
+//   - question string
+func (_e *PrintReadTerminalPort_Expecter) Print(question interface{}) *PrintReadTerminalPort_Print_Call {
+	return &PrintReadTerminalPort_Print_Call{Call: _e.mock.On("Print", question)}
+}
+
+func (_c *PrintReadTerminalPort_Print_Call) Run(run func(question string)) *PrintReadTerminalPort_Print_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *PrintReadTerminalPort_Print_Call) Return() *PrintReadTerminalPort_Print_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *PrintReadTerminalPort_Print_Call) RunAndReturn(run func(string)) *PrintReadTerminalPort_Print_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ReadAnswer provides a mock function with given fields:
@@ -40,6 +76,33 @@ func (_m *PrintReadTerminalPort) ReadAnswer() (string, error) {
 	}
 
 	return r0, r1
+}
+
+// PrintReadTerminalPort_ReadAnswer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReadAnswer'
+type PrintReadTerminalPort_ReadAnswer_Call struct {
+	*mock.Call
+}
+
+// ReadAnswer is a helper method to define mock.On call
+func (_e *PrintReadTerminalPort_Expecter) ReadAnswer() *PrintReadTerminalPort_ReadAnswer_Call {
+	return &PrintReadTerminalPort_ReadAnswer_Call{Call: _e.mock.On("ReadAnswer")}
+}
+
+func (_c *PrintReadTerminalPort_ReadAnswer_Call) Run(run func()) *PrintReadTerminalPort_ReadAnswer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *PrintReadTerminalPort_ReadAnswer_Call) Return(_a0 string, _a1 error) *PrintReadTerminalPort_ReadAnswer_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *PrintReadTerminalPort_ReadAnswer_Call) RunAndReturn(run func() (string, error)) *PrintReadTerminalPort_ReadAnswer_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewPrintReadTerminalPort creates a new instance of PrintReadTerminalPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

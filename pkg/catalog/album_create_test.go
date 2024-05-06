@@ -209,7 +209,7 @@ func (t *TimelineMutationCollector) TransferMediasFromRecords(ctx context.Contex
 
 func returnListOfAlbums(expectedOwner catalog.Owner, albums ...*catalog.Album) func(t *testing.T) catalog.FindAlbumsByOwnerPort {
 	return func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-		return catalog.FindAlbumsByOwnerPortFunc(func(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
+		return catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
 			if owner == expectedOwner && len(albums) > 0 {
 				return albums, nil
 			}

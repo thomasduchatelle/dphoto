@@ -15,6 +15,14 @@ type DynamoBatchWriteItem struct {
 	mock.Mock
 }
 
+type DynamoBatchWriteItem_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *DynamoBatchWriteItem) EXPECT() *DynamoBatchWriteItem_Expecter {
+	return &DynamoBatchWriteItem_Expecter{mock: &_m.Mock}
+}
+
 // BatchWriteItem provides a mock function with given fields: ctx, params, optFns
 func (_m *DynamoBatchWriteItem) BatchWriteItem(ctx context.Context, params *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -50,6 +58,43 @@ func (_m *DynamoBatchWriteItem) BatchWriteItem(ctx context.Context, params *dyna
 	}
 
 	return r0, r1
+}
+
+// DynamoBatchWriteItem_BatchWriteItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchWriteItem'
+type DynamoBatchWriteItem_BatchWriteItem_Call struct {
+	*mock.Call
+}
+
+// BatchWriteItem is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *dynamodb.BatchWriteItemInput
+//   - optFns ...func(*dynamodb.Options)
+func (_e *DynamoBatchWriteItem_Expecter) BatchWriteItem(ctx interface{}, params interface{}, optFns ...interface{}) *DynamoBatchWriteItem_BatchWriteItem_Call {
+	return &DynamoBatchWriteItem_BatchWriteItem_Call{Call: _e.mock.On("BatchWriteItem",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *DynamoBatchWriteItem_BatchWriteItem_Call) Run(run func(ctx context.Context, params *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options))) *DynamoBatchWriteItem_BatchWriteItem_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*dynamodb.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*dynamodb.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*dynamodb.BatchWriteItemInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *DynamoBatchWriteItem_BatchWriteItem_Call) Return(_a0 *dynamodb.BatchWriteItemOutput, _a1 error) *DynamoBatchWriteItem_BatchWriteItem_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DynamoBatchWriteItem_BatchWriteItem_Call) RunAndReturn(run func(context.Context, *dynamodb.BatchWriteItemInput, ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error)) *DynamoBatchWriteItem_BatchWriteItem_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewDynamoBatchWriteItem creates a new instance of DynamoBatchWriteItem. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

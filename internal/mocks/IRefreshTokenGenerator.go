@@ -12,6 +12,14 @@ type IRefreshTokenGenerator struct {
 	mock.Mock
 }
 
+type IRefreshTokenGenerator_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *IRefreshTokenGenerator) EXPECT() *IRefreshTokenGenerator_Expecter {
+	return &IRefreshTokenGenerator_Expecter{mock: &_m.Mock}
+}
+
 // GenerateRefreshToken provides a mock function with given fields: spec
 func (_m *IRefreshTokenGenerator) GenerateRefreshToken(spec aclcore.RefreshTokenSpec) (string, error) {
 	ret := _m.Called(spec)
@@ -38,6 +46,34 @@ func (_m *IRefreshTokenGenerator) GenerateRefreshToken(spec aclcore.RefreshToken
 	}
 
 	return r0, r1
+}
+
+// IRefreshTokenGenerator_GenerateRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateRefreshToken'
+type IRefreshTokenGenerator_GenerateRefreshToken_Call struct {
+	*mock.Call
+}
+
+// GenerateRefreshToken is a helper method to define mock.On call
+//   - spec aclcore.RefreshTokenSpec
+func (_e *IRefreshTokenGenerator_Expecter) GenerateRefreshToken(spec interface{}) *IRefreshTokenGenerator_GenerateRefreshToken_Call {
+	return &IRefreshTokenGenerator_GenerateRefreshToken_Call{Call: _e.mock.On("GenerateRefreshToken", spec)}
+}
+
+func (_c *IRefreshTokenGenerator_GenerateRefreshToken_Call) Run(run func(spec aclcore.RefreshTokenSpec)) *IRefreshTokenGenerator_GenerateRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(aclcore.RefreshTokenSpec))
+	})
+	return _c
+}
+
+func (_c *IRefreshTokenGenerator_GenerateRefreshToken_Call) Return(_a0 string, _a1 error) *IRefreshTokenGenerator_GenerateRefreshToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IRefreshTokenGenerator_GenerateRefreshToken_Call) RunAndReturn(run func(aclcore.RefreshTokenSpec) (string, error)) *IRefreshTokenGenerator_GenerateRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewIRefreshTokenGenerator creates a new instance of IRefreshTokenGenerator. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

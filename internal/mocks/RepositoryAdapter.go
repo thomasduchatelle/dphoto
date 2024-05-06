@@ -15,6 +15,14 @@ type RepositoryAdapter struct {
 	mock.Mock
 }
 
+type RepositoryAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *RepositoryAdapter) EXPECT() *RepositoryAdapter_Expecter {
+	return &RepositoryAdapter_Expecter{mock: &_m.Mock}
+}
+
 // DeleteEmptyAlbum provides a mock function with given fields: ctx, id
 func (_m *RepositoryAdapter) DeleteEmptyAlbum(ctx context.Context, id catalog.AlbumId) error {
 	ret := _m.Called(ctx, id)
@@ -31,6 +39,35 @@ func (_m *RepositoryAdapter) DeleteEmptyAlbum(ctx context.Context, id catalog.Al
 	}
 
 	return r0
+}
+
+// RepositoryAdapter_DeleteEmptyAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteEmptyAlbum'
+type RepositoryAdapter_DeleteEmptyAlbum_Call struct {
+	*mock.Call
+}
+
+// DeleteEmptyAlbum is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id catalog.AlbumId
+func (_e *RepositoryAdapter_Expecter) DeleteEmptyAlbum(ctx interface{}, id interface{}) *RepositoryAdapter_DeleteEmptyAlbum_Call {
+	return &RepositoryAdapter_DeleteEmptyAlbum_Call{Call: _e.mock.On("DeleteEmptyAlbum", ctx, id)}
+}
+
+func (_c *RepositoryAdapter_DeleteEmptyAlbum_Call) Run(run func(ctx context.Context, id catalog.AlbumId)) *RepositoryAdapter_DeleteEmptyAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.AlbumId))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_DeleteEmptyAlbum_Call) Return(_a0 error) *RepositoryAdapter_DeleteEmptyAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RepositoryAdapter_DeleteEmptyAlbum_Call) RunAndReturn(run func(context.Context, catalog.AlbumId) error) *RepositoryAdapter_DeleteEmptyAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindAlbums provides a mock function with given fields: ctx, ids
@@ -70,6 +107,42 @@ func (_m *RepositoryAdapter) FindAlbums(ctx context.Context, ids ...catalog.Albu
 	return r0, r1
 }
 
+// RepositoryAdapter_FindAlbums_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAlbums'
+type RepositoryAdapter_FindAlbums_Call struct {
+	*mock.Call
+}
+
+// FindAlbums is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ids ...catalog.AlbumId
+func (_e *RepositoryAdapter_Expecter) FindAlbums(ctx interface{}, ids ...interface{}) *RepositoryAdapter_FindAlbums_Call {
+	return &RepositoryAdapter_FindAlbums_Call{Call: _e.mock.On("FindAlbums",
+		append([]interface{}{ctx}, ids...)...)}
+}
+
+func (_c *RepositoryAdapter_FindAlbums_Call) Run(run func(ctx context.Context, ids ...catalog.AlbumId)) *RepositoryAdapter_FindAlbums_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]catalog.AlbumId, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(catalog.AlbumId)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindAlbums_Call) Return(_a0 []*catalog.Album, _a1 error) *RepositoryAdapter_FindAlbums_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindAlbums_Call) RunAndReturn(run func(context.Context, ...catalog.AlbumId) ([]*catalog.Album, error)) *RepositoryAdapter_FindAlbums_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindAlbumsByOwner provides a mock function with given fields: ctx, owner
 func (_m *RepositoryAdapter) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
 	ret := _m.Called(ctx, owner)
@@ -98,6 +171,35 @@ func (_m *RepositoryAdapter) FindAlbumsByOwner(ctx context.Context, owner catalo
 	}
 
 	return r0, r1
+}
+
+// RepositoryAdapter_FindAlbumsByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAlbumsByOwner'
+type RepositoryAdapter_FindAlbumsByOwner_Call struct {
+	*mock.Call
+}
+
+// FindAlbumsByOwner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner catalog.Owner
+func (_e *RepositoryAdapter_Expecter) FindAlbumsByOwner(ctx interface{}, owner interface{}) *RepositoryAdapter_FindAlbumsByOwner_Call {
+	return &RepositoryAdapter_FindAlbumsByOwner_Call{Call: _e.mock.On("FindAlbumsByOwner", ctx, owner)}
+}
+
+func (_c *RepositoryAdapter_FindAlbumsByOwner_Call) Run(run func(ctx context.Context, owner catalog.Owner)) *RepositoryAdapter_FindAlbumsByOwner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Owner))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindAlbumsByOwner_Call) Return(_a0 []*catalog.Album, _a1 error) *RepositoryAdapter_FindAlbumsByOwner_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindAlbumsByOwner_Call) RunAndReturn(run func(context.Context, catalog.Owner) ([]*catalog.Album, error)) *RepositoryAdapter_FindAlbumsByOwner_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindExistingSignatures provides a mock function with given fields: ctx, owner, signatures
@@ -130,6 +232,36 @@ func (_m *RepositoryAdapter) FindExistingSignatures(ctx context.Context, owner c
 	return r0, r1
 }
 
+// RepositoryAdapter_FindExistingSignatures_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindExistingSignatures'
+type RepositoryAdapter_FindExistingSignatures_Call struct {
+	*mock.Call
+}
+
+// FindExistingSignatures is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner catalog.Owner
+//   - signatures []*catalog.MediaSignature
+func (_e *RepositoryAdapter_Expecter) FindExistingSignatures(ctx interface{}, owner interface{}, signatures interface{}) *RepositoryAdapter_FindExistingSignatures_Call {
+	return &RepositoryAdapter_FindExistingSignatures_Call{Call: _e.mock.On("FindExistingSignatures", ctx, owner, signatures)}
+}
+
+func (_c *RepositoryAdapter_FindExistingSignatures_Call) Run(run func(ctx context.Context, owner catalog.Owner, signatures []*catalog.MediaSignature)) *RepositoryAdapter_FindExistingSignatures_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Owner), args[2].([]*catalog.MediaSignature))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindExistingSignatures_Call) Return(_a0 []*catalog.MediaSignature, _a1 error) *RepositoryAdapter_FindExistingSignatures_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindExistingSignatures_Call) RunAndReturn(run func(context.Context, catalog.Owner, []*catalog.MediaSignature) ([]*catalog.MediaSignature, error)) *RepositoryAdapter_FindExistingSignatures_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindMediaCurrentAlbum provides a mock function with given fields: ctx, owner, mediaId
 func (_m *RepositoryAdapter) FindMediaCurrentAlbum(ctx context.Context, owner catalog.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {
 	ret := _m.Called(ctx, owner, mediaId)
@@ -158,6 +290,36 @@ func (_m *RepositoryAdapter) FindMediaCurrentAlbum(ctx context.Context, owner ca
 	}
 
 	return r0, r1
+}
+
+// RepositoryAdapter_FindMediaCurrentAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindMediaCurrentAlbum'
+type RepositoryAdapter_FindMediaCurrentAlbum_Call struct {
+	*mock.Call
+}
+
+// FindMediaCurrentAlbum is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner catalog.Owner
+//   - mediaId catalog.MediaId
+func (_e *RepositoryAdapter_Expecter) FindMediaCurrentAlbum(ctx interface{}, owner interface{}, mediaId interface{}) *RepositoryAdapter_FindMediaCurrentAlbum_Call {
+	return &RepositoryAdapter_FindMediaCurrentAlbum_Call{Call: _e.mock.On("FindMediaCurrentAlbum", ctx, owner, mediaId)}
+}
+
+func (_c *RepositoryAdapter_FindMediaCurrentAlbum_Call) Run(run func(ctx context.Context, owner catalog.Owner, mediaId catalog.MediaId)) *RepositoryAdapter_FindMediaCurrentAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Owner), args[2].(catalog.MediaId))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindMediaCurrentAlbum_Call) Return(id *catalog.AlbumId, err error) *RepositoryAdapter_FindMediaCurrentAlbum_Call {
+	_c.Call.Return(id, err)
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindMediaCurrentAlbum_Call) RunAndReturn(run func(context.Context, catalog.Owner, catalog.MediaId) (*catalog.AlbumId, error)) *RepositoryAdapter_FindMediaCurrentAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindMediaIds provides a mock function with given fields: ctx, request
@@ -190,6 +352,35 @@ func (_m *RepositoryAdapter) FindMediaIds(ctx context.Context, request *catalog.
 	return r0, r1
 }
 
+// RepositoryAdapter_FindMediaIds_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindMediaIds'
+type RepositoryAdapter_FindMediaIds_Call struct {
+	*mock.Call
+}
+
+// FindMediaIds is a helper method to define mock.On call
+//   - ctx context.Context
+//   - request *catalog.FindMediaRequest
+func (_e *RepositoryAdapter_Expecter) FindMediaIds(ctx interface{}, request interface{}) *RepositoryAdapter_FindMediaIds_Call {
+	return &RepositoryAdapter_FindMediaIds_Call{Call: _e.mock.On("FindMediaIds", ctx, request)}
+}
+
+func (_c *RepositoryAdapter_FindMediaIds_Call) Run(run func(ctx context.Context, request *catalog.FindMediaRequest)) *RepositoryAdapter_FindMediaIds_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*catalog.FindMediaRequest))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindMediaIds_Call) Return(ids []catalog.MediaId, err error) *RepositoryAdapter_FindMediaIds_Call {
+	_c.Call.Return(ids, err)
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindMediaIds_Call) RunAndReturn(run func(context.Context, *catalog.FindMediaRequest) ([]catalog.MediaId, error)) *RepositoryAdapter_FindMediaIds_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindMedias provides a mock function with given fields: ctx, request
 func (_m *RepositoryAdapter) FindMedias(ctx context.Context, request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
 	ret := _m.Called(ctx, request)
@@ -220,6 +411,35 @@ func (_m *RepositoryAdapter) FindMedias(ctx context.Context, request *catalog.Fi
 	return r0, r1
 }
 
+// RepositoryAdapter_FindMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindMedias'
+type RepositoryAdapter_FindMedias_Call struct {
+	*mock.Call
+}
+
+// FindMedias is a helper method to define mock.On call
+//   - ctx context.Context
+//   - request *catalog.FindMediaRequest
+func (_e *RepositoryAdapter_Expecter) FindMedias(ctx interface{}, request interface{}) *RepositoryAdapter_FindMedias_Call {
+	return &RepositoryAdapter_FindMedias_Call{Call: _e.mock.On("FindMedias", ctx, request)}
+}
+
+func (_c *RepositoryAdapter_FindMedias_Call) Run(run func(ctx context.Context, request *catalog.FindMediaRequest)) *RepositoryAdapter_FindMedias_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*catalog.FindMediaRequest))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindMedias_Call) Return(medias []*catalog.MediaMeta, err error) *RepositoryAdapter_FindMedias_Call {
+	_c.Call.Return(medias, err)
+	return _c
+}
+
+func (_c *RepositoryAdapter_FindMedias_Call) RunAndReturn(run func(context.Context, *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error)) *RepositoryAdapter_FindMedias_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // InsertAlbum provides a mock function with given fields: ctx, album
 func (_m *RepositoryAdapter) InsertAlbum(ctx context.Context, album catalog.Album) error {
 	ret := _m.Called(ctx, album)
@@ -236,6 +456,35 @@ func (_m *RepositoryAdapter) InsertAlbum(ctx context.Context, album catalog.Albu
 	}
 
 	return r0
+}
+
+// RepositoryAdapter_InsertAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertAlbum'
+type RepositoryAdapter_InsertAlbum_Call struct {
+	*mock.Call
+}
+
+// InsertAlbum is a helper method to define mock.On call
+//   - ctx context.Context
+//   - album catalog.Album
+func (_e *RepositoryAdapter_Expecter) InsertAlbum(ctx interface{}, album interface{}) *RepositoryAdapter_InsertAlbum_Call {
+	return &RepositoryAdapter_InsertAlbum_Call{Call: _e.mock.On("InsertAlbum", ctx, album)}
+}
+
+func (_c *RepositoryAdapter_InsertAlbum_Call) Run(run func(ctx context.Context, album catalog.Album)) *RepositoryAdapter_InsertAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Album))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_InsertAlbum_Call) Return(_a0 error) *RepositoryAdapter_InsertAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RepositoryAdapter_InsertAlbum_Call) RunAndReturn(run func(context.Context, catalog.Album) error) *RepositoryAdapter_InsertAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // InsertMedias provides a mock function with given fields: ctx, owner, media
@@ -256,6 +505,36 @@ func (_m *RepositoryAdapter) InsertMedias(ctx context.Context, owner catalog.Own
 	return r0
 }
 
+// RepositoryAdapter_InsertMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertMedias'
+type RepositoryAdapter_InsertMedias_Call struct {
+	*mock.Call
+}
+
+// InsertMedias is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner catalog.Owner
+//   - media []catalog.CreateMediaRequest
+func (_e *RepositoryAdapter_Expecter) InsertMedias(ctx interface{}, owner interface{}, media interface{}) *RepositoryAdapter_InsertMedias_Call {
+	return &RepositoryAdapter_InsertMedias_Call{Call: _e.mock.On("InsertMedias", ctx, owner, media)}
+}
+
+func (_c *RepositoryAdapter_InsertMedias_Call) Run(run func(ctx context.Context, owner catalog.Owner, media []catalog.CreateMediaRequest)) *RepositoryAdapter_InsertMedias_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Owner), args[2].([]catalog.CreateMediaRequest))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_InsertMedias_Call) Return(_a0 error) *RepositoryAdapter_InsertMedias_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RepositoryAdapter_InsertMedias_Call) RunAndReturn(run func(context.Context, catalog.Owner, []catalog.CreateMediaRequest) error) *RepositoryAdapter_InsertMedias_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TransferMedias provides a mock function with given fields: ctx, owner, mediaIds, newFolderName
 func (_m *RepositoryAdapter) TransferMedias(ctx context.Context, owner catalog.Owner, mediaIds []catalog.MediaId, newFolderName catalog.FolderName) error {
 	ret := _m.Called(ctx, owner, mediaIds, newFolderName)
@@ -272,6 +551,37 @@ func (_m *RepositoryAdapter) TransferMedias(ctx context.Context, owner catalog.O
 	}
 
 	return r0
+}
+
+// RepositoryAdapter_TransferMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransferMedias'
+type RepositoryAdapter_TransferMedias_Call struct {
+	*mock.Call
+}
+
+// TransferMedias is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner catalog.Owner
+//   - mediaIds []catalog.MediaId
+//   - newFolderName catalog.FolderName
+func (_e *RepositoryAdapter_Expecter) TransferMedias(ctx interface{}, owner interface{}, mediaIds interface{}, newFolderName interface{}) *RepositoryAdapter_TransferMedias_Call {
+	return &RepositoryAdapter_TransferMedias_Call{Call: _e.mock.On("TransferMedias", ctx, owner, mediaIds, newFolderName)}
+}
+
+func (_c *RepositoryAdapter_TransferMedias_Call) Run(run func(ctx context.Context, owner catalog.Owner, mediaIds []catalog.MediaId, newFolderName catalog.FolderName)) *RepositoryAdapter_TransferMedias_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Owner), args[2].([]catalog.MediaId), args[3].(catalog.FolderName))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_TransferMedias_Call) Return(_a0 error) *RepositoryAdapter_TransferMedias_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RepositoryAdapter_TransferMedias_Call) RunAndReturn(run func(context.Context, catalog.Owner, []catalog.MediaId, catalog.FolderName) error) *RepositoryAdapter_TransferMedias_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // TransferMediasFromRecords provides a mock function with given fields: ctx, records
@@ -304,6 +614,35 @@ func (_m *RepositoryAdapter) TransferMediasFromRecords(ctx context.Context, reco
 	return r0, r1
 }
 
+// RepositoryAdapter_TransferMediasFromRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransferMediasFromRecords'
+type RepositoryAdapter_TransferMediasFromRecords_Call struct {
+	*mock.Call
+}
+
+// TransferMediasFromRecords is a helper method to define mock.On call
+//   - ctx context.Context
+//   - records catalog.MediaTransferRecords
+func (_e *RepositoryAdapter_Expecter) TransferMediasFromRecords(ctx interface{}, records interface{}) *RepositoryAdapter_TransferMediasFromRecords_Call {
+	return &RepositoryAdapter_TransferMediasFromRecords_Call{Call: _e.mock.On("TransferMediasFromRecords", ctx, records)}
+}
+
+func (_c *RepositoryAdapter_TransferMediasFromRecords_Call) Run(run func(ctx context.Context, records catalog.MediaTransferRecords)) *RepositoryAdapter_TransferMediasFromRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.MediaTransferRecords))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_TransferMediasFromRecords_Call) Return(_a0 catalog.TransferredMedias, _a1 error) *RepositoryAdapter_TransferMediasFromRecords_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryAdapter_TransferMediasFromRecords_Call) RunAndReturn(run func(context.Context, catalog.MediaTransferRecords) (catalog.TransferredMedias, error)) *RepositoryAdapter_TransferMediasFromRecords_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateAlbum provides a mock function with given fields: ctx, album
 func (_m *RepositoryAdapter) UpdateAlbum(ctx context.Context, album catalog.Album) error {
 	ret := _m.Called(ctx, album)
@@ -320,6 +659,35 @@ func (_m *RepositoryAdapter) UpdateAlbum(ctx context.Context, album catalog.Albu
 	}
 
 	return r0
+}
+
+// RepositoryAdapter_UpdateAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAlbum'
+type RepositoryAdapter_UpdateAlbum_Call struct {
+	*mock.Call
+}
+
+// UpdateAlbum is a helper method to define mock.On call
+//   - ctx context.Context
+//   - album catalog.Album
+func (_e *RepositoryAdapter_Expecter) UpdateAlbum(ctx interface{}, album interface{}) *RepositoryAdapter_UpdateAlbum_Call {
+	return &RepositoryAdapter_UpdateAlbum_Call{Call: _e.mock.On("UpdateAlbum", ctx, album)}
+}
+
+func (_c *RepositoryAdapter_UpdateAlbum_Call) Run(run func(ctx context.Context, album catalog.Album)) *RepositoryAdapter_UpdateAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Album))
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_UpdateAlbum_Call) Return(_a0 error) *RepositoryAdapter_UpdateAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RepositoryAdapter_UpdateAlbum_Call) RunAndReturn(run func(context.Context, catalog.Album) error) *RepositoryAdapter_UpdateAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewRepositoryAdapter creates a new instance of RepositoryAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -155,8 +155,8 @@ down:
 
 mocks:
 	rm -rf internal/mocks
-	mockery --all --dir pkg -r --output internal/mocks
-	mockery --all --dir cmd -r --output internal/mocks
+	mockery --all --dir pkg -r --with-expecter --output internal/mocks
+	mockery --all --dir cmd -r --with-expecter --output internal/mocks
 	git add internal/mocks
 
 clearlocal: dcdown dcup

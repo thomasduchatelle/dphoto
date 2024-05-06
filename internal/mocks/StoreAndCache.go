@@ -17,6 +17,14 @@ type StoreAndCache struct {
 	mock.Mock
 }
 
+type StoreAndCache_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *StoreAndCache) EXPECT() *StoreAndCache_Expecter {
+	return &StoreAndCache_Expecter{mock: &_m.Mock}
+}
+
 // Copy provides a mock function with given fields: origin, destination
 func (_m *StoreAndCache) Copy(origin string, destination archive.DestructuredKey) (string, error) {
 	ret := _m.Called(origin, destination)
@@ -45,6 +53,35 @@ func (_m *StoreAndCache) Copy(origin string, destination archive.DestructuredKey
 	return r0, r1
 }
 
+// StoreAndCache_Copy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Copy'
+type StoreAndCache_Copy_Call struct {
+	*mock.Call
+}
+
+// Copy is a helper method to define mock.On call
+//   - origin string
+//   - destination archive.DestructuredKey
+func (_e *StoreAndCache_Expecter) Copy(origin interface{}, destination interface{}) *StoreAndCache_Copy_Call {
+	return &StoreAndCache_Copy_Call{Call: _e.mock.On("Copy", origin, destination)}
+}
+
+func (_c *StoreAndCache_Copy_Call) Run(run func(origin string, destination archive.DestructuredKey)) *StoreAndCache_Copy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(archive.DestructuredKey))
+	})
+	return _c
+}
+
+func (_c *StoreAndCache_Copy_Call) Return(_a0 string, _a1 error) *StoreAndCache_Copy_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StoreAndCache_Copy_Call) RunAndReturn(run func(string, archive.DestructuredKey) (string, error)) *StoreAndCache_Copy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function with given fields: locations
 func (_m *StoreAndCache) Delete(locations []string) error {
 	ret := _m.Called(locations)
@@ -61,6 +98,34 @@ func (_m *StoreAndCache) Delete(locations []string) error {
 	}
 
 	return r0
+}
+
+// StoreAndCache_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type StoreAndCache_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - locations []string
+func (_e *StoreAndCache_Expecter) Delete(locations interface{}) *StoreAndCache_Delete_Call {
+	return &StoreAndCache_Delete_Call{Call: _e.mock.On("Delete", locations)}
+}
+
+func (_c *StoreAndCache_Delete_Call) Run(run func(locations []string)) *StoreAndCache_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]string))
+	})
+	return _c
+}
+
+func (_c *StoreAndCache_Delete_Call) Return(_a0 error) *StoreAndCache_Delete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *StoreAndCache_Delete_Call) RunAndReturn(run func([]string) error) *StoreAndCache_Delete_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Download provides a mock function with given fields: key
@@ -91,6 +156,34 @@ func (_m *StoreAndCache) Download(key string) (io.ReadCloser, error) {
 	}
 
 	return r0, r1
+}
+
+// StoreAndCache_Download_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Download'
+type StoreAndCache_Download_Call struct {
+	*mock.Call
+}
+
+// Download is a helper method to define mock.On call
+//   - key string
+func (_e *StoreAndCache_Expecter) Download(key interface{}) *StoreAndCache_Download_Call {
+	return &StoreAndCache_Download_Call{Call: _e.mock.On("Download", key)}
+}
+
+func (_c *StoreAndCache_Download_Call) Run(run func(key string)) *StoreAndCache_Download_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *StoreAndCache_Download_Call) Return(_a0 io.ReadCloser, _a1 error) *StoreAndCache_Download_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StoreAndCache_Download_Call) RunAndReturn(run func(string) (io.ReadCloser, error)) *StoreAndCache_Download_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Get provides a mock function with given fields: key
@@ -137,6 +230,34 @@ func (_m *StoreAndCache) Get(key string) (io.ReadCloser, int, string, error) {
 	return r0, r1, r2, r3
 }
 
+// StoreAndCache_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type StoreAndCache_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - key string
+func (_e *StoreAndCache_Expecter) Get(key interface{}) *StoreAndCache_Get_Call {
+	return &StoreAndCache_Get_Call{Call: _e.mock.On("Get", key)}
+}
+
+func (_c *StoreAndCache_Get_Call) Run(run func(key string)) *StoreAndCache_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *StoreAndCache_Get_Call) Return(_a0 io.ReadCloser, _a1 int, _a2 string, _a3 error) *StoreAndCache_Get_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3)
+	return _c
+}
+
+func (_c *StoreAndCache_Get_Call) RunAndReturn(run func(string) (io.ReadCloser, int, string, error)) *StoreAndCache_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Put provides a mock function with given fields: key, mediaType, content
 func (_m *StoreAndCache) Put(key string, mediaType string, content io.Reader) error {
 	ret := _m.Called(key, mediaType, content)
@@ -153,6 +274,36 @@ func (_m *StoreAndCache) Put(key string, mediaType string, content io.Reader) er
 	}
 
 	return r0
+}
+
+// StoreAndCache_Put_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Put'
+type StoreAndCache_Put_Call struct {
+	*mock.Call
+}
+
+// Put is a helper method to define mock.On call
+//   - key string
+//   - mediaType string
+//   - content io.Reader
+func (_e *StoreAndCache_Expecter) Put(key interface{}, mediaType interface{}, content interface{}) *StoreAndCache_Put_Call {
+	return &StoreAndCache_Put_Call{Call: _e.mock.On("Put", key, mediaType, content)}
+}
+
+func (_c *StoreAndCache_Put_Call) Run(run func(key string, mediaType string, content io.Reader)) *StoreAndCache_Put_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(io.Reader))
+	})
+	return _c
+}
+
+func (_c *StoreAndCache_Put_Call) Return(_a0 error) *StoreAndCache_Put_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *StoreAndCache_Put_Call) RunAndReturn(run func(string, string, io.Reader) error) *StoreAndCache_Put_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SignedURL provides a mock function with given fields: key, duration
@@ -183,6 +334,35 @@ func (_m *StoreAndCache) SignedURL(key string, duration time.Duration) (string, 
 	return r0, r1
 }
 
+// StoreAndCache_SignedURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignedURL'
+type StoreAndCache_SignedURL_Call struct {
+	*mock.Call
+}
+
+// SignedURL is a helper method to define mock.On call
+//   - key string
+//   - duration time.Duration
+func (_e *StoreAndCache_Expecter) SignedURL(key interface{}, duration interface{}) *StoreAndCache_SignedURL_Call {
+	return &StoreAndCache_SignedURL_Call{Call: _e.mock.On("SignedURL", key, duration)}
+}
+
+func (_c *StoreAndCache_SignedURL_Call) Run(run func(key string, duration time.Duration)) *StoreAndCache_SignedURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(time.Duration))
+	})
+	return _c
+}
+
+func (_c *StoreAndCache_SignedURL_Call) Return(_a0 string, _a1 error) *StoreAndCache_SignedURL_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StoreAndCache_SignedURL_Call) RunAndReturn(run func(string, time.Duration) (string, error)) *StoreAndCache_SignedURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Upload provides a mock function with given fields: values, content
 func (_m *StoreAndCache) Upload(values archive.DestructuredKey, content io.Reader) (string, error) {
 	ret := _m.Called(values, content)
@@ -211,6 +391,35 @@ func (_m *StoreAndCache) Upload(values archive.DestructuredKey, content io.Reade
 	return r0, r1
 }
 
+// StoreAndCache_Upload_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Upload'
+type StoreAndCache_Upload_Call struct {
+	*mock.Call
+}
+
+// Upload is a helper method to define mock.On call
+//   - values archive.DestructuredKey
+//   - content io.Reader
+func (_e *StoreAndCache_Expecter) Upload(values interface{}, content interface{}) *StoreAndCache_Upload_Call {
+	return &StoreAndCache_Upload_Call{Call: _e.mock.On("Upload", values, content)}
+}
+
+func (_c *StoreAndCache_Upload_Call) Run(run func(values archive.DestructuredKey, content io.Reader)) *StoreAndCache_Upload_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(archive.DestructuredKey), args[1].(io.Reader))
+	})
+	return _c
+}
+
+func (_c *StoreAndCache_Upload_Call) Return(_a0 string, _a1 error) *StoreAndCache_Upload_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StoreAndCache_Upload_Call) RunAndReturn(run func(archive.DestructuredKey, io.Reader) (string, error)) *StoreAndCache_Upload_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // WalkCacheByPrefix provides a mock function with given fields: prefix, observer
 func (_m *StoreAndCache) WalkCacheByPrefix(prefix string, observer func(string)) error {
 	ret := _m.Called(prefix, observer)
@@ -227,6 +436,35 @@ func (_m *StoreAndCache) WalkCacheByPrefix(prefix string, observer func(string))
 	}
 
 	return r0
+}
+
+// StoreAndCache_WalkCacheByPrefix_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WalkCacheByPrefix'
+type StoreAndCache_WalkCacheByPrefix_Call struct {
+	*mock.Call
+}
+
+// WalkCacheByPrefix is a helper method to define mock.On call
+//   - prefix string
+//   - observer func(string)
+func (_e *StoreAndCache_Expecter) WalkCacheByPrefix(prefix interface{}, observer interface{}) *StoreAndCache_WalkCacheByPrefix_Call {
+	return &StoreAndCache_WalkCacheByPrefix_Call{Call: _e.mock.On("WalkCacheByPrefix", prefix, observer)}
+}
+
+func (_c *StoreAndCache_WalkCacheByPrefix_Call) Run(run func(prefix string, observer func(string))) *StoreAndCache_WalkCacheByPrefix_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(func(string)))
+	})
+	return _c
+}
+
+func (_c *StoreAndCache_WalkCacheByPrefix_Call) Return(_a0 error) *StoreAndCache_WalkCacheByPrefix_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *StoreAndCache_WalkCacheByPrefix_Call) RunAndReturn(run func(string, func(string)) error) *StoreAndCache_WalkCacheByPrefix_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewStoreAndCache creates a new instance of StoreAndCache. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

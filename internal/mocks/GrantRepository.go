@@ -13,6 +13,14 @@ type GrantRepository struct {
 	mock.Mock
 }
 
+type GrantRepository_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *GrantRepository) EXPECT() *GrantRepository_Expecter {
+	return &GrantRepository_Expecter{mock: &_m.Mock}
+}
+
 // DeleteScopes provides a mock function with given fields: id
 func (_m *GrantRepository) DeleteScopes(id ...aclcore.ScopeId) error {
 	_va := make([]interface{}, len(id))
@@ -35,6 +43,41 @@ func (_m *GrantRepository) DeleteScopes(id ...aclcore.ScopeId) error {
 	}
 
 	return r0
+}
+
+// GrantRepository_DeleteScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteScopes'
+type GrantRepository_DeleteScopes_Call struct {
+	*mock.Call
+}
+
+// DeleteScopes is a helper method to define mock.On call
+//   - id ...aclcore.ScopeId
+func (_e *GrantRepository_Expecter) DeleteScopes(id ...interface{}) *GrantRepository_DeleteScopes_Call {
+	return &GrantRepository_DeleteScopes_Call{Call: _e.mock.On("DeleteScopes",
+		append([]interface{}{}, id...)...)}
+}
+
+func (_c *GrantRepository_DeleteScopes_Call) Run(run func(id ...aclcore.ScopeId)) *GrantRepository_DeleteScopes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeId, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeId)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *GrantRepository_DeleteScopes_Call) Return(_a0 error) *GrantRepository_DeleteScopes_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *GrantRepository_DeleteScopes_Call) RunAndReturn(run func(...aclcore.ScopeId) error) *GrantRepository_DeleteScopes_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // FindScopesById provides a mock function with given fields: ids
@@ -71,6 +114,41 @@ func (_m *GrantRepository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Sc
 	}
 
 	return r0, r1
+}
+
+// GrantRepository_FindScopesById_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindScopesById'
+type GrantRepository_FindScopesById_Call struct {
+	*mock.Call
+}
+
+// FindScopesById is a helper method to define mock.On call
+//   - ids ...aclcore.ScopeId
+func (_e *GrantRepository_Expecter) FindScopesById(ids ...interface{}) *GrantRepository_FindScopesById_Call {
+	return &GrantRepository_FindScopesById_Call{Call: _e.mock.On("FindScopesById",
+		append([]interface{}{}, ids...)...)}
+}
+
+func (_c *GrantRepository_FindScopesById_Call) Run(run func(ids ...aclcore.ScopeId)) *GrantRepository_FindScopesById_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeId, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeId)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *GrantRepository_FindScopesById_Call) Return(_a0 []*aclcore.Scope, _a1 error) *GrantRepository_FindScopesById_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *GrantRepository_FindScopesById_Call) RunAndReturn(run func(...aclcore.ScopeId) ([]*aclcore.Scope, error)) *GrantRepository_FindScopesById_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ListOwnerScopes provides a mock function with given fields: owner, types
@@ -110,6 +188,42 @@ func (_m *GrantRepository) ListOwnerScopes(owner string, types ...aclcore.ScopeT
 	return r0, r1
 }
 
+// GrantRepository_ListOwnerScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOwnerScopes'
+type GrantRepository_ListOwnerScopes_Call struct {
+	*mock.Call
+}
+
+// ListOwnerScopes is a helper method to define mock.On call
+//   - owner string
+//   - types ...aclcore.ScopeType
+func (_e *GrantRepository_Expecter) ListOwnerScopes(owner interface{}, types ...interface{}) *GrantRepository_ListOwnerScopes_Call {
+	return &GrantRepository_ListOwnerScopes_Call{Call: _e.mock.On("ListOwnerScopes",
+		append([]interface{}{owner}, types...)...)}
+}
+
+func (_c *GrantRepository_ListOwnerScopes_Call) Run(run func(owner string, types ...aclcore.ScopeType)) *GrantRepository_ListOwnerScopes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeType)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *GrantRepository_ListOwnerScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *GrantRepository_ListOwnerScopes_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *GrantRepository_ListOwnerScopes_Call) RunAndReturn(run func(string, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *GrantRepository_ListOwnerScopes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListScopesByOwners provides a mock function with given fields: owners, types
 func (_m *GrantRepository) ListScopesByOwners(owners []string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))
@@ -145,6 +259,42 @@ func (_m *GrantRepository) ListScopesByOwners(owners []string, types ...aclcore.
 	}
 
 	return r0, r1
+}
+
+// GrantRepository_ListScopesByOwners_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListScopesByOwners'
+type GrantRepository_ListScopesByOwners_Call struct {
+	*mock.Call
+}
+
+// ListScopesByOwners is a helper method to define mock.On call
+//   - owners []string
+//   - types ...aclcore.ScopeType
+func (_e *GrantRepository_Expecter) ListScopesByOwners(owners interface{}, types ...interface{}) *GrantRepository_ListScopesByOwners_Call {
+	return &GrantRepository_ListScopesByOwners_Call{Call: _e.mock.On("ListScopesByOwners",
+		append([]interface{}{owners}, types...)...)}
+}
+
+func (_c *GrantRepository_ListScopesByOwners_Call) Run(run func(owners []string, types ...aclcore.ScopeType)) *GrantRepository_ListScopesByOwners_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeType)
+			}
+		}
+		run(args[0].([]string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *GrantRepository_ListScopesByOwners_Call) Return(_a0 []*aclcore.Scope, _a1 error) *GrantRepository_ListScopesByOwners_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *GrantRepository_ListScopesByOwners_Call) RunAndReturn(run func([]string, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *GrantRepository_ListScopesByOwners_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ListUserScopes provides a mock function with given fields: email, types
@@ -184,6 +334,42 @@ func (_m *GrantRepository) ListUserScopes(email string, types ...aclcore.ScopeTy
 	return r0, r1
 }
 
+// GrantRepository_ListUserScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUserScopes'
+type GrantRepository_ListUserScopes_Call struct {
+	*mock.Call
+}
+
+// ListUserScopes is a helper method to define mock.On call
+//   - email string
+//   - types ...aclcore.ScopeType
+func (_e *GrantRepository_Expecter) ListUserScopes(email interface{}, types ...interface{}) *GrantRepository_ListUserScopes_Call {
+	return &GrantRepository_ListUserScopes_Call{Call: _e.mock.On("ListUserScopes",
+		append([]interface{}{email}, types...)...)}
+}
+
+func (_c *GrantRepository_ListUserScopes_Call) Run(run func(email string, types ...aclcore.ScopeType)) *GrantRepository_ListUserScopes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeType)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *GrantRepository_ListUserScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *GrantRepository_ListUserScopes_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *GrantRepository_ListUserScopes_Call) RunAndReturn(run func(string, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *GrantRepository_ListUserScopes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveIfNewScope provides a mock function with given fields: scope
 func (_m *GrantRepository) SaveIfNewScope(scope aclcore.Scope) error {
 	ret := _m.Called(scope)
@@ -200,6 +386,34 @@ func (_m *GrantRepository) SaveIfNewScope(scope aclcore.Scope) error {
 	}
 
 	return r0
+}
+
+// GrantRepository_SaveIfNewScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveIfNewScope'
+type GrantRepository_SaveIfNewScope_Call struct {
+	*mock.Call
+}
+
+// SaveIfNewScope is a helper method to define mock.On call
+//   - scope aclcore.Scope
+func (_e *GrantRepository_Expecter) SaveIfNewScope(scope interface{}) *GrantRepository_SaveIfNewScope_Call {
+	return &GrantRepository_SaveIfNewScope_Call{Call: _e.mock.On("SaveIfNewScope", scope)}
+}
+
+func (_c *GrantRepository_SaveIfNewScope_Call) Run(run func(scope aclcore.Scope)) *GrantRepository_SaveIfNewScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(aclcore.Scope))
+	})
+	return _c
+}
+
+func (_c *GrantRepository_SaveIfNewScope_Call) Return(_a0 error) *GrantRepository_SaveIfNewScope_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *GrantRepository_SaveIfNewScope_Call) RunAndReturn(run func(aclcore.Scope) error) *GrantRepository_SaveIfNewScope_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewGrantRepository creates a new instance of GrantRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

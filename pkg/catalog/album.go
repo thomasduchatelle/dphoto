@@ -33,31 +33,6 @@ func FindAlbum(id AlbumId) (*Album, error) {
 	return albums[0], nil
 }
 
-// DeleteAlbum delete an album, medias it contains are dispatched to other albums.
-func DeleteAlbum(albumId AlbumId, emptyOnly bool) error {
-	if !emptyOnly {
-		albums, err := repositoryPort.FindAlbumsByOwner(context.TODO(), albumId.Owner)
-		if err != nil {
-			return err
-		}
-
-		albums, removed := removeAlbumFrom(albums, albumId.FolderName)
-
-		if removed != nil {
-			_, err = assignMediasTo(albumId.Owner, albums, removed, func(timeline *Timeline) (segments []PrioritySegment, missed []PrioritySegment, err error) {
-				segments, missed = timeline.FindBetween(removed.Start, removed.End)
-				reallyMissed, err := filterMissedSegmentWithMedias(albumId, missed)
-				return segments, reallyMissed, nil
-			})
-			if err != nil {
-				return errors.Wrapf(err, "Album cannot be deleted")
-			}
-		}
-	}
-
-	return repositoryPort.DeleteEmptyAlbum(context.TODO(), albumId)
-}
-
 func filterMissedSegmentWithMedias(albumId AlbumId, missed []PrioritySegment) ([]PrioritySegment, error) {
 	var reallyMissed []PrioritySegment
 	for _, m := range missed {
@@ -84,6 +59,7 @@ func RenameAlbum(currentId AlbumId, newName string, renameFolder bool) error {
 		return err // can be NotFoundError
 	}
 
+	// TODO Must use the delete album feature
 	if renameFolder {
 		album := Album{
 			AlbumId: AlbumId{
@@ -212,23 +188,16 @@ func assignMediasTo(owner Owner, albums []*Album, removedAlbum *Album, segmentsT
 
 // remove and keep order
 func removeAlbumFrom(albums []*Album, folderName FolderName) ([]*Album, *Album) {
-	index := -1
-	var removed *Album
-	for i, a := range albums {
-		if a.FolderName == folderName {
-			index = i
-			removedCopy := a
-			removed = removedCopy
+	for index, album := range albums {
+		if album.FolderName == folderName {
+			return append(albums[:index], albums[index+1:]...), album
 		}
 	}
 
-	if index >= 0 {
-		return append(albums[:index], albums[index+1:]...), removed
-	}
-
-	return albums, removed
+	return albums, nil
 }
 
+// priorityDescComparator is positive if a is more important than b
 func priorityDescComparator(a, b *Album) int64 {
 	durationDiff := albumDuration(b).Seconds() - albumDuration(a).Seconds()
 	if durationDiff != 0 {
@@ -252,7 +221,11 @@ func endDescComparator(a, b *Album) int64 {
 	return b.End.Unix() - a.End.Unix()
 }
 
+// startsAscSort sorts albums by start date ascending, then by priority descending (equivalent to end date ascending)
 func startsAscComparator(a, b *Album) int64 {
+	if a.Start.Equal(b.Start) {
+		return priorityDescComparator(a, b)
+	}
 	return b.Start.Unix() - a.Start.Unix()
 }
 

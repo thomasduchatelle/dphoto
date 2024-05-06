@@ -15,6 +15,14 @@ type ScanStreamExecutor struct {
 	mock.Mock
 }
 
+type ScanStreamExecutor_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ScanStreamExecutor) EXPECT() *ScanStreamExecutor_Expecter {
+	return &ScanStreamExecutor_Expecter{mock: &_m.Mock}
+}
+
 // Scan provides a mock function with given fields: ctx, params, optFns
 func (_m *ScanStreamExecutor) Scan(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -50,6 +58,43 @@ func (_m *ScanStreamExecutor) Scan(ctx context.Context, params *dynamodb.ScanInp
 	}
 
 	return r0, r1
+}
+
+// ScanStreamExecutor_Scan_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Scan'
+type ScanStreamExecutor_Scan_Call struct {
+	*mock.Call
+}
+
+// Scan is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *dynamodb.ScanInput
+//   - optFns ...func(*dynamodb.Options)
+func (_e *ScanStreamExecutor_Expecter) Scan(ctx interface{}, params interface{}, optFns ...interface{}) *ScanStreamExecutor_Scan_Call {
+	return &ScanStreamExecutor_Scan_Call{Call: _e.mock.On("Scan",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *ScanStreamExecutor_Scan_Call) Run(run func(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options))) *ScanStreamExecutor_Scan_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*dynamodb.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*dynamodb.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*dynamodb.ScanInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *ScanStreamExecutor_Scan_Call) Return(_a0 *dynamodb.ScanOutput, _a1 error) *ScanStreamExecutor_Scan_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ScanStreamExecutor_Scan_Call) RunAndReturn(run func(context.Context, *dynamodb.ScanInput, ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error)) *ScanStreamExecutor_Scan_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewScanStreamExecutor creates a new instance of ScanStreamExecutor. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -12,6 +12,14 @@ type Stream struct {
 	mock.Mock
 }
 
+type Stream_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *Stream) EXPECT() *Stream_Expecter {
+	return &Stream_Expecter{mock: &_m.Mock}
+}
+
 // Count provides a mock function with given fields:
 func (_m *Stream) Count() int64 {
 	ret := _m.Called()
@@ -28,6 +36,33 @@ func (_m *Stream) Count() int64 {
 	}
 
 	return r0
+}
+
+// Stream_Count_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Count'
+type Stream_Count_Call struct {
+	*mock.Call
+}
+
+// Count is a helper method to define mock.On call
+func (_e *Stream_Expecter) Count() *Stream_Count_Call {
+	return &Stream_Count_Call{Call: _e.mock.On("Count")}
+}
+
+func (_c *Stream_Count_Call) Run(run func()) *Stream_Count_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Stream_Count_Call) Return(_a0 int64) *Stream_Count_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Stream_Count_Call) RunAndReturn(run func() int64) *Stream_Count_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Error provides a mock function with given fields:
@@ -48,6 +83,33 @@ func (_m *Stream) Error() error {
 	return r0
 }
 
+// Stream_Error_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Error'
+type Stream_Error_Call struct {
+	*mock.Call
+}
+
+// Error is a helper method to define mock.On call
+func (_e *Stream_Expecter) Error() *Stream_Error_Call {
+	return &Stream_Error_Call{Call: _e.mock.On("Error")}
+}
+
+func (_c *Stream_Error_Call) Run(run func()) *Stream_Error_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Stream_Error_Call) Return(_a0 error) *Stream_Error_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Stream_Error_Call) RunAndReturn(run func() error) *Stream_Error_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HasNext provides a mock function with given fields:
 func (_m *Stream) HasNext() bool {
 	ret := _m.Called()
@@ -64,6 +126,33 @@ func (_m *Stream) HasNext() bool {
 	}
 
 	return r0
+}
+
+// Stream_HasNext_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasNext'
+type Stream_HasNext_Call struct {
+	*mock.Call
+}
+
+// HasNext is a helper method to define mock.On call
+func (_e *Stream_Expecter) HasNext() *Stream_HasNext_Call {
+	return &Stream_HasNext_Call{Call: _e.mock.On("HasNext")}
+}
+
+func (_c *Stream_HasNext_Call) Run(run func()) *Stream_HasNext_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Stream_HasNext_Call) Return(_a0 bool) *Stream_HasNext_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Stream_HasNext_Call) RunAndReturn(run func() bool) *Stream_HasNext_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Next provides a mock function with given fields:
@@ -84,6 +173,33 @@ func (_m *Stream) Next() map[string]types.AttributeValue {
 	}
 
 	return r0
+}
+
+// Stream_Next_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Next'
+type Stream_Next_Call struct {
+	*mock.Call
+}
+
+// Next is a helper method to define mock.On call
+func (_e *Stream_Expecter) Next() *Stream_Next_Call {
+	return &Stream_Next_Call{Call: _e.mock.On("Next")}
+}
+
+func (_c *Stream_Next_Call) Run(run func()) *Stream_Next_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Stream_Next_Call) Return(_a0 map[string]types.AttributeValue) *Stream_Next_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Stream_Next_Call) RunAndReturn(run func() map[string]types.AttributeValue) *Stream_Next_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewStream creates a new instance of Stream. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

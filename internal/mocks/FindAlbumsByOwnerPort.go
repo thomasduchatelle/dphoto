@@ -15,6 +15,14 @@ type FindAlbumsByOwnerPort struct {
 	mock.Mock
 }
 
+type FindAlbumsByOwnerPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *FindAlbumsByOwnerPort) EXPECT() *FindAlbumsByOwnerPort_Expecter {
+	return &FindAlbumsByOwnerPort_Expecter{mock: &_m.Mock}
+}
+
 // FindAlbumsByOwner provides a mock function with given fields: ctx, owner
 func (_m *FindAlbumsByOwnerPort) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
 	ret := _m.Called(ctx, owner)
@@ -43,6 +51,35 @@ func (_m *FindAlbumsByOwnerPort) FindAlbumsByOwner(ctx context.Context, owner ca
 	}
 
 	return r0, r1
+}
+
+// FindAlbumsByOwnerPort_FindAlbumsByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAlbumsByOwner'
+type FindAlbumsByOwnerPort_FindAlbumsByOwner_Call struct {
+	*mock.Call
+}
+
+// FindAlbumsByOwner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner catalog.Owner
+func (_e *FindAlbumsByOwnerPort_Expecter) FindAlbumsByOwner(ctx interface{}, owner interface{}) *FindAlbumsByOwnerPort_FindAlbumsByOwner_Call {
+	return &FindAlbumsByOwnerPort_FindAlbumsByOwner_Call{Call: _e.mock.On("FindAlbumsByOwner", ctx, owner)}
+}
+
+func (_c *FindAlbumsByOwnerPort_FindAlbumsByOwner_Call) Run(run func(ctx context.Context, owner catalog.Owner)) *FindAlbumsByOwnerPort_FindAlbumsByOwner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalog.Owner))
+	})
+	return _c
+}
+
+func (_c *FindAlbumsByOwnerPort_FindAlbumsByOwner_Call) Return(_a0 []*catalog.Album, _a1 error) *FindAlbumsByOwnerPort_FindAlbumsByOwner_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *FindAlbumsByOwnerPort_FindAlbumsByOwner_Call) RunAndReturn(run func(context.Context, catalog.Owner) ([]*catalog.Album, error)) *FindAlbumsByOwnerPort_FindAlbumsByOwner_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewFindAlbumsByOwnerPort creates a new instance of FindAlbumsByOwnerPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

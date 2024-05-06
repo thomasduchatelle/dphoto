@@ -12,6 +12,14 @@ type ScopesReader struct {
 	mock.Mock
 }
 
+type ScopesReader_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ScopesReader) EXPECT() *ScopesReader_Expecter {
+	return &ScopesReader_Expecter{mock: &_m.Mock}
+}
+
 // FindScopesById provides a mock function with given fields: ids
 func (_m *ScopesReader) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(ids))
@@ -46,6 +54,41 @@ func (_m *ScopesReader) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope
 	}
 
 	return r0, r1
+}
+
+// ScopesReader_FindScopesById_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindScopesById'
+type ScopesReader_FindScopesById_Call struct {
+	*mock.Call
+}
+
+// FindScopesById is a helper method to define mock.On call
+//   - ids ...aclcore.ScopeId
+func (_e *ScopesReader_Expecter) FindScopesById(ids ...interface{}) *ScopesReader_FindScopesById_Call {
+	return &ScopesReader_FindScopesById_Call{Call: _e.mock.On("FindScopesById",
+		append([]interface{}{}, ids...)...)}
+}
+
+func (_c *ScopesReader_FindScopesById_Call) Run(run func(ids ...aclcore.ScopeId)) *ScopesReader_FindScopesById_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeId, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeId)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *ScopesReader_FindScopesById_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopesReader_FindScopesById_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ScopesReader_FindScopesById_Call) RunAndReturn(run func(...aclcore.ScopeId) ([]*aclcore.Scope, error)) *ScopesReader_FindScopesById_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ListUserScopes provides a mock function with given fields: email, types
@@ -83,6 +126,42 @@ func (_m *ScopesReader) ListUserScopes(email string, types ...aclcore.ScopeType)
 	}
 
 	return r0, r1
+}
+
+// ScopesReader_ListUserScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUserScopes'
+type ScopesReader_ListUserScopes_Call struct {
+	*mock.Call
+}
+
+// ListUserScopes is a helper method to define mock.On call
+//   - email string
+//   - types ...aclcore.ScopeType
+func (_e *ScopesReader_Expecter) ListUserScopes(email interface{}, types ...interface{}) *ScopesReader_ListUserScopes_Call {
+	return &ScopesReader_ListUserScopes_Call{Call: _e.mock.On("ListUserScopes",
+		append([]interface{}{email}, types...)...)}
+}
+
+func (_c *ScopesReader_ListUserScopes_Call) Run(run func(email string, types ...aclcore.ScopeType)) *ScopesReader_ListUserScopes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeType)
+			}
+		}
+		run(args[0].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *ScopesReader_ListUserScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopesReader_ListUserScopes_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ScopesReader_ListUserScopes_Call) RunAndReturn(run func(string, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ScopesReader_ListUserScopes_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewScopesReader creates a new instance of ScopesReader. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

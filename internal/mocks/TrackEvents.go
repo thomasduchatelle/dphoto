@@ -12,9 +12,45 @@ type TrackEvents struct {
 	mock.Mock
 }
 
+type TrackEvents_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *TrackEvents) EXPECT() *TrackEvents_Expecter {
+	return &TrackEvents_Expecter{mock: &_m.Mock}
+}
+
 // OnEvent provides a mock function with given fields: event
 func (_m *TrackEvents) OnEvent(event backup.ProgressEvent) {
 	_m.Called(event)
+}
+
+// TrackEvents_OnEvent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnEvent'
+type TrackEvents_OnEvent_Call struct {
+	*mock.Call
+}
+
+// OnEvent is a helper method to define mock.On call
+//   - event backup.ProgressEvent
+func (_e *TrackEvents_Expecter) OnEvent(event interface{}) *TrackEvents_OnEvent_Call {
+	return &TrackEvents_OnEvent_Call{Call: _e.mock.On("OnEvent", event)}
+}
+
+func (_c *TrackEvents_OnEvent_Call) Run(run func(event backup.ProgressEvent)) *TrackEvents_OnEvent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(backup.ProgressEvent))
+	})
+	return _c
+}
+
+func (_c *TrackEvents_OnEvent_Call) Return() *TrackEvents_OnEvent_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *TrackEvents_OnEvent_Call) RunAndReturn(run func(backup.ProgressEvent)) *TrackEvents_OnEvent_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewTrackEvents creates a new instance of TrackEvents. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

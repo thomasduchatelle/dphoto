@@ -9,6 +9,14 @@ type RevokeAccessTokenAdapter struct {
 	mock.Mock
 }
 
+type RevokeAccessTokenAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *RevokeAccessTokenAdapter) EXPECT() *RevokeAccessTokenAdapter_Expecter {
+	return &RevokeAccessTokenAdapter_Expecter{mock: &_m.Mock}
+}
+
 // DeleteRefreshToken provides a mock function with given fields: token
 func (_m *RevokeAccessTokenAdapter) DeleteRefreshToken(token string) error {
 	ret := _m.Called(token)
@@ -25,6 +33,34 @@ func (_m *RevokeAccessTokenAdapter) DeleteRefreshToken(token string) error {
 	}
 
 	return r0
+}
+
+// RevokeAccessTokenAdapter_DeleteRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRefreshToken'
+type RevokeAccessTokenAdapter_DeleteRefreshToken_Call struct {
+	*mock.Call
+}
+
+// DeleteRefreshToken is a helper method to define mock.On call
+//   - token string
+func (_e *RevokeAccessTokenAdapter_Expecter) DeleteRefreshToken(token interface{}) *RevokeAccessTokenAdapter_DeleteRefreshToken_Call {
+	return &RevokeAccessTokenAdapter_DeleteRefreshToken_Call{Call: _e.mock.On("DeleteRefreshToken", token)}
+}
+
+func (_c *RevokeAccessTokenAdapter_DeleteRefreshToken_Call) Run(run func(token string)) *RevokeAccessTokenAdapter_DeleteRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *RevokeAccessTokenAdapter_DeleteRefreshToken_Call) Return(_a0 error) *RevokeAccessTokenAdapter_DeleteRefreshToken_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RevokeAccessTokenAdapter_DeleteRefreshToken_Call) RunAndReturn(run func(string) error) *RevokeAccessTokenAdapter_DeleteRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewRevokeAccessTokenAdapter creates a new instance of RevokeAccessTokenAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

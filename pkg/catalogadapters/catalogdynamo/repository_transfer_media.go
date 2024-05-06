@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
@@ -32,23 +33,9 @@ func (r *Repository) TransferMediasFromRecords(ctx context.Context, records cata
 }
 
 func (r *Repository) findMediaIdsFromSelectors(ctx context.Context, targetAlbumId catalog.AlbumId, selectors []catalog.MediaSelector) ([]catalog.MediaId, error) {
-	request := &catalog.FindMediaRequest{
-		Owner:            targetAlbumId.Owner,
-		AlbumFolderNames: make(map[catalog.FolderName]interface{}),
-		Ranges:           nil,
-	}
+	request := r.convertSelectorsIntoMediaRequest(targetAlbumId.Owner, selectors)
 
-	for _, selector := range selectors {
-		for _, album := range selector.FromAlbums {
-			request.AlbumFolderNames[album.FolderName] = nil
-		}
-		request.Ranges = append(request.Ranges, catalog.TimeRange{
-			Start: selector.Start,
-			End:   selector.End,
-		})
-	}
-
-	queries, err := newMediaQueryBuilders(r.table, request, "Id")
+	queries, err := newMediaQueryBuilders(r.table, request, "Id", types.SelectAllAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +51,25 @@ func (r *Repository) findMediaIdsFromSelectors(ctx context.Context, targetAlbumI
 	}
 
 	return mediaIds, nil
+}
+
+func (r *Repository) convertSelectorsIntoMediaRequest(owner catalog.Owner, selectors []catalog.MediaSelector) *catalog.FindMediaRequest {
+	request := &catalog.FindMediaRequest{
+		Owner:            owner,
+		AlbumFolderNames: make(map[catalog.FolderName]interface{}),
+		Ranges:           nil,
+	}
+
+	for _, selector := range selectors {
+		for _, album := range selector.FromAlbums {
+			request.AlbumFolderNames[album.FolderName] = nil
+		}
+		request.Ranges = append(request.Ranges, catalog.TimeRange{
+			Start: selector.Start,
+			End:   selector.End,
+		})
+	}
+	return request
 }
 
 func (r *Repository) transferMedias(ctx context.Context, albumId catalog.AlbumId, mediaIds []catalog.MediaId) error {

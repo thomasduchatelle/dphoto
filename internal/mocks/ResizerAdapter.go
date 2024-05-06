@@ -13,6 +13,14 @@ type ResizerAdapter struct {
 	mock.Mock
 }
 
+type ResizerAdapter_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ResizerAdapter) EXPECT() *ResizerAdapter_Expecter {
+	return &ResizerAdapter_Expecter{mock: &_m.Mock}
+}
+
 // ResizeImage provides a mock function with given fields: reader, width, fast
 func (_m *ResizerAdapter) ResizeImage(reader io.Reader, width int, fast bool) ([]byte, string, error) {
 	ret := _m.Called(reader, width, fast)
@@ -50,6 +58,36 @@ func (_m *ResizerAdapter) ResizeImage(reader io.Reader, width int, fast bool) ([
 	return r0, r1, r2
 }
 
+// ResizerAdapter_ResizeImage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResizeImage'
+type ResizerAdapter_ResizeImage_Call struct {
+	*mock.Call
+}
+
+// ResizeImage is a helper method to define mock.On call
+//   - reader io.Reader
+//   - width int
+//   - fast bool
+func (_e *ResizerAdapter_Expecter) ResizeImage(reader interface{}, width interface{}, fast interface{}) *ResizerAdapter_ResizeImage_Call {
+	return &ResizerAdapter_ResizeImage_Call{Call: _e.mock.On("ResizeImage", reader, width, fast)}
+}
+
+func (_c *ResizerAdapter_ResizeImage_Call) Run(run func(reader io.Reader, width int, fast bool)) *ResizerAdapter_ResizeImage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(io.Reader), args[1].(int), args[2].(bool))
+	})
+	return _c
+}
+
+func (_c *ResizerAdapter_ResizeImage_Call) Return(_a0 []byte, _a1 string, _a2 error) *ResizerAdapter_ResizeImage_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *ResizerAdapter_ResizeImage_Call) RunAndReturn(run func(io.Reader, int, bool) ([]byte, string, error)) *ResizerAdapter_ResizeImage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ResizeImageAtDifferentWidths provides a mock function with given fields: reader, width
 func (_m *ResizerAdapter) ResizeImageAtDifferentWidths(reader io.Reader, width []int) (map[int][]byte, string, error) {
 	ret := _m.Called(reader, width)
@@ -85,6 +123,35 @@ func (_m *ResizerAdapter) ResizeImageAtDifferentWidths(reader io.Reader, width [
 	}
 
 	return r0, r1, r2
+}
+
+// ResizerAdapter_ResizeImageAtDifferentWidths_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResizeImageAtDifferentWidths'
+type ResizerAdapter_ResizeImageAtDifferentWidths_Call struct {
+	*mock.Call
+}
+
+// ResizeImageAtDifferentWidths is a helper method to define mock.On call
+//   - reader io.Reader
+//   - width []int
+func (_e *ResizerAdapter_Expecter) ResizeImageAtDifferentWidths(reader interface{}, width interface{}) *ResizerAdapter_ResizeImageAtDifferentWidths_Call {
+	return &ResizerAdapter_ResizeImageAtDifferentWidths_Call{Call: _e.mock.On("ResizeImageAtDifferentWidths", reader, width)}
+}
+
+func (_c *ResizerAdapter_ResizeImageAtDifferentWidths_Call) Run(run func(reader io.Reader, width []int)) *ResizerAdapter_ResizeImageAtDifferentWidths_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(io.Reader), args[1].([]int))
+	})
+	return _c
+}
+
+func (_c *ResizerAdapter_ResizeImageAtDifferentWidths_Call) Return(_a0 map[int][]byte, _a1 string, _a2 error) *ResizerAdapter_ResizeImageAtDifferentWidths_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *ResizerAdapter_ResizeImageAtDifferentWidths_Call) RunAndReturn(run func(io.Reader, []int) (map[int][]byte, string, error)) *ResizerAdapter_ResizeImageAtDifferentWidths_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewResizerAdapter creates a new instance of ResizerAdapter. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

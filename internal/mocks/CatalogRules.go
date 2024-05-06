@@ -14,6 +14,14 @@ type CatalogRules struct {
 	mock.Mock
 }
 
+type CatalogRules_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *CatalogRules) EXPECT() *CatalogRules_Expecter {
+	return &CatalogRules_Expecter{mock: &_m.Mock}
+}
+
 // CanListMediasFromAlbum provides a mock function with given fields: owner, folderName
 func (_m *CatalogRules) CanListMediasFromAlbum(owner string, folderName string) error {
 	ret := _m.Called(owner, folderName)
@@ -30,6 +38,35 @@ func (_m *CatalogRules) CanListMediasFromAlbum(owner string, folderName string) 
 	}
 
 	return r0
+}
+
+// CatalogRules_CanListMediasFromAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanListMediasFromAlbum'
+type CatalogRules_CanListMediasFromAlbum_Call struct {
+	*mock.Call
+}
+
+// CanListMediasFromAlbum is a helper method to define mock.On call
+//   - owner string
+//   - folderName string
+func (_e *CatalogRules_Expecter) CanListMediasFromAlbum(owner interface{}, folderName interface{}) *CatalogRules_CanListMediasFromAlbum_Call {
+	return &CatalogRules_CanListMediasFromAlbum_Call{Call: _e.mock.On("CanListMediasFromAlbum", owner, folderName)}
+}
+
+func (_c *CatalogRules_CanListMediasFromAlbum_Call) Run(run func(owner string, folderName string)) *CatalogRules_CanListMediasFromAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *CatalogRules_CanListMediasFromAlbum_Call) Return(_a0 error) *CatalogRules_CanListMediasFromAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CatalogRules_CanListMediasFromAlbum_Call) RunAndReturn(run func(string, string) error) *CatalogRules_CanListMediasFromAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // CanManageAlbum provides a mock function with given fields: owner, folderName
@@ -50,6 +87,35 @@ func (_m *CatalogRules) CanManageAlbum(owner string, folderName string) error {
 	return r0
 }
 
+// CatalogRules_CanManageAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanManageAlbum'
+type CatalogRules_CanManageAlbum_Call struct {
+	*mock.Call
+}
+
+// CanManageAlbum is a helper method to define mock.On call
+//   - owner string
+//   - folderName string
+func (_e *CatalogRules_Expecter) CanManageAlbum(owner interface{}, folderName interface{}) *CatalogRules_CanManageAlbum_Call {
+	return &CatalogRules_CanManageAlbum_Call{Call: _e.mock.On("CanManageAlbum", owner, folderName)}
+}
+
+func (_c *CatalogRules_CanManageAlbum_Call) Run(run func(owner string, folderName string)) *CatalogRules_CanManageAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *CatalogRules_CanManageAlbum_Call) Return(_a0 error) *CatalogRules_CanManageAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CatalogRules_CanManageAlbum_Call) RunAndReturn(run func(string, string) error) *CatalogRules_CanManageAlbum_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CanReadMedia provides a mock function with given fields: owner, id
 func (_m *CatalogRules) CanReadMedia(owner string, id string) error {
 	ret := _m.Called(owner, id)
@@ -66,6 +132,35 @@ func (_m *CatalogRules) CanReadMedia(owner string, id string) error {
 	}
 
 	return r0
+}
+
+// CatalogRules_CanReadMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanReadMedia'
+type CatalogRules_CanReadMedia_Call struct {
+	*mock.Call
+}
+
+// CanReadMedia is a helper method to define mock.On call
+//   - owner string
+//   - id string
+func (_e *CatalogRules_Expecter) CanReadMedia(owner interface{}, id interface{}) *CatalogRules_CanReadMedia_Call {
+	return &CatalogRules_CanReadMedia_Call{Call: _e.mock.On("CanReadMedia", owner, id)}
+}
+
+func (_c *CatalogRules_CanReadMedia_Call) Run(run func(owner string, id string)) *CatalogRules_CanReadMedia_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *CatalogRules_CanReadMedia_Call) Return(_a0 error) *CatalogRules_CanReadMedia_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CatalogRules_CanReadMedia_Call) RunAndReturn(run func(string, string) error) *CatalogRules_CanReadMedia_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Owner provides a mock function with given fields:
@@ -94,6 +189,33 @@ func (_m *CatalogRules) Owner() (string, error) {
 	}
 
 	return r0, r1
+}
+
+// CatalogRules_Owner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Owner'
+type CatalogRules_Owner_Call struct {
+	*mock.Call
+}
+
+// Owner is a helper method to define mock.On call
+func (_e *CatalogRules_Expecter) Owner() *CatalogRules_Owner_Call {
+	return &CatalogRules_Owner_Call{Call: _e.mock.On("Owner")}
+}
+
+func (_c *CatalogRules_Owner_Call) Run(run func()) *CatalogRules_Owner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *CatalogRules_Owner_Call) Return(_a0 string, _a1 error) *CatalogRules_Owner_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *CatalogRules_Owner_Call) RunAndReturn(run func() (string, error)) *CatalogRules_Owner_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SharedByUserGrid provides a mock function with given fields: owner
@@ -126,6 +248,34 @@ func (_m *CatalogRules) SharedByUserGrid(owner string) (map[string]map[string]ac
 	return r0, r1
 }
 
+// CatalogRules_SharedByUserGrid_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SharedByUserGrid'
+type CatalogRules_SharedByUserGrid_Call struct {
+	*mock.Call
+}
+
+// SharedByUserGrid is a helper method to define mock.On call
+//   - owner string
+func (_e *CatalogRules_Expecter) SharedByUserGrid(owner interface{}) *CatalogRules_SharedByUserGrid_Call {
+	return &CatalogRules_SharedByUserGrid_Call{Call: _e.mock.On("SharedByUserGrid", owner)}
+}
+
+func (_c *CatalogRules_SharedByUserGrid_Call) Run(run func(owner string)) *CatalogRules_SharedByUserGrid_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *CatalogRules_SharedByUserGrid_Call) Return(_a0 map[string]map[string]aclcore.ScopeType, _a1 error) *CatalogRules_SharedByUserGrid_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *CatalogRules_SharedByUserGrid_Call) RunAndReturn(run func(string) (map[string]map[string]aclcore.ScopeType, error)) *CatalogRules_SharedByUserGrid_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SharedWithUserAlbum provides a mock function with given fields:
 func (_m *CatalogRules) SharedWithUserAlbum() ([]catalog.AlbumId, error) {
 	ret := _m.Called()
@@ -154,6 +304,33 @@ func (_m *CatalogRules) SharedWithUserAlbum() ([]catalog.AlbumId, error) {
 	}
 
 	return r0, r1
+}
+
+// CatalogRules_SharedWithUserAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SharedWithUserAlbum'
+type CatalogRules_SharedWithUserAlbum_Call struct {
+	*mock.Call
+}
+
+// SharedWithUserAlbum is a helper method to define mock.On call
+func (_e *CatalogRules_Expecter) SharedWithUserAlbum() *CatalogRules_SharedWithUserAlbum_Call {
+	return &CatalogRules_SharedWithUserAlbum_Call{Call: _e.mock.On("SharedWithUserAlbum")}
+}
+
+func (_c *CatalogRules_SharedWithUserAlbum_Call) Run(run func()) *CatalogRules_SharedWithUserAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *CatalogRules_SharedWithUserAlbum_Call) Return(_a0 []catalog.AlbumId, _a1 error) *CatalogRules_SharedWithUserAlbum_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *CatalogRules_SharedWithUserAlbum_Call) RunAndReturn(run func() ([]catalog.AlbumId, error)) *CatalogRules_SharedWithUserAlbum_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewCatalogRules creates a new instance of CatalogRules. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

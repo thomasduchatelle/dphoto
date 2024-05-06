@@ -12,9 +12,45 @@ type TrackScanComplete struct {
 	mock.Mock
 }
 
+type TrackScanComplete_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *TrackScanComplete) EXPECT() *TrackScanComplete_Expecter {
+	return &TrackScanComplete_Expecter{mock: &_m.Mock}
+}
+
 // OnScanComplete provides a mock function with given fields: total
 func (_m *TrackScanComplete) OnScanComplete(total backup.MediaCounter) {
 	_m.Called(total)
+}
+
+// TrackScanComplete_OnScanComplete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnScanComplete'
+type TrackScanComplete_OnScanComplete_Call struct {
+	*mock.Call
+}
+
+// OnScanComplete is a helper method to define mock.On call
+//   - total backup.MediaCounter
+func (_e *TrackScanComplete_Expecter) OnScanComplete(total interface{}) *TrackScanComplete_OnScanComplete_Call {
+	return &TrackScanComplete_OnScanComplete_Call{Call: _e.mock.On("OnScanComplete", total)}
+}
+
+func (_c *TrackScanComplete_OnScanComplete_Call) Run(run func(total backup.MediaCounter)) *TrackScanComplete_OnScanComplete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(backup.MediaCounter))
+	})
+	return _c
+}
+
+func (_c *TrackScanComplete_OnScanComplete_Call) Return() *TrackScanComplete_OnScanComplete_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *TrackScanComplete_OnScanComplete_Call) RunAndReturn(run func(backup.MediaCounter)) *TrackScanComplete_OnScanComplete_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewTrackScanComplete creates a new instance of TrackScanComplete. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

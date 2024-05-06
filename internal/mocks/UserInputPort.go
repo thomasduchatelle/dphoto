@@ -9,9 +9,44 @@ type UserInputPort struct {
 	mock.Mock
 }
 
+type UserInputPort_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *UserInputPort) EXPECT() *UserInputPort_Expecter {
+	return &UserInputPort_Expecter{mock: &_m.Mock}
+}
+
 // StartListening provides a mock function with given fields:
 func (_m *UserInputPort) StartListening() {
 	_m.Called()
+}
+
+// UserInputPort_StartListening_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartListening'
+type UserInputPort_StartListening_Call struct {
+	*mock.Call
+}
+
+// StartListening is a helper method to define mock.On call
+func (_e *UserInputPort_Expecter) StartListening() *UserInputPort_StartListening_Call {
+	return &UserInputPort_StartListening_Call{Call: _e.mock.On("StartListening")}
+}
+
+func (_c *UserInputPort_StartListening_Call) Run(run func()) *UserInputPort_StartListening_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *UserInputPort_StartListening_Call) Return() *UserInputPort_StartListening_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *UserInputPort_StartListening_Call) RunAndReturn(run func()) *UserInputPort_StartListening_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewUserInputPort creates a new instance of UserInputPort. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
