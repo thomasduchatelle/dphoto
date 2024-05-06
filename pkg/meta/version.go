@@ -47,7 +47,7 @@ var (
 	BuildVersion = BuildStat{}
 )
 
-// Version returns the version of the app, updated by ci/pre-release.sh
+// Version returns the version of the app, updated during build
 func Version() string {
 	version := VersionOrDefault(BuildVersion.Version, SemVer)
 
