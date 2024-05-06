@@ -53,7 +53,7 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	}
 
 	name := "it should find previously saved album"
-	found, err := a.repo.FindAlbums(catalog.AlbumId{Owner: a.owner, FolderName: folderName})
+	found, err := a.repo.FindAlbums(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: folderName})
 	if a.NoError(err, name) && a.Len(found, 1, name) {
 		a.Equal(&catalog.Album{
 			AlbumId: catalog.AlbumId{
@@ -98,7 +98,7 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 
 func (a *AlbumCrudTestSuite) TestFindNotFound() {
 	ttName := "it should return [?, NotFoundError] when searched album do not exists"
-	albums, err := a.repo.FindAlbums(catalog.AlbumId{Owner: a.owner, FolderName: "_donotexist"})
+	albums, err := a.repo.FindAlbums(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: "_donotexist"})
 	if a.NoError(err, ttName) {
 		a.Empty(albums)
 	}
@@ -121,7 +121,7 @@ func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
 		return
 	}
 
-	err = a.repo.DeleteEmptyAlbum(albumId)
+	err = a.repo.DeleteEmptyAlbum(context.TODO(), albumId)
 	a.NoError(err, "it should delete an album that do not have any medias")
 }
 
@@ -150,10 +150,10 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 		Start: mustParseDate("2021-01-01"),
 		End:   mustParseDate("2021-02-01"),
 	}
-	err = a.repo.UpdateAlbum(update)
+	err = a.repo.UpdateAlbum(context.TODO(), update)
 	name := "it should update an exiting album"
 	if a.NoError(err, name) {
-		updated, err := a.repo.FindAlbums(catalog.AlbumId{Owner: a.owner, FolderName: catalog.NewFolderName(folderName)})
+		updated, err := a.repo.FindAlbums(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: catalog.NewFolderName(folderName)})
 		if a.NoError(err, name) && a.Len(updated, 1) {
 			a.Equal(&update, updated[0], name)
 		}
@@ -172,6 +172,6 @@ func (a *AlbumCrudTestSuite) TestUpdateNotExisting() {
 		Start: mustParseDate("2021-01-01"),
 		End:   mustParseDate("2021-02-01"),
 	}
-	err := a.repo.UpdateAlbum(update)
+	err := a.repo.UpdateAlbum(context.TODO(), update)
 	a.Error(err, "it should fail to update an album that do not exist.")
 }

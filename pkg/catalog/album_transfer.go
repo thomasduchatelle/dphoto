@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	context2 "context"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,7 +35,7 @@ import (
 // TODO That could be an observer ?
 
 func transferMedias(filter *FindMediaRequest, folderName FolderName) (int, error) {
-	ids, err := repositoryPort.FindMediaIds(filter)
+	ids, err := repositoryPort.FindMediaIds(context2.TODO(), filter)
 	if err != nil {
 		return 0, err
 	}
@@ -58,5 +59,5 @@ func transferMedias(filter *FindMediaRequest, folderName FolderName) (int, error
 			"FolderName": folderName,
 		}).Infoln(len(ids), "medias virtually moved to new album")
 	}()
-	return len(ids), repositoryPort.TransferMedias(filter.Owner, ids, folderName)
+	return len(ids), repositoryPort.TransferMedias(context2.TODO(), filter.Owner, ids, folderName)
 }
