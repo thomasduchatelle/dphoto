@@ -30,6 +30,12 @@ type TimelineMutationObserver interface {
 	Observe(ctx context.Context, transfers TransferredMedias) error
 }
 
+type TimelineMutationObserverFunc func(ctx context.Context, transfers TransferredMedias) error
+
+func (f TimelineMutationObserverFunc) Observe(ctx context.Context, transfers TransferredMedias) error {
+	return f(ctx, transfers)
+}
+
 type MediaSelector struct {
 	//ExclusiveAlbum *AlbumId  // ExclusiveAlbum is the Album in which medias are NOT (optional)
 	FromAlbums []AlbumId // FromAlbums is a list of potential origins of medias ; is mandatory on CreateAlbum case because media are not indexed by date, only per album.

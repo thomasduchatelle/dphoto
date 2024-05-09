@@ -22,14 +22,12 @@ func ArchiveTimelineMutationObserver() *catalogarchivesync.Observer {
 
 func CreateAlbumCase(ctx context.Context) *catalog.CreateAlbum {
 	repository := CatalogRepository(ctx)
-	return &catalog.CreateAlbum{
-		FindAlbumsByOwnerPort: repository,
-		InsertAlbumPort:       repository,
-		TransferMediasPort:    repository,
-		TimelineMutationObservers: []catalog.TimelineMutationObserver{
-			ArchiveTimelineMutationObserver(),
-		},
-	}
+	return catalog.NewAlbumCreate(
+		repository,
+		repository,
+		repository,
+		ArchiveTimelineMutationObserver(),
+	)
 }
 
 func CreateAlbumDeleteCase(ctx context.Context) *catalog.DeleteAlbum {

@@ -64,7 +64,6 @@ func (a *albumHeap) HasHead(album *Album) (bool, *Album) {
 
 // AsArray returns the heap as an array
 func (a *albumHeap) AsArray() []*Album {
-	// TODO Do better using the heap !
 	albums := make([]*Album, a.Len())
 	copy(albums, a.heap)
 	slices.SortFunc(albums, func(a, b *Album) int {

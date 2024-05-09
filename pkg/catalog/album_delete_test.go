@@ -51,7 +51,7 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 	type fields struct {
 		FindAlbumsByOwner         func(t *testing.T) catalog.FindAlbumsByOwnerPort
 		CountMediasBySelectors    func(t *testing.T) catalog.CountMediasBySelectorsPort
-		AlbumCanBeDeletedObserver func(t *testing.T) catalog.AlbumCanBeDeletedObserver
+		AlbumCanBeDeletedObserver func(t *testing.T) catalog.DeleteAlbumObserver
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -182,14 +182,14 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var observers []catalog.AlbumCanBeDeletedObserver
+			var observers []catalog.DeleteAlbumObserver
 			if tt.fields.AlbumCanBeDeletedObserver != nil {
 				observers = append(observers, tt.fields.AlbumCanBeDeletedObserver(t))
 			}
 			d := &catalog.DeleteAlbum{
-				FindAlbumsByOwner:         tt.fields.FindAlbumsByOwner(t),
-				CountMediasBySelectors:    tt.fields.CountMediasBySelectors(t),
-				AlbumCanBeDeletedObserver: observers,
+				FindAlbumsByOwner:      tt.fields.FindAlbumsByOwner(t),
+				CountMediasBySelectors: tt.fields.CountMediasBySelectors(t),
+				Observers:              observers,
 			}
 			err := d.DeleteAlbum(context.Background(), tt.args.albumId)
 			tt.wantErr(t, err, fmt.Sprintf("DeleteAlbum(%v)", tt.args.albumId))
@@ -197,129 +197,17 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 	}
 }
 
-func TestDeleteAlbumMediaTransfer_Observe(t *testing.T) {
-	avenger1Id := catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/avengers-1")}
-	ironman1Id := catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/ironman-1")}
-	records := catalog.MediaTransferRecords{
-		avenger1Id: {
-			{
-				FromAlbums: []catalog.AlbumId{ironman1Id},
-				Start:      time.Time{},
-				End:        time.Time{},
-			},
-		},
-	}
-	transfers := catalog.TransferredMedias{
-		avenger1Id: []catalog.MediaId{"media-1", "media-2"},
-	}
-	emptyTransfers := catalog.TransferredMedias{
-		avenger1Id: []catalog.MediaId{},
-		ironman1Id: nil,
-	}
-
-	type fields struct {
-		TransferMedias           func(t *testing.T) catalog.TransferMediasPort
-		TimelineMutationObserver func(t *testing.T) catalog.TimelineMutationObserver
-	}
-	type args struct {
-		deletedAlbum catalog.AlbumId
-		transfers    catalog.MediaTransferRecords
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "it should perform the media transfer on the catalog DB",
-			fields: fields{
-				TransferMedias: expectTransferMediasPortCalled(records, transfers),
-			},
-			args: args{
-				deletedAlbum: ironman1Id,
-				transfers:    records,
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should notify observers that medias should be transferred",
-			fields: fields{
-				TransferMedias:           expectTransferMediasPortCalled(records, transfers),
-				TimelineMutationObserver: expectTimelineMutationObserverCalled(transfers),
-			},
-			args: args{
-				deletedAlbum: ironman1Id,
-				transfers:    records,
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should not notify observers when no medias should be transferred",
-			fields: fields{
-				TransferMedias:           expectTransferMediasPortCalled(records, emptyTransfers),
-				TimelineMutationObserver: timelineMutationObserverNotCalled(),
-			},
-			args: args{
-				deletedAlbum: ironman1Id,
-				transfers:    records,
-			},
-			wantErr: assert.NoError,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var observers []catalog.TimelineMutationObserver
-			if tt.fields.TimelineMutationObserver != nil {
-				observers = append(observers, tt.fields.TimelineMutationObserver(t))
-			}
-			d := &catalog.DeleteAlbumMediaTransfer{
-				TransferMedias:            tt.fields.TransferMedias(t),
-				TimelineMutationObservers: observers,
-			}
-			err := d.Observe(context.Background(), tt.args.deletedAlbum, tt.args.transfers)
-			tt.wantErr(t, err, fmt.Sprintf("Observe(%v, %v)", tt.args.deletedAlbum, tt.args.transfers))
-		})
+func expectAlbumCanBeDeletedObserverNotCalled() func(t *testing.T) catalog.DeleteAlbumObserver {
+	return func(t *testing.T) catalog.DeleteAlbumObserver {
+		return mocks.NewDeleteAlbumObserver(t)
 	}
 }
 
-func expectAlbumCanBeDeletedObserverNotCalled() func(t *testing.T) catalog.AlbumCanBeDeletedObserver {
-	return func(t *testing.T) catalog.AlbumCanBeDeletedObserver {
-		return mocks.NewAlbumCanBeDeletedObserver(t)
-	}
-}
-
-func expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId catalog.AlbumId, records catalog.MediaTransferRecords) func(t *testing.T) catalog.AlbumCanBeDeletedObserver {
-	return func(t *testing.T) catalog.AlbumCanBeDeletedObserver {
-		observer := mocks.NewAlbumCanBeDeletedObserver(t)
-		observer.EXPECT().Observe(mock.Anything, toDeleteAlbumId, records).Return(nil).Once()
+func expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId catalog.AlbumId, records catalog.MediaTransferRecords) func(t *testing.T) catalog.DeleteAlbumObserver {
+	return func(t *testing.T) catalog.DeleteAlbumObserver {
+		observer := mocks.NewDeleteAlbumObserver(t)
+		observer.EXPECT().OnDeleteAlbum(mock.Anything, toDeleteAlbumId, records).Return(nil).Once()
 		return observer
-	}
-}
-
-func timelineMutationObserverNotCalled() func(t *testing.T) catalog.TimelineMutationObserver {
-	return func(t *testing.T) catalog.TimelineMutationObserver {
-		return mocks.NewTimelineMutationObserver(t)
-	}
-}
-
-func expectTimelineMutationObserverCalled(transfers catalog.TransferredMedias) func(t *testing.T) catalog.TimelineMutationObserver {
-	return func(t *testing.T) catalog.TimelineMutationObserver {
-		observer := mocks.NewTimelineMutationObserver(t)
-		observer.EXPECT().Observe(mock.Anything, transfers).Return(nil).Once()
-		return observer
-	}
-}
-
-// TODO use expectTransferMediasPortCalled on create album as well
-func expectTransferMediasPortCalled(expectedRecords catalog.MediaTransferRecords, returnedTransfers catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasPort {
-	return func(t *testing.T) catalog.TransferMediasPort {
-		port := mocks.NewTransferMediasPort(t)
-		port.EXPECT().
-			TransferMediasFromRecords(mock.Anything, expectedRecords).
-			Return(returnedTransfers, nil).
-			Once()
-		return port
 	}
 }
 
@@ -402,9 +290,7 @@ func TestNewDeleteAlbum(t *testing.T) {
 		catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
 			return 0, nil
 		}),
-		catalog.TransferMediasFunc(func(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
-			return transferredMedias, nil
-		}),
+		stubTransferMediaPort(transferredMedias)(t),
 		catalog.DeleteAlbumRepositoryFunc(func(ctx context.Context, albumId catalog.AlbumId) error {
 			return nil
 		}),
@@ -414,5 +300,13 @@ func TestNewDeleteAlbum(t *testing.T) {
 	err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
 	if assert.NoError(t, err) {
 		assert.Equal(t, externalObserver.Transfers, transferredMedias)
+	}
+}
+
+func stubTransferMediaPort(transferredMedias catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasPort {
+	return func(t *testing.T) catalog.TransferMediasPort {
+		return catalog.TransferMediasFunc(func(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
+			return transferredMedias, nil
+		})
 	}
 }
