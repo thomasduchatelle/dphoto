@@ -1,41 +1,56 @@
 package catalog
 
 import (
-	context2 "context"
+	"context"
 	log "github.com/sirupsen/logrus"
 )
 
-//type MediaTransfer struct {
-//	FindMediaIdsBySelectorPort FindMediaIdsBySelectorPort
-//	TransferMediaToAlbumPort TransferMediaToAlbumPort
-//}
-//
-//type FindMediaIdsBySelectorPort interface {
-//	FindMediaIdsBySelector(ctx context.Context, selector ...MediaSelector) ([]MediaId, error)
-//}
-//
-//type TransferMediaToAlbumPort interface {
-//	TransferMediaToAlbum(ctx context.Context, albumId AlbumId, mediaIds []MediaId) error
-//}
-//
-//func (t *MediaTransfer) Observe(ctx context.Context, transfers TransferredMedias) error {
-//	for albumId, selectors := range transfers {
-//		mediaIds, err := t.FindMediaIdsBySelectorPort.FindMediaIdsBySelector(ctx, selectors...)
-//		if err != nil {
-//			return err
-//		}
-//
-//		if len(mediaIds) > 0 {
-//			t.TransferMediaToAlbumPort.TransferMediaToAlbum(ctx, )
-//		}
-//
-//	}
-//}
+type TransferredMedias map[AlbumId][]MediaId
+
+func (t TransferredMedias) IsEmpty() bool {
+	count := 0
+	for _, ids := range t {
+		count += len(ids)
+	}
+
+	return count == 0
+}
+
+type TransferMediasPort interface {
+	TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
+}
+
+type TransferMediasFunc func(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
+
+func (f TransferMediasFunc) TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error) {
+	return f(ctx, records)
+}
+
+type MediaTransfer struct {
+	TransferMedias            TransferMediasPort
+	TimelineMutationObservers []TimelineMutationObserver
+}
+
+func (d *MediaTransfer) Transfer(ctx context.Context, records MediaTransferRecords) error {
+	transfers, err := d.TransferMedias.TransferMediasFromRecords(ctx, records)
+	if err != nil || transfers.IsEmpty() {
+		return err
+	}
+
+	for _, observer := range d.TimelineMutationObservers {
+		err = observer.Observe(ctx, transfers)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 // TODO That could be an observer ?
 
 func transferMedias(filter *FindMediaRequest, folderName FolderName) (int, error) {
-	ids, err := repositoryPort.FindMediaIds(context2.TODO(), filter)
+	ids, err := repositoryPort.FindMediaIds(context.TODO(), filter)
 	if err != nil {
 		return 0, err
 	}
@@ -59,5 +74,5 @@ func transferMedias(filter *FindMediaRequest, folderName FolderName) (int, error
 			"FolderName": folderName,
 		}).Infoln(len(ids), "medias virtually moved to new album")
 	}()
-	return len(ids), repositoryPort.TransferMedias(context2.TODO(), filter.Owner, ids, folderName)
+	return len(ids), repositoryPort.TransferMedias(context.TODO(), filter.Owner, ids, folderName)
 }

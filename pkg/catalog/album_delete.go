@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -20,10 +21,21 @@ func (f CountMediasBySelectorsFunc) CountMediasBySelectors(ctx context.Context, 
 	return f(ctx, owner, selectors)
 }
 
-type AlbumCanBeDeletedObserver interface {
-	Observe(ctx context.Context, deletedAlbum AlbumId, transfers MediaTransferRecords) error
+type DeleteAlbumRepositoryPort interface {
+	DeleteAlbum(ctx context.Context, albumId AlbumId) error
 }
 
+type DeleteAlbumRepositoryFunc func(ctx context.Context, albumId AlbumId) error
+
+func (f DeleteAlbumRepositoryFunc) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
+	return f(ctx, albumId)
+}
+
+type DeleteAlbumObserver interface {
+	OnDeleteAlbum(ctx context.Context, deletedAlbum AlbumId, transfers MediaTransferRecords) error
+}
+
+// NewDeleteAlbum creates a new DeleteAlbum service.
 func NewDeleteAlbum(
 	FindAlbumsByOwner FindAlbumsByOwnerPort,
 	CountMediasBySelectors CountMediasBySelectorsPort,
@@ -31,13 +43,16 @@ func NewDeleteAlbum(
 	DeleteAlbumRepository DeleteAlbumRepositoryPort,
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *DeleteAlbum {
+
 	return &DeleteAlbum{
 		FindAlbumsByOwner:      FindAlbumsByOwner,
 		CountMediasBySelectors: CountMediasBySelectors,
-		AlbumCanBeDeletedObserver: []AlbumCanBeDeletedObserver{
+		Observers: []DeleteAlbumObserver{
 			&DeleteAlbumMediaTransfer{
-				TransferMedias:            TransferMediasPort,
-				TimelineMutationObservers: TimelineMutationObservers,
+				MediaTransfer: MediaTransfer{
+					TransferMedias:            TransferMediasPort,
+					TimelineMutationObservers: TimelineMutationObservers,
+				},
 			},
 			&DeleteAlbumMetadata{
 				DeleteAlbumRepository: DeleteAlbumRepository,
@@ -47,9 +62,9 @@ func NewDeleteAlbum(
 }
 
 type DeleteAlbum struct {
-	FindAlbumsByOwner         FindAlbumsByOwnerPort
-	CountMediasBySelectors    CountMediasBySelectorsPort
-	AlbumCanBeDeletedObserver []AlbumCanBeDeletedObserver
+	FindAlbumsByOwner      FindAlbumsByOwnerPort
+	CountMediasBySelectors CountMediasBySelectorsPort
+	Observers              []DeleteAlbumObserver
 }
 
 // DeleteAlbum delete an album, medias it contains are dispatched to other albums.
@@ -74,51 +89,29 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 		}
 	}
 
-	for _, observer := range d.AlbumCanBeDeletedObserver {
-		err := observer.Observe(ctx, albumId, transfers)
+	for _, observer := range d.Observers {
+		err := observer.OnDeleteAlbum(ctx, albumId, transfers)
 		if err != nil {
 			return err
 		}
 	}
 
+	log.Infof("Album deleted: %s", albumId)
 	return nil
 }
 
 type DeleteAlbumMediaTransfer struct {
-	TransferMedias            TransferMediasPort
-	TimelineMutationObservers []TimelineMutationObserver
+	MediaTransfer
 }
 
-func (d *DeleteAlbumMediaTransfer) Observe(ctx context.Context, deletedAlbum AlbumId, records MediaTransferRecords) error {
-	transfers, err := d.TransferMedias.TransferMediasFromRecords(ctx, records)
-	if err != nil || transfers.IsEmpty() {
-		return err
-	}
-
-	for _, observer := range d.TimelineMutationObservers {
-		err = observer.Observe(ctx, transfers)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-type DeleteAlbumRepositoryPort interface {
-	DeleteAlbum(ctx context.Context, albumId AlbumId) error
-}
-
-type DeleteAlbumRepositoryFunc func(ctx context.Context, albumId AlbumId) error
-
-func (f DeleteAlbumRepositoryFunc) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
-	return f(ctx, albumId)
+func (d *DeleteAlbumMediaTransfer) OnDeleteAlbum(ctx context.Context, deletedAlbum AlbumId, records MediaTransferRecords) error {
+	return d.MediaTransfer.Transfer(ctx, records)
 }
 
 type DeleteAlbumMetadata struct {
 	DeleteAlbumRepository DeleteAlbumRepositoryPort
 }
 
-func (d *DeleteAlbumMetadata) Observe(ctx context.Context, deletedAlbum AlbumId, transfers MediaTransferRecords) error {
+func (d *DeleteAlbumMetadata) OnDeleteAlbum(ctx context.Context, deletedAlbum AlbumId, transfers MediaTransferRecords) error {
 	return d.DeleteAlbumRepository.DeleteAlbum(ctx, deletedAlbum)
 }
