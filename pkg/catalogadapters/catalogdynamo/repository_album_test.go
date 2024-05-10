@@ -56,7 +56,7 @@ func (a *AlbumCrudTestSuite) TestInsertAndFind() {
 	}
 
 	name := "it should find previously saved album"
-	found, err := a.repo.FindAlbums(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: folderName})
+	found, err := a.repo.FindAlbumByIds(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: folderName})
 	if a.NoError(err, name) && a.Len(found, 1, name) {
 		a.Equal(&catalog.Album{
 			AlbumId: catalog.AlbumId{
@@ -100,8 +100,8 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 }
 
 func (a *AlbumCrudTestSuite) TestFindNotFound() {
-	ttName := "it should return [?, NotFoundError] when searched album do not exists"
-	albums, err := a.repo.FindAlbums(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: "_donotexist"})
+	ttName := "it should return [?, AlbumNotFoundError] when searched album do not exists"
+	albums, err := a.repo.FindAlbumByIds(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: "_donotexist"})
 	if a.NoError(err, ttName) {
 		a.Empty(albums)
 	}
@@ -156,7 +156,7 @@ func (a *AlbumCrudTestSuite) TestUpdate() {
 	err = a.repo.UpdateAlbum(context.TODO(), update)
 	name := "it should update an exiting album"
 	if a.NoError(err, name) {
-		updated, err := a.repo.FindAlbums(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: catalog.NewFolderName(folderName)})
+		updated, err := a.repo.FindAlbumByIds(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: catalog.NewFolderName(folderName)})
 		if a.NoError(err, name) && a.Len(updated, 1) {
 			a.Equal(&update, updated[0], name)
 		}

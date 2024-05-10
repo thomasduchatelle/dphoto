@@ -22,7 +22,7 @@ func (s *ShareAlbumCase) ShareAlbumWith(owner, folderName, userEmail string, sco
 
 	_, err := s.CatalogPort.FindAlbum(owner, folderName)
 	if err != nil {
-		return err // it can be a catalog.NotFoundError
+		return err // it can be a catalog.AlbumNotFoundError
 	}
 
 	return s.ScopeWriter.SaveIfNewScope(aclcore.Scope{

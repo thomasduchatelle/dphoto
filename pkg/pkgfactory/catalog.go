@@ -40,3 +40,16 @@ func CreateAlbumDeleteCase(ctx context.Context) *catalog.DeleteAlbum {
 		ArchiveTimelineMutationObserver(),
 	)
 }
+
+func RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
+	// TODO Sharing and other artefacts should be transferred as well when renaming (recreating) an album
+	repository := CatalogRepository(ctx)
+	return catalog.NewRenameAlbum(
+		repository,
+		repository,
+		repository,
+		repository,
+		repository,
+		ArchiveTimelineMutationObserver(),
+	)
+}

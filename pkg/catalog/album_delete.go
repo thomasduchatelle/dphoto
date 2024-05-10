@@ -49,7 +49,7 @@ func NewDeleteAlbum(
 		CountMediasBySelectors: CountMediasBySelectors,
 		Observers: []DeleteAlbumObserver{
 			&DeleteAlbumMediaTransfer{
-				MediaTransfer: MediaTransfer{
+				MediaTransferExecutor: MediaTransferExecutor{
 					TransferMedias:            TransferMediasPort,
 					TimelineMutationObservers: TimelineMutationObservers,
 				},
@@ -101,11 +101,11 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 }
 
 type DeleteAlbumMediaTransfer struct {
-	MediaTransfer
+	MediaTransferExecutor
 }
 
 func (d *DeleteAlbumMediaTransfer) OnDeleteAlbum(ctx context.Context, deletedAlbum AlbumId, records MediaTransferRecords) error {
-	return d.MediaTransfer.Transfer(ctx, records)
+	return d.MediaTransferExecutor.Transfer(ctx, records)
 }
 
 type DeleteAlbumMetadata struct {

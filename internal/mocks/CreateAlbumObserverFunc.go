@@ -23,17 +23,17 @@ func (_m *CreateAlbumObserverFunc) EXPECT() *CreateAlbumObserverFunc_Expecter {
 	return &CreateAlbumObserverFunc_Expecter{mock: &_m.Mock}
 }
 
-// Execute provides a mock function with given fields: ctx, album, records
-func (_m *CreateAlbumObserverFunc) Execute(ctx context.Context, album catalog.Album, records catalog.MediaTransferRecords) error {
-	ret := _m.Called(ctx, album, records)
+// Execute provides a mock function with given fields: ctx, album
+func (_m *CreateAlbumObserverFunc) Execute(ctx context.Context, album catalog.Album) error {
+	ret := _m.Called(ctx, album)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, catalog.Album, catalog.MediaTransferRecords) error); ok {
-		r0 = rf(ctx, album, records)
+	if rf, ok := ret.Get(0).(func(context.Context, catalog.Album) error); ok {
+		r0 = rf(ctx, album)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -49,14 +49,13 @@ type CreateAlbumObserverFunc_Execute_Call struct {
 // Execute is a helper method to define mock.On call
 //   - ctx context.Context
 //   - album catalog.Album
-//   - records catalog.MediaTransferRecords
-func (_e *CreateAlbumObserverFunc_Expecter) Execute(ctx interface{}, album interface{}, records interface{}) *CreateAlbumObserverFunc_Execute_Call {
-	return &CreateAlbumObserverFunc_Execute_Call{Call: _e.mock.On("Execute", ctx, album, records)}
+func (_e *CreateAlbumObserverFunc_Expecter) Execute(ctx interface{}, album interface{}) *CreateAlbumObserverFunc_Execute_Call {
+	return &CreateAlbumObserverFunc_Execute_Call{Call: _e.mock.On("Execute", ctx, album)}
 }
 
-func (_c *CreateAlbumObserverFunc_Execute_Call) Run(run func(ctx context.Context, album catalog.Album, records catalog.MediaTransferRecords)) *CreateAlbumObserverFunc_Execute_Call {
+func (_c *CreateAlbumObserverFunc_Execute_Call) Run(run func(ctx context.Context, album catalog.Album)) *CreateAlbumObserverFunc_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(catalog.Album), args[2].(catalog.MediaTransferRecords))
+		run(args[0].(context.Context), args[1].(catalog.Album))
 	})
 	return _c
 }
@@ -66,7 +65,7 @@ func (_c *CreateAlbumObserverFunc_Execute_Call) Return(_a0 error) *CreateAlbumOb
 	return _c
 }
 
-func (_c *CreateAlbumObserverFunc_Execute_Call) RunAndReturn(run func(context.Context, catalog.Album, catalog.MediaTransferRecords) error) *CreateAlbumObserverFunc_Execute_Call {
+func (_c *CreateAlbumObserverFunc_Execute_Call) RunAndReturn(run func(context.Context, catalog.Album) error) *CreateAlbumObserverFunc_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

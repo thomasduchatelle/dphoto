@@ -167,7 +167,7 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		{
 			name: "it should DENY if media not found",
 			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
-				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return("", catalog.NotFoundError)
+				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return("", catalog.AlbumNotFoundError)
 			},
 			args: args{owner: ownerEmail, mediaId: mediaId},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {

@@ -36,7 +36,7 @@ When not specified, folder name is generated from the pattern 'YYYY-MM_<normalis
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
 		creationRequest.Owner = catalog.Owner(Owner)
-		err = pkgfactory.CreateAlbumCase(ctx).Create(ctx, creationRequest)
+		_, err = pkgfactory.CreateAlbumCase(ctx).Create(ctx, creationRequest)
 		printer.FatalWithMessageIfError(err, 1, "Failed to create the album, or to migrate medias to it.")
 
 		printer.Success("Album %s created.", aurora.Cyan(creationRequest.Name))

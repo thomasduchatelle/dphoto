@@ -70,8 +70,8 @@ func (_c *RepositoryAdapter_DeleteEmptyAlbum_Call) RunAndReturn(run func(context
 	return _c
 }
 
-// FindAlbums provides a mock function with given fields: ctx, ids
-func (_m *RepositoryAdapter) FindAlbums(ctx context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {
+// FindAlbumByIds provides a mock function with given fields: ctx, ids
+func (_m *RepositoryAdapter) FindAlbumByIds(ctx context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {
 	_va := make([]interface{}, len(ids))
 	for _i := range ids {
 		_va[_i] = ids[_i]
@@ -82,7 +82,7 @@ func (_m *RepositoryAdapter) FindAlbums(ctx context.Context, ids ...catalog.Albu
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindAlbums")
+		panic("no return value specified for FindAlbumByIds")
 	}
 
 	var r0 []*catalog.Album
@@ -107,20 +107,20 @@ func (_m *RepositoryAdapter) FindAlbums(ctx context.Context, ids ...catalog.Albu
 	return r0, r1
 }
 
-// RepositoryAdapter_FindAlbums_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAlbums'
-type RepositoryAdapter_FindAlbums_Call struct {
+// RepositoryAdapter_FindAlbumByIds_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAlbumByIds'
+type RepositoryAdapter_FindAlbumByIds_Call struct {
 	*mock.Call
 }
 
-// FindAlbums is a helper method to define mock.On call
+// FindAlbumByIds is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ids ...catalog.AlbumId
-func (_e *RepositoryAdapter_Expecter) FindAlbums(ctx interface{}, ids ...interface{}) *RepositoryAdapter_FindAlbums_Call {
-	return &RepositoryAdapter_FindAlbums_Call{Call: _e.mock.On("FindAlbums",
+func (_e *RepositoryAdapter_Expecter) FindAlbumByIds(ctx interface{}, ids ...interface{}) *RepositoryAdapter_FindAlbumByIds_Call {
+	return &RepositoryAdapter_FindAlbumByIds_Call{Call: _e.mock.On("FindAlbumByIds",
 		append([]interface{}{ctx}, ids...)...)}
 }
 
-func (_c *RepositoryAdapter_FindAlbums_Call) Run(run func(ctx context.Context, ids ...catalog.AlbumId)) *RepositoryAdapter_FindAlbums_Call {
+func (_c *RepositoryAdapter_FindAlbumByIds_Call) Run(run func(ctx context.Context, ids ...catalog.AlbumId)) *RepositoryAdapter_FindAlbumByIds_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]catalog.AlbumId, len(args)-1)
 		for i, a := range args[1:] {
@@ -133,12 +133,12 @@ func (_c *RepositoryAdapter_FindAlbums_Call) Run(run func(ctx context.Context, i
 	return _c
 }
 
-func (_c *RepositoryAdapter_FindAlbums_Call) Return(_a0 []*catalog.Album, _a1 error) *RepositoryAdapter_FindAlbums_Call {
+func (_c *RepositoryAdapter_FindAlbumByIds_Call) Return(_a0 []*catalog.Album, _a1 error) *RepositoryAdapter_FindAlbumByIds_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RepositoryAdapter_FindAlbums_Call) RunAndReturn(run func(context.Context, ...catalog.AlbumId) ([]*catalog.Album, error)) *RepositoryAdapter_FindAlbums_Call {
+func (_c *RepositoryAdapter_FindAlbumByIds_Call) RunAndReturn(run func(context.Context, ...catalog.AlbumId) ([]*catalog.Album, error)) *RepositoryAdapter_FindAlbumByIds_Call {
 	_c.Call.Return(run)
 	return _c
 }

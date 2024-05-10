@@ -45,7 +45,7 @@ func AssignIdsToNewMedias(owner Owner, signatures []*MediaSignature) (map[MediaS
 	return assignedIds, nil
 }
 
-// FindMediaOwnership returns the folderName containing the media, or NotFoundError.
+// FindMediaOwnership returns the folderName containing the media, or AlbumNotFoundError.
 func FindMediaOwnership(owner Owner, mediaId MediaId) (*AlbumId, error) {
 	return repositoryPort.FindMediaCurrentAlbum(context.TODO(), owner, mediaId)
 }

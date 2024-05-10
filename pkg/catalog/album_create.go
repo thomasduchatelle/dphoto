@@ -22,13 +22,13 @@ func NewAlbumCreate(
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
-		FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
 		Observers: []CreateAlbumObserver{
 			&CreateAlbumExecutor{
 				InsertAlbumPort: InsertAlbumPort,
 			},
 			&CreateAlbumMediaTransfer{
-				MediaTransfer: MediaTransfer{
+				FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
+				MediaTransfer: &MediaTransferExecutor{
 					TransferMedias:            TransferMediasPort,
 					TimelineMutationObservers: TimelineMutationObservers,
 				},
@@ -102,24 +102,33 @@ func (f MoveMediaPortFunc) MoveMedia(ctx context.Context, albumId AlbumId, media
 }
 
 type CreateAlbumObserver interface {
-	ObserveCreateAlbum(ctx context.Context, album Album, records MediaTransferRecords) error
+	ObserveCreateAlbum(ctx context.Context, album Album) error
 }
 
-type CreateAlbumObserverFunc func(ctx context.Context, album Album, records MediaTransferRecords) error
+type CreateAlbumObserverFunc func(ctx context.Context, album Album) error
 
-func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, album Album, records MediaTransferRecords) error {
-	return f(ctx, album, records)
+func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, album Album) error {
+	return f(ctx, album)
+}
+
+type MediaTransfer interface {
+	Transfer(ctx context.Context, records MediaTransferRecords) error
+}
+
+type MediaTransferFunc func(ctx context.Context, records MediaTransferRecords) error
+
+func (f MediaTransferFunc) Transfer(ctx context.Context, records MediaTransferRecords) error {
+	return f(ctx, records)
 }
 
 type CreateAlbum struct {
-	FindAlbumsByOwnerPort FindAlbumsByOwnerPort
-	Observers             []CreateAlbumObserver
+	Observers []CreateAlbumObserver
 }
 
 // Create creates a new album
-func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) error {
+func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
 	if err := request.IsValid(); err != nil {
-		return err
+		return nil, err
 	}
 
 	folderName := generateFolderName(request.Name, request.Start)
@@ -127,17 +136,43 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) er
 		folderName = NewFolderName(request.ForcedFolderName)
 	}
 
+	albumId := AlbumId{
+		Owner:      request.Owner,
+		FolderName: folderName,
+	}
 	createdAlbum := Album{
-		AlbumId: AlbumId{
-			Owner:      request.Owner,
-			FolderName: folderName,
-		},
-		Name:  request.Name,
-		Start: request.Start,
-		End:   request.End,
+		AlbumId: albumId,
+		Name:    request.Name,
+		Start:   request.Start,
+		End:     request.End,
 	}
 
-	albums, err := c.FindAlbumsByOwnerPort.FindAlbumsByOwner(ctx, request.Owner)
+	for _, observer := range c.Observers {
+		err := observer.ObserveCreateAlbum(ctx, createdAlbum)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	log.Infof("Album created: %s [%s]", request, createdAlbum.AlbumId)
+	return &albumId, nil
+}
+
+type CreateAlbumExecutor struct {
+	InsertAlbumPort InsertAlbumPort
+}
+
+func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, album Album) error {
+	return c.InsertAlbumPort.InsertAlbum(ctx, album)
+}
+
+type CreateAlbumMediaTransfer struct {
+	MediaTransfer         MediaTransfer
+	FindAlbumsByOwnerPort FindAlbumsByOwnerPort
+}
+
+func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
+	albums, err := c.FindAlbumsByOwnerPort.FindAlbumsByOwner(ctx, createdAlbum.AlbumId.Owner)
 	if err != nil {
 		return err
 	}
@@ -147,29 +182,5 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) er
 		return err
 	}
 
-	for _, observer := range c.Observers {
-		err = observer.ObserveCreateAlbum(ctx, createdAlbum, records)
-		if err != nil {
-			return err
-		}
-	}
-
-	log.Infof("Album created: %s [%s]", request, createdAlbum.AlbumId)
-	return nil
-}
-
-type CreateAlbumExecutor struct {
-	InsertAlbumPort InsertAlbumPort
-}
-
-func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, album Album, records MediaTransferRecords) error {
-	return c.InsertAlbumPort.InsertAlbum(ctx, album)
-}
-
-type CreateAlbumMediaTransfer struct {
-	MediaTransfer
-}
-
-func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, album Album, records MediaTransferRecords) error {
 	return c.MediaTransfer.Transfer(ctx, records)
 }
