@@ -88,7 +88,7 @@ func (t TimelineMutator) RemoveAlbum(currentAlbums []*Album, deletedAlbumId Albu
 
 	albumsWithoutOneToDelete, deletedAlbum := removeAlbumFrom(currentAlbums, deletedAlbumId.FolderName)
 	if deletedAlbum == nil {
-		return nil, nil, NotFoundError
+		return nil, nil, AlbumNotFoundError
 	}
 	sort.Slice(albumsWithoutOneToDelete, startsAscSort(albumsWithoutOneToDelete))
 

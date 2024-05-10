@@ -88,7 +88,7 @@ func TestMediaTransfer_Transfer(t *testing.T) {
 				observers = append(observers, tt.fields.TimelineMutationObserver(t))
 			}
 			d := &catalog.DeleteAlbumMediaTransfer{
-				MediaTransfer: catalog.MediaTransfer{
+				MediaTransferExecutor: catalog.MediaTransferExecutor{
 					TransferMedias:            tt.fields.TransferMedias(t),
 					TimelineMutationObservers: observers,
 				},

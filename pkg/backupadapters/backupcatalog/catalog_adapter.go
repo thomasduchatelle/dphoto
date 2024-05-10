@@ -136,7 +136,7 @@ func (u *timelineAdapter) FindOrCreateAlbum(mediaTime time.Time) (string, bool, 
 
 	log.Infof("Creates new album '%s' to accommodate media at %s", createRequest.ForcedFolderName, mediaTime.Format(time.RFC3339))
 
-	err := u.createAlbum.Create(ctx, createRequest)
+	_, err := u.createAlbum.Create(ctx, createRequest)
 	if err != nil {
 		return "", false, errors.Wrapf(err, "failed to create album containing %s [%s]", mediaTime.Format(time.RFC3339), createRequest.String())
 	}

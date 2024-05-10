@@ -59,6 +59,11 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner)
 	return albums, nil
 }
 
+func (r *Repository) UpdateAlbumName(ctx context.Context, albumId catalog.AlbumId, newName string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r *Repository) InsertAlbum(ctx context.Context, album catalog.Album) error {
 	if album.Owner == "" || album.FolderName == "" {
 		return errors.Errorf("Owner and Foldername are mandatory")
@@ -151,7 +156,19 @@ func (r *Repository) CountMediasBySelectors(ctx context.Context, owner catalog.O
 	return count, nil
 }
 
-func (r *Repository) FindAlbums(ctx context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {
+func (r *Repository) FindAlbumById(ctx context.Context, id catalog.AlbumId) (*catalog.Album, error) {
+	albums, err := r.FindAlbumByIds(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(albums) == 0 {
+		return nil, catalog.AlbumNotFoundError
+	}
+	return albums[0], nil
+}
+
+func (r *Repository) FindAlbumByIds(ctx context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {
 	var keys []map[string]types.AttributeValue
 	for _, id := range ids {
 		key, err := attributevalue.MarshalMap(AlbumPrimaryKey(id.Owner, id.FolderName))

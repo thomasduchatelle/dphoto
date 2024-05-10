@@ -18,17 +18,17 @@ func FindAllAlbums(owner Owner) ([]*Album, error) {
 
 // FindAlbums get several albums by their business keys
 func FindAlbums(keys []AlbumId) ([]*Album, error) {
-	return repositoryPort.FindAlbums(context.TODO(), keys...)
+	return repositoryPort.FindAlbumByIds(context.TODO(), keys...)
 }
 
-// FindAlbum get an album by its business key (its folder name), or returns NotFoundError
+// FindAlbum get an album by its business key (its folder name), or returns AlbumNotFoundError
 func FindAlbum(id AlbumId) (*Album, error) {
-	albums, err := repositoryPort.FindAlbums(context.TODO(), id)
+	albums, err := repositoryPort.FindAlbumByIds(context.TODO(), id)
 	if err != nil {
 		return nil, err
 	}
 	if len(albums) == 0 {
-		return nil, NotFoundError
+		return nil, AlbumNotFoundError
 	}
 	return albums[0], nil
 }
@@ -51,48 +51,6 @@ func filterMissedSegmentWithMedias(albumId AlbumId, missed []PrioritySegment) ([
 	return reallyMissed, nil
 }
 
-// RenameAlbum updates the displayed named of the album. Optionally changes the folder in which media will be stored
-// and flag all its media to be moved to the new one.
-func RenameAlbum(currentId AlbumId, newName string, renameFolder bool) error {
-	found, err := FindAlbum(currentId)
-	if err != nil {
-		return err // can be NotFoundError
-	}
-
-	// TODO Must use the delete album feature
-	if renameFolder {
-		album := Album{
-			AlbumId: AlbumId{
-				Owner:      currentId.Owner,
-				FolderName: generateFolderName(newName, found.Start),
-			},
-			Name:  newName,
-			Start: found.Start,
-			End:   found.End,
-		}
-
-		err = repositoryPort.InsertAlbum(context.TODO(), album)
-		if err != nil {
-			return err
-		}
-
-		count, err := transferMedias(NewFindMediaRequest(currentId.Owner).WithAlbum(currentId.FolderName), album.FolderName)
-		if err != nil {
-			return err
-		}
-
-		log.WithFields(log.Fields{
-			"AlbumFolderName":    album.FolderName,
-			"PreviousFolderName": currentId.FolderName,
-			"AlbumMoved":         count,
-		}).Infof("Album renamed and %d medias moved\n", count)
-		return repositoryPort.DeleteEmptyAlbum(context.TODO(), currentId)
-	}
-
-	found.Name = newName
-	return repositoryPort.UpdateAlbum(context.TODO(), *found)
-}
-
 // UpdateAlbum updates the dates of an album, medias will be re-assign between albums accordingly
 func UpdateAlbum(albumId AlbumId, start, end time.Time) error {
 	albums, err := repositoryPort.FindAlbumsByOwner(context.TODO(), albumId.Owner)
@@ -102,7 +60,7 @@ func UpdateAlbum(albumId AlbumId, start, end time.Time) error {
 
 	albumsWithoutUpdated, updated := removeAlbumFrom(albums, albumId.FolderName)
 	if updated == nil {
-		return NotFoundError
+		return AlbumNotFoundError
 	}
 
 	previousTimeRange := NewTimeRangeFromAlbum(*updated)

@@ -97,17 +97,24 @@ type uiCatalogAdapter struct {
 }
 
 func (o *uiCatalogAdapter) Create(request ui.RecordCreation) error {
-	return o.CreateAlbum.Create(context.TODO(), catalog.CreateAlbumRequest{
+	_, err := o.CreateAlbum.Create(context.TODO(), catalog.CreateAlbumRequest{
 		Owner:            catalog.Owner(request.Owner),
 		Name:             request.Name,
 		Start:            request.Start,
 		End:              request.End,
 		ForcedFolderName: request.FolderName,
 	})
+	return err
 }
 
 func (o *uiCatalogAdapter) RenameAlbum(folderName, newName string, renameFolder bool) error {
-	return catalog.RenameAlbum(catalog.NewAlbumIdFromStrings(Owner, folderName), newName, renameFolder)
+	ctx := context.TODO()
+
+	return pkgfactory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
+		CurrentId:    catalog.NewAlbumIdFromStrings(Owner, folderName),
+		NewName:      newName,
+		RenameFolder: renameFolder,
+	})
 }
 
 func (o *uiCatalogAdapter) UpdateAlbum(folderName string, start, end time.Time) error {

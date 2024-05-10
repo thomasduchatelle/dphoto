@@ -41,7 +41,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			}
 
 			err = common.GetShareAlbumCase().ShareAlbumWith(owner, folderName, email, scope)
-			if errors.Is(err, catalog.NotFoundError) {
+			if errors.Is(err, catalog.AlbumNotFoundError) {
 				return common.NotFound(fmt.Sprintf("%s/%s hasn't been found", owner, folderName))
 			} else if err != nil {
 				return common.InternalError(err)

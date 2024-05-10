@@ -5,11 +5,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
-type RepositoryContract interface {
-	catalog.RepositoryAdapter
-	catalog.TransferMediasPort
-}
-
 type Repository struct {
 	client *dynamodb.Client
 	table  string

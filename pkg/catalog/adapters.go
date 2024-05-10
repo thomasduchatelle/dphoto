@@ -21,7 +21,7 @@ type RepositoryAdapter interface {
 	InsertAlbum(ctx context.Context, album Album) error
 	DeleteEmptyAlbum(ctx context.Context, id AlbumId) error
 	// FindAlbums only returns found albums
-	FindAlbums(ctx context.Context, ids ...AlbumId) ([]*Album, error)
+	FindAlbumByIds(ctx context.Context, ids ...AlbumId) ([]*Album, error)
 	// UpdateAlbum updates data of matching Album.FolderName
 	UpdateAlbum(ctx context.Context, album Album) error
 

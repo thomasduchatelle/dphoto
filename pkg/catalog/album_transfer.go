@@ -26,12 +26,12 @@ func (f TransferMediasFunc) TransferMediasFromRecords(ctx context.Context, recor
 	return f(ctx, records)
 }
 
-type MediaTransfer struct {
+type MediaTransferExecutor struct {
 	TransferMedias            TransferMediasPort
 	TimelineMutationObservers []TimelineMutationObserver
 }
 
-func (d *MediaTransfer) Transfer(ctx context.Context, records MediaTransferRecords) error {
+func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTransferRecords) error {
 	transfers, err := d.TransferMedias.TransferMediasFromRecords(ctx, records)
 	if err != nil || transfers.IsEmpty() {
 		return err
