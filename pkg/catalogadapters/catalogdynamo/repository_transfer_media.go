@@ -73,7 +73,6 @@ func (r *Repository) convertSelectorsIntoMediaRequest(owner catalog.Owner, selec
 }
 
 func (r *Repository) transferMedias(ctx context.Context, albumId catalog.AlbumId, mediaIds []catalog.MediaId) error {
-	// TODO - Candidate for event sourcing ?
 	for _, id := range mediaIds {
 		mediaKey, err := attributevalue.MarshalMap(MediaPrimaryKey(albumId.Owner, id))
 		if err != nil {

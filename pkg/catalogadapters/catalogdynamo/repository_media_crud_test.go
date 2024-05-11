@@ -294,11 +294,6 @@ func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 	}
 }
 
-func (a *MediaCrudTestSuite) TestDeleteNonEmpty() {
-	err := a.repo.DeleteEmptyAlbum(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: a.jan21})
-	a.Equal(catalog.AlbumIsNotEmptyError, err, "it should not delete an album with images in it")
-}
-
 func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 	exiting := []*catalog.MediaSignature{
 		{SignatureSha256: "dc58865da1228b7a187693c702905d00d6a59439a07d52f2a8e7ae43764b55b9", SignatureSize: 16384},
@@ -408,28 +403,6 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 				assert.Equal(t, &catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.want}, got)
 			}
 		})
-	}
-}
-
-func (a *MediaCrudTestSuite) TestTransferMedias() {
-	name := "it should find transferred media in the new album and not anymore on the previous album"
-
-	err := a.repo.TransferMedias(context.TODO(), a.owner, []catalog.MediaId{a.medias[0].Id, a.medias[1].Id}, a.mar21)
-	if a.NoError(err, name) {
-		mediasInMar21, err := a.repo.FindMediaIds(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(a.mar21))
-		if a.NoError(err, name) {
-			a.Equal([]catalog.MediaId{a.medias[0].Id, a.medias[1].Id}, mediasInMar21, name)
-		}
-
-		mediasInJan21, err := a.repo.FindMediaIds(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(a.jan21))
-		if a.NoError(err, name) {
-			a.Equal([]catalog.MediaId{a.medias[2].Id}, mediasInJan21, name)
-		}
-
-		mediasInFeb21, err := a.repo.FindMediaIds(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(a.feb21))
-		if a.NoError(err, name) {
-			a.Nil(mediasInFeb21, name)
-		}
 	}
 }
 

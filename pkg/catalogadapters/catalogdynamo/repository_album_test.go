@@ -107,78 +107,6 @@ func (a *AlbumCrudTestSuite) TestFindNotFound() {
 	}
 }
 
-func (a *AlbumCrudTestSuite) TestDeleteEmpty() {
-	folderName := catalog.NewFolderName("ToBeDeleted")
-	albumId := catalog.AlbumId{
-		Owner:      a.owner,
-		FolderName: folderName,
-	}
-
-	err := a.repo.InsertAlbum(context.TODO(), catalog.Album{
-		AlbumId: albumId,
-		Name:    "ToBeDeleted",
-		Start:   mustParseDate("2020-12-24"),
-		End:     mustParseDate("2020-12-26"),
-	})
-	if !a.NoError(err, "it should insert an album to delete") {
-		return
-	}
-
-	err = a.repo.DeleteEmptyAlbum(context.TODO(), albumId)
-	a.NoError(err, "it should delete an album that do not have any medias")
-}
-
-func (a *AlbumCrudTestSuite) TestUpdate() {
-	folderName := "Update1"
-
-	err := a.repo.InsertAlbum(context.TODO(), catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      a.owner,
-			FolderName: catalog.NewFolderName("Update1"),
-		},
-		Name:  folderName,
-		Start: mustParseDate("2020-12-01"),
-		End:   mustParseDate("2021-01-31"),
-	})
-	if !a.NoError(err, "it should insert an album to update") {
-		return
-	}
-
-	update := catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      a.owner,
-			FolderName: catalog.NewFolderName("Update1"),
-		},
-		Name:  "Another Name",
-		Start: mustParseDate("2021-01-01"),
-		End:   mustParseDate("2021-02-01"),
-	}
-	err = a.repo.UpdateAlbum(context.TODO(), update)
-	name := "it should update an exiting album"
-	if a.NoError(err, name) {
-		updated, err := a.repo.FindAlbumByIds(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: catalog.NewFolderName(folderName)})
-		if a.NoError(err, name) && a.Len(updated, 1) {
-			a.Equal(&update, updated[0], name)
-		}
-	}
-}
-
-func (a *AlbumCrudTestSuite) TestUpdateNotExisting() {
-	folderName := catalog.NewFolderName("_do_not_exist")
-
-	update := catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      a.owner,
-			FolderName: folderName,
-		},
-		Name:  "Another Name",
-		Start: mustParseDate("2021-01-01"),
-		End:   mustParseDate("2021-02-01"),
-	}
-	err := a.repo.UpdateAlbum(context.TODO(), update)
-	a.Error(err, "it should fail to update an album that do not exist.")
-}
-
 func TestRepository_CountMediasBySelectors(t *testing.T) {
 	const owner = "ironman"
 	mediaId1 := "media-1"
@@ -328,5 +256,168 @@ func mediaEntry(albumId catalog.AlbumId, mediaId1 string, mediaDateTime string) 
 		"SK":           &types.AttributeValueMemberS{Value: "#METADATA"},
 		"AlbumIndexPK": &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#%s", albumId.Owner, albumId.FolderName)},
 		"AlbumIndexSK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MEDIA#%s#%s", mediaDateTime, mediaId1)},
+	}
+}
+
+func TestRepository_AmendDates(t *testing.T) {
+	albumId1 := catalog.AlbumId{
+		Owner:      "ironman",
+		FolderName: catalog.NewFolderName("/album-1"),
+	}
+	album1PK := &types.AttributeValueMemberS{Value: "ironman#ALBUM"}
+	album1SK := &types.AttributeValueMemberS{Value: "ALBUM#/album-1"}
+
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+
+	type args struct {
+		albumId catalog.AlbumId
+		start   time.Time
+		end     time.Time
+	}
+	tests := []struct {
+		name    string
+		args    args
+		before  []map[string]types.AttributeValue
+		after   []map[string]types.AttributeValue
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should update an album that exists",
+			args: args{
+				albumId: albumId1,
+				start:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				end:     time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC),
+			},
+			before: []map[string]types.AttributeValue{
+				{
+					"PK":         album1PK,
+					"SK":         album1SK,
+					"AlbumStart": &types.AttributeValueMemberS{Value: "2024-02-01T00:00:00Z"},
+					"AlbumEnd":   &types.AttributeValueMemberS{Value: "2024-05-01T00:00:00Z"},
+				},
+			},
+			after: []map[string]types.AttributeValue{
+				{
+					"PK":         album1PK,
+					"SK":         album1SK,
+					"AlbumStart": &types.AttributeValueMemberS{Value: "2024-01-01T00:00:00Z"},
+					"AlbumEnd":   &types.AttributeValueMemberS{Value: "2024-06-01T00:00:00Z"},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should raise an error if the album doesn't exists",
+			args: args{
+				albumId: albumId1,
+				start:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				end:     time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC),
+			},
+			before: nil,
+			after:  nil,
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, catalog.AlbumNotFoundError, i...)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(dyn.Ctx, tt.before)
+			if !assert.NoError(t, err, "WithDbContent") {
+				return
+			}
+
+			r := &Repository{
+				client: dyn.Client,
+				table:  dyn.Table,
+			}
+
+			err = r.AmendDates(context.Background(), tt.args.albumId, tt.args.start, tt.args.end)
+			if tt.wantErr(t, err, fmt.Sprintf("AmendDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end)) {
+				_, err := dyn.EqualContent(dyn.Ctx, tt.after)
+				assert.NoError(t, err, "AssertDbContent")
+			}
+		})
+	}
+}
+
+func TestRepository_UpdateAlbumName(t *testing.T) {
+	albumId1 := catalog.AlbumId{
+		Owner:      "ironman",
+		FolderName: catalog.NewFolderName("/album-1"),
+	}
+	album1PK := &types.AttributeValueMemberS{Value: "ironman#ALBUM"}
+	album1SK := &types.AttributeValueMemberS{Value: "ALBUM#/album-1"}
+
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+
+	type args struct {
+		albumId catalog.AlbumId
+		newName string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		before  []map[string]types.AttributeValue
+		after   []map[string]types.AttributeValue
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should update the name of an album that exists",
+			args: args{
+				albumId: albumId1,
+				newName: "New Name",
+			},
+			before: []map[string]types.AttributeValue{
+				{
+					"PK":        album1PK,
+					"SK":        album1SK,
+					"AlbumName": &types.AttributeValueMemberS{Value: "Old Name"},
+				},
+			},
+			after: []map[string]types.AttributeValue{
+				{
+					"PK":        album1PK,
+					"SK":        album1SK,
+					"AlbumName": &types.AttributeValueMemberS{Value: "New Name"},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should raise an error if the media doesn't exists",
+			args: args{
+				albumId: albumId1,
+				newName: "New Name",
+			},
+			before: nil,
+			after:  nil,
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, catalog.MediaNotFoundError, i...)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(dyn.Ctx, tt.before)
+			if !assert.NoError(t, err, "WithDbContent") {
+				return
+			}
+
+			r := &Repository{
+				client: dyn.Client,
+				table:  dyn.Table,
+			}
+
+			err = r.UpdateAlbumName(context.Background(), tt.args.albumId, tt.args.newName)
+			if tt.wantErr(t, err, fmt.Sprintf("UpdateAlbumName(%v, %v, %v)", context.Background(), tt.args.albumId, tt.args.newName)) {
+				_, err := dyn.EqualContent(dyn.Ctx, tt.after)
+				assert.NoError(t, err, "AssertDbContent")
+			}
+		})
 	}
 }

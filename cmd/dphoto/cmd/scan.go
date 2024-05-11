@@ -118,7 +118,8 @@ func (o *uiCatalogAdapter) RenameAlbum(folderName, newName string, renameFolder 
 }
 
 func (o *uiCatalogAdapter) UpdateAlbum(folderName string, start, end time.Time) error {
-	return catalog.UpdateAlbum(catalog.NewAlbumIdFromStrings(Owner, folderName), start, end)
+	ctx := context.TODO()
+	return pkgfactory.AmendAlbumDatesCase(ctx).AmendAlbumDates(ctx, catalog.NewAlbumIdFromStrings(Owner, folderName), start, end)
 }
 
 func (o *uiCatalogAdapter) DeleteAlbum(folderName string) error {

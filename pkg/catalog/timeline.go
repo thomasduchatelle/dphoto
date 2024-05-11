@@ -249,6 +249,16 @@ func (t *Timeline) FindSegmentsBetween(start, end time.Time) (segments []Priorit
 	return segments
 }
 
+// FindSegmentsBetweenAndFilter returns a list of segments between start and end date, only segments lead by the given albumId will be returned.
+func (t *Timeline) FindSegmentsBetweenAndFilter(start, end time.Time, albumId AlbumId) (segments []PrioritySegment) {
+	for _, seg := range t.FindSegmentsBetween(start, end) {
+		if seg.Albums[0].AlbumId.IsEqual(albumId) {
+			segments = append(segments, seg)
+		}
+	}
+	return
+}
+
 // AppendAlbum generates a new timeline from memory
 func (t *Timeline) AppendAlbum(album *Album) (*Timeline, error) {
 	albums := make([]*Album, len(t.albums)+1)

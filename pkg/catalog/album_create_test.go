@@ -47,7 +47,7 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 	type fields struct {
 		FindAlbumsByOwnerPort    func(t *testing.T) catalog.FindAlbumsByOwnerPort
 		InsertAlbumPort          func(t *testing.T) catalog.InsertAlbumPort
-		TransferMediasPort       func(t *testing.T) catalog.TransferMediasPort
+		TransferMediasPort       func(t *testing.T) catalog.TransferMediasRepositoryPort
 		TimelineMutationObserver func(t *testing.T) catalog.TimelineMutationObserver
 	}
 	type args struct {
@@ -62,7 +62,7 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 		{
 			name: "it should create a happy path full album create process",
 			fields: fields{
-				FindAlbumsByOwnerPort:    returnListOfAlbums(owner, lifetimeAlbum),
+				FindAlbumsByOwnerPort:    stubFindAlbumsByOwnerWith(owner, lifetimeAlbum),
 				InsertAlbumPort:          expectAlbumInserted(createAlbum),
 				TransferMediasPort:       stubTransferMediaPort(transferredMedias),
 				TimelineMutationObserver: expectTimelineMutationObserverCalled(transferredMedias),
@@ -75,7 +75,7 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 		{
 			name: "it should not call transfer observer if album insert fails (verify the order)",
 			fields: fields{
-				FindAlbumsByOwnerPort:    returnListOfAlbums(owner, lifetimeAlbum),
+				FindAlbumsByOwnerPort:    stubFindAlbumsByOwnerWith(owner, lifetimeAlbum),
 				InsertAlbumPort:          stubInsertAlbumPortWithError(testErrorInsertingAlbum),
 				TransferMediasPort:       stubTransferMediaPort(transferredMedias),
 				TimelineMutationObserver: expectTimelineMutationObserverNotCalled(),
@@ -326,7 +326,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		{
 			name: "it should create the album with a generated name",
 			fields: fields{
-				FindAlbumsByOwnerPort: returnListOfAlbums(owner),
+				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner),
 				MediaTransfer:         expectMediaTransferCalled(nil),
 			},
 			args: args{
@@ -337,7 +337,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		{
 			name: "it should re-allocate medias from a lower priority album",
 			fields: fields{
-				FindAlbumsByOwnerPort: returnListOfAlbums(owner, lifetimeAlbum),
+				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, lifetimeAlbum),
 				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
 					album.AlbumId: {
 						{
@@ -356,7 +356,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		{
 			name: "it should re-allocate medias from 2 lower priority albums ; selector still in one single block",
 			fields: fields{
-				FindAlbumsByOwnerPort: returnListOfAlbums(owner, lifetimeAlbum, remainingLifetimeAlbum),
+				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, lifetimeAlbum, remainingLifetimeAlbum),
 				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
 					album.AlbumId: {
 						{
@@ -375,7 +375,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		{
 			name: "it should re-allocate medias from 1 lower priority albums, avoiding 1 high priority (selectors in two blocks)",
 			fields: fields{
-				FindAlbumsByOwnerPort: returnListOfAlbums(owner, lifetimeAlbum, highPriorityAlbum),
+				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, lifetimeAlbum, highPriorityAlbum),
 				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
 					album.AlbumId: {
 						{
@@ -425,7 +425,7 @@ func expectCreateAlbumObserveNotCalled() func(t *testing.T) catalog.CreateAlbumO
 	}
 }
 
-func returnListOfAlbums(expectedOwner catalog.Owner, albums ...*catalog.Album) func(t *testing.T) catalog.FindAlbumsByOwnerPort {
+func stubFindAlbumsByOwnerWith(expectedOwner catalog.Owner, albums ...*catalog.Album) func(t *testing.T) catalog.FindAlbumsByOwnerPort {
 	return func(t *testing.T) catalog.FindAlbumsByOwnerPort {
 		return catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
 			if owner == expectedOwner && len(albums) > 0 {

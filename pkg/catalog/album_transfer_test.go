@@ -32,7 +32,7 @@ func TestMediaTransfer_Transfer(t *testing.T) {
 	}
 
 	type fields struct {
-		TransferMedias           func(t *testing.T) catalog.TransferMediasPort
+		TransferMedias           func(t *testing.T) catalog.TransferMediasRepositoryPort
 		TimelineMutationObserver func(t *testing.T) catalog.TimelineMutationObserver
 	}
 	type args struct {
@@ -48,7 +48,7 @@ func TestMediaTransfer_Transfer(t *testing.T) {
 		{
 			name: "it should perform the media transfer on the catalog DB",
 			fields: fields{
-				TransferMedias: expectTransferMediasPortCalled(records, transfers),
+				TransferMedias: expectTransferMediasRepositoryPortCalled(records, transfers),
 			},
 			args: args{
 				deletedAlbum: ironman1Id,
@@ -59,7 +59,7 @@ func TestMediaTransfer_Transfer(t *testing.T) {
 		{
 			name: "it should notify observers that medias should be transferred",
 			fields: fields{
-				TransferMedias:           expectTransferMediasPortCalled(records, transfers),
+				TransferMedias:           expectTransferMediasRepositoryPortCalled(records, transfers),
 				TimelineMutationObserver: expectTimelineMutationObserverCalled(transfers),
 			},
 			args: args{
@@ -71,7 +71,7 @@ func TestMediaTransfer_Transfer(t *testing.T) {
 		{
 			name: "it should not notify observers when no medias should be transferred",
 			fields: fields{
-				TransferMedias:           expectTransferMediasPortCalled(records, emptyTransfers),
+				TransferMedias:           expectTransferMediasRepositoryPortCalled(records, emptyTransfers),
 				TimelineMutationObserver: timelineMutationObserverNotCalled(),
 			},
 			args: args{
@@ -89,7 +89,7 @@ func TestMediaTransfer_Transfer(t *testing.T) {
 			}
 			d := &catalog.DeleteAlbumMediaTransfer{
 				MediaTransferExecutor: catalog.MediaTransferExecutor{
-					TransferMedias:            tt.fields.TransferMedias(t),
+					TransferMediasRepository:  tt.fields.TransferMedias(t),
 					TimelineMutationObservers: observers,
 				},
 			}
@@ -113,10 +113,9 @@ func expectTimelineMutationObserverCalled(transfers catalog.TransferredMedias) f
 	}
 }
 
-// TODO use expectTransferMediasPortCalled on create album as well
-func expectTransferMediasPortCalled(expectedRecords catalog.MediaTransferRecords, returnedTransfers catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasPort {
-	return func(t *testing.T) catalog.TransferMediasPort {
-		port := mocks.NewTransferMediasPort(t)
+func expectTransferMediasRepositoryPortCalled(expectedRecords catalog.MediaTransferRecords, returnedTransfers catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasRepositoryPort {
+	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
+		port := mocks.NewTransferMediasRepositoryPort(t)
 		port.EXPECT().
 			TransferMediasFromRecords(mock.Anything, expectedRecords).
 			Return(returnedTransfers, nil).

@@ -1,51 +1,13 @@
 package catalog
 
 import (
-	"context"
-	"fmt"
+	"github.com/pkg/errors"
 	"sort"
-	"strings"
 	"time"
 )
 
 // TimelineMutator is used to measure the impact of a change on the timeline
 type TimelineMutator struct{}
-
-// MediaTransferRecords is a description of all medias that needs to be moved accordingly to the Timeline change
-type MediaTransferRecords map[AlbumId][]MediaSelector
-
-func (r MediaTransferRecords) String() string {
-	if len(r) == 0 {
-		return "<no media transfer>"
-	}
-
-	var transfer []string
-	for albumId, selector := range r {
-		transfer = append(transfer, fmt.Sprintf("%s [%s]", albumId, selector))
-	}
-	return strings.Join(transfer, ", ")
-}
-
-type TimelineMutationObserver interface {
-	Observe(ctx context.Context, transfers TransferredMedias) error
-}
-
-type TimelineMutationObserverFunc func(ctx context.Context, transfers TransferredMedias) error
-
-func (f TimelineMutationObserverFunc) Observe(ctx context.Context, transfers TransferredMedias) error {
-	return f(ctx, transfers)
-}
-
-type MediaSelector struct {
-	//ExclusiveAlbum *AlbumId  // ExclusiveAlbum is the Album in which medias are NOT (optional)
-	FromAlbums []AlbumId // FromAlbums is a list of potential origins of medias ; is mandatory on CreateAlbum case because media are not indexed by date, only per album.
-	Start      time.Time // Start is the first date of matching medias, included
-	End        time.Time // End is the last date of matching media, excluded at the second
-}
-
-func (m MediaSelector) String() string {
-	return fmt.Sprintf("%s -> %s", m.Start.Format(time.DateTime), m.End.Format(time.DateTime))
-}
 
 func NewTimelineMutator() *TimelineMutator {
 	return new(TimelineMutator)
@@ -86,7 +48,7 @@ func (t TimelineMutator) RemoveAlbum(currentAlbums []*Album, deletedAlbumId Albu
 	records := make(MediaTransferRecords)
 	orphaned := make([]MediaSelector, 0)
 
-	albumsWithoutOneToDelete, deletedAlbum := removeAlbumFrom(currentAlbums, deletedAlbumId.FolderName)
+	albumsWithoutOneToDelete, deletedAlbum := t.removeAlbumFrom(currentAlbums, deletedAlbumId.FolderName)
 	if deletedAlbum == nil {
 		return nil, nil, AlbumNotFoundError
 	}
@@ -115,6 +77,123 @@ func (t TimelineMutator) RemoveAlbum(currentAlbums []*Album, deletedAlbumId Albu
 	}
 
 	return records, orphaned, nil
+}
+
+// removeAlbumFrom removes the album with the given folderName from the list of albums
+func (t TimelineMutator) removeAlbumFrom(albums []*Album, folderName FolderName) ([]*Album, *Album) {
+	for index, album := range albums {
+		if album.FolderName == folderName {
+			return append(albums[:index], albums[index+1:]...), album
+		}
+	}
+
+	return albums, nil
+}
+
+func (t TimelineMutator) AmendDates(timeline []*Album, amendedAlbum Album) (MediaTransferRecords, []MediaSelector, error) {
+	originalTimeline, err := NewTimeline(timeline)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	updatedList, previous, err := t.copyListWithAmendedAlbum(timeline, amendedAlbum)
+	amendedTimeline, err := NewTimeline(updatedList)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	start := minTime(amendedAlbum.Start, previous.Start)
+	end := maxTime(amendedAlbum.End, previous.End)
+
+	cursor := struct {
+		time             time.Time
+		originalSegments []PrioritySegment
+		amendedSegments  []PrioritySegment
+		records          MediaTransferRecords
+		orphaned         []MediaSelector
+	}{
+		time:             start,
+		originalSegments: originalTimeline.FindSegmentsBetween(start, end),
+		amendedSegments:  amendedTimeline.FindSegmentsBetween(start, end),
+		records:          make(MediaTransferRecords),
+	}
+
+	for len(cursor.originalSegments) > 0 && len(cursor.amendedSegments) > 0 {
+		nextTime := minTime(cursor.originalSegments[0].End, cursor.amendedSegments[0].End)
+		wasLeading := t.isLeadByAlbum(amendedAlbum.AlbumId, cursor.originalSegments[0])
+		takeTheLead := t.isLeadByAlbum(amendedAlbum.AlbumId, cursor.amendedSegments[0])
+
+		if wasLeading && !takeTheLead {
+			selector := MediaSelector{
+				FromAlbums: []AlbumId{amendedAlbum.AlbumId},
+				Start:      cursor.time,
+				End:        nextTime,
+			}
+
+			if len(cursor.amendedSegments[0].Albums) == 0 {
+				cursor.orphaned = append(cursor.orphaned, selector)
+
+			} else {
+				target := cursor.amendedSegments[0].Albums[0].AlbumId
+				if selectors, found := cursor.records[target]; found {
+					cursor.records[target] = append(selectors, selector)
+				} else {
+					cursor.records[target] = []MediaSelector{selector}
+				}
+			}
+		} else if !wasLeading && takeTheLead && len(cursor.amendedSegments[0].Albums) > 1 {
+			selector := MediaSelector{
+				FromAlbums: extractAlbumIds(cursor.amendedSegments[0].Albums[1:]), // TODO this is required because there is no index only by dates (no album)
+				Start:      cursor.time,
+				End:        nextTime,
+			}
+
+			target := amendedAlbum.AlbumId
+			if selectors, found := cursor.records[target]; found {
+				cursor.records[target] = append(selectors, selector)
+			} else {
+				cursor.records[target] = []MediaSelector{selector}
+			}
+		}
+
+		if cursor.originalSegments[0].End.Equal(cursor.amendedSegments[0].End) {
+			cursor.time = cursor.originalSegments[0].End
+			cursor.originalSegments = cursor.originalSegments[1:]
+			cursor.amendedSegments = cursor.amendedSegments[1:]
+		} else if cursor.originalSegments[0].End.Before(cursor.amendedSegments[0].End) {
+			cursor.time = cursor.originalSegments[0].End
+			cursor.originalSegments = cursor.originalSegments[1:]
+		} else {
+			cursor.time = cursor.amendedSegments[0].End
+			cursor.amendedSegments = cursor.amendedSegments[1:]
+		}
+	}
+
+	return cursor.records, cursor.orphaned, nil
+}
+
+func (t TimelineMutator) isLeadByAlbum(albumId AlbumId, seg PrioritySegment) bool {
+	return len(seg.Albums) > 0 && seg.Albums[0].AlbumId.IsEqual(albumId)
+}
+
+func (t TimelineMutator) copyListWithAmendedAlbum(timeline []*Album, amendedAlbum Album) ([]*Album, Album, error) {
+	var previous *Album
+	amendedTimeline := make([]*Album, len(timeline), len(timeline))
+
+	for i, album := range timeline {
+		if album.AlbumId.IsEqual(amendedAlbum.AlbumId) {
+			previous = album
+			amendedTimeline[i] = &amendedAlbum
+		} else {
+			amendedTimeline[i] = album
+		}
+	}
+
+	if previous == nil {
+		return nil, Album{}, errors.Errorf("album %s not found in timeline %+v", amendedAlbum.AlbumId.FolderName, timeline)
+	}
+
+	return amendedTimeline, *previous, nil
 }
 
 func startsAscSort(albums []*Album) func(i int, j int) bool {

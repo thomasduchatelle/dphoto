@@ -8,7 +8,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	_ "github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
@@ -27,6 +26,6 @@ func init() {
 			}
 		}
 
-		catalog.Init(pkgfactory.CatalogRepository(ctx), catalogarchivesync.New())
+		catalog.Init(pkgfactory.CatalogRepository(ctx))
 	})
 }

@@ -53,3 +53,14 @@ func RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
 		ArchiveTimelineMutationObserver(),
 	)
 }
+
+func AmendAlbumDatesCase(ctx context.Context) *catalog.AmendAlbumDates {
+	repository := CatalogRepository(ctx)
+	return catalog.NewAmendAlbumDates(
+		repository,
+		repository,
+		repository,
+		repository,
+		ArchiveTimelineMutationObserver(),
+	)
+}

@@ -47,7 +47,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 		UpdateAlbumName           func(t *testing.T) catalog.UpdateAlbumNamePort
 		InsertAlbumPort           func(t *testing.T) catalog.InsertAlbumPort
 		DeleteAlbumRepositoryPort func(t *testing.T) catalog.DeleteAlbumRepositoryPort
-		TransferMedias            func(t *testing.T) catalog.TransferMediasPort
+		TransferMedias            func(t *testing.T) catalog.TransferMediasRepositoryPort
 		TimelineMutationObservers func(t *testing.T) catalog.TimelineMutationObserver
 	}
 	type args struct {
@@ -66,7 +66,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				UpdateAlbumName:           expectUpdateAlbumNameNotCalled(),
 				InsertAlbumPort:           expectAlbumInserted(newAlbum),
 				DeleteAlbumRepositoryPort: expectDeleteAlbumRepositoryPortCalled(existingAlbum.AlbumId),
-				TransferMedias: expectTransferMediasPortCalled(catalog.MediaTransferRecords{
+				TransferMedias: expectTransferMediasRepositoryPortCalled(catalog.MediaTransferRecords{
 					newAlbum.AlbumId: []catalog.MediaSelector{
 						{
 							FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
@@ -94,7 +94,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				UpdateAlbumName:           expectUpdateAlbumNameNotCalled(),
 				InsertAlbumPort:           stubInsertAlbumPortWithError(testError),
 				DeleteAlbumRepositoryPort: expectDeleteAlbumRepositoryPortNotCalled(),
-				TransferMedias:            expectTransferMediasNotCalled(),
+				TransferMedias:            expectTransferMediasPortNotCalled(),
 				TimelineMutationObservers: expectTimelineMutationObserverNotCalled(),
 			},
 			args: args{
@@ -127,10 +127,10 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 	}
 }
 
-func expectTransferMediasNotCalled() func(t *testing.T) catalog.TransferMediasPort {
-	return func(t *testing.T) catalog.TransferMediasPort {
+func expectTransferMediasPortNotCalled() func(t *testing.T) catalog.TransferMediasRepositoryPort {
+	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
 		return catalog.TransferMediasFunc(func(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
-			assert.Failf(t, "TransferMedias should not be called", "TransferMediasFunc(%v, %v)", ctx, records)
+			assert.Failf(t, "TransferMediasRepository should not be called", "TransferMediasFunc(%v, %v)", ctx, records)
 			return nil, nil
 		})
 	}
@@ -139,7 +139,7 @@ func expectTransferMediasNotCalled() func(t *testing.T) catalog.TransferMediasPo
 func expectMediaTransferNotCalled() func(t *testing.T) catalog.MediaTransfer {
 	return func(t *testing.T) catalog.MediaTransfer {
 		return catalog.MediaTransferFunc(func(ctx context.Context, records catalog.MediaTransferRecords) error {
-			t.Error("MediaTransfer should not be called")
+			assert.Failf(t, "MediaTransfer should not be called", "MediaTransfer(%v, %v)", ctx, records)
 			return nil
 		})
 	}

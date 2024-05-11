@@ -12,6 +12,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"sort"
+	"time"
 )
 
 func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
@@ -42,7 +43,7 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner)
 		}
 
 		// TODO Media should be counted when inserted, not at every request
-		count, err := r.CountMedias(ctx, catalog.AlbumId{Owner: owner, FolderName: album.FolderName})
+		count, err := r.countMedias(ctx, catalog.AlbumId{Owner: owner, FolderName: album.FolderName})
 		if err != nil {
 			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", owner, album.FolderName)
 		}
@@ -60,8 +61,32 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner)
 }
 
 func (r *Repository) UpdateAlbumName(ctx context.Context, albumId catalog.AlbumId, newName string) error {
-	//TODO implement me
-	panic("implement me")
+	update, err := expression.NewBuilder().
+		WithUpdate(expression.Set(expression.Name("AlbumName"), expression.Value(newName))).
+		WithCondition(expression.Name("PK").Equal(expression.Value(AlbumPrimaryKey(albumId.Owner, albumId.FolderName).PK))).
+		Build()
+	if err != nil {
+		return errors.Wrapf(err, "failed to build update name expression for album %s", albumId)
+	}
+
+	albumKey, err := attributevalue.MarshalMap(AlbumPrimaryKey(albumId.Owner, albumId.FolderName))
+	if err != nil {
+		return errors.Wrapf(err, "failed to build update name expression for album %s", albumId)
+	}
+
+	_, err = r.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		Key:                       albumKey,
+		TableName:                 &r.table,
+		ConditionExpression:       update.Condition(),
+		ExpressionAttributeNames:  update.Names(),
+		ExpressionAttributeValues: update.Values(),
+		UpdateExpression:          update.Update(),
+	})
+	var conditionalCheckFailedException *types.ConditionalCheckFailedException
+	if errors.As(err, &conditionalCheckFailedException) {
+		return catalog.MediaNotFoundError
+	}
+	return errors.Wrapf(err, "failed to build update name expression for album %s", albumId)
 }
 
 func (r *Repository) InsertAlbum(ctx context.Context, album catalog.Album) error {
@@ -83,20 +108,6 @@ func (r *Repository) InsertAlbum(ctx context.Context, album catalog.Album) error
 	return errors.WithStack(errors.Wrapf(err, "failed inserting album '%s'", album.FolderName))
 }
 
-func (r *Repository) DeleteEmptyAlbum(ctx context.Context, albumId catalog.AlbumId) error {
-	// TODO DeleteEmptyAlbum method should not exists, DeleteAlbum should be used instead (no count check)
-	count, err := r.CountMedias(ctx, albumId)
-	if err != nil {
-		return errors.Wrapf(err, "failed to count number of medias in album %s", albumId.FolderName)
-	}
-
-	if count > 0 {
-		return catalog.AlbumIsNotEmptyError
-	}
-
-	return r.DeleteAlbum(ctx, albumId)
-}
-
 func (r *Repository) DeleteAlbum(ctx context.Context, albumId catalog.AlbumId) error {
 	primaryKey, err := attributevalue.MarshalMap(AlbumPrimaryKey(albumId.Owner, albumId.FolderName))
 	if err != nil {
@@ -109,8 +120,8 @@ func (r *Repository) DeleteAlbum(ctx context.Context, albumId catalog.AlbumId) e
 	return err
 }
 
-// CountMedias provides an accurate number of medias and can be used to update the count stored in the album record
-func (r *Repository) CountMedias(ctx context.Context, albumId catalog.AlbumId) (int, error) {
+// countMedias provides an accurate number of medias and can be used to update the count stored in the album record
+func (r *Repository) countMedias(ctx context.Context, albumId catalog.AlbumId) (int, error) {
 	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
 		withinAlbum(albumId.Owner, albumId.FolderName),
 		withExcludingMetaRecord(),
@@ -187,7 +198,7 @@ func (r *Repository) FindAlbumByIds(ctx context.Context, ids ...catalog.AlbumId)
 		}
 
 		// TODO Media should be counted when inserted, not at every request
-		album.TotalCount, err = r.CountMedias(ctx, album.AlbumId)
+		album.TotalCount, err = r.countMedias(ctx, album.AlbumId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", album.Owner, album.FolderName)
 		}
@@ -198,17 +209,34 @@ func (r *Repository) FindAlbumByIds(ctx context.Context, ids ...catalog.AlbumId)
 	return albums, stream.Error()
 }
 
-func (r *Repository) UpdateAlbum(ctx context.Context, album catalog.Album) error {
-	item, err := marshalAlbum(&album)
+func (r *Repository) AmendDates(ctx context.Context, albumId catalog.AlbumId, start, end time.Time) error {
+	update, err := expression.NewBuilder().
+		WithUpdate(expression.
+			Set(expression.Name("AlbumStart"), expression.Value(start)).
+			Set(expression.Name("AlbumEnd"), expression.Value(end))).
+		WithCondition(expression.Name("PK").Equal(expression.Value(AlbumPrimaryKey(albumId.Owner, albumId.FolderName).PK))).
+		Build()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to build date update [%s -> %s] expression for album %s", start, end, albumId)
 	}
 
-	_, err = r.client.PutItem(ctx, &dynamodb.PutItemInput{
-		ConditionExpression: aws.String("attribute_exists(PK)"),
-		Item:                item,
-		TableName:           &r.table,
-	})
+	albumKey, err := attributevalue.MarshalMap(AlbumPrimaryKey(albumId.Owner, albumId.FolderName))
+	if err != nil {
+		return errors.Wrapf(err, "failed to build date update [%s -> %s] expression for album %s", start, end, albumId)
+	}
 
-	return errors.Wrapf(err, "failed updating album '%s'", album.FolderName)
+	_, err = r.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		Key:                       albumKey,
+		TableName:                 &r.table,
+		ConditionExpression:       update.Condition(),
+		ExpressionAttributeNames:  update.Names(),
+		ExpressionAttributeValues: update.Values(),
+		UpdateExpression:          update.Update(),
+	})
+	var conditionalCheckFailedException *types.ConditionalCheckFailedException
+	if errors.As(err, &conditionalCheckFailedException) {
+		return catalog.AlbumNotFoundError
+	}
+
+	return errors.Wrapf(err, "failed to exec update [%s -> %s] expression for album %s", start, end, albumId)
 }

@@ -1,7 +1,6 @@
 package catalog_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
@@ -10,12 +9,11 @@ import (
 	"time"
 )
 
-func mockAdapters(t *testing.T) (*mocks.RepositoryAdapter, *mocks.CArchiveAdapter) {
+func mockAdapters(t *testing.T) *mocks.RepositoryAdapter {
 	mockRepository := mocks.NewRepositoryAdapter(t)
-	mockArchive := mocks.NewCArchiveAdapter(t)
-	catalog.Init(mockRepository, mockArchive)
+	catalog.Init(mockRepository)
 
-	return mockRepository, mockArchive
+	return mockRepository
 }
 
 const (
@@ -29,7 +27,7 @@ var (
 
 func TestFind_Found(t *testing.T) {
 	a := assert.New(t)
-	mockRepository, _ := mockAdapters(t)
+	mockRepository := mockAdapters(t)
 	const owner = catalog.Owner("stark")
 	albumId := catalog.AlbumId{Owner: owner, FolderName: "/MyAlbum"}
 
@@ -50,7 +48,7 @@ func TestFind_Found(t *testing.T) {
 
 func TestFind_NotFound(t *testing.T) {
 	a := assert.New(t)
-	mockRepository, _ := mockAdapters(t)
+	mockRepository := mockAdapters(t)
 	const owner = "stark"
 
 	mockRepository.On("FindAlbumByIds", mock.Anything, myAlbumId).Return(nil, nil)
@@ -61,7 +59,7 @@ func TestFind_NotFound(t *testing.T) {
 
 func TestFindAll(t *testing.T) {
 	a := assert.New(t)
-	mockRepository, _ := mockAdapters(t)
+	mockRepository := mockAdapters(t)
 
 	album := &catalog.Album{
 		AlbumId: myAlbumId,
@@ -76,58 +74,4 @@ func TestFindAll(t *testing.T) {
 	if a.NoError(err) {
 		a.Equal([]*catalog.Album{album}, got)
 	}
-}
-
-func TestShouldTransferAppropriatelyMediasBetweenAlbumsWhenDatesAreChanged(t *testing.T) {
-	a := assert.New(t)
-	mockRepository, mockArchive := mockAdapters(t)
-
-	mockRepository.On("FindAlbumsByOwner", mock.Anything, owner).Maybe().Return(catalog.AlbumCollection(), nil)
-
-	updatedFolder := catalog.NewFolderName("/Christmas_First_Week")
-	updatedStart := catalog.MustParse(layout, "2020-12-21T00")
-	updatedEnd := catalog.MustParse(layout, "2020-12-27T00")
-
-	christmas := catalog.NewFolderName("/Christmas_Holidays")
-	q4 := catalog.NewFolderName("/2020-Q4")
-	expectTransferredMedias(mockRepository, mockArchive,
-		catalog.NewFindMediaRequest(owner).
-			WithAlbum(updatedFolder, q4).
-			WithinRange(catalog.MustParse(layout, "2020-12-18T00"), catalog.MustParse(layout, "2020-12-21T00")), christmas)
-	expectTransferredMedias(
-		mockRepository,
-		mockArchive,
-		catalog.NewFindMediaRequest(owner).WithAlbum(christmas, q4).WithinRange(catalog.MustParse(layout, "2020-12-21T00"), catalog.MustParse(layout, "2020-12-24T00")),
-		updatedFolder,
-	)
-	expectTransferredMedias(mockRepository, mockArchive,
-		catalog.NewFindMediaRequest(owner).
-			WithAlbum(christmas, updatedFolder, q4).
-			WithinRange(catalog.MustParse(layout, "2020-12-24T00"), catalog.MustParse(layout, "2020-12-26T00")), "/Christmas_Day")
-	expectTransferredMedias(mockRepository, mockArchive,
-		catalog.NewFindMediaRequest(owner).
-			WithAlbum(christmas, q4).
-			WithinRange(catalog.MustParse(layout, "2020-12-26T00"), catalog.MustParse(layout, "2020-12-27T00")), updatedFolder)
-
-	mockRepository.On("UpdateAlbum", mock.Anything, catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      owner,
-			FolderName: updatedFolder,
-		},
-		Name:  "",
-		Start: updatedStart,
-		End:   updatedEnd,
-	}).Return(nil)
-
-	err := catalog.UpdateAlbum(catalog.AlbumId{Owner: owner, FolderName: updatedFolder}, updatedStart, updatedEnd)
-	if a.NoError(err) {
-		mockRepository.AssertExpectations(t)
-	}
-}
-
-func expectTransferredMedias(mockRepository *mocks.RepositoryAdapter, mockArchive *mocks.CArchiveAdapter, filter *catalog.FindMediaRequest, target catalog.FolderName) {
-	ids := []catalog.MediaId{catalog.MediaId(fmt.Sprintf("to_%s", target))}
-	mockRepository.On("FindMediaIds", mock.Anything, filter).Once().Return(ids, nil)
-	mockRepository.On("TransferMedias", mock.Anything, owner, ids, target).Once().Return(nil)
-	mockArchive.On("MoveMedias", owner, ids, target).Once().Return(nil)
 }
