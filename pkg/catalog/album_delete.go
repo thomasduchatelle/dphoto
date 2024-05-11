@@ -39,7 +39,7 @@ type DeleteAlbumObserver interface {
 func NewDeleteAlbum(
 	FindAlbumsByOwner FindAlbumsByOwnerPort,
 	CountMediasBySelectors CountMediasBySelectorsPort,
-	TransferMediasPort TransferMediasPort,
+	TransferMediasPort TransferMediasRepositoryPort,
 	DeleteAlbumRepository DeleteAlbumRepositoryPort,
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *DeleteAlbum {
@@ -50,7 +50,7 @@ func NewDeleteAlbum(
 		Observers: []DeleteAlbumObserver{
 			&DeleteAlbumMediaTransfer{
 				MediaTransferExecutor: MediaTransferExecutor{
-					TransferMedias:            TransferMediasPort,
+					TransferMediasRepository:  TransferMediasPort,
 					TimelineMutationObservers: TimelineMutationObservers,
 				},
 			},

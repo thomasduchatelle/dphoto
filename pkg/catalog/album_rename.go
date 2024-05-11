@@ -19,7 +19,7 @@ func NewRenameAlbum(
 	UpdateAlbumName UpdateAlbumNamePort,
 	InsertAlbumPort InsertAlbumPort,
 	DeleteAlbumRepositoryPort DeleteAlbumRepositoryPort,
-	TransferMedias TransferMediasPort,
+	TransferMedias TransferMediasRepositoryPort,
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *RenameAlbum {
 
@@ -36,7 +36,7 @@ func NewRenameAlbum(
 					},
 				},
 				MediaTransfer: &MediaTransferExecutor{
-					TransferMedias:            TransferMedias,
+					TransferMediasRepository:  TransferMedias,
 					TimelineMutationObservers: TimelineMutationObservers,
 				},
 				DeleteAlbumRepositoryPort: DeleteAlbumRepositoryPort,

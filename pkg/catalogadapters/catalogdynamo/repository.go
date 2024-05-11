@@ -2,7 +2,6 @@ package catalogdynamo
 
 import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
 type Repository struct {
@@ -16,13 +15,4 @@ func NewRepository(client *dynamodb.Client, tableName string) *Repository {
 		client: client,
 		table:  tableName,
 	}
-}
-
-// Must panics if there is an error
-func Must(repository catalog.RepositoryAdapter, err error) catalog.RepositoryAdapter {
-	if err != nil {
-		panic(err)
-	}
-
-	return repository
 }

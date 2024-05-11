@@ -102,10 +102,6 @@ func (r *Repository) FindMediaIds(ctx context.Context, request *catalog.FindMedi
 	return mediaIds, err
 }
 
-func (r *Repository) TransferMedias(ctx context.Context, owner catalog.Owner, mediaIds []catalog.MediaId, newFolderName catalog.FolderName) error {
-	return r.transferMedias(ctx, catalog.AlbumId{Owner: owner, FolderName: newFolderName}, mediaIds)
-}
-
 func (r *Repository) FindExistingSignatures(ctx context.Context, owner catalog.Owner, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	// note: this implementation expects media id to be an encoded version of its signature
 

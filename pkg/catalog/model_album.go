@@ -15,12 +15,12 @@ var (
 )
 
 // Album is a logical grouping of medias ; also used to physically store media next to each others.
-type Album struct { // TODO is the total count appropriate on this object ??
+type Album struct {
 	AlbumId
 	Name       string    // Name for displaying purpose, not unique
 	Start      time.Time // Start is datetime inclusive
 	End        time.Time // End is the datetime exclusive
-	TotalCount int       // TotalCount is the number of media (of any type)
+	TotalCount int       // TotalCount is the number of media (of any type)  // TODO is the total count appropriate on this object ??
 }
 
 // IsEqual uses unique identifier to compare both albums
@@ -104,17 +104,6 @@ func NewFolderName(name string) FolderName {
 
 func generateFolderName(name string, start time.Time) FolderName {
 	return NewFolderName(fmt.Sprintf("%s_%s", start.Format("2006-01"), name))
-}
-
-func NewTimeRangeFromAlbum(album Album) TimeRange {
-	if album.Start.After(album.End) {
-		panic("Album must end AFTER its start: " + album.String())
-	}
-
-	return TimeRange{
-		Start: album.Start,
-		End:   album.End,
-	}
 }
 
 type MediaId string

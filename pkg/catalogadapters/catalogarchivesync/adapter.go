@@ -8,10 +8,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
-func New() catalog.CArchiveAdapter {
-	return new(Observer)
-}
-
 type Observer struct {
 }
 
@@ -29,12 +25,4 @@ func (a *Observer) Observe(ctx context.Context, transfers catalog.TransferredMed
 	}
 
 	return nil
-}
-
-func (a *Observer) MoveMedias(owner catalog.Owner, ids []catalog.MediaId, targetFolder catalog.FolderName) error {
-	convertedIds := make([]string, len(ids), len(ids))
-	for i, id := range ids {
-		convertedIds[i] = string(id)
-	}
-	return archive.Relocate(string(owner), convertedIds, targetFolder.String())
 }

@@ -2,9 +2,12 @@ package catalog
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
+	"fmt"
+	"strings"
+	"time"
 )
 
+// TransferredMedias is a list of all medias that has be transferred to a different album in the catalog.
 type TransferredMedias map[AlbumId][]MediaId
 
 func (t TransferredMedias) IsEmpty() bool {
@@ -16,7 +19,48 @@ func (t TransferredMedias) IsEmpty() bool {
 	return count == 0
 }
 
-type TransferMediasPort interface {
+// TimelineMutationObserver will notify each observer that medias has been transferred to a different album.
+type TimelineMutationObserver interface {
+	Observe(ctx context.Context, transfers TransferredMedias) error
+}
+
+type TimelineMutationObserverFunc func(ctx context.Context, transfers TransferredMedias) error
+
+func (f TimelineMutationObserverFunc) Observe(ctx context.Context, transfers TransferredMedias) error {
+	return f(ctx, transfers)
+}
+
+// MediaTransferRecords is a description of all medias that needs to be moved accordingly to the Timeline change
+type MediaTransferRecords map[AlbumId][]MediaSelector
+
+func (r MediaTransferRecords) String() string {
+	if len(r) == 0 {
+		return "<no media to transfer>"
+	}
+
+	var transfer []string
+	for albumId, selectors := range r {
+		transfer = append(transfer, fmt.Sprintf("%s<=%s", albumId, selectors))
+	}
+	return strings.Join(transfer, " ; ")
+}
+
+type MediaSelector struct {
+	//ExclusiveAlbum *AlbumId  // ExclusiveAlbum is the Album in which medias are NOT (optional)
+	FromAlbums []AlbumId // FromAlbums is a list of potential origins of medias ; is mandatory on CreateAlbum case because media are not indexed by date, only per album.
+	Start      time.Time // Start is the first date of matching medias, included
+	End        time.Time // End is the last date of matching media, excluded at the second
+}
+
+func (m MediaSelector) String() string {
+	var from []string
+	for _, album := range m.FromAlbums {
+		from = append(from, album.String())
+	}
+	return fmt.Sprintf("{from:%s} %s -> %s", strings.Join(from, ","), m.Start.Format(time.DateTime), m.End.Format(time.DateTime))
+}
+
+type TransferMediasRepositoryPort interface {
 	TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
 }
 
@@ -27,12 +71,12 @@ func (f TransferMediasFunc) TransferMediasFromRecords(ctx context.Context, recor
 }
 
 type MediaTransferExecutor struct {
-	TransferMedias            TransferMediasPort
+	TransferMediasRepository  TransferMediasRepositoryPort
 	TimelineMutationObservers []TimelineMutationObserver
 }
 
 func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTransferRecords) error {
-	transfers, err := d.TransferMedias.TransferMediasFromRecords(ctx, records)
+	transfers, err := d.TransferMediasRepository.TransferMediasFromRecords(ctx, records)
 	if err != nil || transfers.IsEmpty() {
 		return err
 	}
@@ -45,34 +89,4 @@ func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTrans
 	}
 
 	return nil
-}
-
-// TODO That could be an observer ?
-
-func transferMedias(filter *FindMediaRequest, folderName FolderName) (int, error) {
-	ids, err := repositoryPort.FindMediaIds(context.TODO(), filter)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(ids) == 0 {
-		log.WithFields(log.Fields{
-			"Owner":      filter,
-			"FolderName": folderName,
-		}).Infoln(len(ids), "no media to transfer to the new album")
-		return 0, nil
-	}
-
-	err = archivePort.MoveMedias(filter.Owner, ids, folderName)
-	if err != nil {
-		return 0, err
-	}
-
-	defer func() {
-		log.WithFields(log.Fields{
-			"Owner":      filter,
-			"FolderName": folderName,
-		}).Infoln(len(ids), "medias virtually moved to new album")
-	}()
-	return len(ids), repositoryPort.TransferMedias(context.TODO(), filter.Owner, ids, folderName)
 }

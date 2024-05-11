@@ -65,7 +65,7 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		{
 			name: "it should delete album if all segments can be transferred to 1 other album",
 			fields: fields{
-				FindAlbumsByOwner:      returnListOfAlbums(toDeleteAlbum.Owner, &existingAllYearAlbum, &toDeleteAlbum),
+				FindAlbumsByOwner:      stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &existingAllYearAlbum, &toDeleteAlbum),
 				CountMediasBySelectors: expectCountMediasBySelectorsPortNotCalled(),
 				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId, catalog.MediaTransferRecords{
 					existingAllYearAlbum.AlbumId: []catalog.MediaSelector{
@@ -85,7 +85,7 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		{
 			name: "it should delete album if all segments can be transferred to several other albums",
 			fields: fields{
-				FindAlbumsByOwner:      returnListOfAlbums(toDeleteAlbum.Owner, &existingQ1Album, &existingQ2Album, &toDeleteAlbum),
+				FindAlbumsByOwner:      stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &existingQ1Album, &existingQ2Album, &toDeleteAlbum),
 				CountMediasBySelectors: expectCountMediasBySelectorsPortNotCalled(),
 				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId, catalog.MediaTransferRecords{
 					existingQ1Album.AlbumId: []catalog.MediaSelector{
@@ -112,7 +112,7 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		{
 			name: "it should delete album even if the segments are not covered by other albums as long as there is no medias to become orphaned",
 			fields: fields{
-				FindAlbumsByOwner: returnListOfAlbums(toDeleteAlbum.Owner, &existingQ1Album, &toDeleteAlbum),
+				FindAlbumsByOwner: stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &existingQ1Album, &toDeleteAlbum),
 				CountMediasBySelectors: expectCountMediasBySelectorsPortCalled(0, owner, catalog.MediaSelector{
 					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
 					Start:      apr24,
@@ -136,7 +136,7 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		{
 			name: "it should raise an error if medias are about to be orphaned",
 			fields: fields{
-				FindAlbumsByOwner: returnListOfAlbums(toDeleteAlbum.Owner, &existingQ1Album, &toDeleteAlbum),
+				FindAlbumsByOwner: stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &existingQ1Album, &toDeleteAlbum),
 				CountMediasBySelectors: expectCountMediasBySelectorsPortCalled(1, owner, catalog.MediaSelector{
 					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
 					Start:      apr24,
@@ -168,7 +168,7 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		{
 			name: "it should fails if listing albums raises an error",
 			fields: fields{
-				FindAlbumsByOwner:         returnListOfAlbums(toDeleteAlbum.Owner, &toDeleteAlbum),
+				FindAlbumsByOwner:         stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &toDeleteAlbum),
 				CountMediasBySelectors:    stubCountMediasBySelectorsPortWithError(anExpectedError),
 				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObserverNotCalled(),
 			},
@@ -247,6 +247,14 @@ func stubCountMediasBySelectorsPortWithError(err error) func(t *testing.T) catal
 	}
 }
 
+func stubCountMediasBySelectorsPort(count int) func(t *testing.T) catalog.CountMediasBySelectorsPort {
+	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
+		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
+			return count, nil
+		})
+	}
+}
+
 type ExternalTimelineMutationObserver struct {
 	Transfers catalog.TransferredMedias
 }
@@ -303,8 +311,8 @@ func TestNewDeleteAlbum(t *testing.T) {
 	}
 }
 
-func stubTransferMediaPort(transferredMedias catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasPort {
-	return func(t *testing.T) catalog.TransferMediasPort {
+func stubTransferMediaPort(transferredMedias catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasRepositoryPort {
+	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
 		return catalog.TransferMediasFunc(func(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
 			return transferredMedias, nil
 		})

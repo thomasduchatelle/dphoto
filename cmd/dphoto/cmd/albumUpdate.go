@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 var (
@@ -25,6 +26,7 @@ Note: default quarter albums should not be updated unless the 3 months are cover
 	Args:    cobra.ExactArgs(1),
 	Aliases: []string{"up"},
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
 		updateArgs.folderName = args[0]
 
 		startDate, err := parseDate(updateArgs.start)
@@ -32,7 +34,7 @@ Note: default quarter albums should not be updated unless the 3 months are cover
 		endDate, err := parseDate(updateArgs.end)
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
-		err = catalog.UpdateAlbum(catalog.NewAlbumIdFromStrings(Owner, updateArgs.folderName), startDate, endDate)
+		err = pkgfactory.AmendAlbumDatesCase(ctx).AmendAlbumDates(ctx, catalog.NewAlbumIdFromStrings(Owner, updateArgs.folderName), startDate, endDate)
 		printer.FatalWithMessageIfError(err, 1, "Couldn't update dates of folder %s", updateArgs.folderName)
 
 		printer.Success("Album %s has been updated.", aurora.Cyan(updateArgs.folderName))

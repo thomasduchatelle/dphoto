@@ -17,7 +17,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/s3store"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 	"time"
@@ -127,7 +126,7 @@ func BootstrapOAuthDomain() {
 func bootstrapCatalogDomain() {
 	ctx := context.TODO()
 
-	catalog.Init(pkgfactory.CatalogRepository(ctx), catalogarchivesync.New())
+	catalog.Init(pkgfactory.CatalogRepository(ctx))
 }
 
 func BootstrapArchiveDomain() archive.AsyncJobAdapter {

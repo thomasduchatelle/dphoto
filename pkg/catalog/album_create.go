@@ -18,7 +18,7 @@ var (
 func NewAlbumCreate(
 	FindAlbumsByOwnerPort FindAlbumsByOwnerPort,
 	InsertAlbumPort InsertAlbumPort,
-	TransferMediasPort TransferMediasPort,
+	TransferMediasPort TransferMediasRepositoryPort,
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
@@ -29,7 +29,7 @@ func NewAlbumCreate(
 			&CreateAlbumMediaTransfer{
 				FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
 				MediaTransfer: &MediaTransferExecutor{
-					TransferMedias:            TransferMediasPort,
+					TransferMediasRepository:  TransferMediasPort,
 					TimelineMutationObservers: TimelineMutationObservers,
 				},
 			},
