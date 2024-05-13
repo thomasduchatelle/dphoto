@@ -168,7 +168,7 @@ type mediaAlbumResolver struct{}
 
 func (m mediaAlbumResolver) FindAlbumOfMedia(owner, mediaId string) (string, error) {
 	ownership, err := catalog.FindMediaOwnership(catalog.Owner(owner), catalog.MediaId(mediaId))
-	return string(ownership.Owner), err
+	return string(ownership.FolderName), err
 }
 
 type catalogAdapter struct{}
