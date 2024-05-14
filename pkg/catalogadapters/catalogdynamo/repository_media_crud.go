@@ -131,7 +131,7 @@ func (r *Repository) FindExistingSignatures(ctx context.Context, owner catalog.O
 		attributes := stream.Next()
 		if awsAttr, ok := attributes["Id"]; ok {
 			if value, ok := awsAttr.(*types.AttributeValueMemberS); ok && value.Value != "" {
-				signature, err := catalog.DecodeMediaId(value.Value)
+				signature, err := catalog.DecodeMediaId(catalog.MediaId(value.Value))
 				if err != nil {
 					return nil, err
 				}

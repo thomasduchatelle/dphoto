@@ -99,3 +99,7 @@ func AlbumCollection() []*Album {
 		},
 	}
 }
+
+func endDescComparator(a, b *Album) int64 {
+	return b.End.Unix() - a.End.Unix()
+}

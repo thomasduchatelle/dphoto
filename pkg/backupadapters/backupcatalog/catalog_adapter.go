@@ -42,6 +42,8 @@ func (a *adapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapter, error
 }
 
 func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error) {
+	ctx := context.TODO()
+
 	signatures := make([]*catalog.MediaSignature, len(medias), len(medias))
 	for i, media := range medias {
 		signatures[i] = &catalog.MediaSignature{
@@ -50,7 +52,7 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 		}
 	}
 
-	assignedIds, err := catalog.AssignIdsToNewMedias(catalog.Owner(owner), signatures)
+	assignedIds, err := pkgfactory.InsertMediasCase(ctx).AssignIdsToNewMedias(ctx, catalog.Owner(owner), signatures)
 
 	mediasWithId := make(map[*backup.AnalysedMedia]string)
 	for _, media := range medias {
@@ -59,7 +61,7 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 			SignatureSize:   media.FoundMedia.Size(),
 		}
 		if id, found := assignedIds[sign]; found {
-			mediasWithId[media] = id
+			mediasWithId[media] = id.Value()
 		}
 	}
 
@@ -67,6 +69,8 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 }
 
 func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaRequest) error {
+	ctx := context.TODO()
+
 	catalogRequests := make([]catalog.CreateMediaRequest, len(requests), len(requests))
 	for i, request := range requests {
 		details := request.BackingUpMediaRequest.AnalysedMedia.Details
@@ -95,7 +99,8 @@ func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaReque
 		}
 	}
 
-	return errors.Wrapf(catalog.InsertMedias(catalog.Owner(owner), catalogRequests), "failed to insert %d medias", len(catalogRequests))
+	err := pkgfactory.InsertMediasCase(ctx).Insert(ctx, catalog.Owner(owner), catalogRequests)
+	return errors.Wrapf(err, "failed to insert %d medias", len(catalogRequests))
 }
 
 type timelineAdapter struct {

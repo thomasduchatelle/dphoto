@@ -64,3 +64,10 @@ func AmendAlbumDatesCase(ctx context.Context) *catalog.AmendAlbumDates {
 		ArchiveTimelineMutationObserver(),
 	)
 }
+
+func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
+	repository := CatalogRepository(ctx)
+	return catalog.NewInsertMedias(
+		repository,
+	)
+}

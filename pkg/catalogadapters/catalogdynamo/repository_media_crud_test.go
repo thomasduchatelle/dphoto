@@ -161,11 +161,11 @@ func (a *MediaCrudTestSuite) preload() error {
 	return err
 }
 
-func mustGenerateMediaId(id string, err error) catalog.MediaId {
+func mustGenerateMediaId(id catalog.MediaId, err error) catalog.MediaId {
 	if err != nil {
 		panic(err)
 	}
-	return catalog.MediaId(id)
+	return id
 }
 
 func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest) []string {
