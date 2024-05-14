@@ -106,8 +106,6 @@ func generateFolderName(name string, start time.Time) FolderName {
 	return NewFolderName(fmt.Sprintf("%s_%s", start.Format("2006-01"), name))
 }
 
-type MediaId string
-
 type PageRequest struct {
 	Size     int64
 	NextPage string

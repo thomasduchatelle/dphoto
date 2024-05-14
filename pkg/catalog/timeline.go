@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -279,4 +280,36 @@ func toSortedArray(albums []*Album, comparator func(a *Album, b *Album) int64) [
 	})
 
 	return sortedAlbums
+}
+
+// priorityDescComparator is positive if a is more important than b
+func priorityDescComparator(a, b *Album) int64 {
+	durationDiff := albumDuration(b).Seconds() - albumDuration(a).Seconds()
+	if durationDiff != 0 {
+		return int64(durationDiff)
+	}
+
+	startDiff := b.Start.Unix() - a.Start.Unix()
+	if startDiff != 0 {
+		return startDiff
+	}
+
+	endDiff := b.End.Unix() - a.End.Unix()
+	if endDiff != 0 {
+		return endDiff
+	}
+
+	return int64(strings.Compare(a.Name, b.Name))
+}
+
+// startsAscSort sorts albums by start date ascending, then by priority descending (equivalent to end date ascending)
+func startsAscComparator(a, b *Album) int64 {
+	if a.Start.Equal(b.Start) {
+		return priorityDescComparator(a, b)
+	}
+	return b.Start.Unix() - a.Start.Unix()
+}
+
+func albumDuration(album *Album) time.Duration {
+	return album.End.Sub(album.Start)
 }

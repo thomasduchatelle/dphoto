@@ -19,7 +19,7 @@ func TestCodec(t *testing.T) {
 	if a.NoError(err) {
 		fmt.Printf("encoded > %s\n", encoded)
 
-		a.False(strings.Index(encoded, "/") >= 0, "encoded should not contains a '/'")
+		a.False(strings.Index(encoded.Value(), "/") >= 0, "encoded should not contains a '/'")
 
 		decoded, err := DecodeMediaId(encoded)
 		if a.NoError(err) {

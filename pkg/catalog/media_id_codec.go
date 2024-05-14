@@ -8,8 +8,14 @@ import (
 	"strings"
 )
 
+type MediaId string
+
+func (m MediaId) Value() string {
+	return string(m)
+}
+
 // GenerateMediaId generate a unique ID for a media.
-func GenerateMediaId(signature MediaSignature) (string, error) {
+func GenerateMediaId(signature MediaSignature) (MediaId, error) {
 	idBuffer, err := hex.DecodeString(signature.SignatureSha256)
 	buf := make([]byte, 8, 8)
 	binary.PutUvarint(buf, uint64(signature.SignatureSize))
@@ -20,12 +26,12 @@ func GenerateMediaId(signature MediaSignature) (string, error) {
 		}
 	}
 
-	return strings.ReplaceAll(base64.StdEncoding.EncodeToString(idBuffer), "/", "_"), err
+	return MediaId(strings.ReplaceAll(base64.StdEncoding.EncodeToString(idBuffer), "/", "_")), err
 }
 
 // DecodeMediaId reverse what the GenerateMediaId has done to find original signature.
-func DecodeMediaId(encodedId string) (*MediaSignature, error) {
-	decoded, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(encodedId, "_", "/"))
+func DecodeMediaId(encodedId MediaId) (*MediaSignature, error) {
+	decoded, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(encodedId.Value(), "_", "/"))
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid encoded identifier")
 	}
