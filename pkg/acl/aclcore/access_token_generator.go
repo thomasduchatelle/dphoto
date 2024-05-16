@@ -5,6 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"math/rand"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ type AccessTokenGenerator struct {
 	AccessTokenRepository RefreshTokenRepository
 }
 
-func (t *AccessTokenGenerator) GenerateAccessToken(email string) (*Authentication, error) {
+func (t *AccessTokenGenerator) GenerateAccessToken(email usermodel.UserId) (*Authentication, error) {
 	issuedAt := TimeFunc().UTC()
 	expiresAt := issuedAt.Add(t.Config.AccessDuration)
 
@@ -40,7 +41,7 @@ func (t *AccessTokenGenerator) GenerateAccessToken(email string) (*Authenticatio
 	}{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    t.Config.Issuer,
-			Subject:   email,
+			Subject:   email.Value(),
 			Audience:  []string{t.Config.Issuer},
 			ExpiresAt: &jwt.NumericDate{Time: expiresAt},
 			NotBefore: nil,
@@ -60,7 +61,7 @@ func (t *AccessTokenGenerator) GenerateAccessToken(email string) (*Authenticatio
 	}, errors.Wrapf(err, "couldn't sign the generated JWT")
 }
 
-func (t *AccessTokenGenerator) loadUserScopes(email string) ([]string, error) {
+func (t *AccessTokenGenerator) loadUserScopes(email usermodel.UserId) ([]string, error) {
 	grants, err := t.PermissionsReader.ListUserScopes(email, ApiScope, MainOwnerScope)
 
 	var scopes []string

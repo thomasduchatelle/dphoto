@@ -11,6 +11,8 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 const (
@@ -28,7 +30,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	}
 
 	return common.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common.Response, error) {
-		if err := rules.CanReadMedia(owner, mediaId); err != nil {
+		if err := rules.CanReadMedia(ownermodel.Owner(owner), catalog.MediaId(mediaId)); err != nil {
 			return common.Response{}, err
 		}
 

@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
-	"strings"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 type IdentityRepository interface {
@@ -52,7 +52,7 @@ func (r *repository) StoreIdentity(identity aclcore.Identity) error {
 	return errors.Wrapf(err, "failed to store %s identity details", identity.Email)
 }
 
-func (r *repository) FindIdentity(email string) (*aclcore.Identity, error) {
+func (r *repository) FindIdentity(email usermodel.UserId) (*aclcore.Identity, error) {
 	item, err := r.db.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		Key:       identityRecordPkAttributes(email),
 		TableName: &r.table,
@@ -67,18 +67,17 @@ func (r *repository) FindIdentity(email string) (*aclcore.Identity, error) {
 	return unmarshalIdentity(item.Item)
 }
 
-func (r *repository) FindIdentities(emails []string) ([]*aclcore.Identity, error) {
+func (r *repository) FindIdentities(emails []usermodel.UserId) ([]*aclcore.Identity, error) {
 	if len(emails) == 0 {
 		return nil, nil
 	}
 
-	uniqueEmails := make(map[string]interface{})
+	uniqueEmails := make(map[usermodel.UserId]interface{})
 	var keys []map[string]types.AttributeValue
-	for _, email := range emails {
-		email = strings.ToLower(email)
-		if _, notUnique := uniqueEmails[email]; !notUnique {
-			uniqueEmails[email] = nil
-			keys = append(keys, identityRecordPkAttributes(email))
+	for _, userId := range emails {
+		if _, notUnique := uniqueEmails[userId]; !notUnique {
+			uniqueEmails[userId] = nil
+			keys = append(keys, identityRecordPkAttributes(userId))
 		}
 	}
 

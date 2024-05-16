@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 )
 
@@ -22,7 +23,12 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	return common.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common.Response, error) {
 		log.Infof("list identities %s", strings.Join(emails, ", "))
 
-		identities, err := common.GetIdentityQueries().FindIdentities(emails)
+		var userIds []usermodel.UserId
+		for _, email := range emails {
+			userIds = append(userIds, usermodel.UserId(email))
+		}
+
+		identities, err := common.GetIdentityQueries().FindIdentities(userIds)
 		if err != nil {
 			return common.InternalError(err)
 		}
@@ -31,7 +37,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		for i, identity := range identities {
 			identitiesDTO[i] = UserDetailsDTO{
 				Name:    identity.Name,
-				Email:   identity.Email,
+				Email:   identity.Email.Value(),
 				Picture: identity.Picture,
 			}
 		}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"time"
 )
 
@@ -40,7 +41,7 @@ func NewAlbumCreate(
 
 // CreateAlbumRequest is a request to create a new album
 type CreateAlbumRequest struct {
-	Owner            Owner
+	Owner            ownermodel.Owner
 	Name             string
 	Start            time.Time
 	End              time.Time
@@ -72,12 +73,12 @@ func (c *CreateAlbumRequest) IsValid() error {
 }
 
 type FindAlbumsByOwnerPort interface {
-	FindAlbumsByOwner(ctx context.Context, owner Owner) ([]*Album, error)
+	FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
 }
 
-type FindAlbumsByOwnerFunc func(ctx context.Context, owner Owner) ([]*Album, error)
+type FindAlbumsByOwnerFunc func(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
 
-func (f FindAlbumsByOwnerFunc) FindAlbumsByOwner(ctx context.Context, owner Owner) ([]*Album, error) {
+func (f FindAlbumsByOwnerFunc) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error) {
 	return f(ctx, owner)
 }
 

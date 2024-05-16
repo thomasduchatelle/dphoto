@@ -4,10 +4,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 type ShareAlbumCatalogPort interface {
-	FindAlbum(owner, folderName string) (*catalog.Album, error)
+	FindAlbum(albumId catalog.AlbumId) (*catalog.Album, error)
 }
 
 type ShareAlbumCase struct {
@@ -15,12 +16,12 @@ type ShareAlbumCase struct {
 	CatalogPort ShareAlbumCatalogPort
 }
 
-func (s *ShareAlbumCase) ShareAlbumWith(owner, folderName, userEmail string, scope aclcore.ScopeType) error {
+func (s *ShareAlbumCase) ShareAlbumWith(albumId catalog.AlbumId, userEmail usermodel.UserId, scope aclcore.ScopeType) error {
 	if scope != aclcore.AlbumVisitorScope && scope != aclcore.AlbumContributorScope {
 		return errors.Errorf("'%s' scope is not allowed for album shring.", scope)
 	}
 
-	_, err := s.CatalogPort.FindAlbum(owner, folderName)
+	_, err := s.CatalogPort.FindAlbum(albumId)
 	if err != nil {
 		return err // it can be a catalog.AlbumNotFoundError
 	}
@@ -29,7 +30,7 @@ func (s *ShareAlbumCase) ShareAlbumWith(owner, folderName, userEmail string, sco
 		Type:          scope,
 		GrantedAt:     aclcore.TimeFunc(),
 		GrantedTo:     userEmail,
-		ResourceOwner: owner,
-		ResourceId:    folderName,
+		ResourceOwner: albumId.Owner,
+		ResourceId:    albumId.FolderName.String(),
 	})
 }

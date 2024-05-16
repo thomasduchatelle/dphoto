@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"testing"
 	"time"
 )
@@ -16,7 +17,7 @@ func TestRefreshTokenGenerator_GenerateRefreshToken(t1 *testing.T) {
 		return time.Date(2021, 12, 24, 0, 0, 0, 0, time.UTC)
 	}
 
-	email := "tony@stark.com"
+	email := usermodel.UserId("tony@stark.com")
 	refreshDuration := map[aclcore.RefreshTokenPurpose]time.Duration{
 		aclcore.RefreshTokenPurposeWeb: 1*time.Hour + 2*time.Minute,
 	}

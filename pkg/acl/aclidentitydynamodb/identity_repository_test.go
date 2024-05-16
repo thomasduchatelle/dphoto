@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"sort"
 	"testing"
 )
@@ -27,7 +28,7 @@ func Test_repository_FindIdentity(t *testing.T) {
 	}))
 
 	type args struct {
-		email string
+		email usermodel.UserId
 	}
 	tests := []struct {
 		name    string
@@ -87,7 +88,7 @@ func Test_repository_FindIdentities(t *testing.T) {
 	}))
 
 	type args struct {
-		email []string
+		email []usermodel.UserId
 	}
 	tests := []struct {
 		name    string
@@ -97,7 +98,7 @@ func Test_repository_FindIdentities(t *testing.T) {
 	}{
 		{
 			name: "it should de-duplicate input list of emails",
-			args: args{[]string{"tony@stark.com", "tony@stark.com"}},
+			args: args{[]usermodel.UserId{"tony@stark.com", "tony@stark.com"}},
 			want: []*aclcore.Identity{
 				{Email: "tony@stark.com", Name: "Tony Stark", Picture: "/you/know/me.jpg"},
 			},
@@ -105,7 +106,7 @@ func Test_repository_FindIdentities(t *testing.T) {
 		},
 		{
 			name: "it should find several identities",
-			args: args{[]string{"tony@stark.com", "natasha@banner.com"}},
+			args: args{[]usermodel.UserId{"tony@stark.com", "natasha@banner.com"}},
 			want: []*aclcore.Identity{
 				{Email: "natasha@banner.com", Name: "Natasha", Picture: "/black-widow.jpg"},
 				{Email: "tony@stark.com", Name: "Tony Stark", Picture: "/you/know/me.jpg"},
@@ -114,7 +115,7 @@ func Test_repository_FindIdentities(t *testing.T) {
 		},
 		{
 			name:    "it should return an empty list when not found",
-			args:    args{[]string{"pepper@stark.com"}},
+			args:    args{[]usermodel.UserId{"pepper@stark.com"}},
 			want:    nil,
 			wantErr: assert.NoError,
 		},

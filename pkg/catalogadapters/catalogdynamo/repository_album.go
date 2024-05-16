@@ -11,11 +11,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"sort"
 	"time"
 )
 
-func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
+func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
 	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
 		expression.Key("PK").Equal(expression.Value(fmt.Sprintf("%s#ALBUM", owner))),
 		expression.Key("SK").BeginsWith("ALBUM#"),
@@ -144,7 +145,7 @@ func (r *Repository) countMedias(ctx context.Context, albumId catalog.AlbumId) (
 	return int(query.Count), nil
 }
 
-func (r *Repository) CountMediasBySelectors(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
+func (r *Repository) CountMediasBySelectors(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
 	if len(selectors) == 0 {
 		return 0, nil
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 func NewSuggestionRepository(owner string, folders []*backup.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {
@@ -62,7 +63,7 @@ type dynamicAlbumRepository struct {
 }
 
 func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, error) {
-	albums, err := catalog.FindAllAlbums(catalog.Owner(r.owner))
+	albums, err := catalog.FindAllAlbums(ownermodel.Owner(r.owner))
 	if err != nil {
 		return nil, err
 	}

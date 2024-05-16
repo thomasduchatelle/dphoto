@@ -1,6 +1,9 @@
 package catalog
 
-import "context"
+import (
+	"context"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+)
 
 func NewInsertMedias(
 	InsertMediasRepository InsertMediasRepositoryPort,
@@ -25,10 +28,10 @@ type InsertMedias struct {
 
 type InsertMediasRepositoryPort interface {
 	// InsertMedias bulks insert medias
-	InsertMedias(ctx context.Context, owner Owner, media []CreateMediaRequest) error
+	InsertMedias(ctx context.Context, owner ownermodel.Owner, media []CreateMediaRequest) error
 }
 
-func (i *InsertMedias) Insert(ctx context.Context, owner Owner, medias []CreateMediaRequest) error {
+func (i *InsertMedias) Insert(ctx context.Context, owner ownermodel.Owner, medias []CreateMediaRequest) error {
 	err := i.InsertMediasRepository.InsertMedias(ctx, owner, medias)
 	if err != nil {
 		return err
@@ -55,7 +58,7 @@ func (i *InsertMedias) Insert(ctx context.Context, owner Owner, medias []CreateM
 }
 
 // AssignIdsToNewMedias filters out signatures that are already known and compute a unique ID for the others.
-func (i *InsertMedias) AssignIdsToNewMedias(ctx context.Context, owner Owner, signatures []*MediaSignature) (map[MediaSignature]MediaId, error) {
+func (i *InsertMedias) AssignIdsToNewMedias(ctx context.Context, owner ownermodel.Owner, signatures []*MediaSignature) (map[MediaSignature]MediaId, error) {
 	existingSignaturesSlice, err := FindSignatures(owner, signatures)
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"strings"
 )
 
@@ -32,25 +33,30 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			return common.Ok(dtos)
 		}
 
-		owners, err := common.GetIdentityQueries().FindOwnerIdentities(ownerIds)
+		var owners []ownermodel.Owner
+		for _, id := range ownerIds {
+			owners = append(owners, ownermodel.Owner(id))
+		}
+
+		identities, err := common.GetIdentityQueries().FindOwnerIdentities(owners)
 		if err != nil {
 			return common.InternalError(err)
 		}
 
-		for id, identities := range owners {
+		for id, identities := range identities {
 			names := make([]string, len(identities), len(identities))
 			identityDTOs := make([]UserDetailsDTO, len(identities), len(identities))
 			for i, identity := range identities {
 				names[i] = identity.Name
 				identityDTOs[i] = UserDetailsDTO{
 					Name:    identity.Name,
-					Email:   identity.Email,
+					Email:   identity.Email.Value(),
 					Picture: identity.Picture,
 				}
 			}
 
 			dtos = append(dtos, OwnerDTO{
-				ID:    id,
+				ID:    id.Value(),
 				Name:  strings.Join(names, ", "),
 				Users: identityDTOs,
 			})

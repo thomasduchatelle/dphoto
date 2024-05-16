@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"sort"
 	"strings"
 	"testing"
@@ -19,7 +21,8 @@ func TestAuthenticate(t *testing.T) {
 	}
 	jwt.TimeFunc = aclcore.TimeFunc
 
-	const email = "tony@stark.com"
+	const email = usermodel.UserId("tony@stark.com")
+	const owner = ownermodel.Owner("tony@stark.com")
 	const refreshToken = "1234567890qwertyuiop"
 
 	okJwtString := "eyJhbGciOiJIUzUxMiIsImtpZCI6IjAzZTg0YWVkNGVmNDQzMTAxNGU4NjE3NTY3ODY0YzRlZmFhYWVkZTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImVtYWlsIjoidG9ueUBzdGFyay5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IlFBWldTWEVEQ1JGViIsIm5hbWUiOiJUb255IFN0YXJrIGFrYSBJcm9ubWFuIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hLS90b255c3RhcmstcGljdHVyZSIsImdpdmVuX25hbWUiOiJUb255IiwiZmFtaWx5X25hbWUiOiJTdGFyayIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjozMTU1MzI3MDAsImV4cCI6MzE1NTMyODk5LCJqdGkiOiIzZGU3OTk4NjEzYTFhNGZiOGRhM2RlNzk5ODYxM2ExYTRmYjhkYSJ9.m4fmV7k63JhFwT_ZNtAg6O5xvJZQvGt3yx_Xrr5Yjln4PeXF70jcp31A3qDwIA5ah2X9ZmjZWRbU3_Xbm3LTlg"
@@ -52,14 +55,14 @@ func TestAuthenticate(t *testing.T) {
 			fields: fields{
 				ScopesReader: func(t *testing.T) aclcore.ScopesReader {
 					reader := mocks.NewScopesReader(t)
-					reader.On("ListUserScopes", email, aclcore.ApiScope, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
+					reader.EXPECT().ListUserScopes(email, aclcore.ApiScope, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 						{
 							Type:       aclcore.ApiScope,
 							ResourceId: "admin",
 						},
 						{
 							Type:          aclcore.MainOwnerScope,
-							ResourceOwner: email,
+							ResourceOwner: owner,
 						},
 					}, nil)
 					return reader
@@ -89,7 +92,7 @@ func TestAuthenticate(t *testing.T) {
 					claims := token.Claims.(*decodedClaims)
 					assert.Equal(t, config.Issuer, claims.Issuer, name)
 					assert.Equal(t, jwt.ClaimStrings{config.Issuer}, claims.Audience, name)
-					assert.Equal(t, email, claims.Subject, name)
+					assert.Equal(t, email.Value(), claims.Subject, name)
 
 					scopes := strings.Split(claims.Scopes, " ")
 					sort.Slice(scopes, func(i, j int) bool {
@@ -139,7 +142,7 @@ func TestAuthenticate(t *testing.T) {
 					claims := token.Claims.(*decodedClaims)
 					assert.Equal(t, config.Issuer, claims.Issuer, name)
 					assert.Equal(t, jwt.ClaimStrings{config.Issuer}, claims.Audience, name)
-					assert.Equal(t, email, claims.Subject, name)
+					assert.Equal(t, email.Value(), claims.Subject, name)
 
 					scopes := strings.Split(claims.Scopes, " ")
 					sort.Slice(scopes, func(i, j int) bool {
@@ -233,7 +236,7 @@ func scopeReaderNotCalled() func(t *testing.T) aclcore.ScopesReader {
 	}
 }
 
-func refreshTokenGenerator(email string, refreshToken string) func(t *testing.T) aclcore.IRefreshTokenGenerator {
+func refreshTokenGenerator(email usermodel.UserId, refreshToken string) func(t *testing.T) aclcore.IRefreshTokenGenerator {
 	return func(t *testing.T) aclcore.IRefreshTokenGenerator {
 		generator := mocks.NewIRefreshTokenGenerator(t)
 		generator.On("GenerateRefreshToken", aclcore.RefreshTokenSpec{

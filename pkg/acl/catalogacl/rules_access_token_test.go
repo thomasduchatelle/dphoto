@@ -7,6 +7,8 @@ import (
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 )
 
@@ -14,8 +16,8 @@ func Test_rulesWithAccessToken_CanListMediasFromAlbum(t *testing.T) {
 	nopeError := errors.Errorf("an error")
 
 	type args struct {
-		owner      string
-		folderName string
+		owner      ownermodel.Owner
+		folderName catalog.FolderName
 	}
 	tests := []struct {
 		name    string
@@ -41,7 +43,7 @@ func Test_rulesWithAccessToken_CanListMediasFromAlbum(t *testing.T) {
 			name: "it should delegate access if albums belongs a different owner",
 			mocks: func(t *testing.T) catalogacl.CatalogRules {
 				rules := mocks.NewCatalogRules(t)
-				rules.On("CanListMediasFromAlbum", ownerEmail, folderName).Return(nopeError)
+				rules.On("CanListMediasFromAlbum", albumId).Return(nopeError)
 				return rules
 			},
 			claims: aclcore.Claims{
@@ -59,7 +61,7 @@ func Test_rulesWithAccessToken_CanListMediasFromAlbum(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rules := catalogacl.OptimiseRulesWithAccessToken(tt.mocks(t), tt.claims)
-			tt.wantErr(t, rules.CanListMediasFromAlbum(tt.args.owner, tt.args.folderName), fmt.Sprintf("CanListMediasFromAlbum(%v, %v)", tt.args.owner, tt.args.folderName))
+			tt.wantErr(t, rules.CanListMediasFromAlbum(catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName}), fmt.Sprintf("CanListMediasFromAlbum(%v, %v)", tt.args.owner, tt.args.folderName))
 		})
 	}
 }
@@ -71,8 +73,8 @@ func Test_rulesWithAccessToken_CanReadMedia(t *testing.T) {
 		catalogRules func(t *testing.T) catalogacl.CatalogRules
 	}
 	type args struct {
-		owner   string
-		mediaId string
+		owner   ownermodel.Owner
+		mediaId catalog.MediaId
 	}
 	tests := []struct {
 		name    string
@@ -150,8 +152,8 @@ func Test_rulesWithAccessToken_CanManageAlbum(t *testing.T) {
 		catalogRules func(t *testing.T) catalogacl.CatalogRules
 	}
 	type args struct {
-		owner      string
-		folderName string
+		owner      ownermodel.Owner
+		folderName catalog.FolderName
 	}
 	tests := []struct {
 		name    string
@@ -176,7 +178,7 @@ func Test_rulesWithAccessToken_CanManageAlbum(t *testing.T) {
 			fields: fields{
 				catalogRules: func(t *testing.T) catalogacl.CatalogRules {
 					rules := mocks.NewCatalogRules(t)
-					rules.On("CanManageAlbum", ownerEmail, folderName).Return(nopeError)
+					rules.On("CanManageAlbum", albumId).Return(nopeError)
 					return rules
 				},
 			},
@@ -192,8 +194,8 @@ func Test_rulesWithAccessToken_CanManageAlbum(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rules := catalogacl.OptimiseRulesWithAccessToken(tt.fields.catalogRules(t), tt.claims)
 
-			err := rules.CanManageAlbum(tt.args.owner, tt.args.folderName)
-			tt.wantErr(t, err, fmt.Sprintf("Owner()"))
+			err := rules.CanManageAlbum(catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName})
+			tt.wantErr(t, err, fmt.Sprintf("CanManageAlbum(%v, %v)", tt.args.owner, tt.args.folderName))
 		})
 	}
 }
@@ -202,7 +204,7 @@ func Test_rulesWithAccessToken_Owner(t *testing.T) {
 	tests := []struct {
 		name    string
 		claims  aclcore.Claims
-		want    string
+		want    *ownermodel.Owner
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -214,7 +216,7 @@ func Test_rulesWithAccessToken_Owner(t *testing.T) {
 				},
 				Owner: ownerEmail,
 			},
-			want:    ownerEmail,
+			want:    &ownerEmail,
 			wantErr: assert.NoError,
 		},
 		{
@@ -226,7 +228,7 @@ func Test_rulesWithAccessToken_Owner(t *testing.T) {
 				},
 				Owner: "",
 			},
-			want:    "",
+			want:    nil,
 			wantErr: assert.NoError,
 		},
 	}

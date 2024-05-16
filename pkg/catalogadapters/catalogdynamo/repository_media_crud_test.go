@@ -10,6 +10,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"path"
 	"testing"
 	"time"
@@ -28,7 +29,7 @@ func mustParseDate(date string) time.Time {
 
 type MediaCrudTestSuite struct {
 	suite.Suite
-	owner  catalog.Owner
+	owner  ownermodel.Owner
 	repo   *Repository
 	medias []catalog.CreateMediaRequest
 	jan21  catalog.FolderName
@@ -330,7 +331,7 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 
 func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 	type args struct {
-		owner   catalog.Owner
+		owner   ownermodel.Owner
 		mediaId catalog.MediaId
 	}
 	tests := []struct {

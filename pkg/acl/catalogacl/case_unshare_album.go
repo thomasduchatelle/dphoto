@@ -1,16 +1,20 @@
 package catalogacl
 
-import "github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+import (
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
+)
 
 type UnShareAlbumCase struct {
 	RevokeScopeRepository aclcore.ScopeWriter
 }
 
-func (u *UnShareAlbumCase) StopSharingAlbum(owner, folderName, email string) error {
+func (u *UnShareAlbumCase) StopSharingAlbum(albumId catalog.AlbumId, email usermodel.UserId) error {
 	return u.RevokeScopeRepository.DeleteScopes(aclcore.ScopeId{
 		Type:          aclcore.AlbumVisitorScope,
 		GrantedTo:     email,
-		ResourceOwner: owner,
-		ResourceId:    folderName,
+		ResourceOwner: albumId.Owner,
+		ResourceId:    albumId.FolderName.String(),
 	})
 }

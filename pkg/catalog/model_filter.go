@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"fmt"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"sort"
 	"strings"
 	"time"
@@ -9,12 +10,12 @@ import (
 
 // FindMediaRequest is a filter that is applied to find medias within a time range.
 type FindMediaRequest struct { // TODO FindMediaRequest should be deprecated and replaced by MediaSelector
-	Owner            Owner
+	Owner            ownermodel.Owner
 	AlbumFolderNames map[FolderName]interface{} // AlbumFolderNames is a set of folder names (map value is nil)
 	Ranges           []TimeRange                // Ranges is optional, if empty no restriction will be applied
 }
 
-func NewFindMediaRequest(owner Owner) *FindMediaRequest {
+func NewFindMediaRequest(owner ownermodel.Owner) *FindMediaRequest {
 	return &FindMediaRequest{
 		Owner:            owner,
 		AlbumFolderNames: make(map[FolderName]interface{}),

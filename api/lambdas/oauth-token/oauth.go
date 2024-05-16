@@ -133,7 +133,7 @@ func toOkResponse(authentication *aclcore.Authentication, identity *aclcore.Iden
 		"refresh_token": authentication.RefreshToken,
 		"expires_in":    authentication.ExpiresIn,
 		"identity": identityDTO{
-			Email:   identity.Email,
+			Email:   identity.Email.Value(),
 			Name:    identity.Name,
 			Picture: identity.Picture,
 		},

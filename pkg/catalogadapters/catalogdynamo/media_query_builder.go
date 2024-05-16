@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 const (
@@ -72,7 +73,7 @@ func newMediaQueryBuilders(table string, request *catalog.FindMediaRequest, proj
 	return queries, nil
 }
 
-func withinAlbum(owner catalog.Owner, folderName catalog.FolderName) expression.KeyConditionBuilder {
+func withinAlbum(owner ownermodel.Owner, folderName catalog.FolderName) expression.KeyConditionBuilder {
 	return expression.Key("AlbumIndexPK").Equal(expression.Value(AlbumIndexedKey(owner, folderName).AlbumIndexPK))
 }
 

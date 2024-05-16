@@ -21,9 +21,9 @@ func (_m *ShareAlbumCatalogPort) EXPECT() *ShareAlbumCatalogPort_Expecter {
 	return &ShareAlbumCatalogPort_Expecter{mock: &_m.Mock}
 }
 
-// FindAlbum provides a mock function with given fields: owner, folderName
-func (_m *ShareAlbumCatalogPort) FindAlbum(owner string, folderName string) (*catalog.Album, error) {
-	ret := _m.Called(owner, folderName)
+// FindAlbum provides a mock function with given fields: albumId
+func (_m *ShareAlbumCatalogPort) FindAlbum(albumId catalog.AlbumId) (*catalog.Album, error) {
+	ret := _m.Called(albumId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindAlbum")
@@ -31,19 +31,19 @@ func (_m *ShareAlbumCatalogPort) FindAlbum(owner string, folderName string) (*ca
 
 	var r0 *catalog.Album
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*catalog.Album, error)); ok {
-		return rf(owner, folderName)
+	if rf, ok := ret.Get(0).(func(catalog.AlbumId) (*catalog.Album, error)); ok {
+		return rf(albumId)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *catalog.Album); ok {
-		r0 = rf(owner, folderName)
+	if rf, ok := ret.Get(0).(func(catalog.AlbumId) *catalog.Album); ok {
+		r0 = rf(albumId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*catalog.Album)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(owner, folderName)
+	if rf, ok := ret.Get(1).(func(catalog.AlbumId) error); ok {
+		r1 = rf(albumId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -57,15 +57,14 @@ type ShareAlbumCatalogPort_FindAlbum_Call struct {
 }
 
 // FindAlbum is a helper method to define mock.On call
-//   - owner string
-//   - folderName string
-func (_e *ShareAlbumCatalogPort_Expecter) FindAlbum(owner interface{}, folderName interface{}) *ShareAlbumCatalogPort_FindAlbum_Call {
-	return &ShareAlbumCatalogPort_FindAlbum_Call{Call: _e.mock.On("FindAlbum", owner, folderName)}
+//   - albumId catalog.AlbumId
+func (_e *ShareAlbumCatalogPort_Expecter) FindAlbum(albumId interface{}) *ShareAlbumCatalogPort_FindAlbum_Call {
+	return &ShareAlbumCatalogPort_FindAlbum_Call{Call: _e.mock.On("FindAlbum", albumId)}
 }
 
-func (_c *ShareAlbumCatalogPort_FindAlbum_Call) Run(run func(owner string, folderName string)) *ShareAlbumCatalogPort_FindAlbum_Call {
+func (_c *ShareAlbumCatalogPort_FindAlbum_Call) Run(run func(albumId catalog.AlbumId)) *ShareAlbumCatalogPort_FindAlbum_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string))
+		run(args[0].(catalog.AlbumId))
 	})
 	return _c
 }
@@ -75,7 +74,7 @@ func (_c *ShareAlbumCatalogPort_FindAlbum_Call) Return(_a0 *catalog.Album, _a1 e
 	return _c
 }
 
-func (_c *ShareAlbumCatalogPort_FindAlbum_Call) RunAndReturn(run func(string, string) (*catalog.Album, error)) *ShareAlbumCatalogPort_FindAlbum_Call {
+func (_c *ShareAlbumCatalogPort_FindAlbum_Call) RunAndReturn(run func(catalog.AlbumId) (*catalog.Album, error)) *ShareAlbumCatalogPort_FindAlbum_Call {
 	_c.Call.Return(run)
 	return _c
 }

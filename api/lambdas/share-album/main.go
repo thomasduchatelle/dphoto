@@ -10,6 +10,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 type PutBodyDTO struct {
@@ -18,11 +19,14 @@ type PutBodyDTO struct {
 
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	owner := request.PathParameters["owner"]
-	folderName := fmt.Sprintf("/%s", request.PathParameters["folderName"])
+	folderName := request.PathParameters["folderName"]
 	email := request.PathParameters["email"]
 
 	return common.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common.Response, error) {
-		if err := rules.CanManageAlbum(owner, folderName); err != nil {
+		albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
+		userId := usermodel.NewUserId(email)
+
+		if err := rules.CanManageAlbum(albumId); err != nil {
 			return common.Response{}, err
 		}
 
@@ -40,7 +44,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 				return common.BadRequest(err.Error())
 			}
 
-			err = common.GetShareAlbumCase().ShareAlbumWith(owner, folderName, email, scope)
+			err = common.GetShareAlbumCase().ShareAlbumWith(albumId, userId, scope)
 			if errors.Is(err, catalog.AlbumNotFoundError) {
 				return common.NotFound(fmt.Sprintf("%s/%s hasn't been found", owner, folderName))
 			} else if err != nil {
@@ -48,7 +52,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			}
 
 		case "DELETE":
-			err := common.GetUnShareAlbumCase().StopSharingAlbum(owner, folderName, email)
+			err := common.GetUnShareAlbumCase().StopSharingAlbum(albumId, userId)
 			if err != nil {
 				return common.InternalError(err)
 			}

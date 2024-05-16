@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
 )
@@ -20,7 +21,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 
 	existingAlbum := &catalog.Album{
 		AlbumId: catalog.AlbumId{
-			Owner:      catalog.Owner(owner),
+			Owner:      ownermodel.Owner(owner),
 			FolderName: catalog.NewFolderName("/avenger"),
 		},
 		Name:  "Avenger",
@@ -29,7 +30,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 	}
 	newAlbum := catalog.Album{
 		AlbumId: catalog.AlbumId{
-			Owner:      catalog.Owner(owner),
+			Owner:      ownermodel.Owner(owner),
 			FolderName: catalog.NewFolderName("/2024-05_Avenger_1"),
 		},
 		Name:  newName,
@@ -152,7 +153,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 
 	existingAlbum := &catalog.Album{
 		AlbumId: catalog.AlbumId{
-			Owner:      catalog.Owner(owner),
+			Owner:      ownermodel.Owner(owner),
 			FolderName: catalog.NewFolderName("/avenger"),
 		},
 		Name:  "Avenger",

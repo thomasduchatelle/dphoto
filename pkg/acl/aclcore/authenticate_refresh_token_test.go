@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"testing"
 	"time"
 )
@@ -17,7 +18,7 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 
 	const refreshToken = "1234567890qwertyuiop"
 	const newRefreshToken = "a new refresh token"
-	const email = "tony@stark.com"
+	const email = usermodel.UserId("tony@stark.com")
 
 	type fields struct {
 		AccessTokenGenerator  func(t *testing.T) aclcore.IAccessTokenGenerator
@@ -124,7 +125,7 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 			wantAuthentication: &aclcore.Authentication{RefreshToken: newRefreshToken},
 			wantIdentity: &aclcore.Identity{
 				Email:   email,
-				Name:    email,
+				Name:    email.Value(),
 				Picture: "",
 			},
 			wantErr: assert.NoError,

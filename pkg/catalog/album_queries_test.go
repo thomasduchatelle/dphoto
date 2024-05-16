@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
 )
@@ -17,8 +18,8 @@ func mockAdapters(t *testing.T) *mocks.RepositoryAdapter {
 }
 
 const (
-	layout               = "2006-01-02T15"
-	owner  catalog.Owner = "ironman"
+	layout                  = "2006-01-02T15"
+	owner  ownermodel.Owner = "ironman"
 )
 
 var (
@@ -28,7 +29,7 @@ var (
 func TestFind_Found(t *testing.T) {
 	a := assert.New(t)
 	mockRepository := mockAdapters(t)
-	const owner = catalog.Owner("stark")
+	const owner = ownermodel.Owner("stark")
 	albumId := catalog.AlbumId{Owner: owner, FolderName: "/MyAlbum"}
 
 	album := catalog.Album{

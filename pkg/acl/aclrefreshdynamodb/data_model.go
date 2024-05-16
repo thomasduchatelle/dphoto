@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 	"time"
 )
@@ -33,7 +34,7 @@ func RefreshTokenRecordPk(refreshToken string) appdynamodb.TablePk {
 func marshalToken(token string, spec aclcore.RefreshTokenSpec) (map[string]types.AttributeValue, error) {
 	item, err := attributevalue.MarshalMap(RefreshTokenRecord{
 		TablePk:             RefreshTokenRecordPk(token),
-		Email:               spec.Email,
+		Email:               spec.Email.Value(),
 		RefreshTokenPurpose: string(spec.RefreshTokenPurpose),
 		AbsoluteExpiryTime:  spec.AbsoluteExpiryTime,
 		Scopes:              strings.Join(spec.Scopes, " "),
@@ -50,7 +51,7 @@ func unmarshalToken(item map[string]types.AttributeValue) (*aclcore.RefreshToken
 	err := attributevalue.UnmarshalMap(item, record)
 
 	return &aclcore.RefreshTokenSpec{
-		Email:               record.Email,
+		Email:               usermodel.NewUserId(record.Email),
 		RefreshTokenPurpose: aclcore.RefreshTokenPurpose(record.RefreshTokenPurpose),
 		AbsoluteExpiryTime:  record.AbsoluteExpiryTime,
 		Scopes:              strings.Split(record.Scopes, " "),

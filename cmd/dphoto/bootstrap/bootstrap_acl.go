@@ -12,8 +12,8 @@ import (
 type catalogPort struct {
 }
 
-func (c catalogPort) FindAlbum(owner, folderName string) (*catalog.Album, error) {
-	return catalog.FindAlbum(catalog.NewAlbumIdFromStrings(owner, folderName))
+func (c catalogPort) FindAlbum(albumId catalog.AlbumId) (*catalog.Album, error) {
+	return catalog.FindAlbum(albumId)
 }
 
 func init() {
