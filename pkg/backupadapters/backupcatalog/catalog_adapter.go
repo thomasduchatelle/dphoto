@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"sync"
 	"time"
@@ -23,7 +24,7 @@ type adapter struct {
 func (a *adapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapter, error) {
 	ctx := context.TODO()
 
-	albums, err := catalog.FindAllAlbums(catalog.Owner(owner))
+	albums, err := catalog.FindAllAlbums(ownermodel.Owner(owner))
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 		}
 	}
 
-	assignedIds, err := pkgfactory.InsertMediasCase(ctx).AssignIdsToNewMedias(ctx, catalog.Owner(owner), signatures)
+	assignedIds, err := pkgfactory.InsertMediasCase(ctx).AssignIdsToNewMedias(ctx, ownermodel.Owner(owner), signatures)
 
 	mediasWithId := make(map[*backup.AnalysedMedia]string)
 	for _, media := range medias {
@@ -99,7 +100,7 @@ func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaReque
 		}
 	}
 
-	err := pkgfactory.InsertMediasCase(ctx).Insert(ctx, catalog.Owner(owner), catalogRequests)
+	err := pkgfactory.InsertMediasCase(ctx).Insert(ctx, ownermodel.Owner(owner), catalogRequests)
 	return errors.Wrapf(err, "failed to insert %d medias", len(catalogRequests))
 }
 
@@ -132,7 +133,7 @@ func (u *timelineAdapter) FindOrCreateAlbum(mediaTime time.Time) (string, bool, 
 	quarter := (mediaTime.Month() - 1) / 3
 
 	createRequest := catalog.CreateAlbumRequest{
-		Owner:            catalog.Owner(u.owner),
+		Owner:            ownermodel.Owner(u.owner),
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),
 		Start:            time.Date(year, quarter*3+1, 1, 0, 0, 0, 0, time.UTC),
 		End:              time.Date(year, (quarter+1)*3+1, 1, 0, 0, 0, 0, time.UTC),

@@ -10,9 +10,11 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
-func (r *repository) ListUserScopes(email string, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
+func (r *repository) ListUserScopes(email usermodel.UserId, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	ctx := context.TODO()
 
 	if len(scopeTypes) == 0 {
@@ -51,11 +53,11 @@ func (r *repository) ListUserScopes(email string, scopeTypes ...aclcore.ScopeTyp
 	return scopes, stream.Error()
 }
 
-func (r *repository) ListOwnerScopes(owner string, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
-	return r.ListScopesByOwners([]string{owner}, types...)
+func (r *repository) ListOwnerScopes(owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
+	return r.ListScopesByOwners([]ownermodel.Owner{owner}, types...)
 }
 
-func (r *repository) ListScopesByOwners(owners []string, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
+func (r *repository) ListScopesByOwners(owners []ownermodel.Owner, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	ctx := context.TODO()
 
 	if len(scopeTypes) == 0 {

@@ -1,6 +1,9 @@
 package appdynamodb
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
+)
 
 // TablePk are the primary and sort keys of the table
 type TablePk struct {
@@ -14,6 +17,6 @@ func MediaPrimaryKeyPK(owner string, id string) string {
 }
 
 // UserPk is the PK of a user, used to regroup user related information together
-func UserPk(userEmail string) string {
+func UserPk(userEmail usermodel.UserId) string {
 	return fmt.Sprintf("USER#%s", userEmail)
 }

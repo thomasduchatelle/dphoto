@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 const (
@@ -19,14 +20,14 @@ type IdentityRecord struct {
 	Picture string
 }
 
-func IdentityRecordPk(user string) appdynamodb.TablePk {
+func IdentityRecordPk(user usermodel.UserId) appdynamodb.TablePk {
 	return appdynamodb.TablePk{
 		PK: appdynamodb.UserPk(user),
 		SK: identityPrefix,
 	}
 }
 
-func identityRecordPkAttributes(email string) map[string]types.AttributeValue {
+func identityRecordPkAttributes(email usermodel.UserId) map[string]types.AttributeValue {
 	pk := IdentityRecordPk(email)
 
 	key := map[string]types.AttributeValue{
@@ -39,7 +40,7 @@ func identityRecordPkAttributes(email string) map[string]types.AttributeValue {
 func marshalIdentity(identity *aclcore.Identity) (map[string]types.AttributeValue, error) {
 	item, err := attributevalue.MarshalMap(IdentityRecord{
 		TablePk: IdentityRecordPk(identity.Email),
-		Email:   identity.Email,
+		Email:   identity.Email.Value(),
 		Name:    identity.Name,
 		Picture: identity.Picture,
 	})
@@ -51,7 +52,7 @@ func unmarshalIdentity(item map[string]types.AttributeValue) (*aclcore.Identity,
 	err := attributevalue.UnmarshalMap(item, record)
 
 	return &aclcore.Identity{
-		Email:   record.Email,
+		Email:   usermodel.UserId(record.Email),
 		Name:    record.Name,
 		Picture: record.Picture,
 	}, errors.Wrapf(err, "failed to unmarshap identity %+v", item)

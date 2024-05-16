@@ -5,10 +5,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
+	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 )
 
@@ -21,8 +22,8 @@ func TestView_ListMediasFromAlbum(t *testing.T) {
 		mocks     func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter)
 	}
 	type args struct {
-		owner      string
-		folderName string
+		owner      ownermodel.Owner
+		folderName catalog.FolderName
 	}
 	tests := []struct {
 		name    string
@@ -36,11 +37,11 @@ func TestView_ListMediasFromAlbum(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				mocks: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks2.NewCatalogRules(t)
-					rules.On("CanListMediasFromAlbum", pepper, infinityWarAlbum).Return(nil)
+					rules := mocks.NewCatalogRules(t)
+					rules.On("CanListMediasFromAlbum", catalog.AlbumId{Owner: pepper, FolderName: infinityWarAlbum}).Return(nil)
 
-					catalogAdapter := mocks2.NewACLViewCatalogAdapter(t)
-					catalogAdapter.On("ListMedias", pepper, infinityWarAlbum, mock.Anything).Return(&page, nil)
+					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
+					catalogAdapter.On("ListMedias", catalog.AlbumId{Owner: pepper, FolderName: infinityWarAlbum}, mock.Anything).Return(&page, nil)
 					return rules, catalogAdapter
 				},
 			},
@@ -53,10 +54,10 @@ func TestView_ListMediasFromAlbum(t *testing.T) {
 			fields: fields{
 				UserEmail: pepperUser,
 				mocks: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
-					rules := mocks2.NewCatalogRules(t)
-					rules.On("CanListMediasFromAlbum", pepper, infinityWarAlbum).Return(nopeError)
+					rules := mocks.NewCatalogRules(t)
+					rules.On("CanListMediasFromAlbum", catalog.AlbumId{Owner: pepper, FolderName: infinityWarAlbum}).Return(nopeError)
 
-					return rules, mocks2.NewACLViewCatalogAdapter(t)
+					return rules, mocks.NewACLViewCatalogAdapter(t)
 				},
 			},
 			args: args{owner: pepper, folderName: infinityWarAlbum},
@@ -76,7 +77,7 @@ func TestView_ListMediasFromAlbum(t *testing.T) {
 				CatalogAdapter: catalogAdapter,
 			}
 
-			got, err := v.ListMediasFromAlbum(tt.args.owner, tt.args.folderName)
+			got, err := v.ListMediasFromAlbum(catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName})
 			if !tt.wantErr(t, err, fmt.Sprintf("ListMediasFromAlbum(%v, %v)", tt.args.owner, tt.args.folderName)) {
 				return
 			}

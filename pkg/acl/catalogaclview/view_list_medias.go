@@ -5,11 +5,11 @@ import (
 )
 
 // ListMediasFromAlbum returns medias contained on the album if user is allowed
-func (v *View) ListMediasFromAlbum(owner, folderName string) (*catalog.MediaPage, error) {
-	err := v.CatalogRules.CanListMediasFromAlbum(owner, folderName)
+func (v *View) ListMediasFromAlbum(albumId catalog.AlbumId) (*catalog.MediaPage, error) {
+	err := v.CatalogRules.CanListMediasFromAlbum(albumId)
 	if err != nil {
 		return nil, err
 	}
 
-	return v.CatalogAdapter.ListMedias(owner, folderName, catalog.PageRequest{})
+	return v.CatalogAdapter.ListMedias(albumId, catalog.PageRequest{})
 }

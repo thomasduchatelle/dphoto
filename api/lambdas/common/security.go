@@ -49,7 +49,7 @@ func RequiresCatalogACL(request *events.APIGatewayV2HTTPRequest, process func(cl
 func RequiresCatalogView(request *events.APIGatewayV2HTTPRequest, process func(catalogView *catalogaclview.View) (Response, error)) (Response, error) {
 	return RequiresCatalogACL(request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (Response, error) {
 		view := &catalogaclview.View{
-			UserEmail:      claims.Subject,
+			UserEmail:      claims.Subject.Value(),
 			CatalogRules:   rules,
 			CatalogAdapter: new(catalogAdapter),
 		}

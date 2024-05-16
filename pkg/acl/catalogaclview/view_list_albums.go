@@ -29,16 +29,16 @@ func (v *View) ListAlbums(filter ListAlbumsFilter) ([]*AlbumInView, error) {
 
 func (v *View) listOwnedAlbums() ([]*AlbumInView, error) {
 	owner, err := v.CatalogRules.Owner()
-	if err != nil || owner == "" {
+	if err != nil || owner == nil { // TODO That's highly irregular coding style.
 		return nil, err
 	}
 
-	ownedAlbums, err := v.CatalogAdapter.FindAllAlbums(owner)
+	ownedAlbums, err := v.CatalogAdapter.FindAllAlbums(*owner)
 	if err != nil {
 		return nil, err
 	}
 
-	sharing, err := v.CatalogRules.SharedByUserGrid(owner)
+	sharing, err := v.CatalogRules.SharedByUserGrid(*owner)
 
 	var view []*AlbumInView
 	for _, album := range ownedAlbums {

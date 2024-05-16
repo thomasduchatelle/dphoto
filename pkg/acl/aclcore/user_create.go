@@ -2,7 +2,8 @@ package aclcore
 
 import (
 	log "github.com/sirupsen/logrus"
-	"strings"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 type CreateUser struct {
@@ -12,17 +13,17 @@ type CreateUser struct {
 
 // CreateUser create a user capable of backup as 'owner', or update an existing owner to be 'owner'
 func (c *CreateUser) CreateUser(email, ownerOptional string) error {
-	email = strings.Trim(email, " ")
-	if email == "" {
-		return InvalidUserEmailError
+	userId := usermodel.NewUserId(email)
+	if err := userId.IsValid(); err != nil {
+		return err
 	}
 
-	owner := ownerOptional
+	owner := ownermodel.Owner(ownerOptional)
 	if owner == "" {
-		owner = email
+		owner = ownermodel.Owner(email)
 	}
 
-	scopes, err := c.ScopesReader.ListUserScopes(email, MainOwnerScope)
+	scopes, err := c.ScopesReader.ListUserScopes(userId, MainOwnerScope)
 	if err != nil {
 		return err
 	}
@@ -31,10 +32,10 @@ func (c *CreateUser) CreateUser(email, ownerOptional string) error {
 	if len(scopes) > 0 {
 		var idsToDelete []ScopeId
 		for _, scope := range scopes {
-			if scope.Type == MainOwnerScope && scope.GrantedTo == email && scope.ResourceOwner == owner && scope.ResourceId == "" {
+			if scope.Type == MainOwnerScope && scope.GrantedTo == userId && scope.ResourceOwner == owner && scope.ResourceId == "" {
 				presents = true
 
-			} else if scope.Type == MainOwnerScope && scope.GrantedTo == email {
+			} else if scope.Type == MainOwnerScope && scope.GrantedTo == userId {
 				idsToDelete = append(idsToDelete, ScopeId{
 					Type:          scope.Type,
 					GrantedTo:     scope.GrantedTo,
@@ -62,7 +63,7 @@ func (c *CreateUser) CreateUser(email, ownerOptional string) error {
 	return c.ScopeWriter.SaveIfNewScope(Scope{
 		Type:          MainOwnerScope,
 		GrantedAt:     TimeFunc(),
-		GrantedTo:     email,
+		GrantedTo:     userId,
 		ResourceOwner: owner,
 	})
 }

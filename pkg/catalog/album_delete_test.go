@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
 )
@@ -213,7 +214,7 @@ func expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId catalog.AlbumId, reco
 
 func stubFindAlbumsByOwnerPortWithError(err error) func(t *testing.T) catalog.FindAlbumsByOwnerPort {
 	return func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-		return catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
+		return catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
 			return nil, err
 		})
 	}
@@ -221,16 +222,16 @@ func stubFindAlbumsByOwnerPortWithError(err error) func(t *testing.T) catalog.Fi
 
 func expectCountMediasBySelectorsPortNotCalled() func(t *testing.T) catalog.CountMediasBySelectorsPort {
 	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
-		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
+		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
 			assert.Failf(t, "unexpected call", "CountMediasBySelectors(%+v)", selectors)
 			return 0, nil
 		})
 	}
 }
 
-func expectCountMediasBySelectorsPortCalled(count int, expectedOwner catalog.Owner, expectedSelectors ...catalog.MediaSelector) func(t *testing.T) catalog.CountMediasBySelectorsPort {
+func expectCountMediasBySelectorsPortCalled(count int, expectedOwner ownermodel.Owner, expectedSelectors ...catalog.MediaSelector) func(t *testing.T) catalog.CountMediasBySelectorsPort {
 	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
-		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
+		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
 			assert.Equalf(t, expectedOwner, owner, "unexpected call CountMediasBySelectors(%v, %+v)", owner, selectors)
 			assert.Equalf(t, expectedSelectors, selectors, "unexpected call CountMediasBySelectors(%v, %+v)", owner, selectors)
 
@@ -241,7 +242,7 @@ func expectCountMediasBySelectorsPortCalled(count int, expectedOwner catalog.Own
 
 func stubCountMediasBySelectorsPortWithError(err error) func(t *testing.T) catalog.CountMediasBySelectorsPort {
 	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
-		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
+		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
 			return 0, err
 		})
 	}
@@ -249,7 +250,7 @@ func stubCountMediasBySelectorsPortWithError(err error) func(t *testing.T) catal
 
 func stubCountMediasBySelectorsPort(count int) func(t *testing.T) catalog.CountMediasBySelectorsPort {
 	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
-		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
+		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
 			return count, nil
 		})
 	}
@@ -292,10 +293,10 @@ func TestNewDeleteAlbum(t *testing.T) {
 	}
 
 	deleteAlbum := catalog.NewDeleteAlbum(
-		catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
+		catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
 			return []*catalog.Album{&existingAllYearAlbum, &toDeleteAlbum}, nil
 		}),
-		catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner catalog.Owner, selectors []catalog.MediaSelector) (int, error) {
+		catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
 			return 0, nil
 		}),
 		stubTransferMediaPort(transferredMedias)(t),

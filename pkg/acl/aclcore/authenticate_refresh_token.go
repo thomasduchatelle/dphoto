@@ -1,6 +1,10 @@
 package aclcore
 
-import log "github.com/sirupsen/logrus"
+import (
+	"errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
+)
 
 // RefreshTokenAuthenticator use a known identity token issued by a known and trusted identity provider (google, facebook, ...) to create an access token
 type RefreshTokenAuthenticator struct {
@@ -11,7 +15,7 @@ type RefreshTokenAuthenticator struct {
 }
 
 type IAccessTokenGenerator interface {
-	GenerateAccessToken(email string) (*Authentication, error)
+	GenerateAccessToken(email usermodel.UserId) (*Authentication, error)
 }
 
 type IRefreshTokenGenerator interface {
@@ -33,10 +37,10 @@ func (s *RefreshTokenAuthenticator) AuthenticateFromRefreshToken(refreshToken st
 	}
 
 	identity, err := s.IdentityDetailsStore.FindIdentity(spec.Email)
-	if err == IdentityDetailsNotFoundError {
+	if errors.Is(err, IdentityDetailsNotFoundError) {
 		identity = &Identity{
 			Email:   spec.Email,
-			Name:    spec.Email,
+			Name:    spec.Email.Value(),
 			Picture: "",
 		}
 	} else if err != nil {

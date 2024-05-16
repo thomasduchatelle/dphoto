@@ -5,6 +5,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 var (
@@ -15,8 +17,8 @@ var (
 		revoke     bool
 	}{}
 
-	ShareAlbumCase   func(owner, folderName, userEmail string, scope aclcore.ScopeType) error
-	UnShareAlbumCase func(owner, folderName, userEmail string) error
+	ShareAlbumCase   func(albumId catalog.AlbumId, userEmail usermodel.UserId, scope aclcore.ScopeType) error
+	UnShareAlbumCase func(albumId catalog.AlbumId, userEmail usermodel.UserId) error
 )
 
 var shareAlbumCmd = &cobra.Command{
@@ -24,12 +26,12 @@ var shareAlbumCmd = &cobra.Command{
 	Short: "Share [or un-share] an album to a user (different from the the owner)",
 	Run: func(cmd *cobra.Command, args []string) {
 		if !shareAlbumArg.revoke {
-			err := ShareAlbumCase(shareAlbumArg.owner, shareAlbumArg.folderName, shareAlbumArg.userEmail, aclcore.MainOwnerScope)
+			err := ShareAlbumCase(catalog.NewAlbumIdFromStrings(shareAlbumArg.owner, shareAlbumArg.folderName), usermodel.NewUserId(shareAlbumArg.userEmail), aclcore.MainOwnerScope)
 			printer.FatalIfError(err, 1)
 
 			printer.Success("Album %s/%s has been shared to %s", aurora.Cyan(shareAlbumArg.owner), aurora.Cyan(shareAlbumArg.folderName), aurora.Cyan(shareAlbumArg.userEmail))
 		} else {
-			err := UnShareAlbumCase(shareAlbumArg.owner, shareAlbumArg.folderName, shareAlbumArg.userEmail)
+			err := UnShareAlbumCase(catalog.NewAlbumIdFromStrings(shareAlbumArg.owner, shareAlbumArg.folderName), usermodel.NewUserId(shareAlbumArg.userEmail))
 			printer.FatalIfError(err, 1)
 
 			printer.Success("Access to album %s/%s has been revoked from %s", aurora.Cyan(shareAlbumArg.owner), aurora.Cyan(shareAlbumArg.folderName), aurora.Cyan(shareAlbumArg.userEmail))

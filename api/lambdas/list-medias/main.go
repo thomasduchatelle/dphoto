@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"strings"
 	"time"
 )
@@ -25,7 +25,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 
 	return common.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common.Response, error) {
 		log.Infof("list medias for album %s/%s", owner, folderName)
-		medias, err := catalogView.ListMediasFromAlbum(owner, fmt.Sprintf("/%s", folderName))
+		medias, err := catalogView.ListMediasFromAlbum(catalog.NewAlbumIdFromStrings(owner, folderName))
 		if err != nil {
 			return common.Response{}, err
 		}

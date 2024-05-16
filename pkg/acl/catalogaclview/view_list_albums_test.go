@@ -7,15 +7,20 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"testing"
 )
 
-const (
-	pepperUser       = "pepper"
-	pepper           = "pepper@stark.com"
-	tony             = "tony@stark.com"
-	hulk             = "hulk@avenger.com"
-	infinityWarAlbum = "InfinityWar"
+var (
+	pepperUser = "pepper"
+	pepper     = ownermodel.Owner("pepper@stark.com")
+	tony       = ownermodel.Owner("tony@stark.com")
+	hulk       = ownermodel.Owner("hulk@avenger.com")
+)
+
+var (
+	infinityWarAlbum = catalog.NewFolderName("InfinityWar")
 )
 
 func TestView_ListAlbums(t *testing.T) {
@@ -40,13 +45,13 @@ func TestView_ListAlbums(t *testing.T) {
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
 					rules := mocks.NewCatalogRules(t)
-					rules.On("Owner").Return(pepper, nil)
+					rules.On("Owner").Return(&pepper, nil)
 					rules.On("SharedWithUserAlbum").Return([]catalog.AlbumId{
 						{Owner: tonyAlbum.Owner, FolderName: tonyAlbum.FolderName},
 					}, nil)
-					rules.On("SharedByUserGrid", pepper).Return(map[string]map[string]aclcore.ScopeType{
-						album2.FolderName.String(): {hulk: aclcore.AlbumVisitorScope},
-						"something/else":           {tony: aclcore.AlbumVisitorScope},
+					rules.On("SharedByUserGrid", pepper).Return(map[string]map[usermodel.UserId]aclcore.ScopeType{
+						album2.FolderName.String(): {usermodel.UserId(hulk): aclcore.AlbumVisitorScope},
+						"something/else":           {usermodel.UserId(tony): aclcore.AlbumVisitorScope},
 					}, nil)
 
 					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
@@ -67,7 +72,7 @@ func TestView_ListAlbums(t *testing.T) {
 				},
 				{
 					Album:         album2,
-					SharedWith:    map[string]aclcore.ScopeType{hulk: aclcore.AlbumVisitorScope},
+					SharedWith:    map[usermodel.UserId]aclcore.ScopeType{usermodel.UserId(hulk): aclcore.AlbumVisitorScope},
 					DirectlyOwned: true,
 				},
 				{
@@ -84,10 +89,10 @@ func TestView_ListAlbums(t *testing.T) {
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
 					rules := mocks.NewCatalogRules(t)
-					rules.On("Owner").Return(pepper, nil)
-					rules.On("SharedByUserGrid", pepper).Return(map[string]map[string]aclcore.ScopeType{
-						album2.FolderName.String(): {hulk: aclcore.AlbumVisitorScope},
-						"something/else":           {tony: aclcore.AlbumVisitorScope},
+					rules.On("Owner").Return(&pepper, nil)
+					rules.On("SharedByUserGrid", pepper).Return(map[string]map[usermodel.UserId]aclcore.ScopeType{
+						album2.FolderName.String(): {usermodel.UserId(hulk): aclcore.AlbumVisitorScope},
+						"something/else":           {usermodel.UserId(tony): aclcore.AlbumVisitorScope},
 					}, nil)
 
 					catalogAdapter := mocks.NewACLViewCatalogAdapter(t)
@@ -105,7 +110,7 @@ func TestView_ListAlbums(t *testing.T) {
 				},
 				{
 					Album:         album2,
-					SharedWith:    map[string]aclcore.ScopeType{hulk: aclcore.AlbumVisitorScope},
+					SharedWith:    map[usermodel.UserId]aclcore.ScopeType{usermodel.UserId(hulk): aclcore.AlbumVisitorScope},
 					DirectlyOwned: true,
 				},
 			},
@@ -117,7 +122,7 @@ func TestView_ListAlbums(t *testing.T) {
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
 					rules := mocks.NewCatalogRules(t)
-					rules.On("Owner").Return("", nil)
+					rules.On("Owner").Return(nil, nil)
 					rules.On("SharedWithUserAlbum").Return([]catalog.AlbumId{
 						{Owner: tonyAlbum.Owner, FolderName: tonyAlbum.FolderName},
 					}, nil)
@@ -145,7 +150,7 @@ func TestView_ListAlbums(t *testing.T) {
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
 					rules := mocks.NewCatalogRules(t)
-					rules.On("Owner").Return(pepper, nil)
+					rules.On("Owner").Return(&pepper, nil)
 					rules.On("SharedWithUserAlbum").Return(nil, nil)
 					rules.On("SharedByUserGrid", pepper).Return(nil, nil)
 
@@ -176,7 +181,7 @@ func TestView_ListAlbums(t *testing.T) {
 				UserEmail: pepperUser,
 				CatalogRules: func(t *testing.T) (catalogacl.CatalogRules, catalogaclview.ACLViewCatalogAdapter) {
 					rules := mocks.NewCatalogRules(t)
-					rules.On("Owner").Return(pepper, nil)
+					rules.On("Owner").Return(&pepper, nil)
 					rules.On("SharedWithUserAlbum").Return(nil, nil)
 					rules.On("SharedByUserGrid", pepper).Return(nil, nil)
 

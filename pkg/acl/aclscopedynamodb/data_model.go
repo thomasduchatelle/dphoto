@@ -8,6 +8,8 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 	"time"
 )
@@ -26,7 +28,7 @@ type ScopeRecord struct {
 	ResourceName  string
 }
 
-func ScopeRecordPk(user, scopeType, owner, id string) appdynamodb.TablePk {
+func ScopeRecordPk(user usermodel.UserId, scopeType string, owner ownermodel.Owner, id string) appdynamodb.TablePk {
 	return appdynamodb.TablePk{
 		PK: appdynamodb.UserPk(user),
 		SK: fmt.Sprintf("%s%s#%s#%s", scopePrefix, scopeType, owner, id),
@@ -42,22 +44,22 @@ func MarshalScopeId(id aclcore.ScopeId) map[string]types.AttributeValue {
 }
 
 func MarshalScope(scope aclcore.Scope) (map[string]types.AttributeValue, error) {
-	if isBlank(scope.GrantedTo) {
-		return nil, errors.New("GrantedTo is mandatory to store a scope")
+	if err := scope.GrantedTo.IsValid(); err != nil {
+		return nil, errors.Wrapf(err, "GrantedTo is mandatory to store a scope")
 	}
 	if isBlank(string(scope.Type)) {
 		return nil, errors.New("Type is mandatory to store a scope")
 	}
-	if isBlank(scope.ResourceOwner) {
-		return nil, errors.New("ResourceOwner is mandatory")
+	if err := scope.ResourceOwner.IsValid(); err != nil {
+		return nil, errors.Wrapf(err, "ResourceOwner is mandatory")
 	}
 
 	return attributevalue.MarshalMap(&ScopeRecord{
 		TablePk:       ScopeRecordPk(scope.GrantedTo, string(scope.Type), scope.ResourceOwner, scope.ResourceId),
 		Type:          string(scope.Type),
 		GrantedAt:     scope.GrantedAt,
-		GrantedTo:     scope.GrantedTo,
-		ResourceOwner: scope.ResourceOwner,
+		GrantedTo:     scope.GrantedTo.Value(),
+		ResourceOwner: scope.ResourceOwner.Value(),
 		ResourceId:    scope.ResourceId,
 		ResourceName:  scope.ResourceName,
 	})
@@ -70,8 +72,8 @@ func UnmarshalScope(attributes map[string]types.AttributeValue) (*aclcore.Scope,
 	return &aclcore.Scope{
 			Type:          aclcore.ScopeType(record.Type),
 			GrantedAt:     record.GrantedAt,
-			GrantedTo:     record.GrantedTo,
-			ResourceOwner: record.ResourceOwner,
+			GrantedTo:     usermodel.UserId(record.GrantedTo),
+			ResourceOwner: ownermodel.Owner(record.ResourceOwner),
 			ResourceId:    record.ResourceId,
 			ResourceName:  record.ResourceName,
 		},

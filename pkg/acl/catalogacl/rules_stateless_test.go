@@ -6,21 +6,27 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"testing"
 	"time"
 )
 
-const (
-	userEmail  = "pepper@stark.com"
-	ownerEmail = "tony@stark.com"
-	folderName = "InfinityWar"
-	mediaId    = "Snap"
+var (
+	userEmail  = usermodel.UserId("pepper@stark.com")
+	ownerEmail = ownermodel.Owner("tony@stark.com")
+	mediaId    = catalog.MediaId("Snap")
+)
+
+var (
+	folderName = catalog.NewFolderName("InfinityWar")
+	albumId    = catalog.AlbumId{Owner: ownerEmail, FolderName: folderName}
 )
 
 func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 	type args struct {
-		owner      string
-		folderName string
+		owner      ownermodel.Owner
+		folderName catalog.FolderName
 	}
 	tests := []struct {
 		name      string
@@ -33,7 +39,7 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 			initMocks: func(repository *mocks.ScopeRepository) {
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
-					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
+					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName.String()},
 				).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.MainOwnerScope,
@@ -50,13 +56,13 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 			initMocks: func(repository *mocks.ScopeRepository) {
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
-					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
+					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName.String()},
 				).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.AlbumVisitorScope,
 						GrantedAt:     time.Date(2022, 12, 24, 0, 0, 0, 0, time.UTC),
 						ResourceOwner: ownerEmail,
-						ResourceId:    folderName,
+						ResourceId:    folderName.String(),
 					},
 				}, nil)
 			},
@@ -68,7 +74,7 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 			initMocks: func(repository *mocks.ScopeRepository) {
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
-					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
+					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName.String()},
 				).Return(nil, nil)
 			},
 			args: args{owner: ownerEmail, folderName: folderName},
@@ -85,7 +91,7 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 
 			rules := catalogacl.NewCatalogRules(repository, nil, userEmail)
 
-			err := rules.CanListMediasFromAlbum(tt.args.owner, tt.args.folderName)
+			err := rules.CanListMediasFromAlbum(catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName})
 			tt.wantErr(t, err)
 		})
 	}
@@ -93,8 +99,8 @@ func Test_rules_CanListMediasFromAlbum(t *testing.T) {
 
 func Test_rules_CanReadMedia(t *testing.T) {
 	type args struct {
-		owner   string
-		mediaId string
+		owner   ownermodel.Owner
+		mediaId catalog.MediaId
 	}
 	tests := []struct {
 		name      string
@@ -105,12 +111,12 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		{
 			name: "it should GRANT for the owner of the media",
 			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
-				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(folderName, nil)
+				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(albumId, nil)
 
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
-					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
-					aclcore.ScopeId{Type: aclcore.MediaVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: mediaId},
+					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName.String()},
+					aclcore.ScopeId{Type: aclcore.MediaVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: mediaId.Value()},
 				).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.MainOwnerScope,
@@ -125,18 +131,18 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		{
 			name: "it should GRANT for the visitor of the album",
 			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
-				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(folderName, nil)
+				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(albumId, nil)
 
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
-					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
-					aclcore.ScopeId{Type: aclcore.MediaVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: mediaId},
+					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName.String()},
+					aclcore.ScopeId{Type: aclcore.MediaVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: mediaId.Value()},
 				).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.AlbumVisitorScope,
 						GrantedAt:     time.Date(2022, 12, 24, 0, 0, 0, 0, time.UTC),
 						ResourceOwner: ownerEmail,
-						ResourceId:    folderName,
+						ResourceId:    folderName.String(),
 					},
 				}, nil)
 			},
@@ -146,18 +152,18 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		{
 			name: "it should GRANT for the visitor of the media",
 			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
-				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(folderName, nil)
+				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(albumId, nil)
 
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
-					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
-					aclcore.ScopeId{Type: aclcore.MediaVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: mediaId},
+					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName.String()},
+					aclcore.ScopeId{Type: aclcore.MediaVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: mediaId.Value()},
 				).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.MediaVisitorScope,
 						GrantedAt:     time.Date(2022, 12, 24, 0, 0, 0, 0, time.UTC),
 						ResourceOwner: ownerEmail,
-						ResourceId:    mediaId,
+						ResourceId:    mediaId.Value(),
 					},
 				}, nil)
 			},
@@ -167,7 +173,7 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		{
 			name: "it should DENY if media not found",
 			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
-				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return("", catalog.AlbumNotFoundError)
+				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(catalog.AlbumId{}, catalog.AlbumNotFoundError)
 			},
 			args: args{owner: ownerEmail, mediaId: mediaId},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -177,12 +183,12 @@ func Test_rules_CanReadMedia(t *testing.T) {
 		{
 			name: "it should DENY for others",
 			initMocks: func(repository *mocks.ScopeRepository, resolver *mocks.MediaAlbumResolver) {
-				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(folderName, nil)
+				resolver.On("FindAlbumOfMedia", ownerEmail, mediaId).Return(albumId, nil)
 
 				repository.On("FindScopesById",
 					aclcore.ScopeId{Type: aclcore.MainOwnerScope, GrantedTo: userEmail, ResourceOwner: ownerEmail},
-					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName},
-					aclcore.ScopeId{Type: aclcore.MediaVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: mediaId},
+					aclcore.ScopeId{Type: aclcore.AlbumVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: folderName.String()},
+					aclcore.ScopeId{Type: aclcore.MediaVisitorScope, GrantedTo: userEmail, ResourceOwner: ownerEmail, ResourceId: mediaId.Value()},
 				).Return(nil, nil)
 			},
 			args: args{owner: ownerEmail, mediaId: mediaId},
@@ -210,7 +216,7 @@ func Test_rules_SharedByUserGrid(t *testing.T) {
 	tests := []struct {
 		name      string
 		initMocks func(repository *mocks.ScopeRepository)
-		want      map[string]map[string]aclcore.ScopeType
+		want      map[string]map[usermodel.UserId]aclcore.ScopeType
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
@@ -240,7 +246,7 @@ func Test_rules_SharedByUserGrid(t *testing.T) {
 					},
 				}, nil)
 			},
-			want: map[string]map[string]aclcore.ScopeType{
+			want: map[string]map[usermodel.UserId]aclcore.ScopeType{
 				"InfinityWar": {"blackwidow@avengers.com": aclcore.AlbumContributorScope, "hulk@avengers.com": aclcore.AlbumVisitorScope},
 				"Endgame":     {"blackwidow@avengers.com": aclcore.AlbumVisitorScope},
 			},
@@ -331,8 +337,8 @@ func Test_rules_SharedWithUserAlbum(t *testing.T) {
 
 func Test_rules_CanManageAlbum(t *testing.T) {
 	type args struct {
-		owner      string
-		folderName string
+		owner      ownermodel.Owner
+		folderName catalog.FolderName
 	}
 	tests := []struct {
 		name      string
@@ -374,7 +380,7 @@ func Test_rules_CanManageAlbum(t *testing.T) {
 
 			rules := catalogacl.NewCatalogRules(repository, nil, userEmail)
 
-			err := rules.CanManageAlbum(tt.args.owner, tt.args.folderName)
+			err := rules.CanManageAlbum(catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName})
 			tt.wantErr(t, err)
 		})
 	}

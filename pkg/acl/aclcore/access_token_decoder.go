@@ -3,6 +3,8 @@ package aclcore
 import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 	"time"
 )
@@ -44,9 +46,9 @@ func (a *AccessTokenDecoder) Decode(accessToken string) (Claims, error) {
 	}
 
 	return Claims{
-		Subject: claims.Subject,
+		Subject: usermodel.NewUserId(claims.Subject),
 		Scopes:  scopes,
-		Owner:   owner,
+		Owner:   ownermodel.Owner(owner),
 	}, nil
 }
 

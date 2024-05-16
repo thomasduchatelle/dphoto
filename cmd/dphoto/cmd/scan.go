@@ -10,6 +10,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"os"
 	"path"
@@ -98,7 +99,7 @@ type uiCatalogAdapter struct {
 
 func (o *uiCatalogAdapter) Create(request ui.RecordCreation) error {
 	_, err := o.CreateAlbum.Create(context.TODO(), catalog.CreateAlbumRequest{
-		Owner:            catalog.Owner(request.Owner),
+		Owner:            ownermodel.Owner(request.Owner),
 		Name:             request.Name,
 		Start:            request.Start,
 		End:              request.End,

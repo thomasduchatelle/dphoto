@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 func (r *Repository) TransferMediasFromRecords(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
@@ -53,7 +54,7 @@ func (r *Repository) findMediaIdsFromSelectors(ctx context.Context, targetAlbumI
 	return mediaIds, nil
 }
 
-func (r *Repository) convertSelectorsIntoMediaRequest(owner catalog.Owner, selectors []catalog.MediaSelector) *catalog.FindMediaRequest {
+func (r *Repository) convertSelectorsIntoMediaRequest(owner ownermodel.Owner, selectors []catalog.MediaSelector) *catalog.FindMediaRequest {
 	request := &catalog.FindMediaRequest{
 		Owner:            owner,
 		AlbumFolderNames: make(map[catalog.FolderName]interface{}),

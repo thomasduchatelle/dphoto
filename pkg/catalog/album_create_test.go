@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
 )
@@ -147,7 +148,7 @@ func TestCreateAlbum_Create(t *testing.T) {
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.EmptyOwnerError)
+				return assert.ErrorIs(t, err, ownermodel.EmptyOwnerError)
 			},
 		},
 		{
@@ -425,9 +426,9 @@ func expectCreateAlbumObserveNotCalled() func(t *testing.T) catalog.CreateAlbumO
 	}
 }
 
-func stubFindAlbumsByOwnerWith(expectedOwner catalog.Owner, albums ...*catalog.Album) func(t *testing.T) catalog.FindAlbumsByOwnerPort {
+func stubFindAlbumsByOwnerWith(expectedOwner ownermodel.Owner, albums ...*catalog.Album) func(t *testing.T) catalog.FindAlbumsByOwnerPort {
 	return func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-		return catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner catalog.Owner) ([]*catalog.Album, error) {
+		return catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
 			if owner == expectedOwner && len(albums) > 0 {
 				return albums, nil
 			}

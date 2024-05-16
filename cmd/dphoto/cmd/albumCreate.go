@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"time"
 )
@@ -35,7 +36,7 @@ When not specified, folder name is generated from the pattern 'YYYY-MM_<normalis
 		creationRequest.End, err = parseDate(newArgs.endDate)
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
-		creationRequest.Owner = catalog.Owner(Owner)
+		creationRequest.Owner = ownermodel.Owner(Owner)
 		_, err = pkgfactory.CreateAlbumCase(ctx).Create(ctx, creationRequest)
 		printer.FatalWithMessageIfError(err, 1, "Failed to create the album, or to migrate medias to it.")
 

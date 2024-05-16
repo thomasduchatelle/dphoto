@@ -11,18 +11,20 @@ package aclcore
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"time"
 )
 
 var TimeFunc = time.Now
 
 var (
-	InvalidTokenError            = errors.New("authenticated failed")
-	InvalidTokenExplicitError    = errors.New("authentication failed: token invalid")
-	NotPreregisteredError        = errors.New("user must be pre-registered")
-	AccessUnauthorisedError      = errors.New("access unauthorised") // AccessUnauthorisedError is used when the request doesn't have valid credentials (no bearer token, or invalid token)
-	AccessForbiddenError         = errors.New("access forbidden")    // AccessForbiddenError is used when the request has valid credentials, but the access to the resource has been denied
-	InvalidUserEmailError        = errors.New("user email is mandatory")
+	InvalidTokenError         = errors.New("authenticated failed")
+	InvalidTokenExplicitError = errors.New("authentication failed: token invalid")
+	NotPreregisteredError     = errors.New("user must be pre-registered")
+	AccessUnauthorisedError   = errors.New("access unauthorised") // AccessUnauthorisedError is used when the request doesn't have valid credentials (no bearer token, or invalid token)
+	AccessForbiddenError      = errors.New("access forbidden")    // AccessForbiddenError is used when the request has valid credentials, but the access to the resource has been denied
+
 	ExpiredRefreshTokenError     = errors.New("refresh token has expired")
 	InvalidRefreshTokenError     = errors.New("refresh token is not valid")
 	IdentityDetailsNotFoundError = errors.New("no identity details stored for this identity") // IdentityDetailsNotFoundError is an internal error between the domain and the repository
@@ -51,20 +53,20 @@ type RefreshTokenPurpose string
 
 // Scope is attached to a user (a consumer of the API) and define the role it has on resource basis
 type Scope struct {
-	Type          ScopeType // Type is mandatory, it defines what fields on this structure is used and allow to filter the results
-	GrantedAt     time.Time // GrantedAt is the date the scope has been granted to the user for the first time
-	GrantedTo     string    // GrantedTo is the consumer, usually an email address
-	ResourceOwner string    // ResourceOwner (optional) is used has part of the ID of the catalog resources
-	ResourceId    string    // ResourceId if a unique identifier of the resource (in conjunction of the ResourceOwner for most catalog resources) ; ex: 'admin' (for 'api' type)
-	ResourceName  string    // ResourceName (optional) used for user-friendly display of the shared albums
+	Type          ScopeType        // Type is mandatory, it defines what fields on this structure is used and allow to filter the results
+	GrantedAt     time.Time        // GrantedAt is the date the scope has been granted to the user for the first time
+	GrantedTo     usermodel.UserId // GrantedTo is the consumer, usually an email address
+	ResourceOwner ownermodel.Owner // ResourceOwner (optional) is used has part of the ID of the catalog resources
+	ResourceId    string           // ResourceId if a unique identifier of the resource (in conjunction of the ResourceOwner for most catalog resources) ; ex: 'admin' (for 'api' type)
+	ResourceName  string           // ResourceName (optional) used for user-friendly display of the shared albums // TODO is it necessary ?
 }
 
 // ScopeId are the properties of a Scope that identity it
 type ScopeId struct {
-	Type          ScopeType // Type is mandatory, it defines what fields on this structure is used and allow to filter the results
-	GrantedTo     string    // GrantedTo is the consumer, usually an email address
-	ResourceOwner string    // ResourceOwner (optional) is used has part of the ID of the catalog resources
-	ResourceId    string    // ResourceId if a unique identifier of the resource (in conjunction of the ResourceOwner for most catalog resources) ; ex: 'admin' (for 'api' type)
+	Type          ScopeType        // Type is mandatory, it defines what fields on this structure is used and allow to filter the results
+	GrantedTo     usermodel.UserId // GrantedTo is the consumer, usually an email address
+	ResourceOwner ownermodel.Owner // ResourceOwner (optional) is used has part of the ID of the catalog resources
+	ResourceId    string           // ResourceId if a unique identifier of the resource (in conjunction of the ResourceOwner for most catalog resources) ; ex: 'admin' (for 'api' type)
 }
 
 type OAuthConfig struct {
@@ -102,19 +104,19 @@ type Authentication struct {
 
 // Identity is read from token created by the Identity Provider (google, ...)
 type Identity struct {
-	Email   string
+	Email   usermodel.UserId
 	Name    string
 	Picture string
 }
 
 type Claims struct {
-	Subject string                 // Subject is the user id (its email)
+	Subject usermodel.UserId       // Subject is the user id (its email)
 	Scopes  map[string]interface{} // Scopes is the list of permissions stored eagerly in access token
-	Owner   string                 // Owner is deviated from Scopes (extract of the MainOwnerScope)
+	Owner   ownermodel.Owner       // Owner is deviated from Scopes (extract of the MainOwnerScope)
 }
 
 type RefreshTokenSpec struct {
-	Email               string
+	Email               usermodel.UserId
 	RefreshTokenPurpose RefreshTokenPurpose // RefreshTokenPurpose is mandatory
 	AbsoluteExpiryTime  time.Time           // AbsoluteExpiryTime will be generated from RefreshTokenPurpose if not defined
 	Scopes              []string            // Scopes is the list of scopes for which an access token can be generated

@@ -10,10 +10,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"strings"
 )
 
-func (r *Repository) InsertMedias(ctx context.Context, owner catalog.Owner, medias []catalog.CreateMediaRequest) error {
+func (r *Repository) InsertMedias(ctx context.Context, owner ownermodel.Owner, medias []catalog.CreateMediaRequest) error {
 	requests := make([]types.WriteRequest, len(medias))
 	for index, media := range medias {
 		mediaEntry, err := marshalMedia(owner, &media)
@@ -52,7 +53,7 @@ func (r *Repository) FindMedias(ctx context.Context, request *catalog.FindMediaR
 	return medias, err
 }
 
-func (r *Repository) FindMediaCurrentAlbum(ctx context.Context, owner catalog.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {
+func (r *Repository) FindMediaCurrentAlbum(ctx context.Context, owner ownermodel.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {
 	key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, mediaId))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to marshal media key %s/%s", owner, mediaId)
@@ -102,7 +103,7 @@ func (r *Repository) FindMediaIds(ctx context.Context, request *catalog.FindMedi
 	return mediaIds, err
 }
 
-func (r *Repository) FindExistingSignatures(ctx context.Context, owner catalog.Owner, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
+func (r *Repository) FindExistingSignatures(ctx context.Context, owner ownermodel.Owner, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
 	// note: this implementation expects media id to be an encoded version of its signature
 
 	var keys []map[string]types.AttributeValue

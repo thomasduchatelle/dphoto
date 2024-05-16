@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"strings"
 	"time"
 )
@@ -45,32 +46,32 @@ type MediaRecord struct {
 	SignatureHash string
 }
 
-func AlbumPrimaryKey(owner catalog.Owner, folderName catalog.FolderName) appdynamodb.TablePk {
+func AlbumPrimaryKey(owner ownermodel.Owner, folderName catalog.FolderName) appdynamodb.TablePk {
 	return appdynamodb.TablePk{
 		PK: fmt.Sprintf("%s#ALBUM", owner),
 		SK: fmt.Sprintf("ALBUM#%s", folderName),
 	}
 }
 
-func MediaPrimaryKey(owner catalog.Owner, id catalog.MediaId) appdynamodb.TablePk {
+func MediaPrimaryKey(owner ownermodel.Owner, id catalog.MediaId) appdynamodb.TablePk {
 	return appdynamodb.TablePk{
 		PK: appdynamodb.MediaPrimaryKeyPK(string(owner), string(id)),
 		SK: "#METADATA",
 	}
 }
 
-func AlbumIndexedKeyPK(owner catalog.Owner, folderName catalog.FolderName) string {
+func AlbumIndexedKeyPK(owner ownermodel.Owner, folderName catalog.FolderName) string {
 	return fmt.Sprintf("%s#%s", owner, folderName)
 }
 
-func AlbumIndexedKey(owner catalog.Owner, folderName catalog.FolderName) AlbumIndexKey {
+func AlbumIndexedKey(owner ownermodel.Owner, folderName catalog.FolderName) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: AlbumIndexedKeyPK(owner, folderName),
 		AlbumIndexSK: "#METADATA",
 	}
 }
 
-func MediaAlbumIndexedKey(owner catalog.Owner, folderName catalog.FolderName, dateTime time.Time, id catalog.MediaId) AlbumIndexKey {
+func MediaAlbumIndexedKey(owner ownermodel.Owner, folderName catalog.FolderName, dateTime time.Time, id catalog.MediaId) AlbumIndexKey {
 	return AlbumIndexKey{
 		AlbumIndexPK: AlbumIndexedKeyPK(owner, folderName),
 		AlbumIndexSK: fmt.Sprintf("MEDIA#%s#%s", dateTime.Format(IsoTime), id),
@@ -102,7 +103,7 @@ func unmarshalAlbum(attributes map[string]types.AttributeValue) (*catalog.Album,
 
 	return &catalog.Album{
 		AlbumId: catalog.AlbumId{
-			Owner:      catalog.Owner(data.AlbumOwner),
+			Owner:      ownermodel.Owner(data.AlbumOwner),
 			FolderName: catalog.NewFolderName(data.AlbumFolderName),
 		},
 		Name:  data.AlbumName,
@@ -112,7 +113,7 @@ func unmarshalAlbum(attributes map[string]types.AttributeValue) (*catalog.Album,
 }
 
 // marshalMedia return both Media metadata attributes and location attributes
-func marshalMedia(owner catalog.Owner, media *catalog.CreateMediaRequest) (map[string]types.AttributeValue, error) {
+func marshalMedia(owner ownermodel.Owner, media *catalog.CreateMediaRequest) (map[string]types.AttributeValue, error) {
 	if err := owner.IsValid(); err != nil {
 		return nil, err
 	}

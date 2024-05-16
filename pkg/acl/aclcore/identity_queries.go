@@ -1,11 +1,16 @@
 package aclcore
 
+import (
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
+)
+
 type IdentityQueriesIdentityRepository interface {
-	FindIdentities(emails []string) ([]*Identity, error)
+	FindIdentities(emails []usermodel.UserId) ([]*Identity, error)
 }
 
 type IdentityQueriesScopeRepository interface {
-	ListScopesByOwners(owners []string, types ...ScopeType) ([]*Scope, error)
+	ListScopesByOwners(owners []ownermodel.Owner, types ...ScopeType) ([]*Scope, error)
 }
 
 type IdentityQueries struct {
@@ -13,28 +18,28 @@ type IdentityQueries struct {
 	ScopeRepository    IdentityQueriesScopeRepository
 }
 
-func (i *IdentityQueries) FindIdentities(emails []string) ([]*Identity, error) {
+func (i *IdentityQueries) FindIdentities(emails []usermodel.UserId) ([]*Identity, error) {
 	return i.IdentityRepository.FindIdentities(emails)
 }
 
-func (i *IdentityQueries) FindOwnerIdentities(owners []string) (map[string][]*Identity, error) {
+func (i *IdentityQueries) FindOwnerIdentities(owners []ownermodel.Owner) (map[ownermodel.Owner][]*Identity, error) {
 	scopes, err := i.ScopeRepository.ListScopesByOwners(owners, MainOwnerScope)
 	if err != nil || len(scopes) == 0 {
 		return nil, err
 	}
 
-	var emails []string
+	var emails []usermodel.UserId
 	for _, scope := range scopes {
 		emails = append(emails, scope.GrantedTo)
 	}
 
 	identities, err := i.IdentityRepository.FindIdentities(emails)
 
-	ownerIdentities := make(map[string][]*Identity)
+	ownerIdentities := make(map[ownermodel.Owner][]*Identity)
 	for _, scope := range scopes {
 		identity := &Identity{
 			Email: scope.GrantedTo,
-			Name:  scope.GrantedTo,
+			Name:  scope.GrantedTo.Value(),
 		}
 		for _, i := range identities {
 			if i.Email == scope.GrantedTo {

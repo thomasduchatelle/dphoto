@@ -5,43 +5,47 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"testing"
 	"time"
 )
 
 func TestCoreRules_Owner(t *testing.T) {
+	ironmanOwner := ownermodel.Owner("ironman")
+
 	tests := []struct {
 		name      string
-		email     string
+		email     usermodel.UserId
 		initMocks func(scopesReader *mocks.ScopesReader)
-		want      string
+		want      *ownermodel.Owner
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
 			name:  "it should return resource owner from the ACL",
 			email: "tony@stark.com",
 			initMocks: func(scopesReader *mocks.ScopesReader) {
-				scopesReader.On("ListUserScopes", "tony@stark.com", aclcore.MainOwnerScope).Return([]*aclcore.Scope{
+				scopesReader.On("ListUserScopes", usermodel.UserId("tony@stark.com"), aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.MainOwnerScope,
 						GrantedAt:     time.Time{},
 						GrantedTo:     "tony@stark.com",
-						ResourceOwner: "ironman",
+						ResourceOwner: ironmanOwner,
 						ResourceId:    "007",
 						ResourceName:  "Junior",
 					},
 				}, nil)
 			},
-			want:    "ironman",
+			want:    &ironmanOwner,
 			wantErr: assert.NoError,
 		},
 		{
 			name:  "it should return an error if no scopes are returned",
 			email: "tony@stark.com",
 			initMocks: func(scopesReader *mocks.ScopesReader) {
-				scopesReader.On("ListUserScopes", "tony@stark.com", aclcore.MainOwnerScope).Return(nil, nil)
+				scopesReader.On("ListUserScopes", usermodel.UserId("tony@stark.com"), aclcore.MainOwnerScope).Return(nil, nil)
 			},
-			want: "",
+			want: nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) &&
 					assert.Contains(t, err.Error(), "is not a main user", i)

@@ -3,14 +3,15 @@ package catalog
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"regexp"
 	"strings"
 	"time"
 )
 
 var (
-	AlbumNotFoundError   = errors.New("album hasn't been found")
-	EmptyOwnerError      = errors.New("owner is mandatory and must be not empty")
+	AlbumNotFoundError = errors.New("album hasn't been found")
+
 	EmptyFolderNameError = errors.New("folderName is mandatory and must be not empty")
 )
 
@@ -34,7 +35,7 @@ func (a Album) String() string {
 }
 
 type AlbumId struct {
-	Owner      Owner
+	Owner      ownermodel.Owner
 	FolderName FolderName
 }
 
@@ -63,22 +64,7 @@ func (a AlbumId) String() string {
 
 // NewAlbumIdFromStrings creates an AlbumId from 2 strings ; it doesn't guaranty its validity, use AlbumId.IsValid to check if any error.
 func NewAlbumIdFromStrings(owner, folderName string) AlbumId {
-	return AlbumId{Owner: Owner(owner), FolderName: NewFolderName(folderName)}
-}
-
-// Owner is a non-empty ID
-type Owner string
-
-func (o Owner) IsValid() error {
-	if o == "" {
-		return EmptyOwnerError
-	}
-
-	return nil
-}
-
-func (o Owner) String() string {
-	return string(o)
+	return AlbumId{Owner: ownermodel.Owner(owner), FolderName: NewFolderName(folderName)}
 }
 
 // FolderName is a normalised ID unique per Owner

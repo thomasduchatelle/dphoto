@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
+	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"testing"
 	"time"
 )
@@ -19,13 +21,14 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 	}
 
 	type args struct {
-		owner      string
-		folderName string
-		userEmail  string
+		owner      ownermodel.Owner
+		folderName catalog.FolderName
+		userEmail  usermodel.UserId
 	}
-	const owner = "tony@stark.com"
-	const folderName = "/weddings"
-	const userEmail = "pepper@stark.com"
+	const owner = ownermodel.Owner("tony@stark.com")
+	folderName := catalog.NewFolderName("/weddings")
+	albumId := catalog.AlbumId{Owner: owner, FolderName: folderName}
+	const userEmail = usermodel.UserId("pepper@stark.com")
 
 	tests := []struct {
 		name    string
@@ -36,21 +39,18 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should create the ACL rule when the album exists",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort) {
-				catalogMock := mocks2.NewShareAlbumCatalogPort(t)
-				catalogMock.On("FindAlbum", owner, folderName).Return(&catalog.Album{
-					AlbumId: catalog.AlbumId{
-						Owner:      owner,
-						FolderName: folderName,
-					},
+				catalogMock := mocks.NewShareAlbumCatalogPort(t)
+				catalogMock.On("FindAlbum", albumId).Return(&catalog.Album{
+					AlbumId: albumId,
 				}, nil)
 
-				scopeWriter := mocks2.NewScopeWriter(t)
+				scopeWriter := mocks.NewScopeWriter(t)
 				scopeWriter.On("SaveIfNewScope", aclcore.Scope{
 					Type:          aclcore.AlbumVisitorScope,
 					GrantedAt:     theDate,
 					GrantedTo:     userEmail,
 					ResourceOwner: owner,
-					ResourceId:    folderName,
+					ResourceId:    folderName.String(),
 				}).Return(nil)
 
 				return scopeWriter, catalogMock
@@ -61,10 +61,10 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should return an error if the album doesn't exists",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort) {
-				catalogMock := mocks2.NewShareAlbumCatalogPort(t)
-				catalogMock.On("FindAlbum", owner, folderName).Return(nil, catalog.AlbumNotFoundError)
+				catalogMock := mocks.NewShareAlbumCatalogPort(t)
+				catalogMock.On("FindAlbum", albumId).Return(nil, catalog.AlbumNotFoundError)
 
-				return mocks2.NewScopeWriter(t), catalogMock
+				return mocks.NewScopeWriter(t), catalogMock
 			},
 			args: args{owner, folderName, userEmail},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -74,10 +74,10 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should passthroughs an other error",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort) {
-				catalogMock := mocks2.NewShareAlbumCatalogPort(t)
-				catalogMock.On("FindAlbum", owner, folderName).Return(nil, errors.New("TEST Something else"))
+				catalogMock := mocks.NewShareAlbumCatalogPort(t)
+				catalogMock.On("FindAlbum", albumId).Return(nil, errors.New("TEST Something else"))
 
-				return mocks2.NewScopeWriter(t), catalogMock
+				return mocks.NewScopeWriter(t), catalogMock
 			},
 			args: args{owner, folderName, userEmail},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -92,7 +92,9 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 				ScopeWriter: scopeWriter,
 				CatalogPort: catalogPort,
 			}
-			tt.wantErr(t, s.ShareAlbumWith(tt.args.owner, tt.args.folderName, tt.args.userEmail, aclcore.AlbumVisitorScope), fmt.Sprintf("ShareAlbumWith(%v, %v, %v)", tt.args.owner, tt.args.folderName, tt.args.userEmail))
+
+			err := s.ShareAlbumWith(catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName}, tt.args.userEmail, aclcore.AlbumVisitorScope)
+			tt.wantErr(t, err, fmt.Sprintf("ShareAlbumWith(%v, %v, %v)", tt.args.owner, tt.args.folderName, tt.args.userEmail))
 		})
 	}
 }

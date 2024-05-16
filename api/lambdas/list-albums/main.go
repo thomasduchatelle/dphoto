@@ -45,7 +45,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			sharedWith := make(map[string]string)
 			for email, scope := range a.SharedWith {
 				if role, ok := levelConversion[scope]; ok {
-					sharedWith[email] = role
+					sharedWith[email.Value()] = role
 				}
 			}
 			restAlbums[i] = AlbumDTO{

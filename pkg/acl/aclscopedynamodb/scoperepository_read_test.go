@@ -8,6 +8,8 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"sort"
 	"testing"
 	"time"
@@ -20,7 +22,7 @@ const (
 
 func Test_repository_ListUserScopes(t *testing.T) {
 	type args struct {
-		email string
+		email usermodel.UserId
 		types []aclcore.ScopeType
 	}
 	tests := []struct {
@@ -184,7 +186,7 @@ func Test_repository_ListUserScopes(t *testing.T) {
 
 func Test_repository_ListOwnerScopes(t *testing.T) {
 	type args struct {
-		email string
+		email ownermodel.Owner
 		types []aclcore.ScopeType
 	}
 	tests := []struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 var (
@@ -12,12 +13,12 @@ var (
 )
 
 type CountMediasBySelectorsPort interface {
-	CountMediasBySelectors(ctx context.Context, owner Owner, selectors []MediaSelector) (int, error)
+	CountMediasBySelectors(ctx context.Context, owner ownermodel.Owner, selectors []MediaSelector) (int, error)
 }
 
-type CountMediasBySelectorsFunc func(ctx context.Context, owner Owner, selectors []MediaSelector) (int, error)
+type CountMediasBySelectorsFunc func(ctx context.Context, owner ownermodel.Owner, selectors []MediaSelector) (int, error)
 
-func (f CountMediasBySelectorsFunc) CountMediasBySelectors(ctx context.Context, owner Owner, selectors []MediaSelector) (int, error) {
+func (f CountMediasBySelectorsFunc) CountMediasBySelectors(ctx context.Context, owner ownermodel.Owner, selectors []MediaSelector) (int, error) {
 	return f(ctx, owner, selectors)
 }
 

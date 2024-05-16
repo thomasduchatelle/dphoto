@@ -17,6 +17,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/s3store"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 	"time"
@@ -166,23 +167,26 @@ func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 
 type mediaAlbumResolver struct{}
 
-func (m mediaAlbumResolver) FindAlbumOfMedia(owner, mediaId string) (string, error) {
-	ownership, err := catalog.FindMediaOwnership(catalog.Owner(owner), catalog.MediaId(mediaId))
-	return string(ownership.FolderName), err
+func (m mediaAlbumResolver) FindAlbumOfMedia(owner ownermodel.Owner, mediaId catalog.MediaId) (catalog.AlbumId, error) {
+	ownership, err := catalog.FindMediaOwnership(owner, mediaId)
+	if err != nil {
+		return catalog.AlbumId{}, err
+	}
+	return *ownership, nil
 }
 
 type catalogAdapter struct{}
 
-func (c catalogAdapter) FindAllAlbums(owner string) ([]*catalog.Album, error) {
-	return catalog.FindAllAlbums(catalog.Owner(owner))
+func (c catalogAdapter) FindAllAlbums(owner ownermodel.Owner) ([]*catalog.Album, error) {
+	return catalog.FindAllAlbums(ownermodel.Owner(owner))
 }
 
 func (c catalogAdapter) FindAlbums(keys []catalog.AlbumId) ([]*catalog.Album, error) {
 	return catalog.FindAlbums(keys)
 }
 
-func (c catalogAdapter) ListMedias(owner string, folderName string, request catalog.PageRequest) (*catalog.MediaPage, error) {
-	return catalog.ListMedias(catalog.NewAlbumIdFromStrings(owner, folderName), request)
+func (c catalogAdapter) ListMedias(albumId catalog.AlbumId, request catalog.PageRequest) (*catalog.MediaPage, error) {
+	return catalog.ListMedias(albumId, request)
 }
 
 func newV2Config() aws.Config {

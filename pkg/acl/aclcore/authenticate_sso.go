@@ -4,6 +4,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 )
 
@@ -50,7 +51,7 @@ func (s *SSOAuthenticator) parseGoogleIdentity(identityJWT string) (Identity, er
 	token, err := jwt.ParseWithClaims(identityJWT, identityClaims, s.keyLookup)
 
 	identity := Identity{
-		Email:   identityClaims.Email,
+		Email:   usermodel.UserId(identityClaims.Email),
 		Name:    identityClaims.Name,
 		Picture: identityClaims.Picture,
 	}

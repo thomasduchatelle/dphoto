@@ -10,6 +10,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
 )
@@ -18,7 +19,7 @@ type AlbumCrudTestSuite struct {
 	suite.Suite
 	suffix string
 	repo   *Repository
-	owner  catalog.Owner
+	owner  ownermodel.Owner
 }
 
 func TestRepositoryAlbum(t *testing.T) {
@@ -126,7 +127,7 @@ func TestRepository_CountMediasBySelectors(t *testing.T) {
 	}
 
 	type args struct {
-		owner     catalog.Owner
+		owner     ownermodel.Owner
 		selectors []catalog.MediaSelector
 	}
 	tests := []struct {
