@@ -30,6 +30,8 @@ type RepositoryAdapter interface {
 	FindMediaCurrentAlbum(ctx context.Context, owner ownermodel.Owner, mediaId MediaId) (id *AlbumId, err error)
 	// FindExistingSignatures returns the signatures that are already known
 	FindExistingSignatures(ctx context.Context, owner ownermodel.Owner, signatures []*MediaSignature) ([]*MediaSignature, error)
+
+	CountMedia(ctx context.Context, album ...AlbumId) (map[AlbumId]int, error)
 }
 
 // FindAllAlbums find all albums owned by root user
@@ -64,4 +66,8 @@ func (a *AlbumQueries) FindAlbumsByOwner(ctx context.Context, owner ownermodel.O
 
 func (a *AlbumQueries) FindAlbumsById(ctx context.Context, ids []AlbumId) ([]*Album, error) {
 	return a.Repository.FindAlbumByIds(ctx, ids...)
+}
+
+func (a *AlbumQueries) CountMedia(ctx context.Context, album ...AlbumId) (map[AlbumId]int, error) {
+	return a.Repository.CountMedia(ctx, album...)
 }

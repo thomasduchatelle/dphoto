@@ -12,15 +12,18 @@ func NewAlbumView(
 	GetAlbumSharingGridPort GetAlbumSharingGridPort,
 	FindAlbumsByIdsPort FindAlbumsByIdsPort,
 	SharedWithUserPort SharedWithUserPort,
+	MediaCounterPort MediaCounterPort,
 ) *AlbumView {
 	return &AlbumView{Providers: []ListAlbumsProvider{
 		&OwnedAlbumListProvider{
 			FindAlbumByOwnerPort:    FindAlbumByOwnerPort,
 			GetAlbumSharingGridPort: GetAlbumSharingGridPort,
+			MediaCounterPort:        MediaCounterPort,
 		},
 		&SharedAlbumListProvider{
 			FindAlbumsByIdsPort: FindAlbumsByIdsPort,
 			SharedWithUserPort:  SharedWithUserPort,
+			MediaCounterPort:    MediaCounterPort,
 		},
 	}}
 }

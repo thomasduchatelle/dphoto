@@ -25,6 +25,79 @@ func (_m *RepositoryAdapter) EXPECT() *RepositoryAdapter_Expecter {
 	return &RepositoryAdapter_Expecter{mock: &_m.Mock}
 }
 
+// CountMedia provides a mock function with given fields: ctx, album
+func (_m *RepositoryAdapter) CountMedia(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
+	_va := make([]interface{}, len(album))
+	for _i := range album {
+		_va[_i] = album[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountMedia")
+	}
+
+	var r0 map[catalog.AlbumId]int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ...catalog.AlbumId) (map[catalog.AlbumId]int, error)); ok {
+		return rf(ctx, album...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ...catalog.AlbumId) map[catalog.AlbumId]int); ok {
+		r0 = rf(ctx, album...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[catalog.AlbumId]int)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ...catalog.AlbumId) error); ok {
+		r1 = rf(ctx, album...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RepositoryAdapter_CountMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountMedia'
+type RepositoryAdapter_CountMedia_Call struct {
+	*mock.Call
+}
+
+// CountMedia is a helper method to define mock.On call
+//   - ctx context.Context
+//   - album ...catalog.AlbumId
+func (_e *RepositoryAdapter_Expecter) CountMedia(ctx interface{}, album ...interface{}) *RepositoryAdapter_CountMedia_Call {
+	return &RepositoryAdapter_CountMedia_Call{Call: _e.mock.On("CountMedia",
+		append([]interface{}{ctx}, album...)...)}
+}
+
+func (_c *RepositoryAdapter_CountMedia_Call) Run(run func(ctx context.Context, album ...catalog.AlbumId)) *RepositoryAdapter_CountMedia_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]catalog.AlbumId, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(catalog.AlbumId)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *RepositoryAdapter_CountMedia_Call) Return(_a0 map[catalog.AlbumId]int, _a1 error) *RepositoryAdapter_CountMedia_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RepositoryAdapter_CountMedia_Call) RunAndReturn(run func(context.Context, ...catalog.AlbumId) (map[catalog.AlbumId]int, error)) *RepositoryAdapter_CountMedia_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindAlbumByIds provides a mock function with given fields: ctx, ids
 func (_m *RepositoryAdapter) FindAlbumByIds(ctx context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {
 	_va := make([]interface{}, len(ids))

@@ -349,9 +349,6 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 		Owner:      "ironman",
 		FolderName: catalog.NewFolderName("/album-1"),
 	}
-	album1PK := &types.AttributeValueMemberS{Value: "ironman#ALBUM"}
-	album1SK := &types.AttributeValueMemberS{Value: "ALBUM#/album-1"}
-
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
 
 	type args struct {
@@ -372,18 +369,10 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 				newName: "New Name",
 			},
 			before: []map[string]types.AttributeValue{
-				{
-					"PK":        album1PK,
-					"SK":        album1SK,
-					"AlbumName": &types.AttributeValueMemberS{Value: "Old Name"},
-				},
+				albumEntry(albumId1, "Old Name"),
 			},
 			after: []map[string]types.AttributeValue{
-				{
-					"PK":        album1PK,
-					"SK":        album1SK,
-					"AlbumName": &types.AttributeValueMemberS{Value: "New Name"},
-				},
+				albumEntry(albumId1, "New Name"),
 			},
 			wantErr: assert.NoError,
 		},
@@ -419,6 +408,205 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 				_, err := dyn.EqualContent(dyn.Ctx, tt.after)
 				assert.NoError(t, err, "AssertDbContent")
 			}
+		})
+	}
+}
+
+func albumEntry(albumId catalog.AlbumId, name string) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"PK":              &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#ALBUM", albumId.Owner)},
+		"SK":              &types.AttributeValueMemberS{Value: fmt.Sprintf("ALBUM#%s", albumId.FolderName)},
+		"AlbumOwner":      &types.AttributeValueMemberS{Value: albumId.Owner.Value()},
+		"AlbumFolderName": &types.AttributeValueMemberS{Value: albumId.FolderName.String()},
+		"AlbumName":       &types.AttributeValueMemberS{Value: name},
+	}
+}
+
+func TestRepository_CountMedia(t *testing.T) {
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	albumId1 := catalog.AlbumId{
+		Owner:      "ironman",
+		FolderName: catalog.NewFolderName("/album-1"),
+	}
+	albumId2 := catalog.AlbumId{
+		Owner:      "ironman",
+		FolderName: catalog.NewFolderName("/album-2"),
+	}
+
+	type args struct {
+		album []catalog.AlbumId
+	}
+	tests := []struct {
+		name    string
+		args    args
+		before  []map[string]types.AttributeValue
+		want    map[catalog.AlbumId]int
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should return 0 when no media is in the album",
+			args: args{
+				album: []catalog.AlbumId{albumId1},
+			},
+			want: map[catalog.AlbumId]int{
+				albumId1: 0,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return 1 when one media is in the album",
+			args: args{
+				album: []catalog.AlbumId{albumId1},
+			},
+			before: []map[string]types.AttributeValue{
+				mediaEntry(albumId1, "media-1", "2024-05-08"),
+			},
+			want: map[catalog.AlbumId]int{
+				albumId1: 1,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should find 3 medias from 2 albums",
+			args: args{
+				album: []catalog.AlbumId{
+					albumId1,
+					albumId2,
+				},
+			},
+			before: []map[string]types.AttributeValue{
+				mediaEntry(albumId1, "media-1", "2024-05-08"),
+				mediaEntry(albumId1, "media-2", "2024-05-08"),
+				mediaEntry(albumId2, "media-3", "2024-05-08"),
+			},
+			want: map[catalog.AlbumId]int{
+				albumId1: 2,
+				albumId2: 1,
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(dyn.Ctx, tt.before)
+			if !assert.NoError(t, err, "WithDbContent") {
+				return
+			}
+
+			r := &Repository{
+				client: dyn.Client,
+				table:  dyn.Table,
+			}
+
+			got, err := r.CountMedia(context.Background(), tt.args.album...)
+
+			if !tt.wantErr(t, err, fmt.Sprintf("CountMedia(%v, %v)", context.Background(), tt.args.album)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "CountMedia(%v, %v)", context.Background(), tt.args.album)
+		})
+	}
+}
+
+func TestRepository_FindAlbumsByOwner(t *testing.T) {
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	ironmanOwner := ownermodel.Owner("ironman")
+	pepperOwner := ownermodel.Owner("pepper")
+	ironmans1 := &catalog.Album{
+		AlbumId: catalog.AlbumId{
+			Owner:      ironmanOwner,
+			FolderName: catalog.NewFolderName("/album-1"),
+		},
+		Name: "Album 1",
+	}
+	ironmans2 := &catalog.Album{
+		AlbumId: catalog.AlbumId{
+			Owner:      ironmanOwner,
+			FolderName: catalog.NewFolderName("/album-2"),
+		},
+		Name: "Album 2",
+	}
+	pepper3 := &catalog.Album{
+		AlbumId: catalog.AlbumId{
+			Owner:      pepperOwner,
+			FolderName: catalog.NewFolderName("/album-3"),
+		},
+		Name: "Album 3",
+	}
+
+	type args struct {
+		owner ownermodel.Owner
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		before  []map[string]types.AttributeValue
+		want    []*catalog.Album
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should find no album when none exists",
+			args: args{
+				owner: ironmanOwner,
+			},
+			before:  nil,
+			want:    nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should find 1 album",
+			args: args{
+				owner: ironmanOwner,
+			},
+			before: []map[string]types.AttributeValue{
+				albumEntry(ironmans1.AlbumId, ironmans1.Name),
+				albumEntry(pepper3.AlbumId, pepper3.Name),
+			},
+			want: []*catalog.Album{
+				ironmans1,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should find 2 albums",
+			args: args{
+				owner: ironmanOwner,
+			},
+			before: []map[string]types.AttributeValue{
+				albumEntry(ironmans1.AlbumId, ironmans1.Name),
+				albumEntry(ironmans2.AlbumId, ironmans2.Name),
+				albumEntry(pepper3.AlbumId, pepper3.Name),
+			},
+			want: []*catalog.Album{
+				ironmans1,
+				ironmans2,
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(dyn.Ctx, tt.before)
+			if !assert.NoError(t, err, "WithDbContent") {
+				return
+			}
+
+			r := &Repository{
+				client: dyn.Client,
+				table:  dyn.Table,
+			}
+			got, err := r.FindAlbumsByOwner(context.Background(), tt.args.owner)
+			if !tt.wantErr(t, err, fmt.Sprintf("FindAlbumsByOwner(%v, %v)", context.Background(), tt.args.owner)) {
+				return
+			}
+			assert.ElementsMatchf(t, tt.want, got, "FindAlbumsByOwner(%v, %v)", context.Background(), tt.args.owner)
 		})
 	}
 }

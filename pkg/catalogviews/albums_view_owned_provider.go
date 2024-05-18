@@ -27,9 +27,20 @@ func (f GetAlbumSharingGridFunc) GetAlbumSharingGrid(ctx context.Context, owner 
 	return f(ctx, owner)
 }
 
+type MediaCounterPort interface {
+	CountMedia(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error)
+}
+
+type MediaCounterFunc func(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error)
+
+func (f MediaCounterFunc) CountMedia(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
+	return f(ctx, album...)
+}
+
 type OwnedAlbumListProvider struct {
 	FindAlbumByOwnerPort    FindAlbumByOwnerPort
 	GetAlbumSharingGridPort GetAlbumSharingGridPort
+	MediaCounterPort        MediaCounterPort
 }
 
 func (o *OwnedAlbumListProvider) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
@@ -42,14 +53,25 @@ func (o *OwnedAlbumListProvider) ListAlbums(ctx context.Context, user usermodel.
 		return nil, err
 	}
 
+	albumIds := make([]catalog.AlbumId, len(ownedAlbums))
+	for i, album := range ownedAlbums {
+		albumIds[i] = album.AlbumId
+	}
+
+	mediaCount, err := o.MediaCounterPort.CountMedia(ctx, albumIds...)
+	if err != nil {
+		return nil, err
+	}
+
 	sharing, err := o.GetAlbumSharingGridPort.GetAlbumSharingGrid(ctx, *user.Owner)
 
 	var view []*VisibleAlbum
 	for _, album := range ownedAlbums {
+		count, _ := mediaCount[album.AlbumId]
 		sharedTo, _ := sharing[album.AlbumId]
 		view = append(view, &VisibleAlbum{
 			Album:              *album,
-			MediaCount:         album.TotalCount,
+			MediaCount:         count,
 			Visitors:           sharedTo,
 			OwnedByCurrentUser: true,
 		})

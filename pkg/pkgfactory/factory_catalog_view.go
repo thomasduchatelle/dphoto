@@ -17,6 +17,7 @@ func AlbumView(ctx context.Context) *catalogviews.AlbumView {
 		adapter,
 		repository,
 		adapter,
+		repository,
 	)
 
 }

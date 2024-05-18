@@ -85,7 +85,7 @@ func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, er
 			Name:          album.Name,
 			Start:         album.Start,
 			End:           album.End,
-			Count:         album.TotalCount,
+			Count:         album.MediaCount,
 			ActivePeriods: r.activePeriods(timeline, &album.Album),
 		}
 	}
