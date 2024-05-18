@@ -118,10 +118,10 @@ func marshalMedia(owner ownermodel.Owner, media *catalog.CreateMediaRequest) (ma
 		return nil, err
 	}
 	if isBlank(string(media.Id)) {
-		return nil, errors.Errorf("media ID is mndatory")
+		return nil, errors.Errorf("media ID is mandatory")
 	}
 	if isBlank(media.Filename) {
-		return nil, errors.Errorf("media filename is mndatory")
+		return nil, errors.Errorf("media filename is mandatory")
 	}
 	if isBlank(media.Signature.SignatureSha256) || media.Signature.SignatureSize == 0 || media.Details.DateTime.IsZero() {
 		return nil, errors.WithStack(errors.Errorf("media must have a valid signature and date [sha256=%v ; size=%v ; time=%v]", media.Signature.SignatureSha256, media.Signature.SignatureSize, media.Details.DateTime))

@@ -178,24 +178,6 @@ func (a *MediaCrudTestSuite) fullPathNames(medias []*catalog.CreateMediaRequest)
 	return names
 }
 
-func (a *MediaCrudTestSuite) TestFindAlbums() {
-	albums, err := a.repo.FindAlbumsByOwner(context.Background(), a.owner)
-	if a.NoError(err) {
-		names := make(map[catalog.FolderName]int)
-		for _, a := range albums {
-			names[a.FolderName] = a.TotalCount
-		}
-
-		a.Equal(map[catalog.FolderName]int{
-			a.jan21: 2,
-			a.feb21: 1,
-			a.mar21: 0},
-			names,
-			"it should list all albums no matter how many medias are also stored",
-		)
-	}
-}
-
 func (a *MediaCrudTestSuite) TestFindMedias() {
 	allTime := catalog.TimeRange{}
 	tests := []struct {

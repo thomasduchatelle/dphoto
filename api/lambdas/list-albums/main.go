@@ -50,7 +50,7 @@ func Handler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (commo
 				Name:          a.Name,
 				Owner:         a.Owner.String(),
 				Start:         a.Start,
-				TotalCount:    a.TotalCount,
+				TotalCount:    a.MediaCount,
 				SharedWith:    sharedWith,
 				DirectlyOwned: a.OwnedByCurrentUser,
 			}

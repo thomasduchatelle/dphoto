@@ -12,7 +12,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"sort"
 	"time"
 )
 
@@ -43,20 +42,8 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Own
 			return nil, err
 		}
 
-		// TODO Media should be counted when inserted, not at every request
-		count, err := r.countMedias(ctx, catalog.AlbumId{Owner: owner, FolderName: album.FolderName})
-		if err != nil {
-			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", owner, album.FolderName)
-		}
-
-		album.TotalCount = count
 		albums = append(albums, album)
 	}
-
-	// TODO Is it really necessary to sort here?
-	sort.Slice(albums, func(i, j int) bool {
-		return albums[i].Start.Before(albums[j].Start)
-	})
 
 	return albums, nil
 }
@@ -198,12 +185,6 @@ func (r *Repository) FindAlbumByIds(ctx context.Context, ids ...catalog.AlbumId)
 			return nil, err
 		}
 
-		// TODO Media should be counted when inserted, not at every request
-		album.TotalCount, err = r.countMedias(ctx, album.AlbumId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "couldn't count medias in album %s%s", album.Owner, album.FolderName)
-		}
-
 		albums = append(albums, album)
 	}
 
@@ -240,4 +221,18 @@ func (r *Repository) AmendDates(ctx context.Context, albumId catalog.AlbumId, st
 	}
 
 	return errors.Wrapf(err, "failed to exec update [%s -> %s] expression for album %s", start, end, albumId)
+}
+
+func (r *Repository) CountMedia(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
+	albumCount := make(map[catalog.AlbumId]int)
+
+	for _, albumId := range album {
+		count, err := r.countMedias(ctx, albumId)
+		if err != nil {
+			return nil, err
+		}
+		albumCount[albumId] = count
+	}
+
+	return albumCount, nil
 }

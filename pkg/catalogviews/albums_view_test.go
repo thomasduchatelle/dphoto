@@ -25,22 +25,19 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 	mar24 := time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC)
 	apr24 := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
 	ownedAlbum1 := catalog.Album{
-		AlbumId:    catalog.AlbumId{Owner: *ironmanCurrentUser.Owner, FolderName: catalog.NewFolderName("album-1")},
-		Start:      jan24,
-		End:        feb24,
-		TotalCount: 1,
+		AlbumId: catalog.AlbumId{Owner: *ironmanCurrentUser.Owner, FolderName: catalog.NewFolderName("album-1")},
+		Start:   jan24,
+		End:     feb24,
 	}
 	ownedAlbum2 := catalog.Album{
-		AlbumId:    catalog.AlbumId{Owner: *ironmanCurrentUser.Owner, FolderName: catalog.NewFolderName("album-2")},
-		Start:      feb24,
-		End:        mar24,
-		TotalCount: 2,
+		AlbumId: catalog.AlbumId{Owner: *ironmanCurrentUser.Owner, FolderName: catalog.NewFolderName("album-2")},
+		Start:   feb24,
+		End:     mar24,
 	}
 	sharedAlbum3 := catalog.Album{
-		AlbumId:    catalog.AlbumId{Owner: pepperOwner, FolderName: catalog.NewFolderName("album-3")},
-		Start:      mar24,
-		End:        apr24,
-		TotalCount: 3,
+		AlbumId: catalog.AlbumId{Owner: pepperOwner, FolderName: catalog.NewFolderName("album-3")},
+		Start:   mar24,
+		End:     apr24,
 	}
 
 	type fields struct {
@@ -48,6 +45,7 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 		GetAlbumSharingGridPort GetAlbumSharingGridPort
 		FindAlbumsByIdsPort     FindAlbumsByIdsPort
 		SharedWithUserPort      SharedWithUserPort
+		MediaCounterPort        MediaCounterPort
 	}
 	type args struct {
 		user   usermodel.CurrentUser
@@ -67,6 +65,11 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				GetAlbumSharingGridPort: stubGetAlbumSharingGridPort(ownedAlbum1.AlbumId, userId2),
 				FindAlbumsByIdsPort:     stubFindAlbumsByIdsPort(sharedAlbum3),
 				SharedWithUserPort:      stubSharedWithUserPort(sharedAlbum3),
+				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
+					ownedAlbum1.AlbumId:  1,
+					ownedAlbum2.AlbumId:  2,
+					sharedAlbum3.AlbumId: 3,
+				}),
 			},
 			args: args{
 				user:   ironmanCurrentUser,
@@ -98,6 +101,11 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				GetAlbumSharingGridPort: stubGetAlbumSharingGridPort(ownedAlbum1.AlbumId, userId2),
 				FindAlbumsByIdsPort:     stubFindAlbumsByIdsPort(sharedAlbum3),
 				SharedWithUserPort:      stubSharedWithUserPort(sharedAlbum3),
+				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
+					ownedAlbum1.AlbumId:  1,
+					ownedAlbum2.AlbumId:  2,
+					sharedAlbum3.AlbumId: 3,
+				}),
 			},
 			args: args{
 				user:   ironmanCurrentUser,
@@ -122,7 +130,13 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			albumView := NewAlbumView(tt.fields.FindAlbumByOwnerPort, tt.fields.GetAlbumSharingGridPort, tt.fields.FindAlbumsByIdsPort, tt.fields.SharedWithUserPort)
+			albumView := NewAlbumView(
+				tt.fields.FindAlbumByOwnerPort,
+				tt.fields.GetAlbumSharingGridPort,
+				tt.fields.FindAlbumsByIdsPort,
+				tt.fields.SharedWithUserPort,
+				tt.fields.MediaCounterPort,
+			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)
 			if tt.wantErr(t, err) {
@@ -318,4 +332,10 @@ func stubGetAlbumSharingGridPort(albumId catalog.AlbumId, userId2 usermodel.User
 		}
 		return nil, nil
 	}
+}
+
+func stubMediaCounterPort(m map[catalog.AlbumId]int) MediaCounterPort {
+	return MediaCounterFunc(func(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
+		return m, nil
+	})
 }

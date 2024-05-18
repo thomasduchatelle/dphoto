@@ -29,6 +29,7 @@ func (f SharedWithUserFunc) ListAlbumIdsSharedWithUser(ctx context.Context, user
 type SharedAlbumListProvider struct {
 	FindAlbumsByIdsPort FindAlbumsByIdsPort
 	SharedWithUserPort  SharedWithUserPort
+	MediaCounterPort    MediaCounterPort
 }
 
 func (s *SharedAlbumListProvider) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
@@ -41,13 +42,19 @@ func (s *SharedAlbumListProvider) ListAlbums(ctx context.Context, user usermodel
 		return nil, err
 	}
 
+	countMedia, err := s.MediaCounterPort.CountMedia(ctx, shares...)
+	if err != nil {
+		return nil, err
+	}
+
 	albums, err := s.FindAlbumsByIdsPort.FindAlbumsById(ctx, shares)
 
 	var view []*VisibleAlbum
 	for _, album := range albums {
+		count, _ := countMedia[album.AlbumId]
 		view = append(view, &VisibleAlbum{
 			Album:      *album,
-			MediaCount: album.TotalCount,
+			MediaCount: count,
 		})
 	}
 
