@@ -16,18 +16,18 @@ func OptimiseRulesWithAccessToken(delegate CatalogRules, claims aclcore.Claims) 
 
 type rulesWithAccessToken struct {
 	CatalogRules
-	owner ownermodel.Owner
+	owner *ownermodel.Owner
 }
 
 func (a *rulesWithAccessToken) Owner() (*ownermodel.Owner, error) {
-	if a.owner == "" {
+	if a.owner == nil {
 		return nil, nil // TODO Highly irregular code style !
 	}
-	return &a.owner, nil
+	return a.owner, nil
 }
 
 func (a *rulesWithAccessToken) CanListMediasFromAlbum(albumId catalog.AlbumId) error {
-	if a.owner == albumId.Owner {
+	if a.owner != nil && *a.owner == albumId.Owner {
 		return nil
 	}
 
@@ -35,7 +35,7 @@ func (a *rulesWithAccessToken) CanListMediasFromAlbum(albumId catalog.AlbumId) e
 }
 
 func (a *rulesWithAccessToken) CanReadMedia(owner ownermodel.Owner, mediaId catalog.MediaId) error {
-	if owner == a.owner {
+	if a.owner != nil && *a.owner == owner {
 		return nil
 	}
 
@@ -43,7 +43,7 @@ func (a *rulesWithAccessToken) CanReadMedia(owner ownermodel.Owner, mediaId cata
 }
 
 func (a *rulesWithAccessToken) CanManageAlbum(albumId catalog.AlbumId) error {
-	if a.owner == albumId.Owner {
+	if a.owner != nil && *a.owner == albumId.Owner {
 		return nil
 	}
 

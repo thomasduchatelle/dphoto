@@ -50,7 +50,8 @@ func appAuthConfig() aclcore.OAuthConfig {
 }
 
 func ssoAuthenticatorPermissionReader() aclscopedynamodb.GrantRepository {
-	return aclscopedynamodb.Must(aclscopedynamodb.New(newV2Config(), viper.GetString(DynamoDBTableName)))
+	ctx := context.TODO()
+	return pkgfactory.AclRepository(ctx)
 }
 
 func newRefreshTokenRepository() aclcore.RefreshTokenRepository {

@@ -3,6 +3,7 @@ package aclcore
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
 )
@@ -14,6 +15,7 @@ func TestAccessTokenDecoder_Decode(t *testing.T) {
 		SecretJwtKey:   []byte("DPhotoJwtSecret"),
 	}
 
+	owner := ownermodel.Owner("ironman")
 	tests := []struct {
 		name        string
 		accessToken string
@@ -29,7 +31,7 @@ func TestAccessTokenDecoder_Decode(t *testing.T) {
 					"owner:ironman": nil,
 					"api:admin":     nil,
 				},
-				Owner: "ironman",
+				Owner: &owner,
 			},
 			wantErr: assert.NoError,
 		},

@@ -77,7 +77,7 @@ func Test_repository_DeleteScopes(t *testing.T) {
 	}
 
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
-	repo := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+	repo := Must(New(dyn.Client, dyn.Table)).(*Repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -166,7 +166,7 @@ func Test_repository_SaveIfNewScope(t *testing.T) {
 	}
 
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
-	repo := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+	repo := Must(New(dyn.Client, dyn.Table)).(*Repository)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

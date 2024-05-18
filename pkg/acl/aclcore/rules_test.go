@@ -3,6 +3,7 @@ package aclcore_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
@@ -25,7 +26,7 @@ func TestCoreRules_Owner(t *testing.T) {
 			name:  "it should return resource owner from the ACL",
 			email: "tony@stark.com",
 			initMocks: func(scopesReader *mocks.ScopesReader) {
-				scopesReader.On("ListUserScopes", usermodel.UserId("tony@stark.com"), aclcore.MainOwnerScope).Return([]*aclcore.Scope{
+				scopesReader.On("ListScopesByUser", mock.Anything, usermodel.UserId("tony@stark.com"), aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.MainOwnerScope,
 						GrantedAt:     time.Time{},
@@ -43,7 +44,7 @@ func TestCoreRules_Owner(t *testing.T) {
 			name:  "it should return an error if no scopes are returned",
 			email: "tony@stark.com",
 			initMocks: func(scopesReader *mocks.ScopesReader) {
-				scopesReader.On("ListUserScopes", usermodel.UserId("tony@stark.com"), aclcore.MainOwnerScope).Return(nil, nil)
+				scopesReader.On("ListScopesByUser", mock.Anything, usermodel.UserId("tony@stark.com"), aclcore.MainOwnerScope).Return(nil, nil)
 			},
 			want: nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {

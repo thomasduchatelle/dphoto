@@ -14,9 +14,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
-func (r *repository) ListUserScopes(email usermodel.UserId, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
-	ctx := context.TODO()
-
+func (r *Repository) ListScopesByUser(ctx context.Context, email usermodel.UserId, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	if len(scopeTypes) == 0 {
 		return nil, nil
 	}
@@ -53,13 +51,11 @@ func (r *repository) ListUserScopes(email usermodel.UserId, scopeTypes ...aclcor
 	return scopes, stream.Error()
 }
 
-func (r *repository) ListOwnerScopes(owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
-	return r.ListScopesByOwners([]ownermodel.Owner{owner}, types...)
+func (r *Repository) ListScopesByOwner(ctx context.Context, owner ownermodel.Owner, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
+	return r.ListScopesByOwners(ctx, []ownermodel.Owner{owner}, scopeTypes...)
 }
 
-func (r *repository) ListScopesByOwners(owners []ownermodel.Owner, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
-	ctx := context.TODO()
-
+func (r *Repository) ListScopesByOwners(ctx context.Context, owners []ownermodel.Owner, scopeTypes ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	if len(scopeTypes) == 0 {
 		return nil, nil
 	}
@@ -98,7 +94,7 @@ func (r *repository) ListScopesByOwners(owners []ownermodel.Owner, scopeTypes ..
 	return scopes, stream.Error()
 }
 
-func (r *repository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
+func (r *Repository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
 	ctx := context.TODO()
 
 	keys := make([]map[string]types.AttributeValue, len(ids), len(ids))

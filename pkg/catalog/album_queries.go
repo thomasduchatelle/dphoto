@@ -53,3 +53,15 @@ func FindAlbum(id AlbumId) (*Album, error) {
 	}
 	return albums[0], nil
 }
+
+type AlbumQueries struct {
+	Repository RepositoryAdapter
+}
+
+func (a *AlbumQueries) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error) {
+	return a.Repository.FindAlbumsByOwner(ctx, owner)
+}
+
+func (a *AlbumQueries) FindAlbumsById(ctx context.Context, ids []AlbumId) ([]*Album, error) {
+	return a.Repository.FindAlbumByIds(ctx, ids...)
+}

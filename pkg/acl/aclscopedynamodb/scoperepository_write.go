@@ -10,7 +10,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 )
 
-func (r *repository) DeleteScopes(ids ...aclcore.ScopeId) error {
+func (r *Repository) DeleteScopes(ids ...aclcore.ScopeId) error {
 	ctx := context.TODO()
 
 	requests := make([]types.WriteRequest, len(ids), len(ids))
@@ -27,7 +27,7 @@ func (r *repository) DeleteScopes(ids ...aclcore.ScopeId) error {
 	)
 }
 
-func (r *repository) SaveIfNewScope(scope aclcore.Scope) error {
+func (r *Repository) SaveIfNewScope(scope aclcore.Scope) error {
 	ctx := context.TODO()
 
 	attributes, err := MarshalScope(scope)

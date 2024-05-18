@@ -7,8 +7,39 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 )
+
+func RequiresAuthenticated(request *events.APIGatewayV2HTTPRequest, process func(user usermodel.CurrentUser) (Response, error)) (Response, error) {
+	token, err := readToken(request)
+	if err != nil {
+		return UnauthorizedResponse(err.Error())
+	}
+
+	claims, err := jwtDecoder.Decode(token)
+	if err != nil {
+		return UnauthorizedResponse(err.Error())
+	}
+
+	return process(claims.AsCurrentUser())
+}
+
+func HandleError(err error) (Response, error) {
+	switch {
+	case errors.Is(err, aclcore.AccessUnauthorisedError):
+		return UnauthorizedResponse(err.Error())
+
+	case errors.Is(err, aclcore.AccessForbiddenError):
+		return ForbiddenResponse(err.Error())
+
+	case err != nil:
+		return InternalError(err)
+
+	default:
+		return Response{}, nil
+	}
+}
 
 // RequiresCatalogACL parses the token and instantiate the ACL extension for 'catalog' domain
 //
@@ -29,20 +60,10 @@ func RequiresCatalogACL(request *events.APIGatewayV2HTTPRequest, process func(cl
 	catalogRules := catalogacl.OptimiseRulesWithAccessToken(catalogacl.NewCatalogRules(grantRepository, new(mediaAlbumResolver), claims.Subject), claims)
 
 	response, err := process(claims, catalogRules)
-
-	switch {
-	case errors.Is(err, aclcore.AccessUnauthorisedError):
-		return UnauthorizedResponse(err.Error())
-
-	case errors.Is(err, aclcore.AccessForbiddenError):
-		return ForbiddenResponse(err.Error())
-
-	case err != nil:
-		return InternalError(err)
-
-	default:
-		return response, nil
+	if err != nil {
+		return HandleError(err)
 	}
+	return response, nil
 }
 
 // RequiresCatalogView is based on RequiresCatalogACL but creates a convenient Catalog View
