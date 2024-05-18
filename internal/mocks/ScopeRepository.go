@@ -5,6 +5,8 @@ package mocks
 import (
 	aclcore "github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 
 	ownermodel "github.com/thomasduchatelle/dphoto/pkg/ownermodel"
@@ -96,36 +98,36 @@ func (_c *ScopeRepository_FindScopesById_Call) RunAndReturn(run func(...aclcore.
 	return _c
 }
 
-// ListOwnerScopes provides a mock function with given fields: owner, types
-func (_m *ScopeRepository) ListOwnerScopes(owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
+// ListScopesByOwner provides a mock function with given fields: ctx, owner, types
+func (_m *ScopeRepository) ListScopesByOwner(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))
 	for _i := range types {
 		_va[_i] = types[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, owner)
+	_ca = append(_ca, ctx, owner)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListOwnerScopes")
+		panic("no return value specified for ListScopesByOwner")
 	}
 
 	var r0 []*aclcore.Scope
 	var r1 error
-	if rf, ok := ret.Get(0).(func(ownermodel.Owner, ...aclcore.ScopeType) ([]*aclcore.Scope, error)); ok {
-		return rf(owner, types...)
+	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, ...aclcore.ScopeType) ([]*aclcore.Scope, error)); ok {
+		return rf(ctx, owner, types...)
 	}
-	if rf, ok := ret.Get(0).(func(ownermodel.Owner, ...aclcore.ScopeType) []*aclcore.Scope); ok {
-		r0 = rf(owner, types...)
+	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, ...aclcore.ScopeType) []*aclcore.Scope); ok {
+		r0 = rf(ctx, owner, types...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*aclcore.Scope)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(ownermodel.Owner, ...aclcore.ScopeType) error); ok {
-		r1 = rf(owner, types...)
+	if rf, ok := ret.Get(1).(func(context.Context, ownermodel.Owner, ...aclcore.ScopeType) error); ok {
+		r1 = rf(ctx, owner, types...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -133,72 +135,73 @@ func (_m *ScopeRepository) ListOwnerScopes(owner ownermodel.Owner, types ...aclc
 	return r0, r1
 }
 
-// ScopeRepository_ListOwnerScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOwnerScopes'
-type ScopeRepository_ListOwnerScopes_Call struct {
+// ScopeRepository_ListScopesByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListScopesByOwner'
+type ScopeRepository_ListScopesByOwner_Call struct {
 	*mock.Call
 }
 
-// ListOwnerScopes is a helper method to define mock.On call
+// ListScopesByOwner is a helper method to define mock.On call
+//   - ctx context.Context
 //   - owner ownermodel.Owner
 //   - types ...aclcore.ScopeType
-func (_e *ScopeRepository_Expecter) ListOwnerScopes(owner interface{}, types ...interface{}) *ScopeRepository_ListOwnerScopes_Call {
-	return &ScopeRepository_ListOwnerScopes_Call{Call: _e.mock.On("ListOwnerScopes",
-		append([]interface{}{owner}, types...)...)}
+func (_e *ScopeRepository_Expecter) ListScopesByOwner(ctx interface{}, owner interface{}, types ...interface{}) *ScopeRepository_ListScopesByOwner_Call {
+	return &ScopeRepository_ListScopesByOwner_Call{Call: _e.mock.On("ListScopesByOwner",
+		append([]interface{}{ctx, owner}, types...)...)}
 }
 
-func (_c *ScopeRepository_ListOwnerScopes_Call) Run(run func(owner ownermodel.Owner, types ...aclcore.ScopeType)) *ScopeRepository_ListOwnerScopes_Call {
+func (_c *ScopeRepository_ListScopesByOwner_Call) Run(run func(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType)) *ScopeRepository_ListScopesByOwner_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
-		for i, a := range args[1:] {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-2)
+		for i, a := range args[2:] {
 			if a != nil {
 				variadicArgs[i] = a.(aclcore.ScopeType)
 			}
 		}
-		run(args[0].(ownermodel.Owner), variadicArgs...)
+		run(args[0].(context.Context), args[1].(ownermodel.Owner), variadicArgs...)
 	})
 	return _c
 }
 
-func (_c *ScopeRepository_ListOwnerScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopeRepository_ListOwnerScopes_Call {
+func (_c *ScopeRepository_ListScopesByOwner_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopeRepository_ListScopesByOwner_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ScopeRepository_ListOwnerScopes_Call) RunAndReturn(run func(ownermodel.Owner, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ScopeRepository_ListOwnerScopes_Call {
+func (_c *ScopeRepository_ListScopesByOwner_Call) RunAndReturn(run func(context.Context, ownermodel.Owner, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ScopeRepository_ListScopesByOwner_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListUserScopes provides a mock function with given fields: email, types
-func (_m *ScopeRepository) ListUserScopes(email usermodel.UserId, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
+// ListScopesByUser provides a mock function with given fields: ctx, email, types
+func (_m *ScopeRepository) ListScopesByUser(ctx context.Context, email usermodel.UserId, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))
 	for _i := range types {
 		_va[_i] = types[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, email)
+	_ca = append(_ca, ctx, email)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListUserScopes")
+		panic("no return value specified for ListScopesByUser")
 	}
 
 	var r0 []*aclcore.Scope
 	var r1 error
-	if rf, ok := ret.Get(0).(func(usermodel.UserId, ...aclcore.ScopeType) ([]*aclcore.Scope, error)); ok {
-		return rf(email, types...)
+	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId, ...aclcore.ScopeType) ([]*aclcore.Scope, error)); ok {
+		return rf(ctx, email, types...)
 	}
-	if rf, ok := ret.Get(0).(func(usermodel.UserId, ...aclcore.ScopeType) []*aclcore.Scope); ok {
-		r0 = rf(email, types...)
+	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId, ...aclcore.ScopeType) []*aclcore.Scope); ok {
+		r0 = rf(ctx, email, types...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*aclcore.Scope)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(usermodel.UserId, ...aclcore.ScopeType) error); ok {
-		r1 = rf(email, types...)
+	if rf, ok := ret.Get(1).(func(context.Context, usermodel.UserId, ...aclcore.ScopeType) error); ok {
+		r1 = rf(ctx, email, types...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -206,38 +209,39 @@ func (_m *ScopeRepository) ListUserScopes(email usermodel.UserId, types ...aclco
 	return r0, r1
 }
 
-// ScopeRepository_ListUserScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUserScopes'
-type ScopeRepository_ListUserScopes_Call struct {
+// ScopeRepository_ListScopesByUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListScopesByUser'
+type ScopeRepository_ListScopesByUser_Call struct {
 	*mock.Call
 }
 
-// ListUserScopes is a helper method to define mock.On call
+// ListScopesByUser is a helper method to define mock.On call
+//   - ctx context.Context
 //   - email usermodel.UserId
 //   - types ...aclcore.ScopeType
-func (_e *ScopeRepository_Expecter) ListUserScopes(email interface{}, types ...interface{}) *ScopeRepository_ListUserScopes_Call {
-	return &ScopeRepository_ListUserScopes_Call{Call: _e.mock.On("ListUserScopes",
-		append([]interface{}{email}, types...)...)}
+func (_e *ScopeRepository_Expecter) ListScopesByUser(ctx interface{}, email interface{}, types ...interface{}) *ScopeRepository_ListScopesByUser_Call {
+	return &ScopeRepository_ListScopesByUser_Call{Call: _e.mock.On("ListScopesByUser",
+		append([]interface{}{ctx, email}, types...)...)}
 }
 
-func (_c *ScopeRepository_ListUserScopes_Call) Run(run func(email usermodel.UserId, types ...aclcore.ScopeType)) *ScopeRepository_ListUserScopes_Call {
+func (_c *ScopeRepository_ListScopesByUser_Call) Run(run func(ctx context.Context, email usermodel.UserId, types ...aclcore.ScopeType)) *ScopeRepository_ListScopesByUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
-		for i, a := range args[1:] {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-2)
+		for i, a := range args[2:] {
 			if a != nil {
 				variadicArgs[i] = a.(aclcore.ScopeType)
 			}
 		}
-		run(args[0].(usermodel.UserId), variadicArgs...)
+		run(args[0].(context.Context), args[1].(usermodel.UserId), variadicArgs...)
 	})
 	return _c
 }
 
-func (_c *ScopeRepository_ListUserScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopeRepository_ListUserScopes_Call {
+func (_c *ScopeRepository_ListScopesByUser_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ScopeRepository_ListScopesByUser_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ScopeRepository_ListUserScopes_Call) RunAndReturn(run func(usermodel.UserId, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ScopeRepository_ListUserScopes_Call {
+func (_c *ScopeRepository_ListScopesByUser_Call) RunAndReturn(run func(context.Context, usermodel.UserId, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ScopeRepository_ListScopesByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

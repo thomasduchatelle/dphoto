@@ -1,6 +1,7 @@
 package aclcore
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
@@ -13,6 +14,8 @@ type CreateUser struct {
 
 // CreateUser create a user capable of backup as 'owner', or update an existing owner to be 'owner'
 func (c *CreateUser) CreateUser(email, ownerOptional string) error {
+	ctx := context.TODO()
+
 	userId := usermodel.NewUserId(email)
 	if err := userId.IsValid(); err != nil {
 		return err
@@ -23,7 +26,7 @@ func (c *CreateUser) CreateUser(email, ownerOptional string) error {
 		owner = ownermodel.Owner(email)
 	}
 
-	scopes, err := c.ScopesReader.ListUserScopes(userId, MainOwnerScope)
+	scopes, err := c.ScopesReader.ListScopesByUser(ctx, userId, MainOwnerScope)
 	if err != nil {
 		return err
 	}

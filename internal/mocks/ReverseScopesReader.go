@@ -3,8 +3,11 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
+	context "context"
+
 	aclcore "github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+
+	mock "github.com/stretchr/testify/mock"
 
 	ownermodel "github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
@@ -22,36 +25,36 @@ func (_m *ReverseScopesReader) EXPECT() *ReverseScopesReader_Expecter {
 	return &ReverseScopesReader_Expecter{mock: &_m.Mock}
 }
 
-// ListOwnerScopes provides a mock function with given fields: owner, types
-func (_m *ReverseScopesReader) ListOwnerScopes(owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
+// ListScopesByOwner provides a mock function with given fields: ctx, owner, types
+func (_m *ReverseScopesReader) ListScopesByOwner(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))
 	for _i := range types {
 		_va[_i] = types[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, owner)
+	_ca = append(_ca, ctx, owner)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListOwnerScopes")
+		panic("no return value specified for ListScopesByOwner")
 	}
 
 	var r0 []*aclcore.Scope
 	var r1 error
-	if rf, ok := ret.Get(0).(func(ownermodel.Owner, ...aclcore.ScopeType) ([]*aclcore.Scope, error)); ok {
-		return rf(owner, types...)
+	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, ...aclcore.ScopeType) ([]*aclcore.Scope, error)); ok {
+		return rf(ctx, owner, types...)
 	}
-	if rf, ok := ret.Get(0).(func(ownermodel.Owner, ...aclcore.ScopeType) []*aclcore.Scope); ok {
-		r0 = rf(owner, types...)
+	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, ...aclcore.ScopeType) []*aclcore.Scope); ok {
+		r0 = rf(ctx, owner, types...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*aclcore.Scope)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(ownermodel.Owner, ...aclcore.ScopeType) error); ok {
-		r1 = rf(owner, types...)
+	if rf, ok := ret.Get(1).(func(context.Context, ownermodel.Owner, ...aclcore.ScopeType) error); ok {
+		r1 = rf(ctx, owner, types...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -59,38 +62,39 @@ func (_m *ReverseScopesReader) ListOwnerScopes(owner ownermodel.Owner, types ...
 	return r0, r1
 }
 
-// ReverseScopesReader_ListOwnerScopes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOwnerScopes'
-type ReverseScopesReader_ListOwnerScopes_Call struct {
+// ReverseScopesReader_ListScopesByOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListScopesByOwner'
+type ReverseScopesReader_ListScopesByOwner_Call struct {
 	*mock.Call
 }
 
-// ListOwnerScopes is a helper method to define mock.On call
+// ListScopesByOwner is a helper method to define mock.On call
+//   - ctx context.Context
 //   - owner ownermodel.Owner
 //   - types ...aclcore.ScopeType
-func (_e *ReverseScopesReader_Expecter) ListOwnerScopes(owner interface{}, types ...interface{}) *ReverseScopesReader_ListOwnerScopes_Call {
-	return &ReverseScopesReader_ListOwnerScopes_Call{Call: _e.mock.On("ListOwnerScopes",
-		append([]interface{}{owner}, types...)...)}
+func (_e *ReverseScopesReader_Expecter) ListScopesByOwner(ctx interface{}, owner interface{}, types ...interface{}) *ReverseScopesReader_ListScopesByOwner_Call {
+	return &ReverseScopesReader_ListScopesByOwner_Call{Call: _e.mock.On("ListScopesByOwner",
+		append([]interface{}{ctx, owner}, types...)...)}
 }
 
-func (_c *ReverseScopesReader_ListOwnerScopes_Call) Run(run func(owner ownermodel.Owner, types ...aclcore.ScopeType)) *ReverseScopesReader_ListOwnerScopes_Call {
+func (_c *ReverseScopesReader_ListScopesByOwner_Call) Run(run func(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType)) *ReverseScopesReader_ListScopesByOwner_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]aclcore.ScopeType, len(args)-1)
-		for i, a := range args[1:] {
+		variadicArgs := make([]aclcore.ScopeType, len(args)-2)
+		for i, a := range args[2:] {
 			if a != nil {
 				variadicArgs[i] = a.(aclcore.ScopeType)
 			}
 		}
-		run(args[0].(ownermodel.Owner), variadicArgs...)
+		run(args[0].(context.Context), args[1].(ownermodel.Owner), variadicArgs...)
 	})
 	return _c
 }
 
-func (_c *ReverseScopesReader_ListOwnerScopes_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ReverseScopesReader_ListOwnerScopes_Call {
+func (_c *ReverseScopesReader_ListScopesByOwner_Call) Return(_a0 []*aclcore.Scope, _a1 error) *ReverseScopesReader_ListScopesByOwner_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ReverseScopesReader_ListOwnerScopes_Call) RunAndReturn(run func(ownermodel.Owner, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ReverseScopesReader_ListOwnerScopes_Call {
+func (_c *ReverseScopesReader_ListScopesByOwner_Call) RunAndReturn(run func(context.Context, ownermodel.Owner, ...aclcore.ScopeType) ([]*aclcore.Scope, error)) *ReverseScopesReader_ListScopesByOwner_Call {
 	_c.Call.Return(run)
 	return _c
 }

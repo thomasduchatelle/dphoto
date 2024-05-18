@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 	"time"
 )
@@ -21,7 +23,7 @@ type AlbumDTO struct {
 	DirectlyOwned bool              `json:"directlyOwned"`
 }
 
-func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
+func Handler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	parser := common.NewArgParser(&request)
 	onlyDirectlyOwned := parser.ReadQueryParameterBool("onlyDirectlyOwned", false)
 
@@ -29,24 +31,18 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		return parser.BadRequest()
 	}
 
-	return common.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common.Response, error) {
-		albums, err := catalogView.ListAlbums(catalogaclview.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned})
+	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
+		filter := catalogviews.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned}
+		albums, err := pkgfactory.AlbumView(ctx).ListAlbums(ctx, user, filter)
 		if err != nil {
-			return common.Response{}, err
-		}
-
-		levelConversion := map[aclcore.ScopeType]string{
-			aclcore.AlbumVisitorScope:     "visitor",
-			aclcore.AlbumContributorScope: "contributor",
+			return common.HandleError(err)
 		}
 
 		restAlbums := make([]AlbumDTO, len(albums))
 		for i, a := range albums {
 			sharedWith := make(map[string]string)
-			for email, scope := range a.SharedWith {
-				if role, ok := levelConversion[scope]; ok {
-					sharedWith[email.Value()] = role
-				}
+			for _, visitor := range a.Visitors {
+				sharedWith[visitor.Value()] = "visitor"
 			}
 			restAlbums[i] = AlbumDTO{
 				End:           a.End,
@@ -56,10 +52,11 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 				Start:         a.Start,
 				TotalCount:    a.TotalCount,
 				SharedWith:    sharedWith,
-				DirectlyOwned: a.DirectlyOwned,
+				DirectlyOwned: a.OwnedByCurrentUser,
 			}
 		}
 		return common.Ok(restAlbums)
+
 	})
 }
 

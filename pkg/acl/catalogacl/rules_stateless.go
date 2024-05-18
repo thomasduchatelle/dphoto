@@ -2,6 +2,7 @@
 package catalogacl
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
@@ -50,7 +51,9 @@ type rules struct {
 }
 
 func (r *rules) SharedWithUserAlbum() ([]catalog.AlbumId, error) {
-	shared, err := r.scopeRepository.ListUserScopes(r.email, aclcore.AlbumVisitorScope)
+	ctx := context.TODO()
+
+	shared, err := r.scopeRepository.ListScopesByUser(ctx, r.email, aclcore.AlbumVisitorScope)
 
 	var albums []catalog.AlbumId
 	for _, share := range shared {
@@ -61,7 +64,9 @@ func (r *rules) SharedWithUserAlbum() ([]catalog.AlbumId, error) {
 }
 
 func (r *rules) SharedByUserGrid(owner ownermodel.Owner) (map[string]map[usermodel.UserId]aclcore.ScopeType, error) {
-	scopes, err := r.scopeRepository.ListOwnerScopes(owner, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope)
+	ctx := context.TODO()
+
+	scopes, err := r.scopeRepository.ListScopesByOwner(ctx, owner, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope)
 
 	if err != nil || len(scopes) == 0 {
 		return nil, err

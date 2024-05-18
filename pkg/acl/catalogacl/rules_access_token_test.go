@@ -19,6 +19,8 @@ func Test_rulesWithAccessToken_CanListMediasFromAlbum(t *testing.T) {
 		owner      ownermodel.Owner
 		folderName catalog.FolderName
 	}
+	someoneElseOwner := ownermodel.Owner("some@one.else")
+
 	tests := []struct {
 		name    string
 		mocks   func(t *testing.T) catalogacl.CatalogRules
@@ -34,7 +36,7 @@ func Test_rulesWithAccessToken_CanListMediasFromAlbum(t *testing.T) {
 			claims: aclcore.Claims{
 				Subject: userEmail,
 				Scopes:  nil,
-				Owner:   ownerEmail,
+				Owner:   &ownerEmail,
 			},
 			args:    args{owner: ownerEmail, folderName: folderName},
 			wantErr: assert.NoError,
@@ -49,7 +51,7 @@ func Test_rulesWithAccessToken_CanListMediasFromAlbum(t *testing.T) {
 			claims: aclcore.Claims{
 				Subject: userEmail,
 				Scopes:  nil,
-				Owner:   "some@one.else",
+				Owner:   &someoneElseOwner,
 			},
 			args: args{owner: ownerEmail, folderName: folderName},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -68,6 +70,7 @@ func Test_rulesWithAccessToken_CanListMediasFromAlbum(t *testing.T) {
 
 func Test_rulesWithAccessToken_CanReadMedia(t *testing.T) {
 	nopeError := errors.Errorf("an error")
+	someoneElseOwner := ownermodel.Owner("some@else.com")
 
 	type fields struct {
 		catalogRules func(t *testing.T) catalogacl.CatalogRules
@@ -94,7 +97,7 @@ func Test_rulesWithAccessToken_CanReadMedia(t *testing.T) {
 			claims: aclcore.Claims{
 				Subject: userEmail,
 				Scopes:  nil,
-				Owner:   ownerEmail,
+				Owner:   &ownerEmail,
 			},
 			wantErr: assert.NoError,
 		},
@@ -111,7 +114,7 @@ func Test_rulesWithAccessToken_CanReadMedia(t *testing.T) {
 			claims: aclcore.Claims{
 				Subject: userEmail,
 				Scopes:  nil,
-				Owner:   "some@else.com",
+				Owner:   &someoneElseOwner,
 			},
 			wantErr: assert.NoError,
 		},
@@ -128,7 +131,7 @@ func Test_rulesWithAccessToken_CanReadMedia(t *testing.T) {
 			claims: aclcore.Claims{
 				Subject: userEmail,
 				Scopes:  nil,
-				Owner:   "",
+				Owner:   nil,
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && assert.Equal(t, nopeError, nopeError, i)
@@ -147,6 +150,7 @@ func Test_rulesWithAccessToken_CanReadMedia(t *testing.T) {
 
 func Test_rulesWithAccessToken_CanManageAlbum(t *testing.T) {
 	nopeError := errors.Errorf("an error")
+	someElseOwner := ownermodel.Owner("some@else.com")
 
 	type fields struct {
 		catalogRules func(t *testing.T) catalogacl.CatalogRules
@@ -170,7 +174,7 @@ func Test_rulesWithAccessToken_CanManageAlbum(t *testing.T) {
 				},
 			},
 			args:    args{ownerEmail, folderName},
-			claims:  aclcore.Claims{Subject: userEmail, Scopes: nil, Owner: ownerEmail},
+			claims:  aclcore.Claims{Subject: userEmail, Scopes: nil, Owner: &ownerEmail},
 			wantErr: assert.NoError,
 		},
 		{
@@ -183,7 +187,7 @@ func Test_rulesWithAccessToken_CanManageAlbum(t *testing.T) {
 				},
 			},
 			args:   args{ownerEmail, folderName},
-			claims: aclcore.Claims{Subject: userEmail, Scopes: nil, Owner: "some@else.com"},
+			claims: aclcore.Claims{Subject: userEmail, Scopes: nil, Owner: &someElseOwner},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, nopeError, i)
 			},
@@ -214,7 +218,7 @@ func Test_rulesWithAccessToken_Owner(t *testing.T) {
 				Scopes: map[string]interface{}{
 					"owner:main:foobar": nil, // should be ignored
 				},
-				Owner: ownerEmail,
+				Owner: &ownerEmail,
 			},
 			want:    &ownerEmail,
 			wantErr: assert.NoError,
@@ -226,7 +230,7 @@ func Test_rulesWithAccessToken_Owner(t *testing.T) {
 				Scopes: map[string]interface{}{
 					"owner:main:foobar": nil, // should be ignored
 				},
-				Owner: "",
+				Owner: nil,
 			},
 			want:    nil,
 			wantErr: assert.NoError,

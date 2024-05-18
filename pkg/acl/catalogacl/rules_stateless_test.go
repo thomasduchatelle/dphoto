@@ -2,6 +2,7 @@ package catalogacl_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
@@ -222,7 +223,7 @@ func Test_rules_SharedByUserGrid(t *testing.T) {
 		{
 			name: "it should show an album shared with 2 users, and another with 1",
 			initMocks: func(repository *mocks.ScopeRepository) {
-				repository.On("ListOwnerScopes", ownerEmail, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope).Return([]*aclcore.Scope{
+				repository.On("ListScopesByOwner", mock.Anything, ownerEmail, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.AlbumContributorScope,
 						GrantedAt:     time.Date(2022, 12, 24, 0, 0, 0, 0, time.UTC),
@@ -255,7 +256,7 @@ func Test_rules_SharedByUserGrid(t *testing.T) {
 		{
 			name: "it should return empty map if no album is shared",
 			initMocks: func(repository *mocks.ScopeRepository) {
-				repository.On("ListOwnerScopes", ownerEmail, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope).Return(nil, nil)
+				repository.On("ListScopesByOwner", mock.Anything, ownerEmail, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope).Return(nil, nil)
 			},
 			want:    nil,
 			wantErr: assert.NoError,
@@ -287,7 +288,7 @@ func Test_rules_SharedWithUserAlbum(t *testing.T) {
 		{
 			name: "it should return list of albums shared to current users",
 			initMocks: func(repository *mocks.ScopeRepository) {
-				repository.On("ListUserScopes", userEmail, aclcore.AlbumVisitorScope).Return([]*aclcore.Scope{
+				repository.On("ListScopesByUser", mock.Anything, userEmail, aclcore.AlbumVisitorScope).Return([]*aclcore.Scope{
 					{
 						Type:          aclcore.AlbumVisitorScope,
 						GrantedAt:     time.Date(2022, 12, 24, 0, 0, 0, 0, time.UTC),
@@ -313,7 +314,7 @@ func Test_rules_SharedWithUserAlbum(t *testing.T) {
 		{
 			name: "it should return nil list if nothing has been shared",
 			initMocks: func(repository *mocks.ScopeRepository) {
-				repository.On("ListUserScopes", userEmail, aclcore.AlbumVisitorScope).Return(nil, nil)
+				repository.On("ListScopesByUser", mock.Anything, userEmail, aclcore.AlbumVisitorScope).Return(nil, nil)
 			},
 			want:    nil,
 			wantErr: assert.NoError,

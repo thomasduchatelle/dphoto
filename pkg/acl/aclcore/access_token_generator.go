@@ -1,6 +1,7 @@
 package aclcore
 
 import (
+	"context"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -62,7 +63,8 @@ func (t *AccessTokenGenerator) GenerateAccessToken(email usermodel.UserId) (*Aut
 }
 
 func (t *AccessTokenGenerator) loadUserScopes(email usermodel.UserId) ([]string, error) {
-	grants, err := t.PermissionsReader.ListUserScopes(email, ApiScope, MainOwnerScope)
+	ctx := context.TODO()
+	grants, err := t.PermissionsReader.ListScopesByUser(ctx, email, ApiScope, MainOwnerScope)
 
 	var scopes []string
 	for _, grant := range grants {
@@ -80,7 +82,7 @@ func (t *AccessTokenGenerator) loadUserScopes(email usermodel.UserId) ([]string,
 	}
 
 	// second change for visitors
-	grants, err = t.PermissionsReader.ListUserScopes(email, AlbumVisitorScope, MediaVisitorScope)
+	grants, err = t.PermissionsReader.ListScopesByUser(ctx, email, AlbumVisitorScope, MediaVisitorScope)
 	if len(grants) > 0 {
 		scopes = []string{"visitor"}
 	}

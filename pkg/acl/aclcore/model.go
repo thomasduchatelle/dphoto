@@ -112,7 +112,21 @@ type Identity struct {
 type Claims struct {
 	Subject usermodel.UserId       // Subject is the user id (its email)
 	Scopes  map[string]interface{} // Scopes is the list of permissions stored eagerly in access token
-	Owner   ownermodel.Owner       // Owner is deviated from Scopes (extract of the MainOwnerScope)
+	Owner   *ownermodel.Owner      // Owner is deviated from Scopes (extract of the MainOwnerScope)
+}
+
+func (c *Claims) AsCurrentUser() usermodel.CurrentUser {
+	return usermodel.CurrentUser{
+		UserId: c.Subject,
+		Owner:  c.Owner,
+	}
+}
+
+func (c *Claims) OwnerAsDeprecatedString() string {
+	if c.Owner == nil {
+		return ""
+	}
+	return c.Owner.Value()
 }
 
 type RefreshTokenSpec struct {

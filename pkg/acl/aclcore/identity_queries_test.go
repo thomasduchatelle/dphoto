@@ -3,6 +3,7 @@ package aclcore_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
@@ -35,7 +36,7 @@ func TestIdentityQueries_FindOwnerIdentities(t *testing.T) {
 			name: "it should return empty if no identity is attached to the owner",
 			fields: func(t *testing.T) fields {
 				scopeRepository := mocks.NewIdentityQueriesScopeRepository(t)
-				scopeRepository.On("ListScopesByOwners", []ownermodel.Owner{ironmanOwner}, aclcore.MainOwnerScope).Return(nil, nil)
+				scopeRepository.On("ListScopesByOwners", mock.Anything, []ownermodel.Owner{ironmanOwner}, aclcore.MainOwnerScope).Return(nil, nil)
 
 				return fields{
 					IdentityRepository: mocks.NewIdentityQueriesIdentityRepository(t),
@@ -50,7 +51,7 @@ func TestIdentityQueries_FindOwnerIdentities(t *testing.T) {
 			name: "it should fallback on email/email identity if the user never logged in the application",
 			fields: func(t *testing.T) fields {
 				scopeRepository := mocks.NewIdentityQueriesScopeRepository(t)
-				scopeRepository.On("ListScopesByOwners", []ownermodel.Owner{ironmanOwner}, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
+				scopeRepository.On("ListScopesByOwners", mock.Anything, []ownermodel.Owner{ironmanOwner}, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Time{}, GrantedTo: tonyUser, ResourceOwner: ironmanOwner},
 				}, nil)
 
@@ -74,7 +75,7 @@ func TestIdentityQueries_FindOwnerIdentities(t *testing.T) {
 			name: "it should return the user identity attached to the owner",
 			fields: func(t *testing.T) fields {
 				scopeRepository := mocks.NewIdentityQueriesScopeRepository(t)
-				scopeRepository.On("ListScopesByOwners", []ownermodel.Owner{ironmanOwner}, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
+				scopeRepository.On("ListScopesByOwners", mock.Anything, []ownermodel.Owner{ironmanOwner}, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Time{}, GrantedTo: tonyUser, ResourceOwner: ironmanOwner},
 				}, nil)
 
@@ -100,7 +101,7 @@ func TestIdentityQueries_FindOwnerIdentities(t *testing.T) {
 			name: "it should support the same user to be used by several owners",
 			fields: func(t *testing.T) fields {
 				scopeRepository := mocks.NewIdentityQueriesScopeRepository(t)
-				scopeRepository.On("ListScopesByOwners", []ownermodel.Owner{ironmanOwner}, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
+				scopeRepository.On("ListScopesByOwners", mock.Anything, []ownermodel.Owner{ironmanOwner}, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Time{}, GrantedTo: tonyUser, ResourceOwner: ironmanOwner},
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Time{}, GrantedTo: tonyUser, ResourceOwner: avengerOwner},
 					{Type: aclcore.MainOwnerScope, GrantedAt: time.Time{}, GrantedTo: natashaUser, ResourceOwner: avengerOwner},

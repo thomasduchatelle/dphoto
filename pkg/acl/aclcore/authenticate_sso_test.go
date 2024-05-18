@@ -55,7 +55,7 @@ func TestAuthenticate(t *testing.T) {
 			fields: fields{
 				ScopesReader: func(t *testing.T) aclcore.ScopesReader {
 					reader := mocks.NewScopesReader(t)
-					reader.EXPECT().ListUserScopes(email, aclcore.ApiScope, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
+					reader.EXPECT().ListScopesByUser(mock.Anything, email, aclcore.ApiScope, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
 						{
 							Type:       aclcore.ApiScope,
 							ResourceId: "admin",
@@ -112,8 +112,8 @@ func TestAuthenticate(t *testing.T) {
 			fields: fields{
 				ScopesReader: func(t *testing.T) aclcore.ScopesReader {
 					reader := mocks.NewScopesReader(t)
-					reader.On("ListUserScopes", mock.Anything, aclcore.ApiScope, aclcore.MainOwnerScope).Return(nil, nil)
-					reader.On("ListUserScopes", mock.Anything, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope).Return([]*aclcore.Scope{
+					reader.On("ListScopesByUser", mock.Anything, mock.Anything, aclcore.ApiScope, aclcore.MainOwnerScope).Return(nil, nil)
+					reader.On("ListScopesByUser", mock.Anything, mock.Anything, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope).Return([]*aclcore.Scope{
 						{},
 					}, nil)
 					return reader
@@ -162,8 +162,8 @@ func TestAuthenticate(t *testing.T) {
 			fields: fields{
 				ScopesReader: func(t *testing.T) aclcore.ScopesReader {
 					reader := mocks.NewScopesReader(t)
-					reader.On("ListUserScopes", mock.Anything, aclcore.ApiScope, aclcore.MainOwnerScope).Return(nil, nil)
-					reader.On("ListUserScopes", mock.Anything, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope).Return(nil, nil)
+					reader.On("ListScopesByUser", mock.Anything, mock.Anything, aclcore.ApiScope, aclcore.MainOwnerScope).Return(nil, nil)
+					reader.On("ListScopesByUser", mock.Anything, mock.Anything, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope).Return(nil, nil)
 					return reader
 				},
 				RefreshTokenGenerator: refreshTokenGeneratorNotCalled(),

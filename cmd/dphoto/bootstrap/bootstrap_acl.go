@@ -1,12 +1,13 @@
 package bootstrap
 
 import (
+	"context"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/aclscopedynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 type catalogPort struct {
@@ -18,7 +19,9 @@ func (c catalogPort) FindAlbum(albumId catalog.AlbumId) (*catalog.Album, error) 
 
 func init() {
 	config.Listen(func(cfg config.Config) {
-		repository := aclscopedynamodb.Must(aclscopedynamodb.New(cfg.GetAWSV2Config(), cfg.GetString(config.CatalogDynamodbTable)))
+		ctx := context.TODO()
+
+		repository := pkgfactory.AclRepository(ctx)
 		createUser := &aclcore.CreateUser{
 			ScopesReader: repository,
 			ScopeWriter:  repository,

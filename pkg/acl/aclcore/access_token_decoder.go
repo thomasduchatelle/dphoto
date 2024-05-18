@@ -37,18 +37,19 @@ func (a *AccessTokenDecoder) Decode(accessToken string) (Claims, error) {
 	}
 
 	scopes := make(map[string]interface{})
-	owner := ""
+	var owner *ownermodel.Owner
 	for _, scope := range strings.Split(claims.Scopes, " ") {
 		scopes[scope] = nil
 		if strings.HasPrefix(scope, JWTScopeOwnerPrefix) {
-			owner = scope[len(JWTScopeOwnerPrefix):]
+			value := ownermodel.Owner(scope[len(JWTScopeOwnerPrefix):])
+			owner = &value
 		}
 	}
 
 	return Claims{
 		Subject: usermodel.NewUserId(claims.Subject),
 		Scopes:  scopes,
-		Owner:   ownermodel.Owner(owner),
+		Owner:   owner,
 	}, nil
 }
 

@@ -1,6 +1,7 @@
 package aclcore
 
 import (
+	"context"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
@@ -10,7 +11,7 @@ type IdentityQueriesIdentityRepository interface {
 }
 
 type IdentityQueriesScopeRepository interface {
-	ListScopesByOwners(owners []ownermodel.Owner, types ...ScopeType) ([]*Scope, error)
+	ListScopesByOwners(ctx context.Context, owners []ownermodel.Owner, types ...ScopeType) ([]*Scope, error)
 }
 
 type IdentityQueries struct {
@@ -23,7 +24,8 @@ func (i *IdentityQueries) FindIdentities(emails []usermodel.UserId) ([]*Identity
 }
 
 func (i *IdentityQueries) FindOwnerIdentities(owners []ownermodel.Owner) (map[ownermodel.Owner][]*Identity, error) {
-	scopes, err := i.ScopeRepository.ListScopesByOwners(owners, MainOwnerScope)
+	ctx := context.TODO()
+	scopes, err := i.ScopeRepository.ListScopesByOwners(ctx, owners, MainOwnerScope)
 	if err != nil || len(scopes) == 0 {
 		return nil, err
 	}

@@ -1,10 +1,14 @@
 package scanui
 
 import (
+	"context"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 func NewSuggestionRepository(owner string, folders []*backup.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {
@@ -63,12 +67,12 @@ type dynamicAlbumRepository struct {
 }
 
 func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, error) {
-	albums, err := catalog.FindAllAlbums(ownermodel.Owner(r.owner))
-	if err != nil {
-		return nil, err
-	}
+	ctx := context.TODO()
 
-	timeline, err := catalog.NewTimeline(albums)
+	owner := ownermodel.Owner(r.owner)
+	albums, err := pkgfactory.AlbumView(ctx).ListAlbums(ctx, usermodel.CurrentUser{Owner: &owner}, catalogviews.ListAlbumsFilter{OnlyDirectlyOwned: true})
+
+	timeline, err := newTimeline(albums)
 	if err != nil {
 		return nil, err
 	}
@@ -82,22 +86,30 @@ func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, er
 			Start:         album.Start,
 			End:           album.End,
 			Count:         album.TotalCount,
-			ActivePeriods: r.activePeriods(timeline, album),
+			ActivePeriods: r.activePeriods(timeline, &album.Album),
 		}
 	}
 	return records, err
 }
 
+func newTimeline(visibleAlbums []*catalogviews.VisibleAlbum) (*catalog.Timeline, error) {
+	albums := make([]*catalog.Album, len(visibleAlbums))
+	for i, visible := range visibleAlbums {
+		albums[i] = &visible.Album
+	}
+
+	return catalog.NewTimeline(albums)
+}
+
 func (r *dynamicAlbumRepository) activePeriods(timeline *catalog.Timeline, album *catalog.Album) []ui.Period {
-	actives, _ := timeline.FindBetween(album.Start, album.End)
+	segments := timeline.FindSegmentsBetweenAndFilter(album.Start, album.End, album.AlbumId)
+
 	var periods []ui.Period
-	for _, active := range actives {
-		if len(active.Albums) > 0 && active.Albums[0].FolderName == album.FolderName {
-			periods = append(periods, ui.Period{
-				Start: active.Start,
-				End:   active.End,
-			})
-		}
+	for _, segment := range segments {
+		periods = append(periods, ui.Period{
+			Start: segment.Start,
+			End:   segment.End,
+		})
 	}
 
 	return periods

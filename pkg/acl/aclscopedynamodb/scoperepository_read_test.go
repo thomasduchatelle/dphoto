@@ -116,7 +116,7 @@ func Test_repository_ListUserScopes(t *testing.T) {
 	}
 
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
-	r := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+	r := Must(New(dyn.Client, dyn.Table)).(*Repository)
 
 	_, err := r.client.BatchWriteItem(dyn.Ctx, &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
@@ -172,7 +172,7 @@ func Test_repository_ListUserScopes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := r.ListUserScopes(tt.args.email, tt.args.types...)
+			got, err := r.ListScopesByUser(context.Background(), tt.args.email, tt.args.types...)
 			if tt.wantErr(t, err) && err == nil {
 				sort.Slice(got, func(i, j int) bool {
 					return got[i].GrantedAt.Before(got[j].GrantedAt)
@@ -223,7 +223,7 @@ func Test_repository_ListOwnerScopes(t *testing.T) {
 	}
 
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
-	r := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+	r := Must(New(dyn.Client, dyn.Table)).(*Repository)
 
 	_, err := r.client.BatchWriteItem(dyn.Ctx, &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
@@ -259,7 +259,7 @@ func Test_repository_ListOwnerScopes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := r.ListOwnerScopes(tt.args.email, tt.args.types...)
+			got, err := r.ListScopesByOwner(context.Background(), tt.args.email, tt.args.types...)
 			if tt.wantErr(t, err) && err == nil {
 				sort.Slice(got, func(i, j int) bool {
 					return got[i].GrantedAt.Before(got[j].GrantedAt)
@@ -350,7 +350,7 @@ func Test_repository_FindScopesById(t *testing.T) {
 	}
 
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
-	r := Must(New(dyn.Cfg, dyn.Table)).(*repository)
+	r := Must(New(dyn.Client, dyn.Table)).(*Repository)
 
 	_, err := r.client.BatchWriteItem(dyn.Ctx, &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{

@@ -1,6 +1,7 @@
 package aclcore
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
@@ -13,7 +14,9 @@ type CoreRules struct {
 
 // Owner returns empty if the user own nothing, or the identifier of its owner
 func (a *CoreRules) Owner() (*ownermodel.Owner, error) {
-	scopes, err := a.ScopeReader.ListUserScopes(a.Email, MainOwnerScope)
+	ctx := context.TODO()
+
+	scopes, err := a.ScopeReader.ListScopesByUser(ctx, a.Email, MainOwnerScope)
 	if err != nil {
 		return nil, err
 	}
