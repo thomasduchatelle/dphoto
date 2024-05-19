@@ -23,12 +23,12 @@ func (_m *TimelineMutationObserver) EXPECT() *TimelineMutationObserver_Expecter 
 	return &TimelineMutationObserver_Expecter{mock: &_m.Mock}
 }
 
-// Observe provides a mock function with given fields: ctx, transfers
-func (_m *TimelineMutationObserver) Observe(ctx context.Context, transfers catalog.TransferredMedias) error {
+// OnTransferredMedias provides a mock function with given fields: ctx, transfers
+func (_m *TimelineMutationObserver) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
 	ret := _m.Called(ctx, transfers)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Observe")
+		panic("no return value specified for OnTransferredMedias")
 	}
 
 	var r0 error
@@ -41,31 +41,31 @@ func (_m *TimelineMutationObserver) Observe(ctx context.Context, transfers catal
 	return r0
 }
 
-// TimelineMutationObserver_Observe_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Observe'
-type TimelineMutationObserver_Observe_Call struct {
+// TimelineMutationObserver_OnTransferredMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnTransferredMedias'
+type TimelineMutationObserver_OnTransferredMedias_Call struct {
 	*mock.Call
 }
 
-// Observe is a helper method to define mock.On call
+// OnTransferredMedias is a helper method to define mock.On call
 //   - ctx context.Context
 //   - transfers catalog.TransferredMedias
-func (_e *TimelineMutationObserver_Expecter) Observe(ctx interface{}, transfers interface{}) *TimelineMutationObserver_Observe_Call {
-	return &TimelineMutationObserver_Observe_Call{Call: _e.mock.On("Observe", ctx, transfers)}
+func (_e *TimelineMutationObserver_Expecter) OnTransferredMedias(ctx interface{}, transfers interface{}) *TimelineMutationObserver_OnTransferredMedias_Call {
+	return &TimelineMutationObserver_OnTransferredMedias_Call{Call: _e.mock.On("OnTransferredMedias", ctx, transfers)}
 }
 
-func (_c *TimelineMutationObserver_Observe_Call) Run(run func(ctx context.Context, transfers catalog.TransferredMedias)) *TimelineMutationObserver_Observe_Call {
+func (_c *TimelineMutationObserver_OnTransferredMedias_Call) Run(run func(ctx context.Context, transfers catalog.TransferredMedias)) *TimelineMutationObserver_OnTransferredMedias_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(catalog.TransferredMedias))
 	})
 	return _c
 }
 
-func (_c *TimelineMutationObserver_Observe_Call) Return(_a0 error) *TimelineMutationObserver_Observe_Call {
+func (_c *TimelineMutationObserver_OnTransferredMedias_Call) Return(_a0 error) *TimelineMutationObserver_OnTransferredMedias_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *TimelineMutationObserver_Observe_Call) RunAndReturn(run func(context.Context, catalog.TransferredMedias) error) *TimelineMutationObserver_Observe_Call {
+func (_c *TimelineMutationObserver_OnTransferredMedias_Call) RunAndReturn(run func(context.Context, catalog.TransferredMedias) error) *TimelineMutationObserver_OnTransferredMedias_Call {
 	_c.Call.Return(run)
 	return _c
 }

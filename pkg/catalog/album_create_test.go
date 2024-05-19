@@ -471,7 +471,7 @@ func stubInsertAlbumPortWithError(err error) func(t *testing.T) catalog.InsertAl
 func expectTimelineMutationObserverNotCalled() func(t *testing.T) catalog.TimelineMutationObserver {
 	return func(t *testing.T) catalog.TimelineMutationObserver {
 		return catalog.TimelineMutationObserverFunc(func(ctx context.Context, transfers catalog.TransferredMedias) error {
-			assert.Failf(t, "TimelineMutationObserverFunc", "should not be called", "Observe(%+v)", transfers)
+			assert.Failf(t, "TimelineMutationObserverFunc", "should not be called", "OnTransferredMedias(%+v)", transfers)
 			return nil
 		})
 	}
