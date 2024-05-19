@@ -108,7 +108,7 @@ func timelineMutationObserverNotCalled() func(t *testing.T) catalog.TimelineMuta
 func expectTimelineMutationObserverCalled(transfers catalog.TransferredMedias) func(t *testing.T) catalog.TimelineMutationObserver {
 	return func(t *testing.T) catalog.TimelineMutationObserver {
 		observer := mocks.NewTimelineMutationObserver(t)
-		observer.EXPECT().Observe(mock.Anything, transfers).Return(nil).Once()
+		observer.EXPECT().OnTransferredMedias(mock.Anything, transfers).Return(nil).Once()
 		return observer
 	}
 }

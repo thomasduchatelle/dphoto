@@ -12,7 +12,7 @@ import (
 type Factory struct{}
 
 func (f *Factory) NewCreatorReferencer(ctx context.Context, owner ownermodel.Owner) (backup.CatalogReferencer, error) {
-	queries := CatalogQueries(ctx)
+	queries := AlbumQueries(ctx)
 	writeRepo := CatalogRepository(ctx)
 	referencer, err := catalog.NewAlbumAutoPopulateReferencer(
 		owner,
@@ -21,6 +21,8 @@ func (f *Factory) NewCreatorReferencer(ctx context.Context, owner ownermodel.Own
 		writeRepo,
 		ArchiveTimelineMutationObserver(),
 	)
+
+	// TODO is the albums recounted after backup complete ?
 
 	return &backupcatalog.CatalogReferencerAdapter{
 		Owner: owner,

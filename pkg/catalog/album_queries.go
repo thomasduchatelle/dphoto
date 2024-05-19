@@ -40,18 +40,6 @@ func FindAlbums(keys []AlbumId) ([]*Album, error) {
 	return repositoryPort.FindAlbumByIds(context.TODO(), keys...)
 }
 
-// FindAlbum get an album by its business key (its folder name), or returns AlbumNotFoundError
-func FindAlbum(id AlbumId) (*Album, error) {
-	albums, err := repositoryPort.FindAlbumByIds(context.TODO(), id)
-	if err != nil {
-		return nil, err
-	}
-	if len(albums) == 0 {
-		return nil, AlbumNotFoundError
-	}
-	return albums[0], nil
-}
-
 type AlbumQueries struct {
 	Repository RepositoryAdapter
 }
@@ -66,4 +54,17 @@ func (a *AlbumQueries) FindAlbumsById(ctx context.Context, ids []AlbumId) ([]*Al
 
 func (a *AlbumQueries) CountMedia(ctx context.Context, album ...AlbumId) (map[AlbumId]int, error) {
 	return a.Repository.CountMedia(ctx, album...)
+}
+
+func (a *AlbumQueries) FindAlbum(ctx context.Context, albumId AlbumId) (*Album, error) {
+	albums, err := a.Repository.FindAlbumByIds(ctx, albumId)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(albums) == 0 {
+		return nil, AlbumNotFoundError
+	}
+
+	return albums[0], nil
 }

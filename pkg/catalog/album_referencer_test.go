@@ -458,7 +458,7 @@ type TimelineMutationObserverFake struct {
 	Requests []TransferredMedias
 }
 
-func (t *TimelineMutationObserverFake) Observe(ctx context.Context, transfers TransferredMedias) error {
+func (t *TimelineMutationObserverFake) OnTransferredMedias(ctx context.Context, transfers TransferredMedias) error {
 	t.Requests = append(t.Requests, transfers)
 	return nil
 }

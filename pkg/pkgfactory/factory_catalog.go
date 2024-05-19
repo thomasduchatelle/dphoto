@@ -20,7 +20,7 @@ func ArchiveTimelineMutationObserver() *catalogarchivesync.Observer {
 	})
 }
 
-func CatalogQueries(ctx context.Context) *catalog.AlbumQueries {
+func AlbumQueries(ctx context.Context) *catalog.AlbumQueries {
 	return singletons.MustSingleton(func() (*catalog.AlbumQueries, error) {
 		return &catalog.AlbumQueries{
 			Repository: CatalogRepository(ctx),
@@ -35,6 +35,7 @@ func CreateAlbumCase(ctx context.Context) *catalog.CreateAlbum {
 		repository,
 		repository,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 }
 
@@ -46,11 +47,12 @@ func CreateAlbumDeleteCase(ctx context.Context) *catalog.DeleteAlbum {
 		repository,
 		repository,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 }
 
 func RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
-	// TODO Sharing and other artefacts should be transferred as well when renaming (recreating) an album
+	// TODO ACL Sharing and other resources should be transferred as well when renaming (recreating) an album
 	repository := CatalogRepository(ctx)
 	return catalog.NewRenameAlbum(
 		repository,
@@ -60,6 +62,7 @@ func RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
 		repository,
 		repository,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 }
 
@@ -71,6 +74,7 @@ func AmendAlbumDatesCase(ctx context.Context) *catalog.AmendAlbumDates {
 		repository,
 		repository,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 }
 
@@ -78,5 +82,6 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 	repository := CatalogRepository(ctx)
 	return catalog.NewInsertMedias(
 		repository,
+		CommandHandlerAlbumSize(ctx),
 	)
 }

@@ -260,7 +260,7 @@ type ExternalTimelineMutationObserver struct {
 	Transfers catalog.TransferredMedias
 }
 
-func (e *ExternalTimelineMutationObserver) Observe(ctx context.Context, transfers catalog.TransferredMedias) error {
+func (e *ExternalTimelineMutationObserver) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
 	e.Transfers = transfers
 	return nil
 }

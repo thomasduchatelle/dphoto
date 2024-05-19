@@ -2,7 +2,6 @@ package catalogviews
 
 import (
 	"context"
-	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"slices"
 )
@@ -12,31 +11,29 @@ func NewAlbumView(
 	GetAlbumSharingGridPort GetAlbumSharingGridPort,
 	FindAlbumsByIdsPort FindAlbumsByIdsPort,
 	SharedWithUserPort SharedWithUserPort,
-	MediaCounterPort MediaCounterPort,
+	GetAvailabilitiesByUserPort GetAvailabilitiesByUserPort,
 ) *AlbumView {
 	return &AlbumView{Providers: []ListAlbumsProvider{
-		&OwnedAlbumListProvider{
-			FindAlbumByOwnerPort:    FindAlbumByOwnerPort,
-			GetAlbumSharingGridPort: GetAlbumSharingGridPort,
-			MediaCounterPort:        MediaCounterPort,
-		},
-		&SharedAlbumListProvider{
-			FindAlbumsByIdsPort: FindAlbumsByIdsPort,
-			SharedWithUserPort:  SharedWithUserPort,
-			MediaCounterPort:    MediaCounterPort,
+		&MediaCounterInjector{
+			GetAvailabilitiesByUserPort: GetAvailabilitiesByUserPort,
+			ProviderFactories: []ProviderFactory{
+				ProviderFactoryFunc(func(ctx context.Context, mediaCounterPort MediaCounterPort) ListAlbumsProvider {
+					return &OwnedAlbumListProvider{
+						FindAlbumByOwnerPort:    FindAlbumByOwnerPort,
+						GetAlbumSharingGridPort: GetAlbumSharingGridPort,
+						MediaCounterPort:        mediaCounterPort,
+					}
+				}),
+				ProviderFactoryFunc(func(ctx context.Context, mediaCounterPort MediaCounterPort) ListAlbumsProvider {
+					return &SharedAlbumListProvider{
+						FindAlbumsByIdsPort: FindAlbumsByIdsPort,
+						SharedWithUserPort:  SharedWithUserPort,
+						MediaCounterPort:    mediaCounterPort,
+					}
+				}),
+			},
 		},
 	}}
-}
-
-type VisibleAlbum struct {
-	catalog.Album
-	MediaCount         int                // Count is the number of medias on the album
-	Visitors           []usermodel.UserId // Visitors are the users that can see the album ; only visible to the owner of the album
-	OwnedByCurrentUser bool               // OwnedByCurrentUser is set to true when the user is an owner of the album
-}
-
-type ListAlbumsFilter struct {
-	OnlyDirectlyOwned bool // OnlyDirectlyOwned provides a sub-view where only resources directly owned by user are displayed and accessible
 }
 
 type ListAlbumsProvider interface {

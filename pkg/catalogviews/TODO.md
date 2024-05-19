@@ -9,3 +9,10 @@
    * owned albums + count + last media date + sharing
    * shared albums [by owner] + count + last media date
 6. remove catalogaclview package
+7. move to Auth0 for authentication and used it on the CLI
+
+## Unsorted ...
+
+* the backup should WAIT the end before updating the views.
+* SCOPE should be renamed to PERMISSION
+  * PERMISSION should have a generic type ('OWNER' or 'VISITOR') and a RESOURCE {TYPE, OWNER, ID}  

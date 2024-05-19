@@ -21,12 +21,12 @@ func (t TransferredMedias) IsEmpty() bool {
 
 // TimelineMutationObserver will notify each observer that medias has been transferred to a different album.
 type TimelineMutationObserver interface {
-	Observe(ctx context.Context, transfers TransferredMedias) error
+	OnTransferredMedias(ctx context.Context, transfers TransferredMedias) error
 }
 
 type TimelineMutationObserverFunc func(ctx context.Context, transfers TransferredMedias) error
 
-func (f TimelineMutationObserverFunc) Observe(ctx context.Context, transfers TransferredMedias) error {
+func (f TimelineMutationObserverFunc) OnTransferredMedias(ctx context.Context, transfers TransferredMedias) error {
 	return f(ctx, transfers)
 }
 
@@ -92,7 +92,7 @@ func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTrans
 	}
 
 	for _, observer := range d.TimelineMutationObservers {
-		err = observer.Observe(ctx, transfers)
+		err = observer.OnTransferredMedias(ctx, transfers)
 		if err != nil {
 			return err
 		}
