@@ -2,6 +2,7 @@ package appdynamodb
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
@@ -19,4 +20,11 @@ func MediaPrimaryKeyPK(owner string, id string) string {
 // UserPk is the PK of a user, used to regroup user related information together
 func UserPk(userEmail usermodel.UserId) string {
 	return fmt.Sprintf("USER#%s", userEmail)
+}
+
+func (pk TablePk) ToAttributes() map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"PK": &types.AttributeValueMemberS{Value: pk.PK},
+		"SK": &types.AttributeValueMemberS{Value: pk.SK},
+	}
 }

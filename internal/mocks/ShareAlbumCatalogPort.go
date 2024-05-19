@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	"context"
 	catalog "github.com/thomasduchatelle/dphoto/pkg/catalog"
 
 	mock "github.com/stretchr/testify/mock"
@@ -22,7 +23,7 @@ func (_m *ShareAlbumCatalogPort) EXPECT() *ShareAlbumCatalogPort_Expecter {
 }
 
 // FindAlbum provides a mock function with given fields: albumId
-func (_m *ShareAlbumCatalogPort) FindAlbum(albumId catalog.AlbumId) (*catalog.Album, error) {
+func (_m *ShareAlbumCatalogPort) FindAlbum(ctx context.Context, albumId catalog.AlbumId) (*catalog.Album, error) {
 	ret := _m.Called(albumId)
 
 	if len(ret) == 0 {
