@@ -27,13 +27,26 @@ type CommandHandlerAlbumSize struct {
 }
 
 func (c *CommandHandlerAlbumSize) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
-	if len(transfers) == 0 {
-		return nil
-	}
-
 	var albumIds []catalog.AlbumId
 	for albumId := range transfers {
 		albumIds = append(albumIds, albumId)
+	}
+
+	return c.updateUserViews(ctx, albumIds)
+}
+
+func (c *CommandHandlerAlbumSize) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
+	var albumIds []catalog.AlbumId
+	for albumId := range medias {
+		albumIds = append(albumIds, albumId)
+	}
+
+	return c.updateUserViews(ctx, albumIds)
+}
+
+func (c *CommandHandlerAlbumSize) updateUserViews(ctx context.Context, albumIds []catalog.AlbumId) error {
+	if len(albumIds) == 0 {
+		return nil
 	}
 
 	availabilities, err := c.ListUserWhoCanAccessAlbumPort.ListUserWhoCanAccessAlbum(ctx, albumIds...)
@@ -47,7 +60,7 @@ func (c *CommandHandlerAlbumSize) OnTransferredMedias(ctx context.Context, trans
 	}
 
 	var albumSizes []AlbumSize
-	for albumId := range transfers {
+	for _, albumId := range albumIds {
 		availableTo, _ := availabilities[albumId]
 		count, _ := counts[albumId]
 
@@ -59,11 +72,6 @@ func (c *CommandHandlerAlbumSize) OnTransferredMedias(ctx context.Context, trans
 	}
 
 	return c.ViewWriteRepository.InsertAlbumSize(ctx, albumSizes)
-}
-
-func (c *CommandHandlerAlbumSize) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
-	//TODO implement me
-	panic("implement me")
 }
 
 // TODO Everything about the album should be deleted if the album is deleted
