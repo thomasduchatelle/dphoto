@@ -20,7 +20,7 @@ func ArchiveTimelineMutationObserver() *catalogarchivesync.Observer {
 	})
 }
 
-func CatalogQueries(ctx context.Context) *catalog.AlbumQueries {
+func AlbumQueries(ctx context.Context) *catalog.AlbumQueries {
 	return singletons.MustSingleton(func() (*catalog.AlbumQueries, error) {
 		return &catalog.AlbumQueries{
 			Repository: CatalogRepository(ctx),

@@ -35,7 +35,7 @@ type ViewWriteRepository interface {
 }
 
 type ListUserWhoCanAccessAlbumPort interface {
-	ListUserWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]Availability, error)
+	ListUsersWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]Availability, error)
 }
 
 type CommandHandlerAlbumSize struct {
@@ -67,7 +67,7 @@ func (c *CommandHandlerAlbumSize) updateUserViews(ctx context.Context, albumIds 
 		return nil
 	}
 
-	availabilities, err := c.ListUserWhoCanAccessAlbumPort.ListUserWhoCanAccessAlbum(ctx, albumIds...)
+	availabilities, err := c.ListUserWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, albumIds...)
 	if err != nil {
 		return err
 	}

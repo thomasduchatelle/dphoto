@@ -215,9 +215,9 @@ type ListUserWhoCanAccessAlbumPortFake struct {
 	Values map[catalog.AlbumId][]Availability
 }
 
-func (l *ListUserWhoCanAccessAlbumPortFake) ListUserWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]Availability, error) {
+func (l *ListUserWhoCanAccessAlbumPortFake) ListUsersWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]Availability, error) {
 	if albumId == nil {
-		return nil, errors.Errorf("ListUserWhoCanAccessAlbum(nil): albumId should not be nil")
+		return nil, errors.Errorf("ListUsersWhoCanAccessAlbum(nil): albumId should not be nil")
 	}
 
 	result := make(map[catalog.AlbumId][]Availability)
