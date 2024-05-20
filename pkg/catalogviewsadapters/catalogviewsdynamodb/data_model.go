@@ -21,7 +21,7 @@ type AlbumSizeRecord struct {
 func albumSizeKey(albumSize catalogviews.AlbumSize, user catalogviews.Availability) appdynamodb.TablePk {
 	belongType := "OWNED"
 	if !user.AsOwner {
-		belongType = "SHARED"
+		belongType = "VISITOR"
 	}
 
 	recordKey := appdynamodb.TablePk{

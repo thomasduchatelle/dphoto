@@ -15,10 +15,16 @@ import (
 func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 	ctx := context.Background()
 	dyn := dynamotestutils.NewTestContext(ctx, t)
-	userId := usermodel.NewUserId("user-1")
+	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
+	userId3 := usermodel.NewUserId("user-3")
 	albumId1 := catalog.AlbumId{
-		Owner:      "owner",
+		Owner:      "owner1",
 		FolderName: catalog.NewFolderName("album-1"),
+	}
+	albumId2 := catalog.AlbumId{
+		Owner:      "owner2",
+		FolderName: catalog.NewFolderName("album-2"),
 	}
 
 	type args struct {
@@ -62,13 +68,75 @@ func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 					{
 						AlbumId:    albumId1,
 						MediaCount: 42,
-						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId)},
+						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
 					},
 				},
 			},
 			before: nil,
 			after: []map[string]types.AttributeValue{
-				albumSizeItem(userId, "OWNED", albumId1, "42"),
+				albumSizeItem(userId1, "OWNED", albumId1, "42"),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should save the album size for the shared user",
+			args: args{
+				albumSizes: []catalogviews.AlbumSize{
+					{
+						AlbumId:    albumId1,
+						MediaCount: 42,
+						Users:      []catalogviews.Availability{catalogviews.VisitorAvailability(userId1)},
+					},
+				},
+			},
+			before: nil,
+			after: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, "VISITOR", albumId1, "42"),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should save several album sizes for multiple users",
+			args: args{
+				albumSizes: []catalogviews.AlbumSize{
+					{
+						AlbumId:    albumId1,
+						MediaCount: 42,
+						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId1), catalogviews.VisitorAvailability(userId2), catalogviews.VisitorAvailability(userId3)},
+					},
+					{
+						AlbumId:    albumId2,
+						MediaCount: 24,
+						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId2), catalogviews.VisitorAvailability(userId1)},
+					},
+				},
+			},
+			before: nil,
+			after: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, "OWNED", albumId1, "42"),
+				albumSizeItem(userId1, "VISITOR", albumId2, "24"),
+				albumSizeItem(userId2, "OWNED", albumId2, "24"),
+				albumSizeItem(userId2, "VISITOR", albumId1, "42"),
+				albumSizeItem(userId3, "VISITOR", albumId1, "42"),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should update the count if the album size already exists",
+			args: args{
+				albumSizes: []catalogviews.AlbumSize{
+					{
+						AlbumId:    albumId1,
+						MediaCount: 42,
+						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+					},
+				},
+			},
+			before: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, "OWNED", albumId1, "24"),
+			},
+			after: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, "OWNED", albumId1, "42"),
 			},
 			wantErr: assert.NoError,
 		},
