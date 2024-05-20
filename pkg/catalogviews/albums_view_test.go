@@ -41,11 +41,11 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 	}
 
 	type fields struct {
-		FindAlbumByOwnerPort    FindAlbumByOwnerPort
-		GetAlbumSharingGridPort GetAlbumSharingGridPort
-		FindAlbumsByIdsPort     FindAlbumsByIdsPort
-		SharedWithUserPort      SharedWithUserPort
-		MediaCounterPort        MediaCounterPort
+		FindAlbumByOwnerPort        FindAlbumByOwnerPort
+		GetAlbumSharingGridPort     GetAlbumSharingGridPort
+		FindAlbumsByIdsPort         FindAlbumsByIdsPort
+		SharedWithUserPort          SharedWithUserPort
+		GetAvailabilitiesByUserPort GetAvailabilitiesByUserPort
 	}
 	type args struct {
 		user   usermodel.CurrentUser
@@ -65,7 +65,7 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				GetAlbumSharingGridPort: stubGetAlbumSharingGridPort(ownedAlbum1.AlbumId, userId2),
 				FindAlbumsByIdsPort:     stubFindAlbumsByIdsPort(sharedAlbum3),
 				SharedWithUserPort:      stubSharedWithUserPort(sharedAlbum3),
-				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
+				GetAvailabilitiesByUserPort: stubGetAvailabilitiesByUserPortFromCount(map[catalog.AlbumId]int{
 					ownedAlbum1.AlbumId:  1,
 					ownedAlbum2.AlbumId:  2,
 					sharedAlbum3.AlbumId: 3,
@@ -101,7 +101,7 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				GetAlbumSharingGridPort: stubGetAlbumSharingGridPort(ownedAlbum1.AlbumId, userId2),
 				FindAlbumsByIdsPort:     stubFindAlbumsByIdsPort(sharedAlbum3),
 				SharedWithUserPort:      stubSharedWithUserPort(sharedAlbum3),
-				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
+				GetAvailabilitiesByUserPort: stubGetAvailabilitiesByUserPortFromCount(map[catalog.AlbumId]int{
 					ownedAlbum1.AlbumId:  1,
 					ownedAlbum2.AlbumId:  2,
 					sharedAlbum3.AlbumId: 3,
@@ -135,7 +135,7 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				tt.fields.GetAlbumSharingGridPort,
 				tt.fields.FindAlbumsByIdsPort,
 				tt.fields.SharedWithUserPort,
-				tt.fields.MediaCounterPort,
+				tt.fields.GetAvailabilitiesByUserPort,
 			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)
@@ -337,5 +337,18 @@ func stubGetAlbumSharingGridPort(albumId catalog.AlbumId, userId2 usermodel.User
 func stubMediaCounterPort(m map[catalog.AlbumId]int) MediaCounterPort {
 	return MediaCounterFunc(func(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
 		return m, nil
+	})
+}
+
+func stubGetAvailabilitiesByUserPortFromCount(m map[catalog.AlbumId]int) GetAvailabilitiesByUserPort {
+	return GetAvailabilitiesByUserFunc(func(ctx context.Context, userId usermodel.UserId) ([]AlbumSize, error) {
+		var availabilities []AlbumSize
+		for albumId, count := range m {
+			availabilities = append(availabilities, AlbumSize{
+				AlbumId:    albumId,
+				MediaCount: count,
+			})
+		}
+		return availabilities, nil
 	})
 }

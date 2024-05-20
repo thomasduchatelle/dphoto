@@ -12,18 +12,27 @@ func NewAlbumView(
 	GetAlbumSharingGridPort GetAlbumSharingGridPort,
 	FindAlbumsByIdsPort FindAlbumsByIdsPort,
 	SharedWithUserPort SharedWithUserPort,
-	MediaCounterPort MediaCounterPort,
+	GetAvailabilitiesByUserPort GetAvailabilitiesByUserPort,
 ) *AlbumView {
 	return &AlbumView{Providers: []ListAlbumsProvider{
-		&OwnedAlbumListProvider{
-			FindAlbumByOwnerPort:    FindAlbumByOwnerPort,
-			GetAlbumSharingGridPort: GetAlbumSharingGridPort,
-			MediaCounterPort:        MediaCounterPort,
-		},
-		&SharedAlbumListProvider{
-			FindAlbumsByIdsPort: FindAlbumsByIdsPort,
-			SharedWithUserPort:  SharedWithUserPort,
-			MediaCounterPort:    MediaCounterPort,
+		&MediaCounterInjector{
+			GetAvailabilitiesByUserPort: GetAvailabilitiesByUserPort,
+			ProviderFactories: []ProviderFactory{
+				ProviderFactoryFunc(func(ctx context.Context, mediaCounterPort MediaCounterPort) ListAlbumsProvider {
+					return &OwnedAlbumListProvider{
+						FindAlbumByOwnerPort:    FindAlbumByOwnerPort,
+						GetAlbumSharingGridPort: GetAlbumSharingGridPort,
+						MediaCounterPort:        mediaCounterPort,
+					}
+				}),
+				ProviderFactoryFunc(func(ctx context.Context, mediaCounterPort MediaCounterPort) ListAlbumsProvider {
+					return &SharedAlbumListProvider{
+						FindAlbumsByIdsPort: FindAlbumsByIdsPort,
+						SharedWithUserPort:  SharedWithUserPort,
+						MediaCounterPort:    mediaCounterPort,
+					}
+				}),
+			},
 		},
 	}}
 }
