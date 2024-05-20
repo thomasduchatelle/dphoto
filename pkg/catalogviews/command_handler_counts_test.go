@@ -48,8 +48,8 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
 					albumId1: 1,
 				}),
-				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]usermodel.UserId{
-					albumId1: {owner1User},
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					albumId1: {OwnerAvailability(owner1User)},
 				}),
 			},
 			args: args{
@@ -60,7 +60,7 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 			wantRepo: []AlbumSize{
 				{
 					AlbumId:    albumId1,
-					Users:      []usermodel.UserId{owner1User},
+					Users:      []Availability{OwnerAvailability(owner1User)},
 					MediaCount: 1,
 				},
 			},
@@ -72,8 +72,8 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
 					albumId1: 1,
 				}),
-				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]usermodel.UserId{
-					albumId1: {owner1User, user2},
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					albumId1: {OwnerAvailability(owner1User), VisitorAvailability(user2)},
 				}),
 			},
 			args: args{
@@ -84,7 +84,7 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 			wantRepo: []AlbumSize{
 				{
 					AlbumId:    albumId1,
-					Users:      []usermodel.UserId{owner1User, user2},
+					Users:      []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
 					MediaCount: 1,
 				},
 			},
@@ -147,8 +147,8 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
 					albumId1: 1,
 				}),
-				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]usermodel.UserId{
-					albumId1: {owner1User},
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					albumId1: {OwnerAvailability(owner1User)},
 				}),
 			},
 			args: args{
@@ -159,7 +159,7 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 			wantRepo: []AlbumSize{
 				{
 					AlbumId:    albumId1,
-					Users:      []usermodel.UserId{owner1User},
+					Users:      []Availability{OwnerAvailability(owner1User)},
 					MediaCount: 1,
 				},
 			},
@@ -171,8 +171,8 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
 					albumId1: 3,
 				}),
-				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]usermodel.UserId{
-					albumId1: {owner1User, user2},
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					albumId1: {OwnerAvailability(owner1User), VisitorAvailability(user2)},
 				}),
 			},
 			args: args{
@@ -183,7 +183,7 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 			wantRepo: []AlbumSize{
 				{
 					AlbumId:    albumId1,
-					Users:      []usermodel.UserId{owner1User, user2},
+					Users:      []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
 					MediaCount: 3,
 				},
 			},
@@ -212,22 +212,22 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 }
 
 type ListUserWhoCanAccessAlbumPortFake struct {
-	Values map[catalog.AlbumId][]usermodel.UserId
+	Values map[catalog.AlbumId][]Availability
 }
 
-func (l *ListUserWhoCanAccessAlbumPortFake) ListUserWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]usermodel.UserId, error) {
+func (l *ListUserWhoCanAccessAlbumPortFake) ListUserWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]Availability, error) {
 	if albumId == nil {
 		return nil, errors.Errorf("ListUserWhoCanAccessAlbum(nil): albumId should not be nil")
 	}
 
-	result := make(map[catalog.AlbumId][]usermodel.UserId)
+	result := make(map[catalog.AlbumId][]Availability)
 	for _, id := range albumId {
 		result[id] = l.Values[id]
 	}
 	return result, nil
 }
 
-func stubListUserWhoCanAccessAlbumPort(values map[catalog.AlbumId][]usermodel.UserId) ListUserWhoCanAccessAlbumPort {
+func stubListUserWhoCanAccessAlbumPort(values map[catalog.AlbumId][]Availability) ListUserWhoCanAccessAlbumPort {
 	return &ListUserWhoCanAccessAlbumPortFake{Values: values}
 }
 

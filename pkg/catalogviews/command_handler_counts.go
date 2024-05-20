@@ -6,9 +6,27 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
+type Availability struct {
+	UserId  usermodel.UserId
+	AsOwner bool // AsOwner is true if the user is the owner of the album
+}
+
+func VisitorAvailability(userId usermodel.UserId) Availability {
+	return Availability{
+		UserId: userId,
+	}
+}
+
+func OwnerAvailability(userId usermodel.UserId) Availability {
+	return Availability{
+		UserId:  userId,
+		AsOwner: true,
+	}
+}
+
 type AlbumSize struct {
 	AlbumId    catalog.AlbumId
-	Users      []usermodel.UserId
+	Users      []Availability
 	MediaCount int
 }
 
@@ -17,7 +35,7 @@ type ViewWriteRepository interface {
 }
 
 type ListUserWhoCanAccessAlbumPort interface {
-	ListUserWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]usermodel.UserId, error)
+	ListUserWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]Availability, error)
 }
 
 type CommandHandlerAlbumSize struct {
