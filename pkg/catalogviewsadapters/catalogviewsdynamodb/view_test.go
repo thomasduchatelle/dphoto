@@ -174,3 +174,85 @@ func albumSizeItem(user usermodel.UserId, accessType string, albumId catalog.Alb
 		"Count":           &types.AttributeValueMemberN{Value: count},
 	}
 }
+
+func TestAlbumViewRepository_GetAvailabilitiesByUser(t *testing.T) {
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
+	albumId1 := catalog.AlbumId{
+		Owner:      "owner1",
+		FolderName: catalog.NewFolderName("album-1"),
+	}
+	albumId2 := catalog.AlbumId{
+		Owner:      "owner2",
+		FolderName: catalog.NewFolderName("album-2"),
+	}
+	albumId3 := catalog.AlbumId{
+		Owner:      "owner3",
+		FolderName: catalog.NewFolderName("album-3"),
+	}
+
+	type args struct {
+		user usermodel.UserId
+	}
+	tests := []struct {
+		name    string
+		args    args
+		before  []map[string]types.AttributeValue
+		want    []catalogviews.AlbumSize
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should return an empty list if there is no album size",
+			args: args{
+				user: userId1,
+			},
+			before:  nil,
+			want:    nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return the album sizes for the owner and visitor",
+			args: args{
+				user: userId1,
+			},
+			before: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, "OWNED", albumId1, "42"),
+				albumSizeItem(userId1, "VISITOR", albumId2, "10"),
+				albumSizeItem(userId2, "OWNED", albumId3, "5"),
+			},
+			want: []catalogviews.AlbumSize{
+				{
+					AlbumId:    albumId1,
+					MediaCount: 42,
+				},
+				{
+					AlbumId:    albumId2,
+					MediaCount: 10,
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn := dyn.Subtest(t)
+
+			if !assert.NoError(t, dyn.WithDbContent(ctx, tt.before)) {
+				return
+			}
+
+			a := &AlbumViewRepository{
+				Client:    dyn.Client,
+				TableName: dyn.Table,
+			}
+			got, err := a.GetAvailabilitiesByUser(ctx, tt.args.user)
+			if !tt.wantErr(t, err, fmt.Sprintf("GetAvailabilitiesByUser(%v, %v)", ctx, tt.args.user)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "GetAvailabilitiesByUser(%v, %v)", ctx, tt.args.user)
+		})
+	}
+}

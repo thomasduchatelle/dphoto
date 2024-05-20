@@ -2,8 +2,10 @@ package catalogviewsdynamodb
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
@@ -44,6 +46,37 @@ func (a *AlbumViewRepository) InsertAlbumSize(ctx context.Context, albumSizes []
 // TODO GetAvailabilitiesByUser shouldn't return a slice of AlbumSize: the AlbumSize.User field is not used
 
 func (a *AlbumViewRepository) GetAvailabilitiesByUser(ctx context.Context, user usermodel.UserId) ([]catalogviews.AlbumSize, error) {
-	//TODO implement me
-	panic("implement me")
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(expression.Key("PK").Equal(expression.Value(albumsViewPK(user)))).
+		Build()
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to build expression for user %v", user)
+	}
+
+	paginator := dynamodb.NewQueryPaginator(a.Client, &dynamodb.QueryInput{
+		TableName:                 &a.TableName,
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+	})
+
+	var albumSizes []catalogviews.AlbumSize
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range page.Items {
+			albumSize, err := unmarshalAlbumSize(item)
+			if err != nil {
+				return nil, err
+			}
+
+			albumSizes = append(albumSizes, *albumSize)
+		}
+	}
+
+	return albumSizes, nil
 }
