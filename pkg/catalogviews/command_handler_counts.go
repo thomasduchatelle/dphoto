@@ -92,4 +92,21 @@ func (c *CommandHandlerAlbumSize) updateUserViews(ctx context.Context, albumIds 
 	return c.ViewWriteRepository.InsertAlbumSize(ctx, albumSizes)
 }
 
+func (c *CommandHandlerAlbumSize) AlbumShared(ctx context.Context, albumId catalog.AlbumId, userId usermodel.UserId) error {
+	counts, err := c.MediaCounterPort.CountMedia(ctx, albumId)
+	if err != nil {
+		return err
+	}
+
+	count, _ := counts[albumId]
+
+	return c.ViewWriteRepository.InsertAlbumSize(ctx, []AlbumSize{
+		{
+			AlbumId:    albumId,
+			Users:      []Availability{VisitorAvailability(userId)},
+			MediaCount: count,
+		},
+	})
+}
+
 // TODO Everything about the album should be deleted if the album is deleted

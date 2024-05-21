@@ -1,6 +1,7 @@
 package catalogacl_test
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -31,10 +32,11 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 	const userEmail = usermodel.UserId("pepper@stark.com")
 
 	tests := []struct {
-		name    string
-		fields  func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort)
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name         string
+		fields       func(t *testing.T) (aclcore.ScopeWriter, catalogacl.ShareAlbumCatalogPort)
+		args         args
+		wantObserved map[catalog.AlbumId][]usermodel.UserId
+		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should create the ACL rule when the album exists",
@@ -55,7 +57,10 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 
 				return scopeWriter, catalogMock
 			},
-			args:    args{owner, folderName, userEmail},
+			args: args{owner, folderName, userEmail},
+			wantObserved: map[catalog.AlbumId][]usermodel.UserId{
+				albumId: {userEmail},
+			},
 			wantErr: assert.NoError,
 		},
 		{
@@ -66,7 +71,8 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 
 				return mocks.NewScopeWriter(t), catalogMock
 			},
-			args: args{owner, folderName, userEmail},
+			args:         args{owner, folderName, userEmail},
+			wantObserved: nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundError, i)
 			},
@@ -79,22 +85,45 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 
 				return mocks.NewScopeWriter(t), catalogMock
 			},
-			args: args{owner, folderName, userEmail},
+			args:         args{owner, folderName, userEmail},
+			wantObserved: nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i) && assert.Contains(t, err.Error(), "TEST Something else", i)
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			observer := new(AlbumSharedObserverFake)
+
 			scopeWriter, catalogPort := tt.fields(t)
 			s := &catalogacl.ShareAlbumCase{
 				ScopeWriter: scopeWriter,
 				CatalogPort: catalogPort,
+				Observers:   []catalogacl.AlbumSharedObserver{observer},
 			}
 
 			err := s.ShareAlbumWith(catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName}, tt.args.userEmail, aclcore.AlbumVisitorScope)
-			tt.wantErr(t, err, fmt.Sprintf("ShareAlbumWith(%v, %v, %v)", tt.args.owner, tt.args.folderName, tt.args.userEmail))
+			if !tt.wantErr(t, err, fmt.Sprintf("ShareAlbumWith(%v, %v, %v)", tt.args.owner, tt.args.folderName, tt.args.userEmail)) {
+				return
+			}
+
+			assert.Equalf(t, tt.wantObserved, observer.Shared, "Shared=%+v", observer.Shared)
 		})
 	}
+}
+
+type AlbumSharedObserverFake struct {
+	Shared map[catalog.AlbumId][]usermodel.UserId
+}
+
+func (a *AlbumSharedObserverFake) AlbumShared(ctx context.Context, albumId catalog.AlbumId, userEmail usermodel.UserId) error {
+	if a.Shared == nil {
+		a.Shared = make(map[catalog.AlbumId][]usermodel.UserId)
+	}
+
+	previous, _ := a.Shared[albumId]
+	a.Shared[albumId] = append(previous, userEmail)
+	return nil
 }

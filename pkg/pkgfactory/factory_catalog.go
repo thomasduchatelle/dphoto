@@ -35,6 +35,7 @@ func CreateAlbumCase(ctx context.Context) *catalog.CreateAlbum {
 		repository,
 		repository,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 }
 
@@ -46,6 +47,7 @@ func CreateAlbumDeleteCase(ctx context.Context) *catalog.DeleteAlbum {
 		repository,
 		repository,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 }
 
@@ -59,6 +61,7 @@ func RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
 		repository,
 		repository,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 }
 
@@ -70,6 +73,7 @@ func AmendAlbumDatesCase(ctx context.Context) *catalog.AmendAlbumDates {
 		repository,
 		repository,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 }
 
@@ -77,5 +81,6 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 	repository := CatalogRepository(ctx)
 	return catalog.NewInsertMedias(
 		repository,
+		CommandHandlerAlbumSize(ctx),
 	)
 }
