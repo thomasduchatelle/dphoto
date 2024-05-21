@@ -76,12 +76,14 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 
 	if ignite {
 		ctx := context.TODO()
-		factory, err := awsfactory.NewAWSFactory(ctx, &awsfactory.StaticConfig{
+		pkgfactory.AWSConfigFactory = &awsfactory.StaticConfig{
 			Region:          viper.GetString(AwsRegion),
 			AccessKeyID:     viper.GetString(AwsKey),
 			SecretAccessKey: viper.GetString(AwsSecret),
 			Endpoint:        viper.GetString(AwsEndpoint),
-		})
+		}
+
+		factory, err := awsfactory.NewAWSFactory(ctx, pkgfactory.AWSConfigFactory)
 		if err != nil {
 			return err
 		}
