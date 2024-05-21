@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
+	"slices"
 )
 
 type ResourceIds map[ownermodel.Owner][]string
@@ -25,7 +26,6 @@ func NewResourceIds() ResourceIds {
 type ScopeReadRepositoryPort interface {
 	ListScopesByOwner(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error)
 	ListScopesByUser(ctx context.Context, id usermodel.UserId, types ...aclcore.ScopeType) ([]*aclcore.Scope, error)
-	ListScopesByResource(ctx context.Context, resourceIds ResourceIds, types ...aclcore.ScopeType) ([]*aclcore.Scope, error)
 }
 
 type CatalogToACLAdapter struct {
@@ -66,50 +66,44 @@ func (f *CatalogToACLAdapter) ListAlbumIdsSharedWithUser(ctx context.Context, us
 func (f *CatalogToACLAdapter) ListUsersWhoCanAccessAlbum(ctx context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalogviews.Availability, error) {
 	grid := make(map[catalog.AlbumId][]catalogviews.Availability)
 
-	ids := NewResourceIds()
+	resourceIdsByOwner := NewResourceIds()
 	for _, id := range albumIds {
-		ids.Append(id.Owner, id.FolderName.String())
+		resourceIdsByOwner.Append(id.Owner, id.FolderName.String())
 	}
 
-	visitorScopes, err := f.ScopeRepository.ListScopesByResource(ctx, ids, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, visitorScope := range visitorScopes {
-		albumId := catalog.AlbumId{Owner: visitorScope.ResourceOwner, FolderName: catalog.NewFolderName(visitorScope.ResourceId)}
-		availability := catalogviews.VisitorAvailability(visitorScope.GrantedTo)
-
-		if list, ok := grid[albumId]; ok {
-			grid[albumId] = append(list, availability)
-		} else {
-			grid[albumId] = []catalogviews.Availability{availability}
-		}
-
-	}
-
-	for owner := range ids {
-		ownerScopes, err := f.ScopeRepository.ListScopesByOwner(ctx, owner, aclcore.MainOwnerScope)
+	for owner, resourceIds := range resourceIdsByOwner {
+		scopes, err := f.ScopeRepository.ListScopesByOwner(ctx, owner, aclcore.MainOwnerScope, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, ownerScope := range ownerScopes {
-			for _, albumId := range albumIds {
-				if albumId.Owner == ownerScope.ResourceOwner {
-					availability := catalogviews.OwnerAvailability(ownerScope.GrantedTo)
+		for _, scope := range scopes {
+			if scope.Type == aclcore.MainOwnerScope {
+				for _, albumId := range albumIds {
+					if albumId.Owner == scope.ResourceOwner {
+						availability := catalogviews.OwnerAvailability(scope.GrantedTo)
 
-					if list, ok := grid[albumId]; ok {
-						grid[albumId] = append(list, availability)
-					} else {
-						grid[albumId] = []catalogviews.Availability{availability}
+						if list, ok := grid[albumId]; ok {
+							grid[albumId] = append(list, availability)
+						} else {
+							grid[albumId] = []catalogviews.Availability{availability}
+						}
+
+						break
 					}
+				}
 
-					break
+			} else if len(scope.ResourceId) > 0 && slices.Contains(resourceIds, scope.ResourceId) && (scope.Type == aclcore.AlbumVisitorScope || scope.Type == aclcore.AlbumContributorScope) {
+				albumId := catalog.AlbumId{Owner: scope.ResourceOwner, FolderName: catalog.NewFolderName(scope.ResourceId)}
+				availability := catalogviews.VisitorAvailability(scope.GrantedTo)
+
+				if list, ok := grid[albumId]; ok {
+					grid[albumId] = append(list, availability)
+				} else {
+					grid[albumId] = []catalogviews.Availability{availability}
 				}
 			}
 		}
-
 	}
 
 	return grid, nil

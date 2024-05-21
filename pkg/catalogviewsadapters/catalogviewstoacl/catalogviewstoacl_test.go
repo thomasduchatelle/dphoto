@@ -146,8 +146,8 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 				ScopeRepository: &ScopeReadRepositoryFake{
 					Scopes: []*aclcore.Scope{
 						ownerPermission(user1, owner1),
-						visitorAlbumPermission(user1, albumId2),
 						ownerPermission(user2, owner2),
+						visitorAlbumPermission(user1, albumId2),
 						visitorAlbumPermission(user2, albumId1),
 						visitorAlbumPermission(user3, albumId1),
 					},
@@ -158,13 +158,13 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 			},
 			want: map[catalog.AlbumId][]catalogviews.Availability{
 				albumId1: {
+					catalogviews.OwnerAvailability(user1),
 					catalogviews.VisitorAvailability(user2),
 					catalogviews.VisitorAvailability(user3),
-					catalogviews.OwnerAvailability(user1),
 				},
 				albumId2: {
-					catalogviews.VisitorAvailability(user1),
 					catalogviews.OwnerAvailability(user2),
+					catalogviews.VisitorAvailability(user1),
 				},
 			},
 			wantErr: assert.NoError,
