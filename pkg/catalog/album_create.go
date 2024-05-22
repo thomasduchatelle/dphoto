@@ -2,17 +2,16 @@ package catalog
 
 import (
 	"context"
-	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"time"
 )
 
 var (
 	AlbumNameMandatoryErr            = errors.New("Album name is mandatory")
 	AlbumStartAndEndDateMandatoryErr = errors.New("Start and End times are mandatory")
 	AlbumEndDateMustBeAfterStartErr  = errors.New("Album end must be strictly after its start")
+	AlbumFolderNameAlreadyTakenErr   = errors.New("Album folder name is already taken")
 )
 
 // NewAlbumCreate creates the service to create a new album, including the transfer of medias
@@ -23,12 +22,12 @@ func NewAlbumCreate(
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
+		FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
 		Observers: []CreateAlbumObserver{
 			&CreateAlbumExecutor{
 				InsertAlbumPort: InsertAlbumPort,
 			},
 			&CreateAlbumMediaTransfer{
-				FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
 				MediaTransfer: &MediaTransferExecutor{
 					TransferMediasRepository:  TransferMediasPort,
 					TimelineMutationObservers: TimelineMutationObservers,
@@ -36,40 +35,6 @@ func NewAlbumCreate(
 			},
 		},
 	}
-
-}
-
-// CreateAlbumRequest is a request to create a new album
-type CreateAlbumRequest struct {
-	Owner            ownermodel.Owner
-	Name             string
-	Start            time.Time
-	End              time.Time
-	ForcedFolderName string
-}
-
-func (c *CreateAlbumRequest) String() string {
-	const layout = "2006-01-02T03"
-	return fmt.Sprintf("[%s -> %s] %s (%s/%s)", c.Start.Format(layout), c.End.Format(layout), c.Name, c.Owner, c.ForcedFolderName)
-}
-
-func (c *CreateAlbumRequest) IsValid() error {
-	if err := c.Owner.IsValid(); err != nil {
-		return err
-	}
-	if c.Name == "" {
-		return AlbumNameMandatoryErr
-	}
-
-	if c.Start.IsZero() || c.End.IsZero() {
-		return AlbumStartAndEndDateMandatoryErr
-	}
-
-	if !c.End.After(c.Start) {
-		return AlbumEndDateMustBeAfterStartErr
-	}
-
-	return nil
 }
 
 type FindAlbumsByOwnerPort interface {
@@ -103,13 +68,13 @@ func (f MoveMediaPortFunc) MoveMedia(ctx context.Context, albumId AlbumId, media
 }
 
 type CreateAlbumObserver interface {
-	ObserveCreateAlbum(ctx context.Context, album Album) error
+	ObserveCreateAlbum(ctx context.Context, createdAlbum Album, existingAlbums []*Album) error
 }
 
-type CreateAlbumObserverFunc func(ctx context.Context, album Album) error
+type CreateAlbumObserverFunc func(ctx context.Context, album Album, existingAlbums []*Album) error
 
-func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, album Album) error {
-	return f(ctx, album)
+func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, createdAlbum Album, existingAlbums []*Album) error {
+	return f(ctx, createdAlbum, existingAlbums)
 }
 
 type MediaTransfer interface {
@@ -123,62 +88,46 @@ func (f MediaTransferFunc) Transfer(ctx context.Context, records MediaTransferRe
 }
 
 type CreateAlbum struct {
-	Observers []CreateAlbumObserver
+	FindAlbumsByOwnerPort FindAlbumsByOwnerPort
+	Observers             []CreateAlbumObserver
 }
 
 // Create creates a new album
 func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
-	if err := request.IsValid(); err != nil {
+	albums, err := c.FindAlbumsByOwnerPort.FindAlbumsByOwner(ctx, request.Owner)
+	if err != nil {
 		return nil, err
 	}
 
-	folderName := generateFolderName(request.Name, request.Start)
-	if request.ForcedFolderName != "" {
-		folderName = NewFolderName(request.ForcedFolderName)
-	}
-
-	albumId := AlbumId{
-		Owner:      request.Owner,
-		FolderName: folderName,
-	}
-	createdAlbum := Album{
-		AlbumId: albumId,
-		Name:    request.Name,
-		Start:   request.Start,
-		End:     request.End,
+	createdAlbum, err := request.Convert(albums)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, observer := range c.Observers {
-		err := observer.ObserveCreateAlbum(ctx, createdAlbum)
-		if err != nil {
+		if err := observer.ObserveCreateAlbum(ctx, createdAlbum, albums); err != nil {
 			return nil, err
 		}
 	}
 
 	log.Infof("Album created: %s [%s]", request, createdAlbum.AlbumId)
-	return &albumId, nil
+	return &createdAlbum.AlbumId, nil
 }
 
 type CreateAlbumExecutor struct {
 	InsertAlbumPort InsertAlbumPort
 }
 
-func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, album Album) error {
-	return c.InsertAlbumPort.InsertAlbum(ctx, album)
+func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, createdAlbum Album, existingAlbums []*Album) error {
+	return c.InsertAlbumPort.InsertAlbum(ctx, createdAlbum)
 }
 
 type CreateAlbumMediaTransfer struct {
-	MediaTransfer         MediaTransfer
-	FindAlbumsByOwnerPort FindAlbumsByOwnerPort
+	MediaTransfer MediaTransfer
 }
 
-func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
-	albums, err := c.FindAlbumsByOwnerPort.FindAlbumsByOwner(ctx, createdAlbum.AlbumId.Owner)
-	if err != nil {
-		return err
-	}
-
-	records, err := NewTimelineMutator().AddNew(albums, createdAlbum)
+func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, createdAlbum Album, existingAlbums []*Album) error {
+	records, err := NewTimelineAggregate(existingAlbums).AddNew(createdAlbum)
 	if err != nil {
 		return err
 	}

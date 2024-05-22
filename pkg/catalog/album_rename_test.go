@@ -49,6 +49,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 		InsertAlbumPort           func(t *testing.T) catalog.InsertAlbumPort
 		DeleteAlbumRepositoryPort func(t *testing.T) catalog.DeleteAlbumRepositoryPort
 		TransferMedias            func(t *testing.T) catalog.TransferMediasRepositoryPort
+		FindAlbumsByOwner         func(t *testing.T) catalog.FindAlbumsByOwnerPort
 		TimelineMutationObservers func(t *testing.T) catalog.TimelineMutationObserver
 	}
 	type args struct {
@@ -67,6 +68,9 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				UpdateAlbumName:           expectUpdateAlbumNameNotCalled(),
 				InsertAlbumPort:           expectAlbumInserted(newAlbum),
 				DeleteAlbumRepositoryPort: expectDeleteAlbumRepositoryPortCalled(existingAlbum.AlbumId),
+				FindAlbumsByOwner: func(t *testing.T) catalog.FindAlbumsByOwnerPort {
+					return make(FindAlbumsByOwnerFake)
+				},
 				TransferMedias: expectTransferMediasRepositoryPortCalled(catalog.MediaTransferRecords{
 					newAlbum.AlbumId: []catalog.MediaSelector{
 						{
@@ -96,6 +100,9 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				InsertAlbumPort:           stubInsertAlbumPortWithError(testError),
 				DeleteAlbumRepositoryPort: expectDeleteAlbumRepositoryPortNotCalled(),
 				TransferMedias:            expectTransferMediasPortNotCalled(),
+				FindAlbumsByOwner: func(t *testing.T) catalog.FindAlbumsByOwnerPort {
+					return make(FindAlbumsByOwnerFake)
+				},
 				TimelineMutationObservers: expectTimelineMutationObserverNotCalled(),
 			},
 			args: args{
@@ -119,6 +126,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				tt.fields.InsertAlbumPort(t),
 				tt.fields.DeleteAlbumRepositoryPort(t),
 				tt.fields.TransferMedias(t),
+				tt.fields.FindAlbumsByOwner(t),
 				tt.fields.TimelineMutationObservers(t),
 			)
 

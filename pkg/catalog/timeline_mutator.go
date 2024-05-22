@@ -13,37 +13,6 @@ func NewTimelineMutator() *TimelineMutator {
 	return new(TimelineMutator)
 }
 
-func (t TimelineMutator) AddNew(currentAlbums []*Album, addedAlbum Album) (MediaTransferRecords, error) {
-	albums := append(currentAlbums, &addedAlbum)
-
-	timeline, err := NewTimeline(albums)
-	if err != nil {
-		return nil, err
-	}
-
-	records := make(MediaTransferRecords)
-	for _, seg := range timeline.FindForAlbum(addedAlbum.AlbumId) {
-		if len(seg.Albums) > 1 {
-			selector := MediaSelector{
-				FromAlbums: extractAlbumIds(seg.Albums[1:]),
-				Start:      seg.Start,
-				End:        seg.End,
-			}
-			if selectors, found := records[addedAlbum.AlbumId]; found {
-				records[addedAlbum.AlbumId] = append(selectors, selector)
-			} else {
-				records[addedAlbum.AlbumId] = []MediaSelector{selector}
-			}
-		}
-	}
-
-	if len(records) == 0 {
-		return nil, nil
-	}
-
-	return records, nil
-}
-
 func (t TimelineMutator) RemoveAlbum(currentAlbums []*Album, deletedAlbumId AlbumId) (MediaTransferRecords, []MediaSelector, error) {
 	records := make(MediaTransferRecords)
 	orphaned := make([]MediaSelector, 0)

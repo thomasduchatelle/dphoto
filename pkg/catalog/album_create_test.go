@@ -44,6 +44,7 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 		createAlbum.AlbumId: []catalog.MediaId{"media-1", "media-2"},
 	}
 	testErrorInsertingAlbum := errors.Errorf("TEST error insering album")
+	testErrorFindingAlbums := errors.New("TEST error finding albums")
 
 	type fields struct {
 		FindAlbumsByOwnerPort    func(t *testing.T) catalog.FindAlbumsByOwnerPort
@@ -88,6 +89,21 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 				return assert.ErrorIs(t, err, testErrorInsertingAlbum)
 			},
 		},
+		{
+			name: "it should list the existing albums before creating the new one (otherwise there are duplicates in the timeline)",
+			fields: fields{
+				FindAlbumsByOwnerPort:    stubFindAlbumsByOwnerPortWithError(testErrorFindingAlbums),
+				InsertAlbumPort:          stubInsertAlbumPortWithError(testErrorInsertingAlbum),
+				TransferMediasPort:       stubTransferMediaPort(transferredMedias),
+				TimelineMutationObserver: expectTimelineMutationObserverNotCalled(),
+			},
+			args: args{
+				request: standardRequest,
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, testErrorFindingAlbums)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -106,7 +122,7 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 
 func TestCreateAlbum_Create(t *testing.T) {
 	const owner = "tonystark"
-	album := catalog.Album{
+	ironmanOneAlbum := catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      owner,
 			FolderName: catalog.FolderName("/2024-04_Ironman_1"),
@@ -117,34 +133,35 @@ func TestCreateAlbum_Create(t *testing.T) {
 	}
 	standardRequest := catalog.CreateAlbumRequest{
 		Owner: owner,
-		Name:  album.Name,
-		Start: album.Start,
-		End:   album.End,
+		Name:  ironmanOneAlbum.Name,
+		Start: ironmanOneAlbum.Start,
+		End:   ironmanOneAlbum.End,
 	}
 
 	type fields struct {
-		Observer func(t *testing.T) catalog.CreateAlbumObserver
+		FindAlbumsByOwnerPort catalog.FindAlbumsByOwnerPort
 	}
 	type args struct {
 		request catalog.CreateAlbumRequest
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name         string
+		fields       fields
+		args         args
+		wantObserved []catalog.Album
+		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should NOT create the album without owner",
 			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
+				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
 			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: "",
 					Name:  "foobar",
-					Start: album.Start,
-					End:   album.End,
+					Start: ironmanOneAlbum.Start,
+					End:   ironmanOneAlbum.End,
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -154,14 +171,14 @@ func TestCreateAlbum_Create(t *testing.T) {
 		{
 			name: "it should NOT create the album without name",
 			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
+				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
 			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
 					Name:  "",
-					Start: album.Start,
-					End:   album.End,
+					Start: ironmanOneAlbum.Start,
+					End:   ironmanOneAlbum.End,
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -171,13 +188,13 @@ func TestCreateAlbum_Create(t *testing.T) {
 		{
 			name: "it should NOT create the album without start date",
 			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
+				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
 			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
 					Name:  "foobar",
-					End:   album.End,
+					End:   ironmanOneAlbum.End,
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -187,13 +204,13 @@ func TestCreateAlbum_Create(t *testing.T) {
 		{
 			name: "it should NOT create the album without end date",
 			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
+				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
 			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
 					Name:  "foobar",
-					Start: album.Start,
+					Start: ironmanOneAlbum.Start,
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -203,14 +220,14 @@ func TestCreateAlbum_Create(t *testing.T) {
 		{
 			name: "it should NOT create the album with start and end reversed",
 			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
+				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
 			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
 					Name:  "foobar",
-					Start: album.End,
-					End:   album.Start,
+					Start: ironmanOneAlbum.End,
+					End:   ironmanOneAlbum.Start,
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -220,53 +237,77 @@ func TestCreateAlbum_Create(t *testing.T) {
 		{
 			name: "it should create the album with a generated name",
 			fields: fields{
-				Observer: expectCreateAlbumObserved(album),
+				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
 			},
 			args: args{
 				request: standardRequest,
 			},
-			wantErr: assert.NoError,
+			wantObserved: []catalog.Album{ironmanOneAlbum},
+			wantErr:      assert.NoError,
 		},
 		{
 			name: "it should create the album with a forced name",
 			fields: fields{
-				Observer: expectCreateAlbumObserved(catalog.Album{
-					AlbumId: catalog.AlbumId{
-						Owner:      owner,
-						FolderName: "/Phase_1_Avenger",
-					},
-					Name:  "Avenger 1",
-					Start: album.Start,
-					End:   album.End,
-				}),
+				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
 			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner:            owner,
 					Name:             "Avenger 1",
-					Start:            album.Start,
-					End:              album.End,
+					Start:            ironmanOneAlbum.Start,
+					End:              ironmanOneAlbum.End,
 					ForcedFolderName: "Phase_1_Avenger",
 				},
 			},
+			wantObserved: []catalog.Album{{
+				AlbumId: catalog.AlbumId{
+					Owner:      owner,
+					FolderName: "/Phase_1_Avenger",
+				},
+				Name:  "Avenger 1",
+				Start: ironmanOneAlbum.Start,
+				End:   ironmanOneAlbum.End,
+			}},
 			wantErr: assert.NoError,
+		},
+		{
+			name: "it should NOT create the album if the forced name is already taken",
+			fields: fields{
+				FindAlbumsByOwnerPort: FindAlbumsByOwnerFake{
+					owner: []*catalog.Album{&ironmanOneAlbum},
+				},
+			},
+			args: args{
+				request: catalog.CreateAlbumRequest{
+					Owner:            owner,
+					Name:             "A different name",
+					Start:            ironmanOneAlbum.Start,
+					End:              ironmanOneAlbum.End,
+					ForcedFolderName: ironmanOneAlbum.AlbumId.FolderName.String(),
+				},
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, catalog.AlbumFolderNameAlreadyTakenErr)
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var observers []catalog.CreateAlbumObserver
-			{
-			}
-			if tt.fields.Observer != nil {
-				observers = append(observers, tt.fields.Observer(t))
-			}
+			observer := new(CreateAlbumObserverFake)
 			c := &catalog.CreateAlbum{
-				Observers: observers,
+				FindAlbumsByOwnerPort: tt.fields.FindAlbumsByOwnerPort,
+				Observers: []catalog.CreateAlbumObserver{
+					observer,
+				},
 			}
 
 			_, err := c.Create(context.TODO(), tt.args.request)
-			tt.wantErr(t, err, fmt.Sprintf("Create(%v)", tt.args.request))
+			if !tt.wantErr(t, err, fmt.Sprintf("Create(%v)", tt.args.request)) {
+				return
+			}
+
+			assert.Equal(t, tt.wantObserved, observer.CreatedAlbums)
 		})
 	}
 }
@@ -312,11 +353,11 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 	}
 
 	type fields struct {
-		MediaTransfer         func(t *testing.T) catalog.MediaTransfer
-		FindAlbumsByOwnerPort func(t *testing.T) catalog.FindAlbumsByOwnerPort
+		MediaTransfer func(t *testing.T) catalog.MediaTransfer
 	}
 	type args struct {
-		createdAlbum catalog.Album
+		createdAlbum   catalog.Album
+		existingAlbums []*catalog.Album
 	}
 	tests := []struct {
 		name    string
@@ -327,8 +368,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		{
 			name: "it should create the album with a generated name",
 			fields: fields{
-				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner),
-				MediaTransfer:         expectMediaTransferCalled(nil),
+				MediaTransfer: expectMediaTransferCalled(nil),
 			},
 			args: args{
 				createdAlbum: album,
@@ -338,7 +378,6 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		{
 			name: "it should re-allocate medias from a lower priority album",
 			fields: fields{
-				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, lifetimeAlbum),
 				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
 					album.AlbumId: {
 						{
@@ -350,14 +389,14 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 				}),
 			},
 			args: args{
-				createdAlbum: album,
+				createdAlbum:   album,
+				existingAlbums: []*catalog.Album{lifetimeAlbum},
 			},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "it should re-allocate medias from 2 lower priority albums ; selector still in one single block",
 			fields: fields{
-				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, lifetimeAlbum, remainingLifetimeAlbum),
 				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
 					album.AlbumId: {
 						{
@@ -369,14 +408,14 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 				}),
 			},
 			args: args{
-				createdAlbum: album,
+				createdAlbum:   album,
+				existingAlbums: []*catalog.Album{lifetimeAlbum, remainingLifetimeAlbum},
 			},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "it should re-allocate medias from 1 lower priority albums, avoiding 1 high priority (selectors in two blocks)",
 			fields: fields{
-				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, lifetimeAlbum, highPriorityAlbum),
 				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
 					album.AlbumId: {
 						{
@@ -393,7 +432,8 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 				}),
 			},
 			args: args{
-				createdAlbum: album,
+				createdAlbum:   album,
+				existingAlbums: []*catalog.Album{lifetimeAlbum, highPriorityAlbum},
 			},
 			wantErr: assert.NoError,
 		},
@@ -401,10 +441,9 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &catalog.CreateAlbumMediaTransfer{
-				MediaTransfer:         tt.fields.MediaTransfer(t),
-				FindAlbumsByOwnerPort: tt.fields.FindAlbumsByOwnerPort(t),
+				MediaTransfer: tt.fields.MediaTransfer(t),
 			}
-			tt.wantErr(t, c.ObserveCreateAlbum(context.Background(), tt.args.createdAlbum), fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum))
+			tt.wantErr(t, c.ObserveCreateAlbum(context.Background(), tt.args.createdAlbum, tt.args.existingAlbums), fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum))
 		})
 	}
 }
@@ -419,7 +458,7 @@ func expectMediaTransferCalled(records catalog.MediaTransferRecords) func(t *tes
 
 func expectCreateAlbumObserveNotCalled() func(t *testing.T) catalog.CreateAlbumObserver {
 	return func(t *testing.T) catalog.CreateAlbumObserver {
-		return catalog.CreateAlbumObserverFunc(func(ctx context.Context, album catalog.Album) error {
+		return catalog.CreateAlbumObserverFunc(func(ctx context.Context, createdAlbum catalog.Album, existingAlbums []*catalog.Album) error {
 			assert.Fail(t, "CreateAlbumObserverFunc", "should not be called")
 			return nil
 		})
@@ -438,15 +477,20 @@ func stubFindAlbumsByOwnerWith(expectedOwner ownermodel.Owner, albums ...*catalo
 	}
 }
 
-func expectCreateAlbumObserved(album catalog.Album) func(t *testing.T) catalog.CreateAlbumObserver {
-	return func(t *testing.T) catalog.CreateAlbumObserver {
-		observer := mocks.NewCreateAlbumObserver(t)
-		observer.EXPECT().
-			ObserveCreateAlbum(mock.Anything, album).
-			Return(nil).
-			Once()
-		return observer
-	}
+type FindAlbumsByOwnerFake map[ownermodel.Owner][]*catalog.Album
+
+func (f FindAlbumsByOwnerFake) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
+	albums, _ := f[owner]
+	return albums, nil
+}
+
+type CreateAlbumObserverFake struct {
+	CreatedAlbums []catalog.Album
+}
+
+func (c *CreateAlbumObserverFake) ObserveCreateAlbum(ctx context.Context, createdAlbum catalog.Album, existingAlbums []*catalog.Album) error {
+	c.CreatedAlbums = append(c.CreatedAlbums, createdAlbum)
+	return nil
 }
 
 func expectAlbumInserted(album catalog.Album) func(t *testing.T) catalog.InsertAlbumPort {

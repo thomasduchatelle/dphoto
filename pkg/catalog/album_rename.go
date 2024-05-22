@@ -20,6 +20,7 @@ func NewRenameAlbum(
 	InsertAlbumPort InsertAlbumPort,
 	DeleteAlbumRepositoryPort DeleteAlbumRepositoryPort,
 	TransferMedias TransferMediasRepositoryPort,
+	FindAlbumsByOwner FindAlbumsByOwnerPort,
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *RenameAlbum {
 
@@ -29,6 +30,7 @@ func NewRenameAlbum(
 		RenameAlbumObservers: []RenameAlbumObserver{
 			&RenameAlbumReplacer{
 				CreateAlbum: CreateAlbum{
+					FindAlbumsByOwnerPort: FindAlbumsByOwner,
 					Observers: []CreateAlbumObserver{
 						&CreateAlbumExecutor{
 							InsertAlbumPort: InsertAlbumPort,
