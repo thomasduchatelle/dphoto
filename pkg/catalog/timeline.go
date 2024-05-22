@@ -74,6 +74,9 @@ func NewTimeline(albums []*Album) (*Timeline, error) {
 	slices.SortFunc(albums, func(a, b *Album) int {
 		return -int(startsAscComparator(a, b))
 	})
+	if err := hasDuplicates(albums); err != nil {
+		return nil, err
+	}
 
 	timeline := &Timeline{
 		albums: albums,
@@ -87,14 +90,7 @@ func NewTimeline(albums []*Album) (*Timeline, error) {
 		priorityHeap: newAlbumHeap(priorityDescComparator),
 	}
 
-	for index, next := range albums {
-		if index > 0 && albums[index-1].Start.After(next.Start) {
-			return nil, errors.Errorf("Albums must be sorted by Start date ASC, %s [index %d] is before %s", next.String(), index, albums[index-1].String())
-		}
-		if !next.End.After(next.Start) {
-			return nil, errors.Errorf("Invalid album, end date must be after start date: %s", next.String())
-		}
-
+	for _, next := range albums {
 		for lead, hasLead := cursor.priorityHeap.Head(); hasLead && lead.End.Before(next.Start); lead, hasLead = cursor.priorityHeap.Head() {
 			electNewLeader(cursor, lead.End, timeline)
 		}
@@ -110,6 +106,17 @@ func NewTimeline(albums []*Album) (*Timeline, error) {
 	}
 
 	return timeline, nil
+}
+
+func hasDuplicates(albums []*Album) error {
+	ids := make(map[AlbumId]struct{})
+	for _, album := range albums {
+		if _, exists := ids[album.AlbumId]; exists {
+			return errors.Wrapf(DuplicateError, "album %s is duplicated", album.AlbumId)
+		}
+		ids[album.AlbumId] = struct{}{}
+	}
+	return nil
 }
 
 func electNewLeader(cursor *builderCursor, atTheTime time.Time, timeline *Timeline) {

@@ -28,7 +28,7 @@ func NewAlbumCreate(
 				InsertAlbumPort: InsertAlbumPort,
 			},
 			&CreateAlbumMediaTransfer{
-				FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
+				FindAlbumsByOwnerPort: FindAlbumsByOwnerPort, // FIXME albums already inserted ; it causes duplicates in the timeline
 				MediaTransfer: &MediaTransferExecutor{
 					TransferMediasRepository:  TransferMediasPort,
 					TimelineMutationObservers: TimelineMutationObservers,
@@ -36,7 +36,6 @@ func NewAlbumCreate(
 			},
 		},
 	}
-
 }
 
 // CreateAlbumRequest is a request to create a new album

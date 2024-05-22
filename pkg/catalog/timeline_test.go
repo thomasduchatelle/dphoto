@@ -207,7 +207,7 @@ func TestNewTimeline(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewTimeline(tt.args)
 
-			if !tt.wantErr(t, err, tt.name) {
+			if !tt.wantErr(t, err, tt.name) || err != nil {
 				return
 			}
 
