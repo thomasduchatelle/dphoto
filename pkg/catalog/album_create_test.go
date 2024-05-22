@@ -256,13 +256,13 @@ func TestCreateAlbum_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var observers []catalog.CreateAlbumObserver
-			{
-			}
 			if tt.fields.Observer != nil {
 				observers = append(observers, tt.fields.Observer(t))
 			}
 			c := &catalog.CreateAlbum{
-				Observers: observers,
+				CreateAlbumAggregate: catalog.CreateAlbumAggregate{
+					Observers: observers,
+				},
 			}
 
 			_, err := c.Create(context.TODO(), tt.args.request)

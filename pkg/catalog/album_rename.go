@@ -29,9 +29,11 @@ func NewRenameAlbum(
 		RenameAlbumObservers: []RenameAlbumObserver{
 			&RenameAlbumReplacer{
 				CreateAlbum: CreateAlbum{
-					Observers: []CreateAlbumObserver{
-						&CreateAlbumExecutor{
-							InsertAlbumPort: InsertAlbumPort,
+					CreateAlbumAggregate: CreateAlbumAggregate{
+						Observers: []CreateAlbumObserver{
+							&CreateAlbumExecutor{
+								InsertAlbumPort: InsertAlbumPort,
+							},
 						},
 					},
 				},

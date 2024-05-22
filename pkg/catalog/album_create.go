@@ -23,15 +23,17 @@ func NewAlbumCreate(
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
-		Observers: []CreateAlbumObserver{
-			&CreateAlbumExecutor{
-				InsertAlbumPort: InsertAlbumPort,
-			},
-			&CreateAlbumMediaTransfer{
-				FindAlbumsByOwnerPort: FindAlbumsByOwnerPort, // FIXME albums already inserted ; it causes duplicates in the timeline
-				MediaTransfer: &MediaTransferExecutor{
-					TransferMediasRepository:  TransferMediasPort,
-					TimelineMutationObservers: TimelineMutationObservers,
+		CreateAlbumAggregate: CreateAlbumAggregate{
+			Observers: []CreateAlbumObserver{
+				&CreateAlbumExecutor{
+					InsertAlbumPort: InsertAlbumPort,
+				},
+				&CreateAlbumMediaTransfer{
+					FindAlbumsByOwnerPort: FindAlbumsByOwnerPort, // FIXME albums already inserted ; it causes duplicates in the timeline
+					MediaTransfer: &MediaTransferExecutor{
+						TransferMediasRepository:  TransferMediasPort,
+						TimelineMutationObservers: TimelineMutationObservers,
+					},
 				},
 			},
 		},
@@ -45,6 +47,10 @@ type CreateAlbumRequest struct {
 	Start            time.Time
 	End              time.Time
 	ForcedFolderName string
+}
+
+type CreateAlbum struct {
+	CreateAlbumAggregate
 }
 
 func (c *CreateAlbumRequest) String() string {
@@ -121,12 +127,12 @@ func (f MediaTransferFunc) Transfer(ctx context.Context, records MediaTransferRe
 	return f(ctx, records)
 }
 
-type CreateAlbum struct {
+type CreateAlbumAggregate struct {
 	Observers []CreateAlbumObserver
 }
 
 // Create creates a new album
-func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
+func (c *CreateAlbumAggregate) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
 	if err := request.IsValid(); err != nil {
 		return nil, err
 	}
