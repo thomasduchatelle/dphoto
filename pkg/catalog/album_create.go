@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"time"
 )
@@ -23,7 +22,7 @@ func NewAlbumCreate(
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
-		CreateAlbumAggregate: CreateAlbumAggregate{
+		CreateAlbumValidator: CreateAlbumValidator{
 			Observers: []CreateAlbumObserver{
 				&CreateAlbumExecutor{
 					InsertAlbumPort: InsertAlbumPort,
@@ -49,10 +48,6 @@ type CreateAlbumRequest struct {
 	ForcedFolderName string
 }
 
-type CreateAlbum struct {
-	CreateAlbumAggregate
-}
-
 func (c *CreateAlbumRequest) String() string {
 	const layout = "2006-01-02T03"
 	return fmt.Sprintf("[%s -> %s] %s (%s/%s)", c.Start.Format(layout), c.End.Format(layout), c.Name, c.Owner, c.ForcedFolderName)
@@ -75,6 +70,10 @@ func (c *CreateAlbumRequest) IsValid() error {
 	}
 
 	return nil
+}
+
+type CreateAlbum struct {
+	CreateAlbumValidator
 }
 
 type FindAlbumsByOwnerPort interface {
@@ -127,43 +126,6 @@ func (f MediaTransferFunc) Transfer(ctx context.Context, records MediaTransferRe
 	return f(ctx, records)
 }
 
-type CreateAlbumAggregate struct {
-	Observers []CreateAlbumObserver
-}
-
-// Create creates a new album
-func (c *CreateAlbumAggregate) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
-	if err := request.IsValid(); err != nil {
-		return nil, err
-	}
-
-	folderName := generateFolderName(request.Name, request.Start)
-	if request.ForcedFolderName != "" {
-		folderName = NewFolderName(request.ForcedFolderName)
-	}
-
-	albumId := AlbumId{
-		Owner:      request.Owner,
-		FolderName: folderName,
-	}
-	createdAlbum := Album{
-		AlbumId: albumId,
-		Name:    request.Name,
-		Start:   request.Start,
-		End:     request.End,
-	}
-
-	for _, observer := range c.Observers {
-		err := observer.ObserveCreateAlbum(ctx, createdAlbum)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	log.Infof("Album created: %s [%s]", request, createdAlbum.AlbumId)
-	return &albumId, nil
-}
-
 type CreateAlbumExecutor struct {
 	InsertAlbumPort InsertAlbumPort
 }
@@ -183,7 +145,7 @@ func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, creat
 		return err
 	}
 
-	records, err := NewTimelineMutator().AddNew(albums, createdAlbum)
+	records, err := NewTimelineAggregate(albums).AddNew(createdAlbum)
 	if err != nil {
 		return err
 	}
