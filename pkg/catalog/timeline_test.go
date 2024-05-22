@@ -42,7 +42,7 @@ func TestNewTimeline(t *testing.T) {
 		name    string
 		args    []*Album
 		want    []simplifiedSegment
-		wantErr bool
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			"it should support albums following up each-other",
@@ -54,7 +54,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/2020-Q3", "2020-07-01T00", "2020-10-01T00"),
 				newSimplifiedSegment("/2020-Q4", "2020-10-01T00", "2021-01-01T00"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should support albums with a gap",
@@ -66,7 +66,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/2020-Q3", "2020-07-01T00", "2020-10-01T00"),
 				newSimplifiedSegment("/2020-Q4", "2020-11-01T00", "2021-02-01T00"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should support albums overlapping - priority to the first",
@@ -78,7 +78,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-01", "2020-12-01T00", "2020-12-11T00", "/A-02"),
 				newSimplifiedSegment("/A-02", "2020-12-11T00", "2020-12-21T12"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should support albums overlapping - priority to the second",
@@ -90,7 +90,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-01", "2020-12-01T00", "2020-12-10T12"),
 				newSimplifiedSegment("/A-02", "2020-12-10T12", "2020-12-15T12", "/A-01"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should support albums overlapping - priority to the shortest",
@@ -106,7 +106,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-02", "2020-12-04T00", "2020-12-05T00", "/A-01"),
 				newSimplifiedSegment("/A-01", "2020-12-05T00", "2020-12-06T00"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should support albums starting at the same time",
@@ -120,7 +120,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-01", "2020-12-05T00", "2020-12-06T00", "/A-03"),
 				newSimplifiedSegment("/A-03", "2020-12-06T00", "2020-12-07T00"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should support albums ending at the same time",
@@ -134,7 +134,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-02", "2020-12-02T00", "2020-12-03T00", "/A-01"),
 				newSimplifiedSegment("/A-03", "2020-12-03T00", "2020-12-06T00", "/A-02", "/A-01"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should not have empty segment [2 back to back albums - 01 = 02 > 99]",
@@ -147,7 +147,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-01", "2024-01-01T00", "2024-04-01T00", "/A-99"),
 				newSimplifiedSegment("/A-02", "2024-04-01T00", "2024-07-01T00", "/A-99"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should have a segment for 99 [2 back to back albums - 01 > 99 > 02]",
@@ -161,7 +161,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-99", "2024-04-01T00", "2024-04-02T00", "/A-02"),
 				newSimplifiedSegment("/A-02", "2024-04-02T00", "2024-07-01T00"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should have a segment for 99 [2 back to back albums - 02 > 99 > 01]",
@@ -175,7 +175,7 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-99", "2024-02-01T00", "2024-04-01T00", "/A-01"),
 				newSimplifiedSegment("/A-02", "2024-04-01T00", "2024-05-01T00", "/A-99"),
 			},
-			false,
+			assert.NoError,
 		},
 		{
 			"it should have a segment for 99 [2 back to back albums - 99 > 01 = 03]",
@@ -189,7 +189,17 @@ func TestNewTimeline(t *testing.T) {
 				newSimplifiedSegment("/A-99", "2024-03-20T00", "2024-04-10T00", "/A-01", "/A-02"),
 				newSimplifiedSegment("/A-02", "2024-04-10T00", "2024-07-01T00"),
 			},
-			false,
+			assert.NoError,
+		},
+		{
+			name: "it should not fail if two albums with same dates are added to the timeline",
+			args: []*Album{
+				newAlbum("/A-01", "2024-01-01T00", "2024-04-01T00"),
+				newAlbum("/A-01", "2024-01-01T00", "2024-04-01T00"),
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, DuplicateError, "got:", err.Error())
+			},
 		},
 	}
 
@@ -197,17 +207,16 @@ func TestNewTimeline(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewTimeline(tt.args)
 
-			if !tt.wantErr && assert.NoError(t, err, tt.name) && err == nil {
-				segments := make([]simplifiedSegment, len(got.segments))
-				for i, s := range got.segments {
-					segments[i] = toSimplifiedSegment(&s)
-				}
-
-				assert.Equal(t, tt.want, segments, tt.name)
-
-			} else if tt.wantErr && assert.Error(t, err, tt.name) {
-				// all good
+			if !tt.wantErr(t, err, tt.name) {
+				return
 			}
+
+			segments := make([]simplifiedSegment, len(got.segments))
+			for i, s := range got.segments {
+				segments[i] = toSimplifiedSegment(&s)
+			}
+
+			assert.Equal(t, tt.want, segments, tt.name)
 		})
 	}
 }
@@ -370,9 +379,9 @@ func TestFindAt_FindBetween(t *testing.T) {
 	}
 }
 
-func TestTimeline_FindForAlbum(t *testing.T) {
-	a := assert.New(t)
-	const owner = "ironman"
+func TestTimeline_FindForAlbum(t1 *testing.T) {
+	collection := AlbumCollection()
+	christmasHolidays := collection[2]
 
 	type Want struct {
 		start    string
@@ -380,28 +389,91 @@ func TestTimeline_FindForAlbum(t *testing.T) {
 		allNames []string
 	}
 
-	timeline, err := NewTimeline(AlbumCollection())
-	if a.NoError(err) {
-		segments := timeline.FindForAlbum(AlbumId{Owner: owner, FolderName: "/Christmas_Holidays"})
+	type fields struct {
+		AlbumCollection []*Album
+	}
+	type args struct {
+		albumId AlbumId
+	}
+	tests := []struct {
+		name         string
+		fields       fields
+		args         args
+		wantSegments []Want
+	}{
+		{
+			name: "it should return no segment if there is no albums",
+			fields: fields{
+				AlbumCollection: nil,
+			},
+			args: args{
+				albumId: christmasHolidays.AlbumId,
+			},
+			wantSegments: nil,
+		},
+		{
+			name: "it should return one segment if there is a single albums",
+			fields: fields{
+				AlbumCollection: []*Album{christmasHolidays},
+			},
+			args: args{
+				albumId: christmasHolidays.AlbumId,
+			},
+			wantSegments: []Want{
+				{"2020-12-18T00", "2021-01-04T00", []string{"/Christmas_Holidays"}},
+			},
+		},
+		{
+			name: "it should return one segment when another quarter is added",
+			fields: fields{
+				AlbumCollection: []*Album{collection[0], collection[1]},
+			},
+			args: args{
+				albumId: collection[1].AlbumId,
+			},
+			wantSegments: []Want{
+				{"2020-10-01T00", "2021-01-01T00", []string{"/2020-Q4"}},
+			},
+		},
+		{
+			name: "it should find all segments for the Christmas album",
+			fields: fields{
+				AlbumCollection: collection,
+			},
+			args: args{
+				albumId: christmasHolidays.AlbumId,
+			},
+			wantSegments: []Want{
+				{"2020-12-26T00", "2020-12-31T18", []string{"/Christmas_Holidays", "/2020-Q4"}},
+				{"2021-01-01T18", "2021-01-04T00", []string{"/Christmas_Holidays", "/2021-Q1"}},
+			},
+		},
+	}
 
-		var got []Want
-		for _, seg := range segments {
-			var names []string
-			for _, a := range seg.Albums {
-				names = append(names, a.FolderName.String())
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t *testing.T) {
+			timeline, err := NewTimeline(tt.fields.AlbumCollection)
+			if !assert.NoError(t, err) {
+				return
 			}
 
-			got = append(got, Want{
-				start:    seg.Start.Format(layout),
-				end:      seg.End.Format(layout),
-				allNames: names,
-			})
-		}
+			gotSegments := timeline.FindForAlbum(tt.args.albumId)
 
-		a.Equal([]Want{
-			{"2020-12-26T00", "2020-12-31T18", []string{"/Christmas_Holidays", "/2020-Q4"}},
-			{"2021-01-01T18", "2021-01-04T00", []string{"/Christmas_Holidays", "/2021-Q1"}},
-		}, got)
+			var got []Want
+			for _, seg := range gotSegments {
+				var names []string
+				for _, a := range seg.Albums {
+					names = append(names, a.FolderName.String())
+				}
+
+				got = append(got, Want{
+					start:    seg.Start.Format(layout),
+					end:      seg.End.Format(layout),
+					allNames: names,
+				})
+			}
+			assert.Equalf(t, tt.wantSegments, got, "FindForAlbum(%v)", tt.args.albumId)
+		})
 	}
 }
 

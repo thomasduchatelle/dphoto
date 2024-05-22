@@ -1,11 +1,16 @@
 package catalog
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"slices"
 	"sort"
 	"strings"
 	"time"
+)
+
+var (
+	DuplicateError = errors.New("Timeline cannot contains duplicated albums")
 )
 
 // Timeline can be used to find to which album a media will belongs.
@@ -38,6 +43,9 @@ func (c *builderCursor) closeCurrent(end time.Time, timeline *Timeline) {
 			if album.End.After(c.start) && album.Start.Before(end) {
 				albums = append(albums, album)
 			}
+		}
+		if len(albums) == 0 {
+			panic(fmt.Sprintf("TIMELINE - closeCurrent(%s, %v) on builderCursor[%v] ; \n%s\n%s", end, timeline, c, timeline.Debug(), c.Debug()))
 		}
 		slices.SortFunc(albums, func(a, b *Album) int {
 			return -int(priorityDescComparator(a, b))
@@ -312,4 +320,37 @@ func startsAscComparator(a, b *Album) int64 {
 
 func albumDuration(album *Album) time.Duration {
 	return album.End.Sub(album.Start)
+}
+
+func (s *segment) String() string {
+	var albums []string
+	for _, album := range s.albums {
+		albums = append(albums, album.String())
+	}
+	return fmt.Sprintf("%s -> %s [%s]", s.from, s.to, strings.Join(albums, ", "))
+}
+
+func (t *Timeline) Debug() string {
+	var debug []string
+	debug = append(debug, "Album(s) in the timeline")
+	for _, album := range t.albums {
+		debug = append(debug, fmt.Sprintf("- %s", album.String()))
+	}
+
+	debug = append(debug, "Segment(s) in the timeline")
+	for _, seg := range t.segments {
+		debug = append(debug, fmt.Sprintf("- %s", seg.String()))
+	}
+
+	return strings.Join(debug, "\n")
+}
+
+func (c *builderCursor) Debug() string {
+	var debug []string
+	debug = append(debug, "[builderCursor.Debug()] Album(s) in the priorityHeap:")
+	for _, album := range c.priorityHeap.AsArray() {
+		debug = append(debug, fmt.Sprintf("- %s", album.String()))
+	}
+
+	return strings.Join(debug, "\n")
 }
