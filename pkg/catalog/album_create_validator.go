@@ -5,14 +5,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type CreateAlbumValidator struct {
-	Observers []CreateAlbumObserver
-}
+type CreateAlbumValidator struct{}
 
 // Create creates a new album
-func (c *CreateAlbumValidator) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
+func (c *CreateAlbumValidator) Create(ctx context.Context, request CreateAlbumRequest) (Album, error) {
 	if err := request.IsValid(); err != nil {
-		return nil, err
+		return Album{}, err
 	}
 
 	folderName := generateFolderName(request.Name, request.Start)
@@ -31,13 +29,6 @@ func (c *CreateAlbumValidator) Create(ctx context.Context, request CreateAlbumRe
 		End:     request.End,
 	}
 
-	for _, observer := range c.Observers {
-		err := observer.ObserveCreateAlbum(ctx, createdAlbum)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	log.Infof("Album created: %s [%s]", request, createdAlbum.AlbumId)
-	return &albumId, nil
+	return createdAlbum, nil
 }

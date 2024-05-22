@@ -22,17 +22,15 @@ func NewAlbumCreate(
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
-		CreateAlbumValidator: CreateAlbumValidator{
-			Observers: []CreateAlbumObserver{
-				&CreateAlbumExecutor{
-					InsertAlbumPort: InsertAlbumPort,
-				},
-				&CreateAlbumMediaTransfer{
-					FindAlbumsByOwnerPort: FindAlbumsByOwnerPort, // FIXME albums already inserted ; it causes duplicates in the timeline
-					MediaTransfer: &MediaTransferExecutor{
-						TransferMediasRepository:  TransferMediasPort,
-						TimelineMutationObservers: TimelineMutationObservers,
-					},
+		Observers: []CreateAlbumObserver{
+			&CreateAlbumExecutor{
+				InsertAlbumPort: InsertAlbumPort,
+			},
+			&CreateAlbumMediaTransfer{
+				FindAlbumsByOwnerPort: FindAlbumsByOwnerPort, // FIXME albums already inserted ; it causes duplicates in the timeline
+				MediaTransfer: &MediaTransferExecutor{
+					TransferMediasRepository:  TransferMediasPort,
+					TimelineMutationObservers: TimelineMutationObservers,
 				},
 			},
 		},
@@ -73,7 +71,23 @@ func (c *CreateAlbumRequest) IsValid() error {
 }
 
 type CreateAlbum struct {
-	CreateAlbumValidator
+	Validator CreateAlbumValidator
+	Observers []CreateAlbumObserver
+}
+
+func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
+	album, err := c.Validator.Create(ctx, request)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot create album %s, invalid request", request)
+	}
+
+	for _, observer := range c.Observers {
+		if err := observer.ObserveCreateAlbum(ctx, album); err != nil {
+			return nil, errors.Wrapf(err, "cannot create album %s, failed observer", request)
+		}
+	}
+
+	return &album.AlbumId, nil
 }
 
 type FindAlbumsByOwnerPort interface {

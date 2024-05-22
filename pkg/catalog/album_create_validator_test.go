@@ -28,23 +28,17 @@ func TestCreateAlbumValidator_Create(t *testing.T) {
 		End:   album.End,
 	}
 
-	type fields struct {
-		Observer func(t *testing.T) catalog.CreateAlbumObserver
-	}
 	type args struct {
 		request catalog.CreateAlbumRequest
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
+		want    catalog.Album
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should NOT create the album without owner",
-			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: "",
@@ -59,9 +53,6 @@ func TestCreateAlbumValidator_Create(t *testing.T) {
 		},
 		{
 			name: "it should NOT create the album without name",
-			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
@@ -76,9 +67,6 @@ func TestCreateAlbumValidator_Create(t *testing.T) {
 		},
 		{
 			name: "it should NOT create the album without start date",
-			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
@@ -92,9 +80,6 @@ func TestCreateAlbumValidator_Create(t *testing.T) {
 		},
 		{
 			name: "it should NOT create the album without end date",
-			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
@@ -108,9 +93,6 @@ func TestCreateAlbumValidator_Create(t *testing.T) {
 		},
 		{
 			name: "it should NOT create the album with start and end reversed",
-			fields: fields{
-				Observer: expectCreateAlbumObserveNotCalled(),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
@@ -125,27 +107,14 @@ func TestCreateAlbumValidator_Create(t *testing.T) {
 		},
 		{
 			name: "it should create the album with a generated name",
-			fields: fields{
-				Observer: expectCreateAlbumObserved(album),
-			},
 			args: args{
 				request: standardRequest,
 			},
+			want:    album,
 			wantErr: assert.NoError,
 		},
 		{
 			name: "it should create the album with a forced name",
-			fields: fields{
-				Observer: expectCreateAlbumObserved(catalog.Album{
-					AlbumId: catalog.AlbumId{
-						Owner:      owner,
-						FolderName: "/Phase_1_Avenger",
-					},
-					Name:  "Avenger 1",
-					Start: album.Start,
-					End:   album.End,
-				}),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner:            owner,
@@ -155,24 +124,29 @@ func TestCreateAlbumValidator_Create(t *testing.T) {
 					ForcedFolderName: "Phase_1_Avenger",
 				},
 			},
+			want: catalog.Album{
+				AlbumId: catalog.AlbumId{
+					Owner:      owner,
+					FolderName: "/Phase_1_Avenger",
+				},
+				Name:  "Avenger 1",
+				Start: album.Start,
+				End:   album.End,
+			},
 			wantErr: assert.NoError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var observers []catalog.CreateAlbumObserver
-			if tt.fields.Observer != nil {
-				observers = append(observers, tt.fields.Observer(t))
-			}
-			c := &catalog.CreateAlbum{
-				CreateAlbumValidator: catalog.CreateAlbumValidator{
-					Observers: observers,
-				},
+			validator := catalog.CreateAlbumValidator{}
+
+			got, err := validator.Create(context.Background(), tt.args.request)
+			if !tt.wantErr(t, err, fmt.Sprintf("Create(%v)", tt.args.request)) {
+				return
 			}
 
-			_, err := c.Create(context.TODO(), tt.args.request)
-			tt.wantErr(t, err, fmt.Sprintf("Create(%v)", tt.args.request))
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
