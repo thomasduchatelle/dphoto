@@ -71,12 +71,12 @@ func (c *CreateAlbumRequest) IsValid() error {
 }
 
 type CreateAlbum struct {
-	Validator CreateAlbumValidator
 	Observers []CreateAlbumObserver
 }
 
 func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
-	album, err := c.Validator.Create(ctx, request)
+	validator := CreateAlbumValidator{}
+	album, err := validator.Create(ctx, request)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot create album %s, invalid request", request)
 	}
