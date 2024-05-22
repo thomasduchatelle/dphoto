@@ -78,7 +78,7 @@ func (r *Repository) UpdateAlbumName(ctx context.Context, albumId catalog.AlbumI
 }
 
 func (r *Repository) InsertAlbum(ctx context.Context, album catalog.Album) error {
-	if album.Owner == "" || album.FolderName == "" {
+	if err := album.AlbumId.IsValid(); err != nil {
 		return errors.Errorf("Owner and Foldername are mandatory")
 	}
 

@@ -58,6 +58,7 @@ func RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
 		repository,
 		repository,
 		repository,
+		repository,
 		ArchiveTimelineMutationObserver(),
 	)
 }

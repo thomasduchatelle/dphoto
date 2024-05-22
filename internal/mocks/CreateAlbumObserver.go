@@ -24,8 +24,8 @@ func (_m *CreateAlbumObserver) EXPECT() *CreateAlbumObserver_Expecter {
 }
 
 // ObserveCreateAlbum provides a mock function with given fields: ctx, album
-func (_m *CreateAlbumObserver) ObserveCreateAlbum(ctx context.Context, album catalog.Album) error {
-	ret := _m.Called(ctx, album)
+func (_m *CreateAlbumObserver) ObserveCreateAlbum(ctx context.Context, createdAlbum catalog.Album, existingAlbums []catalog.Album) error {
+	ret := _m.Called(ctx, createdAlbum)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ObserveCreateAlbum")
@@ -33,7 +33,7 @@ func (_m *CreateAlbumObserver) ObserveCreateAlbum(ctx context.Context, album cat
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, catalog.Album) error); ok {
-		r0 = rf(ctx, album)
+		r0 = rf(ctx, createdAlbum)
 	} else {
 		r0 = ret.Error(0)
 	}
