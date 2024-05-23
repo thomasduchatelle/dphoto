@@ -35,7 +35,7 @@ func TestShouldStopAtFirstError(t *testing.T) {
 		{
 			name: "it should re-buffer before assigning ids and before uploading (to not have half empty batch)",
 			modifier: func(run *runner) {
-				run.Cataloger = func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
+				run.Cataloger = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 					var requests []*BackingUpMediaRequest
 					for _, media := range medias {
 						if media.FoundMedia.MediaPath().Filename != "file_2.jpg" && media.FoundMedia.MediaPath().Filename != "file_3.jpg" {
@@ -48,7 +48,7 @@ func TestShouldStopAtFirstError(t *testing.T) {
 					}
 
 					return requests, nil
-				}
+				})
 				run.UniqueFilter = func(media *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool {
 					return media.Id != "file_6.jpg"
 				}
@@ -75,13 +75,13 @@ func TestShouldStopAtFirstError(t *testing.T) {
 			name: "it should stop the process after an error on the cataloguer",
 			modifier: func(run *runner) {
 				original := run.Cataloger
-				run.Cataloger = func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
+				run.Cataloger = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 					if medias[0].FoundMedia.MediaPath().Filename == "file_3.jpg" {
 						return nil, errors.Errorf("TEST")
 					}
 
-					return original(medias, progressChannel)
-				}
+					return original.Catalog(context.TODO(), medias, progressChannel)
+				})
 			},
 			want:    [][]string{{"file_1.jpg", "file_2.jpg"}},
 			wantErr: "error in cataloguer: TEST",
@@ -164,7 +164,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 				},
 			}, nil
 		}),
-		Cataloger: func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
+		Cataloger: RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 			var requests []*BackingUpMediaRequest
 			for _, media := range medias {
 				requests = append(requests, &BackingUpMediaRequest{
@@ -175,7 +175,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 			}
 
 			return requests, nil
-		},
+		}),
 		UniqueFilter: func(media *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool {
 			return true
 		},

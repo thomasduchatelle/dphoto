@@ -115,7 +115,7 @@ func (r *Repository) FindExistingSignatures(ctx context.Context, owner ownermode
 				return nil, err
 			}
 
-			key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, catalog.MediaId(id)))
+			key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, id))
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
 			}
@@ -138,6 +138,53 @@ func (r *Repository) FindExistingSignatures(ctx context.Context, owner ownermode
 				}
 
 				found = append(found, signature)
+			} else {
+				return nil, errors.Errorf("Records Id field is empty or not a String: %+v", attributes)
+			}
+		} else {
+			return nil, errors.Errorf("Records doesn't have an 'Id' field: %+v", attributes)
+		}
+	}
+
+	return found, stream.Error()
+}
+
+func (r *Repository) FindSignatures(ctx context.Context, owner ownermodel.Owner, signatures []catalog.MediaSignature) (map[catalog.MediaSignature]catalog.MediaId, error) {
+	// note: this implementation expects media id to be an encoded version of its signature
+
+	var keys []map[string]types.AttributeValue
+	uniqueSignatures := make(map[catalog.MediaSignature]interface{})
+	for _, signature := range signatures {
+		if _, found := uniqueSignatures[signature]; !found {
+			id, err := catalog.GenerateMediaId(signature)
+			if err != nil {
+				return nil, err
+			}
+
+			key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, id))
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
+			}
+
+			keys = append(keys, key)
+		}
+		uniqueSignatures[signature] = nil
+	}
+
+	stream := dynamoutils.NewGetStream(ctx, dynamoutils.NewGetBatchItem(r.client, r.table, *aws.String("Id")), keys, dynamoutils.DynamoReadBatchSize)
+
+	found := make(map[catalog.MediaSignature]catalog.MediaId)
+	for stream.HasNext() {
+		attributes := stream.Next()
+		if awsAttr, ok := attributes["Id"]; ok {
+			if value, ok := awsAttr.(*types.AttributeValueMemberS); ok && value.Value != "" {
+				mediaId := catalog.MediaId(value.Value)
+				signature, err := catalog.DecodeMediaId(mediaId)
+				if err != nil {
+					return nil, err
+				}
+
+				found[*signature] = mediaId
 			} else {
 				return nil, errors.Errorf("Records Id field is empty or not a String: %+v", attributes)
 			}

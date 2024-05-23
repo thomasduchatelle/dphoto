@@ -3,7 +3,6 @@ package catalog
 import (
 	"fmt"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"slices"
 	"time"
 )
 
@@ -38,34 +37,4 @@ func (c *CreateAlbumRequest) IsValid() error {
 	}
 
 	return nil
-}
-
-func (c *CreateAlbumRequest) Convert(existingAlbums []*Album) (Album, error) {
-	if err := c.IsValid(); err != nil {
-		return Album{}, err
-	}
-
-	folderName := generateFolderName(c.Name, c.Start)
-	if c.ForcedFolderName != "" {
-		folderName = NewFolderName(c.ForcedFolderName)
-	}
-
-	albumId := AlbumId{
-		Owner:      c.Owner,
-		FolderName: folderName,
-	}
-
-	nameIsAlreadyTaken := slices.ContainsFunc(existingAlbums, func(album *Album) bool {
-		return album.AlbumId.IsEqual(albumId)
-	})
-	if nameIsAlreadyTaken {
-		return Album{}, AlbumFolderNameAlreadyTakenErr
-	}
-
-	return Album{
-		AlbumId: albumId,
-		Name:    c.Name,
-		Start:   c.Start,
-		End:     c.End,
-	}, nil
 }

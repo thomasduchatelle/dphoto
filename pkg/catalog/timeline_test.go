@@ -198,7 +198,7 @@ func TestNewTimeline(t *testing.T) {
 				newAlbum("/A-01", "2024-01-01T00", "2024-04-01T00"),
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, DuplicateError, "got:", err.Error())
+				return assert.ErrorIs(t, err, DuplicatedAlbumError, "got:", err.Error())
 			},
 		},
 	}

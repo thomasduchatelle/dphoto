@@ -69,7 +69,7 @@ type AnalysedMedia struct {
 // BackingUpMediaRequest is the requests that must be executed to back up the media
 type BackingUpMediaRequest struct {
 	AnalysedMedia *AnalysedMedia
-	Id            string
+	Id            string // Id is used for filtering duplicates and it should not. TODO use another key of de-duplication and remove Id if not required by backup domain.
 	FolderName    string
 }
 

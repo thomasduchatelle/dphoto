@@ -8,41 +8,17 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"sync"
 	"time"
 )
 
-func New() backup.CatalogAdapter {
-	return &adapter{}
+// TODO Remove adapter once the 'scan' is migrated to new catalog cases.
+
+type Adapter struct {
+	InsertMediaCase *catalog.InsertMedias
 }
 
-type adapter struct {
-	dry bool
-}
-
-func (a *adapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapter, error) {
-	ctx := context.TODO()
-
-	albums, err := catalog.FindAllAlbums(ownermodel.Owner(owner))
-	if err != nil {
-		return nil, err
-	}
-
-	timeline, err := catalog.NewTimeline(albums)
-	if err != nil {
-		return nil, err
-	}
-
-	return &timelineAdapter{
-		owner:        owner,
-		timeline:     timeline,
-		timelineLock: sync.Mutex{},
-		createAlbum:  pkgfactory.CreateAlbumCase(ctx),
-	}, nil
-}
-
-func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error) {
+func (a *Adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error) {
 	ctx := context.TODO()
 
 	signatures := make([]*catalog.MediaSignature, len(medias), len(medias))
@@ -53,7 +29,7 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 		}
 	}
 
-	assignedIds, err := pkgfactory.InsertMediasCase(ctx).AssignIdsToNewMedias(ctx, ownermodel.Owner(owner), signatures)
+	assignedIds, err := a.InsertMediaCase.AssignIdsToNewMedias(ctx, ownermodel.Owner(owner), signatures)
 
 	mediasWithId := make(map[*backup.AnalysedMedia]string)
 	for _, media := range medias {
@@ -69,7 +45,7 @@ func (a *adapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMe
 	return mediasWithId, errors.Wrapf(err, "failed to assign ids")
 }
 
-func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaRequest) error {
+func (a *Adapter) IndexMedias(owner string, requests []*backup.CatalogMediaRequest) error {
 	ctx := context.TODO()
 
 	catalogRequests := make([]catalog.CreateMediaRequest, len(requests), len(requests))
@@ -77,6 +53,7 @@ func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaReque
 		details := request.BackingUpMediaRequest.AnalysedMedia.Details
 
 		catalogRequests[i] = catalog.CreateMediaRequest{
+			// TODO use original reference instead of converting back and forth the ID
 			Id: catalog.MediaId(request.BackingUpMediaRequest.Id),
 			Signature: catalog.MediaSignature{
 				SignatureSha256: request.BackingUpMediaRequest.AnalysedMedia.Sha256Hash,
@@ -100,7 +77,7 @@ func (a *adapter) IndexMedias(owner string, requests []*backup.CatalogMediaReque
 		}
 	}
 
-	err := pkgfactory.InsertMediasCase(ctx).Insert(ctx, ownermodel.Owner(owner), catalogRequests)
+	err := a.InsertMediaCase.Insert(ctx, ownermodel.Owner(owner), catalogRequests)
 	return errors.Wrapf(err, "failed to insert %d medias", len(catalogRequests))
 }
 

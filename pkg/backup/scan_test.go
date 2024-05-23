@@ -2,7 +2,7 @@ package backup_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
+	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"testing"
 	"time"
@@ -16,9 +16,9 @@ func TestShouldReportScannedItems(t *testing.T) {
 	readerAdapter := mockDetailsReaderAdapter(t)
 	backup.RegisterDetailsReader(readerAdapter)
 
-	catalogMock := mocks2.NewCatalogAdapter(t)
-	archiveMock := mocks2.NewBArchiveAdapter(t)
-	backup.Init(catalogMock, archiveMock)
+	catalogMock := mocks.NewCatalogAdapter(t)
+	archiveMock := mocks.NewBArchiveAdapter(t)
+	backup.Init(catalogMock, archiveMock, nil)
 	backup.BatchSize = 128
 
 	eventCapture := newEventCapture()

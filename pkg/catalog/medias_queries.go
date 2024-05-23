@@ -15,6 +15,7 @@ func ListMedias(albumId AlbumId, request PageRequest) (*MediaPage, error) {
 
 // FindSignatures returns a list of the medias already known ; they can't be duplicated
 func FindSignatures(owner ownermodel.Owner, signatures []*MediaSignature) ([]*MediaSignature, error) {
+	// TODO remove this method
 	return repositoryPort.FindExistingSignatures(context.TODO(), owner, signatures)
 }
 

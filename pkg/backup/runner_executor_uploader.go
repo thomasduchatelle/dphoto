@@ -1,13 +1,16 @@
 package backup
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+)
 
-func newBackupUploader(owner string) runnerUploader {
+func newBackupUploader(owner ownermodel.Owner) runnerUploader {
 	return func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
 		catalogRequests := make([]*CatalogMediaRequest, len(buffer), len(buffer))
 
 		for i, request := range buffer {
-			newFilename, err := archivePort.ArchiveMedia(owner, request)
+			newFilename, err := archivePort.ArchiveMedia(owner.Value(), request)
 			if err != nil {
 				return errors.Wrapf(err, "archiving media %s failed", request.AnalysedMedia.FoundMedia.String())
 			}
@@ -26,6 +29,6 @@ func newBackupUploader(owner string) runnerUploader {
 			}
 		}
 
-		return errors.Wrapf(catalogPort.IndexMedias(owner, catalogRequests), "failed to catalog medias")
+		return errors.Wrapf(catalogPort.IndexMedias(owner.Value(), catalogRequests), "failed to catalog medias")
 	}
 }

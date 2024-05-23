@@ -59,6 +59,7 @@ func (i *InsertMedias) Insert(ctx context.Context, owner ownermodel.Owner, media
 
 // AssignIdsToNewMedias filters out signatures that are already known and compute a unique ID for the others.
 func (i *InsertMedias) AssignIdsToNewMedias(ctx context.Context, owner ownermodel.Owner, signatures []*MediaSignature) (map[MediaSignature]MediaId, error) {
+	// TODO delete this method
 	existingSignaturesSlice, err := FindSignatures(owner, signatures)
 	if err != nil {
 		return nil, err

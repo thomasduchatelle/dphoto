@@ -11,17 +11,25 @@ type RunnerAnalyser interface {
 	Analyse(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
 }
 
+type RunnerCataloger interface {
+	Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
+}
+
 type runnerPublisher func(chan FoundMedia, chan *ProgressEvent) error
 type RunnerAnalyserFunc func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
-type runnerCataloger func(medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
+type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool
 type runnerUploader func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
+
+func (r RunnerCatalogerFunc) Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
+	return r(ctx, medias, progressChannel)
+}
 
 type runner struct {
 	MDC                  *log.Entry         // MDC is log.WithFields({}) that contains Mapped Diagnostic Context
 	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
 	Analyser             RunnerAnalyser     // Analyser is extracting metadata from the file
-	Cataloger            runnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
+	Cataloger            RunnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             runnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
 	ConcurrentAnalyser   int                // ConcurrentAnalyser is the number of goroutines that analyse the medias
@@ -167,7 +175,7 @@ func (r *runner) catalogueMedias(analysedChannel chan []*AnalysedMedia, requests
 
 			case buffer, more := <-analysedChannel:
 				if more && r.hasAnyErrors() == 0 {
-					catalogedMedias, err := r.Cataloger(buffer, r.progressEventChannel)
+					catalogedMedias, err := r.Cataloger.Catalog(context.TODO(), buffer, r.progressEventChannel)
 					r.appendError(errors.Wrap(err, "error in cataloguer"))
 
 					for _, media := range catalogedMedias {
