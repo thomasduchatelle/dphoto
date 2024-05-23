@@ -11,6 +11,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysiscache"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/filesystemvolume"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/s3volume"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"io"
 	"os"
 	"path"
@@ -40,7 +41,7 @@ var backupCmd = &cobra.Command{
 		volume, err := newSmartVolume(volumePath)
 		printer.FatalIfError(err, 1)
 
-		report, err := backup.Backup(Owner, volume, backup.OptionWithListener(progress).WithCachedAnalysis(addCacheAnalysis(!backupCmdArg.noCache)))
+		report, err := backup.Backup(ownermodel.Owner(Owner), volume, backup.OptionWithListener(progress).WithCachedAnalysis(addCacheAnalysis(!backupCmdArg.noCache)))
 		printer.FatalIfError(err, 2)
 
 		progress.Stop()

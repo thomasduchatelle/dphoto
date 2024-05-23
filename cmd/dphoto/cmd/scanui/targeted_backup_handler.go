@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/backupui"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"strings"
 )
 
@@ -53,7 +54,7 @@ func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, ex
 			options = append(options, backup.OptionOnlyAlbums(existing.FolderName))
 		}
 
-		report, err := backup.Backup(t.Owner, subVolume, options...)
+		report, err := backup.Backup(ownermodel.Owner(t.Owner), subVolume, options...)
 		listener.Stop()
 
 		if err != nil {

@@ -2,11 +2,13 @@ package backup_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
+	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"testing"
 	"time"
 )
+
+// TODO Backup should have Acceptance tests but not these ones. They are too implementation specific.
 
 func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 	// setup
@@ -16,11 +18,11 @@ func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 	readerAdapter := mockDetailsReaderAdapter(t)
 	backup.RegisterDetailsReader(readerAdapter)
 
-	catalogMock := mocks2.NewCatalogAdapter(t)
-	timelineMock := mocks2.NewTimelineAdapter(t)
+	catalogMock := mocks.NewCatalogAdapter(t)
+	timelineMock := mocks.NewTimelineAdapter(t)
 	catalogMock.On("GetAlbumsTimeline", owner).Return(timelineMock, nil)
-	archiveMock := mocks2.NewBArchiveAdapter(t)
-	backup.Init(catalogMock, archiveMock)
+	archiveMock := mocks.NewBArchiveAdapter(t)
+	backup.Init(catalogMock, archiveMock, nil)
 	backup.BatchSize = 4
 
 	eventCapture := newEventCapture()
@@ -156,11 +158,11 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 	readerAdapter := mockDetailsReaderAdapter(t)
 	backup.RegisterDetailsReader(readerAdapter)
 
-	catalogMock := mocks2.NewCatalogAdapter(t)
-	timelineMock := mocks2.NewTimelineAdapter(t)
+	catalogMock := mocks.NewCatalogAdapter(t)
+	timelineMock := mocks.NewTimelineAdapter(t)
 	catalogMock.On("GetAlbumsTimeline", owner).Return(timelineMock, nil)
-	archiveMock := mocks2.NewBArchiveAdapter(t)
-	backup.Init(catalogMock, archiveMock)
+	archiveMock := mocks.NewBArchiveAdapter(t)
+	backup.Init(catalogMock, archiveMock, nil)
 	backup.BatchSize = 4
 
 	eventCapture := newEventCapture()
@@ -261,31 +263,4 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 			backup.ProgressEventUploaded:       {Number: 1, SumCount: 1, SumSize: 10, Albums: []string{"/folder1"}},
 		}, eventCapture.Captured)
 	}
-}
-
-func newIdGeneratorWithExclusion(accept func(name string) bool) func(_ string, medias []*backup.AnalysedMedia) map[*backup.AnalysedMedia]string {
-	return func(_ string, medias []*backup.AnalysedMedia) map[*backup.AnalysedMedia]string {
-		ids := make(map[*backup.AnalysedMedia]string)
-		for _, media := range medias {
-			filename := media.FoundMedia.MediaPath().Filename
-			if accept(filename) {
-				ids[media] = "id_" + filename
-			}
-		}
-		return ids
-	}
-}
-
-type mockVolume []backup.FoundMedia
-
-func (m *mockVolume) String() string {
-	return "Mocked Volume"
-}
-
-func (m *mockVolume) FindMedias() ([]backup.FoundMedia, error) {
-	return *m, nil
-}
-
-func (m *mockVolume) Children(backup.MediaPath) (backup.SourceVolume, error) {
-	panic("mockVolume cannot generate procreate")
 }

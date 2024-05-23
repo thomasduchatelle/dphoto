@@ -311,6 +311,47 @@ func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
 	}
 }
 
+func (a *MediaCrudTestSuite) TestFindSignatures() {
+	exiting := []catalog.MediaSignature{
+		{SignatureSha256: "dc58865da1228b7a187693c702905d00d6a59439a07d52f2a8e7ae43764b55b9", SignatureSize: 16384},
+		{SignatureSha256: "4d37f8780f5f5f14b914683b1fd36a9a567f5ea63a835b76100d9970303d6ad6", SignatureSize: 32000},
+	}
+	mediaId1, _ := catalog.GenerateMediaId(exiting[0])
+	mediaId2, _ := catalog.GenerateMediaId(exiting[1])
+	expected := map[catalog.MediaSignature]catalog.MediaId{
+		exiting[0]: mediaId1,
+		exiting[1]: mediaId2,
+	}
+
+	search := make([]catalog.MediaSignature, 0, dynamoutils.DynamoReadBatchSize*2+20)
+	for i := 0; i < dynamoutils.DynamoReadBatchSize*2+20; i++ {
+		search = append(search, catalog.MediaSignature{
+			SignatureSha256: fmt.Sprintf("%064d", i),
+			SignatureSize:   42,
+		})
+	}
+
+	signatures, err := a.repo.FindSignatures(context.TODO(), a.owner, search)
+	if a.NoError(err) {
+		a.Empty(signatures, "it should not find any of non-existing signature")
+	} else {
+		return
+	}
+
+	search[42] = exiting[0]
+	search[69] = exiting[1]
+	signatures, err = a.repo.FindSignatures(context.TODO(), a.owner, search)
+	if a.NoError(err) {
+		a.Equal(expected, signatures, "it should filter out any non exiting signature to keep the only 2 that exist")
+	}
+
+	search[1] = exiting[1]
+	signatures, err = a.repo.FindSignatures(context.TODO(), a.owner, search)
+	if a.NoError(err, "it should ignore duplicated keys") {
+		a.Equal(expected, signatures, "it should ignore duplicated keys")
+	}
+}
+
 func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 	type args struct {
 		owner   ownermodel.Owner

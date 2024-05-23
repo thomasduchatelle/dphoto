@@ -26,7 +26,7 @@ func GenerateMediaId(signature MediaSignature) (MediaId, error) {
 		}
 	}
 
-	return MediaId(strings.ReplaceAll(base64.StdEncoding.EncodeToString(idBuffer), "/", "_")), err
+	return MediaId(strings.ReplaceAll(base64.StdEncoding.EncodeToString(idBuffer), "/", "_")), errors.Wrapf(err, "failed to generate media ID for signature %s", signature)
 }
 
 // DecodeMediaId reverse what the GenerateMediaId has done to find original signature.

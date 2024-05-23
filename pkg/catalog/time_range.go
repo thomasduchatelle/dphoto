@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-// TODO Can be deleted ?
-
 // TimeRange is of days, start is inclusive (at the second), end is exclusive (at the second)
 type TimeRange struct {
 	Start time.Time

@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	DuplicateError = errors.New("Timeline cannot contains duplicated albums")
+	DuplicatedAlbumError = errors.New("Timeline cannot contains duplicated albums")
 )
 
 // Timeline can be used to find to which album a media will belongs.
@@ -112,7 +112,7 @@ func hasDuplicates(albums []*Album) error {
 	ids := make(map[AlbumId]struct{})
 	for _, album := range albums {
 		if _, exists := ids[album.AlbumId]; exists {
-			return errors.Wrapf(DuplicateError, "album %s is duplicated", album.AlbumId)
+			return errors.Wrapf(DuplicatedAlbumError, "album %s is duplicated", album.AlbumId)
 		}
 		ids[album.AlbumId] = struct{}{}
 	}

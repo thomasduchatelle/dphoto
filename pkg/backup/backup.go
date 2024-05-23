@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"regexp"
 	"strings"
 	"time"
@@ -16,7 +17,7 @@ type SourceVolume interface {
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
-func Backup(owner string, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
+func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.String(), "_"), "_"), time.Now().Format("20060102_150405"))
 	mdc := log.WithFields(log.Fields{
@@ -26,7 +27,7 @@ func Backup(owner string, volume SourceVolume, optionsSlice ...Options) (Complet
 
 	options := readOptions(optionsSlice)
 
-	cataloger, err := chooseCataloger(owner, options)
+	cataloger, err := NewCataloger(owner, options)
 	if err != nil {
 		return nil, err
 	}
@@ -55,12 +56,4 @@ func Backup(owner string, volume SourceVolume, optionsSlice ...Options) (Complet
 
 	mdc.Infoln("Backup completed.")
 	return backupReport, err
-}
-
-func chooseCataloger(owner string, options Options) (runnerCataloger, error) {
-	if len(options.RestrictedAlbumFolderName) > 0 {
-		return newAlbumFilterCataloger(owner, options.RestrictedAlbumFolderName)
-	}
-
-	return newCreatorCataloger(owner)
 }

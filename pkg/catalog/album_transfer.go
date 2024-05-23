@@ -60,6 +60,16 @@ func (m MediaSelector) String() string {
 	return fmt.Sprintf("{from:%s} %s -> %s", strings.Join(from, ","), m.Start.Format(time.DateTime), m.End.Format(time.DateTime))
 }
 
+type MediaTransfer interface {
+	Transfer(ctx context.Context, records MediaTransferRecords) error
+}
+
+type MediaTransferFunc func(ctx context.Context, records MediaTransferRecords) error
+
+func (f MediaTransferFunc) Transfer(ctx context.Context, records MediaTransferRecords) error {
+	return f(ctx, records)
+}
+
 type TransferMediasRepositoryPort interface {
 	TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
 }

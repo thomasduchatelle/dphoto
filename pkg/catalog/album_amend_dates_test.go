@@ -297,7 +297,6 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 		},
 		{
 			name: "it should transfer medias OUT the amended album - SHRINKING BOTH SIDES",
-			// TODO also check for no other album is present
 			fields: fields{
 				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
 				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{

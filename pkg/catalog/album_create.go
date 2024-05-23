@@ -23,15 +23,20 @@ func NewAlbumCreate(
 ) *CreateAlbum {
 	return &CreateAlbum{
 		FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
-		Observers: []CreateAlbumObserver{
-			&CreateAlbumExecutor{
-				InsertAlbumPort: InsertAlbumPort,
+		Observers: []func(timeline *TimelineAggregate) CreateAlbumObserver{
+			func(_ *TimelineAggregate) CreateAlbumObserver {
+				return &CreateAlbumExecutor{
+					InsertAlbumPort: InsertAlbumPort,
+				}
 			},
-			&CreateAlbumMediaTransfer{
-				MediaTransfer: &MediaTransferExecutor{
-					TransferMediasRepository:  TransferMediasPort,
-					TimelineMutationObservers: TimelineMutationObservers,
-				},
+			func(timeline *TimelineAggregate) CreateAlbumObserver {
+				return &CreateAlbumMediaTransfer{
+					Timeline: timeline,
+					MediaTransfer: &MediaTransferExecutor{
+						TransferMediasRepository:  TransferMediasPort,
+						TimelineMutationObservers: TimelineMutationObservers,
+					},
+				}
 			},
 		},
 	}
@@ -57,39 +62,20 @@ func (f InsertAlbumPortFunc) InsertAlbum(ctx context.Context, album Album) error
 	return f(ctx, album)
 }
 
-type MoveMediaPort interface {
-	MoveMedia(ctx context.Context, albumId AlbumId, mediaIds []MediaId) error
-}
-
-type MoveMediaPortFunc func(ctx context.Context, albumId AlbumId, mediaIds []MediaId) error
-
-func (f MoveMediaPortFunc) MoveMedia(ctx context.Context, albumId AlbumId, mediaIds []MediaId) error {
-	return f(ctx, albumId, mediaIds)
-}
-
 type CreateAlbumObserver interface {
-	ObserveCreateAlbum(ctx context.Context, createdAlbum Album, existingAlbums []*Album) error
+	ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error
 }
 
-type CreateAlbumObserverFunc func(ctx context.Context, album Album, existingAlbums []*Album) error
+type CreateAlbumObserverFunc func(ctx context.Context, createdAlbum Album) error
 
-func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, createdAlbum Album, existingAlbums []*Album) error {
-	return f(ctx, createdAlbum, existingAlbums)
-}
-
-type MediaTransfer interface {
-	Transfer(ctx context.Context, records MediaTransferRecords) error
-}
-
-type MediaTransferFunc func(ctx context.Context, records MediaTransferRecords) error
-
-func (f MediaTransferFunc) Transfer(ctx context.Context, records MediaTransferRecords) error {
-	return f(ctx, records)
+func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
+	return f(ctx, createdAlbum)
 }
 
 type CreateAlbum struct {
 	FindAlbumsByOwnerPort FindAlbumsByOwnerPort
-	Observers             []CreateAlbumObserver
+	MediaTransfer         MediaTransfer
+	Observers             []func(timeline *TimelineAggregate) CreateAlbumObserver
 }
 
 // Create creates a new album
@@ -99,35 +85,36 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*
 		return nil, err
 	}
 
-	createdAlbum, err := request.Convert(albums)
-	if err != nil {
-		return nil, err
-	}
+	timeline := NewLazyTimelineAggregate(albums)
 
-	for _, observer := range c.Observers {
-		if err := observer.ObserveCreateAlbum(ctx, createdAlbum, albums); err != nil {
-			return nil, err
-		}
+	observers := make([]CreateAlbumObserver, len(c.Observers)+1)
+	for index, factory := range c.Observers {
+		observers[index] = factory(timeline)
 	}
+	observers[len(c.Observers)] = CreateAlbumObserverFunc(func(ctx context.Context, album Album) error {
+		log.Infof("Album created: %s => %s", request, album.AlbumId)
+		return nil
+	})
 
-	log.Infof("Album created: %s [%s]", request, createdAlbum.AlbumId)
-	return &createdAlbum.AlbumId, nil
+	createdAlbum, err := timeline.CreateNewAlbum(ctx, request, observers...)
+	return createdAlbum, err
 }
 
 type CreateAlbumExecutor struct {
 	InsertAlbumPort InsertAlbumPort
 }
 
-func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, createdAlbum Album, existingAlbums []*Album) error {
+func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
 	return c.InsertAlbumPort.InsertAlbum(ctx, createdAlbum)
 }
 
 type CreateAlbumMediaTransfer struct {
+	Timeline      *TimelineAggregate
 	MediaTransfer MediaTransfer
 }
 
-func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, createdAlbum Album, existingAlbums []*Album) error {
-	records, err := NewTimelineAggregate(existingAlbums).AddNew(createdAlbum)
+func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
+	records, err := c.Timeline.AddNew(createdAlbum)
 	if err != nil {
 		return err
 	}

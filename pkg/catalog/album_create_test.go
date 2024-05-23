@@ -297,12 +297,14 @@ func TestCreateAlbum_Create(t *testing.T) {
 			observer := new(CreateAlbumObserverFake)
 			c := &catalog.CreateAlbum{
 				FindAlbumsByOwnerPort: tt.fields.FindAlbumsByOwnerPort,
-				Observers: []catalog.CreateAlbumObserver{
-					observer,
+				Observers: []func(timeline *catalog.TimelineAggregate) catalog.CreateAlbumObserver{
+					func(timeline *catalog.TimelineAggregate) catalog.CreateAlbumObserver {
+						return observer
+					},
 				},
 			}
 
-			_, err := c.Create(context.TODO(), tt.args.request)
+			_, err := c.Create(context.Background(), tt.args.request)
 			if !tt.wantErr(t, err, fmt.Sprintf("Create(%v)", tt.args.request)) {
 				return
 			}
@@ -441,9 +443,10 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &catalog.CreateAlbumMediaTransfer{
+				Timeline:      catalog.NewLazyTimelineAggregate(tt.args.existingAlbums),
 				MediaTransfer: tt.fields.MediaTransfer(t),
 			}
-			tt.wantErr(t, c.ObserveCreateAlbum(context.Background(), tt.args.createdAlbum, tt.args.existingAlbums), fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum))
+			tt.wantErr(t, c.ObserveCreateAlbum(context.Background(), tt.args.createdAlbum), fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum))
 		})
 	}
 }
@@ -453,15 +456,6 @@ func expectMediaTransferCalled(records catalog.MediaTransferRecords) func(t *tes
 		transfer := mocks.NewMediaTransfer(t)
 		transfer.EXPECT().Transfer(mock.Anything, records).Return(nil).Once()
 		return transfer
-	}
-}
-
-func expectCreateAlbumObserveNotCalled() func(t *testing.T) catalog.CreateAlbumObserver {
-	return func(t *testing.T) catalog.CreateAlbumObserver {
-		return catalog.CreateAlbumObserverFunc(func(ctx context.Context, createdAlbum catalog.Album, existingAlbums []*catalog.Album) error {
-			assert.Fail(t, "CreateAlbumObserverFunc", "should not be called")
-			return nil
-		})
 	}
 }
 
@@ -488,7 +482,7 @@ type CreateAlbumObserverFake struct {
 	CreatedAlbums []catalog.Album
 }
 
-func (c *CreateAlbumObserverFake) ObserveCreateAlbum(ctx context.Context, createdAlbum catalog.Album, existingAlbums []*catalog.Album) error {
+func (c *CreateAlbumObserverFake) ObserveCreateAlbum(ctx context.Context, createdAlbum catalog.Album) error {
 	c.CreatedAlbums = append(c.CreatedAlbums, createdAlbum)
 	return nil
 }

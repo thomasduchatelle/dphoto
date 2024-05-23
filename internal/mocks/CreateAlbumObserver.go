@@ -23,8 +23,8 @@ func (_m *CreateAlbumObserver) EXPECT() *CreateAlbumObserver_Expecter {
 	return &CreateAlbumObserver_Expecter{mock: &_m.Mock}
 }
 
-// ObserveCreateAlbum provides a mock function with given fields: ctx, album
-func (_m *CreateAlbumObserver) ObserveCreateAlbum(ctx context.Context, createdAlbum catalog.Album, existingAlbums []catalog.Album) error {
+// ObserveCreateAlbum provides a mock function with given fields: ctx, createdAlbum
+func (_m *CreateAlbumObserver) ObserveCreateAlbum(ctx context.Context, createdAlbum catalog.Album) error {
 	ret := _m.Called(ctx, createdAlbum)
 
 	if len(ret) == 0 {
@@ -48,12 +48,12 @@ type CreateAlbumObserver_ObserveCreateAlbum_Call struct {
 
 // ObserveCreateAlbum is a helper method to define mock.On call
 //   - ctx context.Context
-//   - album catalog.Album
-func (_e *CreateAlbumObserver_Expecter) ObserveCreateAlbum(ctx interface{}, album interface{}) *CreateAlbumObserver_ObserveCreateAlbum_Call {
-	return &CreateAlbumObserver_ObserveCreateAlbum_Call{Call: _e.mock.On("ObserveCreateAlbum", ctx, album)}
+//   - createdAlbum catalog.Album
+func (_e *CreateAlbumObserver_Expecter) ObserveCreateAlbum(ctx interface{}, createdAlbum interface{}) *CreateAlbumObserver_ObserveCreateAlbum_Call {
+	return &CreateAlbumObserver_ObserveCreateAlbum_Call{Call: _e.mock.On("ObserveCreateAlbum", ctx, createdAlbum)}
 }
 
-func (_c *CreateAlbumObserver_ObserveCreateAlbum_Call) Run(run func(ctx context.Context, album catalog.Album)) *CreateAlbumObserver_ObserveCreateAlbum_Call {
+func (_c *CreateAlbumObserver_ObserveCreateAlbum_Call) Run(run func(ctx context.Context, createdAlbum catalog.Album)) *CreateAlbumObserver_ObserveCreateAlbum_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(catalog.Album))
 	})

@@ -79,64 +79,6 @@ func (_c *CatalogAdapter_AssignIdsToNewMedias_Call) RunAndReturn(run func(string
 	return _c
 }
 
-// GetAlbumsTimeline provides a mock function with given fields: owner
-func (_m *CatalogAdapter) GetAlbumsTimeline(owner string) (backup.TimelineAdapter, error) {
-	ret := _m.Called(owner)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAlbumsTimeline")
-	}
-
-	var r0 backup.TimelineAdapter
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (backup.TimelineAdapter, error)); ok {
-		return rf(owner)
-	}
-	if rf, ok := ret.Get(0).(func(string) backup.TimelineAdapter); ok {
-		r0 = rf(owner)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(backup.TimelineAdapter)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(owner)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// CatalogAdapter_GetAlbumsTimeline_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAlbumsTimeline'
-type CatalogAdapter_GetAlbumsTimeline_Call struct {
-	*mock.Call
-}
-
-// GetAlbumsTimeline is a helper method to define mock.On call
-//   - owner string
-func (_e *CatalogAdapter_Expecter) GetAlbumsTimeline(owner interface{}) *CatalogAdapter_GetAlbumsTimeline_Call {
-	return &CatalogAdapter_GetAlbumsTimeline_Call{Call: _e.mock.On("GetAlbumsTimeline", owner)}
-}
-
-func (_c *CatalogAdapter_GetAlbumsTimeline_Call) Run(run func(owner string)) *CatalogAdapter_GetAlbumsTimeline_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
-	})
-	return _c
-}
-
-func (_c *CatalogAdapter_GetAlbumsTimeline_Call) Return(_a0 backup.TimelineAdapter, _a1 error) *CatalogAdapter_GetAlbumsTimeline_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *CatalogAdapter_GetAlbumsTimeline_Call) RunAndReturn(run func(string) (backup.TimelineAdapter, error)) *CatalogAdapter_GetAlbumsTimeline_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // IndexMedias provides a mock function with given fields: owner, requests
 func (_m *CatalogAdapter) IndexMedias(owner string, requests []*backup.CatalogMediaRequest) error {
 	ret := _m.Called(owner, requests)
