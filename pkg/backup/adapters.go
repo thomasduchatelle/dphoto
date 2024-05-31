@@ -14,6 +14,10 @@ var (
 	referencerFactory ReferencerFactory
 )
 
+func ClearDetailsReader() {
+	detailsReaders = nil
+}
+
 func RegisterDetailsReader(reader DetailsReaderAdapter) {
 	detailsReaders = append(detailsReaders, reader)
 }
@@ -61,5 +65,5 @@ type ReferencerFactory interface {
 	// NewCreatorReferencer returns a Referencer that will create the album if the date is not yet covered.
 	NewCreatorReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error)
 	// NewDryRunReferencer returns a Referencer that will not create any album.
-	NewDryRunReferencer(ctx context.Context, owner string) (CatalogReferencer, error)
+	NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error)
 }

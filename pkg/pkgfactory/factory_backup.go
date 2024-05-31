@@ -31,7 +31,7 @@ func (f *Factory) NewCreatorReferencer(ctx context.Context, owner ownermodel.Own
 	}, errors.Wrapf(err, "NewCreatorReferencer(%s) failed", owner)
 }
 
-func (f *Factory) NewDryRunReferencer(ctx context.Context, owner string) (backup.CatalogReferencer, error) {
+func (f *Factory) NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (backup.CatalogReferencer, error) {
 	//TODO implement me
 	panic("implement me")
 }

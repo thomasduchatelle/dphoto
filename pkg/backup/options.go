@@ -5,6 +5,7 @@ type Options struct {
 	Listener                  interface{}            // Listener will receive progress events.
 	SkipRejects               bool                   // SkipRejects mode will report any analysis error, or missing timestamp, and continue.
 	AnalyserDecorator         AnalyserDecorator      // AnalyserDecorator is an optional decorator to add concept like caching (might be nil)
+	DryRun                    bool                   // DryRun mode will not upload anything and do not create albums, still analyse
 }
 
 type AnalyserDecorator interface {

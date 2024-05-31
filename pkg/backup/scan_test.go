@@ -1,153 +1,223 @@
-package backup_test
+package backup
 
 import (
+	"fmt"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/backup"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"io"
 	"testing"
 	"time"
 )
 
-func TestShouldReportScannedItems(t *testing.T) {
-	// setup
-	a := assert.New(t)
-	const owner = "tony@stark.com"
+func TestScanAcceptance(t *testing.T) {
+	owner := ownermodel.Owner("tony@stark.com")
 
-	readerAdapter := mockDetailsReaderAdapter(t)
-	backup.RegisterDetailsReader(readerAdapter)
-
-	catalogMock := mocks.NewCatalogAdapter(t)
-	archiveMock := mocks.NewBArchiveAdapter(t)
-	backup.Init(catalogMock, archiveMock, nil)
-	backup.BatchSize = 128
-
-	eventCapture := newEventCapture()
-
-	// given
-	volume := mockVolume{
-		backup.NewInMemoryMedia("folder1/file_1.jpg", time.Now(), []byte("2022-06-18")),
-		backup.NewInMemoryMedia("folder1/file_2.jpg", time.Now(), []byte("2022-06-18A")),
-		backup.NewInMemoryMedia("folder1/file_3.jpg", time.Now(), []byte("2022-06-19AB")),
-		backup.NewInMemoryMedia("folder1/file_4.jpg", time.Now(), []byte("2022-06-20ABC")),
-		backup.NewInMemoryMedia("folder1/folder1a/file_5.jpg", time.Now(), []byte("2022-06-21ABCD")),
-		backup.NewInMemoryMedia("folder2/file_6.jpg", time.Now(), []byte("2022-06-22ABCDE")),
-	}
-	expectedCatalogRequests := []*backup.BackingUpMediaRequest{
+	analysedMedias := []*AnalysedMedia{
 		{
-			AnalysedMedia: &backup.AnalysedMedia{
-				FoundMedia: volume[0],
-				Type:       backup.MediaTypeImage,
-				Sha256Hash: "3e7574e8b640104d97597b200fd516c589f34be540e0a81a272fd488d12acaec",
-				Details:    &backup.MediaDetails{DateTime: time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC)},
-			},
-			Id:         "id_file_1.jpg",
-			FolderName: "/album1",
+			FoundMedia: NewInMemoryMedia("folder1/file_1.jpg", time.Now(), []byte("2022-06-18")),
+			Type:       MediaTypeImage,
+			Sha256Hash: "3e7574e8b640104d97597b200fd516c589f34be540e0a81a272fd488d12acaec",
+			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC)},
 		},
 		{
-			AnalysedMedia: &backup.AnalysedMedia{
-				FoundMedia: volume[1],
-				Type:       backup.MediaTypeImage,
-				Sha256Hash: "43e41e253022d4e2e4bf3d8388d5cb0e7553b2da3e8495c5e8617c961aa0a0bd",
-				Details:    &backup.MediaDetails{DateTime: time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC)},
-			},
-			Id:         "id_file_2.jpg",
-			FolderName: "/album1",
+			FoundMedia: NewInMemoryMedia("folder1/file_2.jpg", time.Now(), []byte("2022-06-18A")),
+			Type:       MediaTypeImage,
+			Sha256Hash: "43e41e253022d4e2e4bf3d8388d5cb0e7553b2da3e8495c5e8617c961aa0a0bd",
+			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC)},
 		},
 		{
-			AnalysedMedia: &backup.AnalysedMedia{
-				FoundMedia: volume[2],
-				Type:       backup.MediaTypeImage,
-				Sha256Hash: "28f046d0ebae98f45512f98d581e7cdded28dd9cf50e7712615970dc15221cb3",
-				Details:    &backup.MediaDetails{DateTime: time.Date(2022, 6, 19, 0, 0, 0, 0, time.UTC)},
-			},
-			Id:         "id_file_3.jpg",
-			FolderName: "/album1",
+			FoundMedia: NewInMemoryMedia("folder1/file_3.jpg", time.Now(), []byte("2022-06-19AB")),
+			Type:       MediaTypeImage,
+			Sha256Hash: "28f046d0ebae98f45512f98d581e7cdded28dd9cf50e7712615970dc15221cb3",
+			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 19, 0, 0, 0, 0, time.UTC)},
 		},
 		{
-			AnalysedMedia: &backup.AnalysedMedia{
-				FoundMedia: volume[3],
-				Type:       backup.MediaTypeImage,
-				Sha256Hash: "b9506fc17d9a648b448efa042a76bcae587e7e2afe02c00c539e5905b9dbb5b3",
-				Details:    &backup.MediaDetails{DateTime: time.Date(2022, 6, 20, 0, 0, 0, 0, time.UTC)},
-			},
-			Id:         "OUT",
-			FolderName: "",
+			FoundMedia: NewInMemoryMedia("folder1/file_4.jpg", time.Now(), []byte("2022-06-20ABC")),
+			Type:       MediaTypeImage,
+			Sha256Hash: "b9506fc17d9a648b448efa042a76bcae587e7e2afe02c00c539e5905b9dbb5b3",
+			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 20, 0, 0, 0, 0, time.UTC)},
 		},
 		{
-			AnalysedMedia: &backup.AnalysedMedia{
-				FoundMedia: volume[4],
-				Type:       backup.MediaTypeImage,
-				Sha256Hash: "ce2b4c6e0f8cf6c2be15d85925f8e6c79cef5c9fbbe5578e6dd0ae419c222d53",
-				Details:    &backup.MediaDetails{DateTime: time.Date(2022, 6, 21, 0, 0, 0, 0, time.UTC)},
-			},
-			Id:         "id_file_5.jpg",
-			FolderName: "",
+			FoundMedia: NewInMemoryMedia("folder1/folder1a/file_5.jpg", time.Now(), []byte("2022-06-21ABCD")),
+			Type:       MediaTypeImage,
+			Sha256Hash: "ce2b4c6e0f8cf6c2be15d85925f8e6c79cef5c9fbbe5578e6dd0ae419c222d53",
+			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 21, 0, 0, 0, 0, time.UTC)},
 		},
 		{
-			AnalysedMedia: &backup.AnalysedMedia{
-				FoundMedia: volume[5],
-				Type:       backup.MediaTypeImage,
-				Sha256Hash: "248960db17bc3e685260f28c0af7fb3b1b3b8659d476c42ccc2a5871c53ab438",
-				Details:    &backup.MediaDetails{DateTime: time.Date(2022, 6, 22, 0, 0, 0, 0, time.UTC)},
-			},
-			Id:         "OUT",
-			FolderName: "",
+			FoundMedia: NewInMemoryMedia("folder2/file_6.jpg", time.Now(), []byte("2022-06-22ABCDE")),
+			Type:       MediaTypeImage,
+			Sha256Hash: "248960db17bc3e685260f28c0af7fb3b1b3b8659d476c42ccc2a5871c53ab438",
+			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 22, 0, 0, 0, 0, time.UTC)},
 		},
 	}
-	catalogMock.On("AssignIdsToNewMedias", owner, []*backup.AnalysedMedia{
-		expectedCatalogRequests[0].AnalysedMedia,
-		expectedCatalogRequests[1].AnalysedMedia,
-		expectedCatalogRequests[2].AnalysedMedia,
-		expectedCatalogRequests[3].AnalysedMedia,
-		expectedCatalogRequests[4].AnalysedMedia,
-		expectedCatalogRequests[5].AnalysedMedia,
-	}).Once().Return(newIdGeneratorWithExclusion(func(name string) bool {
-		return name != "file_4.jpg" && name != "file_6.jpg"
-	}), nil)
 
-	// when
-	folders, skippedMedias, err := backup.Scan(owner, &volume, backup.OptionWithListener(eventCapture))
+	volumeStub := make(SourceVolumeStub, 0)
+	for _, analysedMedia := range analysedMedias {
+		volumeStub = append(volumeStub, analysedMedia.FoundMedia)
+	}
 
-	// then
-	name := "it should find 2 folders"
-	if a.NoError(err) {
-		a.Equal([]*backup.ScannedFolder{
-			{
-				Name:         "folder1",
-				RelativePath: "folder1",
-				FolderName:   "folder1",
-				AbsolutePath: "/ram/folder1",
-				Start:        time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC),
-				End:          time.Date(2022, 6, 20, 0, 0, 0, 0, time.UTC),
-				Distribution: map[string]backup.MediaCounter{
-					"2022-06-18": backup.NewMediaCounter(2, 10+11),
-					"2022-06-19": backup.NewMediaCounter(1, 12),
+	type fields struct {
+		detailsReaders    DetailsReaderAdapter
+		referencerFactory ReferencerFactory
+	}
+	type args struct {
+		owner       string
+		volume      SourceVolume
+		optionSlice []Options
+	}
+	tests := []struct {
+		name              string
+		fields            fields
+		args              args
+		wantFolders       []*ScannedFolder
+		wantSkippedMedias []FoundMedia
+		wantEvents        map[ProgressEventType]eventSummary
+		wantErr           assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should scan files per folder, using read-only referencer, ignoring files that are already catalogued",
+			fields: fields{
+				detailsReaders: new(DetailsReaderAdapterStub),
+				referencerFactory: &ReferencerFactoryFake{
+					DryRunReferencer: &CatalogReferencerStub{
+						analysedMedias[0]: &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"},
+						analysedMedias[1]: &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"},
+						analysedMedias[2]: &CatalogReferenceStub{MediaIdValue: "media-id-3", AlbumFolderNameValue: "/album1"},
+						analysedMedias[3]: &CatalogReferenceStub{MediaIdValue: "media-id-4", AlbumFolderNameValue: "/album3", ExistsValue: true},
+						analysedMedias[4]: &CatalogReferenceStub{MediaIdValue: "media-id-5", AlbumFolderNameValue: "/album2", AlbumCreatedValue: true},
+						analysedMedias[5]: &CatalogReferenceStub{MediaIdValue: "media-id-6", AlbumFolderNameValue: "/album3", ExistsValue: true},
+					},
 				},
 			},
-			{
-				Name:         "folder1a",
-				RelativePath: "folder1/folder1a",
-				FolderName:   "folder1a",
-				AbsolutePath: "/ram/folder1/folder1a",
-				Start:        time.Date(2022, 6, 21, 0, 0, 0, 0, time.UTC),
-				End:          time.Date(2022, 6, 22, 0, 0, 0, 0, time.UTC),
-				Distribution: map[string]backup.MediaCounter{
-					"2022-06-21": backup.NewMediaCounter(1, 14),
+			args: args{
+				owner:  owner.Value(),
+				volume: &volumeStub,
+			},
+			wantFolders: []*ScannedFolder{
+				{
+					Name:         "folder1",
+					RelativePath: "folder1",
+					FolderName:   "folder1",
+					AbsolutePath: "/ram/folder1",
+					Start:        time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC),
+					End:          time.Date(2022, 6, 20, 0, 0, 0, 0, time.UTC),
+					Distribution: map[string]MediaCounter{
+						"2022-06-18": NewMediaCounter(2, 10+11),
+						"2022-06-19": NewMediaCounter(1, 12),
+					},
+				},
+				{
+					Name:         "folder1a",
+					RelativePath: "folder1/folder1a",
+					FolderName:   "folder1a",
+					AbsolutePath: "/ram/folder1/folder1a",
+					Start:        time.Date(2022, 6, 21, 0, 0, 0, 0, time.UTC),
+					End:          time.Date(2022, 6, 22, 0, 0, 0, 0, time.UTC),
+					Distribution: map[string]MediaCounter{
+						"2022-06-21": NewMediaCounter(1, 14),
+					},
 				},
 			},
-		}, folders, name)
-
-		name = "it should not have any skipped files because it's not implemented"
-		a.Empty(skippedMedias, name)
-
-		name = "it should have generated necessary events to track the progress"
-		a.Equal(map[backup.ProgressEventType]eventSummary{
-			backup.ProgressEventScanComplete:   {Number: 1, SumCount: 6, SumSize: 10 + 11 + 12 + 13 + 14 + 15},
-			backup.ProgressEventAnalysed:       {Number: 6, SumCount: 6, SumSize: 10 + 11 + 12 + 13 + 14 + 15},
-			backup.ProgressEventAlreadyExists:  {Number: 1, SumCount: 2, SumSize: 13 + 15},
-			backup.ProgressEventCatalogued:     {Number: 1, SumCount: 4, SumSize: 10 + 11 + 12 + 14},
-			backup.ProgressEventReadyForUpload: {Number: 4, SumCount: 4, SumSize: 10 + 11 + 12 + 14},
-			backup.ProgressEventUploaded:       {Number: 4, SumCount: 4, SumSize: 10 + 11 + 12 + 14, Albums: nil},
-		}, eventCapture.Captured, name)
+			wantEvents: map[ProgressEventType]eventSummary{
+				ProgressEventAlbumCreated:   {SumCount: 1, Albums: []string{"/album2"}},
+				ProgressEventScanComplete:   {SumCount: 6, SumSize: 10 + 11 + 12 + 13 + 14 + 15},
+				ProgressEventAnalysed:       {SumCount: 6, SumSize: 10 + 11 + 12 + 13 + 14 + 15},
+				ProgressEventAlreadyExists:  {SumCount: 2, SumSize: 13 + 15},
+				ProgressEventCatalogued:     {SumCount: 4, SumSize: 10 + 11 + 12 + 14},
+				ProgressEventReadyForUpload: {SumCount: 4, SumSize: 10 + 11 + 12 + 14},
+				ProgressEventUploaded:       {SumCount: 4, SumSize: 10 + 11 + 12 + 14, Albums: []string{"/album1", "/album2"}},
+			},
+			wantSkippedMedias: nil,
+			wantErr:           assert.NoError,
+		},
 	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			catalogAdapterStub := new(CatalogAdapterFake)
+			archiveStub := new(BArchiveAdapterFake)
+			Init(catalogAdapterStub, archiveStub, tt.fields.referencerFactory)
+			ClearDetailsReader()
+			RegisterDetailsReader(tt.fields.detailsReaders)
+
+			eventCatcher := newEventCapture()
+			options := append([]Options{OptionWithListener(eventCatcher)}, tt.args.optionSlice...)
+
+			gotFolder, gotSkippedMedia, err := Scan(tt.args.owner, tt.args.volume, options...)
+			if !tt.wantErr(t, err, fmt.Sprintf("Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)) {
+				return
+			}
+			assert.Equalf(t, tt.wantFolders, gotFolder, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
+			assert.Equalf(t, tt.wantSkippedMedias, gotSkippedMedia, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
+			assert.Equalf(t, tt.wantEvents, eventCatcher.Captured, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
+		})
+	}
+}
+
+type CatalogAdapterFake struct {
+	Indexed map[ownermodel.Owner][]*CatalogMediaRequest
+}
+
+func (c *CatalogAdapterFake) AssignIdsToNewMedias(owner string, medias []*AnalysedMedia) (map[*AnalysedMedia]string, error) {
+	panic("AssignIdsToNewMedias is deprecated and should not be called.")
+}
+
+func (c *CatalogAdapterFake) IndexMedias(owner string, requests []*CatalogMediaRequest) error {
+	if c.Indexed == nil {
+		c.Indexed = make(map[ownermodel.Owner][]*CatalogMediaRequest)
+	}
+	previous, _ := c.Indexed[ownermodel.Owner(owner)]
+	c.Indexed[ownermodel.Owner(owner)] = append(previous, requests...)
+
+	return nil
+}
+
+type BArchiveAdapterFake struct {
+	Archived map[ownermodel.Owner][]*BackingUpMediaRequest
+}
+
+func (B *BArchiveAdapterFake) ArchiveMedia(owner string, media *BackingUpMediaRequest) (string, error) {
+	if B.Archived == nil {
+		B.Archived = make(map[ownermodel.Owner][]*BackingUpMediaRequest)
+	}
+	previous, _ := B.Archived[ownermodel.Owner(owner)]
+	B.Archived[ownermodel.Owner(owner)] = append(previous, media)
+	return media.FolderName, nil
+}
+
+type DetailsReaderAdapterStub struct {
+}
+
+func (d *DetailsReaderAdapterStub) Supports(media FoundMedia, mediaType MediaType) bool {
+	return true
+}
+
+func (d *DetailsReaderAdapterStub) ReadDetails(reader io.Reader, options DetailsReaderOptions) (*MediaDetails, error) {
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	datetime, err := time.Parse("2006-01-02", string(content)[:10])
+	if err != nil {
+		return nil, err
+	}
+
+	return &MediaDetails{
+		DateTime: datetime,
+	}, nil
+}
+
+type SourceVolumeStub []FoundMedia
+
+func (m *SourceVolumeStub) String() string {
+	return "Mocked Volume"
+}
+
+func (m *SourceVolumeStub) FindMedias() ([]FoundMedia, error) {
+	return *m, nil
+}
+
+func (m *SourceVolumeStub) Children(MediaPath) (SourceVolume, error) {
+	return m, errors.New("SourceVolumeStub cannot generate procreate")
 }

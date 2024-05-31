@@ -44,6 +44,25 @@ func NewAlbumAutoPopulateReferencer(
 	}, errors.Wrapf(err, "NewAlbumAutoPopulateReferencer(...) failed")
 }
 
+func NewAlbumDryRunReferencer(
+	owner ownermodel.Owner,
+	findAlbumsByOwner FindAlbumsByOwnerPort,
+) (*AutoCreateAlbumReferencer, error) {
+
+	albums, err := findAlbumsByOwner.FindAlbumsByOwner(context.Background(), owner)
+	if err != nil {
+		return nil, errors.Wrapf(err, "NewAlbumDryRunReferencer(%s) failed", owner)
+	}
+
+	timelineAggregate, err := NewInitialisedTimelineAggregate(albums)
+
+	return &AutoCreateAlbumReferencer{
+		owner:             owner,
+		timelineAggregate: timelineAggregate,
+		Observer:          new(DryRunReferencerObserver),
+	}, errors.Wrapf(err, "NewAlbumAutoPopulateReferencer(%s) failed", owner)
+}
+
 type AlbumReference struct {
 	AlbumId          *AlbumId // AlbumId if no album fit the time and the implementation doesn't support creation.
 	AlbumJustCreated bool     // AlbumJustCreated is true if the album was created during the reference process (depending on the implementation capability).
@@ -97,4 +116,10 @@ type StatefulCreateAlbum struct {
 func (c *StatefulCreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
 	newAlbum, err := c.Timeline.CreateNewAlbum(ctx, request, c.CreateAlbumObserver...)
 	return newAlbum, errors.Wrapf(err, "StatefulCreateAlbum.Create(%s) failed", request)
+}
+
+type DryRunReferencerObserver struct{}
+
+func (d *DryRunReferencerObserver) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
+	return &AlbumId{request.Owner, NewFolderName("new-album")}, nil
 }

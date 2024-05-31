@@ -2,7 +2,7 @@ package backup_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
+	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"testing"
 )

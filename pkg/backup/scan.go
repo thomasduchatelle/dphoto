@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"regexp"
 	"strings"
 	"time"
@@ -19,16 +20,24 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 	})
 
 	options := readOptions(optionSlice)
+	options.DryRun = true
 
 	publisher, hintSize, err := newPublisher(volume)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cataloger, err := NewCataloger(ownermodel.Owner(owner), options)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	receiver := newScanReceiver(mdc, volume)
-
 	run := runner{
 		MDC:                  mdc,
 		Publisher:            publisher,
 		Analyser:             options.GetAnalyserDecorator().Decorate(newBackupAnalyseMedia()),
-		Cataloger:            newScannerCataloger(owner),
+		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             receiver.receive,
 		ConcurrentAnalyser:   ConcurrentAnalyser,
