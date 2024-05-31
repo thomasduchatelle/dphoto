@@ -28,7 +28,7 @@ func TestShouldCreateAlbumsDuringBackup(t *testing.T) {
 	eventCapture := newEventCapture()
 
 	// given
-	volume := mockVolume{
+	volume := SourceVolumeStub{
 		backup.NewInMemoryMedia("file_1.jpg", time.Now(), []byte("2022-06-18")),
 		backup.NewInMemoryMedia("file_2.mp4", time.Now(), []byte("2022-06-19A")),
 		backup.NewInMemoryMedia("file_3.avi", time.Now(), []byte("2022-06-20AB")),
@@ -168,7 +168,7 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 	eventCapture := newEventCapture()
 
 	// given
-	volume := mockVolume{
+	volume := SourceVolumeStub{
 		backup.NewInMemoryMedia("file_1.jpg", time.Now(), []byte("2022-06-18")),
 		backup.NewInMemoryMedia("file_2.jpg", time.Now(), []byte("2022-06-19A")),
 		backup.NewInMemoryMedia("file_3.jpg", time.Now(), []byte("2022-06-20AB")),

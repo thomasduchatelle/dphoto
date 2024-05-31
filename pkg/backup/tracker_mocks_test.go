@@ -1,44 +1,40 @@
-package backup_test
+package backup
 
 import (
 	"fmt"
-	"github.com/thomasduchatelle/dphoto/pkg/backup"
+	"slices"
 	"strings"
 )
 
 type capturedEvents struct {
-	Captured map[backup.ProgressEventType]eventSummary
+	Captured map[ProgressEventType]eventSummary
 }
 
 type eventSummary struct {
-	Number   int
 	SumCount int
 	SumSize  int
 	Albums   []string
 }
 
 func (e *eventSummary) String() string {
-	return fmt.Sprintf("Number=%d , SumCount=%d, SumSize=%d, Albums=%s", e.Number, e.SumCount, e.SumSize, strings.Join(e.Albums, ", "))
+	return fmt.Sprintf("SumCount=%d, SumSize=%d, Albums=%s", e.SumCount, e.SumSize, strings.Join(e.Albums, ", "))
 }
 
 func newEventCapture() *capturedEvents {
 	return &capturedEvents{
-		Captured: make(map[backup.ProgressEventType]eventSummary),
+		Captured: make(map[ProgressEventType]eventSummary),
 	}
 }
 
-func (e *capturedEvents) OnEvent(event backup.ProgressEvent) {
-	capture, found := e.Captured[event.Type]
-	if !found {
-		capture = eventSummary{}
-	}
+func (e *capturedEvents) OnEvent(event ProgressEvent) {
+	capture, _ := e.Captured[event.Type]
 
-	capture.Number++
-	capture.SumCount += int(event.Count)
-	capture.SumSize += int(event.Size)
+	capture.SumCount += event.Count
+	capture.SumSize += event.Size
 
-	if event.Album != "" {
+	if event.Album != "" && !slices.Contains(capture.Albums, event.Album) {
 		capture.Albums = append(capture.Albums, event.Album)
+		slices.Sort(capture.Albums)
 	}
 
 	e.Captured[event.Type] = capture

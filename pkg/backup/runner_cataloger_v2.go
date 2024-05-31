@@ -90,8 +90,14 @@ func (c *Cataloger) firstMatchingFilter(filters []CatalogerFilter, media Analyse
 }
 
 func NewCataloger(owner ownermodel.Owner, options Options) (RunnerCataloger, error) {
-	// TODO check the 'scan' is getting a DryRun Cataloguer !
-	referencer, err := referencerFactory.NewCreatorReferencer(context.TODO(), owner)
+	var referencer CatalogReferencer
+	var err error
+
+	if options.DryRun {
+		referencer, err = referencerFactory.NewDryRunReferencer(context.TODO(), owner)
+	} else {
+		referencer, err = referencerFactory.NewCreatorReferencer(context.TODO(), owner)
+	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create a cataloger for %s with options %+v", owner, options)
 	}

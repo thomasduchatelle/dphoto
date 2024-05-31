@@ -197,25 +197,12 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 	return run, uploadedCapture
 }
 
-type eventSummary struct {
-	Number   int
-	SumCount int
-	SumSize  int
-}
+func collectEvents(channel chan *ProgressEvent) map[ProgressEventType]eventSummary {
+	eventCapture := newEventCapture()
 
-func collectEvents(channel chan *ProgressEvent) map[ProgressEventType]*eventSummary {
-	counters := make(map[ProgressEventType]*eventSummary)
 	for event := range channel {
-		counter, found := counters[event.Type]
-		if !found {
-			counter = new(eventSummary)
-			counters[event.Type] = counter
-		}
-
-		counter.Number++
-		counter.SumCount += event.Count
-		counter.SumSize += event.Size
+		eventCapture.OnEvent(*event)
 	}
 
-	return counters
+	return eventCapture.Captured
 }

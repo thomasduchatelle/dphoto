@@ -93,6 +93,25 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name:    "it should pick a dry-run referencer when in read-only mode",
+			newArgs: newArgs{owner: owner, options: Options{DryRun: true}},
+			fields: fields{
+				ReferencerFactory: &ReferencerFactoryFake{
+					DryRunReferencer: CatalogReferencerStub{
+						analysedMedia1: reference1Exists,
+					},
+				},
+			},
+			args: args{
+				medias: []*AnalysedMedia{analysedMedia1},
+			},
+			want: nil,
+			wantEvents: []*ProgressEvent{
+				{Type: ProgressEventAlreadyExists, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -311,8 +330,11 @@ type CatalogReferencerStub map[*AnalysedMedia]CatalogReference
 func (c CatalogReferencerStub) Reference(ctx context.Context, medias []*AnalysedMedia) (map[*AnalysedMedia]CatalogReference, error) {
 	result := make(map[*AnalysedMedia]CatalogReference)
 	for _, media := range medias {
-		if reference, ok := c[media]; ok {
-			result[media] = reference
+		for key, reference := range c {
+			if key.FoundMedia.String() == media.FoundMedia.String() {
+				result[media] = reference
+				break
+			}
 		}
 	}
 
@@ -338,6 +360,6 @@ func (r *ReferencerFactoryFake) NewCreatorReferencer(ctx context.Context, owner 
 	return r.CreatorReferencer, nil
 }
 
-func (r *ReferencerFactoryFake) NewDryRunReferencer(ctx context.Context, owner string) (CatalogReferencer, error) {
+func (r *ReferencerFactoryFake) NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error) {
 	return r.DryRunReferencer, nil
 }

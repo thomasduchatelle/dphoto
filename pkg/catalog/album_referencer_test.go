@@ -194,6 +194,82 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 	}
 }
 
+func TestNewAlbumDryRunReferencer(t *testing.T) {
+	owner := ownermodel.Owner("owner-1")
+	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+	jan25 := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
+	album24 := Album{
+		AlbumId: AlbumId{
+			Owner:      owner,
+			FolderName: NewFolderName("/2024"),
+		},
+		Name:  "2024",
+		Start: jan24,
+		End:   jan25,
+	}
+
+	type fields struct {
+		owner             ownermodel.Owner
+		findAlbumsByOwner FindAlbumsByOwnerPort
+	}
+	type args struct {
+		mediaTime time.Time
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    AlbumReference
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should return a reference for an album that has been found",
+			fields: fields{
+				owner:             owner,
+				findAlbumsByOwner: FindAlbumsByOwnerPortFake{owner: []*Album{&album24}},
+			},
+			args: args{
+				mediaTime: feb24,
+			},
+			want: AlbumReference{
+				AlbumId:          &album24.AlbumId,
+				AlbumJustCreated: false,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should makeup a reference when the album has not been found",
+			fields: fields{
+				owner:             owner,
+				findAlbumsByOwner: make(FindAlbumsByOwnerPortFake),
+			},
+			args: args{
+				mediaTime: jan24,
+			},
+			want: AlbumReference{
+				AlbumId:          &AlbumId{Owner: owner, FolderName: NewFolderName("/new-album")},
+				AlbumJustCreated: true,
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			referencer, err := NewAlbumDryRunReferencer(tt.fields.owner, tt.fields.findAlbumsByOwner)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			got, err := referencer.FindReference(context.Background(), tt.args.mediaTime)
+			if tt.wantErr(t, err) {
+				assert.Equalf(t, tt.want, got, "FindReference(%v, %v)", context.Background(), tt.args.mediaTime)
+			}
+		})
+	}
+}
+
 func TestAlbumAutoPopulateReferencer_FindReference(t *testing.T) {
 	owner := ownermodel.Owner("owner-1")
 	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
