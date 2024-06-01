@@ -153,11 +153,11 @@ func (_c *CatalogReference_Exists_Call) RunAndReturn(run func() bool) *CatalogRe
 }
 
 // MediaId provides a mock function with given fields:
-func (_m *CatalogReference) MediaId() string {
+func (_m *CatalogReference) UniqueIdentifier() string {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for MediaId")
+		panic("no return value specified for UniqueIdentifier")
 	}
 
 	var r0 string
@@ -170,14 +170,14 @@ func (_m *CatalogReference) MediaId() string {
 	return r0
 }
 
-// CatalogReference_MediaId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MediaId'
+// CatalogReference_MediaId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UniqueIdentifier'
 type CatalogReference_MediaId_Call struct {
 	*mock.Call
 }
 
 // MediaId is a helper method to define mock.On call
 func (_e *CatalogReference_Expecter) MediaId() *CatalogReference_MediaId_Call {
-	return &CatalogReference_MediaId_Call{Call: _e.mock.On("MediaId")}
+	return &CatalogReference_MediaId_Call{Call: _e.mock.On("UniqueIdentifier")}
 }
 
 func (_c *CatalogReference_MediaId_Call) Run(run func()) *CatalogReference_MediaId_Call {

@@ -39,7 +39,7 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 		Analyser:             options.GetAnalyserDecorator().Decorate(newBackupAnalyseMedia()),
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
-		Uploader:             receiver.receive,
+		Uploader:             RunnerUploaderFunc(receiver.receive),
 		ConcurrentAnalyser:   ConcurrentAnalyser,
 		ConcurrentCataloguer: ConcurrentCataloguer,
 		ConcurrentUploader:   1,

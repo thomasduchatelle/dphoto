@@ -40,9 +40,8 @@ func TestShouldStopAtFirstError(t *testing.T) {
 					for _, media := range medias {
 						if media.FoundMedia.MediaPath().Filename != "file_2.jpg" && media.FoundMedia.MediaPath().Filename != "file_3.jpg" {
 							requests = append(requests, &BackingUpMediaRequest{
-								AnalysedMedia: media,
-								Id:            media.Sha256Hash,
-								FolderName:    "/album1",
+								AnalysedMedia:    media,
+								CatalogReference: &CatalogReferenceStub{MediaIdValue: media.Sha256Hash, AlbumFolderNameValue: "/album1"},
 							})
 						}
 					}
@@ -50,7 +49,7 @@ func TestShouldStopAtFirstError(t *testing.T) {
 					return requests, nil
 				})
 				run.UniqueFilter = func(media *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool {
-					return media.Id != "file_6.jpg"
+					return media.CatalogReference.UniqueIdentifier() != "file_6.jpg"
 				}
 			},
 			want:    [][]string{{"file_1.jpg", "file_4.jpg"}, {"file_5.jpg"}},
@@ -90,13 +89,13 @@ func TestShouldStopAtFirstError(t *testing.T) {
 			name: "it should stop the process after an error on the uploader",
 			modifier: func(run *runner) {
 				original := run.Uploader
-				run.Uploader = func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
+				run.Uploader = RunnerUploaderFunc(func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
 					if buffer[0].AnalysedMedia.FoundMedia.MediaPath().Filename == "file_1.jpg" {
 						return errors.Errorf("TEST")
 					}
 
-					return original(buffer, progressChannel)
-				}
+					return original.Upload(buffer, progressChannel)
+				})
 			},
 			want:    nil,
 			wantErr: "error in uploader: TEST",
@@ -168,9 +167,8 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 			var requests []*BackingUpMediaRequest
 			for _, media := range medias {
 				requests = append(requests, &BackingUpMediaRequest{
-					AnalysedMedia: media,
-					Id:            media.Sha256Hash,
-					FolderName:    "/album1",
+					AnalysedMedia:    media,
+					CatalogReference: &CatalogReferenceStub{MediaIdValue: media.Sha256Hash, AlbumFolderNameValue: "/album1"},
 				})
 			}
 
@@ -179,7 +177,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 		UniqueFilter: func(media *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool {
 			return true
 		},
-		Uploader: func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
+		Uploader: RunnerUploaderFunc(func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
 			var names []string
 			for _, request := range buffer {
 				names = append(names, request.AnalysedMedia.FoundMedia.MediaPath().Filename)
@@ -187,7 +185,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 
 			uploadedCapture.requests = append(uploadedCapture.requests, names)
 			return nil
-		},
+		}),
 		ConcurrentAnalyser:   1,
 		ConcurrentCataloguer: 1,
 		ConcurrentUploader:   1,

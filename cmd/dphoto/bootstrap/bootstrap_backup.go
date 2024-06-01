@@ -18,6 +18,6 @@ func init() {
 		backup.ConcurrentUploader = cfg.GetIntOrDefault(config.BackupConcurrencyUploader, 2)
 		backup.BatchSize = dynamoutils.DynamoReadBatchSize // optimise the cataloguer and scanning
 
-		backup.Init(pkgfactory.NewCatalogAdapter(ctx), backuparchive.New(), pkgfactory.NewReferencerFactory())
+		backup.Init(backuparchive.New(), pkgfactory.NewReferencerFactory(), pkgfactory.NewInsertMediaAdapter(ctx))
 	})
 }

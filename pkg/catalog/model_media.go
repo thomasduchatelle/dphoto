@@ -17,6 +17,10 @@ type MediaSignature struct {
 	SignatureSize   int
 }
 
+func (s MediaSignature) Value() string {
+	return fmt.Sprintf("%s##%d", s.SignatureSha256, s.SignatureSize)
+}
+
 func (s MediaSignature) String() string {
 	return fmt.Sprintf("Signature[%s - %d]", s.SignatureSha256, s.SignatureSize)
 }

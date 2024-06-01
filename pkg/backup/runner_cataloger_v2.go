@@ -18,7 +18,10 @@ type CatalogReference interface {
 	// AlbumFolderName returns the name of the album where the media would be stored
 	AlbumFolderName() string
 
-	// MediaId is used for backward compatibility with the previous version of the cataloger
+	// UniqueIdentifier is identifying the media no matter its filename, its id in the catalog (if it's in it or not), its album, ... It's its signature.
+	UniqueIdentifier() string
+
+	// MediaId is the id of the media in the catalog and in the archive
 	MediaId() string
 }
 
@@ -64,9 +67,8 @@ func (c *Cataloger) Catalog(ctx context.Context, medias []*AnalysedMedia, progre
 		}
 
 		requests = append(requests, &BackingUpMediaRequest{
-			AnalysedMedia: analysed,
-			Id:            reference.MediaId(),
-			FolderName:    reference.AlbumFolderName(),
+			AnalysedMedia:    analysed,
+			CatalogReference: reference,
 		})
 		count, _ := counts[ProgressEventCatalogued]
 		counts[ProgressEventCatalogued] = count.Add(1, analysed.FoundMedia.Size())

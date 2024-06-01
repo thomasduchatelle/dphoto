@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	catalogPort       CatalogAdapter
 	archivePort       BArchiveAdapter
 	detailsReaders    []DetailsReaderAdapter // DetailsReaders is a list of specific details extractor can auto-register
 	referencerFactory ReferencerFactory
+	insertMediaPort   InsertMediaPort
 )
 
 func ClearDetailsReader() {
@@ -22,10 +22,15 @@ func RegisterDetailsReader(reader DetailsReaderAdapter) {
 	detailsReaders = append(detailsReaders, reader)
 }
 
-func Init(catalog CatalogAdapter, archive BArchiveAdapter, refFactory ReferencerFactory) {
-	catalogPort = catalog // TODO is it still required ?
+// Init for scan or backup (but only refFactory is required for scan)
+func Init(archive BArchiveAdapter, refFactory ReferencerFactory, insertMedia InsertMediaPort) {
 	archivePort = archive
 	referencerFactory = refFactory
+	insertMediaPort = insertMedia
+}
+
+type InsertMediaPort interface {
+	IndexMedias(ctx context.Context, owner ownermodel.Owner, requests []*CatalogMediaRequest) error
 }
 
 type TimelineAdapter interface {
@@ -38,9 +43,6 @@ type AlbumLookupPort interface {
 }
 
 type CatalogAdapter interface {
-	// AssignIdsToNewMedias filter out existing medias and generate an ID for new ones.
-	AssignIdsToNewMedias(owner string, medias []*AnalysedMedia) (map[*AnalysedMedia]string, error)
-
 	// IndexMedias add to the catalog following medias
 	IndexMedias(owner string, requests []*CatalogMediaRequest) error
 }

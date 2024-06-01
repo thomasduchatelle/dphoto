@@ -40,7 +40,7 @@ func (s *scanReceiver) receive(buffer []*BackingUpMediaRequest, progressChannel 
 			Type:      ProgressEventUploaded,
 			Count:     1,
 			Size:      foundMedia.Size(),
-			Album:     media.FolderName,
+			Album:     media.CatalogReference.AlbumFolderName(),
 			MediaType: media.AnalysedMedia.Type,
 		}
 	}

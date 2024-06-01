@@ -162,7 +162,7 @@ func TestShouldFilterMediasBasedOnAlbumDuringBackup(t *testing.T) {
 	timelineMock := mocks.NewTimelineAdapter(t)
 	catalogMock.On("GetAlbumsTimeline", owner).Return(timelineMock, nil)
 	archiveMock := mocks.NewBArchiveAdapter(t)
-	backup.Init(catalogMock, archiveMock, nil)
+	backup.Init(archiveMock, nil)
 	backup.BatchSize = 4
 
 	eventCapture := newEventCapture()

@@ -135,9 +135,7 @@ func TestScanAcceptance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			catalogAdapterStub := new(CatalogAdapterFake)
-			archiveStub := new(BArchiveAdapterFake)
-			Init(catalogAdapterStub, archiveStub, tt.fields.referencerFactory)
+			Init(nil, tt.fields.referencerFactory, nil)
 			ClearDetailsReader()
 			RegisterDetailsReader(tt.fields.detailsReaders)
 
@@ -153,37 +151,6 @@ func TestScanAcceptance(t *testing.T) {
 			assert.Equalf(t, tt.wantEvents, eventCatcher.Captured, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
 		})
 	}
-}
-
-type CatalogAdapterFake struct {
-	Indexed map[ownermodel.Owner][]*CatalogMediaRequest
-}
-
-func (c *CatalogAdapterFake) AssignIdsToNewMedias(owner string, medias []*AnalysedMedia) (map[*AnalysedMedia]string, error) {
-	panic("AssignIdsToNewMedias is deprecated and should not be called.")
-}
-
-func (c *CatalogAdapterFake) IndexMedias(owner string, requests []*CatalogMediaRequest) error {
-	if c.Indexed == nil {
-		c.Indexed = make(map[ownermodel.Owner][]*CatalogMediaRequest)
-	}
-	previous, _ := c.Indexed[ownermodel.Owner(owner)]
-	c.Indexed[ownermodel.Owner(owner)] = append(previous, requests...)
-
-	return nil
-}
-
-type BArchiveAdapterFake struct {
-	Archived map[ownermodel.Owner][]*BackingUpMediaRequest
-}
-
-func (B *BArchiveAdapterFake) ArchiveMedia(owner string, media *BackingUpMediaRequest) (string, error) {
-	if B.Archived == nil {
-		B.Archived = make(map[ownermodel.Owner][]*BackingUpMediaRequest)
-	}
-	previous, _ := B.Archived[ownermodel.Owner(owner)]
-	B.Archived[ownermodel.Owner(owner)] = append(previous, media)
-	return media.FolderName, nil
 }
 
 type DetailsReaderAdapterStub struct {
