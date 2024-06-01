@@ -93,7 +93,12 @@ type AmendAlbumMediaTransfer struct {
 }
 
 func (a *AmendAlbumMediaTransfer) OnAlbumDatesAmended(ctx context.Context, existingTimeline []*Album, updatedAlbum Album) error {
-	records, orphaned, err := NewTimelineMutator().AmendDates(existingTimeline, updatedAlbum)
+	timeline, err := NewInitialisedTimelineAggregate(existingTimeline)
+	if err != nil {
+		return errors.Wrapf(err, "OnAlbumDatesAmended(%s) failed", updatedAlbum)
+	}
+
+	records, orphaned, err := timeline.AmendDates(updatedAlbum)
 	if err != nil {
 		return err
 	}

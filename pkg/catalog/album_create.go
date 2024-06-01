@@ -96,8 +96,7 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*
 		return nil
 	})
 
-	createdAlbum, err := timeline.CreateNewAlbum(ctx, request, observers...)
-	return createdAlbum, err
+	return timeline.CreateNewAlbum(ctx, request, observers...)
 }
 
 type CreateAlbumExecutor struct {
