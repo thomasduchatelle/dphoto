@@ -84,73 +84,8 @@ func (r *Repository) FindMediaCurrentAlbum(ctx context.Context, owner ownermodel
 	return nil, errors.Errorf("invalid AlbumIndexPK format expected to start with %s ; value: %+v", owner, item.Item)
 }
 
-func (r *Repository) FindMediaIds(ctx context.Context, request *catalog.FindMediaRequest) ([]catalog.MediaId, error) {
-	queries, err := newMediaQueryBuilders(r.table, request, "Id", types.SelectAllAttributes)
-	if err != nil {
-		return nil, err
-	}
-
-	var mediaIds []catalog.MediaId
-
-	crawler := dynamoutils.NewQueryStream(ctx, r.client, queries)
-	for crawler.HasNext() {
-		record := crawler.Next()
-		if id, ok := record["Id"].(*types.AttributeValueMemberS); ok {
-			mediaIds = append(mediaIds, catalog.MediaId(id.Value))
-		}
-	}
-
-	return mediaIds, err
-}
-
-func (r *Repository) FindExistingSignatures(ctx context.Context, owner ownermodel.Owner, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
-	// note: this implementation expects media id to be an encoded version of its signature
-
-	var keys []map[string]types.AttributeValue
-	uniqueSignatures := make(map[catalog.MediaSignature]interface{})
-	for _, signature := range signatures {
-		if _, found := uniqueSignatures[*signature]; !found {
-			id, err := catalog.GenerateMediaId(*signature)
-			if err != nil {
-				return nil, err
-			}
-
-			key, err := attributevalue.MarshalMap(MediaPrimaryKey(owner, id))
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to marshal media keys from signature %+v", signature)
-			}
-
-			keys = append(keys, key)
-		}
-		uniqueSignatures[*signature] = nil
-	}
-
-	stream := dynamoutils.NewGetStream(ctx, dynamoutils.NewGetBatchItem(r.client, r.table, *aws.String("Id")), keys, dynamoutils.DynamoReadBatchSize)
-
-	found := make([]*catalog.MediaSignature, 0, len(signatures))
-	for stream.HasNext() {
-		attributes := stream.Next()
-		if awsAttr, ok := attributes["Id"]; ok {
-			if value, ok := awsAttr.(*types.AttributeValueMemberS); ok && value.Value != "" {
-				signature, err := catalog.DecodeMediaId(catalog.MediaId(value.Value))
-				if err != nil {
-					return nil, err
-				}
-
-				found = append(found, signature)
-			} else {
-				return nil, errors.Errorf("Records Id field is empty or not a String: %+v", attributes)
-			}
-		} else {
-			return nil, errors.Errorf("Records doesn't have an 'Id' field: %+v", attributes)
-		}
-	}
-
-	return found, stream.Error()
-}
-
 func (r *Repository) FindSignatures(ctx context.Context, owner ownermodel.Owner, signatures []catalog.MediaSignature) (map[catalog.MediaSignature]catalog.MediaId, error) {
-	// note: this implementation expects media id to be an encoded version of its signature
+	// note: this implementation expects media id to be an encoded version of its signature ; TODO store (retrospectively) the signature in the media metadata
 
 	var keys []map[string]types.AttributeValue
 	uniqueSignatures := make(map[catalog.MediaSignature]interface{})

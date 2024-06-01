@@ -75,7 +75,7 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 		return err
 	}
 
-	transfers, orphaned, err := NewTimelineMutator().RemoveAlbum(albums, albumId)
+	transfers, orphaned, err := NewLazyTimelineAggregate(albums).RemoveAlbum(albumId)
 	if err != nil {
 		return err
 	}

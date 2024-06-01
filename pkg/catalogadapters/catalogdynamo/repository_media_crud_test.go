@@ -222,46 +222,6 @@ func (a *MediaCrudTestSuite) TestFindMedias() {
 	}
 }
 
-func (a *MediaCrudTestSuite) TestFindMediaIds() {
-	allTime := catalog.TimeRange{}
-	tests := []struct {
-		name       string
-		folderName catalog.FolderName
-		timeRange  catalog.TimeRange
-		medias     [][]catalog.MediaId // medias is a slice of slice to represent pages (that have been removed)
-	}{
-		{
-			"it should find no media in empty albums",
-			a.mar21,
-			allTime,
-			[][]catalog.MediaId{nil},
-		},
-		{
-			"it should find 2 medias in Jan",
-			a.jan21,
-			allTime,
-			[][]catalog.MediaId{{a.medias[0].Id, a.medias[2].Id}},
-		},
-		{
-			"it should filter on the date to only get medias between 2 dates",
-			a.jan21,
-			newDateRange("2021-01-12", "2021-01-13"),
-			[][]catalog.MediaId{{a.medias[2].Id}},
-		},
-	}
-
-	for _, tt := range tests {
-		var pages [][]catalog.MediaId
-
-		ids, err := a.repo.FindMediaIds(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(tt.folderName).WithinRange(tt.timeRange.Start, tt.timeRange.End))
-		if a.NoError(err, tt.name) {
-			pages = append(pages, ids)
-
-			a.Equal(tt.medias, pages, tt.name)
-		}
-	}
-}
-
 func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 	name := "it should find a media with all its details"
 	medias, err := a.repo.FindMedias(context.TODO(), catalog.NewFindMediaRequest(a.owner).WithAlbum(a.jan21))
@@ -274,40 +234,6 @@ func (a *MediaCrudTestSuite) TestFindMedias_AllDetails() {
 			Type:      a.medias[0].Type,
 			Details:   a.medias[0].Details,
 		}, medias[0])
-	}
-}
-
-func (a *MediaCrudTestSuite) TestFindExistingSignatures() {
-	exiting := []*catalog.MediaSignature{
-		{SignatureSha256: "dc58865da1228b7a187693c702905d00d6a59439a07d52f2a8e7ae43764b55b9", SignatureSize: 16384},
-		{SignatureSha256: "4d37f8780f5f5f14b914683b1fd36a9a567f5ea63a835b76100d9970303d6ad6", SignatureSize: 32000},
-	}
-	search := make([]*catalog.MediaSignature, 0, dynamoutils.DynamoReadBatchSize*2+20)
-	for i := 0; i < dynamoutils.DynamoReadBatchSize*2+20; i++ {
-		search = append(search, &catalog.MediaSignature{
-			SignatureSha256: fmt.Sprintf("%064d", i),
-			SignatureSize:   42,
-		})
-	}
-
-	signatures, err := a.repo.FindExistingSignatures(context.TODO(), a.owner, search)
-	if a.NoError(err) {
-		a.Empty(signatures, "it should not find any of non-existing signature")
-	} else {
-		return
-	}
-
-	search[42] = exiting[0]
-	search[69] = exiting[1]
-	signatures, err = a.repo.FindExistingSignatures(context.TODO(), a.owner, search)
-	if a.NoError(err) {
-		a.Equal(exiting, signatures, "it should filter out any non exiting signature to keep the only 2 that exist")
-	}
-
-	search[1] = exiting[1]
-	signatures, err = a.repo.FindExistingSignatures(context.TODO(), a.owner, search)
-	if a.NoError(err, "it should ignore duplicated keys") {
-		a.Equal(exiting, signatures, "it should ignore duplicated keys")
 	}
 }
 
