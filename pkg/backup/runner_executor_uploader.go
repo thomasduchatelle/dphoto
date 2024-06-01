@@ -1,34 +1,38 @@
 package backup
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
-func newBackupUploader(owner ownermodel.Owner) runnerUploader {
-	return func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
-		catalogRequests := make([]*CatalogMediaRequest, len(buffer), len(buffer))
+type Uploader struct {
+	Owner           ownermodel.Owner
+	InsertMediaPort InsertMediaPort
+}
 
-		for i, request := range buffer {
-			newFilename, err := archivePort.ArchiveMedia(owner.Value(), request)
-			if err != nil {
-				return errors.Wrapf(err, "archiving media %s failed", request.AnalysedMedia.FoundMedia.String())
-			}
+func (u *Uploader) Upload(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
+	catalogRequests := make([]*CatalogMediaRequest, len(buffer), len(buffer))
 
-			catalogRequests[i] = &CatalogMediaRequest{
-				BackingUpMediaRequest: request,
-				ArchiveFilename:       newFilename,
-			}
-
-			progressChannel <- &ProgressEvent{
-				Type:      ProgressEventUploaded,
-				Count:     1,
-				Size:      request.AnalysedMedia.FoundMedia.Size(),
-				Album:     request.FolderName,
-				MediaType: request.AnalysedMedia.Type,
-			}
+	for i, request := range buffer {
+		newFilename, err := archivePort.ArchiveMedia(u.Owner.Value(), request)
+		if err != nil {
+			return errors.Wrapf(err, "archiving media %s failed", request.AnalysedMedia.FoundMedia.String())
 		}
 
-		return errors.Wrapf(catalogPort.IndexMedias(owner.Value(), catalogRequests), "failed to catalog medias")
+		catalogRequests[i] = &CatalogMediaRequest{
+			BackingUpMediaRequest: request,
+			ArchiveFilename:       newFilename,
+		}
+
+		progressChannel <- &ProgressEvent{
+			Type:      ProgressEventUploaded,
+			Count:     1,
+			Size:      request.AnalysedMedia.FoundMedia.Size(),
+			Album:     request.CatalogReference.AlbumFolderName(),
+			MediaType: request.AnalysedMedia.Type,
+		}
 	}
+
+	return errors.Wrapf(u.InsertMediaPort.IndexMedias(context.TODO(), u.Owner, catalogRequests), "failed to catalog medias")
 }

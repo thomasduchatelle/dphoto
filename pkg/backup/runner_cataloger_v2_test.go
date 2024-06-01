@@ -81,9 +81,8 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 			},
 			want: []*BackingUpMediaRequest{
 				{
-					AnalysedMedia: analysedMedia2,
-					Id:            reference2.MediaIdValue,
-					FolderName:    reference2.AlbumFolderNameValue,
+					AnalysedMedia:    analysedMedia2,
+					CatalogReference: reference2,
 				},
 			},
 			wantEvents: []*ProgressEvent{
@@ -189,9 +188,8 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 			},
 			want: []*BackingUpMediaRequest{
 				{
-					AnalysedMedia: analysedMedia1,
-					Id:            reference1.MediaIdValue,
-					FolderName:    reference1.AlbumFolderNameValue,
+					AnalysedMedia:    analysedMedia1,
+					CatalogReference: reference1,
 				},
 			},
 			wantEvents: []*ProgressEvent{
@@ -219,9 +217,8 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 			},
 			want: []*BackingUpMediaRequest{
 				{
-					AnalysedMedia: analysedMedia2,
-					Id:            reference2.MediaIdValue,
-					FolderName:    reference2.AlbumFolderNameValue,
+					AnalysedMedia:    analysedMedia2,
+					CatalogReference: reference2,
 				},
 			},
 			wantEvents: []*ProgressEvent{
@@ -243,9 +240,8 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 			},
 			want: []*BackingUpMediaRequest{
 				{
-					AnalysedMedia: analysedMedia1,
-					Id:            reference1AlbumCreated.MediaIdValue,
-					FolderName:    reference1AlbumCreated.AlbumFolderNameValue,
+					AnalysedMedia:    analysedMedia1,
+					CatalogReference: reference1AlbumCreated,
 				},
 			},
 			wantEvents: []*ProgressEvent{
@@ -291,6 +287,10 @@ type CatalogReferenceStub struct {
 	AlbumCreatedValue    bool
 }
 
+func (c *CatalogReferenceStub) MediaId() string {
+	return c.MediaIdValue
+}
+
 func (c *CatalogReferenceStub) AlbumCreated() bool {
 	return c.AlbumCreatedValue
 }
@@ -299,7 +299,7 @@ func (c *CatalogReferenceStub) Exists() bool {
 	return c.ExistsValue
 }
 
-func (c *CatalogReferenceStub) MediaId() string {
+func (c *CatalogReferenceStub) UniqueIdentifier() string {
 	return c.MediaIdValue
 }
 

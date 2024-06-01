@@ -96,10 +96,11 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 			},
 			want: map[*backup.AnalysedMedia]backup.CatalogReference{
 				&analysedMedia1: ReferenceSnapshot{
-					ExistsValue:          true,
-					AlbumCreatedValue:    false,
-					AlbumFolderNameValue: "",
-					MediaIdValue:         mediaReference1Exists.ProvisionalMediaId.Value(),
+					ExistsValue:           true,
+					AlbumCreatedValue:     false,
+					AlbumFolderNameValue:  "",
+					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
 				},
 			},
 			wantErr: assert.NoError,
@@ -128,16 +129,18 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 			},
 			want: map[*backup.AnalysedMedia]backup.CatalogReference{
 				&analysedMedia1: ReferenceSnapshot{
-					ExistsValue:          true,
-					AlbumCreatedValue:    false,
-					AlbumFolderNameValue: "",
-					MediaIdValue:         mediaReference1Exists.ProvisionalMediaId.Value(),
+					ExistsValue:           true,
+					AlbumCreatedValue:     false,
+					AlbumFolderNameValue:  "",
+					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
 				},
 				&analysedMedia2: ReferenceSnapshot{
-					ExistsValue:          true,
-					AlbumCreatedValue:    false,
-					AlbumFolderNameValue: "",
-					MediaIdValue:         mediaReference1Exists.ProvisionalMediaId.Value(),
+					ExistsValue:           true,
+					AlbumCreatedValue:     false,
+					AlbumFolderNameValue:  "",
+					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
 				},
 			},
 			wantErr: assert.NoError,
@@ -165,10 +168,11 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 			},
 			want: map[*backup.AnalysedMedia]backup.CatalogReference{
 				&analysedMedia1: ReferenceSnapshot{
-					ExistsValue:          false,
-					AlbumCreatedValue:    true,
-					AlbumFolderNameValue: albumId1.FolderName.String(),
-					MediaIdValue:         mediaReference1.ProvisionalMediaId.Value(),
+					ExistsValue:           false,
+					AlbumCreatedValue:     true,
+					AlbumFolderNameValue:  albumId1.FolderName.String(),
+					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
 				},
 			},
 			wantErr: assert.NoError,
@@ -190,10 +194,11 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 			reallyGot := make(map[*backup.AnalysedMedia]backup.CatalogReference)
 			for media, reference := range got {
 				reallyGot[media] = ReferenceSnapshot{
-					ExistsValue:          reference.Exists(),
-					AlbumCreatedValue:    reference.AlbumCreated(),
-					AlbumFolderNameValue: reference.AlbumFolderName(),
-					MediaIdValue:         reference.MediaId(),
+					ExistsValue:           reference.Exists(),
+					AlbumCreatedValue:     reference.AlbumCreated(),
+					AlbumFolderNameValue:  reference.AlbumFolderName(),
+					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
 				}
 			}
 
@@ -224,10 +229,15 @@ func (f FindSignaturePortFake) SimulateInsertingMedia(ctx context.Context, owner
 }
 
 type ReferenceSnapshot struct {
-	ExistsValue          bool
-	AlbumCreatedValue    bool
-	AlbumFolderNameValue string
-	MediaIdValue         string
+	ExistsValue           bool
+	AlbumCreatedValue     bool
+	AlbumFolderNameValue  string
+	UniqueIdentifierValue string
+	MediaIdValue          string
+}
+
+func (r ReferenceSnapshot) MediaId() string {
+	return r.MediaIdValue
 }
 
 func (r ReferenceSnapshot) Exists() bool {
@@ -242,8 +252,8 @@ func (r ReferenceSnapshot) AlbumFolderName() string {
 	return r.AlbumFolderNameValue
 }
 
-func (r ReferenceSnapshot) MediaId() string {
-	return r.MediaIdValue
+func (r ReferenceSnapshot) UniqueIdentifier() string {
+	return r.UniqueIdentifierValue
 }
 
 type StatefulAlbumReferencerFake map[time.Time]catalog.AlbumReference

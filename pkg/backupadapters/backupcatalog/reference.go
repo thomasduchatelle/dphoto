@@ -9,6 +9,10 @@ type Reference struct {
 	AlbumReference catalog.AlbumReference
 }
 
+func (r Reference) MediaId() string {
+	return r.MediaReference.ProvisionalMediaId.Value()
+}
+
 func (r Reference) AlbumCreated() bool {
 	if r.AlbumReference.AlbumId == nil {
 		return false
@@ -29,6 +33,6 @@ func (r Reference) Exists() bool {
 	return r.MediaReference.AlreadyExists
 }
 
-func (r Reference) MediaId() string {
-	return r.MediaReference.ProvisionalMediaId.Value()
+func (r Reference) UniqueIdentifier() string {
+	return r.MediaReference.Signature.Value()
 }

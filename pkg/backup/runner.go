@@ -15,14 +15,22 @@ type RunnerCataloger interface {
 	Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 }
 
+type RunnerUploader interface {
+	Upload(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
+}
+
 type runnerPublisher func(chan FoundMedia, chan *ProgressEvent) error
 type RunnerAnalyserFunc func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
 type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool
-type runnerUploader func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
+type RunnerUploaderFunc func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
 
 func (r RunnerCatalogerFunc) Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 	return r(ctx, medias, progressChannel)
+}
+
+func (r RunnerUploaderFunc) Upload(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
+	return r(buffer, progressChannel)
 }
 
 type runner struct {
@@ -31,7 +39,7 @@ type runner struct {
 	Analyser             RunnerAnalyser     // Analyser is extracting metadata from the file
 	Cataloger            RunnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
-	Uploader             runnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
+	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
 	ConcurrentAnalyser   int                // ConcurrentAnalyser is the number of goroutines that analyse the medias
 	ConcurrentCataloguer int                // ConcurrentAnalyser is the number of goroutines that analyse the medias
 	ConcurrentUploader   int                // ConcurrentUploader is the number of goroutine that upload files online
@@ -229,7 +237,7 @@ func (r *runner) uploadMedias(bufferedChannel chan []*BackingUpMediaRequest, com
 
 			case buffer, more := <-bufferedChannel:
 				if more && r.hasAnyErrors() == 0 {
-					err := r.Uploader(buffer, r.progressEventChannel)
+					err := r.Uploader.Upload(buffer, r.progressEventChannel)
 					r.appendError(errors.Wrap(err, "error in uploader"))
 				} else if !more {
 					return

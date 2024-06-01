@@ -40,8 +40,8 @@ func NewReferencerFactory() backup.ReferencerFactory {
 	return new(Factory)
 }
 
-func NewCatalogAdapter(ctx context.Context) backup.CatalogAdapter {
-	return &backupcatalog.Adapter{
-		InsertMediaCase: InsertMediasCase(ctx),
+func NewInsertMediaAdapter(ctx context.Context) backup.InsertMediaPort {
+	return &backupcatalog.InsertMediaAdapter{
+		CatalogInsertMedia: InsertMediasCase(ctx),
 	}
 }

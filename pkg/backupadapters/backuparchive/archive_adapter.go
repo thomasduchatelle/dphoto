@@ -15,8 +15,8 @@ func New() backup.BArchiveAdapter {
 func (a *adapter) ArchiveMedia(owner string, media *backup.BackingUpMediaRequest) (string, error) {
 	return archive.Store(&archive.StoreRequest{
 		DateTime:         media.AnalysedMedia.Details.DateTime,
-		FolderName:       media.FolderName,
-		Id:               media.Id,
+		FolderName:       media.CatalogReference.AlbumFolderName(),
+		Id:               media.CatalogReference.MediaId(),
 		Open:             media.AnalysedMedia.FoundMedia.ReadMedia,
 		OriginalFilename: media.AnalysedMedia.FoundMedia.MediaPath().Filename,
 		Owner:            owner,
