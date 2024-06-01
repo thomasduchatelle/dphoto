@@ -270,7 +270,7 @@ func TestNewAlbumDryRunReferencer(t *testing.T) {
 	}
 }
 
-func TestAlbumAutoPopulateReferencer_FindReference(t *testing.T) {
+func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
 	owner := ownermodel.Owner("owner-1")
 	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
 	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
@@ -284,35 +284,32 @@ func TestAlbumAutoPopulateReferencer_FindReference(t *testing.T) {
 		Start: jan24,
 		End:   apr24,
 	}
-	newAlbumId := AlbumId{
-		Owner:      owner,
-		FolderName: NewFolderName("/new-album-q1"),
+	febAprAlbum := Album{
+		AlbumId: AlbumId{
+			Owner:      owner,
+			FolderName: NewFolderName("/2024-Feb-Apr"),
+		},
+		Name:  "Feb-Apr 2024",
+		Start: feb24,
+		End:   apr24,
 	}
 
-	type fields struct {
-		owner               ownermodel.Owner
-		timelineAggregate   *TimelineAggregate
-		AlbumCreateHandover *AlbumCreateHandoverFake
-	}
 	type args struct {
+		owner     ownermodel.Owner
+		albums    []*Album
 		mediaTime time.Time
 	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		want             AlbumReference
-		wantCreateAlbums []CreateAlbumRequest
-		wantErr          assert.ErrorAssertionFunc
+		name    string
+		args    args
+		want    AlbumReference
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should find an album id that exists in a timelines",
-			fields: fields{
-				owner:               owner,
-				timelineAggregate:   NewLazyTimelineAggregate([]*Album{&q1Album}),
-				AlbumCreateHandover: new(AlbumCreateHandoverFake),
-			},
 			args: args{
+				owner:     owner,
+				albums:    []*Album{&q1Album},
 				mediaTime: feb24,
 			},
 			want: AlbumReference{
@@ -323,18 +320,71 @@ func TestAlbumAutoPopulateReferencer_FindReference(t *testing.T) {
 		},
 		{
 			name: "it should pass to album creation when no album fits the time",
-			fields: fields{
-				owner:             owner,
-				timelineAggregate: NewLazyTimelineAggregate(nil),
-				AlbumCreateHandover: &AlbumCreateHandoverFake{
-					AlbumId: &newAlbumId,
-				},
-			},
 			args: args{
+				owner:     owner,
+				albums:    nil,
+				mediaTime: feb24,
+			},
+			want: AlbumReference{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, NoAlbumLookedUpError, i)
+			},
+		},
+		{
+			name: "it should pick the album with highest priority",
+			args: args{
+				owner: owner,
+				albums: []*Album{
+					&febAprAlbum,
+					&q1Album,
+				},
 				mediaTime: feb24,
 			},
 			want: AlbumReference{
-				AlbumId:          &newAlbumId,
+				AlbumId:          &febAprAlbum.AlbumId,
+				AlbumJustCreated: false,
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			t := TimelineLookupStrategy{}
+			got, err := t.LookupAlbum(context.Background(), tt.args.owner, NewLazyTimelineAggregate(tt.args.albums), tt.args.mediaTime)
+			if !tt.wantErr(t1, err, fmt.Sprintf("LookupAlbum(%v, %v, %v, %v)", context.Background(), tt.args.owner, tt.args.albums, tt.args.mediaTime)) {
+				return
+			}
+			assert.Equalf(t1, tt.want, got, "LookupAlbum(%v, %v, %v, %v)", context.Background(), tt.args.owner, tt.args.albums, tt.args.mediaTime)
+		})
+	}
+}
+
+func TestAlbumAutoCreateLookupStrategy_LookupAlbum(t *testing.T) {
+	owner := ownermodel.Owner("owner-1")
+	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
+	apr24 := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
+
+	type args struct {
+		owner     ownermodel.Owner
+		mediaTime time.Time
+	}
+	tests := []struct {
+		name             string
+		args             args
+		want             AlbumReference
+		wantCreateAlbums []CreateAlbumRequest
+		wantErr          assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should initiate an album creation for a quarter",
+			args: args{
+				owner:     owner,
+				mediaTime: feb24,
+			},
+			want: AlbumReference{
+				AlbumId:          &AlbumId{Owner: owner, FolderName: NewFolderName("/2024-Q1")},
 				AlbumJustCreated: true,
 			},
 			wantCreateAlbums: []CreateAlbumRequest{
@@ -352,29 +402,29 @@ func TestAlbumAutoPopulateReferencer_FindReference(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &AutoCreateAlbumReferencer{
-				owner:             tt.fields.owner,
-				timelineAggregate: tt.fields.timelineAggregate,
-				Observer:          tt.fields.AlbumCreateHandover,
+			delegate := new(CreateAlbumWithTimelineFake)
+			a := &AlbumAutoCreateLookupStrategy{
+				Delegate: delegate,
 			}
-			got, err := a.FindReference(context.Background(), tt.args.mediaTime)
-			if !tt.wantErr(t, err, fmt.Sprintf("FindReference(%v, %v)", context.Background(), tt.args.mediaTime)) {
+
+			timeline := NewLazyTimelineAggregate(nil)
+			got, err := a.LookupAlbum(context.Background(), tt.args.owner, timeline, tt.args.mediaTime)
+			if !tt.wantErr(t, err, fmt.Sprintf("LookupAlbum(%v, %v, %v, %v)", context.Background(), tt.args.owner, timeline, tt.args.mediaTime)) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "FindReference(%v, %v)", context.Background(), tt.args.mediaTime)
-			assert.Equalf(t, tt.wantCreateAlbums, tt.fields.AlbumCreateHandover.Requests, "FindReference(%v, %v)", context.Background(), tt.args.mediaTime)
+
+			assert.Equalf(t, tt.want, got, "LookupAlbum(%v, %v, %v, %v)", context.Background(), tt.args.owner, timeline, tt.args.mediaTime)
 		})
 	}
 }
 
-type AlbumCreateHandoverFake struct {
-	AlbumId  *AlbumId
+type CreateAlbumWithTimelineFake struct {
 	Requests []CreateAlbumRequest
 }
 
-func (a *AlbumCreateHandoverFake) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
+func (a *CreateAlbumWithTimelineFake) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
 	a.Requests = append(a.Requests, request)
-	return a.AlbumId, nil
+	return &AlbumId{Owner: request.Owner, FolderName: NewFolderName(request.ForcedFolderName)}, nil
 }
 
 type FindAlbumsByOwnerPortFake map[ownermodel.Owner][]*Album

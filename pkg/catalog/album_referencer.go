@@ -5,8 +5,18 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"strings"
 	"time"
 )
+
+var (
+	NoAlbumLookedUpError = errors.New("no album matching")
+)
+
+type AlbumReference struct {
+	AlbumId          *AlbumId // AlbumId if no album fit the time and the implementation doesn't support creation.
+	AlbumJustCreated bool     // AlbumJustCreated is true if the album was created during the reference process (depending on the implementation capability).
+}
 
 func NewAlbumAutoPopulateReferencer(
 	owner ownermodel.Owner,
@@ -14,29 +24,32 @@ func NewAlbumAutoPopulateReferencer(
 	insertAlbumPort InsertAlbumPort,
 	transferMediasPort TransferMediasRepositoryPort,
 	timelineMutationObservers ...TimelineMutationObserver,
-) (*AutoCreateAlbumReferencer, error) {
+) (*StatefulAlbumReferencer, error) {
 
 	albums, err := findAlbumsByOwner.FindAlbumsByOwner(context.Background(), owner)
 	if err != nil {
 		return nil, errors.Wrapf(err, "NewAlbumAutoPopulateReferencer(...) failed")
 	}
 
-	timelineAggregate, err := NewInitialisedTimelineAggregate(albums)
+	timeline, err := NewInitialisedTimelineAggregate(albums)
 
-	return &AutoCreateAlbumReferencer{
-		owner:             owner,
-		timelineAggregate: timelineAggregate,
-		Observer: &StatefulCreateAlbum{
-			Timeline: timelineAggregate,
-			CreateAlbumObserver: []CreateAlbumObserver{
-				&CreateAlbumExecutor{
-					InsertAlbumPort: insertAlbumPort,
-				},
-				&CreateAlbumMediaTransfer{
-					Timeline: timelineAggregate,
-					MediaTransfer: &MediaTransferExecutor{
-						TransferMediasRepository:  transferMediasPort,
-						TimelineMutationObservers: timelineMutationObservers,
+	return &StatefulAlbumReferencer{
+		Owner:             owner,
+		TimelineAggregate: timeline,
+		LookupStrategies: []AlbumLookupStrategy{
+			new(TimelineLookupStrategy),
+			&AlbumAutoCreateLookupStrategy{
+				Delegate: &CreateAlbumStateless{
+					Observers: []CreateAlbumObserverWithTimeline{
+						&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
+							InsertAlbumPort: insertAlbumPort,
+						}},
+						&CreateAlbumMediaTransfer{
+							MediaTransfer: &MediaTransferExecutor{
+								TransferMediasRepository:  transferMediasPort,
+								TimelineMutationObservers: timelineMutationObservers,
+							},
+						},
 					},
 				},
 			},
@@ -47,39 +60,56 @@ func NewAlbumAutoPopulateReferencer(
 func NewAlbumDryRunReferencer(
 	owner ownermodel.Owner,
 	findAlbumsByOwner FindAlbumsByOwnerPort,
-) (*AutoCreateAlbumReferencer, error) {
+) (*StatefulAlbumReferencer, error) {
 
 	albums, err := findAlbumsByOwner.FindAlbumsByOwner(context.Background(), owner)
 	if err != nil {
 		return nil, errors.Wrapf(err, "NewAlbumDryRunReferencer(%s) failed", owner)
 	}
 
-	timelineAggregate, err := NewInitialisedTimelineAggregate(albums)
+	timeline, err := NewInitialisedTimelineAggregate(albums)
 
-	return &AutoCreateAlbumReferencer{
-		owner:             owner,
-		timelineAggregate: timelineAggregate,
-		Observer:          new(DryRunReferencerObserver),
-	}, errors.Wrapf(err, "NewAlbumAutoPopulateReferencer(%s) failed", owner)
+	return &StatefulAlbumReferencer{
+		Owner:             owner,
+		TimelineAggregate: timeline,
+		LookupStrategies: []AlbumLookupStrategy{
+			new(TimelineLookupStrategy),
+			new(DryRunLookupStrategy),
+		},
+	}, errors.Wrapf(err, "NewAlbumDryRunReferencer(...) failed")
 }
 
-type AlbumReference struct {
-	AlbumId          *AlbumId // AlbumId if no album fit the time and the implementation doesn't support creation.
-	AlbumJustCreated bool     // AlbumJustCreated is true if the album was created during the reference process (depending on the implementation capability).
+type AlbumLookupStrategy interface {
+	// LookupAlbum returns the AlbumReference for the given mediaTime, or NoAlbumLookedUpError if it can't find any (or a technical error)
+	LookupAlbum(ctx context.Context, owner ownermodel.Owner, timeline *TimelineAggregate, mediaTime time.Time) (AlbumReference, error)
 }
 
-type AutoCreateAlbumObserver interface {
-	Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error)
+type StatefulAlbumReferencer struct {
+	Owner             ownermodel.Owner
+	TimelineAggregate *TimelineAggregate
+	LookupStrategies  []AlbumLookupStrategy
 }
 
-type AutoCreateAlbumReferencer struct {
-	owner             ownermodel.Owner
-	timelineAggregate *TimelineAggregate
-	Observer          AutoCreateAlbumObserver
+func (a *StatefulAlbumReferencer) FindReference(ctx context.Context, mediaTime time.Time) (AlbumReference, error) {
+	for _, strategy := range a.LookupStrategies {
+		albumReference, err := strategy.LookupAlbum(ctx, a.Owner, a.TimelineAggregate, mediaTime)
+		if !errors.Is(err, NoAlbumLookedUpError) {
+			return albumReference, err
+		}
+	}
+
+	var strategies []string
+	for _, strategy := range a.LookupStrategies {
+		strategies = append(strategies, fmt.Sprintf("%T", strategy))
+	}
+
+	return AlbumReference{}, errors.Wrapf(NoAlbumLookedUpError, "no strategy found a matching album for %s with strategies %s", mediaTime, strings.Join(strategies, ", "))
 }
 
-func (a *AutoCreateAlbumReferencer) FindReference(ctx context.Context, mediaTime time.Time) (AlbumReference, error) {
-	album, exists, err := a.timelineAggregate.FindAt(mediaTime)
+type TimelineLookupStrategy struct{}
+
+func (t TimelineLookupStrategy) LookupAlbum(ctx context.Context, owner ownermodel.Owner, timeline *TimelineAggregate, mediaTime time.Time) (AlbumReference, error) {
+	album, exists, err := timeline.FindAt(mediaTime)
 	if err != nil {
 		return AlbumReference{}, err
 	}
@@ -90,36 +120,37 @@ func (a *AutoCreateAlbumReferencer) FindReference(ctx context.Context, mediaTime
 		}, nil
 	}
 
+	return AlbumReference{}, NoAlbumLookedUpError
+}
+
+type AlbumAutoCreateLookupStrategy struct {
+	Delegate CreateAlbumWithTimeline
+}
+
+func (a *AlbumAutoCreateLookupStrategy) LookupAlbum(ctx context.Context, owner ownermodel.Owner, timeline *TimelineAggregate, mediaTime time.Time) (AlbumReference, error) {
 	year := mediaTime.Year()
 	quarter := (mediaTime.Month() - 1) / 3
 
 	createRequest := CreateAlbumRequest{
-		Owner:            a.owner,
+		Owner:            owner,
 		Name:             fmt.Sprintf("Q%d %d", quarter+1, year),
 		Start:            time.Date(year, quarter*3+1, 1, 0, 0, 0, 0, time.UTC),
 		End:              time.Date(year, (quarter+1)*3+1, 1, 0, 0, 0, 0, time.UTC),
 		ForcedFolderName: fmt.Sprintf("/%d-Q%d", year, quarter+1),
 	}
 
-	albumId, err := a.Observer.Create(ctx, createRequest)
+	albumId, err := a.Delegate.Create(ctx, timeline, createRequest)
 	return AlbumReference{
 		AlbumId:          albumId,
 		AlbumJustCreated: true,
 	}, err
 }
 
-type StatefulCreateAlbum struct {
-	Timeline            *TimelineAggregate
-	CreateAlbumObserver []CreateAlbumObserver
-}
+type DryRunLookupStrategy struct{}
 
-func (c *StatefulCreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
-	newAlbum, err := c.Timeline.CreateNewAlbum(ctx, request, c.CreateAlbumObserver...)
-	return newAlbum, errors.Wrapf(err, "StatefulCreateAlbum.Create(%s) failed", request)
-}
-
-type DryRunReferencerObserver struct{}
-
-func (d *DryRunReferencerObserver) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
-	return &AlbumId{request.Owner, NewFolderName("new-album")}, nil
+func (d *DryRunLookupStrategy) LookupAlbum(ctx context.Context, owner ownermodel.Owner, timeline *TimelineAggregate, mediaTime time.Time) (AlbumReference, error) {
+	return AlbumReference{
+		AlbumId:          &AlbumId{owner, NewFolderName("new-album")},
+		AlbumJustCreated: true,
+	}, nil
 }

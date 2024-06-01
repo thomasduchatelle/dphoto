@@ -3,8 +3,6 @@ package catalog
 import (
 	"context"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 var (
@@ -13,6 +11,16 @@ var (
 	AlbumEndDateMustBeAfterStartErr  = errors.New("Album end must be strictly after its start")
 	AlbumFolderNameAlreadyTakenErr   = errors.New("Album folder name is already taken")
 )
+
+type CreateAlbumObserver interface {
+	ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error
+}
+
+type CreateAlbumObserverFunc func(ctx context.Context, createdAlbum Album) error
+
+func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
+	return f(ctx, createdAlbum)
+}
 
 // NewAlbumCreate creates the service to create a new album, including the transfer of medias
 func NewAlbumCreate(
@@ -23,33 +31,20 @@ func NewAlbumCreate(
 ) *CreateAlbum {
 	return &CreateAlbum{
 		FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
-		Observers: []func(timeline *TimelineAggregate) CreateAlbumObserver{
-			func(_ *TimelineAggregate) CreateAlbumObserver {
-				return &CreateAlbumExecutor{
+		CreateAlbumWithTimeline: &CreateAlbumStateless{
+			Observers: []CreateAlbumObserverWithTimeline{
+				&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
 					InsertAlbumPort: InsertAlbumPort,
-				}
-			},
-			func(timeline *TimelineAggregate) CreateAlbumObserver {
-				return &CreateAlbumMediaTransfer{
-					Timeline: timeline,
+				}},
+				&CreateAlbumMediaTransfer{
 					MediaTransfer: &MediaTransferExecutor{
 						TransferMediasRepository:  TransferMediasPort,
 						TimelineMutationObservers: TimelineMutationObservers,
 					},
-				}
+				},
 			},
 		},
 	}
-}
-
-type FindAlbumsByOwnerPort interface {
-	FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
-}
-
-type FindAlbumsByOwnerFunc func(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
-
-func (f FindAlbumsByOwnerFunc) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error) {
-	return f(ctx, owner)
 }
 
 type InsertAlbumPort interface {
@@ -62,20 +57,25 @@ func (f InsertAlbumPortFunc) InsertAlbum(ctx context.Context, album Album) error
 	return f(ctx, album)
 }
 
-type CreateAlbumObserver interface {
-	ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error
+type CreateAlbumObserverWithTimeline interface {
+	ObserveCreateAlbum(ctx context.Context, timeline *TimelineAggregate, createdAlbum Album) error
 }
 
-type CreateAlbumObserverFunc func(ctx context.Context, createdAlbum Album) error
+type CreateAlbumObserverWrapper struct {
+	CreateAlbumObserver
+}
 
-func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
-	return f(ctx, createdAlbum)
+func (c *CreateAlbumObserverWrapper) ObserveCreateAlbum(ctx context.Context, _ *TimelineAggregate, createdAlbum Album) error {
+	return c.CreateAlbumObserver.ObserveCreateAlbum(ctx, createdAlbum)
+}
+
+type CreateAlbumWithTimeline interface {
+	Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error)
 }
 
 type CreateAlbum struct {
-	FindAlbumsByOwnerPort FindAlbumsByOwnerPort
-	MediaTransfer         MediaTransfer
-	Observers             []func(timeline *TimelineAggregate) CreateAlbumObserver
+	FindAlbumsByOwnerPort   FindAlbumsByOwnerPort
+	CreateAlbumWithTimeline CreateAlbumWithTimeline
 }
 
 // Create creates a new album
@@ -87,16 +87,26 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*
 
 	timeline := NewLazyTimelineAggregate(albums)
 
-	observers := make([]CreateAlbumObserver, len(c.Observers)+1)
-	for index, factory := range c.Observers {
-		observers[index] = factory(timeline)
-	}
-	observers[len(c.Observers)] = CreateAlbumObserverFunc(func(ctx context.Context, album Album) error {
-		log.Infof("Album created: %s => %s", request, album.AlbumId)
-		return nil
-	})
+	return c.CreateAlbumWithTimeline.Create(ctx, timeline, request)
+}
 
-	return timeline.CreateNewAlbum(ctx, request, observers...)
+type CreateAlbumStateless struct {
+	Observers []CreateAlbumObserverWithTimeline
+}
+
+func (c *CreateAlbumStateless) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
+	album, err := timeline.CreateNewAlbum(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	for index, observer := range c.Observers {
+		if err = observer.ObserveCreateAlbum(ctx, timeline, album); err != nil {
+			return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed at observer %d/%d", request, index, len(c.Observers))
+		}
+	}
+
+	return &album.AlbumId, nil
 }
 
 type CreateAlbumExecutor struct {
@@ -108,12 +118,11 @@ func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, createdAlb
 }
 
 type CreateAlbumMediaTransfer struct {
-	Timeline      *TimelineAggregate
 	MediaTransfer MediaTransfer
 }
 
-func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
-	records, err := c.Timeline.AddNew(createdAlbum)
+func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, timeline *TimelineAggregate, createdAlbum Album) error {
+	records, err := timeline.AddNew(createdAlbum)
 	if err != nil {
 		return err
 	}

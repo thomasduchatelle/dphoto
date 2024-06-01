@@ -70,7 +70,10 @@ func (c *builderCursor) appendAlbum(album *Album) bool {
 }
 
 // NewTimeline creates a Timeline object used to compute overlaps between Album. List of albums must be sorted by Start date ASC (End sorting does not matter).
-func NewTimeline(albums []*Album) (*Timeline, error) {
+func NewTimeline(originalAlbums []*Album) (*Timeline, error) {
+	albums := make([]*Album, len(originalAlbums))
+	copy(albums, originalAlbums)
+
 	slices.SortFunc(albums, func(a, b *Album) int {
 		return -int(startsAscComparator(a, b))
 	})
