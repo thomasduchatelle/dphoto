@@ -127,8 +127,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 		End:     jun24,
 	}
 	type fields struct {
-		FindAlbumsByOwnerPort    func(t *testing.T) catalog.FindAlbumsByOwnerPort
-		AmendAlbumDatesObservers func(t *testing.T) catalog.AmendAlbumDatesObserver
+		Albums []*catalog.Album
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -136,17 +135,15 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 		end     time.Time
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name         string
+		fields       fields
+		args         args
+		wantObserved []catalog.DatesUpdate
+		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should return an error if the album is not found",
-			fields: fields{
-				FindAlbumsByOwnerPort:    stubFindAlbumsByOwnerWith(owner),
-				AmendAlbumDatesObservers: expectAmendAlbumDatesObserverNotCalled(),
-			},
+			name:   "it should return an error if the album is not found",
+			fields: fields{},
 			args: args{
 				albumId: avenger1Id,
 				start:   may24,
@@ -159,8 +156,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 		{
 			name: "it should return immediately if dates haven't changed",
 			fields: fields{
-				FindAlbumsByOwnerPort:    stubFindAlbumsByOwnerWith(owner, &existingAlbum),
-				AmendAlbumDatesObservers: expectAmendAlbumDatesObserverNotCalled(),
+				Albums: []*catalog.Album{&existingAlbum},
 			},
 			args: args{
 				albumId: avenger1Id,
@@ -172,30 +168,39 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 		{
 			name: "it should call the observers if dates have changed",
 			fields: fields{
-				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, &existingAlbum),
-				AmendAlbumDatesObservers: expectAmendAlbumDatesObserverCalled([]*catalog.Album{&existingAlbum}, catalog.Album{
-					AlbumId: avenger1Id,
-					Name:    "Avenger 1",
-					Start:   may24,
-					End:     jul24,
-				}),
+				Albums: []*catalog.Album{&existingAlbum},
 			},
 			args: args{
 				albumId: avenger1Id,
 				start:   may24,
 				end:     jul24,
 			},
+			wantObserved: []catalog.DatesUpdate{
+				{
+					UpdatedAlbum: catalog.Album{
+						AlbumId: avenger1Id,
+						Name:    "Avenger 1",
+						Start:   may24,
+						End:     jul24,
+					},
+					PreviousStart: existingAlbum.Start,
+					PreviousEnd:   existingAlbum.End,
+				},
+			},
 			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &catalog.AmendAlbumDates{
-				FindAlbumsByOwnerPort:    tt.fields.FindAlbumsByOwnerPort(t),
-				AmendAlbumDatesObservers: []catalog.AmendAlbumDatesObserver{tt.fields.AmendAlbumDatesObservers(t)},
+			observer := new(AlbumDatesAmendedObserverFake)
+			a := &catalog.AmendAlbumDatesStateless{}
+
+			err := a.AmendAlbumDates(context.Background(), catalog.NewLazyTimelineAggregate(tt.fields.Albums), tt.args.albumId, tt.args.start, tt.args.end, observer)
+			if !tt.wantErr(t, err, fmt.Sprintf("AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end)) {
+				return
 			}
-			err := a.AmendAlbumDates(context.Background(), tt.args.albumId, tt.args.start, tt.args.end)
-			tt.wantErr(t, err, fmt.Sprintf("AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end))
+
+			assert.ElementsMatchf(t, observer.DateAmendedAlbums, tt.wantObserved, "AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end)
 		})
 	}
 }
@@ -238,7 +243,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 	}
 	type args struct {
 		existingTimeline []*catalog.Album
-		updatedAlbum     catalog.Album
+		updatedAlbum     catalog.DatesUpdate
 	}
 	tests := []struct {
 		name    string
@@ -254,7 +259,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			},
 			args: args{
 				existingTimeline: []*catalog.Album{&mayAlbum},
-				updatedAlbum:     amendWithDatesOf(mayAlbum.AlbumId, aprToJunAlbum),
+				updatedAlbum:     amendWithDatesOf(mayAlbum, aprToJunAlbum.Start, aprToJunAlbum.End),
 			},
 			wantErr: assert.NoError,
 		},
@@ -266,7 +271,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			},
 			args: args{
 				existingTimeline: []*catalog.Album{&aprToJunAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum.AlbumId, mayAlbum),
+				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, mayAlbum.Start, mayAlbum.End),
 			},
 			wantErr: assert.NoError,
 		},
@@ -291,7 +296,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			},
 			args: args{
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &mayAlbum},
-				updatedAlbum:     amendWithDatesOf(mayAlbum.AlbumId, aprToJunAlbum),
+				updatedAlbum:     amendWithDatesOf(mayAlbum, aprToJunAlbum.Start, aprToJunAlbum.End),
 			},
 			wantErr: assert.NoError,
 		},
@@ -316,7 +321,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			},
 			args: args{
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &aprToJunAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum.AlbumId, mayAlbum),
+				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, mayAlbum.Start, mayAlbum.End),
 			},
 			wantErr: assert.NoError,
 		},
@@ -341,7 +346,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			},
 			args: args{
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &aprToJunAlbum, &mayAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum.AlbumId, fifthJunAlbum),
+				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
 			},
 			wantErr: assert.NoError,
 		},
@@ -361,7 +366,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			},
 			args: args{
 				existingTimeline: []*catalog.Album{&fifthJunAlbum, &junAlbum},
-				updatedAlbum:     amendWithDatesOf(fifthJunAlbum.AlbumId, aprToJunAlbum),
+				updatedAlbum:     amendWithDatesOf(fifthJunAlbum, aprToJunAlbum.Start, junAlbum.End),
 			},
 			wantErr: assert.NoError,
 		},
@@ -388,7 +393,39 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			},
 			args: args{
 				existingTimeline: []*catalog.Album{&aprToJunAlbum, &junAlbum, &fullYearAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum.AlbumId, fifthJunAlbum),
+				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should transfer medias even when timeline has already been updated in case the changes is re-applied [scenario: win some segments on covered time range when shrinking]",
+			fields: fields{
+				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
+				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
+					fullYearAlbum.AlbumId: []catalog.MediaSelector{
+						{
+							FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
+							Start:      aprToJunAlbum.Start,
+							End:        junAlbum.Start,
+						},
+					},
+					aprToJunAlbum.AlbumId: []catalog.MediaSelector{
+						{
+							FromAlbums: []catalog.AlbumId{junAlbum.AlbumId, fullYearAlbum.AlbumId},
+							Start:      fifthJunAlbum.Start,
+							End:        fifthJunAlbum.End,
+						},
+					},
+				}),
+			},
+			args: args{
+				existingTimeline: []*catalog.Album{&catalog.Album{
+					AlbumId: aprToJunAlbum.AlbumId,
+					Name:    aprToJunAlbum.Name,
+					Start:   fifthJunAlbum.Start,
+					End:     fifthJunAlbum.End,
+				}, &junAlbum, &fullYearAlbum},
+				updatedAlbum: amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
 			},
 			wantErr: assert.NoError,
 		},
@@ -400,7 +437,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			},
 			args: args{
 				existingTimeline: []*catalog.Album{&aprToJunAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum.AlbumId, junAlbum),
+				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, junAlbum.Start, junAlbum.End),
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.OrphanedMediasError, i...)
@@ -414,32 +451,22 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				MediaTransfer:          tt.fields.MediaTransfer(t),
 			}
 
-			err := a.OnAlbumDatesAmended(context.Background(), tt.args.existingTimeline, tt.args.updatedAlbum)
+			err := a.OnAlbumDatesAmended(context.Background(), catalog.NewLazyTimelineAggregate(tt.args.existingTimeline), tt.args.updatedAlbum)
 			tt.wantErr(t, err, fmt.Sprintf("OnAlbumDatesAmended(%v, %v, %v)", context.Background(), tt.args.existingTimeline, tt.args.updatedAlbum))
 		})
 	}
 }
 
-func amendWithDatesOf(id catalog.AlbumId, album catalog.Album) catalog.Album {
-	album.AlbumId = id
-	return album
-}
-
-func expectAmendAlbumDatesObserverCalled(timeline []*catalog.Album, updatedAlbum catalog.Album) func(t *testing.T) catalog.AmendAlbumDatesObserver {
-	return func(t *testing.T) catalog.AmendAlbumDatesObserver {
-		observer := mocks.NewAmendAlbumDatesObserver(t)
-		observer.EXPECT().OnAlbumDatesAmended(mock.Anything, timeline, updatedAlbum).Return(nil)
-		return observer
+func amendWithDatesOf(album catalog.Album, start, end time.Time) catalog.DatesUpdate {
+	update := catalog.DatesUpdate{
+		UpdatedAlbum:  album,
+		PreviousStart: album.Start,
+		PreviousEnd:   album.End,
 	}
-}
+	update.UpdatedAlbum.Start = start
+	update.UpdatedAlbum.End = end
 
-func expectAmendAlbumDatesObserverNotCalled() func(t *testing.T) catalog.AmendAlbumDatesObserver {
-	return func(t *testing.T) catalog.AmendAlbumDatesObserver {
-		return catalog.AmendAlbumDatesObserverFunc(func(ctx context.Context, existingTimeline []*catalog.Album, updatedAlbum catalog.Album) error {
-			assert.Failf(t, "AmendAlbumDatesObserver should not be called", "OnAlbumDatesAmended(%v, %v, %+v)", ctx, existingTimeline, updatedAlbum)
-			return nil
-		})
-	}
+	return update
 }
 
 func expectAmendAlbumDateRepositoryNotCalled() func(t *testing.T) catalog.AmendAlbumDateRepositoryPort {
@@ -454,4 +481,13 @@ func expectAmendAlbumDateRepositoryCalled(albumId catalog.AlbumId, start time.Ti
 		repo.EXPECT().AmendDates(mock.Anything, albumId, start, end).Return(nil).Once()
 		return repo
 	}
+}
+
+type AlbumDatesAmendedObserverFake struct {
+	DateAmendedAlbums []catalog.DatesUpdate
+}
+
+func (a *AlbumDatesAmendedObserverFake) OnAlbumDatesAmended(ctx context.Context, amendedAlbum catalog.DatesUpdate) error {
+	a.DateAmendedAlbums = append(a.DateAmendedAlbums, amendedAlbum)
+	return nil
 }

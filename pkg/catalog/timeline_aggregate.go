@@ -27,23 +27,17 @@ func NewInitialisedTimelineAggregate(albums []*Album) (*TimelineAggregate, error
 	}, err
 }
 
-func (t *TimelineAggregate) CreateNewAlbum(ctx context.Context, request CreateAlbumRequest, observers ...CreateAlbumObserver) (*AlbumId, error) {
+func (t *TimelineAggregate) CreateNewAlbum(ctx context.Context, request CreateAlbumRequest, observers ...CreateAlbumObserver) (Album, error) {
 	if err := request.IsValid(); err != nil {
-		return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed", request)
+		return Album{}, errors.Wrapf(err, "CreateNewAlbum(%s) failed", request)
 	}
 
 	album, err := t.convert(request)
 	if err != nil {
-		return nil, err
+		return Album{}, err
 	}
 
-	for index, observer := range observers {
-		if err = observer.ObserveCreateAlbum(ctx, *album); err != nil {
-			return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed at observer %d/%d", request, index, len(observers))
-		}
-	}
-
-	return &album.AlbumId, nil
+	return *album, nil
 }
 
 func (t *TimelineAggregate) convert(request CreateAlbumRequest) (*Album, error) {
@@ -164,25 +158,62 @@ func (t *TimelineAggregate) removeAlbumFrom(albums []*Album, folderName FolderNa
 	return albums, nil
 }
 
-func (t *TimelineAggregate) AmendDates(amendedAlbum Album) (MediaTransferRecords, []MediaSelector, error) {
+func (t *TimelineAggregate) ValidateAmendDates(albumId AlbumId, start, end time.Time) (*DatesUpdate, error) {
+	index := slices.IndexFunc(t.albums, func(album *Album) bool {
+		return album.AlbumId.IsEqual(albumId)
+	})
+
+	if index == -1 {
+		return nil, errors.Wrapf(AlbumNotFoundError, "album %s not found", albumId)
+	}
+
+	amended := DatesUpdate{
+		UpdatedAlbum:  *t.albums[index],
+		PreviousStart: t.albums[index].Start,
+		PreviousEnd:   t.albums[index].End,
+	}
+	amended.UpdatedAlbum.Start = start
+	amended.UpdatedAlbum.End = end
+
+	return &amended, nil
+}
+
+func (t *TimelineAggregate) AmendDates(amendedAlbum DatesUpdate) (MediaTransferRecords, []MediaSelector, error) {
+	index := slices.IndexFunc(t.albums, func(album *Album) bool {
+		return album.AlbumId.IsEqual(amendedAlbum.UpdatedAlbum.AlbumId)
+	})
+	if index == -1 {
+		return nil, nil, errors.Wrapf(AlbumNotFoundError, "album %s not found", amendedAlbum.UpdatedAlbum.AlbumId)
+	}
+
+	var err error
+
+	previousAlbum := *t.albums[index]
+	if !previousAlbum.Start.Equal(amendedAlbum.PreviousStart) || !previousAlbum.End.Equal(amendedAlbum.PreviousEnd) {
+		// restore TimelineAggregate as it was before the amendment
+		previousAlbum.Start = amendedAlbum.PreviousStart
+		previousAlbum.End = amendedAlbum.PreviousEnd
+		t.albums[index] = &previousAlbum
+
+		t.timeline, err = NewTimeline(t.albums)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "failed to create timeline during AmendDates(%s)", amendedAlbum)
+		}
+	}
+
 	originalTimeline, err := t.getTimeline()
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to create timeline during AmendDates(%s)", amendedAlbum)
 	}
 
-	var previous Album
-	t.albums, previous, err = t.copyListWithAmendedAlbum(t.albums, amendedAlbum)
-	if err != nil {
-		return nil, nil, err
-	}
-
+	t.albums[index] = &amendedAlbum.UpdatedAlbum
 	t.timeline, err = NewTimeline(t.albums)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	start := minTime(amendedAlbum.Start, previous.Start)
-	end := maxTime(amendedAlbum.End, previous.End)
+	start := minTime(amendedAlbum.UpdatedAlbum.Start, previousAlbum.Start)
+	end := maxTime(amendedAlbum.UpdatedAlbum.End, previousAlbum.End)
 
 	cursor := struct {
 		time             time.Time
@@ -199,12 +230,12 @@ func (t *TimelineAggregate) AmendDates(amendedAlbum Album) (MediaTransferRecords
 
 	for len(cursor.originalSegments) > 0 && len(cursor.amendedSegments) > 0 {
 		nextTime := minTime(cursor.originalSegments[0].End, cursor.amendedSegments[0].End)
-		wasLeading := t.isLeadByAlbum(amendedAlbum.AlbumId, cursor.originalSegments[0])
-		takeTheLead := t.isLeadByAlbum(amendedAlbum.AlbumId, cursor.amendedSegments[0])
+		wasLeading := t.isLeadByAlbum(amendedAlbum.UpdatedAlbum.AlbumId, cursor.originalSegments[0])
+		takeTheLead := t.isLeadByAlbum(amendedAlbum.UpdatedAlbum.AlbumId, cursor.amendedSegments[0])
 
 		if wasLeading && !takeTheLead {
 			selector := MediaSelector{
-				FromAlbums: []AlbumId{amendedAlbum.AlbumId},
+				FromAlbums: []AlbumId{amendedAlbum.UpdatedAlbum.AlbumId},
 				Start:      cursor.time,
 				End:        nextTime,
 			}
@@ -227,7 +258,7 @@ func (t *TimelineAggregate) AmendDates(amendedAlbum Album) (MediaTransferRecords
 				End:        nextTime,
 			}
 
-			target := amendedAlbum.AlbumId
+			target := amendedAlbum.UpdatedAlbum.AlbumId
 			if selectors, found := cursor.records[target]; found {
 				cursor.records[target] = append(selectors, selector)
 			} else {
@@ -253,26 +284,6 @@ func (t *TimelineAggregate) AmendDates(amendedAlbum Album) (MediaTransferRecords
 
 func (t *TimelineAggregate) isLeadByAlbum(albumId AlbumId, seg PrioritySegment) bool {
 	return len(seg.Albums) > 0 && seg.Albums[0].AlbumId.IsEqual(albumId)
-}
-
-func (t *TimelineAggregate) copyListWithAmendedAlbum(timeline []*Album, amendedAlbum Album) ([]*Album, Album, error) {
-	var previous *Album
-	amendedAlbums := make([]*Album, len(timeline), len(timeline))
-
-	for i, album := range timeline {
-		if album.AlbumId.IsEqual(amendedAlbum.AlbumId) {
-			previous = album
-			amendedAlbums[i] = &amendedAlbum
-		} else {
-			amendedAlbums[i] = album
-		}
-	}
-
-	if previous == nil {
-		return nil, Album{}, errors.Errorf("album %s not found in timeline %+v", amendedAlbum.AlbumId.FolderName, timeline)
-	}
-
-	return amendedAlbums, *previous, nil
 }
 
 func (t *TimelineAggregate) FindAt(date time.Time) (*Album, bool, error) {

@@ -31,11 +31,11 @@ func NewRenameAlbum(
 			&RenameAlbumReplacer{
 				CreateAlbum: CreateAlbum{
 					FindAlbumsByOwnerPort: FindAlbumsByOwner,
-					Observers: []func(timeline *TimelineAggregate) CreateAlbumObserver{
-						func(_ *TimelineAggregate) CreateAlbumObserver {
-							return &CreateAlbumExecutor{
+					CreateAlbumWithTimeline: &CreateAlbumStateless{
+						Observers: []CreateAlbumObserverWithTimeline{
+							&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
 								InsertAlbumPort: InsertAlbumPort,
-							}
+							}},
 						},
 					},
 				},

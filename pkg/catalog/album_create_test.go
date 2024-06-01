@@ -120,7 +120,7 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 	}
 }
 
-func TestCreateAlbum_Create(t *testing.T) {
+func TestCreateAlbumStateless_Create(t *testing.T) {
 	const owner = "tonystark"
 	ironmanOneAlbum := catalog.Album{
 		AlbumId: catalog.AlbumId{
@@ -139,7 +139,7 @@ func TestCreateAlbum_Create(t *testing.T) {
 	}
 
 	type fields struct {
-		FindAlbumsByOwnerPort catalog.FindAlbumsByOwnerPort
+		Albums []*catalog.Album
 	}
 	type args struct {
 		request catalog.CreateAlbumRequest
@@ -153,9 +153,6 @@ func TestCreateAlbum_Create(t *testing.T) {
 	}{
 		{
 			name: "it should NOT create the album without owner",
-			fields: fields{
-				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: "",
@@ -170,9 +167,6 @@ func TestCreateAlbum_Create(t *testing.T) {
 		},
 		{
 			name: "it should NOT create the album without name",
-			fields: fields{
-				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
@@ -187,9 +181,6 @@ func TestCreateAlbum_Create(t *testing.T) {
 		},
 		{
 			name: "it should NOT create the album without start date",
-			fields: fields{
-				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
@@ -203,9 +194,6 @@ func TestCreateAlbum_Create(t *testing.T) {
 		},
 		{
 			name: "it should NOT create the album without end date",
-			fields: fields{
-				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
@@ -219,9 +207,6 @@ func TestCreateAlbum_Create(t *testing.T) {
 		},
 		{
 			name: "it should NOT create the album with start and end reversed",
-			fields: fields{
-				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: owner,
@@ -236,9 +221,6 @@ func TestCreateAlbum_Create(t *testing.T) {
 		},
 		{
 			name: "it should create the album with a generated name",
-			fields: fields{
-				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
-			},
 			args: args{
 				request: standardRequest,
 			},
@@ -247,9 +229,6 @@ func TestCreateAlbum_Create(t *testing.T) {
 		},
 		{
 			name: "it should create the album with a forced name",
-			fields: fields{
-				FindAlbumsByOwnerPort: make(FindAlbumsByOwnerFake),
-			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner:            owner,
@@ -273,9 +252,7 @@ func TestCreateAlbum_Create(t *testing.T) {
 		{
 			name: "it should NOT create the album if the forced name is already taken",
 			fields: fields{
-				FindAlbumsByOwnerPort: FindAlbumsByOwnerFake{
-					owner: []*catalog.Album{&ironmanOneAlbum},
-				},
+				Albums: []*catalog.Album{&ironmanOneAlbum},
 			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
@@ -295,16 +272,11 @@ func TestCreateAlbum_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			observer := new(CreateAlbumObserverFake)
-			c := &catalog.CreateAlbum{
-				FindAlbumsByOwnerPort: tt.fields.FindAlbumsByOwnerPort,
-				Observers: []func(timeline *catalog.TimelineAggregate) catalog.CreateAlbumObserver{
-					func(timeline *catalog.TimelineAggregate) catalog.CreateAlbumObserver {
-						return observer
-					},
-				},
+			c := &catalog.CreateAlbumStateless{
+				Observers: []catalog.CreateAlbumObserverWithTimeline{&catalog.CreateAlbumObserverWrapper{CreateAlbumObserver: observer}},
 			}
 
-			_, err := c.Create(context.Background(), tt.args.request)
+			_, err := c.Create(context.Background(), catalog.NewLazyTimelineAggregate(tt.fields.Albums), tt.args.request)
 			if !tt.wantErr(t, err, fmt.Sprintf("Create(%v)", tt.args.request)) {
 				return
 			}
@@ -443,10 +415,9 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &catalog.CreateAlbumMediaTransfer{
-				Timeline:      catalog.NewLazyTimelineAggregate(tt.args.existingAlbums),
 				MediaTransfer: tt.fields.MediaTransfer(t),
 			}
-			tt.wantErr(t, c.ObserveCreateAlbum(context.Background(), tt.args.createdAlbum), fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum))
+			tt.wantErr(t, c.ObserveCreateAlbum(context.Background(), catalog.NewLazyTimelineAggregate(tt.args.existingAlbums), tt.args.createdAlbum), fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum))
 		})
 	}
 }
