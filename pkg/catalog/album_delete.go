@@ -97,7 +97,8 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 		}
 	}
 
-	log.Infof("Album deleted: %s", albumId)
+	log.WithField("Owner", albumId.Owner).Infof("Album %s deleted", albumId)
+
 	return nil
 }
 

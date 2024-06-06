@@ -17,8 +17,9 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 	ctx := context.Background()
 	owner1 := ownermodel.Owner("owner-1")
 	owner2 := ownermodel.Owner("owner-2")
-	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("album1")}
-	albumId2 := catalog.AlbumId{Owner: owner2, FolderName: catalog.NewFolderName("album2")}
+	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album1")}
+	albumId2 := catalog.AlbumId{Owner: owner2, FolderName: catalog.NewFolderName("/album2")}
+	albumId3 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album3")}
 	user1 := usermodel.UserId("user-1")
 	user2 := usermodel.UserId("user-2")
 	user3 := usermodel.UserId("user-3")
@@ -165,6 +166,28 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 				albumId2: {
 					catalogviews.OwnerAvailability(user2),
 					catalogviews.VisitorAvailability(user1),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should find availabilities for 2 albums owned by the same user",
+			fields: fields{
+				ScopeRepository: &ScopeReadRepositoryFake{
+					Scopes: []*aclcore.Scope{
+						ownerPermission(user1, owner1),
+					},
+				},
+			},
+			args: args{
+				albumIds: []catalog.AlbumId{albumId1, albumId3},
+			},
+			want: map[catalog.AlbumId][]catalogviews.Availability{
+				albumId1: {
+					catalogviews.OwnerAvailability(user1),
+				},
+				albumId3: {
+					catalogviews.OwnerAvailability(user1),
 				},
 			},
 			wantErr: assert.NoError,

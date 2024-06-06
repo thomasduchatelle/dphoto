@@ -37,36 +37,37 @@ func NewAmendAlbumDates(
 ) *AmendAlbumDates {
 
 	return &AmendAlbumDates{
-		FindAlbumsByOwnerPort:       findAlbumsByOwner,
-		AmendAlbumDatesWithTimeline: new(AmendAlbumDatesStateless),
-		Observers: []AlbumDatesAmendedObserverWithTimeline{
-			&AmendAlbumMediaTransfer{
-				CountMediasBySelectors: countMediasBySelectors,
-				MediaTransfer: &MediaTransferExecutor{
-					TransferMediasRepository:  transferMedias,
-					TimelineMutationObservers: timelineMutationObservers,
+		FindAlbumsByOwnerPort: findAlbumsByOwner,
+		AmendAlbumDatesWithTimeline: &AmendAlbumDatesStateless{
+			Observers: []AlbumDatesAmendedObserverWithTimeline{
+				&AmendAlbumMediaTransfer{
+					CountMediasBySelectors: countMediasBySelectors,
+					MediaTransfer: &MediaTransferExecutor{
+						TransferMediasRepository:  transferMedias,
+						TimelineMutationObservers: timelineMutationObservers,
+					},
 				},
+				&AlbumDatesAmendedObserverWrapper{AlbumDatesAmendedObserver: &AmendAlbumDatesExecutor{
+					AmendAlbumDateRepository: amendAlbumDateRepository,
+				}},
 			},
-			&AlbumDatesAmendedObserverWrapper{AlbumDatesAmendedObserver: &AmendAlbumDatesExecutor{
-				AmendAlbumDateRepository: amendAlbumDateRepository,
-			}},
 		},
 	}
 }
 
 type AmendAlbumDatesWithTimeline interface {
-	AmendAlbumDates(ctx context.Context, timeline *TimelineAggregate, albumId AlbumId, start, end time.Time, observers ...AlbumDatesAmendedObserver) error
+	AmendAlbumDates(ctx context.Context, timeline *TimelineAggregate, albumId AlbumId, start, end time.Time) error
 }
 
 type AlbumDatesAmendedObserverWithTimeline interface {
-	OnAlbumDatesAmended(ctx context.Context, timeline *TimelineAggregate, amendedAlbum DatesUpdate) error
+	OnAlbumDatesAmendedWithTimeline(ctx context.Context, timeline *TimelineAggregate, amendedAlbum DatesUpdate) error
 }
 
 type AlbumDatesAmendedObserverWrapper struct {
 	AlbumDatesAmendedObserver
 }
 
-func (a *AlbumDatesAmendedObserverWrapper) OnAlbumDatesAmended(ctx context.Context, _ *TimelineAggregate, amendedAlbum DatesUpdate) error {
+func (a *AlbumDatesAmendedObserverWrapper) OnAlbumDatesAmendedWithTimeline(ctx context.Context, _ *TimelineAggregate, amendedAlbum DatesUpdate) error {
 	return a.AlbumDatesAmendedObserver.OnAlbumDatesAmended(ctx, amendedAlbum)
 }
 
@@ -74,7 +75,6 @@ func (a *AlbumDatesAmendedObserverWrapper) OnAlbumDatesAmended(ctx context.Conte
 type AmendAlbumDates struct {
 	FindAlbumsByOwnerPort       FindAlbumsByOwnerPort
 	AmendAlbumDatesWithTimeline AmendAlbumDatesWithTimeline
-	Observers                   []AlbumDatesAmendedObserverWithTimeline
 }
 
 func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, start, end time.Time) error {
@@ -85,20 +85,14 @@ func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, 
 
 	timeline := NewLazyTimelineAggregate(albums)
 
-	return a.AmendAlbumDatesWithTimeline.AmendAlbumDates(ctx, timeline, albumId, start, end, AlbumDatesAmendedObserverFunc(func(ctx context.Context, amendedAlbum DatesUpdate) error {
-		for _, observer := range a.Observers {
-			err := observer.OnAlbumDatesAmended(ctx, timeline, amendedAlbum)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}))
+	return a.AmendAlbumDatesWithTimeline.AmendAlbumDates(ctx, timeline, albumId, start, end)
 }
 
-type AmendAlbumDatesStateless struct{}
+type AmendAlbumDatesStateless struct {
+	Observers []AlbumDatesAmendedObserverWithTimeline
+}
 
-func (a *AmendAlbumDatesStateless) AmendAlbumDates(ctx context.Context, timeline *TimelineAggregate, albumId AlbumId, start, end time.Time, observers ...AlbumDatesAmendedObserver) error {
+func (a *AmendAlbumDatesStateless) AmendAlbumDates(ctx context.Context, timeline *TimelineAggregate, albumId AlbumId, start, end time.Time) error {
 	amendedAlbum, err := timeline.ValidateAmendDates(albumId, start, end)
 	if err != nil {
 		return err
@@ -113,12 +107,15 @@ func (a *AmendAlbumDatesStateless) AmendAlbumDates(ctx context.Context, timeline
 		return nil
 	}
 
-	for _, observer := range observers {
-		err = observer.OnAlbumDatesAmended(ctx, *amendedAlbum)
+	for _, observer := range a.Observers {
+		err = observer.OnAlbumDatesAmendedWithTimeline(ctx, timeline, *amendedAlbum)
 		if err != nil {
 			return err
 		}
+
 	}
+
+	log.WithField("Owner", albumId.Owner).Infof("Album %s dates updates to %s -> %s", albumId, amendedAlbum.UpdatedAlbum.Start.Format(time.DateTime), amendedAlbum.UpdatedAlbum.End.Format(time.DateTime))
 
 	return nil
 }
@@ -128,7 +125,7 @@ type AmendAlbumMediaTransfer struct {
 	MediaTransfer          MediaTransfer
 }
 
-func (a *AmendAlbumMediaTransfer) OnAlbumDatesAmended(ctx context.Context, timeline *TimelineAggregate, updatedAlbum DatesUpdate) error {
+func (a *AmendAlbumMediaTransfer) OnAlbumDatesAmendedWithTimeline(ctx context.Context, timeline *TimelineAggregate, updatedAlbum DatesUpdate) error {
 	records, orphaned, err := timeline.AmendDates(updatedAlbum)
 	if err != nil {
 		return err

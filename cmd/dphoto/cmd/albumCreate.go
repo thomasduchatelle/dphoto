@@ -13,27 +13,33 @@ import (
 )
 
 var (
-	creationRequest catalog.CreateAlbumRequest
-	newArgs         = struct {
-		startDate string
-		endDate   string
+	newArgs = struct {
+		forcedFolderName string
 	}{}
 )
 
 var newCmd = &cobra.Command{
-	Use:   "create --name <display name> --start <ISO date> --end <ISO date> [--folder-name <forced physical name>]",
+	Use:   "create <display name> <ISO date> <ISO date> [--folder-name <forced physical name>]",
 	Short: "Create a new album",
 	Long: `Create a new album
 
 When not specified, folder name is generated from the pattern 'YYYY-MM_<normalised_display_name>'.
 `,
 	Aliases: []string{"new"},
+	Args:    cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
+
+		creationRequest := catalog.CreateAlbumRequest{
+			Owner:            ownermodel.Owner(Owner),
+			Name:             args[0],
+			ForcedFolderName: newArgs.forcedFolderName,
+		}
+
 		var err error
-		creationRequest.Start, err = parseDate(newArgs.startDate)
+		creationRequest.Start, err = parseDate(args[1])
 		printer.FatalWithMessageIfError(err, 2, "Start date is mandatory")
-		creationRequest.End, err = parseDate(newArgs.endDate)
+		creationRequest.End, err = parseDate(args[2])
 		printer.FatalWithMessageIfError(err, 3, "End date is mandatory")
 
 		creationRequest.Owner = ownermodel.Owner(Owner)
@@ -47,11 +53,7 @@ When not specified, folder name is generated from the pattern 'YYYY-MM_<normalis
 func init() {
 	albumCmd.AddCommand(newCmd)
 
-	newCmd.Flags().StringVarP(&creationRequest.Name, "name", "n", "", "name of the album, mandatory")
-	newCmd.Flags().StringVarP(&creationRequest.ForcedFolderName, "folder-name", "f", "", "folder name in which medias will be physically stored (optional)")
-
-	newCmd.Flags().StringVarP(&newArgs.startDate, "start", "s", "", "start date, format: YYYY-MM-DD ; or YYYY-MM-DDTHH:mm:SS")
-	newCmd.Flags().StringVarP(&newArgs.endDate, "end", "e", "", "end date, format: YYYY-MM-DD ; or YYYY-MM-DDTHH:mm:SS")
+	newCmd.Flags().StringVarP(&newArgs.forcedFolderName, "folder-name", "f", "", "folder name in which medias will be physically stored (optional)")
 }
 
 func parseDate(value string) (time.Time, error) {

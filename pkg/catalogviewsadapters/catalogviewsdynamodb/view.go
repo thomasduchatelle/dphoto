@@ -17,6 +17,42 @@ type AlbumViewRepository struct {
 	TableName string
 }
 
+func (a *AlbumViewRepository) UpdateAlbumSize(ctx context.Context, albumCountUpdates []catalogviews.AlbumSizeDiff) error {
+	var updates []*dynamodb.UpdateItemInput
+
+	for _, albumCount := range albumCountUpdates {
+		expr, err := expression.NewBuilder().
+			WithUpdate(expression.
+				Add(expression.Name("Count"), expression.Value(albumCount.MediaCountDiff)).
+				Set(expression.Name("AlbumOwner"), expression.Value(albumCount.AlbumId.Owner)).
+				Set(expression.Name("AlbumFolderName"), expression.Value(albumCount.AlbumId.FolderName)),
+			).
+			Build()
+		if err != nil {
+			return errors.Wrapf(err, "failed to build expression for AlbumSizeDiff %+v", albumCount)
+		}
+
+		for _, user := range albumCount.Users {
+			updates = append(updates, &dynamodb.UpdateItemInput{
+				TableName:                 &a.TableName,
+				Key:                       albumSizeKey(user, albumCount.AlbumId).ToAttributes(),
+				ExpressionAttributeNames:  expr.Names(),
+				ExpressionAttributeValues: expr.Values(),
+				UpdateExpression:          expr.Update(),
+			})
+		}
+	}
+
+	for _, update := range updates {
+		_, err := a.Client.UpdateItem(ctx, update)
+		if err != nil {
+			return errors.Wrapf(err, "failed to update album size for album %v", update.Key)
+		}
+	}
+
+	return nil
+}
+
 func (a *AlbumViewRepository) InsertAlbumSize(ctx context.Context, albumSizes []catalogviews.AlbumSize) error {
 	var items []types.WriteRequest
 

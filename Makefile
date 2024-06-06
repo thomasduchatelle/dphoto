@@ -159,7 +159,9 @@ mocks:
 	mockery --all --dir cmd -r --with-expecter --output internal/mocks
 	git add internal/mocks
 
-clearlocal: dcdown dcup
+clearlocal:
+	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 s3 rm --recursive "s3://dphoto-local" | cat || echo "skipping"
+	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 dynamodb delete-table --table dphoto-local | cat || echo "skipping"
 
 dcdown:
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 s3 rm --recursive "s3://dphoto-local" | cat || echo "skipping"
