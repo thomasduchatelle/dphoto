@@ -10,19 +10,19 @@ import (
 
 var (
 	createUserArg = struct {
-		email string
 		owner string
 	}{}
 
 	CreateUserCase func(email, ownerOptional string) error
 )
 var createUserCmd = &cobra.Command{
-	Use:   "create-user",
+	Use:   "create-user <user email>",
 	Short: "Create a user capable of backing up its media to a owner of its own",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		email := strings.Trim(createUserArg.email, " ")
+		email := strings.Trim(args[0], " ")
 		if email == "" {
-			printer.ErrorText("--email is mandatory")
+			printer.ErrorText("email is mandatory")
 		}
 		err := CreateUserCase(email, createUserArg.owner)
 		printer.FatalIfError(err, 1)
@@ -34,6 +34,5 @@ var createUserCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(createUserCmd)
 
-	createUserCmd.Flags().StringVarP(&createUserArg.email, "email", "e", "", "email with which the user is identified and can authenticate with google account")
-	createUserCmd.Flags().StringVarP(&createUserArg.email, "owner", "o", "", "(optional) identifier of the owner (tenant) on which this email will backup its media")
+	createUserCmd.Flags().StringVarP(&createUserArg.owner, "owner", "o", "", "(optional) identifier of the owner (tenant) on which this email will backup its media")
 }

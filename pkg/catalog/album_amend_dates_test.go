@@ -193,9 +193,13 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			observer := new(AlbumDatesAmendedObserverFake)
-			a := &catalog.AmendAlbumDatesStateless{}
+			a := &catalog.AmendAlbumDatesStateless{
+				Observers: []catalog.AlbumDatesAmendedObserverWithTimeline{
+					observer,
+				},
+			}
 
-			err := a.AmendAlbumDates(context.Background(), catalog.NewLazyTimelineAggregate(tt.fields.Albums), tt.args.albumId, tt.args.start, tt.args.end, observer)
+			err := a.AmendAlbumDates(context.Background(), catalog.NewLazyTimelineAggregate(tt.fields.Albums), tt.args.albumId, tt.args.start, tt.args.end)
 			if !tt.wantErr(t, err, fmt.Sprintf("AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end)) {
 				return
 			}
@@ -451,7 +455,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				MediaTransfer:          tt.fields.MediaTransfer(t),
 			}
 
-			err := a.OnAlbumDatesAmended(context.Background(), catalog.NewLazyTimelineAggregate(tt.args.existingTimeline), tt.args.updatedAlbum)
+			err := a.OnAlbumDatesAmendedWithTimeline(context.Background(), catalog.NewLazyTimelineAggregate(tt.args.existingTimeline), tt.args.updatedAlbum)
 			tt.wantErr(t, err, fmt.Sprintf("OnAlbumDatesAmended(%v, %v, %v)", context.Background(), tt.args.existingTimeline, tt.args.updatedAlbum))
 		})
 	}
@@ -485,6 +489,11 @@ func expectAmendAlbumDateRepositoryCalled(albumId catalog.AlbumId, start time.Ti
 
 type AlbumDatesAmendedObserverFake struct {
 	DateAmendedAlbums []catalog.DatesUpdate
+}
+
+func (a *AlbumDatesAmendedObserverFake) OnAlbumDatesAmendedWithTimeline(ctx context.Context, timeline *catalog.TimelineAggregate, amendedAlbum catalog.DatesUpdate) error {
+	a.DateAmendedAlbums = append(a.DateAmendedAlbums, amendedAlbum)
+	return nil
 }
 
 func (a *AlbumDatesAmendedObserverFake) OnAlbumDatesAmended(ctx context.Context, amendedAlbum catalog.DatesUpdate) error {

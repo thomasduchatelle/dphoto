@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -105,6 +106,8 @@ func (c *CreateAlbumStateless) Create(ctx context.Context, timeline *TimelineAgg
 			return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed at observer %d/%d", request, index, len(c.Observers))
 		}
 	}
+
+	log.WithField("Owner", request.Owner).Infof("Album %s created", album)
 
 	return &album.AlbumId, nil
 }

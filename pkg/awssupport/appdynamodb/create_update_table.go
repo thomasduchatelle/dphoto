@@ -16,10 +16,12 @@ const (
 
 // CreateTableIfNecessary creates the table if it doesn't exist ; or update it.
 func CreateTableIfNecessary(ctx context.Context, table string, client *dynamodb.Client, localDynamodb bool) error {
+
 	mdc := log.WithFields(log.Fields{
 		"TableBackup":  table,
 		"TableVersion": tableVersion,
 	})
+	mdc.Infof("[appdynamodb] Updating table %s structure if necessary ...", table)
 	mdc.Debugf("CreateTableIfNecessary > describe table '%s'", table)
 
 	var secondaryIndexProvisionedThroughput *types.ProvisionedThroughput

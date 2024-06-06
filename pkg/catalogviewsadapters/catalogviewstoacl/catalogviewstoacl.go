@@ -90,8 +90,6 @@ func (f *CatalogToACLAdapter) ListUsersWhoCanAccessAlbum(ctx context.Context, al
 						} else {
 							grid[albumId] = []catalogviews.Availability{availability}
 						}
-
-						break
 					}
 				}
 

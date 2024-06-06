@@ -28,7 +28,7 @@ func (_m *AmendAlbumDatesObserver) OnAlbumDatesAmended(ctx context.Context, exis
 	ret := _m.Called(ctx, existingTimeline, updatedAlbum)
 
 	if len(ret) == 0 {
-		panic("no return value specified for OnAlbumDatesAmended")
+		panic("no return value specified for OnAlbumDatesAmendedWithTimeline")
 	}
 
 	var r0 error
@@ -41,7 +41,7 @@ func (_m *AmendAlbumDatesObserver) OnAlbumDatesAmended(ctx context.Context, exis
 	return r0
 }
 
-// AmendAlbumDatesObserver_OnAlbumDatesAmended_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnAlbumDatesAmended'
+// AmendAlbumDatesObserver_OnAlbumDatesAmended_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnAlbumDatesAmendedWithTimeline'
 type AmendAlbumDatesObserver_OnAlbumDatesAmended_Call struct {
 	*mock.Call
 }
@@ -51,7 +51,7 @@ type AmendAlbumDatesObserver_OnAlbumDatesAmended_Call struct {
 //   - existingTimeline []*catalog.Album
 //   - updatedAlbum catalog.Album
 func (_e *AmendAlbumDatesObserver_Expecter) OnAlbumDatesAmended(ctx interface{}, existingTimeline interface{}, updatedAlbum interface{}) *AmendAlbumDatesObserver_OnAlbumDatesAmended_Call {
-	return &AmendAlbumDatesObserver_OnAlbumDatesAmended_Call{Call: _e.mock.On("OnAlbumDatesAmended", ctx, existingTimeline, updatedAlbum)}
+	return &AmendAlbumDatesObserver_OnAlbumDatesAmended_Call{Call: _e.mock.On("OnAlbumDatesAmendedWithTimeline", ctx, existingTimeline, updatedAlbum)}
 }
 
 func (_c *AmendAlbumDatesObserver_OnAlbumDatesAmended_Call) Run(run func(ctx context.Context, existingTimeline []*catalog.Album, updatedAlbum catalog.Album)) *AmendAlbumDatesObserver_OnAlbumDatesAmended_Call {

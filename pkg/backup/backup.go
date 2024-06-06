@@ -40,7 +40,7 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 		Analyser:             options.GetAnalyserDecorator().Decorate(newBackupAnalyseMedia()),
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
-		Uploader:             &Uploader{Owner: owner},
+		Uploader:             &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},
 		ConcurrentAnalyser:   ConcurrentAnalyser,
 		ConcurrentCataloguer: ConcurrentCataloguer,
 		ConcurrentUploader:   ConcurrentUploader,

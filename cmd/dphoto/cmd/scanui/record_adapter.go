@@ -69,8 +69,9 @@ type dynamicAlbumRepository struct {
 func (r *dynamicAlbumRepository) FindExistingRecords() ([]*ui.ExistingRecord, error) {
 	ctx := context.TODO()
 
+	// TODO It's incorrect to assume userId = owner
 	owner := ownermodel.Owner(r.owner)
-	albums, err := pkgfactory.AlbumView(ctx).ListAlbums(ctx, usermodel.CurrentUser{Owner: &owner}, catalogviews.ListAlbumsFilter{OnlyDirectlyOwned: true})
+	albums, err := pkgfactory.AlbumView(ctx).ListAlbums(ctx, usermodel.CurrentUser{UserId: usermodel.UserId(r.owner), Owner: &owner}, catalogviews.ListAlbumsFilter{OnlyDirectlyOwned: true})
 
 	timeline, err := newTimeline(albums)
 	if err != nil {

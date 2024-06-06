@@ -2,8 +2,11 @@ package catalogviews
 
 import (
 	"context"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
+	"strings"
 )
 
 type Availability struct {
@@ -30,8 +33,27 @@ type AlbumSize struct {
 	MediaCount int
 }
 
+func (a AlbumSize) String() string {
+	var users []string
+	for _, user := range a.Users {
+		availabilityType := "visitor"
+		if user.AsOwner {
+			availabilityType = "owner"
+		}
+		users = append(users, fmt.Sprintf("%s:%s", availabilityType, user.UserId.Value()))
+	}
+	return fmt.Sprintf("%s: %d media(s) available to %s", a.AlbumId, a.MediaCount, strings.Join(users, ", "))
+}
+
+type AlbumSizeDiff struct {
+	AlbumId        catalog.AlbumId
+	Users          []Availability
+	MediaCountDiff int // MediaCountDiff is the difference between the number of media added, or removed, to the album
+}
+
 type ViewWriteRepository interface {
 	InsertAlbumSize(ctx context.Context, albumSize []AlbumSize) error
+	UpdateAlbumSize(ctx context.Context, albumCountUpdates []AlbumSizeDiff) error
 	DeleteAlbumSize(ctx context.Context, availability Availability, albumId catalog.AlbumId) error
 }
 
@@ -48,15 +70,6 @@ type CommandHandlerAlbumSize struct {
 func (c *CommandHandlerAlbumSize) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
 	var albumIds []catalog.AlbumId
 	for albumId := range transfers {
-		albumIds = append(albumIds, albumId)
-	}
-
-	return c.updateUserViews(ctx, albumIds)
-}
-
-func (c *CommandHandlerAlbumSize) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
-	var albumIds []catalog.AlbumId
-	for albumId := range medias {
 		albumIds = append(albumIds, albumId)
 	}
 
@@ -90,7 +103,40 @@ func (c *CommandHandlerAlbumSize) updateUserViews(ctx context.Context, albumIds 
 		})
 	}
 
+	log.Infof("Updating album sizes for %d albums", len(albumSizes))
+	for _, albumSize := range albumSizes {
+		log.Infof("Album size: %s", albumSize)
+	}
+
 	return c.ViewWriteRepository.InsertAlbumSize(ctx, albumSizes)
+}
+
+func (c *CommandHandlerAlbumSize) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
+	if len(medias) == 0 {
+		return nil
+	}
+
+	var albumIds []catalog.AlbumId
+	for albumId := range medias {
+		albumIds = append(albumIds, albumId)
+	}
+
+	availabilities, err := c.ListUserWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, albumIds...)
+	if err != nil {
+		return err
+	}
+
+	var updates []AlbumSizeDiff
+	for albumId, mediaIds := range medias {
+		availability, _ := availabilities[albumId]
+		updates = append(updates, AlbumSizeDiff{
+			AlbumId:        albumId,
+			Users:          availability,
+			MediaCountDiff: len(mediaIds),
+		})
+	}
+
+	return c.ViewWriteRepository.UpdateAlbumSize(ctx, updates)
 }
 
 func (c *CommandHandlerAlbumSize) AlbumShared(ctx context.Context, albumId catalog.AlbumId, userId usermodel.UserId) error {

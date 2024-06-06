@@ -20,6 +20,7 @@ func (f *Factory) NewCreatorReferencer(ctx context.Context, owner ownermodel.Own
 		writeRepo,
 		writeRepo,
 		ArchiveTimelineMutationObserver(),
+		CommandHandlerAlbumSize(ctx),
 	)
 
 	// TODO is the albums recounted after backup complete ?
@@ -34,8 +35,20 @@ func (f *Factory) NewCreatorReferencer(ctx context.Context, owner ownermodel.Own
 }
 
 func (f *Factory) NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (backup.CatalogReferencer, error) {
-	//TODO implement me
-	panic("implement me")
+	queries := AlbumQueries(ctx)
+	writeRepo := CatalogRepository(ctx)
+	referencer, err := catalog.NewAlbumDryRunReferencer(
+		owner,
+		queries,
+	)
+
+	return &backupcatalog.CatalogReferencerAdapter{
+		Owner: owner,
+		InsertMediaSimulator: &catalog.MediasInsertSimulator{
+			FindExistingSignaturePort: writeRepo,
+		},
+		StatefulAlbumReferencer: referencer,
+	}, errors.Wrapf(err, "NewDryRunReferencer(%s) failed", owner)
 }
 
 func NewReferencerFactory() backup.ReferencerFactory {

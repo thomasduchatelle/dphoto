@@ -8,8 +8,14 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamotestutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"testing"
+)
+
+const (
+	OwnerAvailability   = "OWNED"
+	VisitorAvailability = "VISITOR"
 )
 
 func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
@@ -373,6 +379,136 @@ func TestAlbumViewRepository_GetAvailabilitiesByUser(t *testing.T) {
 				return
 			}
 			assert.Equalf(t, tt.want, got, "GetAvailabilitiesByUser(%v, %v)", ctx, tt.args.user)
+		})
+	}
+}
+
+func TestAlbumViewRepository_UpdateAlbumSize(t *testing.T) {
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+
+	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
+	owner1 := ownermodel.Owner("owner1")
+	owner2 := ownermodel.Owner("owner2")
+	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album-1")}
+	albumId2 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album-2")}
+	albumId3 := catalog.AlbumId{Owner: owner2, FolderName: catalog.NewFolderName("/album-3")}
+
+	type args struct {
+		ctx        context.Context
+		albumSizes []catalogviews.AlbumSizeDiff
+	}
+	tests := []struct {
+		name      string
+		args      args
+		before    []map[string]types.AttributeValue
+		wantAfter []map[string]types.AttributeValue
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should do nothing if there is no album size",
+			args: args{
+				ctx:        ctx,
+				albumSizes: nil,
+			},
+			before:    nil,
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should update the count for the owner",
+			args: args{
+				ctx: ctx,
+				albumSizes: []catalogviews.AlbumSizeDiff{
+					{
+						AlbumId:        albumId1,
+						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+						MediaCountDiff: 2,
+					},
+				},
+			},
+			before: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, OwnerAvailability, albumId1, "42"),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, OwnerAvailability, albumId1, "44"),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should create the count if it doesn't exist yet",
+			args: args{
+				ctx: ctx,
+				albumSizes: []catalogviews.AlbumSizeDiff{
+					{
+						AlbumId:        albumId1,
+						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+						MediaCountDiff: 2,
+					},
+				},
+			},
+			before: nil,
+			wantAfter: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, OwnerAvailability, albumId1, "2"),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should support a mix of albums and users that exists and don't",
+			args: args{
+				ctx: ctx,
+				albumSizes: []catalogviews.AlbumSizeDiff{
+					{
+						AlbumId:        albumId1,
+						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1), catalogviews.VisitorAvailability(userId2)},
+						MediaCountDiff: 2,
+					},
+					{
+						AlbumId:        albumId2,
+						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+						MediaCountDiff: 3,
+					},
+					{
+						AlbumId:        albumId3,
+						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId2), catalogviews.VisitorAvailability(userId1)},
+						MediaCountDiff: 5,
+					},
+				},
+			},
+			before: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, OwnerAvailability, albumId1, "2"),
+				albumSizeItem(userId2, VisitorAvailability, albumId1, "2"),
+				albumSizeItem(userId1, OwnerAvailability, albumId2, "3"),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, OwnerAvailability, albumId1, "4"),
+				albumSizeItem(userId1, OwnerAvailability, albumId2, "6"),
+				albumSizeItem(userId1, VisitorAvailability, albumId3, "5"),
+				albumSizeItem(userId2, OwnerAvailability, albumId3, "5"),
+				albumSizeItem(userId2, VisitorAvailability, albumId1, "4"),
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(ctx, tt.before)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			a := &AlbumViewRepository{
+				Client:    dyn.Client,
+				TableName: dyn.Table,
+			}
+			err = a.UpdateAlbumSize(tt.args.ctx, tt.args.albumSizes)
+			if tt.wantErr(t, err, fmt.Sprintf("UpdateAlbumSize(%v, %v)", tt.args.ctx, tt.args.albumSizes)) {
+				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
+			}
 		})
 	}
 }

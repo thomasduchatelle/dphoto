@@ -117,7 +117,6 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album1")}
 
 	type fields struct {
-		MediaCounterPort              MediaCounterPort
 		ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 	}
 	type args struct {
@@ -127,13 +126,12 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 		name     string
 		fields   fields
 		args     args
-		wantRepo []AlbumSize
+		wantRepo []AlbumSizeDiff
 		wantErr  assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it shouldn't call anything if there is no media inserted",
 			fields: fields{
-				MediaCounterPort:              stubMediaCounterPort(nil),
 				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(nil),
 			},
 			args: args{
@@ -144,9 +142,6 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 		{
 			name: "it should update the count for the owner",
 			fields: fields{
-				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
-					albumId1: 1,
-				}),
 				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
 					albumId1: {OwnerAvailability(owner1User)},
 				}),
@@ -156,11 +151,11 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 					albumId1: {"media1"},
 				},
 			},
-			wantRepo: []AlbumSize{
+			wantRepo: []AlbumSizeDiff{
 				{
-					AlbumId:    albumId1,
-					Users:      []Availability{OwnerAvailability(owner1User)},
-					MediaCount: 1,
+					AlbumId:        albumId1,
+					Users:          []Availability{OwnerAvailability(owner1User)},
+					MediaCountDiff: 1,
 				},
 			},
 			wantErr: assert.NoError,
@@ -168,23 +163,20 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 		{
 			name: "it should update the count for the owner and the user(s) that have access to the album",
 			fields: fields{
-				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
-					albumId1: 3,
-				}),
 				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
 					albumId1: {OwnerAvailability(owner1User), VisitorAvailability(user2)},
 				}),
 			},
 			args: args{
 				medias: map[catalog.AlbumId][]catalog.MediaId{
-					albumId1: {"media1"},
+					albumId1: {"media1", "media2", "media3"},
 				},
 			},
-			wantRepo: []AlbumSize{
+			wantRepo: []AlbumSizeDiff{
 				{
-					AlbumId:    albumId1,
-					Users:      []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
-					MediaCount: 3,
+					AlbumId:        albumId1,
+					Users:          []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
+					MediaCountDiff: 3,
 				},
 			},
 			wantErr: assert.NoError,
@@ -196,7 +188,7 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 			repository := new(ViewWriteRepositoryFake)
 
 			c := &CommandHandlerAlbumSize{
-				MediaCounterPort:              tt.fields.MediaCounterPort,
+				MediaCounterPort:              stubMediaCounterPort(nil),
 				ListUserWhoCanAccessAlbumPort: tt.fields.ListUserWhoCanAccessAlbumPort,
 				ViewWriteRepository:           repository,
 			}
@@ -206,7 +198,7 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 				return
 			}
 
-			assert.ElementsMatchf(t, repository.AlbumSizes, tt.wantRepo, "AlbumSizes should be %v", tt.wantRepo)
+			assert.ElementsMatchf(t, repository.Updated, tt.wantRepo, "AlbumSizeDiffs should be %v", tt.wantRepo)
 		})
 	}
 }
@@ -238,6 +230,7 @@ type CountKey struct {
 
 type ViewWriteRepositoryFake struct {
 	AlbumSizes []AlbumSize
+	Updated    []AlbumSizeDiff
 	Deleted    []CountKey
 }
 
@@ -246,6 +239,15 @@ func (v *ViewWriteRepositoryFake) InsertAlbumSize(ctx context.Context, albumSize
 		return errors.Errorf("InsertAlbumSize(nil): albumSize should not be nil")
 	}
 	v.AlbumSizes = append(v.AlbumSizes, albumSize...)
+	return nil
+}
+
+func (v *ViewWriteRepositoryFake) UpdateAlbumSize(ctx context.Context, albumCountUpdates []AlbumSizeDiff) error {
+	if albumCountUpdates == nil {
+		return errors.Errorf("UpdateAlbumSize(nil): albumCountUpdates should not be nil")
+	}
+
+	v.Updated = append(v.Updated, albumCountUpdates...)
 	return nil
 }
 

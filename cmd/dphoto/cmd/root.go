@@ -67,13 +67,12 @@ var rootCmd = &cobra.Command{
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		log.Debugf("Running %d postRunFunction ...", len(postRunFunctions))
-		for _, callbacks := range postRunFunctions {
-			err := callbacks()
-			log.Warnf("A function failed to complete: %s", err.Error())
+		for _, callback := range postRunFunctions {
+			err := callback()
+			log.Warnf("The %T function failed to complete: %s", callback, err.Error())
 		}
 
 		log.Debugln("Program complete.")
-		log.Exit(0)
 	},
 }
 

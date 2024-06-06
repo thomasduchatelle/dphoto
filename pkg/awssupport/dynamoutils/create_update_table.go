@@ -46,7 +46,7 @@ func CreateOrUpdateTable(ctx context.Context, input *CreateOrUpdateTableInput) e
 	updates := generatedSecondaryUpdatesIndexes(table, input.Definition)
 
 	if len(updates) == 0 {
-		mdc.Infof("No change required on dynamodb table - update complete.")
+		mdc.Debugln("No change required on dynamodb table - update complete.")
 	}
 
 	for i, update := range updates {

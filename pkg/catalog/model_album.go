@@ -31,7 +31,7 @@ func (a Album) IsEqual(other *Album) bool {
 
 func (a Album) String() string {
 	const layout = "2006-01-02T03"
-	return fmt.Sprintf("[%s -> %s] %s (%s)", a.Start.Format(layout), a.End.Format(layout), a.FolderName, a.Name)
+	return fmt.Sprintf("%s '%s' [%s -> %s]", a.AlbumId, a.Name, a.Start.Format(layout), a.End.Format(layout))
 }
 
 type AlbumId struct {
