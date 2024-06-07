@@ -3,9 +3,10 @@
 package mocks
 
 import (
-	context "context"
-
+	catalog "github.com/thomasduchatelle/dphoto/pkg/catalog"
 	catalogviews "github.com/thomasduchatelle/dphoto/pkg/catalogviews"
+
+	context "context"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -21,6 +22,54 @@ type ViewWriteRepository_Expecter struct {
 
 func (_m *ViewWriteRepository) EXPECT() *ViewWriteRepository_Expecter {
 	return &ViewWriteRepository_Expecter{mock: &_m.Mock}
+}
+
+// DeleteAlbumSize provides a mock function with given fields: ctx, availability, albumId
+func (_m *ViewWriteRepository) DeleteAlbumSize(ctx context.Context, availability catalogviews.Availability, albumId catalog.AlbumId) error {
+	ret := _m.Called(ctx, availability, albumId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAlbumSize")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, catalogviews.Availability, catalog.AlbumId) error); ok {
+		r0 = rf(ctx, availability, albumId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ViewWriteRepository_DeleteAlbumSize_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAlbumSize'
+type ViewWriteRepository_DeleteAlbumSize_Call struct {
+	*mock.Call
+}
+
+// DeleteAlbumSize is a helper method to define mock.On call
+//   - ctx context.Context
+//   - availability catalogviews.Availability
+//   - albumId catalog.AlbumId
+func (_e *ViewWriteRepository_Expecter) DeleteAlbumSize(ctx interface{}, availability interface{}, albumId interface{}) *ViewWriteRepository_DeleteAlbumSize_Call {
+	return &ViewWriteRepository_DeleteAlbumSize_Call{Call: _e.mock.On("DeleteAlbumSize", ctx, availability, albumId)}
+}
+
+func (_c *ViewWriteRepository_DeleteAlbumSize_Call) Run(run func(ctx context.Context, availability catalogviews.Availability, albumId catalog.AlbumId)) *ViewWriteRepository_DeleteAlbumSize_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(catalogviews.Availability), args[2].(catalog.AlbumId))
+	})
+	return _c
+}
+
+func (_c *ViewWriteRepository_DeleteAlbumSize_Call) Return(_a0 error) *ViewWriteRepository_DeleteAlbumSize_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ViewWriteRepository_DeleteAlbumSize_Call) RunAndReturn(run func(context.Context, catalogviews.Availability, catalog.AlbumId) error) *ViewWriteRepository_DeleteAlbumSize_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // InsertAlbumSize provides a mock function with given fields: ctx, albumSize
@@ -66,6 +115,53 @@ func (_c *ViewWriteRepository_InsertAlbumSize_Call) Return(_a0 error) *ViewWrite
 }
 
 func (_c *ViewWriteRepository_InsertAlbumSize_Call) RunAndReturn(run func(context.Context, []catalogviews.AlbumSize) error) *ViewWriteRepository_InsertAlbumSize_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateAlbumSize provides a mock function with given fields: ctx, albumCountUpdates
+func (_m *ViewWriteRepository) UpdateAlbumSize(ctx context.Context, albumCountUpdates []catalogviews.AlbumSizeDiff) error {
+	ret := _m.Called(ctx, albumCountUpdates)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateAlbumSize")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []catalogviews.AlbumSizeDiff) error); ok {
+		r0 = rf(ctx, albumCountUpdates)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ViewWriteRepository_UpdateAlbumSize_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAlbumSize'
+type ViewWriteRepository_UpdateAlbumSize_Call struct {
+	*mock.Call
+}
+
+// UpdateAlbumSize is a helper method to define mock.On call
+//   - ctx context.Context
+//   - albumCountUpdates []catalogviews.AlbumSizeDiff
+func (_e *ViewWriteRepository_Expecter) UpdateAlbumSize(ctx interface{}, albumCountUpdates interface{}) *ViewWriteRepository_UpdateAlbumSize_Call {
+	return &ViewWriteRepository_UpdateAlbumSize_Call{Call: _e.mock.On("UpdateAlbumSize", ctx, albumCountUpdates)}
+}
+
+func (_c *ViewWriteRepository_UpdateAlbumSize_Call) Run(run func(ctx context.Context, albumCountUpdates []catalogviews.AlbumSizeDiff)) *ViewWriteRepository_UpdateAlbumSize_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]catalogviews.AlbumSizeDiff))
+	})
+	return _c
+}
+
+func (_c *ViewWriteRepository_UpdateAlbumSize_Call) Return(_a0 error) *ViewWriteRepository_UpdateAlbumSize_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ViewWriteRepository_UpdateAlbumSize_Call) RunAndReturn(run func(context.Context, []catalogviews.AlbumSizeDiff) error) *ViewWriteRepository_UpdateAlbumSize_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -38,7 +38,9 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 		End:   jun24,
 	}
 	transferredMedias := catalog.TransferredMedias{
-		newAlbum.AlbumId: []catalog.MediaId{"media-1", "media-2"},
+		Transfers: map[catalog.AlbumId][]catalog.MediaId{
+			newAlbum.AlbumId: {"media-1", "media-2"},
+		},
 	}
 
 	testError := errors.Errorf("TEST error throwing")
@@ -140,7 +142,7 @@ func expectTransferMediasPortNotCalled() func(t *testing.T) catalog.TransferMedi
 	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
 		return catalog.TransferMediasFunc(func(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
 			assert.Failf(t, "TransferMediasRepository should not be called", "TransferMediasFunc(%v, %v)", ctx, records)
-			return nil, nil
+			return catalog.NewTransferredMedias(), nil
 		})
 	}
 }

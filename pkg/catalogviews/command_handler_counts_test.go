@@ -16,6 +16,7 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 	owner1User := usermodel.UserId("user-of-owner-1")
 	user2 := usermodel.UserId("user-2")
 	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album1")}
+	albumId2 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album2")}
 
 	type fields struct {
 		MediaCounterPort              MediaCounterPort
@@ -24,6 +25,16 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 	type args struct {
 		transfers catalog.TransferredMedias
 	}
+	var r MediaCounterPort = MediaCounterPortFake(nil)
+	var r2 MediaCounterPort = MediaCounterPortFake(map[catalog.AlbumId]int{
+		albumId1: 1,
+	})
+	var r3 MediaCounterPort = MediaCounterPortFake(map[catalog.AlbumId]int{
+		albumId1: 1,
+	})
+	var r4 MediaCounterPort = MediaCounterPortFake(map[catalog.AlbumId]int{
+		albumId1: 1,
+	})
 	tests := []struct {
 		name     string
 		fields   fields
@@ -34,27 +45,27 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 		{
 			name: "it should return nil and do nothing if the transfer is empty",
 			fields: fields{
-				MediaCounterPort:              stubMediaCounterPort(nil),
+				MediaCounterPort:              r,
 				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(nil),
 			},
 			args: args{
-				transfers: nil,
+				transfers: catalog.TransferredMedias{},
 			},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should update the album size for the owner view onluy if not shared",
+			name: "it should update the album size for the owner view only if not shared",
 			fields: fields{
-				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
-					albumId1: 1,
-				}),
+				MediaCounterPort: r2,
 				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
 					albumId1: {OwnerAvailability(owner1User)},
 				}),
 			},
 			args: args{
 				transfers: catalog.TransferredMedias{
-					albumId1: []catalog.MediaId{"media1"},
+					Transfers: map[catalog.AlbumId][]catalog.MediaId{
+						albumId1: {"media1"},
+					},
 				},
 			},
 			wantRepo: []AlbumSize{
@@ -69,16 +80,16 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 		{
 			name: "it should insert the album size for one album and one user",
 			fields: fields{
-				MediaCounterPort: stubMediaCounterPort(map[catalog.AlbumId]int{
-					albumId1: 1,
-				}),
+				MediaCounterPort: r3,
 				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
 					albumId1: {OwnerAvailability(owner1User), VisitorAvailability(user2)},
 				}),
 			},
 			args: args{
 				transfers: catalog.TransferredMedias{
-					albumId1: []catalog.MediaId{"media1"},
+					Transfers: map[catalog.AlbumId][]catalog.MediaId{
+						albumId1: {"media1"},
+					},
 				},
 			},
 			wantRepo: []AlbumSize{
@@ -86,6 +97,37 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 					AlbumId:    albumId1,
 					Users:      []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
 					MediaCount: 1,
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should also recount the albums in the origins",
+			fields: fields{
+				MediaCounterPort: r4,
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					albumId1: {OwnerAvailability(owner1User), VisitorAvailability(user2)},
+					albumId2: {OwnerAvailability(owner1User)},
+				}),
+			},
+			args: args{
+				transfers: catalog.TransferredMedias{
+					Transfers: map[catalog.AlbumId][]catalog.MediaId{
+						albumId1: {"media1"},
+					},
+					FromAlbums: []catalog.AlbumId{albumId2},
+				},
+			},
+			wantRepo: []AlbumSize{
+				{
+					AlbumId:    albumId1,
+					Users:      []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
+					MediaCount: 1,
+				},
+				{
+					AlbumId:    albumId2,
+					Users:      []Availability{OwnerAvailability(owner1User)},
+					MediaCount: 0,
 				},
 			},
 			wantErr: assert.NoError,
@@ -187,8 +229,9 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repository := new(ViewWriteRepositoryFake)
 
+			var r MediaCounterPort = MediaCounterPortFake(nil)
 			c := &CommandHandlerAlbumSize{
-				MediaCounterPort:              stubMediaCounterPort(nil),
+				MediaCounterPort:              r,
 				ListUserWhoCanAccessAlbumPort: tt.fields.ListUserWhoCanAccessAlbumPort,
 				ViewWriteRepository:           repository,
 			}

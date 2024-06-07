@@ -12,7 +12,7 @@ type Observer struct {
 }
 
 func (a *Observer) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
-	for targetAlbumId, ids := range transfers {
+	for targetAlbumId, ids := range transfers.Transfers {
 		convertedIds := make([]string, len(ids), len(ids))
 		for i, id := range ids {
 			convertedIds[i] = string(id)

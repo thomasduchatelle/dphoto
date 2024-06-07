@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
@@ -41,8 +42,8 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should create the ACL rule when the album exists",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.FindAlbumPort) {
-				catalogMock := mocks.NewShareAlbumCatalogPort(t)
-				catalogMock.On("FindAlbum", albumId).Return(&catalog.Album{
+				catalogMock := mocks.NewFindAlbumPort(t)
+				catalogMock.EXPECT().FindAlbum(mock.Anything, albumId).Return(&catalog.Album{
 					AlbumId: albumId,
 				}, nil)
 
@@ -66,8 +67,8 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should return an error if the album doesn't exists",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.FindAlbumPort) {
-				catalogMock := mocks.NewShareAlbumCatalogPort(t)
-				catalogMock.On("FindAlbum", albumId).Return(nil, catalog.AlbumNotFoundError)
+				catalogMock := mocks.NewFindAlbumPort(t)
+				catalogMock.EXPECT().FindAlbum(mock.Anything, albumId).Return(nil, catalog.AlbumNotFoundError)
 
 				return mocks.NewScopeWriter(t), catalogMock
 			},
@@ -80,8 +81,8 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		{
 			name: "it should passthroughs an other error",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.FindAlbumPort) {
-				catalogMock := mocks.NewShareAlbumCatalogPort(t)
-				catalogMock.On("FindAlbum", albumId).Return(nil, errors.New("TEST Something else"))
+				catalogMock := mocks.NewFindAlbumPort(t)
+				catalogMock.EXPECT().FindAlbum(mock.Anything, albumId).Return(nil, errors.New("TEST Something else"))
 
 				return mocks.NewScopeWriter(t), catalogMock
 			},

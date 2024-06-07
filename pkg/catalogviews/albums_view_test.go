@@ -334,21 +334,26 @@ func stubGetAlbumSharingGridPort(albumId catalog.AlbumId, userId2 usermodel.User
 	}
 }
 
-func stubMediaCounterPort(m map[catalog.AlbumId]int) MediaCounterPort {
-	return MediaCounterFunc(func(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
-		return m, nil
-	})
+type MediaCounterPortFake map[catalog.AlbumId]int
+
+func (m MediaCounterPortFake) CountMedia(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
+	counts := make(map[catalog.AlbumId]int)
+	for _, a := range album {
+		counts[a], _ = m[a]
+	}
+
+	return counts, nil
 }
 
 func stubGetAvailabilitiesByUserPortFromCount(m map[catalog.AlbumId]int) GetAvailabilitiesByUserPort {
 	return GetAvailabilitiesByUserFunc(func(ctx context.Context, userId usermodel.UserId) ([]AlbumSize, error) {
-		var availabilities []AlbumSize
+		var sizes []AlbumSize
 		for albumId, count := range m {
-			availabilities = append(availabilities, AlbumSize{
+			sizes = append(sizes, AlbumSize{
 				AlbumId:    albumId,
 				MediaCount: count,
 			})
 		}
-		return availabilities, nil
+		return sizes, nil
 	})
 }

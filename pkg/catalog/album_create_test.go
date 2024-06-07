@@ -41,7 +41,9 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 		End:   time.Date(2200, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 	transferredMedias := catalog.TransferredMedias{
-		createAlbum.AlbumId: []catalog.MediaId{"media-1", "media-2"},
+		Transfers: map[catalog.AlbumId][]catalog.MediaId{
+			createAlbum.AlbumId: {"media-1", "media-2"},
+		},
 	}
 	testErrorInsertingAlbum := errors.Errorf("TEST error insering album")
 	testErrorFindingAlbums := errors.New("TEST error finding albums")
