@@ -3,20 +3,30 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 )
 
 // TransferredMedias is a list of all medias that has be transferred to a different album in the catalog.
-type TransferredMedias map[AlbumId][]MediaId
+type TransferredMedias struct {
+	Transfers  map[AlbumId][]MediaId
+	FromAlbums []AlbumId // FromAlbums is a list of potential origins of medias
+}
 
 func (t TransferredMedias) IsEmpty() bool {
 	count := 0
-	for _, ids := range t {
+	for _, ids := range t.Transfers {
 		count += len(ids)
 	}
 
 	return count == 0
+}
+
+func NewTransferredMedias() TransferredMedias {
+	return TransferredMedias{
+		Transfers: make(map[AlbumId][]MediaId),
+	}
 }
 
 // TimelineMutationObserver will notify each observer that medias has been transferred to a different album.
@@ -89,6 +99,16 @@ func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTrans
 	transfers, err := d.TransferMediasRepository.TransferMediasFromRecords(ctx, records)
 	if err != nil || transfers.IsEmpty() {
 		return err
+	}
+
+	for _, selectors := range records {
+		for _, selector := range selectors {
+			for _, origin := range selector.FromAlbums {
+				if _, isADestination := transfers.Transfers[origin]; !isADestination && !slices.Contains(transfers.FromAlbums, origin) {
+					transfers.FromAlbums = append(transfers.FromAlbums, origin)
+				}
+			}
+		}
 	}
 
 	for _, observer := range d.TimelineMutationObservers {

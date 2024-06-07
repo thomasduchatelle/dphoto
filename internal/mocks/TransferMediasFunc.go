@@ -39,9 +39,7 @@ func (_m *TransferMediasFunc) Execute(ctx context.Context, records catalog.Media
 	if rf, ok := ret.Get(0).(func(context.Context, catalog.MediaTransferRecords) catalog.TransferredMedias); ok {
 		r0 = rf(ctx, records)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(catalog.TransferredMedias)
-		}
+		r0 = ret.Get(0).(catalog.TransferredMedias)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, catalog.MediaTransferRecords) error); ok {

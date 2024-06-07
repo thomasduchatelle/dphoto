@@ -20,65 +20,6 @@ func (_m *CatalogAdapter) EXPECT() *CatalogAdapter_Expecter {
 	return &CatalogAdapter_Expecter{mock: &_m.Mock}
 }
 
-// AssignIdsToNewMedias provides a mock function with given fields: owner, medias
-func (_m *CatalogAdapter) AssignIdsToNewMedias(owner string, medias []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error) {
-	ret := _m.Called(owner, medias)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AssignIdsToNewMedias")
-	}
-
-	var r0 map[*backup.AnalysedMedia]string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error)); ok {
-		return rf(owner, medias)
-	}
-	if rf, ok := ret.Get(0).(func(string, []*backup.AnalysedMedia) map[*backup.AnalysedMedia]string); ok {
-		r0 = rf(owner, medias)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[*backup.AnalysedMedia]string)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, []*backup.AnalysedMedia) error); ok {
-		r1 = rf(owner, medias)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// CatalogAdapter_AssignIdsToNewMedias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssignIdsToNewMedias'
-type CatalogAdapter_AssignIdsToNewMedias_Call struct {
-	*mock.Call
-}
-
-// AssignIdsToNewMedias is a helper method to define mock.On call
-//   - owner string
-//   - medias []*backup.AnalysedMedia
-func (_e *CatalogAdapter_Expecter) AssignIdsToNewMedias(owner interface{}, medias interface{}) *CatalogAdapter_AssignIdsToNewMedias_Call {
-	return &CatalogAdapter_AssignIdsToNewMedias_Call{Call: _e.mock.On("AssignIdsToNewMedias", owner, medias)}
-}
-
-func (_c *CatalogAdapter_AssignIdsToNewMedias_Call) Run(run func(owner string, medias []*backup.AnalysedMedia)) *CatalogAdapter_AssignIdsToNewMedias_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].([]*backup.AnalysedMedia))
-	})
-	return _c
-}
-
-func (_c *CatalogAdapter_AssignIdsToNewMedias_Call) Return(_a0 map[*backup.AnalysedMedia]string, _a1 error) *CatalogAdapter_AssignIdsToNewMedias_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *CatalogAdapter_AssignIdsToNewMedias_Call) RunAndReturn(run func(string, []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]string, error)) *CatalogAdapter_AssignIdsToNewMedias_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // IndexMedias provides a mock function with given fields: owner, requests
 func (_m *CatalogAdapter) IndexMedias(owner string, requests []*backup.CatalogMediaRequest) error {
 	ret := _m.Called(owner, requests)

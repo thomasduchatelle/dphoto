@@ -12,21 +12,21 @@ import (
 )
 
 func (r *Repository) TransferMediasFromRecords(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
-	medias := make(catalog.TransferredMedias)
+	medias := catalog.NewTransferredMedias()
 
 	for albumId, selectors := range records {
 		mediaIds, err := r.findMediaIdsFromSelectors(ctx, albumId, selectors)
 		if err != nil {
-			return nil, err
+			return medias, err
 		}
 
 		if len(mediaIds) > 0 {
 			err = r.transferMedias(ctx, albumId, mediaIds)
 			if err != nil {
-				return nil, err
+				return medias, err
 			}
 
-			medias[albumId] = mediaIds
+			medias.Transfers[albumId] = mediaIds
 		}
 	}
 

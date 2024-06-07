@@ -230,66 +230,6 @@ func (_c *RepositoryAdapter_FindAlbumsByOwner_Call) RunAndReturn(run func(contex
 	return _c
 }
 
-// FindExistingSignatures provides a mock function with given fields: ctx, owner, signatures
-func (_m *RepositoryAdapter) FindExistingSignatures(ctx context.Context, owner ownermodel.Owner, signatures []*catalog.MediaSignature) ([]*catalog.MediaSignature, error) {
-	ret := _m.Called(ctx, owner, signatures)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindExistingSignatures")
-	}
-
-	var r0 []*catalog.MediaSignature
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, []*catalog.MediaSignature) ([]*catalog.MediaSignature, error)); ok {
-		return rf(ctx, owner, signatures)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, []*catalog.MediaSignature) []*catalog.MediaSignature); ok {
-		r0 = rf(ctx, owner, signatures)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*catalog.MediaSignature)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, ownermodel.Owner, []*catalog.MediaSignature) error); ok {
-		r1 = rf(ctx, owner, signatures)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// RepositoryAdapter_FindExistingSignatures_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindExistingSignatures'
-type RepositoryAdapter_FindExistingSignatures_Call struct {
-	*mock.Call
-}
-
-// FindExistingSignatures is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner ownermodel.Owner
-//   - signatures []*catalog.MediaSignature
-func (_e *RepositoryAdapter_Expecter) FindExistingSignatures(ctx interface{}, owner interface{}, signatures interface{}) *RepositoryAdapter_FindExistingSignatures_Call {
-	return &RepositoryAdapter_FindExistingSignatures_Call{Call: _e.mock.On("FindExistingSignatures", ctx, owner, signatures)}
-}
-
-func (_c *RepositoryAdapter_FindExistingSignatures_Call) Run(run func(ctx context.Context, owner ownermodel.Owner, signatures []*catalog.MediaSignature)) *RepositoryAdapter_FindExistingSignatures_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(ownermodel.Owner), args[2].([]*catalog.MediaSignature))
-	})
-	return _c
-}
-
-func (_c *RepositoryAdapter_FindExistingSignatures_Call) Return(_a0 []*catalog.MediaSignature, _a1 error) *RepositoryAdapter_FindExistingSignatures_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *RepositoryAdapter_FindExistingSignatures_Call) RunAndReturn(run func(context.Context, ownermodel.Owner, []*catalog.MediaSignature) ([]*catalog.MediaSignature, error)) *RepositoryAdapter_FindExistingSignatures_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // FindMediaCurrentAlbum provides a mock function with given fields: ctx, owner, mediaId
 func (_m *RepositoryAdapter) FindMediaCurrentAlbum(ctx context.Context, owner ownermodel.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {
 	ret := _m.Called(ctx, owner, mediaId)
@@ -346,65 +286,6 @@ func (_c *RepositoryAdapter_FindMediaCurrentAlbum_Call) Return(id *catalog.Album
 }
 
 func (_c *RepositoryAdapter_FindMediaCurrentAlbum_Call) RunAndReturn(run func(context.Context, ownermodel.Owner, catalog.MediaId) (*catalog.AlbumId, error)) *RepositoryAdapter_FindMediaCurrentAlbum_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// FindMediaIds provides a mock function with given fields: ctx, request
-func (_m *RepositoryAdapter) FindMediaIds(ctx context.Context, request *catalog.FindMediaRequest) ([]catalog.MediaId, error) {
-	ret := _m.Called(ctx, request)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindMediaIds")
-	}
-
-	var r0 []catalog.MediaId
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *catalog.FindMediaRequest) ([]catalog.MediaId, error)); ok {
-		return rf(ctx, request)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *catalog.FindMediaRequest) []catalog.MediaId); ok {
-		r0 = rf(ctx, request)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]catalog.MediaId)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *catalog.FindMediaRequest) error); ok {
-		r1 = rf(ctx, request)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// RepositoryAdapter_FindMediaIds_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindMediaIds'
-type RepositoryAdapter_FindMediaIds_Call struct {
-	*mock.Call
-}
-
-// FindMediaIds is a helper method to define mock.On call
-//   - ctx context.Context
-//   - request *catalog.FindMediaRequest
-func (_e *RepositoryAdapter_Expecter) FindMediaIds(ctx interface{}, request interface{}) *RepositoryAdapter_FindMediaIds_Call {
-	return &RepositoryAdapter_FindMediaIds_Call{Call: _e.mock.On("FindMediaIds", ctx, request)}
-}
-
-func (_c *RepositoryAdapter_FindMediaIds_Call) Run(run func(ctx context.Context, request *catalog.FindMediaRequest)) *RepositoryAdapter_FindMediaIds_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*catalog.FindMediaRequest))
-	})
-	return _c
-}
-
-func (_c *RepositoryAdapter_FindMediaIds_Call) Return(ids []catalog.MediaId, err error) *RepositoryAdapter_FindMediaIds_Call {
-	_c.Call.Return(ids, err)
-	return _c
-}
-
-func (_c *RepositoryAdapter_FindMediaIds_Call) RunAndReturn(run func(context.Context, *catalog.FindMediaRequest) ([]catalog.MediaId, error)) *RepositoryAdapter_FindMediaIds_Call {
 	_c.Call.Return(run)
 	return _c
 }

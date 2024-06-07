@@ -52,7 +52,9 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 		},
 	}
 	transferredMediasFrom23 := TransferredMedias{
-		q1Album.AlbumId: {MediaId("media-1"), MediaId("media-2")},
+		Transfers: map[AlbumId][]MediaId{
+			q1Album.AlbumId: {MediaId("media-1"), MediaId("media-2")},
+		},
 	}
 	type fields struct {
 		owner                     ownermodel.Owner
@@ -69,11 +71,12 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}
 	tests := []struct {
-		name         string
-		fields       fields
-		exec         []exec
-		wantInserted []*Album
-		wantObserved []TransferredMedias
+		name            string
+		fields          fields
+		exec            []exec
+		wantInserted    []*Album
+		wantTransferred MediaTransferRecords
+		wantObserved    []TransferredMedias
 	}{
 		{
 			name: "it should create a new album (complete journey) but without transferring albums because no overlap with other albums",
@@ -119,7 +122,6 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 				owner:             owner,
 				findAlbumsByOwner: FindAlbumsByOwnerPortFake{owner: []*Album{&album23}},
 				transferMediasPort: &TransferMediasRepositoryPortFake{
-					ExpectedRecords:   recordsFrom23,
 					TransferredMedias: transferredMediasFrom23,
 				},
 			},
@@ -132,8 +134,9 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 					wantErr: assert.NoError,
 				},
 			},
-			wantInserted: []*Album{&q1Album},
-			wantObserved: []TransferredMedias{transferredMediasFrom23},
+			wantInserted:    []*Album{&q1Album},
+			wantTransferred: recordsFrom23,
+			wantObserved:    []TransferredMedias{transferredMediasFrom23},
 		},
 		{
 			name: "it should create the album on the first call, and find it on the second call (without requesting list of albums again)",
@@ -188,8 +191,8 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.wantInserted, insertAlbumPortFake.Albums)
-			assert.Equal(t, tt.fields.transferMediasPort.ExpectedRecords, tt.fields.transferMediasPort.GotRecords)
-			assert.Equal(t, tt.wantObserved, observer.Requests)
+			assert.Equal(t, tt.wantTransferred, tt.fields.transferMediasPort.GotSelectors)
+			assert.Equal(t, tt.wantObserved, observer.Observed)
 		})
 	}
 }
@@ -440,25 +443,5 @@ type InsertAlbumPortFake struct {
 
 func (i *InsertAlbumPortFake) InsertAlbum(ctx context.Context, album Album) error {
 	i.Albums = append(i.Albums, &album)
-	return nil
-}
-
-type TransferMediasRepositoryPortFake struct {
-	ExpectedRecords   MediaTransferRecords
-	GotRecords        MediaTransferRecords
-	TransferredMedias TransferredMedias
-}
-
-func (t *TransferMediasRepositoryPortFake) TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error) {
-	t.GotRecords = records
-	return t.TransferredMedias, nil
-}
-
-type TimelineMutationObserverFake struct {
-	Requests []TransferredMedias
-}
-
-func (t *TimelineMutationObserverFake) OnTransferredMedias(ctx context.Context, transfers TransferredMedias) error {
-	t.Requests = append(t.Requests, transfers)
 	return nil
 }

@@ -85,7 +85,7 @@ func (_c *ReferencerFactory_NewCreatorReferencer_Call) RunAndReturn(run func(con
 }
 
 // NewDryRunReferencer provides a mock function with given fields: ctx, owner
-func (_m *ReferencerFactory) NewDryRunReferencer(ctx context.Context, owner string) (backup.CatalogReferencer, error) {
+func (_m *ReferencerFactory) NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (backup.CatalogReferencer, error) {
 	ret := _m.Called(ctx, owner)
 
 	if len(ret) == 0 {
@@ -94,10 +94,10 @@ func (_m *ReferencerFactory) NewDryRunReferencer(ctx context.Context, owner stri
 
 	var r0 backup.CatalogReferencer
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (backup.CatalogReferencer, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner) (backup.CatalogReferencer, error)); ok {
 		return rf(ctx, owner)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) backup.CatalogReferencer); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner) backup.CatalogReferencer); ok {
 		r0 = rf(ctx, owner)
 	} else {
 		if ret.Get(0) != nil {
@@ -105,7 +105,7 @@ func (_m *ReferencerFactory) NewDryRunReferencer(ctx context.Context, owner stri
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, ownermodel.Owner) error); ok {
 		r1 = rf(ctx, owner)
 	} else {
 		r1 = ret.Error(1)
@@ -121,14 +121,14 @@ type ReferencerFactory_NewDryRunReferencer_Call struct {
 
 // NewDryRunReferencer is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
+//   - owner ownermodel.Owner
 func (_e *ReferencerFactory_Expecter) NewDryRunReferencer(ctx interface{}, owner interface{}) *ReferencerFactory_NewDryRunReferencer_Call {
 	return &ReferencerFactory_NewDryRunReferencer_Call{Call: _e.mock.On("NewDryRunReferencer", ctx, owner)}
 }
 
-func (_c *ReferencerFactory_NewDryRunReferencer_Call) Run(run func(ctx context.Context, owner string)) *ReferencerFactory_NewDryRunReferencer_Call {
+func (_c *ReferencerFactory_NewDryRunReferencer_Call) Run(run func(ctx context.Context, owner ownermodel.Owner)) *ReferencerFactory_NewDryRunReferencer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(ownermodel.Owner))
 	})
 	return _c
 }
@@ -138,7 +138,7 @@ func (_c *ReferencerFactory_NewDryRunReferencer_Call) Return(_a0 backup.CatalogR
 	return _c
 }
 
-func (_c *ReferencerFactory_NewDryRunReferencer_Call) RunAndReturn(run func(context.Context, string) (backup.CatalogReferencer, error)) *ReferencerFactory_NewDryRunReferencer_Call {
+func (_c *ReferencerFactory_NewDryRunReferencer_Call) RunAndReturn(run func(context.Context, ownermodel.Owner) (backup.CatalogReferencer, error)) *ReferencerFactory_NewDryRunReferencer_Call {
 	_c.Call.Return(run)
 	return _c
 }

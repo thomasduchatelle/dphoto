@@ -289,7 +289,9 @@ func TestNewDeleteAlbum(t *testing.T) {
 	externalObserver := new(ExternalTimelineMutationObserver)
 
 	transferredMedias := catalog.TransferredMedias{
-		existingAllYearAlbum.AlbumId: []catalog.MediaId{"media-1", "media-2"},
+		Transfers: map[catalog.AlbumId][]catalog.MediaId{
+			existingAllYearAlbum.AlbumId: {"media-1", "media-2"},
+		},
 	}
 
 	deleteAlbum := catalog.NewDeleteAlbum(

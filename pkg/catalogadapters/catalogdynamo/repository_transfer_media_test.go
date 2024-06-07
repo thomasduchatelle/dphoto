@@ -21,7 +21,7 @@ func TestRepository_TransferMediasFromRecords(t *testing.T) {
 		Owner:      "ironman",
 		FolderName: catalog.NewFolderName("/my-album-02"),
 	}
-	nothingTransferred := make(catalog.TransferredMedias)
+	nothingTransferred := catalog.NewTransferredMedias()
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	middle := time.Date(2024, 1, 2, 12, 2, 42, 0, time.UTC)
 	end := time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
@@ -74,7 +74,9 @@ func TestRepository_TransferMediasFromRecords(t *testing.T) {
 				mediaAttributeMap(album01, middle, media01Id),
 			},
 			want: catalog.TransferredMedias{
-				album01: []catalog.MediaId{media01Id},
+				Transfers: map[catalog.AlbumId][]catalog.MediaId{
+					album01: {media01Id},
+				},
 			},
 			wantErr: assert.NoError,
 		},

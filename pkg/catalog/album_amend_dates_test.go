@@ -33,7 +33,9 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 		End:     jan25,
 	}
 	transferredMedias := catalog.TransferredMedias{
-		avenger1Id: []catalog.MediaId{"media-1", "media-2"},
+		Transfers: map[catalog.AlbumId][]catalog.MediaId{
+			avenger1Id: {"media-1", "media-2"},
+		},
 	}
 
 	type fields struct {
@@ -499,4 +501,23 @@ func (a *AlbumDatesAmendedObserverFake) OnAlbumDatesAmendedWithTimeline(ctx cont
 func (a *AlbumDatesAmendedObserverFake) OnAlbumDatesAmended(ctx context.Context, amendedAlbum catalog.DatesUpdate) error {
 	a.DateAmendedAlbums = append(a.DateAmendedAlbums, amendedAlbum)
 	return nil
+}
+
+func expectTimelineMutationObserverCalled(transfers catalog.TransferredMedias) func(t *testing.T) catalog.TimelineMutationObserver {
+	return func(t *testing.T) catalog.TimelineMutationObserver {
+		observer := mocks.NewTimelineMutationObserver(t)
+		observer.EXPECT().OnTransferredMedias(mock.Anything, transfers).Return(nil).Once()
+		return observer
+	}
+}
+
+func expectTransferMediasRepositoryPortCalled(expectedRecords catalog.MediaTransferRecords, returnedTransfers catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasRepositoryPort {
+	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
+		port := mocks.NewTransferMediasRepositoryPort(t)
+		port.EXPECT().
+			TransferMediasFromRecords(mock.Anything, expectedRecords).
+			Return(returnedTransfers, nil).
+			Once()
+		return port
+	}
 }

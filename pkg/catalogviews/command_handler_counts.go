@@ -69,7 +69,10 @@ type CommandHandlerAlbumSize struct {
 
 func (c *CommandHandlerAlbumSize) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
 	var albumIds []catalog.AlbumId
-	for albumId := range transfers {
+	for albumId := range transfers.Transfers {
+		albumIds = append(albumIds, albumId)
+	}
+	for _, albumId := range transfers.FromAlbums {
 		albumIds = append(albumIds, albumId)
 	}
 
