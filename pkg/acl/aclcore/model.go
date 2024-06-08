@@ -61,6 +61,15 @@ type Scope struct {
 	ResourceName  string           // ResourceName (optional) used for user-friendly display of the shared albums // TODO is it necessary ?
 }
 
+func (s Scope) Id() ScopeId {
+	return ScopeId{
+		Type:          s.Type,
+		GrantedTo:     s.GrantedTo,
+		ResourceOwner: s.ResourceOwner,
+		ResourceId:    s.ResourceId,
+	}
+}
+
 // ScopeId are the properties of a Scope that identity it
 type ScopeId struct {
 	Type          ScopeType        // Type is mandatory, it defines what fields on this structure is used and allow to filter the results

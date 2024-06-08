@@ -5,8 +5,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 )
 
@@ -25,7 +25,7 @@ type UserDetailsDTO struct {
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	ownerIds := strings.Split(request.QueryStringParameters["ids"], ",")
 
-	return common.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common.Response, error) {
+	return common.RequiresAuthenticated(&request, func(_ usermodel.CurrentUser) (common.Response, error) {
 		log.Infof("list identities of owners: %s", strings.Join(ownerIds, ", "))
 		var dtos []OwnerDTO
 

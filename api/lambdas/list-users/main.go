@@ -5,8 +5,6 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 )
@@ -20,7 +18,7 @@ type UserDetailsDTO struct {
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	emails := strings.Split(request.QueryStringParameters["emails"], ",")
 
-	return common.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common.Response, error) {
+	return common.RequiresAuthenticated(&request, func(_ usermodel.CurrentUser) (common.Response, error) {
 		log.Infof("list identities %s", strings.Join(emails, ", "))
 
 		var userIds []usermodel.UserId

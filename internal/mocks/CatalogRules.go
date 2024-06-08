@@ -77,7 +77,7 @@ func (_m *CatalogRules) CanManageAlbum(id catalog.AlbumId) error {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CanManageAlbum")
+		panic("no return value specified for CanShareAlbum")
 	}
 
 	var r0 error
@@ -90,7 +90,7 @@ func (_m *CatalogRules) CanManageAlbum(id catalog.AlbumId) error {
 	return r0
 }
 
-// CatalogRules_CanManageAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanManageAlbum'
+// CatalogRules_CanManageAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanShareAlbum'
 type CatalogRules_CanManageAlbum_Call struct {
 	*mock.Call
 }
@@ -98,7 +98,7 @@ type CatalogRules_CanManageAlbum_Call struct {
 // CanManageAlbum is a helper method to define mock.On call
 //   - id catalog.AlbumId
 func (_e *CatalogRules_Expecter) CanManageAlbum(id interface{}) *CatalogRules_CanManageAlbum_Call {
-	return &CatalogRules_CanManageAlbum_Call{Call: _e.mock.On("CanManageAlbum", id)}
+	return &CatalogRules_CanManageAlbum_Call{Call: _e.mock.On("CanShareAlbum", id)}
 }
 
 func (_c *CatalogRules_CanManageAlbum_Call) Run(run func(id catalog.AlbumId)) *CatalogRules_CanManageAlbum_Call {

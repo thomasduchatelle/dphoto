@@ -22,22 +22,7 @@ type RepositoryAdapter interface {
 	// FindAlbumByIds only returns found albums
 	FindAlbumByIds(ctx context.Context, ids ...AlbumId) ([]*Album, error)
 
-	// FindMedias is a paginated search for media with their details
-	FindMedias(ctx context.Context, request *FindMediaRequest) (medias []*MediaMeta, err error)
-	// FindMediaCurrentAlbum returns the folderName the media is currently in
-	FindMediaCurrentAlbum(ctx context.Context, owner ownermodel.Owner, mediaId MediaId) (id *AlbumId, err error)
-
 	CountMedia(ctx context.Context, album ...AlbumId) (map[AlbumId]int, error)
-}
-
-// FindAllAlbums find all albums owned by root user
-func FindAllAlbums(owner ownermodel.Owner) ([]*Album, error) {
-	return repositoryPort.FindAlbumsByOwner(context.TODO(), owner)
-}
-
-// FindAlbums get several albums by their business keys
-func FindAlbums(keys []AlbumId) ([]*Album, error) {
-	return repositoryPort.FindAlbumByIds(context.TODO(), keys...)
 }
 
 type AlbumQueries struct {

@@ -96,7 +96,10 @@ func (r *Repository) ListScopesByOwners(ctx context.Context, owners []ownermodel
 
 func (r *Repository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
 	ctx := context.TODO()
+	return r.FindScopesByIdCtx(ctx, ids...)
+}
 
+func (r *Repository) FindScopesByIdCtx(ctx context.Context, ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
 	keys := make([]map[string]types.AttributeValue, len(ids), len(ids))
 	for i, id := range ids {
 		keys[i] = MarshalScopeId(id)
