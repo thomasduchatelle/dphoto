@@ -9,7 +9,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"slices"
 	"testing"
 )
 
@@ -40,7 +39,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 		{
 			name: "it should not return any availability if no permission is present",
 			fields: fields{
-				ScopeRepository: &ScopeReadRepositoryFake{},
+				ScopeRepository: &aclcore.ScopeReadRepositoryInMemory{},
 			},
 			args: args{
 				albumIds: []catalog.AlbumId{albumId1},
@@ -51,7 +50,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 		{
 			name: "it should not return any availability if no permission for the resource is present",
 			fields: fields{
-				ScopeRepository: &ScopeReadRepositoryFake{
+				ScopeRepository: &aclcore.ScopeReadRepositoryInMemory{
 					Scopes: []*aclcore.Scope{
 						ownerPermission(user1, owner2),
 					},
@@ -66,7 +65,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 		{
 			name: "it should find an availability for the user who's the owner of the album",
 			fields: fields{
-				ScopeRepository: &ScopeReadRepositoryFake{
+				ScopeRepository: &aclcore.ScopeReadRepositoryInMemory{
 					Scopes: []*aclcore.Scope{
 						ownerPermission(user1, owner1),
 					},
@@ -85,7 +84,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 		{
 			name: "it should find an availability for the user who has a visitor permission on the album",
 			fields: fields{
-				ScopeRepository: &ScopeReadRepositoryFake{
+				ScopeRepository: &aclcore.ScopeReadRepositoryInMemory{
 					Scopes: []*aclcore.Scope{
 						visitorAlbumPermission(user1, albumId1),
 					},
@@ -104,7 +103,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 		{
 			name: "it should find an availability for the user who has a contributor permission on the album",
 			fields: fields{
-				ScopeRepository: &ScopeReadRepositoryFake{
+				ScopeRepository: &aclcore.ScopeReadRepositoryInMemory{
 					Scopes: []*aclcore.Scope{
 						contributorAlbumPermission(user1, albumId1),
 					},
@@ -123,7 +122,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 		{
 			name: "it should find an availability for the users who has a visitor permission on the album or is the owner",
 			fields: fields{
-				ScopeRepository: &ScopeReadRepositoryFake{
+				ScopeRepository: &aclcore.ScopeReadRepositoryInMemory{
 					Scopes: []*aclcore.Scope{
 						visitorAlbumPermission(user1, albumId1),
 						ownerPermission(user2, owner1),
@@ -144,7 +143,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 		{
 			name: "it should find an availabilities for several albums owned or shared with other users",
 			fields: fields{
-				ScopeRepository: &ScopeReadRepositoryFake{
+				ScopeRepository: &aclcore.ScopeReadRepositoryInMemory{
 					Scopes: []*aclcore.Scope{
 						ownerPermission(user1, owner1),
 						ownerPermission(user2, owner2),
@@ -173,7 +172,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 		{
 			name: "it should find availabilities for 2 albums owned by the same user",
 			fields: fields{
-				ScopeRepository: &ScopeReadRepositoryFake{
+				ScopeRepository: &aclcore.ScopeReadRepositoryInMemory{
 					Scopes: []*aclcore.Scope{
 						ownerPermission(user1, owner1),
 					},
@@ -232,43 +231,4 @@ func ownerPermission(userId usermodel.UserId, owner ownermodel.Owner) *aclcore.S
 		GrantedTo:     userId,
 		ResourceOwner: owner,
 	}
-}
-
-type ScopeReadRepositoryFake struct {
-	Scopes []*aclcore.Scope
-}
-
-func (s *ScopeReadRepositoryFake) ListScopesByOwner(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
-	var scopes []*aclcore.Scope
-	for _, scope := range s.Scopes {
-		if scope.ResourceOwner == owner && slices.Contains(types, scope.Type) {
-			scopes = append(scopes, scope)
-		}
-	}
-
-	return scopes, nil
-}
-
-func (s *ScopeReadRepositoryFake) ListScopesByUser(ctx context.Context, userId usermodel.UserId, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
-	var scopes []*aclcore.Scope
-	for _, scope := range s.Scopes {
-		if scope.GrantedTo == userId && slices.Contains(types, scope.Type) {
-			scopes = append(scopes, scope)
-		}
-	}
-
-	return scopes, nil
-}
-
-func (s *ScopeReadRepositoryFake) ListScopesByResource(ctx context.Context, resourceIds ResourceIds, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
-	var scopes []*aclcore.Scope
-	for _, scope := range s.Scopes {
-		if slices.Contains(types, scope.Type) {
-			if ids, ok := resourceIds[scope.ResourceOwner]; ok && slices.Contains(ids, scope.ResourceId) {
-				scopes = append(scopes, scope)
-			}
-		}
-	}
-
-	return scopes, nil
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
@@ -26,12 +25,15 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	folderName := request.PathParameters["folderName"]
 	email := request.PathParameters["email"]
 
-	return common.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common.Response, error) {
+	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
 		albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
 		userId := usermodel.NewUserId(email)
 
-		if err := rules.CanManageAlbum(albumId); err != nil {
-			return common.Response{}, err
+		if err := pkgfactory.AclCatalogAuthoriser(ctx).CanShareAlbum(ctx, user, albumId); err != nil {
+			if errors.Is(err, aclcore.AccessForbiddenError) {
+				return common.ForbiddenResponse(err.Error())
+			}
+			return common.InternalError(err)
 		}
 
 		method := request.RequestContext.HTTP.Method

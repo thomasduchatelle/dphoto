@@ -5,8 +5,6 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 )
@@ -39,44 +37,6 @@ func HandleError(err error) (Response, error) {
 	default:
 		return Response{}, nil
 	}
-}
-
-// RequiresCatalogACL parses the token and instantiate the ACL extension for 'catalog' domain
-//
-// accesscontrol.AccessUnauthorisedError errors will be converted into 401 responses
-// accesscontrol.AccessForbiddenError errors will be converted into 403 responses
-// any other errors will be converted into 500
-func RequiresCatalogACL(request *events.APIGatewayV2HTTPRequest, process func(claims aclcore.Claims, rules catalogacl.CatalogRules) (Response, error)) (Response, error) {
-	token, err := readToken(request)
-	if err != nil {
-		return UnauthorizedResponse(err.Error())
-	}
-
-	claims, err := jwtDecoder.Decode(token)
-	if err != nil {
-		return UnauthorizedResponse(err.Error())
-	}
-
-	catalogRules := catalogacl.OptimiseRulesWithAccessToken(catalogacl.NewCatalogRules(grantRepository, new(mediaAlbumResolver), claims.Subject), claims)
-
-	response, err := process(claims, catalogRules)
-	if err != nil {
-		return HandleError(err)
-	}
-	return response, nil
-}
-
-// RequiresCatalogView is based on RequiresCatalogACL but creates a convenient Catalog View
-func RequiresCatalogView(request *events.APIGatewayV2HTTPRequest, process func(catalogView *catalogaclview.View) (Response, error)) (Response, error) {
-	return RequiresCatalogACL(request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (Response, error) {
-		view := &catalogaclview.View{
-			UserEmail:      claims.Subject.Value(),
-			CatalogRules:   rules,
-			CatalogAdapter: new(catalogAdapter),
-		}
-
-		return process(view)
-	})
 }
 
 func readToken(request *events.APIGatewayV2HTTPRequest) (string, error) {

@@ -5,6 +5,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclscopedynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviewsadapters/catalogviewstoacl"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
@@ -38,5 +39,11 @@ func AclCatalogUnShare(ctx context.Context) *catalogacl.UnShareAlbumCase {
 		Observers: []catalogacl.AlbumUnSharedObserver{
 			CommandHandlerAlbumSize(ctx),
 		},
+	}
+}
+
+func AclCatalogAuthoriser(ctx context.Context) *catalogviewstoacl.CatalogAuthorizer {
+	return &catalogviewstoacl.CatalogAuthorizer{
+		HasPermissionPort: AclQueries(ctx),
 	}
 }

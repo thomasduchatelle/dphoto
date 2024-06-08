@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
@@ -28,25 +27,6 @@ const (
 var (
 	albumId1 = catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/MyAlbum")}
 )
-
-func TestFindAll(t *testing.T) {
-	a := assert.New(t)
-	mockRepository := mockAdapters(t)
-
-	album := &catalog.Album{
-		AlbumId: albumId1,
-		Name:    "My Album",
-		Start:   time.Date(2020, 12, 24, 0, 0, 0, 0, time.UTC),
-		End:     time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC),
-	}
-
-	mockRepository.On("FindAlbumsByOwner", mock.Anything, owner).Return([]*catalog.Album{album}, nil)
-
-	got, err := catalog.FindAllAlbums(owner)
-	if a.NoError(err) {
-		a.Equal([]*catalog.Album{album}, got)
-	}
-}
 
 func TestAlbumQueries_FindAlbum(t *testing.T) {
 	albumId1 = catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/MyAlbum")}

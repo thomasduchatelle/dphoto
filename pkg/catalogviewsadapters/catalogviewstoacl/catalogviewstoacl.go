@@ -12,19 +12,6 @@ import (
 
 // TODO is catalogviewstoacl the right package to have these translations catalog -> ACL ? catalogacl is doing the same ...
 
-type ResourceIds map[ownermodel.Owner][]string
-
-func (i ResourceIds) Append(owner ownermodel.Owner, resourceId string) {
-	if _, ok := i[owner]; !ok {
-		i[owner] = make([]string, 0)
-	}
-	i[owner] = append(i[owner], resourceId)
-}
-
-func NewResourceIds() ResourceIds {
-	return make(ResourceIds)
-}
-
 type ScopeReadRepositoryPort interface {
 	ListScopesByOwner(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error)
 	ListScopesByUser(ctx context.Context, id usermodel.UserId, types ...aclcore.ScopeType) ([]*aclcore.Scope, error)
@@ -68,9 +55,10 @@ func (f *CatalogToACLAdapter) ListAlbumIdsSharedWithUser(ctx context.Context, us
 func (f *CatalogToACLAdapter) ListUsersWhoCanAccessAlbum(ctx context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalogviews.Availability, error) {
 	grid := make(map[catalog.AlbumId][]catalogviews.Availability)
 
-	resourceIdsByOwner := NewResourceIds()
+	resourceIdsByOwner := make(map[ownermodel.Owner][]string)
 	for _, id := range albumIds {
-		resourceIdsByOwner.Append(id.Owner, id.FolderName.String())
+		before, _ := resourceIdsByOwner[id.Owner]
+		resourceIdsByOwner[id.Owner] = append(before, id.FolderName.String())
 	}
 
 	for owner, resourceIds := range resourceIdsByOwner {

@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogaclview"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviewsadapters/catalogviewstoacl"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
 	"time"
 )
@@ -20,18 +24,26 @@ type Media struct {
 }
 
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
+	ctx := context.Background()
 	owner := request.PathParameters["owner"]
 	folderName := request.PathParameters["folderName"]
 
-	return common.RequiresCatalogView(&request, func(catalogView *catalogaclview.View) (common.Response, error) {
+	albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
+
+	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
 		log.Infof("list medias for album %s/%s", owner, folderName)
-		medias, err := catalogView.ListMediasFromAlbum(catalog.NewAlbumIdFromStrings(owner, folderName))
+		err := pkgfactory.AclCatalogAuthoriser(ctx).IsAuthorisedToListMedias(ctx, user, albumId)
+		if errors.Is(err, catalogviewstoacl.ErrAccessDenied) {
+			return common.ForbiddenResponse(err.Error())
+		}
 		if err != nil {
-			return common.Response{}, err
+			return common.InternalError(err)
 		}
 
-		resp := make([]Media, len(medias.Content), len(medias.Content))
-		for i, media := range medias.Content {
+		medias, err := pkgfactory.CatalogMediaQueries(ctx).ListMedias(ctx, albumId)
+
+		resp := make([]Media, len(medias), len(medias))
+		for i, media := range medias {
 			resp[i] = Media{
 				Id:       string(media.Id),
 				Type:     string(media.Type),

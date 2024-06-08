@@ -85,3 +85,11 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 		CommandHandlerAlbumSize(ctx),
 	)
 }
+
+func CatalogMediaQueries(ctx context.Context) *catalog.MediaQueries {
+	return singletons.MustSingleton(func() (*catalog.MediaQueries, error) {
+		return &catalog.MediaQueries{
+			MediaReadRepository: CatalogRepository(ctx),
+		}, nil
+	})
+}

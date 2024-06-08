@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -9,10 +10,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 const (
@@ -20,31 +22,40 @@ const (
 )
 
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
+	ctx := context.Background()
+
 	parser := common.NewArgParser(&request)
-	owner := parser.ReadPathParameterString("owner")
-	mediaId := parser.ReadPathParameterString("mediaId")
+	ownerValue := parser.ReadPathParameterString("owner")
+	mediaIdValue := parser.ReadPathParameterString("mediaId")
 	width := parser.ReadQueryParameterInt("w", false)
 
 	if parser.HasViolations() {
 		return parser.BadRequest()
 	}
 
-	return common.RequiresCatalogACL(&request, func(claims aclcore.Claims, rules catalogacl.CatalogRules) (common.Response, error) {
-		if err := rules.CanReadMedia(ownermodel.Owner(owner), catalog.MediaId(mediaId)); err != nil {
-			return common.Response{}, err
+	owner := ownermodel.Owner(ownerValue)
+	mediaId := catalog.MediaId(mediaIdValue)
+
+	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
+		err := pkgfactory.AclCatalogAuthoriser(ctx).IsAuthorisedToViewMedia(ctx, user, owner, mediaId)
+		if errors.Is(err, aclcore.AccessForbiddenError) {
+			return common.ForbiddenResponse(err.Error())
+		}
+		if err != nil {
+			return common.InternalError(err)
 		}
 
 		if width == 0 {
-			return redirectTo(archive.GetMediaOriginalURL(owner, mediaId))
+			return redirectTo(archive.GetMediaOriginalURL(owner.Value(), mediaId.Value()))
 		}
 
-		content, contentType, err := archive.GetResizedImage(owner, mediaId, width, responseMaxContent)
+		content, contentType, err := archive.GetResizedImage(owner.Value(), mediaId.Value(), width, responseMaxContent)
 		if errors.Is(err, archive.NotFoundError) {
 			return common.NotFound(nil)
 		}
 		if errors.Is(err, archive.MediaOverflowError) {
 			log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is over max allowed payload. Redirecting.", owner, mediaId, width)
-			return redirectTo(archive.GetResizedImageURL(owner, mediaId, width))
+			return redirectTo(archive.GetResizedImageURL(owner.Value(), mediaId.Value(), width))
 		}
 		if err != nil {
 			return common.InternalError(err)

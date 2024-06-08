@@ -5,15 +5,20 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
-// ListMedias return a page of medias within an album
-func ListMedias(albumId AlbumId, request PageRequest) (*MediaPage, error) {
-	medias, err := repositoryPort.FindMedias(context.TODO(), NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
-	return &MediaPage{
-		Content: medias,
-	}, err
+type MediaReadRepository interface {
+	FindMedias(ctx context.Context, request *FindMediaRequest) (medias []*MediaMeta, err error)
+	FindMediaCurrentAlbum(ctx context.Context, owner ownermodel.Owner, mediaId MediaId) (id *AlbumId, err error)
+}
+
+type MediaQueries struct {
+	MediaReadRepository MediaReadRepository
+}
+
+func (q *MediaQueries) ListMedias(ctx context.Context, albumId AlbumId) ([]*MediaMeta, error) {
+	return q.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
 }
 
 // FindMediaOwnership returns the folderName containing the media, or AlbumNotFoundError.
-func FindMediaOwnership(owner ownermodel.Owner, mediaId MediaId) (*AlbumId, error) {
-	return repositoryPort.FindMediaCurrentAlbum(context.TODO(), owner, mediaId)
+func (q *MediaQueries) FindMediaOwnership(ctx context.Context, owner ownermodel.Owner, mediaId MediaId) (*AlbumId, error) {
+	return q.MediaReadRepository.FindMediaCurrentAlbum(ctx, owner, mediaId)
 }
