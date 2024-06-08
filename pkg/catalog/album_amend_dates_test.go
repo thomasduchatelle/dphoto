@@ -71,7 +71,10 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 						},
 					},
 				}, transferredMedias),
-				timelineMutationObservers: expectTimelineMutationObserverCalled(transferredMedias),
+				timelineMutationObservers: expectTimelineMutationObserverCalled(catalog.TransferredMedias{
+					Transfers:  transferredMedias.Transfers,
+					FromAlbums: []catalog.AlbumId{allYearAlbum.AlbumId},
+				}),
 			},
 			args: args{
 				albumId: avenger1Id,

@@ -66,10 +66,13 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 		{
 			name: "it should create a happy path full album create process",
 			fields: fields{
-				FindAlbumsByOwnerPort:    stubFindAlbumsByOwnerWith(owner, lifetimeAlbum),
-				InsertAlbumPort:          expectAlbumInserted(createAlbum),
-				TransferMediasPort:       stubTransferMediaPort(transferredMedias),
-				TimelineMutationObserver: expectTimelineMutationObserverCalled(transferredMedias),
+				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, lifetimeAlbum),
+				InsertAlbumPort:       expectAlbumInserted(createAlbum),
+				TransferMediasPort:    stubTransferMediaPort(transferredMedias),
+				TimelineMutationObserver: expectTimelineMutationObserverCalled(catalog.TransferredMedias{
+					Transfers:  transferredMedias.Transfers,
+					FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+				}),
 			},
 			args: args{
 				request: standardRequest,
