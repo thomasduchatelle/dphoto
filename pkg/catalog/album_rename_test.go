@@ -82,7 +82,10 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 						},
 					},
 				}, transferredMedias),
-				TimelineMutationObservers: expectTimelineMutationObserverCalled(transferredMedias),
+				TimelineMutationObservers: expectTimelineMutationObserverCalled(catalog.TransferredMedias{
+					Transfers:  transferredMedias.Transfers,
+					FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
+				}),
 			},
 			args: args{
 				request: catalog.RenameAlbumRequest{

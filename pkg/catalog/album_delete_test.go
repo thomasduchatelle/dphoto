@@ -310,7 +310,10 @@ func TestNewDeleteAlbum(t *testing.T) {
 
 	err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
 	if assert.NoError(t, err) {
-		assert.Equal(t, externalObserver.Transfers, transferredMedias)
+		assert.Equal(t, externalObserver.Transfers, catalog.TransferredMedias{
+			Transfers:  transferredMedias.Transfers,
+			FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
+		})
 	}
 }
 

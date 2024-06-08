@@ -55,6 +55,7 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 		Transfers: map[AlbumId][]MediaId{
 			q1Album.AlbumId: {MediaId("media-1"), MediaId("media-2")},
 		},
+		FromAlbums: []AlbumId{album23.AlbumId},
 	}
 	type fields struct {
 		owner                     ownermodel.Owner

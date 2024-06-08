@@ -18,10 +18,9 @@ var (
 // Album is a logical grouping of medias ; also used to physically store media next to each others.
 type Album struct {
 	AlbumId
-	Name       string    // Name for displaying purpose, not unique
-	Start      time.Time // Start is datetime inclusive
-	End        time.Time // End is the datetime exclusive
-	TotalCount int       // TotalCount is the number of media (of any type)  // TODO is the total count appropriate on this object ??
+	Name  string    // Name for displaying purpose, not unique
+	Start time.Time // Start is datetime inclusive
+	End   time.Time // End is the datetime exclusive
 }
 
 // IsEqual uses unique identifier to compare both albums
