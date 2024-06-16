@@ -1,4 +1,4 @@
-package catalogviewstoacl
+package catalogacl
 
 import (
 	"context"
@@ -195,7 +195,7 @@ func TestCatalogToACLAdapter_ListUsersWhoCanAccessAlbum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := &CatalogToACLAdapter{
+			f := &ReverseReader{
 				ScopeRepository: tt.fields.ScopeRepository,
 			}
 			got, err := f.ListUsersWhoCanAccessAlbum(ctx, tt.args.albumIds...)

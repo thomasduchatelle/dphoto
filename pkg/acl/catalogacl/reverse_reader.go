@@ -1,4 +1,4 @@
-package catalogviewstoacl
+package catalogacl
 
 import (
 	"context"
@@ -10,18 +10,17 @@ import (
 	"slices"
 )
 
-// TODO is catalogviewstoacl the right package to have these translations catalog -> ACL ? catalogacl is doing the same ...
-
 type ScopeReadRepositoryPort interface {
 	ListScopesByOwner(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error)
 	ListScopesByUser(ctx context.Context, id usermodel.UserId, types ...aclcore.ScopeType) ([]*aclcore.Scope, error)
 }
 
-type CatalogToACLAdapter struct {
+// ReverseReader reads the permissions to read what can be accessed by who, and who can access what
+type ReverseReader struct {
 	ScopeRepository ScopeReadRepositoryPort
 }
 
-func (f *CatalogToACLAdapter) GetAlbumSharingGrid(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) {
+func (f *ReverseReader) GetAlbumSharingGrid(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) {
 	scopes, err := f.ScopeRepository.ListScopesByOwner(ctx, owner, aclcore.AlbumVisitorScope, aclcore.AlbumContributorScope)
 
 	if err != nil || len(scopes) == 0 {
@@ -41,7 +40,7 @@ func (f *CatalogToACLAdapter) GetAlbumSharingGrid(ctx context.Context, owner own
 	return grid, nil
 }
 
-func (f *CatalogToACLAdapter) ListAlbumIdsSharedWithUser(ctx context.Context, userId usermodel.UserId) ([]catalog.AlbumId, error) {
+func (f *ReverseReader) ListAlbumIdsSharedWithUser(ctx context.Context, userId usermodel.UserId) ([]catalog.AlbumId, error) {
 	shared, err := f.ScopeRepository.ListScopesByUser(ctx, userId, aclcore.AlbumVisitorScope)
 
 	var albums []catalog.AlbumId
@@ -52,7 +51,7 @@ func (f *CatalogToACLAdapter) ListAlbumIdsSharedWithUser(ctx context.Context, us
 	return albums, err
 }
 
-func (f *CatalogToACLAdapter) ListUsersWhoCanAccessAlbum(ctx context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalogviews.Availability, error) {
+func (f *ReverseReader) ListUsersWhoCanAccessAlbum(ctx context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalogviews.Availability, error) {
 	grid := make(map[catalog.AlbumId][]catalogviews.Availability)
 
 	resourceIdsByOwner := make(map[ownermodel.Owner][]string)
