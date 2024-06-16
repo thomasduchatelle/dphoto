@@ -7,8 +7,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogviewsadapters/catalogviewstoacl"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
@@ -33,7 +33,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
 		log.Infof("list medias for album %s/%s", owner, folderName)
 		err := pkgfactory.AclCatalogAuthoriser(ctx).IsAuthorisedToListMedias(ctx, user, albumId)
-		if errors.Is(err, catalogviewstoacl.ErrAccessDenied) {
+		if errors.Is(err, catalogacl.ErrAccessDenied) {
 			return common.ForbiddenResponse(err.Error())
 		}
 		if err != nil {

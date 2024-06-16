@@ -2,9 +2,9 @@ package pkgfactory
 
 import (
 	"context"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviewsadapters/catalogviewsdynamodb"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogviewsadapters/catalogviewstoacl"
 )
 
 func AlbumViewRepository(ctx context.Context) *catalogviewsdynamodb.AlbumViewRepository {
@@ -14,8 +14,8 @@ func AlbumViewRepository(ctx context.Context) *catalogviewsdynamodb.AlbumViewRep
 	}
 }
 
-func CatalogToACLAdapter(ctx context.Context) *catalogviewstoacl.CatalogToACLAdapter {
-	return &catalogviewstoacl.CatalogToACLAdapter{
+func CatalogToACLAdapter(ctx context.Context) *catalogacl.ReverseReader {
+	return &catalogacl.ReverseReader{
 		ScopeRepository: AclQueries(ctx),
 	}
 }
