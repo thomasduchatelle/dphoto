@@ -3,7 +3,6 @@ package catalogviews
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"strings"
@@ -27,20 +26,28 @@ func OwnerAvailability(userId usermodel.UserId) Availability {
 	}
 }
 
+func (a Availability) String() string {
+	availabilityType := "visitor"
+	if a.AsOwner {
+		availabilityType = "owner"
+	}
+	return fmt.Sprintf("%s:%s", availabilityType, a.UserId.Value())
+}
+
 type AlbumSize struct {
 	AlbumId    catalog.AlbumId
-	Users      []Availability
 	MediaCount int
 }
 
-func (a AlbumSize) String() string {
+type MultiUserAlbumSize struct {
+	AlbumSize
+	Users []Availability
+}
+
+func (a MultiUserAlbumSize) String() string {
 	var users []string
 	for _, user := range a.Users {
-		availabilityType := "visitor"
-		if user.AsOwner {
-			availabilityType = "owner"
-		}
-		users = append(users, fmt.Sprintf("%s:%s", availabilityType, user.UserId.Value()))
+		users = append(users, user.String())
 	}
 	return fmt.Sprintf("%s: %d media(s) available to %s", a.AlbumId, a.MediaCount, strings.Join(users, ", "))
 }
@@ -51,10 +58,18 @@ type AlbumSizeDiff struct {
 	MediaCountDiff int // MediaCountDiff is the difference between the number of media added, or removed, to the album
 }
 
-type ViewWriteRepository interface {
-	InsertAlbumSize(ctx context.Context, albumSize []AlbumSize) error
-	UpdateAlbumSize(ctx context.Context, albumCountUpdates []AlbumSizeDiff) error
+type InsertAlbumSizePort interface {
+	InsertAlbumSize(ctx context.Context, albumSize []MultiUserAlbumSize) error
+}
+
+type DeleteAlbumSizePort interface {
 	DeleteAlbumSize(ctx context.Context, availability Availability, albumId catalog.AlbumId) error
+}
+
+type ViewWriteRepository interface {
+	InsertAlbumSizePort
+	DeleteAlbumSizePort
+	UpdateAlbumSize(ctx context.Context, albumCountUpdates []AlbumSizeDiff) error
 }
 
 type ListUserWhoCanAccessAlbumPort interface {
@@ -76,42 +91,11 @@ func (c *CommandHandlerAlbumSize) OnTransferredMedias(ctx context.Context, trans
 		albumIds = append(albumIds, albumId)
 	}
 
-	return c.updateUserViews(ctx, albumIds)
-}
-
-func (c *CommandHandlerAlbumSize) updateUserViews(ctx context.Context, albumIds []catalog.AlbumId) error {
-	if len(albumIds) == 0 {
-		return nil
+	reCounter := &AlbumReCounter{
+		ListUserWhoCanAccessAlbumPort: c.ListUserWhoCanAccessAlbumPort,
+		MediaCounterPort:              c.MediaCounterPort,
 	}
-
-	availabilities, err := c.ListUserWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, albumIds...)
-	if err != nil {
-		return err
-	}
-
-	counts, err := c.MediaCounterPort.CountMedia(ctx, albumIds...)
-	if err != nil {
-		return err
-	}
-
-	var albumSizes []AlbumSize
-	for _, albumId := range albumIds {
-		availableTo, _ := availabilities[albumId]
-		count, _ := counts[albumId]
-
-		albumSizes = append(albumSizes, AlbumSize{
-			AlbumId:    albumId,
-			Users:      availableTo,
-			MediaCount: count,
-		})
-	}
-
-	log.Infof("Updating album sizes for %d albums", len(albumSizes))
-	for _, albumSize := range albumSizes {
-		log.Infof("Album size: %s", albumSize)
-	}
-
-	return c.ViewWriteRepository.InsertAlbumSize(ctx, albumSizes)
+	return reCounter.ReCountMedias(ctx, albumIds, new(LoggingInsertAlbumSizeObserver), c.ViewWriteRepository)
 }
 
 func (c *CommandHandlerAlbumSize) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
@@ -150,17 +134,63 @@ func (c *CommandHandlerAlbumSize) AlbumShared(ctx context.Context, albumId catal
 
 	count, _ := counts[albumId]
 
-	return c.ViewWriteRepository.InsertAlbumSize(ctx, []AlbumSize{
+	return c.ViewWriteRepository.InsertAlbumSize(ctx, []MultiUserAlbumSize{
 		{
-			AlbumId:    albumId,
-			Users:      []Availability{VisitorAvailability(userId)},
-			MediaCount: count,
+			AlbumSize: AlbumSize{
+				AlbumId:    albumId,
+				MediaCount: count,
+			},
+			Users: []Availability{VisitorAvailability(userId)},
 		},
 	})
 }
 
 func (c *CommandHandlerAlbumSize) AlbumUnShared(ctx context.Context, albumId catalog.AlbumId, userId usermodel.UserId) error {
 	return c.ViewWriteRepository.DeleteAlbumSize(ctx, VisitorAvailability(userId), albumId)
+}
+
+type AlbumReCounter struct {
+	ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
+	MediaCounterPort              MediaCounterPort
+}
+
+func (c *AlbumReCounter) ReCountMedias(ctx context.Context, albumIds []catalog.AlbumId, observers ...InsertAlbumSizePort) error {
+	if len(albumIds) == 0 {
+		return nil
+	}
+
+	availabilities, err := c.ListUserWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, albumIds...)
+	if err != nil {
+		return err
+	}
+
+	counts, err := c.MediaCounterPort.CountMedia(ctx, albumIds...)
+	if err != nil {
+		return err
+	}
+
+	var albumSizes []MultiUserAlbumSize
+	for _, albumId := range albumIds {
+		availableTo, _ := availabilities[albumId]
+		count, _ := counts[albumId]
+
+		albumSizes = append(albumSizes, MultiUserAlbumSize{
+			AlbumSize: AlbumSize{
+				AlbumId:    albumId,
+				MediaCount: count,
+			},
+			Users: availableTo,
+		})
+	}
+
+	for _, observer := range observers {
+		err = observer.InsertAlbumSize(ctx, albumSizes)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // TODO Everything about the album should be deleted if the album is deleted

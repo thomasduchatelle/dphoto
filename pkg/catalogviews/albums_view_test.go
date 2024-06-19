@@ -65,11 +65,13 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				GetAlbumSharingGridPort: stubGetAlbumSharingGridPort(ownedAlbum1.AlbumId, userId2),
 				FindAlbumsByIdsPort:     stubFindAlbumsByIdsPort(sharedAlbum3),
 				SharedWithUserPort:      stubSharedWithUserPort(sharedAlbum3),
-				GetAvailabilitiesByUserPort: stubGetAvailabilitiesByUserPortFromCount(map[catalog.AlbumId]int{
-					ownedAlbum1.AlbumId:  1,
-					ownedAlbum2.AlbumId:  2,
-					sharedAlbum3.AlbumId: 3,
-				}),
+				GetAvailabilitiesByUserPort: &AlbumSizeInMemoryRepository{
+					Sizes: []UserAlbumSize{
+						{AlbumSize: AlbumSize{AlbumId: ownedAlbum1.AlbumId, MediaCount: 1}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
+						{AlbumSize: AlbumSize{AlbumId: ownedAlbum2.AlbumId, MediaCount: 2}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
+						{AlbumSize: AlbumSize{AlbumId: sharedAlbum3.AlbumId, MediaCount: 3}, Availability: VisitorAvailability(ironmanCurrentUser.UserId)},
+					},
+				},
 			},
 			args: args{
 				user:   ironmanCurrentUser,
@@ -101,11 +103,13 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				GetAlbumSharingGridPort: stubGetAlbumSharingGridPort(ownedAlbum1.AlbumId, userId2),
 				FindAlbumsByIdsPort:     stubFindAlbumsByIdsPort(sharedAlbum3),
 				SharedWithUserPort:      stubSharedWithUserPort(sharedAlbum3),
-				GetAvailabilitiesByUserPort: stubGetAvailabilitiesByUserPortFromCount(map[catalog.AlbumId]int{
-					ownedAlbum1.AlbumId:  1,
-					ownedAlbum2.AlbumId:  2,
-					sharedAlbum3.AlbumId: 3,
-				}),
+				GetAvailabilitiesByUserPort: &AlbumSizeInMemoryRepository{
+					Sizes: []UserAlbumSize{
+						{AlbumSize: AlbumSize{AlbumId: ownedAlbum1.AlbumId, MediaCount: 1}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
+						{AlbumSize: AlbumSize{AlbumId: ownedAlbum2.AlbumId, MediaCount: 2}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
+						{AlbumSize: AlbumSize{AlbumId: sharedAlbum3.AlbumId, MediaCount: 3}, Availability: VisitorAvailability(ironmanCurrentUser.UserId)},
+					},
+				},
 			},
 			args: args{
 				user:   ironmanCurrentUser,
@@ -343,17 +347,4 @@ func (m MediaCounterPortFake) CountMedia(ctx context.Context, album ...catalog.A
 	}
 
 	return counts, nil
-}
-
-func stubGetAvailabilitiesByUserPortFromCount(m map[catalog.AlbumId]int) GetAvailabilitiesByUserPort {
-	return GetAvailabilitiesByUserFunc(func(ctx context.Context, userId usermodel.UserId) ([]AlbumSize, error) {
-		var sizes []AlbumSize
-		for albumId, count := range m {
-			sizes = append(sizes, AlbumSize{
-				AlbumId:    albumId,
-				MediaCount: count,
-			})
-		}
-		return sizes, nil
-	})
 }

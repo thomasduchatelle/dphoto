@@ -45,3 +45,20 @@ func CommandHandlerAlbumSize(ctx context.Context) *catalogviews.CommandHandlerAl
 		ViewWriteRepository:           albumViewRepository,
 	}
 }
+
+func OwnerDriftReconciler(ctx context.Context, dry bool, options ...catalogviews.DriftOption) *catalogviews.OwnerDriftReconciler {
+	albumQueries := AlbumQueries(ctx)
+	repository := AlbumViewRepository(ctx)
+
+	drifts := make([]catalogviews.DriftOption, len(options)+1)
+	copy(drifts, options)
+	drifts[len(options)] = catalogviews.DriftOptionDryMode(dry, repository)
+
+	return catalogviews.NewDriftReconciler(
+		albumQueries,
+		repository,
+		CatalogToACLAdapter(ctx),
+		albumQueries,
+		drifts...,
+	)
+}

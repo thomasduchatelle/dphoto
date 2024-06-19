@@ -136,7 +136,7 @@ Any machine should update to the latest version of the CLI:
 
 DPhoto only supports AWS to be deployed as a serverless application using AWS Gateway, Lambdas, DynamoDB, and S3.
 
-DynamoDB is a single table documented in [README.md](pkg/awssupport/appdynamodb/README.md).
+DynamoDB is a single table documented in [README.md](DATA_MODEL.md).
 
 ### TODOs
 

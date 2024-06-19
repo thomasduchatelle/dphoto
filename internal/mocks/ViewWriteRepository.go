@@ -73,7 +73,7 @@ func (_c *ViewWriteRepository_DeleteAlbumSize_Call) RunAndReturn(run func(contex
 }
 
 // InsertAlbumSize provides a mock function with given fields: ctx, albumSize
-func (_m *ViewWriteRepository) InsertAlbumSize(ctx context.Context, albumSize []catalogviews.AlbumSize) error {
+func (_m *ViewWriteRepository) InsertAlbumSize(ctx context.Context, albumSize []catalogviews.MultiUserAlbumSize) error {
 	ret := _m.Called(ctx, albumSize)
 
 	if len(ret) == 0 {
@@ -81,7 +81,7 @@ func (_m *ViewWriteRepository) InsertAlbumSize(ctx context.Context, albumSize []
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []catalogviews.AlbumSize) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []catalogviews.MultiUserAlbumSize) error); ok {
 		r0 = rf(ctx, albumSize)
 	} else {
 		r0 = ret.Error(0)
@@ -97,14 +97,14 @@ type ViewWriteRepository_InsertAlbumSize_Call struct {
 
 // InsertAlbumSize is a helper method to define mock.On call
 //   - ctx context.Context
-//   - albumSize []catalogviews.AlbumSize
+//   - albumSize []catalogviews.MultiUserAlbumSize
 func (_e *ViewWriteRepository_Expecter) InsertAlbumSize(ctx interface{}, albumSize interface{}) *ViewWriteRepository_InsertAlbumSize_Call {
 	return &ViewWriteRepository_InsertAlbumSize_Call{Call: _e.mock.On("InsertAlbumSize", ctx, albumSize)}
 }
 
-func (_c *ViewWriteRepository_InsertAlbumSize_Call) Run(run func(ctx context.Context, albumSize []catalogviews.AlbumSize)) *ViewWriteRepository_InsertAlbumSize_Call {
+func (_c *ViewWriteRepository_InsertAlbumSize_Call) Run(run func(ctx context.Context, albumSize []catalogviews.MultiUserAlbumSize)) *ViewWriteRepository_InsertAlbumSize_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]catalogviews.AlbumSize))
+		run(args[0].(context.Context), args[1].([]catalogviews.MultiUserAlbumSize))
 	})
 	return _c
 }
@@ -114,7 +114,7 @@ func (_c *ViewWriteRepository_InsertAlbumSize_Call) Return(_a0 error) *ViewWrite
 	return _c
 }
 
-func (_c *ViewWriteRepository_InsertAlbumSize_Call) RunAndReturn(run func(context.Context, []catalogviews.AlbumSize) error) *ViewWriteRepository_InsertAlbumSize_Call {
+func (_c *ViewWriteRepository_InsertAlbumSize_Call) RunAndReturn(run func(context.Context, []catalogviews.MultiUserAlbumSize) error) *ViewWriteRepository_InsertAlbumSize_Call {
 	_c.Call.Return(run)
 	return _c
 }

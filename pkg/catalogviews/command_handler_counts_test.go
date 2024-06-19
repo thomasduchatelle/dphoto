@@ -18,13 +18,6 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album1")}
 	albumId2 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album2")}
 
-	type fields struct {
-		MediaCounterPort              MediaCounterPort
-		ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
-	}
-	type args struct {
-		transfers catalog.TransferredMedias
-	}
 	var r MediaCounterPort = MediaCounterPortFake(nil)
 	var r2 MediaCounterPort = MediaCounterPortFake(map[catalog.AlbumId]int{
 		albumId1: 1,
@@ -35,11 +28,19 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 	var r4 MediaCounterPort = MediaCounterPortFake(map[catalog.AlbumId]int{
 		albumId1: 1,
 	})
+
+	type fields struct {
+		MediaCounterPort              MediaCounterPort
+		ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
+	}
+	type args struct {
+		transfers catalog.TransferredMedias
+	}
 	tests := []struct {
 		name     string
 		fields   fields
 		args     args
-		wantRepo []AlbumSize
+		wantRepo []UserAlbumSize
 		wantErr  assert.ErrorAssertionFunc
 	}{
 		{
@@ -68,12 +69,8 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 					},
 				},
 			},
-			wantRepo: []AlbumSize{
-				{
-					AlbumId:    albumId1,
-					Users:      []Availability{OwnerAvailability(owner1User)},
-					MediaCount: 1,
-				},
+			wantRepo: []UserAlbumSize{
+				{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1}, Availability: OwnerAvailability(owner1User)},
 			},
 			wantErr: assert.NoError,
 		},
@@ -92,12 +89,9 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 					},
 				},
 			},
-			wantRepo: []AlbumSize{
-				{
-					AlbumId:    albumId1,
-					Users:      []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
-					MediaCount: 1,
-				},
+			wantRepo: []UserAlbumSize{
+				{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1}, Availability: OwnerAvailability(owner1User)},
+				{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1}, Availability: VisitorAvailability(user2)},
 			},
 			wantErr: assert.NoError,
 		},
@@ -118,17 +112,10 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 					FromAlbums: []catalog.AlbumId{albumId2},
 				},
 			},
-			wantRepo: []AlbumSize{
-				{
-					AlbumId:    albumId1,
-					Users:      []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
-					MediaCount: 1,
-				},
-				{
-					AlbumId:    albumId2,
-					Users:      []Availability{OwnerAvailability(owner1User)},
-					MediaCount: 0,
-				},
+			wantRepo: []UserAlbumSize{
+				{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1}, Availability: OwnerAvailability(owner1User)},
+				{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1}, Availability: VisitorAvailability(user2)},
+				{AlbumSize: AlbumSize{AlbumId: albumId2, MediaCount: 0}, Availability: OwnerAvailability(owner1User)},
 			},
 			wantErr: assert.NoError,
 		},
@@ -136,7 +123,7 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := new(ViewWriteRepositoryFake)
+			repository := new(AlbumSizeInMemoryRepository)
 			c := &CommandHandlerAlbumSize{
 				MediaCounterPort:              tt.fields.MediaCounterPort,
 				ListUserWhoCanAccessAlbumPort: tt.fields.ListUserWhoCanAccessAlbumPort,
@@ -147,7 +134,7 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 				return
 			}
 
-			assert.ElementsMatchf(t, repository.AlbumSizes, tt.wantRepo, "AlbumSizes should be %v", tt.wantRepo)
+			assert.ElementsMatchf(t, repository.Sizes, tt.wantRepo, "AlbumSizes should be %v", tt.wantRepo)
 		})
 	}
 }
@@ -168,7 +155,7 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 		name     string
 		fields   fields
 		args     args
-		wantRepo []AlbumSizeDiff
+		wantRepo []UserAlbumSize
 		wantErr  assert.ErrorAssertionFunc
 	}{
 		{
@@ -193,12 +180,8 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 					albumId1: {"media1"},
 				},
 			},
-			wantRepo: []AlbumSizeDiff{
-				{
-					AlbumId:        albumId1,
-					Users:          []Availability{OwnerAvailability(owner1User)},
-					MediaCountDiff: 1,
-				},
+			wantRepo: []UserAlbumSize{
+				{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1}, Availability: OwnerAvailability(owner1User)},
 			},
 			wantErr: assert.NoError,
 		},
@@ -214,12 +197,9 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 					albumId1: {"media1", "media2", "media3"},
 				},
 			},
-			wantRepo: []AlbumSizeDiff{
-				{
-					AlbumId:        albumId1,
-					Users:          []Availability{OwnerAvailability(owner1User), VisitorAvailability(user2)},
-					MediaCountDiff: 3,
-				},
+			wantRepo: []UserAlbumSize{
+				{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 3}, Availability: OwnerAvailability(owner1User)},
+				{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 3}, Availability: VisitorAvailability(user2)},
 			},
 			wantErr: assert.NoError,
 		},
@@ -227,7 +207,7 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := new(ViewWriteRepositoryFake)
+			repository := new(AlbumSizeInMemoryRepository)
 
 			var r MediaCounterPort = MediaCounterPortFake(nil)
 			c := &CommandHandlerAlbumSize{
@@ -241,7 +221,7 @@ func TestCommandHandlerAlbumSize_OnMediasInserted(t *testing.T) {
 				return
 			}
 
-			assert.ElementsMatchf(t, repository.Updated, tt.wantRepo, "AlbumSizeDiffs should be %v", tt.wantRepo)
+			assert.ElementsMatchf(t, repository.Sizes, tt.wantRepo, "AlbumSizeDiffs should be %v", tt.wantRepo)
 		})
 	}
 }
@@ -264,37 +244,4 @@ func (l *ListUserWhoCanAccessAlbumPortFake) ListUsersWhoCanAccessAlbum(ctx conte
 
 func stubListUserWhoCanAccessAlbumPort(values map[catalog.AlbumId][]Availability) ListUserWhoCanAccessAlbumPort {
 	return &ListUserWhoCanAccessAlbumPortFake{Values: values}
-}
-
-type CountKey struct {
-	Availability Availability
-	AlbumId      catalog.AlbumId
-}
-
-type ViewWriteRepositoryFake struct {
-	AlbumSizes []AlbumSize
-	Updated    []AlbumSizeDiff
-	Deleted    []CountKey
-}
-
-func (v *ViewWriteRepositoryFake) InsertAlbumSize(ctx context.Context, albumSize []AlbumSize) error {
-	if albumSize == nil {
-		return errors.Errorf("InsertAlbumSize(nil): albumSize should not be nil")
-	}
-	v.AlbumSizes = append(v.AlbumSizes, albumSize...)
-	return nil
-}
-
-func (v *ViewWriteRepositoryFake) UpdateAlbumSize(ctx context.Context, albumCountUpdates []AlbumSizeDiff) error {
-	if albumCountUpdates == nil {
-		return errors.Errorf("UpdateAlbumSize(nil): albumCountUpdates should not be nil")
-	}
-
-	v.Updated = append(v.Updated, albumCountUpdates...)
-	return nil
-}
-
-func (v *ViewWriteRepositoryFake) DeleteAlbumSize(ctx context.Context, availability Availability, albumId catalog.AlbumId) error {
-	v.Deleted = append(v.Deleted, CountKey{Availability: availability, AlbumId: albumId})
-	return nil
 }

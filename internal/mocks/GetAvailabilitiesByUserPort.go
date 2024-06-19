@@ -26,23 +26,23 @@ func (_m *GetAvailabilitiesByUserPort) EXPECT() *GetAvailabilitiesByUserPort_Exp
 }
 
 // GetAvailabilitiesByUser provides a mock function with given fields: ctx, user
-func (_m *GetAvailabilitiesByUserPort) GetAvailabilitiesByUser(ctx context.Context, user usermodel.UserId) ([]catalogviews.AlbumSize, error) {
+func (_m *GetAvailabilitiesByUserPort) GetAvailabilitiesByUser(ctx context.Context, user usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error) {
 	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAvailabilitiesByUser")
 	}
 
-	var r0 []catalogviews.AlbumSize
+	var r0 []catalogviews.MultiUserAlbumSize
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) ([]catalogviews.AlbumSize, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error)); ok {
 		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) []catalogviews.AlbumSize); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) []catalogviews.MultiUserAlbumSize); ok {
 		r0 = rf(ctx, user)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]catalogviews.AlbumSize)
+			r0 = ret.Get(0).([]catalogviews.MultiUserAlbumSize)
 		}
 	}
 
@@ -74,12 +74,12 @@ func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) Run(run func
 	return _c
 }
 
-func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) Return(_a0 []catalogviews.AlbumSize, _a1 error) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
+func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) Return(_a0 []catalogviews.MultiUserAlbumSize, _a1 error) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) RunAndReturn(run func(context.Context, usermodel.UserId) ([]catalogviews.AlbumSize, error)) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
+func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) RunAndReturn(run func(context.Context, usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error)) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
