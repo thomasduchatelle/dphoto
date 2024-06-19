@@ -9,7 +9,9 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
+	"slices"
 )
 
 type AlbumViewRepository struct {
@@ -21,18 +23,20 @@ func (a *AlbumViewRepository) UpdateAlbumSize(ctx context.Context, albumCountUpd
 	var updates []*dynamodb.UpdateItemInput
 
 	for _, albumCount := range albumCountUpdates {
-		expr, err := expression.NewBuilder().
-			WithUpdate(expression.
-				Add(expression.Name("Count"), expression.Value(albumCount.MediaCountDiff)).
-				Set(expression.Name("AlbumOwner"), expression.Value(albumCount.AlbumId.Owner)).
-				Set(expression.Name("AlbumFolderName"), expression.Value(albumCount.AlbumId.FolderName)),
-			).
-			Build()
-		if err != nil {
-			return errors.Wrapf(err, "failed to build expression for AlbumSizeDiff %+v", albumCount)
-		}
-
 		for _, user := range albumCount.Users {
+			expr, err := expression.NewBuilder().
+				WithUpdate(expression.
+					Add(expression.Name("Count"), expression.Value(albumCount.MediaCountDiff)).
+					Set(expression.Name("UserId"), expression.Value(user.UserId.Value())).
+					Set(expression.Name("AvailabilityType"), expression.Value(marshalAvailabilityType(user))).
+					Set(expression.Name("AlbumOwner"), expression.Value(albumCount.AlbumId.Owner)).
+					Set(expression.Name("AlbumFolderName"), expression.Value(albumCount.AlbumId.FolderName)),
+				).
+				Build()
+			if err != nil {
+				return errors.Wrapf(err, "failed to build expression for AlbumSizeDiff %+v", albumCount)
+			}
+
 			updates = append(updates, &dynamodb.UpdateItemInput{
 				TableName:                 &a.TableName,
 				Key:                       albumSizeKey(user, albumCount.AlbumId).ToAttributes(),
@@ -53,7 +57,7 @@ func (a *AlbumViewRepository) UpdateAlbumSize(ctx context.Context, albumCountUpd
 	return nil
 }
 
-func (a *AlbumViewRepository) InsertAlbumSize(ctx context.Context, albumSizes []catalogviews.AlbumSize) error {
+func (a *AlbumViewRepository) InsertAlbumSize(ctx context.Context, albumSizes []catalogviews.MultiUserAlbumSize) error {
 	var items []types.WriteRequest
 
 	for _, albumSize := range albumSizes {
@@ -91,15 +95,13 @@ func (a *AlbumViewRepository) DeleteAlbumSize(ctx context.Context, availability 
 	return errors.Wrapf(err, "failed to delete album size for album %v and user %v", albumId, availability)
 }
 
-// TODO GetAvailabilitiesByUser shouldn't return a slice of AlbumSize: the AlbumSize.User field is not used
-
-func (a *AlbumViewRepository) GetAvailabilitiesByUser(ctx context.Context, user usermodel.UserId) ([]catalogviews.AlbumSize, error) {
+func (a *AlbumViewRepository) GetAvailabilitiesByUser(ctx context.Context, userId usermodel.UserId) ([]catalogviews.UserAlbumSize, error) {
 	expr, err := expression.NewBuilder().
-		WithKeyCondition(expression.Key("PK").Equal(expression.Value(albumsViewPK(user)))).
+		WithKeyCondition(expression.Key("PK").Equal(expression.Value(albumsViewPK(userId)))).
 		Build()
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to build expression for user %v", user)
+		return nil, errors.Wrapf(err, "failed to build expression for user %v", userId)
 	}
 
 	paginator := dynamodb.NewQueryPaginator(a.Client, &dynamodb.QueryInput{
@@ -109,7 +111,7 @@ func (a *AlbumViewRepository) GetAvailabilitiesByUser(ctx context.Context, user 
 		KeyConditionExpression:    expr.KeyCondition(),
 	})
 
-	var albumSizes []catalogviews.AlbumSize
+	var albumSizes []catalogviews.UserAlbumSize
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
@@ -127,4 +129,18 @@ func (a *AlbumViewRepository) GetAvailabilitiesByUser(ctx context.Context, user 
 	}
 
 	return albumSizes, nil
+}
+
+func (a *AlbumViewRepository) GetAlbumSizes(ctx context.Context, userId usermodel.UserId, owner ...ownermodel.Owner) ([]catalogviews.UserAlbumSize, error) {
+	sizes, err := a.GetAvailabilitiesByUser(ctx, userId)
+
+	var filteredSizes []catalogviews.UserAlbumSize
+	for _, size := range sizes {
+		// legacy entries cleanup: 'size.Availability.UserId' wasn't set before 2024-06-30 and will be ignored during a drift reconciliation
+		if slices.Contains(owner, size.AlbumSize.AlbumId.Owner) && size.Availability.UserId != "" {
+			filteredSizes = append(filteredSizes, size)
+		}
+	}
+
+	return filteredSizes, err
 }

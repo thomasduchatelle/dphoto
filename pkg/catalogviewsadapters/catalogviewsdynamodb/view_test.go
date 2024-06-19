@@ -34,7 +34,7 @@ func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 	}
 
 	type args struct {
-		albumSizes []catalogviews.AlbumSize
+		albumSizes []catalogviews.MultiUserAlbumSize
 	}
 	tests := []struct {
 		name    string
@@ -55,11 +55,10 @@ func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should not save anything if there is no user on the album size",
 			args: args{
-				albumSizes: []catalogviews.AlbumSize{
+				albumSizes: []catalogviews.MultiUserAlbumSize{
 					{
-						AlbumId:    albumId1,
-						MediaCount: 42,
-						Users:      nil,
+						AlbumSize: catalogviews.AlbumSize{AlbumId: albumId1, MediaCount: 42},
+						Users:     nil,
 					},
 				},
 			},
@@ -70,11 +69,10 @@ func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should save the album size for the owner",
 			args: args{
-				albumSizes: []catalogviews.AlbumSize{
+				albumSizes: []catalogviews.MultiUserAlbumSize{
 					{
-						AlbumId:    albumId1,
-						MediaCount: 42,
-						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+						AlbumSize: catalogviews.AlbumSize{AlbumId: albumId1, MediaCount: 42},
+						Users:     []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
 					},
 				},
 			},
@@ -87,11 +85,10 @@ func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should save the album size for the shared user",
 			args: args{
-				albumSizes: []catalogviews.AlbumSize{
+				albumSizes: []catalogviews.MultiUserAlbumSize{
 					{
-						AlbumId:    albumId1,
-						MediaCount: 42,
-						Users:      []catalogviews.Availability{catalogviews.VisitorAvailability(userId1)},
+						AlbumSize: catalogviews.AlbumSize{AlbumId: albumId1, MediaCount: 42},
+						Users:     []catalogviews.Availability{catalogviews.VisitorAvailability(userId1)},
 					},
 				},
 			},
@@ -104,16 +101,14 @@ func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should save several album sizes for multiple users",
 			args: args{
-				albumSizes: []catalogviews.AlbumSize{
+				albumSizes: []catalogviews.MultiUserAlbumSize{
 					{
-						AlbumId:    albumId1,
-						MediaCount: 42,
-						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId1), catalogviews.VisitorAvailability(userId2), catalogviews.VisitorAvailability(userId3)},
+						AlbumSize: catalogviews.AlbumSize{AlbumId: albumId1, MediaCount: 42},
+						Users:     []catalogviews.Availability{catalogviews.OwnerAvailability(userId1), catalogviews.VisitorAvailability(userId2), catalogviews.VisitorAvailability(userId3)},
 					},
 					{
-						AlbumId:    albumId2,
-						MediaCount: 24,
-						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId2), catalogviews.VisitorAvailability(userId1)},
+						AlbumSize: catalogviews.AlbumSize{AlbumId: albumId2, MediaCount: 24},
+						Users:     []catalogviews.Availability{catalogviews.OwnerAvailability(userId2), catalogviews.VisitorAvailability(userId1)},
 					},
 				},
 			},
@@ -130,11 +125,10 @@ func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should update the count if the album size already exists",
 			args: args{
-				albumSizes: []catalogviews.AlbumSize{
+				albumSizes: []catalogviews.MultiUserAlbumSize{
 					{
-						AlbumId:    albumId1,
-						MediaCount: 42,
-						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+						AlbumSize: catalogviews.AlbumSize{AlbumId: albumId1, MediaCount: 42},
+						Users:     []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
 					},
 				},
 			},
@@ -173,11 +167,13 @@ func TestAlbumViewRepository_InsertAlbumSize(t *testing.T) {
 
 func albumSizeItem(user usermodel.UserId, accessType string, albumId catalog.AlbumId, count string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
-		"PK":              &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s#ALBUMS_VIEW", user)},
-		"SK":              &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#%s#%s#COUNT", accessType, albumId.Owner.Value(), albumId.FolderName.String())},
-		"AlbumOwner":      &types.AttributeValueMemberS{Value: albumId.Owner.Value()},
-		"AlbumFolderName": &types.AttributeValueMemberS{Value: albumId.FolderName.String()},
-		"Count":           &types.AttributeValueMemberN{Value: count},
+		"PK":               &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s#ALBUMS_VIEW", user)},
+		"SK":               &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#%s#%s#COUNT", accessType, albumId.Owner.Value(), albumId.FolderName.String())},
+		"AlbumOwner":       &types.AttributeValueMemberS{Value: albumId.Owner.Value()},
+		"AlbumFolderName":  &types.AttributeValueMemberS{Value: albumId.FolderName.String()},
+		"AvailabilityType": &types.AttributeValueMemberS{Value: accessType},
+		"UserId":           &types.AttributeValueMemberS{Value: user.Value()},
+		"Count":            &types.AttributeValueMemberN{Value: count},
 	}
 }
 
@@ -326,7 +322,7 @@ func TestAlbumViewRepository_GetAvailabilitiesByUser(t *testing.T) {
 		name    string
 		args    args
 		before  []map[string]types.AttributeValue
-		want    []catalogviews.AlbumSize
+		want    []catalogviews.UserAlbumSize
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -348,15 +344,9 @@ func TestAlbumViewRepository_GetAvailabilitiesByUser(t *testing.T) {
 				albumSizeItem(userId1, "VISITOR", albumId2, "10"),
 				albumSizeItem(userId2, "OWNED", albumId3, "5"),
 			},
-			want: []catalogviews.AlbumSize{
-				{
-					AlbumId:    albumId1,
-					MediaCount: 42,
-				},
-				{
-					AlbumId:    albumId2,
-					MediaCount: 10,
-				},
+			want: []catalogviews.UserAlbumSize{
+				{Availability: catalogviews.OwnerAvailability(userId1), AlbumSize: catalogviews.AlbumSize{AlbumId: albumId1, MediaCount: 42}},
+				{Availability: catalogviews.VisitorAvailability(userId1), AlbumSize: catalogviews.AlbumSize{AlbumId: albumId2, MediaCount: 10}},
 			},
 			wantErr: assert.NoError,
 		},
@@ -509,6 +499,96 @@ func TestAlbumViewRepository_UpdateAlbumSize(t *testing.T) {
 			if tt.wantErr(t, err, fmt.Sprintf("UpdateAlbumSize(%v, %v)", tt.args.ctx, tt.args.albumSizes)) {
 				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
 			}
+		})
+	}
+}
+
+func TestAlbumViewRepository_GetAlbumSizes(t *testing.T) {
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+
+	owner1 := ownermodel.Owner("owner1")
+	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("album-1")}
+	albumId2 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("album-2")}
+	owner2 := ownermodel.Owner("owner2")
+	albumId3 := catalog.AlbumId{Owner: owner2, FolderName: catalog.NewFolderName("album-3")}
+	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
+
+	type args struct {
+		ctx    context.Context
+		userId usermodel.UserId
+		owner  []ownermodel.Owner
+	}
+	tests := []struct {
+		name    string
+		content []map[string]types.AttributeValue
+		args    args
+		want    []catalogviews.UserAlbumSize
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "it should return an empty list if there is no album size",
+			content: nil,
+			args: args{
+				ctx:    context.Background(),
+				userId: userId1,
+				owner:  []ownermodel.Owner{owner1},
+			},
+			want:    nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return no album if their is no owner selected",
+			content: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, OwnerAvailability, albumId1, "42"),
+			},
+			args: args{
+				ctx:    context.Background(),
+				userId: userId1,
+				owner:  nil,
+			},
+			want:    nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return the album size for the owner",
+			content: []map[string]types.AttributeValue{
+				albumSizeItem(userId1, OwnerAvailability, albumId1, "42"),
+				albumSizeItem(userId1, VisitorAvailability, albumId2, "42"),
+				albumSizeItem(userId1, VisitorAvailability, albumId3, "42"),
+				albumSizeItem(userId2, VisitorAvailability, albumId1, "42"),
+			},
+			args: args{
+				ctx:    context.Background(),
+				userId: userId1,
+				owner:  []ownermodel.Owner{owner1},
+			},
+			want: []catalogviews.UserAlbumSize{
+				{Availability: catalogviews.OwnerAvailability(userId1), AlbumSize: catalogviews.AlbumSize{AlbumId: albumId1, MediaCount: 42}},
+				{Availability: catalogviews.VisitorAvailability(userId1), AlbumSize: catalogviews.AlbumSize{AlbumId: albumId2, MediaCount: 42}},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(tt.args.ctx, tt.content)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			a := &AlbumViewRepository{
+				Client:    dyn.Client,
+				TableName: dyn.Table,
+			}
+			got, err := a.GetAlbumSizes(tt.args.ctx, tt.args.userId, tt.args.owner...)
+			if !tt.wantErr(t, err, fmt.Sprintf("GetAlbumSizes(%v, %v, %v)", tt.args.ctx, tt.args.userId, tt.args.owner)) {
+				return
+			}
+			assert.ElementsMatchf(t, tt.want, got, "GetAlbumSizes(%v, %v, %v)", tt.args.ctx, tt.args.userId, tt.args.owner)
 		})
 	}
 }

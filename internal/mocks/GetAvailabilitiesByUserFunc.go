@@ -26,23 +26,23 @@ func (_m *GetAvailabilitiesByUserFunc) EXPECT() *GetAvailabilitiesByUserFunc_Exp
 }
 
 // Execute provides a mock function with given fields: ctx, user
-func (_m *GetAvailabilitiesByUserFunc) Execute(ctx context.Context, user usermodel.UserId) ([]catalogviews.AlbumSize, error) {
+func (_m *GetAvailabilitiesByUserFunc) Execute(ctx context.Context, user usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error) {
 	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
 	}
 
-	var r0 []catalogviews.AlbumSize
+	var r0 []catalogviews.MultiUserAlbumSize
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) ([]catalogviews.AlbumSize, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error)); ok {
 		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) []catalogviews.AlbumSize); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) []catalogviews.MultiUserAlbumSize); ok {
 		r0 = rf(ctx, user)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]catalogviews.AlbumSize)
+			r0 = ret.Get(0).([]catalogviews.MultiUserAlbumSize)
 		}
 	}
 
@@ -74,12 +74,12 @@ func (_c *GetAvailabilitiesByUserFunc_Execute_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *GetAvailabilitiesByUserFunc_Execute_Call) Return(_a0 []catalogviews.AlbumSize, _a1 error) *GetAvailabilitiesByUserFunc_Execute_Call {
+func (_c *GetAvailabilitiesByUserFunc_Execute_Call) Return(_a0 []catalogviews.MultiUserAlbumSize, _a1 error) *GetAvailabilitiesByUserFunc_Execute_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *GetAvailabilitiesByUserFunc_Execute_Call) RunAndReturn(run func(context.Context, usermodel.UserId) ([]catalogviews.AlbumSize, error)) *GetAvailabilitiesByUserFunc_Execute_Call {
+func (_c *GetAvailabilitiesByUserFunc_Execute_Call) RunAndReturn(run func(context.Context, usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error)) *GetAvailabilitiesByUserFunc_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

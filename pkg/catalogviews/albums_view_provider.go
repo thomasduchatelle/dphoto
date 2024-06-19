@@ -7,13 +7,7 @@ import (
 )
 
 type GetAvailabilitiesByUserPort interface {
-	GetAvailabilitiesByUser(ctx context.Context, user usermodel.UserId) ([]AlbumSize, error)
-}
-
-type GetAvailabilitiesByUserFunc func(ctx context.Context, user usermodel.UserId) ([]AlbumSize, error)
-
-func (f GetAvailabilitiesByUserFunc) GetAvailabilitiesByUser(ctx context.Context, user usermodel.UserId) ([]AlbumSize, error) {
-	return f(ctx, user)
+	GetAvailabilitiesByUser(ctx context.Context, userId usermodel.UserId) ([]UserAlbumSize, error)
 }
 
 type ProviderFactory interface {
@@ -33,9 +27,14 @@ type MediaCounterInjector struct {
 }
 
 func (o *MediaCounterInjector) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
-	view, err := o.GetAvailabilitiesByUserPort.GetAvailabilitiesByUser(ctx, user.UserId)
+	userAlbumSizes, err := o.GetAvailabilitiesByUserPort.GetAvailabilitiesByUser(ctx, user.UserId)
 	if err != nil {
 		return nil, err
+	}
+
+	view := make([]AlbumSize, len(userAlbumSizes))
+	for i, userAlbumSize := range userAlbumSizes {
+		view[i] = userAlbumSize.AlbumSize
 	}
 
 	var visibleAlbums []*VisibleAlbum
