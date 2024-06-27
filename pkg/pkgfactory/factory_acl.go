@@ -43,6 +43,7 @@ func AclCatalogUnShare(ctx context.Context) *catalogacl.UnShareAlbumCase {
 
 func AclCatalogAuthoriser(ctx context.Context) *catalogacl.CatalogAuthorizer {
 	return &catalogacl.CatalogAuthorizer{
-		HasPermissionPort: AclQueries(ctx),
+		HasPermissionPort:  AclQueries(ctx),
+		CatalogQueriesPort: CatalogMediaQueries(ctx),
 	}
 }
