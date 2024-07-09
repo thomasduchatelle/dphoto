@@ -35,7 +35,7 @@ jobs:
         run:  |
           cd deployments/infra-data
           RC=0
-          terraform plan -no-color || RC=$?
+          terraform plan -no-color -detailed-exitcode || RC=$?
 
           if [[ $RC -eq 0 ]] ; then
            echo "no_change=true" >> $GITHUB_OUTPUT

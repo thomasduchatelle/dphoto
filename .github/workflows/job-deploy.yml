@@ -44,7 +44,7 @@ jobs:
         run: |
           cd deployments/infra-data
           RC=0
-          terraform plan -no-color || RC=$?
+          terraform plan -no-color -detailed-exitcode || RC=$?
           
           case "$RC" in 
           0)
