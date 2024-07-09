@@ -50,7 +50,7 @@ jobs:
           0)
             echo "no-change=true" >> $GITHUB_OUTPUT
             ;;
-          1)
+          2)
             echo "no-change=false" >> $GITHUB_OUTPUT
             ;;
           *)
