@@ -69,6 +69,8 @@ func (r *runner) appendError(err error) {
 
 // start initialises the channels and publish files in the source channel
 func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, chan []error) {
+	r.BatchSize = defaultValue(r.BatchSize, 1)
+
 	r.progressEventChannel = make(chan *ProgressEvent, sizeHint*5)
 	r.context, r.cancel = context.WithCancel(ctx)
 
@@ -128,7 +130,7 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 	}()
 }
 func (r *runner) analyseMedias(foundChannel chan FoundMedia, analysedChannel chan *AnalysedMedia) {
-	r.startsInParallel(r.ConcurrentAnalyser, func() {
+	r.startsInParallel(defaultValue(r.ConcurrentAnalyser, 1), func() {
 		for {
 			select {
 			case <-r.context.Done():
@@ -175,7 +177,7 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 }
 
 func (r *runner) catalogueMedias(analysedChannel chan []*AnalysedMedia, requestsChannel chan *BackingUpMediaRequest) {
-	r.startsInParallel(r.ConcurrentCataloguer, func() {
+	r.startsInParallel(defaultValue(r.ConcurrentCataloguer, 1), func() {
 		for {
 			select {
 			case <-r.context.Done():
@@ -229,7 +231,7 @@ func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *Backin
 }
 
 func (r *runner) uploadMedias(bufferedChannel chan []*BackingUpMediaRequest, completionChannel chan []error) {
-	r.startsInParallel(r.ConcurrentUploader, func() {
+	r.startsInParallel(defaultValue(r.ConcurrentUploader, 1), func() {
 		for {
 			select {
 			case <-r.context.Done():

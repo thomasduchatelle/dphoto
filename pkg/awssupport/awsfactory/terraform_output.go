@@ -19,7 +19,7 @@ type mapValue struct {
 
 // TerraformOutput is the content of `infra-data` output and can be used as Names and as ConfigFactory.
 type TerraformOutput struct {
-	StaticConfig
+	StaticCredentials
 	DynamoDBName           string
 	ArchiveMainBucketName  string
 	ArchiveCacheBucketName string
@@ -78,7 +78,7 @@ func parseJsonContentAndDecode(ctx context.Context, jsonOutput []byte, decoder S
 	decodedSecretAccessKey, err := decoder(tf.DelegateSecretAccessKey.Value[latestKey])
 
 	return &TerraformOutput{
-		StaticConfig: StaticConfig{
+		StaticCredentials: StaticCredentials{
 			Region:          tf.Region.Value,
 			AccessKeyID:     tf.DelegateAccessKeyId.Value[latestKey],
 			SecretAccessKey: decodedSecretAccessKey,

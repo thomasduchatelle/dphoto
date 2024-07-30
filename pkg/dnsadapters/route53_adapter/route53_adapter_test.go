@@ -5,7 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/acm"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/internal/localstack"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
 	"testing"
 )
@@ -14,14 +14,18 @@ func TestCertificateManager(t *testing.T) {
 	a := assert.New(t)
 
 	ctx := context.Background()
-	cfg := localstack.Config(ctx)
+	factory, err := awsfactory.LocalstackAWSFactory(ctx, awsfactory.LocalstackEndpoint)
+	if !assert.NoError(t, err) {
+		return
+	}
+	cfg := factory.GetCfg()
 	certManager := NewCertificateManager(cfg, nil, "unittest")
 
 	acmClient := cleanup(ctx, cfg)
 
 	name := "it should not find any domain"
 	domain := "dphoto.example.com"
-	_, err := certManager.FindCertificate(ctx, domain)
+	_, err = certManager.FindCertificate(ctx, domain)
 	a.Equal(dnsdomain.CertificateNotFoundError, err, name)
 
 	name = "it should import a certificate"

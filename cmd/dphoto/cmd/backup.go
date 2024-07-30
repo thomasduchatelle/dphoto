@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/spf13/cobra"
@@ -12,6 +13,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/filesystemvolume"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/s3volume"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"io"
 	"os"
 	"path"
@@ -35,13 +37,19 @@ var backupCmd = &cobra.Command{
 	Short: "Backup photos and videos to personal cloud",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
 		volumePath := args[0]
 
 		progress := backupui.NewProgress()
 		volume, err := newSmartVolume(volumePath)
 		printer.FatalIfError(err, 1)
 
-		report, err := backup.Backup(ownermodel.Owner(Owner), volume, backup.OptionWithListener(progress).WithCachedAnalysis(addCacheAnalysis(!backupCmdArg.noCache)))
+		multiFilesBackup := pkgfactory.NewMultiFilesBackup(ctx)
+		options := []backup.Options{
+			backup.OptionWithListener(progress).WithCachedAnalysis(addCacheAnalysis(!backupCmdArg.noCache)),
+		}
+		options = append(options, config.BackupOptions()...)
+		report, err := multiFilesBackup(ctx, ownermodel.Owner(Owner), volume, options...)
 		printer.FatalIfError(err, 2)
 
 		progress.Stop()

@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/internal/localstack"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -22,13 +22,17 @@ var (
 )
 
 func newMockedStore(purpose string) (*store, func()) {
-	adapter := Must(New(
-		localstack.Config(ctx),
-		fmt.Sprintf("dphoto-unit-archive-%s-%s", purpose, time.Now().Format("20060102150405")),
-		localstack.WithUsePathPrefix,
-	)).(*store)
+	factory, err := awsfactory.LocalstackAWSFactory(ctx, awsfactory.LocalstackEndpoint)
+	if err != nil {
+		panic(err)
+	}
 
-	_, err := adapter.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &adapter.bucketName})
+	adapter := NewWithS3Client(
+		factory.GetS3Client(),
+		fmt.Sprintf("dphoto-unit-archive-%s-%s", purpose, time.Now().Format("20060102150405")),
+	).(*store)
+
+	_, err = adapter.client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: &adapter.bucketName})
 	if err != nil {
 		panic(err)
 	}

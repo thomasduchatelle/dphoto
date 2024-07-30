@@ -40,10 +40,10 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             RunnerUploaderFunc(receiver.receive),
-		ConcurrentAnalyser:   ConcurrentAnalyser,
-		ConcurrentCataloguer: ConcurrentCataloguer,
+		ConcurrentAnalyser:   options.ConcurrentAnalyser,
+		ConcurrentCataloguer: options.ConcurrentCataloguer,
 		ConcurrentUploader:   1,
-		BatchSize:            BatchSize,
+		BatchSize:            options.BatchSize,
 		SkipRejects:          options.SkipRejects,
 	}
 

@@ -1,8 +1,7 @@
 package config
 
 const (
-	Localstack                  = "aws.localstack"
-	AwsEndpoint                 = "aws.endpoint"
+	Localstack                  = "aws.localstack" // Localstack set to true will ignore AwsRegion, AwsKey, and AwsSecret
 	AwsRegion                   = "aws.region"
 	AwsKey                      = "aws.key"
 	AwsSecret                   = "aws.secret"

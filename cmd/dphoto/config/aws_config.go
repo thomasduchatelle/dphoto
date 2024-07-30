@@ -75,22 +75,32 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 	pkgfactory.AWSNames = new(ViperAWSName)
 
 	if ignite {
+		builder := pkgfactory.StartAWSCloudBuilder(new(ViperAWSName))
 		ctx := context.TODO()
-		pkgfactory.AWSConfigFactory = &awsfactory.StaticConfig{
-			Region:          viper.GetString(AwsRegion),
-			AccessKeyID:     viper.GetString(AwsKey),
-			SecretAccessKey: viper.GetString(AwsSecret),
-			Endpoint:        viper.GetString(AwsEndpoint),
+		if viper.GetBool(Localstack) {
+			builder.OverridesAWSFactory(awsfactory.LocalstackAWSFactory(ctx, awsfactory.LocalstackEndpoint))
+			if err != nil {
+				return err
+			}
+		} else {
+			builder.OverridesAWSFactory(awsfactory.StaticAWSFactory(ctx, awsfactory.StaticCredentials{
+				Region:          viper.GetString(AwsRegion),
+				AccessKeyID:     viper.GetString(AwsKey),
+				SecretAccessKey: viper.GetString(AwsSecret),
+			}))
+			if err != nil {
+				return err
+			}
 		}
 
-		factory, err := awsfactory.NewAWSFactory(ctx, pkgfactory.AWSConfigFactory)
+		_, err = builder.Build(ctx)
 		if err != nil {
 			return err
 		}
 
 		config = &viperConfig{
 			Viper:      viper.GetViper(),
-			AWSFactory: factory,
+			AWSFactory: pkgfactory.AWSFactory(ctx),
 		}
 
 		for _, listener := range listeners {

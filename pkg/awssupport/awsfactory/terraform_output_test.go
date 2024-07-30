@@ -129,7 +129,7 @@ func TestParseJSONTerraformOutput(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		want      *StaticConfig
+		want      *StaticCredentials
 		wantNames namesStruct
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -140,7 +140,7 @@ func TestParseJSONTerraformOutput(t *testing.T) {
 				jsonOutput: keysJsonContent,
 				decoder:    addsPrefixDecoder,
 			},
-			want: &StaticConfig{
+			want: &StaticCredentials{
 				Region:          "us-east-1",
 				AccessKeyID:     "ACCESS_KEY_ID_2024_01",
 				SecretAccessKey: "decoded-a-very-complex-secret",
@@ -154,7 +154,7 @@ func TestParseJSONTerraformOutput(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := parseJsonContentAndDecode(tt.args.ctx, []byte(tt.args.jsonOutput), tt.args.decoder)
 			if tt.wantErr(t, err) {
-				assert.Equal(t, *tt.want, got.StaticConfig)
+				assert.Equal(t, *tt.want, got.StaticCredentials)
 				assert.Equal(t, tt.wantNames.DynamoDBMainTable, got.DynamoDBMainTable())
 			}
 		})
