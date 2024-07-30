@@ -1,13 +1,16 @@
 package scanui
 
 import (
+	"context"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/backupui"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"strings"
 )
 
@@ -26,6 +29,7 @@ func NewBackupHandler(owner string, resolver func(absolutePath string) (backup.S
 }
 
 func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, existing *ui.ExistingRecord, renderer ui.InteractiveRendererPort) error {
+	ctx := context.TODO()
 	if folder, ok := record.Original.(*backup.ScannedFolder); ok {
 		subVolume, err := t.SubVolumeResolver(folder.AbsolutePath)
 		if err != nil {
@@ -49,12 +53,14 @@ func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, ex
 			backup.OptionWithListener(listener),
 			t.ScanOptions,
 		}
+		options = append(options, config.BackupOptions()...)
 
 		if existing != nil {
 			options = append(options, backup.OptionOnlyAlbums(existing.FolderName))
 		}
 
-		report, err := backup.Backup(ownermodel.Owner(t.Owner), subVolume, options...)
+		multiFilesBackup := pkgfactory.NewMultiFilesBackup(ctx)
+		report, err := multiFilesBackup(ctx, ownermodel.Owner(t.Owner), subVolume, options...)
 		listener.Stop()
 
 		if err != nil {

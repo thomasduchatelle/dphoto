@@ -23,6 +23,10 @@ type StoreAndCache interface {
 
 func New(cfg aws.Config, bucketName string, optFns ...func(options *s3.Options)) (StoreAndCache, error) {
 	s3client := s3.NewFromConfig(cfg, optFns...)
+	return NewWithS3Client(s3client, bucketName), nil
+}
+
+func NewWithS3Client(s3client *s3.Client, bucketName string) StoreAndCache {
 	presign := s3.NewPresignClient(s3client)
 	uploader := manager.NewUploader(s3client)
 
@@ -31,7 +35,7 @@ func New(cfg aws.Config, bucketName string, optFns ...func(options *s3.Options))
 		presign:    presign,
 		s3Uploader: uploader,
 		bucketName: bucketName,
-	}, nil
+	}
 }
 
 func Must(storage StoreAndCache, err error) StoreAndCache {

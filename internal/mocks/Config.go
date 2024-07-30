@@ -71,19 +71,19 @@ func (_c *Config_Get_Call) RunAndReturn(run func(string) interface{}) *Config_Ge
 }
 
 // GetAWSFactory provides a mock function with given fields:
-func (_m *Config) GetAWSFactory() *awsfactory.AWSFactory {
+func (_m *Config) GetAWSFactory() *awsfactory.ClientsFactory {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAWSFactory")
 	}
 
-	var r0 *awsfactory.AWSFactory
-	if rf, ok := ret.Get(0).(func() *awsfactory.AWSFactory); ok {
+	var r0 *awsfactory.ClientsFactory
+	if rf, ok := ret.Get(0).(func() *awsfactory.ClientsFactory); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*awsfactory.AWSFactory)
+			r0 = ret.Get(0).(*awsfactory.ClientsFactory)
 		}
 	}
 
@@ -107,12 +107,12 @@ func (_c *Config_GetAWSFactory_Call) Run(run func()) *Config_GetAWSFactory_Call 
 	return _c
 }
 
-func (_c *Config_GetAWSFactory_Call) Return(_a0 *awsfactory.AWSFactory) *Config_GetAWSFactory_Call {
+func (_c *Config_GetAWSFactory_Call) Return(_a0 *awsfactory.ClientsFactory) *Config_GetAWSFactory_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Config_GetAWSFactory_Call) RunAndReturn(run func() *awsfactory.AWSFactory) *Config_GetAWSFactory_Call {
+func (_c *Config_GetAWSFactory_Call) RunAndReturn(run func() *awsfactory.ClientsFactory) *Config_GetAWSFactory_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -12,20 +12,27 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclscopedynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/jwks"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
-	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/archivedynamo"
-	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/asyncjobadapter"
-	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/s3store"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
-	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 	"time"
 )
 
 var (
 	jwtDecoder      *aclcore.AccessTokenDecoder
 	grantRepository aclscopedynamodb.GrantRepository
+	factory         pkgfactory.Factory
 )
+
+func init() {
+	initViper()
+
+	var err error
+	factory, err = pkgfactory.StartAWSCloudBuilder(new(LambdaViperNames)).WithAdvancedAWSAsyncFeatures().Build(context.Background())
+	if err != nil {
+		panic(fmt.Sprintf("failed to start AWS cloud factory: %v", err))
+	}
+}
 
 func appAuthConfig() aclcore.OAuthConfig {
 	jwtKey, err := base64.StdEncoding.DecodeString(viper.GetString(JWTKeyB64))
@@ -131,55 +138,16 @@ func bootstrapCatalogDomain() {
 }
 
 func BootstrapArchiveDomain() archive.AsyncJobAdapter {
-	tableName := viper.GetString(DynamoDBTableName)
-	if tableName == "" {
-		panic(fmt.Sprintf("%s must be set and non-empty", DynamoDBTableName))
-	}
-	storeBucketName := viper.GetString(StorageBucketName)
-	if storeBucketName == "" {
-		panic(fmt.Sprintf("%s must be set and non-empty", StorageBucketName))
-	}
-	cacheBucketName := viper.GetString(CacheBucketName)
-	if cacheBucketName == "" {
-		panic(fmt.Sprintf("%s must be set and non-empty", CacheBucketName))
-	}
-	archiveJobsSnsARN := viper.GetString(SNSArchiveARN)
-	if archiveJobsSnsARN == "" {
-		panic(fmt.Sprintf("%s must be set and non-empty", SNSArchiveARN))
-	}
-	archiveJobsSqsURL := viper.GetString(SQSArchiveURL)
-	if archiveJobsSqsURL == "" {
-		panic(fmt.Sprintf("%s must be set and non-empty", SQSArchiveURL))
-	}
-
 	ctx := context.TODO()
-	cfg := newV2Config()
-	archiveAsyncAdapter := asyncjobadapter.New(cfg, archiveJobsSnsARN, archiveJobsSqsURL, asyncjobadapter.DefaultImagesPerMessage)
-	archive.Init(
-		must(archivedynamo.New(MustAWSFactory(ctx).GetDynamoDBClient(), tableName)),
-		s3store.Must(s3store.New(cfg, storeBucketName)),
-		s3store.Must(s3store.New(cfg, cacheBucketName)),
-		archiveAsyncAdapter,
-	)
-
-	return archiveAsyncAdapter
+	factory.InitArchive(ctx)
+	return factory.ArchiveAsyncJobAdapter(ctx)
 }
 
 func newV2Config() aws.Config {
 	ctx := context.TODO()
-	return MustAWSFactory(ctx).Cfg
+	return MustAWSFactory(ctx).GetCfg()
 }
 
-func MustAWSFactory(ctx context.Context) *awsfactory.AWSFactory {
-	return must(singletons.Singleton(func() (*awsfactory.AWSFactory, error) {
-		return awsfactory.NewAWSFactory(ctx, awsfactory.NewContextualConfigFactory())
-	}))
-}
-
-func must[M any](value M, err error) M {
-	if err != nil {
-		panic(fmt.Sprintf("PANIC - %T couldn't be built: %s", *new(M), err))
-	}
-
-	return value
+func MustAWSFactory(ctx context.Context) awsfactory.AWSFactory {
+	return pkgfactory.AWSFactory(ctx)
 }

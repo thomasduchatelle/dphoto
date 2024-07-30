@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/internal/localstack"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"io/ioutil"
 	"path"
@@ -19,8 +19,11 @@ func TestShouldFindMediasInS3(t *testing.T) {
 	ctx := context.Background()
 
 	// given
-	cfg := localstack.Config(ctx)
-	s3Client := localstack.S3(cfg)
+	factory, err := awsfactory.LocalstackAWSFactory(ctx, awsfactory.LocalstackEndpoint)
+	if !assert.NoError(t, err) {
+		return
+	}
+	s3Client := factory.GetS3Client()
 
 	mockBucket := fmt.Sprintf("dphoto-unit-s3source-%s", uuid.Must(uuid.NewUUID()))
 	mockFiles := []struct {
@@ -33,11 +36,11 @@ func TestShouldFindMediasInS3(t *testing.T) {
 		{"my_images/video_1.mp4", nil},
 		{"my_images_before/image_4.jpg", nil},
 	}
-	_, err := s3Client.CreateBucket(ctx, &s3.CreateBucketInput{
+	_, err = s3Client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: &mockBucket,
 	})
-	if err != nil {
-		a.FailNow(err.Error())
+	if !assert.NoError(t, err) {
+		return
 	}
 	for _, file := range mockFiles {
 		_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{

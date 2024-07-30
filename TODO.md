@@ -29,11 +29,12 @@ Next steps:
 5. ~~start building a view that contains for a user:~~
    * owned albums + count + last media date + sharing
    * shared albums [by owner] + count + last media date
-6. remove catalogaclview package
-7. Ops script to recount the medias retrospectively
+6. ~~remove catalogaclview package~~
+7. ~~Ops script to recount the medias retrospectively~~
 
 ### Unsorted ...
 
 * the backup should WAIT the end before updating the views.
 * SCOPE should be renamed to PERMISSION
    * PERMISSION should have a generic type ('OWNER' or 'VISITOR') and a RESOURCE {TYPE, OWNER, ID}  
+* FIX the media listing (reported to miss some files)

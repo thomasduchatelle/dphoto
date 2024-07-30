@@ -1,8 +1,8 @@
 package common
 
 import (
+	"fmt"
 	"github.com/spf13/viper"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 const (
@@ -17,33 +17,53 @@ const (
 	SQSArchiveURL        = "SQS_ARCHIVE_URL"
 )
 
-func init() {
+func initViper() {
 	viper.AutomaticEnv()
 
 	viper.SetDefault(JWTValidity, "15m")
 	viper.SetDefault(RefreshTokenValidity, "")
-
-	pkgfactory.AWSNames = new(LambdaViperNames)
 }
 
 type LambdaViperNames struct{}
 
 func (l *LambdaViperNames) DynamoDBName() string {
-	return viper.GetString(DynamoDBTableName)
+	tableName := viper.GetString(DynamoDBTableName)
+	if tableName == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", DynamoDBTableName))
+	}
+	return tableName
 }
 
 func (l *LambdaViperNames) ArchiveMainBucketName() string {
-	return viper.GetString(StorageBucketName)
+	storeBucketName := viper.GetString(StorageBucketName)
+	if storeBucketName == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", StorageBucketName))
+	}
+	return storeBucketName
 }
 
 func (l *LambdaViperNames) ArchiveCacheBucketName() string {
-	return viper.GetString(CacheBucketName)
+	cacheBucketName := viper.GetString(CacheBucketName)
+	if cacheBucketName == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", CacheBucketName))
+	}
+
+	return cacheBucketName
 }
 
 func (l *LambdaViperNames) ArchiveJobsSNSARN() string {
-	return viper.GetString(SNSArchiveARN)
+	archiveJobsSnsARN := viper.GetString(SNSArchiveARN)
+	if archiveJobsSnsARN == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", SNSArchiveARN))
+	}
+
+	return archiveJobsSnsARN
 }
 
 func (l *LambdaViperNames) ArchiveJobsSQSURL() string {
-	return viper.GetString(SQSArchiveURL)
+	archiveJobsSqsURL := viper.GetString(SQSArchiveURL)
+	if archiveJobsSqsURL == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", SQSArchiveURL))
+	}
+	return archiveJobsSqsURL
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -24,59 +25,65 @@ func NewAlbumAutoPopulateReferencer(
 	insertAlbumPort InsertAlbumPort,
 	transferMediasPort TransferMediasRepositoryPort,
 	timelineMutationObservers ...TimelineMutationObserver,
-) (*StatefulAlbumReferencer, error) {
+) (*ThreadSafeAlbumReferencer, error) {
+	return initiateStatefulAlbumReferencer(
+		context.Background(),
+		findAlbumsByOwner,
+		owner,
+		new(TimelineLookupStrategy),
+		&AlbumAutoCreateLookupStrategy{
+			Delegate: &CreateAlbumStateless{
+				Observers: []CreateAlbumObserverWithTimeline{
+					&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
+						InsertAlbumPort: insertAlbumPort,
+					}},
+					&CreateAlbumMediaTransfer{
+						MediaTransfer: &MediaTransferExecutor{
+							TransferMediasRepository:  transferMediasPort,
+							TimelineMutationObservers: timelineMutationObservers,
+						},
+					},
+				},
+			},
+		},
+	)
+}
 
-	albums, err := findAlbumsByOwner.FindAlbumsByOwner(context.Background(), owner)
+func NewAlbumDryRunReferencer(
+	owner ownermodel.Owner,
+	findAlbumsByOwner FindAlbumsByOwnerPort,
+) (*ThreadSafeAlbumReferencer, error) {
+
+	return initiateStatefulAlbumReferencer(
+		context.Background(),
+		findAlbumsByOwner,
+		owner,
+		new(TimelineLookupStrategy),
+		new(DryRunLookupStrategy),
+	)
+}
+
+func initiateStatefulAlbumReferencer(
+	ctx context.Context,
+	findAlbumsByOwner FindAlbumsByOwnerPort,
+	owner ownermodel.Owner,
+	strategies ...AlbumLookupStrategy,
+) (*ThreadSafeAlbumReferencer, error) {
+
+	albums, err := findAlbumsByOwner.FindAlbumsByOwner(ctx, owner)
 	if err != nil {
 		return nil, errors.Wrapf(err, "NewAlbumAutoPopulateReferencer(...) failed")
 	}
 
 	timeline, err := NewInitialisedTimelineAggregate(albums)
 
-	return &StatefulAlbumReferencer{
-		Owner:             owner,
-		TimelineAggregate: timeline,
-		LookupStrategies: []AlbumLookupStrategy{
-			new(TimelineLookupStrategy),
-			&AlbumAutoCreateLookupStrategy{
-				Delegate: &CreateAlbumStateless{
-					Observers: []CreateAlbumObserverWithTimeline{
-						&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
-							InsertAlbumPort: insertAlbumPort,
-						}},
-						&CreateAlbumMediaTransfer{
-							MediaTransfer: &MediaTransferExecutor{
-								TransferMediasRepository:  transferMediasPort,
-								TimelineMutationObservers: timelineMutationObservers,
-							},
-						},
-					},
-				},
-			},
+	return &ThreadSafeAlbumReferencer{
+		Delegate: &StatefulAlbumReferencer{
+			Owner:             owner,
+			TimelineAggregate: timeline,
+			LookupStrategies:  strategies,
 		},
-	}, errors.Wrapf(err, "NewAlbumAutoPopulateReferencer(...) failed")
-}
-
-func NewAlbumDryRunReferencer(
-	owner ownermodel.Owner,
-	findAlbumsByOwner FindAlbumsByOwnerPort,
-) (*StatefulAlbumReferencer, error) {
-
-	albums, err := findAlbumsByOwner.FindAlbumsByOwner(context.Background(), owner)
-	if err != nil {
-		return nil, errors.Wrapf(err, "NewAlbumDryRunReferencer(%s) failed", owner)
-	}
-
-	timeline, err := NewInitialisedTimelineAggregate(albums)
-
-	return &StatefulAlbumReferencer{
-		Owner:             owner,
-		TimelineAggregate: timeline,
-		LookupStrategies: []AlbumLookupStrategy{
-			new(TimelineLookupStrategy),
-			new(DryRunLookupStrategy),
-		},
-	}, errors.Wrapf(err, "NewAlbumDryRunReferencer(...) failed")
+	}, errors.Wrapf(err, "initiateStatefulAlbumReferencer(...) failed")
 }
 
 type AlbumLookupStrategy interface {
@@ -87,7 +94,7 @@ type AlbumLookupStrategy interface {
 type StatefulAlbumReferencer struct {
 	Owner             ownermodel.Owner
 	TimelineAggregate *TimelineAggregate
-	LookupStrategies  []AlbumLookupStrategy
+	LookupStrategies  []AlbumLookupStrategy // LookupStrategies will return the first matching album reference (not returning NoAlbumLookedUpError)
 }
 
 func (a *StatefulAlbumReferencer) FindReference(ctx context.Context, mediaTime time.Time) (AlbumReference, error) {
@@ -153,4 +160,17 @@ func (d *DryRunLookupStrategy) LookupAlbum(ctx context.Context, owner ownermodel
 		AlbumId:          &AlbumId{owner, NewFolderName("new-album")},
 		AlbumJustCreated: true,
 	}, nil
+}
+
+type ThreadSafeAlbumReferencer struct {
+	Delegate *StatefulAlbumReferencer
+	lock     sync.Mutex
+}
+
+func (t *ThreadSafeAlbumReferencer) FindReference(ctx context.Context, mediaTime time.Time) (AlbumReference, error) {
+	// note: if the album needs to be created, first strategy fails but any next request needs to wait the timeline to be upgraded. (tested in TestBackupAcceptance)
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
+	return t.Delegate.FindReference(ctx, mediaTime)
 }

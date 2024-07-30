@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/thomasduchatelle/dphoto/internal/localstack"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"regexp"
 	"strings"
 	"testing"
@@ -22,11 +22,11 @@ type DynamodbTestContext struct {
 }
 
 func NewTestContext(ctx context.Context, t *testing.T) *DynamodbTestContext {
-	cfg := localstack.Config(ctx)
-	client := dynamodb.NewFromConfig(cfg)
+	factory, err := awsfactory.LocalstackAWSFactory(ctx, awsfactory.LocalstackEndpoint)
+	client := factory.GetDynamoDBClient()
 	tableName := NewTestTableName(t)
 
-	err := appdynamodb.CreateTableIfNecessary(ctx, tableName, client, true)
+	err = appdynamodb.CreateTableIfNecessary(ctx, tableName, client, true)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +38,7 @@ func NewTestContext(ctx context.Context, t *testing.T) *DynamodbTestContext {
 	return &DynamodbTestContext{
 		T:      t,
 		Ctx:    ctx,
-		Cfg:    cfg,
+		Cfg:    factory.GetCfg(),
 		Client: client,
 		Table:  tableName,
 	}

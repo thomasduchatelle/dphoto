@@ -22,19 +22,25 @@ var migrateCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
+		var builder *pkgfactory.AWSCloudBuilder
 		if migrateCmdArgs.localstack {
-			pkgfactory.AWSConfigFactory = awsfactory.NewLocalstackConfig(ctx)
-			pkgfactory.AWSNames = &StaticConfigNames{DynamoDBNameValue: "dphoto-local"}
+			pkgfactory.StartAWSCloudBuilder(&pkgfactory.StaticAWSAdapterNames{DynamoDBNameValue: "dphoto-local"}).
+				OverridesAWSFactory(awsfactory.LocalstackAWSFactory(ctx, awsfactory.LocalstackEndpoint))
 
 		} else if migrateCmdArgs.terraformOutput != "" {
 			terraformCfg, err := awsfactory.ReadTerraformOutputFile(ctx, migrateCmdArgs.terraformOutput)
 			printer.FatalIfError(err, 10)
 
-			pkgfactory.AWSConfigFactory = terraformCfg
-			pkgfactory.AWSNames = &StaticConfigNames{DynamoDBNameValue: terraformCfg.DynamoDBMainTable()}
+			pkgfactory.StartAWSCloudBuilder(&pkgfactory.StaticAWSAdapterNames{DynamoDBNameValue: terraformCfg.DynamoDBMainTable()}).
+				OverridesAWSFactory(awsfactory.StaticAWSFactory(ctx, terraformCfg.StaticCredentials))
 
 		} else {
 			printer.ErrorText("Either terraform-output or localstack must be set")
+		}
+
+		_, err := builder.Build(ctx)
+		if err != nil {
+			printer.FatalIfError(err, 12)
 		}
 	},
 }
@@ -44,28 +50,4 @@ func init() {
 
 	migrateCmd.PersistentFlags().StringVarP(&migrateCmdArgs.terraformOutput, "terraform-output", "f", "", "(required) output file obtained with 'terraform output -json > output.json'")
 	migrateCmd.PersistentFlags().BoolVar(&migrateCmdArgs.localstack, "localstack", false, "set to true when running against localstack DynamoDB")
-}
-
-type StaticConfigNames struct {
-	DynamoDBNameValue string
-}
-
-func (s StaticConfigNames) DynamoDBName() string {
-	return s.DynamoDBNameValue
-}
-
-func (s StaticConfigNames) ArchiveMainBucketName() string {
-	panic("implement me")
-}
-
-func (s StaticConfigNames) ArchiveCacheBucketName() string {
-	panic("implement me")
-}
-
-func (s StaticConfigNames) ArchiveJobsSNSARN() string {
-	panic("implement me")
-}
-
-func (s StaticConfigNames) ArchiveJobsSQSURL() string {
-	panic("implement me")
 }

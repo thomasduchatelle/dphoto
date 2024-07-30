@@ -6,6 +6,10 @@ type Options struct {
 	SkipRejects               bool                   // SkipRejects mode will report any analysis error, or missing timestamp, and continue.
 	AnalyserDecorator         AnalyserDecorator      // AnalyserDecorator is an optional decorator to add concept like caching (might be nil)
 	DryRun                    bool                   // DryRun mode will not upload anything and do not create albums, still analyse
+	ConcurrentAnalyser        int                    // ConcurrentAnalyser is the number of concurrent analyser (read files, compute hash, filter out duplicates, ...)
+	ConcurrentCataloguer      int                    // ConcurrentCataloguer is the number of concurrent cataloguer (find album, create new albums)
+	ConcurrentUploader        int                    // ConcurrentUploader is the number of concurrent uploader (upload files)
+	BatchSize                 int                    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
 }
 
 type AnalyserDecorator interface {
@@ -30,6 +34,11 @@ func readOptions(requestedOptions []Options) Options {
 		}
 
 		aggregated.SkipRejects = aggregated.SkipRejects || original.SkipRejects
+
+		aggregated.ConcurrentAnalyser = mergeIntOption(aggregated.ConcurrentAnalyser, original.ConcurrentAnalyser)
+		aggregated.ConcurrentCataloguer = mergeIntOption(aggregated.ConcurrentCataloguer, original.ConcurrentCataloguer)
+		aggregated.ConcurrentUploader = mergeIntOption(aggregated.ConcurrentUploader, original.ConcurrentUploader)
+		aggregated.BatchSize = mergeIntOption(aggregated.BatchSize, original.BatchSize)
 	}
 
 	return aggregated
@@ -77,10 +86,42 @@ func (o Options) GetAnalyserDecorator() AnalyserDecorator {
 	return new(NopeAnalyserDecorator)
 }
 
+func WithConcurrentAnalyser(concurrent int) Options {
+	return Options{
+		ConcurrentAnalyser: concurrent,
+	}
+}
+
+func WithConcurrentCataloguer(concurrent int) Options {
+	return Options{
+		ConcurrentCataloguer: concurrent,
+	}
+}
+
+func WithConcurrentUploader(concurrent int) Options {
+	return Options{
+		ConcurrentUploader: concurrent,
+	}
+}
+
+func WithBatchSize(batchSize int) Options {
+	return Options{
+		BatchSize: batchSize,
+	}
+}
+
 // NopeAnalyserDecorator is a default implementation for AnalyserDecorator which doesn't decorate the AnalyseMediaFunc.
 type NopeAnalyserDecorator struct {
 }
 
 func (n *NopeAnalyserDecorator) Decorate(analyseFunc RunnerAnalyser) RunnerAnalyser {
 	return analyseFunc
+}
+
+func mergeIntOption(current, value int) int {
+	if current > 0 {
+		return current
+	}
+
+	return value
 }

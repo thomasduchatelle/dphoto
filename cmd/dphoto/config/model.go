@@ -14,20 +14,15 @@ type Config interface {
 	GetInt(key string) int
 	GetIntOrDefault(key string, defaultValue int) int
 	GetAWSV2Config() aws.Config
-	GetAWSFactory() *awsfactory.AWSFactory
 }
 
 type viperConfig struct {
 	*viper.Viper
-	AWSFactory *awsfactory.AWSFactory
+	AWSFactory awsfactory.AWSFactory
 }
 
 func (v *viperConfig) GetAWSV2Config() aws.Config {
-	return v.AWSFactory.Cfg
-}
-
-func (v *viperConfig) GetAWSFactory() *awsfactory.AWSFactory {
-	return v.AWSFactory
+	return v.AWSFactory.GetCfg()
 }
 
 func (v *viperConfig) GetStringOrDefault(key string, defaultValue string) string {

@@ -1,11 +1,14 @@
 package scanui
 
 import (
+	"context"
 	"fmt"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
+	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
 	"github.com/thomasduchatelle/dphoto/internal/screen"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 type ScanProgress struct {
@@ -21,10 +24,14 @@ func ScanWithProgress(owner string, volume backup.SourceVolume, options ...backu
 }
 
 func doScan(owner string, volume backup.SourceVolume, options ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error) {
+	ctx := context.TODO()
+
 	progress := newScanProgress()
 	options = append(options, backup.OptionWithListener(progress))
+	options = append(options, config.BackupOptions()...)
 
-	suggestions, rejects, err := backup.Scan(owner, volume, options...)
+	scanner := pkgfactory.NewMultiFilesScanner(ctx)
+	suggestions, rejects, err := scanner(ctx, owner, volume, options...)
 	progress.stop()
 
 	if err != nil {

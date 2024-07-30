@@ -159,3 +159,12 @@ func (t *Tracker) fireRawEvent(event *ProgressEvent) {
 	}
 
 }
+
+func (t *Tracker) MediaCount() int {
+	count := 0
+	for _, counter := range t.detailedCount {
+		count += counter.Total().Count
+	}
+
+	return count
+}

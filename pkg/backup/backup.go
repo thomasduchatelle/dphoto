@@ -41,10 +41,10 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},
-		ConcurrentAnalyser:   ConcurrentAnalyser,
-		ConcurrentCataloguer: ConcurrentCataloguer,
-		ConcurrentUploader:   ConcurrentUploader,
-		BatchSize:            BatchSize,
+		ConcurrentAnalyser:   options.ConcurrentAnalyser,
+		ConcurrentCataloguer: options.ConcurrentCataloguer,
+		ConcurrentUploader:   options.ConcurrentUploader,
+		BatchSize:            options.BatchSize,
 		SkipRejects:          options.SkipRejects,
 	}
 
@@ -54,6 +54,18 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 	err = run.waitToFinish()
 	backupReport.WaitToComplete()
 
-	mdc.Infoln("Backup completed.")
+	if err == nil {
+		mdc.Infof("Backup completed, %d medias backed up.", backupReport.MediaCount())
+	} else {
+		mdc.WithError(err).Errorf("Backup faifed with err: %s", err.Error())
+	}
 	return backupReport, err
+}
+
+func defaultValue(value, fallback int) int {
+	if value == 0 {
+		return fallback
+	}
+
+	return value
 }
