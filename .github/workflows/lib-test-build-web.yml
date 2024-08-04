@@ -28,7 +28,7 @@ jobs:
       - name: Setup GO
         uses: ./.github/actions/install-go
       - name: start mock services
-        run: docker-compose up -d
+        run: docker compose up -d
       - run: make test-go
 
   build-go:

@@ -11,6 +11,6 @@ jobs:
       - name: Install GO
         uses: ./.github/actions/install-go
       - name: Starts localstack
-        run: docker-compose up -d
+        run: docker compose up -d
       - name: Run tests
         run: make test-go
