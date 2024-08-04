@@ -10,6 +10,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          ref: ${{ github.head_ref }}
       - name: SemVer
         id: semver
         uses: ./.github/actions/semver
@@ -19,8 +20,19 @@ jobs:
           cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
 
       - name: Generate snapshots
+        id: generate-snapshots
         if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
-        run: make update-snapshots
+        run: |
+          make update-snapshots
+          if ! git diff --exit-code ; then
+            echo "status=updated" >> $GITHUB_OUTPUT 
+          fi
+
+      - name: Publish new snapshots
+        if: ${{ steps.generate-snapshots.outputs.status == 'updated' }}
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: ui/test - update visual regression snapshots
 
       - name: Test and build WEB UI
         run: make test-web
