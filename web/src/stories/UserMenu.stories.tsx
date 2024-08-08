@@ -1,30 +1,31 @@
-import React from 'react';
-import {ComponentMeta, ComponentStory} from '@storybook/react';
+import React from "react";
+import { ComponentMeta, ComponentStory } from "@storybook/react";
 import UserMenu from "../components/user.menu";
-import {userEvent, within} from "@storybook/testing-library";
+import { userEvent, within } from "@storybook/test";
 
 export default {
-    title: 'Layout/UserMenu',
-    component: UserMenu,
+  title: "Layout/UserMenu",
+  component: UserMenu,
 } as ComponentMeta<typeof UserMenu>;
 
-const Template: ComponentStory<typeof UserMenu> = (args) => <UserMenu {...args} />;
+const Template: ComponentStory<typeof UserMenu> = (args) => (
+  <UserMenu {...args} />
+);
 
 export const DefaultMenu = Template.bind({});
 DefaultMenu.args = {
-    user: {
-        name: "Tony Ironman Stark",
-        email: "tomy@stark.com",
-        picture: "tonystark-profile.jpg"
-    },
-    onLogout: () => {
-    },
+  user: {
+    name: "Tony Ironman Stark",
+    email: "tomy@stark.com",
+    picture: "tonystark-profile.jpg",
+  },
+  onLogout: () => {},
 };
 DefaultMenu.parameters = {
-    delay: 300,
+  delay: 300,
 };
-DefaultMenu.play = async ({canvasElement}) => {
-    const canvas = within(canvasElement);
+DefaultMenu.play = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
 
-    await userEvent.click(canvas.getByRole("button"));
+  await userEvent.click(canvas.getByRole("button"));
 };

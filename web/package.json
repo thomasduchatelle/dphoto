@@ -31,7 +31,7 @@
     "test:ci": "yarn build-storybook && STORYBOOK_BUILT=true yarn test -- --watchAll=false",
     "eject": "react-scripts eject",
     "clean": "rm -rf build/ storybook-static/",
-    "storybook": "start-storybook -p 6006"
+    "storybook": "storybook dev -p 6006"
   },
   "eslintConfig": {
     "extends": [
@@ -69,19 +69,18 @@
     "@storybook/addon-links": "^8.2.8",
     "@storybook/addon-storyshots": "^7.6.17",
     "@storybook/addon-storyshots-puppeteer": "^7.6.17",
-    "@storybook/builder-webpack5": "^8.2.8",
-    "@storybook/jest": "^0.2.3",
-    "@storybook/manager-webpack5": "^6.5.16",
     "@storybook/node-logger": "^8.2.8",
     "@storybook/preset-create-react-app": "^8.2.8",
     "@storybook/react": "^8.2.8",
+    "@storybook/react-webpack5": "^8.2.8",
+    "@storybook/test": "^8.2.8",
     "@storybook/test-runner": "^0.19.1",
-    "@storybook/testing-library": "^0.2.2",
     "babel-plugin-named-exports-order": "^0.0.2",
     "prop-types": "^15.8.1",
     "puppeteer": "23.0.1",
     "react-test-renderer": "^18.3.1",
     "start-server-and-test": "^2.0.5",
+    "storybook": "^8.2.8",
     "webpack": "^5.93.0"
   }
 }
