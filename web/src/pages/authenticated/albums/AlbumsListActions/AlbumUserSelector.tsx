@@ -1,5 +1,6 @@
 import {useState} from "react";
-import {List, ListItemButton, ListItemText, Menu, MenuItem} from "@mui/material";
+import {Avatar, AvatarGroup, Box, Divider, Fab, Menu, MenuItem} from "@mui/material";
+import CollectionsIcon from "@mui/icons-material/Collections";
 
 const options = [
     'Show some love to MUI',
@@ -30,25 +31,20 @@ export default function AlarmUserSelector() {
 
     return (
         <div>
-            <List
-                component="nav"
-                aria-label="Device settings"
-                sx={{ bgcolor: 'background.paper' }}
-            >
-                <ListItemButton
-                    id="lock-button"
-                    aria-haspopup="listbox"
-                    aria-controls="lock-menu"
-                    aria-label="when device is locked"
-                    aria-expanded={open ? 'true' : undefined}
-                    onClick={handleClickListItem}
-                >
-                    <ListItemText
-                        primary="When device is locked"
-                        secondary={options[selectedIndex]}
-                    />
-                </ListItemButton>
-            </List>
+            <Fab variant="extended" onClick={handleClickListItem}>
+                <Box sx={{mr: 1, width: '130px'}}>
+                    <AvatarGroup max={4} spacing='small'>
+                        <Avatar alt="Black Widow" src="/api/static/black-widow-profile.jpg"/>
+                        <Avatar alt="Hulk" src="/api/static/hulk-profile.webp"/>
+                        <Avatar alt="Tony Stark" src="/api/static/tonystark-profile.jpg"/>
+                        <Avatar alt="Agnes Walker" src="/static/images/avatar/4.jpg"/>
+                        <Avatar alt="Trevor Henderson" src="/static/images/avatar/5.jpg"/>
+                    </AvatarGroup>
+                </Box>
+                All Albums
+                {/*<CollectionsIcon sx={{mr: 1}}/>*/}
+                {/*All Albums*/}
+            </Fab>
             <Menu
                 id="lock-menu"
                 anchorEl={anchorEl}
@@ -59,16 +55,42 @@ export default function AlarmUserSelector() {
                     role: 'listbox',
                 }}
             >
-                {options.map((option, index) => (
-                    <MenuItem
-                        key={option}
-                        disabled={index === 0}
-                        selected={index === selectedIndex}
-                        onClick={(event) => handleMenuItemClick(event, index)}
-                    >
-                        {option}
-                    </MenuItem>
-                ))}
+                <MenuItem>
+                    <Box sx={{mr: 1, width: '130px'}}>
+                        <Avatar alt="Tony Stark" src="/api/static/tonystark-profile.jpg"/>
+                        {/*<CollectionsIcon/>*/}
+                    </Box>
+                    My Albums
+                </MenuItem>
+                <Divider />
+                <MenuItem>
+                    <Box sx={{mr: 1, width: '130px'}}>
+                        <AvatarGroup max={4} spacing='small'>
+                            <Avatar alt="Black Widow" src="/api/static/black-widow-profile.jpg"/>
+                            <Avatar alt="Hulk" src="/api/static/hulk-profile.webp"/>
+                            <Avatar alt="Tony Stark" src="/api/static/tonystark-profile.jpg"/>
+                            <Avatar alt="Agnes Walker" src="/static/images/avatar/4.jpg"/>
+                            <Avatar alt="Trevor Henderson" src="/static/images/avatar/5.jpg"/>
+                        </AvatarGroup>
+                    </Box>
+                    All Albums
+                </MenuItem>
+                <MenuItem>
+                    <Box sx={{mr: 1, width: '130px'}}>
+                        <Avatar alt="Black Widow" src="/api/static/black-widow-profile.jpg"/>
+                    </Box>
+                    Black Window
+                </MenuItem>
+                {/*{options.map((option, index) => (*/}
+                {/*    <MenuItem*/}
+                {/*        key={option}*/}
+                {/*        disabled={index === 0}*/}
+                {/*        selected={index === selectedIndex}*/}
+                {/*        onClick={(event) => handleMenuItemClick(event, index)}*/}
+                {/*    >*/}
+                {/*        {option}*/}
+                {/*    </MenuItem>*/}
+                {/*))}*/}
             </Menu>
         </div>
     );

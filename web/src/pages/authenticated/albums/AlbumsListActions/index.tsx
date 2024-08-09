@@ -13,11 +13,7 @@ export default function AlbumListActions() {
             '& > :not(style)': { m: 1, mr: 3 },
         }}>
             <AlarmUserSelector />
-            <Fab variant="extended">
-                <CollectionsIcon sx={{mr: 1}} />
-                All Albums
-            </Fab>
-            <Fab color="secondary" aria-label="add">
+            <Fab color="secondary" aria-label="add" title="Create new album">
                 <AddIcon/>
             </Fab>
         </Box>
