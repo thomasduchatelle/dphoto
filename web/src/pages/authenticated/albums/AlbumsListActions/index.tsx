@@ -1,21 +1,31 @@
-import CollectionsIcon from "@mui/icons-material/Collections";
 import AddIcon from "@mui/icons-material/Add";
-
-import {Box, Fab} from "@mui/material";
+import SettingsIcon from '@mui/icons-material/Settings';
+import {Box, Button, ButtonGroup, IconButton} from "@mui/material";
 import AlarmUserSelector from "./AlbumUserSelector";
 
 export default function AlbumListActions() {
+    const doSomething = () => {
+        console.log("creating a new album")
+    }
+
     return (
         <Box sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            '& > :not(style)': { m: 1, mr: 3 },
+            '& > :not(style)': {mt: 1, mb: 1},
         }}>
-            <AlarmUserSelector />
-            <Fab color="secondary" aria-label="add" title="Create new album">
-                <AddIcon/>
-            </Fab>
+            <Box sx={{mr: 2}}>
+                <AlarmUserSelector/>
+            </Box>
+            {/*<ButtonGroup variant="contained">*/}
+                <IconButton color="primary" title="Create new album" onClick={doSomething} size="large">
+                    <AddIcon/>
+                </IconButton>
+                <IconButton color="primary" title="Album management" onClick={doSomething} size="large">
+                    <SettingsIcon/>
+                </IconButton>
+            {/*</ButtonGroup>*/}
         </Box>
     )
 }

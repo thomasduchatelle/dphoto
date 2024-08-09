@@ -1,6 +1,6 @@
 import {useState} from "react";
-import {Avatar, AvatarGroup, Box, Divider, Fab, Menu, MenuItem} from "@mui/material";
-import CollectionsIcon from "@mui/icons-material/Collections";
+import {Avatar, AvatarGroup, Box, Button, Divider, Menu, MenuItem} from "@mui/material";
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 const options = [
     'Show some love to MUI',
@@ -31,8 +31,10 @@ export default function AlarmUserSelector() {
 
     return (
         <div>
-            <Fab variant="extended" onClick={handleClickListItem}>
-                <Box sx={{mr: 1, width: '130px'}}>
+            <Button
+                variant="outlined"
+                onClick={handleClickListItem}
+                startIcon={
                     <AvatarGroup max={4} spacing='small'>
                         <Avatar alt="Black Widow" src="/api/static/black-widow-profile.jpg"/>
                         <Avatar alt="Hulk" src="/api/static/hulk-profile.webp"/>
@@ -40,11 +42,11 @@ export default function AlarmUserSelector() {
                         <Avatar alt="Agnes Walker" src="/static/images/avatar/4.jpg"/>
                         <Avatar alt="Trevor Henderson" src="/static/images/avatar/5.jpg"/>
                     </AvatarGroup>
-                </Box>
+                }
+                endIcon={<ArrowDropDownIcon/>}
+            >
                 All Albums
-                {/*<CollectionsIcon sx={{mr: 1}}/>*/}
-                {/*All Albums*/}
-            </Fab>
+            </Button>
             <Menu
                 id="lock-menu"
                 anchorEl={anchorEl}
@@ -58,11 +60,10 @@ export default function AlarmUserSelector() {
                 <MenuItem>
                     <Box sx={{mr: 1, width: '130px'}}>
                         <Avatar alt="Tony Stark" src="/api/static/tonystark-profile.jpg"/>
-                        {/*<CollectionsIcon/>*/}
                     </Box>
                     My Albums
                 </MenuItem>
-                <Divider />
+                <Divider/>
                 <MenuItem>
                     <Box sx={{mr: 1, width: '130px'}}>
                         <AvatarGroup max={4} spacing='small'>
