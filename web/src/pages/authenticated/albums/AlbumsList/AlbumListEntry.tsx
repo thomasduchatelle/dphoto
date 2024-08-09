@@ -1,4 +1,4 @@
-import {Album} from "../../../../core/catalog";
+import {Album} from "../../../../core/catalog-react";
 import {
     Avatar,
     AvatarGroup,

@@ -1,4 +1,4 @@
-import {Sharing} from "../../../../core/catalog";
+import {Sharing} from "../../../../core/catalog-react";
 
 export interface ShareError {
     type: "adding" | "general"

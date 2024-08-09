@@ -1,4 +1,4 @@
-import {Album, AlbumId, SharingType, UserDetails} from "../../../../core/catalog";
+import {Album, AlbumId, SharingType, UserDetails} from "../../../../core/catalog-react";
 
 import {SharingModalAction} from "./sharingModalReducer";
 

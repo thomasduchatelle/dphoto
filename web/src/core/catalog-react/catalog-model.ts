@@ -47,11 +47,6 @@ export interface MediaWithinADay {
     medias: Media[]
 }
 
-export interface MediaId {
-    hash: string
-    size: number
-}
-
 export interface Media {
     id: string
     type: MediaType

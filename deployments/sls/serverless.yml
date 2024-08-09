@@ -79,13 +79,13 @@ functions:
   # API
   #####################################
 
-  list-albums:
+  albums:
     handler: bootstrap
     package:
-      artifact: ../../bin/list-albums.zip
+      artifact: ../../bin/list-albums-v2.zip
     events:
       - httpApi:
-          path: /api/v1/albums
+          path: /api/v2/albums
           method: get
   share-album:
     handler: bootstrap
@@ -93,7 +93,12 @@ functions:
       artifact: ../../bin/share-album.zip
     events:
       - httpApi:
-          # /api/v1/owners/tomdush@gmail.com/albums/2018-Q1/shares/claire.magnier@gmail.com
+          path: /api/v2/owners/{owner}/albums/{folderName}/shares/{email}
+          method: put
+      - httpApi:
+          path: /api/v2/owners/{owner}/albums/{folderName}/shares/{email}
+          method: delete
+      - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/shares/{email}
           method: put
       - httpApi:
@@ -105,7 +110,35 @@ functions:
       artifact: ../../bin/list-medias.zip
     events:
       - httpApi:
+          path: /api/v2/owners/{owner}/albums/{folderName}/medias
+          method: get
+      - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/medias
+          method: get
+  get-media:
+    handler: bootstrap
+    package:
+      artifact: ../../bin/get-media.zip
+    memorySize: 1024
+    timeout: 29 # maximum allowed by API gateway
+    events:
+      - httpApi:
+          path: /api/v2/owners/{owner}/medias/{mediaId}/{filename}
+          method: get
+      - httpApi:
+          path: /api/v1/owners/{owner}/medias/{mediaId}/{filename}
+          method: get
+
+  # API V1 - DEPRECATED / NOT USED
+  #####################################
+
+  list-albums:
+    handler: bootstrap
+    package:
+      artifact: ../../bin/list-albums.zip
+    events:
+      - httpApi:
+          path: /api/v1/albums
           method: get
   list-users:
     handler: bootstrap
@@ -123,16 +156,7 @@ functions:
       - httpApi:
           path: /api/v1/owners
           method: get
-  get-media:
-    handler: bootstrap
-    package:
-      artifact: ../../bin/get-media.zip
-    memorySize: 1024
-    timeout: 29 # maximum allowed by API gateway
-    events:
-      - httpApi:
-          path: /api/v1/owners/{owner}/medias/{mediaId}/{filename}
-          method: get
+
 
   # ASYNC lambdas - using FIFO for deduplication made a SQS required
   #####################################

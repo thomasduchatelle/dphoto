@@ -32,7 +32,7 @@ import {
 import React, {useRef, useState} from "react";
 import Grid from '@mui/material/Unstable_Grid2';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import {Sharing, SharingType} from "../../../../core/catalog";
+import {Sharing, SharingType} from "../../../../core/catalog-react";
 import {Delete, MoreHoriz} from "@mui/icons-material";
 import {ShareError} from "../share-controller";
 

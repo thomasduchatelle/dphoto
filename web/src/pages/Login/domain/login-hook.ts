@@ -3,7 +3,7 @@ import {useAuthenticationCase, useSecurityState} from "../../../core/application
 import {useEffect, useMemo, useReducer} from "react";
 import {LoginController} from "./login-controller";
 import {initialLoginPageState, reduce} from "./login-reducer";
-import {useCatalogLoader} from "../../../core/catalog";
+import {useCatalogLoader} from "../../../core/catalog-react";
 
 export interface LoginPageState extends PageState, LoginPageActions {
 }

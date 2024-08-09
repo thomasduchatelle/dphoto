@@ -3,7 +3,7 @@ import {Fragment} from "react";
 import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
 import useWindowDimensions from "../../../../core/utils/window-utils";
 import {ImageInList} from "./ImageInList";
-import {MediaWithinADay} from "../../../../core/catalog";
+import {MediaWithinADay} from "../../../../core/catalog-react";
 
 const drawerWidth = 498;
 const marginsWidth = 33;

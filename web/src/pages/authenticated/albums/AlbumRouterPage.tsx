@@ -6,7 +6,7 @@ import AlbumsList from "./AlbumsList";
 import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
-import {useCatalogController} from "../../../core/catalog";
+import {useCatalogController} from "../../../core/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
 
 export default function AlbumRouterPage() {
