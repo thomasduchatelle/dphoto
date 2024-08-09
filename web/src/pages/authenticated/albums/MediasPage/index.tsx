@@ -1,8 +1,9 @@
-import {Alert, Box, Drawer, Toolbar} from "@mui/material";
+import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
 import {Album, MediaWithinADay} from "../../../../core/catalog";
+import AlbumListActions from "../AlbumsListActions";
 
 export default function MediasPage({
                                        albums,
@@ -40,6 +41,8 @@ export default function MediasPage({
                     }}
                 >
                     <Toolbar/>
+                    <AlbumListActions />
+                    <Divider />
                     <AlbumsList albums={albums} loaded={fullyLoaded} selected={selectedAlbum}/>
                 </Drawer>
             </Box>
