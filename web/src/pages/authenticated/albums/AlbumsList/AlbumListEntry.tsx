@@ -51,9 +51,11 @@ export function AlbumListEntry({album, selected, onClickOnSharedWith}: {
         />
         {album.ownedBy ? (
             <Tooltip title={`Shared by ${album.ownedBy.name ?? "a friend"}`}>
-                <AvatarGroup max={2} spacing='small'>
+                <AvatarGroup max={2} spacing='small' sx={{
+                    '& .MuiAvatarGroup-avatar': {width: 32, height: 32, fontSize: "0.8em"},
+                }}>
                     {album.ownedBy.users.map(user => (
-                        <Avatar key={user.email} src={user.picture} alt={user.name} sx={{width: 32, height: 32}}/>
+                        <Avatar key={user.email} src={user.picture} alt={user.name}/>
                     ))}
                 </AvatarGroup>
             </Tooltip>

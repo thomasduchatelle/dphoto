@@ -35,7 +35,9 @@ export default function AlarmUserSelector() {
                 variant="outlined"
                 onClick={handleClickListItem}
                 startIcon={
-                    <AvatarGroup max={4} spacing='small'>
+                    <AvatarGroup max={4} spacing='small' variant="circular" sx={{
+                        '& .MuiAvatarGroup-avatar': {width: 32, height: 32, fontSize: "0.8em"},
+                    }}>
                         <Avatar alt="Black Widow" src="/api/static/black-widow-profile.jpg"/>
                         <Avatar alt="Hulk" src="/api/static/hulk-profile.webp"/>
                         <Avatar alt="Tony Stark" src="/api/static/tonystark-profile.jpg"/>
