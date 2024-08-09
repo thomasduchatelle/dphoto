@@ -3,7 +3,7 @@ import {ComponentMeta, ComponentStory} from '@storybook/react';
 import {List} from "@mui/material";
 import {AlbumListEntry} from "../pages/authenticated/albums/AlbumsList/AlbumListEntry";
 import {StoriesContext} from "./StoriesContext";
-import {SharingType} from "../core/catalog";
+import {SharingType} from "../core/catalog-react";
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {

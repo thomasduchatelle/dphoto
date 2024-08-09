@@ -2,7 +2,7 @@ import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
-import {Album, MediaWithinADay} from "../../../../core/catalog";
+import {Album, MediaWithinADay} from "../../../../core/catalog-react";
 import AlbumListActions from "../AlbumsListActions";
 
 export default function MediasPage({

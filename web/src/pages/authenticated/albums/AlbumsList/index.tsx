@@ -1,5 +1,5 @@
 import {Box, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Skeleton} from "@mui/material";
-import {Album} from "../../../../core/catalog";
+import {Album} from "../../../../core/catalog-react";
 import {AlbumListEntry} from "./AlbumListEntry";
 import ShareDialog from "../ShareDialog";
 import React from "react";

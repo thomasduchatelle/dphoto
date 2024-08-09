@@ -1,6 +1,6 @@
 // CatalogController is the controller used once on the page
 import {AlbumId, Media, MediaWithinADay} from "./catalog-model";
-import {CatalogAPIAdapter} from "../../apis/catalog";
+import {CatalogAPIAdapter} from "../catalog/adapters/apis";
 import {Dispatch} from "react";
 import {CatalogAction} from "./catalog-reducer";
 import {InternalError, UnrecoverableErrorAction} from "../application";
