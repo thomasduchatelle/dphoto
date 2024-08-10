@@ -1,40 +1,5 @@
-import {Album, AlbumId, albumIdEquals, CatalogState, MediaWithinADay} from "./catalog-model";
-
-type AlbumsAndMediasLoadedAction = {
-    type: 'AlbumsAndMediasLoadedAction'
-    albums: Album[]
-    media: MediaWithinADay[]
-    selectedAlbum?: Album
-}
-
-type MediaFailedToLoadAction = {
-    type: 'MediaFailedToLoadAction'
-    albums: Album[]
-    selectedAlbum?: Album
-    error: Error
-}
-
-type NoAlbumAvailableAction = {
-    type: 'NoAlbumAvailableAction'
-}
-
-type StartLoadingMediasAction = {
-    type: 'StartLoadingMediasAction'
-    albumId: AlbumId
-}
-
-type MediasLoadedAction = {
-    type: 'MediasLoadedAction'
-    albumId: AlbumId
-    medias: MediaWithinADay[]
-}
-
-export type CatalogAction =
-    AlbumsAndMediasLoadedAction
-    | MediaFailedToLoadAction
-    | NoAlbumAvailableAction
-    | StartLoadingMediasAction
-    | MediasLoadedAction
+import {albumIdEquals, CatalogState} from "./catalog-model";
+import {CatalogAction} from "../catalog";
 
 export const initialCatalogState: CatalogState = {
     albumNotFound: false,
@@ -96,7 +61,8 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 fullyLoaded: true,
             }
 
+        default:
+            return current
     }
-    return current
 }
 

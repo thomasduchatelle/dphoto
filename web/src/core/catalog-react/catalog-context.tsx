@@ -1,6 +1,7 @@
 import {CatalogState} from "./catalog-model";
 import {createContext, Dispatch, ReactNode, useReducer} from "react";
-import {CatalogAction, catalogReducer, initialCatalogState} from "./catalog-reducer";
+import {catalogReducer, initialCatalogState} from "./catalog-reducer";
+import {CatalogAction} from "../catalog";
 
 export interface CatalogStateWithDispatch {
     catalog: CatalogState

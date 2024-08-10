@@ -3,7 +3,7 @@ import {CatalogController, InitialCatalogController} from "./catalog-controller"
 import {useCallback, useContext, useEffect, useMemo} from "react";
 import {AuthenticatedUser} from "../security";
 import {useApplication, useUnrecoverableErrorDispatch} from "../application";
-import {CatalogAPIAdapter} from "../catalog/adapters/apis";
+import {CatalogAPIAdapter} from "../catalog-apis";
 import {CatalogContext} from "./catalog-context";
 import {CatalogState} from "./catalog-model";
 

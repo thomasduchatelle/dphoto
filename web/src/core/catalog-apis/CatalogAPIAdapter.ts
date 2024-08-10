@@ -1,7 +1,7 @@
-import {Album, AlbumId, CatalogAPI, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../../catalog-react";
+import {Album, AlbumId, CatalogAPI, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../catalog-react";
 import axios, {AxiosError, AxiosInstance} from "axios";
-import {AccessTokenHolder} from "../../../application";
-import {SharingAPI} from "../../../../pages/authenticated/albums/share-controller";
+import {AccessTokenHolder} from "../application";
+import {SharingAPI} from "../../pages/authenticated/albums/share-controller";
 
 interface RestAlbum {
     owner: string
