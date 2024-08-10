@@ -2,6 +2,7 @@ import {Album, AlbumId, CatalogAPI, Media, MediaType, OwnerDetails, SharingType,
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../application";
 import {SharingAPI} from "../../pages/authenticated/albums/share-controller";
+import {FetchAlbumMediasPort, FetchAlbumsPort} from "../catalog";
 
 interface RestAlbum {
     owner: string
@@ -34,14 +35,14 @@ interface RestOwnerDetails {
     users: RestUserDetails[]
 }
 
-export class CatalogAPIAdapter implements CatalogAPI, SharingAPI {
+export class CatalogAPIAdapter implements SharingAPI, FetchAlbumsPort, FetchAlbumMediasPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,
     ) {
     }
 
-    public fetchAlbums(email: string): Promise<Album[]> {
+    public fetchAlbums(): Promise<Album[]> {
         return this.authenticatedAxios.get<RestAlbum[]>('/api/v1/albums')
             .then(resp => {
                 const albums = resp.data;

@@ -1,4 +1,4 @@
-import {albumIdEquals, CatalogState} from "./catalog-model";
+import {albumIdEquals, CatalogState} from "../catalog/catalog-model";
 import {CatalogAction} from "../catalog";
 
 export const initialCatalogState: CatalogState = {

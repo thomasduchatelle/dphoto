@@ -1,4 +1,4 @@
-import {CatalogState} from "./catalog-model";
+import {CatalogState} from "../catalog/catalog-model";
 import {createContext, Dispatch, ReactNode, useReducer} from "react";
 import {catalogReducer, initialCatalogState} from "./catalog-reducer";
 import {CatalogAction} from "../catalog";

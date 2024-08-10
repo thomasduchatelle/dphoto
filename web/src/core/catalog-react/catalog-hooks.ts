@@ -5,7 +5,7 @@ import {AuthenticatedUser} from "../security";
 import {useApplication, useUnrecoverableErrorDispatch} from "../application";
 import {CatalogAPIAdapter} from "../catalog-apis";
 import {CatalogContext} from "./catalog-context";
-import {CatalogState} from "./catalog-model";
+import {CatalogState} from "../catalog/catalog-model";
 
 
 export const useCatalogLoader = (): (user: AuthenticatedUser) => Promise<void> => {
