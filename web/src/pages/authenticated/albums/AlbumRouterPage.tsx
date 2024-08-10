@@ -1,17 +1,19 @@
 import {Box, Toolbar, useMediaQuery, useTheme} from "@mui/material";
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import AppNav from "../../../components/AppNav";
 import UserMenu from "../../../components/user.menu";
 import AlbumsList from "./AlbumsList";
 import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
-import {useCatalogController} from "../../../core/catalog-react";
+import {useCatalogController, useCatalogLoader} from "../../../core/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
 
 export default function AlbumRouterPage() {
-    const {albums, selectedAlbum, albumNotFound, medias} = useCatalogController()
     const authenticatedUser = useAuthenticatedUser();
+    const catalogLoader = useCatalogLoader()
+
+    const {albums, selectedAlbum, albumNotFound, medias, fullyLoaded} = useCatalogController()
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()
@@ -22,6 +24,10 @@ export default function AlbumRouterPage() {
     // '/albums' page is only available on small devices
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
     const isAlbumsPage = pathname === '/albums'
+
+    useEffect(() => {
+        catalogLoader(authenticatedUser).catch(err => console.log(`Error: ${err}`))
+    }, []);
 
     return (
         <Box>
@@ -34,13 +40,13 @@ export default function AlbumRouterPage() {
             </Box>
             {isMobileDevice && isAlbumsPage ? (
                 <AlbumsList albums={albums}
-                            loaded={true}
+                            loaded={fullyLoaded}
                             selected={selectedAlbum}/>
             ) : (
                 <MediasPage
                     albums={albums}
                     albumNotFound={albumNotFound}
-                    fullyLoaded={true}
+                    fullyLoaded={fullyLoaded}
                     medias={medias}
                     selectedAlbum={selectedAlbum}
                     scrollToMedia={search.get("mediaId") ?? undefined}

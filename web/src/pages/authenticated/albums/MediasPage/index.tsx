@@ -41,8 +41,12 @@ export default function MediasPage({
                     }}
                 >
                     <Toolbar/>
-                    <AlbumListActions />
-                    <Divider />
+                    { fullyLoaded && (
+                        <>
+                            <AlbumListActions />
+                            <Divider />
+                        </>
+                    )}
                     <AlbumsList albums={albums} loaded={fullyLoaded} selected={selectedAlbum}/>
                 </Drawer>
             </Box>

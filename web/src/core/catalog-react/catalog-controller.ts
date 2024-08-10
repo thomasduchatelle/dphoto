@@ -24,6 +24,7 @@ export class InitialCatalogController {
     }
 
     public loadInitialCatalog = (userEmail: string, owner?: string, folderName?: string): Promise<RedirectTo> => {
+        console.log(`loadInitialCatalog(${userEmail}, ${owner}, ${folderName}`)
         if (owner && folderName) {
             return this.loadSpecificAlbum(userEmail, owner, folderName)
         }

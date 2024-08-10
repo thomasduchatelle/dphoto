@@ -15,7 +15,10 @@ export const useCatalogLoader = (): (user: AuthenticatedUser) => Promise<void> =
     const {dispatch} = useContext(CatalogContext)
     const unrecoverableErrorDispatch = useUnrecoverableErrorDispatch()
 
-    const controller = useMemo(() => new InitialCatalogController(new CatalogAPIAdapter(app.axiosInstance, app), dispatch, unrecoverableErrorDispatch), [app, dispatch, unrecoverableErrorDispatch])
+    const controller = useMemo(() => {
+        console.log("new InitialCatalogController")
+        return new InitialCatalogController(new CatalogAPIAdapter(app.axiosInstance, app), dispatch, unrecoverableErrorDispatch)
+    }, [app, dispatch, unrecoverableErrorDispatch])
 
     return useCallback(user => {
         return controller.loadInitialCatalog(user.email, match?.params.owner, match?.params.folderName)

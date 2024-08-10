@@ -68,6 +68,7 @@ export interface CatalogState {
     medias: MediaWithinADay[]
     error?: Error
     loadingMediasFor?: AlbumId
+    fullyLoaded: boolean
 }
 
 export interface CatalogStateV0 {

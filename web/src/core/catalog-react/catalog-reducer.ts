@@ -37,7 +37,10 @@ export type CatalogAction =
     | MediasLoadedAction
 
 export const initialCatalogState: CatalogState = {
-    albumNotFound: false, albums: [], medias: [],
+    albumNotFound: false,
+    albums: [],
+    medias: [],
+    fullyLoaded: false,
 }
 
 export function catalogReducer(current: CatalogState, action: CatalogAction): CatalogState {
@@ -47,6 +50,7 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 ...current,
                 loadingMediasFor: action.albumId,
                 albumNotFound: false,
+                fullyLoaded: false,
             }
 
         case "MediasLoadedAction":
@@ -62,6 +66,7 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 medias: action.medias,
                 selectedAlbum,
                 error: undefined,
+                fullyLoaded: true,
             }
 
         case "NoAlbumAvailableAction":
@@ -69,6 +74,7 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 albumNotFound: true,
                 albums: [],
                 medias: [],
+                fullyLoaded: true,
             }
 
         case "AlbumsAndMediasLoadedAction":
@@ -77,6 +83,7 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 albums: action.albums,
                 medias: action.media,
                 selectedAlbum: action.selectedAlbum,
+                fullyLoaded: true,
             }
 
         case "MediaFailedToLoadAction":
@@ -86,6 +93,7 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 medias: [],
                 selectedAlbum: undefined,
                 error: action.error,
+                fullyLoaded: true,
             }
 
     }
