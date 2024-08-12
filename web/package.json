@@ -21,13 +21,13 @@
     "react-router-dom": "^6.2.1",
     "react-scripts": "5.0.1",
     "react-swipeable": "^7.0.0",
-    "typescript": "^4.5.4",
+    "typescript": "^4.9.5",
     "web-vitals": "^3.1.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "jest --watch",
     "test:ci": "yarn build-storybook && STORYBOOK_BUILT=true yarn test -- --watchAll=false",
     "eject": "react-scripts eject",
     "clean": "rm -rf build/ storybook-static/",
@@ -78,10 +78,13 @@
     "@storybook/test-runner": "^0.9.4",
     "@storybook/testing-library": "^0.0.13",
     "babel-plugin-named-exports-order": "^0.0.2",
+    "msw": "^2.3.5",
     "prop-types": "^15.8.1",
     "puppeteer": "18.1.0",
     "react-test-renderer": "^18.2.0",
     "start-server-and-test": "^2.0.0",
+    "ts-node": "^10.9.2",
+    "undici": "^6.19.7",
     "webpack": "^5.75.0"
   }
 }
