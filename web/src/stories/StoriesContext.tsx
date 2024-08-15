@@ -1,7 +1,6 @@
 import {Box, BoxProps, createTheme, LinkProps, ThemeProvider} from "@mui/material";
 import {forwardRef} from "react";
 import {BrowserRouter, Link as RouterLink, LinkProps as RouterLinkProps} from "react-router-dom";
-import {Theme} from "@mui/system/createTheme";
 
 const LinkBehavior = forwardRef<any,
     Omit<RouterLinkProps, 'to'> & { href: RouterLinkProps['to'] }>((props, ref) => {
@@ -26,7 +25,7 @@ const theme = createTheme({
     }
 });
 
-export const StoriesContext = <T extends object = Theme>(props: BoxProps) => (
+export const StoriesContext = (props: BoxProps) => (
     <BrowserRouter>
         <ThemeProvider theme={theme}>
             <Box {...props} />

@@ -47,43 +47,15 @@ export interface MediaWithinADay {
     medias: Media[]
 }
 
-export interface MediaId {
-    hash: string
-    size: number
-}
+export type MediaId = string
 
 export interface Media {
-    id: string
+    id: MediaId
     type: MediaType
     time: Date
     uiRelativePath: string // uiRelativePath is the WEB UI internal link (from the album)
     contentPath: string
     source: string
-}
-
-export interface CatalogState {
-    albumNotFound: boolean
-    albums: Album[]
-    selectedAlbum?: Album
-    medias: MediaWithinADay[]
-    error?: Error
-    loadingMediasFor?: AlbumId
-}
-
-export interface CatalogStateV0 {
-    fullyLoaded: boolean
-    albumsLoaded: boolean
-    albumNotFound: boolean
-    albums: Album[]
-    selectedAlbum?: Album
-    medias: MediaWithinADay[]
-}
-
-export interface CatalogAPI {
-
-    fetchAlbums(email: string): Promise<Album[]>
-
-    fetchMedias(albumId: AlbumId): Promise<Media[]>
 }
 
 export function albumIdEquals(a?: AlbumId, b?: AlbumId): boolean {

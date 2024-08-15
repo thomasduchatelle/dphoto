@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// TransferredMedias is a list of all medias that has be transferred to a different album in the catalog.
+// TransferredMedias is a list of all medias that has be transferred to a different album in the state.
 type TransferredMedias struct {
 	Transfers  map[AlbumId][]MediaId
 	FromAlbums []AlbumId // FromAlbums is a list of potential origins of medias

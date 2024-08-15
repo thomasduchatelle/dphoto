@@ -1,10 +1,5 @@
 import {AuthenticationPort, IdentityProviderError, LoadingPort, LoginPageActions} from "./login-model";
-import {
-    AppAuthenticationError,
-    ExpiredSessionError,
-    LogoutListener,
-    SuccessfulAuthenticationResponse
-} from "../../../core/security";
+import {AppAuthenticationError, ExpiredSessionError, LogoutListener, SuccessfulAuthenticationResponse} from "../../../core/security";
 import {Dispatch} from "react";
 import {initialLoginPageState, PageAction} from "./login-reducer";
 
@@ -44,7 +39,7 @@ export class LoginController implements LoginPageActions {
     }
 
     private onSuccessfulAuthentication = (user: SuccessfulAuthenticationResponse): void => {
-        this.dispatch({type: 'update-loading', message: "Please wait, loading your catalog..."})
+        this.dispatch({type: 'update-loading', message: "Please wait, loading your state..."})
         this.loadingPort.warmupApplication(user.details)
             .then(() => {
                 this.dispatch({type: 'on-successful-authentication'})

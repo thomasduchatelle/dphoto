@@ -1,7 +1,8 @@
-import {Album, AlbumId, CatalogAPI, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../core/catalog";
+import {Album, AlbumId, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../domain";
 import axios, {AxiosError, AxiosInstance} from "axios";
-import {AccessTokenHolder} from "../../core/application";
-import {SharingAPI} from "../../pages/authenticated/albums/share-controller";
+import {AccessTokenHolder} from "../../../application";
+import {SharingAPI} from "../../../../pages/authenticated/albums/share-controller";
+import {FetchAlbumMediasPort, FetchAlbumsPort} from "../../index";
 
 interface RestAlbum {
     owner: string
@@ -34,15 +35,20 @@ interface RestOwnerDetails {
     users: RestUserDetails[]
 }
 
-export class CatalogAPIAdapter implements CatalogAPI, SharingAPI {
+function castError(err: AxiosError): Error {
+    return new Error(`'${err.config.method?.toUpperCase()} ${err.config.url}' failed with status ${err.response?.status} ${err.response?.statusText}: ${err.response?.data?.message ?? err.message}`)
+}
+
+export class CatalogAPIAdapter implements SharingAPI, FetchAlbumsPort, FetchAlbumMediasPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,
     ) {
     }
 
-    public fetchAlbums(email: string): Promise<Album[]> {
+    public fetchAlbums(): Promise<Album[]> {
         return this.authenticatedAxios.get<RestAlbum[]>('/api/v1/albums')
+            .catch((err: AxiosError) => Promise.reject(castError(err)))
             .then(resp => {
                 const albums = resp.data;
 
@@ -52,7 +58,7 @@ export class CatalogAPIAdapter implements CatalogAPI, SharingAPI {
                 ]).then(([ownersResp, usersResp]) => {
                     const owners = ownersResp.status === "fulfilled" ? ownersResp.value.reduce(
                         (map, owner) => {
-                            map.set(owner.id, owner)
+                            map.set(owner.id, {name: owner.name, users: owner.users} as OwnerDetails)
                             return map
                         },
                         new Map<string, OwnerDetails>()
@@ -141,7 +147,8 @@ export class CatalogAPIAdapter implements CatalogAPI, SharingAPI {
             })
             .then(data => {
                 return data.map((media): Media => ({
-                    ...media,
+                    id: media.id,
+                    source: media.source,
                     type: convertToType(media.type),
                     time: new Date(media.time),
                     uiRelativePath: `${media.id}/${media.filename}`,

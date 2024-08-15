@@ -6,12 +6,20 @@ import AlbumsList from "./AlbumsList";
 import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
-import {useCatalogController} from "../../../core/catalog";
+import {useCatalogViewerState} from "../../../core/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
 
-export default function AlbumRouterPage() {
-    const {albums, selectedAlbum, albumNotFound, medias} = useCatalogController()
+export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
+
+    const {
+        albums,
+        selectedAlbum,
+        albumNotFound,
+        medias,
+        albumsLoaded,
+        mediasLoaded
+    } = useCatalogViewerState()
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()
@@ -34,13 +42,14 @@ export default function AlbumRouterPage() {
             </Box>
             {isMobileDevice && isAlbumsPage ? (
                 <AlbumsList albums={albums}
-                            loaded={true}
+                            loaded={albumsLoaded}
                             selected={selectedAlbum}/>
             ) : (
                 <MediasPage
                     albums={albums}
                     albumNotFound={albumNotFound}
-                    fullyLoaded={true}
+                    albumsLoaded={albumsLoaded}
+                    mediasLoaded={mediasLoaded}
                     medias={medias}
                     selectedAlbum={selectedAlbum}
                     scrollToMedia={search.get("mediaId") ?? undefined}

@@ -1,52 +1,26 @@
-import {Album, AlbumId, albumIdEquals, CatalogState, MediaWithinADay} from "./catalog-model";
+import {albumIdEquals} from "../../catalog";
+import {CatalogViewerAction, CatalogViewerState} from "./catalog-viewer-state";
 
-type AlbumsAndMediasLoadedAction = {
-    type: 'AlbumsAndMediasLoadedAction'
-    albums: Album[]
-    media: MediaWithinADay[]
-    selectedAlbum?: Album
+export const initialCatalogState: CatalogViewerState = {
+    albumNotFound: false,
+    albums: [],
+    medias: [],
+    albumsLoaded: false,
+    mediasLoaded: false,
 }
 
-type MediaFailedToLoadAction = {
-    type: 'MediaFailedToLoadAction'
-    albums: Album[]
-    selectedAlbum?: Album
-    error: Error
-}
-
-type NoAlbumAvailableAction = {
-    type: 'NoAlbumAvailableAction'
-}
-
-type StartLoadingMediasAction = {
-    type: 'StartLoadingMediasAction'
-    albumId: AlbumId
-}
-
-type MediasLoadedAction = {
-    type: 'MediasLoadedAction'
-    albumId: AlbumId
-    medias: MediaWithinADay[]
-}
-
-export type CatalogAction =
-    AlbumsAndMediasLoadedAction
-    | MediaFailedToLoadAction
-    | NoAlbumAvailableAction
-    | StartLoadingMediasAction
-    | MediasLoadedAction
-
-export const initialCatalogState: CatalogState = {
-    albumNotFound: false, albums: [], medias: [],
-}
-
-export function catalogReducer(current: CatalogState, action: CatalogAction): CatalogState {
+export function catalogReducer(current: CatalogViewerState, action: CatalogViewerAction): CatalogViewerState {
     switch (action.type) {
         case "StartLoadingMediasAction":
             return {
-                ...current,
+                albumsLoaded: current.albumsLoaded,
+                albums: current.albums,
+                selectedAlbum: current.albums.find(album => albumIdEquals(album.albumId, action.albumId)),
+                medias: [],
+                error: undefined,
                 loadingMediasFor: action.albumId,
                 albumNotFound: false,
+                mediasLoaded: false,
             }
 
         case "MediasLoadedAction":
@@ -62,6 +36,7 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 medias: action.medias,
                 selectedAlbum,
                 error: undefined,
+                mediasLoaded: true,
             }
 
         case "NoAlbumAvailableAction":
@@ -69,6 +44,8 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 albumNotFound: true,
                 albums: [],
                 medias: [],
+                albumsLoaded: true,
+                mediasLoaded: true,
             }
 
         case "AlbumsAndMediasLoadedAction":
@@ -77,6 +54,8 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 albums: action.albums,
                 medias: action.media,
                 selectedAlbum: action.selectedAlbum,
+                albumsLoaded: true,
+                mediasLoaded: true,
             }
 
         case "MediaFailedToLoadAction":
@@ -86,9 +65,12 @@ export function catalogReducer(current: CatalogState, action: CatalogAction): Ca
                 medias: [],
                 selectedAlbum: undefined,
                 error: action.error,
+                albumsLoaded: true,
+                mediasLoaded: true,
             }
 
+        default:
+            return current
     }
-    return current
 }
 

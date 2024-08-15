@@ -35,7 +35,7 @@ type CreateMediaRequest struct {
 	Details    MediaDetails
 }
 
-// MediaMeta is an entry (read) of a media in the catalog
+// MediaMeta is an entry (read) of a media in the state
 type MediaMeta struct {
 	Id        MediaId        // Id is the unique identifier to use across all domains
 	Signature MediaSignature // Signature is the key used to get the image (or its location)

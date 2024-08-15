@@ -1,4 +1,4 @@
-// Package catalog provides tools to maintain an index of all medias that have been backed up.
+// Package state provides tools to maintain an index of all medias that have been backed up.
 package catalog
 
 import (
