@@ -47,7 +47,16 @@ export default function MediasPage({
                     <Toolbar/>
                     {albumFilterFeature && albumsLoaded && (
                         <>
-                            <AlbumListActions/>
+                            <AlbumListActions
+                                selected={{
+                                    criterion: {owners: []},
+                                    avatars: [],
+                                    name: "All Albums",
+                                }}
+                                options={[]}
+                                onAlbumFiltered={() => {
+                                }}
+                            />
                             <Divider/>
                         </>
                     )}
@@ -72,7 +81,7 @@ export default function MediasPage({
                     <Box>
                         <MediaList
                             medias={medias}
-                            loaded={false}
+                            loaded={mediasLoaded}
                             albumNotFound={albumNotFound}
                             scrollToMedia={scrollToMedia}
                         />
