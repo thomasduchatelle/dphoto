@@ -1,20 +1,25 @@
-import {Alert, Box, Drawer, Toolbar} from "@mui/material";
+import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
+import AlbumListActions from "../AlbumsListActions";
 import {Album, MediaWithinADay} from "../../../../core/catalog";
+
+const albumFilterFeature = false
 
 export default function MediasPage({
                                        albums,
                                        albumNotFound,
-                                       fullyLoaded,
+                                       albumsLoaded,
+                                       mediasLoaded,
                                        medias,
                                        selectedAlbum,
                                        scrollToMedia,
                                    }: {
     albums: Album[]
     albumNotFound: boolean
-    fullyLoaded: boolean
+    albumsLoaded: boolean
+    mediasLoaded: boolean
     medias: MediaWithinADay[]
     selectedAlbum?: Album
     scrollToMedia?: string
@@ -40,7 +45,13 @@ export default function MediasPage({
                     }}
                 >
                     <Toolbar/>
-                    <AlbumsList albums={albums} loaded={fullyLoaded} selected={selectedAlbum}/>
+                    {albumFilterFeature && albumsLoaded && (
+                        <>
+                            <AlbumListActions/>
+                            <Divider/>
+                        </>
+                    )}
+                    <AlbumsList albums={albums} loaded={albumsLoaded} selected={selectedAlbum}/>
                 </Drawer>
             </Box>
             <Box
@@ -52,7 +63,7 @@ export default function MediasPage({
                     backgroundColor: theme.palette.background.paper,
                 })}
             >
-                {(fullyLoaded && !albums && (
+                {(albumsLoaded && !albums && (
                     <Alert severity='info' sx={{mt: 3}}>
                         Your account is empty, start to create new albums and upload your photos with the command line
                         interface.
@@ -61,7 +72,7 @@ export default function MediasPage({
                     <Box>
                         <MediaList
                             medias={medias}
-                            loaded={fullyLoaded}
+                            loaded={false}
                             albumNotFound={albumNotFound}
                             scrollToMedia={scrollToMedia}
                         />

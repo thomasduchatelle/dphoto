@@ -18,7 +18,7 @@ const AlbumsList = ({albums, loaded, selected}: {
     return (
         <Box sx={{overflow: 'auto'}}>
             <List>
-                {!loaded && (Array.from(Array(4).keys()).map((v, index) => (
+                {!loaded ? (Array.from(Array(4).keys()).map((v, index) => (
                     <ListItem
                         key={index}
                         divider={index < 2}>
@@ -33,16 +33,16 @@ const AlbumsList = ({albums, loaded, selected}: {
                             <Skeleton variant="circular" width={35} height={35} animation='wave'/>
                         </ListItemSecondaryAction>
                     </ListItem>
-                )))}
-
-                {albums.map((album, index) => (
-                    <AlbumListEntry
-                        key={album.albumId.owner + album.albumId.folderName}
-                        album={album}
-                        selected={isSelected(album, selected)}
-                        onClickOnSharedWith={openSharingModal}
-                    />
-                ))}
+                ))) : (
+                    albums.map((album, index) => (
+                        <AlbumListEntry
+                            key={album.albumId.owner + album.albumId.folderName}
+                            album={album}
+                            selected={isSelected(album, selected)}
+                            onClickOnSharedWith={openSharingModal}
+                        />
+                    ))
+                )}
             </List>
 
             <ShareDialog {...shareDialogProps} />

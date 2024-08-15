@@ -2,7 +2,7 @@ import {useMemo, useReducer} from "react";
 import {ShareController} from "./ShareController";
 import {ShareState, sharingModalReducer} from "./sharingModalReducer";
 import {useApplication} from "../../../../core/application";
-import {CatalogAPIAdapter} from "../../../../apis/catalog";
+import {CatalogAPIAdapter} from "../../../../core/catalog/adapters/api";
 
 export function useSharingModalController(): ShareState & ShareController {
     const [state, dispatch] = useReducer(sharingModalReducer, {

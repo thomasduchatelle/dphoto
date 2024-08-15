@@ -4,11 +4,12 @@ import {AccessTokenHolder} from "./application-model";
 
 export class DPhotoApplication implements AccessTokenHolder {
     private accessToken?: AccessToken
-    public readonly axiosInstance: AxiosInstance = axios.create({})
     private axiosInterceptorId ?: number
 
-    constructor(public logoutListeners: LogoutListener[] = [],
-                public authenticationTimeoutIds: NodeJS.Timeout[] = [],
+    constructor(
+        public logoutListeners: LogoutListener[] = [],
+        public authenticationTimeoutIds: NodeJS.Timeout[] = [],
+        public readonly axiosInstance: AxiosInstance = axios.create({}),
     ) {
     }
 

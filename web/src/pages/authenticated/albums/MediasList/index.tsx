@@ -1,4 +1,4 @@
-import {Alert, ImageList, ImageListItem, Skeleton, Typography, useMediaQuery, useTheme} from "@mui/material";
+import {Alert, Box, CircularProgress, ImageList, Typography, useMediaQuery, useTheme} from "@mui/material";
 import {Fragment} from "react";
 import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
 import useWindowDimensions from "../../../../core/utils/window-utils";
@@ -26,13 +26,12 @@ export default function MediaList({medias, loaded, albumNotFound, scrollToMedia 
 
     if (!loaded) {
         return (
-            <ImageList cols={cols} gap={2} rowHeight={estimatedWidth}>
-                {Array.from(Array(3 * cols).keys()).map(i => (
-                    <ImageListItem key={i}>
-                        <Skeleton variant="rectangular" animation='wave' height={estimatedWidth}/>
-                    </ImageListItem>
-                ))}
-            </ImageList>
+            <Box sx={{
+                paddingTop: 10,
+                textAlign: 'center',
+            }}>
+                <CircularProgress size={150}/>
+            </Box>
         )
     }
 
