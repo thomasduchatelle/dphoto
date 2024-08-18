@@ -2,6 +2,7 @@ package pkgfactory
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/archivedynamo"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/asyncjobadapter"
@@ -9,19 +10,12 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
-type SyncArchiveFactory struct{}
-type AsyncArchiveFactory struct {
-	SyncArchiveFactory
-}
-
-type initBackupMarker struct{}
-
-func (a *SyncArchiveFactory) InitArchive(ctx context.Context) {
-	singletons.MustSingleton(func() (initBackupMarker, error) {
+func (a *AWSCloud) InitArchive(ctx context.Context) {
+	singletons.MustSingletonKey("InitArchive", func() (interface{}, error) {
 		repositoryAdapter := archivedynamo.Must(archivedynamo.New(AWSFactory(ctx).GetDynamoDBClient(), AWSNames.DynamoDBName()))
 		storeAdapter := s3store.NewWithS3Client(AWSFactory(ctx).GetS3Client(), AWSNames.ArchiveMainBucketName())
 		cacheAdapter := s3store.NewWithS3Client(AWSFactory(ctx).GetS3Client(), AWSNames.ArchiveCacheBucketName())
-		archiveAsyncAdapter := a.ArchiveAsyncJobAdapter(ctx)
+		archiveAsyncAdapter := a.ArchiveFactory.ArchiveAsyncJobAdapter(ctx)
 		archive.Init(
 			repositoryAdapter,
 			storeAdapter,
@@ -29,18 +23,24 @@ func (a *SyncArchiveFactory) InitArchive(ctx context.Context) {
 			archiveAsyncAdapter,
 		)
 
-		return initBackupMarker{}, nil
+		return nil, nil
 	})
 }
 
+type SyncArchiveFactory struct{}
+
 func (a *SyncArchiveFactory) ArchiveAsyncJobAdapter(ctx context.Context) archive.AsyncJobAdapter {
-	return singletons.MustSingletonKey("AsyncJobAdapter", func() (archive.AsyncJobAdapter, error) {
+	return singletons.MustSingletonKey("SyncArchiveFactory.ArchiveAsyncJobAdapter", func() (archive.AsyncJobAdapter, error) {
+		log.Info("Using archive.NewSyncJobAdapter() as ArchiveAsyncJobAdapter")
 		return archive.NewSyncJobAdapter(), nil
 	})
 }
 
+type AsyncArchiveFactory struct{}
+
 func (a *AsyncArchiveFactory) ArchiveAsyncJobAdapter(ctx context.Context) archive.AsyncJobAdapter {
-	return singletons.MustSingletonKey("AsyncJobAdapter", func() (archive.AsyncJobAdapter, error) {
+	return singletons.MustSingletonKey("AsyncArchiveFactory.ArchiveAsyncJobAdapter", func() (archive.AsyncJobAdapter, error) {
+		log.Info("Using asyncjobadapter.NewFromClients() as ArchiveAsyncJobAdapter")
 		return asyncjobadapter.NewFromClients(AWSFactory(ctx).GetSNSClient(), AWSFactory(ctx).GetSQSClient(), AWSNames.ArchiveJobsSNSARN(), AWSNames.ArchiveJobsSQSURL(), asyncjobadapter.DefaultImagesPerMessage), nil
 	})
 }
