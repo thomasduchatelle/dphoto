@@ -17,10 +17,12 @@ var (
 // Factory is the builder of the application ; any direct variables are deprecated in favour of moving to the appropriate factory implementation.
 type Factory interface {
 	ArchiveFactory
+
+	// InitArchive shouldn't be used directly but is exposed to support legacy implementation
+	InitArchive(ctx context.Context)
 }
 
 type ArchiveFactory interface {
-	InitArchive(ctx context.Context)
 	ArchiveAsyncJobAdapter(ctx context.Context) archive.AsyncJobAdapter
 }
 
