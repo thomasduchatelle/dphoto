@@ -23,7 +23,7 @@ func (a *AWSCloud) InitArchive(ctx context.Context) {
 			archiveAsyncAdapter,
 		)
 
-		return nil, nil
+		return new(interface{}), nil
 	})
 }
 
