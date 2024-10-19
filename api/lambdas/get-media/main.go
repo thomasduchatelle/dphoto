@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	responseMaxContent = 6 * 1024 * 1024
+	responseMaxContent = 5.5 * 1024 * 1024
 )
 
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
