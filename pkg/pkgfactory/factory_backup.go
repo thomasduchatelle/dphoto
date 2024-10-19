@@ -37,7 +37,7 @@ func (f *BackupReferencerFactory) NewCreatorReferencer(ctx context.Context, owne
 		queries,
 		writeRepo,
 		writeRepo,
-		ArchiveTimelineMutationObserver(),
+		ArchiveTimelineMutationObserver(nil),
 		CommandHandlerAlbumSize(ctx),
 	)
 

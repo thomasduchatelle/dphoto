@@ -14,7 +14,8 @@ func CatalogRepository(ctx context.Context) *catalogdynamo.Repository {
 	})
 }
 
-func ArchiveTimelineMutationObserver() *catalogarchivesync.Observer {
+func ArchiveTimelineMutationObserver(ctx context.Context) *catalogarchivesync.Observer {
+	factory.InitArchive(ctx)
 	return singletons.MustSingleton(func() (*catalogarchivesync.Observer, error) {
 		return new(catalogarchivesync.Observer), nil
 	})
@@ -34,7 +35,7 @@ func CreateAlbumCase(ctx context.Context) *catalog.CreateAlbum {
 		repository,
 		repository,
 		repository,
-		ArchiveTimelineMutationObserver(),
+		ArchiveTimelineMutationObserver(ctx),
 		CommandHandlerAlbumSize(ctx),
 	)
 }
@@ -46,7 +47,7 @@ func CreateAlbumDeleteCase(ctx context.Context) *catalog.DeleteAlbum {
 		repository,
 		repository,
 		repository,
-		ArchiveTimelineMutationObserver(),
+		ArchiveTimelineMutationObserver(ctx),
 		CommandHandlerAlbumSize(ctx),
 	)
 }
@@ -61,7 +62,7 @@ func RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
 		repository,
 		repository,
 		repository,
-		ArchiveTimelineMutationObserver(),
+		ArchiveTimelineMutationObserver(ctx),
 		CommandHandlerAlbumSize(ctx),
 	)
 }
@@ -73,7 +74,7 @@ func AmendAlbumDatesCase(ctx context.Context) *catalog.AmendAlbumDates {
 		repository,
 		repository,
 		repository,
-		ArchiveTimelineMutationObserver(),
+		ArchiveTimelineMutationObserver(ctx),
 		CommandHandlerAlbumSize(ctx),
 	)
 }
