@@ -45,7 +45,6 @@ type runner struct {
 	ConcurrentUploader   int                // ConcurrentUploader is the number of goroutine that upload files online
 	BatchSize            int                // BatchSize is the size of the buffer for the uploader
 	SkipRejects          bool
-	context              context.Context
 	cancel               context.CancelFunc
 	progressEventChannel chan *ProgressEvent
 	errorsMutex          sync.Mutex
@@ -58,7 +57,7 @@ func (r *runner) appendError(err error) {
 		return
 	}
 
-	log.WithError(err).Errorln("cancelling queued processes")
+	log.WithError(err).Errorln("logging error and cancelling process")
 	r.errorsMutex.Lock()
 	defer r.errorsMutex.Unlock()
 
@@ -72,7 +71,8 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	r.BatchSize = defaultValue(r.BatchSize, 1)
 
 	r.progressEventChannel = make(chan *ProgressEvent, sizeHint*5)
-	r.context, r.cancel = context.WithCancel(ctx)
+	var cancellableCtx context.Context
+	cancellableCtx, r.cancel = context.WithCancel(ctx)
 
 	bufferedChannelSize := 1 + sizeHint/r.BatchSize
 	if sizeHint == 0 {
@@ -86,7 +86,7 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	bufferedCataloguedChannel := make(chan []*BackingUpMediaRequest, bufferedChannelSize)
 	r.completionChannel = make(chan []error, 1)
 
-	r.analyseMedias(foundChannel, analysedChannel)
+	r.analyseMedias(cancellableCtx, foundChannel, analysedChannel)
 	r.bufferAnalysedMedias(analysedChannel, bufferedAnalysedChannel)
 	r.catalogueMedias(bufferedAnalysedChannel, cataloguedChannel)
 	r.bufferUniqueCataloguedMedias(cataloguedChannel, bufferedCataloguedChannel)
@@ -106,7 +106,7 @@ func (r *runner) waitToFinish() error {
 	}
 
 	if len(reportedErrors) > 0 {
-		return errors.Wrapf(reportedErrors[0], "Backup failed, %d errors reported until shutdown.", len(reportedErrors))
+		return errors.Wrapf(reportedErrors[0], "Backup failed, %d error(s) reported before shutdown. First one encountered", len(reportedErrors))
 	}
 
 	return nil
@@ -129,11 +129,12 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 		closeChannel()
 	}()
 }
-func (r *runner) analyseMedias(foundChannel chan FoundMedia, analysedChannel chan *AnalysedMedia) {
+
+func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, analysedChannel chan *AnalysedMedia) {
 	r.startsInParallel(defaultValue(r.ConcurrentAnalyser, 1), func() {
 		for {
 			select {
-			case <-r.context.Done():
+			case <-ctx.Done():
 				return
 			case media, more := <-foundChannel:
 				if more {
@@ -180,9 +181,6 @@ func (r *runner) catalogueMedias(analysedChannel chan []*AnalysedMedia, requests
 	r.startsInParallel(defaultValue(r.ConcurrentCataloguer, 1), func() {
 		for {
 			select {
-			case <-r.context.Done():
-				return
-
 			case buffer, more := <-analysedChannel:
 				if more && r.hasAnyErrors() == 0 {
 					catalogedMedias, err := r.Cataloger.Catalog(context.TODO(), buffer, r.progressEventChannel)
@@ -234,9 +232,6 @@ func (r *runner) uploadMedias(bufferedChannel chan []*BackingUpMediaRequest, com
 	r.startsInParallel(defaultValue(r.ConcurrentUploader, 1), func() {
 		for {
 			select {
-			case <-r.context.Done():
-				return
-
 			case buffer, more := <-bufferedChannel:
 				if more && r.hasAnyErrors() == 0 {
 					err := r.Uploader.Upload(buffer, r.progressEventChannel)
