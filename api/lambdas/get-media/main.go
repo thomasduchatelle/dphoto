@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	responseMaxContent = 5.5 * 1024 * 1024
+	responseMaxContent = 6 * 1024 * 1024
 )
 
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
@@ -61,6 +61,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			return common.InternalError(err)
 		}
 
+		log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is served (%d KB)", owner, mediaId, width, len(content)/1024)
 		return common.Response{
 			StatusCode: 200,
 			Headers: map[string]string{
