@@ -61,14 +61,15 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			return common.InternalError(err)
 		}
 
-		log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is served (%d KB)", owner, mediaId, width, len(content)/1024)
+		based64Encoded := base64.StdEncoding.EncodeToString(content)
+		log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is served (%d KB ; base64 = %d KB)", owner, mediaId, width, len(content)/1024, len(based64Encoded)/1024)
 		return common.Response{
 			StatusCode: 200,
 			Headers: map[string]string{
 				"Content-Type":  contentType,
 				"Cache-Control": fmt.Sprintf("max-age=%d", 3600*24),
 			},
-			Body:            base64.StdEncoding.EncodeToString(content),
+			Body:            based64Encoded,
 			IsBase64Encoded: true,
 		}, nil
 	})
