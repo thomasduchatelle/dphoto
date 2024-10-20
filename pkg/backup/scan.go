@@ -37,7 +37,7 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 		MDC:                  mdc,
 		Options:              options,
 		Publisher:            publisher,
-		Analyser:             newBackupAnalyseMedia(),
+		Analyser:             getDefaultAnalyser(),
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             RunnerUploaderFunc(receiver.receive),

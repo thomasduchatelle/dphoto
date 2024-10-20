@@ -4,7 +4,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 )
 
-func (d *AnalyserCache) Decorate(analyser backup.RunnerAnalyser, observers ...backup.RunnerAnalyserDecoratorObserver) backup.RunnerAnalyser {
+func (d *AnalyserCache) Decorate(analyser backup.Analyser, observers ...backup.AnalyserDecoratorObserver) backup.Analyser {
 	return &AnalyserCacheWrapper{
 		Delegate:      analyser,
 		AnalyserCache: d,
@@ -13,9 +13,9 @@ func (d *AnalyserCache) Decorate(analyser backup.RunnerAnalyser, observers ...ba
 }
 
 type AnalyserCacheWrapper struct {
-	Delegate      backup.RunnerAnalyser
+	Delegate      backup.Analyser
 	AnalyserCache *AnalyserCache
-	Observers     []backup.RunnerAnalyserDecoratorObserver
+	Observers     []backup.AnalyserDecoratorObserver
 }
 
 func (a *AnalyserCacheWrapper) Analyse(found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectedMediaObserver backup.RejectedMediaObserver) {

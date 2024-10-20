@@ -8,10 +8,6 @@ import (
 	"sync"
 )
 
-type RunnerAnalyser interface {
-	Analyse(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver)
-}
-
 type RunnerCataloger interface {
 	Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 }
@@ -42,7 +38,7 @@ type runner struct {
 	MDC                  *log.Entry         // MDC is log.WithFields({}) that contains Mapped Diagnostic Context
 	Options              Options            // Options contains the configuration for each step of the backup process. [migration to Observer Pattern]
 	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
-	Analyser             RunnerAnalyser     // Analyser is extracting metadata from the file
+	Analyser             Analyser           // Analyser is extracting metadata from the file
 	Cataloger            RunnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog

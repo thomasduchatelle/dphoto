@@ -38,7 +38,7 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 		MDC:                  mdc,
 		Options:              options,
 		Publisher:            publisher,
-		Analyser:             newBackupAnalyseMedia(),
+		Analyser:             getDefaultAnalyser(),
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},

@@ -9,18 +9,9 @@ import (
 
 var (
 	archivePort       BArchiveAdapter
-	detailsReaders    []DetailsReaderAdapter // DetailsReaders is a list of specific details extractor can auto-register
 	referencerFactory ReferencerFactory
 	insertMediaPort   InsertMediaPort
 )
-
-func ClearDetailsReader() {
-	detailsReaders = nil
-}
-
-func RegisterDetailsReader(reader DetailsReaderAdapter) {
-	detailsReaders = append(detailsReaders, reader)
-}
 
 // Init for scan or backup (but only refFactory is required for scan)
 func Init(archive BArchiveAdapter, refFactory ReferencerFactory, insertMedia InsertMediaPort) {
@@ -60,7 +51,7 @@ type DetailsReaderAdapter interface {
 }
 
 type DetailsReaderOptions struct {
-	Fast bool // Fast true indicate the parser should focus at extracting the date, nothing else
+	Fast bool // Fast true indicate the parser should focus at extracting the date, nothing else TODO can be retired
 }
 
 type ReferencerFactory interface {

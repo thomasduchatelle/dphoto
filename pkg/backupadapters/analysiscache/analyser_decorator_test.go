@@ -55,7 +55,7 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 	}
 
 	type fields struct {
-		Delegate backup.RunnerAnalyser
+		Delegate backup.Analyser
 	}
 	type args struct {
 		found backup.FoundMedia
