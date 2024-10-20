@@ -77,7 +77,7 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	}
 
 	foundChannel := make(chan FoundMedia, sizeHint)
-	analysedMediaChannelPublisher := NewAsyncPublisher(sizeHint)
+	channelPublisher := NewAsyncPublisher(sizeHint)
 	bufferedAnalysedChannel := make(chan []*AnalysedMedia, bufferedChannelSize)
 	cataloguedChannel := make(chan *BackingUpMediaRequest, bufferedChannelSize)
 	bufferedCataloguedChannel := make(chan []*BackingUpMediaRequest, bufferedChannelSize)
@@ -88,12 +88,12 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 			r.errorCollectorObserver,
 			r.interrupterObserver,
 			progressObserver,
-			analysedMediaChannelPublisher,
+			channelPublisher,
 		},
 	}
 
-	r.analyseMedias(interruptableContext, foundChannel, observer, analysedMediaChannelPublisher.Close)
-	r.bufferAnalysedMedias(analysedMediaChannelPublisher.AnalysedMediaChannel, bufferedAnalysedChannel)
+	r.analyseMedias(interruptableContext, foundChannel, observer, channelPublisher.Close)
+	r.bufferAnalysedMedias(channelPublisher.AnalysedMediaChannel, bufferedAnalysedChannel)
 	r.catalogueMedias(interruptableContext, bufferedAnalysedChannel, cataloguedChannel)
 	r.bufferUniqueCataloguedMedias(cataloguedChannel, bufferedCataloguedChannel)
 	r.uploadMedias(interruptableContext, bufferedCataloguedChannel, r.completionChannel, r.errorCollectorObserver)
