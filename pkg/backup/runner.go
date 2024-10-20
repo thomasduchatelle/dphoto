@@ -37,7 +37,6 @@ type runner struct {
 	Cataloger            RunnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
-	ConcurrentAnalyser   int                // ConcurrentAnalyser is the number of goroutines that analyse the medias [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
 	ConcurrentCataloguer int                // ConcurrentAnalyser is the number of goroutines that analyse the medias [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
 	ConcurrentUploader   int                // ConcurrentUploader is the number of goroutine that upload files online [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
 	BatchSize            int                // BatchSize is the size of the buffer for the uploader	 [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
@@ -138,7 +137,7 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 }
 
 func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, observer *CompositeRunnerObserver, closer func()) {
-	r.startsInParallel(defaultValue(r.ConcurrentAnalyser, 1), func() {
+	r.startsInParallel(defaultValue(r.Options.ConcurrentAnalyser, 1), func() {
 		for {
 			select {
 			case <-ctx.Done():
