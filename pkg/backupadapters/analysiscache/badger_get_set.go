@@ -8,7 +8,7 @@ import (
 
 const RecommendedGCRatio = 0.5
 
-func (d *DecoratorInstance) get(key Key) (*Payload, error) {
+func (d *AnalyserCache) get(key Key) (*Payload, error) {
 	var (
 		payload Payload
 	)
@@ -30,7 +30,7 @@ func (d *DecoratorInstance) get(key Key) (*Payload, error) {
 	return &payload, err
 }
 
-func (d *DecoratorInstance) set(key Key, payload Payload) error {
+func (d *AnalyserCache) set(key Key, payload Payload) error {
 	return d.DB.Update(func(txn *badger.Txn) error {
 		jsonPayload, err := json.Marshal(payload)
 		if err != nil {
