@@ -12,10 +12,6 @@ type Options struct {
 	BatchSize                 int                    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
 }
 
-type AnalyserDecorator interface {
-	Decorate(analyseFunc RunnerAnalyser) RunnerAnalyser
-}
-
 func readOptions(requestedOptions []Options) Options {
 	aggregated := Options{
 		RestrictedAlbumFolderName: make(map[string]interface{}),
@@ -114,7 +110,7 @@ func WithBatchSize(batchSize int) Options {
 type NopeAnalyserDecorator struct {
 }
 
-func (n *NopeAnalyserDecorator) Decorate(analyseFunc RunnerAnalyser) RunnerAnalyser {
+func (n *NopeAnalyserDecorator) Decorate(analyseFunc Analyser, observers ...AnalyserDecoratorObserver) Analyser {
 	return analyseFunc
 }
 

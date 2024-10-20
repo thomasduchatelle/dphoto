@@ -21,19 +21,19 @@ func (_m *AnalyserDecorator) EXPECT() *AnalyserDecorator_Expecter {
 }
 
 // Decorate provides a mock function with given fields: analyseFunc
-func (_m *AnalyserDecorator) Decorate(analyseFunc backup.RunnerAnalyser) backup.RunnerAnalyser {
+func (_m *AnalyserDecorator) Decorate(analyseFunc backup.Analyser) backup.Analyser {
 	ret := _m.Called(analyseFunc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Decorate")
 	}
 
-	var r0 backup.RunnerAnalyser
-	if rf, ok := ret.Get(0).(func(backup.RunnerAnalyser) backup.RunnerAnalyser); ok {
+	var r0 backup.Analyser
+	if rf, ok := ret.Get(0).(func(backup.Analyser) backup.Analyser); ok {
 		r0 = rf(analyseFunc)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(backup.RunnerAnalyser)
+			r0 = ret.Get(0).(backup.Analyser)
 		}
 	}
 
@@ -46,24 +46,24 @@ type AnalyserDecorator_Decorate_Call struct {
 }
 
 // Decorate is a helper method to define mock.On call
-//   - analyseFunc backup.RunnerAnalyser
+//   - analyseFunc backup.Analyser
 func (_e *AnalyserDecorator_Expecter) Decorate(analyseFunc interface{}) *AnalyserDecorator_Decorate_Call {
 	return &AnalyserDecorator_Decorate_Call{Call: _e.mock.On("Decorate", analyseFunc)}
 }
 
-func (_c *AnalyserDecorator_Decorate_Call) Run(run func(analyseFunc backup.RunnerAnalyser)) *AnalyserDecorator_Decorate_Call {
+func (_c *AnalyserDecorator_Decorate_Call) Run(run func(analyseFunc backup.Analyser)) *AnalyserDecorator_Decorate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(backup.RunnerAnalyser))
+		run(args[0].(backup.Analyser))
 	})
 	return _c
 }
 
-func (_c *AnalyserDecorator_Decorate_Call) Return(_a0 backup.RunnerAnalyser) *AnalyserDecorator_Decorate_Call {
+func (_c *AnalyserDecorator_Decorate_Call) Return(_a0 backup.Analyser) *AnalyserDecorator_Decorate_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *AnalyserDecorator_Decorate_Call) RunAndReturn(run func(backup.RunnerAnalyser) backup.RunnerAnalyser) *AnalyserDecorator_Decorate_Call {
+func (_c *AnalyserDecorator_Decorate_Call) RunAndReturn(run func(backup.Analyser) backup.Analyser) *AnalyserDecorator_Decorate_Call {
 	_c.Call.Return(run)
 	return _c
 }

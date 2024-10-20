@@ -36,12 +36,12 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 
 	run := runner{
 		MDC:                  mdc,
+		Options:              options,
 		Publisher:            publisher,
-		Analyser:             options.GetAnalyserDecorator().Decorate(newBackupAnalyseMedia()),
+		Analyser:             getDefaultAnalyser(),
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},
-		ConcurrentAnalyser:   options.ConcurrentAnalyser,
 		ConcurrentCataloguer: options.ConcurrentCataloguer,
 		ConcurrentUploader:   options.ConcurrentUploader,
 		BatchSize:            options.BatchSize,

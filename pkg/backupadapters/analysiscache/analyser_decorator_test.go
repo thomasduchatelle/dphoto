@@ -20,7 +20,6 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 	const cachedMediaHash = "cached-sha256-images"
 	sometime := time.Date(2024, 3, 9, 23, 10, 11, 0, time.UTC)
 	foundMedia := backup.NewInMemoryMedia("/avengers/ironman/stark-tower-01.png", sometime, []byte("some content"))
-	analysedWasCached := []backup.ProgressEvent{{Type: "analysed-from-cache", Count: 1, Size: 12, Album: "", MediaType: ""}}
 
 	const badgerKey = "/ram/avengers/ironman/stark-tower-01.png##12"
 	const badgerPayload = `{
@@ -56,7 +55,7 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 	}
 
 	type fields struct {
-		Delegate backup.RunnerAnalyser
+		Delegate backup.Analyser
 	}
 	type args struct {
 		found backup.FoundMedia
@@ -72,16 +71,15 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 	}
 	doesNotCallTheDelegate := func(t *testing.T) fields {
 		return fields{
-			Delegate: backup.RunnerAnalyserFunc(func(found backup.FoundMedia, progressChannel chan *backup.ProgressEvent) (*backup.AnalysedMedia, error) {
+			Delegate: backup.RunnerAnalyserFunc(func(found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectedMediaObserver backup.RejectedMediaObserver) {
 				assert.Fail(t, "Unexpected call on Analyse", "unexpected Analyse(%+v, ...))", found)
-				return nil, nil
 			}),
 		}
 	}
 	doesCallTheDelegate := func(t *testing.T) fields {
 		return fields{
-			Delegate: backup.RunnerAnalyserFunc(func(found backup.FoundMedia, progressChannel chan *backup.ProgressEvent) (*backup.AnalysedMedia, error) {
-				return &backup.AnalysedMedia{
+			Delegate: backup.RunnerAnalyserFunc(func(found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectedMediaObserver backup.RejectedMediaObserver) {
+				analysedMediaObserver.OnAnalysedMedia(&backup.AnalysedMedia{
 					FoundMedia: found,
 					Type:       backup.MediaTypeImage,
 					Sha256Hash: computedMediaHash,
@@ -89,21 +87,21 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 						Width:  120,
 						Height: 42,
 					},
-				}, nil
+				})
 			}),
 		}
 
 	}
 
 	tests := []struct {
-		name       string
-		init       func(t *testing.T, db *badger.DB) error
-		mocks      func(t *testing.T) fields
-		args       args
-		want       *backup.AnalysedMedia
-		wantDB     map[string]analysiscache.Payload
-		wantEvents []backup.ProgressEvent
-		wantErr    assert.ErrorAssertionFunc
+		name   string
+		init   func(t *testing.T, db *badger.DB) error
+		mocks  func(t *testing.T) fields
+		args   args
+		want   *backup.AnalysedMedia
+		wantDB map[string]analysiscache.Payload
+		//wantEvents []backup.ProgressEvent
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name:  "it should call the delegate and cache the result when no cache",
@@ -140,9 +138,8 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 					Height: 42,
 				},
 			},
-			wantDB:     recordHasBeenKept,
-			wantEvents: analysedWasCached,
-			wantErr:    assert.NoError,
+			wantDB:  recordHasBeenKept,
+			wantErr: assert.NoError,
 		},
 		{
 			name:  "it should call the delegate and override the result when last modification doesn't match",
@@ -189,9 +186,8 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 					Height: 42,
 				},
 			},
-			wantDB:     recordHasBeenKept,
-			wantEvents: analysedWasCached,
-			wantErr:    assert.NoError,
+			wantDB:  recordHasBeenKept,
+			wantErr: assert.NoError,
 		},
 	}
 
@@ -204,27 +200,26 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 
 			mockedFields := tt.mocks(t)
 
-			d := &analysiscache.DecoratorInstance{
-				DB:       db,
+			d := &analysiscache.AnalyserCacheWrapper{
 				Delegate: mockedFields.Delegate,
+				AnalyserCache: &analysiscache.AnalyserCache{
+					DB: db,
+				},
 			}
-			progressChannel, completion := NewSinkChannel()
 
-			got, err := d.Analyse(tt.args.found, progressChannel)
-			close(progressChannel)
+			analysedMediaObserver := new(AnalysedMediaObserverFake)
+			rejectedMediaObserver := new(RejectedMediaObserverFake)
+			d.Analyse(tt.args.found, analysedMediaObserver, rejectedMediaObserver)
 
 			if !tt.wantErr(t, err, fmt.Sprintf("Analyse(%v)", tt.args.found)) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "Analyse(%v)", tt.args.found)
+			assert.Equalf(t, []*backup.AnalysedMedia{tt.want}, analysedMediaObserver.Medias, "Analyse(%v)", tt.args.found)
 
 			gotDB, err := databaseDump(db)
-			if assert.NoError(t, err, "databaseDump(db)") {
+			if assert.NoError(t, err, "databaseDump(DB)") {
 				assert.Equal(t, tt.wantDB, gotDB)
 			}
-
-			gotEvents := <-completion
-			assert.Equalf(t, tt.wantEvents, gotEvents, "events: %+v", gotEvents)
 		})
 	}
 }
@@ -266,20 +261,18 @@ func databaseDump(db *badger.DB) (map[string]analysiscache.Payload, error) {
 	return dump, err
 }
 
-func NewSinkChannel() (chan *backup.ProgressEvent, chan []backup.ProgressEvent) {
-	channel := make(chan *backup.ProgressEvent)
-	completion := make(chan []backup.ProgressEvent, 1)
-	holder := struct {
-		events []backup.ProgressEvent
-	}{}
+type AnalysedMediaObserverFake struct {
+	Medias []*backup.AnalysedMedia
+}
 
-	go func() {
-		for event := range channel {
-			holder.events = append(holder.events, *event)
-		}
+func (a *AnalysedMediaObserverFake) OnAnalysedMedia(media *backup.AnalysedMedia) {
+	a.Medias = append(a.Medias, media)
+}
 
-		completion <- holder.events
-	}()
+type RejectedMediaObserverFake struct {
+	Rejected map[backup.FoundMedia]error
+}
 
-	return channel, completion
+func (r *RejectedMediaObserverFake) OnRejectedMedia(found backup.FoundMedia, err error) {
+	r.Rejected[found] = err
 }
