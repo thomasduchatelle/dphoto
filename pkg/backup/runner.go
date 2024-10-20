@@ -21,13 +21,13 @@ type RunnerUploader interface {
 }
 
 type runnerPublisher func(chan FoundMedia, chan *ProgressEvent) error
-type RunnerAnalyserFunc func(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
+type RunnerAnalyserFunc func(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver)
 type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool
 type RunnerUploaderFunc func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
 
-func (r RunnerAnalyserFunc) Analyse(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error) {
-	return r(found, progressChannel)
+func (r RunnerAnalyserFunc) Analyse(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver) {
+	r(found, analysedMediaObserver, rejectedMediaObserver)
 }
 
 func (r RunnerCatalogerFunc) Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {

@@ -4,6 +4,13 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 )
 
+func (d *AnalyserCache) Decorate(analyser backup.RunnerAnalyser) backup.RunnerAnalyser {
+	return &AnalyserCacheWrapper{
+		Delegate:      analyser,
+		AnalyserCache: d,
+	}
+}
+
 type AnalyserCacheWrapper struct {
 	Delegate      backup.RunnerAnalyser
 	AnalyserCache *AnalyserCache
