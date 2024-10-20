@@ -35,8 +35,9 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 	receiver := newScanReceiver(mdc, volume)
 	run := runner{
 		MDC:                  mdc,
+		Options:              options,
 		Publisher:            publisher,
-		Analyser:             options.GetAnalyserDecorator().Decorate(newBackupAnalyseMedia()),
+		Analyser:             newBackupAnalyseMedia(),
 		Cataloger:            cataloger,
 		UniqueFilter:         newUniqueFilter(),
 		Uploader:             RunnerUploaderFunc(receiver.receive),

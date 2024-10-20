@@ -12,8 +12,12 @@ type Options struct {
 	BatchSize                 int                    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
 }
 
+type RunnerAnalyserDecoratorObserver interface {
+	OnDecoratedAnalyser(found FoundMedia, cacheHit bool)
+}
+
 type AnalyserDecorator interface {
-	Decorate(analyseFunc RunnerAnalyser) RunnerAnalyser
+	Decorate(analyseFunc RunnerAnalyser, observers ...RunnerAnalyserDecoratorObserver) RunnerAnalyser
 }
 
 func readOptions(requestedOptions []Options) Options {
@@ -114,7 +118,7 @@ func WithBatchSize(batchSize int) Options {
 type NopeAnalyserDecorator struct {
 }
 
-func (n *NopeAnalyserDecorator) Decorate(analyseFunc RunnerAnalyser) RunnerAnalyser {
+func (n *NopeAnalyserDecorator) Decorate(analyseFunc RunnerAnalyser, observers ...RunnerAnalyserDecoratorObserver) RunnerAnalyser {
 	return analyseFunc
 }
 

@@ -40,20 +40,21 @@ func (r RunnerUploaderFunc) Upload(buffer []*BackingUpMediaRequest, progressChan
 
 type runner struct {
 	MDC                  *log.Entry         // MDC is log.WithFields({}) that contains Mapped Diagnostic Context
+	Options              Options            // Options contains the configuration for each step of the backup process. [migration to Observer Pattern]
 	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
 	Analyser             RunnerAnalyser     // Analyser is extracting metadata from the file
 	Cataloger            RunnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
-	ConcurrentAnalyser   int                // ConcurrentAnalyser is the number of goroutines that analyse the medias
-	ConcurrentCataloguer int                // ConcurrentAnalyser is the number of goroutines that analyse the medias
-	ConcurrentUploader   int                // ConcurrentUploader is the number of goroutine that upload files online
-	BatchSize            int                // BatchSize is the size of the buffer for the uploader
-	SkipRejects          bool
+	ConcurrentAnalyser   int                // ConcurrentAnalyser is the number of goroutines that analyse the medias [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
+	ConcurrentCataloguer int                // ConcurrentAnalyser is the number of goroutines that analyse the medias [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
+	ConcurrentUploader   int                // ConcurrentUploader is the number of goroutine that upload files online [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
+	BatchSize            int                // BatchSize is the size of the buffer for the uploader	 [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
+	SkipRejects          bool               // SkipRejects [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
 	progressEventChannel chan *ProgressEvent
 	errors               []error
-	completionChannel    chan []error
 
+	completionChannel      chan []error
 	interrupterObserver    *InterrupterObserver    // InterrupterObserver is temporary while refactoring to observer pattern
 	errorCollectorObserver *ErrorCollectorObserver // ErrorCollectorObserver is temporary while refactoring to observer pattern
 }
@@ -70,9 +71,11 @@ func (r *runner) appendError(err error) {
 
 // start initialises the channels and publish files in the source channel
 func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, chan []error) {
-	r.BatchSize = defaultValue(r.BatchSize, 1)
+	progressObserver := NewProgressObserver(sizeHint)
+	r.progressEventChannel = progressObserver.EventChannel
 
-	r.progressEventChannel = make(chan *ProgressEvent, sizeHint*5)
+	r.BatchSize = defaultValue(r.BatchSize, 1)
+	r.Analyser = r.Options.GetAnalyserDecorator().Decorate(r.Analyser, progressObserver)
 
 	var interruptableContext context.Context
 	r.interrupterObserver, interruptableContext = NewInterrupterObserver(ctx)
@@ -96,7 +99,7 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 		Observers: []interface{}{
 			r.errorCollectorObserver,
 			r.interrupterObserver,
-			&ProgressObserver{EventChannel: r.progressEventChannel},
+			progressObserver,
 			analysedMediaChannelPublisher,
 		},
 	}
@@ -153,7 +156,6 @@ func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia
 				return
 			case media, more := <-foundChannel:
 				if more {
-					r.MDC.Infof("Runner > analysing %s", media)
 					r.Analyser.Analyse(media, observer, observer) // TODO manage the SkipRejects mode
 
 				} else {
@@ -171,7 +173,6 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 		buffer := make([]*AnalysedMedia, 0, r.BatchSize)
 		for media := range readyToBackupChannel {
 			buffer = append(buffer, media)
-			log.Infof("runner > buffuring analysed media %s", media.FoundMedia)
 			if len(buffer) == cap(buffer) {
 				bufferedChannel <- buffer
 				buffer = make([]*AnalysedMedia, 0, r.BatchSize)
@@ -190,7 +191,6 @@ func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*An
 		for {
 			select {
 			case <-ctx.Done():
-				r.MDC.Infof("runner > catalogueMedias interrupted")
 				interrupted = true
 			case buffer, more := <-analysedChannel:
 				if !more {
@@ -324,12 +324,23 @@ type InterrupterObserver struct {
 }
 
 func (c *InterrupterObserver) OnRejectedMedia(found FoundMedia, err error) {
-	log.Infof("runner > cancelling context due to %s on %s", err.Error(), found)
 	c.cancel()
+}
+
+func NewProgressObserver(sizeHint int) *ProgressObserver {
+	return &ProgressObserver{
+		EventChannel: make(chan *ProgressEvent, sizeHint*5),
+	}
 }
 
 type ProgressObserver struct {
 	EventChannel chan *ProgressEvent
+}
+
+func (c *ProgressObserver) OnDecoratedAnalyser(found FoundMedia, cacheHit bool) {
+	if cacheHit {
+		c.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysedFromCache, Count: 1, Size: found.Size()}
+	}
 }
 
 func (c *ProgressObserver) OnAnalysedMedia(media *AnalysedMedia) {
@@ -341,12 +352,10 @@ type AnalysedMediaChannelPublisher struct {
 }
 
 func (a *AnalysedMediaChannelPublisher) OnAnalysedMedia(media *AnalysedMedia) {
-	log.Infof("Analysed media %s added to channel", media.FoundMedia)
 	a.Channel <- media
 }
 
 func (a *AnalysedMediaChannelPublisher) Close() {
-	log.Infof("Closing channel AnalysedMediaChannelPublisher")
 	close(a.Channel)
 }
 
