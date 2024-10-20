@@ -1,5 +1,6 @@
 package backup
 
+import "C"
 import (
 	"context"
 	"github.com/pkg/errors"
@@ -8,7 +9,7 @@ import (
 )
 
 type RunnerAnalyser interface {
-	Analyse(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error)
+	Analyse(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver)
 }
 
 type RunnerCataloger interface {
@@ -24,6 +25,10 @@ type RunnerAnalyserFunc func(found FoundMedia, progressChannel chan *ProgressEve
 type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool
 type RunnerUploaderFunc func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
+
+func (r RunnerAnalyserFunc) Analyse(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error) {
+	return r(found, progressChannel)
+}
 
 func (r RunnerCatalogerFunc) Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 	return r(ctx, medias, progressChannel)
@@ -45,11 +50,12 @@ type runner struct {
 	ConcurrentUploader   int                // ConcurrentUploader is the number of goroutine that upload files online
 	BatchSize            int                // BatchSize is the size of the buffer for the uploader
 	SkipRejects          bool
-	cancel               context.CancelFunc
 	progressEventChannel chan *ProgressEvent
-	errorsMutex          sync.Mutex
 	errors               []error
 	completionChannel    chan []error
+
+	interrupterObserver    *InterrupterObserver    // InterrupterObserver is temporary while refactoring to observer pattern
+	errorCollectorObserver *ErrorCollectorObserver // ErrorCollectorObserver is temporary while refactoring to observer pattern
 }
 
 func (r *runner) appendError(err error) {
@@ -57,13 +63,9 @@ func (r *runner) appendError(err error) {
 		return
 	}
 
-	log.WithError(err).Errorln("logging error and cancelling process")
-	r.errorsMutex.Lock()
-	defer r.errorsMutex.Unlock()
-
-	r.cancel()
-
-	r.errors = append(r.errors, err)
+	// Deprecated - use observers directly
+	r.errorCollectorObserver.appendError(err)
+	r.interrupterObserver.cancel()
 }
 
 // start initialises the channels and publish files in the source channel
@@ -71,8 +73,10 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	r.BatchSize = defaultValue(r.BatchSize, 1)
 
 	r.progressEventChannel = make(chan *ProgressEvent, sizeHint*5)
-	var cancellableCtx context.Context
-	cancellableCtx, r.cancel = context.WithCancel(ctx)
+
+	var interruptableContext context.Context
+	r.interrupterObserver, interruptableContext = NewInterrupterObserver(ctx)
+	r.errorCollectorObserver = NewErrorCollectorObserver()
 
 	bufferedChannelSize := 1 + sizeHint/r.BatchSize
 	if sizeHint == 0 {
@@ -80,17 +84,28 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	}
 
 	foundChannel := make(chan FoundMedia, sizeHint)
-	analysedChannel := make(chan *AnalysedMedia, sizeHint)
+	analysedMediaChannelPublisher := &AnalysedMediaChannelPublisher{
+		Channel: make(chan *AnalysedMedia, sizeHint),
+	}
 	bufferedAnalysedChannel := make(chan []*AnalysedMedia, bufferedChannelSize)
 	cataloguedChannel := make(chan *BackingUpMediaRequest, bufferedChannelSize)
 	bufferedCataloguedChannel := make(chan []*BackingUpMediaRequest, bufferedChannelSize)
 	r.completionChannel = make(chan []error, 1)
 
-	r.analyseMedias(cancellableCtx, foundChannel, analysedChannel)
-	r.bufferAnalysedMedias(analysedChannel, bufferedAnalysedChannel)
-	r.catalogueMedias(bufferedAnalysedChannel, cataloguedChannel)
+	observer := &CompositeRunnerObserver{
+		Observers: []interface{}{
+			r.errorCollectorObserver,
+			r.interrupterObserver,
+			&ProgressObserver{EventChannel: r.progressEventChannel},
+			analysedMediaChannelPublisher,
+		},
+	}
+
+	r.analyseMedias(interruptableContext, foundChannel, observer, analysedMediaChannelPublisher.Close)
+	r.bufferAnalysedMedias(analysedMediaChannelPublisher.Channel, bufferedAnalysedChannel)
+	r.catalogueMedias(interruptableContext, bufferedAnalysedChannel, cataloguedChannel)
 	r.bufferUniqueCataloguedMedias(cataloguedChannel, bufferedCataloguedChannel)
-	r.uploadMedias(bufferedCataloguedChannel, r.completionChannel)
+	r.uploadMedias(interruptableContext, bufferedCataloguedChannel, r.completionChannel, r.errorCollectorObserver)
 
 	r.startPublishing(foundChannel)
 	return r.progressEventChannel, r.completionChannel
@@ -130,7 +145,7 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 	}()
 }
 
-func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, analysedChannel chan *AnalysedMedia) {
+func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, observer *CompositeRunnerObserver, closer func()) {
 	r.startsInParallel(defaultValue(r.ConcurrentAnalyser, 1), func() {
 		for {
 			select {
@@ -138,24 +153,15 @@ func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia
 				return
 			case media, more := <-foundChannel:
 				if more {
-					r.MDC.Debugf("Runner > analysing %s", media)
-					analysed, err := r.Analyser.Analyse(media, r.progressEventChannel)
-					if err != nil && r.SkipRejects {
-						r.MDC.Infof("silently skip %s: %s", media, err.Error()) // not strictly correct as the file won't be counted
-					} else if err != nil {
-						r.appendError(errors.Wrap(err, "error in analyser"))
-					} else {
-						analysedChannel <- analysed
-					}
+					r.MDC.Infof("Runner > analysing %s", media)
+					r.Analyser.Analyse(media, observer, observer) // TODO manage the SkipRejects mode
 
 				} else {
 					return
 				}
 			}
 		}
-	}, func() {
-		close(analysedChannel)
-	})
+	}, closer)
 }
 
 func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, bufferedChannel chan []*AnalysedMedia) {
@@ -165,6 +171,7 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 		buffer := make([]*AnalysedMedia, 0, r.BatchSize)
 		for media := range readyToBackupChannel {
 			buffer = append(buffer, media)
+			log.Infof("runner > buffuring analysed media %s", media.FoundMedia)
 			if len(buffer) == cap(buffer) {
 				bufferedChannel <- buffer
 				buffer = make([]*AnalysedMedia, 0, r.BatchSize)
@@ -177,33 +184,31 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 	}()
 }
 
-func (r *runner) catalogueMedias(analysedChannel chan []*AnalysedMedia, requestsChannel chan *BackingUpMediaRequest) {
+func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*AnalysedMedia, requestsChannel chan *BackingUpMediaRequest) {
 	r.startsInParallel(defaultValue(r.ConcurrentCataloguer, 1), func() {
+		interrupted := false
 		for {
 			select {
+			case <-ctx.Done():
+				r.MDC.Infof("runner > catalogueMedias interrupted")
+				interrupted = true
 			case buffer, more := <-analysedChannel:
-				if more && r.hasAnyErrors() == 0 {
+				if !more {
+					return
+				}
+				if !interrupted {
 					catalogedMedias, err := r.Cataloger.Catalog(context.TODO(), buffer, r.progressEventChannel)
 					r.appendError(errors.Wrap(err, "error in cataloguer"))
 
 					for _, media := range catalogedMedias {
 						requestsChannel <- media
 					}
-				} else if !more {
-					return
 				}
 			}
 		}
 	}, func() {
 		close(requestsChannel)
 	})
-}
-
-func (r *runner) hasAnyErrors() int {
-	r.errorsMutex.Lock()
-	defer r.errorsMutex.Unlock()
-
-	return len(r.errors)
 }
 
 func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *BackingUpMediaRequest, bufferedChannel chan []*BackingUpMediaRequest) {
@@ -228,12 +233,16 @@ func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *Backin
 	}()
 }
 
-func (r *runner) uploadMedias(bufferedChannel chan []*BackingUpMediaRequest, completionChannel chan []error) {
+func (r *runner) uploadMedias(ctx context.Context, bufferedChannel chan []*BackingUpMediaRequest, completionChannel chan []error, collector *ErrorCollectorObserver) {
 	r.startsInParallel(defaultValue(r.ConcurrentUploader, 1), func() {
+		interrupted := false
 		for {
 			select {
+			case <-ctx.Done():
+				interrupted = true
+
 			case buffer, more := <-bufferedChannel:
-				if more && r.hasAnyErrors() == 0 {
+				if more && !interrupted {
 					err := r.Uploader.Upload(buffer, r.progressEventChannel)
 					r.appendError(errors.Wrap(err, "error in uploader"))
 				} else if !more {
@@ -242,13 +251,7 @@ func (r *runner) uploadMedias(bufferedChannel chan []*BackingUpMediaRequest, com
 			}
 		}
 	}, func() {
-		r.errorsMutex.Lock()
-		defer r.errorsMutex.Unlock()
-
-		errs := make([]error, len(r.errors), len(r.errors))
-		copy(errs, r.errors)
-
-		completionChannel <- errs
+		completionChannel <- collector.Errors()
 		close(completionChannel)
 		close(r.progressEventChannel)
 	})
@@ -262,6 +265,107 @@ func (r *runner) startPublishing(foundChannel chan FoundMedia) {
 	}()
 }
 
-func (r RunnerAnalyserFunc) Analyse(found FoundMedia, progressChannel chan *ProgressEvent) (*AnalysedMedia, error) {
-	return r(found, progressChannel)
+func NewErrorCollectorObserver() *ErrorCollectorObserver {
+	return &ErrorCollectorObserver{
+		errorsMutex: sync.Mutex{},
+	}
+}
+
+type ErrorCollectorObserver struct {
+	errors      []error
+	errorsMutex sync.Mutex
+}
+
+func (e *ErrorCollectorObserver) OnRejectedMedia(found FoundMedia, err error) {
+	e.appendError(errors.Wrapf(err, "error in analyser"))
+}
+
+func (e *ErrorCollectorObserver) appendError(err error) {
+	if err == nil {
+		return
+	}
+
+	e.errorsMutex.Lock()
+	defer e.errorsMutex.Unlock()
+
+	e.errors = append(e.errors, err)
+}
+
+func (e *ErrorCollectorObserver) hasAnyErrors() int {
+	e.errorsMutex.Lock()
+	defer e.errorsMutex.Unlock()
+
+	return len(e.errors)
+}
+
+func (e *ErrorCollectorObserver) Errors() []error {
+	e.errorsMutex.Lock()
+	defer e.errorsMutex.Unlock()
+
+	errs := make([]error, len(e.errors), len(e.errors))
+	copy(errs, e.errors)
+
+	return errs
+}
+
+func NewInterrupterObserver(ctx context.Context) (*InterrupterObserver, context.Context) {
+	cancellableCtx, cancel := context.WithCancel(ctx)
+
+	return &InterrupterObserver{
+		ctx:    ctx,
+		cancel: cancel,
+	}, cancellableCtx
+
+}
+
+type InterrupterObserver struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+func (c *InterrupterObserver) OnRejectedMedia(found FoundMedia, err error) {
+	log.Infof("runner > cancelling context due to %s on %s", err.Error(), found)
+	c.cancel()
+}
+
+type ProgressObserver struct {
+	EventChannel chan *ProgressEvent
+}
+
+func (c *ProgressObserver) OnAnalysedMedia(media *AnalysedMedia) {
+	c.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: media.FoundMedia.Size()}
+}
+
+type AnalysedMediaChannelPublisher struct {
+	Channel chan *AnalysedMedia
+}
+
+func (a *AnalysedMediaChannelPublisher) OnAnalysedMedia(media *AnalysedMedia) {
+	log.Infof("Analysed media %s added to channel", media.FoundMedia)
+	a.Channel <- media
+}
+
+func (a *AnalysedMediaChannelPublisher) Close() {
+	log.Infof("Closing channel AnalysedMediaChannelPublisher")
+	close(a.Channel)
+}
+
+type CompositeRunnerObserver struct {
+	Observers []interface{}
+}
+
+func (c *CompositeRunnerObserver) OnAnalysedMedia(media *AnalysedMedia) {
+	for _, observer := range c.Observers {
+		if typed, ok := observer.(AnalysedMediaObserver); ok {
+			typed.OnAnalysedMedia(media)
+		}
+	}
+}
+
+func (c *CompositeRunnerObserver) OnRejectedMedia(found FoundMedia, err error) {
+	for _, observer := range c.Observers {
+		if typed, ok := observer.(RejectedMediaObserver); ok {
+			typed.OnRejectedMedia(found, err)
+		}
+	}
 }

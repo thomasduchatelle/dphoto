@@ -45,10 +45,24 @@ func newBackupAnalyseMedia() RunnerAnalyser {
 	return &analyser
 }
 
-func (a *analyseMedia) Analyse(found FoundMedia, eventChannel chan *ProgressEvent) (*AnalysedMedia, error) {
+type AnalyserObserver interface {
+	AnalysedMediaObserver
+	RejectedMediaObserver
+}
+
+type AnalysedMediaObserver interface {
+	OnAnalysedMedia(media *AnalysedMedia)
+}
+
+type RejectedMediaObserver interface {
+	OnRejectedMedia(found FoundMedia, err error)
+}
+
+func (a *analyseMedia) Analyse(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver) {
 	reader, hasher, err := readerSpyingForHash(found)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to open file %s for analyse", found)
+		rejectedMediaObserver.OnRejectedMedia(found, errors.Wrapf(err, "failed to open file %s for analyse", found))
+		return
 	}
 	defer func() {
 		if reader != nil {
@@ -58,22 +72,25 @@ func (a *analyseMedia) Analyse(found FoundMedia, eventChannel chan *ProgressEven
 
 	mediaType, details, err := extractDetails(found, reader, a.options)
 	if err != nil {
-		return nil, err
+		rejectedMediaObserver.OnRejectedMedia(found, err)
+		return
 	}
 
 	filehash := ""
 	if !a.options.Fast {
 		filehash, err = hasher.computeHash()
 	}
+	if err != nil {
+		rejectedMediaObserver.OnRejectedMedia(found, errors.Wrapf(err, "failed to compute file %s SHA256", found))
+		return
+	}
 
-	eventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: found.Size()}
-
-	return &AnalysedMedia{
+	analysedMediaObserver.OnAnalysedMedia(&AnalysedMedia{
 		FoundMedia: found,
 		Type:       mediaType,
 		Sha256Hash: filehash,
 		Details:    details,
-	}, errors.Wrapf(err, "failed to compute file %s SHA256", found)
+	})
 }
 
 func extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {

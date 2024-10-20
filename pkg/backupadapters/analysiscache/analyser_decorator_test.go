@@ -204,9 +204,11 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 
 			mockedFields := tt.mocks(t)
 
-			d := &analysiscache.DecoratorInstance{
-				DB:       db,
+			d := &analysiscache.AnalyserCacheWrapper{
 				Delegate: mockedFields.Delegate,
+				AnalyserCache: &analysiscache.AnalyserCache{
+					DB: db,
+				},
 			}
 			progressChannel, completion := NewSinkChannel()
 
@@ -219,7 +221,7 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 			assert.Equalf(t, tt.want, got, "Analyse(%v)", tt.args.found)
 
 			gotDB, err := databaseDump(db)
-			if assert.NoError(t, err, "databaseDump(db)") {
+			if assert.NoError(t, err, "databaseDump(DB)") {
 				assert.Equal(t, tt.wantDB, gotDB)
 			}
 
