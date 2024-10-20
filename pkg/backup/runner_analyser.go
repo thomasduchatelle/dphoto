@@ -37,3 +37,9 @@ type AnalyserDecorator interface {
 type AnalyserDecoratorObserver interface {
 	OnDecoratedAnalyser(found FoundMedia, cacheHit bool)
 }
+
+type RunnerAnalyserFunc func(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver)
+
+func (r RunnerAnalyserFunc) Analyse(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver) {
+	r(found, analysedMediaObserver, rejectedMediaObserver)
+}

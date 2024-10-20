@@ -17,14 +17,9 @@ type RunnerUploader interface {
 }
 
 type runnerPublisher func(chan FoundMedia, chan *ProgressEvent) error
-type RunnerAnalyserFunc func(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver)
 type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool
 type RunnerUploaderFunc func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
-
-func (r RunnerAnalyserFunc) Analyse(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver) {
-	r(found, analysedMediaObserver, rejectedMediaObserver)
-}
 
 func (r RunnerCatalogerFunc) Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
 	return r(ctx, medias, progressChannel)
@@ -83,9 +78,7 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	}
 
 	foundChannel := make(chan FoundMedia, sizeHint)
-	analysedMediaChannelPublisher := &AnalysedMediaChannelPublisher{
-		Channel: make(chan *AnalysedMedia, sizeHint),
-	}
+	analysedMediaChannelPublisher := NewAsyncPublisher(sizeHint)
 	bufferedAnalysedChannel := make(chan []*AnalysedMedia, bufferedChannelSize)
 	cataloguedChannel := make(chan *BackingUpMediaRequest, bufferedChannelSize)
 	bufferedCataloguedChannel := make(chan []*BackingUpMediaRequest, bufferedChannelSize)
@@ -101,7 +94,7 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	}
 
 	r.analyseMedias(interruptableContext, foundChannel, observer, analysedMediaChannelPublisher.Close)
-	r.bufferAnalysedMedias(analysedMediaChannelPublisher.Channel, bufferedAnalysedChannel)
+	r.bufferAnalysedMedias(analysedMediaChannelPublisher.AnalysedMediaChannel, bufferedAnalysedChannel)
 	r.catalogueMedias(interruptableContext, bufferedAnalysedChannel, cataloguedChannel)
 	r.bufferUniqueCataloguedMedias(cataloguedChannel, bufferedCataloguedChannel)
 	r.uploadMedias(interruptableContext, bufferedCataloguedChannel, r.completionChannel, r.errorCollectorObserver)
@@ -259,118 +252,4 @@ func (r *runner) startPublishing(foundChannel chan FoundMedia) {
 		r.appendError(err)
 		close(foundChannel)
 	}()
-}
-
-func NewErrorCollectorObserver() *ErrorCollectorObserver {
-	return &ErrorCollectorObserver{
-		errorsMutex: sync.Mutex{},
-	}
-}
-
-type ErrorCollectorObserver struct {
-	errors      []error
-	errorsMutex sync.Mutex
-}
-
-func (e *ErrorCollectorObserver) OnRejectedMedia(found FoundMedia, err error) {
-	e.appendError(errors.Wrapf(err, "error in analyser"))
-}
-
-func (e *ErrorCollectorObserver) appendError(err error) {
-	if err == nil {
-		return
-	}
-
-	e.errorsMutex.Lock()
-	defer e.errorsMutex.Unlock()
-
-	e.errors = append(e.errors, err)
-}
-
-func (e *ErrorCollectorObserver) hasAnyErrors() int {
-	e.errorsMutex.Lock()
-	defer e.errorsMutex.Unlock()
-
-	return len(e.errors)
-}
-
-func (e *ErrorCollectorObserver) Errors() []error {
-	e.errorsMutex.Lock()
-	defer e.errorsMutex.Unlock()
-
-	errs := make([]error, len(e.errors), len(e.errors))
-	copy(errs, e.errors)
-
-	return errs
-}
-
-func NewInterrupterObserver(ctx context.Context) (*InterrupterObserver, context.Context) {
-	cancellableCtx, cancel := context.WithCancel(ctx)
-
-	return &InterrupterObserver{
-		ctx:    ctx,
-		cancel: cancel,
-	}, cancellableCtx
-
-}
-
-type InterrupterObserver struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-}
-
-func (c *InterrupterObserver) OnRejectedMedia(found FoundMedia, err error) {
-	c.cancel()
-}
-
-func NewProgressObserver(sizeHint int) *ProgressObserver {
-	return &ProgressObserver{
-		EventChannel: make(chan *ProgressEvent, sizeHint*5),
-	}
-}
-
-type ProgressObserver struct {
-	EventChannel chan *ProgressEvent
-}
-
-func (c *ProgressObserver) OnDecoratedAnalyser(found FoundMedia, cacheHit bool) {
-	if cacheHit {
-		c.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysedFromCache, Count: 1, Size: found.Size()}
-	}
-}
-
-func (c *ProgressObserver) OnAnalysedMedia(media *AnalysedMedia) {
-	c.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: media.FoundMedia.Size()}
-}
-
-type AnalysedMediaChannelPublisher struct {
-	Channel chan *AnalysedMedia
-}
-
-func (a *AnalysedMediaChannelPublisher) OnAnalysedMedia(media *AnalysedMedia) {
-	a.Channel <- media
-}
-
-func (a *AnalysedMediaChannelPublisher) Close() {
-	close(a.Channel)
-}
-
-type CompositeRunnerObserver struct {
-	Observers []interface{}
-}
-
-func (c *CompositeRunnerObserver) OnAnalysedMedia(media *AnalysedMedia) {
-	for _, observer := range c.Observers {
-		if typed, ok := observer.(AnalysedMediaObserver); ok {
-			typed.OnAnalysedMedia(media)
-		}
-	}
-}
-
-func (c *CompositeRunnerObserver) OnRejectedMedia(found FoundMedia, err error) {
-	for _, observer := range c.Observers {
-		if typed, ok := observer.(RejectedMediaObserver); ok {
-			typed.OnRejectedMedia(found, err)
-		}
-	}
 }
