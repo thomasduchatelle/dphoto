@@ -85,9 +85,9 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 
 	observer := &CompositeRunnerObserver{
 		Observers: []interface{}{
-			r.errorCollectorObserver,
-			r.interrupterObserver,
-			progressObserver,
+			r.errorCollectorObserver, // TODO - skip error = it should not show an error at the end ? should it log the errors still ?
+			r.interrupterObserver,    // TODO - skip error = it should not interrupt ! But is it only for the analyser ?
+			progressObserver,         // TODO - skip error = it should count the found media in error but assume it "filtered out"
 			channelPublisher,
 		},
 	}
