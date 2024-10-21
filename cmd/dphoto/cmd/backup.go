@@ -14,7 +14,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/s3volume"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
-	"io"
 	"os"
 	"path"
 	"strings"
@@ -61,16 +60,14 @@ var backupCmd = &cobra.Command{
 // addCacheAnalysis is shared between 'backup' and 'scan'
 func addCacheAnalysis(cache bool) backup.AnalyserDecorator {
 	if cache {
-		decorator, err := analysiscache.NewCacheDecorator(cacheDirectory)
+		decorator, err := analysiscache.NewAnalyserCache(cacheDirectory)
 		if err != nil {
 			panic(fmt.Sprintf("PANIC - cache couldn't be initiated: %s", err.Error()))
 		}
 
-		if closable, isClosable := decorator.(io.Closer); isClosable {
-			postRunFunctions = append(postRunFunctions, func() error {
-				return closable.Close()
-			})
-		}
+		postRunFunctions = append(postRunFunctions, func() error {
+			return decorator.Close()
+		})
 
 		return decorator
 	}
