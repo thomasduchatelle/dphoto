@@ -10,9 +10,10 @@ type Options struct {
 	ConcurrentCataloguer      int                    // ConcurrentCataloguer is the number of concurrent cataloguer (find album, create new albums)
 	ConcurrentUploader        int                    // ConcurrentUploader is the number of concurrent uploader (upload files)
 	BatchSize                 int                    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
+	RejectDir                 string                 // RejectDir is the directory where rejected files will be copied
 }
 
-func readOptions(requestedOptions []Options) Options {
+func ReduceOptions(requestedOptions ...Options) Options {
 	aggregated := Options{
 		RestrictedAlbumFolderName: make(map[string]interface{}),
 	}
@@ -31,6 +32,7 @@ func readOptions(requestedOptions []Options) Options {
 
 		aggregated.SkipRejects = aggregated.SkipRejects || original.SkipRejects
 
+		aggregated.RejectDir = mergeStringOption(aggregated.RejectDir, original.RejectDir)
 		aggregated.ConcurrentAnalyser = mergeIntOption(aggregated.ConcurrentAnalyser, original.ConcurrentAnalyser)
 		aggregated.ConcurrentCataloguer = mergeIntOption(aggregated.ConcurrentCataloguer, original.ConcurrentCataloguer)
 		aggregated.ConcurrentUploader = mergeIntOption(aggregated.ConcurrentUploader, original.ConcurrentUploader)
@@ -106,6 +108,13 @@ func WithBatchSize(batchSize int) Options {
 	}
 }
 
+func OptionWithRejectDir(rejectDir string) Options {
+	return Options{
+		SkipRejects: true,
+		RejectDir:   rejectDir,
+	}
+}
+
 // NopeAnalyserDecorator is a default implementation for AnalyserDecorator which doesn't decorate the AnalyseMediaFunc.
 type NopeAnalyserDecorator struct {
 }
@@ -120,4 +129,12 @@ func mergeIntOption(current, value int) int {
 	}
 
 	return value
+}
+
+func mergeStringOption(current, value string) string {
+	if value != "" {
+		return value
+	}
+
+	return current
 }

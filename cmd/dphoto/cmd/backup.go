@@ -26,8 +26,9 @@ var (
 
 var (
 	backupCmdArg = struct {
-		noCache bool
-		confirm bool
+		noCache   bool
+		confirm   bool
+		rejectDir string
 	}{}
 )
 
@@ -46,6 +47,7 @@ var backupCmd = &cobra.Command{
 		multiFilesBackup := pkgfactory.NewMultiFilesBackup(ctx)
 		options := []backup.Options{
 			backup.OptionWithListener(progress).WithCachedAnalysis(addCacheAnalysis(!backupCmdArg.noCache)),
+			backup.OptionWithRejectDir(backupCmdArg.rejectDir),
 		}
 		options = append(options, config.BackupOptions()...)
 		report, err := multiFilesBackup(ctx, ownermodel.Owner(Owner), volume, options...)
@@ -79,6 +81,7 @@ func init() {
 	rootCmd.AddCommand(backupCmd)
 
 	backupCmd.Flags().BoolVarP(&backupCmdArg.noCache, "no-cache", "c", false, "set to true to ignore cache (and not building it)")
+	backupCmd.Flags().StringVar(&backupCmdArg.rejectDir, "rejects", "", "copy files that have not been backed up to this directory (same as --skip during scanning)")
 
 	config.Listen(func(cfg config.Config) {
 		newS3Volume = func(volumePath string) (backup.SourceVolume, error) {

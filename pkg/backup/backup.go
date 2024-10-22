@@ -25,7 +25,7 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 		"Volume":   volume.String(),
 	})
 
-	options := readOptions(optionsSlice)
+	options := ReduceOptions(optionsSlice...)
 
 	cataloger, err := NewCataloger(owner, options)
 	if err != nil {

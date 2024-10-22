@@ -1,12 +1,21 @@
 package backup
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	"sync"
 )
 
+type IErrorCollectorObserver interface {
+	RejectedMediaObserver
+
+	appendError(err error)
+	hasAnyErrors() int
+	Errors() []error
+}
+
 // NewErrorCollectorObserver collects errors that occurred during the backup process
-func NewErrorCollectorObserver() *ErrorCollectorObserver {
+func NewErrorCollectorObserver() IErrorCollectorObserver {
 	return &ErrorCollectorObserver{
 		errorsMutex: sync.Mutex{},
 	}
@@ -17,7 +26,7 @@ type ErrorCollectorObserver struct {
 	errorsMutex sync.Mutex
 }
 
-func (e *ErrorCollectorObserver) OnRejectedMedia(found FoundMedia, err error) {
+func (e *ErrorCollectorObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
 	e.appendError(errors.Wrapf(err, "error in analyser"))
 }
 

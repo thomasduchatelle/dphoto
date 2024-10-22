@@ -1,22 +1,28 @@
 package backup
 
+import "context"
+
 // CompositeRunnerObserver dispatches events to multiple observers of different types
 type CompositeRunnerObserver struct {
 	Observers []interface{}
 }
 
-func (c *CompositeRunnerObserver) OnAnalysedMedia(media *AnalysedMedia) {
+func (c *CompositeRunnerObserver) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
 	for _, observer := range c.Observers {
 		if typed, ok := observer.(AnalysedMediaObserver); ok {
-			typed.OnAnalysedMedia(media)
+			err := typed.OnAnalysedMedia(ctx, media)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func (c *CompositeRunnerObserver) OnRejectedMedia(found FoundMedia, err error) {
+func (c *CompositeRunnerObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
 	for _, observer := range c.Observers {
 		if typed, ok := observer.(RejectedMediaObserver); ok {
-			typed.OnRejectedMedia(found, err)
+			typed.OnRejectedMedia(ctx, found, err)
 		}
 	}
 }

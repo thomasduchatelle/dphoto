@@ -8,6 +8,11 @@ import (
 )
 
 func TestTracker(t *testing.T) {
+	noExtra := backup.ExtraCounts{
+		Cached:   backup.MediaCounterZero,
+		Rejected: backup.MediaCounterZero,
+	}
+
 	tests := []struct {
 		name              string
 		events            []*backup.ProgressEvent
@@ -26,7 +31,7 @@ func TestTracker(t *testing.T) {
 			},
 			setMocks: func(complete *mocks.TrackScanComplete, analysed *mocks.TrackAnalysed, uploaded *mocks.TrackUploaded) {
 				complete.On("OnScanComplete", backup.NewMediaCounter(1, 42)).Once().Return()
-				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 42), backup.NewMediaCounter(1, 42), backup.MediaCounterZero).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 42), backup.NewMediaCounter(1, 42), noExtra).Once().Return()
 				uploaded.On("OnUploaded", backup.NewMediaCounter(1, 42), backup.NewMediaCounter(1, 42)).Once().Return()
 			},
 			wantCountPerAlbum: map[string]*backup.TypeCounter{
@@ -43,7 +48,7 @@ func TestTracker(t *testing.T) {
 				{Type: backup.ProgressEventScanComplete, Count: 1, Size: 1},
 			},
 			setMocks: func(complete *mocks.TrackScanComplete, analysed *mocks.TrackAnalysed, uploaded *mocks.TrackUploaded) {
-				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 1), backup.MediaCounterZero, backup.MediaCounterZero).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 1), backup.MediaCounterZero, noExtra).Once().Return()
 				uploaded.On("OnUploaded", backup.NewMediaCounter(1, 1), backup.MediaCounterZero).Once().Return()
 				complete.On("OnScanComplete", backup.NewMediaCounter(1, 1)).Once().Return()
 			},
@@ -63,7 +68,7 @@ func TestTracker(t *testing.T) {
 			setMocks: func(complete *mocks.TrackScanComplete, analysed *mocks.TrackAnalysed, uploaded *mocks.TrackUploaded) {
 				complete.On("OnScanComplete", backup.NewMediaCounter(1, 1)).Once().Return()
 				uploaded.On("OnUploaded", backup.NewMediaCounter(1, 1), backup.MediaCounterZero).Once().Return()
-				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 1), backup.NewMediaCounter(1, 1), backup.MediaCounterZero).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 1), backup.NewMediaCounter(1, 1), noExtra).Once().Return()
 			},
 			wantCountPerAlbum: map[string]*backup.TypeCounter{
 				"/avengers": backup.NewTypeCounter(backup.MediaTypeImage, 1, 1),
@@ -83,10 +88,33 @@ func TestTracker(t *testing.T) {
 			},
 			setMocks: func(complete *mocks.TrackScanComplete, analysed *mocks.TrackAnalysed, uploaded *mocks.TrackUploaded) {
 				complete.On("OnScanComplete", backup.NewMediaCounter(4, 1111)).Once().Return()
-				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 1), backup.NewMediaCounter(4, 1111), backup.MediaCounterZero).Once().Return()
-				analysed.On("OnAnalysed", backup.NewMediaCounter(2, 11), backup.NewMediaCounter(4, 1111), backup.MediaCounterZero).Once().Return()
-				analysed.On("OnAnalysed", backup.NewMediaCounter(3, 111), backup.NewMediaCounter(4, 1111), backup.MediaCounterZero).Once().Return()
-				analysed.On("OnAnalysed", backup.NewMediaCounter(4, 1111), backup.NewMediaCounter(4, 1111), backup.MediaCounterZero).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 1), backup.NewMediaCounter(4, 1111), noExtra).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(2, 11), backup.NewMediaCounter(4, 1111), noExtra).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(3, 111), backup.NewMediaCounter(4, 1111), noExtra).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(4, 1111), backup.NewMediaCounter(4, 1111), noExtra).Once().Return()
+				uploaded.On("OnUploaded", backup.NewMediaCounter(1, 1), backup.NewMediaCounter(1, 1)).Once().Return()
+			},
+			wantCountPerAlbum: map[string]*backup.TypeCounter{
+				"/avengers": backup.NewTypeCounter(backup.MediaTypeImage, 1, 1),
+			},
+			wantNewAlbums: nil,
+		},
+		{
+			name: "it should count the media rejected by the analysis",
+			events: []*backup.ProgressEvent{
+				{Type: backup.ProgressEventScanComplete, Count: 2, Size: 11},
+				{Type: backup.ProgressEventAnalysed, Count: 1, Size: 1},
+				{Type: backup.ProgressEventReadyForUpload, Count: 1, Size: 1},
+				{Type: backup.ProgressEventRejected, Count: 1, Size: 10},
+				{Type: backup.ProgressEventUploaded, Count: 1, Size: 1, Album: "/avengers", MediaType: backup.MediaTypeImage},
+			},
+			setMocks: func(complete *mocks.TrackScanComplete, analysed *mocks.TrackAnalysed, uploaded *mocks.TrackUploaded) {
+				complete.On("OnScanComplete", backup.NewMediaCounter(2, 11)).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(1, 1), backup.NewMediaCounter(2, 11), noExtra).Once().Return()
+				analysed.On("OnAnalysed", backup.NewMediaCounter(2, 11), backup.NewMediaCounter(2, 11), backup.ExtraCounts{
+					Cached:   backup.MediaCounterZero,
+					Rejected: backup.NewMediaCounter(1, 10),
+				}).Once().Return()
 				uploaded.On("OnUploaded", backup.NewMediaCounter(1, 1), backup.NewMediaCounter(1, 1)).Once().Return()
 			},
 			wantCountPerAlbum: map[string]*backup.TypeCounter{

@@ -20,6 +20,7 @@ const (
 	ProgressEventScanComplete      ProgressEventType = "scan-complete"       // ProgressEventScanComplete set the total of files
 	ProgressEventAnalysed          ProgressEventType = "analysed"            // ProgressEventAnalysed is not useful for progress, it will be fined grained before upload
 	ProgressEventAnalysedFromCache ProgressEventType = "analysed-from-cache" // ProgressEventAnalysedFromCache is sent instead of ProgressEventAnalysed when the analysis has been cached
+	ProgressEventRejected          ProgressEventType = "analysis-rejected"   // ProgressEventSkipped count files skipped because the analysis failed (no date, invalid format, ...)
 	ProgressEventCatalogued        ProgressEventType = "catalogued"          // ProgressEventCatalogued is not useful for progress, it will be fined grained before upload
 	ProgressEventWrongAlbum        ProgressEventType = "wrong-album"         // ProgressEventWrongAlbum count files in filtered out albums (if filter used), subtracted from ProgressEventScanComplete
 	ProgressEventAlreadyExists     ProgressEventType = "duplicate-catalog"   // ProgressEventAlreadyExists count files already known in catalog, subtracted from ProgressEventScanComplete

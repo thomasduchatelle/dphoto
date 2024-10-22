@@ -42,15 +42,11 @@ func (p *BackupProgress) OnScanComplete(total backup.MediaCounter) {
 	}
 }
 
-func (p *BackupProgress) OnAnalysed(done, total, cached backup.MediaCounter) {
+func (p *BackupProgress) OnAnalysed(done, total backup.MediaCounter, extra backup.ExtraCounts) {
 	p.onAnalysedCalled = true
 	if !total.IsZero() {
 		p.analyseLine.SetBar(done.Count, total.Count)
-		cachedExplanation := ""
-		if cached.Count > 0 {
-			cachedExplanation = fmt.Sprintf(" [from cache: %d]", cached.Count)
-		}
-		p.analyseLine.SetExplanation(fmt.Sprintf("%d / %d files%s", done.Count, total.Count, cachedExplanation))
+		p.analyseLine.SetExplanation(fmt.Sprintf("%d / %d files %s", done.Count, total.Count, extra.String()))
 
 		if done.Count == total.Count {
 			p.analyseLine.SwapSpinner(1)

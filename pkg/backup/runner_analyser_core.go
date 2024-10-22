@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -39,11 +40,10 @@ type CoreAnalyser struct {
 	detailsReaders []DetailsReaderAdapter // DetailsReaders is a list of specific details extractor can auto-register
 }
 
-func (a *CoreAnalyser) Analyse(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver) {
+func (a *CoreAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver) error {
 	reader, hasher, err := readerSpyingForHash(found)
 	if err != nil {
-		rejectedMediaObserver.OnRejectedMedia(found, errors.Wrapf(err, "failed to open file %s for analyse", found))
-		return
+		return errors.Wrapf(err, "failed to open file %s for analyse", found)
 	}
 	defer func() {
 		if reader != nil {
@@ -53,8 +53,7 @@ func (a *CoreAnalyser) Analyse(found FoundMedia, analysedMediaObserver AnalysedM
 
 	mediaType, details, err := a.extractDetails(found, reader, a.options)
 	if err != nil {
-		rejectedMediaObserver.OnRejectedMedia(found, err)
-		return
+		return err
 	}
 
 	filehash := ""
@@ -62,11 +61,10 @@ func (a *CoreAnalyser) Analyse(found FoundMedia, analysedMediaObserver AnalysedM
 		filehash, err = hasher.computeHash()
 	}
 	if err != nil {
-		rejectedMediaObserver.OnRejectedMedia(found, errors.Wrapf(err, "failed to compute file %s SHA256", found))
-		return
+		return errors.Wrapf(err, "failed to compute file %s SHA256", found)
 	}
 
-	analysedMediaObserver.OnAnalysedMedia(&AnalysedMedia{
+	return analysedMediaObserver.OnAnalysedMedia(ctx, &AnalysedMedia{
 		FoundMedia: found,
 		Type:       mediaType,
 		Sha256Hash: filehash,

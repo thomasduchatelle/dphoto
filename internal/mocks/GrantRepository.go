@@ -157,6 +157,79 @@ func (_c *GrantRepository_FindScopesById_Call) RunAndReturn(run func(...aclcore.
 	return _c
 }
 
+// FindScopesByIdCtx provides a mock function with given fields: ctx, ids
+func (_m *GrantRepository) FindScopesByIdCtx(ctx context.Context, ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
+	_va := make([]interface{}, len(ids))
+	for _i := range ids {
+		_va[_i] = ids[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindScopesByIdCtx")
+	}
+
+	var r0 []*aclcore.Scope
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ...aclcore.ScopeId) ([]*aclcore.Scope, error)); ok {
+		return rf(ctx, ids...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ...aclcore.ScopeId) []*aclcore.Scope); ok {
+		r0 = rf(ctx, ids...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*aclcore.Scope)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ...aclcore.ScopeId) error); ok {
+		r1 = rf(ctx, ids...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GrantRepository_FindScopesByIdCtx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindScopesByIdCtx'
+type GrantRepository_FindScopesByIdCtx_Call struct {
+	*mock.Call
+}
+
+// FindScopesByIdCtx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ids ...aclcore.ScopeId
+func (_e *GrantRepository_Expecter) FindScopesByIdCtx(ctx interface{}, ids ...interface{}) *GrantRepository_FindScopesByIdCtx_Call {
+	return &GrantRepository_FindScopesByIdCtx_Call{Call: _e.mock.On("FindScopesByIdCtx",
+		append([]interface{}{ctx}, ids...)...)}
+}
+
+func (_c *GrantRepository_FindScopesByIdCtx_Call) Run(run func(ctx context.Context, ids ...aclcore.ScopeId)) *GrantRepository_FindScopesByIdCtx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]aclcore.ScopeId, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(aclcore.ScopeId)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *GrantRepository_FindScopesByIdCtx_Call) Return(_a0 []*aclcore.Scope, _a1 error) *GrantRepository_FindScopesByIdCtx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *GrantRepository_FindScopesByIdCtx_Call) RunAndReturn(run func(context.Context, ...aclcore.ScopeId) ([]*aclcore.Scope, error)) *GrantRepository_FindScopesByIdCtx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListScopesByOwner provides a mock function with given fields: ctx, owner, types
 func (_m *GrantRepository) ListScopesByOwner(ctx context.Context, owner ownermodel.Owner, types ...aclcore.ScopeType) ([]*aclcore.Scope, error) {
 	_va := make([]interface{}, len(types))

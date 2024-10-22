@@ -44,7 +44,7 @@ type runner struct {
 	channelPublisher     *ChannelPublisher
 
 	interrupterObserver    Interrupter             // AnalyserInterrupterObserver is temporary while refactoring to observer pattern
-	errorCollectorObserver *ErrorCollectorObserver // ErrorCollectorObserver is temporary while refactoring to observer pattern
+	errorCollectorObserver IErrorCollectorObserver // ErrorCollectorObserver is temporary while refactoring to observer pattern
 }
 
 func (r *runner) appendError(err error) {
@@ -70,7 +70,10 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	r.interrupterObserver, interruptableContext = NewInterrupterObserver(ctx, r.Options)
 	r.errorCollectorObserver = NewErrorCollectorObserver()
 
-	observer := r.CreateObserver(progressObserver)
+	observer, err := r.CreateObserver(progressObserver)
+	if err != nil {
+		panic(err)
+	}
 
 	r.progressEventChannel = progressObserver.EventChannel
 	r.analyseMedias(interruptableContext, r.channelPublisher.FoundChannel, observer, r.channelPublisher.AnalysedMediaChannelCloser)
@@ -83,16 +86,26 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	return r.progressEventChannel, r.channelPublisher.CompletionChannel
 }
 
-func (r *runner) CreateObserver(progressObserver *ProgressObserver) *CompositeRunnerObserver {
+func (r *runner) CreateObserver(progressObserver *ProgressObserver) (*CompositeRunnerObserver, error) {
 	observer := &CompositeRunnerObserver{
 		Observers: []interface{}{
 			r.errorCollectorObserver,
 			r.interrupterObserver,
 			progressObserver,
-			r.channelPublisher,
 		},
 	}
-	return observer
+
+	if r.Options.RejectDir != "" {
+		rejectsObserver, err := NewCopyRejectsObserver(r.Options.RejectDir)
+		if err != nil {
+			return nil, err
+		}
+		observer.Observers = append(observer.Observers, rejectsObserver)
+	}
+
+	observer.Observers = append(observer.Observers, r.channelPublisher)
+
+	return observer, nil
 }
 
 // waitToFinish is blocking until runner completes (or fails), returned completion channel should not be consumed.
@@ -104,7 +117,7 @@ func (r *runner) waitToFinish() error {
 		r.MDC.WithError(err).Errorf("Error %d/%d: %s", i+1, len(reportedErrors), err.Error())
 	}
 
-	if len(reportedErrors) > 0 {
+	if !r.Options.SkipRejects && len(reportedErrors) > 0 {
 		return errors.Wrapf(reportedErrors[0], "Backup failed, %d error(s) reported before shutdown. First one encountered", len(reportedErrors))
 	}
 
@@ -130,6 +143,9 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 }
 
 func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, observer *CompositeRunnerObserver, closer func()) {
+	analyser := &AnalyserAsyncWrapper{
+		Analyser: r.Analyser,
+	}
 	r.startsInParallel(defaultValue(r.Options.ConcurrentAnalyser, 1), func() {
 		for {
 			select {
@@ -137,7 +153,7 @@ func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia
 				return
 			case media, more := <-foundChannel:
 				if more {
-					r.Analyser.Analyse(media, observer, observer)
+					analyser.Analyse(ctx, media, observer, observer)
 
 				} else {
 					return
@@ -214,7 +230,7 @@ func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *Backin
 	}()
 }
 
-func (r *runner) uploadMedias(ctx context.Context, bufferedChannel chan []*BackingUpMediaRequest, completionChannel chan []error, collector *ErrorCollectorObserver) {
+func (r *runner) uploadMedias(ctx context.Context, bufferedChannel chan []*BackingUpMediaRequest, completionChannel chan []error, collector IErrorCollectorObserver) {
 	r.startsInParallel(defaultValue(r.ConcurrentUploader, 1), func() {
 		interrupted := false
 		for {

@@ -1,6 +1,7 @@
 package analysiscache_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/dgraph-io/badger/v4"
@@ -71,15 +72,16 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 	}
 	doesNotCallTheDelegate := func(t *testing.T) fields {
 		return fields{
-			Delegate: backup.RunnerAnalyserFunc(func(found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectedMediaObserver backup.RejectedMediaObserver) {
+			Delegate: RunnerAnalyserFunc(func(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
 				assert.Fail(t, "Unexpected call on Analyse", "unexpected Analyse(%+v, ...))", found)
+				return nil
 			}),
 		}
 	}
 	doesCallTheDelegate := func(t *testing.T) fields {
 		return fields{
-			Delegate: backup.RunnerAnalyserFunc(func(found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectedMediaObserver backup.RejectedMediaObserver) {
-				analysedMediaObserver.OnAnalysedMedia(&backup.AnalysedMedia{
+			Delegate: RunnerAnalyserFunc(func(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
+				return analysedMediaObserver.OnAnalysedMedia(ctx, &backup.AnalysedMedia{
 					FoundMedia: found,
 					Type:       backup.MediaTypeImage,
 					Sha256Hash: computedMediaHash,
@@ -90,7 +92,6 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 				})
 			}),
 		}
-
 	}
 
 	tests := []struct {
@@ -208,17 +209,17 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 			}
 
 			analysedMediaObserver := new(AnalysedMediaObserverFake)
-			rejectedMediaObserver := new(RejectedMediaObserverFake)
-			d.Analyse(tt.args.found, analysedMediaObserver, rejectedMediaObserver)
+			err = d.Analyse(context.Background(), tt.args.found, analysedMediaObserver)
+			if assert.NoError(t, err, "Analyse(%v)", tt.args.found) {
+				if !tt.wantErr(t, err, fmt.Sprintf("Analyse(%v)", tt.args.found)) {
+					return
+				}
+				assert.Equalf(t, []*backup.AnalysedMedia{tt.want}, analysedMediaObserver.Medias, "Analyse(%v)", tt.args.found)
 
-			if !tt.wantErr(t, err, fmt.Sprintf("Analyse(%v)", tt.args.found)) {
-				return
-			}
-			assert.Equalf(t, []*backup.AnalysedMedia{tt.want}, analysedMediaObserver.Medias, "Analyse(%v)", tt.args.found)
-
-			gotDB, err := databaseDump(db)
-			if assert.NoError(t, err, "databaseDump(DB)") {
-				assert.Equal(t, tt.wantDB, gotDB)
+				gotDB, err := databaseDump(db)
+				if assert.NoError(t, err, "databaseDump(DB)") {
+					assert.Equal(t, tt.wantDB, gotDB)
+				}
 			}
 		})
 	}
@@ -265,8 +266,9 @@ type AnalysedMediaObserverFake struct {
 	Medias []*backup.AnalysedMedia
 }
 
-func (a *AnalysedMediaObserverFake) OnAnalysedMedia(media *backup.AnalysedMedia) {
+func (a *AnalysedMediaObserverFake) OnAnalysedMedia(ctx context.Context, media *backup.AnalysedMedia) error {
 	a.Medias = append(a.Medias, media)
+	return nil
 }
 
 type RejectedMediaObserverFake struct {
@@ -275,4 +277,10 @@ type RejectedMediaObserverFake struct {
 
 func (r *RejectedMediaObserverFake) OnRejectedMedia(found backup.FoundMedia, err error) {
 	r.Rejected[found] = err
+}
+
+type RunnerAnalyserFunc func(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error
+
+func (r RunnerAnalyserFunc) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
+	return r(ctx, found, analysedMediaObserver)
 }
