@@ -1,6 +1,5 @@
 package backup
 
-import "C"
 import (
 	"context"
 	"github.com/pkg/errors"
