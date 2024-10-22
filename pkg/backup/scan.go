@@ -19,7 +19,7 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 		"Volume": volume.String(),
 	})
 
-	options := readOptions(optionSlice)
+	options := ReduceOptions(optionSlice...)
 	options.DryRun = true
 
 	publisher, hintSize, err := newPublisher(volume)

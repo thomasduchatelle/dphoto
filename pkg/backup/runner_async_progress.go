@@ -1,5 +1,9 @@
 package backup
 
+import (
+	"context"
+)
+
 // NewProgressObserver publishes on a channel the progress of the backup
 func NewProgressObserver(sizeHint int) *ProgressObserver {
 	return &ProgressObserver{
@@ -11,17 +15,20 @@ type ProgressObserver struct {
 	EventChannel chan *ProgressEvent
 }
 
-func (c *ProgressObserver) OnRejectedMedia(found FoundMedia, err error) {
-	c.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: found.Size()}
-	c.EventChannel <- &ProgressEvent{Type: ProgressEventDuplicate, Count: 1, Size: found.Size()} // Hacky - Should be SKIPPED not ProgressEventDuplicate
+func (p *ProgressObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
+	p.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: found.Size()}
+	p.EventChannel <- &ProgressEvent{Type: ProgressEventRejected, Count: 1, Size: found.Size()} // Hacky - Should be SKIPPED not ProgressEventDuplicate
 }
 
-func (c *ProgressObserver) OnDecoratedAnalyser(found FoundMedia, cacheHit bool) {
+func (p *ProgressObserver) OnDecoratedAnalyser(ctx context.Context, found FoundMedia, cacheHit bool) error {
 	if cacheHit {
-		c.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysedFromCache, Count: 1, Size: found.Size()}
+		p.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysedFromCache, Count: 1, Size: found.Size()}
 	}
+
+	return nil
 }
 
-func (c *ProgressObserver) OnAnalysedMedia(media *AnalysedMedia) {
-	c.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: media.FoundMedia.Size()}
+func (p *ProgressObserver) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
+	p.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: media.FoundMedia.Size()}
+	return nil
 }

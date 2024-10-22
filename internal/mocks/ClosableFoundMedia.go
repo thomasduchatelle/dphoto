@@ -22,7 +22,7 @@ func (_m *ClosableFoundMedia) Close() error {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for AnalysedMediaChannelCloser")
+		panic("no return value specified for Close")
 	}
 
 	var r0 error
@@ -35,14 +35,14 @@ func (_m *ClosableFoundMedia) Close() error {
 	return r0
 }
 
-// ClosableFoundMedia_Close_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AnalysedMediaChannelCloser'
+// ClosableFoundMedia_Close_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Close'
 type ClosableFoundMedia_Close_Call struct {
 	*mock.Call
 }
 
 // Close is a helper method to define mock.On call
 func (_e *ClosableFoundMedia_Expecter) Close() *ClosableFoundMedia_Close_Call {
-	return &ClosableFoundMedia_Close_Call{Call: _e.mock.On("AnalysedMediaChannelCloser")}
+	return &ClosableFoundMedia_Close_Call{Call: _e.mock.On("Close")}
 }
 
 func (_c *ClosableFoundMedia_Close_Call) Run(run func()) *ClosableFoundMedia_Close_Call {

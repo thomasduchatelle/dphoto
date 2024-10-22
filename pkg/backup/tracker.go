@@ -1,7 +1,9 @@
 package backup
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
 type TrackEvents interface {
@@ -12,8 +14,30 @@ type TrackScanComplete interface {
 	OnScanComplete(total MediaCounter)
 }
 
+type ExtraCounts struct {
+	Cached   MediaCounter
+	Rejected MediaCounter
+}
+
+func (c ExtraCounts) String() interface{} {
+	var extraDetails []string
+
+	if c.Cached.Count > 0 {
+		extraDetails = append(extraDetails, fmt.Sprintf("from cache: %d", c.Cached.Count))
+	}
+	if c.Rejected.Count > 0 {
+		extraDetails = append(extraDetails, fmt.Sprintf("rejected: %d", c.Rejected.Count))
+	}
+
+	cachedExplanation := ""
+	if len(extraDetails) > 0 {
+		cachedExplanation = "[" + strings.Join(extraDetails, " ; ") + "]"
+	}
+	return cachedExplanation
+}
+
 type TrackAnalysed interface {
-	OnAnalysed(done, total, cached MediaCounter)
+	OnAnalysed(done, total MediaCounter, others ExtraCounts)
 }
 
 // TrackUploaded includes both uploaded and skipped
@@ -82,7 +106,8 @@ func (t *Tracker) consume(progressChannel chan *ProgressEvent) {
 		case ProgressEventCatalogued:
 			// nothing
 
-		case ProgressEventAlreadyExists,
+		case ProgressEventRejected,
+			ProgressEventAlreadyExists,
 			ProgressEventDuplicate,
 			ProgressEventWrongAlbum,
 			ProgressEventReadyForUpload:
@@ -120,19 +145,24 @@ func (t *Tracker) fireAnalysedEvent() {
 	exists, _ := t.eventCount[ProgressEventAlreadyExists]
 	duplicates, _ := t.eventCount[ProgressEventDuplicate]
 	wrongAlbum, _ := t.eventCount[ProgressEventWrongAlbum]
+	rejected, _ := t.eventCount[ProgressEventRejected]
 	analysedFromCache, _ := t.eventCount[ProgressEventAnalysedFromCache]
 
-	done := passed.AddCounter(exists).AddCounter(duplicates).AddCounter(wrongAlbum)
+	done := passed.AddCounter(exists).AddCounter(duplicates).AddCounter(wrongAlbum).AddCounter(rejected)
 
 	for _, listener := range t.listeners {
 		if dispatch, ok := listener.(TrackAnalysed); ok {
-			dispatch.OnAnalysed(done, t.eventCount[ProgressEventScanComplete], analysedFromCache)
+			dispatch.OnAnalysed(done, t.eventCount[ProgressEventScanComplete], ExtraCounts{
+				Cached:   analysedFromCache,
+				Rejected: rejected,
+			})
 		}
 	}
 }
 
 func (t *Tracker) fireUploadedEvent() {
 	scanned, _ := t.eventCount[ProgressEventScanComplete]
+	rejected, _ := t.eventCount[ProgressEventRejected]
 	exists, _ := t.eventCount[ProgressEventAlreadyExists]
 	duplicates, _ := t.eventCount[ProgressEventDuplicate]
 	wrongAlbum, _ := t.eventCount[ProgressEventWrongAlbum]
@@ -140,7 +170,8 @@ func (t *Tracker) fireUploadedEvent() {
 	uploaded, _ := t.eventCount[ProgressEventUploaded]
 
 	total := MediaCounterZero
-	if ready.AddCounter(duplicates).AddCounter(exists).AddCounter(wrongAlbum).Count == scanned.Count {
+	if ready.AddCounter(duplicates).AddCounter(exists).AddCounter(wrongAlbum).AddCounter(rejected).Count == scanned.Count {
+		// total-to-upload is confirmed
 		total = ready
 	}
 

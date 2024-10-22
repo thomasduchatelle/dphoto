@@ -25,29 +25,29 @@ func (_m *GetAvailabilitiesByUserPort) EXPECT() *GetAvailabilitiesByUserPort_Exp
 	return &GetAvailabilitiesByUserPort_Expecter{mock: &_m.Mock}
 }
 
-// GetAvailabilitiesByUser provides a mock function with given fields: ctx, user
-func (_m *GetAvailabilitiesByUserPort) GetAvailabilitiesByUser(ctx context.Context, user usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error) {
-	ret := _m.Called(ctx, user)
+// GetAvailabilitiesByUser provides a mock function with given fields: ctx, userId
+func (_m *GetAvailabilitiesByUserPort) GetAvailabilitiesByUser(ctx context.Context, userId usermodel.UserId) ([]catalogviews.UserAlbumSize, error) {
+	ret := _m.Called(ctx, userId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAvailabilitiesByUser")
 	}
 
-	var r0 []catalogviews.MultiUserAlbumSize
+	var r0 []catalogviews.UserAlbumSize
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error)); ok {
-		return rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) ([]catalogviews.UserAlbumSize, error)); ok {
+		return rf(ctx, userId)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) []catalogviews.MultiUserAlbumSize); ok {
-		r0 = rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, usermodel.UserId) []catalogviews.UserAlbumSize); ok {
+		r0 = rf(ctx, userId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]catalogviews.MultiUserAlbumSize)
+			r0 = ret.Get(0).([]catalogviews.UserAlbumSize)
 		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, usermodel.UserId) error); ok {
-		r1 = rf(ctx, user)
+		r1 = rf(ctx, userId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -62,24 +62,24 @@ type GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call struct {
 
 // GetAvailabilitiesByUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - user usermodel.UserId
-func (_e *GetAvailabilitiesByUserPort_Expecter) GetAvailabilitiesByUser(ctx interface{}, user interface{}) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
-	return &GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call{Call: _e.mock.On("GetAvailabilitiesByUser", ctx, user)}
+//   - userId usermodel.UserId
+func (_e *GetAvailabilitiesByUserPort_Expecter) GetAvailabilitiesByUser(ctx interface{}, userId interface{}) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
+	return &GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call{Call: _e.mock.On("GetAvailabilitiesByUser", ctx, userId)}
 }
 
-func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) Run(run func(ctx context.Context, user usermodel.UserId)) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
+func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) Run(run func(ctx context.Context, userId usermodel.UserId)) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(usermodel.UserId))
 	})
 	return _c
 }
 
-func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) Return(_a0 []catalogviews.MultiUserAlbumSize, _a1 error) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
+func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) Return(_a0 []catalogviews.UserAlbumSize, _a1 error) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) RunAndReturn(run func(context.Context, usermodel.UserId) ([]catalogviews.MultiUserAlbumSize, error)) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
+func (_c *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call) RunAndReturn(run func(context.Context, usermodel.UserId) ([]catalogviews.UserAlbumSize, error)) *GetAvailabilitiesByUserPort_GetAvailabilitiesByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

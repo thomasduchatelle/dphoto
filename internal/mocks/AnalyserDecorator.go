@@ -20,17 +20,24 @@ func (_m *AnalyserDecorator) EXPECT() *AnalyserDecorator_Expecter {
 	return &AnalyserDecorator_Expecter{mock: &_m.Mock}
 }
 
-// Decorate provides a mock function with given fields: analyseFunc
-func (_m *AnalyserDecorator) Decorate(analyseFunc backup.Analyser) backup.Analyser {
-	ret := _m.Called(analyseFunc)
+// Decorate provides a mock function with given fields: analyseFunc, observers
+func (_m *AnalyserDecorator) Decorate(analyseFunc backup.Analyser, observers ...backup.AnalyserDecoratorObserver) backup.Analyser {
+	_va := make([]interface{}, len(observers))
+	for _i := range observers {
+		_va[_i] = observers[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, analyseFunc)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Decorate")
 	}
 
 	var r0 backup.Analyser
-	if rf, ok := ret.Get(0).(func(backup.Analyser) backup.Analyser); ok {
-		r0 = rf(analyseFunc)
+	if rf, ok := ret.Get(0).(func(backup.Analyser, ...backup.AnalyserDecoratorObserver) backup.Analyser); ok {
+		r0 = rf(analyseFunc, observers...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(backup.Analyser)
@@ -47,13 +54,21 @@ type AnalyserDecorator_Decorate_Call struct {
 
 // Decorate is a helper method to define mock.On call
 //   - analyseFunc backup.Analyser
-func (_e *AnalyserDecorator_Expecter) Decorate(analyseFunc interface{}) *AnalyserDecorator_Decorate_Call {
-	return &AnalyserDecorator_Decorate_Call{Call: _e.mock.On("Decorate", analyseFunc)}
+//   - observers ...backup.AnalyserDecoratorObserver
+func (_e *AnalyserDecorator_Expecter) Decorate(analyseFunc interface{}, observers ...interface{}) *AnalyserDecorator_Decorate_Call {
+	return &AnalyserDecorator_Decorate_Call{Call: _e.mock.On("Decorate",
+		append([]interface{}{analyseFunc}, observers...)...)}
 }
 
-func (_c *AnalyserDecorator_Decorate_Call) Run(run func(analyseFunc backup.Analyser)) *AnalyserDecorator_Decorate_Call {
+func (_c *AnalyserDecorator_Decorate_Call) Run(run func(analyseFunc backup.Analyser, observers ...backup.AnalyserDecoratorObserver)) *AnalyserDecorator_Decorate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(backup.Analyser))
+		variadicArgs := make([]backup.AnalyserDecoratorObserver, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(backup.AnalyserDecoratorObserver)
+			}
+		}
+		run(args[0].(backup.Analyser), variadicArgs...)
 	})
 	return _c
 }
@@ -63,7 +78,7 @@ func (_c *AnalyserDecorator_Decorate_Call) Return(_a0 backup.Analyser) *Analyser
 	return _c
 }
 
-func (_c *AnalyserDecorator_Decorate_Call) RunAndReturn(run func(backup.Analyser) backup.Analyser) *AnalyserDecorator_Decorate_Call {
+func (_c *AnalyserDecorator_Decorate_Call) RunAndReturn(run func(backup.Analyser, ...backup.AnalyserDecoratorObserver) backup.Analyser) *AnalyserDecorator_Decorate_Call {
 	_c.Call.Return(run)
 	return _c
 }

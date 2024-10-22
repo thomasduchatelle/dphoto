@@ -4,7 +4,6 @@ package mocks
 
 import (
 	aws "github.com/aws/aws-sdk-go-v2/aws"
-	awsfactory "github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -66,53 +65,6 @@ func (_c *Config_Get_Call) Return(_a0 interface{}) *Config_Get_Call {
 }
 
 func (_c *Config_Get_Call) RunAndReturn(run func(string) interface{}) *Config_Get_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAWSFactory provides a mock function with given fields:
-func (_m *Config) GetAWSFactory() *awsfactory.ClientsFactory {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAWSFactory")
-	}
-
-	var r0 *awsfactory.ClientsFactory
-	if rf, ok := ret.Get(0).(func() *awsfactory.ClientsFactory); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*awsfactory.ClientsFactory)
-		}
-	}
-
-	return r0
-}
-
-// Config_GetAWSFactory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAWSFactory'
-type Config_GetAWSFactory_Call struct {
-	*mock.Call
-}
-
-// GetAWSFactory is a helper method to define mock.On call
-func (_e *Config_Expecter) GetAWSFactory() *Config_GetAWSFactory_Call {
-	return &Config_GetAWSFactory_Call{Call: _e.mock.On("GetAWSFactory")}
-}
-
-func (_c *Config_GetAWSFactory_Call) Run(run func()) *Config_GetAWSFactory_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Config_GetAWSFactory_Call) Return(_a0 *awsfactory.ClientsFactory) *Config_GetAWSFactory_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Config_GetAWSFactory_Call) RunAndReturn(run func() *awsfactory.ClientsFactory) *Config_GetAWSFactory_Call {
 	_c.Call.Return(run)
 	return _c
 }

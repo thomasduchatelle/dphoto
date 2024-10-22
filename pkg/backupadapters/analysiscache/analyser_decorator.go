@@ -1,6 +1,7 @@
 package analysiscache
 
 import (
+	"context"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 )
 
@@ -18,52 +19,61 @@ type AnalyserCacheWrapper struct {
 	Observers     []backup.AnalyserDecoratorObserver
 }
 
-func (a *AnalyserCacheWrapper) Analyse(found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectedMediaObserver backup.RejectedMediaObserver) {
+func (a *AnalyserCacheWrapper) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
 	cache, missed, err := a.AnalyserCache.RestoreCache(found)
 	if err != nil {
-		a.fireMissed(found)
-		rejectedMediaObserver.OnRejectedMedia(found, err)
-		return
+		return err
 	}
 
 	if !missed {
-		a.fireHit(found)
-		analysedMediaObserver.OnAnalysedMedia(cache)
-		return
+		err = a.fireHit(ctx, found)
+		if err != nil {
+			return err
+		}
+		return analysedMediaObserver.OnAnalysedMedia(ctx, cache)
 	}
 
-	a.fireMissed(found)
-	a.Delegate.Analyse(found, &interceptor{
+	err = a.fireMissed(ctx, found)
+	if err != nil {
+		return err
+	}
+	return a.Delegate.Analyse(ctx, found, &interceptor{
 		AnalysedMediaObserver: analysedMediaObserver,
-		RejectedMediaObserver: rejectedMediaObserver,
 		AnalyserCache:         a.AnalyserCache,
-	}, rejectedMediaObserver)
+	})
 }
 
-func (a *AnalyserCacheWrapper) fireMissed(found backup.FoundMedia) {
+func (a *AnalyserCacheWrapper) fireMissed(ctx context.Context, found backup.FoundMedia) error {
 	for _, observer := range a.Observers {
-		observer.OnDecoratedAnalyser(found, false)
+		err := observer.OnDecoratedAnalyser(ctx, found, false)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func (a *AnalyserCacheWrapper) fireHit(found backup.FoundMedia) {
+func (a *AnalyserCacheWrapper) fireHit(ctx context.Context, found backup.FoundMedia) error {
 	for _, observer := range a.Observers {
-		observer.OnDecoratedAnalyser(found, true)
+		err := observer.OnDecoratedAnalyser(ctx, found, true)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 type interceptor struct {
 	AnalysedMediaObserver backup.AnalysedMediaObserver
-	RejectedMediaObserver backup.RejectedMediaObserver
 	AnalyserCache         *AnalyserCache
 }
 
-func (a *interceptor) OnAnalysedMedia(media *backup.AnalysedMedia) {
+func (a *interceptor) OnAnalysedMedia(ctx context.Context, media *backup.AnalysedMedia) error {
 	err := a.AnalyserCache.StoreCache(media)
 	if err != nil {
-		a.RejectedMediaObserver.OnRejectedMedia(media.FoundMedia, err)
-		return
+		return err
 	}
 
-	a.AnalysedMediaObserver.OnAnalysedMedia(media)
+	return a.AnalysedMediaObserver.OnAnalysedMedia(ctx, media)
 }

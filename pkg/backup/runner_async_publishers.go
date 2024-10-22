@@ -1,5 +1,7 @@
 package backup
 
+import "context"
+
 // NewAsyncPublisher observes step outputs and publishes them on a channel for the next one to consume
 func NewAsyncPublisher(sizeHint int, batchSize int) *ChannelPublisher {
 	bufferedChannelSize := 1 + sizeHint/batchSize
@@ -27,8 +29,9 @@ type ChannelPublisher struct {
 	CompletionChannel         chan []error
 }
 
-func (a *ChannelPublisher) OnAnalysedMedia(media *AnalysedMedia) {
+func (a *ChannelPublisher) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
 	a.AnalysedMediaChannel <- media
+	return nil
 }
 
 func (a *ChannelPublisher) AnalysedMediaChannelCloser() {

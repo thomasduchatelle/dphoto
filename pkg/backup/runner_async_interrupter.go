@@ -3,6 +3,8 @@ package backup
 import "context"
 
 type Interrupter interface {
+	RejectedMediaObserver
+
 	Cancel()
 }
 
@@ -29,6 +31,9 @@ type DefaultInterrupterObserver struct {
 	cancel context.CancelFunc
 }
 
+func (c *DefaultInterrupterObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
+}
+
 func (c *DefaultInterrupterObserver) Cancel() {
 	c.cancel()
 }
@@ -38,6 +43,6 @@ type AnalyserInterrupterObserver struct {
 	*DefaultInterrupterObserver
 }
 
-func (c *AnalyserInterrupterObserver) OnRejectedMedia(found FoundMedia, err error) {
+func (c *AnalyserInterrupterObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
 	c.cancel()
 }

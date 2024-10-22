@@ -119,7 +119,6 @@ func TestShouldStopAtFirstError(t *testing.T) {
 				a.Empty(caughtErrors, tt.name)
 
 				a.Equal(tt.want, capture.requests, tt.name)
-				//a.Empty(events, tt.name)
 			} else {
 				if a.Len(caughtErrors, 1, tt.name) {
 					a.Equal(tt.wantErr, caughtErrors[0].Error(), tt.name)
@@ -200,13 +199,12 @@ type AnalyserFake struct {
 	ErroredFilename map[string]error
 }
 
-func (a *AnalyserFake) Analyse(found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver) {
+func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver) error {
 	if err, errored := a.ErroredFilename[found.MediaPath().Filename]; errored {
-		rejectedMediaObserver.OnRejectedMedia(found, err)
-		return
+		return err
 	}
 
-	analysedMediaObserver.OnAnalysedMedia(&AnalysedMedia{
+	return analysedMediaObserver.OnAnalysedMedia(ctx, &AnalysedMedia{
 		FoundMedia: found,
 		Type:       MediaTypeImage,
 		Sha256Hash: found.MediaPath().Filename,

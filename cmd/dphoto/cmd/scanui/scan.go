@@ -64,15 +64,11 @@ func (s *ScanProgress) OnScanComplete(total backup.MediaCounter) {
 	s.scanningLine.SetLabel(aurora.Sprintf("%d files has been found.", aurora.Cyan(total.Count)))
 }
 
-func (s *ScanProgress) OnAnalysed(done, total, cached backup.MediaCounter) {
+func (s *ScanProgress) OnAnalysed(done, total backup.MediaCounter, extra backup.ExtraCounts) {
 	s.onAnalysedCalled = true
 	if !total.IsZero() {
 		s.analysedLine.SetBar(done.Count, total.Count)
-		cachedExplanation := ""
-		if cached.Count > 0 {
-			cachedExplanation = fmt.Sprintf(" [from cache: %d]", cached.Count)
-		}
-		s.analysedLine.SetExplanation(fmt.Sprintf("%d / %d files%s", done.Count, total.Count, cachedExplanation))
+		s.analysedLine.SetExplanation(fmt.Sprintf("%d / %d files %s", done.Count, total.Count, extra.String()))
 
 		if done.Count == total.Count {
 			s.analysedLine.SwapSpinner(1)
