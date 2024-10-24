@@ -28,7 +28,7 @@ func (_m *CatalogReferencer) Reference(ctx context.Context, medias []*backup.Ana
 	ret := _m.Called(ctx, medias)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Reference")
+		panic("no return value specified for Catalog")
 	}
 
 	var r0 map[*backup.AnalysedMedia]backup.CatalogReference
@@ -53,7 +53,7 @@ func (_m *CatalogReferencer) Reference(ctx context.Context, medias []*backup.Ana
 	return r0, r1
 }
 
-// CatalogReferencer_Reference_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Reference'
+// CatalogReferencer_Reference_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Catalog'
 type CatalogReferencer_Reference_Call struct {
 	*mock.Call
 }
@@ -62,7 +62,7 @@ type CatalogReferencer_Reference_Call struct {
 //   - ctx context.Context
 //   - medias []*backup.AnalysedMedia
 func (_e *CatalogReferencer_Expecter) Reference(ctx interface{}, medias interface{}) *CatalogReferencer_Reference_Call {
-	return &CatalogReferencer_Reference_Call{Call: _e.mock.On("Reference", ctx, medias)}
+	return &CatalogReferencer_Reference_Call{Call: _e.mock.On("Catalog", ctx, medias)}
 }
 
 func (_c *CatalogReferencer_Reference_Call) Run(run func(ctx context.Context, medias []*backup.AnalysedMedia)) *CatalogReferencer_Reference_Call {

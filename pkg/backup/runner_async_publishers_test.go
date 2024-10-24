@@ -2,6 +2,7 @@ package backup
 
 type IChannelPublisher interface {
 	AnalysedMediaObserver
+	CatalogReferencerObserver
 }
 
 func ChannelPublisherImplementsObserverInterface() IChannelPublisher {
