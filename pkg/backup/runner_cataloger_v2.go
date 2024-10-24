@@ -60,16 +60,20 @@ func (c *CataloguerWithFilters) Catalog(ctx context.Context, medias []*AnalysedM
 }
 
 func NewCataloguer(owner ownermodel.Owner, options Options) (Cataloguer, error) {
-	var referencer CatalogReferencer
-	var err error
-
-	if options.DryRun {
-		referencer, err = referencerFactory.NewDryRunReferencer(context.TODO(), owner)
-	} else {
-		referencer, err = referencerFactory.NewCreatorReferencer(context.TODO(), owner)
-	}
+	referencer, err := NewReferencer(owner, options.DryRun)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create a cataloguer for %s with options %+v", owner, options)
+		return nil, err
+	}
+
+	return &CataloguerWithFilters{
+		Delegate:          referencer,
+		CataloguerFilters: ListCataloguerFilters(options),
+	}, nil
+}
+
+func ListCataloguerFilters(options Options) []CataloguerFilter {
+	filters := []CataloguerFilter{
+		mustNotExists(),
 	}
 
 	if len(options.RestrictedAlbumFolderName) > 0 {
@@ -77,20 +81,23 @@ func NewCataloguer(owner ownermodel.Owner, options Options) (Cataloguer, error) 
 		for albumFolderName := range options.RestrictedAlbumFolderName {
 			albumFolderNames = append(albumFolderNames, albumFolderName)
 		}
-
-		return &CataloguerWithFilters{
-			Delegate: referencer,
-			CataloguerFilters: []CataloguerFilter{
-				mustNotExists(),
-				mustBeInAlbum(albumFolderNames...),
-			},
-		}, nil
+		filters = append(filters, mustBeInAlbum(albumFolderNames...))
 	}
 
-	return &CataloguerWithFilters{
-		Delegate: referencer,
-		CataloguerFilters: []CataloguerFilter{
-			mustNotExists(),
-		},
-	}, nil
+	return filters
+}
+
+func NewReferencer(owner ownermodel.Owner, dryRun bool) (CatalogReferencer, error) {
+	var referencer CatalogReferencer
+	var err error
+
+	if dryRun {
+		referencer, err = referencerFactory.NewDryRunReferencer(context.TODO(), owner)
+	} else {
+		referencer, err = referencerFactory.NewCreatorReferencer(context.TODO(), owner)
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create a cataloguer for %s with dryRun=%t", owner, dryRun)
+	}
+	return referencer, nil
 }
