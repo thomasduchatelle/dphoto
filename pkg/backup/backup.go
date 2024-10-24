@@ -35,17 +35,13 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 	publisher, hintSize, err := newPublisher(volume)
 
 	run := runner{
-		MDC:                  mdc,
-		Options:              options,
-		Publisher:            publisher,
-		Analyser:             getDefaultAnalyser(),
-		Cataloger:            cataloger,
-		UniqueFilter:         newUniqueFilter(),
-		Uploader:             &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},
-		ConcurrentCataloguer: options.ConcurrentCataloguer,
-		ConcurrentUploader:   options.ConcurrentUploader,
-		BatchSize:            options.BatchSize,
-		SkipRejects:          options.SkipRejects,
+		MDC:          mdc,
+		Options:      options,
+		Publisher:    publisher,
+		Analyser:     getDefaultAnalyser(),
+		Cataloger:    cataloger,
+		UniqueFilter: newUniqueFilter(),
+		Uploader:     &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},
 	}
 
 	progressChannel, _ := run.start(context.TODO(), hintSize)

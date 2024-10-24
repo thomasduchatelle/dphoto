@@ -19,7 +19,7 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 		"Volume": volume.String(),
 	})
 
-	options := ReduceOptions(optionSlice...)
+	options := ReduceOptions(append(optionSlice, Options{ConcurrentUploader: 1})...)
 	options.DryRun = true
 
 	publisher, hintSize, err := newPublisher(volume)
@@ -34,17 +34,13 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 
 	receiver := newScanReceiver(mdc, volume)
 	run := runner{
-		MDC:                  mdc,
-		Options:              options,
-		Publisher:            publisher,
-		Analyser:             getDefaultAnalyser(),
-		Cataloger:            cataloger,
-		UniqueFilter:         newUniqueFilter(),
-		Uploader:             RunnerUploaderFunc(receiver.receive),
-		ConcurrentCataloguer: options.ConcurrentCataloguer,
-		ConcurrentUploader:   1,
-		BatchSize:            options.BatchSize,
-		SkipRejects:          options.SkipRejects,
+		MDC:          mdc,
+		Options:      options,
+		Publisher:    publisher,
+		Analyser:     getDefaultAnalyser(),
+		Cataloger:    cataloger,
+		UniqueFilter: newUniqueFilter(),
+		Uploader:     RunnerUploaderFunc(receiver.receive),
 	}
 
 	progressChannel, _ := run.start(context.TODO(), hintSize)
