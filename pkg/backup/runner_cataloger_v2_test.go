@@ -383,3 +383,16 @@ func (r *ReferencerFactoryFake) NewCreatorReferencer(ctx context.Context, owner 
 func (r *ReferencerFactoryFake) NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error) {
 	return r.DryRunReferencer, nil
 }
+
+// NewCataloguer has been deprecated from production codebase but is still used to validate acceptance tests...
+func NewCataloguer(owner ownermodel.Owner, options Options) (Cataloguer, error) {
+	referencer, err := NewReferencer(owner, options.DryRun)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CataloguerWithFilters{
+		Delegate:          referencer,
+		CataloguerFilters: ListCataloguerFilters(options),
+	}, nil
+}

@@ -33,7 +33,7 @@ func TestShouldStopAtFirstError(t *testing.T) {
 		{
 			name: "it should re-buffer before assigning ids and before uploading (to not have half empty batch)",
 			modifier: func(run *runner) {
-				run.Cataloger = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
+				run.CatalogReferencer = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error {
 					var requests []BackingUpMediaRequest
 					for _, media := range medias {
 						if media.FoundMedia.MediaPath().Filename != "file_2.jpg" && media.FoundMedia.MediaPath().Filename != "file_3.jpg" {
@@ -68,13 +68,13 @@ func TestShouldStopAtFirstError(t *testing.T) {
 		{
 			name: "it should stop the process after an error on the cataloguer",
 			modifier: func(run *runner) {
-				original := run.Cataloger
-				run.Cataloger = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
+				original := run.CatalogReferencer
+				run.CatalogReferencer = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error {
 					if medias[0].FoundMedia.MediaPath().Filename == "file_3.jpg" {
 						return errors.Errorf("TEST")
 					}
 
-					return original.Catalog(ctx, medias, observer)
+					return original.Reference(ctx, medias, observer)
 				})
 			},
 			want:    [][]string{{"file_1.jpg", "file_2.jpg"}},
@@ -151,7 +151,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 		MDC:       log.WithField("Testing", "Test"),
 		Publisher: publisher,
 		Analyser:  new(AnalyserFake),
-		Cataloger: RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
+		CatalogReferencer: RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error {
 			var requests []BackingUpMediaRequest
 			for _, media := range medias {
 				requests = append(requests, BackingUpMediaRequest{
@@ -214,8 +214,8 @@ func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia, analysedMe
 	})
 }
 
-type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error
+type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error
 
-func (f RunnerCatalogerFunc) Catalog(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
-	return f(ctx, medias, observer)
+func (r RunnerCatalogerFunc) Reference(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error {
+	return r(ctx, medias, observer)
 }
