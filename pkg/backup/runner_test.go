@@ -175,11 +175,11 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 			return nil
 		}),
 		Options: Options{
-			ConcurrentAnalyser: 1,
+			ConcurrentAnalyser:   1,
+			ConcurrentCataloguer: 1,
+			ConcurrentUploader:   1,
+			BatchSize:            2,
 		},
-		ConcurrentCataloguer: 1,
-		ConcurrentUploader:   1,
-		BatchSize:            2,
 	}
 
 	return run, uploadedCapture

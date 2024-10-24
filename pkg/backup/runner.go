@@ -36,10 +36,6 @@ type runner struct {
 	Cataloger            RunnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
-	ConcurrentCataloguer int                // ConcurrentAnalyser is the number of goroutines that analyse the medias [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
-	ConcurrentUploader   int                // ConcurrentUploader is the number of goroutine that upload files online [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
-	BatchSize            int                // BatchSize is the size of the buffer for the uploader	 [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
-	SkipRejects          bool               // SkipRejects [DEPRECATED - part of the 'runner/orchestrator' pattern, use Options to migrate to the 'Observer' pattern]
 	progressEventChannel chan *ProgressEvent
 	channelPublisher     *ChannelPublisher
 
@@ -59,10 +55,8 @@ func (r *runner) appendError(err error) {
 
 // start initialises the channels and publish files in the source channel
 func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, chan []error) {
-	r.BatchSize = defaultValue(r.BatchSize, 1)
-
 	progressObserver := NewProgressObserver(sizeHint)
-	r.channelPublisher = NewAsyncPublisher(sizeHint, defaultValue(r.BatchSize, 1))
+	r.channelPublisher = NewAsyncPublisher(sizeHint, r.batchSize())
 
 	r.Analyser = r.Options.GetAnalyserDecorator().Decorate(r.Analyser, progressObserver)
 
@@ -167,12 +161,12 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 	go func() {
 		defer close(bufferedChannel)
 
-		buffer := make([]*AnalysedMedia, 0, r.BatchSize)
+		buffer := make([]*AnalysedMedia, 0, r.batchSize())
 		for media := range readyToBackupChannel {
 			buffer = append(buffer, media)
 			if len(buffer) == cap(buffer) {
 				bufferedChannel <- buffer
-				buffer = make([]*AnalysedMedia, 0, r.BatchSize)
+				buffer = make([]*AnalysedMedia, 0, r.batchSize())
 			}
 		}
 
@@ -183,7 +177,7 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 }
 
 func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*AnalysedMedia, requestsChannel chan *BackingUpMediaRequest) {
-	r.startsInParallel(defaultValue(r.ConcurrentCataloguer, 1), func() {
+	r.startsInParallel(defaultValue(r.Options.ConcurrentCataloguer, 1), func() {
 		interrupted := false
 		for {
 			select {
@@ -212,14 +206,14 @@ func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *Backin
 	go func() {
 		defer close(bufferedChannel)
 
-		buffer := make([]*BackingUpMediaRequest, 0, r.BatchSize)
+		buffer := make([]*BackingUpMediaRequest, 0, r.batchSize())
 		for analysed := range backingUpMediaChannel {
 			if r.UniqueFilter(analysed, r.progressEventChannel) {
 
 				buffer = append(buffer, analysed)
 				if len(buffer) >= cap(buffer) {
 					bufferedChannel <- buffer
-					buffer = make([]*BackingUpMediaRequest, 0, r.BatchSize)
+					buffer = make([]*BackingUpMediaRequest, 0, r.batchSize())
 				}
 			}
 		}
@@ -231,7 +225,7 @@ func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *Backin
 }
 
 func (r *runner) uploadMedias(ctx context.Context, bufferedChannel chan []*BackingUpMediaRequest, completionChannel chan []error, collector IErrorCollectorObserver) {
-	r.startsInParallel(defaultValue(r.ConcurrentUploader, 1), func() {
+	r.startsInParallel(defaultValue(r.Options.ConcurrentUploader, 1), func() {
 		interrupted := false
 		for {
 			select {
@@ -252,6 +246,10 @@ func (r *runner) uploadMedias(ctx context.Context, bufferedChannel chan []*Backi
 		close(completionChannel)
 		close(r.progressEventChannel)
 	})
+}
+
+func (r *runner) batchSize() int {
+	return defaultValue(r.Options.BatchSize, 1)
 }
 
 func (r *runner) startPublishing(foundChannel chan FoundMedia) {
