@@ -59,18 +59,6 @@ func (c *CataloguerWithFilters) Catalog(ctx context.Context, medias []*AnalysedM
 	return c.Delegate.Reference(ctx, medias, filters)
 }
 
-func NewCataloguer(owner ownermodel.Owner, options Options) (Cataloguer, error) {
-	referencer, err := NewReferencer(owner, options.DryRun)
-	if err != nil {
-		return nil, err
-	}
-
-	return &CataloguerWithFilters{
-		Delegate:          referencer,
-		CataloguerFilters: ListCataloguerFilters(options),
-	}, nil
-}
-
 func ListCataloguerFilters(options Options) []CataloguerFilter {
 	filters := []CataloguerFilter{
 		mustNotExists(),
