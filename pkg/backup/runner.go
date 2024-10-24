@@ -7,22 +7,13 @@ import (
 	"sync"
 )
 
-type RunnerCataloger interface {
-	Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
-}
-
 type RunnerUploader interface {
 	Upload(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
 }
 
 type runnerPublisher func(chan FoundMedia, chan *ProgressEvent) error
-type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error)
 type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool
 type RunnerUploaderFunc func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
-
-func (r RunnerCatalogerFunc) Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
-	return r(ctx, medias, progressChannel)
-}
 
 func (r RunnerUploaderFunc) Upload(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
 	return r(buffer, progressChannel)
@@ -33,7 +24,7 @@ type runner struct {
 	Options              Options            // Options contains the configuration for each step of the backup process. [migration to Observer Pattern]
 	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
 	Analyser             Analyser           // Analyser is extracting metadata from the file
-	Cataloger            RunnerCataloger    // Cataloger is assigning the media to an album and filtering out media already backed up
+	Cataloger            Cataloguer         // Cataloger is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
 	progressEventChannel chan *ProgressEvent
@@ -72,7 +63,7 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	r.progressEventChannel = progressObserver.EventChannel
 	r.analyseMedias(interruptableContext, r.channelPublisher.FoundChannel, observer, r.channelPublisher.AnalysedMediaChannelCloser)
 	r.bufferAnalysedMedias(r.channelPublisher.AnalysedMediaChannel, r.channelPublisher.BufferedAnalysedChannel)
-	r.catalogueMedias(interruptableContext, r.channelPublisher.BufferedAnalysedChannel, r.channelPublisher.CataloguedChannel)
+	r.catalogueMedias(interruptableContext, r.channelPublisher.BufferedAnalysedChannel, observer, r.channelPublisher.CataloguedChannelCloser)
 	r.bufferUniqueCataloguedMedias(r.channelPublisher.CataloguedChannel, r.channelPublisher.BufferedCataloguedChannel)
 	r.uploadMedias(interruptableContext, r.channelPublisher.BufferedCataloguedChannel, r.channelPublisher.CompletionChannel, r.errorCollectorObserver)
 
@@ -176,7 +167,7 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 	}()
 }
 
-func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*AnalysedMedia, requestsChannel chan *BackingUpMediaRequest) {
+func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*AnalysedMedia, observer *CompositeRunnerObserver, closer func()) {
 	r.startsInParallel(defaultValue(r.Options.ConcurrentCataloguer, 1), func() {
 		interrupted := false
 		for {
@@ -188,18 +179,12 @@ func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*An
 					return
 				}
 				if !interrupted {
-					catalogedMedias, err := r.Cataloger.Catalog(context.TODO(), buffer, r.progressEventChannel)
+					err := r.Cataloger.Catalog(ctx, buffer, observer)
 					r.appendError(errors.Wrap(err, "error in cataloguer"))
-
-					for _, media := range catalogedMedias {
-						requestsChannel <- media
-					}
 				}
 			}
 		}
-	}, func() {
-		close(requestsChannel)
-	})
+	}, closer)
 }
 
 func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *BackingUpMediaRequest, bufferedChannel chan []*BackingUpMediaRequest) {

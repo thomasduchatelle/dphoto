@@ -80,7 +80,7 @@ func TestScanAcceptance(t *testing.T) {
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
 				referencerFactory: &ReferencerFactoryFake{
-					DryRunReferencer: &CatalogReferencerStub{
+					DryRunReferencer: &CatalogReferencerFake{
 						analysedMedias[0]: &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"},
 						analysedMedias[1]: &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"},
 						analysedMedias[2]: &CatalogReferenceStub{MediaIdValue: "media-id-3", AlbumFolderNameValue: "/album1"},

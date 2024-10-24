@@ -27,7 +27,7 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 		return nil, nil, err
 	}
 
-	cataloger, err := NewCataloger(ownermodel.Owner(owner), options)
+	cataloger, err := NewCataloguer(ownermodel.Owner(owner), options)
 	if err != nil {
 		return nil, nil, err
 	}

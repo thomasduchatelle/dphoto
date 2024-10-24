@@ -33,18 +33,18 @@ func TestShouldStopAtFirstError(t *testing.T) {
 		{
 			name: "it should re-buffer before assigning ids and before uploading (to not have half empty batch)",
 			modifier: func(run *runner) {
-				run.Cataloger = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
-					var requests []*BackingUpMediaRequest
+				run.Cataloger = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
+					var requests []BackingUpMediaRequest
 					for _, media := range medias {
 						if media.FoundMedia.MediaPath().Filename != "file_2.jpg" && media.FoundMedia.MediaPath().Filename != "file_3.jpg" {
-							requests = append(requests, &BackingUpMediaRequest{
+							requests = append(requests, BackingUpMediaRequest{
 								AnalysedMedia:    media,
 								CatalogReference: &CatalogReferenceStub{MediaIdValue: media.Sha256Hash, AlbumFolderNameValue: "/album1"},
 							})
 						}
 					}
 
-					return requests, nil
+					return observer.OnMediaCatalogued(ctx, requests)
 				})
 				run.UniqueFilter = func(media *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool {
 					return media.CatalogReference.UniqueIdentifier() != "file_6.jpg"
@@ -69,12 +69,12 @@ func TestShouldStopAtFirstError(t *testing.T) {
 			name: "it should stop the process after an error on the cataloguer",
 			modifier: func(run *runner) {
 				original := run.Cataloger
-				run.Cataloger = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
+				run.Cataloger = RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
 					if medias[0].FoundMedia.MediaPath().Filename == "file_3.jpg" {
-						return nil, errors.Errorf("TEST")
+						return errors.Errorf("TEST")
 					}
 
-					return original.Catalog(context.TODO(), medias, progressChannel)
+					return original.Catalog(ctx, medias, observer)
 				})
 			},
 			want:    [][]string{{"file_1.jpg", "file_2.jpg"}},
@@ -151,16 +151,16 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 		MDC:       log.WithField("Testing", "Test"),
 		Publisher: publisher,
 		Analyser:  new(AnalyserFake),
-		Cataloger: RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
-			var requests []*BackingUpMediaRequest
+		Cataloger: RunnerCatalogerFunc(func(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
+			var requests []BackingUpMediaRequest
 			for _, media := range medias {
-				requests = append(requests, &BackingUpMediaRequest{
+				requests = append(requests, BackingUpMediaRequest{
 					AnalysedMedia:    media,
 					CatalogReference: &CatalogReferenceStub{MediaIdValue: media.Sha256Hash, AlbumFolderNameValue: "/album1"},
 				})
 			}
 
-			return requests, nil
+			return observer.OnMediaCatalogued(ctx, requests)
 		}),
 		UniqueFilter: func(media *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool {
 			return true
@@ -212,4 +212,10 @@ func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia, analysedMe
 			DateTime: time.Date(2022, 6, 18, 10, 42, 0, 0, time.UTC),
 		},
 	})
+}
+
+type RunnerCatalogerFunc func(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error
+
+func (f RunnerCatalogerFunc) Catalog(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
+	return f(ctx, medias, observer)
 }

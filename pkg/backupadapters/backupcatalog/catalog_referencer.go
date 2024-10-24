@@ -23,8 +23,8 @@ type CatalogReferencerAdapter struct {
 	StatefulAlbumReferencer StatefulAlbumReferencer
 }
 
-func (c *CatalogReferencerAdapter) Reference(ctx context.Context, analysedMedias []*backup.AnalysedMedia) (map[*backup.AnalysedMedia]backup.CatalogReference, error) {
-	references := make(map[*backup.AnalysedMedia]backup.CatalogReference)
+func (c *CatalogReferencerAdapter) Reference(ctx context.Context, analysedMedias []*backup.AnalysedMedia, observer backup.CatalogReferencerObserver) error {
+	var references []backup.BackingUpMediaRequest
 
 	var signatures []catalog.MediaSignature
 	analysedMediasBySignature := make(map[catalog.MediaSignature][]*backup.AnalysedMedia)
@@ -44,23 +44,26 @@ func (c *CatalogReferencerAdapter) Reference(ctx context.Context, analysedMedias
 
 	mediaReferences, err := c.InsertMediaSimulator.SimulateInsertingMedia(ctx, c.Owner, signatures)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, mediaReference := range mediaReferences {
 		medias := analysedMediasBySignature[mediaReference.Signature]
 		albumReference, err := c.StatefulAlbumReferencer.FindReference(ctx, medias[0].Details.DateTime)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to find album reference for media at time %s", medias[0].Details.DateTime)
+			return errors.Wrapf(err, "failed to find album reference for media at time %s", medias[0].Details.DateTime)
 		}
 
 		for _, media := range medias {
-			references[media] = Reference{
-				MediaReference: mediaReference,
-				AlbumReference: albumReference,
-			}
+			references = append(references, backup.BackingUpMediaRequest{
+				AnalysedMedia: media,
+				CatalogReference: Reference{
+					MediaReference: mediaReference,
+					AlbumReference: albumReference,
+				},
+			})
 		}
 	}
 
-	return references, nil
+	return observer.OnMediaCatalogued(ctx, references)
 }

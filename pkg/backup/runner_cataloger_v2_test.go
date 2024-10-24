@@ -38,7 +38,7 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 		fields     fields
 		newArgs    newArgs
 		args       args
-		want       []*BackingUpMediaRequest
+		want       []BackingUpMediaRequest
 		wantEvents []*ProgressEvent
 		wantErr    assert.ErrorAssertionFunc
 	}{
@@ -47,7 +47,7 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 			newArgs: newArgs{owner: owner, options: Options{}},
 			fields: fields{
 				ReferencerFactory: &ReferencerFactoryFake{
-					CreatorReferencer: CatalogReferencerStub{
+					CreatorReferencer: CatalogReferencerFake{
 						analysedMedia1: reference1Exists,
 					},
 				},
@@ -62,14 +62,11 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should filter out medias that are not in the selected album",
-			newArgs: newArgs{owner: owner, options: Options{RestrictedAlbumFolderName: map[string]interface{}{
-				"album1": nil,
-				"album2": nil,
-			}}},
+			name:    "it should filter out medias that are not in the selected album",
+			newArgs: newArgs{owner: owner, options: OptionOnlyAlbums("album1", "album2")},
 			fields: fields{
 				ReferencerFactory: &ReferencerFactoryFake{
-					CreatorReferencer: CatalogReferencerStub{
+					CreatorReferencer: CatalogReferencerFake{
 						analysedMedia1: reference1Exists,
 						analysedMedia2: reference2,
 						analysedMedia3: reference3,
@@ -79,7 +76,7 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 			args: args{
 				medias: []*AnalysedMedia{analysedMedia1, analysedMedia2, analysedMedia3},
 			},
-			want: []*BackingUpMediaRequest{
+			want: []BackingUpMediaRequest{
 				{
 					AnalysedMedia:    analysedMedia2,
 					CatalogReference: reference2,
@@ -97,7 +94,7 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 			newArgs: newArgs{owner: owner, options: Options{DryRun: true}},
 			fields: fields{
 				ReferencerFactory: &ReferencerFactoryFake{
-					DryRunReferencer: CatalogReferencerStub{
+					DryRunReferencer: CatalogReferencerFake{
 						analysedMedia1: reference1Exists,
 					},
 				},
@@ -116,20 +113,20 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			referencerFactory = tt.fields.ReferencerFactory
-			cataloger, err := NewCataloger(tt.newArgs.owner, tt.newArgs.options)
-			if !tt.wantErr(t, err, fmt.Sprintf("NewCataloger(%v, %v)", tt.newArgs.owner, tt.newArgs.options)) {
+			cataloger, err := NewCataloguer(tt.newArgs.owner, tt.newArgs.options)
+			if !tt.wantErr(t, err, fmt.Sprintf("NewCataloguer(%v, %v)", tt.newArgs.owner, tt.newArgs.options)) {
 				return
 			}
 
 			catcher := NewChanProgressEventCatcher()
-			got, err := cataloger.Catalog(ctx, tt.args.medias, catcher)
+			err = cataloger.Catalog(ctx, tt.args.medias, catcher)
 			gotEvents := catcher.Catch()
 
 			if !tt.wantErr(t, err, fmt.Sprintf("Catalog(%v)", tt.args.medias)) {
 				return
 			}
 
-			assert.Equalf(t, tt.want, got, "Catalog(%v)", tt.args.medias)
+			assert.Equalf(t, tt.want, catcher.Got, "Catalog(%v)", tt.args.medias)
 			assert.ElementsMatchf(t, tt.wantEvents, gotEvents, "Catalog(%v)", tt.args.medias)
 		})
 	}
@@ -151,7 +148,7 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 
 	type fields struct {
 		CatalogReferencer CatalogReferencer
-		Filters           []CatalogerFilter
+		Filters           []CataloguerFilter
 	}
 	type args struct {
 		medias []*AnalysedMedia
@@ -160,14 +157,14 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 		name       string
 		fields     fields
 		args       args
-		want       []*BackingUpMediaRequest
+		want       []BackingUpMediaRequest
 		wantEvents []*ProgressEvent
 		wantErr    assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it shouldn't do anything if no media",
 			fields: fields{
-				CatalogReferencer: make(CatalogReferencerStub),
+				CatalogReferencer: make(CatalogReferencerFake),
 			},
 			args: args{
 				medias: nil,
@@ -179,14 +176,14 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 		{
 			name: "it should add the reference to each media",
 			fields: fields{
-				CatalogReferencer: CatalogReferencerStub{
+				CatalogReferencer: CatalogReferencerFake{
 					analysedMedia1: reference1,
 				},
 			},
 			args: args{
 				medias: []*AnalysedMedia{analysedMedia1},
 			},
-			want: []*BackingUpMediaRequest{
+			want: []BackingUpMediaRequest{
 				{
 					AnalysedMedia:    analysedMedia1,
 					CatalogReference: reference1,
@@ -200,22 +197,22 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 		{
 			name: "it should skip filtered out medias with the right event",
 			fields: fields{
-				CatalogReferencer: CatalogReferencerStub{
+				CatalogReferencer: CatalogReferencerFake{
 					analysedMedia1: reference1,
 					analysedMedia2: reference2,
 					analysedMedia3: reference3,
 				},
-				Filters: []CatalogerFilter{
+				Filters: []CataloguerFilter{
 					CatalogerFilterFake{
-						analysedMedia1.FoundMedia.String(): ProgressEventAlreadyExists,
-						analysedMedia3.FoundMedia.String(): ProgressEventWrongAlbum,
+						analysedMedia1.FoundMedia.String(): CatalogerFilterMustNotAlreadyExistsError,
+						analysedMedia3.FoundMedia.String(): CatalogerFilterMustBeInAlbumError,
 					},
 				},
 			},
 			args: args{
 				medias: []*AnalysedMedia{analysedMedia1, analysedMedia2, analysedMedia3},
 			},
-			want: []*BackingUpMediaRequest{
+			want: []BackingUpMediaRequest{
 				{
 					AnalysedMedia:    analysedMedia2,
 					CatalogReference: reference2,
@@ -231,14 +228,14 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 		{
 			name: "it should raise an event if an album has been created to store the media",
 			fields: fields{
-				CatalogReferencer: CatalogReferencerStub{
+				CatalogReferencer: CatalogReferencerFake{
 					analysedMedia1: reference1AlbumCreated,
 				},
 			},
 			args: args{
 				medias: []*AnalysedMedia{analysedMedia1},
 			},
-			want: []*BackingUpMediaRequest{
+			want: []BackingUpMediaRequest{
 				{
 					AnalysedMedia:    analysedMedia1,
 					CatalogReference: reference1AlbumCreated,
@@ -255,19 +252,19 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			catcher := NewChanProgressEventCatcher()
-			c := Cataloger{
-				CatalogReferencer: tt.fields.CatalogReferencer,
-				CatalogerFilters:  tt.fields.Filters,
+			c := CataloguerWithFilters{
+				Delegate:          tt.fields.CatalogReferencer,
+				CataloguerFilters: tt.fields.Filters,
 			}
 
-			got, err := c.Catalog(ctx, tt.args.medias, catcher)
+			err := c.Catalog(ctx, tt.args.medias, catcher)
 			gotEvents := catcher.Catch()
 
 			if !tt.wantErr(t, err, fmt.Sprintf("Catalog(%v)", tt.args.medias)) {
 				return
 			}
 
-			assert.Equalf(t, tt.want, got, "Catalog(%v)", tt.args.medias)
+			assert.Equalf(t, tt.want, catcher.Got, "Catalog(%v)", tt.args.medias)
 			assert.ElementsMatchf(t, tt.wantEvents, gotEvents, "Catalog(%v)", tt.args.medias)
 		})
 	}
@@ -307,48 +304,71 @@ func (c *CatalogReferenceStub) AlbumFolderName() string {
 	return c.AlbumFolderNameValue
 }
 
-type ChanProgressEventCatcher chan *ProgressEvent
-
-func NewChanProgressEventCatcher() ChanProgressEventCatcher {
-	return make(chan *ProgressEvent, 255)
+type ChanProgressEventCatcher struct {
+	ProgressObserver *ProgressObserver
+	Got              []BackingUpMediaRequest
 }
 
-func (c ChanProgressEventCatcher) Catch() []*ProgressEvent {
-	var events []*ProgressEvent
-	for {
-		select {
-		case event := <-c:
-			events = append(events, event)
-		default:
-			return events
-		}
+func (c *ChanProgressEventCatcher) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+	err := c.ProgressObserver.OnMediaCatalogued(ctx, requests)
+	if err != nil {
+		return err
+	}
+
+	c.Got = append(c.Got, requests...)
+
+	return nil
+}
+
+func (c *ChanProgressEventCatcher) OnFilteredOut(ctx context.Context, media AnalysedMedia, reference CatalogReference, cause error) error {
+	return c.ProgressObserver.OnFilteredOut(ctx, media, reference, cause)
+}
+
+func NewChanProgressEventCatcher() *ChanProgressEventCatcher {
+	return &ChanProgressEventCatcher{
+		ProgressObserver: &ProgressObserver{
+			EventChannel: make(chan *ProgressEvent, 256),
+		},
 	}
 }
 
-type CatalogReferencerStub map[*AnalysedMedia]CatalogReference
+func (c *ChanProgressEventCatcher) Catch() []*ProgressEvent {
+	close(c.ProgressObserver.EventChannel)
 
-func (c CatalogReferencerStub) Reference(ctx context.Context, medias []*AnalysedMedia) (map[*AnalysedMedia]CatalogReference, error) {
-	result := make(map[*AnalysedMedia]CatalogReference)
+	var events []*ProgressEvent
+	for event := range c.ProgressObserver.EventChannel {
+		events = append(events, event)
+	}
+	return events
+}
+
+type CatalogReferencerFake map[*AnalysedMedia]CatalogReference
+
+func (c CatalogReferencerFake) Reference(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error {
+	var result []BackingUpMediaRequest
 	for _, media := range medias {
 		for key, reference := range c {
 			if key.FoundMedia.String() == media.FoundMedia.String() {
-				result[media] = reference
+				result = append(result, BackingUpMediaRequest{
+					AnalysedMedia:    media,
+					CatalogReference: reference,
+				})
 				break
 			}
 		}
 	}
 
-	return result, nil
+	return observer.OnMediaCatalogued(ctx, result)
 }
 
-type CatalogerFilterFake map[string]ProgressEventType
+type CatalogerFilterFake map[string]error
 
-func (c CatalogerFilterFake) FilterOut(media AnalysedMedia, reference CatalogReference) (ProgressEventType, bool) {
+func (c CatalogerFilterFake) FilterOut(ctx context.Context, media AnalysedMedia, reference CatalogReference) error {
 	if cause, ok := c[media.FoundMedia.String()]; ok {
-		return cause, true
+		return cause
 	}
 
-	return ProgressEventCatalogued, false
+	return nil
 }
 
 type ReferencerFactoryFake struct {
