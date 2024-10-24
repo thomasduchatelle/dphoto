@@ -24,7 +24,7 @@ type runner struct {
 	Options              Options            // Options contains the configuration for each step of the backup process. [migration to Observer Pattern]
 	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
 	Analyser             Analyser           // Analyser is extracting metadata from the file
-	Cataloger            Cataloguer         // Cataloger is assigning the media to an album and filtering out media already backed up
+	CatalogReferencer    CatalogReferencer  // CatalogReferencer is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
 	progressEventChannel chan *ProgressEvent
@@ -168,6 +168,11 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 }
 
 func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*AnalysedMedia, observer *CompositeRunnerObserver, closer func()) {
+	cataloguer := &CataloguerWithFilters{
+		Delegate:          r.CatalogReferencer,
+		CataloguerFilters: ListCataloguerFilters(r.Options),
+	}
+
 	r.startsInParallel(defaultValue(r.Options.ConcurrentCataloguer, 1), func() {
 		interrupted := false
 		for {
@@ -179,7 +184,7 @@ func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*An
 					return
 				}
 				if !interrupted {
-					err := r.Cataloger.Catalog(ctx, buffer, observer)
+					err := cataloguer.Catalog(ctx, buffer, observer)
 					r.appendError(errors.Wrap(err, "error in cataloguer"))
 				}
 			}

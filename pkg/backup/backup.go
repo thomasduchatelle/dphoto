@@ -27,7 +27,7 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 
 	options := ReduceOptions(optionsSlice...)
 
-	cataloger, err := NewCataloguer(owner, options)
+	referencer, err := NewReferencer(owner, options.DryRun)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +35,13 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 	publisher, hintSize, err := newPublisher(volume)
 
 	run := runner{
-		MDC:          mdc,
-		Options:      options,
-		Publisher:    publisher,
-		Analyser:     getDefaultAnalyser(),
-		Cataloger:    cataloger,
-		UniqueFilter: newUniqueFilter(),
-		Uploader:     &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},
+		MDC:               mdc,
+		Options:           options,
+		Publisher:         publisher,
+		Analyser:          getDefaultAnalyser(),
+		CatalogReferencer: referencer,
+		UniqueFilter:      newUniqueFilter(),
+		Uploader:          &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},
 	}
 
 	progressChannel, _ := run.start(context.TODO(), hintSize)

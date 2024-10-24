@@ -20,27 +20,26 @@ func Scan(owner string, volume SourceVolume, optionSlice ...Options) ([]*Scanned
 	})
 
 	options := ReduceOptions(append(optionSlice, Options{ConcurrentUploader: 1})...)
-	options.DryRun = true
 
 	publisher, hintSize, err := newPublisher(volume)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	cataloger, err := NewCataloguer(ownermodel.Owner(owner), options)
+	referencer, err := NewReferencer(ownermodel.Owner(owner), true)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	receiver := newScanReceiver(mdc, volume)
 	run := runner{
-		MDC:          mdc,
-		Options:      options,
-		Publisher:    publisher,
-		Analyser:     getDefaultAnalyser(),
-		Cataloger:    cataloger,
-		UniqueFilter: newUniqueFilter(),
-		Uploader:     RunnerUploaderFunc(receiver.receive),
+		MDC:               mdc,
+		Options:           options,
+		Publisher:         publisher,
+		Analyser:          getDefaultAnalyser(),
+		CatalogReferencer: referencer,
+		UniqueFilter:      newUniqueFilter(),
+		Uploader:          RunnerUploaderFunc(receiver.receive),
 	}
 
 	progressChannel, _ := run.start(context.TODO(), hintSize)
