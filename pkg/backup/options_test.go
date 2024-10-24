@@ -38,6 +38,15 @@ func TestOption_ReduceOptions(t *testing.T) {
 				RejectDir:                 "foobar",
 			},
 		},
+		{
+			name: "it should not set the SkipRejects if RejectDir option is empty",
+			args: args{
+				option: backup.OptionWithRejectDir(""),
+			},
+			want: backup.Options{
+				RestrictedAlbumFolderName: noRestrictedAlbumFolder,
+			},
+		},
 	}
 
 	for _, tt := range tests {

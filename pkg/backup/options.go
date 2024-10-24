@@ -109,8 +109,12 @@ func WithBatchSize(batchSize int) Options {
 }
 
 func OptionWithRejectDir(rejectDir string) Options {
+	skip := false
+	if rejectDir != "" {
+		skip = true
+	}
 	return Options{
-		SkipRejects: true,
+		SkipRejects: skip,
 		RejectDir:   rejectDir,
 	}
 }
