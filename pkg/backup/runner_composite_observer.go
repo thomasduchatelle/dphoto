@@ -26,3 +26,27 @@ func (c *CompositeRunnerObserver) OnRejectedMedia(ctx context.Context, found Fou
 		}
 	}
 }
+
+func (c *CompositeRunnerObserver) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+	for _, observer := range c.Observers {
+		if typed, ok := observer.(CatalogReferencerObserver); ok {
+			err := typed.OnMediaCatalogued(ctx, requests)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (c *CompositeRunnerObserver) OnFilteredOut(ctx context.Context, media AnalysedMedia, reference CatalogReference, cause error) error {
+	for _, observer := range c.Observers {
+		if typed, ok := observer.(CataloguerFilterObserver); ok {
+			err := typed.OnFilteredOut(ctx, media, reference, cause)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}

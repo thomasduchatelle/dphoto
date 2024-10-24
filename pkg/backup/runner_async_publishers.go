@@ -38,6 +38,17 @@ func (a *ChannelPublisher) AnalysedMediaChannelCloser() {
 	close(a.AnalysedMediaChannel)
 }
 
+func (a *ChannelPublisher) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+	for _, request := range requests {
+		a.CataloguedChannel <- &request
+	}
+	return nil
+}
+
+func (a *ChannelPublisher) CataloguedChannelCloser() {
+	close(a.CataloguedChannel)
+}
+
 func (a *ChannelPublisher) WaitToFinish() []error {
 	return <-a.CompletionChannel
 }

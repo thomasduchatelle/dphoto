@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"slices"
 )
 
 // CatalogReference is used to project where a media will fit in the catalog: its ID and its album.
@@ -25,73 +24,42 @@ type CatalogReference interface {
 	MediaId() string
 }
 
+type CatalogReferencerObserver interface {
+	OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error
+}
+
+type CataloguerFilterObserver interface {
+	OnFilteredOut(ctx context.Context, media AnalysedMedia, reference CatalogReference, cause error) error
+}
+
+type CataloguerObserver interface {
+	CatalogReferencerObserver
+	CataloguerFilterObserver
+}
+
 type CatalogReferencer interface {
-	Reference(ctx context.Context, medias []*AnalysedMedia) (map[*AnalysedMedia]CatalogReference, error)
+	Reference(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error
 }
 
-type CatalogerFilter interface {
-	// FilterOut returns true if the media should be filtered out, with the cause of behind excluded
-	FilterOut(media AnalysedMedia, reference CatalogReference) (ProgressEventType, bool)
+type Cataloguer interface {
+	Catalog(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error
 }
 
-type CatalogerFilterFunc func(media AnalysedMedia, reference CatalogReference) (ProgressEventType, bool)
-
-func (f CatalogerFilterFunc) FilterOut(media AnalysedMedia, reference CatalogReference) (ProgressEventType, bool) {
-	return f(media, reference)
+type CataloguerWithFilters struct {
+	Delegate          CatalogReferencer
+	CataloguerFilters []CataloguerFilter
 }
 
-// Cataloger returns a BackingUpMediaRequest with an album all the time: it will have been created if necessary.
-type Cataloger struct {
-	CatalogReferencer CatalogReferencer
-	CatalogerFilters  []CatalogerFilter
-}
-
-func (c *Cataloger) Catalog(ctx context.Context, medias []*AnalysedMedia, progressChannel chan *ProgressEvent) ([]*BackingUpMediaRequest, error) {
-	references, err := c.CatalogReferencer.Reference(ctx, medias)
-	if err != nil {
-		return nil, err
+func (c *CataloguerWithFilters) Catalog(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
+	filters := &ApplyFiltersOnCataloguer{
+		Delegate:          observer,
+		Observer:          observer,
+		CataloguerFilters: c.CataloguerFilters,
 	}
-
-	var requests []*BackingUpMediaRequest
-	counts := make(map[ProgressEventType]MediaCounter)
-
-	for analysed, reference := range references {
-		if cause, filteredOut := c.firstMatchingFilter(c.CatalogerFilters, *analysed, reference); filteredOut {
-			count, _ := counts[cause]
-			counts[cause] = count.Add(1, analysed.FoundMedia.Size())
-			continue
-		}
-
-		if reference.AlbumCreated() {
-			progressChannel <- &ProgressEvent{Type: ProgressEventAlbumCreated, Count: 1, Album: reference.AlbumFolderName()}
-		}
-
-		requests = append(requests, &BackingUpMediaRequest{
-			AnalysedMedia:    analysed,
-			CatalogReference: reference,
-		})
-		count, _ := counts[ProgressEventCatalogued]
-		counts[ProgressEventCatalogued] = count.Add(1, analysed.FoundMedia.Size())
-	}
-
-	for event, count := range counts {
-		progressChannel <- &ProgressEvent{Type: event, Count: count.Count, Size: count.Size}
-	}
-
-	return requests, nil
+	return c.Delegate.Reference(ctx, medias, filters)
 }
 
-func (c *Cataloger) firstMatchingFilter(filters []CatalogerFilter, media AnalysedMedia, reference CatalogReference) (ProgressEventType, bool) {
-	for _, filter := range filters {
-		if cause, filteredOut := filter.FilterOut(media, reference); filteredOut {
-			return cause, true
-		}
-	}
-
-	return ProgressEventCatalogued, false
-}
-
-func NewCataloger(owner ownermodel.Owner, options Options) (RunnerCataloger, error) {
+func NewCataloguer(owner ownermodel.Owner, options Options) (Cataloguer, error) {
 	var referencer CatalogReferencer
 	var err error
 
@@ -101,7 +69,7 @@ func NewCataloger(owner ownermodel.Owner, options Options) (RunnerCataloger, err
 		referencer, err = referencerFactory.NewCreatorReferencer(context.TODO(), owner)
 	}
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create a cataloger for %s with options %+v", owner, options)
+		return nil, errors.Wrapf(err, "failed to create a cataloguer for %s with options %+v", owner, options)
 	}
 
 	if len(options.RestrictedAlbumFolderName) > 0 {
@@ -110,31 +78,19 @@ func NewCataloger(owner ownermodel.Owner, options Options) (RunnerCataloger, err
 			albumFolderNames = append(albumFolderNames, albumFolderName)
 		}
 
-		return &Cataloger{
-			CatalogReferencer: referencer,
-			CatalogerFilters: []CatalogerFilter{
+		return &CataloguerWithFilters{
+			Delegate: referencer,
+			CataloguerFilters: []CataloguerFilter{
 				mustNotExists(),
 				mustBeInAlbum(albumFolderNames...),
 			},
 		}, nil
 	}
 
-	return &Cataloger{
-		CatalogReferencer: referencer,
-		CatalogerFilters: []CatalogerFilter{
+	return &CataloguerWithFilters{
+		Delegate: referencer,
+		CataloguerFilters: []CataloguerFilter{
 			mustNotExists(),
 		},
 	}, nil
-}
-
-func mustBeInAlbum(albumFolderNames ...string) CatalogerFilterFunc {
-	return func(media AnalysedMedia, reference CatalogReference) (ProgressEventType, bool) {
-		return ProgressEventWrongAlbum, !slices.Contains(albumFolderNames, reference.AlbumFolderName())
-	}
-}
-
-func mustNotExists() CatalogerFilterFunc {
-	return func(media AnalysedMedia, reference CatalogReference) (ProgressEventType, bool) {
-		return ProgressEventAlreadyExists, reference.Exists()
-	}
 }

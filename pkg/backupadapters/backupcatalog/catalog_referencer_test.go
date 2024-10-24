@@ -55,7 +55,7 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    map[*backup.AnalysedMedia]backup.CatalogReference
+		want    []backup.BackingUpMediaRequest
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -70,7 +70,7 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 			args: args{
 				medias: nil,
 			},
-			want:    make(map[*backup.AnalysedMedia]backup.CatalogReference),
+			want:    nil,
 			wantErr: assert.NoError,
 		},
 		{
@@ -94,13 +94,16 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 					&analysedMedia1,
 				},
 			},
-			want: map[*backup.AnalysedMedia]backup.CatalogReference{
-				&analysedMedia1: ReferenceSnapshot{
-					ExistsValue:           true,
-					AlbumCreatedValue:     false,
-					AlbumFolderNameValue:  "",
-					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
-					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+			want: []backup.BackingUpMediaRequest{
+				{
+					AnalysedMedia: &analysedMedia1,
+					CatalogReference: ReferenceSnapshot{
+						ExistsValue:           true,
+						AlbumCreatedValue:     false,
+						AlbumFolderNameValue:  "",
+						UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+						MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+					},
 				},
 			},
 			wantErr: assert.NoError,
@@ -127,20 +130,26 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 					&analysedMedia2,
 				},
 			},
-			want: map[*backup.AnalysedMedia]backup.CatalogReference{
-				&analysedMedia1: ReferenceSnapshot{
-					ExistsValue:           true,
-					AlbumCreatedValue:     false,
-					AlbumFolderNameValue:  "",
-					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
-					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+			want: []backup.BackingUpMediaRequest{
+				{
+					AnalysedMedia: &analysedMedia1,
+					CatalogReference: ReferenceSnapshot{
+						ExistsValue:           true,
+						AlbumCreatedValue:     false,
+						AlbumFolderNameValue:  "",
+						UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+						MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+					},
 				},
-				&analysedMedia2: ReferenceSnapshot{
-					ExistsValue:           true,
-					AlbumCreatedValue:     false,
-					AlbumFolderNameValue:  "",
-					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
-					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+				{
+					AnalysedMedia: &analysedMedia2,
+					CatalogReference: ReferenceSnapshot{
+						ExistsValue:           true,
+						AlbumCreatedValue:     false,
+						AlbumFolderNameValue:  "",
+						UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+						MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+					},
 				},
 			},
 			wantErr: assert.NoError,
@@ -166,13 +175,16 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 					&analysedMedia1,
 				},
 			},
-			want: map[*backup.AnalysedMedia]backup.CatalogReference{
-				&analysedMedia1: ReferenceSnapshot{
-					ExistsValue:           false,
-					AlbumCreatedValue:     true,
-					AlbumFolderNameValue:  albumId1.FolderName.String(),
-					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
-					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+			want: []backup.BackingUpMediaRequest{
+				{
+					AnalysedMedia: &analysedMedia1,
+					CatalogReference: ReferenceSnapshot{
+						ExistsValue:           false,
+						AlbumCreatedValue:     true,
+						AlbumFolderNameValue:  albumId1.FolderName.String(),
+						UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+						MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+					},
 				},
 			},
 			wantErr: assert.NoError,
@@ -181,28 +193,33 @@ func TestCatalogReferencerAdapter_Reference(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			observer := new(CataloguerObserverFake)
+
 			c := &CatalogReferencerAdapter{
 				Owner:                   tt.fields.Owner,
 				InsertMediaSimulator:    tt.fields.FindSignaturePort,
 				StatefulAlbumReferencer: tt.fields.StatefulAlbumReferencer,
 			}
-			got, err := c.Reference(context.Background(), tt.args.medias)
+			err := c.Reference(context.Background(), tt.args.medias, observer)
 			if !tt.wantErr(t, err) {
 				return
 			}
 
-			reallyGot := make(map[*backup.AnalysedMedia]backup.CatalogReference)
-			for media, reference := range got {
-				reallyGot[media] = ReferenceSnapshot{
-					ExistsValue:           reference.Exists(),
-					AlbumCreatedValue:     reference.AlbumCreated(),
-					AlbumFolderNameValue:  reference.AlbumFolderName(),
-					UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
-					MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
-				}
+			var reallyGot []backup.BackingUpMediaRequest
+			for _, request := range observer.Got {
+				reallyGot = append(reallyGot, backup.BackingUpMediaRequest{
+					AnalysedMedia: request.AnalysedMedia,
+					CatalogReference: ReferenceSnapshot{
+						ExistsValue:           request.CatalogReference.Exists(),
+						AlbumCreatedValue:     request.CatalogReference.AlbumCreated(),
+						AlbumFolderNameValue:  request.CatalogReference.AlbumFolderName(),
+						UniqueIdentifierValue: mediaReference1Exists.Signature.Value(),
+						MediaIdValue:          mediaReference1Exists.ProvisionalMediaId.Value(),
+					},
+				})
 			}
 
-			assert.Equalf(t, tt.want, reallyGot, "Reference() = %v, want %v", got, tt.want)
+			assert.Equalf(t, tt.want, reallyGot, "Catalog() = %v, want %v", observer.Got, tt.want)
 		})
 	}
 }
@@ -260,4 +277,13 @@ type StatefulAlbumReferencerFake map[time.Time]catalog.AlbumReference
 
 func (s StatefulAlbumReferencerFake) FindReference(ctx context.Context, mediaTime time.Time) (catalog.AlbumReference, error) {
 	return s[mediaTime], nil
+}
+
+type CataloguerObserverFake struct {
+	Got []backup.BackingUpMediaRequest
+}
+
+func (c *CataloguerObserverFake) OnMediaCatalogued(ctx context.Context, requests []backup.BackingUpMediaRequest) error {
+	c.Got = append(c.Got, requests...)
+	return nil
 }
