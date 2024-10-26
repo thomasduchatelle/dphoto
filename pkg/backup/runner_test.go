@@ -199,7 +199,7 @@ type AnalyserFake struct {
 	ErroredFilename map[string]error
 }
 
-func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver) error {
+func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
 	if err, errored := a.ErroredFilename[found.MediaPath().Filename]; errored {
 		return err
 	}

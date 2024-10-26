@@ -26,8 +26,9 @@ type ErrorCollectorObserver struct {
 	errorsMutex sync.Mutex
 }
 
-func (e *ErrorCollectorObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
-	e.appendError(errors.Wrapf(err, "error in analyser"))
+func (e *ErrorCollectorObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
+	e.appendError(errors.Wrapf(cause, "error in analyser"))
+	return nil
 }
 
 func (e *ErrorCollectorObserver) appendError(err error) {

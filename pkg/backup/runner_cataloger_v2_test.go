@@ -204,8 +204,8 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 				},
 				Filters: []CataloguerFilter{
 					CatalogerFilterFake{
-						analysedMedia1.FoundMedia.String(): CatalogerFilterMustNotAlreadyExistsError,
-						analysedMedia3.FoundMedia.String(): CatalogerFilterMustBeInAlbumError,
+						analysedMedia1.FoundMedia.String(): ErrCatalogerFilterMustNotAlreadyExists,
+						analysedMedia3.FoundMedia.String(): ErrCatalogerFilterMustBeInAlbum,
 					},
 				},
 			},

@@ -20,12 +20,13 @@ type CopyRejectsObserver struct {
 	RejectDir string
 }
 
-func (c *CopyRejectsObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, _ error) {
+func (c *CopyRejectsObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
 	err := c.copyFile(found)
 	if err != nil {
 		// note - 'OnRejectedMedia' is called within error handling (hence not returning errors itself) ; suggested improvement is to pass the error in a channel where the consumer has its own error handling
 		log.WithError(err).Errorf("failed to copy rejected file %s to %s", found.MediaPath().Path, c.RejectDir)
 	}
+	return nil
 }
 
 func (c *CopyRejectsObserver) copyFile(found FoundMedia) error {

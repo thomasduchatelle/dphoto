@@ -24,7 +24,7 @@ func (_m *Analyser) EXPECT() *Analyser_Expecter {
 }
 
 // Analyse provides a mock function with given fields: ctx, found, analysedMediaObserver
-func (_m *Analyser) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
+func (_m *Analyser) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectsObserver backup.RejectedMediaObserver) error {
 	ret := _m.Called(ctx, found, analysedMediaObserver)
 
 	if len(ret) == 0 {

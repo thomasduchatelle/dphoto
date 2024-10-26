@@ -126,7 +126,6 @@ func TestScanAcceptance(t *testing.T) {
 				ProgressEventAlreadyExists:  {SumCount: 2, SumSize: 13 + 15},
 				ProgressEventCatalogued:     {SumCount: 4, SumSize: 10 + 11 + 12 + 14},
 				ProgressEventReadyForUpload: {SumCount: 4, SumSize: 10 + 11 + 12 + 14},
-				ProgressEventUploaded:       {SumCount: 4, SumSize: 10 + 11 + 12 + 14, Albums: []string{"/album1", "/album2"}},
 			},
 			wantSkippedMedias: nil,
 			wantErr:           assert.NoError,
@@ -142,13 +141,18 @@ func TestScanAcceptance(t *testing.T) {
 			eventCatcher := newEventCapture()
 			options := append([]Options{OptionWithListener(eventCatcher)}, tt.args.optionSlice...)
 
-			gotFolder, gotSkippedMedia, err := Scan(tt.args.owner, tt.args.volume, options...)
+			gotFolder, err := Scan(tt.args.owner, tt.args.volume, options...)
 			if !tt.wantErr(t, err, fmt.Sprintf("Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)) {
 				return
 			}
 			assert.Equalf(t, tt.wantFolders, gotFolder, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
-			assert.Equalf(t, tt.wantSkippedMedias, gotSkippedMedia, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
 			assert.Equalf(t, tt.wantEvents, eventCatcher.Captured, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
+
+			rejectsCount := 0
+			for _, folder := range gotFolder {
+				rejectsCount += folder.RejectsCount
+			}
+			assert.Equalf(t, len(tt.wantSkippedMedias), rejectsCount, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
 		})
 	}
 }

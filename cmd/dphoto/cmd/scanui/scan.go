@@ -18,12 +18,12 @@ type ScanProgress struct {
 	onAnalysedCalled bool
 }
 
-func ScanWithProgress(owner string, volume backup.SourceVolume, options ...backup.Options) (ui.SuggestionRecordRepositoryPort, []backup.FoundMedia, error) {
-	suggestions, rejects, err := doScan(owner, volume, options...)
-	return NewSuggestionRepository(owner, suggestions, len(rejects)), rejects, err
+func ScanWithProgress(owner string, volume backup.SourceVolume, options ...backup.Options) (ui.SuggestionRecordRepositoryPort, error) {
+	suggestions, err := doScan(owner, volume, options...)
+	return NewSuggestionRepository(owner, suggestions), err
 }
 
-func doScan(owner string, volume backup.SourceVolume, options ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error) {
+func doScan(owner string, volume backup.SourceVolume, options ...backup.Options) ([]*backup.ScannedFolder, error) {
 	ctx := context.TODO()
 
 	progress := newScanProgress()
@@ -31,14 +31,14 @@ func doScan(owner string, volume backup.SourceVolume, options ...backup.Options)
 	options = append(options, config.BackupOptions()...)
 
 	scanner := pkgfactory.NewMultiFilesScanner(ctx)
-	suggestions, rejects, err := scanner(ctx, owner, volume, options...)
+	suggestions, err := scanner(ctx, owner, volume, options...)
 	progress.stop()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return suggestions, rejects, err
+	return suggestions, err
 }
 
 func newScanProgress() *ScanProgress {

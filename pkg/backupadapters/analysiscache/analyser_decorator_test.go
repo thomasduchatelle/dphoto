@@ -95,13 +95,12 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		init   func(t *testing.T, db *badger.DB) error
-		mocks  func(t *testing.T) fields
-		args   args
-		want   *backup.AnalysedMedia
-		wantDB map[string]analysiscache.Payload
-		//wantEvents []backup.ProgressEvent
+		name    string
+		init    func(t *testing.T, db *badger.DB) error
+		mocks   func(t *testing.T) fields
+		args    args
+		want    *backup.AnalysedMedia
+		wantDB  map[string]analysiscache.Payload
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -209,7 +208,7 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 			}
 
 			analysedMediaObserver := new(AnalysedMediaObserverFake)
-			err = d.Analyse(context.Background(), tt.args.found, analysedMediaObserver)
+			err = d.Analyse(context.Background(), tt.args.found, analysedMediaObserver, nil)
 			if assert.NoError(t, err, "Analyse(%v)", tt.args.found) {
 				if !tt.wantErr(t, err, fmt.Sprintf("Analyse(%v)", tt.args.found)) {
 					return
@@ -271,16 +270,8 @@ func (a *AnalysedMediaObserverFake) OnAnalysedMedia(ctx context.Context, media *
 	return nil
 }
 
-type RejectedMediaObserverFake struct {
-	Rejected map[backup.FoundMedia]error
-}
-
-func (r *RejectedMediaObserverFake) OnRejectedMedia(found backup.FoundMedia, err error) {
-	r.Rejected[found] = err
-}
-
 type RunnerAnalyserFunc func(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error
 
-func (r RunnerAnalyserFunc) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
+func (r RunnerAnalyserFunc) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectsObserver backup.RejectedMediaObserver) error {
 	return r(ctx, found, analysedMediaObserver)
 }

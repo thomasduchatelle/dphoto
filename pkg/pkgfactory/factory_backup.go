@@ -14,7 +14,7 @@ import (
 
 type MultiFilesBackup func(ctx context.Context, owner ownermodel.Owner, volumeSource backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error)
 
-type MultiFilesScanner func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error)
+type MultiFilesScanner func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, error)
 
 func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 	factory.InitArchive(ctx)
@@ -82,7 +82,7 @@ func NewInsertMediaAdapter(ctx context.Context) backup.InsertMediaPort {
 func NewMultiFilesScanner(ctx context.Context) MultiFilesScanner {
 	backup.Init(backuparchive.New(), NewReferencerFactory(), NewInsertMediaAdapter(ctx))
 
-	return func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error) {
+	return func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, error) {
 		return backup.Scan(owner, volume, backupDefaultOptionsForAWS(optionSlice)...)
 	}
 }

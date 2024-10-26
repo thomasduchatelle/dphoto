@@ -12,6 +12,7 @@ type ScannedFolder struct {
 	AbsolutePath string                  // AbsolutePath is used to create a new SourceVolume
 	Start, End   time.Time               // Start and End are the beginning of the day of the first media, and the beginning of the day following the last media.
 	Distribution map[string]MediaCounter // Distribution is the number of media found for each day (format YYYY-MM-DD)
+	RejectsCount int                     // RejectsCount is the number of media that have been rejected or filtered out in the folder
 }
 
 // PushBoundaries is updating the ScannedFolder dates, and update the counter.

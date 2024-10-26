@@ -11,10 +11,12 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
-func NewSuggestionRepository(owner string, folders []*backup.ScannedFolder, rejectCount int) ui.SuggestionRecordRepositoryPort {
+func NewSuggestionRepository(owner string, folders []*backup.ScannedFolder) ui.SuggestionRecordRepositoryPort {
 	records := make([]*ui.SuggestionRecord, len(folders))
+	rejectCount := 0
 
 	for i, folder := range folders {
+		rejectCount += folder.RejectsCount
 
 		simplifiedDistribution := make(map[string]int)
 		for day, dayCounter := range folder.Distribution {

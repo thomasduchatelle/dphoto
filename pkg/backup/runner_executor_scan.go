@@ -1,8 +1,10 @@
 package backup
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
 	"sort"
+	"sync"
 )
 
 func newScanReceiver(mdc *log.Entry, volume SourceVolume) *scanReceiver {
@@ -14,49 +16,51 @@ func newScanReceiver(mdc *log.Entry, volume SourceVolume) *scanReceiver {
 }
 
 type scanReceiver struct {
-	mdc     *log.Entry
-	volume  SourceVolume
-	albums  map[string]*ScannedFolder
-	rejects []FoundMedia
+	mdc    *log.Entry
+	lock   sync.Mutex
+	volume SourceVolume
+	albums map[string]*ScannedFolder
 }
 
-func (s *scanReceiver) receive(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
-	for _, media := range buffer {
-		foundMedia := media.AnalysedMedia.FoundMedia
-		if media.AnalysedMedia.Details.DateTime.IsZero() {
-			log.Warnf("Media timestamp cannot be found within the file %s", foundMedia)
-			s.rejects = append(s.rejects, foundMedia)
+func (s *scanReceiver) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
-		} else {
-			mediaPath := foundMedia.MediaPath()
-			if _, ok := s.albums[mediaPath.Path]; !ok {
-				s.albums[mediaPath.Path] = s.newFoundAlbum(mediaPath)
-			}
-
-			s.albums[mediaPath.Path].PushBoundaries(media.AnalysedMedia.Details.DateTime, foundMedia.Size())
-		}
-
-		progressChannel <- &ProgressEvent{
-			Type:      ProgressEventUploaded,
-			Count:     1,
-			Size:      foundMedia.Size(),
-			Album:     media.CatalogReference.AlbumFolderName(),
-			MediaType: media.AnalysedMedia.Type,
-		}
+	for _, request := range requests {
+		scannedFolder := s.getOrCreateScannedFolder(request.AnalysedMedia.FoundMedia)
+		scannedFolder.PushBoundaries(request.AnalysedMedia.Details.DateTime, request.AnalysedMedia.FoundMedia.Size())
 	}
 
 	return nil
 }
 
-func (s *scanReceiver) collect() []*ScannedFolder {
-	suggestions := make([]*ScannedFolder, len(s.albums))
-	i := 0
-	for _, album := range s.albums {
-		suggestions[i] = album
-		i++
+func (s *scanReceiver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	scannedFolder := s.getOrCreateScannedFolder(found)
+	scannedFolder.RejectsCount++
+	return nil
+}
+
+func (s *scanReceiver) getOrCreateScannedFolder(foundMedia FoundMedia) *ScannedFolder {
+	mediaPath := foundMedia.MediaPath()
+	if _, ok := s.albums[mediaPath.Path]; !ok {
+		s.albums[mediaPath.Path] = s.newFoundAlbum(mediaPath)
 	}
+
+	scannedFolder := s.albums[mediaPath.Path]
+	return scannedFolder
+}
+
+func (s *scanReceiver) collect() []*ScannedFolder {
+	suggestions := make([]*ScannedFolder, 0, len(s.albums))
+	for _, album := range s.albums {
+		suggestions = append(suggestions, album)
+	}
+
 	sort.Slice(suggestions, func(i, j int) bool {
-		if suggestions[i].Start != suggestions[j].Start {
+		if suggestions[i].Start.Equal(suggestions[j].Start) {
 			return suggestions[i].Start.Before(suggestions[j].Start)
 		}
 

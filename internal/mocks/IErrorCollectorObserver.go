@@ -71,8 +71,9 @@ func (_c *IErrorCollectorObserver_Errors_Call) RunAndReturn(run func() []error) 
 }
 
 // OnRejectedMedia provides a mock function with given fields: ctx, found, cause
-func (_m *IErrorCollectorObserver) OnRejectedMedia(ctx context.Context, found backup.FoundMedia, cause error) {
+func (_m *IErrorCollectorObserver) OnRejectedMedia(ctx context.Context, found backup.FoundMedia, cause error) error {
 	_m.Called(ctx, found, cause)
+	return nil
 }
 
 // IErrorCollectorObserver_OnRejectedMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnRejectedMedia'
