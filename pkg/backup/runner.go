@@ -27,6 +27,7 @@ type runner struct {
 	CatalogReferencer    CatalogReferencer  // CatalogReferencer is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
+	Listeners            []interface{}      // Listeners is a list of observers that are notified of the progress of the backup process, they need to implement the appropriate interfaces
 	progressEventChannel chan *ProgressEvent
 	channelPublisher     *ChannelPublisher
 
@@ -61,7 +62,8 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	}
 
 	r.progressEventChannel = progressObserver.EventChannel
-	r.analyseMedias(interruptableContext, r.channelPublisher.FoundChannel, observer, r.channelPublisher.AnalysedMediaChannelCloser)
+	analyserObserver := NewAnalyserMediaHandler(r.Options, observer)
+	r.analyseMedias(interruptableContext, r.channelPublisher.FoundChannel, analyserObserver, r.channelPublisher.AnalysedMediaChannelCloser)
 	r.bufferAnalysedMedias(r.channelPublisher.AnalysedMediaChannel, r.channelPublisher.BufferedAnalysedChannel)
 	r.catalogueMedias(interruptableContext, r.channelPublisher.BufferedAnalysedChannel, observer, r.channelPublisher.CataloguedChannelCloser)
 	r.bufferUniqueCataloguedMedias(r.channelPublisher.CataloguedChannel, r.channelPublisher.BufferedCataloguedChannel)
@@ -89,6 +91,10 @@ func (r *runner) CreateObserver(progressObserver *ProgressObserver) (*CompositeR
 	}
 
 	observer.Observers = append(observer.Observers, r.channelPublisher)
+
+	if len(r.Listeners) > 0 {
+		observer.Observers = append(observer.Observers, r.Listeners...)
+	}
 
 	return observer, nil
 }
@@ -127,10 +133,7 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 	}()
 }
 
-func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, observer *CompositeRunnerObserver, closer func()) {
-	analyser := &AnalyserAsyncWrapper{
-		Analyser: r.Analyser,
-	}
+func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, observer AnalyserObserver, closer func()) {
 	r.startsInParallel(defaultValue(r.Options.ConcurrentAnalyser, 1), func() {
 		for {
 			select {
@@ -138,7 +141,8 @@ func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia
 				return
 			case media, more := <-foundChannel:
 				if more {
-					analyser.Analyse(ctx, media, observer, observer)
+					err := r.Analyser.Analyse(ctx, media, observer, observer)
+					r.appendError(errors.Wrap(err, "error in analyser"))
 
 				} else {
 					return

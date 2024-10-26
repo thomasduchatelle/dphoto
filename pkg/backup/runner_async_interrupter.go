@@ -31,7 +31,8 @@ type DefaultInterrupterObserver struct {
 	cancel context.CancelFunc
 }
 
-func (c *DefaultInterrupterObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
+func (c *DefaultInterrupterObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
+	return nil
 }
 
 func (c *DefaultInterrupterObserver) Cancel() {
@@ -43,6 +44,7 @@ type AnalyserInterrupterObserver struct {
 	*DefaultInterrupterObserver
 }
 
-func (c *AnalyserInterrupterObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
+func (c *AnalyserInterrupterObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
 	c.cancel()
+	return nil
 }

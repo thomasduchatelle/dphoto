@@ -1,6 +1,9 @@
 package backup
 
-import "context"
+import (
+	"context"
+	"github.com/pkg/errors"
+)
 
 var (
 	defaultAnalyser = &CoreAnalyser{
@@ -26,8 +29,13 @@ type AnalysedMediaObserver interface {
 	OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error
 }
 
+type RejectedMediaObserver interface {
+	// OnRejectedMedia is called when the media is invalid and cannot be used ; the error is returned only if there is a technical issue.
+	OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error
+}
+
 type Analyser interface {
-	Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver) error
+	Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error
 }
 
 type AnalyserDecorator interface {
@@ -38,23 +46,46 @@ type AnalyserDecoratorObserver interface {
 	OnDecoratedAnalyser(ctx context.Context, found FoundMedia, cacheHit bool) error
 }
 
-// ... Async ...
+// ... unsure ...
 
-type RejectedMediaObserver interface {
-	OnRejectedMedia(ctx context.Context, found FoundMedia, cause error)
+type AnalyserObserver interface {
+	AnalysedMediaObserver
+	RejectedMediaObserver
 }
 
-type AnalyserAsync interface {
-	Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver)
-}
-
-type AnalyserAsyncWrapper struct {
-	Analyser Analyser
-}
-
-func (a *AnalyserAsyncWrapper) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectedMediaObserver RejectedMediaObserver) {
-	err := a.Analyser.Analyse(ctx, found, analysedMediaObserver)
-	if err != nil {
-		rejectedMediaObserver.OnRejectedMedia(ctx, found, err)
+func NewAnalyserMediaHandler(options Options, observers ...AnalyserObserver) AnalyserObserver {
+	delegates := NewCompositeAnalyserObserver(observers...)
+	if options.SkipRejects {
+		return &analyserNoDateTimeFilter{observer: delegates}
 	}
+
+	return &analyserNoDateTimeFilter{observer: &analyserFailsFastObserver{observer: delegates}}
+}
+
+type analyserNoDateTimeFilter struct {
+	observer AnalyserObserver
+}
+
+func (a *analyserNoDateTimeFilter) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
+	return a.observer.OnRejectedMedia(ctx, found, cause) // TODO is that required to have a pass-through?
+}
+
+func (a *analyserNoDateTimeFilter) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
+	if media.Details.DateTime.IsZero() {
+		return a.observer.OnRejectedMedia(ctx, media.FoundMedia, ErrAnalyserNoDateTime)
+	}
+
+	return a.observer.OnAnalysedMedia(ctx, media)
+}
+
+type analyserFailsFastObserver struct {
+	observer AnalyserObserver
+}
+
+func (a *analyserFailsFastObserver) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
+	return a.observer.OnAnalysedMedia(ctx, media) // TODO is that required to have a pass-through?
+}
+
+func (a *analyserFailsFastObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
+	return errors.Wrapf(cause, "invalid media '%s'", found)
 }

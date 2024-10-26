@@ -117,7 +117,7 @@ func (_m *SuggestionRecordRepositoryPort) Rejects() int {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for Rejects")
+		panic("no return value specified for RejectsCount")
 	}
 
 	var r0 int
@@ -130,14 +130,14 @@ func (_m *SuggestionRecordRepositoryPort) Rejects() int {
 	return r0
 }
 
-// SuggestionRecordRepositoryPort_Rejects_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Rejects'
+// SuggestionRecordRepositoryPort_Rejects_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RejectsCount'
 type SuggestionRecordRepositoryPort_Rejects_Call struct {
 	*mock.Call
 }
 
 // Rejects is a helper method to define mock.On call
 func (_e *SuggestionRecordRepositoryPort_Expecter) Rejects() *SuggestionRecordRepositoryPort_Rejects_Call {
-	return &SuggestionRecordRepositoryPort_Rejects_Call{Call: _e.mock.On("Rejects")}
+	return &SuggestionRecordRepositoryPort_Rejects_Call{Call: _e.mock.On("RejectsCount")}
 }
 
 func (_c *SuggestionRecordRepositoryPort_Rejects_Call) Run(run func()) *SuggestionRecordRepositoryPort_Rejects_Call {

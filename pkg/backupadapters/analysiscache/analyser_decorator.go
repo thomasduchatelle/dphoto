@@ -19,7 +19,7 @@ type AnalyserCacheWrapper struct {
 	Observers     []backup.AnalyserDecoratorObserver
 }
 
-func (a *AnalyserCacheWrapper) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
+func (a *AnalyserCacheWrapper) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectsObserver backup.RejectedMediaObserver) error {
 	cache, missed, err := a.AnalyserCache.RestoreCache(found)
 	if err != nil {
 		return err
@@ -37,10 +37,11 @@ func (a *AnalyserCacheWrapper) Analyse(ctx context.Context, found backup.FoundMe
 	if err != nil {
 		return err
 	}
+
 	return a.Delegate.Analyse(ctx, found, &interceptor{
 		AnalysedMediaObserver: analysedMediaObserver,
 		AnalyserCache:         a.AnalyserCache,
-	})
+	}, rejectsObserver)
 }
 
 func (a *AnalyserCacheWrapper) fireMissed(ctx context.Context, found backup.FoundMedia) error {

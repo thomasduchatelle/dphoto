@@ -24,8 +24,9 @@ func (_m *RejectedMediaObserver) EXPECT() *RejectedMediaObserver_Expecter {
 }
 
 // OnRejectedMedia provides a mock function with given fields: ctx, found, cause
-func (_m *RejectedMediaObserver) OnRejectedMedia(ctx context.Context, found backup.FoundMedia, cause error) {
+func (_m *RejectedMediaObserver) OnRejectedMedia(ctx context.Context, found backup.FoundMedia, cause error) error {
 	_m.Called(ctx, found, cause)
+	return nil
 }
 
 // RejectedMediaObserver_OnRejectedMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnRejectedMedia'

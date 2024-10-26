@@ -56,8 +56,9 @@ func (_c *Interrupter_Cancel_Call) RunAndReturn(run func()) *Interrupter_Cancel_
 }
 
 // OnRejectedMedia provides a mock function with given fields: ctx, found, cause
-func (_m *Interrupter) OnRejectedMedia(ctx context.Context, found backup.FoundMedia, cause error) {
+func (_m *Interrupter) OnRejectedMedia(ctx context.Context, found backup.FoundMedia, cause error) error {
 	_m.Called(ctx, found, cause)
+	return nil
 }
 
 // Interrupter_OnRejectedMedia_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnRejectedMedia'

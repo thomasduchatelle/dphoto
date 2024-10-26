@@ -72,7 +72,7 @@ func (r *recordsRenderer) Render(state *RecordsState) (string, error) {
 
 	rejectLine := ""
 	if state.Rejected > 0 {
-		rejectLine = aurora.Sprintf("\n(%d medias has been rejected - see reject file for more details)\n", aurora.Red(state.Rejected))
+		rejectLine = aurora.Sprintf("\n(%d medias has been rejected)\n", aurora.Red(state.Rejected))
 	}
 
 	return table.String() + rejectLine, nil

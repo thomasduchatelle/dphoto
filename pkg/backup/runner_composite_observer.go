@@ -2,6 +2,20 @@ package backup
 
 import "context"
 
+func NewCompositeAnalyserObserver(observers ...AnalyserObserver) AnalyserObserver {
+	if len(observers) == 1 {
+		return observers[0]
+	}
+
+	observer := &CompositeRunnerObserver{
+		Observers: make([]interface{}, 0, len(observers)),
+	}
+	for _, o := range observers {
+		observer.Observers = append(observer.Observers, o)
+	}
+	return observer
+}
+
 // CompositeRunnerObserver dispatches events to multiple observers of different types
 type CompositeRunnerObserver struct {
 	Observers []interface{}
@@ -19,12 +33,16 @@ func (c *CompositeRunnerObserver) OnAnalysedMedia(ctx context.Context, media *An
 	return nil
 }
 
-func (c *CompositeRunnerObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, err error) {
+func (c *CompositeRunnerObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
 	for _, observer := range c.Observers {
 		if typed, ok := observer.(RejectedMediaObserver); ok {
-			typed.OnRejectedMedia(ctx, found, err)
+			err := typed.OnRejectedMedia(ctx, found, cause)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (c *CompositeRunnerObserver) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {

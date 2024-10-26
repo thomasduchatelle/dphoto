@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	CatalogerFilterMustBeInAlbumError        = errors.New("media must be in album")
-	CatalogerFilterMustNotAlreadyExistsError = errors.New("media must not already exists")
+	ErrAnalyserNoDateTime                  = errors.New("media must have a date time included in the metadata")
+	ErrCatalogerFilterMustBeInAlbum        = errors.New("media must be in album")
+	ErrCatalogerFilterMustNotAlreadyExists = errors.New("media must not already exists")
 )
 
 type CataloguerFilter interface {
@@ -33,14 +34,14 @@ func (m mustBeInAlbumCatalogerFilter) FilterOut(ctx context.Context, media Analy
 		return nil
 	}
 
-	return CatalogerFilterMustBeInAlbumError
+	return ErrCatalogerFilterMustBeInAlbum
 }
 
 type mustNotAlreadyExistsCatalogerFilter struct{}
 
 func (m mustNotAlreadyExistsCatalogerFilter) FilterOut(ctx context.Context, media AnalysedMedia, reference CatalogReference) error {
 	if reference.Exists() {
-		return CatalogerFilterMustNotAlreadyExistsError
+		return ErrCatalogerFilterMustNotAlreadyExists
 	}
 	return nil
 }

@@ -40,10 +40,18 @@ type CoreAnalyser struct {
 	detailsReaders []DetailsReaderAdapter // DetailsReaders is a list of specific details extractor can auto-register
 }
 
-func (a *CoreAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver) error {
+func (a *CoreAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
+	media, err := a.analyseMedia(found)
+	if err != nil {
+		return rejectsObserver.OnRejectedMedia(ctx, found, err)
+	}
+	return analysedMediaObserver.OnAnalysedMedia(ctx, media)
+}
+
+func (a *CoreAnalyser) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
 	reader, hasher, err := readerSpyingForHash(found)
 	if err != nil {
-		return errors.Wrapf(err, "failed to open file %s for analyse", found)
+		return nil, errors.Wrapf(err, "failed to open file %s for analyse", found)
 	}
 	defer func() {
 		if reader != nil {
@@ -53,7 +61,7 @@ func (a *CoreAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMe
 
 	mediaType, details, err := a.extractDetails(found, reader, a.options)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	filehash := ""
@@ -61,15 +69,16 @@ func (a *CoreAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMe
 		filehash, err = hasher.computeHash()
 	}
 	if err != nil {
-		return errors.Wrapf(err, "failed to compute file %s SHA256", found)
+		return nil, errors.Wrapf(err, "failed to compute file %s SHA256", found)
 	}
 
-	return analysedMediaObserver.OnAnalysedMedia(ctx, &AnalysedMedia{
+	media := &AnalysedMedia{
 		FoundMedia: found,
 		Type:       mediaType,
 		Sha256Hash: filehash,
 		Details:    details,
-	})
+	}
+	return media, nil
 }
 
 func (a *CoreAnalyser) extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {
