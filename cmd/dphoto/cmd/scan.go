@@ -33,7 +33,7 @@ var scan = &cobra.Command{
 		volume := args[0]
 
 		smartVolume, err := newSmartVolume(volume)
-		options := backup.OptionSkipRejects(scanArgs.skipRejects).WithCachedAnalysis(addCacheAnalysis(!scanArgs.noCache))
+		options := backup.OptionsSkipRejects(scanArgs.skipRejects).WithCachedAnalysis(addCacheAnalysis(!scanArgs.noCache))
 		recordRepository, err := scanui.ScanWithProgress(Owner, smartVolume, options)
 		printer.FatalIfError(err, 2)
 

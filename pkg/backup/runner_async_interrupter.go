@@ -39,7 +39,7 @@ func (c *DefaultInterrupterObserver) Cancel() {
 	c.cancel()
 }
 
-// AnalyserInterrupterObserver interrupts everything, including when the analyser rejected a media..
+// AnalyserInterrupterObserver interrupts everything, including when the analyser rejected a media.
 type AnalyserInterrupterObserver struct {
 	*DefaultInterrupterObserver
 }

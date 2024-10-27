@@ -8,30 +8,45 @@ import (
 // NewProgressObserver publishes on a channel the progress of the backup
 func NewProgressObserver(sizeHint int) *ProgressObserver {
 	return &ProgressObserver{
-		EventChannel: make(chan *ProgressEvent, sizeHint*5),
+		EventChannel: make(chan *progressEvent, sizeHint*5),
 	}
 }
 
 type ProgressObserver struct {
-	EventChannel chan *ProgressEvent
+	EventChannel chan *progressEvent
+}
+
+func (p *ProgressObserver) OnUniqueBackupMediaRequest(ctx context.Context, request []BackingUpMediaRequest) error {
+	for _, media := range request {
+		p.EventChannel <- &progressEvent{Type: trackCatalogued, Count: 1, Size: media.AnalysedMedia.FoundMedia.Size()}
+	}
+
+	return nil
+}
+
+func (p *ProgressObserver) OnDuplicatedBackupMediaRequest(ctx context.Context, request []BackingUpMediaRequest) error {
+	for _, media := range request {
+		p.EventChannel <- &progressEvent{Type: trackDuplicatedInVolume, Count: 1, Size: media.AnalysedMedia.FoundMedia.Size()}
+	}
+
+	return nil
 }
 
 func (p *ProgressObserver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
-	p.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: found.Size()}
-	p.EventChannel <- &ProgressEvent{Type: ProgressEventRejected, Count: 1, Size: found.Size()} // Hacky - Should be SKIPPED not ProgressEventDuplicate
+	p.EventChannel <- &progressEvent{Type: trackAnalysisFailed, Count: 1, Size: found.Size()}
 	return nil
 }
 
 func (p *ProgressObserver) OnDecoratedAnalyser(ctx context.Context, found FoundMedia, cacheHit bool) error {
 	if cacheHit {
-		p.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysedFromCache, Count: 1, Size: found.Size()}
+		p.EventChannel <- &progressEvent{Type: trackAnalysedFromCache, Count: 1, Size: found.Size()}
 	}
 
 	return nil
 }
 
 func (p *ProgressObserver) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
-	p.EventChannel <- &ProgressEvent{Type: ProgressEventAnalysed, Count: 1, Size: media.FoundMedia.Size()}
+	p.EventChannel <- &progressEvent{Type: ProgressEventAnalysed, Count: 1, Size: media.FoundMedia.Size()}
 	return nil
 }
 
@@ -39,13 +54,13 @@ func (p *ProgressObserver) OnMediaCatalogued(ctx context.Context, requests []Bac
 	count := MediaCounterZero
 	for _, request := range requests {
 		if request.CatalogReference.AlbumCreated() {
-			p.EventChannel <- &ProgressEvent{Type: ProgressEventAlbumCreated, Count: 1, Album: request.CatalogReference.AlbumFolderName()}
+			p.EventChannel <- &progressEvent{Type: trackAlbumCreated, Count: 1, Album: request.CatalogReference.AlbumFolderName()}
 		}
 
 		count = count.Add(1, request.AnalysedMedia.FoundMedia.Size())
 	}
 
-	p.EventChannel <- &ProgressEvent{Type: ProgressEventCatalogued, Count: count.Count, Size: count.Size}
+	p.EventChannel <- &progressEvent{Type: ProgressEventCatalogued, Count: count.Count, Size: count.Size}
 
 	return nil
 }
@@ -53,10 +68,14 @@ func (p *ProgressObserver) OnMediaCatalogued(ctx context.Context, requests []Bac
 func (p *ProgressObserver) OnFilteredOut(ctx context.Context, media AnalysedMedia, reference CatalogReference, cause error) error {
 	switch {
 	case errors.Is(cause, ErrCatalogerFilterMustBeInAlbum):
-		p.EventChannel <- &ProgressEvent{Type: ProgressEventWrongAlbum, Count: 1, Size: media.FoundMedia.Size()}
+		p.EventChannel <- &progressEvent{Type: trackWrongAlbum, Count: 1, Size: media.FoundMedia.Size()}
 		return nil
 	case errors.Is(cause, ErrCatalogerFilterMustNotAlreadyExists):
-		p.EventChannel <- &ProgressEvent{Type: ProgressEventAlreadyExists, Count: 1, Size: media.FoundMedia.Size()}
+		p.EventChannel <- &progressEvent{Type: trackAlreadyExistsInCatalog, Count: 1, Size: media.FoundMedia.Size()}
+		return nil
+
+	case errors.Is(cause, ErrCatalogerFilterMustNotAlreadyExists):
+		p.EventChannel <- &progressEvent{Type: trackAlreadyExistsInCatalog, Count: 1, Size: media.FoundMedia.Size()}
 		return nil
 
 	default:

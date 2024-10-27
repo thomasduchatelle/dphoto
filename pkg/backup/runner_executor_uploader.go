@@ -11,7 +11,7 @@ type Uploader struct {
 	InsertMediaPort InsertMediaPort
 }
 
-func (u *Uploader) Upload(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
+func (u *Uploader) Upload(buffer []*BackingUpMediaRequest, progressChannel chan *progressEvent) error {
 	catalogRequests := make([]*CatalogMediaRequest, len(buffer), len(buffer))
 
 	for i, request := range buffer {
@@ -25,8 +25,8 @@ func (u *Uploader) Upload(buffer []*BackingUpMediaRequest, progressChannel chan 
 			ArchiveFilename:       newFilename,
 		}
 
-		progressChannel <- &ProgressEvent{
-			Type:      ProgressEventUploaded,
+		progressChannel <- &progressEvent{
+			Type:      trackUploaded,
 			Count:     1,
 			Size:      request.AnalysedMedia.FoundMedia.Size(),
 			Album:     request.CatalogReference.AlbumFolderName(),

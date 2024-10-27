@@ -24,7 +24,7 @@ func (_m *MultiFilesScanner) EXPECT() *MultiFilesScanner_Expecter {
 }
 
 // Execute provides a mock function with given fields: ctx, owner, volume, optionSlice
-func (_m *MultiFilesScanner) Execute(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error) {
+func (_m *MultiFilesScanner) Execute(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, error) {
 	_va := make([]interface{}, len(optionSlice))
 	for _i := range optionSlice {
 		_va[_i] = optionSlice[_i]
@@ -39,9 +39,8 @@ func (_m *MultiFilesScanner) Execute(ctx context.Context, owner string, volume b
 	}
 
 	var r0 []*backup.ScannedFolder
-	var r1 []backup.FoundMedia
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, backup.SourceVolume, ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, backup.SourceVolume, ...backup.Options) ([]*backup.ScannedFolder, error)); ok {
 		return rf(ctx, owner, volume, optionSlice...)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, backup.SourceVolume, ...backup.Options) []*backup.ScannedFolder); ok {
@@ -52,21 +51,13 @@ func (_m *MultiFilesScanner) Execute(ctx context.Context, owner string, volume b
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, backup.SourceVolume, ...backup.Options) []backup.FoundMedia); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, backup.SourceVolume, ...backup.Options) error); ok {
 		r1 = rf(ctx, owner, volume, optionSlice...)
 	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]backup.FoundMedia)
-		}
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, backup.SourceVolume, ...backup.Options) error); ok {
-		r2 = rf(ctx, owner, volume, optionSlice...)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MultiFilesScanner_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
@@ -97,12 +88,12 @@ func (_c *MultiFilesScanner_Execute_Call) Run(run func(ctx context.Context, owne
 	return _c
 }
 
-func (_c *MultiFilesScanner_Execute_Call) Return(_a0 []*backup.ScannedFolder, _a1 []backup.FoundMedia, _a2 error) *MultiFilesScanner_Execute_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MultiFilesScanner_Execute_Call) Return(_a0 []*backup.ScannedFolder, _a1 error) *MultiFilesScanner_Execute_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MultiFilesScanner_Execute_Call) RunAndReturn(run func(context.Context, string, backup.SourceVolume, ...backup.Options) ([]*backup.ScannedFolder, []backup.FoundMedia, error)) *MultiFilesScanner_Execute_Call {
+func (_c *MultiFilesScanner_Execute_Call) RunAndReturn(run func(context.Context, string, backup.SourceVolume, ...backup.Options) ([]*backup.ScannedFolder, error)) *MultiFilesScanner_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

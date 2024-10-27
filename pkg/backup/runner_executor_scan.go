@@ -2,27 +2,22 @@ package backup
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"sort"
 	"sync"
 )
 
-func newScanReceiver(mdc *log.Entry, volume SourceVolume) *scanReceiver {
-	return &scanReceiver{
-		mdc:    mdc,
-		volume: volume,
+func newScanReport() *scanReport {
+	return &scanReport{
 		albums: make(map[string]*ScannedFolder),
 	}
 }
 
-type scanReceiver struct {
-	mdc    *log.Entry
+type scanReport struct {
 	lock   sync.Mutex
-	volume SourceVolume
 	albums map[string]*ScannedFolder
 }
 
-func (s *scanReceiver) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+func (s *scanReport) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -34,7 +29,7 @@ func (s *scanReceiver) OnMediaCatalogued(ctx context.Context, requests []Backing
 	return nil
 }
 
-func (s *scanReceiver) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
+func (s *scanReport) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -43,7 +38,7 @@ func (s *scanReceiver) OnRejectedMedia(ctx context.Context, found FoundMedia, ca
 	return nil
 }
 
-func (s *scanReceiver) getOrCreateScannedFolder(foundMedia FoundMedia) *ScannedFolder {
+func (s *scanReport) getOrCreateScannedFolder(foundMedia FoundMedia) *ScannedFolder {
 	mediaPath := foundMedia.MediaPath()
 	if _, ok := s.albums[mediaPath.Path]; !ok {
 		s.albums[mediaPath.Path] = s.newFoundAlbum(mediaPath)
@@ -53,7 +48,7 @@ func (s *scanReceiver) getOrCreateScannedFolder(foundMedia FoundMedia) *ScannedF
 	return scannedFolder
 }
 
-func (s *scanReceiver) collect() []*ScannedFolder {
+func (s *scanReport) collect() []*ScannedFolder {
 	suggestions := make([]*ScannedFolder, 0, len(s.albums))
 	for _, album := range s.albums {
 		suggestions = append(suggestions, album)
@@ -70,7 +65,7 @@ func (s *scanReceiver) collect() []*ScannedFolder {
 	return suggestions
 }
 
-func (s *scanReceiver) newFoundAlbum(mediaPath MediaPath) *ScannedFolder {
+func (s *scanReport) newFoundAlbum(mediaPath MediaPath) *ScannedFolder {
 	return &ScannedFolder{
 		Name:         mediaPath.ParentDir,
 		RelativePath: mediaPath.Path,

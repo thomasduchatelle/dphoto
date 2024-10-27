@@ -42,7 +42,10 @@ func TestCopyRejectsObserver_OnRejectedMedia(t *testing.T) {
 				RejectDir: temp,
 			}
 
-			c.OnRejectedMedia(context.Background(), tt.args.found, tt.args.err)
+			err = c.OnRejectedMedia(context.Background(), tt.args.found, tt.args.err)
+			if !assert.NoError(t, err) {
+				return
+			}
 
 			files, err := os.ReadDir(temp)
 			if assert.NoError(t, err) {

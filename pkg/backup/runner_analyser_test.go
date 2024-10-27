@@ -44,7 +44,7 @@ func TestAnalyserAcceptance_simple(t *testing.T) {
 		{
 			name: "should reject invalid analysed media without failing the process if skipRejects is TRUE",
 			args: args{
-				Options:       OptionSkipRejects(true),
+				Options:       OptionsSkipRejects(true),
 				AnalysedMedia: &AnalysedMedia{FoundMedia: aMedia, Details: &MediaDetails{}},
 			},
 			wantAnalysed: nil,
@@ -69,7 +69,7 @@ func TestAnalyserAcceptance_simple(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeObserver := new(AnalyserObserverFake)
-			handler := NewAnalyserMediaHandler(tt.args.Options, fakeObserver)
+			handler := newAnalyserObserverChain(tt.args.Options, fakeObserver)
 
 			err := handler.OnAnalysedMedia(context.Background(), tt.args.AnalysedMedia)
 			if tt.wantErr(t, err, tt.name) {
@@ -79,10 +79,6 @@ func TestAnalyserAcceptance_simple(t *testing.T) {
 
 		})
 	}
-}
-
-func NewBatchAnalyserObserver(observers ...AnalyserObserver) AnalyserObserver {
-	return nil
 }
 
 type AnalyserObserverFake struct {

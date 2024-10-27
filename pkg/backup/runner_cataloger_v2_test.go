@@ -24,7 +24,7 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 	reference3 := &CatalogReferenceStub{MediaIdValue: "media3", AlbumFolderNameValue: "album3"}
 
 	type fields struct {
-		ReferencerFactory ReferencerFactory
+		CatalogReferencer CatalogReferencer
 	}
 	type newArgs struct {
 		owner   ownermodel.Owner
@@ -39,25 +39,23 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 		newArgs    newArgs
 		args       args
 		want       []BackingUpMediaRequest
-		wantEvents []*ProgressEvent
+		wantEvents []*progressEvent
 		wantErr    assert.ErrorAssertionFunc
 	}{
 		{
 			name:    "it should filter out exiting media",
 			newArgs: newArgs{owner: owner, options: Options{}},
 			fields: fields{
-				ReferencerFactory: &ReferencerFactoryFake{
-					CreatorReferencer: CatalogReferencerFake{
-						analysedMedia1: reference1Exists,
-					},
+				CatalogReferencer: CatalogReferencerFake{
+					analysedMedia1: reference1Exists,
 				},
 			},
 			args: args{
 				medias: []*AnalysedMedia{analysedMedia1},
 			},
 			want: nil,
-			wantEvents: []*ProgressEvent{
-				{Type: ProgressEventAlreadyExists, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
+			wantEvents: []*progressEvent{
+				{Type: trackAlreadyExistsInCatalog, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
 			},
 			wantErr: assert.NoError,
 		},
@@ -65,12 +63,10 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 			name:    "it should filter out medias that are not in the selected album",
 			newArgs: newArgs{owner: owner, options: OptionOnlyAlbums("album1", "album2")},
 			fields: fields{
-				ReferencerFactory: &ReferencerFactoryFake{
-					CreatorReferencer: CatalogReferencerFake{
-						analysedMedia1: reference1Exists,
-						analysedMedia2: reference2,
-						analysedMedia3: reference3,
-					},
+				CatalogReferencer: CatalogReferencerFake{
+					analysedMedia1: reference1Exists,
+					analysedMedia2: reference2,
+					analysedMedia3: reference3,
 				},
 			},
 			args: args{
@@ -82,10 +78,10 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 					CatalogReference: reference2,
 				},
 			},
-			wantEvents: []*ProgressEvent{
-				{Type: ProgressEventAlreadyExists, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
+			wantEvents: []*progressEvent{
+				{Type: trackAlreadyExistsInCatalog, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
 				{Type: ProgressEventCatalogued, Count: 1, Size: analysedMedia2.FoundMedia.Size()},
-				{Type: ProgressEventWrongAlbum, Count: 1, Size: analysedMedia3.FoundMedia.Size()},
+				{Type: trackWrongAlbum, Count: 1, Size: analysedMedia3.FoundMedia.Size()},
 			},
 			wantErr: assert.NoError,
 		},
@@ -93,18 +89,16 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 			name:    "it should pick a dry-run referencer when in read-only mode",
 			newArgs: newArgs{owner: owner, options: Options{DryRun: true}},
 			fields: fields{
-				ReferencerFactory: &ReferencerFactoryFake{
-					DryRunReferencer: CatalogReferencerFake{
-						analysedMedia1: reference1Exists,
-					},
+				CatalogReferencer: CatalogReferencerFake{
+					analysedMedia1: reference1Exists,
 				},
 			},
 			args: args{
 				medias: []*AnalysedMedia{analysedMedia1},
 			},
 			want: nil,
-			wantEvents: []*ProgressEvent{
-				{Type: ProgressEventAlreadyExists, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
+			wantEvents: []*progressEvent{
+				{Type: trackAlreadyExistsInCatalog, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
 			},
 			wantErr: assert.NoError,
 		},
@@ -112,14 +106,15 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			referencerFactory = tt.fields.ReferencerFactory
-			cataloger, err := NewCataloguer(tt.newArgs.owner, tt.newArgs.options)
-			if !tt.wantErr(t, err, fmt.Sprintf("NewCataloguer(%v, %v)", tt.newArgs.owner, tt.newArgs.options)) {
-				return
+			catcher := NewChanProgressEventCatcher()
+			cataloger := &CataloguerWithFilters{
+				Delegate:                  tt.fields.CatalogReferencer,
+				CataloguerFilters:         postCatalogFiltersList(tt.newArgs.options),
+				CatalogReferencerObserver: catcher,
+				CataloguerFilterObserver:  catcher,
 			}
 
-			catcher := NewChanProgressEventCatcher()
-			err = cataloger.Catalog(ctx, tt.args.medias, catcher)
+			err := cataloger.Catalog(ctx, tt.args.medias)
 			gotEvents := catcher.Catch()
 
 			if !tt.wantErr(t, err, fmt.Sprintf("Catalog(%v)", tt.args.medias)) {
@@ -158,7 +153,7 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 		fields     fields
 		args       args
 		want       []BackingUpMediaRequest
-		wantEvents []*ProgressEvent
+		wantEvents []*progressEvent
 		wantErr    assert.ErrorAssertionFunc
 	}{
 		{
@@ -189,7 +184,7 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 					CatalogReference: reference1,
 				},
 			},
-			wantEvents: []*ProgressEvent{
+			wantEvents: []*progressEvent{
 				{Type: ProgressEventCatalogued, Count: 1, Size: 12},
 			},
 			wantErr: assert.NoError,
@@ -218,10 +213,10 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 					CatalogReference: reference2,
 				},
 			},
-			wantEvents: []*ProgressEvent{
-				{Type: ProgressEventAlreadyExists, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
+			wantEvents: []*progressEvent{
+				{Type: trackAlreadyExistsInCatalog, Count: 1, Size: analysedMedia1.FoundMedia.Size()},
 				{Type: ProgressEventCatalogued, Count: 1, Size: analysedMedia2.FoundMedia.Size()},
-				{Type: ProgressEventWrongAlbum, Count: 1, Size: analysedMedia3.FoundMedia.Size()},
+				{Type: trackWrongAlbum, Count: 1, Size: analysedMedia3.FoundMedia.Size()},
 			},
 			wantErr: assert.NoError,
 		},
@@ -241,8 +236,8 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 					CatalogReference: reference1AlbumCreated,
 				},
 			},
-			wantEvents: []*ProgressEvent{
-				{Type: ProgressEventAlbumCreated, Count: 1, Album: reference1AlbumCreated.AlbumFolderNameValue},
+			wantEvents: []*progressEvent{
+				{Type: trackAlbumCreated, Count: 1, Album: reference1AlbumCreated.AlbumFolderNameValue},
 				{Type: ProgressEventCatalogued, Count: 1, Size: 12},
 			},
 			wantErr: assert.NoError,
@@ -253,11 +248,13 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			catcher := NewChanProgressEventCatcher()
 			c := CataloguerWithFilters{
-				Delegate:          tt.fields.CatalogReferencer,
-				CataloguerFilters: tt.fields.Filters,
+				Delegate:                  tt.fields.CatalogReferencer,
+				CataloguerFilters:         tt.fields.Filters,
+				CatalogReferencerObserver: catcher,
+				CataloguerFilterObserver:  catcher,
 			}
 
-			err := c.Catalog(ctx, tt.args.medias, catcher)
+			err := c.Catalog(ctx, tt.args.medias)
 			gotEvents := catcher.Catch()
 
 			if !tt.wantErr(t, err, fmt.Sprintf("Catalog(%v)", tt.args.medias)) {
@@ -327,15 +324,15 @@ func (c *ChanProgressEventCatcher) OnFilteredOut(ctx context.Context, media Anal
 func NewChanProgressEventCatcher() *ChanProgressEventCatcher {
 	return &ChanProgressEventCatcher{
 		ProgressObserver: &ProgressObserver{
-			EventChannel: make(chan *ProgressEvent, 256),
+			EventChannel: make(chan *progressEvent, 256),
 		},
 	}
 }
 
-func (c *ChanProgressEventCatcher) Catch() []*ProgressEvent {
+func (c *ChanProgressEventCatcher) Catch() []*progressEvent {
 	close(c.ProgressObserver.EventChannel)
 
-	var events []*ProgressEvent
+	var events []*progressEvent
 	for event := range c.ProgressObserver.EventChannel {
 		events = append(events, event)
 	}
@@ -382,17 +379,4 @@ func (r *ReferencerFactoryFake) NewCreatorReferencer(ctx context.Context, owner 
 
 func (r *ReferencerFactoryFake) NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error) {
 	return r.DryRunReferencer, nil
-}
-
-// NewCataloguer has been deprecated from production codebase but is still used to validate acceptance tests...
-func NewCataloguer(owner ownermodel.Owner, options Options) (Cataloguer, error) {
-	referencer, err := NewReferencer(owner, options.DryRun)
-	if err != nil {
-		return nil, err
-	}
-
-	return &CataloguerWithFilters{
-		Delegate:          referencer,
-		CataloguerFilters: ListCataloguerFilters(options),
-	}, nil
 }

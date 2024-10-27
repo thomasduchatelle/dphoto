@@ -46,7 +46,7 @@ func TestShouldStopAtFirstError(t *testing.T) {
 
 					return observer.OnMediaCatalogued(ctx, requests)
 				})
-				run.UniqueFilter = func(media *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool {
+				run.UniqueFilter = func(media *BackingUpMediaRequest, progressChannel chan *progressEvent) bool {
 					return media.CatalogReference.UniqueIdentifier() != "file_6.jpg"
 				}
 			},
@@ -84,7 +84,7 @@ func TestShouldStopAtFirstError(t *testing.T) {
 			name: "it should stop the process after an error on the uploader",
 			modifier: func(run *runner) {
 				original := run.Uploader
-				run.Uploader = RunnerUploaderFunc(func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
+				run.Uploader = RunnerUploaderFunc(func(buffer []*BackingUpMediaRequest, progressChannel chan *progressEvent) error {
 					if buffer[0].AnalysedMedia.FoundMedia.MediaPath().Filename == "file_1.jpg" {
 						return errors.Errorf("TEST")
 					}
@@ -131,7 +131,7 @@ func TestShouldStopAtFirstError(t *testing.T) {
 // ** UTILS
 
 func mockPublisher(medias ...FoundMedia) runnerPublisher {
-	return func(channel chan FoundMedia, events chan *ProgressEvent) error {
+	return func(channel chan FoundMedia, events chan *progressEvent) error {
 		for _, media := range medias {
 			channel <- media
 		}
@@ -162,10 +162,10 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 
 			return observer.OnMediaCatalogued(ctx, requests)
 		}),
-		UniqueFilter: func(media *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool {
+		UniqueFilter: func(media *BackingUpMediaRequest, progressChannel chan *progressEvent) bool {
 			return true
 		},
-		Uploader: RunnerUploaderFunc(func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
+		Uploader: RunnerUploaderFunc(func(buffer []*BackingUpMediaRequest, progressChannel chan *progressEvent) error {
 			var names []string
 			for _, request := range buffer {
 				names = append(names, request.AnalysedMedia.FoundMedia.MediaPath().Filename)
@@ -185,7 +185,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 	return run, uploadedCapture
 }
 
-func collectEvents(channel chan *ProgressEvent) map[ProgressEventType]eventSummary {
+func collectEvents(channel chan *progressEvent) map[trackEvent]eventSummary {
 	eventCapture := newEventCapture()
 
 	for event := range channel {

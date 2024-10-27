@@ -20,7 +20,7 @@ func TestOption_ReduceOptions(t *testing.T) {
 		{
 			name: "it should retain the SkipRejects option",
 			args: args{
-				option: backup.OptionSkipRejects(true),
+				option: backup.OptionsSkipRejects(true),
 			},
 			want: backup.Options{
 				RestrictedAlbumFolderName: noRestrictedAlbumFolder,
