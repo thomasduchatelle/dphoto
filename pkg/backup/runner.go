@@ -8,27 +8,27 @@ import (
 )
 
 type RunnerUploader interface {
-	Upload(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
+	Upload(buffer []*BackingUpMediaRequest, progressChannel chan *progressEvent) error
 }
 
-type runnerPublisher func(chan FoundMedia, chan *ProgressEvent) error
-type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *ProgressEvent) bool
-type RunnerUploaderFunc func(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error
+type runnerPublisher func(chan FoundMedia, chan *progressEvent) error
+type runnerUniqueFilter func(medias *BackingUpMediaRequest, progressChannel chan *progressEvent) bool
+type RunnerUploaderFunc func(buffer []*BackingUpMediaRequest, progressChannel chan *progressEvent) error
 
-func (r RunnerUploaderFunc) Upload(buffer []*BackingUpMediaRequest, progressChannel chan *ProgressEvent) error {
+func (r RunnerUploaderFunc) Upload(buffer []*BackingUpMediaRequest, progressChannel chan *progressEvent) error {
 	return r(buffer, progressChannel)
 }
 
 type runner struct {
 	MDC                  *log.Entry         // MDC is log.WithFields({}) that contains Mapped Diagnostic Context
-	Options              Options            // Options contains the configuration for each step of the backup process. [migration to Observer Pattern]
+	Options              Options            // Options contains the configuration for each step of the backup process. [migration to CataloguerFilterObserver Pattern]
 	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
 	Analyser             Analyser           // Analyser is extracting metadata from the file
 	CatalogReferencer    CatalogReferencer  // CatalogReferencer is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
 	Listeners            []interface{}      // Listeners is a list of observers that are notified of the progress of the backup process, they need to implement the appropriate interfaces
-	progressEventChannel chan *ProgressEvent
+	progressEventChannel chan *progressEvent
 	channelPublisher     *ChannelPublisher
 
 	interrupterObserver    Interrupter             // AnalyserInterrupterObserver is temporary while refactoring to observer pattern
@@ -46,7 +46,7 @@ func (r *runner) appendError(err error) {
 }
 
 // start initialises the channels and publish files in the source channel
-func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, chan []error) {
+func (r *runner) start(ctx context.Context, sizeHint int) (chan *progressEvent, chan []error) {
 	progressObserver := NewProgressObserver(sizeHint)
 	r.channelPublisher = NewAsyncPublisher(sizeHint, r.batchSize())
 
@@ -62,8 +62,7 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *ProgressEvent, 
 	}
 
 	r.progressEventChannel = progressObserver.EventChannel
-	analyserObserver := NewAnalyserMediaHandler(r.Options, observer)
-	r.analyseMedias(interruptableContext, r.channelPublisher.FoundChannel, analyserObserver, r.channelPublisher.AnalysedMediaChannelCloser)
+	r.analyseMedias(interruptableContext, r.channelPublisher.FoundChannel, observer, r.channelPublisher.AnalysedMediaChannelCloser)
 	r.bufferAnalysedMedias(r.channelPublisher.AnalysedMediaChannel, r.channelPublisher.BufferedAnalysedChannel)
 	r.catalogueMedias(interruptableContext, r.channelPublisher.BufferedAnalysedChannel, observer, r.channelPublisher.CataloguedChannelCloser)
 	r.bufferUniqueCataloguedMedias(r.channelPublisher.CataloguedChannel, r.channelPublisher.BufferedCataloguedChannel)
@@ -133,7 +132,9 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 	}()
 }
 
-func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, observer AnalyserObserver, closer func()) {
+func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, observer *CompositeRunnerObserver, closer func()) {
+	analyserObserver := newAnalyserObserverChain(r.Options, observer)
+
 	r.startsInParallel(defaultValue(r.Options.ConcurrentAnalyser, 1), func() {
 		for {
 			select {
@@ -141,7 +142,7 @@ func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia
 				return
 			case media, more := <-foundChannel:
 				if more {
-					err := r.Analyser.Analyse(ctx, media, observer, observer)
+					err := r.Analyser.Analyse(ctx, media, analyserObserver, analyserObserver)
 					r.appendError(errors.Wrap(err, "error in analyser"))
 
 				} else {
@@ -173,8 +174,10 @@ func (r *runner) bufferAnalysedMedias(readyToBackupChannel chan *AnalysedMedia, 
 
 func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*AnalysedMedia, observer *CompositeRunnerObserver, closer func()) {
 	cataloguer := &CataloguerWithFilters{
-		Delegate:          r.CatalogReferencer,
-		CataloguerFilters: ListCataloguerFilters(r.Options),
+		Delegate:                  r.CatalogReferencer,
+		CataloguerFilters:         postCatalogFiltersList(r.Options),
+		CatalogReferencerObserver: observer,
+		CataloguerFilterObserver:  observer,
 	}
 
 	r.startsInParallel(defaultValue(r.Options.ConcurrentCataloguer, 1), func() {
@@ -188,7 +191,7 @@ func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*An
 					return
 				}
 				if !interrupted {
-					err := cataloguer.Catalog(ctx, buffer, observer)
+					err := cataloguer.Catalog(ctx, buffer) // FIXME the 'observer' has been removed.
 					r.appendError(errors.Wrap(err, "error in cataloguer"))
 				}
 			}

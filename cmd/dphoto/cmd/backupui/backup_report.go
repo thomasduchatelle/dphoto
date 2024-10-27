@@ -26,16 +26,11 @@ func PrintBackupStats(tracker backup.CompletionReport, volumePath string) {
 	}}
 	table.Body = &simpletable.Body{Cells: make([][]*simpletable.Cell, len(tracker.CountPerAlbum())+1)}
 
-	newAlbums := make(map[string]interface{})
-	for _, album := range tracker.NewAlbums() {
-		newAlbums[album] = nil
-	}
-
 	var totals [3]backup.MediaCounter
 	i := 0
 	for folderName, counts := range tracker.CountPerAlbum() {
 		newMarker := ""
-		if _, ok := newAlbums[folderName]; ok {
+		if counts.New {
 			newMarker = "*"
 		}
 

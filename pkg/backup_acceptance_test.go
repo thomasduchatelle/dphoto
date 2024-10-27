@@ -66,12 +66,11 @@ func (b *BackupTestSuite) Test10_Backup() {
 		backup.WithConcurrentAnalyser(3),
 		backup.WithConcurrentCataloguer(3),
 		backup.WithConcurrentUploader(3),
-		backup.WithBatchSize(1),
+		backup.OptionsBatchSize(1),
 	)
 	if assert.NoError(t, err) {
-		assert.Equal(t, []string{"/2024-Q1"}, report.NewAlbums())
-		assert.Equal(t, map[string]*backup.TypeCounter{
-			"/2024-Q1": backup.NewTypeCounter(backup.MediaTypeImage, 3, 88185),
+		assert.Equal(t, map[string]*backup.AlbumReport{
+			"/2024-Q1": backup.NewTypeCounter(backup.MediaTypeImage, 3, 88185, true),
 		}, report.CountPerAlbum())
 	}
 }

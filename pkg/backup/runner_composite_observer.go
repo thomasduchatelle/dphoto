@@ -2,18 +2,10 @@ package backup
 
 import "context"
 
-func NewCompositeAnalyserObserver(observers ...AnalyserObserver) AnalyserObserver {
-	if len(observers) == 1 {
-		return observers[0]
+func newCompositeAnalyserObserver(observers ...interface{}) AnalyserObserver {
+	return &CompositeRunnerObserver{
+		Observers: observers,
 	}
-
-	observer := &CompositeRunnerObserver{
-		Observers: make([]interface{}, 0, len(observers)),
-	}
-	for _, o := range observers {
-		observer.Observers = append(observer.Observers, o)
-	}
-	return observer
 }
 
 // CompositeRunnerObserver dispatches events to multiple observers of different types

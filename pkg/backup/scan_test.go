@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -50,6 +51,12 @@ func TestScanAcceptance(t *testing.T) {
 			Sha256Hash: "248960db17bc3e685260f28c0af7fb3b1b3b8659d476c42ccc2a5871c53ab438",
 			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 22, 0, 0, 0, 0, time.UTC)},
 		},
+		{
+			FoundMedia: NewInMemoryMedia("folder1/file_7_no_date.jpg", time.Now(), []byte{0}),
+			Type:       MediaTypeImage,
+			Sha256Hash: "28f046d0ebae98f45512f98d581e7cdded28dd9cf50e7712615970dc15221cb3",
+			Details:    &MediaDetails{},
+		},
 	}
 
 	volumeStub := make(SourceVolumeStub, 0)
@@ -67,13 +74,13 @@ func TestScanAcceptance(t *testing.T) {
 		optionSlice []Options
 	}
 	tests := []struct {
-		name              string
-		fields            fields
-		args              args
-		wantFolders       []*ScannedFolder
-		wantSkippedMedias []FoundMedia
-		wantEvents        map[ProgressEventType]eventSummary
-		wantErr           assert.ErrorAssertionFunc
+		name                   string
+		fields                 fields
+		args                   args
+		wantFolders            []*ScannedFolder
+		wantSkippedMediasCount int
+		wantEvents             map[trackEvent]eventSummary
+		wantErr                assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should scan files per folder, using read-only referencer, ignoring files that are already catalogued",
@@ -93,6 +100,10 @@ func TestScanAcceptance(t *testing.T) {
 			args: args{
 				owner:  owner.Value(),
 				volume: &volumeStub,
+				optionSlice: []Options{
+					OptionsSkipRejects(true),
+					OptionsBatchSize(3),
+				},
 			},
 			wantFolders: []*ScannedFolder{
 				{
@@ -106,6 +117,7 @@ func TestScanAcceptance(t *testing.T) {
 						"2022-06-18": NewMediaCounter(2, 10+11),
 						"2022-06-19": NewMediaCounter(1, 12),
 					},
+					RejectsCount: 1,
 				},
 				{
 					Name:         "folder1a",
@@ -119,16 +131,72 @@ func TestScanAcceptance(t *testing.T) {
 					},
 				},
 			},
-			wantEvents: map[ProgressEventType]eventSummary{
-				ProgressEventAlbumCreated:   {SumCount: 1, Albums: []string{"/album2"}},
-				ProgressEventScanComplete:   {SumCount: 6, SumSize: 10 + 11 + 12 + 13 + 14 + 15},
-				ProgressEventAnalysed:       {SumCount: 6, SumSize: 10 + 11 + 12 + 13 + 14 + 15},
-				ProgressEventAlreadyExists:  {SumCount: 2, SumSize: 13 + 15},
-				ProgressEventCatalogued:     {SumCount: 4, SumSize: 10 + 11 + 12 + 14},
-				ProgressEventReadyForUpload: {SumCount: 4, SumSize: 10 + 11 + 12 + 14},
+			wantEvents: map[trackEvent]eventSummary{
+				trackAlbumCreated:           {SumCount: 1, Albums: []string{"/album2"}},
+				trackScanComplete:           {SumCount: 7, SumSize: 10 + 11 + 12 + 13 + 14 + 15 + 1},
+				trackAnalysisFailed:         {SumCount: 1, SumSize: 1},
+				trackAlreadyExistsInCatalog: {SumCount: 2, SumSize: 13 + 15},
+				trackCatalogued:             {SumCount: 4, SumSize: 10 + 11 + 12 + 14},
 			},
-			wantSkippedMedias: nil,
-			wantErr:           assert.NoError,
+			wantSkippedMediasCount: 1,
+			wantErr:                assert.NoError,
+		},
+		{
+			name: "it should ignore the files that are not readable by the analyser",
+			fields: fields{
+				detailsReaders: new(DetailsReaderAdapterStub),
+				referencerFactory: &ReferencerFactoryFake{
+					DryRunReferencer: &CatalogReferencerFake{},
+				},
+			},
+			args: args{
+				owner: owner.Value(),
+				volume: &SourceVolumeStub{
+					&UnreadableMedia{FoundMedia: NewInMemoryMedia("folder66/file_unreadable.jpg", time.Now(), []byte("will not be readable"))},
+				},
+				optionSlice: []Options{
+					OptionsSkipRejects(true),
+				},
+			},
+			wantFolders: []*ScannedFolder{
+				{
+					Name:         "folder66",
+					RelativePath: "folder66",
+					FolderName:   "folder66",
+					AbsolutePath: "/ram/folder66",
+					Distribution: make(map[string]MediaCounter),
+					RejectsCount: 1,
+				},
+			},
+			wantEvents: map[trackEvent]eventSummary{
+				trackScanComplete:   {SumCount: 1, SumSize: 20},
+				trackAnalysisFailed: {SumCount: 1, SumSize: 20},
+			},
+			wantSkippedMediasCount: 1,
+			wantErr:                assert.NoError,
+		},
+		{
+			name: "it should fail the scan if one of the files is unreadable",
+			fields: fields{
+				detailsReaders: new(DetailsReaderAdapterStub),
+				referencerFactory: &ReferencerFactoryFake{
+					DryRunReferencer: &CatalogReferencerFake{},
+				},
+			},
+			args: args{
+				owner: owner.Value(),
+				volume: &SourceVolumeStub{
+					&UnreadableMedia{FoundMedia: NewInMemoryMedia("folder66/file_unreadable.jpg", time.Now(), []byte("will not be readable"))},
+				},
+			},
+			wantFolders: []*ScannedFolder{},
+			wantEvents: map[trackEvent]eventSummary{
+				trackScanComplete:   {SumCount: 1, SumSize: 20},
+				trackAnalysisFailed: {SumCount: 1, SumSize: 20},
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorContains(t, err, "[UnreadableMedia]", i)
+			},
 		},
 	}
 
@@ -141,7 +209,8 @@ func TestScanAcceptance(t *testing.T) {
 			eventCatcher := newEventCapture()
 			options := append([]Options{OptionWithListener(eventCatcher)}, tt.args.optionSlice...)
 
-			gotFolder, err := Scan(tt.args.owner, tt.args.volume, options...)
+			scanner := new(BatchScanner)
+			gotFolder, err := scanner.Scan(context.Background(), ownermodel.Owner(tt.args.owner), tt.args.volume, options...)
 			if !tt.wantErr(t, err, fmt.Sprintf("Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)) {
 				return
 			}
@@ -152,7 +221,7 @@ func TestScanAcceptance(t *testing.T) {
 			for _, folder := range gotFolder {
 				rejectsCount += folder.RejectsCount
 			}
-			assert.Equalf(t, len(tt.wantSkippedMedias), rejectsCount, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
+			assert.Equalf(t, tt.wantSkippedMediasCount, rejectsCount, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
 		})
 	}
 }
@@ -169,6 +238,11 @@ func (d *DetailsReaderAdapterStub) ReadDetails(reader io.Reader, options Details
 	if err != nil {
 		return nil, err
 	}
+
+	if len(content) < 10 {
+		return &MediaDetails{}, nil // no date
+	}
+
 	datetime, err := time.Parse("2006-01-02", string(content)[:10])
 	if err != nil {
 		return nil, err
@@ -191,4 +265,12 @@ func (m *SourceVolumeStub) FindMedias() ([]FoundMedia, error) {
 
 func (m *SourceVolumeStub) Children(MediaPath) (SourceVolume, error) {
 	return m, errors.New("SourceVolumeStub cannot generate procreate")
+}
+
+type UnreadableMedia struct {
+	FoundMedia
+}
+
+func (u *UnreadableMedia) ReadMedia() (io.ReadCloser, error) {
+	return nil, errors.New("[UnreadableMedia] stubbed error")
 }

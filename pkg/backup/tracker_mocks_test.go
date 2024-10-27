@@ -7,7 +7,7 @@ import (
 )
 
 type capturedEvents struct {
-	Captured map[ProgressEventType]eventSummary
+	Captured map[trackEvent]eventSummary
 }
 
 type eventSummary struct {
@@ -22,11 +22,11 @@ func (e *eventSummary) String() string {
 
 func newEventCapture() *capturedEvents {
 	return &capturedEvents{
-		Captured: make(map[ProgressEventType]eventSummary),
+		Captured: make(map[trackEvent]eventSummary),
 	}
 }
 
-func (e *capturedEvents) OnEvent(event ProgressEvent) {
+func (e *capturedEvents) OnEvent(event progressEvent) {
 	capture, _ := e.Captured[event.Type]
 
 	capture.SumCount += event.Count

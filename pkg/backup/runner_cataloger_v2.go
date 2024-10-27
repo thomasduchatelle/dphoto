@@ -42,37 +42,26 @@ type CatalogReferencer interface {
 }
 
 type Cataloguer interface {
-	Catalog(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error
+	Catalog(ctx context.Context, medias []*AnalysedMedia) error
 }
 
 type CataloguerWithFilters struct {
-	Delegate          CatalogReferencer
-	CataloguerFilters []CataloguerFilter
+	Delegate                  CatalogReferencer
+	CataloguerFilters         []CataloguerFilter
+	CatalogReferencerObserver CatalogReferencerObserver
+	CataloguerFilterObserver  CataloguerFilterObserver
 }
 
-func (c *CataloguerWithFilters) Catalog(ctx context.Context, medias []*AnalysedMedia, observer CataloguerObserver) error {
-	filters := &ApplyFiltersOnCataloguer{
-		Delegate:          observer,
-		Observer:          observer,
-		CataloguerFilters: c.CataloguerFilters,
+func (c *CataloguerWithFilters) Catalog(ctx context.Context, medias []*AnalysedMedia) error {
+	if c.CatalogReferencerObserver == nil || c.CataloguerFilterObserver == nil {
+		return errors.New("cataloguer must have a CatalogReferencerObserver and a CataloguerFilterObserver")
+	}
+	filters := &applyFiltersOnCataloguer{
+		CatalogReferencerObservers: []CatalogReferencerObserver{c.CatalogReferencerObserver},
+		CataloguerFilterObservers:  []CataloguerFilterObserver{c.CataloguerFilterObserver},
+		CataloguerFilters:          c.CataloguerFilters,
 	}
 	return c.Delegate.Reference(ctx, medias, filters)
-}
-
-func ListCataloguerFilters(options Options) []CataloguerFilter {
-	filters := []CataloguerFilter{
-		mustNotExists(),
-	}
-
-	if len(options.RestrictedAlbumFolderName) > 0 {
-		var albumFolderNames []string
-		for albumFolderName := range options.RestrictedAlbumFolderName {
-			albumFolderNames = append(albumFolderNames, albumFolderName)
-		}
-		filters = append(filters, mustBeInAlbum(albumFolderNames...))
-	}
-
-	return filters
 }
 
 func NewReferencer(owner ownermodel.Owner, dryRun bool) (CatalogReferencer, error) {

@@ -83,7 +83,8 @@ func NewMultiFilesScanner(ctx context.Context) MultiFilesScanner {
 	backup.Init(backuparchive.New(), NewReferencerFactory(), NewInsertMediaAdapter(ctx))
 
 	return func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, error) {
-		return backup.Scan(owner, volume, backupDefaultOptionsForAWS(optionSlice)...)
+		batchScanner := new(backup.BatchScanner)
+		return batchScanner.Scan(ctx, ownermodel.Owner(owner), volume, backupDefaultOptionsForAWS(optionSlice)...)
 	}
 }
 
@@ -91,6 +92,6 @@ func backupDefaultOptionsForAWS(optionsSlice []backup.Options) []backup.Options 
 	// AWS Optimisation - comes last as low priority
 	options := make([]backup.Options, len(optionsSlice)+1, len(optionsSlice)+1)
 	copy(options, optionsSlice)
-	options[len(options)-1] = backup.WithBatchSize(dynamoutils.DynamoReadBatchSize)
+	options[len(options)-1] = backup.OptionsBatchSize(dynamoutils.DynamoReadBatchSize)
 	return options
 }

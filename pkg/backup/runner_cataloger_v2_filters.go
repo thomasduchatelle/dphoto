@@ -10,6 +10,7 @@ var (
 	ErrAnalyserNoDateTime                  = errors.New("media must have a date time included in the metadata")
 	ErrCatalogerFilterMustBeInAlbum        = errors.New("media must be in album")
 	ErrCatalogerFilterMustNotAlreadyExists = errors.New("media must not already exists")
+	ErrMediaMustNotBeDuplicated            = errors.New("media is present twice in the volume")
 )
 
 type CataloguerFilter interface {
@@ -23,6 +24,68 @@ func mustBeInAlbum(albumFolderNames ...string) CataloguerFilter {
 
 func mustNotExists() CataloguerFilter {
 	return new(mustNotAlreadyExistsCatalogerFilter)
+}
+
+func mustBeUniqueInVolume() CataloguerFilter {
+	return &uniqueFilter{
+		uniqueIndexes: make(map[string]interface{}),
+	}
+}
+
+type applyFiltersOnCataloguer struct {
+	CatalogReferencerObservers []CatalogReferencerObserver
+	CataloguerFilterObservers  []CataloguerFilterObserver
+	CataloguerFilters          []CataloguerFilter
+}
+
+func (a *applyFiltersOnCataloguer) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+	validRequests := make([]BackingUpMediaRequest, 0, len(requests))
+	for _, request := range requests {
+		filtered, err := a.filteredOut(ctx, request)
+		if err != nil {
+			return err
+		}
+
+		if !filtered {
+			validRequests = append(validRequests, request)
+		}
+	}
+
+	if len(validRequests) > 0 {
+		return a.fireOnMediaCatalogued(ctx, validRequests)
+	}
+
+	return nil
+}
+
+func (a *applyFiltersOnCataloguer) filteredOut(ctx context.Context, request BackingUpMediaRequest) (bool, error) {
+	for _, filter := range a.CataloguerFilters {
+		if err := filter.FilterOut(ctx, *request.AnalysedMedia, request.CatalogReference); err != nil {
+			return true, a.fireOnFilteredOut(ctx, request, err)
+		}
+	}
+
+	return false, nil
+}
+
+func (a *applyFiltersOnCataloguer) fireOnMediaCatalogued(ctx context.Context, validRequests []BackingUpMediaRequest) error {
+	for _, observer := range a.CatalogReferencerObservers {
+		if err := observer.OnMediaCatalogued(ctx, validRequests); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (a *applyFiltersOnCataloguer) fireOnFilteredOut(ctx context.Context, request BackingUpMediaRequest, cause error) error {
+	for _, observer := range a.CataloguerFilterObservers {
+		if err := observer.OnFilteredOut(ctx, *request.AnalysedMedia, request.CatalogReference, cause); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type mustBeInAlbumCatalogerFilter struct {
@@ -46,38 +109,16 @@ func (m mustNotAlreadyExistsCatalogerFilter) FilterOut(ctx context.Context, medi
 	return nil
 }
 
-type ApplyFiltersOnCataloguer struct {
-	Delegate          CatalogReferencerObserver
-	Observer          CataloguerFilterObserver
-	CataloguerFilters []CataloguerFilter
+type uniqueFilter struct {
+	uniqueIndexes map[string]interface{}
 }
 
-func (a *ApplyFiltersOnCataloguer) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
-	validRequests := make([]BackingUpMediaRequest, 0, len(requests))
-	for _, request := range requests {
-		filtered, err := a.filteredOut(ctx, request)
-		if err != nil {
-			return err
-		}
-
-		if !filtered {
-			validRequests = append(validRequests, request)
-		}
+func (u *uniqueFilter) FilterOut(ctx context.Context, media AnalysedMedia, reference CatalogReference) error {
+	uniqueId := reference.UniqueIdentifier()
+	if _, filterOut := u.uniqueIndexes[uniqueId]; filterOut {
+		return ErrMediaMustNotBeDuplicated
 	}
 
-	if len(validRequests) > 0 {
-		return a.Delegate.OnMediaCatalogued(ctx, validRequests)
-	}
-
+	u.uniqueIndexes[uniqueId] = nil
 	return nil
-}
-
-func (a *ApplyFiltersOnCataloguer) filteredOut(ctx context.Context, request BackingUpMediaRequest) (bool, error) {
-	for _, filter := range a.CataloguerFilters {
-		if err := filter.FilterOut(ctx, *request.AnalysedMedia, request.CatalogReference); err != nil {
-			return true, a.Observer.OnFilteredOut(ctx, *request.AnalysedMedia, request.CatalogReference, err)
-		}
-	}
-
-	return false, nil
 }

@@ -16,18 +16,6 @@ const (
 	OrientationLowerRight ImageOrientation = "LOWER_RIGHT"
 	OrientationUpperRight ImageOrientation = "UPPER_RIGHT"
 	OrientationLowerLeft  ImageOrientation = "LOWER_LEFT"
-
-	ProgressEventScanComplete      ProgressEventType = "scan-complete"       // ProgressEventScanComplete set the total of files
-	ProgressEventAnalysed          ProgressEventType = "analysed"            // ProgressEventAnalysed is not useful for progress, it will be fined grained before upload
-	ProgressEventAnalysedFromCache ProgressEventType = "analysed-from-cache" // ProgressEventAnalysedFromCache is sent instead of ProgressEventAnalysed when the analysis has been cached
-	ProgressEventRejected          ProgressEventType = "analysis-rejected"   // ProgressEventSkipped count files skipped because the analysis failed (no date, invalid format, ...)
-	ProgressEventCatalogued        ProgressEventType = "catalogued"          // ProgressEventCatalogued is not useful for progress, it will be fined grained before upload
-	ProgressEventWrongAlbum        ProgressEventType = "wrong-album"         // ProgressEventWrongAlbum count files in filtered out albums (if filter used), subtracted from ProgressEventScanComplete
-	ProgressEventAlreadyExists     ProgressEventType = "duplicate-catalog"   // ProgressEventAlreadyExists count files already known in catalog, subtracted from ProgressEventScanComplete
-	ProgressEventDuplicate         ProgressEventType = "duplicate-unique"    // ProgressEventDuplicate count files present twice in this backup/scan process, subtracted from ProgressEventScanComplete
-	ProgressEventReadyForUpload    ProgressEventType = "upload-ready"        // ProgressEventReadyForUpload files remaining after analysis and filters: ProgressEventReadyForUpload = ProgressEventScanComplete - ProgressEventDuplicate - ProgressEventAlreadyExists - ProgressEventWrongAlbum
-	ProgressEventUploaded          ProgressEventType = "uploaded"            // ProgressEventUploaded files uploaded, is equals to ProgressEventReadyForUpload when complete
-	ProgressEventAlbumCreated      ProgressEventType = "album-created"       // ProgressEventAlbumCreated notify when a new album is created
 )
 
 // MediaType is photo or video

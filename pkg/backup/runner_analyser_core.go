@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"hash"
 	"io"
-	"io/ioutil"
 	"path"
 	"strings"
 )
@@ -120,7 +119,7 @@ func readerSpyingForHash(found FoundMedia) (io.ReadCloser, *hashSpy, error) {
 }
 
 func (r *hashSpy) computeHash() (string, error) {
-	_, err := io.Copy(ioutil.Discard, r.reader)
+	_, err := io.Copy(io.Discard, r.reader)
 	return hex.EncodeToString(r.shaWriter.Sum(nil)), err
 }
 

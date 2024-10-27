@@ -62,8 +62,8 @@ func OptionOnlyAlbums(albums ...string) Options {
 	return options
 }
 
-// OptionSkipRejects disables the strict mode and ignores invalid files (wrong / no date, ...)
-func OptionSkipRejects(skip bool) Options {
+// OptionsSkipRejects disables the strict mode and ignores invalid files (wrong / no date, ...)
+func OptionsSkipRejects(skip bool) Options {
 	return Options{
 		SkipRejects: skip,
 	}
@@ -102,7 +102,7 @@ func WithConcurrentUploader(concurrent int) Options {
 	}
 }
 
-func WithBatchSize(batchSize int) Options {
+func OptionsBatchSize(batchSize int) Options {
 	return Options{
 		BatchSize: batchSize,
 	}
