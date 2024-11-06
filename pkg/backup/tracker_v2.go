@@ -224,7 +224,7 @@ type trackerObserver struct {
 	Done    chan struct{}
 }
 
-func (p *trackerObserver) flush(ctx context.Context) error {
+func (p *trackerObserver) Flush(ctx context.Context) error {
 	close(p.channel)
 	<-p.Done
 	return nil

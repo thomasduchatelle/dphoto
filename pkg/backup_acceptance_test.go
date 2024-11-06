@@ -63,9 +63,9 @@ func (b *BackupTestSuite) Test10_Backup() {
 
 	multiFilesBackup := pkgfactory.NewMultiFilesBackup(ctx)
 	report, err := multiFilesBackup(ctx, b.owner, volume,
-		backup.WithConcurrentAnalyser(3),
-		backup.WithConcurrentCataloguer(3),
-		backup.WithConcurrentUploader(3),
+		backup.OptionsConcurrentAnalyserRoutines(3),
+		backup.OptionsConcurrentCataloguerRoutines(3),
+		backup.OptionsConcurrentUploaderRoutines(3),
 		backup.OptionsBatchSize(1),
 	)
 	if assert.NoError(t, err) {

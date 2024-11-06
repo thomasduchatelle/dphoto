@@ -24,7 +24,7 @@ type runner struct {
 	Options              Options            // Options contains the configuration for each step of the backup process. [migration to CataloguerFilterObserver Pattern]
 	Publisher            runnerPublisher    // Publisher is pushing files that have been found in the Volume into a channel
 	Analyser             Analyser           // Analyser is extracting metadata from the file
-	CatalogReferencer    CatalogReferencer  // CatalogReferencer is assigning the media to an album and filtering out media already backed up
+	CatalogReferencer    Cataloguer         // CatalogReferencer is assigning the media to an album and filtering out media already backed up
 	UniqueFilter         runnerUniqueFilter // UniqueFilter is removing duplicates from the source Volume
 	Uploader             RunnerUploader     // Uploader is storing the media in the archive, and registering it in the catalog
 	Listeners            []interface{}      // Listeners is a list of observers that are notified of the progress of the backup process, they need to implement the appropriate interfaces
@@ -32,7 +32,7 @@ type runner struct {
 	channelPublisher     *ChannelPublisher
 
 	interrupterObserver    Interrupter             // AnalyserInterrupterObserver is temporary while refactoring to observer pattern
-	errorCollectorObserver IErrorCollectorObserver // ErrorCollectorObserver is temporary while refactoring to observer pattern
+	errorCollectorObserver IErrorCollectorObserver // errorCollector is temporary while refactoring to observer pattern
 }
 
 func (r *runner) appendError(err error) {
@@ -54,7 +54,7 @@ func (r *runner) start(ctx context.Context, sizeHint int) (chan *progressEvent, 
 
 	var interruptableContext context.Context
 	r.interrupterObserver, interruptableContext = NewInterrupterObserver(ctx, r.Options)
-	r.errorCollectorObserver = NewErrorCollectorObserver()
+	r.errorCollectorObserver = newErrorCollector()
 
 	observer, err := r.CreateObserver(progressObserver)
 	if err != nil {
@@ -135,7 +135,7 @@ func (r *runner) startsInParallel(parallel int, consume func(), closeChannel fun
 func (r *runner) analyseMedias(ctx context.Context, foundChannel chan FoundMedia, observer *CompositeRunnerObserver, closer func()) {
 	analyserObserver := newAnalyserObserverChain(r.Options, observer)
 
-	r.startsInParallel(defaultValue(r.Options.ConcurrentAnalyser, 1), func() {
+	r.startsInParallel(defaultValue(r.Options.ConcurrencyParameters.ConcurrentAnalyserRoutines, 1), func() {
 		for {
 			select {
 			case <-ctx.Done():
@@ -180,7 +180,7 @@ func (r *runner) catalogueMedias(ctx context.Context, analysedChannel chan []*An
 		CataloguerFilterObserver:  observer,
 	}
 
-	r.startsInParallel(defaultValue(r.Options.ConcurrentCataloguer, 1), func() {
+	r.startsInParallel(1, func() { // FIXME it was 'defaultValue(r.Options.ConcurrencyParameters.ConcurrentCataloguerRoutines, 1)' but needed to be removed due to concurrency race.
 		interrupted := false
 		for {
 			select {
@@ -222,7 +222,7 @@ func (r *runner) bufferUniqueCataloguedMedias(backingUpMediaChannel chan *Backin
 }
 
 func (r *runner) uploadMedias(ctx context.Context, bufferedChannel chan []*BackingUpMediaRequest, completionChannel chan []error, collector IErrorCollectorObserver) {
-	r.startsInParallel(defaultValue(r.Options.ConcurrentUploader, 1), func() {
+	r.startsInParallel(defaultValue(r.Options.ConcurrencyParameters.ConcurrentUploaderRoutines, 1), func() {
 		interrupted := false
 		for {
 			select {

@@ -175,10 +175,7 @@ func newMockedRun(publisher runnerPublisher) (*runner, *captureStruct) {
 			return nil
 		}),
 		Options: Options{
-			ConcurrentAnalyser:   1,
-			ConcurrentCataloguer: 1,
-			ConcurrentUploader:   1,
-			BatchSize:            2,
+			BatchSize: 2,
 		},
 	}
 
@@ -200,8 +197,10 @@ type AnalyserFake struct {
 }
 
 func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
-	if err, errored := a.ErroredFilename[found.MediaPath().Filename]; errored {
-		return err
+	if a.ErroredFilename != nil {
+		if err, errored := a.ErroredFilename[found.MediaPath().Filename]; errored {
+			return err
+		}
 	}
 
 	return analysedMediaObserver.OnAnalysedMedia(ctx, &AnalysedMedia{

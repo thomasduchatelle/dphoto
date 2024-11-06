@@ -28,6 +28,12 @@ type CatalogReferencerObserver interface {
 	OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error
 }
 
+type CatalogReferencerObserverFunc func(ctx context.Context, requests []BackingUpMediaRequest) error
+
+func (c CatalogReferencerObserverFunc) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+	return c(ctx, requests)
+}
+
 type CataloguerFilterObserver interface {
 	OnFilteredOut(ctx context.Context, media AnalysedMedia, reference CatalogReference, cause error) error
 }
@@ -37,16 +43,12 @@ type CataloguerObserver interface {
 	CataloguerFilterObserver
 }
 
-type CatalogReferencer interface {
+type Cataloguer interface {
 	Reference(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error
 }
 
-type Cataloguer interface {
-	Catalog(ctx context.Context, medias []*AnalysedMedia) error
-}
-
 type CataloguerWithFilters struct {
-	Delegate                  CatalogReferencer
+	Delegate                  Cataloguer
 	CataloguerFilters         []CataloguerFilter
 	CatalogReferencerObserver CatalogReferencerObserver
 	CataloguerFilterObserver  CataloguerFilterObserver
@@ -64,14 +66,14 @@ func (c *CataloguerWithFilters) Catalog(ctx context.Context, medias []*AnalysedM
 	return c.Delegate.Reference(ctx, medias, filters)
 }
 
-func NewReferencer(owner ownermodel.Owner, dryRun bool) (CatalogReferencer, error) {
-	var referencer CatalogReferencer
+func NewReferencer(owner ownermodel.Owner, dryRun bool) (Cataloguer, error) {
+	var referencer Cataloguer
 	var err error
 
 	if dryRun {
-		referencer, err = referencerFactory.NewDryRunReferencer(context.TODO(), owner)
+		referencer, err = referencerFactory.NewDryRunCataloguer(context.TODO(), owner)
 	} else {
-		referencer, err = referencerFactory.NewCreatorReferencer(context.TODO(), owner)
+		referencer, err = referencerFactory.NewAlbumCreatorCataloguer(context.TODO(), owner)
 	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create a cataloguer for %s with dryRun=%t", owner, dryRun)

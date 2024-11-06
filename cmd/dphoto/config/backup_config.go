@@ -6,8 +6,8 @@ import (
 
 func BackupOptions() []backup.Options {
 	return []backup.Options{
-		backup.WithConcurrentAnalyser(config.GetIntOrDefault(BackupConcurrencyAnalyser, 4)),
-		backup.WithConcurrentCataloguer(config.GetIntOrDefault(BackupConcurrencyCataloguer, 2)),
-		backup.WithConcurrentUploader(config.GetIntOrDefault(BackupConcurrencyUploader, 2)),
+		backup.OptionsConcurrentAnalyserRoutines(config.GetIntOrDefault(BackupConcurrencyAnalyser, 4)),
+		backup.OptionsConcurrentCataloguerRoutines(config.GetIntOrDefault(BackupConcurrencyCataloguer, 2)),
+		backup.OptionsConcurrentUploaderRoutines(config.GetIntOrDefault(BackupConcurrencyUploader, 2)),
 	}
 }
