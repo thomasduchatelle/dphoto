@@ -29,6 +29,12 @@ type AnalysedMediaObserver interface {
 	OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error
 }
 
+type AnalysedMediaObserverFunc func(ctx context.Context, media *AnalysedMedia) error
+
+func (a AnalysedMediaObserverFunc) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
+	return a(ctx, media)
+}
+
 type RejectedMediaObserver interface {
 	// OnRejectedMedia is called when the media is invalid and cannot be used ; the error is returned only if there is a technical issue.
 	OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error

@@ -6,11 +6,9 @@ type Options struct {
 	SkipRejects               bool                   // SkipRejects mode will report any analysis error, or missing timestamp, and continue.
 	AnalyserDecorator         AnalyserDecorator      // AnalyserDecorator is an optional decorator to add concept like caching (might be nil)
 	DryRun                    bool                   // DryRun mode will not upload anything and do not create albums, still analyse
-	ConcurrentAnalyser        int                    // ConcurrentAnalyser is the number of concurrent analyser (read files, compute hash, filter out duplicates, ...)
-	ConcurrentCataloguer      int                    // ConcurrentCataloguer is the number of concurrent cataloguer (find album, create new albums)
-	ConcurrentUploader        int                    // ConcurrentUploader is the number of concurrent uploader (upload files)
-	BatchSize                 int                    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
-	RejectDir                 string                 // RejectDir is the directory where rejected files will be copied
+	ConcurrencyParameters     ConcurrencyParameters
+	BatchSize                 int    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
+	RejectDir                 string // RejectDir is the directory where rejected files will be copied
 }
 
 func ReduceOptions(requestedOptions ...Options) Options {
@@ -33,13 +31,39 @@ func ReduceOptions(requestedOptions ...Options) Options {
 		aggregated.SkipRejects = aggregated.SkipRejects || original.SkipRejects
 
 		aggregated.RejectDir = mergeStringOption(aggregated.RejectDir, original.RejectDir)
-		aggregated.ConcurrentAnalyser = mergeIntOption(aggregated.ConcurrentAnalyser, original.ConcurrentAnalyser)
-		aggregated.ConcurrentCataloguer = mergeIntOption(aggregated.ConcurrentCataloguer, original.ConcurrentCataloguer)
-		aggregated.ConcurrentUploader = mergeIntOption(aggregated.ConcurrentUploader, original.ConcurrentUploader)
+		aggregated.ConcurrencyParameters.ConcurrentAnalyserRoutines = mergeIntOption(aggregated.ConcurrencyParameters.ConcurrentAnalyserRoutines, original.ConcurrencyParameters.ConcurrentAnalyserRoutines)
+		aggregated.ConcurrencyParameters.ConcurrentCataloguerRoutines = mergeIntOption(aggregated.ConcurrencyParameters.ConcurrentCataloguerRoutines, original.ConcurrencyParameters.ConcurrentCataloguerRoutines)
+		aggregated.ConcurrencyParameters.ConcurrentUploaderRoutines = mergeIntOption(aggregated.ConcurrencyParameters.ConcurrentUploaderRoutines, original.ConcurrencyParameters.ConcurrentUploaderRoutines)
 		aggregated.BatchSize = mergeIntOption(aggregated.BatchSize, original.BatchSize)
 	}
 
 	return aggregated
+}
+
+type ConcurrencyParameters struct {
+	ConcurrentAnalyserRoutines   int // ConcurrentAnalyserRoutines is the number of concurrent analyser (read files, compute hash, filter out duplicates, ...)
+	ConcurrentCataloguerRoutines int // ConcurrentCataloguerRoutines is the number of concurrent cataloguer (find album, create new albums)
+	ConcurrentUploaderRoutines   int // ConcurrentUploaderRoutines is the number of concurrent uploader (upload files)
+}
+
+func (c ConcurrencyParameters) NumberOfConcurrentAnalyserRoutines() int {
+	return defaultValue(c.ConcurrentAnalyserRoutines, 1)
+}
+
+func (c ConcurrencyParameters) NumberOfConcurrentCataloguerRoutines() int {
+	return defaultValue(c.ConcurrentCataloguerRoutines, 1)
+}
+
+func (c ConcurrencyParameters) NumberOfConcurrentUploaderRoutines() int {
+	return defaultValue(c.ConcurrentUploaderRoutines, 1)
+}
+
+func defaultValue(value, fallback int) int {
+	if value == 0 {
+		return fallback
+	}
+
+	return value
 }
 
 // OptionWithListener creates an option with a listener
@@ -84,21 +108,31 @@ func (o Options) GetAnalyserDecorator() AnalyserDecorator {
 	return new(NopeAnalyserDecorator)
 }
 
-func WithConcurrentAnalyser(concurrent int) Options {
+func (o Options) GetBatchSize() int {
+	return defaultValue(o.BatchSize, 1)
+}
+
+func OptionsConcurrentAnalyserRoutines(concurrent int) Options {
 	return Options{
-		ConcurrentAnalyser: concurrent,
+		ConcurrencyParameters: ConcurrencyParameters{
+			ConcurrentAnalyserRoutines: concurrent,
+		},
 	}
 }
 
-func WithConcurrentCataloguer(concurrent int) Options {
+func OptionsConcurrentCataloguerRoutines(concurrent int) Options {
 	return Options{
-		ConcurrentCataloguer: concurrent,
+		ConcurrencyParameters: ConcurrencyParameters{
+			ConcurrentCataloguerRoutines: concurrent,
+		},
 	}
 }
 
-func WithConcurrentUploader(concurrent int) Options {
+func OptionsConcurrentUploaderRoutines(concurrent int) Options {
 	return Options{
-		ConcurrentUploader: concurrent,
+		ConcurrencyParameters: ConcurrencyParameters{
+			ConcurrentUploaderRoutines: concurrent,
+		},
 	}
 }
 

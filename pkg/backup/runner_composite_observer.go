@@ -2,6 +2,8 @@ package backup
 
 import "context"
 
+// TODO newCompositeAnalyserObserver should be deleted once runner is refactored to use the scanner constructs.
+
 func newCompositeAnalyserObserver(observers ...interface{}) AnalyserObserver {
 	return &CompositeRunnerObserver{
 		Observers: observers,

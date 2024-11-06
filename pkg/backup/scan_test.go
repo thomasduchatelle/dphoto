@@ -59,14 +59,14 @@ func TestScanAcceptance(t *testing.T) {
 		},
 	}
 
-	volumeStub := make(SourceVolumeStub, 0)
+	volumeStub := make(InMemorySourceVolume, 0)
 	for _, analysedMedia := range analysedMedias {
 		volumeStub = append(volumeStub, analysedMedia.FoundMedia)
 	}
 
 	type fields struct {
 		detailsReaders    DetailsReaderAdapter
-		referencerFactory ReferencerFactory
+		referencerFactory CataloguerFactory
 	}
 	type args struct {
 		owner       string
@@ -103,6 +103,7 @@ func TestScanAcceptance(t *testing.T) {
 				optionSlice: []Options{
 					OptionsSkipRejects(true),
 					OptionsBatchSize(3),
+					OptionsConcurrentAnalyserRoutines(12),
 				},
 			},
 			wantFolders: []*ScannedFolder{
@@ -146,12 +147,12 @@ func TestScanAcceptance(t *testing.T) {
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
 				referencerFactory: &ReferencerFactoryFake{
-					DryRunReferencer: &CatalogReferencerFake{},
+					DryRunReferencer: &CatalogReferencerFakeByName{},
 				},
 			},
 			args: args{
 				owner: owner.Value(),
-				volume: &SourceVolumeStub{
+				volume: &InMemorySourceVolume{
 					&UnreadableMedia{FoundMedia: NewInMemoryMedia("folder66/file_unreadable.jpg", time.Now(), []byte("will not be readable"))},
 				},
 				optionSlice: []Options{
@@ -180,12 +181,12 @@ func TestScanAcceptance(t *testing.T) {
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
 				referencerFactory: &ReferencerFactoryFake{
-					DryRunReferencer: &CatalogReferencerFake{},
+					DryRunReferencer: &CatalogReferencerFakeByName{},
 				},
 			},
 			args: args{
 				owner: owner.Value(),
-				volume: &SourceVolumeStub{
+				volume: &InMemorySourceVolume{
 					&UnreadableMedia{FoundMedia: NewInMemoryMedia("folder66/file_unreadable.jpg", time.Now(), []byte("will not be readable"))},
 				},
 			},
@@ -253,18 +254,18 @@ func (d *DetailsReaderAdapterStub) ReadDetails(reader io.Reader, options Details
 	}, nil
 }
 
-type SourceVolumeStub []FoundMedia
+type InMemorySourceVolume []FoundMedia
 
-func (m *SourceVolumeStub) String() string {
-	return "Mocked Volume"
+func (m *InMemorySourceVolume) String() string {
+	return "In-Memory Volume"
 }
 
-func (m *SourceVolumeStub) FindMedias() ([]FoundMedia, error) {
+func (m *InMemorySourceVolume) FindMedias() ([]FoundMedia, error) {
 	return *m, nil
 }
 
-func (m *SourceVolumeStub) Children(MediaPath) (SourceVolume, error) {
-	return m, errors.New("SourceVolumeStub cannot generate procreate")
+func (m *InMemorySourceVolume) Children(MediaPath) (SourceVolume, error) {
+	return m, errors.New("InMemorySourceVolume cannot generate Children")
 }
 
 type UnreadableMedia struct {

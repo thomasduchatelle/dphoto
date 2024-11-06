@@ -29,7 +29,7 @@ func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 
 type BackupReferencerFactory struct{}
 
-func (f *BackupReferencerFactory) NewCreatorReferencer(ctx context.Context, owner ownermodel.Owner) (backup.CatalogReferencer, error) {
+func (f *BackupReferencerFactory) NewAlbumCreatorCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
 	queries := AlbumQueries(ctx)
 	writeRepo := CatalogRepository(ctx)
 	referencer, err := catalog.NewAlbumAutoPopulateReferencer(
@@ -49,10 +49,10 @@ func (f *BackupReferencerFactory) NewCreatorReferencer(ctx context.Context, owne
 			FindExistingSignaturePort: writeRepo,
 		},
 		StatefulAlbumReferencer: referencer,
-	}, errors.Wrapf(err, "NewCreatorReferencer(%s) failed", owner)
+	}, errors.Wrapf(err, "NewAlbumCreatorCataloguer(%s) failed", owner)
 }
 
-func (f *BackupReferencerFactory) NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (backup.CatalogReferencer, error) {
+func (f *BackupReferencerFactory) NewDryRunCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
 	queries := AlbumQueries(ctx)
 	writeRepo := CatalogRepository(ctx)
 	referencer, err := catalog.NewAlbumDryRunReferencer(
@@ -66,10 +66,10 @@ func (f *BackupReferencerFactory) NewDryRunReferencer(ctx context.Context, owner
 			FindExistingSignaturePort: writeRepo,
 		},
 		StatefulAlbumReferencer: referencer,
-	}, errors.Wrapf(err, "NewDryRunReferencer(%s) failed", owner)
+	}, errors.Wrapf(err, "NewDryRunCataloguer(%s) failed", owner)
 }
 
-func NewReferencerFactory() backup.ReferencerFactory {
+func NewReferencerFactory() backup.CataloguerFactory {
 	return new(BackupReferencerFactory)
 }
 

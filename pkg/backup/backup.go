@@ -57,11 +57,3 @@ func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options
 	}
 	return backupReport, err
 }
-
-func defaultValue(value, fallback int) int {
-	if value == 0 {
-		return fallback
-	}
-
-	return value
-}

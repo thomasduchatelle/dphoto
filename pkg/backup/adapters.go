@@ -9,12 +9,12 @@ import (
 
 var (
 	archivePort       BArchiveAdapter
-	referencerFactory ReferencerFactory
+	referencerFactory CataloguerFactory
 	insertMediaPort   InsertMediaPort
 )
 
 // Init for scan or backup (but only refFactory is required for scan)
-func Init(archive BArchiveAdapter, refFactory ReferencerFactory, insertMedia InsertMediaPort) {
+func Init(archive BArchiveAdapter, refFactory CataloguerFactory, insertMedia InsertMediaPort) {
 	archivePort = archive
 	referencerFactory = refFactory
 	insertMediaPort = insertMedia
@@ -54,9 +54,9 @@ type DetailsReaderOptions struct {
 	Fast bool // Fast true indicate the parser should focus at extracting the date, nothing else TODO can be retired
 }
 
-type ReferencerFactory interface {
-	// NewCreatorReferencer returns a Referencer that will create the album if the date is not yet covered.
-	NewCreatorReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error)
-	// NewDryRunReferencer returns a Referencer that will not create any album.
-	NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error)
+type CataloguerFactory interface {
+	// NewAlbumCreatorCataloguer returns a Referencer that will create the album if the date is not yet covered.
+	NewAlbumCreatorCataloguer(ctx context.Context, owner ownermodel.Owner) (Cataloguer, error)
+	// NewDryRunCataloguer returns a Referencer that will not create any album.
+	NewDryRunCataloguer(ctx context.Context, owner ownermodel.Owner) (Cataloguer, error)
 }

@@ -24,7 +24,7 @@ func TestNewCatalogerAcceptance(t *testing.T) {
 	reference3 := &CatalogReferenceStub{MediaIdValue: "media3", AlbumFolderNameValue: "album3"}
 
 	type fields struct {
-		CatalogReferencer CatalogReferencer
+		CatalogReferencer Cataloguer
 	}
 	type newArgs struct {
 		owner   ownermodel.Owner
@@ -142,7 +142,7 @@ func TestCatalogerCreator_Catalog(t *testing.T) {
 	reference3 := &CatalogReferenceStub{MediaIdValue: "media3", AlbumFolderNameValue: "album3"}
 
 	type fields struct {
-		CatalogReferencer CatalogReferencer
+		CatalogReferencer Cataloguer
 		Filters           []CataloguerFilter
 	}
 	type args struct {
@@ -369,14 +369,14 @@ func (c CatalogerFilterFake) FilterOut(ctx context.Context, media AnalysedMedia,
 }
 
 type ReferencerFactoryFake struct {
-	CreatorReferencer CatalogReferencer
-	DryRunReferencer  CatalogReferencer
+	CreatorReferencer Cataloguer
+	DryRunReferencer  Cataloguer
 }
 
-func (r *ReferencerFactoryFake) NewCreatorReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error) {
+func (r *ReferencerFactoryFake) NewAlbumCreatorCataloguer(ctx context.Context, owner ownermodel.Owner) (Cataloguer, error) {
 	return r.CreatorReferencer, nil
 }
 
-func (r *ReferencerFactoryFake) NewDryRunReferencer(ctx context.Context, owner ownermodel.Owner) (CatalogReferencer, error) {
+func (r *ReferencerFactoryFake) NewDryRunCataloguer(ctx context.Context, owner ownermodel.Owner) (Cataloguer, error) {
 	return r.DryRunReferencer, nil
 }

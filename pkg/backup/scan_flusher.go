@@ -13,9 +13,9 @@ func (f *flushableCollector) append(flushable flushable) {
 	f.flushables = append(f.flushables, flushable)
 }
 
-func (f *flushableCollector) flush(ctx context.Context) error {
+func (f *flushableCollector) Flush(ctx context.Context) error {
 	for _, flushable := range slices.Backward(f.flushables) {
-		if err := flushable.flush(ctx); err != nil {
+		if err := flushable.Flush(ctx); err != nil {
 			return err
 		}
 	}
@@ -24,5 +24,5 @@ func (f *flushableCollector) flush(ctx context.Context) error {
 }
 
 type flushable interface {
-	flush(ctx context.Context) error
+	Flush(ctx context.Context) error
 }
