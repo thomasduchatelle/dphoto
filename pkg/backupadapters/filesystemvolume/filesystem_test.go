@@ -11,15 +11,14 @@ import (
 	"testing"
 )
 
-// _TestScanner is ignored because it causes the test to fail randomly. A TODO is to change the implementation to use io/fs.WalkDir.
-func _TestScanner(t *testing.T) {
+func TestScanner(t *testing.T) {
 	a := assert.New(t)
 
 	fs := &volume{
 		path: "../../test_resources",
 		supportedExtensions: map[string]backup.MediaType{
 			"txt":  backup.MediaTypeOther,
-			"Jpeg": backup.MediaTypeImage,
+			"jpeg": backup.MediaTypeImage,
 		},
 	}
 	abspath, _ := filepath.Abs(fs.path)
