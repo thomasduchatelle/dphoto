@@ -2,11 +2,10 @@
 package filesystemvolume
 
 import (
-	"github.com/dixonwille/skywalker"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -31,135 +30,48 @@ func (v *volume) String() string {
 }
 
 func (v *volume) FindMedias() ([]backup.FoundMedia, error) {
-	// TODO - Could be simplified with https://pkg.go.dev/io/fs#WalkDir
 	absRootPath, err := filepath.Abs(v.path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid volume path")
 	}
 
-	extensions := make([]string, len(v.supportedExtensions)*2)
-	index := 0
-	for typ, _ := range v.supportedExtensions {
-		extensions[index*2] = "." + strings.ToLower(typ)
-		extensions[index*2+1] = "." + strings.ToUpper(typ)
-		index++
-	}
+	var medias []backup.FoundMedia
+	err = filepath.WalkDir(absRootPath, func(filePath string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 
-	worker := v.newWorker(absRootPath)
-	walker := skywalker.New(absRootPath, worker)
-	walker.ExtListType = skywalker.LTWhitelist
-	walker.ExtList = extensions
+		if entry.IsDir() {
+			if absRootPath != filePath && strings.HasPrefix(entry.Name(), ".") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
 
-	medias, caughtErrors, done := v.collect(log.WithField("mediaPath", v.path), worker.medias, worker.errors)
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
 
-	err = walker.Walk()
-	worker.walkComplete()
-	<-done
+		ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(filePath), "."))
+		if _, ok := v.supportedExtensions[ext]; !ok {
+			return nil
+		}
 
-	err = v.wrapErrors(err, *caughtErrors)
+		medias = append(medias, &fsMedia{
+			volumeAbsolutePath:   absRootPath,
+			absolutePath:         filePath,
+			size:                 int(info.Size()),
+			lastModificationDate: info.ModTime(),
+		})
+		return nil
+	})
 
-	return *medias, err
+	return medias, errors.Wrapf(err, "walking directory %s", v.path)
 }
 
 func (v *volume) Children(path backup.MediaPath) (backup.SourceVolume, error) {
 	return New(path.ParentFullPath), nil
-}
-
-func (v *volume) newWorker(rootPath string) *fsWorker {
-	return &fsWorker{
-		rootPath: rootPath,
-		medias:   make(chan backup.FoundMedia, 256),
-		errors:   make(chan error, 32),
-	}
-}
-
-func (v *volume) collect(mcd *log.Entry, mediaChannel chan backup.FoundMedia, errorsChannel chan error) (*[]backup.FoundMedia, *[]error, chan interface{}) {
-	medias := make([]backup.FoundMedia, 0)
-	caughtErrors := make([]error, 0)
-	done := make(chan interface{})
-
-	go func() {
-		defer close(done)
-
-		noMoreError := false
-		noMoreMedia := false
-		for !noMoreError && !noMoreMedia {
-			select {
-			case err, more := <-errorsChannel:
-				if more {
-					mcd.WithError(err).Warnln("scan error")
-					caughtErrors = append(caughtErrors, err)
-				} else {
-					noMoreError = true
-				}
-
-			case media, more := <-mediaChannel:
-				if more {
-					medias = append(medias, media)
-				} else {
-					noMoreMedia = true
-				}
-			}
-		}
-	}()
-
-	return &medias, &caughtErrors, done
-}
-
-func (v *volume) wrapErrors(err error, caughtErrors []error) error {
-	if err != nil {
-		caughtErrors = append([]error{err}, caughtErrors...)
-	}
-
-	if len(caughtErrors) > 0 {
-		var messages []string
-		for _, e := range caughtErrors[1:] {
-			messages = append(messages, e.Error())
-		}
-
-		return errors.Wrapf(err, "scanning caused %d errors (%s)", len(caughtErrors), strings.Join(messages, ", "))
-	}
-
-	return nil
-}
-
-type fsWorker struct {
-	rootPath string
-	medias   chan backup.FoundMedia
-	errors   chan error
-}
-
-func (w *fsWorker) Work(mediaPath string) {
-	for _, p := range strings.Split(mediaPath, "/") {
-		if strings.HasPrefix(p, ".") && p != "." && p != ".." {
-			// skip hidden files
-			return
-		}
-	}
-
-	abs, err := filepath.Abs(mediaPath)
-	if err != nil {
-		w.errors <- errors.Wrapf(err, "invalid path, no absolute path")
-		return
-	}
-
-	stat, err := os.Stat(abs)
-	if err != nil {
-		w.errors <- errors.Wrapf(err, "file stats cannot be read")
-		return
-	}
-
-	w.medias <- &fsMedia{
-		volumeAbsolutePath:   w.rootPath,
-		absolutePath:         abs,
-		size:                 int(stat.Size()),
-		lastModificationDate: stat.ModTime(),
-	}
-}
-
-func (w *fsWorker) walkComplete() {
-	close(w.medias)
-	close(w.errors)
 }
 
 type fsMedia struct {
