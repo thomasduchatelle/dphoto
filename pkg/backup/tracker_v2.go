@@ -79,10 +79,10 @@ func newTrackerV2(options Options) *trackerObserver {
 
 	observer := &trackerObserver{
 		channel: make(chan *progressEvent, defaultValue(options.BatchSize, 1)*8),
-		Done:    make(chan struct{}),
+		done:    make(chan struct{}),
 	}
 	go func() {
-		defer close(observer.Done)
+		defer close(observer.done)
 		tracker.consume(observer.channel)
 	}()
 	return observer
@@ -221,12 +221,12 @@ func (t *trackerV2) MediaCount() int {
 
 type trackerObserver struct {
 	channel chan *progressEvent
-	Done    chan struct{}
+	done    chan struct{}
 }
 
-func (p *trackerObserver) Flush(ctx context.Context) error {
+func (p *trackerObserver) Close() error {
 	close(p.channel)
-	<-p.Done
+	<-p.done
 	return nil
 }
 

@@ -2,7 +2,6 @@ package backup
 
 import (
 	"context"
-	"sort"
 	"sync"
 )
 
@@ -54,12 +53,12 @@ func (s *scanReport) collect() []*ScannedFolder {
 		suggestions = append(suggestions, album)
 	}
 
-	sort.Slice(suggestions, func(i, j int) bool {
-		if suggestions[i].Start.Equal(suggestions[j].Start) {
-			return suggestions[i].Start.Before(suggestions[j].Start)
+	slices.SortFunc(suggestions, func(i, j *ScannedFolder) int {
+		if i.Start.Equal(j.Start) {
+			return i.Start.Compare(j.Start)
 		}
 
-		return suggestions[i].End.Before(suggestions[j].End)
+		return i.End.Compare(j.End)
 	})
 
 	return suggestions
