@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TODO should be deleted to not use GLOBAL variables up to ...
 var (
 	defaultAnalyser = &CoreAnalyser{
 		options: DetailsReaderOptions{},
@@ -23,6 +24,14 @@ func ClearDetailsReader() {
 // RegisterDetailsReader adds a details reader implementation to the default Analyser
 func RegisterDetailsReader(reader DetailsReaderAdapter) {
 	defaultAnalyser.detailsReaders = append(defaultAnalyser.detailsReaders, reader)
+}
+
+// TODO ... here
+
+func newDefaultAnalyser(readers ...DetailsReaderAdapter) *CoreAnalyser {
+	return &CoreAnalyser{
+		detailsReaders: readers,
+	}
 }
 
 type AnalysedMediaObserver interface {

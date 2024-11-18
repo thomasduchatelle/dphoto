@@ -7,13 +7,15 @@ import (
 )
 
 type BatchScanner struct {
+	CataloguerFactory CataloguerFactory
+	DetailsReaders    DetailsReaderAdapter
 }
 
 func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionSlice ...Options) ([]*ScannedFolder, error) {
 
 	options := ReduceOptions(optionSlice...)
 
-	launcher, monitor, err := newScanner(ctx, options, volume.String(), owner)
+	launcher, monitor, err := s.newScanner(ctx, options, volume.String(), owner)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +25,7 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 	return monitor.getReport(ctx, err)
 }
 
-func newScanner(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *reportGetter, error) {
+func (s *BatchScanner) newScanner(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *reportGetter, error) {
 	tracker := newTrackerV2(options)
 	report := newScanReport()
 	scanLogger := newLogger(volumeName)
@@ -47,7 +49,7 @@ func newScanner(ctx context.Context, options Options, volumeName string, owner o
 
 	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring, options.GetBatchSize(), flusher)
 
-	cataloguer, err := referencerFactory.NewDryRunCataloguer(ctx, owner)
+	cataloguer, err := s.CataloguerFactory.NewDryRunCataloguer(ctx, owner)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,7 +57,7 @@ func newScanner(ctx context.Context, options Options, volumeName string, owner o
 	launcher, err := newScanningChain(ctx, controller, scanningOptions{
 		Options:    options,
 		cataloguer: cataloguer,
-		analyser:   options.GetAnalyserDecorator().Decorate(getDefaultAnalyser()),
+		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders)),
 	})
 	return launcher, &reportGetter{
 		flusher: flusher,

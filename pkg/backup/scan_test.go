@@ -203,14 +203,13 @@ func TestScanAcceptance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Init(nil, tt.fields.referencerFactory, nil)
-			ClearDetailsReader()
-			RegisterDetailsReader(tt.fields.detailsReaders)
-
 			eventCatcher := newEventCapture()
 			options := append([]Options{OptionWithListener(eventCatcher)}, tt.args.optionSlice...)
 
-			scanner := new(BatchScanner)
+			scanner := &BatchScanner{
+				CataloguerFactory: tt.fields.referencerFactory,
+				DetailsReaders:    tt.fields.detailsReaders,
+			}
 			gotFolder, err := scanner.Scan(context.Background(), ownermodel.Owner(tt.args.owner), tt.args.volume, options...)
 			if !tt.wantErr(t, err, fmt.Sprintf("Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)) {
 				return
