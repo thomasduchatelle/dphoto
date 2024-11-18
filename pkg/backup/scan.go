@@ -42,7 +42,7 @@ func (s *BatchScanner) newScanner(ctx context.Context, options Options, volumeNa
 		monitoring.PostAnalyserRejects = append(monitoring.PostAnalyserRejects, report)
 	}
 
-	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring, options.GetBatchSize())
+	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring)
 	controller.registerWrappers(tracker)
 
 	cataloguer, err := s.CataloguerFactory.NewDryRunCataloguer(ctx, owner)

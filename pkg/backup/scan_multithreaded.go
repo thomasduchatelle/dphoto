@@ -13,14 +13,13 @@ type analyserLauncher interface {
 	process(ctx context.Context, volume SourceVolume) chan error
 }
 
-func newMultiThreadedController(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator, batchSize int) *multiThreadedController {
+func newMultiThreadedController(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator) *multiThreadedController {
 	return &multiThreadedController{
 		scanMonitoringIntegrator: monitoringIntegrator,
 		analysedMedias:           make(chan *AnalysedMedia, 255),
 		bufferedAnalysedMedias:   make(chan []*AnalysedMedia, 255),
 		backingUpMediaRequests:   make(chan []BackingUpMediaRequest, 255),
 		concurrencyParameters:    concurrencyParameters,
-		batchSize:                batchSize, // TODO should it be provided when the "buffering function" is called instead of keeping it along every structure all the time ?
 	}
 }
 
@@ -50,15 +49,14 @@ func (m *multiThreadedController) Launcher(analyser Analyser, chain *analyserObs
 // 2.b  uniqueFilter
 type multiThreadedController struct {
 	scanMonitoringIntegrator
-	analysedMedias             chan *AnalysedMedia
-	bufferedAnalysedMedias     chan []*AnalysedMedia
-	backingUpMediaRequests     chan []BackingUpMediaRequest
-	catalogReferencerObservers []CatalogReferencerObserver
-	concurrencyParameters      ConcurrencyParameters
-	cataloguerAdapter          cataloguerAdapter
-	wrappers                   []multiThreadedControllerWrapper
-
-	batchSize int
+	concurrencyParameters       ConcurrencyParameters
+	analysedMedias              chan *AnalysedMedia
+	bufferedAnalysedMedias      chan []*AnalysedMedia
+	backingUpMediaRequests      chan []BackingUpMediaRequest
+	wrappers                    []multiThreadedControllerWrapper
+	catalogReferencerObservers  []CatalogReferencerObserver
+	analysedMediasBatchObserver analysedMediasBatchObserver
+	analysedMediaBatchSize      int
 }
 
 // multiThreadedControllerWrapper Close() is called once all the routines of the controller have completed.
@@ -66,7 +64,7 @@ type multiThreadedControllerWrapper interface {
 	Close() error
 }
 
-type cataloguerAdapter interface {
+type analysedMediasBatchObserver interface {
 	OnBatchOfAnalysedMedia(ctx context.Context, batch []*AnalysedMedia) error
 }
 
@@ -88,8 +86,9 @@ func (m *multiThreadedController) AppendPreCataloguerFilter(observers ...Catalog
 	})}
 }
 
-func (m *multiThreadedController) bufferAnalysedMedia(ctx context.Context, adapter cataloguerAdapter) AnalysedMediaObserver {
-	m.cataloguerAdapter = adapter
+func (m *multiThreadedController) WrapAnalysedMediasBatchObserverIntoAnalysedMediaObserver(ctx context.Context, batchSize int, observer analysedMediasBatchObserver) AnalysedMediaObserver {
+	m.analysedMediasBatchObserver = observer
+	m.analysedMediaBatchSize = batchSize
 	return AnalysedMediaObserverFunc(func(ctx context.Context, media *AnalysedMedia) error {
 		m.analysedMedias <- media
 		return nil
@@ -149,7 +148,7 @@ func (l *multiThreadedControllerLauncher) buffersAnalysedMedias(ctx context.Cont
 			l.parent.bufferedAnalysedMedias <- buffer
 			return nil
 		},
-		content: make([]*AnalysedMedia, 0, l.parent.batchSize),
+		content: make([]*AnalysedMedia, 0, defaultValue(l.parent.analysedMediaBatchSize, 1)),
 	}
 
 	for {
@@ -167,7 +166,7 @@ func (l *multiThreadedControllerLauncher) buffersAnalysedMedias(ctx context.Cont
 
 func (l *multiThreadedControllerLauncher) forwardsBufferedAnalysedMedia(ctx context.Context) {
 	for requests := range l.parent.bufferedAnalysedMedias {
-		err := l.parent.cataloguerAdapter.OnBatchOfAnalysedMedia(ctx, requests)
+		err := l.parent.analysedMediasBatchObserver.OnBatchOfAnalysedMedia(ctx, requests)
 		if err != nil {
 			l.errorCollector.appendError(err)
 		}
