@@ -2,26 +2,6 @@ package backup
 
 import "context"
 
-func bufferAnalysedMedia(ctx context.Context, size int, consumer bufferedConsumer[*AnalysedMedia], register func(flushable flushable)) *bufferAnalysedMediaObserverAdapter {
-	adapter := &bufferAnalysedMediaObserverAdapter{
-		Buffer: &buffer[*AnalysedMedia]{
-			consumer: consumer,
-			content:  make([]*AnalysedMedia, 0, size),
-		},
-	}
-	register(adapter.Buffer)
-
-	return adapter
-}
-
-type bufferAnalysedMediaObserverAdapter struct {
-	Buffer *buffer[*AnalysedMedia]
-}
-
-func (b *bufferAnalysedMediaObserverAdapter) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
-	return b.Buffer.Append(ctx, media)
-}
-
 type bufferedConsumer[T any] func(ctx context.Context, buffer []T) error
 
 type buffer[T any] struct {

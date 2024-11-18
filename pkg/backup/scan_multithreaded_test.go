@@ -234,7 +234,7 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newMultiThreadedController(tt.newControllerArgs.concurrencyParameters, tt.newControllerArgs.monitoringIntegrator, tt.newControllerArgs.bufferSize, new(flushableCollector))
+			m := newMultiThreadedController(tt.newControllerArgs.concurrencyParameters, tt.newControllerArgs.monitoringIntegrator, tt.newControllerArgs.bufferSize)
 			launcher := m.Launcher(tt.launcherArgs.analyser, stubAnalyserObserverChainForMultithreadedTests(context.Background(), m, scanningOptions{
 				Options:    Options{},
 				analyser:   nil,

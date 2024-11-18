@@ -13,15 +13,14 @@ type analyserLauncher interface {
 	process(ctx context.Context, volume SourceVolume) chan error
 }
 
-func newMultiThreadedController(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator, size int, flusher *flushableCollector) *multiThreadedController {
+func newMultiThreadedController(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator, batchSize int) *multiThreadedController {
 	return &multiThreadedController{
 		scanMonitoringIntegrator: monitoringIntegrator,
 		analysedMedias:           make(chan *AnalysedMedia, 255),
 		bufferedAnalysedMedias:   make(chan []*AnalysedMedia, 255),
 		backingUpMediaRequests:   make(chan []BackingUpMediaRequest, 255),
 		concurrencyParameters:    concurrencyParameters,
-		batchSize:                size,
-		flusher:                  flusher,
+		batchSize:                batchSize, // TODO should it be provided when the "buffering function" is called instead of keeping it along every structure all the time ?
 	}
 }
 
@@ -57,9 +56,14 @@ type multiThreadedController struct {
 	catalogReferencerObservers []CatalogReferencerObserver
 	concurrencyParameters      ConcurrencyParameters
 	cataloguerAdapter          cataloguerAdapter
+	wrappers                   []multiThreadedControllerWrapper
 
-	flusher   *flushableCollector
 	batchSize int
+}
+
+// multiThreadedControllerWrapper Close() is called once all the routines of the controller have completed.
+type multiThreadedControllerWrapper interface {
+	Close() error
 }
 
 type cataloguerAdapter interface {
@@ -92,13 +96,26 @@ func (m *multiThreadedController) bufferAnalysedMedia(ctx context.Context, adapt
 	})
 }
 
+func (m *multiThreadedController) registerWrappers(wrappers ...multiThreadedControllerWrapper) {
+	m.wrappers = append(m.wrappers, wrappers...)
+}
+
 func (l *multiThreadedControllerLauncher) process(ctxWithoutCancel context.Context, volume SourceVolume) chan error {
 	ctx, cancelFunc := context.WithCancel(ctxWithoutCancel)
 	l.errorCollector.registerErrorObserver(func(err error) {
 		cancelFunc()
 	})
 
-	go l.forwardsBackingUpMediaRequestsToTheChain(ctx)
+	go func() {
+		defer close(l.done)
+
+		l.forwardsBackingUpMediaRequestsToTheChain(ctx)
+		l.wrapsAnyRegisteredWrappers()
+
+		if err := l.errorCollector.collectError(); err != nil {
+			l.done <- err
+		}
+	}()
 
 	startsInParallel(ctx, l.parent.concurrencyParameters.NumberOfConcurrentCataloguerRoutines(), l.forwardsBufferedAnalysedMedia, func() {
 		close(l.parent.backingUpMediaRequests)
@@ -113,6 +130,15 @@ func (l *multiThreadedControllerLauncher) process(ctxWithoutCancel context.Conte
 	go l.readVolumeAndPublishFoundMediasInChannel(ctx, volume)
 
 	return l.done
+}
+
+func (l *multiThreadedControllerLauncher) wrapsAnyRegisteredWrappers() {
+	for _, wrapper := range l.parent.wrappers {
+		err := wrapper.Close()
+		if err != nil {
+			l.errorCollector.appendError(err)
+		}
+	}
 }
 
 func (l *multiThreadedControllerLauncher) buffersAnalysedMedias(ctx context.Context) {
@@ -149,8 +175,6 @@ func (l *multiThreadedControllerLauncher) forwardsBufferedAnalysedMedia(ctx cont
 }
 
 func (l *multiThreadedControllerLauncher) forwardsBackingUpMediaRequestsToTheChain(ctx context.Context) {
-	defer close(l.done)
-
 	for requestBatch := range l.parent.backingUpMediaRequests {
 		for _, observer := range l.parent.catalogReferencerObservers {
 			err := observer.OnMediaCatalogued(ctx, requestBatch)
@@ -158,10 +182,6 @@ func (l *multiThreadedControllerLauncher) forwardsBackingUpMediaRequestsToTheCha
 				l.errorCollector.appendError(err)
 			}
 		}
-	}
-
-	if err := l.errorCollector.collectError(); err != nil {
-		l.done <- err
 	}
 }
 
