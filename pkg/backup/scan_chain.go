@@ -9,7 +9,7 @@ import (
 type scanningController interface {
 	scanMonitoringIntegrator
 	Launcher(analyser Analyser, chain *analyserObserverChain, tracker scanCompleteObserver) scanningLauncher
-	bufferAnalysedMedia(ctx context.Context, cataloguerAdapter cataloguerAdapter) AnalysedMediaObserver
+	WrapAnalysedMediasBatchObserverIntoAnalysedMediaObserver(ctx context.Context, batchSize int, cataloguerAdapter analysedMediasBatchObserver) AnalysedMediaObserver
 }
 
 type scanningLauncher analyserLauncher
@@ -34,7 +34,7 @@ func newScanningChain(ctx context.Context, controller scanningController, option
 		AnalysedMediaObservers: controller.AppendPostAnalyserSuccess(&analyserNoDateTimeFilter{
 			analyserObserverChain{
 				AnalysedMediaObservers: []AnalysedMediaObserver{
-					controller.bufferAnalysedMedia(ctx, &analyserToCatalogReferencer{
+					controller.WrapAnalysedMediasBatchObserverIntoAnalysedMediaObserver(ctx, options.BatchSize, &analyserToCatalogReferencer{
 						CatalogReferencer: options.cataloguer,
 						CatalogReferencerObservers: controller.AppendPreCataloguerFilter(&applyFiltersOnCataloguer{
 							CatalogReferencerObservers: controller.AppendPostCatalogFiltersIn(),

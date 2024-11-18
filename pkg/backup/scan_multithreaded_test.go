@@ -18,7 +18,7 @@ import (
 func stubAnalyserObserverChainForMultithreadedTests(ctx context.Context, controller scanningController, options scanningOptions) *analyserObserverChain {
 	return &analyserObserverChain{
 		AnalysedMediaObservers: []AnalysedMediaObserver{
-			controller.bufferAnalysedMedia(ctx, &analyserToCatalogReferencer{
+			controller.WrapAnalysedMediasBatchObserverIntoAnalysedMediaObserver(ctx, 0, &analyserToCatalogReferencer{
 				CatalogReferencer:          options.cataloguer,
 				CatalogReferencerObservers: controller.AppendPreCataloguerFilter(controller.AppendPostCatalogFiltersIn()...),
 			}),
@@ -234,7 +234,7 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newMultiThreadedController(tt.newControllerArgs.concurrencyParameters, tt.newControllerArgs.monitoringIntegrator, tt.newControllerArgs.bufferSize)
+			m := newMultiThreadedController(tt.newControllerArgs.concurrencyParameters, tt.newControllerArgs.monitoringIntegrator)
 			launcher := m.Launcher(tt.launcherArgs.analyser, stubAnalyserObserverChainForMultithreadedTests(context.Background(), m, scanningOptions{
 				Options:    Options{},
 				analyser:   nil,
