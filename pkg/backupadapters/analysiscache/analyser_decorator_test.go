@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dgraph-io/badger/v4"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysiscache"
@@ -55,13 +56,6 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 		},
 	}
 
-	type fields struct {
-		Delegate backup.Analyser
-	}
-	type args struct {
-		found backup.FoundMedia
-	}
-
 	doesNotHaveARecordInCache := func(t *testing.T, db *badger.DB) error {
 		return nil
 	}
@@ -70,43 +64,42 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 			return txn.Set([]byte(badgerKey), []byte(badgerPayload))
 		})
 	}
-	doesNotCallTheDelegate := func(t *testing.T) fields {
-		return fields{
-			Delegate: RunnerAnalyserFunc(func(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
-				assert.Fail(t, "Unexpected call on Analyse", "unexpected Analyse(%+v, ...))", found)
-				return nil
-			}),
-		}
-	}
-	doesCallTheDelegate := func(t *testing.T) fields {
-		return fields{
-			Delegate: RunnerAnalyserFunc(func(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error {
-				return analysedMediaObserver.OnAnalysedMedia(ctx, &backup.AnalysedMedia{
-					FoundMedia: found,
-					Type:       backup.MediaTypeImage,
-					Sha256Hash: computedMediaHash,
-					Details: &backup.MediaDetails{
-						Width:  120,
-						Height: 42,
-					},
-				})
-			}),
-		}
+
+	delegateFailsToAnalyse := new(AnalyserFake)
+	delegateReturnsAnalysedMedia := &AnalyserFake{
+		medias: map[string]backup.AnalysedMedia{
+			foundMedia.MediaPath().Filename: {
+				Type:       backup.MediaTypeImage,
+				Sha256Hash: computedMediaHash,
+				Details: &backup.MediaDetails{
+					Width:  120,
+					Height: 42,
+				},
+			},
+		},
 	}
 
+	type fields struct {
+		Delegate backup.Analyser
+	}
+	type args struct {
+		found backup.FoundMedia
+	}
 	tests := []struct {
 		name    string
 		init    func(t *testing.T, db *badger.DB) error
-		mocks   func(t *testing.T) fields
+		fields  fields
 		args    args
 		want    *backup.AnalysedMedia
 		wantDB  map[string]analysiscache.Payload
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name:  "it should call the delegate and cache the result when no cache",
-			init:  doesNotHaveARecordInCache,
-			mocks: doesCallTheDelegate,
+			name: "it should call the delegate and cache the result when no cache",
+			init: doesNotHaveARecordInCache,
+			fields: fields{
+				Delegate: delegateReturnsAnalysedMedia,
+			},
 			args: args{
 				found: foundMedia,
 			},
@@ -123,9 +116,11 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:  "it should use the cache when key and last modified date match",
-			init:  hasARecordInCache,
-			mocks: doesNotCallTheDelegate,
+			name: "it should use the cache when key and last modified date match",
+			init: hasARecordInCache,
+			fields: fields{
+				Delegate: delegateFailsToAnalyse,
+			},
 			args: args{
 				found: foundMedia,
 			},
@@ -142,9 +137,11 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:  "it should call the delegate and override the result when last modification doesn't match",
-			init:  hasARecordInCache,
-			mocks: doesCallTheDelegate,
+			name: "it should call the delegate and override the result when last modification doesn't match",
+			init: hasARecordInCache,
+			fields: fields{
+				Delegate: delegateReturnsAnalysedMedia,
+			},
 			args: args{
 				found: backup.NewInMemoryMedia("/avengers/ironman/stark-tower-01.png", sometime.Add(1*time.Minute), []byte("some content")),
 			},
@@ -171,9 +168,11 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:  "it should use the cache and ignore last modification if ZERO is requested (mean not supported)",
-			init:  hasARecordInCache,
-			mocks: doesNotCallTheDelegate,
+			name: "it should use the cache and ignore last modification if ZERO is requested (mean not supported)",
+			init: hasARecordInCache,
+			fields: fields{
+				Delegate: delegateFailsToAnalyse,
+			},
 			args: args{
 				found: backup.NewInMemoryMedia("/avengers/ironman/stark-tower-01.png", time.Time{}, []byte("some content")),
 			},
@@ -198,27 +197,23 @@ func TestDecoratorInstance_Analyse(t *testing.T) {
 				assert.FailNow(t, "tt.init()")
 			}
 
-			mockedFields := tt.mocks(t)
-
 			d := &analysiscache.AnalyserCacheWrapper{
-				Delegate: mockedFields.Delegate,
+				Delegate: tt.fields.Delegate,
 				AnalyserCache: &analysiscache.AnalyserCache{
 					DB: db,
 				},
 			}
 
-			analysedMediaObserver := new(AnalysedMediaObserverFake)
-			err = d.Analyse(context.Background(), tt.args.found, analysedMediaObserver, nil)
-			if assert.NoError(t, err, "Analyse(%v)", tt.args.found) {
-				if !tt.wantErr(t, err, fmt.Sprintf("Analyse(%v)", tt.args.found)) {
-					return
-				}
-				assert.Equalf(t, []*backup.AnalysedMedia{tt.want}, analysedMediaObserver.Medias, "Analyse(%v)", tt.args.found)
+			analysed, err := d.Analyse(context.Background(), tt.args.found)
+			if !tt.wantErr(t, err, fmt.Sprintf("Analyse(%v)", tt.args.found)) {
+				return
+			}
 
-				gotDB, err := databaseDump(db)
-				if assert.NoError(t, err, "databaseDump(DB)") {
-					assert.Equal(t, tt.wantDB, gotDB)
-				}
+			assert.Equalf(t, tt.want, analysed, "Analyse(%v)", tt.args.found)
+
+			gotDB, err := databaseDump(db)
+			if assert.NoError(t, err, "databaseDump(DB)") {
+				assert.Equal(t, tt.wantDB, gotDB)
 			}
 		})
 	}
@@ -261,17 +256,16 @@ func databaseDump(db *badger.DB) (map[string]analysiscache.Payload, error) {
 	return dump, err
 }
 
-type AnalysedMediaObserverFake struct {
-	Medias []*backup.AnalysedMedia
+type AnalyserFake struct {
+	medias map[string]backup.AnalysedMedia
 }
 
-func (a *AnalysedMediaObserverFake) OnAnalysedMedia(ctx context.Context, media *backup.AnalysedMedia) error {
-	a.Medias = append(a.Medias, media)
-	return nil
-}
+func (a *AnalyserFake) Analyse(ctx context.Context, found backup.FoundMedia) (*backup.AnalysedMedia, error) {
+	analysed, ok := a.medias[found.MediaPath().Filename]
+	if !ok {
+		return nil, errors.New("Unexpected call on Analyse")
+	}
 
-type RunnerAnalyserFunc func(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver) error
-
-func (r RunnerAnalyserFunc) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectsObserver backup.RejectedMediaObserver) error {
-	return r(ctx, found, analysedMediaObserver)
+	analysed.FoundMedia = found
+	return &analysed, nil
 }

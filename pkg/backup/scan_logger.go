@@ -38,20 +38,13 @@ func (l *logger) OnRejectedMedia(ctx context.Context, found FoundMedia, cause er
 	l.mdc.WithFields(log.Fields{
 		"Media": found.String(),
 		"Cause": cause,
-	}).Info("Media rejected")
-	return nil
-}
-
-func (l *logger) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
-	l.mdc.WithFields(log.Fields{
-		"Media": media.FoundMedia.String(),
-	}).Infof("Media analysed %s", media.Details.DateTime.Format(time.DateTime))
+	}).Warnf("Media rejected")
 	return nil
 }
 
 func (l *logger) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
 	for _, request := range requests {
-		l.mdc.Infof("Media catalogued %s <- %s", request.CatalogReference.AlbumFolderName(), request.AnalysedMedia.FoundMedia)
+		l.mdc.Infof("Media catalogued %s > %s", request.CatalogReference.AlbumFolderName(), request.AnalysedMedia.FoundMedia)
 	}
 
 	return nil

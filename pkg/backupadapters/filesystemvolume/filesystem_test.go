@@ -1,6 +1,7 @@
 package filesystemvolume
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"io/ioutil"
@@ -23,7 +24,7 @@ func TestScanner(t *testing.T) {
 	}
 	abspath, _ := filepath.Abs(fs.path)
 
-	medias, err := fs.FindMedias()
+	medias, err := fs.FindMedias(context.TODO())
 
 	sort.Slice(medias, func(i, j int) bool {
 		return strings.Compare(medias[i].String(), medias[j].String()) < 0
@@ -76,7 +77,7 @@ func TestScanner(t *testing.T) {
 			fsChildVolume := childVolume.(*volume)
 			fsChildVolume.supportedExtensions = fs.supportedExtensions
 
-			subFolderMedias, err := childVolume.FindMedias()
+			subFolderMedias, err := childVolume.FindMedias(context.TODO())
 			if a.NoError(err, name) {
 				if a.Len(subFolderMedias, 1, name) {
 					a.Equal("another.txt", subFolderMedias[0].MediaPath().Filename, name)

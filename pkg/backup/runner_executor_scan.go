@@ -6,18 +6,18 @@ import (
 	"sync"
 )
 
-func newScanReport() *scanReport {
-	return &scanReport{
+func newScanReportBuilder() *scanReportBuilder {
+	return &scanReportBuilder{
 		albums: make(map[string]*ScannedFolder),
 	}
 }
 
-type scanReport struct {
+type scanReportBuilder struct {
 	lock   sync.Mutex
 	albums map[string]*ScannedFolder
 }
 
-func (s *scanReport) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+func (s *scanReportBuilder) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -29,7 +29,7 @@ func (s *scanReport) OnMediaCatalogued(ctx context.Context, requests []BackingUp
 	return nil
 }
 
-func (s *scanReport) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
+func (s *scanReportBuilder) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -38,7 +38,7 @@ func (s *scanReport) OnRejectedMedia(ctx context.Context, found FoundMedia, caus
 	return nil
 }
 
-func (s *scanReport) getOrCreateScannedFolder(foundMedia FoundMedia) *ScannedFolder {
+func (s *scanReportBuilder) getOrCreateScannedFolder(foundMedia FoundMedia) *ScannedFolder {
 	mediaPath := foundMedia.MediaPath()
 	if _, ok := s.albums[mediaPath.Path]; !ok {
 		s.albums[mediaPath.Path] = s.newFoundAlbum(mediaPath)
@@ -48,7 +48,7 @@ func (s *scanReport) getOrCreateScannedFolder(foundMedia FoundMedia) *ScannedFol
 	return scannedFolder
 }
 
-func (s *scanReport) collect() []*ScannedFolder {
+func (s *scanReportBuilder) build() []*ScannedFolder {
 	suggestions := make([]*ScannedFolder, 0, len(s.albums))
 	for _, album := range s.albums {
 		suggestions = append(suggestions, album)
@@ -65,7 +65,7 @@ func (s *scanReport) collect() []*ScannedFolder {
 	return suggestions
 }
 
-func (s *scanReport) newFoundAlbum(mediaPath MediaPath) *ScannedFolder {
+func (s *scanReportBuilder) newFoundAlbum(mediaPath MediaPath) *ScannedFolder {
 	return &ScannedFolder{
 		Name:         mediaPath.ParentDir,
 		RelativePath: mediaPath.Path,

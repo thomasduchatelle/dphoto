@@ -64,7 +64,7 @@ func TestShouldFindMediasInS3(t *testing.T) {
 		"jpg": backup.MediaTypeImage,
 	}
 
-	medias, err := vol.FindMedias()
+	medias, err := vol.FindMedias(context.TODO())
 	if a.NoError(err, "it should find all medias in s3") {
 		found := make([]string, len(medias), len(medias))
 		for i, media := range medias {

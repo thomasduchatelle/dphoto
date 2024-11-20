@@ -15,74 +15,69 @@ import (
 	"time"
 )
 
-func stubAnalyserObserverChainForMultithreadedTests(ctx context.Context, controller scanningController, options scanningOptions) *analyserObserverChain {
-	return &analyserObserverChain{
-		AnalysedMediaObservers: []AnalysedMediaObserver{
-			controller.WrapAnalysedMediasBatchObserverIntoAnalysedMediaObserver(ctx, 0, &analyserToCatalogReferencer{
-				CatalogReferencer:          options.cataloguer,
-				CatalogReferencerObservers: controller.AppendPreCataloguerFilter(controller.AppendPostCatalogFiltersIn()...),
-			}),
-		},
-		RejectedMediaObservers: controller.AppendPostAnalyserFilterRejects(),
-	}
-}
-
-func Test_multiThreadedController_Launcher(t *testing.T) {
+func Test_multithreadedScanRuntime(t *testing.T) {
 	simulatedError := errors.New("TEST Simulated error")
 
 	groupThatMustWaitForAProcessInEachStep := newWaitGroup(3)
-
-	type newControllerArgs struct {
-		concurrencyParameters ConcurrencyParameters
-		monitoringIntegrator  *scanListeners
-		bufferSize            int
-	}
-	type launcherArgs struct {
-		analyser   Analyser
-		cataloguer Cataloguer
-	}
-	type args struct {
-		volume SourceVolume
-	}
 	simpleReferencerForFile1to3 := CatalogReferencerFakeByName{
 		"file-1": nonExistingSimpleReference("file-1"),
 		"file-2": nonExistingSimpleReference("file-2"),
 		"file-3": nonExistingSimpleReference("file-3"),
 	}
+
+	type fields struct {
+		options Options
+		config  *scanConfiguration
+	}
+	type args struct {
+		volume SourceVolume
+	}
 	tests := []struct {
-		name              string
-		newControllerArgs newControllerArgs
-		launcherArgs      launcherArgs
-		args              args
-		wantErr           assert.ErrorAssertionFunc
+		name    string
+		fields  fields
+		args    args
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should run through with an empty volume and default values",
-			newControllerArgs: newControllerArgs{
-				concurrencyParameters: ConcurrencyParameters{},
-				monitoringIntegrator:  new(scanListeners),
-				bufferSize:            1,
-			},
-			launcherArgs: launcherArgs{
-				analyser:   &AnalyserFake{},
-				cataloguer: CatalogReferencerFakeByName{},
+			fields: fields{
+				config: &scanConfiguration{
+					Analyser:             &AnalyserFake{},
+					Cataloguer:           CatalogReferencerFakeByName{},
+					ScanCompleteObserver: &ScanCompleteObserverFakeAssert{WantCount: 0, WantSize: 0},
+				},
 			},
 			args:    args{volume: &InMemorySourceVolume{}},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should run with 2 analysers concurrently",
-			newControllerArgs: newControllerArgs{
-				concurrencyParameters: ConcurrencyParameters{ConcurrentAnalyserRoutines: 2},
-				monitoringIntegrator:  new(scanListeners),
-				bufferSize:            1,
-			},
-			launcherArgs: launcherArgs{
-				analyser: &AnalyserGroupWaiter{
-					group:    newWaitGroup(2),
-					delegate: &AnalyserFake{},
+			name: "it should notify when the volume has been listed",
+			fields: fields{
+				config: &scanConfiguration{
+					Analyser:             &AnalyserFake{},
+					Cataloguer:           simpleReferencerForFile1to3,
+					ScanCompleteObserver: &ScanCompleteObserverFakeAssert{WantCount: 2, WantSize: 3},
 				},
-				cataloguer: simpleReferencerForFile1to3,
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte("a")),
+				NewInMemoryMedia("file-2", time.Now(), []byte("ab")),
+			}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should run with 2 analysers concurrently",
+			fields: fields{
+				options: ReduceOptions(
+					OptionsConcurrentAnalyserRoutines(2),
+				),
+				config: &scanConfiguration{
+					Analyser: &AnalyserGroupWaiter{
+						group:    newWaitGroup(2),
+						delegate: &AnalyserFake{},
+					},
+					Cataloguer: simpleReferencerForFile1to3,
+				},
 			},
 			args: args{volume: &InMemorySourceVolume{
 				NewInMemoryMedia("file-1", time.Now(), []byte{}),
@@ -92,16 +87,16 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 		},
 		{
 			name: "it should run the cataloguer on two routines",
-			newControllerArgs: newControllerArgs{
-				concurrencyParameters: ConcurrencyParameters{ConcurrentCataloguerRoutines: 2},
-				monitoringIntegrator:  new(scanListeners),
-				bufferSize:            1,
-			},
-			launcherArgs: launcherArgs{
-				analyser: &AnalyserFake{},
-				cataloguer: &CataloguerGroupWaiter{
-					delegate: simpleReferencerForFile1to3,
-					group:    newWaitGroup(2),
+			fields: fields{
+				options: ReduceOptions(
+					OptionsConcurrentCataloguerRoutines(2),
+				),
+				config: &scanConfiguration{
+					Analyser: &AnalyserFake{},
+					Cataloguer: &CataloguerGroupWaiter{
+						delegate: simpleReferencerForFile1to3,
+						group:    newWaitGroup(2),
+					},
 				},
 			},
 			args: args{volume: &InMemorySourceVolume{
@@ -112,13 +107,15 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 		},
 		{
 			name: "it should have a single thread for post-scan reporting",
-			newControllerArgs: newControllerArgs{
-				concurrencyParameters: ConcurrencyParameters{
-					ConcurrentAnalyserRoutines:   2,
-					ConcurrentCataloguerRoutines: 2,
-					ConcurrentUploaderRoutines:   2,
-				},
-				monitoringIntegrator: &scanListeners{
+			fields: fields{
+				options: ReduceOptions(
+					OptionsConcurrentAnalyserRoutines(2),
+					OptionsConcurrentCataloguerRoutines(2),
+					OptionsConcurrentUploaderRoutines(2),
+				),
+				config: &scanConfiguration{
+					Analyser:   new(AnalyserFake),
+					Cataloguer: simpleReferencerForFile1to3,
 					PostCatalogFiltersIn: []CatalogReferencerObserver{
 						&SingleThreadedConstrainedCatalogReferencerObserver{
 							lock:          sync.Mutex{},
@@ -126,11 +123,6 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 						},
 					},
 				},
-				bufferSize: 1,
-			},
-			launcherArgs: launcherArgs{
-				analyser:   new(AnalyserFake),
-				cataloguer: simpleReferencerForFile1to3,
 			},
 			args: args{volume: &InMemorySourceVolume{
 				NewInMemoryMedia("file-1", time.Now(), []byte{}),
@@ -140,28 +132,24 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 		},
 		{
 			name: "it should run the analyser, the cataloguer, and the post-scan on 3 different threads",
-			newControllerArgs: newControllerArgs{
-				concurrencyParameters: ConcurrencyParameters{},
-				monitoringIntegrator: &scanListeners{
+			fields: fields{
+				config: &scanConfiguration{
+					Analyser: &AnalyserGroupWaiter{
+						allowedToPass: []string{"file-1", "file-2"},
+						group:         groupThatMustWaitForAProcessInEachStep,
+						delegate:      new(AnalyserFake),
+					},
+					Cataloguer: &CataloguerGroupWaiter{
+						allowedToPass: []string{"file-1", "file-3"},
+						delegate:      simpleReferencerForFile1to3,
+						group:         groupThatMustWaitForAProcessInEachStep,
+					},
 					PostCatalogFiltersIn: []CatalogReferencerObserver{&ScanningCompleteGroupWaiter{
 						lock:          sync.RWMutex{},
 						group:         groupThatMustWaitForAProcessInEachStep,
 						allowedToPass: []string{"file-2", "file-3"},
 						expectedCalls: 1,
 					}},
-				},
-				bufferSize: 1,
-			},
-			launcherArgs: launcherArgs{
-				analyser: &AnalyserGroupWaiter{
-					allowedToPass: []string{"file-1", "file-2"},
-					group:         groupThatMustWaitForAProcessInEachStep,
-					delegate:      new(AnalyserFake),
-				},
-				cataloguer: &CataloguerGroupWaiter{
-					allowedToPass: []string{"file-1", "file-3"},
-					delegate:      simpleReferencerForFile1to3,
-					group:         groupThatMustWaitForAProcessInEachStep,
 				},
 			},
 			args: args{volume: &InMemorySourceVolume{
@@ -173,16 +161,16 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 		},
 		{
 			name: "it should run with 2 cataloguer concurrently",
-			newControllerArgs: newControllerArgs{
-				concurrencyParameters: ConcurrencyParameters{ConcurrentCataloguerRoutines: 2},
-				monitoringIntegrator:  &scanListeners{},
-				bufferSize:            1,
-			},
-			launcherArgs: launcherArgs{
-				analyser: new(AnalyserFake),
-				cataloguer: &CataloguerGroupWaiter{
-					delegate: simpleReferencerForFile1to3,
-					group:    newWaitGroup(2),
+			fields: fields{
+				options: ReduceOptions(
+					OptionsConcurrentCataloguerRoutines(2),
+				),
+				config: &scanConfiguration{
+					Analyser: new(AnalyserFake),
+					Cataloguer: &CataloguerGroupWaiter{
+						delegate: simpleReferencerForFile1to3,
+						group:    newWaitGroup(2),
+					},
 				},
 			},
 			args: args{volume: &InMemorySourceVolume{
@@ -193,24 +181,21 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 		},
 		{
 			name: "it should interrupt the process if an error occur during the analyser",
-			newControllerArgs: newControllerArgs{
-				concurrencyParameters: ConcurrencyParameters{},
-				monitoringIntegrator: &scanListeners{
+			fields: fields{
+				config: &scanConfiguration{
+					Analyser: &AnalyserFake{
+						ErroredFilename: map[string]error{
+							"file-1": simulatedError,
+						},
+					},
+					Cataloguer:          simpleReferencerForFile1to3,
+					PostAnalyserRejects: []RejectedMediaObserver{new(analyserFailsFastObserver)},
 					PostCatalogFiltersIn: []CatalogReferencerObserver{
 						&ScanAssertEndOfHappyPath{
-							WantMaxReadyToUploadCount: 10, // usually 0 or 1 ; sometime 2-3 ; saw once 6 and 7.
+							WantMaxReadyToUploadCount: 10, // usually 0 or 1 before interruption ; sometime 2-3 ; saw once 6 and 7.
 						},
 					},
 				},
-				bufferSize: 1,
-			},
-			launcherArgs: launcherArgs{
-				analyser: &AnalyserFake{
-					ErroredFilename: map[string]error{
-						"file-1": simulatedError,
-					},
-				},
-				cataloguer: simpleReferencerForFile1to3,
 			},
 			args: args{volume: &InMemorySourceVolume{
 				NewInMemoryMedia("file-1", time.Now(), []byte{}),
@@ -234,28 +219,27 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newMultiThreadedController(tt.newControllerArgs.concurrencyParameters, tt.newControllerArgs.monitoringIntegrator)
-			launcher := m.Launcher(tt.launcherArgs.analyser, stubAnalyserObserverChainForMultithreadedTests(context.Background(), m, scanningOptions{
-				Options:    Options{},
-				analyser:   nil,
-				cataloguer: tt.launcherArgs.cataloguer,
-			}), new(ScanCompleteObserverFake))
+			run, err := multithreadedScanRuntime(context.Background(), tt.fields.options, tt.fields.config)
 
-			err := <-launcher.process(context.Background(), tt.args.volume)
-			if tt.wantErr(t, err) {
-				if toBeSatisfied, match := tt.launcherArgs.analyser.(ToBeSatisfied); match {
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			err = <-run.Process(context.Background(), tt.args.volume)
+			if !tt.wantErr(t, err) {
+				return
+			}
+
+			if toBeSatisfied, match := tt.fields.config.Analyser.(ToBeSatisfied); match {
+				toBeSatisfied.IsSatisfied(t)
+			}
+			for _, listener := range tt.fields.config.PostCatalogFiltersIn {
+				if toBeSatisfied, match := listener.(ToBeSatisfied); match {
 					toBeSatisfied.IsSatisfied(t)
 				}
-				for _, listener := range tt.newControllerArgs.monitoringIntegrator.PostAnalyserSuccess {
-					if toBeSatisfied, match := listener.(ToBeSatisfied); match {
-						toBeSatisfied.IsSatisfied(t)
-					}
-				}
-				for _, listener := range tt.newControllerArgs.monitoringIntegrator.PostCatalogFiltersIn {
-					if toBeSatisfied, match := listener.(ToBeSatisfied); match {
-						toBeSatisfied.IsSatisfied(t)
-					}
-				}
+			}
+			if toBeSatisfied, match := tt.fields.config.ScanCompleteObserver.(ToBeSatisfied); match {
+				toBeSatisfied.IsSatisfied(t)
 			}
 		})
 	}
@@ -283,13 +267,25 @@ func (s *ScanCompleteObserverFake) OnScanComplete(ctx context.Context, count, si
 	return nil
 }
 
+type ScanCompleteObserverFakeAssert struct {
+	ScanCompleteObserverFake
+	WantCount int
+	WantSize  int
+}
+
+func (s *ScanCompleteObserverFakeAssert) IsSatisfied(t *testing.T) bool {
+	return assert.Equal(t, s.WantCount, s.count, "Invalid count") &&
+		assert.Equal(t, s.WantSize, s.size, "Invalid size")
+
+}
+
 type AnalyserGroupWaiter struct {
 	allowedToPass []string
 	delegate      Analyser
 	group         *sync.WaitGroup // group must be EXACTLY the number of file that will be received: LESS -> deadlock ; MORE -> negative waitGroup
 }
 
-func (a *AnalyserGroupWaiter) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
+func (a *AnalyserGroupWaiter) Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error) {
 	filename := found.MediaPath().Filename
 	if slices.Index(a.allowedToPass, filename) < 0 {
 		log.Infof("[%d] AnalyserGroupWaiter > %s placed on hold", goid(), filename)
@@ -299,7 +295,7 @@ func (a *AnalyserGroupWaiter) Analyse(ctx context.Context, found FoundMedia, ana
 	}
 
 	log.Infof("[%d] AnalyserGroupWaiter > %s processed", goid(), filename)
-	return a.delegate.Analyse(ctx, found, analysedMediaObserver, rejectsObserver)
+	return a.delegate.Analyse(ctx, found)
 }
 
 type CataloguerGroupWaiter struct {
@@ -411,38 +407,6 @@ func (s *SimpleReference) MediaId() string {
 	return s.mediaId
 }
 
-type AnalysedMediaGroupWaiter struct {
-	lock          sync.RWMutex
-	group         *sync.WaitGroup
-	allowedToPass []string
-	expectedCalls int
-}
-
-func (a *AnalysedMediaGroupWaiter) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
-	a.lock.RLock()
-	filename := media.FoundMedia.MediaPath().Filename
-	block := slices.Index(a.allowedToPass, filename) < 0
-	a.lock.RUnlock()
-
-	if block {
-		log.Infof("[%d] AnalysedMediaGroupWaiter > %s placed on hold", goid(), filename)
-
-		a.group.Done()
-		a.group.Wait()
-
-		a.lock.Lock()
-		a.expectedCalls--
-		a.lock.Unlock()
-	}
-
-	log.Infof("[%d] AnalysedMediaGroupWaiter > %s processed", goid(), filename)
-	return nil
-}
-
-func (a *AnalysedMediaGroupWaiter) IsSatisfied(t *testing.T) bool {
-	return assert.Equal(t, 0, a.expectedCalls, "Invalid number of calls to AnalysedMediaGroupWaiter")
-}
-
 type ScanningCompleteGroupWaiter struct {
 	lock          sync.RWMutex
 	group         *sync.WaitGroup
@@ -515,4 +479,25 @@ func goid() int {
 		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
 	}
 	return id
+}
+
+type AnalyserFake struct {
+	ErroredFilename map[string]error
+}
+
+func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error) {
+	if a.ErroredFilename != nil {
+		if err, errored := a.ErroredFilename[found.MediaPath().Filename]; errored {
+			return nil, err
+		}
+	}
+
+	return &AnalysedMedia{
+		FoundMedia: found,
+		Type:       MediaTypeImage,
+		Sha256Hash: found.MediaPath().Filename,
+		Details: &MediaDetails{
+			DateTime: time.Date(2022, 6, 18, 10, 42, 0, 0, time.UTC),
+		},
+	}, nil
 }
