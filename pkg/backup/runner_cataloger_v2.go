@@ -3,7 +3,6 @@ package backup
 import (
 	"context"
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 // CatalogReference is used to project where a media will fit in the catalog: its ID and its album.
@@ -64,19 +63,4 @@ func (c *CataloguerWithFilters) Catalog(ctx context.Context, medias []*AnalysedM
 		CataloguerFilters:          c.CataloguerFilters,
 	}
 	return c.Delegate.Reference(ctx, medias, filters)
-}
-
-func NewReferencer(owner ownermodel.Owner, dryRun bool) (Cataloguer, error) {
-	var referencer Cataloguer
-	var err error
-
-	if dryRun {
-		referencer, err = referencerFactory.NewDryRunCataloguer(context.TODO(), owner)
-	} else {
-		referencer, err = referencerFactory.NewAlbumCreatorCataloguer(context.TODO(), owner)
-	}
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create a cataloguer for %s with dryRun=%t", owner, dryRun)
-	}
-	return referencer, nil
 }

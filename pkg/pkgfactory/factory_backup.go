@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
+	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
 	_ "github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/backuparchive"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/backupcatalog"
@@ -18,7 +19,7 @@ type MultiFilesScanner func(ctx context.Context, owner string, volume backup.Sou
 
 func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 	factory.InitArchive(ctx)
-	backup.Init(backuparchive.New(), NewReferencerFactory(), NewInsertMediaAdapter(ctx))
+	backup.Init(backuparchive.New(), NewCataloguerFactory(), NewInsertMediaAdapter(ctx))
 
 	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error) {
 		options := backupDefaultOptionsForAWS(optionsSlice)
@@ -69,7 +70,7 @@ func (f *BackupReferencerFactory) NewDryRunCataloguer(ctx context.Context, owner
 	}, errors.Wrapf(err, "NewDryRunCataloguer(%s) failed", owner)
 }
 
-func NewReferencerFactory() backup.CataloguerFactory {
+func NewCataloguerFactory() backup.CataloguerFactory {
 	return new(BackupReferencerFactory)
 }
 
@@ -80,10 +81,11 @@ func NewInsertMediaAdapter(ctx context.Context) backup.InsertMediaPort {
 }
 
 func NewMultiFilesScanner(ctx context.Context) MultiFilesScanner {
-	backup.Init(backuparchive.New(), NewReferencerFactory(), NewInsertMediaAdapter(ctx))
-
 	return func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, error) {
-		batchScanner := new(backup.BatchScanner)
+		batchScanner := &backup.BatchScanner{
+			CataloguerFactory: NewCataloguerFactory(),
+			DetailsReaders:    analysers.ListDetailReaders(),
+		}
 		return batchScanner.Scan(ctx, ownermodel.Owner(owner), volume, backupDefaultOptionsForAWS(optionSlice)...)
 	}
 }

@@ -208,7 +208,7 @@ func TestScanAcceptance(t *testing.T) {
 
 			scanner := &BatchScanner{
 				CataloguerFactory: tt.fields.cataloguerFactory,
-				DetailsReaders:    tt.fields.detailsReaders,
+				DetailsReaders:    []DetailsReaderAdapter{tt.fields.detailsReaders},
 			}
 			gotFolder, err := scanner.Scan(context.Background(), ownermodel.Owner(tt.args.owner), tt.args.volume, options...)
 			if !tt.wantErr(t, err, fmt.Sprintf("Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)) {

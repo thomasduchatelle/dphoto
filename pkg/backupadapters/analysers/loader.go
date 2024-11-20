@@ -14,3 +14,12 @@ func init() {
 	backup.RegisterDetailsReader(new(m2ts.Parser))
 	backup.RegisterDetailsReader(new(mp4.Parser))
 }
+
+func ListDetailReaders() []backup.DetailsReaderAdapter {
+	return []backup.DetailsReaderAdapter{
+		new(avi.Parser),
+		new(exif.Parser),
+		new(m2ts.Parser),
+		new(mp4.Parser),
+	}
+}
