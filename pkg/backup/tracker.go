@@ -45,19 +45,22 @@ func (t *Tracker) Skipped() MediaCounter {
 	return exists.AddCounter(duplicates).AddCounter(wrongAlbum)
 }
 
-func (t *Tracker) CountPerAlbum() map[string]*AlbumReport {
+func (t *Tracker) CountPerAlbum() map[string]IAlbumReport {
 	newAlbums := make(map[string]interface{})
 	for _, album := range t.createdAlbums {
 		newAlbums[album] = nil
 	}
 
+	report := make(map[string]IAlbumReport)
 	for folderName, counts := range t.detailedCount {
 		if _, isNew := newAlbums[folderName]; isNew {
 			counts.New = true
 		}
+
+		report[folderName] = counts
 	}
 
-	return t.detailedCount
+	return report
 }
 
 func (t *Tracker) WaitToComplete() {

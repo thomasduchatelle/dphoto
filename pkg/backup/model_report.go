@@ -7,9 +7,15 @@ var (
 
 type CompletionReport interface {
 	Skipped() MediaCounter
-	CountPerAlbum() map[string]*AlbumReport
+	CountPerAlbum() map[string]IAlbumReport
 }
 
+type IAlbumReport interface {
+	Total() MediaCounter
+	OfType(mediaType MediaType) MediaCounter
+}
+
+// MediaCounter TODO implementation and constructors should be privatised to only expose relevant methods of functions
 type MediaCounter struct {
 	Count int // Count is the number of medias
 	Size  int // Size is the sum of the size of the medias

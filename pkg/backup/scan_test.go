@@ -66,7 +66,7 @@ func TestScanAcceptance(t *testing.T) {
 
 	type fields struct {
 		detailsReaders    DetailsReaderAdapter
-		referencerFactory CataloguerFactory
+		cataloguerFactory CataloguerFactory
 	}
 	type args struct {
 		owner       string
@@ -86,7 +86,7 @@ func TestScanAcceptance(t *testing.T) {
 			name: "it should scan files per folder, using read-only referencer, ignoring files that are already catalogued",
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
-				referencerFactory: &ReferencerFactoryFake{
+				cataloguerFactory: &ReferencerFactoryFake{
 					DryRunReferencer: &CatalogReferencerFake{
 						analysedMedias[0]: &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"},
 						analysedMedias[1]: &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"},
@@ -146,7 +146,7 @@ func TestScanAcceptance(t *testing.T) {
 			name: "it should ignore the files that are not readable by the analyser",
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
-				referencerFactory: &ReferencerFactoryFake{
+				cataloguerFactory: &ReferencerFactoryFake{
 					DryRunReferencer: &CatalogReferencerFakeByName{},
 				},
 			},
@@ -180,7 +180,7 @@ func TestScanAcceptance(t *testing.T) {
 			name: "it should fail the scan if one of the files is unreadable",
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
-				referencerFactory: &ReferencerFactoryFake{
+				cataloguerFactory: &ReferencerFactoryFake{
 					DryRunReferencer: &CatalogReferencerFakeByName{},
 				},
 			},
@@ -207,7 +207,7 @@ func TestScanAcceptance(t *testing.T) {
 			options := append([]Options{OptionWithListener(eventCatcher)}, tt.args.optionSlice...)
 
 			scanner := &BatchScanner{
-				CataloguerFactory: tt.fields.referencerFactory,
+				CataloguerFactory: tt.fields.cataloguerFactory,
 				DetailsReaders:    tt.fields.detailsReaders,
 			}
 			gotFolder, err := scanner.Scan(context.Background(), ownermodel.Owner(tt.args.owner), tt.args.volume, options...)
