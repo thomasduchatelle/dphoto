@@ -2,64 +2,84 @@ package backup
 
 import (
 	"context"
+	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/backup/chain"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"slices"
 )
 
 type BatchScanner struct {
 	CataloguerFactory CataloguerFactory
-	DetailsReaders    DetailsReaderAdapter
+	DetailsReaders    []DetailsReader
 }
 
 func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionSlice ...Options) ([]*ScannedFolder, error) {
 
 	options := ReduceOptions(optionSlice...)
 
-	launcher, monitor, err := s.newScanner(ctx, options, volume.String(), owner)
+	launcher, reportBuilder, err := s.prepareVolumeScan(ctx, options, volume.String(), owner)
 	if err != nil {
 		return nil, err
 	}
 
-	err, _ = <-launcher.process(ctx, volume)
+	err = <-launcher.Process(ctx, volume)
 
-	return monitor.report.collect(), err
+	return reportBuilder.build(), err
 }
 
-func (s *BatchScanner) newScanner(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *reportGetter, error) {
-	tracker := newTrackerV2(options)
-	report := newScanReport()
+// scanListeners list the listeners that will be notified during the scan process.
+type scanConfiguration struct {
+	Analyser                 Analyser
+	Cataloguer               Cataloguer
+	ScanCompleteObserver     scanCompleteObserver
+	PostAnalyserRejects      []RejectedMediaObserver
+	PostCatalogFiltersIn     []CatalogReferencerObserver
+	PostCataloguerFiltersOut []CataloguerFilterObserver
+	Wrappers                 []chain.CloserFunc
+}
+
+func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
+	tracker, _ := newTrackerV2(options)
+	reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
 
-	monitoring := &scanListeners{
-		scanCompleteObserver:      tracker,
-		PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
-		PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker},
-		PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker, report},
-		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
-		PostCatalogFiltersIn:      []CatalogReferencerObserver{tracker, report},
-		PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
-	}
-	if options.SkipRejects {
-		monitoring.PostAnalyserRejects = append(monitoring.PostAnalyserRejects, report)
-	}
-
-	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring)
-	controller.registerWrappers(tracker)
-
-	cataloguer, err := s.CataloguerFactory.NewDryRunCataloguer(ctx, owner)
+	cataloguer, err := s.CataloguerFactory.NewOwnerScopedCataloguer(ctx, owner)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.Wrapf(err, "failed to create cataloguer for owner %s", owner)
 	}
 
-	launcher, err := newScanningChain(ctx, controller, scanningOptions{
-		Options:    options,
-		cataloguer: cataloguer,
-		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders)),
-	})
-	return launcher, &reportGetter{
-		report: report,
-	}, err
+	config := &scanConfiguration{
+		Analyser:                 options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...), tracker),
+		Cataloguer:               cataloguer,
+		ScanCompleteObserver:     tracker,
+		PostAnalyserRejects:      []RejectedMediaObserver{scanLogger, tracker},
+		PostCatalogFiltersIn:     []CatalogReferencerObserver{scanLogger, tracker, reportBuilder},
+		PostCataloguerFiltersOut: []CataloguerFilterObserver{scanLogger, tracker},
+		Wrappers:                 []chain.CloserFunc{tracker.NoMoreEvents},
+	}
+	if !options.SkipRejects {
+		config.PostAnalyserRejects = append(config.PostAnalyserRejects, new(analyserFailsFastObserver))
+	}
+	config.PostAnalyserRejects = append(config.PostAnalyserRejects, reportBuilder)
+
+	launcher, err := multithreadedScanRuntime(ctx, options, config)
+	return launcher, reportBuilder, err
 }
 
-type reportGetter struct {
-	report *scanReport
+func multithreadedScanRuntime(ctxNonCancelable context.Context, options Options, config *scanConfiguration) (analyserLauncher, error) {
+	ctx, cancelFunc := context.WithCancel(ctxNonCancelable)
+
+	launcher := scanAndBackupCommonLauncher(config, options, &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
+		NumberOfRoutines: 1,
+		ConsumerBuilder:  chain.PassThrough[[]BackingUpMediaRequest](),
+		Next: &chain.CloseWrapperLink[[]BackingUpMediaRequest]{
+			CloserFuncs: slices.Concat(config.Wrappers, []chain.CloserFunc{chain.CloserFunc(cancelFunc)}),
+			Next:        chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
+		},
+	})
+
+	err := launcher.Starts(ctx, chain.NewErrorCollector(func(err error) {
+		cancelFunc()
+	}))
+	return launcher, err
 }

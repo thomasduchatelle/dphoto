@@ -8,9 +8,11 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers/mp4"
 )
 
-func init() {
-	backup.RegisterDetailsReader(new(avi.Parser))
-	backup.RegisterDetailsReader(new(exif.Parser))
-	backup.RegisterDetailsReader(new(m2ts.Parser))
-	backup.RegisterDetailsReader(new(mp4.Parser))
+func ListDetailReaders() []backup.DetailsReader {
+	return []backup.DetailsReader{
+		new(avi.Parser),
+		new(exif.Parser),
+		new(m2ts.Parser),
+		new(mp4.Parser),
+	}
 }

@@ -57,7 +57,7 @@ func (s *volume) String() string {
 	return fmt.Sprintf("s3://%s%s", s.bucket, s.keyPrefix)
 }
 
-func (s *volume) FindMedias() ([]backup.FoundMedia, error) {
+func (s *volume) FindMedias(context.Context) ([]backup.FoundMedia, error) {
 	var medias []backup.FoundMedia
 
 	paginator := s3.NewListObjectsV2Paginator(s.s3, &s3.ListObjectsV2Input{

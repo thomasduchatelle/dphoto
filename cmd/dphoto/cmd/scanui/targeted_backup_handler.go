@@ -50,13 +50,13 @@ func (t *TargetedBackupHandler) BackupSuggestion(record *ui.SuggestionRecord, ex
 
 		listener := backupui.NewProgress()
 		options := []backup.Options{
-			backup.OptionWithListener(listener),
+			backup.OptionsWithListener(listener),
 			t.ScanOptions,
 		}
 		options = append(options, config.BackupOptions()...)
 
 		if existing != nil {
-			options = append(options, backup.OptionOnlyAlbums(existing.FolderName))
+			options = append(options, backup.OptionsOnlyAlbums(existing.FolderName))
 		}
 
 		multiFilesBackup := pkgfactory.NewMultiFilesBackup(ctx)

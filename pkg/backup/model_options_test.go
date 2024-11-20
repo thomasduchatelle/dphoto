@@ -29,7 +29,7 @@ func TestOption_ReduceOptions(t *testing.T) {
 		{
 			name: "it should retain the RejectDir option and enable the SkipRejects option implicitly",
 			args: args{
-				option: OptionWithRejectDir("foobar"),
+				option: OptionsWithRejectDir("foobar"),
 			},
 			want: Options{
 				RestrictedAlbumFolderName: noRestrictedAlbumFolder,
@@ -40,7 +40,7 @@ func TestOption_ReduceOptions(t *testing.T) {
 		{
 			name: "it should not set the SkipRejects if RejectDir option is empty",
 			args: args{
-				option: OptionWithRejectDir(""),
+				option: OptionsWithRejectDir(""),
 			},
 			want: Options{
 				RestrictedAlbumFolderName: noRestrictedAlbumFolder,

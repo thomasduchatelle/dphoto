@@ -65,13 +65,13 @@ func TestScanAcceptance(t *testing.T) {
 	}
 
 	type fields struct {
-		detailsReaders    DetailsReaderAdapter
-		referencerFactory CataloguerFactory
+		detailsReaders    DetailsReader
+		cataloguerFactory CataloguerFactory
 	}
 	type args struct {
-		owner       string
-		volume      SourceVolume
-		optionSlice []Options
+		owner        string
+		volume       SourceVolume
+		optionsSlice []Options
 	}
 	tests := []struct {
 		name                   string
@@ -83,11 +83,11 @@ func TestScanAcceptance(t *testing.T) {
 		wantErr                assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should scan files per folder, using read-only referencer, ignoring files that are already catalogued",
+			name: "it should scan files per folder, ignoring files that are already catalogued",
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
-				referencerFactory: &ReferencerFactoryFake{
-					DryRunReferencer: &CatalogReferencerFake{
+				cataloguerFactory: &ReferencerFactoryFake{
+					Cataloguer: &CatalogReferencerFake{
 						analysedMedias[0]: &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"},
 						analysedMedias[1]: &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"},
 						analysedMedias[2]: &CatalogReferenceStub{MediaIdValue: "media-id-3", AlbumFolderNameValue: "/album1"},
@@ -100,9 +100,9 @@ func TestScanAcceptance(t *testing.T) {
 			args: args{
 				owner:  owner.Value(),
 				volume: &volumeStub,
-				optionSlice: []Options{
+				optionsSlice: []Options{
 					OptionsSkipRejects(true),
-					OptionsBatchSize(3),
+					OptionsBatchSize(4),
 					OptionsConcurrentAnalyserRoutines(12),
 				},
 			},
@@ -146,8 +146,8 @@ func TestScanAcceptance(t *testing.T) {
 			name: "it should ignore the files that are not readable by the analyser",
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
-				referencerFactory: &ReferencerFactoryFake{
-					DryRunReferencer: &CatalogReferencerFakeByName{},
+				cataloguerFactory: &ReferencerFactoryFake{
+					Cataloguer: &CatalogReferencerFakeByName{},
 				},
 			},
 			args: args{
@@ -155,7 +155,7 @@ func TestScanAcceptance(t *testing.T) {
 				volume: &InMemorySourceVolume{
 					&UnreadableMedia{FoundMedia: NewInMemoryMedia("folder66/file_unreadable.jpg", time.Now(), []byte("will not be readable"))},
 				},
-				optionSlice: []Options{
+				optionsSlice: []Options{
 					OptionsSkipRejects(true),
 				},
 			},
@@ -180,8 +180,8 @@ func TestScanAcceptance(t *testing.T) {
 			name: "it should fail the scan if one of the files is unreadable",
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
-				referencerFactory: &ReferencerFactoryFake{
-					DryRunReferencer: &CatalogReferencerFakeByName{},
+				cataloguerFactory: &ReferencerFactoryFake{
+					Cataloguer: &CatalogReferencerFakeByName{},
 				},
 			},
 			args: args{
@@ -199,16 +199,57 @@ func TestScanAcceptance(t *testing.T) {
 				return assert.ErrorContains(t, err, "[UnreadableMedia]", i)
 			},
 		},
+		{
+			name: "it should use the decorator of the analyser to skip, or to use, the analyser", fields: fields{
+				detailsReaders: new(DetailsReaderAdapterStub),
+				cataloguerFactory: &ReferencerFactoryFake{
+					Cataloguer: &CatalogReferencerFake{
+						analysedMedias[0]: &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"},
+						analysedMedias[1]: &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"},
+					},
+				},
+			},
+			args: args{
+				owner:  owner.Value(),
+				volume: &InMemorySourceVolume{analysedMedias[0].FoundMedia, analysedMedias[1].FoundMedia},
+				optionsSlice: []Options{
+					OptionsAnalyserDecorator(&AnalyserDecoratorFake{
+						Cached: map[string]*AnalysedMedia{
+							analysedMedias[1].FoundMedia.MediaPath().Filename: analysedMedias[1],
+						},
+					}),
+				},
+			},
+			wantFolders: []*ScannedFolder{
+				{
+					Name:         "folder1",
+					RelativePath: "folder1",
+					FolderName:   "folder1",
+					AbsolutePath: "/ram/folder1",
+					Start:        time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC),
+					End:          time.Date(2022, 6, 19, 0, 0, 0, 0, time.UTC),
+					Distribution: map[string]MediaCounter{
+						"2022-06-18": NewMediaCounter(2, 10+11),
+					},
+				},
+			},
+			wantEvents: map[trackEvent]eventSummary{
+				trackScanComplete:      {SumCount: 2, SumSize: 10 + 11},
+				trackCatalogued:        {SumCount: 2, SumSize: 10 + 11},
+				trackAnalysedFromCache: {SumCount: 1, SumSize: 11},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			eventCatcher := newEventCapture()
-			options := append([]Options{OptionWithListener(eventCatcher)}, tt.args.optionSlice...)
+			options := append([]Options{OptionsWithListener(eventCatcher)}, tt.args.optionsSlice...)
 
 			scanner := &BatchScanner{
-				CataloguerFactory: tt.fields.referencerFactory,
-				DetailsReaders:    tt.fields.detailsReaders,
+				CataloguerFactory: tt.fields.cataloguerFactory,
+				DetailsReaders:    []DetailsReader{tt.fields.detailsReaders},
 			}
 			gotFolder, err := scanner.Scan(context.Background(), ownermodel.Owner(tt.args.owner), tt.args.volume, options...)
 			if !tt.wantErr(t, err, fmt.Sprintf("Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)) {
@@ -221,7 +262,7 @@ func TestScanAcceptance(t *testing.T) {
 			for _, folder := range gotFolder {
 				rejectsCount += folder.RejectsCount
 			}
-			assert.Equalf(t, tt.wantSkippedMediasCount, rejectsCount, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
+			assert.Equal(t, tt.wantSkippedMediasCount, rejectsCount, "Rejected counts")
 		})
 	}
 }
@@ -259,7 +300,7 @@ func (m *InMemorySourceVolume) String() string {
 	return "In-Memory Volume"
 }
 
-func (m *InMemorySourceVolume) FindMedias() ([]FoundMedia, error) {
+func (m *InMemorySourceVolume) FindMedias(context.Context) ([]FoundMedia, error) {
 	return *m, nil
 }
 
@@ -273,4 +314,38 @@ type UnreadableMedia struct {
 
 func (u *UnreadableMedia) ReadMedia() (io.ReadCloser, error) {
 	return nil, errors.New("[UnreadableMedia] stubbed error")
+}
+
+type ReferencerFactoryFake struct {
+	Cataloguer Cataloguer
+}
+
+func (r *ReferencerFactoryFake) NewOwnerScopedCataloguer(ctx context.Context, owner ownermodel.Owner) (Cataloguer, error) {
+	return r.Cataloguer, nil
+}
+
+// AnalyserDecoratorFake behaves like a read-only cache.
+type AnalyserDecoratorFake struct {
+	Cached    map[string]*AnalysedMedia
+	delegate  Analyser
+	observers []AnalyserDecoratorObserver
+}
+
+func (a *AnalyserDecoratorFake) Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error) {
+	if cached, ok := a.Cached[found.MediaPath().Filename]; ok {
+		for _, observer := range a.observers {
+			_ = observer.OnSkipDelegateAnalyser(ctx, found)
+		}
+
+		return cached, nil
+	}
+
+	return a.delegate.Analyse(ctx, found)
+}
+
+func (a *AnalyserDecoratorFake) Decorate(analyse Analyser, observers ...AnalyserDecoratorObserver) Analyser {
+	a.delegate = analyse
+	a.observers = observers
+
+	return a
 }

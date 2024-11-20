@@ -5,7 +5,6 @@ type Options struct {
 	Listener                  interface{}            // Listener will receive progress events.
 	SkipRejects               bool                   // SkipRejects mode will report any analysis error, or missing timestamp, and continue.
 	AnalyserDecorator         AnalyserDecorator      // AnalyserDecorator is an optional decorator to add concept like caching (might be nil)
-	DryRun                    bool                   // DryRun mode will not upload anything and do not create albums, still analyse
 	ConcurrencyParameters     ConcurrencyParameters
 	BatchSize                 int    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
 	RejectDir                 string // RejectDir is the directory where rejected files will be copied
@@ -66,15 +65,15 @@ func defaultValue(value, fallback int) int {
 	return value
 }
 
-// OptionWithListener creates an option with a listener
-func OptionWithListener(listener interface{}) Options {
+// OptionsWithListener adds a listener tracking the progress of the scan/backup
+func OptionsWithListener(listener interface{}) Options {
 	return Options{
 		Listener: listener,
 	}
 }
 
-// OptionOnlyAlbums restricts backed up medias to those in these albums
-func OptionOnlyAlbums(albums ...string) Options {
+// OptionsOnlyAlbums restricts backed up medias to those in these albums
+func OptionsOnlyAlbums(albums ...string) Options {
 	options := Options{
 		RestrictedAlbumFolderName: make(map[string]interface{}),
 	}
@@ -93,10 +92,11 @@ func OptionsSkipRejects(skip bool) Options {
 	}
 }
 
-// WithCachedAnalysis adds a decorator on analysis function ; argument can be nil.
-func (o Options) WithCachedAnalysis(analyserDecorator AnalyserDecorator) Options {
-	o.AnalyserDecorator = analyserDecorator
-	return o
+// OptionsAnalyserDecorator adds a decorator on analysis function ; argument can be nil. Used to add a cache.
+func OptionsAnalyserDecorator(analyserDecorator AnalyserDecorator) Options {
+	return Options{
+		AnalyserDecorator: analyserDecorator,
+	}
 }
 
 // GetAnalyserDecorator is returning the AnalyserDecorator or NopeAnalyserDecorator, never nil.
@@ -142,7 +142,7 @@ func OptionsBatchSize(batchSize int) Options {
 	}
 }
 
-func OptionWithRejectDir(rejectDir string) Options {
+func OptionsWithRejectDir(rejectDir string) Options {
 	skip := false
 	if rejectDir != "" {
 		skip = true

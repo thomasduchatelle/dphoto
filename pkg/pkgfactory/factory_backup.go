@@ -5,31 +5,35 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
-	_ "github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
+	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/backuparchive"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/backupcatalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
-type MultiFilesBackup func(ctx context.Context, owner ownermodel.Owner, volumeSource backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error)
+type MultiFilesBackup func(ctx context.Context, owner ownermodel.Owner, volumeSource backup.SourceVolume, optionsSlice ...backup.Options) (backup.Report, error)
 
 type MultiFilesScanner func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, error)
 
 func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 	factory.InitArchive(ctx)
-	backup.Init(backuparchive.New(), NewReferencerFactory(), NewInsertMediaAdapter(ctx))
 
-	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error) {
-		options := backupDefaultOptionsForAWS(optionsSlice)
+	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.Report, error) {
+		batch := &backup.BatchBackup{
+			CataloguerFactory: new(AlbumCreatorCataloguerFactory),
+			DetailsReaders:    analysers.ListDetailReaders(),
+			InsertMediaPort:   NewInsertMediaAdapter(ctx),
+			ArchivePort:       backuparchive.New(),
+		}
 
-		return backup.Backup(owner, volume, options...)
+		return batch.Backup(ctx, owner, volume, backupDefaultOptionsForAWS(optionsSlice)...)
 	}
 }
 
-type BackupReferencerFactory struct{}
+type AlbumCreatorCataloguerFactory struct{}
 
-func (f *BackupReferencerFactory) NewAlbumCreatorCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
+func (f *AlbumCreatorCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
 	queries := AlbumQueries(ctx)
 	writeRepo := CatalogRepository(ctx)
 	referencer, err := catalog.NewAlbumAutoPopulateReferencer(
@@ -37,11 +41,9 @@ func (f *BackupReferencerFactory) NewAlbumCreatorCataloguer(ctx context.Context,
 		queries,
 		writeRepo,
 		writeRepo,
-		ArchiveTimelineMutationObserver(nil),
+		ArchiveTimelineMutationObserver(ctx),
 		CommandHandlerAlbumSize(ctx),
 	)
-
-	// TODO is the albums recounted after backup complete ?
 
 	return &backupcatalog.CatalogReferencerAdapter{
 		Owner: owner,
@@ -49,10 +51,12 @@ func (f *BackupReferencerFactory) NewAlbumCreatorCataloguer(ctx context.Context,
 			FindExistingSignaturePort: writeRepo,
 		},
 		StatefulAlbumReferencer: referencer,
-	}, errors.Wrapf(err, "NewAlbumCreatorCataloguer(%s) failed", owner)
+	}, errors.Wrapf(err, "NewOwnerScopedCataloguer(%s) failed", owner)
 }
 
-func (f *BackupReferencerFactory) NewDryRunCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
+type DryRunCataloguerFactory struct{}
+
+func (f *DryRunCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
 	queries := AlbumQueries(ctx)
 	writeRepo := CatalogRepository(ctx)
 	referencer, err := catalog.NewAlbumDryRunReferencer(
@@ -69,10 +73,6 @@ func (f *BackupReferencerFactory) NewDryRunCataloguer(ctx context.Context, owner
 	}, errors.Wrapf(err, "NewDryRunCataloguer(%s) failed", owner)
 }
 
-func NewReferencerFactory() backup.CataloguerFactory {
-	return new(BackupReferencerFactory)
-}
-
 func NewInsertMediaAdapter(ctx context.Context) backup.InsertMediaPort {
 	return &backupcatalog.InsertMediaAdapter{
 		CatalogInsertMedia: InsertMediasCase(ctx),
@@ -80,10 +80,11 @@ func NewInsertMediaAdapter(ctx context.Context) backup.InsertMediaPort {
 }
 
 func NewMultiFilesScanner(ctx context.Context) MultiFilesScanner {
-	backup.Init(backuparchive.New(), NewReferencerFactory(), NewInsertMediaAdapter(ctx))
-
 	return func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, error) {
-		batchScanner := new(backup.BatchScanner)
+		batchScanner := &backup.BatchScanner{
+			CataloguerFactory: new(DryRunCataloguerFactory),
+			DetailsReaders:    analysers.ListDetailReaders(),
+		}
 		return batchScanner.Scan(ctx, ownermodel.Owner(owner), volume, backupDefaultOptionsForAWS(optionSlice)...)
 	}
 }

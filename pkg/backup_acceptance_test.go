@@ -56,21 +56,21 @@ func (b *BackupTestSuite) Test10_Backup() {
 	t := b.T()
 
 	volume := filesystemvolume.New("./test_resources/acceptance")
-	medias, err := volume.FindMedias()
+	medias, err := volume.FindMedias(context.TODO())
 	if !assert.NoError(t, err, "pre-requisite on source volume") || !assert.Len(t, medias, 3) {
 		return
 	}
 
 	multiFilesBackup := pkgfactory.NewMultiFilesBackup(ctx)
 	report, err := multiFilesBackup(ctx, b.owner, volume,
-		backup.OptionsConcurrentAnalyserRoutines(3),
-		backup.OptionsConcurrentCataloguerRoutines(3),
-		backup.OptionsConcurrentUploaderRoutines(3),
-		backup.OptionsBatchSize(1),
+		backup.OptionsConcurrentAnalyserRoutines(2),
+		backup.OptionsConcurrentCataloguerRoutines(2),
+		backup.OptionsConcurrentUploaderRoutines(2),
+		backup.OptionsBatchSize(2),
 	)
 	if assert.NoError(t, err) {
 		assert.Equal(t, map[string]*backup.AlbumReport{
-			"/2024-Q1": backup.NewTypeCounter(backup.MediaTypeImage, 3, 88185, true),
+			"/2024-Q1": backup.NewAlbumReport(backup.MediaTypeImage, 3, 88185, true),
 		}, report.CountPerAlbum())
 	}
 }

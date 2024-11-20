@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -17,6 +18,11 @@ const (
 	OrientationUpperRight ImageOrientation = "UPPER_RIGHT"
 	OrientationLowerLeft  ImageOrientation = "LOWER_LEFT"
 )
+
+type SourceVolume interface {
+	String() string
+	FindMedias(ctx context.Context) ([]FoundMedia, error)
+}
 
 // MediaType is photo or video
 type MediaType string
