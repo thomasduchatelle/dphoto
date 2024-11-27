@@ -88,11 +88,13 @@ func TestBackupAcceptance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ClearDetailsReader()
-			RegisterDetailsReader(tt.fields.detailsReaders)
-			Init(tt.fields.archive, tt.fields.cataloguerFactory, tt.fields.insertMedia)
+			Init(tt.fields.archive, nil, tt.fields.insertMedia)
+			backup := &BatchBackup{
+				CataloguerFactory: tt.fields.cataloguerFactory,
+				DetailsReaders:    []DetailsReaderAdapter{tt.fields.detailsReaders},
+			}
 
-			got, err := Backup(tt.args.owner, tt.args.volume, tt.args.optionsSlice...)
+			got, err := backup.Backup(tt.args.owner, tt.args.volume, tt.args.optionsSlice...)
 
 			if !tt.wantErr(t, err, fmt.Sprintf("Backup(%v, %v, %v)", tt.args.owner, tt.args.volume, tt.args.optionsSlice)) {
 				return
@@ -219,6 +221,7 @@ func (e *StaticCompletionReport) CountPerAlbum() map[string]IAlbumReport {
 
 func convertToStaticAlbumReport(report IAlbumReport) *StaticAlbumReport {
 	return &StaticAlbumReport{
+		isNew: report.IsNew(),
 		image: report.OfType(MediaTypeImage),
 		video: report.OfType(MediaTypeVideo),
 		other: report.OfType(MediaTypeOther),
@@ -226,9 +229,14 @@ func convertToStaticAlbumReport(report IAlbumReport) *StaticAlbumReport {
 }
 
 type StaticAlbumReport struct {
+	isNew bool
 	image MediaCounter
 	video MediaCounter
 	other MediaCounter
+}
+
+func (c *StaticAlbumReport) IsNew() bool {
+	return c.isNew
 }
 
 func (c *StaticAlbumReport) Total() MediaCounter {

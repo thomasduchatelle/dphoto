@@ -6,7 +6,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
-	_ "github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/backuparchive"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/backupcatalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
@@ -19,12 +18,15 @@ type MultiFilesScanner func(ctx context.Context, owner string, volume backup.Sou
 
 func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 	factory.InitArchive(ctx)
-	backup.Init(backuparchive.New(), NewCataloguerFactory(), NewInsertMediaAdapter(ctx))
+	backup.Init(backuparchive.New(), nil, NewInsertMediaAdapter(ctx))
 
 	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error) {
-		options := backupDefaultOptionsForAWS(optionsSlice)
+		batch := &backup.BatchBackup{
+			CataloguerFactory: NewCataloguerFactory(),
+			DetailsReaders:    analysers.ListDetailReaders(),
+		}
 
-		return backup.Backup(owner, volume, options...)
+		return batch.Backup(owner, volume, backupDefaultOptionsForAWS(optionsSlice)...)
 	}
 }
 

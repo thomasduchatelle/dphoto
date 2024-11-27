@@ -30,7 +30,7 @@ func PrintBackupStats(tracker backup.CompletionReport, volumePath string) {
 	i := 0
 	for folderName, counts := range tracker.CountPerAlbum() {
 		newMarker := ""
-		if counts.New {
+		if counts.IsNew() {
 			newMarker = "*"
 		}
 

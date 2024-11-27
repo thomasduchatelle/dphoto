@@ -11,6 +11,7 @@ type CompletionReport interface {
 }
 
 type IAlbumReport interface {
+	IsNew() bool
 	Total() MediaCounter
 	OfType(mediaType MediaType) MediaCounter
 }
@@ -58,6 +59,10 @@ func NewTypeCounter(mediaType MediaType, count int, size int, isNew bool) *Album
 	counter.IncrementFoundCounter(mediaType, count, size)
 	counter.New = isNew
 	return counter
+}
+
+func (c *AlbumReport) IsNew() bool {
+	return c.New
 }
 
 func (c *AlbumReport) IncrementFoundCounter(mediaType MediaType, count int, size int) *AlbumReport {
