@@ -18,7 +18,7 @@ type MultiFilesScanner func(ctx context.Context, owner string, volume backup.Sou
 
 func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 	factory.InitArchive(ctx)
-	backup.Init(backuparchive.New(), nil, NewInsertMediaAdapter(ctx))
+	backup.Init(backuparchive.New())
 
 	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error) {
 		batch := &backup.BatchBackup{

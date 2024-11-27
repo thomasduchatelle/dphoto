@@ -20,6 +20,7 @@ type SourceVolume interface {
 type BatchBackup struct {
 	CataloguerFactory CataloguerFactory
 	DetailsReaders    []DetailsReaderAdapter
+	InsertMediaPort   InsertMediaPort
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
@@ -47,7 +48,7 @@ func (b *BatchBackup) Backup(owner ownermodel.Owner, volume SourceVolume, option
 		Analyser:          options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
 		CatalogReferencer: referencer,
 		UniqueFilter:      newUniqueFilter(),
-		Uploader:          &Uploader{Owner: owner, InsertMediaPort: insertMediaPort},
+		Uploader:          &Uploader{Owner: owner, InsertMediaPort: b.InsertMediaPort},
 	}
 
 	progressChannel, _ := run.start(context.TODO(), hintSize)
@@ -78,13 +79,4 @@ func (b *BatchBackup) newCataloguer(owner ownermodel.Owner, dryRun bool) (Catalo
 	}
 
 	return referencer, nil
-}
-
-// Backup is now deprecated. Use BatchBackup instead.
-func Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
-	backup := &BatchBackup{
-		CataloguerFactory: referencerFactory,
-		DetailsReaders:    defaultAnalyser.detailsReaders,
-	}
-	return backup.Backup(owner, volume, optionsSlice...)
 }

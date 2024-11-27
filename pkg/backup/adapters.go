@@ -8,16 +8,12 @@ import (
 )
 
 var (
-	archivePort       BArchiveAdapter
-	referencerFactory CataloguerFactory
-	insertMediaPort   InsertMediaPort
+	archivePort BArchiveAdapter
 )
 
 // Init for scan or backup (but only refFactory is required for scan)
-func Init(archive BArchiveAdapter, refFactory CataloguerFactory, insertMedia InsertMediaPort) {
+func Init(archive BArchiveAdapter) {
 	archivePort = archive
-	referencerFactory = refFactory
-	insertMediaPort = insertMedia
 }
 
 type InsertMediaPort interface {
