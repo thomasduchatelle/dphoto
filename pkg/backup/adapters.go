@@ -7,15 +7,6 @@ import (
 	"time"
 )
 
-var (
-	archivePort BArchiveAdapter
-)
-
-// Init for scan or backup (but only refFactory is required for scan)
-func Init(archive BArchiveAdapter) {
-	archivePort = archive
-}
-
 type InsertMediaPort interface {
 	IndexMedias(ctx context.Context, owner ownermodel.Owner, requests []*CatalogMediaRequest) error
 }

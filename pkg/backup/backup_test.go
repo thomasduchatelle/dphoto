@@ -88,11 +88,11 @@ func TestBackupAcceptance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Init(tt.fields.archive)
 			backup := &BatchBackup{
 				CataloguerFactory: tt.fields.cataloguerFactory,
 				DetailsReaders:    []DetailsReaderAdapter{tt.fields.detailsReaders},
 				InsertMediaPort:   tt.fields.insertMedia,
+				ArchivePort:       tt.fields.archive,
 			}
 
 			got, err := backup.Backup(tt.args.owner, tt.args.volume, tt.args.optionsSlice...)

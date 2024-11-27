@@ -21,6 +21,7 @@ type BatchBackup struct {
 	CataloguerFactory CataloguerFactory
 	DetailsReaders    []DetailsReaderAdapter
 	InsertMediaPort   InsertMediaPort
+	ArchivePort       BArchiveAdapter
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
@@ -48,7 +49,7 @@ func (b *BatchBackup) Backup(owner ownermodel.Owner, volume SourceVolume, option
 		Analyser:          options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
 		CatalogReferencer: referencer,
 		UniqueFilter:      newUniqueFilter(),
-		Uploader:          &Uploader{Owner: owner, InsertMediaPort: b.InsertMediaPort},
+		Uploader:          &Uploader{Owner: owner, InsertMediaPort: b.InsertMediaPort, ArchivePort: b.ArchivePort},
 	}
 
 	progressChannel, _ := run.start(context.TODO(), hintSize)

@@ -9,13 +9,14 @@ import (
 type Uploader struct {
 	Owner           ownermodel.Owner
 	InsertMediaPort InsertMediaPort
+	ArchivePort     BArchiveAdapter
 }
 
 func (u *Uploader) Upload(buffer []*BackingUpMediaRequest, progressChannel chan *progressEvent) error {
 	catalogRequests := make([]*CatalogMediaRequest, len(buffer), len(buffer))
 
 	for i, request := range buffer {
-		newFilename, err := archivePort.ArchiveMedia(u.Owner.Value(), request)
+		newFilename, err := u.ArchivePort.ArchiveMedia(u.Owner.Value(), request)
 		if err != nil {
 			return errors.Wrapf(err, "archiving media %s failed", request.AnalysedMedia.FoundMedia.String())
 		}
