@@ -24,7 +24,7 @@ func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 			DetailsReaders:    analysers.ListDetailReaders(),
 		}
 
-		return batch.Backup(owner, volume, backupDefaultOptionsForAWS(optionsSlice)...)
+		return batch.Backup(ctx, owner, volume, backupDefaultOptionsForAWS(optionsSlice)...)
 	}
 }
 

@@ -25,7 +25,7 @@ type BatchBackup struct {
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
-func (b *BatchBackup) Backup(owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
+func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.String(), "_"), "_"), time.Now().Format("20060102_150405"))
 	mdc := log.WithFields(log.Fields{
@@ -35,7 +35,7 @@ func (b *BatchBackup) Backup(owner ownermodel.Owner, volume SourceVolume, option
 
 	options := ReduceOptions(optionsSlice...)
 
-	referencer, err := b.newCataloguer(owner, options.DryRun)
+	referencer, err := b.newCataloguer(ctx, owner, options.DryRun)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (b *BatchBackup) Backup(owner ownermodel.Owner, volume SourceVolume, option
 		Uploader:          &Uploader{Owner: owner, InsertMediaPort: b.InsertMediaPort, ArchivePort: b.ArchivePort},
 	}
 
-	progressChannel, _ := run.start(context.TODO(), hintSize)
+	progressChannel, _ := run.start(ctx, hintSize)
 	backupReport := NewTracker(progressChannel, options.Listener)
 
 	err = run.waitToFinish()
@@ -66,14 +66,14 @@ func (b *BatchBackup) Backup(owner ownermodel.Owner, volume SourceVolume, option
 	return backupReport, err
 }
 
-func (b *BatchBackup) newCataloguer(owner ownermodel.Owner, dryRun bool) (Cataloguer, error) {
+func (b *BatchBackup) newCataloguer(ctx context.Context, owner ownermodel.Owner, dryRun bool) (Cataloguer, error) {
 	var referencer Cataloguer
 	var err error
 
 	if dryRun {
-		referencer, err = b.CataloguerFactory.NewDryRunCataloguer(context.TODO(), owner)
+		referencer, err = b.CataloguerFactory.NewDryRunCataloguer(ctx, owner)
 	} else {
-		referencer, err = b.CataloguerFactory.NewAlbumCreatorCataloguer(context.TODO(), owner)
+		referencer, err = b.CataloguerFactory.NewAlbumCreatorCataloguer(ctx, owner)
 	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create a cataloguer for %s with dryRun=%t", owner, dryRun)
