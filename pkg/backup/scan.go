@@ -14,32 +14,32 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 
 	options := ReduceOptions(optionSlice...)
 
-	launcher, monitor, err := s.prepareVolumeScan(ctx, options, volume.String(), owner)
+	launcher, reportBuilder, err := s.prepareVolumeScan(ctx, options, volume.String(), owner)
 	if err != nil {
 		return nil, err
 	}
 
 	err, _ = <-launcher.process(ctx, volume)
 
-	return monitor.report.collect(), err
+	return reportBuilder.build(), err
 }
 
-func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *reportGetter, error) {
+func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
 	tracker := newTrackerV2(options)
-	report := newScanReport()
+	reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
 
 	monitoring := &scanListeners{
 		scanCompleteObserver:      tracker,
 		PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
 		PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker},
-		PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker, report},
+		PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker, reportBuilder},
 		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
-		PostCatalogFiltersIn:      []CatalogReferencerObserver{tracker, report},
+		PostCatalogFiltersIn:      []CatalogReferencerObserver{tracker, reportBuilder},
 		PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
 	}
 	if options.SkipRejects {
-		monitoring.PostAnalyserRejects = append(monitoring.PostAnalyserRejects, report)
+		monitoring.PostAnalyserRejects = append(monitoring.PostAnalyserRejects, reportBuilder)
 	}
 
 	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring)
@@ -55,11 +55,5 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 		cataloguer: cataloguer,
 		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
 	})
-	return launcher, &reportGetter{
-		report: report,
-	}, err
-}
-
-type reportGetter struct {
-	report *scanReport
+	return launcher, reportBuilder, err
 }
