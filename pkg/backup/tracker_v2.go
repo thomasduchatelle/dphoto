@@ -70,11 +70,11 @@ func (c ExtraCounts) String() interface{} {
 }
 
 // newTrackerV2 creates the trackerV2 and start consuming (async)
-func newTrackerV2(options Options) *trackerObserver {
+func newTrackerV2(options Options) (*trackerObserver, *trackerV2) {
 	tracker := &trackerV2{
 		listeners:     []interface{}{options.Listener},
 		eventCount:    make(map[trackEvent]MediaCounter),
-		detailedCount: make(map[string]*AlbumReport),
+		detailedCount: make(map[string]IAlbumReport),
 	}
 
 	observer := &trackerObserver{
@@ -85,14 +85,14 @@ func newTrackerV2(options Options) *trackerObserver {
 		defer close(observer.done)
 		tracker.consume(observer.channel)
 	}()
-	return observer
+	return observer, tracker
 }
 
 // trackerV2 is simplifying the consumption of events from scans and backups to implement progress bars.
 type trackerV2 struct {
 	listeners     []interface{} // listeners will receive aggregated and typed updates
 	eventCount    map[trackEvent]MediaCounter
-	detailedCount map[string]*AlbumReport
+	detailedCount map[string]IAlbumReport
 }
 
 func (t *trackerV2) Skipped() MediaCounter {
@@ -102,7 +102,7 @@ func (t *trackerV2) Skipped() MediaCounter {
 	return exists.AddCounter(duplicates).AddCounter(wrongAlbum)
 }
 
-func (t *trackerV2) CountPerAlbum() map[string]*AlbumReport {
+func (t *trackerV2) CountPerAlbum() map[string]IAlbumReport {
 	return t.detailedCount
 }
 
@@ -130,7 +130,7 @@ func (t *trackerV2) consume(progressChannel chan *progressEvent) {
 				typeCount = &AlbumReport{}
 				t.detailedCount[event.Album] = typeCount
 			}
-			typeCount.IncrementFoundCounter(event.MediaType, event.Count, event.Size)
+			typeCount.(*AlbumReport).IncrementFoundCounter(event.MediaType, event.Count, event.Size)
 
 			t.fireUploadedEvent()
 
@@ -140,7 +140,7 @@ func (t *trackerV2) consume(progressChannel chan *progressEvent) {
 				counts = &AlbumReport{}
 				t.detailedCount[event.Album] = counts
 			}
-			counts.New = true
+			counts.(*AlbumReport).New = true
 
 		case trackAnalysedFromCache:
 			// nothing
@@ -278,4 +278,16 @@ func (p *trackerObserver) OnFilteredOut(ctx context.Context, media AnalysedMedia
 	default:
 		return errors.Wrapf(cause, "filter error is not supported. Media: %s", media.FoundMedia)
 	}
+}
+
+func (p *trackerObserver) OnBackingUpMediaRequestUploaded(ctx context.Context, request BackingUpMediaRequest) error {
+	p.channel <- &progressEvent{
+		Type:      trackUploaded,
+		Count:     1,
+		Size:      request.AnalysedMedia.FoundMedia.Size(),
+		Album:     request.CatalogReference.AlbumFolderName(),
+		MediaType: request.AnalysedMedia.Type,
+	}
+
+	return nil
 }

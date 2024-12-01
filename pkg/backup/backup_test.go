@@ -95,7 +95,7 @@ func TestBackupAcceptance(t *testing.T) {
 				ArchivePort:       tt.fields.archive,
 			}
 
-			got, err := backup.Backup(nil, tt.args.owner, tt.args.volume, tt.args.optionsSlice...)
+			got, err := backup.Backup(context.Background(), tt.args.owner, tt.args.volume, tt.args.optionsSlice...)
 
 			if !tt.wantErr(t, err, fmt.Sprintf("Backup(%v, %v, %v)", tt.args.owner, tt.args.volume, tt.args.optionsSlice)) {
 				return

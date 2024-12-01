@@ -26,6 +26,17 @@ type BatchBackup struct {
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
 func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
+	launcher, tracker, err := b.prepareVolumeScan(ctx, ReduceOptions(optionsSlice...), volume.String(), owner)
+	if err != nil {
+		return nil, err
+	}
+
+	err, _ = <-launcher.process(ctx, volume)
+
+	return tracker, err
+}
+
+func (b *BatchBackup) Backup2(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.String(), "_"), "_"), time.Now().Format("20060102_150405"))
 	mdc := log.WithFields(log.Fields{
@@ -49,7 +60,7 @@ func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume
 		Analyser:          options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
 		CatalogReferencer: referencer,
 		UniqueFilter:      newUniqueFilter(),
-		Uploader:          &Uploader{Owner: owner, InsertMediaPort: b.InsertMediaPort, ArchivePort: b.ArchivePort},
+		Uploader:          &uploader{Owner: owner, InsertMediaPort: b.InsertMediaPort, ArchivePort: b.ArchivePort},
 	}
 
 	progressChannel, _ := run.start(ctx, hintSize)
@@ -80,4 +91,46 @@ func (b *BatchBackup) newCataloguer(ctx context.Context, owner ownermodel.Owner,
 	}
 
 	return referencer, nil
+}
+
+func (b *BatchBackup) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *trackerV2, error) {
+	tracker, report := newTrackerV2(options) // TODO is using the tracker to collect the report the best way to do it ?
+	//reportBuilder := newScanReportBuilder()
+	scanLogger := newLogger(volumeName)
+
+	monitoring := &scanListeners{
+		scanCompleteObserver:      tracker,
+		PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
+		PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker},
+		PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker /*, reportBuilder*/},
+		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
+		PostCatalogFiltersIn: []CatalogReferencerObserver{
+			tracker, /*, reportBuilder*/
+			&uploader{
+				Owner:            owner,
+				InsertMediaPort:  b.InsertMediaPort,
+				ArchivePort:      b.ArchivePort,
+				UploaderObserver: tracker,
+			},
+		},
+		PostCatalogFiltersOut: []CataloguerFilterObserver{scanLogger, tracker},
+	}
+	if options.SkipRejects {
+		monitoring.PostAnalyserRejects = append(monitoring.PostAnalyserRejects /*, reportBuilder*/)
+	}
+
+	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring)
+	controller.registerWrappers(tracker)
+
+	cataloguer, err := b.newCataloguer(ctx, owner, options.DryRun)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	launcher, err := newScanningChain(ctx, controller, scanningOptions{
+		Options:    options,
+		cataloguer: cataloguer,
+		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
+	})
+	return launcher, report, err
 }

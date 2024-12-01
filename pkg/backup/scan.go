@@ -25,7 +25,7 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 }
 
 func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
-	tracker := newTrackerV2(options)
+	tracker, _ := newTrackerV2(options)
 	reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
 

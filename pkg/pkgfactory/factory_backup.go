@@ -6,6 +6,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
+	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/backuparchive"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/backupcatalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
@@ -22,6 +23,8 @@ func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 		batch := &backup.BatchBackup{
 			CataloguerFactory: NewCataloguerFactory(),
 			DetailsReaders:    analysers.ListDetailReaders(),
+			InsertMediaPort:   NewInsertMediaAdapter(ctx),
+			ArchivePort:       backuparchive.New(),
 		}
 
 		return batch.Backup(ctx, owner, volume, backupDefaultOptionsForAWS(optionsSlice)...)
