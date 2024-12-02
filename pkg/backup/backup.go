@@ -26,7 +26,7 @@ type BatchBackup struct {
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
 func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
-	launcher, tracker, err := b.prepareVolumeScan(ctx, ReduceOptions(optionsSlice...), volume.String(), owner)
+	launcher, tracker, err := b.prepareVolumeBackup(ctx, ReduceOptions(optionsSlice...), volume.String(), owner)
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +37,7 @@ func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume
 }
 
 func (b *BatchBackup) Backup2(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
+	// TODO delete recursively this method and all orphaned code
 	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.String(), "_"), "_"), time.Now().Format("20060102_150405"))
 	mdc := log.WithFields(log.Fields{
@@ -93,7 +94,7 @@ func (b *BatchBackup) newCataloguer(ctx context.Context, owner ownermodel.Owner,
 	return referencer, nil
 }
 
-func (b *BatchBackup) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *trackerV2, error) {
+func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *trackerV2, error) {
 	tracker, report := newTrackerV2(options) // TODO is using the tracker to collect the report the best way to do it ?
 	//reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
