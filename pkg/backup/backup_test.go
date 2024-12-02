@@ -28,7 +28,8 @@ func TestBackupAcceptance(t *testing.T) {
 			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 19, 0, 0, 0, 0, time.UTC)},
 		},
 	}
-	doesNotExistReference := &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"}
+	doesNotExistReference1 := &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"}
+	doesNotExistReference2 := &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"}
 
 	type fields struct {
 		archive           BArchiveAdapter
@@ -57,21 +58,21 @@ func TestBackupAcceptance(t *testing.T) {
 						owner: {
 							{
 								AnalysedMedia:    analysedMedias[0],
-								CatalogReference: doesNotExistReference,
+								CatalogReference: doesNotExistReference1,
 							},
 						},
 					},
 				},
 				cataloguerFactory: &ReferencerFactoryFake{
 					CreatorReferencer: &CatalogReferencerFake{
-						analysedMedias[0]: doesNotExistReference,
+						analysedMedias[0]: doesNotExistReference1,
 					},
 				},
 				insertMedia: &AssertInsertMediaPort{
 					Want: []InsertMediaPortFakeEntry{
 						{
 							owner:           owner,
-							reference:       doesNotExistReference,
+							reference:       doesNotExistReference1,
 							ArchiveFilename: fakeArchiveFileName(analysedMedias[0]),
 						},
 					},
@@ -86,7 +87,7 @@ func TestBackupAcceptance(t *testing.T) {
 			want: &StaticCompletionReport{
 				skipped: MediaCounterZero,
 				countPerAlbum: map[string]IAlbumReport{
-					doesNotExistReference.AlbumFolderNameValue: countOfMedias(analysedMedias[0]),
+					doesNotExistReference1.AlbumFolderNameValue: countOfMedias(analysedMedias[0]),
 				},
 			},
 			wantErr: assert.NoError,
@@ -101,8 +102,8 @@ func TestBackupAcceptance(t *testing.T) {
 				},
 				cataloguerFactory: &ReferencerFactoryFake{
 					CreatorReferencer: &CatalogReferencerFake{
-						analysedMedias[0]: doesNotExistReference,
-						analysedMedias[1]: doesNotExistReference,
+						analysedMedias[0]: doesNotExistReference1,
+						analysedMedias[1]: doesNotExistReference2,
 					},
 				},
 				insertMedia: new(InsertMediaPortFake),
@@ -115,12 +116,13 @@ func TestBackupAcceptance(t *testing.T) {
 				},
 				optionsSlice: []Options{
 					OptionsConcurrentUploaderRoutines(2),
+					OptionsBatchSize(1),
 				},
 			},
 			want: &StaticCompletionReport{
 				skipped: MediaCounterZero,
 				countPerAlbum: map[string]IAlbumReport{
-					doesNotExistReference.AlbumFolderNameValue: countOfMedias(analysedMedias[0], analysedMedias[1]),
+					doesNotExistReference1.AlbumFolderNameValue: countOfMedias(analysedMedias[0], analysedMedias[1]),
 				},
 			},
 			wantErr: assert.NoError,

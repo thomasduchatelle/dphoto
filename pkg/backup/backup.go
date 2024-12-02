@@ -99,6 +99,8 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 	//reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
 
+	uploaderChannelInstance := make(uploaderChannel)
+
 	monitoring := &scanListeners{
 		scanCompleteObserver:      tracker,
 		PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
@@ -107,12 +109,7 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
 		PostCatalogFiltersIn: []CatalogReferencerObserver{
 			tracker, /*, reportBuilder*/
-			&uploader{
-				Owner:            owner,
-				InsertMediaPort:  b.InsertMediaPort,
-				ArchivePort:      b.ArchivePort,
-				UploaderObserver: tracker,
-			},
+			uploaderChannelInstance,
 		},
 		PostCatalogFiltersOut: []CataloguerFilterObserver{scanLogger, tracker},
 	}
@@ -120,7 +117,20 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 		monitoring.PostAnalyserRejects = append(monitoring.PostAnalyserRejects /*, reportBuilder*/)
 	}
 
+	uploaderLauncher := &multithreadedUploaderLauncher{
+		uploader: &uploader{
+			Owner:            owner,
+			InsertMediaPort:  b.InsertMediaPort,
+			ArchivePort:      b.ArchivePort,
+			UploaderObserver: tracker,
+		},
+		channel:                    uploaderChannelInstance,
+		done:                       make(chan interface{}),
+		concurrentUploaderRoutines: options.ConcurrencyParameters.NumberOfConcurrentUploaderRoutines(),
+	}
+
 	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring)
+	controller.registerWrappers(uploaderLauncher)
 	controller.registerWrappers(tracker)
 
 	cataloguer, err := b.newCataloguer(ctx, owner, options.DryRun)
@@ -133,5 +143,46 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 		cataloguer: cataloguer,
 		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
 	})
-	return launcher, report, err
+	return uploaderLauncher.wrapLauncher(launcher), report, err
+}
+
+type uploaderChannel chan []BackingUpMediaRequest
+
+func (m uploaderChannel) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
+	m <- requests
+	return nil
+}
+
+type multithreadedUploaderLauncher struct {
+	launcher                   analyserLauncher
+	uploader                   CatalogReferencerObserver
+	channel                    chan []BackingUpMediaRequest
+	done                       chan interface{}
+	concurrentUploaderRoutines int
+}
+
+func (m *multithreadedUploaderLauncher) Close() error {
+	close(m.channel)
+	<-m.done
+	return nil
+}
+
+func (m *multithreadedUploaderLauncher) process(ctx context.Context, volume SourceVolume) chan error {
+	startsInParallel(ctx, m.concurrentUploaderRoutines, func(ctx context.Context) {
+		for requests := range m.channel {
+			err := m.uploader.OnMediaCatalogued(ctx, requests)
+			if err != nil {
+				// TODO handle the error to abort the process
+			}
+		}
+	}, func() {
+		close(m.done)
+	})
+
+	return m.launcher.process(ctx, volume)
+}
+
+func (m *multithreadedUploaderLauncher) wrapLauncher(launcher scanningLauncher) analyserLauncher {
+	m.launcher = launcher
+	return m
 }
