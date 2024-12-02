@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"maps"
+	"sync"
 	"testing"
 	"time"
 )
@@ -19,6 +20,12 @@ func TestBackupAcceptance(t *testing.T) {
 			Type:       MediaTypeImage,
 			Sha256Hash: "3e7574e8b640104d97597b200fd516c589f34be540e0a81a272fd488d12acaec",
 			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC)},
+		},
+		{
+			FoundMedia: NewInMemoryMedia("folder1/file_2.jpg", time.Now(), []byte("2022-06-19AB")),
+			Type:       MediaTypeImage,
+			Sha256Hash: "28f046d0ebae98f45512f98d581e7cdded28dd9cf50e7712615970dc15221cb3",
+			Details:    &MediaDetails{DateTime: time.Date(2022, 6, 19, 0, 0, 0, 0, time.UTC)},
 		},
 	}
 	doesNotExistReference := &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"}
@@ -80,6 +87,40 @@ func TestBackupAcceptance(t *testing.T) {
 				skipped: MediaCounterZero,
 				countPerAlbum: map[string]IAlbumReport{
 					doesNotExistReference.AlbumFolderNameValue: countOfMedias(analysedMedias[0]),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should run uploader in 2 routines",
+			fields: fields{
+				detailsReaders: new(DetailsReaderAdapterStub),
+				archive: &ArchiveGroupWaiter{
+					Delegate: new(ArchiveFake),
+					Waiter:   newWaitGroup(2),
+				},
+				cataloguerFactory: &ReferencerFactoryFake{
+					CreatorReferencer: &CatalogReferencerFake{
+						analysedMedias[0]: doesNotExistReference,
+						analysedMedias[1]: doesNotExistReference,
+					},
+				},
+				insertMedia: new(InsertMediaPortFake),
+			},
+			args: args{
+				owner: owner,
+				volume: &InMemorySourceVolume{
+					analysedMedias[0].FoundMedia,
+					analysedMedias[1].FoundMedia,
+				},
+				optionsSlice: []Options{
+					OptionsConcurrentUploaderRoutines(2),
+				},
+			},
+			want: &StaticCompletionReport{
+				skipped: MediaCounterZero,
+				countPerAlbum: map[string]IAlbumReport{
+					doesNotExistReference.AlbumFolderNameValue: countOfMedias(analysedMedias[0], analysedMedias[1]),
 				},
 			},
 			wantErr: assert.NoError,
@@ -253,4 +294,16 @@ func (c *StaticAlbumReport) OfType(mediaType MediaType) MediaCounter {
 	default:
 		return c.other
 	}
+}
+
+type ArchiveGroupWaiter struct {
+	Delegate BArchiveAdapter
+	Waiter   *sync.WaitGroup
+}
+
+func (a *ArchiveGroupWaiter) ArchiveMedia(owner string, media *BackingUpMediaRequest) (string, error) {
+	a.Waiter.Done()
+	a.Waiter.Wait()
+
+	return a.Delegate.ArchiveMedia(owner, media)
 }
