@@ -56,7 +56,7 @@ func (b *BackupTestSuite) Test10_Backup() {
 	t := b.T()
 
 	volume := filesystemvolume.New("./test_resources/acceptance")
-	medias, err := volume.FindMedias()
+	medias, err := volume.FindMedias(context.TODO())
 	if !assert.NoError(t, err, "pre-requisite on source volume") || !assert.Len(t, medias, 3) {
 		return
 	}

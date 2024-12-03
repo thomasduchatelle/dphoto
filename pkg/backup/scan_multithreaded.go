@@ -13,7 +13,7 @@ type analyserLauncher interface {
 	process(ctx context.Context, volume SourceVolume) chan error
 }
 
-func newMultiThreadedController(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator) *multiThreadedController {
+func newMultiThreadedController2(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator) *multiThreadedController {
 	return &multiThreadedController{
 		scanMonitoringIntegrator: monitoringIntegrator,
 		analysedMedias:           make(chan *AnalysedMedia, 255),
@@ -206,7 +206,7 @@ func (l *multiThreadedControllerLauncher) forwardsMediaChannelToTheChain(ctx con
 func (l *multiThreadedControllerLauncher) readVolumeAndPublishFoundMediasInChannel(ctx context.Context, volume SourceVolume) {
 	defer close(l.mediaChannels)
 
-	medias, err := volume.FindMedias()
+	medias, err := volume.FindMedias(context.TODO())
 	if err != nil {
 		l.errorCollector.appendError(err)
 		return

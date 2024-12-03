@@ -2,6 +2,7 @@
 package filesystemvolume
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"io"
@@ -29,7 +30,7 @@ func (v *volume) String() string {
 	return v.path
 }
 
-func (v *volume) FindMedias() ([]backup.FoundMedia, error) {
+func (v *volume) FindMedias(context.Context) ([]backup.FoundMedia, error) {
 	absRootPath, err := filepath.Abs(v.path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid volume path")

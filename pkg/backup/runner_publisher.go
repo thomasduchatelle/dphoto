@@ -1,7 +1,9 @@
 package backup
 
+import "context"
+
 func newPublisher(volume SourceVolume) (runnerPublisher, int, error) {
-	medias, err := volume.FindMedias()
+	medias, err := volume.FindMedias(context.TODO())
 
 	return func(channel chan FoundMedia, eventChannel chan *progressEvent) error {
 		size := 0

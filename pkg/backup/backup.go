@@ -14,7 +14,7 @@ import (
 
 type SourceVolume interface {
 	String() string
-	FindMedias() ([]FoundMedia, error)
+	FindMedias(ctx context.Context) ([]FoundMedia, error)
 }
 
 type BatchBackup struct {

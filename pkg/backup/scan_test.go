@@ -259,7 +259,7 @@ func (m *InMemorySourceVolume) String() string {
 	return "In-Memory Volume"
 }
 
-func (m *InMemorySourceVolume) FindMedias() ([]FoundMedia, error) {
+func (m *InMemorySourceVolume) FindMedias(context.Context) ([]FoundMedia, error) {
 	return *m, nil
 }
 
