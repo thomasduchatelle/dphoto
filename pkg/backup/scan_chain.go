@@ -32,19 +32,17 @@ func newScanningChain(ctx context.Context, controller scanningController, option
 
 	chain := &analyserObserverChain{
 		AnalysedMediaObservers: controller.AppendPostAnalyserSuccess(&analyserNoDateTimeFilter{
-			analyserObserverChain{
-				AnalysedMediaObservers: []AnalysedMediaObserver{
-					controller.WrapAnalysedMediasBatchObserverIntoAnalysedMediaObserver(ctx, options.BatchSize, &analyserToCatalogReferencer{
-						CatalogReferencer: options.cataloguer,
-						CatalogReferencerObservers: controller.AppendPreCataloguerFilter(&applyFiltersOnCataloguer{
-							CatalogReferencerObservers: controller.AppendPostCatalogFiltersIn(),
-							CataloguerFilterObservers:  controller.AppendPostCatalogFiltersOut(),
-							CataloguerFilters:          postCatalogFiltersList(options.Options),
-						}),
+			analysedMediaObserver: AnalysedMediaObservers{
+				controller.WrapAnalysedMediasBatchObserverIntoAnalysedMediaObserver(ctx, options.BatchSize, &analyserToCatalogReferencer{
+					CatalogReferencer: options.cataloguer,
+					CatalogReferencerObservers: controller.AppendPreCataloguerFilter(&applyFiltersOnCataloguer{
+						CatalogReferencerObservers: controller.AppendPostCatalogFiltersIn(),
+						CataloguerFilterObservers:  controller.AppendPostCatalogFiltersOut(),
+						CataloguerFilters:          postCatalogFiltersList(options.Options),
 					}),
-				},
-				RejectedMediaObservers: controller.AppendPostAnalyserFilterRejects(),
+				}),
 			},
+			rejectedMediaObserver: RejectedMediaObservers(controller.AppendPostAnalyserFilterRejects()),
 		}),
 		RejectedMediaObservers: controller.AppendPostAnalyserRejects(postAnalyserRejects...),
 	}
