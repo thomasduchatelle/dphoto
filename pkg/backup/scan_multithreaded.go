@@ -13,7 +13,7 @@ type analyserLauncher interface {
 	process(ctx context.Context, volume SourceVolume) chan error
 }
 
-func newMultiThreadedController2(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator) *multiThreadedController {
+func newMultiThreadedController(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator) *multiThreadedController {
 	return &multiThreadedController{
 		scanMonitoringIntegrator: monitoringIntegrator,
 		analysedMedias:           make(chan *AnalysedMedia, 255),
@@ -43,7 +43,7 @@ func (m *multiThreadedController) Launcher(analyser Analyser, chain *analyserObs
 // 0.b  analyserNoDateTimeFilter
 // 1.  CATALOGUER [Mx cataloguers]
 // 1.a  bufferAnalysedMedia
-// 1.b  analyserToCatalogReferencer
+// 1.b  cataloguerAdapter
 // 2.  REDUCER [1x reducer]
 // 2.a  applyFiltersOnCataloguer (postCatalogFiltersList)
 // 2.b  uniqueFilter
@@ -206,7 +206,7 @@ func (l *multiThreadedControllerLauncher) forwardsMediaChannelToTheChain(ctx con
 func (l *multiThreadedControllerLauncher) readVolumeAndPublishFoundMediasInChannel(ctx context.Context, volume SourceVolume) {
 	defer close(l.mediaChannels)
 
-	medias, err := volume.FindMedias(context.TODO())
+	medias, err := volume.FindMedias(ctx)
 	if err != nil {
 		l.errorCollector.appendError(err)
 		return

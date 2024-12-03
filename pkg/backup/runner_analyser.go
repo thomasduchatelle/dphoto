@@ -75,10 +75,8 @@ func newAnalyserObserverChain(options Options, observers ...interface{}) *analys
 		return &analyserObserverChain{
 			AnalysedMediaObservers: []AnalysedMediaObserver{
 				&analyserNoDateTimeFilter{
-					analyserObserverChain{
-						AnalysedMediaObservers: []AnalysedMediaObserver{delegates},
-						RejectedMediaObservers: []RejectedMediaObserver{delegates}},
-				},
+					analysedMediaObserver: AnalysedMediaObservers{delegates},
+					rejectedMediaObserver: RejectedMediaObservers{delegates}},
 			},
 			RejectedMediaObservers: []RejectedMediaObserver{delegates},
 		}
@@ -87,14 +85,36 @@ func newAnalyserObserverChain(options Options, observers ...interface{}) *analys
 	return &analyserObserverChain{
 		AnalysedMediaObservers: []AnalysedMediaObserver{
 			&analyserNoDateTimeFilter{
-				analyserObserverChain{
-					AnalysedMediaObservers: []AnalysedMediaObserver{delegates},
-					RejectedMediaObservers: []RejectedMediaObserver{new(analyserFailsFastObserver)},
-				},
+				analysedMediaObserver: AnalysedMediaObservers{delegates},
+				rejectedMediaObserver: RejectedMediaObservers{new(analyserFailsFastObserver)},
 			},
 		},
 		RejectedMediaObservers: []RejectedMediaObserver{delegates, new(analyserFailsFastObserver)},
 	}
+}
+
+type AnalysedMediaObservers []AnalysedMediaObserver
+
+func (a AnalysedMediaObservers) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
+	for _, observer := range a {
+		if err := observer.OnAnalysedMedia(ctx, media); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type RejectedMediaObservers []RejectedMediaObserver
+
+func (a RejectedMediaObservers) OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error {
+	for _, observer := range a {
+		if err := observer.OnRejectedMedia(ctx, found, cause); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type analyserObserverChain struct {
@@ -120,18 +140,6 @@ func (a *analyserObserverChain) OnRejectedMedia(ctx context.Context, found Found
 	}
 
 	return nil
-}
-
-type analyserNoDateTimeFilter struct {
-	analyserObserverChain
-}
-
-func (a *analyserNoDateTimeFilter) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
-	if media.Details.DateTime.IsZero() {
-		return a.analyserObserverChain.OnRejectedMedia(ctx, media.FoundMedia, ErrAnalyserNoDateTime)
-	}
-
-	return a.analyserObserverChain.OnAnalysedMedia(ctx, media)
 }
 
 type analyserFailsFastObserver struct {
