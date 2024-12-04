@@ -21,6 +21,16 @@ type ChainableErrorCollector interface {
 	Error() error
 }
 
+type Consumer[Consumed any] interface {
+	Consume(ctx context.Context, consumed Consumed) error
+}
+
+type ConsumerFunc[Consumed any] func(ctx context.Context, consumed Consumed) error
+
+func (c ConsumerFunc[Consumed]) Consume(ctx context.Context, consumed Consumed) error {
+	return c(ctx, consumed)
+}
+
 type StartLink interface {
 	// Starts is called first, it should create the channels and start the goroutines ; Next links Starts should also be called.
 	Starts(ctx context.Context, collector ChainableErrorCollector) error
@@ -31,18 +41,16 @@ type StartLink interface {
 
 type Link[Consumed any, Produced any] interface {
 	StartLink
-
-	// Consume is called by the previous link
-	Consume(ctx context.Context, produced Consumed) error
+	Consumer[Consumed]
 
 	// NotifyUpstreamCompleted is called when the previous link will not call Consume anymore
 	NotifyUpstreamCompleted()
 }
 
-// MultithreadedLink runs the operator on as many routines as requested.
+// MultithreadedLink runs the Operator on as many routines as requested.
 type MultithreadedLink[Consumed any, Produced any] struct {
 	NumberOfRoutines int
-	Operator         func(ctx context.Context, consumed Consumed) (Produced, error)
+	ConsumerBuilder  func(Consumer[Produced]) Consumer[Consumed]
 	Next             Link[Produced, any]
 	channel          chan Consumed
 }
@@ -52,8 +60,8 @@ func (m *MultithreadedLink[Consumed, Produced]) ChainNextLink(next Link[Produced
 }
 
 func (m *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
-	if m.Operator == nil {
-		return errors.New("operator is not set")
+	if m.ConsumerBuilder == nil {
+		return errors.New("ConsumerBuilder is not set")
 	}
 	if m.Next == nil {
 		return errors.New("Next is not set")
@@ -69,15 +77,11 @@ func (m *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, coll
 		return err
 	}
 
+	consumer := m.ConsumerBuilder(m.Next)
+
 	startsInParallel(ctx, m.NumberOfRoutines, func(ctx context.Context) {
 		for consumed := range m.channel {
-			produced, err := m.Operator(ctx, consumed)
-			if err != nil {
-				collector.OnError(err)
-				continue
-			}
-
-			err = m.Next.Consume(ctx, produced)
+			err := consumer.Consume(ctx, consumed)
 			if err != nil {
 				collector.OnError(err)
 			}
@@ -100,10 +104,10 @@ func (m *MultithreadedLink[Consumed, Produced]) WaitForCompletion() chan error {
 	return m.Next.WaitForCompletion()
 }
 
-// EnderChainLink runs operator on the same routines as the previous link, and return errors from the ChainableErrorCollector
+// EnderChainLink runs Operator on the same routines as the previous link, and return errors from the ChainableErrorCollector
 type EnderChainLink[Consumed any] struct {
 	done      chan error
-	operator  func(ctx context.Context, consumed Consumed) error
+	Operator  func(ctx context.Context, consumed Consumed) error
 	collector ChainableErrorCollector
 }
 
@@ -114,7 +118,11 @@ func (l *EnderChainLink[Consumed]) Starts(ctx context.Context, collector Chainab
 }
 
 func (l *EnderChainLink[Consumed]) Consume(ctx context.Context, produced Consumed) error {
-	return l.operator(ctx, produced)
+	if l.Operator != nil {
+		return l.Operator(ctx, produced)
+	}
+
+	return nil
 }
 
 func (l *EnderChainLink[Consumed]) NotifyUpstreamCompleted() {

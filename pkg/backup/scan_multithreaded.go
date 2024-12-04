@@ -68,6 +68,12 @@ type analysedMediasBatchObserver interface {
 	OnBatchOfAnalysedMedia(ctx context.Context, batch []*AnalysedMedia) error
 }
 
+type analysedMediasBatchObserverFunc func(ctx context.Context, batch []*AnalysedMedia) error
+
+func (a analysedMediasBatchObserverFunc) OnBatchOfAnalysedMedia(ctx context.Context, batch []*AnalysedMedia) error {
+	return a(ctx, batch)
+}
+
 type multiThreadedControllerLauncher struct {
 	parent                *multiThreadedController
 	analyser              Analyser
