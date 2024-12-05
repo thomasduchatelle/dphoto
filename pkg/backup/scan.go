@@ -15,7 +15,7 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 
 	options := ReduceOptions(optionSlice...)
 
-	launcher, reportBuilder, err := s.prepareVolumeScan(ctx, options, volume.String(), owner, volume)
+	launcher, reportBuilder, err := s.prepareVolumeScan(ctx, options, volume.String(), owner)
 	if err != nil {
 		return nil, err
 	}
@@ -25,14 +25,14 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 	return reportBuilder.build(), err
 }
 
-//type scanMultithreadedOrchestration struct {
-//	volumeProcess     *volumeAdapter
-//	analyserProcess   foundMediaObserver
-//	bufferProcess     AnalysedMediaObserver // TODO is also closable
-//	cataloguerProcess analysedMediasBatchObserver
-//}
+type chainBuilderForScan struct {
+	concurrencyParameters ConcurrencyParameters
+	volumeReaderFunc      func(ctx context.Context, consumed SourceVolume) ([]FoundMedia, error)
+	analyserBuilder       func(consumer chain.Consumer[*AnalysedMedia]) chain.Consumer[FoundMedia]
+	cataloguerBuilder     func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]*AnalysedMedia]
+}
 
-func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner, volume SourceVolume) (analyserLauncher, *scanReportBuilder, error) {
+func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
 	tracker, _ := newTrackerV2(options)
 	reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
@@ -49,8 +49,9 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 		rejectedFoundMediaObservers = append(rejectedFoundMediaObservers, new(analyserFailsFastObserver))
 	}
 
-	launcher := &chain.SingleLauncher[SourceVolume, FoundMedia]{
-		Function: func(ctx context.Context, consumed SourceVolume) ([]FoundMedia, error) {
+	builder := chainBuilderForScan{
+		concurrencyParameters: options.ConcurrencyParameters,
+		volumeReaderFunc: func(ctx context.Context, consumed SourceVolume) ([]FoundMedia, error) {
 			medias, err := consumed.FindMedias(ctx)
 			if err != nil {
 				return nil, err
@@ -58,52 +59,45 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 
 			return medias, tracker.OnScanComplete(ctx, len(medias), sizeOfAllMedias(medias))
 		},
+		analyserBuilder: func(consumer chain.Consumer[*AnalysedMedia]) chain.Consumer[FoundMedia] {
+			analyser := &analyserAdapter{
+				analyser:     options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
+				analysed:     []AnalysedMediaObserver{AnalysedMediaObserverFunc(consumer.Consume)},
+				beforeFilter: []AnalysedMediaObserver{scanLogger},
+				filteredOut:  []RejectedMediaObserver{scanLogger, tracker, reportBuilder},
+				rejected:     rejectedFoundMediaObservers,
+			}
+			return chain.ConsumerFunc[FoundMedia](analyser.OnFoundMedia)
+		},
+		cataloguerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]*AnalysedMedia] {
+			adapter := &cataloguerAdapter{
+				cataloguer:  cataloguer,
+				options:     options,
+				preFilters:  []CatalogReferencerObserver{scanLogger},
+				catalogued:  []CatalogReferencerObserver{tracker, CatalogReferencerObserverFunc(consumer.Consume)},
+				filteredOut: []CataloguerFilterObserver{scanLogger, tracker},
+			}
+			return chain.ConsumerFunc[[]*AnalysedMedia](adapter.OnBatchOfAnalysedMedia)
+		},
+	}
+
+	launcher := &chain.SingleLauncher[SourceVolume, FoundMedia]{
+		Function: builder.volumeReaderFunc,
 		Next: &chain.MultithreadedLink[FoundMedia, *AnalysedMedia]{
-			NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentAnalyserRoutines(),
-			ConsumerBuilder: func(consumer chain.Consumer[*AnalysedMedia]) chain.Consumer[FoundMedia] {
-				analyser := &analyserAdapter{
-					analyser:     options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
-					analysed:     []AnalysedMediaObserver{AnalysedMediaObserverFunc(consumer.Consume)},
-					beforeFilter: []AnalysedMediaObserver{scanLogger},
-					filteredOut:  []RejectedMediaObserver{scanLogger, tracker, reportBuilder},
-					rejected:     rejectedFoundMediaObservers,
-				}
-				return chain.ConsumerFunc[FoundMedia](analyser.OnFoundMedia)
-			},
+			NumberOfRoutines: builder.concurrencyParameters.NumberOfConcurrentAnalyserRoutines(),
+			ConsumerBuilder:  builder.analyserBuilder,
 			Next: &BufferLink[*AnalysedMedia]{
 				Buffer: buffer[*AnalysedMedia]{
 					content: make([]*AnalysedMedia, 0, defaultValue(options.BatchSize, 1)),
 					// note - consumer is set during "Starts" call
 				},
 				Next: &chain.MultithreadedLink[[]*AnalysedMedia, []BackingUpMediaRequest]{
-					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentCataloguerRoutines(),
-					ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]*AnalysedMedia] {
-						adapter := &cataloguerAdapter{
-							cataloguer:  cataloguer,
-							options:     options,
-							preFilters:  []CatalogReferencerObserver{scanLogger},
-							catalogued:  []CatalogReferencerObserver{tracker, CatalogReferencerObserverFunc(consumer.Consume)},
-							filteredOut: []CataloguerFilterObserver{scanLogger, tracker},
-						}
-						return chain.ConsumerFunc[[]*AnalysedMedia](adapter.OnBatchOfAnalysedMedia)
-					},
+					NumberOfRoutines: builder.concurrencyParameters.NumberOfConcurrentCataloguerRoutines(),
+					ConsumerBuilder:  builder.cataloguerBuilder,
 					Next: &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
-						NumberOfRoutines: 0,
-						ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]BackingUpMediaRequest] {
-							return chain.ConsumerFunc[[]BackingUpMediaRequest](func(ctx context.Context, requests []BackingUpMediaRequest) error {
-								err := reportBuilder.OnMediaCatalogued(ctx, requests)
-								if err != nil {
-									return err
-								}
-
-								return consumer.Consume(ctx, requests)
-							})
-						},
-						Next: &chain.EnderChainLink[[]BackingUpMediaRequest]{
-							Operator: func(ctx context.Context, requests []BackingUpMediaRequest) error {
-								return nil
-							},
-						},
+						NumberOfRoutines: 1,
+						ConsumerBuilder:  chain.Direct[[]BackingUpMediaRequest](),
+						Next:             chain.EndOfTheChain[[]BackingUpMediaRequest](reportBuilder.OnMediaCatalogued),
 					},
 				},
 			},

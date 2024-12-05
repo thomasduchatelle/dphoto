@@ -50,9 +50,9 @@ type Link[Consumed any] interface {
 
 // MultithreadedLink runs the Operator on as many routines as requested.
 type MultithreadedLink[Consumed any, Produced any] struct {
-	NumberOfRoutines int
-	ConsumerBuilder  func(Consumer[Produced]) Consumer[Consumed]
-	Next             Link[Produced]
+	NumberOfRoutines int                                         // NumberOfRoutines is the number of routines on which the ConsumerBuilder returned method will be called. Default is 1.
+	ConsumerBuilder  func(Consumer[Produced]) Consumer[Consumed] // ConsumerBuilder is the factory function to build the consumer that transforms Consumed into Produced. Use Direct if no transformation is needed.
+	Next             Link[Produced]                              // Next will receive the product of the ConsumerBuilder returned method. It is mandatory to have one, use EndOfTheChain to end the chain.
 	channel          chan Consumed
 }
 
@@ -105,35 +105,44 @@ func (m *MultithreadedLink[Consumed, Produced]) WaitForCompletion() chan error {
 	return m.Next.WaitForCompletion()
 }
 
-// EnderChainLink runs Operator on the same routines as the previous link, and return errors from the ChainableErrorCollector
-type EnderChainLink[Consumed any] struct {
+func EndOfTheChain[Consumed any](consumers ...ConsumerFunc[Consumed]) Link[Consumed] {
+	return &endLink[Consumed]{
+		Consumers: consumers,
+	}
+}
+
+// endLink runs Operator on the same routines as the previous link, and return errors from the ChainableErrorCollector
+type endLink[Consumed any] struct {
 	done      chan error
-	Operator  func(ctx context.Context, consumed Consumed) error
+	Consumers []ConsumerFunc[Consumed]
 	collector ChainableErrorCollector
 }
 
-func (l *EnderChainLink[Consumed]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
+func (l *endLink[Consumed]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
 	l.done = make(chan error)
 	l.collector = collector
 	return nil
 }
 
-func (l *EnderChainLink[Consumed]) Consume(ctx context.Context, produced Consumed) error {
-	if l.Operator != nil {
-		return l.Operator(ctx, produced)
+func (l *endLink[Consumed]) Consume(ctx context.Context, produced Consumed) error {
+	for _, consumer := range l.Consumers {
+		err := consumer(ctx, produced)
+		if err != nil {
+			l.collector.OnError(err)
+		}
 	}
 
 	return nil
 }
 
-func (l *EnderChainLink[Consumed]) NotifyUpstreamCompleted() {
+func (l *endLink[Consumed]) NotifyUpstreamCompleted() {
 	if err := l.collector.Error(); err != nil {
 		l.done <- err
 	}
 	close(l.done)
 }
 
-func (l *EnderChainLink[Consumed]) WaitForCompletion() chan error {
+func (l *endLink[Consumed]) WaitForCompletion() chan error {
 	return l.done
 }
 
@@ -182,6 +191,13 @@ func (s *SingleLauncher[Consumed, Produced]) Process(ctx context.Context, consum
 	}
 
 	return s.WaitForCompletion()
+}
+
+// Direct is a ConsumerBuilder that forwards the .
+func Direct[Consumed any]() func(Consumer[Consumed]) Consumer[Consumed] {
+	return func(c Consumer[Consumed]) Consumer[Consumed] {
+		return c
+	}
 }
 
 func startsInParallel(ctx context.Context, parallel int, consume func(ctx context.Context), closeChannel func()) {
