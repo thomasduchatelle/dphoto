@@ -20,7 +20,12 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 		return nil, err
 	}
 
-	err, _ = <-launcher.process(ctx, volume)
+	err = launcher.Starts(ctx, chain.NewErrorCollector())
+	if err != nil {
+		return nil, err
+	}
+
+	err = <-launcher.WaitForCompletion()
 
 	return reportBuilder.build(), err
 }
@@ -32,7 +37,7 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 //	cataloguerProcess analysedMediasBatchObserver
 //}
 
-func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner, volume SourceVolume) (analyserLauncher, *scanReportBuilder, error) {
+func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner, volume SourceVolume) (*chain.SliceLauncher[FoundMedia], *scanReportBuilder, error) {
 	tracker, _ := newTrackerV2(options)
 	reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
@@ -42,7 +47,7 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 		return nil, nil, err
 	}
 
-	launcher := chain.SliceLauncher[FoundMedia]{
+	launcher := &chain.SliceLauncher[FoundMedia]{
 		Producer: volume.FindMedias,
 		Next: &chain.MultithreadedLink[FoundMedia, *AnalysedMedia]{
 			NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentAnalyserRoutines(),
@@ -97,37 +102,7 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 		},
 	}
 
-	//controller := scanMultithreadedOrchestration{
-	//	volumeProcess:     volumeAdapter{
-	//		observer: nil,
-	//	},
-	//	analyserProcess:   nil,
-	//	bufferProcess:     nil,
-	//	cataloguerProcess: nil,
-	//}
-
-	monitoring := &scanListeners{
-		scanCompleteObserver:      tracker,
-		PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
-		PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker},
-		PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker, reportBuilder},
-		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
-		PostCatalogFiltersIn:      []CatalogReferencerObserver{tracker, reportBuilder},
-		PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
-	}
-	if options.SkipRejects {
-		monitoring.PostAnalyserRejects = append(monitoring.PostAnalyserRejects, reportBuilder)
-	}
-
-	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring)
-	controller.registerWrappers(tracker)
-
-	launcher, err := newScanningChain(ctx, controller, scanningOptions{
-		Options:    options,
-		cataloguer: cataloguer,
-		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
-	})
-	return launcher, reportBuilder, err
+	return launcher, reportBuilder, nil
 }
 
 func (s *BatchScanner) _ref_prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
