@@ -51,7 +51,7 @@ type Link[Consumed any] interface {
 // MultithreadedLink runs the Operator on as many routines as requested.
 type MultithreadedLink[Consumed any, Produced any] struct {
 	NumberOfRoutines int                                         // NumberOfRoutines is the number of routines on which the ConsumerBuilder returned method will be called. Default is 1.
-	ConsumerBuilder  func(Consumer[Produced]) Consumer[Consumed] // ConsumerBuilder is the factory function to build the consumer that transforms Consumed into Produced. Use Direct if no transformation is needed.
+	ConsumerBuilder  func(Consumer[Produced]) Consumer[Consumed] // ConsumerBuilder is the factory function to build the consumer that transforms Consumed into Produced. Use PassThrough if no transformation is needed.
 	Next             Link[Produced]                              // Next will receive the product of the ConsumerBuilder returned method. It is mandatory to have one, use EndOfTheChain to end the chain.
 	channel          chan Consumed
 }
@@ -193,8 +193,8 @@ func (s *SingleLauncher[Consumed, Produced]) Process(ctx context.Context, consum
 	return s.WaitForCompletion()
 }
 
-// Direct is a ConsumerBuilder that forwards the .
-func Direct[Consumed any]() func(Consumer[Consumed]) Consumer[Consumed] {
+// PassThrough is a ConsumerBuilder that forwards the .
+func PassThrough[Consumed any]() func(Consumer[Consumed]) Consumer[Consumed] {
 	return func(c Consumer[Consumed]) Consumer[Consumed] {
 		return c
 	}
