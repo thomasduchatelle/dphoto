@@ -42,6 +42,11 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 		return nil, nil, err
 	}
 
+	rejectedFoundMediaObservers := []RejectedMediaObserver{scanLogger, tracker}
+	if options.SkipRejects {
+		rejectedFoundMediaObservers = append(rejectedFoundMediaObservers, reportBuilder)
+	}
+
 	launcher := &chain.SingleLauncher[SourceVolume, FoundMedia]{
 		Function: func(ctx context.Context, consumed SourceVolume) ([]FoundMedia, error) {
 			medias, err := consumed.FindMedias(ctx)
@@ -59,7 +64,7 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 					analysed:     []AnalysedMediaObserver{AnalysedMediaObserverFunc(consumer.Consume)},
 					beforeFilter: []AnalysedMediaObserver{scanLogger},
 					filteredOut:  []RejectedMediaObserver{scanLogger, tracker, reportBuilder},
-					rejected:     []RejectedMediaObserver{scanLogger, tracker},
+					rejected:     rejectedFoundMediaObservers,
 				}
 				return chain.ConsumerFunc[FoundMedia](analyser.OnFoundMedia)
 			},

@@ -38,7 +38,7 @@ func (l *logger) OnRejectedMedia(ctx context.Context, found FoundMedia, cause er
 	l.mdc.WithFields(log.Fields{
 		"Media": found.String(),
 		"Cause": cause,
-	}).Info("Media rejected")
+	}).Warnf("Media rejected")
 	return nil
 }
 
