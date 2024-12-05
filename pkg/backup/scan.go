@@ -45,6 +45,8 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 	rejectedFoundMediaObservers := []RejectedMediaObserver{scanLogger, tracker}
 	if options.SkipRejects {
 		rejectedFoundMediaObservers = append(rejectedFoundMediaObservers, reportBuilder)
+	} else {
+		rejectedFoundMediaObservers = append(rejectedFoundMediaObservers, new(analyserFailsFastObserver))
 	}
 
 	launcher := &chain.SingleLauncher[SourceVolume, FoundMedia]{
