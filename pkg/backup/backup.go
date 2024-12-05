@@ -31,7 +31,7 @@ func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume
 		return nil, err
 	}
 
-	err, _ = <-launcher.process(ctx, volume)
+	err, _ = <-launcher.Process(ctx, volume)
 
 	return tracker, err
 }
@@ -167,7 +167,7 @@ func (m *multithreadedUploaderLauncher) Close() error {
 	return nil
 }
 
-func (m *multithreadedUploaderLauncher) process(ctx context.Context, volume SourceVolume) chan error {
+func (m *multithreadedUploaderLauncher) Process(ctx context.Context, volume SourceVolume) chan error {
 	startsInParallel(ctx, m.concurrentUploaderRoutines, func(ctx context.Context) {
 		for requests := range m.channel {
 			err := m.uploader.OnMediaCatalogued(ctx, requests)
@@ -179,7 +179,7 @@ func (m *multithreadedUploaderLauncher) process(ctx context.Context, volume Sour
 		close(m.done)
 	})
 
-	return m.launcher.process(ctx, volume)
+	return m.launcher.Process(ctx, volume)
 }
 
 func (m *multithreadedUploaderLauncher) wrapLauncher(launcher scanningLauncher) analyserLauncher {

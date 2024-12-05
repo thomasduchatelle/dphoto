@@ -241,7 +241,7 @@ func Test_multiThreadedController_Launcher(t *testing.T) {
 				cataloguer: tt.launcherArgs.cataloguer,
 			}), new(ScanCompleteObserverFake))
 
-			err := <-launcher.process(context.Background(), tt.args.volume)
+			err := <-launcher.Process(context.Background(), tt.args.volume)
 			if tt.wantErr(t, err) {
 				if toBeSatisfied, match := tt.launcherArgs.analyser.(ToBeSatisfied); match {
 					toBeSatisfied.IsSatisfied(t)

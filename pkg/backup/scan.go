@@ -20,12 +20,7 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 		return nil, err
 	}
 
-	err = launcher.Starts(ctx, chain.NewErrorCollector())
-	if err != nil {
-		return nil, err
-	}
-
-	err = <-launcher.WaitForCompletion()
+	err = <-launcher.Process(ctx, volume)
 
 	return reportBuilder.build(), err
 }
@@ -37,7 +32,7 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 //	cataloguerProcess analysedMediasBatchObserver
 //}
 
-func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner, volume SourceVolume) (*chain.SliceLauncher[FoundMedia], *scanReportBuilder, error) {
+func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner, volume SourceVolume) (analyserLauncher, *scanReportBuilder, error) {
 	tracker, _ := newTrackerV2(options)
 	reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
@@ -47,8 +42,15 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 		return nil, nil, err
 	}
 
-	launcher := &chain.SliceLauncher[FoundMedia]{
-		Producer: volume.FindMedias,
+	launcher := &chain.SingleLauncher[SourceVolume, FoundMedia]{
+		Function: func(ctx context.Context, consumed SourceVolume) ([]FoundMedia, error) {
+			medias, err := consumed.FindMedias(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			return medias, tracker.OnScanComplete(ctx, len(medias), sizeOfAllMedias(medias))
+		},
 		Next: &chain.MultithreadedLink[FoundMedia, *AnalysedMedia]{
 			NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentAnalyserRoutines(),
 			ConsumerBuilder: func(consumer chain.Consumer[*AnalysedMedia]) chain.Consumer[FoundMedia] {
@@ -100,6 +102,11 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 				},
 			},
 		},
+	}
+
+	err = launcher.Starts(ctx, chain.NewErrorCollector())
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return launcher, reportBuilder, nil

@@ -10,7 +10,7 @@ type scanCompleteObserver interface {
 }
 
 type analyserLauncher interface {
-	process(ctx context.Context, volume SourceVolume) chan error
+	Process(ctx context.Context, volume SourceVolume) chan error
 }
 
 func newMultiThreadedController(concurrencyParameters ConcurrencyParameters, monitoringIntegrator scanMonitoringIntegrator) *multiThreadedController {
@@ -105,7 +105,7 @@ func (m *multiThreadedController) registerWrappers(wrappers ...multiThreadedCont
 	m.wrappers = append(m.wrappers, wrappers...)
 }
 
-func (l *multiThreadedControllerLauncher) process(ctxWithoutCancel context.Context, volume SourceVolume) chan error {
+func (l *multiThreadedControllerLauncher) Process(ctxWithoutCancel context.Context, volume SourceVolume) chan error {
 	ctx, cancelFunc := context.WithCancel(ctxWithoutCancel)
 	l.errorCollector.registerErrorObserver(func(err error) {
 		cancelFunc()

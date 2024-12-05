@@ -31,7 +31,9 @@ func (c ConsumerFunc[Consumed]) Consume(ctx context.Context, consumed Consumed) 
 	return c(ctx, consumed)
 }
 
-type StartLink interface {
+type StartLink[Consumed any] interface {
+	Consumer[Consumed]
+
 	// Starts is called first, it should create the channels and start the goroutines ; Next links Starts should also be called.
 	Starts(ctx context.Context, collector ChainableErrorCollector) error
 
@@ -39,9 +41,8 @@ type StartLink interface {
 	WaitForCompletion() chan error
 }
 
-type Link[Consumed any, Produced any] interface {
-	StartLink
-	Consumer[Consumed]
+type Link[Consumed any] interface {
+	StartLink[Consumed]
 
 	// NotifyUpstreamCompleted is called when the previous link will not call Consume anymore
 	NotifyUpstreamCompleted()
@@ -51,11 +52,11 @@ type Link[Consumed any, Produced any] interface {
 type MultithreadedLink[Consumed any, Produced any] struct {
 	NumberOfRoutines int
 	ConsumerBuilder  func(Consumer[Produced]) Consumer[Consumed]
-	Next             Link[Produced, any]
+	Next             Link[Produced]
 	channel          chan Consumed
 }
 
-func (m *MultithreadedLink[Consumed, Produced]) ChainNextLink(next Link[Produced, any]) {
+func (m *MultithreadedLink[Consumed, Produced]) ChainNextLink(next Link[Produced]) {
 	m.Next = next
 }
 
@@ -136,36 +137,51 @@ func (l *EnderChainLink[Consumed]) WaitForCompletion() chan error {
 	return l.done
 }
 
-type SliceLauncher[Produced any] struct {
-	Next     Link[Produced, any]
-	Producer func(ctx context.Context) ([]Produced, error)
+// SingleLauncher launch the chain process by consume one and only one element.
+type SingleLauncher[Consumed any, Produced any] struct {
+	Next      Link[Produced]
+	Function  func(ctx context.Context, consumed Consumed) ([]Produced, error)
+	collector ChainableErrorCollector
 }
 
-func (s *SliceLauncher[Produced]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
-	err := s.Next.Starts(ctx, collector)
+func (s *SingleLauncher[Consumed, Produced]) Consume(ctx context.Context, consumed Consumed) error {
+	defer s.Next.NotifyUpstreamCompleted()
+
+	products, err := s.Function(ctx, consumed)
 	if err != nil {
 		return err
 	}
 
-	produced, err := s.Producer(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, product := range produced {
-		err = s.Next.Consume(ctx, product)
+	for _, product := range products {
+		err := s.Next.Consume(ctx, product)
 		if err != nil {
-			collector.OnError(err)
+			s.collector.OnError(err)
 			return nil
 		}
 	}
-	s.Next.NotifyUpstreamCompleted()
 
-	return err
+	return nil
 }
 
-func (s *SliceLauncher[Produced]) WaitForCompletion() chan error {
+func (s *SingleLauncher[Consumed, Produced]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
+	s.collector = collector
+	return s.Next.Starts(ctx, collector)
+}
+
+func (s *SingleLauncher[Consumed, Produced]) WaitForCompletion() chan error {
 	return s.Next.WaitForCompletion()
+}
+
+// Process combine Consume and WaitForCompletion to simplify consumption.
+func (s *SingleLauncher[Consumed, Produced]) Process(ctx context.Context, consumed Consumed) chan error {
+	err := s.Consume(ctx, consumed)
+	if err != nil {
+		errChan := make(chan error, 1)
+		errChan <- err
+		return errChan
+	}
+
+	return s.WaitForCompletion()
 }
 
 func startsInParallel(ctx context.Context, parallel int, consume func(ctx context.Context), closeChannel func()) {
