@@ -102,7 +102,7 @@ func TestScanAcceptance(t *testing.T) {
 				volume: &volumeStub,
 				optionSlice: []Options{
 					OptionsSkipRejects(true),
-					OptionsBatchSize(3),
+					OptionsBatchSize(4),
 					OptionsConcurrentAnalyserRoutines(12),
 				},
 			},

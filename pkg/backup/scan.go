@@ -63,11 +63,10 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 				}
 				return chain.ConsumerFunc[FoundMedia](analyser.OnFoundMedia)
 			},
-			Next: &chain.MultithreadedLink[*AnalysedMedia, []*AnalysedMedia]{
-				NumberOfRoutines: 1,
-				ConsumerBuilder: func(c chain.Consumer[[]*AnalysedMedia]) chain.Consumer[*AnalysedMedia] {
-					// TODO buffer needs to be closed
-					return chain.ConsumerFunc[*AnalysedMedia](newAnalysedMediaBufferAdapter(options, analysedMediasBatchObserverFunc(c.Consume)).OnAnalysedMedia)
+			Next: &BufferLink[*AnalysedMedia]{
+				Buffer: buffer[*AnalysedMedia]{
+					content: make([]*AnalysedMedia, 0, defaultValue(options.BatchSize, 1)),
+					// note - consumer is set during "Starts" call
 				},
 				Next: &chain.MultithreadedLink[[]*AnalysedMedia, []BackingUpMediaRequest]{
 					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentCataloguerRoutines(),
@@ -144,4 +143,52 @@ func (s *BatchScanner) _ref_prepareVolumeScan(ctx context.Context, options Optio
 		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
 	})
 	return launcher, reportBuilder, err
+}
+
+type BufferLink[Consumed any] struct {
+	Next    chain.Link[[]Consumed]
+	channel chan Consumed
+	Buffer  buffer[Consumed]
+}
+
+func (l *BufferLink[Consumed]) Consume(ctx context.Context, consumed Consumed) error {
+	l.channel <- consumed
+	return nil
+}
+
+func (l *BufferLink[Consumed]) Starts(ctx context.Context, collector chain.ChainableErrorCollector) error {
+	l.channel = make(chan Consumed, 255)
+	l.Buffer.consumer = l.Next.Consume
+
+	go func() {
+		defer l.Next.NotifyUpstreamCompleted()
+
+		for {
+			select {
+			case consumed, more := <-l.channel:
+				if more {
+					err := l.Buffer.Append(ctx, consumed)
+					if err != nil {
+						collector.OnError(err)
+					}
+				} else {
+					err := l.Buffer.Flush(ctx)
+					if err != nil {
+						collector.OnError(err)
+					}
+					return
+				}
+			}
+		}
+	}()
+
+	return l.Next.Starts(ctx, collector)
+}
+
+func (l *BufferLink[Consumed]) WaitForCompletion() chan error {
+	return l.Next.WaitForCompletion()
+}
+
+func (l *BufferLink[Consumed]) NotifyUpstreamCompleted() {
+	close(l.channel)
 }

@@ -71,6 +71,8 @@ func (a *analyserNoDateTimeFilter) OnAnalysedMedia(ctx context.Context, media *A
 	return a.analysedMediaObserver.OnAnalysedMedia(ctx, media)
 }
 
+// TODO should be removed ?
+
 func newAnalysedMediaBufferAdapter(options Options, observer analysedMediasBatchObserver) *analysedMediaBufferAdapter {
 	return &analysedMediaBufferAdapter{
 		buffer: buffer[*AnalysedMedia]{
