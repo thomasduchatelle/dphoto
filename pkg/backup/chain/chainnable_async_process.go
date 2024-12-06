@@ -6,16 +6,6 @@ import (
 	"sync"
 )
 
-// Chain is a DSL method to create a chain of processes.
-//func Chain[Linked any, After any](rootLink Link[any, Linked], Next Link[Linked, After]) Link[Linked, After] {
-//	rootLink.ChainNextLink(Next.(Link[Linked, any]))
-//	return Next
-//}
-
-//type Chainable[Produced any] interface {
-//
-//}
-
 type ChainableErrorCollector interface {
 	OnError(err error)
 	Error() error
@@ -56,75 +46,77 @@ type MultithreadedLink[Consumed any, Produced any] struct {
 	channel          chan Consumed
 }
 
-func (m *MultithreadedLink[Consumed, Produced]) ChainNextLink(next Link[Produced]) {
-	m.Next = next
+func (l *MultithreadedLink[Consumed, Produced]) ChainNextLink(next Link[Produced]) {
+	l.Next = next
 }
 
-func (m *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
-	if m.ConsumerBuilder == nil {
+func (l *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
+	if l.ConsumerBuilder == nil {
 		return errors.New("ConsumerBuilder is not set")
 	}
-	if m.Next == nil {
+	if l.Next == nil {
 		return errors.New("Next is not set")
 	}
 
-	m.channel = make(chan Consumed, 255)
-	if m.NumberOfRoutines <= 0 {
-		m.NumberOfRoutines = 1
+	l.channel = make(chan Consumed, 255)
+	if l.NumberOfRoutines <= 0 {
+		l.NumberOfRoutines = 1
 	}
 
-	err := m.Next.Starts(ctx, collector)
+	err := l.Next.Starts(ctx, collector)
 	if err != nil {
 		return err
 	}
 
-	consumer := m.ConsumerBuilder(m.Next)
+	consumer := l.ConsumerBuilder(l.Next)
 
-	startsInParallel(ctx, m.NumberOfRoutines, func(ctx context.Context) {
-		for consumed := range m.channel {
+	startsInParallel(ctx, l.NumberOfRoutines, func(ctx context.Context) {
+		for consumed := range l.channel {
 			err := consumer.Consume(ctx, consumed)
 			if err != nil {
 				collector.OnError(err)
 			}
 		}
-	}, m.Next.NotifyUpstreamCompleted)
+	}, l.Next.NotifyUpstreamCompleted)
 
 	return nil
 }
 
-func (m *MultithreadedLink[Consumed, Produced]) Consume(ctx context.Context, consumed Consumed) error {
-	m.channel <- consumed
+func (l *MultithreadedLink[Consumed, Produced]) Consume(ctx context.Context, consumed Consumed) error {
+	l.channel <- consumed
 	return nil
 }
 
-func (m *MultithreadedLink[Consumed, Produced]) NotifyUpstreamCompleted() {
-	close(m.channel)
+func (l *MultithreadedLink[Consumed, Produced]) NotifyUpstreamCompleted() {
+	//log.Infof("[%d] MultithreadedLink.NotifyUpstreamCompleted - %T", l.NumberOfRoutines, l.channel)
+	close(l.channel)
 }
 
-func (m *MultithreadedLink[Consumed, Produced]) WaitForCompletion() chan error {
-	return m.Next.WaitForCompletion()
+func (l *MultithreadedLink[Consumed, Produced]) WaitForCompletion() chan error {
+	//log.Infof("[%d] MultithreadedLink.WaitForCompletion - %T", l.NumberOfRoutines, l.channel)
+	return l.Next.WaitForCompletion()
 }
 
-func EndOfTheChain[Consumed any](consumers ...ConsumerFunc[Consumed]) Link[Consumed] {
-	return &endLink[Consumed]{
+func EndOfTheChain[Consumed any](consumers ...ConsumerFunc[Consumed]) *EndLink[Consumed] {
+	return &EndLink[Consumed]{
 		Consumers: consumers,
 	}
 }
 
-// endLink runs Operator on the same routines as the previous link, and return errors from the ChainableErrorCollector
-type endLink[Consumed any] struct {
+// EndLink runs Operator on the same routines as the previous link, and return errors from the ChainableErrorCollector
+type EndLink[Consumed any] struct {
 	done      chan error
 	Consumers []ConsumerFunc[Consumed]
 	collector ChainableErrorCollector
 }
 
-func (l *endLink[Consumed]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
+func (l *EndLink[Consumed]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
 	l.done = make(chan error)
 	l.collector = collector
 	return nil
 }
 
-func (l *endLink[Consumed]) Consume(ctx context.Context, produced Consumed) error {
+func (l *EndLink[Consumed]) Consume(ctx context.Context, produced Consumed) error {
 	for _, consumer := range l.Consumers {
 		err := consumer(ctx, produced)
 		if err != nil {
@@ -135,14 +127,14 @@ func (l *endLink[Consumed]) Consume(ctx context.Context, produced Consumed) erro
 	return nil
 }
 
-func (l *endLink[Consumed]) NotifyUpstreamCompleted() {
+func (l *EndLink[Consumed]) NotifyUpstreamCompleted() {
 	if err := l.collector.Error(); err != nil {
 		l.done <- err
 	}
 	close(l.done)
 }
 
-func (l *endLink[Consumed]) WaitForCompletion() chan error {
+func (l *EndLink[Consumed]) WaitForCompletion() chan error {
 	return l.done
 }
 
@@ -162,7 +154,7 @@ func (s *SingleLauncher[Consumed, Produced]) Consume(ctx context.Context, consum
 	}
 
 	for _, product := range products {
-		err := s.Next.Consume(ctx, product)
+		err = s.Next.Consume(ctx, product)
 		if err != nil {
 			s.collector.OnError(err)
 			return nil
@@ -185,12 +177,32 @@ func (s *SingleLauncher[Consumed, Produced]) WaitForCompletion() chan error {
 func (s *SingleLauncher[Consumed, Produced]) Process(ctx context.Context, consumed Consumed) chan error {
 	err := s.Consume(ctx, consumed)
 	if err != nil {
-		errChan := make(chan error, 1)
-		errChan <- err
-		return errChan
+		s.collector.OnError(err)
 	}
 
 	return s.WaitForCompletion()
+}
+
+type CloseWrapperLink[Consumed any] struct {
+	CloserFunc func() error
+	Next       Link[Consumed]
+}
+
+func (w *CloseWrapperLink[Consumed]) Consume(ctx context.Context, consumed Consumed) error {
+	return w.Next.Consume(ctx, consumed)
+}
+
+func (w *CloseWrapperLink[Consumed]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
+	return w.Next.Starts(ctx, collector)
+}
+
+func (w *CloseWrapperLink[Consumed]) WaitForCompletion() chan error {
+	return w.Next.WaitForCompletion()
+}
+
+func (w *CloseWrapperLink[Consumed]) NotifyUpstreamCompleted() {
+	_ = w.CloserFunc()
+	w.Next.NotifyUpstreamCompleted()
 }
 
 // PassThrough is a ConsumerBuilder that forwards the .

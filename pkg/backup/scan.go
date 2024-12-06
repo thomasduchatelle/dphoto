@@ -36,6 +36,7 @@ type scanConfiguration struct {
 	PreCataloguerFilter       []CatalogReferencerObserver
 	PostCatalogFiltersIn      []CatalogReferencerObserver
 	PostCatalogFiltersOut     []CataloguerFilterObserver
+	closer                    func() error
 }
 
 func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
@@ -58,6 +59,7 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
 		PostCatalogFiltersIn:      []CatalogReferencerObserver{tracker, reportBuilder},
 		PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
+		closer:                    tracker.Close,
 	}
 	if options.SkipRejects {
 		config.PostAnalyserRejects = append(config.PostAnalyserRejects, reportBuilder)
@@ -111,7 +113,10 @@ func multithreadedScanRuntime(ctx context.Context, options Options, config *scan
 					Next: &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
 						NumberOfRoutines: 1,
 						ConsumerBuilder:  chain.PassThrough[[]BackingUpMediaRequest](),
-						Next:             chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
+						Next: &chain.CloseWrapperLink[[]BackingUpMediaRequest]{
+							CloserFunc: config.closer,
+							Next:       chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
+						},
 					},
 				},
 			},
@@ -129,40 +134,6 @@ func finalizer(in []CatalogReferencerObserver) []chain.ConsumerFunc[[]BackingUpM
 	}
 
 	return functions
-}
-
-func (s *BatchScanner) _ref_prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
-	tracker, _ := newTrackerV2(options)
-	reportBuilder := newScanReportBuilder()
-	scanLogger := newLogger(volumeName)
-
-	monitoring := &scanListeners{
-		scanCompleteObserver:      tracker,
-		PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
-		PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker},
-		PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker, reportBuilder},
-		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
-		PostCatalogFiltersIn:      []CatalogReferencerObserver{tracker, reportBuilder},
-		PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
-	}
-	if options.SkipRejects {
-		monitoring.PostAnalyserRejects = append(monitoring.PostAnalyserRejects, reportBuilder)
-	}
-
-	controller := newMultiThreadedController(options.ConcurrencyParameters, monitoring)
-	controller.registerWrappers(tracker)
-
-	cataloguer, err := s.CataloguerFactory.NewDryRunCataloguer(ctx, owner)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	launcher, err := newScanningChain(ctx, controller, scanningOptions{
-		Options:    options,
-		cataloguer: cataloguer,
-		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
-	})
-	return launcher, reportBuilder, err
 }
 
 type BufferLink[Consumed any] struct {
