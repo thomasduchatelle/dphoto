@@ -201,7 +201,9 @@ func (w *CloseWrapperLink[Consumed]) WaitForCompletion() chan error {
 }
 
 func (w *CloseWrapperLink[Consumed]) NotifyUpstreamCompleted() {
-	_ = w.CloserFunc()
+	if w.CloserFunc != nil {
+		_ = w.CloserFunc()
+	}
 	w.Next.NotifyUpstreamCompleted()
 }
 
