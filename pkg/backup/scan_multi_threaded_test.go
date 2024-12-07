@@ -31,11 +31,11 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 	//simulatedError := errors.New("TEST Simulated error")
 
 	//groupThatMustWaitForAProcessInEachStep := newWaitGroup(3)
-	//simpleReferencerForFile1to3 := CatalogReferencerFakeByName{
-	//	"file-1": nonExistingSimpleReference("file-1"),
-	//	"file-2": nonExistingSimpleReference("file-2"),
-	//	"file-3": nonExistingSimpleReference("file-3"),
-	//}
+	simpleReferencerForFile1to3 := CatalogReferencerFakeByName{
+		"file-1": nonExistingSimpleReference("file-1"),
+		"file-2": nonExistingSimpleReference("file-2"),
+		"file-3": nonExistingSimpleReference("file-3"),
+	}
 
 	type fields struct {
 		options Options
@@ -61,26 +61,26 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 			args:    args{volume: &InMemorySourceVolume{}},
 			wantErr: assert.NoError,
 		},
-		//{
-		//	name: "it should run with 2 analysers concurrently",
-		//	newControllerArgs: newControllerArgs{
-		//		concurrencyParameters: ConcurrencyParameters{ConcurrentAnalyserRoutines: 2},
-		//		monitoringIntegrator:  new(scanListeners),
-		//		bufferSize:            1,
-		//	},
-		//	launcherArgs: launcherArgs{
-		//		analyser: &AnalyserGroupWaiter{
-		//			group:    newWaitGroup(2),
-		//			delegate: &AnalyserFake{},
-		//		},
-		//		cataloguer: simpleReferencerForFile1to3,
-		//	},
-		//	args: args{volume: &InMemorySourceVolume{
-		//		NewInMemoryMedia("file-1", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-2", time.Now(), []byte{}),
-		//	}},
-		//	wantErr: assert.NoError,
-		//},
+		{
+			name: "it should run with 2 analysers concurrently",
+			fields: fields{
+				options: ReduceOptions(
+					OptionsConcurrentAnalyserRoutines(2),
+				),
+				config: &scanConfiguration{
+					Analyser: &AnalyserGroupWaiter{
+						group:    newWaitGroup(2),
+						delegate: &AnalyserFake{},
+					},
+					Cataloguer: simpleReferencerForFile1to3,
+				},
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte{}),
+				NewInMemoryMedia("file-2", time.Now(), []byte{}),
+			}},
+			wantErr: assert.NoError,
+		},
 		//{
 		//	name: "it should run the cataloguer on two routines",
 		//	newControllerArgs: newControllerArgs{
@@ -232,33 +232,23 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 			}
 
 			err = <-run.Process(context.Background(), tt.args.volume)
-			if !assert.NoError(t, err) {
+			if !tt.wantErr(t, err) {
 				return
 			}
 
-			//m := newMultiThreadedController(tt.newControllerArgs.concurrencyParameters, tt.newControllerArgs.monitoringIntegrator)
-			//launcher := m.Launcher(tt.launcherArgs.analyser, stubAnalyserObserverChainForMultithreadedTests(context.Background(), m, scanningOptions{
-			//	Options:    Options{},
-			//	analyser:   nil,
-			//	cataloguer: tt.launcherArgs.cataloguer,
-			//}), new(ScanCompleteObserverFake))
-			//
-			//err := <-launcher.Process(context.Background(), tt.args.volume)
-			//if tt.wantErr(t, err) {
-			//	if toBeSatisfied, match := tt.launcherArgs.analyser.(ToBeSatisfied); match {
-			//		toBeSatisfied.IsSatisfied(t)
-			//	}
-			//	for _, listener := range tt.newControllerArgs.monitoringIntegrator.PostAnalyserSuccess {
-			//		if toBeSatisfied, match := listener.(ToBeSatisfied); match {
-			//			toBeSatisfied.IsSatisfied(t)
-			//		}
-			//	}
-			//	for _, listener := range tt.newControllerArgs.monitoringIntegrator.PostCatalogFiltersIn {
-			//		if toBeSatisfied, match := listener.(ToBeSatisfied); match {
-			//			toBeSatisfied.IsSatisfied(t)
-			//		}
-			//	}
-			//}
+			if toBeSatisfied, match := tt.fields.config.Analyser.(ToBeSatisfied); match {
+				toBeSatisfied.IsSatisfied(t)
+			}
+			for _, listener := range tt.fields.config.PostAnalyserSuccess {
+				if toBeSatisfied, match := listener.(ToBeSatisfied); match {
+					toBeSatisfied.IsSatisfied(t)
+				}
+			}
+			for _, listener := range tt.fields.config.PostCatalogFiltersIn {
+				if toBeSatisfied, match := listener.(ToBeSatisfied); match {
+					toBeSatisfied.IsSatisfied(t)
+				}
+			}
 		})
 	}
 }
