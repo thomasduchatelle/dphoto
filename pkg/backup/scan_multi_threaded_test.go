@@ -28,9 +28,9 @@ func stubAnalyserObserverChainForMultithreadedTests(ctx context.Context, control
 }
 
 func Test_multithreadedScanRuntime(t *testing.T) {
-	//simulatedError := errors.New("TEST Simulated error")
+	simulatedError := errors.New("TEST Simulated error")
 
-	//groupThatMustWaitForAProcessInEachStep := newWaitGroup(3)
+	groupThatMustWaitForAProcessInEachStep := newWaitGroup(3)
 	simpleReferencerForFile1to3 := CatalogReferencerFakeByName{
 		"file-1": nonExistingSimpleReference("file-1"),
 		"file-2": nonExistingSimpleReference("file-2"),
@@ -81,146 +81,135 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 			}},
 			wantErr: assert.NoError,
 		},
-		//{
-		//	name: "it should run the cataloguer on two routines",
-		//	newControllerArgs: newControllerArgs{
-		//		concurrencyParameters: ConcurrencyParameters{ConcurrentCataloguerRoutines: 2},
-		//		monitoringIntegrator:  new(scanListeners),
-		//		bufferSize:            1,
-		//	},
-		//	launcherArgs: launcherArgs{
-		//		analyser: &AnalyserFake{},
-		//		cataloguer: &CataloguerGroupWaiter{
-		//			delegate: simpleReferencerForFile1to3,
-		//			group:    newWaitGroup(2),
-		//		},
-		//	},
-		//	args: args{volume: &InMemorySourceVolume{
-		//		NewInMemoryMedia("file-1", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-2", time.Now(), []byte{}),
-		//	}},
-		//	wantErr: assert.NoError,
-		//},
-		//{
-		//	name: "it should have a single thread for post-scan reporting",
-		//	newControllerArgs: newControllerArgs{
-		//		concurrencyParameters: ConcurrencyParameters{
-		//			ConcurrentAnalyserRoutines:   2,
-		//			ConcurrentCataloguerRoutines: 2,
-		//			ConcurrentUploaderRoutines:   2,
-		//		},
-		//		monitoringIntegrator: &scanListeners{
-		//			PostCatalogFiltersIn: []CatalogReferencerObserver{
-		//				&SingleThreadedConstrainedCatalogReferencerObserver{
-		//					lock:          sync.Mutex{},
-		//					expectedCalls: 2,
-		//				},
-		//			},
-		//		},
-		//		bufferSize: 1,
-		//	},
-		//	launcherArgs: launcherArgs{
-		//		analyser:   new(AnalyserFake),
-		//		cataloguer: simpleReferencerForFile1to3,
-		//	},
-		//	args: args{volume: &InMemorySourceVolume{
-		//		NewInMemoryMedia("file-1", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-2", time.Now(), []byte{}),
-		//	}},
-		//	wantErr: assert.NoError,
-		//},
-		//{
-		//	name: "it should run the analyser, the cataloguer, and the post-scan on 3 different threads",
-		//	newControllerArgs: newControllerArgs{
-		//		concurrencyParameters: ConcurrencyParameters{},
-		//		monitoringIntegrator: &scanListeners{
-		//			PostCatalogFiltersIn: []CatalogReferencerObserver{&ScanningCompleteGroupWaiter{
-		//				lock:          sync.RWMutex{},
-		//				group:         groupThatMustWaitForAProcessInEachStep,
-		//				allowedToPass: []string{"file-2", "file-3"},
-		//				expectedCalls: 1,
-		//			}},
-		//		},
-		//		bufferSize: 1,
-		//	},
-		//	launcherArgs: launcherArgs{
-		//		analyser: &AnalyserGroupWaiter{
-		//			allowedToPass: []string{"file-1", "file-2"},
-		//			group:         groupThatMustWaitForAProcessInEachStep,
-		//			delegate:      new(AnalyserFake),
-		//		},
-		//		cataloguer: &CataloguerGroupWaiter{
-		//			allowedToPass: []string{"file-1", "file-3"},
-		//			delegate:      simpleReferencerForFile1to3,
-		//			group:         groupThatMustWaitForAProcessInEachStep,
-		//		},
-		//	},
-		//	args: args{volume: &InMemorySourceVolume{
-		//		NewInMemoryMedia("file-1", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-2", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//	}},
-		//	wantErr: assert.NoError,
-		//},
-		//{
-		//	name: "it should run with 2 cataloguer concurrently",
-		//	newControllerArgs: newControllerArgs{
-		//		concurrencyParameters: ConcurrencyParameters{ConcurrentCataloguerRoutines: 2},
-		//		monitoringIntegrator:  &scanListeners{},
-		//		bufferSize:            1,
-		//	},
-		//	launcherArgs: launcherArgs{
-		//		analyser: new(AnalyserFake),
-		//		cataloguer: &CataloguerGroupWaiter{
-		//			delegate: simpleReferencerForFile1to3,
-		//			group:    newWaitGroup(2),
-		//		},
-		//	},
-		//	args: args{volume: &InMemorySourceVolume{
-		//		NewInMemoryMedia("file-1", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-2", time.Now(), []byte{}),
-		//	}},
-		//	wantErr: assert.NoError,
-		//},
-		//{
-		//	name: "it should interrupt the process if an error occur during the analyser",
-		//	newControllerArgs: newControllerArgs{
-		//		concurrencyParameters: ConcurrencyParameters{},
-		//		monitoringIntegrator: &scanListeners{
-		//			PostCatalogFiltersIn: []CatalogReferencerObserver{
-		//				&ScanAssertEndOfHappyPath{
-		//					WantMaxReadyToUploadCount: 10, // usually 0 or 1 ; sometime 2-3 ; saw once 6 and 7.
-		//				},
-		//			},
-		//		},
-		//		bufferSize: 1,
-		//	},
-		//	launcherArgs: launcherArgs{
-		//		analyser: &AnalyserFake{
-		//			ErroredFilename: map[string]error{
-		//				"file-1": simulatedError,
-		//			},
-		//		},
-		//		cataloguer: simpleReferencerForFile1to3,
-		//	},
-		//	args: args{volume: &InMemorySourceVolume{
-		//		NewInMemoryMedia("file-1", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-2", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//		NewInMemoryMedia("file-3", time.Now(), []byte{}),
-		//	}},
-		//	wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-		//		return assert.ErrorIs(t, err, simulatedError)
-		//	},
-		//},
+		{
+			name: "it should run the cataloguer on two routines",
+			fields: fields{
+				options: ReduceOptions(
+					OptionsConcurrentCataloguerRoutines(2),
+				),
+				config: &scanConfiguration{
+					Analyser: &AnalyserFake{},
+					Cataloguer: &CataloguerGroupWaiter{
+						delegate: simpleReferencerForFile1to3,
+						group:    newWaitGroup(2),
+					},
+				},
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte{}),
+				NewInMemoryMedia("file-2", time.Now(), []byte{}),
+			}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should have a single thread for post-scan reporting",
+			fields: fields{
+				options: ReduceOptions(
+					OptionsConcurrentAnalyserRoutines(2),
+					OptionsConcurrentCataloguerRoutines(2),
+					OptionsConcurrentUploaderRoutines(2),
+				),
+				config: &scanConfiguration{
+					Analyser:   new(AnalyserFake),
+					Cataloguer: simpleReferencerForFile1to3,
+					PostCatalogFiltersIn: []CatalogReferencerObserver{
+						&SingleThreadedConstrainedCatalogReferencerObserver{
+							lock:          sync.Mutex{},
+							expectedCalls: 2,
+						},
+					},
+				},
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte{}),
+				NewInMemoryMedia("file-2", time.Now(), []byte{}),
+			}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should run the analyser, the cataloguer, and the post-scan on 3 different threads",
+			fields: fields{
+				config: &scanConfiguration{
+					Analyser: &AnalyserGroupWaiter{
+						allowedToPass: []string{"file-1", "file-2"},
+						group:         groupThatMustWaitForAProcessInEachStep,
+						delegate:      new(AnalyserFake),
+					},
+					Cataloguer: &CataloguerGroupWaiter{
+						allowedToPass: []string{"file-1", "file-3"},
+						delegate:      simpleReferencerForFile1to3,
+						group:         groupThatMustWaitForAProcessInEachStep,
+					},
+					PostCatalogFiltersIn: []CatalogReferencerObserver{&ScanningCompleteGroupWaiter{
+						lock:          sync.RWMutex{},
+						group:         groupThatMustWaitForAProcessInEachStep,
+						allowedToPass: []string{"file-2", "file-3"},
+						expectedCalls: 1,
+					}},
+				},
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte{}),
+				NewInMemoryMedia("file-2", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+			}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should run with 2 cataloguer concurrently",
+			fields: fields{
+				options: ReduceOptions(
+					OptionsConcurrentCataloguerRoutines(2),
+				),
+				config: &scanConfiguration{
+					Analyser: new(AnalyserFake),
+					Cataloguer: &CataloguerGroupWaiter{
+						delegate: simpleReferencerForFile1to3,
+						group:    newWaitGroup(2),
+					},
+				},
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte{}),
+				NewInMemoryMedia("file-2", time.Now(), []byte{}),
+			}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should interrupt the process if an error occur during the analyser",
+			fields: fields{
+				config: &scanConfiguration{
+					Analyser: &AnalyserFake{
+						ErroredFilename: map[string]error{
+							"file-1": simulatedError,
+						},
+					},
+					Cataloguer: simpleReferencerForFile1to3,
+					PostCatalogFiltersIn: []CatalogReferencerObserver{
+						&ScanAssertEndOfHappyPath{
+							WantMaxReadyToUploadCount: 10, // usually 0 or 1 before interruption ; sometime 2-3 ; saw once 6 and 7.
+						},
+					},
+				},
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte{}),
+				NewInMemoryMedia("file-2", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+			}},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, simulatedError)
+			},
+		},
 	}
 
 	for _, tt := range tests {
