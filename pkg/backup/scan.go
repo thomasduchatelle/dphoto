@@ -2,6 +2,7 @@ package backup
 
 import (
 	"context"
+	"github.com/thomasduchatelle/dphoto/pkg/backup/chain"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
@@ -35,7 +36,7 @@ type scanConfiguration struct {
 	PreCataloguerFilter       []CatalogReferencerObserver
 	PostCatalogFiltersIn      []CatalogReferencerObserver
 	PostCatalogFiltersOut     []CataloguerFilterObserver
-	closer                    func() error
+	Wrappers                  []chain.CloserFunc
 }
 
 func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
@@ -58,7 +59,7 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
 		PostCatalogFiltersIn:      []CatalogReferencerObserver{tracker, reportBuilder},
 		PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
-		closer:                    tracker.Close,
+		Wrappers:                  []chain.CloserFunc{tracker.NoMoreEvents},
 	}
 	if options.SkipRejects {
 		config.PostAnalyserRejects = append(config.PostAnalyserRejects, reportBuilder)

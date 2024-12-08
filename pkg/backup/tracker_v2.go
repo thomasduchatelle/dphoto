@@ -224,10 +224,16 @@ type trackerObserver struct {
 	done    chan struct{}
 }
 
+// Close TODO should be delete and replaced by NoMoreEvents
 func (p *trackerObserver) Close() error {
 	close(p.channel)
 	<-p.done
 	return nil
+}
+
+func (p *trackerObserver) NoMoreEvents() {
+	close(p.channel)
+	<-p.done
 }
 
 func (p *trackerObserver) OnScanComplete(ctx context.Context, count, size int) error {

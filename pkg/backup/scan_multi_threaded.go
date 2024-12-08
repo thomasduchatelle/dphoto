@@ -3,9 +3,12 @@ package backup
 import (
 	"context"
 	"github.com/thomasduchatelle/dphoto/pkg/backup/chain"
+	"slices"
 )
 
-func multithreadedScanRuntime(ctx context.Context, options Options, config *scanConfiguration) (analyserLauncher, error) {
+func multithreadedScanRuntime(ctxNonCancelable context.Context, options Options, config *scanConfiguration) (analyserLauncher, error) {
+	ctx, cancelFunc := context.WithCancel(ctxNonCancelable)
+
 	launcher := &chain.SingleLauncher[SourceVolume, FoundMedia]{
 		Function: func(ctx context.Context, volume SourceVolume) ([]FoundMedia, error) {
 			medias, err := volume.FindMedias(ctx)
@@ -17,6 +20,7 @@ func multithreadedScanRuntime(ctx context.Context, options Options, config *scan
 		},
 		Next: &chain.MultithreadedLink[FoundMedia, *AnalysedMedia]{
 			NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentAnalyserRoutines(),
+			Cancellable:      true,
 			ConsumerBuilder: func(consumer chain.Consumer[*AnalysedMedia]) chain.Consumer[FoundMedia] {
 				analyser := &analyserAdapter{
 					analyser:     config.Analyser,
@@ -48,8 +52,8 @@ func multithreadedScanRuntime(ctx context.Context, options Options, config *scan
 						NumberOfRoutines: 1,
 						ConsumerBuilder:  chain.PassThrough[[]BackingUpMediaRequest](),
 						Next: &chain.CloseWrapperLink[[]BackingUpMediaRequest]{
-							CloserFunc: config.closer,
-							Next:       chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
+							CloserFuncs: slices.Concat(config.Wrappers, []chain.CloserFunc{chain.CloserFunc(cancelFunc)}),
+							Next:        chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
 						},
 					},
 				},
@@ -57,7 +61,9 @@ func multithreadedScanRuntime(ctx context.Context, options Options, config *scan
 		},
 	}
 
-	err := launcher.Starts(ctx, chain.NewErrorCollector())
+	err := launcher.Starts(ctx, chain.NewErrorCollector(func(err error) {
+		cancelFunc()
+	}))
 	return launcher, err
 }
 
