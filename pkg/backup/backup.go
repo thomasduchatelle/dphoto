@@ -3,13 +3,10 @@ package backup
 
 import (
 	"context"
-	"fmt"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/pkg/backup/chain"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"regexp"
-	"strings"
-	"time"
+	"slices"
 )
 
 type SourceVolume interface {
@@ -36,46 +33,43 @@ func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume
 	return tracker, err
 }
 
-func (b *BatchBackup) Backup2(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
-	// TODO delete recursively this method and all orphaned code
-	unsafeChar := regexp.MustCompile(`[^a-zA-Z0-9]+`)
-	backupId := fmt.Sprintf("%s_%s", strings.Trim(unsafeChar.ReplaceAllString(volume.String(), "_"), "_"), time.Now().Format("20060102_150405"))
-	mdc := log.WithFields(log.Fields{
-		"BackupId": backupId,
-		"Volume":   volume.String(),
-	})
+func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *trackerV2, error) {
+	tracker, report := newTrackerV2(options) // TODO is using the tracker to collect the report the best way to do it ?
+	scanLogger := newLogger(volumeName)
 
-	options := ReduceOptions(optionsSlice...)
-
-	referencer, err := b.newCataloguer(ctx, owner, options.DryRun)
+	cataloguer, err := b.newCataloguer(ctx, owner, options.DryRun)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	publisher, hintSize, err := newPublisher(volume)
-
-	run := runner{
-		MDC:               mdc,
-		Options:           options,
-		Publisher:         publisher,
-		Analyser:          options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
-		CatalogReferencer: referencer,
-		UniqueFilter:      newUniqueFilter(),
-		Uploader:          &uploader{Owner: owner, InsertMediaPort: b.InsertMediaPort, ArchivePort: b.ArchivePort},
+	config := &backupConfiguration{
+		scanConfiguration: scanConfiguration{
+			Analyser:                  options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
+			Cataloguer:                cataloguer,
+			ScanCompleteObserver:      tracker,
+			PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
+			PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker /*, reportBuilder*/},
+			PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker},
+			PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
+			PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
+			Wrappers:                  []chain.CloserFunc{tracker.NoMoreEvents},
+			// PostCatalogFiltersIn is not supported.
+		},
+		Uploader: &uploader{
+			Owner:            owner,
+			InsertMediaPort:  b.InsertMediaPort,
+			ArchivePort:      b.ArchivePort,
+			UploaderObserver: tracker,
+		},
 	}
-
-	progressChannel, _ := run.start(ctx, hintSize)
-	backupReport := NewTracker(progressChannel, options.Listener)
-
-	err = run.waitToFinish()
-	backupReport.WaitToComplete()
-
-	if err == nil {
-		mdc.Infof("Backup completed, %d medias backed up.", backupReport.MediaCount())
+	if options.SkipRejects {
+		config.PostAnalyserRejects = append(config.PostAnalyserRejects /*, reportBuilder*/)
 	} else {
-		mdc.WithError(err).Errorf("Backup faifed with err: %s", err.Error())
+		config.PostAnalyserRejects = append(config.PostAnalyserRejects, new(analyserFailsFastObserver))
 	}
-	return backupReport, err
+
+	launcher, err := multithreadedBackupRuntime(ctx, options, config)
+	return launcher, report, err
 }
 
 func (b *BatchBackup) newCataloguer(ctx context.Context, owner ownermodel.Owner, dryRun bool) (Cataloguer, error) {
@@ -94,12 +88,88 @@ func (b *BatchBackup) newCataloguer(ctx context.Context, owner ownermodel.Owner,
 	return referencer, nil
 }
 
-func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *trackerV2, error) {
+type backupConfiguration struct {
+	scanConfiguration
+
+	Uploader *uploader
+}
+
+func multithreadedBackupRuntime(ctxNonCancelable context.Context, options Options, config *backupConfiguration) (analyserLauncher, error) {
+	ctx, cancelFunc := context.WithCancel(ctxNonCancelable)
+
+	//uploaderLauncher := &multithreadedUploaderLauncher{
+	//	uploader: &uploader{
+	//		Owner:            owner,
+	//		InsertMediaPort:  b.InsertMediaPort,
+	//		ArchivePort:      b.ArchivePort,
+	//		UploaderObserver: tracker,
+	//	},
+	//	channel:                    uploaderChannelInstance,
+	//	done:                       make(chan interface{}),
+	//	concurrentUploaderRoutines: options.ConcurrencyParameters.NumberOfConcurrentUploaderRoutines(),
+	//}
+	launcher := scanAndBackupCommonLauncher(&config.scanConfiguration, options,
+		&reBufferLink[BackingUpMediaRequest]{ // TODO rebuffer is not tested...
+			bufferLink: bufferLink[BackingUpMediaRequest]{
+				Buffer: buffer[BackingUpMediaRequest]{
+					content: make([]BackingUpMediaRequest, 0, defaultValue(options.BatchSize, 1)),
+				},
+				Next: &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
+					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentUploaderRoutines(),
+					ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]BackingUpMediaRequest] {
+						up := config.Uploader
+						return chain.ConsumerFunc[[]BackingUpMediaRequest](func(ctx context.Context, consumed []BackingUpMediaRequest) error {
+							err := up.OnMediaCatalogued(ctx, consumed)
+							if err != nil {
+								return err
+							}
+							return consumer.Consume(ctx, consumed)
+						})
+					},
+					Next: &chain.CloseWrapperLink[[]BackingUpMediaRequest]{
+						CloserFuncs: slices.Concat(config.Wrappers, []chain.CloserFunc{chain.CloserFunc(cancelFunc)}),
+						Next:        chain.EndOfTheChain[[]BackingUpMediaRequest](),
+					},
+				},
+			},
+		},
+
+		//&chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
+		//	NumberOfRoutines: 1,
+		//	ConsumerBuilder:  chain.PassThrough[[]BackingUpMediaRequest](),
+		//	Next: &chain.CloseWrapperLink[[]BackingUpMediaRequest]{
+		//		CloserFuncs: slices.Concat(config.Wrappers, []chain.CloserFunc{chain.CloserFunc(cancelFunc)}),
+		//		Next:        chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
+		//	},
+		//},
+	)
+
+	err := launcher.Starts(ctx, chain.NewErrorCollector(func(err error) {
+		cancelFunc()
+	}))
+	return launcher, err
+}
+
+type reBufferLink[Consumed any] struct {
+	bufferLink[Consumed]
+}
+
+func (l *reBufferLink[Consumed]) Consume(ctx context.Context, buf []Consumed) error {
+	for _, item := range buf {
+		err := l.bufferLink.Consume(ctx, item)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *BatchBackup) _prepareVolumeBackup(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *trackerV2, error) {
 	tracker, report := newTrackerV2(options) // TODO is using the tracker to collect the report the best way to do it ?
 	//reportBuilder := newScanReportBuilder()
 	scanLogger := newLogger(volumeName)
 
-	uploaderChannelInstance := make(uploaderChannel)
+	//uploaderChannelInstance := make(uploaderChannel)
 
 	monitoring := &scanListeners{
 		scanCompleteObserver:      tracker,
@@ -109,7 +179,7 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
 		PostCatalogFiltersIn: []CatalogReferencerObserver{
 			tracker, /*, reportBuilder*/
-			uploaderChannelInstance,
+			//uploaderChannelInstance,
 		},
 		PostCatalogFiltersOut: []CataloguerFilterObserver{scanLogger, tracker},
 	}
@@ -124,7 +194,7 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 			ArchivePort:      b.ArchivePort,
 			UploaderObserver: tracker,
 		},
-		channel:                    uploaderChannelInstance,
+		//channel:                    uploaderChannelInstance,
 		done:                       make(chan interface{}),
 		concurrentUploaderRoutines: options.ConcurrencyParameters.NumberOfConcurrentUploaderRoutines(),
 	}
@@ -144,13 +214,6 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 		analyser:   options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
 	})
 	return uploaderLauncher.wrapLauncher(launcher), report, err
-}
-
-type uploaderChannel chan []BackingUpMediaRequest
-
-func (m uploaderChannel) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
-	m <- requests
-	return nil
 }
 
 type multithreadedUploaderLauncher struct {

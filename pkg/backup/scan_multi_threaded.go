@@ -9,7 +9,23 @@ import (
 func multithreadedScanRuntime(ctxNonCancelable context.Context, options Options, config *scanConfiguration) (analyserLauncher, error) {
 	ctx, cancelFunc := context.WithCancel(ctxNonCancelable)
 
-	launcher := &chain.SingleLauncher[SourceVolume, FoundMedia]{
+	launcher := scanAndBackupCommonLauncher(config, options, &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
+		NumberOfRoutines: 1,
+		ConsumerBuilder:  chain.PassThrough[[]BackingUpMediaRequest](),
+		Next: &chain.CloseWrapperLink[[]BackingUpMediaRequest]{
+			CloserFuncs: slices.Concat(config.Wrappers, []chain.CloserFunc{chain.CloserFunc(cancelFunc)}),
+			Next:        chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
+		},
+	})
+
+	err := launcher.Starts(ctx, chain.NewErrorCollector(func(err error) {
+		cancelFunc()
+	}))
+	return launcher, err
+}
+
+func scanAndBackupCommonLauncher(config *scanConfiguration, options Options, next chain.Link[[]BackingUpMediaRequest]) *chain.SingleLauncher[SourceVolume, FoundMedia] {
+	return &chain.SingleLauncher[SourceVolume, FoundMedia]{
 		Function: func(ctx context.Context, volume SourceVolume) ([]FoundMedia, error) {
 			medias, err := volume.FindMedias(ctx)
 			if err != nil || config.ScanCompleteObserver == nil {
@@ -48,23 +64,11 @@ func multithreadedScanRuntime(ctxNonCancelable context.Context, options Options,
 						}
 						return chain.ConsumerFunc[[]*AnalysedMedia](adapter.OnBatchOfAnalysedMedia)
 					},
-					Next: &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
-						NumberOfRoutines: 1,
-						ConsumerBuilder:  chain.PassThrough[[]BackingUpMediaRequest](),
-						Next: &chain.CloseWrapperLink[[]BackingUpMediaRequest]{
-							CloserFuncs: slices.Concat(config.Wrappers, []chain.CloserFunc{chain.CloserFunc(cancelFunc)}),
-							Next:        chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
-						},
-					},
+					Next: next,
 				},
 			},
 		},
 	}
-
-	err := launcher.Starts(ctx, chain.NewErrorCollector(func(err error) {
-		cancelFunc()
-	}))
-	return launcher, err
 }
 
 func finalizer(in []CatalogReferencerObserver) []chain.ConsumerFunc[[]BackingUpMediaRequest] {
