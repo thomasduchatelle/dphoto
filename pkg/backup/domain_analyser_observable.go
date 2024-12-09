@@ -5,16 +5,20 @@ import (
 	"github.com/pkg/errors"
 )
 
+type Analyser interface {
+	Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error
+}
+
 func newDefaultAnalyser(readers ...DetailsReader) *observableAnalyser {
 	return &observableAnalyser{
-		analyser: &coreAnalyser{
+		analyser: &mediaReader{
 			detailsReaders: readers,
 		},
 	}
 }
 
 type observableAnalyser struct {
-	analyser *coreAnalyser
+	analyser *mediaReader
 }
 
 func (a *observableAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
@@ -38,10 +42,6 @@ func (a AnalysedMediaObserverFunc) OnAnalysedMedia(ctx context.Context, media *A
 type RejectedMediaObserver interface {
 	// OnRejectedMedia is called when the media is invalid and cannot be used ; the error is returned only if there is a technical issue.
 	OnRejectedMedia(ctx context.Context, found FoundMedia, cause error) error
-}
-
-type Analyser interface {
-	Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error
 }
 
 type AnalyserDecorator interface {

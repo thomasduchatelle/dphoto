@@ -5,6 +5,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+type Cataloguer interface {
+	Reference(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error
+}
+
 // CatalogReference is used to project where a media will fit in the catalog: its ID and its album.
 type CatalogReference interface {
 	// Exists returns true if the media exists in the catalog
@@ -35,10 +39,6 @@ func (c CatalogReferencerObserverFunc) OnMediaCatalogued(ctx context.Context, re
 
 type CataloguerFilterObserver interface {
 	OnFilteredOut(ctx context.Context, media AnalysedMedia, reference CatalogReference, cause error) error
-}
-
-type Cataloguer interface {
-	Reference(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error
 }
 
 type CataloguerWithFilters struct {

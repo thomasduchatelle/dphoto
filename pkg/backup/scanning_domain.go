@@ -17,26 +17,6 @@ func (c CatalogReferencerObservers) OnMediaCatalogued(ctx context.Context, reque
 	return nil
 }
 
-type analyserAdapter struct {
-	analyser     Analyser
-	analysed     AnalysedMediaObservers
-	beforeFilter AnalysedMediaObservers
-	filteredOut  RejectedMediaObservers
-	rejected     RejectedMediaObservers
-}
-
-func (a *analyserAdapter) OnFoundMedia(ctx context.Context, media FoundMedia) error {
-	return a.analyser.Analyse(
-		ctx,
-		media,
-		slices.Concat(a.beforeFilter, []AnalysedMediaObserver{&analyserNoDateTimeFilter{
-			analysedMediaObserver: a.analysed,
-			rejectedMediaObserver: a.filteredOut,
-		}}),
-		&a.rejected,
-	)
-}
-
 type cataloguerAdapter struct {
 	cataloguer  Cataloguer
 	options     Options
@@ -56,17 +36,4 @@ func (s *cataloguerAdapter) OnBatchOfAnalysedMedia(ctx context.Context, batch []
 			},
 		},
 	))
-}
-
-type analyserNoDateTimeFilter struct {
-	analysedMediaObserver AnalysedMediaObserver
-	rejectedMediaObserver RejectedMediaObserver
-}
-
-func (a *analyserNoDateTimeFilter) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
-	if media.Details.DateTime.IsZero() {
-		return a.rejectedMediaObserver.OnRejectedMedia(ctx, media.FoundMedia, ErrAnalyserNoDateTime)
-	}
-
-	return a.analysedMediaObserver.OnAnalysedMedia(ctx, media)
 }

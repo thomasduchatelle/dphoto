@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"hash"
 	"io"
 	"path"
+	"slices"
 	"strings"
 )
 
@@ -33,12 +35,12 @@ var SupportedExtensions = map[string]MediaType{
 	"webm": MediaTypeVideo,
 }
 
-type coreAnalyser struct {
+type mediaReader struct {
 	options        DetailsReaderOptions
-	detailsReaders []DetailsReader // DetailsReaders is a list of specific details extractor can auto-register
+	detailsReaders []DetailsReader
 }
 
-func (a *coreAnalyser) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
+func (a *mediaReader) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
 	reader, hasher, err := readerSpyingForHash(found)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open file %s for analyse", found)
@@ -71,7 +73,7 @@ func (a *coreAnalyser) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
 	return media, nil
 }
 
-func (a *coreAnalyser) extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {
+func (a *mediaReader) extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {
 	mediaType := getMediaType(found)
 
 	loadedReaders := make([]string, len(a.detailsReaders), len(a.detailsReaders))
@@ -121,4 +123,37 @@ func getMediaType(media FoundMedia) MediaType {
 	}
 
 	return MediaTypeOther
+}
+
+type analyserAdapter struct {
+	analyser     Analyser
+	analysed     AnalysedMediaObservers
+	beforeFilter AnalysedMediaObservers
+	filteredOut  RejectedMediaObservers
+	rejected     RejectedMediaObservers
+}
+
+func (a *analyserAdapter) OnFoundMedia(ctx context.Context, media FoundMedia) error {
+	return a.analyser.Analyse(
+		ctx,
+		media,
+		slices.Concat(a.beforeFilter, []AnalysedMediaObserver{&analyserNoDateTimeFilter{
+			analysedMediaObserver: a.analysed,
+			rejectedMediaObserver: a.filteredOut,
+		}}),
+		&a.rejected,
+	)
+}
+
+type analyserNoDateTimeFilter struct {
+	analysedMediaObserver AnalysedMediaObserver
+	rejectedMediaObserver RejectedMediaObserver
+}
+
+func (a *analyserNoDateTimeFilter) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
+	if media.Details.DateTime.IsZero() {
+		return a.rejectedMediaObserver.OnRejectedMedia(ctx, media.FoundMedia, ErrAnalyserNoDateTime)
+	}
+
+	return a.analysedMediaObserver.OnAnalysedMedia(ctx, media)
 }
