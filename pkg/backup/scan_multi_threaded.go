@@ -6,6 +6,14 @@ import (
 	"slices"
 )
 
+type scanCompleteObserver interface {
+	OnScanComplete(ctx context.Context, count, size int) error
+}
+
+type analyserLauncher interface {
+	Process(ctx context.Context, volume SourceVolume) chan error
+}
+
 func multithreadedScanRuntime(ctxNonCancelable context.Context, options Options, config *scanConfiguration) (analyserLauncher, error) {
 	ctx, cancelFunc := context.WithCancel(ctxNonCancelable)
 
@@ -126,4 +134,12 @@ func (l *bufferLink[Consumed]) WaitForCompletion() chan error {
 
 func (l *bufferLink[Consumed]) NotifyUpstreamCompleted() {
 	close(l.channel)
+}
+
+func sizeOfAllMedias(medias []FoundMedia) int {
+	size := 0
+	for _, media := range medias {
+		size += media.Size()
+	}
+	return size
 }

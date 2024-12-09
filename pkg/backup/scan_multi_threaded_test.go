@@ -15,18 +15,6 @@ import (
 	"time"
 )
 
-func stubAnalyserObserverChainForMultithreadedTests(ctx context.Context, controller scanningController, options scanningOptions) *analyserObserverChain {
-	return &analyserObserverChain{
-		AnalysedMediaObservers: []AnalysedMediaObserver{
-			controller.WrapAnalysedMediasBatchObserverIntoAnalysedMediaObserver(ctx, 0, &analyserToCatalogReferencer{
-				CatalogReferencer:          options.cataloguer,
-				CatalogReferencerObservers: controller.AppendPreCataloguerFilter(controller.AppendPostCatalogFiltersIn()...),
-			}),
-		},
-		RejectedMediaObservers: controller.AppendPostAnalyserFilterRejects(),
-	}
-}
-
 func Test_multithreadedScanRuntime(t *testing.T) {
 	simulatedError := errors.New("TEST Simulated error")
 
@@ -496,4 +484,25 @@ func goid() int {
 		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
 	}
 	return id
+}
+
+type AnalyserFake struct {
+	ErroredFilename map[string]error
+}
+
+func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
+	if a.ErroredFilename != nil {
+		if err, errored := a.ErroredFilename[found.MediaPath().Filename]; errored {
+			return err
+		}
+	}
+
+	return analysedMediaObserver.OnAnalysedMedia(ctx, &AnalysedMedia{
+		FoundMedia: found,
+		Type:       MediaTypeImage,
+		Sha256Hash: found.MediaPath().Filename,
+		Details: &MediaDetails{
+			DateTime: time.Date(2022, 6, 18, 10, 42, 0, 0, time.UTC),
+		},
+	})
 }

@@ -37,28 +37,23 @@ type CataloguerFilterObserver interface {
 	OnFilteredOut(ctx context.Context, media AnalysedMedia, reference CatalogReference, cause error) error
 }
 
-type CataloguerObserver interface {
-	CatalogReferencerObserver
-	CataloguerFilterObserver
-}
-
 type Cataloguer interface {
 	Reference(ctx context.Context, medias []*AnalysedMedia, observer CatalogReferencerObserver) error
 }
 
 type CataloguerWithFilters struct {
-	Delegate                  Cataloguer
-	CataloguerFilters         []CataloguerFilter
-	CatalogReferencerObserver CatalogReferencerObserver
-	CataloguerFilterObserver  CataloguerFilterObserver
+	Delegate                   Cataloguer
+	CataloguerFilters          []CataloguerFilter
+	CatalogReferencerObservers CatalogReferencerObservers
+	CataloguerFilterObserver   CataloguerFilterObserver
 }
 
 func (c *CataloguerWithFilters) Catalog(ctx context.Context, medias []*AnalysedMedia) error {
-	if c.CatalogReferencerObserver == nil || c.CataloguerFilterObserver == nil {
-		return errors.New("cataloguer must have a CatalogReferencerObserver and a CataloguerFilterObserver")
+	if c.CataloguerFilterObserver == nil {
+		return errors.New("cataloguer must have a CataloguerFilterObserver (not-nil)")
 	}
 	filters := &applyFiltersOnCataloguer{
-		CatalogReferencerObservers: []CatalogReferencerObserver{c.CatalogReferencerObserver},
+		CatalogReferencerObservers: c.CatalogReferencerObservers,
 		CataloguerFilterObservers:  []CataloguerFilterObserver{c.CataloguerFilterObserver},
 		CataloguerFilters:          c.CataloguerFilters,
 	}

@@ -72,7 +72,7 @@ func (c ExtraCounts) String() interface{} {
 // newTrackerV2 creates the trackerV2 and start consuming (async)
 func newTrackerV2(options Options) (*trackerObserver, *trackerV2) {
 	tracker := &trackerV2{
-		listeners:     []interface{}{options.Listener},
+		listeners:     panicIfDoesNotImplementsTrackerInterface(options.Listener),
 		eventCount:    make(map[trackEvent]MediaCounter),
 		detailedCount: make(map[string]IAlbumReport),
 	}
@@ -86,6 +86,32 @@ func newTrackerV2(options Options) (*trackerObserver, *trackerV2) {
 		tracker.consume(observer.channel)
 	}()
 	return observer, tracker
+}
+
+func panicIfDoesNotImplementsTrackerInterface(listener interface{}) (listeners []interface{}) {
+	if listener == nil {
+		return
+	}
+
+	listeners = append(listeners, listener)
+
+	if _, ok := listener.(TrackEvents); ok {
+		return
+	}
+
+	if _, ok := listener.(TrackScanComplete); ok {
+		return
+	}
+
+	if _, ok := listener.(TrackAnalysed); ok {
+		return
+	}
+
+	if _, ok := listener.(TrackUploaded); ok {
+		return
+	}
+
+	panic("listener must implement at least one of the tracker interfaces")
 }
 
 // trackerV2 is simplifying the consumption of events from scans and backups to implement progress bars.
@@ -222,13 +248,6 @@ func (t *trackerV2) MediaCount() int {
 type trackerObserver struct {
 	channel chan *progressEvent
 	done    chan struct{}
-}
-
-// Close TODO should be delete and replaced by NoMoreEvents
-func (p *trackerObserver) Close() error {
-	close(p.channel)
-	<-p.done
-	return nil
 }
 
 func (p *trackerObserver) NoMoreEvents() {
