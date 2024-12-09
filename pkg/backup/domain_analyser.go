@@ -1,7 +1,6 @@
 package backup
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -34,20 +33,12 @@ var SupportedExtensions = map[string]MediaType{
 	"webm": MediaTypeVideo,
 }
 
-type CoreAnalyser struct {
+type coreAnalyser struct {
 	options        DetailsReaderOptions
 	detailsReaders []DetailsReader // DetailsReaders is a list of specific details extractor can auto-register
 }
 
-func (a *CoreAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
-	media, err := a.analyseMedia(found)
-	if err != nil {
-		return rejectsObserver.OnRejectedMedia(ctx, found, err)
-	}
-	return analysedMediaObserver.OnAnalysedMedia(ctx, media)
-}
-
-func (a *CoreAnalyser) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
+func (a *coreAnalyser) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
 	reader, hasher, err := readerSpyingForHash(found)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open file %s for analyse", found)
@@ -80,7 +71,7 @@ func (a *CoreAnalyser) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
 	return media, nil
 }
 
-func (a *CoreAnalyser) extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {
+func (a *coreAnalyser) extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {
 	mediaType := getMediaType(found)
 
 	loadedReaders := make([]string, len(a.detailsReaders), len(a.detailsReaders))

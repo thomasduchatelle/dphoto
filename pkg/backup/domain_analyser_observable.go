@@ -5,10 +5,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-func newDefaultAnalyser(readers ...DetailsReader) *CoreAnalyser {
-	return &CoreAnalyser{
-		detailsReaders: readers,
+func newDefaultAnalyser(readers ...DetailsReader) *observableAnalyser {
+	return &observableAnalyser{
+		analyser: &coreAnalyser{
+			detailsReaders: readers,
+		},
 	}
+}
+
+type observableAnalyser struct {
+	analyser *coreAnalyser
+}
+
+func (a *observableAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
+	media, err := a.analyser.analyseMedia(found)
+	if err != nil {
+		return rejectsObserver.OnRejectedMedia(ctx, found, err)
+	}
+	return analysedMediaObserver.OnAnalysedMedia(ctx, media)
 }
 
 type AnalysedMediaObserver interface {
@@ -31,7 +45,7 @@ type Analyser interface {
 }
 
 type AnalyserDecorator interface {
-	Decorate(analyseFunc Analyser, observers ...AnalyserDecoratorObserver) Analyser
+	Decorate(analyse Analyser, observers ...AnalyserDecoratorObserver) Analyser
 }
 
 type AnalyserDecoratorObserver interface {
