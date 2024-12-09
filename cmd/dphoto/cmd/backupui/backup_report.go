@@ -8,7 +8,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 )
 
-func PrintBackupStats(tracker backup.CompletionReport, volumePath string) {
+func PrintBackupStats(tracker backup.Report, volumePath string) {
 	if len(tracker.CountPerAlbum()) == 0 {
 		printer.Success("\n\nBackup of %s complete: %s.", aurora.Cyan(volumePath), aurora.Bold(aurora.Yellow("no new medias")))
 		return

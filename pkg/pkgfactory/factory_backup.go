@@ -12,14 +12,14 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
-type MultiFilesBackup func(ctx context.Context, owner ownermodel.Owner, volumeSource backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error)
+type MultiFilesBackup func(ctx context.Context, owner ownermodel.Owner, volumeSource backup.SourceVolume, optionsSlice ...backup.Options) (backup.Report, error)
 
 type MultiFilesScanner func(ctx context.Context, owner string, volume backup.SourceVolume, optionSlice ...backup.Options) ([]*backup.ScannedFolder, error)
 
 func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 	factory.InitArchive(ctx)
 
-	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error) {
+	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.Report, error) {
 		batch := &backup.BatchBackup{
 			CataloguerFactory: NewCataloguerFactory(),
 			DetailsReaders:    analysers.ListDetailReaders(),

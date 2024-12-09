@@ -46,7 +46,7 @@ func TestBackupAcceptance(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    CompletionReport
+		want    Report
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -85,7 +85,7 @@ func TestBackupAcceptance(t *testing.T) {
 			},
 			want: &backupReportBuilder{
 				skipped: MediaCounterZero,
-				countPerAlbum: map[string]IAlbumReport{
+				countPerAlbum: map[string]*AlbumReport{
 					doesNotExistReference1.AlbumFolderNameValue: countOfMedias(analysedMedias[0]),
 				},
 			},
@@ -120,7 +120,7 @@ func TestBackupAcceptance(t *testing.T) {
 			},
 			want: &backupReportBuilder{
 				skipped: MediaCounterZero,
-				countPerAlbum: map[string]IAlbumReport{
+				countPerAlbum: map[string]*AlbumReport{
 					doesNotExistReference1.AlbumFolderNameValue: countOfMedias(analysedMedias[0], analysedMedias[1]),
 				},
 			},
@@ -147,8 +147,8 @@ func TestBackupAcceptance(t *testing.T) {
 	}
 }
 
-func countOfMedias(medias ...*AnalysedMedia) IAlbumReport {
-	report := &albumReport{}
+func countOfMedias(medias ...*AnalysedMedia) *AlbumReport {
+	report := &AlbumReport{}
 	for _, media := range medias {
 		switch media.Type {
 		case MediaTypeImage:
@@ -225,16 +225,8 @@ func (a *AssertInsertMediaPort) IsSatisfied(t *testing.T) bool {
 	return assert.ElementsMatch(t, a.Want, a.InsertMediaPortFake.got)
 }
 
-func convertToStaticCompletionReport(report CompletionReport) *backupReportBuilder {
-	countPerAlbum := make(map[string]IAlbumReport)
-	for album, albumReport := range report.CountPerAlbum() {
-		countPerAlbum[album] = convertToStaticAlbumReport(albumReport)
-	}
-
-	return &backupReportBuilder{
-		skipped:       report.Skipped(),
-		countPerAlbum: countPerAlbum,
-	}
+func convertToStaticCompletionReport(report Report) *backupReportBuilder {
+	return report.(*backupReportBuilder)
 }
 
 type ArchiveGroupWaiter struct {
@@ -249,8 +241,8 @@ func (a *ArchiveGroupWaiter) ArchiveMedia(owner string, media *BackingUpMediaReq
 	return a.Delegate.ArchiveMedia(owner, media)
 }
 
-func convertToStaticAlbumReport(report IAlbumReport) *albumReport {
-	return &albumReport{
+func convertToStaticAlbumReport(report AlbumReport) *AlbumReport {
+	return &AlbumReport{
 		isNew: report.IsNew(),
 		image: report.OfType(MediaTypeImage),
 		video: report.OfType(MediaTypeVideo),

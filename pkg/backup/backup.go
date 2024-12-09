@@ -17,7 +17,7 @@ type BatchBackup struct {
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
-func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
+func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (Report, error) {
 	launcher, report, err := b.prepareVolumeBackup(ctx, ReduceOptions(optionsSlice...), volume.String(), owner)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume
 	return report, err
 }
 
-func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, CompletionReport, error) {
+func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, Report, error) {
 	tracker, _ := newTrackerV2(options) // TODO is using the tracker to collect the report the best way to do it ?
 	report := newBackupReportBuilder()
 	scanLogger := newLogger(volumeName)

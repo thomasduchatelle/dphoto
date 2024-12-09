@@ -26,7 +26,7 @@ func (_m *MultiFilesBackup) EXPECT() *MultiFilesBackup_Expecter {
 }
 
 // Execute provides a mock function with given fields: ctx, owner, volumeSource, optionsSlice
-func (_m *MultiFilesBackup) Execute(ctx context.Context, owner ownermodel.Owner, volumeSource backup.SourceVolume, optionsSlice ...backup.Options) (backup.CompletionReport, error) {
+func (_m *MultiFilesBackup) Execute(ctx context.Context, owner ownermodel.Owner, volumeSource backup.SourceVolume, optionsSlice ...backup.Options) (backup.Report, error) {
 	_va := make([]interface{}, len(optionsSlice))
 	for _i := range optionsSlice {
 		_va[_i] = optionsSlice[_i]
@@ -40,16 +40,16 @@ func (_m *MultiFilesBackup) Execute(ctx context.Context, owner ownermodel.Owner,
 		panic("no return value specified for Execute")
 	}
 
-	var r0 backup.CompletionReport
+	var r0 backup.Report
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, backup.SourceVolume, ...backup.Options) (backup.CompletionReport, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, backup.SourceVolume, ...backup.Options) (backup.Report, error)); ok {
 		return rf(ctx, owner, volumeSource, optionsSlice...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, backup.SourceVolume, ...backup.Options) backup.CompletionReport); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ownermodel.Owner, backup.SourceVolume, ...backup.Options) backup.Report); ok {
 		r0 = rf(ctx, owner, volumeSource, optionsSlice...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(backup.CompletionReport)
+			r0 = ret.Get(0).(backup.Report)
 		}
 	}
 
@@ -90,12 +90,12 @@ func (_c *MultiFilesBackup_Execute_Call) Run(run func(ctx context.Context, owner
 	return _c
 }
 
-func (_c *MultiFilesBackup_Execute_Call) Return(_a0 backup.CompletionReport, _a1 error) *MultiFilesBackup_Execute_Call {
+func (_c *MultiFilesBackup_Execute_Call) Return(_a0 backup.Report, _a1 error) *MultiFilesBackup_Execute_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MultiFilesBackup_Execute_Call) RunAndReturn(run func(context.Context, ownermodel.Owner, backup.SourceVolume, ...backup.Options) (backup.CompletionReport, error)) *MultiFilesBackup_Execute_Call {
+func (_c *MultiFilesBackup_Execute_Call) RunAndReturn(run func(context.Context, ownermodel.Owner, backup.SourceVolume, ...backup.Options) (backup.Report, error)) *MultiFilesBackup_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }
