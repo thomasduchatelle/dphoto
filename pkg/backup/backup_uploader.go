@@ -11,10 +11,10 @@ type uploaderObserver interface {
 }
 
 type uploader struct {
-	Owner            ownermodel.Owner
-	InsertMediaPort  InsertMediaPort
-	ArchivePort      ArchiveMediaPort
-	UploaderObserver uploaderObserver // UploaderObserver is called after the media is uploaded, but before the media is catalogued
+	Owner             ownermodel.Owner
+	InsertMediaPort   InsertMediaPort
+	ArchivePort       ArchiveMediaPort
+	UploaderObservers []uploaderObserver // UploaderObservers are called after the media is uploaded, but before the media is catalogued
 }
 
 func (u *uploader) OnMediaCatalogued(ctx context.Context, requests []BackingUpMediaRequest) error {
@@ -31,9 +31,11 @@ func (u *uploader) OnMediaCatalogued(ctx context.Context, requests []BackingUpMe
 			ArchiveFilename:       newFilename,
 		}
 
-		err = u.UploaderObserver.OnBackingUpMediaRequestUploaded(ctx, request)
-		if err != nil {
-			return err
+		for _, observer := range u.UploaderObservers {
+			err = observer.OnBackingUpMediaRequestUploaded(ctx, request)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

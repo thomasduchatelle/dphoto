@@ -16,7 +16,6 @@ type IAlbumReport interface {
 	OfType(mediaType MediaType) MediaCounter
 }
 
-// MediaCounter TODO implementation and constructors should be privatised to only expose relevant methods of functions
 type MediaCounter struct {
 	Count int // Count is the number of medias
 	Size  int // Size is the sum of the size of the medias
@@ -47,65 +46,18 @@ func (c MediaCounter) IsZero() bool {
 	return c.Size == 0 && c.Count == 0
 }
 
-type AlbumReport struct {
-	New    bool // New is true if the album have been created during the backup
-	counts [numberOfMediaType]int
-	sizes  [numberOfMediaType]int
-}
+// NewAlbumReport is a convenience method for testing or mocking 'backup' domain
+func NewAlbumReport(mediaType MediaType, count int, size int, isNew bool) IAlbumReport {
+	counter := NewMediaCounter(count, size)
 
-// NewTypeCounter is a convenience method for testing or mocking 'backup' domain
-func NewTypeCounter(mediaType MediaType, count int, size int, isNew bool) *AlbumReport {
-	counter := new(AlbumReport)
-	counter.IncrementFoundCounter(mediaType, count, size)
-	counter.New = isNew
-	return counter
-}
-
-func (c *AlbumReport) IsNew() bool {
-	return c.New
-}
-
-func (c *AlbumReport) IncrementFoundCounter(mediaType MediaType, count int, size int) *AlbumReport {
-	c.IncrementCounter(&c.counts, mediaType, count)
-	c.IncrementCounter(&c.sizes, mediaType, size)
-	return c
-}
-
-func (c *AlbumReport) IncrementCounter(counter *[numberOfMediaType]int, mediaType MediaType, delta int) {
-	index := c.GetMediaIndex(mediaType)
-	if index > 0 {
-		counter[index] = counter[index] + delta
-	}
-
-	counter[0] = counter[0] + delta
-}
-
-func (c *AlbumReport) GetMediaIndex(mediaType MediaType) int {
+	report := &albumReport{isNew: isNew}
 	switch mediaType {
 	case MediaTypeImage:
-		return 1
+		report.image = counter
 	case MediaTypeVideo:
-		return 2
+		report.video = counter
+	default:
+		report.other = counter
 	}
-
-	return -1
-}
-
-func (c *AlbumReport) Total() MediaCounter {
-	return MediaCounter{
-		Count: c.counts[0],
-		Size:  c.sizes[0],
-	}
-}
-
-func (c *AlbumReport) OfType(mediaType MediaType) MediaCounter {
-	index := c.GetMediaIndex(mediaType)
-	if index < 0 {
-		return MediaCounter{}
-	}
-
-	return MediaCounter{
-		Count: c.counts[index],
-		Size:  c.sizes[index],
-	}
+	return report
 }

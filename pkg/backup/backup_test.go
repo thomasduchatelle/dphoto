@@ -83,7 +83,7 @@ func TestBackupAcceptance(t *testing.T) {
 					analysedMedias[0].FoundMedia,
 				},
 			},
-			want: &StaticCompletionReport{
+			want: &backupReportBuilder{
 				skipped: MediaCounterZero,
 				countPerAlbum: map[string]IAlbumReport{
 					doesNotExistReference1.AlbumFolderNameValue: countOfMedias(analysedMedias[0]),
@@ -118,7 +118,7 @@ func TestBackupAcceptance(t *testing.T) {
 					OptionsBatchSize(1),
 				},
 			},
-			want: &StaticCompletionReport{
+			want: &backupReportBuilder{
 				skipped: MediaCounterZero,
 				countPerAlbum: map[string]IAlbumReport{
 					doesNotExistReference1.AlbumFolderNameValue: countOfMedias(analysedMedias[0], analysedMedias[1]),
@@ -148,7 +148,7 @@ func TestBackupAcceptance(t *testing.T) {
 }
 
 func countOfMedias(medias ...*AnalysedMedia) IAlbumReport {
-	report := &StaticAlbumReport{}
+	report := &albumReport{}
 	for _, media := range medias {
 		switch media.Type {
 		case MediaTypeImage:
@@ -225,63 +225,15 @@ func (a *AssertInsertMediaPort) IsSatisfied(t *testing.T) bool {
 	return assert.ElementsMatch(t, a.Want, a.InsertMediaPortFake.got)
 }
 
-func convertToStaticCompletionReport(report CompletionReport) *StaticCompletionReport {
+func convertToStaticCompletionReport(report CompletionReport) *backupReportBuilder {
 	countPerAlbum := make(map[string]IAlbumReport)
 	for album, albumReport := range report.CountPerAlbum() {
 		countPerAlbum[album] = convertToStaticAlbumReport(albumReport)
 	}
 
-	return &StaticCompletionReport{
+	return &backupReportBuilder{
 		skipped:       report.Skipped(),
 		countPerAlbum: countPerAlbum,
-	}
-}
-
-type StaticCompletionReport struct {
-	skipped       MediaCounter
-	countPerAlbum map[string]IAlbumReport
-}
-
-func (e *StaticCompletionReport) Skipped() MediaCounter {
-	return e.skipped
-}
-
-func (e *StaticCompletionReport) CountPerAlbum() map[string]IAlbumReport {
-	return e.countPerAlbum
-}
-
-func convertToStaticAlbumReport(report IAlbumReport) *StaticAlbumReport {
-	return &StaticAlbumReport{
-		isNew: report.IsNew(),
-		image: report.OfType(MediaTypeImage),
-		video: report.OfType(MediaTypeVideo),
-		other: report.OfType(MediaTypeOther),
-	}
-}
-
-type StaticAlbumReport struct {
-	isNew bool
-	image MediaCounter
-	video MediaCounter
-	other MediaCounter
-}
-
-func (c *StaticAlbumReport) IsNew() bool {
-	return c.isNew
-}
-
-func (c *StaticAlbumReport) Total() MediaCounter {
-	return c.image.AddCounter(c.video).AddCounter(c.other)
-}
-
-func (c *StaticAlbumReport) OfType(mediaType MediaType) MediaCounter {
-	switch mediaType {
-	case MediaTypeImage:
-		return c.image
-	case MediaTypeVideo:
-		return c.video
-	default:
-		return c.other
 	}
 }
 
@@ -295,4 +247,13 @@ func (a *ArchiveGroupWaiter) ArchiveMedia(owner string, media *BackingUpMediaReq
 	a.Waiter.Wait()
 
 	return a.Delegate.ArchiveMedia(owner, media)
+}
+
+func convertToStaticAlbumReport(report IAlbumReport) *albumReport {
+	return &albumReport{
+		isNew: report.IsNew(),
+		image: report.OfType(MediaTypeImage),
+		video: report.OfType(MediaTypeVideo),
+		other: report.OfType(MediaTypeOther),
+	}
 }

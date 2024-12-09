@@ -18,18 +18,19 @@ type BatchBackup struct {
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
 func (b *BatchBackup) Backup(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionsSlice ...Options) (CompletionReport, error) {
-	launcher, tracker, err := b.prepareVolumeBackup(ctx, ReduceOptions(optionsSlice...), volume.String(), owner)
+	launcher, report, err := b.prepareVolumeBackup(ctx, ReduceOptions(optionsSlice...), volume.String(), owner)
 	if err != nil {
 		return nil, err
 	}
 
 	err, _ = <-launcher.Process(ctx, volume)
 
-	return tracker, err
+	return report, err
 }
 
-func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *trackerV2, error) {
-	tracker, report := newTrackerV2(options) // TODO is using the tracker to collect the report the best way to do it ?
+func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, CompletionReport, error) {
+	tracker, _ := newTrackerV2(options) // TODO is using the tracker to collect the report the best way to do it ?
+	report := newBackupReportBuilder()
 	scanLogger := newLogger(volumeName)
 
 	cataloguer, err := b.newCataloguer(ctx, owner, options.DryRun)
@@ -43,18 +44,18 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 			Cataloguer:                cataloguer,
 			ScanCompleteObserver:      tracker,
 			PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
-			PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker /*, reportBuilder*/},
-			PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker},
+			PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker, report},
+			PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker, report},
 			PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
-			PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
+			PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker, report},
 			Wrappers:                  []chain.CloserFunc{tracker.NoMoreEvents},
 			// PostCatalogFiltersIn is not supported.
 		},
 		Uploader: &uploader{
-			Owner:            owner,
-			InsertMediaPort:  b.InsertMediaPort,
-			ArchivePort:      b.ArchivePort,
-			UploaderObserver: tracker,
+			Owner:             owner,
+			InsertMediaPort:   b.InsertMediaPort,
+			ArchivePort:       b.ArchivePort,
+			UploaderObservers: []uploaderObserver{tracker, report},
 		},
 	}
 	if options.SkipRejects {

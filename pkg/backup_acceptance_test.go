@@ -70,7 +70,7 @@ func (b *BackupTestSuite) Test10_Backup() {
 	)
 	if assert.NoError(t, err) {
 		assert.Equal(t, map[string]backup.IAlbumReport{
-			"/2024-Q1": backup.NewTypeCounter(backup.MediaTypeImage, 3, 88185, true),
+			"/2024-Q1": backup.NewAlbumReport(backup.MediaTypeImage, 3, 88185, true),
 		}, report.CountPerAlbum())
 	}
 }

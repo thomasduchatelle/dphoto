@@ -72,9 +72,8 @@ func (c ExtraCounts) String() interface{} {
 // newTrackerV2 creates the trackerV2 and start consuming (async)
 func newTrackerV2(options Options) (*trackerObserver, *trackerV2) {
 	tracker := &trackerV2{
-		listeners:     panicIfDoesNotImplementsTrackerInterface(options.Listener),
-		eventCount:    make(map[trackEvent]MediaCounter),
-		detailedCount: make(map[string]IAlbumReport),
+		listeners:  panicIfDoesNotImplementsTrackerInterface(options.Listener),
+		eventCount: make(map[trackEvent]MediaCounter),
 	}
 
 	observer := &trackerObserver{
@@ -116,20 +115,8 @@ func panicIfDoesNotImplementsTrackerInterface(listener interface{}) (listeners [
 
 // trackerV2 is simplifying the consumption of events from scans and backups to implement progress bars.
 type trackerV2 struct {
-	listeners     []interface{} // listeners will receive aggregated and typed updates
-	eventCount    map[trackEvent]MediaCounter
-	detailedCount map[string]IAlbumReport
-}
-
-func (t *trackerV2) Skipped() MediaCounter {
-	exists, _ := t.eventCount[trackAlreadyExistsInCatalog]
-	duplicates, _ := t.eventCount[trackDuplicatedInVolume]
-	wrongAlbum, _ := t.eventCount[trackWrongAlbum]
-	return exists.AddCounter(duplicates).AddCounter(wrongAlbum)
-}
-
-func (t *trackerV2) CountPerAlbum() map[string]IAlbumReport {
-	return t.detailedCount
+	listeners  []interface{} // listeners will receive aggregated and typed updates
+	eventCount map[trackEvent]MediaCounter
 }
 
 func (t *trackerV2) consume(progressChannel chan *progressEvent) {
@@ -151,23 +138,9 @@ func (t *trackerV2) consume(progressChannel chan *progressEvent) {
 			t.fireAnalysedEvent()
 
 		case trackUploaded:
-			typeCount, ok := t.detailedCount[event.Album]
-			if !ok {
-				typeCount = &AlbumReport{}
-				t.detailedCount[event.Album] = typeCount
-			}
-			typeCount.(*AlbumReport).IncrementFoundCounter(event.MediaType, event.Count, event.Size)
-
 			t.fireUploadedEvent()
 
 		case trackAlbumCreated:
-			counts, ok := t.detailedCount[event.Album]
-			if !ok {
-				counts = &AlbumReport{}
-				t.detailedCount[event.Album] = counts
-			}
-			counts.(*AlbumReport).New = true
-
 		case trackAnalysedFromCache:
 			// nothing
 
@@ -234,15 +207,6 @@ func (t *trackerV2) fireRawEvent(event *progressEvent) {
 		}
 	}
 
-}
-
-func (t *trackerV2) MediaCount() int {
-	count := 0
-	for _, counter := range t.detailedCount {
-		count += counter.Total().Count
-	}
-
-	return count
 }
 
 type trackerObserver struct {
