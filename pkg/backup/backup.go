@@ -9,16 +9,11 @@ import (
 	"slices"
 )
 
-type SourceVolume interface {
-	String() string
-	FindMedias(ctx context.Context) ([]FoundMedia, error)
-}
-
 type BatchBackup struct {
 	CataloguerFactory CataloguerFactory
-	DetailsReaders    []DetailsReaderAdapter
+	DetailsReaders    []DetailsReader
 	InsertMediaPort   InsertMediaPort
-	ArchivePort       BArchiveAdapter
+	ArchivePort       ArchiveMediaPort
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
@@ -98,11 +93,9 @@ func multithreadedBackupRuntime(ctxNonCancelable context.Context, options Option
 	ctx, cancelFunc := context.WithCancel(ctxNonCancelable)
 
 	launcher := scanAndBackupCommonLauncher(&config.scanConfiguration, options,
-		&reBufferLink[BackingUpMediaRequest]{ // TODO rebuffer is not tested...
-			bufferLink: bufferLink[BackingUpMediaRequest]{
-				Buffer: buffer[BackingUpMediaRequest]{
-					content: make([]BackingUpMediaRequest, 0, defaultValue(options.BatchSize, 1)),
-				},
+		&chain.ReBufferLink[BackingUpMediaRequest]{ // TODO ReBufferLink is added a behaviour which is not tested (and if removed it would still work)
+			BufferLink: chain.BufferLink[BackingUpMediaRequest]{
+				BufferCapacity: options.BatchSize,
 				Next: &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
 					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentUploaderRoutines(),
 					ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]BackingUpMediaRequest] {
@@ -128,18 +121,4 @@ func multithreadedBackupRuntime(ctxNonCancelable context.Context, options Option
 		cancelFunc()
 	}))
 	return launcher, err
-}
-
-type reBufferLink[Consumed any] struct {
-	bufferLink[Consumed]
-}
-
-func (l *reBufferLink[Consumed]) Consume(ctx context.Context, buf []Consumed) error {
-	for _, item := range buf {
-		err := l.bufferLink.Consume(ctx, item)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

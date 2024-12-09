@@ -11,7 +11,7 @@ type InsertMediaPort interface {
 	IndexMedias(ctx context.Context, owner ownermodel.Owner, requests []*CatalogMediaRequest) error
 }
 
-type TimelineAdapter interface {
+type TimelinePort interface {
 	FindOrCreateAlbum(mediaTime time.Time) (folderName string, created bool, err error)
 	FindAlbum(dateTime time.Time) (folderName string, exists bool, err error)
 }
@@ -20,17 +20,17 @@ type AlbumLookupPort interface {
 	FindOrCreateAlbum(owner ownermodel.Owner, mediaTime time.Time) (folderName string, created bool, err error)
 }
 
-type CatalogAdapter interface {
+type IndexMediaPort interface {
 	// IndexMedias add to the catalog following medias
 	IndexMedias(owner string, requests []*CatalogMediaRequest) error
 }
 
-type BArchiveAdapter interface {
+type ArchiveMediaPort interface {
 	// ArchiveMedia uploads the file in the right folder but might change the name to avoid clash with other existing files. Use files name is always returned.
 	ArchiveMedia(owner string, media *BackingUpMediaRequest) (string, error)
 }
 
-type DetailsReaderAdapter interface {
+type DetailsReader interface {
 	// Supports returns true if the file can be parsed with this reader. False otherwise.
 	Supports(media FoundMedia, mediaType MediaType) bool
 	// ReadDetails extracts metadata from the content of the file.

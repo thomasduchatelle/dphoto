@@ -55,11 +55,8 @@ func scanAndBackupCommonLauncher(config *scanConfiguration, options Options, nex
 				}
 				return chain.ConsumerFunc[FoundMedia](analyser.OnFoundMedia)
 			},
-			Next: &bufferLink[*AnalysedMedia]{
-				Buffer: buffer[*AnalysedMedia]{
-					content: make([]*AnalysedMedia, 0, defaultValue(options.BatchSize, 1)),
-					// note - consumer is set during "Starts" call
-				},
+			Next: &chain.BufferLink[*AnalysedMedia]{
+				BufferCapacity: options.BatchSize,
 				Next: &chain.MultithreadedLink[[]*AnalysedMedia, []BackingUpMediaRequest]{
 					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentCataloguerRoutines(),
 					ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]*AnalysedMedia] {
@@ -86,54 +83,6 @@ func finalizer(in []CatalogReferencerObserver) []chain.ConsumerFunc[[]BackingUpM
 	}
 
 	return functions
-}
-
-type bufferLink[Consumed any] struct {
-	Next    chain.Link[[]Consumed]
-	channel chan Consumed
-	Buffer  buffer[Consumed]
-}
-
-func (l *bufferLink[Consumed]) Consume(ctx context.Context, consumed Consumed) error {
-	l.channel <- consumed
-	return nil
-}
-
-func (l *bufferLink[Consumed]) Starts(ctx context.Context, collector chain.ChainableErrorCollector) error {
-	l.channel = make(chan Consumed, 255)
-	l.Buffer.consumer = l.Next.Consume
-
-	go func() {
-		defer l.Next.NotifyUpstreamCompleted()
-
-		for {
-			select {
-			case consumed, more := <-l.channel:
-				if more {
-					err := l.Buffer.Append(ctx, consumed)
-					if err != nil {
-						collector.OnError(err)
-					}
-				} else {
-					err := l.Buffer.Flush(ctx)
-					if err != nil {
-						collector.OnError(err)
-					}
-					return
-				}
-			}
-		}
-	}()
-
-	return l.Next.Starts(ctx, collector)
-}
-
-func (l *bufferLink[Consumed]) WaitForCompletion() chan error {
-	return l.Next.WaitForCompletion()
-}
-
-func (l *bufferLink[Consumed]) NotifyUpstreamCompleted() {
-	close(l.channel)
 }
 
 func sizeOfAllMedias(medias []FoundMedia) int {

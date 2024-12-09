@@ -32,10 +32,10 @@ func TestBackupAcceptance(t *testing.T) {
 	doesNotExistReference2 := &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"}
 
 	type fields struct {
-		archive           BArchiveAdapter
+		archive           ArchiveMediaPort
 		cataloguerFactory CataloguerFactory
 		insertMedia       InsertMediaPort
-		detailsReaders    DetailsReaderAdapter
+		detailsReaders    DetailsReader
 	}
 	type args struct {
 		owner        ownermodel.Owner
@@ -72,7 +72,6 @@ func TestBackupAcceptance(t *testing.T) {
 					Want: []InsertMediaPortFakeEntry{
 						{
 							owner:           owner,
-							reference:       doesNotExistReference1,
 							ArchiveFilename: fakeArchiveFileName(analysedMedias[0]),
 						},
 					},
@@ -97,7 +96,7 @@ func TestBackupAcceptance(t *testing.T) {
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
 				archive: &ArchiveGroupWaiter{
-					Delegate: new(ArchiveFake),
+					Delegate: new(ArchiveMediaPortFake),
 					Waiter:   newWaitGroup(2),
 				},
 				cataloguerFactory: &ReferencerFactoryFake{
@@ -133,7 +132,7 @@ func TestBackupAcceptance(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			backup := &BatchBackup{
 				CataloguerFactory: tt.fields.cataloguerFactory,
-				DetailsReaders:    []DetailsReaderAdapter{tt.fields.detailsReaders},
+				DetailsReaders:    []DetailsReader{tt.fields.detailsReaders},
 				InsertMediaPort:   tt.fields.insertMedia,
 				ArchivePort:       tt.fields.archive,
 			}
@@ -163,25 +162,15 @@ func countOfMedias(medias ...*AnalysedMedia) IAlbumReport {
 	return report
 }
 
-func staticCountWithSingleReport(album string, created bool) map[string]*AlbumReport {
-	return map[string]*AlbumReport{
-		"/album1": {
-			New:    false,
-			counts: [3]int{},
-			sizes:  [3]int{},
-		},
-	}
-}
-
 func fakeArchiveFileName(media *AnalysedMedia) string {
 	return media.FoundMedia.MediaPath().Filename
 }
 
-type ArchiveFake struct {
+type ArchiveMediaPortFake struct {
 	got map[ownermodel.Owner][]*BackingUpMediaRequest
 }
 
-func (a *ArchiveFake) ArchiveMedia(ownerValue string, media *BackingUpMediaRequest) (string, error) {
+func (a *ArchiveMediaPortFake) ArchiveMedia(ownerValue string, media *BackingUpMediaRequest) (string, error) {
 	if a.got == nil {
 		a.got = make(map[ownermodel.Owner][]*BackingUpMediaRequest)
 	}
@@ -192,25 +181,24 @@ func (a *ArchiveFake) ArchiveMedia(ownerValue string, media *BackingUpMediaReque
 }
 
 type AssertArchiveFake struct {
-	ArchiveFake
+	ArchiveMediaPortFake
 	Want map[ownermodel.Owner][]*BackingUpMediaRequest
 }
 
 func (a *AssertArchiveFake) IsSatisfied(t *testing.T) bool {
-	if !assert.Equal(t, maps.Keys(a.Want), maps.Keys(a.ArchiveFake.got), "different list of owners") {
+	if !assert.Equal(t, maps.Keys(a.Want), maps.Keys(a.ArchiveMediaPortFake.got), "different list of owners") {
 		return false
 	}
 
 	passed := true
 	for owner, expected := range a.Want {
-		passed = passed && assert.ElementsMatch(t, expected, a.ArchiveFake.got[owner])
+		passed = passed && assert.ElementsMatch(t, expected, a.ArchiveMediaPortFake.got[owner])
 	}
 	return passed
 }
 
 type InsertMediaPortFakeEntry struct {
 	owner           ownermodel.Owner
-	reference       CatalogReference
 	ArchiveFilename string
 }
 
@@ -222,7 +210,6 @@ func (i *InsertMediaPortFake) IndexMedias(ctx context.Context, owner ownermodel.
 	for _, request := range requests {
 		i.got = append(i.got, InsertMediaPortFakeEntry{
 			owner:           owner,
-			reference:       request.BackingUpMediaRequest.CatalogReference,
 			ArchiveFilename: request.ArchiveFilename,
 		})
 	}
@@ -299,7 +286,7 @@ func (c *StaticAlbumReport) OfType(mediaType MediaType) MediaCounter {
 }
 
 type ArchiveGroupWaiter struct {
-	Delegate BArchiveAdapter
+	Delegate ArchiveMediaPort
 	Waiter   *sync.WaitGroup
 }
 

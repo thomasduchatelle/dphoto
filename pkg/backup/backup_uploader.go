@@ -13,7 +13,7 @@ type uploaderObserver interface {
 type uploader struct {
 	Owner            ownermodel.Owner
 	InsertMediaPort  InsertMediaPort
-	ArchivePort      BArchiveAdapter
+	ArchivePort      ArchiveMediaPort
 	UploaderObserver uploaderObserver // UploaderObserver is called after the media is uploaded, but before the media is catalogued
 }
 

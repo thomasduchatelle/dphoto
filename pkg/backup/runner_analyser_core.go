@@ -36,7 +36,7 @@ var SupportedExtensions = map[string]MediaType{
 
 type CoreAnalyser struct {
 	options        DetailsReaderOptions
-	detailsReaders []DetailsReaderAdapter // DetailsReaders is a list of specific details extractor can auto-register
+	detailsReaders []DetailsReader // DetailsReaders is a list of specific details extractor can auto-register
 }
 
 func (a *CoreAnalyser) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {

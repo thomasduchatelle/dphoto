@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func newDefaultAnalyser(readers ...DetailsReaderAdapter) *CoreAnalyser {
+func newDefaultAnalyser(readers ...DetailsReader) *CoreAnalyser {
 	return &CoreAnalyser{
 		detailsReaders: readers,
 	}

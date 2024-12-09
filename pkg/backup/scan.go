@@ -8,7 +8,7 @@ import (
 
 type BatchScanner struct {
 	CataloguerFactory CataloguerFactory
-	DetailsReaders    []DetailsReaderAdapter
+	DetailsReaders    []DetailsReader
 }
 
 func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume SourceVolume, optionSlice ...Options) ([]*ScannedFolder, error) {

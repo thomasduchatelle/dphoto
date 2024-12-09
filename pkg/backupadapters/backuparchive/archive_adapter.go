@@ -8,7 +8,7 @@ import (
 type adapter struct {
 }
 
-func New() backup.BArchiveAdapter {
+func New() backup.ArchiveMediaPort {
 	return new(adapter)
 }
 
