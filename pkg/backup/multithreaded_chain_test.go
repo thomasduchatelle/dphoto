@@ -42,11 +42,27 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 			name: "it should run through with an empty volume and default values",
 			fields: fields{
 				config: &scanConfiguration{
-					Analyser:   &AnalyserFake{},
-					Cataloguer: CatalogReferencerFakeByName{},
+					Analyser:             &AnalyserFake{},
+					Cataloguer:           CatalogReferencerFakeByName{},
+					ScanCompleteObserver: &ScanCompleteObserverFakeAssert{WantCount: 0, WantSize: 0},
 				},
 			},
 			args:    args{volume: &InMemorySourceVolume{}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should notify when the volume has been listed",
+			fields: fields{
+				config: &scanConfiguration{
+					Analyser:             &AnalyserFake{},
+					Cataloguer:           simpleReferencerForFile1to3,
+					ScanCompleteObserver: &ScanCompleteObserverFakeAssert{WantCount: 2, WantSize: 3},
+				},
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte("a")),
+				NewInMemoryMedia("file-2", time.Now(), []byte("ab")),
+			}},
 			wantErr: assert.NoError,
 		},
 		{
@@ -224,6 +240,9 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 					toBeSatisfied.IsSatisfied(t)
 				}
 			}
+			if toBeSatisfied, match := tt.fields.config.ScanCompleteObserver.(ToBeSatisfied); match {
+				toBeSatisfied.IsSatisfied(t)
+			}
 		})
 	}
 }
@@ -248,6 +267,18 @@ func (s *ScanCompleteObserverFake) OnScanComplete(ctx context.Context, count, si
 	s.size = size
 
 	return nil
+}
+
+type ScanCompleteObserverFakeAssert struct {
+	ScanCompleteObserverFake
+	WantCount int
+	WantSize  int
+}
+
+func (s *ScanCompleteObserverFakeAssert) IsSatisfied(t *testing.T) bool {
+	return assert.Equal(t, s.WantCount, s.count, "Invalid count") &&
+		assert.Equal(t, s.WantSize, s.size, "Invalid size")
+
 }
 
 type AnalyserGroupWaiter struct {
