@@ -40,13 +40,12 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 
 	config := &backupConfiguration{
 		scanConfiguration: scanConfiguration{
-			Analyser:              options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
-			Cataloguer:            cataloguer,
-			ScanCompleteObserver:  tracker,
-			PostAnalyserRejects:   []RejectedMediaObserver{scanLogger, tracker, report},
-			PreCataloguerFilter:   []CatalogReferencerObserver{scanLogger},
-			PostCatalogFiltersOut: []CataloguerFilterObserver{scanLogger, tracker, report},
-			Wrappers:              []chain.CloserFunc{tracker.NoMoreEvents},
+			Analyser:                 options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
+			Cataloguer:               cataloguer,
+			ScanCompleteObserver:     tracker,
+			PostAnalyserRejects:      []RejectedMediaObserver{scanLogger, tracker, report},
+			PostCataloguerFiltersOut: []CataloguerFilterObserver{scanLogger, tracker, report},
+			Wrappers:                 []chain.CloserFunc{tracker.NoMoreEvents},
 			// PostCatalogFiltersIn is not supported.
 		},
 		Uploader: &uploader{

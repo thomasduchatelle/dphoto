@@ -274,3 +274,16 @@ type UnreadableMedia struct {
 func (u *UnreadableMedia) ReadMedia() (io.ReadCloser, error) {
 	return nil, errors.New("[UnreadableMedia] stubbed error")
 }
+
+type ReferencerFactoryFake struct {
+	CreatorReferencer Cataloguer
+	DryRunReferencer  Cataloguer
+}
+
+func (r *ReferencerFactoryFake) NewAlbumCreatorCataloguer(ctx context.Context, owner ownermodel.Owner) (Cataloguer, error) {
+	return r.CreatorReferencer, nil
+}
+
+func (r *ReferencerFactoryFake) NewDryRunCataloguer(ctx context.Context, owner ownermodel.Owner) (Cataloguer, error) {
+	return r.DryRunReferencer, nil
+}

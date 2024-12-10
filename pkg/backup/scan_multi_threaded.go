@@ -58,12 +58,13 @@ func scanAndBackupCommonLauncher(config *scanConfiguration, options Options, nex
 				Next: &chain.MultithreadedLink[[]*AnalysedMedia, []BackingUpMediaRequest]{
 					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentCataloguerRoutines(),
 					ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]*AnalysedMedia] {
-						adapter := &cataloguerAdapter{
-							cataloguer:  config.Cataloguer,
-							options:     options,
-							preFilters:  config.PreCataloguerFilter,
-							catalogued:  []CatalogReferencerObserver{CatalogReferencerObserverFunc(consumer.Consume)},
-							filteredOut: config.PostCatalogFiltersOut,
+						adapter := &cataloguerAggregate{
+							cataloguer: config.Cataloguer,
+							observerWithFilters: applyFiltersOnCataloguer{
+								CatalogReferencerObservers: []CatalogReferencerObserver{CatalogReferencerObserverFunc(consumer.Consume)},
+								CataloguerFilterObservers:  config.PostCataloguerFiltersOut,
+								CataloguerFilters:          postCataloguerFiltersList(options),
+							},
 						}
 						return chain.ConsumerFunc[[]*AnalysedMedia](adapter.OnBatchOfAnalysedMedia)
 					},

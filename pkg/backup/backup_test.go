@@ -240,12 +240,3 @@ func (a *ArchiveGroupWaiter) ArchiveMedia(owner string, media *BackingUpMediaReq
 
 	return a.Delegate.ArchiveMedia(owner, media)
 }
-
-func convertToStaticAlbumReport(report AlbumReport) *AlbumReport {
-	return &AlbumReport{
-		isNew: report.IsNew(),
-		image: report.OfType(MediaTypeImage),
-		video: report.OfType(MediaTypeVideo),
-		other: report.OfType(MediaTypeOther),
-	}
-}
