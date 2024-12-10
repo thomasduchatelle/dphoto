@@ -199,6 +199,8 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 				return assert.ErrorIs(t, err, simulatedError)
 			},
 		},
+		// TODO why ScanCompleteObserverFake not used ?
+		// TODO why AnalysedMediaGroupWaiter not used ?
 	}
 
 	for _, tt := range tests {

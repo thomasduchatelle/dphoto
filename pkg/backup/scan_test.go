@@ -199,6 +199,8 @@ func TestScanAcceptance(t *testing.T) {
 				return assert.ErrorContains(t, err, "[UnreadableMedia]", i)
 			},
 		},
+		// TODO logger.OnAnalysedMedia never called ?
+		// TODO logger.OnMediaCatalogued never called ?
 	}
 
 	for _, tt := range tests {

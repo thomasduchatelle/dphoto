@@ -47,16 +47,12 @@ type MultithreadedLink[Consumed any, Produced any] struct {
 	channel          chan Consumed
 }
 
-func (l *MultithreadedLink[Consumed, Produced]) ChainNextLink(next Link[Produced]) {
-	l.Next = next
-}
-
 func (l *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
 	if l.ConsumerBuilder == nil {
-		return errors.New("ConsumerBuilder is not set")
+		return errors.New("MultithreadedLink.ConsumerBuilder is not set")
 	}
 	if l.Next == nil {
-		return errors.New("Next is not set")
+		return errors.New("MultithreadedLink.Next is not set")
 	}
 
 	l.channel = make(chan Consumed, 255)

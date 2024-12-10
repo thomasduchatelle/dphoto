@@ -163,6 +163,13 @@ func TestBackupAcceptance(t *testing.T) {
 			wantRejectFolderContent: []string{"folder1_file_1.jpg"},
 			wantErr:                 assert.NoError,
 		},
+		// TODO dry run
+		// TODO interrupt if errors
+		// TODO report OnFilteredOut
+		// TODO re-buffer before uploading
+		// TODO video in report
+		// TODO other in report
+		// TODO options WithCachedAnalysis
 	}
 
 	for _, tt := range tests {

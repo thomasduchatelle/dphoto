@@ -3,7 +3,6 @@ package backup
 import (
 	"context"
 	"github.com/thomasduchatelle/dphoto/pkg/backup/chain"
-	"slices"
 )
 
 type scanCompleteObserver interface {
@@ -12,24 +11,6 @@ type scanCompleteObserver interface {
 
 type analyserLauncher interface {
 	Process(ctx context.Context, volume SourceVolume) chan error
-}
-
-func multithreadedScanRuntime(ctxNonCancelable context.Context, options Options, config *scanConfiguration) (analyserLauncher, error) {
-	ctx, cancelFunc := context.WithCancel(ctxNonCancelable)
-
-	launcher := scanAndBackupCommonLauncher(config, options, &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
-		NumberOfRoutines: 1,
-		ConsumerBuilder:  chain.PassThrough[[]BackingUpMediaRequest](),
-		Next: &chain.CloseWrapperLink[[]BackingUpMediaRequest]{
-			CloserFuncs: slices.Concat(config.Wrappers, []chain.CloserFunc{chain.CloserFunc(cancelFunc)}),
-			Next:        chain.EndOfTheChain[[]BackingUpMediaRequest](finalizer(config.PostCatalogFiltersIn)...),
-		},
-	})
-
-	err := launcher.Starts(ctx, chain.NewErrorCollector(func(err error) {
-		cancelFunc()
-	}))
-	return launcher, err
 }
 
 func scanAndBackupCommonLauncher(config *scanConfiguration, options Options, next chain.Link[[]BackingUpMediaRequest]) *chain.SingleLauncher[SourceVolume, FoundMedia] {
