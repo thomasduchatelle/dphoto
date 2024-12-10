@@ -38,7 +38,7 @@ func TestCopyRejectsObserver_OnRejectedMedia(t *testing.T) {
 			}
 			defer os.RemoveAll(temp)
 
-			c := &CopyRejectsObserver{
+			c := &copyRejectsObserver{
 				RejectDir: temp,
 			}
 

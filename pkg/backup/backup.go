@@ -55,8 +55,15 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 			UploaderObservers: []uploaderObserver{tracker, report},
 		},
 	}
-	if !options.SkipRejects {
+	if !options.SkipRejects && options.RejectDir == "" {
 		config.PostAnalyserRejects = append(config.PostAnalyserRejects, new(analyserFailsFastObserver))
+	}
+	if options.RejectDir != "" {
+		observer, err := newCopyRejectsObserver(options.RejectDir)
+		if err != nil {
+			return nil, nil, err
+		}
+		config.PostAnalyserRejects = append(config.PostAnalyserRejects, observer)
 	}
 
 	launcher, err := multithreadedBackupRuntime(ctx, options, config)

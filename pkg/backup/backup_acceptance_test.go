@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"maps"
+	"os"
+	"path"
 	"sync"
 	"testing"
 	"time"
@@ -13,6 +15,12 @@ import (
 
 func TestBackupAcceptance(t *testing.T) {
 	const owner = ownermodel.Owner("ironman")
+
+	rejectFolder, err := os.MkdirTemp(os.TempDir(), "dphoto-unit-testbackupacceptance")
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer os.RemoveAll(rejectFolder)
 
 	analysedMedias := []*AnalysedMedia{
 		{
@@ -31,6 +39,8 @@ func TestBackupAcceptance(t *testing.T) {
 	doesNotExistReference1 := &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"}
 	doesNotExistReference2 := &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"}
 
+	readerFailingToParseFile := new(DetailsReaderFake)
+
 	type fields struct {
 		archive           ArchiveMediaPort
 		cataloguerFactory CataloguerFactory
@@ -43,11 +53,12 @@ func TestBackupAcceptance(t *testing.T) {
 		optionsSlice []Options
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    Report
-		wantErr assert.ErrorAssertionFunc
+		name                    string
+		fields                  fields
+		args                    args
+		want                    Report
+		wantErr                 assert.ErrorAssertionFunc
+		wantRejectFolderContent []string
 	}{
 		{
 			name: "it should upload a media going through the happy path",
@@ -126,6 +137,32 @@ func TestBackupAcceptance(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should copy files into reject folder OptionsRejectFolder is used",
+			fields: fields{
+				detailsReaders: readerFailingToParseFile,
+				archive:        new(ArchiveMediaPortFake),
+				cataloguerFactory: &ReferencerFactoryFake{
+					CreatorReferencer: &CatalogReferencerFake{},
+				},
+				insertMedia: new(InsertMediaPortFake),
+			},
+			args: args{
+				owner: owner,
+				volume: &InMemorySourceVolume{
+					analysedMedias[0].FoundMedia,
+				},
+				optionsSlice: []Options{
+					OptionWithRejectDir(rejectFolder),
+				},
+			},
+			want: &backupReportBuilder{
+				skipped:       NewMediaCounter(1, analysedMedias[0].FoundMedia.Size()),
+				countPerAlbum: map[string]*AlbumReport{},
+			},
+			wantRejectFolderContent: []string{"folder1_file_1.jpg"},
+			wantErr:                 assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -143,8 +180,23 @@ func TestBackupAcceptance(t *testing.T) {
 				return
 			}
 			assert.Equalf(t, tt.want, convertToStaticCompletionReport(got), "Backup(%v, %v, %v)", tt.args.owner, tt.args.volume, tt.args.optionsSlice)
+
+			assert.ElementsMatch(t, tt.wantRejectFolderContent, readAndClearFolder(t, rejectFolder))
 		})
 	}
+}
+
+func readAndClearFolder(t *testing.T, rejectFolder string) []string {
+	var filenames []string
+
+	dir, err := os.ReadDir(rejectFolder)
+	if assert.NoError(t, err, "read dir", rejectFolder) {
+		for _, entry := range dir {
+			filenames = append(filenames, entry.Name())
+			_ = os.Remove(path.Join(rejectFolder, entry.Name()))
+		}
+	}
+	return filenames
 }
 
 func countOfMedias(medias ...*AnalysedMedia) *AlbumReport {
