@@ -7,7 +7,6 @@ import (
 )
 
 var (
-	ErrAnalyserNoDateTime                  = errors.New("media must have a date time included in the metadata")
 	ErrCatalogerFilterMustBeInAlbum        = errors.New("media must be in album")
 	ErrCatalogerFilterMustNotAlreadyExists = errors.New("media must not already exists")
 	ErrMediaMustNotBeDuplicated            = errors.New("media is present twice in the volume")

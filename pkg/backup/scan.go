@@ -27,16 +27,14 @@ func (s *BatchScanner) Scan(ctx context.Context, owner ownermodel.Owner, volume 
 
 // scanListeners list the listeners that will be notified during the scan process.
 type scanConfiguration struct {
-	Analyser                  Analyser
-	Cataloguer                Cataloguer
-	ScanCompleteObserver      scanCompleteObserver
-	PostAnalyserSuccess       []AnalysedMediaObserver
-	PostAnalyserFilterRejects []RejectedMediaObserver
-	PostAnalyserRejects       []RejectedMediaObserver
-	PreCataloguerFilter       []CatalogReferencerObserver
-	PostCatalogFiltersIn      []CatalogReferencerObserver
-	PostCatalogFiltersOut     []CataloguerFilterObserver
-	Wrappers                  []chain.CloserFunc
+	Analyser              Analyser
+	Cataloguer            Cataloguer
+	ScanCompleteObserver  scanCompleteObserver
+	PostAnalyserRejects   []RejectedMediaObserver
+	PreCataloguerFilter   []CatalogReferencerObserver
+	PostCatalogFiltersIn  []CatalogReferencerObserver
+	PostCatalogFiltersOut []CataloguerFilterObserver
+	Wrappers              []chain.CloserFunc
 }
 
 func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, volumeName string, owner ownermodel.Owner) (analyserLauncher, *scanReportBuilder, error) {
@@ -50,22 +48,19 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 	}
 
 	config := &scanConfiguration{
-		Analyser:                  options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
-		Cataloguer:                cataloguer,
-		ScanCompleteObserver:      tracker,
-		PostAnalyserSuccess:       []AnalysedMediaObserver{scanLogger},
-		PostAnalyserRejects:       []RejectedMediaObserver{scanLogger, tracker},
-		PostAnalyserFilterRejects: []RejectedMediaObserver{scanLogger, tracker, reportBuilder},
-		PreCataloguerFilter:       []CatalogReferencerObserver{scanLogger},
-		PostCatalogFiltersIn:      []CatalogReferencerObserver{tracker, reportBuilder},
-		PostCatalogFiltersOut:     []CataloguerFilterObserver{scanLogger, tracker},
-		Wrappers:                  []chain.CloserFunc{tracker.NoMoreEvents},
+		Analyser:              options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
+		Cataloguer:            cataloguer,
+		ScanCompleteObserver:  tracker,
+		PostAnalyserRejects:   []RejectedMediaObserver{scanLogger, tracker},
+		PreCataloguerFilter:   []CatalogReferencerObserver{scanLogger},
+		PostCatalogFiltersIn:  []CatalogReferencerObserver{tracker, reportBuilder},
+		PostCatalogFiltersOut: []CataloguerFilterObserver{scanLogger, tracker},
+		Wrappers:              []chain.CloserFunc{tracker.NoMoreEvents},
 	}
-	if options.SkipRejects {
-		config.PostAnalyserRejects = append(config.PostAnalyserRejects, reportBuilder)
-	} else {
+	if !options.SkipRejects {
 		config.PostAnalyserRejects = append(config.PostAnalyserRejects, new(analyserFailsFastObserver))
 	}
+	config.PostAnalyserRejects = append(config.PostAnalyserRejects, reportBuilder)
 
 	launcher, err := multithreadedScanRuntime(ctx, options, config)
 	return launcher, reportBuilder, err

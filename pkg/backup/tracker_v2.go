@@ -229,10 +229,8 @@ func (p *trackerObserver) OnRejectedMedia(ctx context.Context, found FoundMedia,
 	return nil
 }
 
-func (p *trackerObserver) OnDecoratedAnalyser(ctx context.Context, found FoundMedia, cacheHit bool) error {
-	if cacheHit {
-		p.channel <- &progressEvent{Type: trackAnalysedFromCache, Count: 1, Size: found.Size()}
-	}
+func (p *trackerObserver) OnSkipDelegateAnalyser(ctx context.Context, found FoundMedia) error {
+	p.channel <- &progressEvent{Type: trackAnalysedFromCache, Count: 1, Size: found.Size()}
 
 	return nil
 }

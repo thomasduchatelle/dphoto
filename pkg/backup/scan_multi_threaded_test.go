@@ -172,7 +172,8 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 							"file-1": simulatedError,
 						},
 					},
-					Cataloguer: simpleReferencerForFile1to3,
+					Cataloguer:          simpleReferencerForFile1to3,
+					PostAnalyserRejects: []RejectedMediaObserver{new(analyserFailsFastObserver)},
 					PostCatalogFiltersIn: []CatalogReferencerObserver{
 						&ScanAssertEndOfHappyPath{
 							WantMaxReadyToUploadCount: 10, // usually 0 or 1 before interruption ; sometime 2-3 ; saw once 6 and 7.
@@ -216,11 +217,6 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 			if toBeSatisfied, match := tt.fields.config.Analyser.(ToBeSatisfied); match {
 				toBeSatisfied.IsSatisfied(t)
 			}
-			for _, listener := range tt.fields.config.PostAnalyserSuccess {
-				if toBeSatisfied, match := listener.(ToBeSatisfied); match {
-					toBeSatisfied.IsSatisfied(t)
-				}
-			}
 			for _, listener := range tt.fields.config.PostCatalogFiltersIn {
 				if toBeSatisfied, match := listener.(ToBeSatisfied); match {
 					toBeSatisfied.IsSatisfied(t)
@@ -258,7 +254,7 @@ type AnalyserGroupWaiter struct {
 	group         *sync.WaitGroup // group must be EXACTLY the number of file that will be received: LESS -> deadlock ; MORE -> negative waitGroup
 }
 
-func (a *AnalyserGroupWaiter) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
+func (a *AnalyserGroupWaiter) Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error) {
 	filename := found.MediaPath().Filename
 	if slices.Index(a.allowedToPass, filename) < 0 {
 		log.Infof("[%d] AnalyserGroupWaiter > %s placed on hold", goid(), filename)
@@ -268,7 +264,7 @@ func (a *AnalyserGroupWaiter) Analyse(ctx context.Context, found FoundMedia, ana
 	}
 
 	log.Infof("[%d] AnalyserGroupWaiter > %s processed", goid(), filename)
-	return a.delegate.Analyse(ctx, found, analysedMediaObserver, rejectsObserver)
+	return a.delegate.Analyse(ctx, found)
 }
 
 type CataloguerGroupWaiter struct {
@@ -490,19 +486,19 @@ type AnalyserFake struct {
 	ErroredFilename map[string]error
 }
 
-func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia, analysedMediaObserver AnalysedMediaObserver, rejectsObserver RejectedMediaObserver) error {
+func (a *AnalyserFake) Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error) {
 	if a.ErroredFilename != nil {
 		if err, errored := a.ErroredFilename[found.MediaPath().Filename]; errored {
-			return err
+			return nil, err
 		}
 	}
 
-	return analysedMediaObserver.OnAnalysedMedia(ctx, &AnalysedMedia{
+	return &AnalysedMedia{
 		FoundMedia: found,
 		Type:       MediaTypeImage,
 		Sha256Hash: found.MediaPath().Filename,
 		Details: &MediaDetails{
 			DateTime: time.Date(2022, 6, 18, 10, 42, 0, 0, time.UTC),
 		},
-	})
+	}, nil
 }

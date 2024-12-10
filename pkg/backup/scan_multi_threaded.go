@@ -46,12 +46,10 @@ func scanAndBackupCommonLauncher(config *scanConfiguration, options Options, nex
 			NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentAnalyserRoutines(),
 			Cancellable:      true,
 			ConsumerBuilder: func(consumer chain.Consumer[*AnalysedMedia]) chain.Consumer[FoundMedia] {
-				analyser := &analyserAdapter{
-					analyser:     config.Analyser,
-					analysed:     []AnalysedMediaObserver{AnalysedMediaObserverFunc(consumer.Consume)},
-					beforeFilter: config.PostAnalyserSuccess,
-					filteredOut:  config.PostAnalyserFilterRejects,
-					rejected:     config.PostAnalyserRejects,
+				analyser := &analyserAggregate{
+					analyser:               config.Analyser,
+					analysedMediaObservers: []AnalysedMediaObserver{AnalysedMediaObserverFunc(consumer.Consume)},
+					rejectedMediaObservers: config.PostAnalyserRejects,
 				}
 				return chain.ConsumerFunc[FoundMedia](analyser.OnFoundMedia)
 			},

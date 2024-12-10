@@ -9,7 +9,6 @@ import (
 	"hash"
 	"io"
 	"path"
-	"slices"
 	"strings"
 )
 
@@ -35,12 +34,34 @@ var SupportedExtensions = map[string]MediaType{
 	"webm": MediaTypeVideo,
 }
 
-type mediaReader struct {
+// Analyser is a method to get the details of the media from the content of the file.
+type Analyser interface {
+	Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error)
+}
+
+// AnalyserDecorator allows to customize the Analyser behaviour, like adding a cache.
+type AnalyserDecorator interface {
+	Decorate(analyse Analyser, observers ...AnalyserDecoratorObserver) Analyser
+}
+
+// AnalyserDecoratorObserver is used to observe the decorator (if the cache hits, it will call this observer).
+type AnalyserDecoratorObserver interface {
+	OnSkipDelegateAnalyser(ctx context.Context, found FoundMedia) error
+}
+
+func newDefaultAnalyser(readers ...DetailsReader) Analyser {
+	return &AnalyserFromMediaDetails{
+		detailsReaders: readers,
+	}
+}
+
+// AnalyserFromMediaDetails is using DetailsReader to extract data from the file (EXIF, MP4, ...).
+type AnalyserFromMediaDetails struct {
 	options        DetailsReaderOptions
 	detailsReaders []DetailsReader
 }
 
-func (a *mediaReader) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
+func (a *AnalyserFromMediaDetails) Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error) {
 	reader, hasher, err := readerSpyingForHash(found)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open file %s for analyse", found)
@@ -73,7 +94,7 @@ func (a *mediaReader) analyseMedia(found FoundMedia) (*AnalysedMedia, error) {
 	return media, nil
 }
 
-func (a *mediaReader) extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {
+func (a *AnalyserFromMediaDetails) extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {
 	mediaType := getMediaType(found)
 
 	loadedReaders := make([]string, len(a.detailsReaders), len(a.detailsReaders))
@@ -86,7 +107,7 @@ func (a *mediaReader) extractDetails(found FoundMedia, reader io.Reader, options
 		}
 	}
 
-	return MediaTypeOther, nil, errors.Errorf("%s not supported. Parser loaded: %s", found, strings.Join(loadedReaders, ", "))
+	return MediaTypeOther, nil, errors.Wrapf(ErrAnalyserNotSupported, "none of the details readers [%s] can parse %s", strings.Join(loadedReaders, ", "), found)
 }
 
 type hashSpy struct {
@@ -123,37 +144,4 @@ func getMediaType(media FoundMedia) MediaType {
 	}
 
 	return MediaTypeOther
-}
-
-type analyserAdapter struct {
-	analyser     Analyser
-	analysed     AnalysedMediaObservers
-	beforeFilter AnalysedMediaObservers
-	filteredOut  RejectedMediaObservers
-	rejected     RejectedMediaObservers
-}
-
-func (a *analyserAdapter) OnFoundMedia(ctx context.Context, media FoundMedia) error {
-	return a.analyser.Analyse(
-		ctx,
-		media,
-		slices.Concat(a.beforeFilter, []AnalysedMediaObserver{&analyserNoDateTimeFilter{
-			analysedMediaObserver: a.analysed,
-			rejectedMediaObserver: a.filteredOut,
-		}}),
-		&a.rejected,
-	)
-}
-
-type analyserNoDateTimeFilter struct {
-	analysedMediaObserver AnalysedMediaObserver
-	rejectedMediaObserver RejectedMediaObserver
-}
-
-func (a *analyserNoDateTimeFilter) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
-	if media.Details.DateTime.IsZero() {
-		return a.rejectedMediaObserver.OnRejectedMedia(ctx, media.FoundMedia, ErrAnalyserNoDateTime)
-	}
-
-	return a.analysedMediaObserver.OnAnalysedMedia(ctx, media)
 }

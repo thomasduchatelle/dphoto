@@ -19,62 +19,35 @@ type AnalyserCacheWrapper struct {
 	Observers     []backup.AnalyserDecoratorObserver
 }
 
-func (a *AnalyserCacheWrapper) Analyse(ctx context.Context, found backup.FoundMedia, analysedMediaObserver backup.AnalysedMediaObserver, rejectsObserver backup.RejectedMediaObserver) error {
+func (a *AnalyserCacheWrapper) Analyse(ctx context.Context, found backup.FoundMedia) (*backup.AnalysedMedia, error) {
 	cache, missed, err := a.AnalyserCache.RestoreCache(found)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !missed {
 		err = a.fireHit(ctx, found)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return analysedMediaObserver.OnAnalysedMedia(ctx, cache)
+		return cache, nil
 	}
 
-	err = a.fireMissed(ctx, found)
+	analyse, err := a.Delegate.Analyse(ctx, found)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return a.Delegate.Analyse(ctx, found, &interceptor{
-		AnalysedMediaObserver: analysedMediaObserver,
-		AnalyserCache:         a.AnalyserCache,
-	}, rejectsObserver)
-}
-
-func (a *AnalyserCacheWrapper) fireMissed(ctx context.Context, found backup.FoundMedia) error {
-	for _, observer := range a.Observers {
-		err := observer.OnDecoratedAnalyser(ctx, found, false)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	err = a.AnalyserCache.StoreCache(analyse)
+	return analyse, err
 }
 
 func (a *AnalyserCacheWrapper) fireHit(ctx context.Context, found backup.FoundMedia) error {
 	for _, observer := range a.Observers {
-		err := observer.OnDecoratedAnalyser(ctx, found, true)
+		err := observer.OnSkipDelegateAnalyser(ctx, found)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-type interceptor struct {
-	AnalysedMediaObserver backup.AnalysedMediaObserver
-	AnalyserCache         *AnalyserCache
-}
-
-func (a *interceptor) OnAnalysedMedia(ctx context.Context, media *backup.AnalysedMedia) error {
-	err := a.AnalyserCache.StoreCache(media)
-	if err != nil {
-		return err
-	}
-
-	return a.AnalysedMediaObserver.OnAnalysedMedia(ctx, media)
 }
