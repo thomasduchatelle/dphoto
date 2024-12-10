@@ -215,8 +215,6 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 				return assert.ErrorIs(t, err, simulatedError)
 			},
 		},
-		// TODO why ScanCompleteObserverFake not used ?
-		// TODO why AnalysedMediaGroupWaiter not used ?
 	}
 
 	for _, tt := range tests {
@@ -407,38 +405,6 @@ func (s *SimpleReference) UniqueIdentifier() string {
 
 func (s *SimpleReference) MediaId() string {
 	return s.mediaId
-}
-
-type AnalysedMediaGroupWaiter struct {
-	lock          sync.RWMutex
-	group         *sync.WaitGroup
-	allowedToPass []string
-	expectedCalls int
-}
-
-func (a *AnalysedMediaGroupWaiter) OnAnalysedMedia(ctx context.Context, media *AnalysedMedia) error {
-	a.lock.RLock()
-	filename := media.FoundMedia.MediaPath().Filename
-	block := slices.Index(a.allowedToPass, filename) < 0
-	a.lock.RUnlock()
-
-	if block {
-		log.Infof("[%d] AnalysedMediaGroupWaiter > %s placed on hold", goid(), filename)
-
-		a.group.Done()
-		a.group.Wait()
-
-		a.lock.Lock()
-		a.expectedCalls--
-		a.lock.Unlock()
-	}
-
-	log.Infof("[%d] AnalysedMediaGroupWaiter > %s processed", goid(), filename)
-	return nil
-}
-
-func (a *AnalysedMediaGroupWaiter) IsSatisfied(t *testing.T) bool {
-	return assert.Equal(t, 0, a.expectedCalls, "Invalid number of calls to AnalysedMediaGroupWaiter")
 }
 
 type ScanningCompleteGroupWaiter struct {
