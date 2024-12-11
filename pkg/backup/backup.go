@@ -40,7 +40,7 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 
 	config := &backupConfiguration{
 		scanConfiguration: scanConfiguration{
-			Analyser:                 options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)),
+			Analyser:                 options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(b.DetailsReaders...)), // FIXME tracker is not in the observers.
 			Cataloguer:               cataloguer,
 			ScanCompleteObserver:     tracker,
 			PostAnalyserRejects:      []RejectedMediaObserver{scanLogger, tracker, report},

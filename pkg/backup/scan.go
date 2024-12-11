@@ -48,11 +48,11 @@ func (s *BatchScanner) prepareVolumeScan(ctx context.Context, options Options, v
 	}
 
 	config := &scanConfiguration{
-		Analyser:                 options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...)),
+		Analyser:                 options.GetAnalyserDecorator().Decorate(newDefaultAnalyser(s.DetailsReaders...), tracker),
 		Cataloguer:               cataloguer,
 		ScanCompleteObserver:     tracker,
 		PostAnalyserRejects:      []RejectedMediaObserver{scanLogger, tracker},
-		PostCatalogFiltersIn:     []CatalogReferencerObserver{tracker, reportBuilder},
+		PostCatalogFiltersIn:     []CatalogReferencerObserver{scanLogger, tracker, reportBuilder},
 		PostCataloguerFiltersOut: []CataloguerFilterObserver{scanLogger, tracker},
 		Wrappers:                 []chain.CloserFunc{tracker.NoMoreEvents},
 	}

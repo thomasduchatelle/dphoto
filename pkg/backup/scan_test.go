@@ -199,8 +199,47 @@ func TestScanAcceptance(t *testing.T) {
 				return assert.ErrorContains(t, err, "[UnreadableMedia]", i)
 			},
 		},
-		// TODO logger.OnAnalysedMedia never called ?
-		// TODO logger.OnMediaCatalogued never called ?
+		{
+			name: "it should use the decorator of the analyser to skip, or to use, the analyser", fields: fields{
+			detailsReaders: new(DetailsReaderAdapterStub),
+			cataloguerFactory: &ReferencerFactoryFake{
+				DryRunReferencer: &CatalogReferencerFake{
+					analysedMedias[0]: &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"},
+					analysedMedias[1]: &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"},
+				},
+			},
+		},
+			args: args{
+				owner:  owner.Value(),
+				volume: &InMemorySourceVolume{analysedMedias[0].FoundMedia, analysedMedias[1].FoundMedia},
+				optionSlice: []Options{
+					Options{}.WithCachedAnalysis(&AnalyserDecoratorFake{
+						Cached: map[string]*AnalysedMedia{
+							analysedMedias[1].FoundMedia.MediaPath().Filename: analysedMedias[1],
+						},
+					}),
+				},
+			},
+			wantFolders: []*ScannedFolder{
+				{
+					Name:         "folder1",
+					RelativePath: "folder1",
+					FolderName:   "folder1",
+					AbsolutePath: "/ram/folder1",
+					Start:        time.Date(2022, 6, 18, 0, 0, 0, 0, time.UTC),
+					End:          time.Date(2022, 6, 19, 0, 0, 0, 0, time.UTC),
+					Distribution: map[string]MediaCounter{
+						"2022-06-18": NewMediaCounter(2, 10+11),
+					},
+				},
+			},
+			wantEvents: map[trackEvent]eventSummary{
+				trackScanComplete:      {SumCount: 2, SumSize: 10 + 11},
+				trackCatalogued:        {SumCount: 2, SumSize: 10 + 11},
+				trackAnalysedFromCache: {SumCount: 1, SumSize: 11},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -223,7 +262,7 @@ func TestScanAcceptance(t *testing.T) {
 			for _, folder := range gotFolder {
 				rejectsCount += folder.RejectsCount
 			}
-			assert.Equalf(t, tt.wantSkippedMediasCount, rejectsCount, "Scan(%v, %v, %v)", tt.args.owner, tt.args.volume, options)
+			assert.Equal(t, tt.wantSkippedMediasCount, rejectsCount, "Rejected counts")
 		})
 	}
 }
@@ -288,4 +327,30 @@ func (r *ReferencerFactoryFake) NewAlbumCreatorCataloguer(ctx context.Context, o
 
 func (r *ReferencerFactoryFake) NewDryRunCataloguer(ctx context.Context, owner ownermodel.Owner) (Cataloguer, error) {
 	return r.DryRunReferencer, nil
+}
+
+// AnalyserDecoratorFake behaves like a read-only cache.
+type AnalyserDecoratorFake struct {
+	Cached    map[string]*AnalysedMedia
+	delegate  Analyser
+	observers []AnalyserDecoratorObserver
+}
+
+func (a *AnalyserDecoratorFake) Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error) {
+	if cached, ok := a.Cached[found.MediaPath().Filename]; ok {
+		for _, observer := range a.observers {
+			_ = observer.OnSkipDelegateAnalyser(ctx, found)
+		}
+
+		return cached, nil
+	}
+
+	return a.delegate.Analyse(ctx, found)
+}
+
+func (a *AnalyserDecoratorFake) Decorate(analyse Analyser, observers ...AnalyserDecoratorObserver) Analyser {
+	a.delegate = analyse
+	a.observers = observers
+
+	return a
 }

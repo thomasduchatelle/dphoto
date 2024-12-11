@@ -213,6 +213,10 @@ func (c CatalogReferencerFake) Reference(ctx context.Context, medias []*Analysed
 		}
 	}
 
+	if len(medias) != len(result) {
+		return fmt.Errorf("[CatalogReferencerFake] missing reference for some media")
+	}
+
 	return observer.OnMediaCatalogued(ctx, result)
 }
 
