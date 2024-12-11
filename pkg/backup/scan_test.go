@@ -201,19 +201,19 @@ func TestScanAcceptance(t *testing.T) {
 		},
 		{
 			name: "it should use the decorator of the analyser to skip, or to use, the analyser", fields: fields{
-			detailsReaders: new(DetailsReaderAdapterStub),
-			cataloguerFactory: &ReferencerFactoryFake{
-				DryRunReferencer: &CatalogReferencerFake{
-					analysedMedias[0]: &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"},
-					analysedMedias[1]: &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"},
+				detailsReaders: new(DetailsReaderAdapterStub),
+				cataloguerFactory: &ReferencerFactoryFake{
+					DryRunReferencer: &CatalogReferencerFake{
+						analysedMedias[0]: &CatalogReferenceStub{MediaIdValue: "media-id-1", AlbumFolderNameValue: "/album1"},
+						analysedMedias[1]: &CatalogReferenceStub{MediaIdValue: "media-id-2", AlbumFolderNameValue: "/album1"},
+					},
 				},
 			},
-		},
 			args: args{
 				owner:  owner.Value(),
 				volume: &InMemorySourceVolume{analysedMedias[0].FoundMedia, analysedMedias[1].FoundMedia},
 				optionSlice: []Options{
-					Options{}.WithCachedAnalysis(&AnalyserDecoratorFake{
+					OptionsAnalyserDecorator(&AnalyserDecoratorFake{
 						Cached: map[string]*AnalysedMedia{
 							analysedMedias[1].FoundMedia.MediaPath().Filename: analysedMedias[1],
 						},
@@ -245,7 +245,7 @@ func TestScanAcceptance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			eventCatcher := newEventCapture()
-			options := append([]Options{OptionWithListener(eventCatcher)}, tt.args.optionSlice...)
+			options := append([]Options{OptionsWithListener(eventCatcher)}, tt.args.optionSlice...)
 
 			scanner := &BatchScanner{
 				CataloguerFactory: tt.fields.cataloguerFactory,

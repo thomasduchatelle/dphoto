@@ -46,7 +46,8 @@ var backupCmd = &cobra.Command{
 
 		multiFilesBackup := pkgfactory.NewMultiFilesBackup(ctx)
 		options := []backup.Options{
-			backup.OptionWithListener(progress).WithCachedAnalysis(addCacheAnalysis(!backupCmdArg.noCache)),
+			backup.OptionsWithListener(progress),
+			backup.OptionsAnalyserDecorator(addCacheAnalysis(!backupCmdArg.noCache)),
 			backup.OptionWithRejectDir(backupCmdArg.rejectDir),
 		}
 		options = append(options, config.BackupOptions()...)

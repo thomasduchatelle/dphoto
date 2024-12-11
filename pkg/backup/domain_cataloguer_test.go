@@ -91,7 +91,7 @@ func TestNewCataloguerAcceptance(t *testing.T) {
 					analysedMedia2: reference2,
 					analysedMedia3: reference3,
 				},
-				options: OptionOnlyAlbums("album1", "album2"),
+				options: OptionsOnlyAlbums("album1", "album2"),
 			},
 			args: args{
 				medias: []*AnalysedMedia{analysedMedia1, analysedMedia2, analysedMedia3},

@@ -27,7 +27,7 @@ func doScan(owner string, volume backup.SourceVolume, options ...backup.Options)
 	ctx := context.TODO()
 
 	progress := newScanProgress()
-	options = append(options, backup.OptionWithListener(progress))
+	options = append(options, backup.OptionsWithListener(progress))
 	options = append(options, config.BackupOptions()...)
 
 	scanner := pkgfactory.NewMultiFilesScanner(ctx)
