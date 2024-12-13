@@ -43,6 +43,7 @@ type MultithreadedLink[Consumed any, Produced any] struct {
 	NumberOfRoutines int                                         // NumberOfRoutines is the number of routines on which the ConsumerBuilder returned method will be called. Default is 1.
 	ConsumerBuilder  func(Consumer[Produced]) Consumer[Consumed] // ConsumerBuilder is the factory function to build the consumer that transforms Consumed into Produced. Use PassThrough if no transformation is needed.
 	Cancellable      bool                                        // Cancellable is true if the cancelled context should stop the routine. Default is false.
+	ChannelSize      int                                         // ChannelSize is defaulted to 255
 	Next             Link[Produced]                              // Next will receive the product of the ConsumerBuilder returned method. It is mandatory to have one, use EndOfTheChain to end the chain.
 	channel          chan Consumed
 }
@@ -55,10 +56,13 @@ func (l *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, coll
 		return errors.New("MultithreadedLink.Next is not set")
 	}
 
-	l.channel = make(chan Consumed, 255)
+	if l.ChannelSize <= 0 {
+		l.ChannelSize = 255
+	}
 	if l.NumberOfRoutines <= 0 {
 		l.NumberOfRoutines = 1
 	}
+	l.channel = make(chan Consumed, l.ChannelSize)
 
 	err := l.Next.Starts(ctx, collector)
 	if err != nil {
@@ -69,9 +73,9 @@ func (l *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, coll
 
 	var routine func(ctx context.Context)
 	if l.Cancellable {
-		routine = multithreadedLinkCancellableRoutine(l, consumer, collector)
+		routine = l.multithreadedLinkCancellableRoutine(consumer, collector)
 	} else {
-		routine = multithreadedLinkDefaultRoutine(l, consumer, collector)
+		routine = l.multithreadedLinkDefaultRoutine(consumer, collector)
 	}
 	startsInParallel(ctx, l.NumberOfRoutines, routine, l.Next.NotifyUpstreamCompleted)
 
@@ -79,7 +83,7 @@ func (l *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, coll
 }
 
 // multithreadedLinkDefaultRoutine is consuming messages in the channel until the channel is closed. Then the routine terminates.
-func multithreadedLinkDefaultRoutine[Consumed any, Produced any](l *MultithreadedLink[Consumed, Produced], consumer Consumer[Consumed], collector ChainableErrorCollector) func(ctx context.Context) {
+func (l *MultithreadedLink[Consumed, Produced]) multithreadedLinkDefaultRoutine(consumer Consumer[Consumed], collector ChainableErrorCollector) func(ctx context.Context) {
 	return func(ctx context.Context) {
 		for consumed := range l.channel {
 			err := consumer.Consume(ctx, consumed)
@@ -91,7 +95,7 @@ func multithreadedLinkDefaultRoutine[Consumed any, Produced any](l *Multithreade
 }
 
 // multithreadedLinkCancellableRoutine is consuming messages until the context is cancelled all or the channel is closed. Then the routine terminates.
-func multithreadedLinkCancellableRoutine[Consumed any, Produced any](l *MultithreadedLink[Consumed, Produced], consumer Consumer[Consumed], collector ChainableErrorCollector) func(ctx context.Context) {
+func (l *MultithreadedLink[Consumed, Produced]) multithreadedLinkCancellableRoutine(consumer Consumer[Consumed], collector ChainableErrorCollector) func(ctx context.Context) {
 	return func(ctx context.Context) {
 		for {
 			select {
@@ -112,17 +116,31 @@ func multithreadedLinkCancellableRoutine[Consumed any, Produced any](l *Multithr
 }
 
 func (l *MultithreadedLink[Consumed, Produced]) Consume(ctx context.Context, consumed Consumed) error {
-	l.channel <- consumed
+	if l.Cancellable {
+		addsToChannelIfContextNotCancelled(ctx, l.channel, consumed)
+
+	} else {
+		blockingAddsToChannel(ctx, l.channel, consumed)
+	}
 	return nil
 }
 
+func blockingAddsToChannel[Consumed any](ctx context.Context, channel chan Consumed, consumed Consumed) {
+	channel <- consumed
+}
+
+func addsToChannelIfContextNotCancelled[Consumed any](ctx context.Context, channel chan Consumed, consumed Consumed) {
+	select {
+	case <-ctx.Done():
+	case channel <- consumed:
+	}
+}
+
 func (l *MultithreadedLink[Consumed, Produced]) NotifyUpstreamCompleted() {
-	//log.Infof("[%d] MultithreadedLink.NotifyUpstreamCompleted - %T", l.NumberOfRoutines, l.channel)
 	close(l.channel)
 }
 
 func (l *MultithreadedLink[Consumed, Produced]) WaitForCompletion() chan error {
-	//log.Infof("[%d] MultithreadedLink.WaitForCompletion - %T", l.NumberOfRoutines, l.channel)
 	return l.Next.WaitForCompletion()
 }
 
@@ -140,7 +158,7 @@ type EndLink[Consumed any] struct {
 }
 
 func (l *EndLink[Consumed]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
-	l.done = make(chan error)
+	l.done = make(chan error, 1)
 	l.collector = collector
 	return nil
 }
@@ -171,6 +189,7 @@ func (l *EndLink[Consumed]) WaitForCompletion() chan error {
 type SingleLauncher[Consumed any, Produced any] struct {
 	Next      Link[Produced]
 	Function  func(ctx context.Context, consumed Consumed) ([]Produced, error)
+	ctx       context.Context // ctx used to process the chain is the one used to START the chain, not the one received in Process. This is to keep the chain behaviour consistent no matter the threads.
 	collector ChainableErrorCollector
 }
 
@@ -194,6 +213,7 @@ func (s *SingleLauncher[Consumed, Produced]) Consume(ctx context.Context, consum
 }
 
 func (s *SingleLauncher[Consumed, Produced]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
+	s.ctx = ctx
 	s.collector = collector
 	return s.Next.Starts(ctx, collector)
 }
@@ -204,7 +224,7 @@ func (s *SingleLauncher[Consumed, Produced]) WaitForCompletion() chan error {
 
 // Process combine Consume and WaitForCompletion to simplify consumption.
 func (s *SingleLauncher[Consumed, Produced]) Process(ctx context.Context, consumed Consumed) chan error {
-	err := s.Consume(ctx, consumed)
+	err := s.Consume(s.ctx, consumed)
 	if err != nil {
 		s.collector.OnError(err)
 	}

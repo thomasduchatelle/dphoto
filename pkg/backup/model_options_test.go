@@ -62,6 +62,16 @@ func TestOption_ReduceOptions(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "it should retain the size of the channels",
+			args: args{
+				option: OptionsChannelSize(3),
+			},
+			want: Options{
+				RestrictedAlbumFolderName: noRestrictedAlbumFolder,
+				ChannelSize:               3,
+			},
+		},
 	}
 
 	for _, tt := range tests {

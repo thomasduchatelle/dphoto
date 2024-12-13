@@ -25,6 +25,7 @@ func scanAndBackupCommonLauncher(config *scanConfiguration, options Options, nex
 		},
 		Next: &chain.MultithreadedLink[FoundMedia, *AnalysedMedia]{
 			NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentAnalyserRoutines(),
+			ChannelSize:      options.ChannelSize,
 			Cancellable:      true,
 			ConsumerBuilder: func(consumer chain.Consumer[*AnalysedMedia]) chain.Consumer[FoundMedia] {
 				analyser := &analyserAggregate{

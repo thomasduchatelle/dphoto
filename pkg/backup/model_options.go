@@ -8,6 +8,7 @@ type Options struct {
 	ConcurrencyParameters     ConcurrencyParameters
 	BatchSize                 int    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
 	RejectDir                 string // RejectDir is the directory where rejected files will be copied
+	ChannelSize               int    // ChannelSize is a hint of the size of the channels to use. Default is set in the `chain` package (255).
 }
 
 func ReduceOptions(requestedOptions ...Options) Options {
@@ -34,6 +35,7 @@ func ReduceOptions(requestedOptions ...Options) Options {
 		aggregated.ConcurrencyParameters.ConcurrentCataloguerRoutines = mergeIntOption(aggregated.ConcurrencyParameters.ConcurrentCataloguerRoutines, original.ConcurrencyParameters.ConcurrentCataloguerRoutines)
 		aggregated.ConcurrencyParameters.ConcurrentUploaderRoutines = mergeIntOption(aggregated.ConcurrencyParameters.ConcurrentUploaderRoutines, original.ConcurrencyParameters.ConcurrentUploaderRoutines)
 		aggregated.BatchSize = mergeIntOption(aggregated.BatchSize, original.BatchSize)
+		aggregated.ChannelSize = mergeIntOption(aggregated.ChannelSize, original.ChannelSize)
 	}
 
 	return aggregated
@@ -150,6 +152,12 @@ func OptionsWithRejectDir(rejectDir string) Options {
 	return Options{
 		SkipRejects: skip,
 		RejectDir:   rejectDir,
+	}
+}
+
+func OptionsChannelSize(i int) Options {
+	return Options{
+		ChannelSize: i,
 	}
 }
 
