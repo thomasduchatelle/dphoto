@@ -215,6 +215,43 @@ func Test_multithreadedScanRuntime(t *testing.T) {
 				return assert.ErrorIs(t, err, simulatedError)
 			},
 		},
+		{
+			name: "it should interrupt the process if an error occur during the analyser and the channel cannot buff all received medias",
+			fields: fields{
+				config: &scanConfiguration{
+					Analyser: &AnalyserFake{
+						ErroredFilename: map[string]error{
+							"file-1": simulatedError,
+						},
+					},
+					Cataloguer:          simpleReferencerForFile1to3,
+					PostAnalyserRejects: []RejectedMediaObserver{new(analyserFailsFastObserver)},
+					PostCatalogFiltersIn: []CatalogReferencerObserver{
+						&ScanAssertEndOfHappyPath{
+							WantMaxReadyToUploadCount: 10, // usually 0 or 1 before interruption ; sometime 2-3 ; saw once 6 and 7.
+						},
+					},
+				},
+				options: OptionsChannelSize(2),
+			},
+			args: args{volume: &InMemorySourceVolume{
+				NewInMemoryMedia("file-1", time.Now(), []byte{}),
+				NewInMemoryMedia("file-2", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+				NewInMemoryMedia("file-3", time.Now(), []byte{}),
+			}},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, simulatedError)
+			},
+		},
 	}
 
 	for _, tt := range tests {
