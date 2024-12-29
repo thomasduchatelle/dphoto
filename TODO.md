@@ -5,7 +5,7 @@ TODOs
 2. Back the CLI with APIs instead of direct accesses to underlying AWS services
    1. user concept is missing in the CLI (takes the owner as the user)
    2. move to Auth0 for authentication on both UI and CLI
-3. Upload: support DAV (backup from phone), post-upload management (deletion, rotation, datetime re-tagging)
+3. Upload: support a sync mechanism from Android to AWS (existing backup software), post-upload management (inbox: deletion, rotation, datetime sliding, ...)
 4. Migrate to NextJS, and refresh UI build process
 5. Create a monitoring Dashboard with some stats (drive size, cache size, missed cache, popular resolutions, ...)
 
@@ -34,7 +34,7 @@ Next steps:
 
 ### Unsorted ...
 
-* the backup should WAIT the end before updating the views.
+* ~~the backup should WAIT the end before updating the views.~~ WON'T DO: to keep consistency the views are updated on each batch
 * SCOPE should be renamed to PERMISSION
    * PERMISSION should have a generic type ('OWNER' or 'VISITOR') and a RESOURCE {TYPE, OWNER, ID}  
-* FIX the media listing (reported to miss some files)
+* ~~FIX the media listing (reported to miss some files)~~
