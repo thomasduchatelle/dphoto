@@ -18,16 +18,16 @@ export default function AlbumListActions({...props}: OwnerSelectorProps) {
             <Box sx={{mr: 2}}>
                 <OwnerSelector {...props} />
             </Box>
-            <Tooltip title="Feature not yet available">
+            <Tooltip title="Create new album [Feature not yet available]">
                 <span>
-                    <IconButton color="primary" title="Create new album" onClick={doSomething} size="large" disabled={true}>
+                    <IconButton color="primary" onClick={doSomething} size="large" disabled={true}>
                         <AddIcon/>
                     </IconButton>
                 </span>
             </Tooltip>
-            <Tooltip title="Feature not yet available">
+            <Tooltip title="Album management [Feature not yet available]">
                 <span>
-                    <IconButton color="primary" title="Album management" onClick={doSomething} size="large" disabled={true}>
+                    <IconButton color="primary" onClick={doSomething} size="large" disabled={true}>
                         <SettingsIcon/>
                     </IconButton>
                 </span>

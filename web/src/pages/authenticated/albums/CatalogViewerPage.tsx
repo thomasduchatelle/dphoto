@@ -6,20 +6,14 @@ import AlbumsList from "./AlbumsList";
 import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
-import {useCatalogViewerState} from "../../../core/catalog-react";
+import {useCatalogContext} from "../../../core/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
+import {albumIdEquals} from "../../../core/catalog";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
 
-    const {
-        albums,
-        selectedAlbum,
-        albumNotFound,
-        medias,
-        albumsLoaded,
-        mediasLoaded
-    } = useCatalogViewerState()
+    const {state, handlers: {onAlbumFilterChange}, selectedAlbumId} = useCatalogContext()
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()
@@ -31,6 +25,8 @@ export function CatalogViewerPage() {
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
     const isAlbumsPage = pathname === '/albums'
 
+    const selectedAlbum = state.albums.find(album => albumIdEquals(album.albumId, selectedAlbumId))
+
     return (
         <Box>
             <AppNav
@@ -41,17 +37,14 @@ export function CatalogViewerPage() {
                 <MobileNavigation album={isAlbumsPage ? undefined : selectedAlbum}/>
             </Box>
             {isMobileDevice && isAlbumsPage ? (
-                <AlbumsList albums={albums}
-                            loaded={albumsLoaded}
-                            selected={selectedAlbum}/>
+                <AlbumsList albums={state.albums}
+                            loaded={state.albumsLoaded}
+                            selectedAlbumId={selectedAlbumId}/>
             ) : (
                 <MediasPage
-                    albums={albums}
-                    albumNotFound={albumNotFound}
-                    albumsLoaded={albumsLoaded}
-                    mediasLoaded={mediasLoaded}
-                    medias={medias}
-                    selectedAlbum={selectedAlbum}
+                    {...state}
+                    selectedAlbumId={selectedAlbumId}
+                    onAlbumFilterChange={onAlbumFilterChange}
                     scrollToMedia={search.get("mediaId") ?? undefined}
                 />
             )}

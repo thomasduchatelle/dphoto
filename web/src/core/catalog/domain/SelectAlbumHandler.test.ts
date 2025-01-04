@@ -1,19 +1,8 @@
-import {HasType, MediaPerDayLoader, SelectAlbumHandler} from "./SelectAlbumHandler";
+import {HasType, SelectAlbumHandler} from "./SelectAlbumHandler";
 import {mediasLoadedAction, MediasLoadedAction, startLoadingMediasAction} from "./catalog-actions";
-import {AlbumId, Media, MediaId, MediaType} from "./catalog-model";
+import {MediaPerDayLoader} from "./MediaPerDayLoader";
+import {AlbumId, Media, MediaId, MediaType} from "./catalog-state";
 import {FetchAlbumMediasPort} from "./CatalogViewerLoader";
-
-class MediaRepositoryFake implements FetchAlbumMediasPort {
-    private medias: Map<AlbumId, Media[]> = new Map()
-
-    fetchMedias(albumId: AlbumId): Promise<Media[]> {
-        return Promise.resolve(this.medias.get(albumId) ?? [])
-    }
-
-    addMedias(albumId: AlbumId, medias: Media[]) {
-        this.medias.set(albumId, [...(this.medias.get(albumId) ?? []), ...medias])
-    }
-}
 
 function newMedia(mediaId: MediaId, dateTime: string): Media {
     return {
@@ -108,5 +97,17 @@ export class ActionObserverFake {
 
     onAction = (action: HasType): void => {
         this.actions.push(action)
+    }
+}
+
+class MediaRepositoryFake implements FetchAlbumMediasPort {
+    private medias: Map<AlbumId, Media[]> = new Map()
+
+    fetchMedias(albumId: AlbumId): Promise<Media[]> {
+        return Promise.resolve(this.medias.get(albumId) ?? [])
+    }
+
+    addMedias(albumId: AlbumId, medias: Media[]) {
+        this.medias.set(albumId, [...(this.medias.get(albumId) ?? []), ...medias])
     }
 }

@@ -1,9 +1,17 @@
-import {Album, AlbumId, MediaWithinADay} from "./catalog-model";
+import {Album, AlbumFilterCriterion, AlbumId, MediaWithinADay} from "./catalog-state";
+
+export type CatalogViewerAction =
+    AlbumsAndMediasLoadedAction
+    | MediaFailedToLoadAction
+    | NoAlbumAvailableAction
+    | StartLoadingMediasAction
+    | MediasLoadedAction
+    | AlbumsFilteredAction
 
 export type AlbumsAndMediasLoadedAction = {
     type: 'AlbumsAndMediasLoadedAction'
     albums: Album[]
-    media: MediaWithinADay[]
+    medias: MediaWithinADay[]
     selectedAlbum?: Album
 }
 
@@ -23,6 +31,12 @@ export type StartLoadingMediasAction = {
     albumId: AlbumId
 }
 
+export type AlbumsFilteredAction = {
+    type: 'AlbumsFilteredAction'
+    criterion: AlbumFilterCriterion
+    albumId?: AlbumId // albumId is set when the album is changing as well and the action behaves like a StartLoadingMediasAction
+}
+
 export function startLoadingMediasAction(albumId: AlbumId): StartLoadingMediasAction {
     return {type: 'StartLoadingMediasAction', albumId}
 }
@@ -35,4 +49,8 @@ export type MediasLoadedAction = {
 
 export function mediasLoadedAction(albumId: AlbumId, medias: MediaWithinADay[]): MediasLoadedAction {
     return {type: 'MediasLoadedAction', albumId, medias}
+}
+
+export function isCatalogViewerAction(arg: any): arg is CatalogViewerAction {
+    return ['AlbumsAndMediasLoadedAction', 'MediaFailedToLoadAction', 'NoAlbumAvailableAction', 'StartLoadingMediasAction', 'MediasLoadedAction'].indexOf(arg.type) >= 0
 }

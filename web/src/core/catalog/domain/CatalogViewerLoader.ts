@@ -1,6 +1,7 @@
-import {Album, AlbumId, Media} from "./catalog-model";
 import {AlbumsAndMediasLoadedAction, MediaFailedToLoadAction, NoAlbumAvailableAction} from "./catalog-actions";
-import {MediaPerDayLoader} from "./SelectAlbumHandler";
+
+import {MediaPerDayLoader} from "./MediaPerDayLoader";
+import {Album, AlbumId, Media} from "./catalog-state";
 
 export interface MediaViewLoaderQuery {
     albumId?: AlbumId
@@ -14,7 +15,7 @@ export interface FetchAlbumMediasPort {
     fetchMedias(albumId: AlbumId): Promise<Media[]>
 }
 
-// InitCatalogController is the controller used from loading page (or other external page)
+// CatalogViewerLoader is the controller used from loading page (or other external page)
 export class CatalogViewerLoader {
 
     constructor(
@@ -31,37 +32,36 @@ export class CatalogViewerLoader {
         return this.loadDefaultAlbum()
     }
 
-    private loadSpecificAlbum = (albumId: AlbumId): Promise<MediaFailedToLoadAction | AlbumsAndMediasLoadedAction> => {
-        return Promise
+    private loadSpecificAlbum = async (albumId: AlbumId): Promise<MediaFailedToLoadAction | AlbumsAndMediasLoadedAction> => {
+        const [albumsResp, mediasResp] = await Promise
             .allSettled([
                 this.fetchAlbumsPort.fetchAlbums(),
                 this.mediaPerDayLoader.loadMedias(albumId),
-            ])
-            .then(([albumsResp, mediasResp]) => {
-                if (albumsResp.status === "rejected") {
-                    return Promise.reject(albumsResp.reason)
+            ]);
 
-                } else if (mediasResp.status === "rejected") {
-                    return {
-                        albums: albumsResp.value,
-                        selectedAlbum: undefined,
-                        error: new Error(`failed to load medias of ${albumId}`, mediasResp.reason),
-                        type: 'MediaFailedToLoadAction',
-                    } as MediaFailedToLoadAction
+        if (albumsResp.status === "rejected") {
+            return Promise.reject(albumsResp.reason)
 
-                } else {
-                    const albums: Album[] = albumsResp.value
-                    const medias = mediasResp.value.medias
+        } else if (mediasResp.status === "rejected") {
+            return {
+                albums: albumsResp.value,
+                selectedAlbum: undefined,
+                error: new Error(`failed to load medias of ${albumId}`, mediasResp.reason),
+                type: 'MediaFailedToLoadAction',
+            } as MediaFailedToLoadAction
 
-                    const selectedAlbum = albums.find(a => a.albumId.owner === albumId.owner && a.albumId.folderName === albumId.folderName);
-                    return {
-                        albums: albums,
-                        media: medias,
-                        selectedAlbum,
-                        type: 'AlbumsAndMediasLoadedAction',
-                    } as AlbumsAndMediasLoadedAction
-                }
-            })
+        } else {
+            const albums: Album[] = albumsResp.value
+            const medias = mediasResp.value.medias
+
+            const selectedAlbum = albums.find(a => a.albumId.owner === albumId.owner && a.albumId.folderName === albumId.folderName);
+            return {
+                albums: albums,
+                medias: medias,
+                selectedAlbum,
+                type: 'AlbumsAndMediasLoadedAction',
+            } as AlbumsAndMediasLoadedAction
+        }
     }
 
     private loadDefaultAlbum = async (): Promise<AlbumsAndMediasLoadedAction | NoAlbumAvailableAction> => {
@@ -75,7 +75,7 @@ export class CatalogViewerLoader {
         return ({
             type: 'AlbumsAndMediasLoadedAction',
             albums: albums,
-            media: medias.medias,
+            medias: medias.medias,
             selectedAlbum,
         } as AlbumsAndMediasLoadedAction);
     }
