@@ -1,19 +1,7 @@
 import {memo, useState} from "react";
 import {Avatar, AvatarGroup, Box, Button, Menu, MenuItem} from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-
-export type Owner = string
-
-export interface AlbumFilterCriterion {
-    owners: Owner[] // Empty with selfOwned=false means all albums user has access to
-    selfOwned?: boolean // Owned by the current user
-}
-
-export interface AlbumFilterEntry {
-    criterion: AlbumFilterCriterion
-    avatars: string[]
-    name: string
-}
+import {AlbumFilterCriterion, AlbumFilterEntry} from "../../../../core/catalog";
 
 export interface OwnerSelectorProps {
     selected: AlbumFilterEntry
@@ -52,12 +40,13 @@ export function OwnerSelector({selected, options = [], onAlbumFiltered}: OwnerSe
         onAlbumFiltered(criterion)
     }
 
+    const disabled = !options || options.length <= 1;
     return (
         <div>
             <Button
                 variant="outlined"
                 onClick={handleClickListItem}
-                disabled={!options || options.length === 0}
+                disabled={disabled}
                 startIcon={
                     <Avatars avatars={selected.avatars}/>
                 }
@@ -76,7 +65,7 @@ export function OwnerSelector({selected, options = [], onAlbumFiltered}: OwnerSe
                 }}
             >
                 {options.map((option, index) => (
-                    <MenuItem key={option.name} divider={option.criterion.selfOwned || option.criterion.owners.length === 0}
+                    <MenuItem key={option.name} divider={option.criterion.selfOwned && option.criterion.owners.length >= 1}
                               onClick={() => handleClickOnOption(option.criterion)}>
                         <Box sx={{mr: 1, width: '90px'}}>
                             <Avatars avatars={option.avatars}/>

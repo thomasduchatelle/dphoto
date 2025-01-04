@@ -124,6 +124,26 @@ NoOwnAlbums.args = {
     ],
 };
 
+export const OnlyOwnAlbums = Template.bind({});
+OnlyOwnAlbums.args = {
+    selected: {
+        criterion: {
+            owners: []
+        },
+        avatars: ['tonystark-profile.jpg'],
+        name: "All Albums",
+    },
+    options: [
+        {
+            criterion: {
+                owners: []
+            },
+            avatars: ['tonystark-profile.jpg'],
+            name: "All Albums",
+        },
+    ],
+};
+
 export const NoOwnAlbumsOpen = Template.bind({});
 NoOwnAlbumsOpen.args = NoOwnAlbums.args;
 NoOwnAlbumsOpen.parameters = {

@@ -1,3 +1,3 @@
-export * from "./catalog-viewer-context"
-export * from "./catalog-viewer-state";
-export * from "./catalog-viewer-hooks";
+export * from "./CatalogViewerProvider"
+export * from "./CatalogViewerStateWithDispatch"
+export * from "./useCatalogContext"

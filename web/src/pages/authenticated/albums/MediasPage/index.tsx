@@ -3,9 +3,9 @@ import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
 import AlbumListActions from "../AlbumsListActions";
-import {Album, MediaWithinADay} from "../../../../core/catalog";
+import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, MediaWithinADay} from "../../../../core/catalog";
 
-const albumFilterFeature = false
+const albumFilterFeatureFlag = true
 
 export default function MediasPage({
                                        albums,
@@ -13,16 +13,22 @@ export default function MediasPage({
                                        albumsLoaded,
                                        mediasLoaded,
                                        medias,
-                                       selectedAlbum,
                                        scrollToMedia,
+                                       albumFilterOptions,
+                                       albumFilter,
+                                       onAlbumFilterChange,
+                                       selectedAlbumId,
                                    }: {
     albums: Album[]
     albumNotFound: boolean
     albumsLoaded: boolean
     mediasLoaded: boolean
     medias: MediaWithinADay[]
-    selectedAlbum?: Album
     scrollToMedia?: string
+    albumFilterOptions: AlbumFilterEntry[],
+    albumFilter: AlbumFilterEntry,
+    selectedAlbumId: AlbumId | undefined,
+    onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
 }) {
     const drawerWidth = 450
 
@@ -45,22 +51,17 @@ export default function MediasPage({
                     }}
                 >
                     <Toolbar/>
-                    {albumFilterFeature && albumsLoaded && (
+                    {albumFilterFeatureFlag && albumsLoaded && (
                         <>
                             <AlbumListActions
-                                selected={{
-                                    criterion: {owners: []},
-                                    avatars: [],
-                                    name: "All Albums",
-                                }}
-                                options={[]}
-                                onAlbumFiltered={() => {
-                                }}
+                                selected={albumFilter}
+                                options={albumFilterOptions}
+                                onAlbumFiltered={onAlbumFilterChange}
                             />
                             <Divider/>
                         </>
                     )}
-                    <AlbumsList albums={albums} loaded={albumsLoaded} selected={selectedAlbum}/>
+                    <AlbumsList albums={albums} loaded={albumsLoaded} selectedAlbumId={selectedAlbumId}/>
                 </Drawer>
             </Box>
             <Box

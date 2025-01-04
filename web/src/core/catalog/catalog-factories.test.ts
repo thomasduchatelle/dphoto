@@ -88,7 +88,7 @@ describe('CatalogFactory', () => {
                 temperature: 0.3333333333333333,
                 totalCount: 10
             },
-            media: [
+            medias: [
                 {
                     day: new Date(2021, 0, 5),
                     medias: [
