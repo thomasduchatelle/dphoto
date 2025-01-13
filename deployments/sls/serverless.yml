@@ -87,6 +87,14 @@ functions:
       - httpApi:
           path: /api/v1/albums
           method: get
+  create-albums:
+    handler: bootstrap
+    package:
+      artifact: ../../bin/create-album.zip
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums
+          method: post
   share-album:
     handler: bootstrap
     package:

@@ -278,9 +278,26 @@ func TestCatalogAuthorizer_CanManageAlbum(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should DENY access to a visitor",
+			name: "it should DENY access to a visitor without permissions",
 			fields: fields{
 				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{},
+			},
+			args: args{
+				ctx:     context.Background(),
+				user:    user2,
+				albumId: albumId1,
+			},
+			wantErr: isAccessForbidden,
+		},
+		{
+			name: "it should DENY access to a visitor of this album",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{
+					Scopes: []*aclcore.Scope{
+						{Type: aclcore.AlbumVisitorScope, GrantedTo: user2.UserId, ResourceOwner: owner1},
+						{Type: aclcore.AlbumVisitorScope, GrantedTo: user2.UserId, ResourceOwner: owner1, ResourceId: albumId1.FolderName.String()},
+					},
+				},
 			},
 			args: args{
 				ctx:     context.Background(),
@@ -317,23 +334,6 @@ func TestCatalogAuthorizer_CanManageAlbum(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
-		{
-			name: "it should DENY access to a visitor",
-			fields: fields{
-				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{
-					Scopes: []*aclcore.Scope{
-						{Type: aclcore.AlbumVisitorScope, GrantedTo: user2.UserId, ResourceOwner: owner1},
-						{Type: aclcore.AlbumVisitorScope, GrantedTo: user2.UserId, ResourceOwner: owner1, ResourceId: albumId1.FolderName.String()},
-					},
-				},
-			},
-			args: args{
-				ctx:     context.Background(),
-				user:    user2,
-				albumId: albumId1,
-			},
-			wantErr: isAccessForbidden,
-		},
 	}
 
 	for _, tt := range tests {
@@ -344,6 +344,94 @@ func TestCatalogAuthorizer_CanManageAlbum(t *testing.T) {
 			}
 			err := a.CanShareAlbum(tt.args.ctx, tt.args.user, tt.args.albumId)
 			tt.wantErr(t, err, fmt.Sprintf("CanShareAlbum(%v, %v, %v)", tt.args.ctx, tt.args.user, tt.args.albumId))
+		})
+	}
+}
+
+func TestCatalogAuthorizer_CanCreateAlbum(t *testing.T) {
+	owner1 := ownermodel.Owner("owner-1")
+	const user1Id = "user-1"
+	user2 := usermodel.CurrentUser{UserId: "user-2"}
+	isAccessForbidden := func(t assert.TestingT, err error, i ...interface{}) bool {
+		return assert.ErrorIs(t, err, aclcore.AccessForbiddenError)
+	}
+
+	type fields struct {
+		HasPermissionPort  HasPermissionPort
+		CatalogQueriesPort CatalogQueriesPort
+	}
+	type args struct {
+		user  usermodel.CurrentUser
+		owner ownermodel.Owner
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should DENY access to a user without permission",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{},
+			},
+			args: args{
+				user:  usermodel.CurrentUser{UserId: user1Id},
+				owner: owner1,
+			},
+			wantErr: isAccessForbidden,
+		},
+		{
+			name: "it should DENY access to a different owner",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{
+					Scopes: []*aclcore.Scope{
+						{Type: aclcore.MainOwnerScope, GrantedTo: user2.UserId, ResourceOwner: ownermodel.Owner("owner-2")},
+					},
+				},
+			},
+			args: args{
+				user:  user2,
+				owner: owner1,
+			},
+			wantErr: isAccessForbidden,
+		},
+		{
+			name: "it should GRANT access to user representing the owner (from the currentUser)",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{},
+			},
+			args: args{
+				user:  usermodel.CurrentUser{UserId: user1Id, Owner: &owner1},
+				owner: owner1,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should GRANT access to user representing the owner (from the permissions)",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{
+					Scopes: []*aclcore.Scope{
+						{Type: aclcore.MainOwnerScope, GrantedTo: user1Id, ResourceOwner: owner1},
+					},
+				},
+			},
+			args: args{
+				user:  usermodel.CurrentUser{UserId: user1Id},
+				owner: owner1,
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &CatalogAuthorizer{
+				HasPermissionPort:  tt.fields.HasPermissionPort,
+				CatalogQueriesPort: tt.fields.CatalogQueriesPort,
+			}
+			err := a.CanCreateAlbum(context.Background(), tt.args.user, tt.args.owner)
+			tt.wantErr(t, err, fmt.Sprintf("CanCreateAlbum(%v, %v, %v)", context.Background(), tt.args.user, tt.args.owner))
 		})
 	}
 }
