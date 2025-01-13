@@ -1,4 +1,4 @@
-import {Album, AlbumId, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../domain";
+import {Album, AlbumId, CreateAlbumPort, CreateAlbumRequest, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../domain";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
 import {SharingAPI} from "../../../../pages/authenticated/albums/share-controller";
@@ -39,11 +39,22 @@ function castError(err: AxiosError): Error {
     return new Error(`'${err.config.method?.toUpperCase()} ${err.config.url}' failed with status ${err.response?.status} ${err.response?.statusText}: ${err.response?.data?.message ?? err.message}`)
 }
 
-export class CatalogAPIAdapter implements SharingAPI, FetchAlbumsPort, FetchAlbumMediasPort {
+export class CatalogAPIAdapter implements SharingAPI, FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,
     ) {
+    }
+
+    public async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
+        return this.authenticatedAxios
+            .post<AlbumId>(`/api/v1/albums`, {
+                name: request.name,
+                folderName: request.forcedFolderName,
+                start: request.start.toISOString(),
+                end: request.end.toISOString(),
+            })
+            .then(resp => resp.data)
     }
 
     public fetchAlbums(): Promise<Album[]> {

@@ -9,6 +9,7 @@ import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../core/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
 import {albumIdEquals} from "../../../core/catalog";
+import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
@@ -37,16 +38,22 @@ export function CatalogViewerPage() {
                 <MobileNavigation album={isAlbumsPage ? undefined : selectedAlbum}/>
             </Box>
             {isMobileDevice && isAlbumsPage ? (
+                // TODO add the toolbox here for mobiles.
                 <AlbumsList albums={state.albums}
                             loaded={state.albumsLoaded}
                             selectedAlbumId={selectedAlbumId}/>
             ) : (
-                <MediasPage
-                    {...state}
-                    selectedAlbumId={selectedAlbumId}
-                    onAlbumFilterChange={onAlbumFilterChange}
-                    scrollToMedia={search.get("mediaId") ?? undefined}
-                />
+                <CreateAlbumDialogContainer>
+                    {(controls) => (
+                        <MediasPage
+                            {...state}
+                            selectedAlbumId={selectedAlbumId}
+                            onAlbumFilterChange={onAlbumFilterChange}
+                            scrollToMedia={search.get("mediaId") ?? undefined}
+                            {...controls}
+                        />
+                    )}
+                </CreateAlbumDialogContainer>
             )}
         </Box>
     );

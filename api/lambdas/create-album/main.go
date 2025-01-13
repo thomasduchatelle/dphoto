@@ -9,7 +9,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"time"
@@ -22,9 +21,13 @@ type CreateAlbumRequestDTO struct {
 	ForcedFolderName string    `json:"forcedFolderName,omitempty"`
 }
 
+type albumIdDTO struct {
+	Owner      string `json:"owner"`
+	FolderName string `json:"folderName"`
+}
+
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	ctx := context.Background()
-	owner := ownermodel.Owner(request.PathParameters["owner"])
 
 	requestDto := &CreateAlbumRequestDTO{}
 	err := json.Unmarshal([]byte(request.Body), requestDto)
@@ -33,15 +36,16 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	}
 
 	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
-		if err := pkgfactory.AclCatalogAuthoriser(ctx).CanCreateAlbum(ctx, user, owner); err != nil {
+		owner, err := pkgfactory.AclCatalogAuthoriser(ctx).CanCreateAlbum(ctx, user)
+		if err != nil {
 			if errors.Is(err, aclcore.AccessForbiddenError) {
 				return common.ForbiddenResponse(err.Error())
 			}
 			return common.InternalError(err)
 		}
 
-		_, err := pkgfactory.CreateAlbumCase(ctx).Create(ctx, catalog.CreateAlbumRequest{
-			Owner:            owner,
+		albumId, err := pkgfactory.CreateAlbumCase(ctx).Create(ctx, catalog.CreateAlbumRequest{
+			Owner:            *owner,
 			Name:             requestDto.Name,
 			Start:            requestDto.Start,
 			End:              requestDto.End,
@@ -62,7 +66,10 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			}
 		}
 
-		return common.NoContent()
+		return common.Created(albumIdDTO{
+			Owner:      albumId.Owner.Value(),
+			FolderName: albumId.FolderName.String(),
+		})
 	})
 }
 

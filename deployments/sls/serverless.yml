@@ -93,7 +93,7 @@ functions:
       artifact: ../../bin/create-album.zip
     events:
       - httpApi:
-          path: /api/v1/owners/{owner}/albums
+          path: /api/v1/albums
           method: post
   share-album:
     handler: bootstrap

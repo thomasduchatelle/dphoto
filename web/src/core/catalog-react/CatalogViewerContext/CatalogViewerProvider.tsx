@@ -1,9 +1,17 @@
 import {createContext, ReactNode, useCallback, useEffect, useReducer} from "react";
-import {catalogReducerFunction, initialCatalogState} from "../../catalog/domain/catalog-reducer";
+import {
+    AlbumFilterCriterion,
+    AlbumId,
+    albumIdEquals,
+    catalogReducerFunction,
+    initialCatalogState,
+    MediaPerDayLoader,
+    PostCreateAlbumHandler,
+    SelectAlbumHandler
+} from "../../catalog";
 import {useApplication, useUnrecoverableErrorDispatch} from "../../application";
 import {CatalogFactory} from "../../catalog/catalog-factories";
-import {AlbumFilterCriterion, AlbumId, albumIdEquals, MediaPerDayLoader, SelectAlbumHandler} from "../../catalog";
-import {CatalogViewerStateWithDispatch} from "./CatalogViewerStateWithDispatch";
+import {CatalogHandlers, CatalogViewerStateWithDispatch} from "./CatalogViewerStateWithDispatch";
 import {AuthenticatedUser} from "../../security";
 import {AlbumFilterHandler, AlbumFilterHandlerDispatch} from "../../catalog/domain/AlbumFilterHandler";
 
@@ -13,6 +21,8 @@ export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch
     },
     handlers: {
         onAlbumFilterChange: () => {
+        },
+        async onAlbumCreated(albumId: AlbumId): Promise<void> {
         }
     }
 })
@@ -44,8 +54,11 @@ export const CatalogViewerProvider = (
 
     }, [dispatch, onSelectedAlbumIdByDefault, albumId, allAlbums])
 
+    const onAlbumCreated = useCallback((albumId: AlbumId) => new PostCreateAlbumHandler(dispatch, new CatalogFactory(app).mediaViewLoader()).onAlbumCreated(albumId), [dispatch, app])
+
     const handlers: CatalogHandlers = {
         onAlbumFilterChange,
+        onAlbumCreated,
     }
 
     useEffect(() => {
@@ -82,6 +95,3 @@ export const CatalogViewerProvider = (
     )
 }
 
-export interface CatalogHandlers {
-    onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
-}

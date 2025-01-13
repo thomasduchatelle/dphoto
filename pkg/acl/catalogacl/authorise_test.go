@@ -351,7 +351,6 @@ func TestCatalogAuthorizer_CanManageAlbum(t *testing.T) {
 func TestCatalogAuthorizer_CanCreateAlbum(t *testing.T) {
 	owner1 := ownermodel.Owner("owner-1")
 	const user1Id = "user-1"
-	user2 := usermodel.CurrentUser{UserId: "user-2"}
 	isAccessForbidden := func(t assert.TestingT, err error, i ...interface{}) bool {
 		return assert.ErrorIs(t, err, aclcore.AccessForbiddenError)
 	}
@@ -361,14 +360,14 @@ func TestCatalogAuthorizer_CanCreateAlbum(t *testing.T) {
 		CatalogQueriesPort CatalogQueriesPort
 	}
 	type args struct {
-		user  usermodel.CurrentUser
-		owner ownermodel.Owner
+		user usermodel.CurrentUser
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name      string
+		fields    fields
+		args      args
+		wantOwner *ownermodel.Owner
+		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should DENY access to a user without permission",
@@ -376,23 +375,7 @@ func TestCatalogAuthorizer_CanCreateAlbum(t *testing.T) {
 				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{},
 			},
 			args: args{
-				user:  usermodel.CurrentUser{UserId: user1Id},
-				owner: owner1,
-			},
-			wantErr: isAccessForbidden,
-		},
-		{
-			name: "it should DENY access to a different owner",
-			fields: fields{
-				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{
-					Scopes: []*aclcore.Scope{
-						{Type: aclcore.MainOwnerScope, GrantedTo: user2.UserId, ResourceOwner: ownermodel.Owner("owner-2")},
-					},
-				},
-			},
-			args: args{
-				user:  user2,
-				owner: owner1,
+				user: usermodel.CurrentUser{UserId: user1Id},
 			},
 			wantErr: isAccessForbidden,
 		},
@@ -402,10 +385,10 @@ func TestCatalogAuthorizer_CanCreateAlbum(t *testing.T) {
 				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{},
 			},
 			args: args{
-				user:  usermodel.CurrentUser{UserId: user1Id, Owner: &owner1},
-				owner: owner1,
+				user: usermodel.CurrentUser{UserId: user1Id, Owner: &owner1},
 			},
-			wantErr: assert.NoError,
+			wantOwner: &owner1,
+			wantErr:   assert.NoError,
 		},
 		{
 			name: "it should GRANT access to user representing the owner (from the permissions)",
@@ -417,10 +400,10 @@ func TestCatalogAuthorizer_CanCreateAlbum(t *testing.T) {
 				},
 			},
 			args: args{
-				user:  usermodel.CurrentUser{UserId: user1Id},
-				owner: owner1,
+				user: usermodel.CurrentUser{UserId: user1Id},
 			},
-			wantErr: assert.NoError,
+			wantOwner: &owner1,
+			wantErr:   assert.NoError,
 		},
 	}
 
@@ -430,8 +413,10 @@ func TestCatalogAuthorizer_CanCreateAlbum(t *testing.T) {
 				HasPermissionPort:  tt.fields.HasPermissionPort,
 				CatalogQueriesPort: tt.fields.CatalogQueriesPort,
 			}
-			err := a.CanCreateAlbum(context.Background(), tt.args.user, tt.args.owner)
-			tt.wantErr(t, err, fmt.Sprintf("CanCreateAlbum(%v, %v, %v)", context.Background(), tt.args.user, tt.args.owner))
+			gotOwner, err := a.CanCreateAlbum(context.Background(), tt.args.user)
+			if tt.wantErr(t, err, fmt.Sprintf("CanCreateAlbum(%v, %v)", context.Background(), tt.args.user)) {
+				assert.Equal(t, tt.wantOwner, gotOwner)
+			}
 		})
 	}
 }

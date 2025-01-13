@@ -15,6 +15,7 @@ var (
 
 type HasPermissionPort interface {
 	FindScopesByIdCtx(ctx context.Context, ids ...aclcore.ScopeId) ([]*aclcore.Scope, error)
+	ListScopesByUser(ctx context.Context, email usermodel.UserId, types ...aclcore.ScopeType) ([]*aclcore.Scope, error)
 }
 
 type CatalogQueriesPort interface {
@@ -108,22 +109,18 @@ func (a *CatalogAuthorizer) CanShareAlbum(ctx context.Context, user usermodel.Cu
 	return aclcore.AccessForbiddenError
 }
 
-func (a *CatalogAuthorizer) CanCreateAlbum(ctx context.Context, user usermodel.CurrentUser, owner ownermodel.Owner) error {
-	if user.Owner != nil && *user.Owner == owner {
-		return nil
+func (a *CatalogAuthorizer) CanCreateAlbum(ctx context.Context, user usermodel.CurrentUser) (*ownermodel.Owner, error) {
+	if user.Owner != nil {
+		return user.Owner, nil
 	}
 
-	permissions, err := a.HasPermissionPort.FindScopesByIdCtx(ctx, aclcore.ScopeId{
-		Type:          aclcore.MainOwnerScope,
-		GrantedTo:     user.UserId,
-		ResourceOwner: owner,
-	})
+	permissions, err := a.HasPermissionPort.ListScopesByUser(ctx, user.UserId, aclcore.MainOwnerScope)
 	if err != nil {
-		return errors.Wrapf(err, "failed to check permissions for user %s for owner %s", user.UserId, owner)
+		return nil, errors.Wrapf(err, "failed to check permissions for user %s", user.UserId)
 	}
 	if len(permissions) > 0 {
-		return nil
+		return &permissions[0].ResourceOwner, nil
 	}
 
-	return aclcore.AccessForbiddenError
+	return nil, aclcore.AccessForbiddenError
 }

@@ -131,13 +131,6 @@ func (c *Claims) AsCurrentUser() usermodel.CurrentUser {
 	}
 }
 
-func (c *Claims) OwnerAsDeprecatedString() string {
-	if c.Owner == nil {
-		return ""
-	}
-	return c.Owner.Value()
-}
-
 type RefreshTokenSpec struct {
 	Email               usermodel.UserId
 	RefreshTokenPurpose RefreshTokenPurpose // RefreshTokenPurpose is mandatory
