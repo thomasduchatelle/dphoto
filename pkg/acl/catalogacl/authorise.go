@@ -107,3 +107,23 @@ func (a *CatalogAuthorizer) CanShareAlbum(ctx context.Context, user usermodel.Cu
 
 	return aclcore.AccessForbiddenError
 }
+
+func (a *CatalogAuthorizer) CanCreateAlbum(ctx context.Context, user usermodel.CurrentUser, owner ownermodel.Owner) error {
+	if user.Owner != nil && *user.Owner == owner {
+		return nil
+	}
+
+	permissions, err := a.HasPermissionPort.FindScopesByIdCtx(ctx, aclcore.ScopeId{
+		Type:          aclcore.MainOwnerScope,
+		GrantedTo:     user.UserId,
+		ResourceOwner: owner,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to check permissions for user %s for owner %s", user.UserId, owner)
+	}
+	if len(permissions) > 0 {
+		return nil
+	}
+
+	return aclcore.AccessForbiddenError
+}

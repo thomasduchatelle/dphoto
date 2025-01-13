@@ -64,3 +64,10 @@ func BadRequest(body interface{}) (Response, error) {
 func NotFound(body interface{}) (Response, error) {
 	return NewJsonResponse(404, body, nil)
 }
+
+func InvalidRequest(code, message string) (Response, error) {
+	return NewJsonResponse(422, map[string]string{
+		"code":  code,
+		message: message,
+	}, nil)
+}
