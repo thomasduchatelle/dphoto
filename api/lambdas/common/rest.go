@@ -53,6 +53,9 @@ func Ok(body interface{}) (Response, error) {
 	return NewJsonResponse(200, body, nil)
 }
 
+func Created(body interface{}) (Response, error) {
+	return NewJsonResponse(201, body, nil)
+}
 func NoContent() (Response, error) {
 	return NewJsonResponse(204, nil, nil)
 }
