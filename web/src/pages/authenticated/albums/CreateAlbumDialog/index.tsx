@@ -53,6 +53,8 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    const canBeSubmitted = createForm.name.length > 0
+
     const resetForm = useCallback(() => {
         setCreateForm(emptyCreateAlbum(defaultDate))
         setStartsAtStartOfTheDay(false)
@@ -187,7 +189,7 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleClose} color='info'>Cancel</Button>
-                <Button onClick={handleSubmit} color='primary' variant='contained'>Save</Button>
+                <Button onClick={handleSubmit} color='primary' variant='contained' disabled={!canBeSubmitted}>Save</Button>
             </DialogActions>
         </Dialog>
     );
