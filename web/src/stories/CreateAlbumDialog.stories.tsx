@@ -5,6 +5,7 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
+import {screen, userEvent, within} from "@storybook/testing-library";
 
 dayjs.locale(fr)
 
@@ -30,4 +31,36 @@ Empty.args = {
 Empty.parameters = {
     delay: 300,
 };
+
+export const WithAName = Template.bind({});
+WithAName.args = {
+    open: true,
+};
+WithAName.parameters = {
+    delay: 300,
+};
+WithAName.play = async ({canvasElement}) => {
+    const canvas = within(screen.getByRole('dialog'));
+    const nameInput = canvas.getByLabelText(/Name/, {
+        selector: 'input',
+    })
+
+    userEvent.type(nameInput, 'Avenger 3');
+};
+
+export const AlreadyExists = Template.bind({});
+AlreadyExists.args = {
+    open: true,
+};
+AlreadyExists.parameters = {
+    delay: 300,
+};
+// AlreadyExists.play = async ({canvasElement}) => {
+//     const canvas = within(screen.getByRole('dialog'));
+//     const nameInput = canvas.getByLabelText(/Name/, {
+//         selector: 'input',
+//     })
+//
+//     userEvent.type(nameInput, 'Avenger 3');
+// };
 

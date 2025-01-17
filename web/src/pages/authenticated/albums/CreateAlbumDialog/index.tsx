@@ -64,16 +64,16 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
     const handleClose = useCallback(() => {
         onClose()
         setState(emptyCreateAlbum(defaultDate))
-    }, [setState, onClose])
+    }, [setState, onClose, defaultDate])
 
     const handleSubmit = useCallback(() => {
         onSubmit(state)
         setState(emptyCreateAlbum(defaultDate))
-    }, [setState, onSubmit])
+    }, [state, setState, onSubmit, defaultDate])
 
     return (
         <Dialog
-            open={open}
+            open={true}
             onClose={handleClose}
             fullWidth
             fullScreen={isMobile}
@@ -102,10 +102,6 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
                         <TextField
                             autoFocus
                             fullWidth
-                            variant={isMobile ? 'standard' : 'outlined'}
-                            margin="dense"
-                            size='medium'
-                            id="email"
                             label="Name"
                             type="string"
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setState(album => ({...album, name: event.target.value}))}
@@ -113,13 +109,13 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
                         />
                     </Grid>
                     <Grid xs={6}>
-                        {state.startsAtStartOfTheDay && (
+                        {state.startsAtStartOfTheDay ? (
                             <DatePicker
                                 label="First day"
                                 value={state.start}
                                 onChange={start => setState(form => ({...form, start}))}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
-                            />) || (
+                            />) : (
                             <DateTimePicker
                                 label="First day"
                                 value={state.start}
@@ -134,13 +130,13 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
                                           label="at the start of the day"/>
                     </Grid>
                     <Grid xs={6}>
-                        {state.endsAtEndOfTheDay && (
+                        {state.endsAtEndOfTheDay ? (
                             <DatePicker
                                 label="Last day"
                                 value={state.end}
                                 onChange={end => setState(form => ({...form, end}))}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
-                            />) || (
+                            />) : (
                             <DateTimePicker
                                 label="Last day"
                                 value={state.end}
