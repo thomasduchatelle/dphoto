@@ -22,55 +22,54 @@ import dayjs, {Dayjs} from 'dayjs';
 import {DatePicker, DateTimePicker} from '@mui/x-date-pickers'
 
 
-interface CreateAlbum {
+interface CreateAlbumDialogState {
     name: string
     start: Dayjs | null
     end: Dayjs | null
     forceFolderName: string
+    startsAtStartOfTheDay: boolean
+    endsAtEndOfTheDay: boolean
+    withCustomFolderName: boolean
 }
 
 const saturdayTwoWeeksAgo = dayjs().startOf("week").subtract(8, "days")
 
-const emptyCreateAlbum = (defaultDate: Dayjs): CreateAlbum => ({
+const emptyCreateAlbum = (defaultDate: Dayjs): CreateAlbumDialogState => ({
     name: "",
     start: defaultDate,
     end: defaultDate.add(7, "days").endOf("day"),
-    forceFolderName: ""
+    forceFolderName: "",
+    startsAtStartOfTheDay: true,
+    endsAtEndOfTheDay: true,
+    withCustomFolderName: false,
 })
 
 export default function CreateAlbumDialog({open, error, onClose, onSubmit, defaultDate = saturdayTwoWeeksAgo}: {
     open: boolean,
     onClose: () => void,
     error?: string,
-    onSubmit: (album: CreateAlbum) => void,
+    onSubmit: (album: CreateAlbumDialogState) => void,
     defaultDate?: Dayjs,
 }) {
-    const [startsAtStartOfTheDay, setStartsAtStartOfTheDay] = useState<boolean>(true)
-    const [endsAtEndOfTheDay, setEndsAtEndOfTheDay] = useState<boolean>(true)
-    const [withCustomFolderName, setWithCustomFolderName] = useState<boolean>(false)
-    const [createForm, setCreateForm] = useState<CreateAlbum>(emptyCreateAlbum(defaultDate))
+    const [state, setState] = useState<CreateAlbumDialogState>(emptyCreateAlbum(defaultDate))
+    const setStartsAtStartOfTheDay = (startsAtStartOfTheDay: boolean) => setState(prev => ({...prev, startsAtStartOfTheDay}))
+    const setEndsAtEndOfTheDay = (endsAtEndOfTheDay: boolean) => setState(prev => ({...prev, endsAtEndOfTheDay}))
+    const setWithCustomFolderName = (withCustomFolderName: boolean) => setState(prev => ({...prev, withCustomFolderName}))
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const canBeSubmitted = createForm.name.length > 0
-
-    const resetForm = useCallback(() => {
-        setCreateForm(emptyCreateAlbum(defaultDate))
-        setStartsAtStartOfTheDay(false)
-        setEndsAtEndOfTheDay(false)
-        setWithCustomFolderName(false)
-    }, [setCreateForm, setStartsAtStartOfTheDay, setEndsAtEndOfTheDay, setWithCustomFolderName])
+    const canBeSubmitted = state.name.length > 0
 
     const handleClose = useCallback(() => {
         onClose()
-        resetForm()
-    }, [resetForm, onClose])
+        setState(emptyCreateAlbum(defaultDate))
+    }, [setState, onClose])
 
     const handleSubmit = useCallback(() => {
-        onSubmit(createForm)
-        resetForm()
-    }, [resetForm, onSubmit])
+        onSubmit(state)
+        setState(emptyCreateAlbum(defaultDate))
+    }, [setState, onSubmit])
 
     return (
         <Dialog
@@ -109,49 +108,49 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
                             id="email"
                             label="Name"
                             type="string"
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCreateForm(album => ({...album, name: event.target.value}))}
-                            value={createForm.name}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setState(album => ({...album, name: event.target.value}))}
+                            value={state.name}
                         />
                     </Grid>
                     <Grid xs={6}>
-                        {startsAtStartOfTheDay && (
+                        {state.startsAtStartOfTheDay && (
                             <DatePicker
                                 label="First day"
-                                value={createForm.start}
-                                onChange={start => setCreateForm(form => ({...form, start}))}
+                                value={state.start}
+                                onChange={start => setState(form => ({...form, start}))}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
                             />) || (
                             <DateTimePicker
                                 label="First day"
-                                value={createForm.start}
-                                onChange={start => setCreateForm(form => ({...form, start}))}
+                                value={state.start}
+                                onChange={start => setState(form => ({...form, start}))}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
                             />
                         )}
                     </Grid>
                     <Grid xs={6}>
-                        <FormControlLabel control={<Checkbox checked={startsAtStartOfTheDay}
+                        <FormControlLabel control={<Checkbox checked={state.startsAtStartOfTheDay}
                                                              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setStartsAtStartOfTheDay(event.target.checked)}/>}
                                           label="at the start of the day"/>
                     </Grid>
                     <Grid xs={6}>
-                        {endsAtEndOfTheDay && (
+                        {state.endsAtEndOfTheDay && (
                             <DatePicker
                                 label="Last day"
-                                value={createForm.end}
-                                onChange={end => setCreateForm(form => ({...form, end}))}
+                                value={state.end}
+                                onChange={end => setState(form => ({...form, end}))}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
                             />) || (
                             <DateTimePicker
                                 label="Last day"
-                                value={createForm.end}
-                                onChange={end => setCreateForm(form => ({...form, end}))}
+                                value={state.end}
+                                onChange={end => setState(form => ({...form, end}))}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
                             />
                         )}
                     </Grid>
                     <Grid xs={6}>
-                        <FormControlLabel control={<Checkbox checked={endsAtEndOfTheDay}
+                        <FormControlLabel control={<Checkbox checked={state.endsAtEndOfTheDay}
                                                              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEndsAtEndOfTheDay(event.target.checked)}/>}
                                           label="at the end of the day"/>
                     </Grid>
@@ -168,16 +167,16 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
                                 })}
                                 elevation={0}
                             >
-                                <Checkbox checked={withCustomFolderName}
+                                <Checkbox checked={state.withCustomFolderName}
                                           onChange={(event: React.ChangeEvent<HTMLInputElement>) => setWithCustomFolderName(event.target.checked)}
                                 />
                                 <Divider sx={{height: 28, m: 0.5}} orientation="vertical"/>
                                 <InputBase
                                     sx={{ml: 1, flex: 1}}
                                     placeholder="Custom folder name (ex: '/2025-08_Summer')"
-                                    disabled={!withCustomFolderName}
-                                    value={createForm.forceFolderName}
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCreateForm(prev => ({
+                                    disabled={!state.withCustomFolderName}
+                                    value={state.forceFolderName}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setState(prev => ({
                                         ...prev,
                                         forceFolderName: event.target.value
                                     }))}
