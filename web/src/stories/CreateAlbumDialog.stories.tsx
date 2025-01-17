@@ -4,8 +4,9 @@ import CreateAlbumDialog from "../pages/authenticated/albums/CreateAlbumDialog";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
+import fr from "dayjs/locale/fr";
 
-dayjs.locale('fr')
+dayjs.locale(fr)
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
