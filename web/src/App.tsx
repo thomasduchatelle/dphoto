@@ -3,6 +3,8 @@ import {BrowserRouter} from "react-router-dom";
 import DPhotoTheme from "./components/DPhotoTheme";
 import GeneralRouter from "./pages/GeneralRouter";
 import {ApplicationContextComponent} from "./core/application";
+import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import {LocalizationProvider} from "@mui/x-date-pickers";
 
 const App = () => {
     // TODO - add React error boundary
@@ -11,9 +13,11 @@ const App = () => {
             <DPhotoTheme>
                 <CssBaseline/>
                 <BrowserRouter>
-                    <ApplicationContextComponent>
-                        <GeneralRouter/>
-                    </ApplicationContextComponent>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <ApplicationContextComponent>
+                            <GeneralRouter/>
+                        </ApplicationContextComponent>
+                    </LocalizationProvider>
                 </BrowserRouter>
             </DPhotoTheme>
         </div>

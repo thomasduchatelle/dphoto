@@ -1,208 +1,97 @@
 import {
-    Avatar,
     Button,
-    ButtonGroup,
-    Chip,
-    ClickAwayListener,
+    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    Grow,
+    Divider,
+    FormControlLabel,
     IconButton,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
-    MenuList,
+    InputBase,
     Paper,
-    Popper,
     TextField,
+    Tooltip,
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import React, {useRef, useState} from "react";
+import React, {useCallback, useState} from "react";
 import Grid from '@mui/material/Unstable_Grid2';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import {SharingType} from "../../../../core/catalog";
-import {Delete, MoreHoriz} from "@mui/icons-material";
+import {Close} from "@mui/icons-material";
+import dayjs, {Dayjs} from 'dayjs';
+import {DatePicker, DateTimePicker} from '@mui/x-date-pickers'
 
-function OptionButton({onRevoke, role, name, picture}: {
-    onRevoke: () => void
-    role?: string
-    name?: string
-    picture?: string
-}) {
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-    const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget)
-    }
-    const handleClose = () => {
-        setAnchorEl(null)
-    }
-
-    const handleRevoke = () => {
-        setAnchorEl(null)
-        onRevoke()
-    }
-
-    return (
-        <>
-            <IconButton onClick={handleOpen}><MoreHoriz/></IconButton>
-            <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
-                }}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-            >
-                {role && (
-                    <MenuItem>
-                        <ListItemText sx={{textAlign: 'center'}}>
-                            {role && <Chip label={role} variant='outlined' color='secondary' size='small'
-                                           sx={{width: "90px"}}/>}
-                        </ListItemText>
-                    </MenuItem>
-                )}
-                {(name || picture) && (
-                    <MenuItem>
-                        <ListItemIcon>{picture &&
-                            <Avatar alt="?" src={picture} sx={{width: '24px', height: '24px'}}/>}</ListItemIcon>
-                        <ListItemText>{name}</ListItemText>
-                    </MenuItem>
-                )}
-                <MenuItem
-                    onClick={handleRevoke}
-                    sx={theme => ({
-                        cursor: 'unset',
-                        color: theme.palette.error.main,
-                        background: theme.palette.error.contrastText,
-                    })}>
-                    <ListItemIcon sx={{color: 'inherit'}}><Delete/></ListItemIcon>
-                    <ListItemText>
-                        Revoke
-                    </ListItemText>
-                </MenuItem>
-            </Menu>
-        </>
-    )
-}
-
-function GrantAccessButton({onClick}: {
-    onClick: (role: SharingType) => void,
-}) {
-    const [open, setOpen] = useState(false);
-    const anchorRef = useRef<HTMLDivElement>(null);
-
-    const handleMenuItemClick = (
-        event: React.MouseEvent<HTMLLIElement, MouseEvent>,
-        role: SharingType,
-    ) => {
-        onClick(role)
-        setOpen(false);
-    };
-
-    const handleToggle = () => {
-        setOpen((prevOpen) => !prevOpen);
-    };
-
-    const handleClose = (event: Event) => {
-        if (anchorRef.current && anchorRef.current.contains(event.target as HTMLElement)) {
-            return;
-        }
-
-        setOpen(false);
-    };
-
-    const asVisitorText = 'As a visitor';
-
-    return (
-        <>
-            <ButtonGroup variant="contained" size='large' ref={anchorRef} aria-label="split button">
-                <Button onClick={evt => onClick(SharingType.visitor)}>{asVisitorText}</Button>
-                <Button
-                    size="small"
-                    onClick={handleToggle}
-                >
-                    <ArrowDropDownIcon/>
-                </Button>
-            </ButtonGroup>
-            <Popper
-                sx={{
-                    zIndex: 1,
-                }}
-                open={open}
-                anchorEl={anchorRef.current}
-                role={undefined}
-                transition
-                disablePortal
-            >
-                {({TransitionProps, placement}) => (
-                    <Grow
-                        {...TransitionProps}
-                        style={{
-                            transformOrigin:
-                                placement === 'bottom' ? 'center top' : 'center bottom',
-                        }}
-                    >
-                        <Paper>
-                            <ClickAwayListener onClickAway={handleClose}>
-                                <MenuList id="split-button-menu" autoFocusItem>
-                                    <MenuItem onClick={(event) => handleMenuItemClick(event, SharingType.visitor)}
-                                              selected>
-                                        {asVisitorText}
-                                    </MenuItem>
-                                    <MenuItem onClick={(event) => handleMenuItemClick(event, SharingType.contributor)}>
-                                        As a contributor
-                                    </MenuItem>
-                                </MenuList>
-                            </ClickAwayListener>
-                        </Paper>
-                    </Grow>
-                )}
-            </Popper>
-        </>
-    );
-}
 
 interface CreateAlbum {
-    name?: string
-    start?: Date
-    end?: Date
+    name: string
+    start: Dayjs | null
+    end: Dayjs | null
+    forceFolderNameEnabled: boolean
     forceFolderName?: string
 }
 
-export default function CreateAlbumDialog({open, error, onClose, onSubmit}: {
+const saturdayTwoWeeksAgo = dayjs().startOf("week").subtract(8, "days")
+
+const emptyCreateAlbum = (defaultDate: Dayjs): CreateAlbum => ({
+    name: "",
+    start: defaultDate,
+    end: defaultDate.add(7, "days").endOf("day"),
+    forceFolderNameEnabled: false
+})
+
+export default function CreateAlbumDialog({open, error, onClose, onSubmit, defaultDate = saturdayTwoWeeksAgo}: {
     open: boolean,
     onClose: () => void,
     error?: string,
     onSubmit: (album: CreateAlbum) => void,
+    defaultDate?: Dayjs,
 }) {
-    const [album, setAlbum] = useState<CreateAlbum>({})
+    const [startsAtStartOfTheDay, setStartsAtStartOfTheDay] = useState<boolean>(true)
+    const [endsAtEndOfTheDay, setEndsAtEndOfTheDay] = useState<boolean>(true)
+    const [withCustomFolderName, setWithCustomFolderName] = useState<boolean>(false)
+    const [createForm, setCreateForm] = useState<CreateAlbum>(emptyCreateAlbum(defaultDate))
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    const handleClose = useCallback(() => {
+        onClose()
+        setCreateForm(emptyCreateAlbum(defaultDate))
+    }, [setCreateForm, onClose])
+
+    const handleSubmit = useCallback(() => {
+        onSubmit(createForm)
+        setCreateForm(emptyCreateAlbum(defaultDate))
+    }, [createForm, onSubmit])
+
     return (
         <Dialog
             open={open}
-            onClose={onClose}
+            onClose={handleClose}
             fullWidth
             fullScreen={isMobile}
             maxWidth='md'
         >
             <DialogTitle>Creates an album</DialogTitle>
+            <IconButton
+                aria-label="close"
+                onClick={handleClose}
+                color='primary'
+                sx={{
+                    position: 'absolute',
+                    right: 8,
+                    top: 8,
+                    color: (theme) => theme.palette.grey[500],
+                }}
+            >
+                <Close/>
+            </IconButton>
             <DialogContent>
                 {/*{error?.type === "general" && (*/}
                 {/*    <Alert severity='error' sx={theme => ({mb: theme.spacing(2)})}>{error.message}</Alert>*/}
                 {/*)}*/}
                 <Grid container spacing={2} alignItems='center'>
-                    <Grid sm={8} xs={12}>
+                    <Grid sm={12} xs={12}>
                         <TextField
                             autoFocus
                             fullWidth
@@ -212,20 +101,82 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit}: {
                             id="email"
                             label="Name"
                             type="string"
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAlbum(album => ({...album, name: event.target.value}))}
-                            value={album.name}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCreateForm(album => ({...album, name: event.target.value}))}
+                            value={createForm.name}
                         />
                     </Grid>
-                    <Grid sm={4} xs={12} sx={{
-                        textAlign: 'center'
-                    }}>
-                        {/*<GrantAccessButton onClick={role => savingHandler(role)}/>*/}
+                    <Grid xs={6}>
+                        {startsAtStartOfTheDay && (
+                            <DatePicker
+                                label="First day"
+                                value={createForm.start}
+                                onChange={start => setCreateForm(form => ({...form, start}))}
+                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
+                            />) || (
+                            <DateTimePicker
+                                label="First day"
+                                value={createForm.start}
+                                onChange={start => setCreateForm(form => ({...form, start}))}
+                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
+                            />
+                        )}
+                    </Grid>
+                    <Grid xs={6}>
+                        <FormControlLabel control={<Checkbox checked={startsAtStartOfTheDay}
+                                                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setStartsAtStartOfTheDay(event.target.checked)}/>}
+                                          label="at the start of the day"/>
+                    </Grid>
+                    <Grid xs={6}>
+                        {endsAtEndOfTheDay && (
+                            <DatePicker
+                                label="Last day"
+                                value={createForm.end}
+                                onChange={end => setCreateForm(form => ({...form, end}))}
+                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
+                            />) || (
+                            <DateTimePicker
+                                label="Last day"
+                                value={createForm.end}
+                                onChange={end => setCreateForm(form => ({...form, end}))}
+                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
+                            />
+                        )}
+                    </Grid>
+                    <Grid xs={6}>
+                        <FormControlLabel control={<Checkbox checked={endsAtEndOfTheDay}
+                                                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEndsAtEndOfTheDay(event.target.checked)}/>}
+                                          label="at the end of the day"/>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Tooltip title="The name of the physical foldername is generated from the date and the name ; but can be overriden.">
+                            <Paper
+                                component="form"
+                                sx={theme => ({
+                                    p: '2px 4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    width: "99%",
+                                    border: `solid 1px ${theme.palette.grey.A400}`
+                                })}
+                                elevation={0}
+                            >
+                                <Checkbox checked={withCustomFolderName}
+                                          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setWithCustomFolderName(event.target.checked)}
+                                />
+                                <Divider sx={{height: 28, m: 0.5}} orientation="vertical"/>
+                                <InputBase
+                                    sx={{ml: 1, flex: 1}}
+                                    placeholder="Custom folder name (ex: '/2025-08_Summer')"
+                                    disabled={!withCustomFolderName}
+                                />
+                            </Paper>
+                        </Tooltip>
                     </Grid>
                 </Grid>
-                {/*)}*/}
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose}>Close</Button>
+                <Button onClick={handleClose} color='info'>Cancel</Button>
+                <Button onClick={handleSubmit} color='primary' variant='contained'>Save</Button>
             </DialogActions>
         </Dialog>
     );
