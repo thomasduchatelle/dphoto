@@ -26,8 +26,7 @@ interface CreateAlbum {
     name: string
     start: Dayjs | null
     end: Dayjs | null
-    forceFolderNameEnabled: boolean
-    forceFolderName?: string
+    forceFolderName: string
 }
 
 const saturdayTwoWeeksAgo = dayjs().startOf("week").subtract(8, "days")
@@ -36,7 +35,7 @@ const emptyCreateAlbum = (defaultDate: Dayjs): CreateAlbum => ({
     name: "",
     start: defaultDate,
     end: defaultDate.add(7, "days").endOf("day"),
-    forceFolderNameEnabled: false
+    forceFolderName: ""
 })
 
 export default function CreateAlbumDialog({open, error, onClose, onSubmit, defaultDate = saturdayTwoWeeksAgo}: {
@@ -54,15 +53,22 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    const resetForm = useCallback(() => {
+        setCreateForm(emptyCreateAlbum(defaultDate))
+        setStartsAtStartOfTheDay(false)
+        setEndsAtEndOfTheDay(false)
+        setWithCustomFolderName(false)
+    }, [setCreateForm, setStartsAtStartOfTheDay, setEndsAtEndOfTheDay, setWithCustomFolderName])
+
     const handleClose = useCallback(() => {
         onClose()
-        setCreateForm(emptyCreateAlbum(defaultDate))
-    }, [setCreateForm, onClose])
+        resetForm()
+    }, [resetForm, onClose])
 
     const handleSubmit = useCallback(() => {
         onSubmit(createForm)
-        setCreateForm(emptyCreateAlbum(defaultDate))
-    }, [createForm, onSubmit])
+        resetForm()
+    }, [resetForm, onSubmit])
 
     return (
         <Dialog
@@ -168,6 +174,11 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
                                     sx={{ml: 1, flex: 1}}
                                     placeholder="Custom folder name (ex: '/2025-08_Summer')"
                                     disabled={!withCustomFolderName}
+                                    value={createForm.forceFolderName}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCreateForm(prev => ({
+                                        ...prev,
+                                        forceFolderName: event.target.value
+                                    }))}
                                 />
                             </Paper>
                         </Tooltip>
