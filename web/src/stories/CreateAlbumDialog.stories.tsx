@@ -1,6 +1,6 @@
 import React from 'react';
 import {ComponentMeta, ComponentStory} from '@storybook/react';
-import CreateAlbumDialog from "../pages/authenticated/albums/CreateAlbumDialog";
+import CreateAlbumDialog, {albumFolderNameAlreadyTakenErr} from "../pages/authenticated/albums/CreateAlbumDialog";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
@@ -24,6 +24,7 @@ const Template: ComponentStory<typeof CreateAlbumDialog> = (args) => (
     </LocalizationProvider>
 );
 
+// it should display the model with no name, defaulted start and end date (1 week apart), no folder name, "create" button disabled
 export const Empty = Template.bind({});
 Empty.args = {
     open: true,
@@ -32,6 +33,7 @@ Empty.parameters = {
     delay: 300,
 };
 
+// it should have the "save" button enabled when the name is not empty
 export const WithAName = Template.bind({});
 WithAName.args = {
     open: true,
@@ -48,19 +50,13 @@ WithAName.play = async ({canvasElement}) => {
     userEvent.type(nameInput, 'Avenger 3');
 };
 
+// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
 export const AlreadyExists = Template.bind({});
 AlreadyExists.args = {
     open: true,
+    defaultErrorCode: albumFolderNameAlreadyTakenErr,
 };
 AlreadyExists.parameters = {
     delay: 300,
 };
-// AlreadyExists.play = async ({canvasElement}) => {
-//     const canvas = within(screen.getByRole('dialog'));
-//     const nameInput = canvas.getByLabelText(/Name/, {
-//         selector: 'input',
-//     })
-//
-//     userEvent.type(nameInput, 'Avenger 3');
-// };
 

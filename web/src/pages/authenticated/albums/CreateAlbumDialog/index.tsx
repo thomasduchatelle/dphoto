@@ -21,6 +21,7 @@ import {Close} from "@mui/icons-material";
 import dayjs, {Dayjs} from 'dayjs';
 import {DatePicker, DateTimePicker} from '@mui/x-date-pickers'
 
+export const albumFolderNameAlreadyTakenErr = "AlbumFolderNameAlreadyTakenErr";
 
 interface CreateAlbumDialogState {
     name: string
@@ -30,6 +31,7 @@ interface CreateAlbumDialogState {
     startsAtStartOfTheDay: boolean
     endsAtEndOfTheDay: boolean
     withCustomFolderName: boolean
+    errorCode?: string
 }
 
 const saturdayTwoWeeksAgo = dayjs().startOf("week").subtract(8, "days")
@@ -44,14 +46,14 @@ const emptyCreateAlbum = (defaultDate: Dayjs): CreateAlbumDialogState => ({
     withCustomFolderName: false,
 })
 
-export default function CreateAlbumDialog({open, error, onClose, onSubmit, defaultDate = saturdayTwoWeeksAgo}: {
+export default function CreateAlbumDialog({open, onClose, onSubmit, defaultDate = saturdayTwoWeeksAgo, defaultErrorCode}: {
     open: boolean,
     onClose: () => void,
-    error?: string,
     onSubmit: (album: CreateAlbumDialogState) => void,
     defaultDate?: Dayjs,
+    defaultErrorCode?: string
 }) {
-    const [state, setState] = useState<CreateAlbumDialogState>(emptyCreateAlbum(defaultDate))
+    const [state, setState] = useState<CreateAlbumDialogState>({...emptyCreateAlbum(defaultDate), errorCode: defaultErrorCode})
     const setStartsAtStartOfTheDay = (startsAtStartOfTheDay: boolean) => setState(prev => ({...prev, startsAtStartOfTheDay}))
     const setEndsAtEndOfTheDay = (endsAtEndOfTheDay: boolean) => setState(prev => ({...prev, endsAtEndOfTheDay}))
     const setWithCustomFolderName = (withCustomFolderName: boolean) => setState(prev => ({...prev, withCustomFolderName}))
@@ -60,6 +62,17 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const canBeSubmitted = state.name.length > 0
+
+    const handleOnNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        setState(prev => ({...prev, name: event.target.value, errorCode: prev.errorCode !== albumFolderNameAlreadyTakenErr ? prev.errorCode : undefined}))
+    }, [setState])
+    const handleOnFolderNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        setState(prev => ({
+            ...prev,
+            forceFolderName: event.target.value,
+            errorCode: prev.errorCode !== albumFolderNameAlreadyTakenErr ? prev.errorCode : undefined
+        }))
+    }, [setState])
 
     const handleClose = useCallback(() => {
         onClose()
@@ -73,7 +86,7 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
 
     return (
         <Dialog
-            open={true}
+            open={open}
             onClose={handleClose}
             fullWidth
             fullScreen={isMobile}
@@ -104,8 +117,10 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
                             fullWidth
                             label="Name"
                             type="string"
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setState(album => ({...album, name: event.target.value}))}
+                            onChange={handleOnNameChange}
                             value={state.name}
+                            helperText={state.errorCode === albumFolderNameAlreadyTakenErr && "The name must be unique (or the folder name must be explicitely set)"}
+                            error={state.errorCode === albumFolderNameAlreadyTakenErr}
                         />
                     </Grid>
                     <Grid xs={6}>
@@ -172,10 +187,7 @@ export default function CreateAlbumDialog({open, error, onClose, onSubmit, defau
                                     placeholder="Custom folder name (ex: '/2025-08_Summer')"
                                     disabled={!state.withCustomFolderName}
                                     value={state.forceFolderName}
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setState(prev => ({
-                                        ...prev,
-                                        forceFolderName: event.target.value
-                                    }))}
+                                    onChange={handleOnFolderNameChange}
                                 />
                             </Paper>
                         </Tooltip>
