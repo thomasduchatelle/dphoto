@@ -22,6 +22,7 @@ import dayjs, {Dayjs} from 'dayjs';
 import {DatePicker, DateTimePicker} from '@mui/x-date-pickers'
 
 export const albumFolderNameAlreadyTakenErr = "AlbumFolderNameAlreadyTakenErr";
+export const albumStartAndEndDateMandatoryErr = "AlbumStartAndEndDateMandatoryErr";
 
 interface CreateAlbumDialogState {
     name: string
@@ -62,10 +63,24 @@ export default function CreateAlbumDialog({open, onClose, onSubmit, defaultDate 
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const canBeSubmitted = state.name.length > 0
+    const dateErrorArgs = state.errorCode === albumStartAndEndDateMandatoryErr ? {
+        error: true,
+        helperText: "Start and end dates are mandatory, and end date must be after the start date.",
+    } : {}
 
     const handleOnNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setState(prev => ({...prev, name: event.target.value, errorCode: prev.errorCode !== albumFolderNameAlreadyTakenErr ? prev.errorCode : undefined}))
     }, [setState])
+    const handleStartDateChange = useCallback((start: Dayjs | null) => setState(prev => ({
+        ...prev,
+        start,
+        errorCode: prev.errorCode === albumStartAndEndDateMandatoryErr ? undefined : prev.errorCode
+    })), [setState])
+    const handleEndDateChange = useCallback((end: Dayjs | null) => setState(prev => ({
+        ...prev,
+        end,
+        errorCode: prev.errorCode === albumStartAndEndDateMandatoryErr ? undefined : prev.errorCode
+    })), [setState])
     const handleOnFolderNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setState(prev => ({
             ...prev,
@@ -128,14 +143,14 @@ export default function CreateAlbumDialog({open, onClose, onSubmit, defaultDate 
                             <DatePicker
                                 label="First day"
                                 value={state.start}
-                                onChange={start => setState(form => ({...form, start}))}
-                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
+                                onChange={handleStartDateChange}
+                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} helperText=''/>}
                             />) : (
                             <DateTimePicker
                                 label="First day"
                                 value={state.start}
-                                onChange={start => setState(form => ({...form, start}))}
-                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
+                                onChange={handleStartDateChange}
+                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} helperText=''/>}
                             />
                         )}
                     </Grid>
@@ -149,14 +164,14 @@ export default function CreateAlbumDialog({open, onClose, onSubmit, defaultDate 
                             <DatePicker
                                 label="Last day"
                                 value={state.end}
-                                onChange={end => setState(form => ({...form, end}))}
-                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
+                                onChange={handleEndDateChange}
+                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs}/>}
                             />) : (
                             <DateTimePicker
                                 label="Last day"
                                 value={state.end}
-                                onChange={end => setState(form => ({...form, end}))}
-                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}}/>}
+                                onChange={handleEndDateChange}
+                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs}/>}
                             />
                         )}
                     </Grid>

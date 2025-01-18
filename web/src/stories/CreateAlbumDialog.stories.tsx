@@ -60,3 +60,13 @@ AlreadyExists.parameters = {
     delay: 300,
 };
 
+// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
+export const StartAndEndDateAreMandatory = Template.bind({});
+StartAndEndDateAreMandatory.args = {
+    open: true,
+    defaultErrorCode: "AlbumStartAndEndDateMandatoryErr",
+};
+StartAndEndDateAreMandatory.parameters = {
+    delay: 300,
+};
+
