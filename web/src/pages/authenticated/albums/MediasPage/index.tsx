@@ -18,6 +18,7 @@ export default function MediasPage({
                                        albumFilter,
                                        onAlbumFilterChange,
                                        selectedAlbumId,
+                                       onClickOnAddNewAlbum,
                                    }: {
     albums: Album[]
     albumNotFound: boolean
@@ -29,6 +30,7 @@ export default function MediasPage({
     albumFilter: AlbumFilterEntry,
     selectedAlbumId: AlbumId | undefined,
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
+    onClickOnAddNewAlbum: () => void,
 }) {
     const drawerWidth = 450
 
@@ -57,6 +59,7 @@ export default function MediasPage({
                                 selected={albumFilter}
                                 options={albumFilterOptions}
                                 onAlbumFiltered={onAlbumFilterChange}
+                                onClickOnAdd={onClickOnAddNewAlbum}
                             />
                             <Divider/>
                         </>

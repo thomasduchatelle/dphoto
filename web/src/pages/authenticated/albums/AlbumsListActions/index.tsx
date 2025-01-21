@@ -3,11 +3,11 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import {Box, IconButton, Tooltip} from "@mui/material";
 import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
 
-export default function AlbumListActions({...props}: OwnerSelectorProps) {
-    const doSomething = () => {
-        console.log("creating a new album")
-    }
+export interface AlbumListActionsCallBacks {
+    onClickOnAdd(): void
+}
 
+export default function AlbumListActions({onClickOnAdd, ...props}: OwnerSelectorProps & AlbumListActionsCallBacks) {
     return (
         <Box sx={{
             display: 'flex',
@@ -18,16 +18,12 @@ export default function AlbumListActions({...props}: OwnerSelectorProps) {
             <Box sx={{mr: 2}}>
                 <OwnerSelector {...props} />
             </Box>
-            <Tooltip title="Create new album [Feature not yet available]">
-                <span>
-                    <IconButton color="primary" onClick={doSomething} size="large" disabled={true}>
-                        <AddIcon/>
-                    </IconButton>
-                </span>
-            </Tooltip>
+            <IconButton color="primary" onClick={onClickOnAdd} size="large">
+                <AddIcon/>
+            </IconButton>
             <Tooltip title="Album management [Feature not yet available]">
                 <span>
-                    <IconButton color="primary" onClick={doSomething} size="large" disabled={true}>
+                    <IconButton color="primary" size="large" disabled={true}>
                         <SettingsIcon/>
                     </IconButton>
                 </span>

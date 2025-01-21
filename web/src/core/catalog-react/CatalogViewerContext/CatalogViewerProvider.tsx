@@ -13,7 +13,9 @@ export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch
     },
     handlers: {
         onAlbumFilterChange: () => {
-        }
+        },
+        onClickOnAddNewAlbum: () => {
+        },
     }
 })
 
@@ -46,6 +48,8 @@ export const CatalogViewerProvider = (
 
     const handlers: CatalogHandlers = {
         onAlbumFilterChange,
+        onClickOnAddNewAlbum: () => {
+        },
     }
 
     useEffect(() => {
@@ -84,4 +88,5 @@ export const CatalogViewerProvider = (
 
 export interface CatalogHandlers {
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
+    onClickOnAddNewAlbum: () => void
 }

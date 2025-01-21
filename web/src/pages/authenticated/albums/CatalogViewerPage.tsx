@@ -13,7 +13,7 @@ import {albumIdEquals} from "../../../core/catalog";
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
 
-    const {state, handlers: {onAlbumFilterChange}, selectedAlbumId} = useCatalogContext()
+    const {state, handlers: {onAlbumFilterChange, onClickOnAddNewAlbum}, selectedAlbumId} = useCatalogContext()
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()
@@ -46,6 +46,7 @@ export function CatalogViewerPage() {
                     selectedAlbumId={selectedAlbumId}
                     onAlbumFilterChange={onAlbumFilterChange}
                     scrollToMedia={search.get("mediaId") ?? undefined}
+                    onClickOnAddNewAlbum={onClickOnAddNewAlbum}
                 />
             )}
         </Box>
