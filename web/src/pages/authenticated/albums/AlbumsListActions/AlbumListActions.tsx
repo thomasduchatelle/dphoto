@@ -36,8 +36,10 @@ export default function AlbumListActions({onCreateNewAlbumRequest, ...props}: Ow
             <CreateAlbumDialog
                 open={createModal}
                 onClose={() => setCreateModal(false)}
-                onSubmit={(request => {
-                })}
+                onSubmit={(request) => {
+                    setCreateModal(false)
+                    return onCreateNewAlbumRequest(request)
+                }}
             />
         </Box>
     )

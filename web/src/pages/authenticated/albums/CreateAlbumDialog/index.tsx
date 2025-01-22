@@ -20,6 +20,8 @@ import Grid from '@mui/material/Unstable_Grid2';
 import {Close} from "@mui/icons-material";
 import dayjs, {Dayjs} from 'dayjs';
 import {DatePicker, DateTimePicker} from '@mui/x-date-pickers'
+import {OnCreateNewAlbumRequestType} from "../../../../core/catalog-react";
+import {isCatalogError} from "../../../../core/catalog/domain/errors";
 
 export const albumFolderNameAlreadyTakenErr = "AlbumFolderNameAlreadyTakenErr";
 export const albumStartAndEndDateMandatoryErr = "AlbumStartAndEndDateMandatoryErr";
@@ -50,7 +52,7 @@ const emptyCreateAlbum = (defaultDate: Dayjs): CreateAlbumDialogState => ({
 export default function CreateAlbumDialog({open, onClose, onSubmit, defaultDate = saturdayTwoWeeksAgo, defaultErrorCode}: {
     open: boolean,
     onClose: () => void,
-    onSubmit: (album: CreateAlbumDialogState) => void,
+    onSubmit: OnCreateNewAlbumRequestType,
     defaultDate?: Dayjs,
     defaultErrorCode?: string
 }) {
@@ -95,8 +97,28 @@ export default function CreateAlbumDialog({open, onClose, onSubmit, defaultDate 
     }, [setState, onClose, defaultDate])
 
     const handleSubmit = useCallback(() => {
-        onSubmit(state)
-        setState(emptyCreateAlbum(defaultDate))
+        if (state.start && state.end) {
+            // TODO what about the timezone ??
+            onSubmit({
+                name: state.name,
+                start: state.startsAtStartOfTheDay ? state.start.startOf("day").toDate() : state.start.toDate(),
+                end: state.endsAtEndOfTheDay ? state.end.endOf("day").toDate() : state.end.toDate(),
+                forcedFolderName: state.withCustomFolderName ? state.forceFolderName : ""
+            })
+                .then(() => setState(emptyCreateAlbum(defaultDate)))
+                .catch(err => {
+                    console.log("Failed to create the album", err)
+                    setState(prev => ({
+                        ...prev,
+                        errorCode: isCatalogError(err) ? err.errorCode : err, // TODO display the errors
+                    }))
+                })
+        } else {
+            setState(prev => ({
+                ...prev,
+                errorCode: albumStartAndEndDateMandatoryErr,
+            }))
+        }
     }, [state, setState, onSubmit, defaultDate])
 
     return (
