@@ -1,7 +1,7 @@
 import React from 'react';
 import {ComponentMeta, ComponentStory} from '@storybook/react';
-import AlbumsListActions from "../pages/authenticated/albums/AlbumsListActions";
 import {userEvent, within} from "@storybook/testing-library";
+import AlbumsListActions from "../pages/authenticated/albums/AlbumsListActions/AlbumListActions";
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {

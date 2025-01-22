@@ -2,8 +2,9 @@ import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
-import AlbumListActions from "../AlbumsListActions";
 import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, MediaWithinADay} from "../../../../core/catalog";
+import AlbumListActions from "../AlbumsListActions/AlbumListActions";
+import {OnCreateNewAlbumRequestType} from "../../../../core/catalog-react";
 
 const albumFilterFeatureFlag = true
 
@@ -18,7 +19,7 @@ export default function MediasPage({
                                        albumFilter,
                                        onAlbumFilterChange,
                                        selectedAlbumId,
-                                       onClickOnAddNewAlbum,
+                                       onCreateNewAlbumRequest,
                                    }: {
     albums: Album[]
     albumNotFound: boolean
@@ -30,7 +31,7 @@ export default function MediasPage({
     albumFilter: AlbumFilterEntry,
     selectedAlbumId: AlbumId | undefined,
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
-    onClickOnAddNewAlbum: () => void,
+    onCreateNewAlbumRequest: OnCreateNewAlbumRequestType
 }) {
     const drawerWidth = 450
 
@@ -59,7 +60,7 @@ export default function MediasPage({
                                 selected={albumFilter}
                                 options={albumFilterOptions}
                                 onAlbumFiltered={onAlbumFilterChange}
-                                onClickOnAdd={onClickOnAddNewAlbum}
+                                onCreateNewAlbumRequest={onCreateNewAlbumRequest}
                             />
                             <Divider/>
                         </>

@@ -13,7 +13,7 @@ import {albumIdEquals} from "../../../core/catalog";
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
 
-    const {state, handlers: {onAlbumFilterChange, onClickOnAddNewAlbum}, selectedAlbumId} = useCatalogContext()
+    const {state, handlers: {onAlbumFilterChange, onCreateNewAlbumRequest}, selectedAlbumId} = useCatalogContext()
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()
@@ -37,6 +37,7 @@ export function CatalogViewerPage() {
                 <MobileNavigation album={isAlbumsPage ? undefined : selectedAlbum}/>
             </Box>
             {isMobileDevice && isAlbumsPage ? (
+                // TODO add the toolbox here for mobiles.
                 <AlbumsList albums={state.albums}
                             loaded={state.albumsLoaded}
                             selectedAlbumId={selectedAlbumId}/>
@@ -46,7 +47,7 @@ export function CatalogViewerPage() {
                     selectedAlbumId={selectedAlbumId}
                     onAlbumFilterChange={onAlbumFilterChange}
                     scrollToMedia={search.get("mediaId") ?? undefined}
-                    onClickOnAddNewAlbum={onClickOnAddNewAlbum}
+                    onCreateNewAlbumRequest={onCreateNewAlbumRequest}
                 />
             )}
         </Box>
