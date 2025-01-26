@@ -4,7 +4,7 @@ import {MediaPerDayLoader} from "./MediaPerDayLoader";
 import {AlbumId, Media, MediaId, MediaType} from "./catalog-state";
 import {FetchAlbumMediasPort} from "./CatalogViewerLoader";
 
-function newMedia(mediaId: MediaId, dateTime: string): Media {
+export function newMedia(mediaId: MediaId, dateTime: string): Media {
     return {
         id: mediaId,
         type: MediaType.IMAGE,
@@ -100,7 +100,7 @@ export class ActionObserverFake {
     }
 }
 
-class MediaRepositoryFake implements FetchAlbumMediasPort {
+export class MediaRepositoryFake implements FetchAlbumMediasPort {
     private medias: Map<AlbumId, Media[]> = new Map()
 
     fetchMedias(albumId: AlbumId): Promise<Media[]> {
