@@ -22,12 +22,7 @@ import {
 import Grid from '@mui/material/Unstable_Grid2';
 import {Close} from "@mui/icons-material";
 import {DatePicker, DateTimePicker} from '@mui/x-date-pickers';
-import {
-    albumFolderNameAlreadyTakenErr,
-    albumStartAndEndDateMandatoryErr,
-    CreateAlbumHandlers,
-    CreateAlbumState
-} from "../../../../core/catalog/domain/CreateAlbumController";
+import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr, CreateAlbumHandlers, CreateAlbumState} from "../../../../core/catalog";
 
 export function CreateAlbumDialog({
                                       state,
