@@ -1,5 +1,7 @@
 import React from 'react';
 import {
+    Alert,
+    Box,
     Button,
     Checkbox,
     Dialog,
@@ -10,6 +12,7 @@ import {
     FormControlLabel,
     IconButton,
     InputBase,
+    LinearProgress,
     Paper,
     TextField,
     Tooltip,
@@ -43,11 +46,13 @@ export function CreateAlbumDialog({
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const canBeSubmitted = state.name.length > 0;
+    const canBeSubmitted = state.name.length > 0 && !state.creationInProgress;
     const dateErrorArgs = state.errorCode === albumStartAndEndDateMandatoryErr ? {
         error: true,
         helperText: "Start and end dates are mandatory, and end date must be after the start date.",
     } : {};
+
+    const errorMessage = getErrorMessage(state.errorCode);
 
     return (
         <Dialog
@@ -57,6 +62,16 @@ export function CreateAlbumDialog({
             fullScreen={isMobile}
             maxWidth='md'
         >
+            <Box sx={{
+                height: '4px',
+                marginTop: '0px !important',
+            }}>
+                {state.creationInProgress && <LinearProgress sx={{
+                    borderRadius: {
+                        sm: '4px 4px 0px 0px'
+                    },
+                }}/>}
+            </Box>
             <DialogTitle>Creates an album</DialogTitle>
             <IconButton
                 aria-label="close"
@@ -74,11 +89,17 @@ export function CreateAlbumDialog({
             <DialogContent>
                 <Grid container spacing={2} alignItems='center'>
                     <Grid sm={12} xs={12}>
+                        {errorMessage && <Alert severity="error">
+                            {errorMessage}
+                        </Alert>}
+                    </Grid>
+                    <Grid sm={12} xs={12}>
                         <TextField
                             autoFocus
                             fullWidth
                             label="Name"
                             type="string"
+                            disabled={state.creationInProgress}
                             onChange={(event) => onNameChange(event.target.value)}
                             value={state.name}
                             helperText={state.errorCode === albumFolderNameAlreadyTakenErr && "The name must be unique (or the folder name must be explicitly set)"}
@@ -89,12 +110,14 @@ export function CreateAlbumDialog({
                         {state.startsAtStartOfTheDay ? (
                             <DatePicker
                                 label="First day"
+                                disabled={state.creationInProgress}
                                 value={state.start}
                                 onChange={onStartDateChange}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} helperText=''/>}
                             />) : (
                             <DateTimePicker
                                 label="First day"
+                                disabled={state.creationInProgress}
                                 value={state.start}
                                 onChange={onStartDateChange}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} helperText=''/>}
@@ -103,6 +126,7 @@ export function CreateAlbumDialog({
                     </Grid>
                     <Grid xs={6}>
                         <FormControlLabel control={<Checkbox checked={state.startsAtStartOfTheDay}
+                                                             disabled={state.creationInProgress}
                                                              onChange={(event: React.ChangeEvent<HTMLInputElement>) => onStartsAtStartOfTheDayChange(event.target.checked)}/>}
                                           label="at the start of the day"/>
                     </Grid>
@@ -110,12 +134,14 @@ export function CreateAlbumDialog({
                         {state.endsAtEndOfTheDay ? (
                             <DatePicker
                                 label="Last day"
+                                disabled={state.creationInProgress}
                                 value={state.end}
                                 onChange={onEndDateChange}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} />}
                             />) : (
                             <DateTimePicker
                                 label="Last day"
+                                disabled={state.creationInProgress}
                                 value={state.end}
                                 onChange={onEndDateChange}
                                 renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} />}
@@ -124,6 +150,7 @@ export function CreateAlbumDialog({
                     </Grid>
                     <Grid xs={6}>
                         <FormControlLabel control={<Checkbox checked={state.endsAtEndOfTheDay}
+                                                             disabled={state.creationInProgress}
                                                              onChange={(event: React.ChangeEvent<HTMLInputElement>) => onEndsAtEndOfTheDayChange(event.target.checked)}/>}
                                           label="at the end of the day"/>
                     </Grid>
@@ -141,13 +168,14 @@ export function CreateAlbumDialog({
                                 elevation={0}
                             >
                                 <Checkbox checked={state.withCustomFolderName}
+                                          disabled={state.creationInProgress}
                                           onChange={(event: React.ChangeEvent<HTMLInputElement>) => onWithCustomFolderNameChange(event.target.checked)}
                                 />
                                 <Divider sx={{height: 28, m: 0.5}} orientation="vertical"/>
                                 <InputBase
                                     sx={{ml: 1, flex: 1}}
                                     placeholder="Custom folder name (ex: '/2025-08_Summer')"
-                                    disabled={!state.withCustomFolderName}
+                                    disabled={!state.withCustomFolderName || state.creationInProgress}
                                     value={state.forceFolderName}
                                     onChange={(event) => onFolderNameChange(event.target.value)}
                                 />
@@ -162,4 +190,17 @@ export function CreateAlbumDialog({
             </DialogActions>
         </Dialog>
     );
+}
+
+function getErrorMessage(errorCode: string | undefined): string {
+    switch (errorCode) {
+        case undefined:
+        case "":
+        case albumFolderNameAlreadyTakenErr:
+        case albumStartAndEndDateMandatoryErr:
+            return "";
+
+        default:
+            return "Album couldn't be saved. Refresh your page and retry, or let the developer known.";
+    }
 }

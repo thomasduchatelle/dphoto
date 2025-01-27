@@ -6,6 +6,7 @@ import {CreateAlbumDialog} from "./CreateAlbumDialog";
 export const CreateAlbumDialogContainer = ({children: Child, firstDay}: { children: FC<CreateAlbumControls>, firstDay?: Dayjs }) => {
     const [state, setState] = useState<CreateAlbumState>(emptyCreateAlbum(dayjs()));
 
+    // FIXME - inject appropriate dependencies
     const controller = useMemo(() => new CreateAlbumController(
         setState,
         {
