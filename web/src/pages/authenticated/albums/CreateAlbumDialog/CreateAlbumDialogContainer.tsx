@@ -2,12 +2,14 @@ import {CreateAlbumController, CreateAlbumControls, CreateAlbumState, emptyCreat
 import {FC, useMemo, useState} from "react";
 import dayjs, {Dayjs} from "dayjs";
 import {CreateAlbumDialog} from "./CreateAlbumDialog";
+import {CreateAlbumRequest} from "../../../../core/catalog";
 
 export const CreateAlbumDialogContainer = ({children: Child, firstDay}: { children: FC<CreateAlbumControls>, firstDay?: Dayjs }) => {
     const [state, setState] = useState<CreateAlbumState>(emptyCreateAlbum(dayjs()));
 
     const controller = useMemo(() => new CreateAlbumController(setState, {
-        createAlbum: async () => {
+        createAlbum: async (request: CreateAlbumRequest) => {
+            console.log("Create album", request);
             return;
         }
     }, firstDay), [setState])

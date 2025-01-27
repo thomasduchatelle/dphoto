@@ -1,6 +1,7 @@
 import dayjs, {Dayjs} from "dayjs";
 import {isCatalogError} from "./errors";
-import {OnCreateNewAlbumRequestType} from "../../catalog-react";
+import {AlbumId} from "./catalog-state";
+import {AlbumsAndMediasLoadedAction} from "./catalog-actions";
 
 export const albumFolderNameAlreadyTakenErr = "AlbumFolderNameAlreadyTakenErr";
 export const albumStartAndEndDateMandatoryErr = "AlbumStartAndEndDateMandatoryErr";
@@ -34,15 +35,22 @@ export interface CreateAlbumControls {
     // openEdit: (album: Album) => void // TODO manage EDIT mode
 }
 
-export interface CreateAlbumPort {
-    createAlbum: OnCreateNewAlbumRequestType
+export interface CreateAlbumRequest {
+    name: string
+    start: Date
+    end: Date
+    forcedFolderName: string
 }
 
+export interface CreateAlbumPort {
+    createAlbum(request: CreateAlbumRequest): Promise<AlbumId>
+}
 
 export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumControls {
     constructor(
         private readonly setState: (stateUpdater: (prev: CreateAlbumState) => CreateAlbumState) => void,
         private readonly createAlbumPort: CreateAlbumPort,
+        private readonly dispatch: (action: AlbumsAndMediasLoadedAction) => void,
         private readonly firstDay: Dayjs = dayjs().startOf("week").subtract(9, "days"),
     ) {
     }
@@ -58,19 +66,19 @@ export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumCo
         this.setState(prev => ({...prev, open: false}));
     }
 
-    onSubmitCreateAlbum = (state: CreateAlbumState): void => {
-        if (state.start && state.end) {
+    onSubmitCreateAlbum = async (state: CreateAlbumState): Promise<void> => {
+        if (state.start && state.end && state.start.isBefore(state.end)) {
             this.createAlbumPort.createAlbum({
                 name: state.name,
                 start: state.startsAtStartOfTheDay ? state.start.startOf("day").toDate() : state.start.toDate(),
-                end: state.endsAtEndOfTheDay ? state.end.endOf("day").toDate() : state.end.toDate(),
+                end: state.endsAtEndOfTheDay ? state.end.add(1, "day").startOf("day").toDate() : state.end.toDate(),
                 forcedFolderName: state.withCustomFolderName ? state.forceFolderName : ""
             })
-                .catch(err => {
+                .catch((err: Error) => {
                     console.log("Failed to create the album", err);
                     this.setState(prev => ({
                         ...prev,
-                        errorCode: isCatalogError(err) ? err.errorCode : err,
+                        errorCode: isCatalogError(err) ? err.errorCode : err.message,
                     }));
                 });
         } else {
