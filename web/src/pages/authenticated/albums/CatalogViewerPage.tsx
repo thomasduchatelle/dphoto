@@ -14,7 +14,7 @@ import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
 
-    const {state, handlers: {onAlbumFilterChange, onCreateNewAlbumRequest}, selectedAlbumId} = useCatalogContext()
+    const {state, handlers: {onAlbumFilterChange}, selectedAlbumId} = useCatalogContext()
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()

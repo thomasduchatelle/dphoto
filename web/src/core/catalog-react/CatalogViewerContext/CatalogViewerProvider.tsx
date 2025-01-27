@@ -1,8 +1,7 @@
 import {createContext, ReactNode, useCallback, useEffect, useReducer} from "react";
-import {catalogReducerFunction, initialCatalogState} from "../../catalog/domain/catalog-reducer";
+import {AlbumFilterCriterion, AlbumId, albumIdEquals, catalogReducerFunction, initialCatalogState, MediaPerDayLoader, SelectAlbumHandler} from "../../catalog";
 import {useApplication, useUnrecoverableErrorDispatch} from "../../application";
 import {CatalogFactory} from "../../catalog/catalog-factories";
-import {AlbumFilterCriterion, AlbumId, albumIdEquals, CreateAlbumHandler, CreateAlbumRequest, MediaPerDayLoader, SelectAlbumHandler} from "../../catalog";
 import {CatalogViewerStateWithDispatch} from "./CatalogViewerStateWithDispatch";
 import {AuthenticatedUser} from "../../security";
 import {AlbumFilterHandler, AlbumFilterHandlerDispatch} from "../../catalog/domain/AlbumFilterHandler";
@@ -13,8 +12,6 @@ export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch
     },
     handlers: {
         onAlbumFilterChange: () => {
-        },
-        onCreateNewAlbumRequest: async () => {
         },
     }
 })
@@ -46,11 +43,8 @@ export const CatalogViewerProvider = (
 
     }, [dispatch, onSelectedAlbumIdByDefault, albumId, allAlbums])
 
-    const onCreateNewAlbumRequest = useCallback(new CreateAlbumHandler().handleCreateAlbum, [])
-
     const handlers: CatalogHandlers = {
         onAlbumFilterChange,
-        onCreateNewAlbumRequest,
     }
 
     useEffect(() => {
@@ -87,9 +81,6 @@ export const CatalogViewerProvider = (
     )
 }
 
-export type OnCreateNewAlbumRequestType = (request: CreateAlbumRequest) => Promise<void>
-
 export interface CatalogHandlers {
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
-    onCreateNewAlbumRequest: OnCreateNewAlbumRequestType
 }
