@@ -5,10 +5,7 @@ import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
 import {screen, userEvent, within} from "@storybook/testing-library";
-import {
-    CreateAlbumDialog,
-    CreateAlbumDialogContainer
-} from "../pages/authenticated/albums/CreateAlbumDialog";
+import {CreateAlbumDialog, CreateAlbumDialogContainer} from "../pages/authenticated/albums/CreateAlbumDialog";
 import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr, emptyCreateAlbum} from "../core/catalog/domain/CreateAlbumController";
 import {Button} from "@mui/material";
 
@@ -104,6 +101,34 @@ StartAndEndDateAreMandatory.args = {
     },
 };
 StartAndEndDateAreMandatory.parameters = {
+    delay: 300,
+};
+
+// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
+export const Loading = Template.bind({});
+Loading.args = {
+    state: {
+        ...emptyCreateAlbum(defaultStartDate),
+        name: 'Avenger 3',
+        creationInProgress: true,
+        open: true,
+    },
+};
+Loading.parameters = {
+    storyshots: {disable: true},
+};
+
+// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
+export const GenericError = Template.bind({});
+GenericError.args = {
+    state: {
+        ...emptyCreateAlbum(defaultStartDate),
+        name: 'Avenger 3',
+        open: true,
+        errorCode: 'Something weird and different than the known errors.'
+    },
+};
+GenericError.parameters = {
     delay: 300,
 };
 

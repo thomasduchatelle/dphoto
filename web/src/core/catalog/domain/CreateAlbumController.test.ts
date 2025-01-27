@@ -1,9 +1,9 @@
-import {ActionObserverFake, MediaRepositoryFake, newMedia} from "./SelectAlbumHandler.test";
 import {AlbumId, Owner} from "./catalog-state";
 import {
     albumFolderNameAlreadyTakenErr,
     albumStartAndEndDateMandatoryErr,
     CreateAlbumController,
+    CreateAlbumListener,
     CreateAlbumRequest,
     CreateAlbumState,
     emptyCreateAlbum
@@ -17,6 +17,11 @@ describe("CreateAlbumController", () => {
     const defaultDateForEmptyAlbum = dayjs("2025-01-04");
     const folderName = "/avenger_3"
 
+    const openWithoutError = {
+        open: true,
+        creationInProgress: false,
+        errorCode: undefined,
+    }
     const stateValidForSubmission = {
         name: "Avenger 3",
         start: dayjs("2025-01-04T09:08:07"),
@@ -25,54 +30,32 @@ describe("CreateAlbumController", () => {
         endsAtEndOfTheDay: true,
         forceFolderName: "",
         withCustomFolderName: false,
-        open: true
+        ...openWithoutError,
     }
 
-    const media1 = newMedia('01', "2024-12-01T15:22:00Z");
-
-
-    const janAlbumId = {owner: owner1, folderName: folderName}
-    const janAlbum = {
-        albumId: janAlbumId,
-        name: "Jan 2025",
-        start: new Date(2025, 1, 1),
-        end: new Date(2025, 2, 1),
-        totalCount: 0,
-        temperature: 0,
-        relativeTemperature: 0,
-        sharedWith: []
-    }
-
-    let actionObserverFake: ActionObserverFake
+    let listener: CreateAlbumListenerFake
     let albumCatalogFake: AlbumCatalogFake
-    let mediaRepositoryFake: MediaRepositoryFake
 
     let stateHolder: StateHolder<CreateAlbumState>
     let handler: CreateAlbumController
 
     beforeEach(() => {
         stateHolder = new StateHolder(emptyCreateAlbum(defaultDateForEmptyAlbum))
-        actionObserverFake = new ActionObserverFake()
+        listener = new CreateAlbumListenerFake()
         albumCatalogFake = new AlbumCatalogFake()
 
         handler = new CreateAlbumController(
             stateHolder.update,
             albumCatalogFake,
-            actionObserverFake.onAction,
+            listener,
             defaultDateForEmptyAlbum,
         )
     })
 
     it("it should reset the state when opening the dialog to create a new album", () => {
         stateHolder.state = {
+            ...stateValidForSubmission,
             open: false,
-            name: "Jan 2025",
-            start: dayjs("2025-01-01"),
-            end: dayjs("2025-02-01"),
-            forceFolderName: "",
-            startsAtStartOfTheDay: true,
-            endsAtEndOfTheDay: true,
-            withCustomFolderName: false,
         }
 
         handler.openDialogForCreateAlbum()
@@ -81,7 +64,7 @@ describe("CreateAlbumController", () => {
             ...emptyCreateAlbum(defaultDateForEmptyAlbum),
             open: true,
         })
-        expect(actionObserverFake.actions).toHaveLength(0)
+        expect(listener.albumIds).toHaveLength(0)
     })
 
     it("it should close the dialog without any other actions when onClose is requested", () => {
@@ -90,7 +73,7 @@ describe("CreateAlbumController", () => {
         handler.onCloseCreateAlbumDialog()
 
         expect(stateHolder.state.open).toEqual(false)
-        expect(actionObserverFake.actions).toHaveLength(0)
+        expect(listener.albumIds).toHaveLength(0)
     })
 
     it.each([
@@ -106,7 +89,7 @@ describe("CreateAlbumController", () => {
 
         expect(albumCatalogFake.albumCreationRequests).toHaveLength(0)
         expect(stateHolder.state.errorCode).toEqual(albumStartAndEndDateMandatoryErr)
-        expect(actionObserverFake.actions).toHaveLength(0)
+        expect(listener.albumIds).toHaveLength(0)
     })
 
     it("it should submit the form with requested start date and exclusive end date, then dispatch an action with albums and medias reloaded and close the dialog.", async () => {
@@ -118,7 +101,7 @@ describe("CreateAlbumController", () => {
             endsAtEndOfTheDay: true,
             forceFolderName: "/marvel_2018_avenger_3",
             withCustomFolderName: false,
-            open: true
+            ...openWithoutError,
         })
 
         expect(albumCatalogFake.albumCreationRequests).toEqual([
@@ -130,9 +113,9 @@ describe("CreateAlbumController", () => {
             }
         ])
 
-        // expect(stateHolder.state.creating).toEqual(true) // TODO adds the state
+        expect(stateHolder.state.creationInProgress).toEqual(true)
         expect(stateHolder.state.open).toEqual(false)
-        expect(actionObserverFake.actions).toHaveLength(0) // TODO it should have something - eventually
+        expect(listener.albumIds).toEqual([{owner: owner1, folderName: "/avenger-3"}])
     })
 
     it("it should submit the form with custom start date and end date", async () => {
@@ -144,7 +127,7 @@ describe("CreateAlbumController", () => {
             endsAtEndOfTheDay: false,
             forceFolderName: "",
             withCustomFolderName: false,
-            open: true
+            ...openWithoutError,
         })
 
         expect(albumCatalogFake.albumCreationRequests).toEqual([
@@ -166,7 +149,7 @@ describe("CreateAlbumController", () => {
             endsAtEndOfTheDay: true,
             forceFolderName: "/marvel_2018_avenger_3",
             withCustomFolderName: true,
-            open: true
+            ...openWithoutError,
         })
 
         expect(albumCatalogFake.albumCreationRequests).toEqual([
@@ -188,30 +171,30 @@ describe("CreateAlbumController", () => {
         } as CatalogError
 
         stateHolder.state = stateValidForSubmission
-        await handler.onSubmitCreateAlbum(stateHolder.state)
+        await expect(handler.onSubmitCreateAlbum(stateHolder.state)).rejects.toEqual(albumCatalogFake.failsWithError)
 
         expect(stateHolder.state).toEqual({
             ...stateValidForSubmission,
             errorCode: albumFolderNameAlreadyTakenErr,
             open: true,
-            // loading: false, // TODO
+            creationInProgress: false,
         })
-        expect(actionObserverFake.actions).toHaveLength(0)
+        expect(listener.albumIds).toHaveLength(0)
     })
 
     it("should fallback on a native error when saving fails for an unknown reason", async () => {
         albumCatalogFake.failsWithError = new Error("TEST Create Album Error")
 
         stateHolder.state = stateValidForSubmission
-        await handler.onSubmitCreateAlbum(stateHolder.state)
+        await expect(handler.onSubmitCreateAlbum(stateHolder.state)).rejects.toEqual(albumCatalogFake.failsWithError)
 
         expect(stateHolder.state).toEqual({
             ...stateValidForSubmission,
             errorCode: "TEST Create Album Error",
             open: true,
-            // loading: false, // TODO
+            creationInProgress: false,
         })
-        expect(actionObserverFake.actions).toHaveLength(0)
+        expect(listener.albumIds).toHaveLength(0)
     })
 
     // it should switch to the newly created album after the creation
@@ -282,6 +265,14 @@ class AlbumCatalogFake {
 
         this.albumCreationRequests.push(request); // TODO where is the owner coming from ?
         return Promise.resolve({owner: owner1, folderName: `/${request.name.replaceAll(" ", "-").toLowerCase()}`})
+    }
+}
+
+class CreateAlbumListenerFake implements CreateAlbumListener {
+    public albumIds: AlbumId[] = []
+
+    onAlbumCreated = async (albumId: AlbumId): Promise<void> => {
+        this.albumIds.push(albumId)
     }
 }
 
