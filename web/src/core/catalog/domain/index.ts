@@ -6,3 +6,5 @@ export * from "./catalog-actions";
 export * from "./catalog-reducer";
 export * from "./catalog-state";
 export * from "./utils-albumIdEquals";
+export {albumStartAndEndDateMandatoryErr} from "./CreateAlbumController";
+export {albumFolderNameAlreadyTakenErr} from "./CreateAlbumController";

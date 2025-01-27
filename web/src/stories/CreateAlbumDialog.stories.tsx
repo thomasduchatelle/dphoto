@@ -6,12 +6,10 @@ import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
 import {screen, userEvent, within} from "@storybook/testing-library";
 import {
-    albumFolderNameAlreadyTakenErr,
-    albumStartAndEndDateMandatoryErr,
     CreateAlbumDialog,
     CreateAlbumDialogContainer
 } from "../pages/authenticated/albums/CreateAlbumDialog";
-import {emptyCreateAlbum} from "../core/catalog/domain/CreateAlbumController";
+import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr, emptyCreateAlbum} from "../core/catalog/domain/CreateAlbumController";
 import {Button} from "@mui/material";
 
 dayjs.locale(fr)
@@ -30,23 +28,23 @@ const Template: ComponentStory<typeof CreateAlbumDialog> = (args) => (
         <CreateAlbumDialog {...args}/>
     </LocalizationProvider>
 );
-const TemplateContainer: ComponentStory<typeof CreateAlbumDialog> = (args) => (
+const TemplateInContainer: ComponentStory<typeof CreateAlbumDialog> = (args) => (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
         <CreateAlbumDialogContainer firstDay={defaultStartDate}>
-            {({openNew}) => {
-                return <Button onClick={openNew} variant='contained'>Click to open</Button>
+            {({openDialogForCreateAlbum}) => {
+                return <Button onClick={openDialogForCreateAlbum} variant='contained'>Click to open</Button>
             }}
         </CreateAlbumDialogContainer>
     </LocalizationProvider>
 );
 
 // it should open the dialog and set a name when used with the container
-export const WithContainer = TemplateContainer.bind({});
-WithContainer.args = {};
-WithContainer.parameters = {
+export const InContainer = TemplateInContainer.bind({});
+InContainer.args = {};
+InContainer.parameters = {
     delay: 300,
 };
-WithContainer.play = async ({canvasElement}) => {
+InContainer.play = async ({canvasElement}) => {
     const fullCanvas = within(canvasElement);
     await userEvent.click(fullCanvas.getAllByRole("button")[0]);
 
@@ -76,18 +74,11 @@ WithAName.args = {
     state: {
         ...emptyCreateAlbum(defaultStartDate),
         open: true,
+        name: 'Avenger 3',
     }
 };
 WithAName.parameters = {
     delay: 300,
-};
-WithAName.play = async ({canvasElement}) => {
-    const canvas = within(screen.getByRole('dialog'));
-    const nameInput = canvas.getByLabelText(/Name/, {
-        selector: 'input',
-    })
-
-    userEvent.type(nameInput, 'Avenger 3');
 };
 
 // it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated

@@ -1,8 +1,9 @@
 import dayjs, {Dayjs} from "dayjs";
-import React from "react";
 import {isCatalogError} from "./errors";
 import {OnCreateNewAlbumRequestType} from "../../catalog-react";
-import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr} from "../../../pages/authenticated/albums/CreateAlbumDialog/CreateAlbumDialog";
+
+export const albumFolderNameAlreadyTakenErr = "AlbumFolderNameAlreadyTakenErr";
+export const albumStartAndEndDateMandatoryErr = "AlbumStartAndEndDateMandatoryErr";
 
 export interface CreateAlbumState {
     open: boolean
@@ -17,25 +18,26 @@ export interface CreateAlbumState {
 }
 
 export interface CreateAlbumHandlers {
-    onClose: () => void
-    onSubmit: (state: CreateAlbumState) => void
-    setStartsAtStartOfTheDay: (startsAtStartOfTheDay: boolean) => void
-    setEndsAtEndOfTheDay: (endsAtEndOfTheDay: boolean) => void
-    setWithCustomFolderName: (withCustomFolderName: boolean) => void
-    handleOnNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void
-    handleStartDateChange: (start: Dayjs | null) => void
-    handleEndDateChange: (end: Dayjs | null) => void
-    handleOnFolderNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+    onCloseCreateAlbumDialog: () => void
+    onSubmitCreateAlbum: (state: CreateAlbumState) => void
+    onNameChange: (value: string) => void
+    onFolderNameChange: (value: string) => void
+    onWithCustomFolderNameChange: (withCustomFolderName: boolean) => void
+    onStartsAtStartOfTheDayChange: (startsAtStartOfTheDay: boolean) => void
+    onEndsAtEndOfTheDayChange: (endsAtEndOfTheDay: boolean) => void
+    onStartDateChange: (start: Dayjs | null) => void
+    onEndDateChange: (end: Dayjs | null) => void
 }
 
 export interface CreateAlbumControls {
-    openNew: () => void
+    openDialogForCreateAlbum: () => void
     // openEdit: (album: Album) => void // TODO manage EDIT mode
 }
 
 export interface CreateAlbumPort {
     createAlbum: OnCreateNewAlbumRequestType
 }
+
 
 export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumControls {
     constructor(
@@ -45,18 +47,18 @@ export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumCo
     ) {
     }
 
-    openNew = (): void => {
+    openDialogForCreateAlbum = (): void => {
         this.setState(prev => ({
             ...emptyCreateAlbum(this.firstDay),
             open: true
         }));
     }
 
-    onClose = (): void => {
+    onCloseCreateAlbumDialog = (): void => {
         this.setState(prev => ({...prev, open: false}));
     }
 
-    onSubmit = (state: CreateAlbumState): void => {
+    onSubmitCreateAlbum = (state: CreateAlbumState): void => {
         if (state.start && state.end) {
             this.createAlbumPort.createAlbum({
                 name: state.name,
@@ -79,35 +81,35 @@ export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumCo
         }
     }
 
-    setWithCustomFolderName = (withCustomFolderName: boolean): void => {
+    onWithCustomFolderNameChange = (withCustomFolderName: boolean): void => {
         this.setState(prev => ({...prev, withCustomFolderName}));
     }
 
-    handleOnNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    onNameChange = (value: string): void => {
         this.setState(prev => ({
             ...prev,
-            name: event.target.value,
+            name: value,
             errorCode: prev.errorCode !== albumFolderNameAlreadyTakenErr ? prev.errorCode : undefined
         }));
     }
 
-    handleOnFolderNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    onFolderNameChange = (value: string): void => {
         this.setState(prev => ({
             ...prev,
-            forceFolderName: event.target.value,
+            forceFolderName: value,
             errorCode: prev.errorCode !== albumFolderNameAlreadyTakenErr ? prev.errorCode : undefined
         }));
     }
 
-    setStartsAtStartOfTheDay = (startsAtStartOfTheDay: boolean): void => {
+    onStartsAtStartOfTheDayChange = (startsAtStartOfTheDay: boolean): void => {
         this.setState(prev => ({...prev, startsAtStartOfTheDay}));
     }
 
-    setEndsAtEndOfTheDay = (endsAtEndOfTheDay: boolean): void => {
+    onEndsAtEndOfTheDayChange = (endsAtEndOfTheDay: boolean): void => {
         this.setState(prev => ({...prev, endsAtEndOfTheDay}));
     }
 
-    handleStartDateChange = (start: Dayjs | null): void => {
+    onStartDateChange = (start: Dayjs | null): void => {
         this.setState(prev => ({
             ...prev,
             start,
@@ -115,7 +117,7 @@ export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumCo
         }));
     }
 
-    handleEndDateChange = (end: Dayjs | null): void => {
+    onEndDateChange = (end: Dayjs | null): void => {
         this.setState(prev => ({
             ...prev,
             end,
