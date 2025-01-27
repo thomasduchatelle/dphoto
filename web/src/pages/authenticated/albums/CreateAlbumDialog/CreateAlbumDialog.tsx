@@ -25,7 +25,7 @@ import {CreateAlbumState} from "../../../../core/catalog/domain/CreateAlbumContr
 export const albumFolderNameAlreadyTakenErr = "AlbumFolderNameAlreadyTakenErr";
 export const albumStartAndEndDateMandatoryErr = "AlbumStartAndEndDateMandatoryErr";
 
-export default function CreateAlbumDialog({
+export function CreateAlbumDialog({
                                               state,
                                               onClose,
                                               onSubmit,

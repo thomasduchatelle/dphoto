@@ -41,12 +41,15 @@ export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumCo
     constructor(
         private readonly setState: (stateUpdater: (prev: CreateAlbumState) => CreateAlbumState) => void,
         private readonly createAlbumPort: CreateAlbumPort,
-        private readonly firstDay: Dayjs = dayjs(),
+        private readonly firstDay: Dayjs = dayjs().startOf("week").subtract(9, "days"),
     ) {
     }
 
     openNew = (): void => {
-        this.setState(prev => emptyCreateAlbum(this.firstDay));
+        this.setState(prev => ({
+            ...emptyCreateAlbum(this.firstDay),
+            open: true
+        }));
     }
 
     onClose = (): void => {
@@ -125,7 +128,7 @@ export const emptyCreateAlbum = (defaultDate: Dayjs): CreateAlbumState => ({
     open: false,
     name: "",
     start: defaultDate,
-    end: defaultDate.add(7, "days").endOf("day"),
+    end: defaultDate.add(8, "days").endOf("day"),
     forceFolderName: "",
     startsAtStartOfTheDay: true,
     endsAtEndOfTheDay: true,

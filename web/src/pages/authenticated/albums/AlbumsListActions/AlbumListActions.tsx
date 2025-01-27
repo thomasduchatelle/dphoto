@@ -2,17 +2,10 @@ import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
 import {Box, IconButton, Tooltip} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsIcon from "@mui/icons-material/Settings";
-import {useState} from "react";
-import CreateAlbumDialog from "../CreateAlbumDialog";
-import {OnCreateNewAlbumRequestType} from "../../../../core/catalog-react";
+import {CreateAlbumControls} from "../../../../core/catalog/domain/CreateAlbumController";
 
-export interface AlbumListActionsCallBacks {
-    onCreateNewAlbumRequest: OnCreateNewAlbumRequestType
-}
 
-export default function AlbumListActions({onCreateNewAlbumRequest, ...props}: OwnerSelectorProps & AlbumListActionsCallBacks) {
-    const [createModal, setCreateModal] = useState(false)
-
+export default function AlbumListActions({openNew, ...props}: OwnerSelectorProps & CreateAlbumControls) {
     return (
         <Box sx={{
             display: 'flex',
@@ -23,7 +16,7 @@ export default function AlbumListActions({onCreateNewAlbumRequest, ...props}: Ow
             <Box sx={{mr: 2}}>
                 <OwnerSelector {...props} />
             </Box>
-            <IconButton color="primary" onClick={() => setCreateModal(true)} size="large">
+            <IconButton color="primary" onClick={openNew} size="large">
                 <AddIcon/>
             </IconButton>
             <Tooltip title="Album management [Feature not yet available]">
@@ -33,14 +26,6 @@ export default function AlbumListActions({onCreateNewAlbumRequest, ...props}: Ow
                     </IconButton>
                 </span>
             </Tooltip>
-            <CreateAlbumDialog
-                open={createModal}
-                onClose={() => setCreateModal(false)}
-                onSubmit={(request) => {
-                    setCreateModal(false)
-                    return onCreateNewAlbumRequest(request)
-                }}
-            />
         </Box>
     )
 }
