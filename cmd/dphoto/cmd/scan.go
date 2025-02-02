@@ -11,7 +11,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"time"
 )
 
@@ -48,7 +47,7 @@ var scan = &cobra.Command{
 		} else {
 			err = ui.NewInteractiveSession(&uiCatalogAdapter{
 				BackupSuggestionPort: scanui.NewBackupHandler(Owner, newSmartVolume, options),
-				CreateAlbum:          pkgfactory.CreateAlbumCase(ctx),
+				CreateAlbum:          factory.CreateAlbumCase(ctx),
 			}, scanui.NewAlbumRepository(Owner), recordRepository, Owner).Start()
 			printer.FatalIfError(err, 1)
 		}
@@ -82,7 +81,7 @@ func (o *uiCatalogAdapter) Create(request ui.RecordCreation) error {
 func (o *uiCatalogAdapter) RenameAlbum(folderName, newName string, renameFolder bool) error {
 	ctx := context.TODO()
 
-	return pkgfactory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
+	return factory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
 		CurrentId:    catalog.NewAlbumIdFromStrings(Owner, folderName),
 		NewName:      newName,
 		RenameFolder: renameFolder,
@@ -91,12 +90,12 @@ func (o *uiCatalogAdapter) RenameAlbum(folderName, newName string, renameFolder 
 
 func (o *uiCatalogAdapter) UpdateAlbum(folderName string, start, end time.Time) error {
 	ctx := context.TODO()
-	return pkgfactory.AmendAlbumDatesCase(ctx).AmendAlbumDates(ctx, catalog.NewAlbumIdFromStrings(Owner, folderName), start, end)
+	return factory.AmendAlbumDatesCase(ctx).AmendAlbumDates(ctx, catalog.NewAlbumIdFromStrings(Owner, folderName), start, end)
 }
 
 func (o *uiCatalogAdapter) DeleteAlbum(folderName string) error {
 	ctx := context.TODO()
-	deleteCase := pkgfactory.CreateAlbumDeleteCase(ctx)
+	deleteCase := factory.CreateAlbumDeleteCase(ctx)
 
 	return deleteCase.DeleteAlbum(ctx, catalog.NewAlbumIdFromStrings(Owner, folderName))
 }

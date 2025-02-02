@@ -6,7 +6,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/scanui"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/cmd/ui"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 var (
@@ -26,7 +25,7 @@ var albumCmd = &cobra.Command{
 		if listArgs.interactive {
 			err := ui.NewInteractiveSession(&uiCatalogAdapter{
 				BackupSuggestionPort: nil,
-				CreateAlbum:          pkgfactory.CreateAlbumCase(ctx),
+				CreateAlbum:          factory.CreateAlbumCase(ctx),
 			}, scanui.NewAlbumRepository(Owner), ui.NewNoopRepository(), Owner).Start()
 			printer.FatalIfError(err, 1)
 		} else {

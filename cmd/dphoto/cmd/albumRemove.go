@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 var removeCmd = &cobra.Command{
@@ -23,7 +22,7 @@ Albums can only be deleted if all medias can be assigned to a different album.
 
 		folderName := args[0]
 
-		deleteCase := pkgfactory.CreateAlbumDeleteCase(ctx)
+		deleteCase := factory.CreateAlbumDeleteCase(ctx)
 		err := deleteCase.DeleteAlbum(ctx, catalog.NewAlbumIdFromStrings(Owner, folderName))
 		printer.FatalWithMessageIfError(err, 1, "Album %s couldn't be deleted", folderName)
 

@@ -8,8 +8,7 @@ import (
 )
 
 var (
-	OverriddenAWSFactory awsfactory.AWSFactory // AWSConfigFactory will be defaulted with awsfactory.ContextualAWSFactory() if not set
-	AWSNames             AWSAdapterNames       // Names provides the config required by the adapters
+	AWSNames AWSAdapterNames // Names provides the config required by the adapters
 
 	factory *AWSCloud // factory supports deprecated implementation while migrating out of global OverriddenAWSFactory and AWSNames
 )
@@ -17,6 +16,7 @@ var (
 // Factory is the builder of the application ; any direct variables are deprecated in favour of moving to the appropriate factory implementation.
 type Factory interface {
 	ArchiveFactory
+	CatalogFactory
 
 	// InitArchive shouldn't be used directly but is exposed to support legacy implementation
 	InitArchive(ctx context.Context)
@@ -32,19 +32,21 @@ type AWSAdapterNames interface {
 	ArchiveCacheBucketName() string
 	ArchiveJobsSNSARN() string
 	ArchiveJobsSQSURL() string
+	ArchiveRelocateJobsSQSURL() string
 }
 
 type AWSCloud struct {
 	awsfactory.AWSFactory
 	ArchiveFactory
+	*SimpleCatalogFactory
 	Names AWSAdapterNames
 }
 
 type AWSCloudBuilder struct {
-	names          AWSAdapterNames
-	awsFactory     awsfactory.AWSFactory
-	archiveFactory ArchiveFactory
-	err            []error
+	advancedAsyncFeatures bool
+	names                 AWSAdapterNames
+	awsFactory            awsfactory.AWSFactory
+	err                   []error
 }
 
 // StartAWSCloudBuilder creates a version of the application directly connected to AWS cloud using DynamoDB and S3.
@@ -66,7 +68,7 @@ func (a *AWSCloudBuilder) OverridesAWSFactory(factory awsfactory.AWSFactory, err
 
 // WithAdvancedAWSAsyncFeatures enable the use of SNS/SQS to process asynchronously the archive jobs. (required lambdas to be listening the messages)
 func (a *AWSCloudBuilder) WithAdvancedAWSAsyncFeatures() *AWSCloudBuilder {
-	a.archiveFactory = new(AsyncArchiveFactory)
+	a.advancedAsyncFeatures = true
 	return a
 }
 
@@ -83,16 +85,25 @@ func (a *AWSCloudBuilder) Build(ctx context.Context) (*AWSCloud, error) {
 			return nil, err
 		}
 	}
-	if a.archiveFactory == nil {
-		a.archiveFactory = new(SyncArchiveFactory)
-	}
 
 	AWSNames = a.names
 	factory = &AWSCloud{
 		AWSFactory:     a.awsFactory,
-		ArchiveFactory: a.archiveFactory,
-		Names:          a.names,
+		ArchiveFactory: new(SyncArchiveFactory),
+		SimpleCatalogFactory: &SimpleCatalogFactory{
+			ArchiveAdapterForCatalog: new(SyncArchiveAdapterForCatalog),
+		},
+		Names: a.names,
 	}
+
+	if a.advancedAsyncFeatures {
+		factory.ArchiveFactory = new(AsyncArchiveFactory)
+		factory.SimpleCatalogFactory.ArchiveAdapterForCatalog = &ASyncArchiveAdapterForCatalog{
+			AWSFactory:      factory.AWSFactory,
+			AWSAdapterNames: a.names,
+		}
+	}
+
 	return factory, nil
 }
 
@@ -103,11 +114,12 @@ func AWSFactory(ctx context.Context) awsfactory.AWSFactory {
 }
 
 type StaticAWSAdapterNames struct {
-	DynamoDBNameValue           string
-	ArchiveMainBucketNameValue  string
-	ArchiveCacheBucketNameValue string
-	ArchiveJobsSNSARNValue      string
-	ArchiveJobsSQSURLValue      string
+	DynamoDBNameValue              string
+	ArchiveMainBucketNameValue     string
+	ArchiveCacheBucketNameValue    string
+	ArchiveJobsSNSARNValue         string
+	ArchiveJobsSQSURLValue         string
+	ArchiveRelocateJobsSQSURLValue string
 }
 
 func (s StaticAWSAdapterNames) DynamoDBName() string {
@@ -128,4 +140,8 @@ func (s StaticAWSAdapterNames) ArchiveJobsSNSARN() string {
 
 func (s StaticAWSAdapterNames) ArchiveJobsSQSURL() string {
 	return s.ArchiveJobsSQSURLValue
+}
+
+func (s StaticAWSAdapterNames) ArchiveRelocateJobsSQSURL() string {
+	return s.ArchiveRelocateJobsSQSURLValue
 }

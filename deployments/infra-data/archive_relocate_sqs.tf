@@ -1,6 +1,6 @@
 resource "aws_sqs_queue" "archive_relocate" {
   name                       = "${local.prefix}-archive-relocate"
-  visibility_timeout_seconds = 900*6
+  visibility_timeout_seconds = 900 * 6
   message_retention_seconds  = 14 * 24 * 3600 // 14 days is the maximum
 }
 

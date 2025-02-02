@@ -33,7 +33,7 @@ func Listen(listener Listener) {
 }
 
 // Connect must be called by main function, it dispatches the config to all components requiring it. Set ignite to TRUE to connect to AWS (required for most commands)
-func Connect(ignite, createConfigIfNotExist bool) error {
+func Connect(ignite, createConfigIfNotExist bool) (pkgfactory.Factory, error) {
 	defaultConfigFile := ForcedConfigFile
 	if ForcedConfigFile == "" {
 		configFileName := "dphoto"
@@ -56,19 +56,19 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 			printer.Info("Creating default configuration file: %s", defaultConfigFile)
 			err = os.MkdirAll(path.Dir(defaultConfigFile), 0600)
 			if err != nil {
-				return errors.Wrapf(err, "can't create directory for the config file %s", defaultConfigFile)
+				return nil, errors.Wrapf(err, "can't create directory for the config file %s", defaultConfigFile)
 			}
 
 			_, err = os.Create(defaultConfigFile)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			// read config is re-run to find the now-created file
-			return viper.ReadInConfig()
+			return nil, viper.ReadInConfig()
 
 		} else {
-			return err
+			return nil, err
 		}
 	}
 
@@ -79,23 +79,17 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 		ctx := context.TODO()
 		if viper.GetBool(Localstack) {
 			builder.OverridesAWSFactory(awsfactory.LocalstackAWSFactory(ctx, awsfactory.LocalstackEndpoint))
-			if err != nil {
-				return err
-			}
 		} else {
 			builder.OverridesAWSFactory(awsfactory.StaticAWSFactory(ctx, awsfactory.StaticCredentials{
 				Region:          viper.GetString(AwsRegion),
 				AccessKeyID:     viper.GetString(AwsKey),
 				SecretAccessKey: viper.GetString(AwsSecret),
 			}))
-			if err != nil {
-				return err
-			}
 		}
 
-		_, err = builder.Build(ctx)
+		factory, err := builder.Build(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		config = &viperConfig{
@@ -107,7 +101,9 @@ func Connect(ignite, createConfigIfNotExist bool) error {
 			listener(config)
 		}
 		log.Debugf("Config > %d adapters connected", len(listeners))
+
+		return factory, nil
 	}
 
-	return nil
+	return nil, nil
 }

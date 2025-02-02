@@ -21,14 +21,14 @@ import (
 var (
 	jwtDecoder      *aclcore.AccessTokenDecoder
 	grantRepository aclscopedynamodb.GrantRepository
-	factory         pkgfactory.Factory
+	Factory         pkgfactory.Factory
 )
 
 func init() {
 	initViper()
 
 	var err error
-	factory, err = pkgfactory.StartAWSCloudBuilder(new(LambdaViperNames)).WithAdvancedAWSAsyncFeatures().Build(context.Background())
+	Factory, err = pkgfactory.StartAWSCloudBuilder(new(LambdaViperNames)).WithAdvancedAWSAsyncFeatures().Build(context.Background())
 	if err != nil {
 		panic(fmt.Sprintf("failed to start AWS cloud factory: %v", err))
 	}
@@ -139,8 +139,8 @@ func bootstrapCatalogDomain() {
 
 func BootstrapArchiveDomain() archive.AsyncJobAdapter {
 	ctx := context.TODO()
-	factory.InitArchive(ctx)
-	return factory.ArchiveAsyncJobAdapter(ctx)
+	Factory.InitArchive(ctx)
+	return Factory.ArchiveAsyncJobAdapter(ctx)
 }
 
 func newV2Config() aws.Config {

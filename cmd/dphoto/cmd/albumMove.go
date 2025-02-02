@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
 var (
@@ -30,7 +29,7 @@ var moveCmd = &cobra.Command{
 		moveArgs.folderName = args[0]
 		moveArgs.newName = args[1]
 
-		err := pkgfactory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
+		err := factory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
 			CurrentId:        catalog.NewAlbumIdFromStrings(Owner, moveArgs.folderName),
 			NewName:          moveArgs.newName,
 			RenameFolder:     moveArgs.renameFolder,
