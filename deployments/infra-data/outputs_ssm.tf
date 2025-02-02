@@ -19,6 +19,13 @@ resource "aws_ssm_parameter" "iam_policy_bucket_ro" {
   tags  = local.tags
 }
 
+resource "aws_ssm_parameter" "iam_policy_bucket_rw" {
+  name  = "/dphoto/${var.environment_name}/iam/policies/storageRWArn"
+  type  = "String"
+  value = aws_iam_policy.storage_rw.arn
+  tags  = local.tags
+}
+
 resource "aws_ssm_parameter" "iam_policy_dyn_table_rw" {
   name  = "/dphoto/${var.environment_name}/iam/policies/indexRWArn"
   type  = "String"
@@ -30,6 +37,13 @@ resource "aws_ssm_parameter" "iam_policy_cache_rw" {
   name  = "/dphoto/${var.environment_name}/iam/policies/cacheRWArn"
   type  = "String"
   value = aws_iam_policy.cache_rw.arn
+  tags  = local.tags
+}
+
+resource "aws_ssm_parameter" "iam_policy_archive_relocate" {
+  name  = "/dphoto/${var.environment_name}/iam/policies/archive_relocate_send/arn"
+  type  = "String"
+  value = aws_iam_policy.archive_relocate.arn
   tags  = local.tags
 }
 
@@ -65,6 +79,20 @@ resource "aws_ssm_parameter" "sqs_archive_arn" {
   name  = "/dphoto/${var.environment_name}/sqs/archive/arn"
   type  = "String"
   value = aws_sqs_queue.async_archive_caching_jobs.arn
+  tags  = local.tags
+}
+
+resource "aws_ssm_parameter" "sqs_archive_relocate_url" {
+  name  = "/dphoto/${var.environment_name}/sqs/archive_relocate/url"
+  type  = "String"
+  value = aws_sqs_queue.archive_relocate.url
+  tags  = local.tags
+}
+
+resource "aws_ssm_parameter" "sqs_archive_relocate_arn" {
+  name  = "/dphoto/${var.environment_name}/sqs/archive_relocate/arn"
+  type  = "String"
+  value = aws_sqs_queue.archive_relocate.arn
   tags  = local.tags
 }
 

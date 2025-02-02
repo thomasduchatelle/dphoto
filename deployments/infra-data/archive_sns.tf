@@ -25,7 +25,7 @@ resource "aws_sqs_queue" "async_archive_caching_jobs" {
   name                        = "dphoto-${var.environment_name}-async-archive-caching-jobs.fifo"
   fifo_queue                  = true
   content_based_deduplication = true
-  visibility_timeout_seconds  = 900 // must be more or equals the function timeout
+  visibility_timeout_seconds = 900 * 6
   tags                        = local.tags
 }
 

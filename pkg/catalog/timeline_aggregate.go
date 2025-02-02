@@ -1,7 +1,6 @@
 package catalog
 
 import (
-	"context"
 	"github.com/pkg/errors"
 	"slices"
 	"time"
@@ -27,7 +26,7 @@ func NewInitialisedTimelineAggregate(albums []*Album) (*TimelineAggregate, error
 	}, err
 }
 
-func (t *TimelineAggregate) CreateNewAlbum(ctx context.Context, request CreateAlbumRequest, observers ...CreateAlbumObserver) (Album, error) {
+func (t *TimelineAggregate) CreateNewAlbum(request CreateAlbumRequest) (Album, error) {
 	if err := request.IsValid(); err != nil {
 		return Album{}, errors.Wrapf(err, "CreateNewAlbum(%s) failed", request)
 	}

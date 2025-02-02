@@ -169,6 +169,16 @@ functions:
             ContentType:
               - "[]ImageToResizeMessageV1"
 
+  async-relocate-medias:
+    handler: bootstrap
+    package:
+      artifact: ../../bin/async-relocate-medias.zip
+    timeout: 900
+    events:
+      - sqs:
+          arn: ${ssm:/dphoto/${sls:stage}/sqs/archive_relocate/arn}
+          batchSize: 1
+
 provider:
   name: aws
   region: eu-west-1
@@ -191,9 +201,10 @@ provider:
       managedPolicies:
         - ${ssm:/dphoto/${sls:stage}/iam/policies/cacheRWArn}
         - ${ssm:/dphoto/${sls:stage}/iam/policies/indexRWArn}
-        - ${ssm:/dphoto/${sls:stage}/iam/policies/storageROArn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/storageRWArn} # TODO the RW policy should only be granted for the 'async-relocate-medias' lambda ; others to not need to update anything on the storage bucket.
         - ${ssm:/dphoto/${sls:stage}/iam/policies/archive_sns_publish/arn}
         - ${ssm:/dphoto/${sls:stage}/iam/policies/archive_sqs_send/arn}
+        - ${ssm:/dphoto/${sls:stage}/iam/policies/archive_relocate_send/arn}
       tags:
         Application: dphoto-app
         Environment: ${sls:stage}
@@ -383,6 +394,7 @@ custom:
     STORAGE_BUCKET_NAME: /dphoto/${sls:stage}/s3/storage/bucketName
     SNS_ARCHIVE_ARN: /dphoto/${sls:stage}/sns/archive/arn
     SQS_ARCHIVE_URL: /dphoto/${sls:stage}/sqs/archive/url
+    SQS_ARCHIVE_RELOCATE_URL: /dphoto/${sls:stage}/sqs/archive_relocate/url
   s3Sync:
     - bucketNameKey: ViewerUiBucketName
       localDir: ../../web/build/
