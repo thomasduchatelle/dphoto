@@ -77,7 +77,7 @@ func (a *ArchiveASyncRelocator) OnTransferredMedias(ctx context.Context, transfe
 		}
 
 		if len(entries) > 0 {
-			log.Warn("%d messages failed to be sent to %s, retrying", len(entries), a.QueueUrl)
+			log.Warnf("%d messages failed to be sent to %s, retrying", len(entries), a.QueueUrl)
 		}
 	}
 

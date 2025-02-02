@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/cmd/dphoto/config"
+	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"os"
 	"path"
 )
@@ -15,6 +16,8 @@ var (
 	Owner   string // Owner source of truce is viper config, for convenience, other commands can get it from here.
 
 	postRunFunctions []func() error
+
+	factory pkgfactory.Factory // factory is set only when the application is ignited (all commands except configure and version)
 )
 
 var rootCmd = &cobra.Command{
@@ -53,7 +56,7 @@ var rootCmd = &cobra.Command{
 		// complete initialisation on components
 		if cmd.Name() != "version" {
 			ignite := cmd.Name() != "configure"
-			err = config.Connect(ignite, cmd.Name() == "configure")
+			factory, err = config.Connect(ignite, cmd.Name() == "configure")
 			if err != nil {
 				panic(fmt.Errorf("Fatal error while loading configuration: %s \n", err))
 			}

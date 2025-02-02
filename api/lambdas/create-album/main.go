@@ -44,7 +44,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			return common.InternalError(err)
 		}
 
-		albumId, err := pkgfactory.CreateAlbumCase(ctx).Create(ctx, catalog.CreateAlbumRequest{
+		albumId, err := common.Factory.CreateAlbumCase(ctx).Create(ctx, catalog.CreateAlbumRequest{
 			Owner:            *owner,
 			Name:             requestDto.Name,
 			Start:            requestDto.Start,
@@ -74,7 +74,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 }
 
 func main() {
-	common.BootstrapCatalogDomain()
+	common.BootstrapCatalogAndArchiveDomains()
 
 	lambda.Start(Handler)
 }
