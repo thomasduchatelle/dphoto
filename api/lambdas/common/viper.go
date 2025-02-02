@@ -14,7 +14,7 @@ const (
 	StorageBucketName    = "STORAGE_BUCKET_NAME"
 	CacheBucketName      = "CACHE_BUCKET_NAME"
 	SNSArchiveARN        = "SNS_ARCHIVE_ARN"
-	SQSArchiveURL        = "SQS_ARCHIVE_URL"
+	SQSArchiveURL        = "SQS_ARCHIVE_RELOCATE_URL"
 )
 
 func initViper() {
@@ -61,6 +61,14 @@ func (l *LambdaViperNames) ArchiveJobsSNSARN() string {
 }
 
 func (l *LambdaViperNames) ArchiveJobsSQSURL() string {
+	archiveJobsSqsURL := viper.GetString(SQSArchiveURL)
+	if archiveJobsSqsURL == "" {
+		panic(fmt.Sprintf("%s must be set and non-empty", SQSArchiveURL))
+	}
+	return archiveJobsSqsURL
+}
+
+func (l *LambdaViperNames) ArchiveRelocateJobsSQSURL() string {
 	archiveJobsSqsURL := viper.GetString(SQSArchiveURL)
 	if archiveJobsSqsURL == "" {
 		panic(fmt.Sprintf("%s must be set and non-empty", SQSArchiveURL))

@@ -96,7 +96,7 @@ type CreateAlbumStateless struct {
 }
 
 func (c *CreateAlbumStateless) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
-	album, err := timeline.CreateNewAlbum(ctx, request)
+	album, err := timeline.CreateNewAlbum(request)
 	if err != nil {
 		return nil, err
 	}

@@ -14,10 +14,10 @@ func CatalogRepository(ctx context.Context) *catalogdynamo.Repository {
 	})
 }
 
-func ArchiveTimelineMutationObserver(ctx context.Context) *catalogarchivesync.Observer {
+func ArchiveTimelineMutationObserver(ctx context.Context) *catalogarchivesync.ArchiveSyncRelocator {
 	factory.InitArchive(ctx)
-	return singletons.MustSingleton(func() (*catalogarchivesync.Observer, error) {
-		return new(catalogarchivesync.Observer), nil
+	return singletons.MustSingleton(func() (*catalogarchivesync.ArchiveSyncRelocator, error) {
+		return new(catalogarchivesync.ArchiveSyncRelocator), nil
 	})
 }
 

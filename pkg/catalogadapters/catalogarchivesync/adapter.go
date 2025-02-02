@@ -8,10 +8,10 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
-type Observer struct {
+type ArchiveSyncRelocator struct {
 }
 
-func (a *Observer) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
+func (a *ArchiveSyncRelocator) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
 	for targetAlbumId, ids := range transfers.Transfers {
 		convertedIds := make([]string, len(ids), len(ids))
 		for i, id := range ids {
