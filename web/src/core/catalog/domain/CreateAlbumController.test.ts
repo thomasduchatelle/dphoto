@@ -15,7 +15,6 @@ const owner1: Owner = "owner1"
 
 describe("CreateAlbumController", () => {
     const defaultDateForEmptyAlbum = dayjs("2025-01-04");
-    const folderName = "/avenger_3"
 
     const openWithoutError = {
         open: true,
@@ -197,50 +196,27 @@ describe("CreateAlbumController", () => {
         expect(listener.albumIds).toHaveLength(0)
     })
 
-    // it should switch to the newly created album after the creation
+    it("should accept when start = end dates if the end of day is selected for the end", async () => {
+        stateHolder.state = {
+            ...stateValidForSubmission,
+            start: dayjs("2025-01-04"),
+            startsAtStartOfTheDay: true,
+            end: dayjs("2025-01-04"),
+            endsAtEndOfTheDay: true,
+        }
+        await handler.onSubmitCreateAlbum(stateHolder.state)
 
-    // it("should raise the AlbumCreatingAction, then a AlbumsAndMediasLoadedAction where the newly created album is selected", async () => {
-    //     mediaRepositoryFake.addMedias(janAlbumId, [media1])
-    //
-    //     const createJanAlbumRequest = {
-    //         start: new Date(2025, 1, 1),
-    //         end: new Date(2025, 2, 1),
-    //         forcedFolderName: "",
-    //         name: "Jan 2025"
-    //     }
-    //
-    //     await handler.handleCreateAlbum(createJanAlbumRequest)
-    //
-    //     expect(albumCatalogFake.albumCreationRequests).toEqual([
-    //         {
-    //             start: new Date(2025, 1, 1),
-    //             end: new Date(2025, 2, 1),
-    //             forcedFolderName: "",
-    //             name: "Jan 2025"
-    //         }
-    //     ])
-    //
-    //     expect(actionObserverFake.actions).toEqual([
-    //         {
-    //             type: "AlbumCreatingAction",
-    //         },
-    //         {
-    //             type: "AlbumsAndMediasLoadedAction",
-    //             albums: [
-    //                 janAlbum
-    //             ],
-    //             medias: [
-    //                 {
-    //                     day: new Date("2024-12-01T00:00:00Z"),
-    //                     medias: [media1],
-    //                 },
-    //             ],
-    //             selectedAlbum: janAlbum
-    //         } as AlbumsAndMediasLoadedAction,
-    //     ])
-    // })
+        expect(stateHolder.state.errorCode).toBeUndefined()
+        expect(albumCatalogFake.albumCreationRequests).toEqual([
+            {
+                name: stateValidForSubmission.name,
+                start: new Date(2025, 0, 4),
+                end: new Date(2025, 0, 5),
+                forcedFolderName: "",
+            }
+        ])
+    })
 
-    // it should return an error if the rest adapter fails to process the request with the error code from the request
 })
 
 class StateHolder<T> {
