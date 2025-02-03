@@ -71,14 +71,17 @@ export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumCo
     }
 
     onSubmitCreateAlbum = async (state: CreateAlbumState): Promise<void> => {
-        if (state.start && state.end && state.start.isBefore(state.end)) {
+        const actualStart = state.startsAtStartOfTheDay ? state.start?.startOf("day") : state.start;
+        const actualEnd = state.endsAtEndOfTheDay ? state.end?.add(1, "day").startOf("day") : state.end;
+
+        if (actualStart && actualEnd && actualStart.isBefore(actualEnd)) {
             this.setState(prev => ({...prev, creationInProgress: true}));
 
             await this.createAlbumPort
                 .createAlbum({
                     name: state.name,
-                    start: state.startsAtStartOfTheDay ? state.start.startOf("day").toDate() : state.start.toDate(),
-                    end: state.endsAtEndOfTheDay ? state.end.add(1, "day").startOf("day").toDate() : state.end.toDate(),
+                    start: actualStart.toDate(),
+                    end: actualEnd.toDate(),
                     forcedFolderName: state.withCustomFolderName ? state.forceFolderName : ""
                 })
                 .then((albumId) => {
