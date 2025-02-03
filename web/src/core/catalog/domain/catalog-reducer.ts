@@ -93,8 +93,8 @@ export const catalogReducerFunction = (currentUser: CurrentUserInsight): (curren
                 }
 
             case "MediaFailedToLoadAction": {
-                const allAlbums = action.albums ?? current.albums
-                const albumFilterOptions = generateAlbumFilterOptions(currentUser, action.albums)
+                const allAlbums = action.albums ?? current.allAlbums
+                const albumFilterOptions = generateAlbumFilterOptions(currentUser, allAlbums)
                 const albumFilter = albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, current.albumFilter.criterion)) ?? DEFAULT_ALBUM_FILTER_ENTRY
                 const albums = allAlbums.filter(albumMatchCriterion(albumFilter.criterion))
 
@@ -109,6 +109,32 @@ export const catalogReducerFunction = (currentUser: CurrentUserInsight): (curren
                     albumsLoaded: true,
                     mediasLoaded: true,
                 }
+            }
+
+            case "AlbumsLoadedAction": {
+                const albumFilterOptions = generateAlbumFilterOptions(currentUser, action.albums)
+                const albumFilter = albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, current.albumFilter.criterion)) ?? DEFAULT_ALBUM_FILTER_ENTRY
+
+                let staging: CatalogViewerState = {
+                    ...current,
+                    albumFilterOptions,
+                    albumFilter,
+                    allAlbums: action.albums,
+                    albums: action.albums.filter(albumMatchCriterion(current.albumFilter.criterion)),
+                    error: undefined,
+                    albumsLoaded: true,
+                }
+
+                if (!staging.albums.find(album => albumIdEquals(album.albumId, action.redirectTo))) {
+                    const albumFilter = current.albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, DEFAULT_ALBUM_FILTER_ENTRY.criterion)) ?? DEFAULT_ALBUM_FILTER_ENTRY
+                    staging = {
+                        ...staging,
+                        albumFilter,
+                        albums: action.albums.filter(albumMatchCriterion(albumFilter.criterion)),
+                    }
+                }
+
+                return staging
             }
 
             default:

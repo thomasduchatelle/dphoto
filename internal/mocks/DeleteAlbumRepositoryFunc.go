@@ -23,7 +23,7 @@ func (_m *DeleteAlbumRepositoryFunc) EXPECT() *DeleteAlbumRepositoryFunc_Expecte
 	return &DeleteAlbumRepositoryFunc_Expecter{mock: &_m.Mock}
 }
 
-// Execute provides a mock function with given fields: ctx, albumId
+// Execute provides a mock function with given fields: ctx, redirectTo
 func (_m *DeleteAlbumRepositoryFunc) Execute(ctx context.Context, albumId catalog.AlbumId) error {
 	ret := _m.Called(ctx, albumId)
 
@@ -48,7 +48,7 @@ type DeleteAlbumRepositoryFunc_Execute_Call struct {
 
 // Execute is a helper method to define mock.On call
 //   - ctx context.Context
-//   - albumId catalog.AlbumId
+//   - redirectTo catalog.AlbumId
 func (_e *DeleteAlbumRepositoryFunc_Expecter) Execute(ctx interface{}, albumId interface{}) *DeleteAlbumRepositoryFunc_Execute_Call {
 	return &DeleteAlbumRepositoryFunc_Execute_Call{Call: _e.mock.On("Execute", ctx, albumId)}
 }

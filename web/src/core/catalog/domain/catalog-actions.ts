@@ -7,17 +7,27 @@ export type CatalogViewerAction =
     | StartLoadingMediasAction
     | MediasLoadedAction
     | AlbumsFilteredAction
+    | AlbumsLoadedAction
 
-export type AlbumsAndMediasLoadedAction = {
+export type RedirectToAlbumIdAction = {
+    redirectTo?: AlbumId
+}
+
+export type AlbumsAndMediasLoadedAction = RedirectToAlbumIdAction & {
     type: 'AlbumsAndMediasLoadedAction'
     albums: Album[]
     medias: MediaWithinADay[]
     selectedAlbum?: Album
 }
 
+export type AlbumsLoadedAction = RedirectToAlbumIdAction & {
+    type: 'AlbumsLoadedAction'
+    albums: Album[]
+}
+
 export type MediaFailedToLoadAction = {
     type: 'MediaFailedToLoadAction'
-    albums: Album[]
+    albums?: Album[]
     selectedAlbum?: Album
     error: Error
 }
@@ -31,10 +41,9 @@ export type StartLoadingMediasAction = {
     albumId: AlbumId
 }
 
-export type AlbumsFilteredAction = {
+export type AlbumsFilteredAction = RedirectToAlbumIdAction & {
     type: 'AlbumsFilteredAction'
     criterion: AlbumFilterCriterion
-    albumId?: AlbumId // albumId is set when the album is changing as well and the action behaves like a StartLoadingMediasAction
 }
 
 export function startLoadingMediasAction(albumId: AlbumId): StartLoadingMediasAction {
@@ -51,6 +60,6 @@ export function mediasLoadedAction(albumId: AlbumId, medias: MediaWithinADay[]):
     return {type: 'MediasLoadedAction', albumId, medias}
 }
 
-export function isCatalogViewerAction(arg: any): arg is CatalogViewerAction {
-    return ['AlbumsAndMediasLoadedAction', 'MediaFailedToLoadAction', 'NoAlbumAvailableAction', 'StartLoadingMediasAction', 'MediasLoadedAction'].indexOf(arg.type) >= 0
+export function isRedirectToAlbumIdAction(arg: any): arg is RedirectToAlbumIdAction {
+    return arg.redirectTo
 }

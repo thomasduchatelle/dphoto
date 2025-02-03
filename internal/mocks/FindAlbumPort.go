@@ -23,7 +23,7 @@ func (_m *FindAlbumPort) EXPECT() *FindAlbumPort_Expecter {
 	return &FindAlbumPort_Expecter{mock: &_m.Mock}
 }
 
-// FindAlbum provides a mock function with given fields: ctx, albumId
+// FindAlbum provides a mock function with given fields: ctx, redirectTo
 func (_m *FindAlbumPort) FindAlbum(ctx context.Context, albumId catalog.AlbumId) (*catalog.Album, error) {
 	ret := _m.Called(ctx, albumId)
 
@@ -60,7 +60,7 @@ type FindAlbumPort_FindAlbum_Call struct {
 
 // FindAlbum is a helper method to define mock.On call
 //   - ctx context.Context
-//   - albumId catalog.AlbumId
+//   - redirectTo catalog.AlbumId
 func (_e *FindAlbumPort_Expecter) FindAlbum(ctx interface{}, albumId interface{}) *FindAlbumPort_FindAlbum_Call {
 	return &FindAlbumPort_FindAlbum_Call{Call: _e.mock.On("FindAlbum", ctx, albumId)}
 }

@@ -29,7 +29,7 @@ export class AlbumFilterHandler {
         this.dispatch({
             type: "AlbumsFilteredAction",
             criterion: criterion,
-            albumId: nextSelectedAlbumId,
+            redirectTo: nextSelectedAlbumId,
         })
     }
 }

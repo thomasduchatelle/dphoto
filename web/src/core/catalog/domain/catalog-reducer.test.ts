@@ -15,7 +15,6 @@ describe("CatalogViewerState", () => {
             totalCount: 42,
             temperature: 0.25,
             relativeTemperature: 1,
-            // ownedBy: {name: "Myself", users: [myselfUser]}, TODO make possible to have details about the current user
             sharedWith: [],
         },
         {
@@ -237,6 +236,79 @@ describe("CatalogViewerState", () => {
             medias: [],
             mediasLoadedFromAlbumId: undefined,
             error: testError,
+        })
+    })
+
+    it("should set the errors and clears medias and media loading status when reducing MediaFailedToLoadAction that hasn't the albums", () => {
+        const testError = new Error("TEST loading error");
+
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        expect(catalogReducer({
+            ...initialCatalogState,
+            allAlbums: twoAlbums,
+        }, {
+            type: "MediaFailedToLoadAction",
+            selectedAlbum: twoAlbums[0],
+            error: testError,
+        })).toEqual({
+            ...loadedStateWithTwoAlbums,
+            medias: [],
+            mediasLoadedFromAlbumId: undefined,
+            error: testError,
+        })
+    })
+
+    it("should update the list of albums and clear errors when AlbumsLoadedAction is received", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        expect(catalogReducer({
+            ...loadedStateWithTwoAlbums,
+            allAlbums: [twoAlbums[0]],
+            albums: [twoAlbums[0]],
+            error: new Error("TEST previous error to clear"),
+            albumsLoaded: false,
+        }, {
+            type: "AlbumsLoadedAction",
+            albums: twoAlbums,
+        })).toEqual(loadedStateWithTwoAlbums)
+    })
+
+    it("should update the available filters and re-apply the selected filter when receiving AlbumsLoadedAction", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        expect(catalogReducer({
+            ...loadedStateWithTwoAlbums,
+            albumFilterOptions: [loadedStateWithTwoAlbums.albumFilterOptions[0]],
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
+            allAlbums: [twoAlbums[1]],
+            albums: [],
+            mediasLoadedFromAlbumId: twoAlbums[0].albumId, // no effect
+        }, {
+            type: "AlbumsLoadedAction",
+            albums: twoAlbums,
+            redirectTo: twoAlbums[0].albumId,
+        })).toEqual({
+            ...loadedStateWithTwoAlbums,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
+            allAlbums: twoAlbums,
+            albums: [twoAlbums[0]],
+        })
+    })
+
+    it("should remove the album filter if the redirectTo in AlbumsLoadedAction wouldn't be displayed", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        expect(catalogReducer({
+            ...loadedStateWithTwoAlbums,
+            allAlbums: [twoAlbums[0]],
+            albums: [],
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
+        }, {
+            type: "AlbumsLoadedAction",
+            albums: twoAlbums,
+            redirectTo: twoAlbums[1].albumId,
+        })).toEqual({
+            ...loadedStateWithTwoAlbums,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
+            allAlbums: twoAlbums,
+            albums: twoAlbums,
         })
     })
 })

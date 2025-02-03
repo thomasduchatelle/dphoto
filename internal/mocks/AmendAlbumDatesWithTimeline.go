@@ -25,7 +25,7 @@ func (_m *AmendAlbumDatesWithTimeline) EXPECT() *AmendAlbumDatesWithTimeline_Exp
 	return &AmendAlbumDatesWithTimeline_Expecter{mock: &_m.Mock}
 }
 
-// AmendAlbumDates provides a mock function with given fields: ctx, timeline, albumId, start, end
+// AmendAlbumDates provides a mock function with given fields: ctx, timeline, redirectTo, start, end
 func (_m *AmendAlbumDatesWithTimeline) AmendAlbumDates(ctx context.Context, timeline *catalog.TimelineAggregate, albumId catalog.AlbumId, start time.Time, end time.Time) error {
 	ret := _m.Called(ctx, timeline, albumId, start, end)
 
@@ -51,7 +51,7 @@ type AmendAlbumDatesWithTimeline_AmendAlbumDates_Call struct {
 // AmendAlbumDates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - timeline *catalog.TimelineAggregate
-//   - albumId catalog.AlbumId
+//   - redirectTo catalog.AlbumId
 //   - start time.Time
 //   - end time.Time
 func (_e *AmendAlbumDatesWithTimeline_Expecter) AmendAlbumDates(ctx interface{}, timeline interface{}, albumId interface{}, start interface{}, end interface{}) *AmendAlbumDatesWithTimeline_AmendAlbumDates_Call {

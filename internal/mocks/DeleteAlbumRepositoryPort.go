@@ -23,7 +23,7 @@ func (_m *DeleteAlbumRepositoryPort) EXPECT() *DeleteAlbumRepositoryPort_Expecte
 	return &DeleteAlbumRepositoryPort_Expecter{mock: &_m.Mock}
 }
 
-// DeleteAlbum provides a mock function with given fields: ctx, albumId
+// DeleteAlbum provides a mock function with given fields: ctx, redirectTo
 func (_m *DeleteAlbumRepositoryPort) DeleteAlbum(ctx context.Context, albumId catalog.AlbumId) error {
 	ret := _m.Called(ctx, albumId)
 
@@ -48,7 +48,7 @@ type DeleteAlbumRepositoryPort_DeleteAlbum_Call struct {
 
 // DeleteAlbum is a helper method to define mock.On call
 //   - ctx context.Context
-//   - albumId catalog.AlbumId
+//   - redirectTo catalog.AlbumId
 func (_e *DeleteAlbumRepositoryPort_Expecter) DeleteAlbum(ctx interface{}, albumId interface{}) *DeleteAlbumRepositoryPort_DeleteAlbum_Call {
 	return &DeleteAlbumRepositoryPort_DeleteAlbum_Call{Call: _e.mock.On("DeleteAlbum", ctx, albumId)}
 }

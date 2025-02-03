@@ -25,7 +25,7 @@ func (_m *AlbumUnSharedObserver) EXPECT() *AlbumUnSharedObserver_Expecter {
 	return &AlbumUnSharedObserver_Expecter{mock: &_m.Mock}
 }
 
-// AlbumUnShared provides a mock function with given fields: ctx, albumId, userEmail
+// AlbumUnShared provides a mock function with given fields: ctx, redirectTo, userEmail
 func (_m *AlbumUnSharedObserver) AlbumUnShared(ctx context.Context, albumId catalog.AlbumId, userEmail usermodel.UserId) error {
 	ret := _m.Called(ctx, albumId, userEmail)
 
@@ -50,7 +50,7 @@ type AlbumUnSharedObserver_AlbumUnShared_Call struct {
 
 // AlbumUnShared is a helper method to define mock.On call
 //   - ctx context.Context
-//   - albumId catalog.AlbumId
+//   - redirectTo catalog.AlbumId
 //   - userEmail usermodel.UserId
 func (_e *AlbumUnSharedObserver_Expecter) AlbumUnShared(ctx interface{}, albumId interface{}, userEmail interface{}) *AlbumUnSharedObserver_AlbumUnShared_Call {
 	return &AlbumUnSharedObserver_AlbumUnShared_Call{Call: _e.mock.On("AlbumUnShared", ctx, albumId, userEmail)}

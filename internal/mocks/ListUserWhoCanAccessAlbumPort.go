@@ -24,7 +24,7 @@ func (_m *ListUserWhoCanAccessAlbumPort) EXPECT() *ListUserWhoCanAccessAlbumPort
 	return &ListUserWhoCanAccessAlbumPort_Expecter{mock: &_m.Mock}
 }
 
-// ListUsersWhoCanAccessAlbum provides a mock function with given fields: ctx, albumId
+// ListUsersWhoCanAccessAlbum provides a mock function with given fields: ctx, redirectTo
 func (_m *ListUserWhoCanAccessAlbumPort) ListUsersWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]catalogviews.Availability, error) {
 	_va := make([]interface{}, len(albumId))
 	for _i := range albumId {
@@ -68,7 +68,7 @@ type ListUserWhoCanAccessAlbumPort_ListUsersWhoCanAccessAlbum_Call struct {
 
 // ListUsersWhoCanAccessAlbum is a helper method to define mock.On call
 //   - ctx context.Context
-//   - albumId ...catalog.AlbumId
+//   - redirectTo ...catalog.AlbumId
 func (_e *ListUserWhoCanAccessAlbumPort_Expecter) ListUsersWhoCanAccessAlbum(ctx interface{}, albumId ...interface{}) *ListUserWhoCanAccessAlbumPort_ListUsersWhoCanAccessAlbum_Call {
 	return &ListUserWhoCanAccessAlbumPort_ListUsersWhoCanAccessAlbum_Call{Call: _e.mock.On("ListUsersWhoCanAccessAlbum",
 		append([]interface{}{ctx}, albumId...)...)}

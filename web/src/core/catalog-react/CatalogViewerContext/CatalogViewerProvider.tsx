@@ -7,15 +7,16 @@ import {
     catalogReducerFunction,
     CatalogViewerAction,
     initialCatalogState,
+    isRedirectToAlbumIdAction,
     MediaPerDayLoader,
-    PostCreateAlbumHandler,
-    SelectAlbumHandler
+    PostCreateAlbumHandler
 } from "../../catalog";
 import {DPhotoApplication, useApplication, useUnrecoverableErrorDispatch} from "../../application";
 import {CatalogFactory} from "../../catalog/catalog-factories";
 import {CatalogHandlers, CatalogViewerStateWithDispatch} from "./CatalogViewerStateWithDispatch";
 import {AuthenticatedUser} from "../../security";
 import {AlbumFilterHandler} from "../../catalog/domain/AlbumFilterHandler";
+import {CatalogLoader} from "../../catalog/domain/CatalogLoader";
 
 export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch>({
     state: initialCatalogState,
@@ -42,36 +43,28 @@ export const CatalogViewerProvider = (
     const dispatchPropagator = useCallback((action: CatalogViewerAction) => {
         dispatch(action)
 
-        if (!albumId && action.type === "AlbumsAndMediasLoadedAction" && action.selectedAlbum) {
-            redirectToAlbumId(action.selectedAlbum.albumId)
+        if (isRedirectToAlbumIdAction(action) && action.redirectTo) {
+            redirectToAlbumId(action.redirectTo);
         }
-        if (action.type === "AlbumsFilteredAction" && action.albumId) {
-            redirectToAlbumId(action.albumId)
-        }
-    }, [dispatch, redirectToAlbumId, albumId])
+    }, [dispatch, redirectToAlbumId])
 
-    const {allAlbums, loadingMediasFor, mediasLoadedFromAlbumId} = catalog
+    const {allAlbums, mediasLoadedFromAlbumId, albumsLoaded, loadingMediasFor} = catalog
     const handlers = useMemo(
         () => new CompositeHandler(app, dispatchPropagator, allAlbums, albumId),
         [app, dispatchPropagator, allAlbums, albumId]
     )
 
     useEffect(() => {
-        const loader = new CatalogFactory(app).mediaViewLoader()
-        loader.loadInitialCatalog({albumId})
-            .then(dispatchPropagator)
+        const restAdapter = new CatalogFactory(app).restAdapter();
+        const loader = new CatalogLoader(dispatchPropagator, new MediaPerDayLoader(restAdapter), restAdapter, {
+            mediasLoadedFromAlbumId,
+            allAlbums,
+            albumsLoaded,
+            loadingMediasFor,
+        })
+        loader.onPageRefresh(albumId)
             .catch(error => unrecoverableErrorDispatch({type: 'unrecoverable-error', error: error}))
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-
-    useEffect(() => {
-        const handler = new SelectAlbumHandler(dispatchPropagator, new MediaPerDayLoader(new CatalogFactory(app).restAdapter()), mediasLoadedFromAlbumId, loadingMediasFor)
-        if (albumId) {
-            handler.onSelectAlbum(albumId)
-                .catch(error => unrecoverableErrorDispatch({type: 'unrecoverable-error', error: error}))
-
-        }
-    }, [app, dispatchPropagator, unrecoverableErrorDispatch, albumId, mediasLoadedFromAlbumId, loadingMediasFor]);
+    }, [app, dispatchPropagator, mediasLoadedFromAlbumId, allAlbums, albumsLoaded, albumId, loadingMediasFor, unrecoverableErrorDispatch])
 
     return (
         <CatalogViewerContext.Provider value={{state: catalog, handlers, selectedAlbumId: albumId}}>
@@ -82,15 +75,15 @@ export const CatalogViewerProvider = (
 
 class CompositeHandler implements CatalogHandlers {
     constructor(
-        private readonly app: DPhotoApplication,
-        private readonly dispatch: (action: CatalogViewerAction) => void,
-        private readonly allAlbums: Album[],
-        private readonly albumId?: AlbumId,
+        app: DPhotoApplication,
+        dispatch: (action: CatalogViewerAction) => void,
+        allAlbums: Album[],
+        albumId?: AlbumId,
     ) {
         const selectedAlbum = allAlbums.find(album => albumIdEquals(albumId, album.albumId))
 
         this.onAlbumFilterChange = new AlbumFilterHandler(dispatch, {selectedAlbum, allAlbums}).onAlbumFilter
-        this.onAlbumCreated = new PostCreateAlbumHandler(dispatch, new CatalogFactory(app).mediaViewLoader()).onAlbumCreated
+        this.onAlbumCreated = new PostCreateAlbumHandler(dispatch, new CatalogFactory(app).restAdapter()).onAlbumCreated
     }
 
     onAlbumCreated: (albumId: AlbumId) => Promise<void>
