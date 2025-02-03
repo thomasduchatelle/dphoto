@@ -47,6 +47,7 @@ export const catalogReducerFunction = (currentUser: CurrentUserInsight): (curren
                 return {
                     ...current,
                     loadingMediasFor: undefined,
+                    mediasLoadedFromAlbumId: action.albumId,
                     medias: action.medias,
                     error: undefined,
                     mediasLoaded: true,
@@ -72,6 +73,7 @@ export const catalogReducerFunction = (currentUser: CurrentUserInsight): (curren
                     albumNotFound: false,
                     allAlbums: action.albums,
                     albums: action.albums,
+                    mediasLoadedFromAlbumId: action.selectedAlbum?.albumId,
                     medias: action.medias,
                     albumsLoaded: true,
                     mediasLoaded: true,

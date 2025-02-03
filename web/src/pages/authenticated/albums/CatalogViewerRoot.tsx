@@ -15,7 +15,7 @@ export default function CatalogViewerRoot({children}: {
     const onSelectedAlbumIdByDefault = useCallback((albumId: AlbumId) => navigate(`/albums/${albumId.owner}/${albumId.folderName}`), [navigate])
 
     return (
-        <CatalogViewerProvider albumId={albumId} onSelectedAlbumIdByDefault={onSelectedAlbumIdByDefault} authenticatedUser={authenticatedUser}>
+        <CatalogViewerProvider albumId={albumId} redirectToAlbumId={onSelectedAlbumIdByDefault} authenticatedUser={authenticatedUser}>
             {children}
         </CatalogViewerProvider>
     )
