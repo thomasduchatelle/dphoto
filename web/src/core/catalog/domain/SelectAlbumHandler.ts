@@ -1,5 +1,6 @@
 import {MediasLoadedAction, StartLoadingMediasAction, startLoadingMediasAction} from "./catalog-actions";
 import {AlbumId} from "./catalog-state";
+import {ActionObserver} from "./ActionObserver";
 import {albumIdEquals} from "./utils-albumIdEquals";
 
 export interface SelectAlbumQuery {
@@ -8,12 +9,6 @@ export interface SelectAlbumQuery {
     albumId: AlbumId
 }
 
-export interface HasType {
-    type: string
-}
-
-export type ActionObserver<T extends HasType> = (action: T) => void
-
 export interface MediaPerDayLoaderInterface {
     loadMedias(albumId: AlbumId): Promise<MediasLoadedAction>
 }
@@ -21,16 +16,24 @@ export interface MediaPerDayLoaderInterface {
 export class SelectAlbumHandler {
 
     constructor(
+        private readonly dispatch: ActionObserver<MediasLoadedAction | StartLoadingMediasAction>,
         private readonly mediaPerDayLoader: MediaPerDayLoaderInterface,
+        private readonly loadedAlbumId?: AlbumId,
+        private readonly loadingAlbumId?: AlbumId,
     ) {
     }
 
-    public async onSelectAlbum(query: SelectAlbumQuery, dispatch: ActionObserver<MediasLoadedAction | StartLoadingMediasAction>) {
-        if (query.loaded && !albumIdEquals(query.currentAlbumId, query.albumId)) {
-            dispatch(startLoadingMediasAction(query.albumId))
+    public onSelectAlbum(albumId: AlbumId) {
+        if (this.loadedAlbumId && (
+            (this.loadingAlbumId && !albumIdEquals(this.loadingAlbumId, albumId))
+            || !albumIdEquals(this.loadedAlbumId, albumId)
+        )) {
 
-            return this.mediaPerDayLoader.loadMedias(query.albumId).then(dispatch)
+            this.dispatch(startLoadingMediasAction(albumId))
+            return this.mediaPerDayLoader.loadMedias(albumId).then(this.dispatch)
         }
+
+        return Promise.resolve()
     }
 }
 

@@ -5,11 +5,12 @@ export interface CatalogViewerState {
     albumFilter: AlbumFilterEntry,
     // albums is the list derived from 'albumFilter' and 'allAlbums'
     albums: Album[]
+    mediasLoadedFromAlbumId?: AlbumId
     medias: MediaWithinADay[]
     error?: Error
     loadingMediasFor?: AlbumId
     albumsLoaded: boolean
-    mediasLoaded: boolean
+    mediasLoaded: boolean // TODO can be removed
 }
 
 export enum MediaType {

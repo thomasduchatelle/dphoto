@@ -74,6 +74,7 @@ describe("CatalogViewerState", () => {
         albums: twoAlbums,
         medias: someMedias,
         albumNotFound: false,
+        mediasLoadedFromAlbumId: twoAlbums[0].albumId,
         albumsLoaded: true,
         mediasLoaded: true,
     };
@@ -201,6 +202,7 @@ describe("CatalogViewerState", () => {
         })).toEqual({
             ...loadedStateWithTwoAlbums,
             medias: someMedias,
+            mediasLoadedFromAlbumId: twoAlbums[1].albumId,
         })
     })
 
@@ -233,6 +235,7 @@ describe("CatalogViewerState", () => {
         })).toEqual({
             ...loadedStateWithTwoAlbums,
             medias: [],
+            mediasLoadedFromAlbumId: undefined,
             error: testError,
         })
     })

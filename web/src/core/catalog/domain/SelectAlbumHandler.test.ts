@@ -1,8 +1,9 @@
-import {HasType, SelectAlbumHandler} from "./SelectAlbumHandler";
+import {SelectAlbumHandler} from "./SelectAlbumHandler";
 import {mediasLoadedAction, MediasLoadedAction, startLoadingMediasAction} from "./catalog-actions";
 import {MediaPerDayLoader} from "./MediaPerDayLoader";
 import {AlbumId, Media, MediaId, MediaType} from "./catalog-state";
 import {FetchAlbumMediasPort} from "./CatalogViewerLoader";
+import {HasType} from "./ActionObserver";
 
 export function newMedia(mediaId: MediaId, dateTime: string): Media {
     return {
@@ -17,41 +18,44 @@ export function newMedia(mediaId: MediaId, dateTime: string): Media {
 
 describe('SelectAlbumHandler', () => {
     const albumId = {owner: 'tony@stark.com', folderName: 'avenger-1'};
+    const anotherAlbumId = {owner: 'pepper@stark.com', folderName: '/stark-industries'};
+
+    const media1 = newMedia('01', "2024-12-01T15:22:00Z");
+    const media2 = newMedia('02', "2024-12-01T13:09:00Z");
+    const media3 = newMedia('03', "2024-12-02T09:45:00Z");
+
+    const addsMediasToMediaRepositoryFake = () => mediaRepositoryFake.addMedias(albumId, [
+        media1,
+        media2,
+        media3,
+    ] as Media[])
 
     let actionObserverFake: ActionObserverFake
     let mediaRepositoryFake: MediaRepositoryFake
-    let selectAlbumHandler: SelectAlbumHandler
 
     beforeEach(() => {
         actionObserverFake = new ActionObserverFake()
         mediaRepositoryFake = new MediaRepositoryFake()
-        selectAlbumHandler = new SelectAlbumHandler(new MediaPerDayLoader(mediaRepositoryFake))
     })
 
     it('it should not start to load if the initial loading is not complete', () => {
-        selectAlbumHandler.onSelectAlbum({loaded: false, currentAlbumId: undefined, albumId}, actionObserverFake.onAction);
+        const selectAlbumHandler = new SelectAlbumHandler(actionObserverFake.onAction, new MediaPerDayLoader(mediaRepositoryFake))
+        selectAlbumHandler.onSelectAlbum(albumId);
 
         expect(actionObserverFake.actions).toHaveLength(0)
     })
 
     it('it should not start to load if the previous album is same as the current one', () => {
-        selectAlbumHandler.onSelectAlbum({loaded: true, currentAlbumId: albumId, albumId}, actionObserverFake.onAction);
+        const selectAlbumHandler = new SelectAlbumHandler(actionObserverFake.onAction, new MediaPerDayLoader(mediaRepositoryFake), albumId)
+        selectAlbumHandler.onSelectAlbum(albumId);
 
         expect(actionObserverFake.actions).toHaveLength(0)
     })
 
     it('should load medias (grouped by days) and publish 2 actions: MediasLoadedAction and AlbumsAndMediasLoadedAction', async () => {
-        const media1 = newMedia('01', "2024-12-01T15:22:00Z");
-        const media2 = newMedia('02', "2024-12-01T13:09:00Z");
-        const media3 = newMedia('03', "2024-12-02T09:45:00Z");
-
-        mediaRepositoryFake.addMedias(albumId, [
-            media1,
-            media2,
-            media3,
-        ] as Media[])
-
-        await selectAlbumHandler.onSelectAlbum({loaded: true, currentAlbumId: undefined, albumId}, actionObserverFake.onAction);
+        addsMediasToMediaRepositoryFake()
+        const selectAlbumHandler = new SelectAlbumHandler(actionObserverFake.onAction, new MediaPerDayLoader(mediaRepositoryFake), anotherAlbumId)
+        await selectAlbumHandler.onSelectAlbum(albumId);
 
         expect(actionObserverFake.actions).toEqual([
             startLoadingMediasAction(albumId),
@@ -68,8 +72,37 @@ describe('SelectAlbumHandler', () => {
         ])
     })
 
+    it('should load medias if the loading album is different from the one requested (even if the one currently selected is the target)', async () => {
+        addsMediasToMediaRepositoryFake()
+        const selectAlbumHandler = new SelectAlbumHandler(actionObserverFake.onAction, new MediaPerDayLoader(mediaRepositoryFake), albumId, anotherAlbumId)
+        await selectAlbumHandler.onSelectAlbum(albumId);
+
+        expect(actionObserverFake.actions).toEqual([
+            startLoadingMediasAction(albumId),
+            mediasLoadedAction(albumId, [
+                {
+                    day: new Date("2024-12-01T00:00:00Z"),
+                    medias: [media1, media2],
+                },
+                {
+                    day: new Date("2024-12-02T00:00:00Z"),
+                    medias: [media3],
+                },
+            ]),
+        ])
+    })
+
+    it('should not load medias if there is no album currently loaded (to prevent double trigger of the REST call)', async () => {
+        addsMediasToMediaRepositoryFake()
+        const selectAlbumHandler = new SelectAlbumHandler(actionObserverFake.onAction, new MediaPerDayLoader(mediaRepositoryFake), undefined, anotherAlbumId)
+        await selectAlbumHandler.onSelectAlbum(albumId);
+
+        expect(actionObserverFake.actions).toHaveLength(0)
+    })
+
     it('should return an empty media list if no medias are found', async () => {
-        await selectAlbumHandler.onSelectAlbum({loaded: true, currentAlbumId: undefined, albumId}, actionObserverFake.onAction);
+        const selectAlbumHandler = new SelectAlbumHandler(actionObserverFake.onAction, new MediaPerDayLoader(mediaRepositoryFake), anotherAlbumId)
+        await selectAlbumHandler.onSelectAlbum(albumId);
 
         expect(actionObserverFake.actions).toEqual([
             startLoadingMediasAction(albumId),
@@ -79,18 +112,19 @@ describe('SelectAlbumHandler', () => {
 
     it('should let error throw', () => {
         const error = new Error("TEST simulate error on loadMedias");
-        const selectAlbumHandler = new SelectAlbumHandler({
+        const loaderThrowingAnError = {
             loadMedias: (albumId: AlbumId): Promise<MediasLoadedAction> => {
                 return Promise.reject(error)
             },
-        })
+        }
+        const selectAlbumHandler = new SelectAlbumHandler(actionObserverFake.onAction, loaderThrowingAnError, anotherAlbumId)
 
-        expect(selectAlbumHandler.onSelectAlbum({loaded: true, currentAlbumId: undefined, albumId}, actionObserverFake.onAction)).rejects.toThrow(error)
+        expect(selectAlbumHandler.onSelectAlbum(albumId)).rejects.toThrow(error)
         expect(actionObserverFake.actions).toEqual([
             startLoadingMediasAction(albumId),
         ])
     })
-});
+})
 
 export class ActionObserverFake {
     public actions: HasType[] = []

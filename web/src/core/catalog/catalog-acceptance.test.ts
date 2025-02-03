@@ -1,5 +1,5 @@
 import {DPhotoApplication} from "../application";
-import {AlbumsAndMediasLoadedAction, CatalogViewerLoader, MediasLoadedAction, MediaType} from "./index";
+import {AlbumsAndMediasLoadedAction, CatalogViewerLoader, MediaPerDayLoader, MediasLoadedAction, MediaType, SelectAlbumHandler} from "./index";
 import {CatalogAPIAdapter} from "./adapters/api";
 import {CatalogFactory} from "./catalog-factories";
 import {rest} from "msw";
@@ -107,18 +107,15 @@ describe('CatalogFactory', () => {
     });
 
     it('should create a new instance of SelectAlbumHandler', async () => {
-        const selectAlbumHandler = newCatalogFactory().selectAlbumHandler();
+        const observer = new ActionObserverFake();
+        const selectAlbumHandler = new SelectAlbumHandler(observer.onAction, new MediaPerDayLoader(newCatalogFactory().restAdapter()), {owner: "foo", folderName: "bar"});
+
 
         server.use(
             getMediasForAvenger1(),
         )
 
-        const observer = new ActionObserverFake();
-        await selectAlbumHandler.onSelectAlbum({
-            loaded: true,
-            albumId: albumIdAvenger1,
-            currentAlbumId: undefined,
-        }, observer.onAction);
+        await selectAlbumHandler.onSelectAlbum(albumIdAvenger1);
 
         let mediasLoadedAction = observer.actions.find(action => action.type === "MediasLoadedAction");
         expect(mediasLoadedAction).toBeDefined()
