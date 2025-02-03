@@ -24,7 +24,7 @@ func (_m *DriftSynchronizerPort) EXPECT() *DriftSynchronizerPort_Expecter {
 	return &DriftSynchronizerPort_Expecter{mock: &_m.Mock}
 }
 
-// DeleteAlbumSize provides a mock function with given fields: ctx, availability, albumId
+// DeleteAlbumSize provides a mock function with given fields: ctx, availability, redirectTo
 func (_m *DriftSynchronizerPort) DeleteAlbumSize(ctx context.Context, availability catalogviews.Availability, albumId catalog.AlbumId) error {
 	ret := _m.Called(ctx, availability, albumId)
 
@@ -50,7 +50,7 @@ type DriftSynchronizerPort_DeleteAlbumSize_Call struct {
 // DeleteAlbumSize is a helper method to define mock.On call
 //   - ctx context.Context
 //   - availability catalogviews.Availability
-//   - albumId catalog.AlbumId
+//   - redirectTo catalog.AlbumId
 func (_e *DriftSynchronizerPort_Expecter) DeleteAlbumSize(ctx interface{}, availability interface{}, albumId interface{}) *DriftSynchronizerPort_DeleteAlbumSize_Call {
 	return &DriftSynchronizerPort_DeleteAlbumSize_Call{Call: _e.mock.On("DeleteAlbumSize", ctx, availability, albumId)}
 }

@@ -1,10 +1,10 @@
 import {DPhotoApplication} from "../application";
-import {AlbumsAndMediasLoadedAction, CatalogViewerLoader, MediaPerDayLoader, MediasLoadedAction, MediaType, SelectAlbumHandler} from "./index";
+import {AlbumsAndMediasLoadedAction, CatalogViewerAction, MediaPerDayLoader, MediasLoadedAction, MediaType} from "./domain";
 import {CatalogAPIAdapter} from "./adapters/api";
 import {CatalogFactory} from "./catalog-factories";
 import {rest} from "msw";
 import {SetupServer, setupServer} from "msw/node";
-import {ActionObserverFake} from "./domain/SelectAlbumHandler.test";
+import {CatalogLoader} from "./domain/CatalogLoader";
 
 describe('CatalogFactory', () => {
 
@@ -34,8 +34,15 @@ describe('CatalogFactory', () => {
     });
 
     it('should create a new instance of CatalogViewerLoader', async () => {
-        const mediaViewLoader = newCatalogFactory().mediaViewLoader();
-        expect(mediaViewLoader).toBeInstanceOf(CatalogViewerLoader);
+        const dispatch: CatalogViewerAction[] = []
+        const restAdapter = newCatalogFactory().restAdapter();
+        const mediaViewLoader = new CatalogLoader(dispatch.push.bind(dispatch), new MediaPerDayLoader(restAdapter), restAdapter, {
+            mediasLoadedFromAlbumId: undefined,
+            allAlbums: [],
+            albumsLoaded: false,
+            loadingMediasFor: undefined,
+        });
+        expect(mediaViewLoader).toBeInstanceOf(CatalogLoader);
 
         server.use(
             getAlbums(avenger1Album()),
@@ -43,8 +50,8 @@ describe('CatalogFactory', () => {
             getMediasForAvenger1(),
         )
 
-        const got = await mediaViewLoader.loadInitialCatalog({});
-        expect(got).toEqual({
+        await mediaViewLoader.onPageRefresh(undefined);
+        expect(dispatch).toEqual([{
             type: 'AlbumsAndMediasLoadedAction',
             albums: [
                 {
@@ -103,21 +110,27 @@ describe('CatalogFactory', () => {
                     ]
                 }
             ],
-        } as AlbumsAndMediasLoadedAction);
+            redirectTo: albumIdAvenger1,
+        } as AlbumsAndMediasLoadedAction]);
     });
 
     it('should create a new instance of SelectAlbumHandler', async () => {
-        const observer = new ActionObserverFake();
-        const selectAlbumHandler = new SelectAlbumHandler(observer.onAction, new MediaPerDayLoader(newCatalogFactory().restAdapter()), {owner: "foo", folderName: "bar"});
-
+        const dispatch: CatalogViewerAction[] = []
+        const restAdapter = newCatalogFactory().restAdapter();
+        const mediaViewLoader = new CatalogLoader(dispatch.push.bind(dispatch), new MediaPerDayLoader(restAdapter), restAdapter, {
+            mediasLoadedFromAlbumId: undefined,
+            allAlbums: [],
+            albumsLoaded: true,
+            loadingMediasFor: undefined,
+        });
 
         server.use(
             getMediasForAvenger1(),
         )
 
-        await selectAlbumHandler.onSelectAlbum(albumIdAvenger1);
+        await mediaViewLoader.onPageRefresh(albumIdAvenger1);
 
-        let mediasLoadedAction = observer.actions.find(action => action.type === "MediasLoadedAction");
+        let mediasLoadedAction = dispatch.find(action => action.type === "MediasLoadedAction");
         expect(mediasLoadedAction).toBeDefined()
 
         expect((mediasLoadedAction as MediasLoadedAction).medias).toEqual(

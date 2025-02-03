@@ -23,7 +23,7 @@ func (_m *UpdateAlbumNamePort) EXPECT() *UpdateAlbumNamePort_Expecter {
 	return &UpdateAlbumNamePort_Expecter{mock: &_m.Mock}
 }
 
-// UpdateAlbumName provides a mock function with given fields: ctx, albumId, newName
+// UpdateAlbumName provides a mock function with given fields: ctx, redirectTo, newName
 func (_m *UpdateAlbumNamePort) UpdateAlbumName(ctx context.Context, albumId catalog.AlbumId, newName string) error {
 	ret := _m.Called(ctx, albumId, newName)
 
@@ -48,7 +48,7 @@ type UpdateAlbumNamePort_UpdateAlbumName_Call struct {
 
 // UpdateAlbumName is a helper method to define mock.On call
 //   - ctx context.Context
-//   - albumId catalog.AlbumId
+//   - redirectTo catalog.AlbumId
 //   - newName string
 func (_e *UpdateAlbumNamePort_Expecter) UpdateAlbumName(ctx interface{}, albumId interface{}, newName interface{}) *UpdateAlbumNamePort_UpdateAlbumName_Call {
 	return &UpdateAlbumNamePort_UpdateAlbumName_Call{Call: _e.mock.On("UpdateAlbumName", ctx, albumId, newName)}

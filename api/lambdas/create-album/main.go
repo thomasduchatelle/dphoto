@@ -68,7 +68,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 
 		return common.Created(albumIdDTO{
 			Owner:      albumId.Owner.Value(),
-			FolderName: albumId.FolderName.String(),
+			FolderName: common.ConvertFolderNameForREST(albumId.FolderName),
 		})
 	})
 }

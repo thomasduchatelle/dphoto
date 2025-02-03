@@ -25,7 +25,7 @@ func (_m *AlbumSharedObserver) EXPECT() *AlbumSharedObserver_Expecter {
 	return &AlbumSharedObserver_Expecter{mock: &_m.Mock}
 }
 
-// AlbumShared provides a mock function with given fields: ctx, albumId, userEmail
+// AlbumShared provides a mock function with given fields: ctx, redirectTo, userEmail
 func (_m *AlbumSharedObserver) AlbumShared(ctx context.Context, albumId catalog.AlbumId, userEmail usermodel.UserId) error {
 	ret := _m.Called(ctx, albumId, userEmail)
 
@@ -50,7 +50,7 @@ type AlbumSharedObserver_AlbumShared_Call struct {
 
 // AlbumShared is a helper method to define mock.On call
 //   - ctx context.Context
-//   - albumId catalog.AlbumId
+//   - redirectTo catalog.AlbumId
 //   - userEmail usermodel.UserId
 func (_e *AlbumSharedObserver_Expecter) AlbumShared(ctx interface{}, albumId interface{}, userEmail interface{}) *AlbumSharedObserver_AlbumShared_Call {
 	return &AlbumSharedObserver_AlbumShared_Call{Call: _e.mock.On("AlbumShared", ctx, albumId, userEmail)}

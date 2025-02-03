@@ -1,6 +1,10 @@
-import {FetchAlbumMediasPort} from "./CatalogViewerLoader";
 import {mediasLoadedAction, MediasLoadedAction} from "./catalog-actions";
 import {AlbumId, Media, MediaWithinADay} from "./catalog-state";
+
+
+export interface FetchAlbumMediasPort {
+    fetchMedias(albumId: AlbumId): Promise<Media[]>
+}
 
 export class MediaPerDayLoader {
 

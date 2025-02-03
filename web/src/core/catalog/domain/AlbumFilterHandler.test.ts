@@ -47,7 +47,7 @@ describe('AlbumFilterHandler', () => {
                     {
                         type: 'AlbumsFilteredAction',
                         criterion: selfOwnedFilterEntry.criterion,
-                        albumId: selfOwnedAlbum.albumId,
+                        redirectTo: selfOwnedAlbum.albumId,
                     }
                 ]
             }],
@@ -59,7 +59,7 @@ describe('AlbumFilterHandler', () => {
                     {
                         type: 'AlbumsFilteredAction',
                         criterion: selfOwnedFilterEntry.criterion,
-                        albumId: selfOwnedAlbum.albumId,
+                        redirectTo: selfOwnedAlbum.albumId,
                     },
                 ]
             }],

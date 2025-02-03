@@ -1,22 +1,22 @@
 import {AlbumId} from "./catalog-state";
 import {CreateAlbumListener} from "./CreateAlbumController";
-import {AlbumsAndMediasLoadedAction, MediaFailedToLoadAction, NoAlbumAvailableAction} from "./catalog-actions";
-import {CatalogViewerLoader} from "./CatalogViewerLoader";
-
+import {AlbumsLoadedAction} from "./catalog-actions";
+import {FetchAlbumsPort} from "./CatalogLoader";
 
 export class PostCreateAlbumHandler implements CreateAlbumListener {
 
     constructor(
-        private readonly dispatch: (action: MediaFailedToLoadAction | AlbumsAndMediasLoadedAction | NoAlbumAvailableAction) => void,
-        private readonly catalogViewerLoader: CatalogViewerLoader,
+        private readonly dispatch: (action: AlbumsLoadedAction) => void,
+        private readonly fetchAlbumsPort: FetchAlbumsPort,
     ) {
     }
 
-
-    onAlbumCreated = (albumId: AlbumId): Promise<void> => {
-        return this.catalogViewerLoader.loadInitialCatalog({
-            albumId,
-        }).then(this.dispatch)
+    onAlbumCreated = async (albumId: AlbumId): Promise<void> => {
+        const albums = await this.fetchAlbumsPort.fetchAlbums()
+        this.dispatch({
+            type: 'AlbumsLoadedAction',
+            albums: albums,
+            redirectTo: albumId,
+        })
     }
-
 }

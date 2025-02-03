@@ -8,7 +8,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"strings"
 	"time"
 )
 
@@ -46,7 +45,7 @@ func Handler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (commo
 			}
 			restAlbums[i] = AlbumDTO{
 				End:           a.End,
-				FolderName:    strings.TrimPrefix(a.FolderName.String(), "/"),
+				FolderName:    common.ConvertFolderNameForREST(a.FolderName),
 				Name:          a.Name,
 				Owner:         a.Owner.String(),
 				Start:         a.Start,
