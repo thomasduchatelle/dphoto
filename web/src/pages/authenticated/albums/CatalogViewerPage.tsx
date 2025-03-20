@@ -10,6 +10,7 @@ import {useCatalogContext} from "../../../core/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
 import {albumIdEquals} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
+import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
@@ -37,24 +38,29 @@ export function CatalogViewerPage() {
             <Box sx={{mt: 2, pl: 2, pr: 2, display: {lg: 'none'}}}>
                 <MobileNavigation album={isAlbumsPage ? undefined : selectedAlbum}/>
             </Box>
-            {isMobileDevice && isAlbumsPage ? (
-                // TODO add the toolbox here for mobiles.
-                <AlbumsList albums={state.albums}
-                            loaded={state.albumsLoaded}
-                            selectedAlbumId={selectedAlbumId}/>
-            ) : (
-                <CreateAlbumDialogContainer>
-                    {(controls) => (
-                        <MediasPage
-                            {...state}
-                            selectedAlbumId={selectedAlbumId}
-                            onAlbumFilterChange={onAlbumFilterChange}
-                            scrollToMedia={search.get("mediaId") ?? undefined}
+            <CreateAlbumDialogContainer>
+                {(controls) => isMobileDevice && isAlbumsPage ? (
+                    <>
+                        <AlbumListActions
+                            selected={state.albumFilter}
+                            options={state.albumFilterOptions}
+                            onAlbumFiltered={onAlbumFilterChange}
                             {...controls}
                         />
-                    )}
-                </CreateAlbumDialogContainer>
-            )}
+                        <AlbumsList albums={state.albums}
+                                    loaded={state.albumsLoaded}
+                                    selectedAlbumId={selectedAlbumId}/>
+                    </>
+                ) : (
+                    <MediasPage
+                        {...state}
+                        selectedAlbumId={selectedAlbumId}
+                        onAlbumFilterChange={onAlbumFilterChange}
+                        scrollToMedia={search.get("mediaId") ?? undefined}
+                        {...controls}
+                    />
+                )}
+            </CreateAlbumDialogContainer>
         </Box>
     );
 }
