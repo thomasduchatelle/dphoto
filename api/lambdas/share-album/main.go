@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -14,12 +13,8 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
-type PutBodyDTO struct {
-	Role string `json:"role"`
-}
-
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	owner := request.PathParameters["owner"]
 	folderName := request.PathParameters["folderName"]
@@ -39,18 +34,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		method := request.RequestContext.HTTP.Method
 		switch method {
 		case "PUT":
-			body := new(PutBodyDTO)
-			err := json.Unmarshal([]byte(request.Body), body)
-			if err != nil {
-				return common.BadRequest(err.Error())
-			}
-
-			scope, err := translateScope(body.Role)
-			if err != nil {
-				return common.BadRequest(err.Error())
-			}
-
-			err = pkgfactory.AclCatalogShare(context.TODO()).ShareAlbumWith(albumId, userId, scope)
+			err := pkgfactory.AclCatalogShare(ctx).ShareAlbumWith(ctx, albumId, userId)
 			if errors.Is(err, catalog.AlbumNotFoundError) {
 				return common.NotFound(fmt.Sprintf("%s/%s hasn't been found", owner, folderName))
 			} else if err != nil {

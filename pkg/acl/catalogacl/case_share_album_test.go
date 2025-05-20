@@ -105,7 +105,7 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 				Observers:     []catalogacl.AlbumSharedObserver{observer},
 			}
 
-			err := s.ShareAlbumWith(catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName}, tt.args.userEmail, aclcore.AlbumVisitorScope)
+			err := s.ShareAlbumWith(context.TODO(), catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName}, tt.args.userEmail)
 			if !tt.wantErr(t, err, fmt.Sprintf("ShareAlbumWith(%v, %v, %v)", tt.args.owner, tt.args.folderName, tt.args.userEmail)) {
 				return
 			}
