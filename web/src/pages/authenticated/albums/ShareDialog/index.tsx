@@ -185,7 +185,7 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
     error?: ShareError,
     onClose: () => void,
     onGrant: (email: string, role: SharingType) => Promise<void>,
-    onRevoke: (email: string) => void,
+    onRevoke: (email: string) => Promise<void>,
 }) {
     const [email, setEmail] = useState("")
 

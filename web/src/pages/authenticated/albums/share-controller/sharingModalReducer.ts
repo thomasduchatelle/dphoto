@@ -1,4 +1,4 @@
-import {Sharing} from "../../../../core/catalog";
+import {AlbumId, Sharing} from "../../../../core/catalog";
 
 export interface ShareError {
     type: "adding" | "general"
@@ -7,12 +7,14 @@ export interface ShareError {
 
 export interface ShareState {
     open: boolean
+    sharedAlbumId?: AlbumId
     sharedWith: Sharing[]
     error?: ShareError
 }
 
 export type OpenSharingModalAction = {
     type: "OpenSharingModalAction"
+    albumId: AlbumId
     sharedWith: Sharing[]
 }
 export type AddSharingAction = {
@@ -42,10 +44,10 @@ export function sharingModalReducer(current: ShareState, action: SharingModalAct
 
     switch (action.type) {
         case "CloseSharingModalAction":
-            return {...current, open: false}
+            return {...current, sharedAlbumId: undefined, open: false}
 
         case "OpenSharingModalAction":
-            return {open: true, sharedWith: sortShares(action.sharedWith)}
+            return {open: true, sharedAlbumId: action.albumId, sharedWith: sortShares(action.sharedWith)}
 
         case "AddSharingAction":
             const shares = current.sharedWith.filter(s => s.user.email !== action.sharing.user.email);
