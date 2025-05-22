@@ -11,6 +11,7 @@ export interface CatalogViewerState {
     loadingMediasFor?: AlbumId
     albumsLoaded: boolean
     mediasLoaded: boolean // TODO can be removed
+    shareModal?: ShareModal
 }
 
 export enum MediaType {
@@ -84,6 +85,17 @@ export interface AlbumFilterEntry {
     criterion: AlbumFilterCriterion
     avatars: string[]
     name: string
+}
+
+export interface ShareError {
+    type: "adding" | "general"
+    message: string
+}
+
+export interface ShareModal {
+    sharedAlbumId: AlbumId
+    sharedWith: Sharing[]
+    error?: ShareError
 }
 
 export function albumIsOwnedByCurrentUser(album: Album) {

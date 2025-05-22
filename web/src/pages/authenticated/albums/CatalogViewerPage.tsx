@@ -11,6 +11,8 @@ import {useLocation, useSearchParams} from "react-router-dom";
 import {albumIdEquals} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
+import ShareDialog from "./ShareDialog";
+import {useSharingModalController} from "../../../core/catalog-react/CatalogViewerContext/useSharingModalController";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
@@ -22,6 +24,8 @@ export function CatalogViewerPage() {
     const [search] = useSearchParams()
 
     const theme = useTheme()
+
+    const {openSharingModal, shareModal, ...shareDialogProps} = useSharingModalController()
 
     // '/albums' page is only available on small devices
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
@@ -49,7 +53,8 @@ export function CatalogViewerPage() {
                         />
                         <AlbumsList albums={state.albums}
                                     loaded={state.albumsLoaded}
-                                    selectedAlbumId={selectedAlbumId}/>
+                                    selectedAlbumId={selectedAlbumId}
+                                    openSharingModal={openSharingModal}/>
                     </>
                 ) : (
                     <MediasPage
@@ -57,10 +62,14 @@ export function CatalogViewerPage() {
                         selectedAlbumId={selectedAlbumId}
                         onAlbumFilterChange={onAlbumFilterChange}
                         scrollToMedia={search.get("mediaId") ?? undefined}
+                        openSharingModal={openSharingModal}
                         {...controls}
                     />
                 )}
             </CreateAlbumDialogContainer>
+            {shareModal && (
+                <ShareDialog {...shareDialogProps} {...shareModal} open={true}/>
+            )}
         </Box>
     );
 }

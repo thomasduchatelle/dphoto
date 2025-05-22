@@ -1,18 +1,14 @@
 import {Box, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Skeleton} from "@mui/material";
 import {Album, AlbumId, albumIdEquals} from "../../../../core/catalog";
 import {AlbumListEntry} from "./AlbumListEntry";
-import ShareDialog from "../ShareDialog";
 import React from "react";
-import {useSharingModalController} from "../share-controller";
 
-const AlbumsList = ({albums, loaded, selectedAlbumId}: {
+const AlbumsList = ({albums, loaded, selectedAlbumId, openSharingModal}: {
     albums: Album[]
     loaded: boolean
     selectedAlbumId?: AlbumId
+    openSharingModal: (album: Album) => void
 }) => {
-    // const {openSharingModal, open, error, onRevoke, sharedWith,  onClose, onGrant} = useSharingModalController()
-    const {openSharingModal, ...shareDialogProps} = useSharingModalController()
-
     const isSelected = (album: Album) => albumIdEquals(selectedAlbumId, album.albumId)
 
     return (
@@ -44,8 +40,6 @@ const AlbumsList = ({albums, loaded, selectedAlbumId}: {
                     ))
                 )}
             </List>
-
-            <ShareDialog {...shareDialogProps} />
         </Box>
     )
 }

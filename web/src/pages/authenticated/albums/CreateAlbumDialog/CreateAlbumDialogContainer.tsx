@@ -9,12 +9,14 @@ export const CreateAlbumDialogContainer = ({children: Child, firstDay}: { childr
     const catalogAPIAdapter = useCatalogAPIAdapter()
     const [state, setState] = useState<CreateAlbumState>(emptyCreateAlbum(dayjs()))
 
-    const controller = useMemo(() => new CreateAlbumController(
-        setState,
-        catalogAPIAdapter,
-        handlers,
-        firstDay,
-    ), [setState, catalogAPIAdapter, handlers, firstDay])
+    const controller = useMemo(() => {
+        return new CreateAlbumController(
+            setState,
+            catalogAPIAdapter,
+            handlers,
+            firstDay,
+        )
+    }, [setState, catalogAPIAdapter, handlers, firstDay])
 
 
     return <>

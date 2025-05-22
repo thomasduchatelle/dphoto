@@ -1,6 +1,5 @@
-import {Album, AlbumId, SharingType, UserDetails} from "../../../../core/catalog";
+import {Album, AlbumId, SharingModalAction, SharingType, UserDetails} from "../index";
 
-import {SharingModalAction} from "./sharingModalReducer";
 
 export interface SharingAPI {
     revokeSharingAlbum(albumId: AlbumId, email: string): Promise<void>
@@ -17,7 +16,7 @@ export class ShareController {
     }
 
     public openSharingModal = (album: Album): void => {
-        this.dispatch({type: "OpenSharingModalAction", albumId: album.albumId, sharedWith: album.sharedWith})
+        this.dispatch({type: "OpenSharingModalAction", albumId: album.albumId})
     }
 
     public onClose = (): void => {

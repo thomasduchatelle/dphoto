@@ -1,4 +1,4 @@
-import {Album, AlbumFilterCriterion, AlbumId, MediaWithinADay} from "./catalog-state";
+import {Album, AlbumFilterCriterion, AlbumId, MediaWithinADay, ShareError, Sharing} from "./catalog-state";
 
 export type CatalogViewerAction =
     AlbumsAndMediasLoadedAction
@@ -8,6 +8,19 @@ export type CatalogViewerAction =
     | MediasLoadedAction
     | AlbumsFilteredAction
     | AlbumsLoadedAction
+    | OpenSharingModalAction
+    | AddSharingAction
+    | RemoveSharingAction
+    | CloseSharingModalAction
+    | SharingModalErrorAction
+
+// TODO Delete the type.
+export type SharingModalAction =
+    OpenSharingModalAction
+    | AddSharingAction
+    | RemoveSharingAction
+    | CloseSharingModalAction
+    | SharingModalErrorAction
 
 export type RedirectToAlbumIdAction = {
     redirectTo?: AlbumId
@@ -62,4 +75,24 @@ export function mediasLoadedAction(albumId: AlbumId, medias: MediaWithinADay[]):
 
 export function isRedirectToAlbumIdAction(arg: any): arg is RedirectToAlbumIdAction {
     return arg.redirectTo
+}
+
+export type OpenSharingModalAction = {
+    type: "OpenSharingModalAction"
+    albumId: AlbumId
+}
+export type AddSharingAction = {
+    type: "AddSharingAction"
+    sharing: Sharing
+}
+export type RemoveSharingAction = {
+    type: "RemoveSharingAction"
+    email: string
+}
+export type CloseSharingModalAction = {
+    type: "CloseSharingModalAction"
+}
+export type SharingModalErrorAction = {
+    type: "SharingModalErrorAction"
+    error: ShareError
 }
