@@ -2,21 +2,24 @@ import {createContext, ReactNode, useCallback, useEffect, useMemo, useReducer} f
 import {
     Album,
     AlbumFilterCriterion,
+    AlbumFilterHandler,
     AlbumId,
     albumIdEquals,
+    CatalogLoader,
     catalogReducerFunction,
     CatalogViewerAction,
     initialCatalogState,
     isRedirectToAlbumIdAction,
     MediaPerDayLoader,
-    PostCreateAlbumHandler
+    PostCreateAlbumHandler,
+    SharingType
 } from "../../catalog";
 import {DPhotoApplication, useApplication, useUnrecoverableErrorDispatch} from "../../application";
 import {CatalogFactory} from "../../catalog/catalog-factories";
-import {CatalogHandlers, CatalogViewerStateWithDispatch} from "./CatalogViewerStateWithDispatch";
+import {CatalogHandlers, CatalogViewerStateWithDispatch, ShareHandlers} from "./CatalogViewerStateWithDispatch";
 import {AuthenticatedUser} from "../../security";
-import {AlbumFilterHandler} from "../../catalog/domain/AlbumFilterHandler";
-import {CatalogLoader} from "../../catalog/domain/CatalogLoader";
+import {ShareController} from "../../catalog/domain/ShareController";
+import {CatalogAPIAdapter} from "../../catalog/adapters/api";
 
 export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch>({
     state: initialCatalogState,
@@ -24,7 +27,15 @@ export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch
         onAlbumFilterChange: () => {
         },
         async onAlbumCreated(albumId: AlbumId): Promise<void> {
-        }
+        },
+        async onRevoke(email: string): Promise<void> {
+        },
+        async onGrant(email: string, role: SharingType): Promise<void> {
+        },
+        openSharingModal(album: Album): void {
+        },
+        onClose(): void {
+        },
     }
 })
 
@@ -48,10 +59,15 @@ export const CatalogViewerProvider = (
         }
     }, [dispatch, redirectToAlbumId])
 
-    const {allAlbums, mediasLoadedFromAlbumId, albumsLoaded, loadingMediasFor} = catalog
-    const handlers = useMemo(
-        () => new CompositeHandler(app, dispatchPropagator, allAlbums, albumId),
-        [app, dispatchPropagator, allAlbums, albumId]
+    const {allAlbums, mediasLoadedFromAlbumId, albumsLoaded, loadingMediasFor, shareModal} = catalog
+
+    const handlers = useMemo(() => {
+            const sharingAPI = new CatalogAPIAdapter(app.axiosInstance, app);
+            const shareController = new ShareController(dispatchPropagator, sharingAPI);
+
+            return new CompositeHandler(app, dispatchPropagator, shareController, allAlbums, albumId, shareModal?.sharedAlbumId)
+        },
+        [app, dispatchPropagator, allAlbums, albumId, shareModal]
     )
 
     useEffect(() => {
@@ -73,12 +89,14 @@ export const CatalogViewerProvider = (
     )
 }
 
-class CompositeHandler implements CatalogHandlers {
+class CompositeHandler implements CatalogHandlers, ShareHandlers {
     constructor(
         app: DPhotoApplication,
         dispatch: (action: CatalogViewerAction) => void,
+        private readonly shareController: ShareController,
         allAlbums: Album[],
         albumId?: AlbumId,
+        private readonly sharingModalAlbumId?: AlbumId,
     ) {
         const selectedAlbum = allAlbums.find(album => albumIdEquals(albumId, album.albumId))
 
@@ -88,5 +106,27 @@ class CompositeHandler implements CatalogHandlers {
 
     onAlbumCreated: (albumId: AlbumId) => Promise<void>
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
+
+    onRevoke = async (email: string): Promise<void> => {
+        if (!this.sharingModalAlbumId) {
+            return Promise.reject("No album selected");
+        }
+        return this.shareController.revokeAccess(this.sharingModalAlbumId, email);
+    }
+
+    onGrant = async (email: string, role: SharingType): Promise<void> => {
+        if (!this.sharingModalAlbumId) {
+            return Promise.reject("No album selected");
+        }
+        return this.shareController.grantAccess(this.sharingModalAlbumId, email, role);
+    }
+
+    openSharingModal = (album: Album): void => {
+        this.shareController.openSharingModal(album);
+    }
+
+    onClose = (): void => {
+        this.shareController.onClose();
+    }
 }
 

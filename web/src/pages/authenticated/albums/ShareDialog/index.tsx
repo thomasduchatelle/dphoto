@@ -32,9 +32,8 @@ import {
 import React, {useRef, useState} from "react";
 import Grid from '@mui/material/Unstable_Grid2';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import {Sharing, SharingType} from "../../../../core/catalog";
+import {ShareError, Sharing, SharingType} from "../../../../core/catalog";
 import {Delete, MoreHoriz} from "@mui/icons-material";
-import {ShareError} from "../share-controller";
 
 function OptionButton({onRevoke, role, name, picture}: {
     onRevoke: () => void
@@ -193,7 +192,9 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const savingHandler = (role: SharingType) => {
-        onGrant(email, role)?.then(() => setEmail(""))
+        if (email) {
+            onGrant(email, role).then(() => setEmail(""))
+        }
     }
 
     return (
@@ -233,7 +234,6 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
                         <GrantAccessButton onClick={role => savingHandler(role)}/>
                     </Grid>
                 </Grid>
-                {/*)}*/}
                 {sharedWith.length > 0 && (
                     <TableContainer component={Box} sx={theme => ({
                         mt: theme.spacing(3),

@@ -1,7 +1,8 @@
 import {useApplication} from "../application";
 import {CatalogAPIAdapter} from "../catalog/adapters/api";
+import {useMemo} from "react";
 
 export const useCatalogAPIAdapter = () => {
     const app = useApplication()
-    return new CatalogAPIAdapter(app.axiosInstance, app)
+    return useMemo(() => new CatalogAPIAdapter(app.axiosInstance, app), [app])
 }

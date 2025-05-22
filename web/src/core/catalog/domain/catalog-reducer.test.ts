@@ -1,5 +1,6 @@
 import {catalogReducerFunction, CurrentUserInsight, generateAlbumFilterOptions, initialCatalogState} from "./catalog-reducer";
-import {Album, AlbumFilterEntry, CatalogViewerState, MediaType, MediaWithinADay, UserDetails} from "./catalog-state";
+import {Album, AlbumFilterEntry, CatalogViewerState, MediaType, MediaWithinADay, SharingType, UserDetails} from "./catalog-state";
+import {SharingModalAction} from "./catalog-actions";
 
 describe("CatalogViewerState", () => {
     const myselfUser: CurrentUserInsight = {picture: "my-face.jpg"};
@@ -15,7 +16,12 @@ describe("CatalogViewerState", () => {
             totalCount: 42,
             temperature: 0.25,
             relativeTemperature: 1,
-            sharedWith: [],
+            sharedWith: [
+                {
+                    user: herselfUser,
+                    role: SharingType.visitor,
+                }
+            ],
         },
         {
             albumId: {owner: herselfOwner, folderName: "feb-25"},
@@ -311,6 +317,301 @@ describe("CatalogViewerState", () => {
             albums: twoAlbums,
         })
     })
+
+    it("should open the sharing modal with the appropriate albumId and already-shared list", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const action: SharingModalAction = {
+            type: "OpenSharingModalAction",
+            albumId: twoAlbums[0].albumId,
+        };
+
+        const expected: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        expect(catalogReducer(loadedStateWithTwoAlbums, action)).toEqual(expected);
+    });
+
+    it("should close the sharing modal by clearing the shareModel property", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const action: SharingModalAction = {type: "CloseSharingModalAction"};
+
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        expect(catalogReducer(initial, action)).toEqual(loadedStateWithTwoAlbums);
+    });
+
+    it("should add a new sharing entry and keep the modal open when receiving AddSharingAction", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        const newUser: UserDetails = {email: "bob@example.com", name: "Bob", picture: "bob-face.jpg"};
+        const action: SharingModalAction = {
+            type: "AddSharingAction",
+            sharing: {
+                user: newUser,
+                role: SharingType.contributor,
+            }
+        };
+        const expected: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: newUser,
+                        role: SharingType.contributor,
+                    },
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        expect(catalogReducer(initial, action)).toEqual(expected);
+    });
+
+    it("should replace an existing sharing entry for the same user when receiving AddSharingAction", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        // Add the same user with a different role: user is overridden and not added
+        const action: SharingModalAction = {
+            type: "AddSharingAction",
+            sharing: {
+                user: herselfUser,
+                role: SharingType.contributor,
+            }
+        };
+        const expected: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.contributor,
+                    }
+                ],
+            }
+        };
+        expect(catalogReducer(initial, action)).toEqual(expected);
+    });
+
+    it("should remove a sharing entry by email and keep the modal open when receiving RemoveSharingAction", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const bobEmail = "bob@example.com";
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    },
+                    {
+                        user: {email: bobEmail, name: "Bob", picture: "bob-face.jpg"},
+                        role: SharingType.contributor,
+                    }
+                ],
+            }
+        };
+        const action: SharingModalAction = {
+            type: "RemoveSharingAction",
+            email: bobEmail,
+        };
+        const expected: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        expect(catalogReducer(initial, action)).toEqual(expected);
+    });
+
+    it("should not change state when AddSharingAction is received and shareModal is closed", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: undefined,
+        };
+        const newUser: UserDetails = {email: "bob@example.com", name: "Bob", picture: "bob-face.jpg"};
+        const action: SharingModalAction = {
+            type: "AddSharingAction",
+            sharing: twoAlbums[0].sharedWith[0],
+        };
+        expect(catalogReducer(initial, action)).toEqual(initial);
+    });
+
+    it("should not change state when RemoveSharingAction is received and shareModal is undefined", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: undefined,
+        };
+        const action: SharingModalAction = {
+            type: "RemoveSharingAction",
+            email: herselfUser.email,
+        };
+        expect(catalogReducer(initial, action)).toEqual(initial);
+    });
+
+    it("should not change state when RemoveSharingAction is received with an email not in sharedWith", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        const action: SharingModalAction = {
+            type: "RemoveSharingAction",
+            email: "notfound@example.com",
+        };
+        expect(catalogReducer(initial, action)).toEqual(initial);
+    });
+
+    it("should set the error field when receiving SharingModalErrorAction", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        const error = {type: "adding", message: "Failed to add user"} as const;
+        const action: SharingModalAction = {
+            type: "SharingModalErrorAction",
+            error,
+        };
+        const expected: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+                error,
+            }
+        };
+        expect(catalogReducer(initial, action)).toEqual(expected);
+    });
+
+    it("should sort the sharedWith list alphabetically by user name when adding or opening sharings", () => {
+        const catalogReducer = catalogReducerFunction(myselfUser);
+        // Test AddSharingAction
+        const initial: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+        const tonyUser: UserDetails = {email: "tony@avenger.com", name: "", picture: "Tony-face.jpg"};
+        const captainUser: UserDetails = {email: "captain@avenger.com", name: "Captain", picture: "captain-face.jpg"};
+
+        const got = catalogReducer(catalogReducer(initial, {
+            type: "AddSharingAction",
+            sharing: {
+                user: tonyUser,
+                role: SharingType.visitor,
+            }
+        }), {
+            type: "AddSharingAction",
+            sharing: {
+                user: captainUser,
+                role: SharingType.visitor,
+            }
+        })
+        const expected: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [
+                    {
+                        user: captainUser,
+                        role: SharingType.visitor,
+                    },
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
+                    },
+                    {
+                        user: tonyUser,
+                        role: SharingType.visitor,
+                    }
+                ],
+            }
+        };
+
+        expect(got).toEqual(expected);
+    });
 })
 
 describe("generateAlbumFilterOptions", () => {

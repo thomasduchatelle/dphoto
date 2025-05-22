@@ -19,6 +19,7 @@ export default function MediasPage({
                                        albumFilter,
                                        onAlbumFilterChange,
                                        selectedAlbumId,
+                                       openSharingModal,
                                        ...controls
                                    }: {
     albums: Album[]
@@ -31,6 +32,7 @@ export default function MediasPage({
     albumFilter: AlbumFilterEntry
     selectedAlbumId: AlbumId | undefined
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
+    openSharingModal: (album: Album) => void
 } & CreateAlbumControls) {
     const drawerWidth = 450
 
@@ -64,7 +66,10 @@ export default function MediasPage({
                             <Divider/>
                         </>
                     )}
-                    <AlbumsList albums={albums} loaded={albumsLoaded} selectedAlbumId={selectedAlbumId}/>
+                    <AlbumsList albums={albums}
+                                loaded={albumsLoaded}
+                                selectedAlbumId={selectedAlbumId}
+                                openSharingModal={openSharingModal}/>
                 </Drawer>
             </Box>
             <Box

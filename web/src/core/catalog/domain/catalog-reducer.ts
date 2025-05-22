@@ -1,4 +1,13 @@
-import {Album, AlbumFilterCriterion, AlbumFilterEntry, albumIsOwnedByCurrentUser, albumMatchCriterion, CatalogViewerState, OwnerDetails} from "./catalog-state";
+import {
+    Album,
+    AlbumFilterCriterion,
+    AlbumFilterEntry,
+    albumIsOwnedByCurrentUser,
+    albumMatchCriterion,
+    CatalogViewerState,
+    OwnerDetails,
+    Sharing
+} from "./catalog-state";
 import {CatalogViewerAction} from "./catalog-actions";
 import {albumIdEquals} from "./utils-albumIdEquals";
 
@@ -137,10 +146,90 @@ export const catalogReducerFunction = (currentUser: CurrentUserInsight): (curren
                 return staging
             }
 
+            case "OpenSharingModalAction": {
+                // Find the album in the current state
+                const album = current.allAlbums.find(a => albumIdEquals(a.albumId, action.albumId));
+                return {
+                    ...current,
+                    shareModal: album
+                        ? {
+                            sharedAlbumId: album.albumId,
+                            sharedWith: sortSharings([...album.sharedWith]),
+                        }
+                        : undefined,
+                };
+            }
+
+            case "CloseSharingModalAction": {
+                // Remove the shareModal property
+                const { shareModal, ...rest } = current;
+                return rest as CatalogViewerState;
+            }
+
+            case "AddSharingAction": {
+                if (!current.shareModal) return current;
+                // Replace if user already exists (by email), else add
+                const newSharing = action.sharing;
+                const updatedSharedWith = [
+                    ...current.shareModal.sharedWith.filter(s => s.user.email !== newSharing.user.email),
+                    newSharing
+                ];
+                return {
+                    ...current,
+                    shareModal: {
+                        ...current.shareModal,
+                        sharedWith: sortSharings(updatedSharedWith),
+                    }
+                };
+            }
+
+            case "RemoveSharingAction": {
+                if (!current.shareModal) return current;
+                const updatedSharedWith = current.shareModal.sharedWith.filter(
+                    s => s.user.email !== action.email
+                );
+                return {
+                    ...current,
+                    shareModal: {
+                        ...current.shareModal,
+                        sharedWith: updatedSharedWith,
+                    }
+                };
+            }
+
+            case "SharingModalErrorAction": {
+                if (!current.shareModal) return current;
+                return {
+                    ...current,
+                    shareModal: {
+                        ...current.shareModal,
+                        error: action.error,
+                    }
+                };
+            }
+
             default:
                 return current
         }
     }
+}
+
+function sortSharings(sharings: Sharing[]): Sharing[] {
+    return sharings.slice().sort((a, b) => {
+        const nameA = a.user.name?.trim() || "";
+        const nameB = b.user.name?.trim() || "";
+        if (nameA && nameB) {
+            const cmp = nameA.localeCompare(nameB);
+            if (cmp !== 0) return cmp;
+            return a.user.email.localeCompare(b.user.email);
+        }
+        if (!nameA && !nameB) {
+            return a.user.email.localeCompare(b.user.email);
+        }
+        if (!nameA) return 1;
+        if (!nameB) return -1;
+        return 0;
+    });
 }
 
 export function generateAlbumFilterOptions(currentUser: CurrentUserInsight, albums: Album[]) {
