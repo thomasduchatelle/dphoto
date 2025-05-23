@@ -1,4 +1,4 @@
-import {Album, AlbumId, SharingModalAction, SharingType, UserDetails} from "../index";
+import {Album, AlbumId, CatalogViewerAction, SharingType, UserDetails} from "../index";
 
 
 export interface SharingAPI {
@@ -11,7 +11,7 @@ export interface SharingAPI {
 
 export class ShareController {
 
-    constructor(readonly dispatch: (action: SharingModalAction) => void,
+    constructor(readonly dispatch: (action: CatalogViewerAction) => void,
                 readonly sharingAPI: SharingAPI) {
     }
 
