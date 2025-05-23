@@ -14,14 +14,6 @@ export type CatalogViewerAction =
     | CloseSharingModalAction
     | SharingModalErrorAction
 
-// TODO Delete the type.
-export type SharingModalAction =
-    OpenSharingModalAction
-    | AddSharingAction
-    | RemoveSharingAction
-    | CloseSharingModalAction
-    | SharingModalErrorAction
-
 export type RedirectToAlbumIdAction = {
     redirectTo?: AlbumId
 }

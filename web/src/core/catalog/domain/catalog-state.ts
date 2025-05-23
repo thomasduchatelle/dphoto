@@ -10,7 +10,7 @@ export interface CatalogViewerState {
     error?: Error
     loadingMediasFor?: AlbumId
     albumsLoaded: boolean
-    mediasLoaded: boolean // TODO can be removed
+    mediasLoaded: boolean
     shareModal?: ShareModal
 }
 

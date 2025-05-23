@@ -1,5 +1,5 @@
 import {ShareController, SharingAPI} from "./ShareController";
-import {AlbumId, SharingModalAction, SharingType, UserDetails} from "../index";
+import {AlbumId, CatalogViewerAction, SharingType, UserDetails} from "../index";
 
 class FakeSharingAPI implements SharingAPI {
     public revokeRequests: { albumId: AlbumId, email: string }[] = [];
@@ -44,7 +44,7 @@ describe("ShareController.revokeAccess", () => {
 
     it("should call the sharingAPI.revokeSharingAlbum with appropriate parameters and dispatch a RemoveSharingAction action", async () => {
         const fakeAPI = new FakeSharingAPI();
-        const dispatched: SharingModalAction[] = [];
+        const dispatched: CatalogViewerAction[] = [];
         const controller = new ShareController(action => dispatched.push(action), fakeAPI);
 
         await controller.revokeAccess(albumId, email);
@@ -56,7 +56,7 @@ describe("ShareController.revokeAccess", () => {
     it("should dispatch a SharingModalErrorAction if the call to sharingAPI.revokeSharingAlbum raise an error", async () => {
         const fakeAPI = new FakeSharingAPI();
         fakeAPI.revokeError = new Error("[TEST] fail!");
-        const dispatched: SharingModalAction[] = [];
+        const dispatched: CatalogViewerAction[] = [];
         const controller = new ShareController(action => dispatched.push(action), fakeAPI);
 
         await controller.revokeAccess(albumId, email);
@@ -82,7 +82,7 @@ describe("ShareController.grantAccess", () => {
     it("should call the sharingAPI.grantAccessToAlbum and dispatch a AddSharingAction with values from sharingAPI.loadUserDetails", async () => {
         const fakeAPI = new FakeSharingAPI();
         fakeAPI.userDetails[email] = userDetails;
-        const dispatched: SharingModalAction[] = [];
+        const dispatched: CatalogViewerAction[] = [];
         const controller = new ShareController(action => dispatched.push(action), fakeAPI);
 
         await controller.grantAccess(albumId, email, role);
@@ -102,7 +102,7 @@ describe("ShareController.grantAccess", () => {
     it("should use the email as name if the call to sharingAPI.loadUserDetails failed and dispatch the AddSharingAction", async () => {
         const fakeAPI = new FakeSharingAPI();
         fakeAPI.userDetailsError = new Error("[TEST] fail user details");
-        const dispatched: SharingModalAction[] = [];
+        const dispatched: CatalogViewerAction[] = [];
         const controller = new ShareController(action => dispatched.push(action), fakeAPI);
 
         await controller.grantAccess(albumId, email, role);
@@ -124,7 +124,7 @@ describe("ShareController.grantAccess", () => {
     it("should dispatch SharingModalErrorAction if the sharingAPI.grantAccessToAlbum failed", async () => {
         const fakeAPI = new FakeSharingAPI();
         fakeAPI.grantError = new Error("[TEST] fail grant");
-        const dispatched: SharingModalAction[] = [];
+        const dispatched: CatalogViewerAction[] = [];
         const controller = new ShareController(action => dispatched.push(action), fakeAPI);
 
         await controller.grantAccess(albumId, email, role);

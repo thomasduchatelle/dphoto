@@ -1,6 +1,6 @@
 import {catalogReducerFunction, CurrentUserInsight, generateAlbumFilterOptions, initialCatalogState} from "./catalog-reducer";
 import {Album, AlbumFilterEntry, CatalogViewerState, MediaType, MediaWithinADay, SharingType, UserDetails} from "./catalog-state";
-import {SharingModalAction} from "./catalog-actions";
+import {CatalogViewerAction} from "./catalog-actions";
 
 describe("CatalogViewerState", () => {
     const myselfUser: CurrentUserInsight = {picture: "my-face.jpg"};
@@ -320,7 +320,7 @@ describe("CatalogViewerState", () => {
 
     it("should open the sharing modal with the appropriate albumId and already-shared list", () => {
         const catalogReducer = catalogReducerFunction(myselfUser);
-        const action: SharingModalAction = {
+        const action: CatalogViewerAction = {
             type: "OpenSharingModalAction",
             albumId: twoAlbums[0].albumId,
         };
@@ -342,7 +342,7 @@ describe("CatalogViewerState", () => {
 
     it("should close the sharing modal by clearing the shareModel property", () => {
         const catalogReducer = catalogReducerFunction(myselfUser);
-        const action: SharingModalAction = {type: "CloseSharingModalAction"};
+        const action: CatalogViewerAction = {type: "CloseSharingModalAction"};
 
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
@@ -374,7 +374,7 @@ describe("CatalogViewerState", () => {
             }
         };
         const newUser: UserDetails = {email: "bob@example.com", name: "Bob", picture: "bob-face.jpg"};
-        const action: SharingModalAction = {
+        const action: CatalogViewerAction = {
             type: "AddSharingAction",
             sharing: {
                 user: newUser,
@@ -415,7 +415,7 @@ describe("CatalogViewerState", () => {
             }
         };
         // Add the same user with a different role: user is overridden and not added
-        const action: SharingModalAction = {
+        const action: CatalogViewerAction = {
             type: "AddSharingAction",
             sharing: {
                 user: herselfUser,
@@ -456,7 +456,7 @@ describe("CatalogViewerState", () => {
                 ],
             }
         };
-        const action: SharingModalAction = {
+        const action: CatalogViewerAction = {
             type: "RemoveSharingAction",
             email: bobEmail,
         };
@@ -482,7 +482,7 @@ describe("CatalogViewerState", () => {
             shareModal: undefined,
         };
         const newUser: UserDetails = {email: "bob@example.com", name: "Bob", picture: "bob-face.jpg"};
-        const action: SharingModalAction = {
+        const action: CatalogViewerAction = {
             type: "AddSharingAction",
             sharing: twoAlbums[0].sharedWith[0],
         };
@@ -495,7 +495,7 @@ describe("CatalogViewerState", () => {
             ...loadedStateWithTwoAlbums,
             shareModal: undefined,
         };
-        const action: SharingModalAction = {
+        const action: CatalogViewerAction = {
             type: "RemoveSharingAction",
             email: herselfUser.email,
         };
@@ -516,7 +516,7 @@ describe("CatalogViewerState", () => {
                 ],
             }
         };
-        const action: SharingModalAction = {
+        const action: CatalogViewerAction = {
             type: "RemoveSharingAction",
             email: "notfound@example.com",
         };
@@ -538,7 +538,7 @@ describe("CatalogViewerState", () => {
             }
         };
         const error = {type: "adding", message: "Failed to add user"} as const;
-        const action: SharingModalAction = {
+        const action: CatalogViewerAction = {
             type: "SharingModalErrorAction",
             error,
         };
