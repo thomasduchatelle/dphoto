@@ -29,8 +29,8 @@ relevant property (a list of user details).
 
 The reducer has become a very large switch case and cannot be maintained anymore. I want it to be breakdown following principles.
 
-Each Action is placed in its own file 'action-<name of the action>.ts' with its associated test. The action name is always in lowercase except the interface
-defining it.
+Each Action is placed in its own file 'action-<name of the action>.ts' with its associated test. The action name is always in camelCase, starting with lower
+case, except the interface defining it that starts with an upper case.
 
 The action file contains:
 
