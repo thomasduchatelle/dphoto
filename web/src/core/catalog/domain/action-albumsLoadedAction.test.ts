@@ -1,4 +1,4 @@
-import {albumsLoadedAction, reduceAlbumsLoaded} from "./catalog-action-albumsLoadedAction";
+import {albumsLoadedAction, reduceAlbumsLoaded} from "./action-albumsLoadedAction";
 import {loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
 
 describe("reduceAlbumsLoaded", () => {
@@ -18,7 +18,7 @@ describe("reduceAlbumsLoaded", () => {
     });
 
     it("should update the available filters and re-apply the selected filter when receiving AlbumsLoadedAction", () => {
-        const action = albumsLoadedAction(twoAlbums, twoAlbums[0].albumId);
+        const action = albumsLoadedAction({albums: twoAlbums, redirectTo: twoAlbums[0].albumId});
         const got = reduceAlbumsLoaded({
             ...loadedStateWithTwoAlbums,
             albumFilterOptions: [loadedStateWithTwoAlbums.albumFilterOptions[0]],
@@ -37,7 +37,7 @@ describe("reduceAlbumsLoaded", () => {
     });
 
     it("should remove the album filter if the redirectTo in AlbumsLoadedAction wouldn't be displayed", () => {
-        const action = albumsLoadedAction(twoAlbums, twoAlbums[1].albumId);
+        const action = albumsLoadedAction({albums: twoAlbums, redirectTo: twoAlbums[1].albumId});
         const got = reduceAlbumsLoaded({
             ...loadedStateWithTwoAlbums,
             allAlbums: [twoAlbums[0]],

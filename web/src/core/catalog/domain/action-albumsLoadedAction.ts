@@ -1,21 +1,21 @@
-import { Album, CatalogViewerState } from "./catalog-state";
-import { RedirectToAlbumIdAction } from "./catalog-actions";
-import { generateAlbumFilterOptions } from "./catalog-reducer";
-import { albumIdEquals } from "./utils-albumIdEquals";
+import {Album, CatalogViewerState} from "./catalog-state";
+import {RedirectToAlbumIdAction} from "./catalog-actions";
+import {generateAlbumFilterOptions} from "./catalog-reducer";
+import {albumIdEquals} from "./utils-albumIdEquals";
 
 export interface AlbumsLoadedAction extends RedirectToAlbumIdAction {
     type: 'AlbumsLoadedAction'
     albums: Album[]
 }
 
-export function albumsLoadedAction(
-    albums: Album[],
-    redirectTo?: any // AlbumId | undefined
-): AlbumsLoadedAction {
+export function albumsLoadedAction(props: Omit<AlbumsLoadedAction, "type"> | Album[]): AlbumsLoadedAction {
+    if (!props || Array.isArray(props)) {
+        return albumsLoadedAction({albums: props});
+    }
+
     return {
+        ...props,
         type: 'AlbumsLoadedAction',
-        albums,
-        redirectTo,
     };
 }
 
@@ -25,7 +25,7 @@ export function albumsLoadedAction(
  */
 export function reduceAlbumsLoaded(
     current: CatalogViewerState,
-    action: Omit<AlbumsLoadedAction, "type">
+    action: AlbumsLoadedAction,
 ): CatalogViewerState {
     const albumFilterOptions = generateAlbumFilterOptions(current.currentUser, action.albums);
     const albumFilter = albumFilterOptions.find(option =>
