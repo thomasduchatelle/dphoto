@@ -9,3 +9,5 @@ export * from "./errors"
 export * from "./MediaPerDayLoader"
 export * from "./PostCreateAlbumHandler"
 export * from "./utils-albumIdEquals"
+
+export * from "./catalog-action-AlbumsAndMediasLoadedAction"
