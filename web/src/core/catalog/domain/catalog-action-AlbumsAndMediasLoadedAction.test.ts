@@ -1,5 +1,5 @@
 import { CatalogViewerState, Album, MediaWithinADay, MediaType, SharingType, UserDetails } from "./catalog-state";
-import { AlbumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded } from "./catalog-action-AlbumsAndMediasLoadedAction";
+import { albumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded } from "./catalog-action-AlbumsAndMediasLoadedAction";
 
 describe("reduceAlbumsAndMediasLoaded", () => {
     const myselfUser = {picture: "my-face.jpg"};

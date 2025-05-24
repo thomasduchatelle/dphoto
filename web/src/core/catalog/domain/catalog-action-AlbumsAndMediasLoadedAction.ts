@@ -2,14 +2,14 @@ import {Album, CatalogViewerState, MediaWithinADay} from "./catalog-state";
 import {RedirectToAlbumIdAction} from "./catalog-actions";
 import {generateAlbumFilterOptions} from "./catalog-reducer";
 
-export type AlbumsAndMediasLoadedAction = RedirectToAlbumIdAction & {
+export interface AlbumsAndMediasLoadedAction extends RedirectToAlbumIdAction {
     type: 'AlbumsAndMediasLoadedAction'
     albums: Album[]
     medias: MediaWithinADay[]
     selectedAlbum?: Album
-};
+}
 
-export function AlbumsAndMediasLoadedAction(
+export function albumsAndMediasLoadedAction(
     albums: Album[],
     medias: MediaWithinADay[],
     selectedAlbum?: Album,
@@ -25,7 +25,7 @@ export function AlbumsAndMediasLoadedAction(
 }
 
 /**
- * Reducer fragment for AlbumsAndMediasLoadedAction.
+ * Reducer fragment for albumsAndMediasLoadedAction.
  * Uses currentUser from the state.
  */
 export function reduceAlbumsAndMediasLoaded(

@@ -3,12 +3,12 @@ import { RedirectToAlbumIdAction } from "./catalog-actions";
 import { generateAlbumFilterOptions } from "./catalog-reducer";
 import { albumIdEquals } from "./utils-albumIdEquals";
 
-export type AlbumsLoadedAction = RedirectToAlbumIdAction & {
+export interface AlbumsLoadedAction extends RedirectToAlbumIdAction {
     type: 'AlbumsLoadedAction'
     albums: Album[]
-};
+}
 
-export function AlbumsLoadedAction(
+export function albumsLoadedAction(
     albums: Album[],
     redirectTo?: any // AlbumId | undefined
 ): AlbumsLoadedAction {
@@ -20,7 +20,7 @@ export function AlbumsLoadedAction(
 }
 
 /**
- * Reducer fragment for AlbumsLoadedAction.
+ * Reducer fragment for albumsLoadedAction.
  * Uses currentUser from the state.
  */
 export function reduceAlbumsLoaded(

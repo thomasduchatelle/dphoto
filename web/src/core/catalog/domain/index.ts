@@ -11,4 +11,4 @@ export * from "./PostCreateAlbumHandler"
 export * from "./utils-albumIdEquals"
 
 export * from "./catalog-action-AlbumsAndMediasLoadedAction"
-export * from "./catalog-action-AlbumsLoadedAction"
+export * from "./catalog-action-albumsLoadedAction"
