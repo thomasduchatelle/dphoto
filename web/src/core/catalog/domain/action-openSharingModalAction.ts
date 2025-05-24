@@ -1,11 +1,18 @@
 import {AlbumId, CatalogViewerState, Sharing} from "./catalog-state";
+import {albumIdEquals} from "./utils-albumIdEquals";
 
 export interface OpenSharingModalAction {
     type: "OpenSharingModalAction"
     albumId: AlbumId
 }
 
-export function openSharingModalAction(props: Omit<OpenSharingModalAction, "type">): OpenSharingModalAction {
+export function openSharingModalAction(props: AlbumId | Omit<OpenSharingModalAction, "type">): OpenSharingModalAction {
+    if ("owner" in props && "folderName" in props) {
+        return {
+            type: "OpenSharingModalAction",
+            albumId: props,
+        };
+    }
     return {
         ...props,
         type: "OpenSharingModalAction",
@@ -34,8 +41,7 @@ export function reduceOpenSharingModal(
     current: CatalogViewerState,
     action: OpenSharingModalAction,
 ): CatalogViewerState {
-    // Find the album in the current state
-    const album = current.allAlbums.find(a => a.albumId.owner === action.albumId.owner && a.albumId.folderName === action.albumId.folderName);
+    const album = current.allAlbums.find(a => albumIdEquals(a.albumId, action.albumId));
     return {
         ...current,
         shareModal: album
