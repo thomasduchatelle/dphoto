@@ -39,7 +39,8 @@ The action file contains:
 * the action function: named after the type of the action, it takes as parameters each property of the action interface and returns an object implementing the
   Action interface
 
-The associated test is copied from existing test cases with minimal changes to use the action function to create the Action, and use the reducer fragment.
+You need to copy the implementation of the reducer fragment from the existing 'catalogReducerFunction', and copy the tests relevant to this action from
+catalog-reducer.test.ts. The test will be updated to use the action function to create the Action, and assert the result of the reducer fragment.
 
 Exported from the index.ts, there will be:
 
