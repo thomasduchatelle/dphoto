@@ -1,6 +1,6 @@
-import {sharingModalErrorAction, reduceSharingModalError} from "./action-sharingModalErrorAction";
+import {reduceSharingModalError, sharingModalErrorAction} from "./action-sharingModalErrorAction";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
-import {SharingType} from "./catalog-state";
+import {ShareError, SharingType} from "./catalog-state";
 
 describe("reduceSharingModalError", () => {
     it("should set the error field when receiving SharingModalErrorAction", () => {
@@ -16,8 +16,8 @@ describe("reduceSharingModalError", () => {
                 ],
             }
         };
-        const error = {type: "adding", message: "Failed to add user"} as const;
-        const action = sharingModalErrorAction({error});
+        const error: ShareError = {type: "adding", message: "Failed to add user"};
+        const action = sharingModalErrorAction(error);
         const expected = {
             ...loadedStateWithTwoAlbums,
             shareModal: {

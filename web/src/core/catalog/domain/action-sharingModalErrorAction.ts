@@ -5,7 +5,13 @@ export interface SharingModalErrorAction {
     error: ShareError
 }
 
-export function sharingModalErrorAction(props: Omit<SharingModalErrorAction, "type">): SharingModalErrorAction {
+export function sharingModalErrorAction(props: ShareError | Omit<SharingModalErrorAction, "type">): SharingModalErrorAction {
+    if ("type" in props && "message" in props) {
+        return {
+            type: "SharingModalErrorAction",
+            error: props as ShareError,
+        }
+    }
     return {
         ...props,
         type: "SharingModalErrorAction",
