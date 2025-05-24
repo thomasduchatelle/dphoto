@@ -1,5 +1,5 @@
-import { reduceAlbumsFiltered, albumsFilteredAction } from "./action-albumsfilteredaction";
-import { loadedStateWithTwoAlbums, twoAlbums } from "./tests/test-helper-state";
+import {albumsFilteredAction, reduceAlbumsFiltered} from "./action-albumsfilteredaction";
+import {herselfOwner, loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
 
 describe("reduceAlbumsFiltered", () => {
     it("should show only directly owned album after the AlbumsFilteredAction", () => {
@@ -35,7 +35,7 @@ describe("reduceAlbumsFiltered", () => {
                 ...loadedStateWithTwoAlbums,
                 albums: [],
             },
-            albumsFilteredAction({ owners: ["herself"] })
+            albumsFilteredAction({owners: [herselfOwner]})
         );
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,
