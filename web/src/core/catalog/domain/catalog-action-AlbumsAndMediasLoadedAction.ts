@@ -1,6 +1,6 @@
-import { Album, MediaWithinADay, CatalogViewerState } from "./catalog-state";
-import { RedirectToAlbumIdAction } from "./catalog-actions";
-import { CurrentUserInsight, generateAlbumFilterOptions } from "./catalog-reducer";
+import {Album, CatalogViewerState, MediaWithinADay} from "./catalog-state";
+import {RedirectToAlbumIdAction} from "./catalog-actions";
+import {generateAlbumFilterOptions} from "./catalog-reducer";
 
 export type AlbumsAndMediasLoadedAction = RedirectToAlbumIdAction & {
     type: 'AlbumsAndMediasLoadedAction'
