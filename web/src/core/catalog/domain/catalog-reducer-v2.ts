@@ -4,6 +4,7 @@ import { reduceAlbumsLoaded } from "./action-albumsLoadedAction";
 import { reduceMediaFailedToLoad } from "./action-mediaFailedToLoadAction";
 import { reduceNoAlbumAvailable } from "./action-noalbumavailableaction";
 import { reduceStartLoadingMedias } from "./action-startloadingmediasaction";
+import { reduceAlbumsFiltered } from "./action-albumsfilteredaction";
 import { CatalogSupportedActions } from "./catalog-index";
 
 /**
@@ -38,4 +39,5 @@ export const catalogReducer = createReducer<CatalogViewerState, CatalogSupported
     MediaFailedToLoadAction: reduceMediaFailedToLoad,
     NoAlbumAvailableAction: reduceNoAlbumAvailable,
     StartLoadingMediasAction: reduceStartLoadingMedias,
+    AlbumsFilteredAction: reduceAlbumsFiltered,
 });

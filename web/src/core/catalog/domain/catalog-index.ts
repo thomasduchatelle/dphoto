@@ -3,6 +3,7 @@ import { AlbumsLoadedAction, albumsLoadedAction } from "./action-albumsLoadedAct
 import { MediaFailedToLoadAction, mediaFailedToLoadAction } from "./action-mediaFailedToLoadAction";
 import { NoAlbumAvailableAction, noAlbumAvailableAction } from "./action-noalbumavailableaction";
 import { StartLoadingMediasAction, startLoadingMediasAction } from "./action-startloadingmediasaction";
+import { AlbumsFilteredAction, albumsFilteredAction } from "./action-albumsfilteredaction";
 import { catalogReducer } from "./catalog-reducer-v2";
 
 export type CatalogSupportedActions =
@@ -10,7 +11,8 @@ export type CatalogSupportedActions =
     | AlbumsLoadedAction
     | MediaFailedToLoadAction
     | NoAlbumAvailableAction
-    | StartLoadingMediasAction;
+    | StartLoadingMediasAction
+    | AlbumsFilteredAction;
 
 export const catalogActions = {
     albumsAndMediasLoadedAction,
@@ -18,6 +20,7 @@ export const catalogActions = {
     mediaFailedToLoadAction,
     noAlbumAvailableAction,
     startLoadingMediasAction,
+    albumsFilteredAction,
 };
 
 export {
@@ -30,4 +33,5 @@ export type {
     MediaFailedToLoadAction,
     NoAlbumAvailableAction,
     StartLoadingMediasAction,
+    AlbumsFilteredAction,
 };
