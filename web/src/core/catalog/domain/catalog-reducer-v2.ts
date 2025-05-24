@@ -6,6 +6,7 @@ import {reduceNoAlbumAvailable} from "./action-noAlbumAvailableAction";
 import {reduceStartLoadingMedias} from "./action-startLoadingMediasAction";
 import {reduceAlbumsFiltered} from "./action-albumsFilteredAction";
 import {reduceOpenSharingModal} from "./action-openSharingModalAction";
+import {reduceAddSharing} from "./action-addSharingAction";
 import {CatalogSupportedActions} from "./catalog-index";
 
 export function catalogReducer(
@@ -27,6 +28,8 @@ export function catalogReducer(
             return reduceAlbumsFiltered(state, action);
         case "OpenSharingModalAction":
             return reduceOpenSharingModal(state, action);
+        case "AddSharingAction":
+            return reduceAddSharing(state, action);
         default:
             return state;
     }
