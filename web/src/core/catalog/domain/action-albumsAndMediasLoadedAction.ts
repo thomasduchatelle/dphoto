@@ -1,6 +1,7 @@
 import {Album, CatalogViewerState, MediaWithinADay} from "./catalog-state";
 import {RedirectToAlbumIdAction} from "./catalog-actions";
-import {generateAlbumFilterOptions} from "./catalog-reducer";
+
+import {albumFilterAreCriterionEqual, ALL_ALBUMS_FILTER_CRITERION, DEFAULT_ALBUM_FILTER_ENTRY, generateAlbumFilterOptions} from "./catalog-common-modifiers";
 
 export interface AlbumsAndMediasLoadedAction extends RedirectToAlbumIdAction {
     type: 'AlbumsAndMediasLoadedAction'
@@ -27,7 +28,7 @@ export function reduceAlbumsAndMediasLoaded(
     const albumFilterOptions = generateAlbumFilterOptions(current.currentUser, action.albums);
 
     return {
-        ...current,
+        currentUser: current.currentUser,
         albumNotFound: false,
         allAlbums: action.albums,
         albums: action.albums,
@@ -36,6 +37,6 @@ export function reduceAlbumsAndMediasLoaded(
         albumsLoaded: true,
         mediasLoaded: true,
         albumFilterOptions,
-        albumFilter: albumFilterOptions.find(option => option.criterion.selfOwned === undefined && option.criterion.owners.length === 0) ?? albumFilterOptions[0]
-    };
+        albumFilter: albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, ALL_ALBUMS_FILTER_CRITERION)) ?? DEFAULT_ALBUM_FILTER_ENTRY
+    }
 }

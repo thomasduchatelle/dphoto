@@ -1,4 +1,4 @@
-import {reduceMediaFailedToLoad} from "./catalog-action-MediaFailedToLoadAction";
+import {mediaFailedToLoadAction, reduceMediaFailedToLoad} from "./action-mediaFailedToLoadAction";
 import {loadedStateWithTwoAlbums, myselfUser, twoAlbums} from "./tests/test-helper-state";
 import {initialCatalogState} from "./catalog-reducer";
 
@@ -7,11 +7,11 @@ describe("reduceMediaFailedToLoad", () => {
         const testError = new Error("TEST loading error");
         const got = reduceMediaFailedToLoad(
             initialCatalogState(myselfUser),
-            {
+            mediaFailedToLoadAction({
                 error: testError,
                 albums: twoAlbums,
                 selectedAlbum: twoAlbums[0],
-            }
+            })
         );
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,
@@ -28,10 +28,10 @@ describe("reduceMediaFailedToLoad", () => {
                 ...loadedStateWithTwoAlbums,
                 allAlbums: twoAlbums,
             },
-            {
+            mediaFailedToLoadAction({
                 error: testError,
                 selectedAlbum: twoAlbums[0],
-            }
+            })
         );
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,

@@ -1,6 +1,7 @@
-import {catalogReducerFunction, generateAlbumFilterOptions, initialCatalogState} from "./catalog-reducer";
+import {catalogReducerFunction, initialCatalogState} from "./catalog-reducer";
 import {Album, AlbumFilterEntry, CatalogViewerState, CurrentUserInsight, MediaType, MediaWithinADay, SharingType, UserDetails} from "./catalog-state";
 import {CatalogViewerAction} from "./catalog-actions";
+import {generateAlbumFilterOptions} from "./catalog-common-modifiers";
 
 describe("CatalogViewerState", () => {
     const myselfUser: CurrentUserInsight = {picture: "my-face.jpg"};
