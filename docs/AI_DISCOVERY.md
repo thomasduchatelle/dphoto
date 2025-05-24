@@ -40,9 +40,11 @@ The action file contains:
   implementing the Action interface
 
 You need to make an exact copy the implementation of the reducer fragment from the existing 'catalogReducerFunction', and copy the tests relevant to this action
-from
-catalog-reducer.test.ts. Make sure the parameters passed to the reducer fragment are the same one as on the original test. Use the action function to create the
-action, but the other params must be exactly the same. The result of the reducer fragment must be exactly the same as it was defined on the original test.
+from catalog-reducer.test.ts. Make sure the parameters passed to the reducer fragment are the same one as on the original test. Use the action function to
+create the action, but the other params must be exactly the same. The result of the reducer fragment must be exactly the same as it was defined on the original
+test.
+
+Do not add comments on the functions you're creating.
 
 Register the reducer fragment in web/src/core/catalog/domain/catalog-reducer.ts.
 

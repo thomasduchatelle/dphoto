@@ -1,17 +1,10 @@
-import { CatalogViewerState } from "./catalog-state";
-import { DEFAULT_ALBUM_FILTER_ENTRY } from "./catalog-common-modifiers";
+import {CatalogViewerState} from "./catalog-state";
+import {DEFAULT_ALBUM_FILTER_ENTRY} from "./catalog-common-modifiers";
 
-/**
- * NoAlbumAvailableAction interface
- */
 export interface NoAlbumAvailableAction {
     type: 'NoAlbumAvailableAction'
 }
 
-/**
- * Reducer fragment for NoAlbumAvailableAction.
- * Returns the state when no album is available.
- */
 export function reduceNoAlbumAvailable(
     current: CatalogViewerState,
     action: NoAlbumAvailableAction
@@ -29,9 +22,6 @@ export function reduceNoAlbumAvailable(
     };
 }
 
-/**
- * Action creator for NoAlbumAvailableAction.
- */
 export function noAlbumAvailableAction(): NoAlbumAvailableAction {
     return { type: "NoAlbumAvailableAction" };
 }

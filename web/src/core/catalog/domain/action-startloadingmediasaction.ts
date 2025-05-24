@@ -1,17 +1,14 @@
-import { CatalogViewerState, AlbumId } from "./catalog-state";
+import {AlbumId, CatalogViewerState} from "./catalog-state";
 
-/**
- * StartLoadingMediasAction interface
- */
 export interface StartLoadingMediasAction {
     type: 'StartLoadingMediasAction'
     albumId: AlbumId
 }
 
-/**
- * Reducer fragment for StartLoadingMediasAction.
- * Resets medias, error, and sets loadingMediasFor, albumNotFound, mediasLoaded.
- */
+export function startLoadingMediasAction(albumId: AlbumId): StartLoadingMediasAction {
+    return {type: "StartLoadingMediasAction", albumId};
+}
+
 export function reduceStartLoadingMedias(
     current: CatalogViewerState,
     action: StartLoadingMediasAction
@@ -24,11 +21,4 @@ export function reduceStartLoadingMedias(
         albumNotFound: false,
         mediasLoaded: false,
     };
-}
-
-/**
- * Action creator for StartLoadingMediasAction.
- */
-export function startLoadingMediasAction(albumId: AlbumId): StartLoadingMediasAction {
-    return { type: "StartLoadingMediasAction", albumId };
 }
