@@ -1,4 +1,6 @@
 export interface CatalogViewerState {
+    currentUser: CurrentUserInsight // immutable - the whole context is unmounted and remounted when the user changes
+
     albumNotFound: boolean
     allAlbums: Album[]
     albumFilterOptions: AlbumFilterEntry[],
@@ -12,6 +14,10 @@ export interface CatalogViewerState {
     albumsLoaded: boolean
     mediasLoaded: boolean
     shareModal?: ShareModal
+}
+
+export interface CurrentUserInsight {
+    picture?: string
 }
 
 export enum MediaType {
@@ -110,4 +116,12 @@ export function albumMatchCriterion(criterion: AlbumFilterCriterion): (album: Al
             return criterion.owners.length === 0 || criterion.owners.includes(album.albumId.owner)
         }
     };
+}
+
+export type RedirectToAlbumIdAction = {
+    redirectTo?: AlbumId
+}
+
+export function isRedirectToAlbumIdAction(arg: any): arg is RedirectToAlbumIdAction {
+    return arg.redirectTo
 }

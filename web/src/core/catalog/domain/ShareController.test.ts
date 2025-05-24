@@ -1,5 +1,6 @@
 import {ShareController, SharingAPI} from "./ShareController";
-import {AlbumId, CatalogViewerAction, SharingType, UserDetails} from "../index";
+import {AlbumId, SharingType, UserDetails} from "./catalog-state";
+import {catalogActions, CatalogViewerAction} from "./catalog-reducer-v2";
 
 class FakeSharingAPI implements SharingAPI {
     public revokeRequests: { albumId: AlbumId, email: string }[] = [];
@@ -62,13 +63,10 @@ describe("ShareController.revokeAccess", () => {
         await controller.revokeAccess(albumId, email);
 
         expect(dispatched).toEqual([
-            {
-                type: "SharingModalErrorAction",
-                error: {
-                    type: "general",
-                    message: `Couldn't revoke access of user ${email}, try again later`
-                }
-            }
+            catalogActions.sharingModalErrorAction({
+                type: "general",
+                message: `Couldn't revoke access of user ${email}, try again later`
+            })
         ]);
     });
 });
@@ -89,13 +87,12 @@ describe("ShareController.grantAccess", () => {
 
         expect(fakeAPI.grantRequests).toEqual([{albumId, email, role}]);
         expect(dispatched).toEqual([
-            {
-                type: "AddSharingAction",
+            catalogActions.addSharingAction({
                 sharing: {
                     user: userDetails,
                     role,
                 }
-            }
+            })
         ]);
     });
 
@@ -108,16 +105,13 @@ describe("ShareController.grantAccess", () => {
         await controller.grantAccess(albumId, email, role);
 
         expect(dispatched).toEqual([
-            {
-                type: "AddSharingAction",
-                sharing: {
-                    user: {
-                        email,
-                        name: email,
-                    },
-                    role,
-                }
-            }
+            catalogActions.addSharingAction({
+                user: {
+                    email,
+                    name: email,
+                },
+                role,
+            })
         ]);
     });
 
@@ -131,13 +125,13 @@ describe("ShareController.grantAccess", () => {
 
         expect(fakeAPI.grantRequests).toEqual([{albumId, email, role}]);
         expect(dispatched).toEqual([
-            {
-                type: "SharingModalErrorAction",
+            catalogActions.sharingModalErrorAction({
+
                 error: {
                     type: "adding",
                     message: "Failed to grant access, verify the email address or contact maintainers"
                 }
-            }
+            })
         ]);
     });
 });

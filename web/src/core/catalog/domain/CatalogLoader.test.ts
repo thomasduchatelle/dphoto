@@ -2,7 +2,7 @@ import {HasType} from "./ActionObserver";
 import {Album, AlbumId, Media, MediaId, MediaType} from "./catalog-state";
 import {CatalogLoader, FetchAlbumsPort, PartialCatalogLoaderState} from "./CatalogLoader";
 import {FetchAlbumMediasPort, MediaPerDayLoader} from "./MediaPerDayLoader";
-import {AlbumsAndMediasLoadedAction, MediasLoadedAction} from "./catalog-actions";
+import {AlbumsAndMediasLoadedAction, MediasLoadedAction, catalogActions} from "./catalog-reducer-v2";
 
 
 const twoAlbums: Album[] = [
@@ -77,12 +77,11 @@ describe("CatalogLoader", () => {
         await loader.onPageRefresh(twoAlbums[0].albumId)
 
         expect(dispatch.actions).toEqual([
-            {
-                type: 'AlbumsAndMediasLoadedAction',
+            catalogActions.albumsAndMediasLoadedAction({
                 albums: twoAlbums,
                 medias: expectedMediasPerDay,
                 selectedAlbum: twoAlbums[0],
-            } as AlbumsAndMediasLoadedAction,
+            }),
         ])
     })
 
@@ -92,12 +91,11 @@ describe("CatalogLoader", () => {
         await loader.onPageRefresh(twoAlbums[0].albumId)
 
         expect(dispatch.actions).toEqual([
-            {
-                type: 'MediaFailedToLoadAction',
+            catalogActions.mediaFailedToLoadAction({
                 albums: twoAlbums,
                 selectedAlbum: twoAlbums[0],
                 error: new Error(`failed to load medias of ${twoAlbums[0].albumId}`, error),
-            }
+            })
         ])
     })
 
@@ -121,13 +119,12 @@ describe("CatalogLoader", () => {
         await loader.onPageRefresh(undefined)
 
         expect(dispatch.actions).toEqual([
-            {
-                type: 'AlbumsAndMediasLoadedAction',
+            catalogActions.albumsAndMediasLoadedAction({
                 albums: twoAlbums,
                 medias: expectedMediasPerDay,
                 selectedAlbum: twoAlbums[0],
                 redirectTo: twoAlbums[0].albumId,
-            } as AlbumsAndMediasLoadedAction,
+            }),
         ])
     })
 
@@ -144,12 +141,11 @@ describe("CatalogLoader", () => {
         await loader.onPageRefresh(undefined)
 
         expect(dispatch.actions).toEqual([
-            {
-                type: 'MediaFailedToLoadAction',
+            catalogActions.mediaFailedToLoadAction({
                 albums: twoAlbums,
                 selectedAlbum: twoAlbums[0],
                 error: new Error(`failed to load medias of ${twoAlbums[0].albumId}`, error),
-            },
+            }),
         ])
     })
 
@@ -165,11 +161,10 @@ describe("CatalogLoader", () => {
         await loader.onPageRefresh(twoAlbums[1].albumId)
 
         expect(dispatch.actions).toEqual([
-            {
-                type: 'MediasLoadedAction',
+            catalogActions.mediasLoadedAction({
                 albumId: twoAlbums[1].albumId,
                 medias: [],
-            } as MediasLoadedAction,
+            }),
         ])
     })
 
@@ -189,11 +184,10 @@ describe("CatalogLoader", () => {
         await loader.onPageRefresh(twoAlbums[1].albumId)
 
         expect(dispatch.actions).toEqual([
-            {
-                type: 'MediaFailedToLoadAction',
+            catalogActions.mediaFailedToLoadAction({
                 selectedAlbum: twoAlbums[1],
                 error,
-            },
+            }),
         ])
     })
 })

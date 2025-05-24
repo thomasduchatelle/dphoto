@@ -1,5 +1,5 @@
 import {ActionObserver} from "./ActionObserver";
-import {AlbumsAndMediasLoadedAction, MediaFailedToLoadAction, MediasLoadedAction, NoAlbumAvailableAction} from "./catalog-actions";
+import {AlbumsAndMediasLoadedAction, catalogActions, MediaFailedToLoadAction, MediasLoadedAction, NoAlbumAvailableAction} from "./catalog-reducer-v2";
 import {MediaPerDayLoader} from "./MediaPerDayLoader";
 import {Album, AlbumId} from "./catalog-state";
 import {albumIdEquals} from "./utils-albumIdEquals";
@@ -38,18 +38,13 @@ export class CatalogLoader {
         } else if (albumsLoaded && !albumIdEquals(mediasLoadedFromAlbumId, albumId) && !albumIdEquals(loadingMediasFor, albumId)) {
             return this.mediaPerDayLoader.loadMedias(albumId)
                 .then(medias => {
-                    this.dispatch({
-                        type: 'MediasLoadedAction',
-                        albumId,
-                        medias: medias.medias,
-                    })
+                    this.dispatch(catalogActions.mediasLoadedAction({albumId, medias: medias.medias}))
                 })
                 .catch(error => {
-                    this.dispatch({
-                        type: 'MediaFailedToLoadAction',
+                    this.dispatch(catalogActions.mediaFailedToLoadAction({
                         selectedAlbum: allAlbums.find(a => albumIdEquals(a.albumId, albumId)),
                         error,
-                    })
+                    }))
                 })
         }
 
@@ -80,12 +75,11 @@ export class CatalogLoader {
             const medias = mediasResp.value.medias
 
             const selectedAlbum = albums.find(a => albumIdEquals(a.albumId, albumId))
-            return {
+            return catalogActions.albumsAndMediasLoadedAction({
                 albums: albums,
-                medias: medias,
+                medias,
                 selectedAlbum,
-                type: 'AlbumsAndMediasLoadedAction',
-            } as AlbumsAndMediasLoadedAction
+            })
         }
     }
 

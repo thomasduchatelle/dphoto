@@ -1,4 +1,4 @@
-import {AlbumsFilteredAction, CatalogViewerAction} from "./catalog-actions";
+import {AlbumsFilteredAction, CatalogViewerAction, catalogActions} from "./catalog-reducer-v2";
 import {AlbumFilterHandler, AlbumFilterHandlerState} from "./AlbumFilterHandler";
 import {Album, AlbumFilterCriterion, AlbumFilterEntry} from "./catalog-state";
 
@@ -33,10 +33,7 @@ describe('AlbumFilterHandler', () => {
                 partialState: {selectedAlbum: selfOwnedAlbum, allAlbums: [selfOwnedAlbum]},
                 criterion: selfOwnedFilterEntry.criterion,
                 expectedActions: [
-                    {
-                        type: 'AlbumsFilteredAction',
-                        criterion: selfOwnedFilterEntry.criterion,
-                    }
+                    catalogActions.albumsFilteredAction({criterion: selfOwnedFilterEntry.criterion}),
                 ]
             }],
         ["should change the current albumId if the new filter is filtering out the currently selected album",
@@ -44,11 +41,7 @@ describe('AlbumFilterHandler', () => {
                 partialState: {selectedAlbum: someoneElseOwnedAlbum, allAlbums: [selfOwnedAlbum, someoneElseOwnedAlbum]},
                 criterion: selfOwnedFilterEntry.criterion,
                 expectedActions: [
-                    {
-                        type: 'AlbumsFilteredAction',
-                        criterion: selfOwnedFilterEntry.criterion,
-                        redirectTo: selfOwnedAlbum.albumId,
-                    }
+                    catalogActions.albumsFilteredAction({criterion: selfOwnedFilterEntry.criterion, redirectTo: selfOwnedAlbum.albumId}),
                 ]
             }],
         ["should select an album if no album was selected",
@@ -56,11 +49,7 @@ describe('AlbumFilterHandler', () => {
                 partialState: {selectedAlbum: undefined, allAlbums: [selfOwnedAlbum, someoneElseOwnedAlbum]},
                 criterion: selfOwnedFilterEntry.criterion,
                 expectedActions: [
-                    {
-                        type: 'AlbumsFilteredAction',
-                        criterion: selfOwnedFilterEntry.criterion,
-                        redirectTo: selfOwnedAlbum.albumId,
-                    },
+                    catalogActions.albumsFilteredAction({criterion: selfOwnedFilterEntry.criterion, redirectTo: selfOwnedAlbum.albumId}),
                 ]
             }],
         ["should not select any album if there is no album in the list",
@@ -68,10 +57,7 @@ describe('AlbumFilterHandler', () => {
                 partialState: {selectedAlbum: undefined, allAlbums: []},
                 criterion: selfOwnedFilterEntry.criterion,
                 expectedActions: [
-                    {
-                        type: 'AlbumsFilteredAction',
-                        criterion: selfOwnedFilterEntry.criterion,
-                    },
+                    catalogActions.albumsFilteredAction({criterion: selfOwnedFilterEntry.criterion}),
                 ]
             }],
     ]

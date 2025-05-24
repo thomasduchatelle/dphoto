@@ -1,4 +1,5 @@
-import {Album, AlbumId, CatalogViewerAction, SharingType, UserDetails} from "../index";
+import {Album, AlbumId, SharingType, UserDetails} from "./catalog-state";
+import {CatalogViewerAction, catalogActions} from "./catalog-reducer-v2";
 
 
 export interface SharingAPI {
@@ -16,11 +17,11 @@ export class ShareController {
     }
 
     public openSharingModal = (album: Album): void => {
-        this.dispatch({type: "OpenSharingModalAction", albumId: album.albumId})
+        this.dispatch(catalogActions.openSharingModalAction({albumId: album.albumId}))
     }
 
     public onClose = (): void => {
-        this.dispatch({type: "CloseSharingModalAction"})
+        this.dispatch(catalogActions.closeSharingModalAction())
     }
 
     public revokeAccess = (albumId: AlbumId, email: string): Promise<void> => {
@@ -29,13 +30,12 @@ export class ShareController {
         }
 
         return this.sharingAPI.revokeSharingAlbum(albumId, email)
-            .then(() => this.dispatch({type: "RemoveSharingAction", email}))
+            .then(() => this.dispatch(catalogActions.removeSharingAction({email})))
             .catch(err => {
                 console.log(`ERROR: ${JSON.stringify(err)}`)
-                this.dispatch({
-                    type: "SharingModalErrorAction",
+                this.dispatch(catalogActions.sharingModalErrorAction({
                     error: {type: "general", message: `Couldn't revoke access of user ${email}, try again later`}
-                })
+                }))
             })
     }
 
@@ -51,23 +51,22 @@ export class ShareController {
                         } as UserDetails)
                     })
                     .then(details => {
-                        this.dispatch({
-                            type: "AddSharingAction", sharing: {
+                        this.dispatch(catalogActions.addSharingAction({
+                            sharing: {
                                 user: details,
                                 role: role,
                             }
-                        })
+                        }))
                     })
             )
             .catch(err => {
                 console.log(`ERROR: ${JSON.stringify(err)}`)
-                this.dispatch({
-                    type: "SharingModalErrorAction",
+                this.dispatch(catalogActions.sharingModalErrorAction({
                     error: {
                         type: "adding",
                         message: "Failed to grant access, verify the email address or contact maintainers"
                     }
-                })
+                }))
             })
     }
 }

@@ -1,5 +1,5 @@
 import {Album, AlbumFilterCriterion, albumMatchCriterion} from "./catalog-state";
-import {AlbumsFilteredAction, MediasLoadedAction} from "./catalog-actions";
+import {AlbumsFilteredAction, MediasLoadedAction, catalogActions} from "./catalog-reducer-v2";
 
 export interface AlbumFilterHandlerState {
     selectedAlbum?: Album
@@ -18,18 +18,11 @@ export class AlbumFilterHandler {
     public onAlbumFilter = (criterion: AlbumFilterCriterion,) => {
         const match = albumMatchCriterion(criterion);
         if (this.partialState.selectedAlbum && match(this.partialState.selectedAlbum)) {
-            this.dispatch({
-                type: "AlbumsFilteredAction",
-                criterion: criterion,
-            })
+            this.dispatch(catalogActions.albumsFilteredAction({criterion: criterion}))
             return
         }
 
         const nextSelectedAlbumId = this.partialState.allAlbums.find(album => match(album))?.albumId;
-        this.dispatch({
-            type: "AlbumsFilteredAction",
-            criterion: criterion,
-            redirectTo: nextSelectedAlbumId,
-        })
+        this.dispatch(catalogActions.albumsFilteredAction({criterion: criterion, redirectTo: nextSelectedAlbumId}))
     }
 }
