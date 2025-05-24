@@ -1,8 +1,9 @@
-import {CatalogViewerState} from "./catalog-state";
-import {reduceAlbumsAndMediasLoaded} from "./action-albumsAndMediasLoadedAction";
-import {reduceAlbumsLoaded} from "./action-albumsLoadedAction";
-import {reduceMediaFailedToLoad} from "./action-mediaFailedToLoadAction";
-import {CatalogSupportedActions} from "./catalog-index";
+import { CatalogViewerState } from "./catalog-state";
+import { reduceAlbumsAndMediasLoaded } from "./action-albumsAndMediasLoadedAction";
+import { reduceAlbumsLoaded } from "./action-albumsLoadedAction";
+import { reduceMediaFailedToLoad } from "./action-mediaFailedToLoadAction";
+import { reduceNoAlbumAvailable } from "./action-noalbumavailableaction";
+import { CatalogSupportedActions } from "./catalog-index";
 
 /**
  * Utility to create a reducer from a map of action handlers.
@@ -34,4 +35,5 @@ export const catalogReducer = createReducer<CatalogViewerState, CatalogSupported
     AlbumsAndMediasLoadedAction: reduceAlbumsAndMediasLoaded,
     AlbumsLoadedAction: reduceAlbumsLoaded,
     MediaFailedToLoadAction: reduceMediaFailedToLoad,
+    NoAlbumAvailableAction: reduceNoAlbumAvailable,
 });
