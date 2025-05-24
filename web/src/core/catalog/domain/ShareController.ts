@@ -1,4 +1,5 @@
-import {Album, AlbumId, CatalogViewerAction, SharingType, UserDetails} from "../index";
+import {Album, AlbumId, SharingType, UserDetails} from "./catalog-state";
+import {CatalogViewerAction} from "./catalog-actions";
 
 
 export interface SharingAPI {

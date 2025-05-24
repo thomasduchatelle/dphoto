@@ -1,8 +1,6 @@
-import { AlbumsAndMediasLoadedAction, albumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded } from "./catalog-action-AlbumsAndMediasLoadedAction";
-import { AlbumsLoadedAction, albumsLoadedAction, reduceAlbumsLoaded } from "./catalog-action-albumsLoadedAction";
-import { MediaFailedToLoadAction, mediaFailedToLoadAction, reduceMediaFailedToLoad } from "./catalog-action-MediaFailedToLoadAction";
-import { createReducer } from "./catalog-reducer-v2";
-import { CatalogViewerState } from "./catalog-state";
+import {AlbumsAndMediasLoadedAction, albumsAndMediasLoadedAction} from "./catalog-action-AlbumsAndMediasLoadedAction";
+import {AlbumsLoadedAction, albumsLoadedAction} from "./catalog-action-albumsLoadedAction";
+import {MediaFailedToLoadAction, mediaFailedToLoadAction} from "./catalog-action-MediaFailedToLoadAction";
 
 export type CatalogSupportedActions =
     | AlbumsAndMediasLoadedAction
@@ -14,12 +12,6 @@ export const catalogActions = {
     albumsLoadedAction,
     mediaFailedToLoadAction,
 };
-
-export const catalogReducer = createReducer<CatalogViewerState, CatalogSupportedActions>({
-    AlbumsAndMediasLoadedAction: reduceAlbumsAndMediasLoaded,
-    AlbumsLoadedAction: reduceAlbumsLoaded,
-    MediaFailedToLoadAction: reduceMediaFailedToLoad,
-});
 
 export type {
     AlbumsAndMediasLoadedAction,

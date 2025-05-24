@@ -1,3 +1,9 @@
+import {CatalogViewerState} from "./catalog-state";
+import {reduceAlbumsAndMediasLoaded} from "./catalog-action-AlbumsAndMediasLoadedAction";
+import {reduceAlbumsLoaded} from "./catalog-action-albumsLoadedAction";
+import {reduceMediaFailedToLoad} from "./catalog-action-MediaFailedToLoadAction";
+import {CatalogSupportedActions} from "./catalog-index";
+
 /**
  * Utility to create a reducer from a map of action handlers.
  * 
@@ -23,3 +29,9 @@ export function createReducer<TState, TActions extends { type: string }>(
         return state;
     };
 }
+
+export const catalogReducer = createReducer<CatalogViewerState, CatalogSupportedActions>({
+    AlbumsAndMediasLoadedAction: reduceAlbumsAndMediasLoaded,
+    AlbumsLoadedAction: reduceAlbumsLoaded,
+    MediaFailedToLoadAction: reduceMediaFailedToLoad,
+});

@@ -1,11 +1,12 @@
-import { mediaFailedToLoadAction, reduceMediaFailedToLoad } from "./catalog-action-MediaFailedToLoadAction";
-import { loadedStateWithTwoAlbums, twoAlbums, herselfUser } from "./tests/test-helper-state";
+import {reduceMediaFailedToLoad} from "./catalog-action-MediaFailedToLoadAction";
+import {loadedStateWithTwoAlbums, myselfUser, twoAlbums} from "./tests/test-helper-state";
+import {initialCatalogState} from "./catalog-reducer";
 
 describe("reduceMediaFailedToLoad", () => {
     it("should set the errors and clears medias and media loading status when reducing MediaFailedToLoadAction", () => {
         const testError = new Error("TEST loading error");
         const got = reduceMediaFailedToLoad(
-            loadedStateWithTwoAlbums,
+            initialCatalogState(myselfUser),
             {
                 error: testError,
                 albums: twoAlbums,

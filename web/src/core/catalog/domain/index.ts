@@ -7,4 +7,5 @@ export * from "./MediaPerDayLoader"
 export * from "./PostCreateAlbumHandler"
 export * from "./utils-albumIdEquals"
 export * from "./catalog-index"
+export {catalogReducer} from "./catalog-reducer-v2";
 

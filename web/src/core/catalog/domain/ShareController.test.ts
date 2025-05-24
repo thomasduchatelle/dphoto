@@ -1,5 +1,6 @@
 import {ShareController, SharingAPI} from "./ShareController";
-import {AlbumId, CatalogViewerAction, SharingType, UserDetails} from "../index";
+import {AlbumId, SharingType, UserDetails} from "./catalog-state";
+import {CatalogViewerAction} from "./catalog-actions";
 
 class FakeSharingAPI implements SharingAPI {
     public revokeRequests: { albumId: AlbumId, email: string }[] = [];
