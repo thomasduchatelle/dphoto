@@ -1,11 +1,15 @@
-import {albumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded} from "./catalog-action-AlbumsAndMediasLoadedAction";
+import {albumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded} from "./action-albumsAndMediasLoadedAction";
 import {loadedStateWithTwoAlbums, myselfUser, someMedias, twoAlbums} from "./tests/test-helper-state";
 import {initialCatalogState} from "./catalog-reducer";
 
 describe("reduceAlbumsAndMediasLoaded", () => {
 
     it("should add the loaded albums and medias to the state, and reset all status when receiving AlbumsAndMediasLoadedAction", () => {
-        const action = albumsAndMediasLoadedAction(twoAlbums, someMedias, twoAlbums[0]);
+        const action = albumsAndMediasLoadedAction({
+            albums: twoAlbums,
+            medias: someMedias,
+            selectedAlbum: twoAlbums[0],
+        });
         const got = reduceAlbumsAndMediasLoaded({
             ...initialCatalogState(myselfUser),
             albumNotFound: true,
@@ -17,7 +21,11 @@ describe("reduceAlbumsAndMediasLoaded", () => {
     });
 
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums) when receiving AlbumsAndMediasLoadedAction", () => {
-        const action = albumsAndMediasLoadedAction([twoAlbums[0]], someMedias, twoAlbums[0]);
+        const action = albumsAndMediasLoadedAction({
+            albums: [twoAlbums[0]],
+            medias: someMedias,
+            selectedAlbum: twoAlbums[0],
+        });
         const got = reduceAlbumsAndMediasLoaded(initialCatalogState(myselfUser), action);
 
         const allAlbumFilter = {

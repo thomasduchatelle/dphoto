@@ -29,24 +29,29 @@ relevant property (a list of user details).
 
 The reducer has become a very large switch case and cannot be maintained anymore. I want it to be breakdown following principles.
 
-Each Action is placed in its own file 'catalog-action-<name of the action>.ts' with its associated test.
+Each Action is placed in its own file 'action-<name of the action>.ts' with its associated test. The action name is always in lowercase except the interface
+defining it.
 
 The action file contains:
 
 * the interface defining the action with a 'type' and other properties, they should be copied without changes
-* the reducer fragment, a function taking 2 parameters: the previous state, and action (of the type of interface except 'type' property), and returning the new
-  state
-* the action function: named after the type of the action, it takes as parameters each property of the action interface and returns an object implementing the
-  Action interface
+* the reducer fragment, a function taking 2 parameters: the previous state, and action (of the type of interface), and returning the new state
+* the action function: named after the type of the action, it takes as parameters the action interface (except 'type' property) and returns an object
+  implementing the Action interface
 
 You need to copy the implementation of the reducer fragment from the existing 'catalogReducerFunction', and copy the tests relevant to this action from
-catalog-reducer.test.ts. The test will be updated to use the action function to create the Action, and assert the result of the reducer fragment.
+catalog-reducer.test.ts. Make sure the parameters passed to the reducer fragment are the same one as on the original test. Use the action function to create the
+action, but the other params must be exactly the same. The result of the reducer fragment must be exactly the same as it was defined on the original test.
 
-Exported from the index.ts, there will be:
+Register the reducer fragment in web/src/core/catalog/domain/catalog-reducer.ts.
+
+Update the file web/src/core/catalog/domain/catalog-index.ts to export:
 
 * all action interfaces
 * an "catalogActions" object with each action function as property
 * the catalog reducer which is a conventional reducer function: parameters are current state and an action of teh type of one of the supported Action type.
+
+#### UI: Reducer mechanics
 
 A function 'createReducer' will be created and used for the catalogReducer. It takes an object with one property per action supported: property name is the name
 of the action, and the value is the related reducer fragment.

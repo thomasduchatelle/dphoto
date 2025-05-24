@@ -9,18 +9,10 @@ export interface AlbumsAndMediasLoadedAction extends RedirectToAlbumIdAction {
     selectedAlbum?: Album
 }
 
-export function albumsAndMediasLoadedAction(
-    albums: Album[],
-    medias: MediaWithinADay[],
-    selectedAlbum?: Album,
-    redirectTo?: any // AlbumId | undefined
-): AlbumsAndMediasLoadedAction {
+export function albumsAndMediasLoadedAction(props: Omit<AlbumsAndMediasLoadedAction, "type">): AlbumsAndMediasLoadedAction {
     return {
+        ...props,
         type: 'AlbumsAndMediasLoadedAction',
-        albums,
-        medias,
-        selectedAlbum,
-        redirectTo,
     };
 }
 
@@ -30,7 +22,7 @@ export function albumsAndMediasLoadedAction(
  */
 export function reduceAlbumsAndMediasLoaded(
     current: CatalogViewerState,
-    action: Omit<AlbumsAndMediasLoadedAction, "type">
+    action: AlbumsAndMediasLoadedAction
 ): CatalogViewerState {
     const albumFilterOptions = generateAlbumFilterOptions(current.currentUser, action.albums);
 

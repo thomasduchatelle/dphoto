@@ -1,5 +1,5 @@
-import {AlbumsAndMediasLoadedAction, albumsAndMediasLoadedAction} from "./catalog-action-AlbumsAndMediasLoadedAction";
-import {AlbumsLoadedAction, albumsLoadedAction} from "./catalog-action-albumsLoadedAction";
+import {AlbumsAndMediasLoadedAction, albumsAndMediasLoadedAction} from "./action-albumsAndMediasLoadedAction";
+import {AlbumsLoadedAction, albumsLoadedAction} from "./catalog-action-AlbumsLoadedAction";
 import {MediaFailedToLoadAction, mediaFailedToLoadAction} from "./catalog-action-MediaFailedToLoadAction";
 
 export type CatalogSupportedActions =

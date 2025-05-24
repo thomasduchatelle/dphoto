@@ -1,5 +1,5 @@
 import {CatalogViewerState} from "./catalog-state";
-import {reduceAlbumsAndMediasLoaded} from "./catalog-action-AlbumsAndMediasLoadedAction";
+import {reduceAlbumsAndMediasLoaded} from "./action-albumsAndMediasLoadedAction";
 import {reduceAlbumsLoaded} from "./catalog-action-albumsLoadedAction";
 import {reduceMediaFailedToLoad} from "./catalog-action-MediaFailedToLoadAction";
 import {CatalogSupportedActions} from "./catalog-index";
