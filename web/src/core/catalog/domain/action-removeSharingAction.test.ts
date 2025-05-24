@@ -1,6 +1,6 @@
-import {removeSharingAction, reduceRemoveSharing} from "./action-removeSharingAction";
+import {reduceRemoveSharing, removeSharingAction} from "./action-removeSharingAction";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
-import {SharingType, UserDetails} from "./catalog-state";
+import {SharingType} from "./catalog-state";
 
 describe("reduceRemoveSharing", () => {
     it("should remove a sharing entry by email and keep the modal open when receiving RemoveSharingAction", () => {
@@ -39,11 +39,7 @@ describe("reduceRemoveSharing", () => {
 
     it("should not change state when RemoveSharingAction is received and shareModal is undefined", () => {
         const action = removeSharingAction(herselfUser.email);
-        const initial = {
-            ...loadedStateWithTwoAlbums,
-            shareModal: undefined,
-        };
-        expect(reduceRemoveSharing(initial, action)).toEqual(initial);
+        expect(reduceRemoveSharing(loadedStateWithTwoAlbums, action)).toEqual(loadedStateWithTwoAlbums);
     });
 
     it("should not change state when RemoveSharingAction is received with an email not in sharedWith", () => {

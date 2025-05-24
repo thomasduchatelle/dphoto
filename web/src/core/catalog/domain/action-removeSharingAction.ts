@@ -26,10 +26,6 @@ export function reduceRemoveSharing(
     const updatedSharedWith = current.shareModal.sharedWith.filter(
         s => s.user.email !== action.email
     );
-    // If nothing was removed, return current (to match original reducer/test behavior)
-    if (updatedSharedWith.length === current.shareModal.sharedWith.length) {
-        return current;
-    }
     return {
         ...current,
         shareModal: {
