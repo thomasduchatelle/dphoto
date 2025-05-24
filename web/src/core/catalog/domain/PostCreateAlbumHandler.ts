@@ -1,6 +1,6 @@
 import {AlbumId} from "./catalog-state";
 import {CreateAlbumListener} from "./CreateAlbumController";
-import {AlbumsLoadedAction} from "./catalog-actions";
+import {AlbumsLoadedAction, catalogActions} from "./catalog-reducer-v2";
 import {FetchAlbumsPort} from "./CatalogLoader";
 
 export class PostCreateAlbumHandler implements CreateAlbumListener {
@@ -13,10 +13,6 @@ export class PostCreateAlbumHandler implements CreateAlbumListener {
 
     onAlbumCreated = async (albumId: AlbumId): Promise<void> => {
         const albums = await this.fetchAlbumsPort.fetchAlbums()
-        this.dispatch({
-            type: 'AlbumsLoadedAction',
-            albums: albums,
-            redirectTo: albumId,
-        })
+        this.dispatch(catalogActions.albumsLoadedAction({albums: albums, redirectTo: albumId}))
     }
 }

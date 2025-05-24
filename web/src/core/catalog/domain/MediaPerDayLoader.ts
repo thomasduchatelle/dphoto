@@ -1,4 +1,4 @@
-import {mediasLoadedAction, MediasLoadedAction} from "./catalog-actions";
+import {catalogActions, MediasLoadedAction} from "./catalog-reducer-v2";
 import {AlbumId, Media, MediaWithinADay} from "./catalog-state";
 
 
@@ -15,10 +15,10 @@ export class MediaPerDayLoader {
 
     public async loadMedias(albumId: AlbumId): Promise<MediasLoadedAction> {
         const medias = await this.fetchAlbumMediasPort.fetchMedias(albumId)
-        return mediasLoadedAction(albumId, this.groupByDay(medias))
+        return catalogActions.mediasLoadedAction({albumId, medias: this.groupByDay(medias)})
     }
 
-    groupByDay(medias: Media[]): MediaWithinADay[] {
+    private groupByDay(medias: Media[]): MediaWithinADay[] {
         let result: MediaWithinADay[] = []
 
         medias.forEach(m => {

@@ -6,7 +6,7 @@ import {
     AlbumId,
     albumIdEquals,
     CatalogLoader,
-    catalogReducerFunction,
+    catalogReducer,
     CatalogViewerAction,
     initialCatalogState,
     isRedirectToAlbumIdAction,
@@ -22,7 +22,7 @@ import {ShareController} from "../../catalog/domain/ShareController";
 import {CatalogAPIAdapter} from "../../catalog/adapters/api";
 
 export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch>({
-    state: initialCatalogState,
+    state: initialCatalogState({}),
     handlers: {
         onAlbumFilterChange: () => {
         },
@@ -50,7 +50,7 @@ export const CatalogViewerProvider = (
     const app = useApplication()
     const unrecoverableErrorDispatch = useUnrecoverableErrorDispatch()
 
-    const [catalog, dispatch] = useReducer(catalogReducerFunction(authenticatedUser), initialCatalogState)
+    const [catalog, dispatch] = useReducer(catalogReducer, initialCatalogState(authenticatedUser))
     const dispatchPropagator = useCallback((action: CatalogViewerAction) => {
         dispatch(action)
 

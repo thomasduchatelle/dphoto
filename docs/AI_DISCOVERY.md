@@ -25,6 +25,72 @@ The requests to sharingAPI.loadUserDetails are not stored. The Fake is a simple 
 relevant property (a list of user details). 
 ```
 
+#### UI: action patterns
+
+The reducer has become a very large switch case and cannot be maintained anymore. I want it to be breakdown following principles.
+
+Each Action is placed in its own file 'action-<name of the action>.ts' with its associated test. The action name is always in camelCase, starting with lower
+case, except the interface defining it that starts with an upper case.
+
+The action file contains:
+
+* the interface defining the action with a 'type' and other properties, they should be copied without changes
+* the reducer fragment, a function taking 2 parameters: the previous state, and action (of the type of interface), and returning the new state
+* the action function: named after the type of the action, it takes as parameters the action interface (except 'type' property) and returns an object
+  implementing the Action interface
+
+You need to make an exact copy the implementation of the reducer fragment from the existing 'catalogReducerFunction', and copy the tests relevant to this action
+from catalog-reducer.test.ts. Make sure the parameters passed to the reducer fragment are the same one as on the original test. Use the action function to
+create the action, but the other params must be exactly the same. The result of the reducer fragment must be exactly the same as it was defined on the original
+test.
+
+Do not add comments on the functions you're creating.
+
+Register the reducer fragment in web/src/core/catalog/domain/catalog-reducer.ts.
+
+Update the file web/src/core/catalog/domain/catalog-index.ts to export:
+
+* all action interfaces
+* an "catalogActions" object with each action function as property
+* the catalog reducer which is a conventional reducer function: parameters are current state and an action of teh type of one of the supported Action type.
+
+#### UI: Reducer mechanics
+
+A function 'createReducer' will be created and used for the catalogReducer. It takes an object with one property per action supported: property name is the name
+of the action, and the value is the related reducer fragment.
+
+You will not delete existing code, only copy the code to the code. You'll proceed one action at a time following the following list. Once the changes for one
+action are completed and I approved them, I'll tell you to move to the next one.
+
+The actions list is:
+
+1. AlbumsAndMediasLoadedAction
+2. AlbumsLoadedAction
+3. MediaFailedToLoadAction
+4. NoAlbumAvailableAction
+5. StartLoadingMediasAction
+6. AlbumsFilteredAction
+7. MediasLoadedAction
+8. OpenSharingModalAction
+9. AddSharingAction
+10. RemoveSharingAction
+11. CloseSharingModalAction
+12. SharingModalErrorAction
+
+##### Focus on the index and the creation of the reducer
+
+Create a function 'createReducer' in web/src/core/catalog/domain/catalog-reducer-v2.ts. It takes an object with one property per action supported: property name
+is the name of the action, and the value is the related reducer function. It returns a conventional reducer function that take 2 parameters (the current state
+and the action that must implement one of teh supported action interfaces) and returns the new state.
+
+The two actions supported so far are AlbumsAndMediasLoadedAction and AlbumsLoadedAction.
+
+In web/src/core/catalog/domain/catalog-index.ts, exports:
+
+* all the supported action interfaces
+* a "catalogActions" object with each function that creates an action instance set as a property
+* the catalog reducer which is built from the 'createReducer' function with the list of the supported actions.
+
 Discovery path (and tasks)
 ---------------------------------------
 
@@ -60,3 +126,14 @@ Models notes
 * looks expensive: ~$1 for a session
 * response time to watch, I do have to wait before being able to start reviewing the changes and that disengage me
 * architect mode wasn't efficient for simple tasks (as expected ?) ; the weak model was confused
+* failed to execute because context was too big (~ 12 files)
+* looks good for refactoring but the chat must be cleared on very regular basis, and the number of files very limited ; I used `--map-tokens 1024` to reduce the
+  number of token used by the map.
+
+### aider / gpt-4.1-mini (OpenAI)
+
+* (architect: gpt-4.1) aider couldn't apply the changes because the model failed to respect the format ; or some files were changed and it didn't find an exact
+  match.
+* failed to respect the format when used directly - I wonder if it wasn't because of refactoring with read-only files that it tries to change (?)
+* used as weak model for summarisation and git commit looks working well
+* 
