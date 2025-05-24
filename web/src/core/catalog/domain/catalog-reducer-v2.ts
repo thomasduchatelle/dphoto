@@ -1,11 +1,11 @@
-import { CatalogViewerState } from "./catalog-state";
-import { reduceAlbumsAndMediasLoaded } from "./action-albumsAndMediasLoadedAction";
-import { reduceAlbumsLoaded } from "./action-albumsLoadedAction";
-import { reduceMediaFailedToLoad } from "./action-mediaFailedToLoadAction";
-import { reduceNoAlbumAvailable } from "./action-noalbumavailableaction";
-import { reduceStartLoadingMedias } from "./action-startloadingmediasaction";
-import { reduceAlbumsFiltered } from "./action-albumsfilteredaction";
-import { CatalogSupportedActions } from "./catalog-index";
+import {CatalogViewerState} from "./catalog-state";
+import {reduceAlbumsAndMediasLoaded} from "./action-albumsAndMediasLoadedAction";
+import {reduceAlbumsLoaded} from "./action-albumsLoadedAction";
+import {reduceMediaFailedToLoad} from "./action-mediaFailedToLoadAction";
+import {reduceNoAlbumAvailable} from "./action-noAlbumAvailableAction";
+import {reduceStartLoadingMedias} from "./action-startLoadingMediasAction";
+import {reduceAlbumsFiltered} from "./action-albumsFilteredAction";
+import {CatalogSupportedActions} from "./catalog-index";
 
 /**
  * Utility to create a reducer from a map of action handlers.

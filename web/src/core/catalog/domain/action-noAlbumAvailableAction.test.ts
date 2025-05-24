@@ -1,4 +1,4 @@
-import {noAlbumAvailableAction, reduceNoAlbumAvailable} from "./action-noalbumavailableaction";
+import {noAlbumAvailableAction, reduceNoAlbumAvailable} from "./action-noAlbumAvailableAction";
 import {initialCatalogState} from "./catalog-reducer";
 import {CurrentUserInsight} from "./catalog-state";
 import {loadedStateWithTwoAlbums} from "./tests/test-helper-state";

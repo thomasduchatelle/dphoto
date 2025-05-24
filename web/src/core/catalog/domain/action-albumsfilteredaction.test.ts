@@ -1,4 +1,4 @@
-import {albumsFilteredAction, reduceAlbumsFiltered} from "./action-albumsfilteredaction";
+import {albumsFilteredAction, reduceAlbumsFiltered} from "./action-albumsFilteredAction";
 import {herselfOwner, loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
 
 describe("reduceAlbumsFiltered", () => {

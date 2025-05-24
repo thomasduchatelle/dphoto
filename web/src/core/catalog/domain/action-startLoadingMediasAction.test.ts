@@ -1,4 +1,4 @@
-import {reduceStartLoadingMedias, startLoadingMediasAction} from "./action-startloadingmediasaction";
+import {reduceStartLoadingMedias, startLoadingMediasAction} from "./action-startLoadingMediasAction";
 import {loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
 
 describe("reduceStartLoadingMedias", () => {

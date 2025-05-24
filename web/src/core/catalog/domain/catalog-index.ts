@@ -1,10 +1,10 @@
-import { AlbumsAndMediasLoadedAction, albumsAndMediasLoadedAction } from "./action-albumsAndMediasLoadedAction";
-import { AlbumsLoadedAction, albumsLoadedAction } from "./action-albumsLoadedAction";
-import { MediaFailedToLoadAction, mediaFailedToLoadAction } from "./action-mediaFailedToLoadAction";
-import { NoAlbumAvailableAction, noAlbumAvailableAction } from "./action-noalbumavailableaction";
-import { StartLoadingMediasAction, startLoadingMediasAction } from "./action-startloadingmediasaction";
-import { AlbumsFilteredAction, albumsFilteredAction } from "./action-albumsfilteredaction";
-import { catalogReducer } from "./catalog-reducer-v2";
+import {AlbumsAndMediasLoadedAction, albumsAndMediasLoadedAction} from "./action-albumsAndMediasLoadedAction";
+import {AlbumsLoadedAction, albumsLoadedAction} from "./action-albumsLoadedAction";
+import {MediaFailedToLoadAction, mediaFailedToLoadAction} from "./action-mediaFailedToLoadAction";
+import {NoAlbumAvailableAction, noAlbumAvailableAction} from "./action-noAlbumAvailableAction";
+import {StartLoadingMediasAction, startLoadingMediasAction} from "./action-startLoadingMediasAction";
+import {AlbumsFilteredAction, albumsFilteredAction} from "./action-albumsFilteredAction";
+import {catalogReducer} from "./catalog-reducer-v2";
 
 export type CatalogSupportedActions =
     | AlbumsAndMediasLoadedAction
