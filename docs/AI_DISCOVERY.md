@@ -69,6 +69,20 @@ The actions list is:
 11. CloseSharingModalAction
 12. SharingModalErrorAction
 
+##### Focus on the index and the creation of the reducer
+
+Create a function 'createReducer' in web/src/core/catalog/domain/catalog-reducer-v2.ts. It takes an object with one property per action supported: property name
+is the name of the action, and the value is the related reducer function. It returns a conventional reducer function that take 2 parameters (the current state
+and the action that must implement one of teh supported action interfaces) and returns the new state.
+
+The two actions supported so far are AlbumsAndMediasLoadedAction and AlbumsLoadedAction.
+
+In web/src/core/catalog/domain/catalog-index.ts, exports:
+
+* all the supported action interfaces
+* a "catalogActions" object with each function that creates an action instance set as a property
+* the catalog reducer which is built from the 'createReducer' function with the list of the supported actions.
+
 Discovery path (and tasks)
 ---------------------------------------
 
