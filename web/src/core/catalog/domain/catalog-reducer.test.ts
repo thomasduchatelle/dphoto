@@ -56,6 +56,7 @@ describe("CatalogViewerState", () => {
     }]
 
     const loadedStateWithTwoAlbums: CatalogViewerState = {
+        currentUser: myselfUser,
         allAlbums: twoAlbums,
         albumFilterOptions: [
             {
@@ -85,9 +86,9 @@ describe("CatalogViewerState", () => {
     };
 
     it("should add the loaded albums and medias to the state, and reset all status when receiving AlbumsAndMediasLoadedAction", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const got = catalogReducer({
-            ...initialCatalogState,
+            ...initialCatalogState(myselfUser),
             albumNotFound: true,
             albumsLoaded: false,
             mediasLoaded: false,
@@ -102,8 +103,8 @@ describe("CatalogViewerState", () => {
     })
 
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums) when receiving AlbumsAndMediasLoadedAction", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
-        const got = catalogReducer(initialCatalogState, {
+        const catalogReducer = catalogReducerFunction
+        const got = catalogReducer(initialCatalogState(myselfUser), {
             type: "AlbumsAndMediasLoadedAction",
             albums: [twoAlbums[0]],
             medias: someMedias,
@@ -127,7 +128,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should show only directly owned album after the AlbumsFilteredAction", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const got = catalogReducer(loadedStateWithTwoAlbums, {
             type: "AlbumsFilteredAction",
             criterion: {selfOwned: true, owners: []},
@@ -141,7 +142,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should show all albums when the filter moves back to 'All albums'", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const got = catalogReducer({
             ...loadedStateWithTwoAlbums,
             albums: [],
@@ -158,7 +159,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should filter albums to those with a certain owner when the filter with that owner is selected", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const got = catalogReducer({
             ...loadedStateWithTwoAlbums,
             albums: [],
@@ -175,7 +176,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should only change the medias and loading status when reducing StartLoadingMediasAction, and clear errors", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         expect(catalogReducer({
             ...loadedStateWithTwoAlbums,
             albumNotFound: true,
@@ -192,7 +193,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should only change the medias and loading status when reducing MediasLoadedAction, and clear errors", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         expect(catalogReducer({
             ...loadedStateWithTwoAlbums,
             medias: [],
@@ -212,7 +213,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should ignore MediasLoadedAction if the medias are not for the expected album", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         expect(catalogReducer({
             ...loadedStateWithTwoAlbums,
             medias: [],
@@ -231,8 +232,8 @@ describe("CatalogViewerState", () => {
     it("should set the errors and clears medias and media loading status when reducing MediaFailedToLoadAction", () => {
         const testError = new Error("TEST loading error");
 
-        const catalogReducer = catalogReducerFunction(myselfUser);
-        expect(catalogReducer(initialCatalogState, {
+        const catalogReducer = catalogReducerFunction
+        expect(catalogReducer(initialCatalogState(myselfUser), {
             type: "MediaFailedToLoadAction",
             albums: twoAlbums,
             selectedAlbum: twoAlbums[0],
@@ -248,9 +249,9 @@ describe("CatalogViewerState", () => {
     it("should set the errors and clears medias and media loading status when reducing MediaFailedToLoadAction that hasn't the albums", () => {
         const testError = new Error("TEST loading error");
 
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         expect(catalogReducer({
-            ...initialCatalogState,
+            ...initialCatalogState(myselfUser),
             allAlbums: twoAlbums,
         }, {
             type: "MediaFailedToLoadAction",
@@ -265,7 +266,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should update the list of albums and clear errors when AlbumsLoadedAction is received", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         expect(catalogReducer({
             ...loadedStateWithTwoAlbums,
             allAlbums: [twoAlbums[0]],
@@ -279,7 +280,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should update the available filters and re-apply the selected filter when receiving AlbumsLoadedAction", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         expect(catalogReducer({
             ...loadedStateWithTwoAlbums,
             albumFilterOptions: [loadedStateWithTwoAlbums.albumFilterOptions[0]],
@@ -300,7 +301,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should remove the album filter if the redirectTo in AlbumsLoadedAction wouldn't be displayed", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         expect(catalogReducer({
             ...loadedStateWithTwoAlbums,
             allAlbums: [twoAlbums[0]],
@@ -319,7 +320,7 @@ describe("CatalogViewerState", () => {
     })
 
     it("should open the sharing modal with the appropriate albumId and already-shared list", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const action: CatalogViewerAction = {
             type: "OpenSharingModalAction",
             albumId: twoAlbums[0].albumId,
@@ -341,7 +342,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should close the sharing modal by clearing the shareModel property", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const action: CatalogViewerAction = {type: "CloseSharingModalAction"};
 
         const initial: CatalogViewerState = {
@@ -360,7 +361,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should add a new sharing entry and keep the modal open when receiving AddSharingAction", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             shareModal: {
@@ -401,7 +402,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should replace an existing sharing entry for the same user when receiving AddSharingAction", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             shareModal: {
@@ -438,7 +439,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should remove a sharing entry by email and keep the modal open when receiving RemoveSharingAction", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const bobEmail = "bob@example.com";
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
@@ -476,7 +477,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should not change state when AddSharingAction is received and shareModal is closed", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             shareModal: undefined,
@@ -490,7 +491,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should not change state when RemoveSharingAction is received and shareModal is undefined", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             shareModal: undefined,
@@ -503,7 +504,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should not change state when RemoveSharingAction is received with an email not in sharedWith", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             shareModal: {
@@ -524,7 +525,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should set the error field when receiving SharingModalErrorAction", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             shareModal: {
@@ -559,7 +560,7 @@ describe("CatalogViewerState", () => {
     });
 
     it("should sort the sharedWith list alphabetically by user name when adding or opening sharings", () => {
-        const catalogReducer = catalogReducerFunction(myselfUser);
+        const catalogReducer = catalogReducerFunction
         // Test AddSharingAction
         const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,

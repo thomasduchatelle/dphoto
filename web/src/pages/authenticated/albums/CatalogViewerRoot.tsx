@@ -15,7 +15,12 @@ export default function CatalogViewerRoot({children}: {
     const onSelectedAlbumIdByDefault = useCallback((albumId: AlbumId) => navigate(`/albums/${albumId.owner}/${albumId.folderName}`), [navigate])
 
     return (
-        <CatalogViewerProvider albumId={albumId} redirectToAlbumId={onSelectedAlbumIdByDefault} authenticatedUser={authenticatedUser}>
+        <CatalogViewerProvider
+            key={authenticatedUser.email} // Force unmount and remount when authenticated user changes (required for the catalog state to be reset)
+            albumId={albumId}
+            redirectToAlbumId={onSelectedAlbumIdByDefault}
+            authenticatedUser={authenticatedUser}
+        >
             {children}
         </CatalogViewerProvider>
     )
