@@ -1,5 +1,5 @@
-import {catalogReducerFunction, CurrentUserInsight, generateAlbumFilterOptions, initialCatalogState} from "./catalog-reducer";
-import {Album, AlbumFilterEntry, CatalogViewerState, MediaType, MediaWithinADay, SharingType, UserDetails} from "./catalog-state";
+import {catalogReducerFunction, generateAlbumFilterOptions, initialCatalogState} from "./catalog-reducer";
+import {Album, AlbumFilterEntry, CatalogViewerState, CurrentUserInsight, MediaType, MediaWithinADay, SharingType, UserDetails} from "./catalog-state";
 import {CatalogViewerAction} from "./catalog-actions";
 
 describe("CatalogViewerState", () => {

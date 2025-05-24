@@ -1,5 +1,5 @@
-import { CatalogViewerState, Album, MediaWithinADay, MediaType, SharingType, UserDetails } from "./catalog-state";
-import { albumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded } from "./catalog-action-AlbumsAndMediasLoadedAction";
+import {Album, CatalogViewerState, MediaType, MediaWithinADay, SharingType, UserDetails} from "./catalog-state";
+import {albumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded} from "./catalog-action-AlbumsAndMediasLoadedAction";
 
 describe("reduceAlbumsAndMediasLoaded", () => {
     const myselfUser = {picture: "my-face.jpg"};
@@ -59,7 +59,7 @@ describe("reduceAlbumsAndMediasLoaded", () => {
     };
 
     it("should add the loaded albums and medias to the state, and reset all status", () => {
-        const action = AlbumsAndMediasLoadedAction(twoAlbums, someMedias, twoAlbums[0]);
+        const action = albumsAndMediasLoadedAction(twoAlbums, someMedias, twoAlbums[0]);
         const got = reduceAlbumsAndMediasLoaded({
             ...initialCatalogState,
             albumNotFound: true,
@@ -79,7 +79,7 @@ describe("reduceAlbumsAndMediasLoaded", () => {
     });
 
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums)", () => {
-        const action = AlbumsAndMediasLoadedAction([twoAlbums[0]], someMedias, twoAlbums[0]);
+        const action = albumsAndMediasLoadedAction([twoAlbums[0]], someMedias, twoAlbums[0]);
         const got = reduceAlbumsAndMediasLoaded(initialCatalogState, action);
 
         expect(got.allAlbums).toEqual([twoAlbums[0]]);
