@@ -1,12 +1,13 @@
 import {albumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded} from "./catalog-action-AlbumsAndMediasLoadedAction";
-import {loadedStateWithTwoAlbums, twoAlbums, someMedias} from "./tests/test-helper-state";
+import {loadedStateWithTwoAlbums, myselfUser, someMedias, twoAlbums} from "./tests/test-helper-state";
+import {initialCatalogState} from "./catalog-reducer";
 
 describe("reduceAlbumsAndMediasLoaded", () => {
 
     it("should add the loaded albums and medias to the state, and reset all status when receiving AlbumsAndMediasLoadedAction", () => {
         const action = albumsAndMediasLoadedAction(twoAlbums, someMedias, twoAlbums[0]);
         const got = reduceAlbumsAndMediasLoaded({
-            ...loadedStateWithTwoAlbums,
+            ...initialCatalogState(myselfUser),
             albumNotFound: true,
             albumsLoaded: false,
             mediasLoaded: false,
@@ -17,48 +18,21 @@ describe("reduceAlbumsAndMediasLoaded", () => {
 
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums) when receiving AlbumsAndMediasLoadedAction", () => {
         const action = albumsAndMediasLoadedAction([twoAlbums[0]], someMedias, twoAlbums[0]);
-        const got = reduceAlbumsAndMediasLoaded({
-            ...loadedStateWithTwoAlbums,
-            allAlbums: [twoAlbums[0]],
-            albums: [twoAlbums[0]],
-            albumFilterOptions: [{
-                criterion: {
-                    owners: []
-                },
-                avatars: [loadedStateWithTwoAlbums.currentUser.picture ?? ""],
-                name: "All albums",
-            }],
-            albumFilter: {
-                criterion: {
-                    owners: []
-                },
-                avatars: [loadedStateWithTwoAlbums.currentUser.picture ?? ""],
-                name: "All albums",
-            },
-            medias: someMedias,
-            mediasLoadedFromAlbumId: twoAlbums[0].albumId,
-        }, action);
+        const got = reduceAlbumsAndMediasLoaded(initialCatalogState(myselfUser), action);
 
+        const allAlbumFilter = {
+            criterion: {
+                owners: []
+            },
+            avatars: [myselfUser.picture ?? ""],
+            name: "All albums",
+        };
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,
-            allAlbums: [twoAlbums[0]],
             albums: [twoAlbums[0]],
-            albumFilterOptions: [{
-                criterion: {
-                    owners: []
-                },
-                avatars: [loadedStateWithTwoAlbums.currentUser.picture ?? ""],
-                name: "All albums",
-            }],
-            albumFilter: {
-                criterion: {
-                    owners: []
-                },
-                avatars: [loadedStateWithTwoAlbums.currentUser.picture ?? ""],
-                name: "All albums",
-            },
-            medias: someMedias,
-            mediasLoadedFromAlbumId: twoAlbums[0].albumId,
+            allAlbums: [twoAlbums[0]],
+            albumFilter: allAlbumFilter,
+            albumFilterOptions: [allAlbumFilter],
         });
     });
 });
