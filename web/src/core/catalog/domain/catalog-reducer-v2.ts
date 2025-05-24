@@ -8,11 +8,13 @@ import {reduceAlbumsFiltered} from "./action-albumsFilteredAction";
 import {reduceOpenSharingModal} from "./action-openSharingModalAction";
 import {reduceAddSharing} from "./action-addSharingAction";
 import {reduceRemoveSharing} from "./action-removeSharingAction";
-import {CatalogSupportedActions} from "./catalog-index";
+import {CatalogViewerAction} from "./catalog-actions";
+import {reduceCloseSharingModal} from "./action-closeSharingModalAction";
+import {reduceSharingModalError} from "./action-sharingModalErrorAction";
 
 export function catalogReducer(
     state: CatalogViewerState,
-    action: CatalogSupportedActions
+    action: CatalogViewerAction
 ): CatalogViewerState {
     switch (action.type) {
         case "AlbumsAndMediasLoadedAction":
@@ -33,6 +35,10 @@ export function catalogReducer(
             return reduceAddSharing(state, action);
         case "RemoveSharingAction":
             return reduceRemoveSharing(state, action);
+        case "CloseSharingModalAction":
+            return reduceCloseSharingModal(state, action);
+        case "SharingModalErrorAction":
+            return reduceSharingModalError(state, action);
         default:
             return state;
     }
