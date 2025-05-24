@@ -33,22 +33,40 @@ Each Action is placed in its own file 'catalog-action-<name of the action>.ts' w
 
 The action file contains:
 
-* the interface defining the action with a 'type' and other properties
+* the interface defining the action with a 'type' and other properties, they should be copied without changes
 * the reducer fragment, a function taking 2 parameters: the previous state, and action (of the type of interface except 'type' property), and returning the new
   state
-* the action function: named after the type of the action, it takes as parameters each property of the action interface and returns a function taking the
-  previous state as parameter and returning the new state. This action function is for developer convenience and is implemented by calling the reducer fragment
+* the action function: named after the type of the action, it takes as parameters each property of the action interface and returns an object implementing the
+  Action interface
+
+The associated test is copied from existing test cases with minimal changes to use the action function to create the Action, and use the reducer fragment.
 
 Exported from the index.ts, there will be:
 
 * all action interfaces
 * an "catalogActions" object with each action function as property
-* the catalog reducer which is a conventional reducer function (parameters are current state and action). The action can either be an implementation of an
-  action interface in which case the appropriate function is found from "catalogActions". Or a function taling the previous state in which case it is called
-  directly.
+* the catalog reducer which is a conventional reducer function: parameters are current state and an action of teh type of one of the supported Action type.
 
-I'd like you to go through all the code to isolate each action interfaces, write the fragment function from the current "catalogReducerFunction", and have the
-test well associated and adapter to call the action function.
+A function 'createReducer' will be created and used for the catalogReducer. It takes an object with one property per action supported: property name is the name
+of the action, and the value is the related reducer fragment.
+
+You will not delete existing code, only copy the code to the code. You'll proceed one action at a time following the following list. Once the changes for one
+action are completed and I approved them, I'll tell you to move to the next one.
+
+The actions list is:
+
+1. AlbumsAndMediasLoadedAction
+2. AlbumsLoadedAction
+3. MediaFailedToLoadAction
+4. NoAlbumAvailableAction
+5. StartLoadingMediasAction
+6. AlbumsFilteredAction
+7. MediasLoadedAction
+8. OpenSharingModalAction
+9. AddSharingAction
+10. RemoveSharingAction
+11. CloseSharingModalAction
+12. SharingModalErrorAction
 
 Discovery path (and tasks)
 ---------------------------------------
@@ -89,4 +107,5 @@ Models notes
 
 ### aider / gpt-4.1-mini (OpenAI)
 
-* (architect: gpt-4.1) aider couldn't apply the changes because the model failed to respect the format ; or some files were changed and it didn't find an exact match.
+* (architect: gpt-4.1) aider couldn't apply the changes because the model failed to respect the format ; or some files were changed and it didn't find an exact
+  match.
