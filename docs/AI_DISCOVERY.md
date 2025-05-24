@@ -25,6 +25,31 @@ The requests to sharingAPI.loadUserDetails are not stored. The Fake is a simple 
 relevant property (a list of user details). 
 ```
 
+#### UI: action patterns
+
+The reducer has become a very large switch case and cannot be maintained anymore. I want it to be breakdown following principles.
+
+Each Action is placed in its own file 'catalog-action-<name of the action>.ts' with its associated test.
+
+The action file contains:
+
+* the interface defining the action with a 'type' and other properties
+* the reducer fragment, a function taking 2 parameters: the previous state, and action (of the type of interface except 'type' property), and returning the new
+  state
+* the action function: named after the type of the action, it takes as parameters each property of the action interface and returns a function taking the
+  previous state as parameter and returning the new state. This action function is for developer convenience and is implemented by calling the reducer fragment
+
+Exported from the index.ts, there will be:
+
+* all action interfaces
+* an "catalogActions" object with each action function as property
+* the catalog reducer which is a conventional reducer function (parameters are current state and action). The action can either be an implementation of an
+  action interface in which case the appropriate function is found from "catalogActions". Or a function taling the previous state in which case it is called
+  directly.
+
+I'd like you to go through all the code to isolate each action interfaces, write the fragment function from the current "catalogReducerFunction", and have the
+test well associated and adapter to call the action function.
+
 Discovery path (and tasks)
 ---------------------------------------
 
@@ -60,3 +85,8 @@ Models notes
 * looks expensive: ~$1 for a session
 * response time to watch, I do have to wait before being able to start reviewing the changes and that disengage me
 * architect mode wasn't efficient for simple tasks (as expected ?) ; the weak model was confused
+* failed to execute because context was too big (~ 12 files)
+
+### aider / gpt-4.1-mini (OpenAI)
+
+* (architect: gpt-4.1) aider couldn't apply the changes because the model failed to respect the format ; or some files were changed and it didn't find an exact match.
