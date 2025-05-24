@@ -19,7 +19,7 @@ export function openSharingModalAction(props: AlbumId | Omit<OpenSharingModalAct
     };
 }
 
-function sortSharings(sharings: Sharing[]): Sharing[] {
+export function sortSharings(sharings: Sharing[]): Sharing[] {
     return sharings.slice().sort((a, b) => {
         const nameA = a.user.name?.trim() || "";
         const nameB = b.user.name?.trim() || "";

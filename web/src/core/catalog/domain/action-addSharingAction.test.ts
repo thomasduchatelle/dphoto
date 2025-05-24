@@ -1,5 +1,5 @@
 import {addSharingAction, reduceAddSharing} from "./action-addSharingAction";
-import {SharingType, UserDetails} from "./catalog-state";
+import {CatalogViewerState, SharingType, UserDetails} from "./catalog-state";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
 
 describe("reduceAddSharing", () => {
@@ -18,10 +18,8 @@ describe("reduceAddSharing", () => {
         };
         const newUser: UserDetails = {email: "bob@example.com", name: "Bob", picture: "bob-face.jpg"};
         const action = addSharingAction({
-            sharing: {
-                user: newUser,
-                role: SharingType.contributor,
-            }
+            user: newUser,
+            role: SharingType.contributor,
         });
         const expected = {
             ...loadedStateWithTwoAlbums,
@@ -29,28 +27,14 @@ describe("reduceAddSharing", () => {
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: [
                     {
-                        user: herselfUser,
-                        role: SharingType.visitor,
-                    },
-                    {
                         user: newUser,
                         role: SharingType.contributor,
+                    },
+                    {
+                        user: herselfUser,
+                        role: SharingType.visitor,
                     }
-                ].sort((a, b) => {
-                    const nameA = a.user.name?.trim() || "";
-                    const nameB = b.user.name?.trim() || "";
-                    if (nameA && nameB) {
-                        const cmp = nameA.localeCompare(nameB);
-                        if (cmp !== 0) return cmp;
-                        return a.user.email.localeCompare(b.user.email);
-                    }
-                    if (!nameA && !nameB) {
-                        return a.user.email.localeCompare(b.user.email);
-                    }
-                    if (!nameA) return 1;
-                    if (!nameB) return -1;
-                    return 0;
-                }),
+                ]
             }
         };
         expect(reduceAddSharing(initial, action)).toEqual(expected);
@@ -71,12 +55,10 @@ describe("reduceAddSharing", () => {
         };
         // Add the same user with a different role: user is overridden and not added
         const action = addSharingAction({
-            sharing: {
-                user: herselfUser,
-                role: SharingType.contributor,
-            }
+            user: herselfUser,
+            role: SharingType.contributor,
         });
-        const expected = {
+        const expected: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             shareModal: {
                 sharedAlbumId: twoAlbums[0].albumId,
@@ -92,16 +74,7 @@ describe("reduceAddSharing", () => {
     });
 
     it("should not change state when AddSharingAction is received and shareModal is closed", () => {
-        const initial = {
-            ...loadedStateWithTwoAlbums,
-            shareModal: undefined,
-        };
-        const action = addSharingAction({
-            sharing: {
-                user: herselfUser,
-                role: SharingType.visitor,
-            }
-        });
-        expect(reduceAddSharing(initial, action)).toEqual(initial);
+        const action = addSharingAction(twoAlbums[0].sharedWith[0]);
+        expect(reduceAddSharing(loadedStateWithTwoAlbums, action)).toEqual(loadedStateWithTwoAlbums);
     });
 });

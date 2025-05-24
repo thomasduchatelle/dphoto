@@ -1,33 +1,22 @@
 import {CatalogViewerState, Sharing} from "./catalog-state";
+import {sortSharings} from "./action-openSharingModalAction";
 
 export interface AddSharingAction {
     type: "AddSharingAction"
     sharing: Sharing
 }
 
-export function addSharingAction(props: Omit<AddSharingAction, "type">): AddSharingAction {
+export function addSharingAction(props: Sharing | Omit<AddSharingAction, "type">): AddSharingAction {
+    if ("user" in props && "role" in props) {
+        return {
+            type: "AddSharingAction",
+            sharing: props,
+        };
+    }
     return {
         ...props,
         type: "AddSharingAction",
     };
-}
-
-function sortSharings(sharings: Sharing[]): Sharing[] {
-    return sharings.slice().sort((a, b) => {
-        const nameA = a.user.name?.trim() || "";
-        const nameB = b.user.name?.trim() || "";
-        if (nameA && nameB) {
-            const cmp = nameA.localeCompare(nameB);
-            if (cmp !== 0) return cmp;
-            return a.user.email.localeCompare(b.user.email);
-        }
-        if (!nameA && !nameB) {
-            return a.user.email.localeCompare(b.user.email);
-        }
-        if (!nameA) return 1;
-        if (!nameB) return -1;
-        return 0;
-    });
 }
 
 export function reduceAddSharing(
