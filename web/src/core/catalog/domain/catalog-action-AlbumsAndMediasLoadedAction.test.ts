@@ -1,9 +1,8 @@
 import { CatalogViewerState, Album, MediaWithinADay, MediaType, SharingType, UserDetails } from "./catalog-state";
-import { CurrentUserInsight } from "./catalog-reducer";
-import { AlbumsAndMediasLoadedAction, makeReduceAlbumsAndMediasLoaded } from "./catalog-action-AlbumsAndMediasLoadedAction";
+import { AlbumsAndMediasLoadedAction, reduceAlbumsAndMediasLoaded } from "./catalog-action-AlbumsAndMediasLoadedAction";
 
 describe("reduceAlbumsAndMediasLoaded", () => {
-    const myselfUser: CurrentUserInsight = {picture: "my-face.jpg"};
+    const myselfUser = {picture: "my-face.jpg"};
     const herselfUser: UserDetails = {email: "her@self.com", name: "Herself", picture: "her-face.jpg"};
     const herselfOwner = "herself";
 
@@ -48,6 +47,7 @@ describe("reduceAlbumsAndMediasLoaded", () => {
     }];
 
     const initialCatalogState: CatalogViewerState = {
+        currentUser: myselfUser,
         albumFilterOptions: [],
         albumFilter: undefined as any,
         allAlbums: [],
@@ -59,9 +59,8 @@ describe("reduceAlbumsAndMediasLoaded", () => {
     };
 
     it("should add the loaded albums and medias to the state, and reset all status", () => {
-        const reduce = makeReduceAlbumsAndMediasLoaded(myselfUser);
         const action = AlbumsAndMediasLoadedAction(twoAlbums, someMedias, twoAlbums[0]);
-        const got = reduce({
+        const got = reduceAlbumsAndMediasLoaded({
             ...initialCatalogState,
             albumNotFound: true,
             albumsLoaded: false,
@@ -80,9 +79,8 @@ describe("reduceAlbumsAndMediasLoaded", () => {
     });
 
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums)", () => {
-        const reduce = makeReduceAlbumsAndMediasLoaded(myselfUser);
         const action = AlbumsAndMediasLoadedAction([twoAlbums[0]], someMedias, twoAlbums[0]);
-        const got = reduce(initialCatalogState, action);
+        const got = reduceAlbumsAndMediasLoaded(initialCatalogState, action);
 
         expect(got.allAlbums).toEqual([twoAlbums[0]]);
         expect(got.albums).toEqual([twoAlbums[0]]);

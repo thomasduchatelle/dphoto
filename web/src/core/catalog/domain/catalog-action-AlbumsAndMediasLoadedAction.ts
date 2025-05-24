@@ -24,32 +24,26 @@ export function AlbumsAndMediasLoadedAction(
     };
 }
 
-// Reducer fragment for AlbumsAndMediasLoadedAction
+/**
+ * Reducer fragment for AlbumsAndMediasLoadedAction.
+ * Uses currentUser from the state.
+ */
 export function reduceAlbumsAndMediasLoaded(
     current: CatalogViewerState,
     action: Omit<AlbumsAndMediasLoadedAction, "type">
 ): CatalogViewerState {
-    // We need currentUser for generateAlbumFilterOptions, so we require the reducer to be partially applied with currentUser
-    throw new Error("reduceAlbumsAndMediasLoaded requires currentUser: use makeReduceAlbumsAndMediasLoaded(currentUser)");
-}
+    const albumFilterOptions = generateAlbumFilterOptions(current.currentUser, action.albums);
 
-export function makeReduceAlbumsAndMediasLoaded(currentUser: CurrentUserInsight) {
-    return (
-        current: CatalogViewerState,
-        action: Omit<AlbumsAndMediasLoadedAction, "type">
-    ): CatalogViewerState => {
-        const albumFilterOptions = generateAlbumFilterOptions(currentUser, action.albums);
-
-        return {
-            albumNotFound: false,
-            allAlbums: action.albums,
-            albums: action.albums,
-            mediasLoadedFromAlbumId: action.selectedAlbum?.albumId,
-            medias: action.medias,
-            albumsLoaded: true,
-            mediasLoaded: true,
-            albumFilterOptions,
-            albumFilter: albumFilterOptions.find(option => option.criterion.selfOwned === undefined && option.criterion.owners.length === 0) ?? albumFilterOptions[0]
-        };
+    return {
+        ...current,
+        albumNotFound: false,
+        allAlbums: action.albums,
+        albums: action.albums,
+        mediasLoadedFromAlbumId: action.selectedAlbum?.albumId,
+        medias: action.medias,
+        albumsLoaded: true,
+        mediasLoaded: true,
+        albumFilterOptions,
+        albumFilter: albumFilterOptions.find(option => option.criterion.selfOwned === undefined && option.criterion.owners.length === 0) ?? albumFilterOptions[0]
     };
 }
