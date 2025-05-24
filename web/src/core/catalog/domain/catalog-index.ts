@@ -2,19 +2,22 @@ import { AlbumsAndMediasLoadedAction, albumsAndMediasLoadedAction } from "./acti
 import { AlbumsLoadedAction, albumsLoadedAction } from "./action-albumsLoadedAction";
 import { MediaFailedToLoadAction, mediaFailedToLoadAction } from "./action-mediaFailedToLoadAction";
 import { NoAlbumAvailableAction, noAlbumAvailableAction } from "./action-noalbumavailableaction";
-import { catalogReducer } from "./catalog-reducer";
+import { StartLoadingMediasAction, startLoadingMediasAction } from "./action-startloadingmediasaction";
+import { catalogReducer } from "./catalog-reducer-v2";
 
 export type CatalogSupportedActions =
     | AlbumsAndMediasLoadedAction
     | AlbumsLoadedAction
     | MediaFailedToLoadAction
-    | NoAlbumAvailableAction;
+    | NoAlbumAvailableAction
+    | StartLoadingMediasAction;
 
 export const catalogActions = {
     albumsAndMediasLoadedAction,
     albumsLoadedAction,
     mediaFailedToLoadAction,
     noAlbumAvailableAction,
+    startLoadingMediasAction,
 };
 
 export {
@@ -26,4 +29,5 @@ export type {
     AlbumsLoadedAction,
     MediaFailedToLoadAction,
     NoAlbumAvailableAction,
+    StartLoadingMediasAction,
 };
