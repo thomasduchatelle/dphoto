@@ -5,39 +5,29 @@ import {reduceMediaFailedToLoad} from "./action-mediaFailedToLoadAction";
 import {reduceNoAlbumAvailable} from "./action-noAlbumAvailableAction";
 import {reduceStartLoadingMedias} from "./action-startLoadingMediasAction";
 import {reduceAlbumsFiltered} from "./action-albumsFilteredAction";
+import {reduceOpenSharingModal} from "./action-openSharingModalAction";
 import {CatalogSupportedActions} from "./catalog-index";
 
-/**
- * Utility to create a reducer from a map of action handlers.
- * 
- * Usage:
- *   const reducer = createReducer({
- *     AlbumsLoadedAction: (state, action) => { ... },
- *     MediasLoadedAction: (state, action) => { ... },
- *   });
- * 
- * The returned reducer takes (state, action) and dispatches to the correct handler.
- */
-export function createReducer<TState, TActions extends { type: string }>(
-    handlers: {
-        [K in TActions["type"]]: (state: TState, action: Extract<TActions, { type: K }>) => TState
+export function catalogReducer(
+    state: CatalogViewerState,
+    action: CatalogSupportedActions
+): CatalogViewerState {
+    switch (action.type) {
+        case "AlbumsAndMediasLoadedAction":
+            return reduceAlbumsAndMediasLoaded(state, action);
+        case "AlbumsLoadedAction":
+            return reduceAlbumsLoaded(state, action);
+        case "MediaFailedToLoadAction":
+            return reduceMediaFailedToLoad(state, action);
+        case "NoAlbumAvailableAction":
+            return reduceNoAlbumAvailable(state, action);
+        case "StartLoadingMediasAction":
+            return reduceStartLoadingMedias(state, action);
+        case "AlbumsFilteredAction":
+            return reduceAlbumsFiltered(state, action);
+        case "OpenSharingModalAction":
+            return reduceOpenSharingModal(state, action);
+        default:
+            return state;
     }
-): (state: TState, action: TActions) => TState {
-    return (state: TState, action: TActions): TState => {
-        const handler = handlers[action.type as keyof typeof handlers];
-        if (handler) {
-            // TypeScript will ensure correct type for handler/action
-            return handler(state, action as any);
-        }
-        return state;
-    };
 }
-
-export const catalogReducer = createReducer<CatalogViewerState, CatalogSupportedActions>({
-    AlbumsAndMediasLoadedAction: reduceAlbumsAndMediasLoaded,
-    AlbumsLoadedAction: reduceAlbumsLoaded,
-    MediaFailedToLoadAction: reduceMediaFailedToLoad,
-    NoAlbumAvailableAction: reduceNoAlbumAvailable,
-    StartLoadingMediasAction: reduceStartLoadingMedias,
-    AlbumsFilteredAction: reduceAlbumsFiltered,
-});

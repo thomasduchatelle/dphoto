@@ -4,6 +4,7 @@ import {MediaFailedToLoadAction, mediaFailedToLoadAction} from "./action-mediaFa
 import {NoAlbumAvailableAction, noAlbumAvailableAction} from "./action-noAlbumAvailableAction";
 import {StartLoadingMediasAction, startLoadingMediasAction} from "./action-startLoadingMediasAction";
 import {AlbumsFilteredAction, albumsFilteredAction} from "./action-albumsFilteredAction";
+import {OpenSharingModalAction, openSharingModalAction} from "./action-openSharingModalAction";
 import {catalogReducer} from "./catalog-reducer-v2";
 
 export type CatalogSupportedActions =
@@ -12,7 +13,8 @@ export type CatalogSupportedActions =
     | MediaFailedToLoadAction
     | NoAlbumAvailableAction
     | StartLoadingMediasAction
-    | AlbumsFilteredAction;
+    | AlbumsFilteredAction
+    | OpenSharingModalAction;
 
 export const catalogActions = {
     albumsAndMediasLoadedAction,
@@ -21,6 +23,7 @@ export const catalogActions = {
     noAlbumAvailableAction,
     startLoadingMediasAction,
     albumsFilteredAction,
+    openSharingModalAction,
 };
 
 export {
@@ -34,4 +37,5 @@ export type {
     NoAlbumAvailableAction,
     StartLoadingMediasAction,
     AlbumsFilteredAction,
+    OpenSharingModalAction,
 };
