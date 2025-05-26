@@ -7,7 +7,7 @@ import {useAuthenticatedUser} from "../../../core/application";
 export default function CatalogViewerRoot({children}: {
     children: ReactElement;
 }) {
-    const match = useMatch('/albums/:owner/:folderName');
+    const match = useMatch('/albums/:owner/:folderName/*');
     const navigate = useNavigate()
     const authenticatedUser = useAuthenticatedUser()
 

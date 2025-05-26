@@ -4,7 +4,7 @@ import {CatalogAPIAdapter} from "./adapters/api";
 import {CatalogFactory} from "./catalog-factories";
 import {rest} from "msw";
 import {SetupServer, setupServer} from "msw/node";
-import {CatalogLoader} from "./domain/CatalogLoader";
+import {OnPageRefresh} from "./thunks";
 
 describe('CatalogFactory', () => {
 
@@ -36,13 +36,8 @@ describe('CatalogFactory', () => {
     it('should create a new instance of CatalogViewerLoader', async () => {
         const dispatch: CatalogViewerAction[] = []
         const restAdapter = newCatalogFactory().restAdapter();
-        const mediaViewLoader = new CatalogLoader(dispatch.push.bind(dispatch), new MediaPerDayLoader(restAdapter), restAdapter, {
-            mediasLoadedFromAlbumId: undefined,
-            allAlbums: [],
-            albumsLoaded: false,
-            loadingMediasFor: undefined,
-        });
-        expect(mediaViewLoader).toBeInstanceOf(CatalogLoader);
+        const mediaViewLoader = new OnPageRefresh(dispatch.push.bind(dispatch), new MediaPerDayLoader(restAdapter), restAdapter);
+        expect(mediaViewLoader).toBeInstanceOf(OnPageRefresh);
 
         server.use(
             getAlbums(avenger1Album()),
@@ -50,7 +45,12 @@ describe('CatalogFactory', () => {
             getMediasForAvenger1(),
         )
 
-        await mediaViewLoader.onPageRefresh(undefined);
+        await mediaViewLoader.onPageRefresh({
+            mediasLoadedFromAlbumId: undefined,
+            allAlbums: [],
+            albumsLoaded: false,
+            loadingMediasFor: undefined,
+        });
         expect(dispatch).toEqual([{
             type: 'AlbumsAndMediasLoadedAction',
             albums: [
@@ -117,18 +117,19 @@ describe('CatalogFactory', () => {
     it('should create a new instance of SelectAlbumHandler', async () => {
         const dispatch: CatalogViewerAction[] = []
         const restAdapter = newCatalogFactory().restAdapter();
-        const mediaViewLoader = new CatalogLoader(dispatch.push.bind(dispatch), new MediaPerDayLoader(restAdapter), restAdapter, {
-            mediasLoadedFromAlbumId: undefined,
-            allAlbums: [],
-            albumsLoaded: true,
-            loadingMediasFor: undefined,
-        });
+        const mediaViewLoader = new OnPageRefresh(dispatch.push.bind(dispatch), new MediaPerDayLoader(restAdapter), restAdapter);
 
         server.use(
             getMediasForAvenger1(),
         )
 
-        await mediaViewLoader.onPageRefresh(albumIdAvenger1);
+        await mediaViewLoader.onPageRefresh({
+            mediasLoadedFromAlbumId: undefined,
+            allAlbums: [],
+            albumsLoaded: true,
+            loadingMediasFor: undefined,
+            albumId: albumIdAvenger1,
+        });
 
         let mediasLoadedAction = dispatch.find(action => action.type === "MediasLoadedAction");
         expect(mediasLoadedAction).toBeDefined()

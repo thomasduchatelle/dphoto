@@ -1,8 +1,5 @@
-import {HasType} from "./ActionObserver";
-import {Album, AlbumId, Media, MediaId, MediaType} from "./catalog-state";
-import {CatalogLoader, FetchAlbumsPort, PartialCatalogLoaderState} from "./CatalogLoader";
-import {FetchAlbumMediasPort, MediaPerDayLoader} from "./MediaPerDayLoader";
-import {AlbumsAndMediasLoadedAction, MediasLoadedAction, catalogActions} from "./catalog-reducer-v2";
+import {Album, AlbumId, catalogActions, FetchAlbumMediasPort, HasType, Media, MediaId, MediaPerDayLoader, MediaType} from "../domain";
+import {FetchAlbumsPort, OnPageRefresh, OnPageRefreshArgs} from "./thunks-onPageRefresh";
 
 
 const twoAlbums: Album[] = [
@@ -53,17 +50,20 @@ function repositoryWithThreeMedias() {
 
 }
 
+interface PartialCatalogLoaderState extends Omit<OnPageRefreshArgs, "albumId"> {
+}
+
 describe("CatalogLoader", () => {
     const stateNotLoaded: PartialCatalogLoaderState = {albumsLoaded: false, allAlbums: []}
     const firstAlbumLoaded: PartialCatalogLoaderState = {albumsLoaded: true, allAlbums: twoAlbums, mediasLoadedFromAlbumId: twoAlbums[0].albumId}
     const firstAlbumLoading: PartialCatalogLoaderState = {albumsLoaded: false, allAlbums: twoAlbums, loadingMediasFor: twoAlbums[0].albumId}
 
-    const newCatalogLoader = (dispatch: ActionObserverFake, state: PartialCatalogLoaderState) => {
-        return new CatalogLoader(dispatch.onAction, repositoryWithThreeMedias(), new AlbumRepositoryFake(twoAlbums), state)
+    const newThunk = (dispatch: ActionObserverFake) => {
+        return new OnPageRefresh(dispatch.onAction, repositoryWithThreeMedias(), new AlbumRepositoryFake(twoAlbums))
     }
 
-    const newLoaderFailingGettingMedias = (dispatch: ActionObserverFake, error: Error, state: PartialCatalogLoaderState) => {
-        return new CatalogLoader(dispatch.onAction, new MediaPerDayLoader(new MediaRepositoryFakeWithFailure(error)), new AlbumRepositoryFake(twoAlbums), state)
+    const newLoaderFailingGettingMedias = (dispatch: ActionObserverFake, error: Error) => {
+        return new OnPageRefresh(dispatch.onAction, new MediaPerDayLoader(new MediaRepositoryFakeWithFailure(error)), new AlbumRepositoryFake(twoAlbums))
     }
 
     let dispatch: ActionObserverFake
@@ -73,8 +73,8 @@ describe("CatalogLoader", () => {
     })
 
     it("should load albums and medias of requested album when the state is not loaded", async () => {
-        const loader = newCatalogLoader(dispatch, stateNotLoaded)
-        await loader.onPageRefresh(twoAlbums[0].albumId)
+        const loader = newThunk(dispatch)
+        await loader.onPageRefresh({...stateNotLoaded, albumId: twoAlbums[0].albumId})
 
         expect(dispatch.actions).toEqual([
             catalogActions.albumsAndMediasLoadedAction({
@@ -87,8 +87,8 @@ describe("CatalogLoader", () => {
 
     it("should dispatch a MediaFailedToLoadAction if the medias cannot be loaded", async () => {
         const error = new Error("TEST simulate medias failing to load");
-        const loader = newLoaderFailingGettingMedias(dispatch, error, stateNotLoaded)
-        await loader.onPageRefresh(twoAlbums[0].albumId)
+        const loader = newLoaderFailingGettingMedias(dispatch, error)
+        await loader.onPageRefresh({...stateNotLoaded, albumId: twoAlbums[0].albumId})
 
         expect(dispatch.actions).toEqual([
             catalogActions.mediaFailedToLoadAction({
@@ -101,22 +101,22 @@ describe("CatalogLoader", () => {
 
     it("should throw an error if the albums cannot be loaded", async () => {
         const error = new Error("TEST simulate albums failing to load");
-        const loader = new CatalogLoader(dispatch.onAction, new MediaPerDayLoader(new MediaRepositoryFake()), new AlbumRepositoryFakeWithError(error), stateNotLoaded)
-        await expect(loader.onPageRefresh(twoAlbums[0].albumId)).rejects.toThrow(error)
+        const loader = new OnPageRefresh(dispatch.onAction, new MediaPerDayLoader(new MediaRepositoryFake()), new AlbumRepositoryFakeWithError(error))
+        await expect(loader.onPageRefresh({...stateNotLoaded, albumId: twoAlbums[0].albumId})).rejects.toThrow(error)
 
         expect(dispatch.actions).toHaveLength(0)
     })
 
     it("should not load if the state is currently loading the desired album", async () => {
-        const loader = newCatalogLoader(dispatch, firstAlbumLoading)
-        await loader.onPageRefresh(twoAlbums[0].albumId)
+        const loader = newThunk(dispatch)
+        await loader.onPageRefresh({...firstAlbumLoading, albumId: twoAlbums[0].albumId})
 
         expect(dispatch.actions).toHaveLength(0)
     })
 
     it("should load albums and medias of the first album when the state is not loaded and there is no album selected", async () => {
-        const loader = newCatalogLoader(dispatch, stateNotLoaded)
-        await loader.onPageRefresh(undefined)
+        const loader = newThunk(dispatch)
+        await loader.onPageRefresh(stateNotLoaded)
 
         expect(dispatch.actions).toEqual([
             catalogActions.albumsAndMediasLoadedAction({
@@ -129,16 +129,16 @@ describe("CatalogLoader", () => {
     })
 
     it("should not trigger an 'initial load' if the albums are already loaded", async () => {
-        const loader = newCatalogLoader(dispatch, firstAlbumLoaded)
-        await loader.onPageRefresh(undefined)
+        const loader = newThunk(dispatch)
+        await loader.onPageRefresh(firstAlbumLoaded)
 
         expect(dispatch.actions).toHaveLength(0)
     })
 
     it("should dispatch a MediaFailedToLoadAction when failing to load the medias of the selected album", async () => {
         const error = new Error("TEST simulate medias failing to load");
-        const loader = newLoaderFailingGettingMedias(dispatch, error, stateNotLoaded)
-        await loader.onPageRefresh(undefined)
+        const loader = newLoaderFailingGettingMedias(dispatch, error)
+        await loader.onPageRefresh(stateNotLoaded)
 
         expect(dispatch.actions).toEqual([
             catalogActions.mediaFailedToLoadAction({
@@ -150,15 +150,15 @@ describe("CatalogLoader", () => {
     })
 
     it("should not do anything if the medias are already loaded for the requested album", async () => {
-        const loader = newCatalogLoader(dispatch, firstAlbumLoaded)
-        await loader.onPageRefresh(twoAlbums[0].albumId)
+        const loader = newThunk(dispatch)
+        await loader.onPageRefresh({...firstAlbumLoaded, albumId: twoAlbums[0].albumId})
 
         expect(dispatch.actions).toHaveLength(0)
     })
 
     it("should load the medias if another album is selected", async () => {
-        const loader = newCatalogLoader(dispatch, firstAlbumLoaded)
-        await loader.onPageRefresh(twoAlbums[1].albumId)
+        const loader = newThunk(dispatch)
+        await loader.onPageRefresh({...firstAlbumLoaded, albumId: twoAlbums[1].albumId})
 
         expect(dispatch.actions).toEqual([
             catalogActions.mediasLoadedAction({
@@ -169,19 +169,20 @@ describe("CatalogLoader", () => {
     })
 
     it("should not load the medias if another album is selected but the medias are already loading", async () => {
-        const loader = newCatalogLoader(dispatch, {
+        const loader = newThunk(dispatch)
+        await loader.onPageRefresh({
             ...firstAlbumLoaded,
             loadingMediasFor: twoAlbums[1].albumId,
+            albumId: twoAlbums[1].albumId,
         })
-        await loader.onPageRefresh(twoAlbums[1].albumId)
 
         expect(dispatch.actions).toHaveLength(0)
     })
 
     it("should dispatch an error if the medias cannot be loaded", async () => {
         const error = new Error("TEST simulate medias failing to load");
-        const loader = newLoaderFailingGettingMedias(dispatch, error, firstAlbumLoaded)
-        await loader.onPageRefresh(twoAlbums[1].albumId)
+        const loader = newLoaderFailingGettingMedias(dispatch, error)
+        await loader.onPageRefresh({...firstAlbumLoaded, albumId: twoAlbums[1].albumId})
 
         expect(dispatch.actions).toEqual([
             catalogActions.mediaFailedToLoadAction({

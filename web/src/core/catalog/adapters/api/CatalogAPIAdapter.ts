@@ -1,8 +1,9 @@
 import {Album, AlbumId, CreateAlbumPort, CreateAlbumRequest, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../domain";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
-import {FetchAlbumMediasPort, FetchAlbumsPort} from "../../index";
+import {FetchAlbumMediasPort} from "../../index";
 import {SharingAPI} from "../../domain/ShareController";
+import {FetchAlbumsPort} from "../../thunks";
 
 interface RestAlbum {
     owner: string
