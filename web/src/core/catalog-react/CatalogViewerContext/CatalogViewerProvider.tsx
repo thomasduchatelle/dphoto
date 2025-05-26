@@ -5,12 +5,11 @@ import {
     AlbumFilterHandler,
     AlbumId,
     albumIdEquals,
-    CatalogLoader,
     catalogReducer,
     CatalogViewerAction,
+    CatalogViewerState,
     initialCatalogState,
     isRedirectToAlbumIdAction,
-    MediaPerDayLoader,
     PostCreateAlbumHandler,
     SharingType
 } from "../../catalog";
@@ -20,6 +19,8 @@ import {CatalogHandlers, CatalogViewerStateWithDispatch, ShareHandlers} from "./
 import {AuthenticatedUser} from "../../security";
 import {ShareController} from "../../catalog/domain/ShareController";
 import {CatalogAPIAdapter} from "../../catalog/adapters/api";
+import {CatalogFactoryArgs, catalogThunks} from "../../catalog/thunks";
+import {useThunks} from "../../thunk-engine";
 
 export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch>({
     state: initialCatalogState({}),
@@ -59,7 +60,7 @@ export const CatalogViewerProvider = (
         }
     }, [dispatch, redirectToAlbumId])
 
-    const {allAlbums, mediasLoadedFromAlbumId, albumsLoaded, loadingMediasFor, shareModal} = catalog
+    const {allAlbums, shareModal} = catalog
 
     const handlers = useMemo(() => {
             const sharingAPI = new CatalogAPIAdapter(app.axiosInstance, app);
@@ -70,23 +71,38 @@ export const CatalogViewerProvider = (
         [app, dispatchPropagator, allAlbums, albumId, shareModal]
     )
 
+    const {onPageRefresh} = useCatalogThunks(catalog, dispatchPropagator);
+
     useEffect(() => {
-        const restAdapter = new CatalogFactory(app).restAdapter();
-        const loader = new CatalogLoader(dispatchPropagator, new MediaPerDayLoader(restAdapter), restAdapter, {
-            mediasLoadedFromAlbumId,
-            allAlbums,
-            albumsLoaded,
-            loadingMediasFor,
-        })
-        loader.onPageRefresh(albumId)
-            .catch(error => unrecoverableErrorDispatch({type: 'unrecoverable-error', error: error}))
-    }, [app, dispatchPropagator, mediasLoadedFromAlbumId, allAlbums, albumsLoaded, albumId, loadingMediasFor, unrecoverableErrorDispatch])
+        onPageRefresh(albumId)
+            .catch(error => unrecoverableErrorDispatch({type: 'unrecoverable-error', error}));
+    }, [onPageRefresh, albumId, unrecoverableErrorDispatch]);
 
     return (
         <CatalogViewerContext.Provider value={{state: catalog, handlers, selectedAlbumId: albumId}}>
             {children}
         </CatalogViewerContext.Provider>
     )
+}
+
+/**
+ * useCatalogThunks aggregates catalog thunks using the generic thunk engine.
+ */
+function useCatalogThunks(
+    state: CatalogViewerState,
+    dispatch: (action: CatalogViewerAction) => void
+) {
+    const app = useApplication();
+    const factoryArgs: CatalogFactoryArgs = useMemo(() => ({
+        app,
+        dispatch,
+    }), [app, dispatch]);
+
+    return useThunks(
+        catalogThunks,
+        factoryArgs,
+        state
+    );
 }
 
 class CompositeHandler implements CatalogHandlers, ShareHandlers {

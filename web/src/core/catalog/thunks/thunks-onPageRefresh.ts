@@ -1,32 +1,42 @@
-import {ActionObserver} from "./ActionObserver";
-import {AlbumsAndMediasLoadedAction, catalogActions, MediaFailedToLoadAction, MediasLoadedAction, NoAlbumAvailableAction} from "./catalog-reducer-v2";
-import {MediaPerDayLoader} from "./MediaPerDayLoader";
-import {Album, AlbumId} from "./catalog-state";
-import {albumIdEquals} from "./utils-albumIdEquals";
+import {
+    Album,
+    AlbumId,
+    albumIdEquals,
+    AlbumsAndMediasLoadedAction,
+    catalogActions,
+    CatalogViewerAction,
+    CatalogViewerState,
+    MediaFailedToLoadAction,
+    MediaPerDayLoader,
+    MediasLoadedAction,
+    NoAlbumAvailableAction
+} from "../domain";
+import {ThunkDeclaration} from "../../thunk-engine";
+import {DPhotoApplication} from "../../application";
+import {CatalogFactory} from "../catalog-factories";
 
-export interface PartialCatalogLoaderState {
-    albumsLoaded: boolean,
+export interface OnPageRefreshArgs {
+    allAlbums: Album[]
+    albumsLoaded: boolean
     mediasLoadedFromAlbumId?: AlbumId
     loadingMediasFor?: AlbumId
-    allAlbums: Album[]
 }
 
 export interface FetchAlbumsPort {
     fetchAlbums(): Promise<Album[]>
 }
 
-export class CatalogLoader {
+export class OnPageRefresh {
     constructor(
-        private readonly dispatch: ActionObserver<MediaFailedToLoadAction | AlbumsAndMediasLoadedAction | NoAlbumAvailableAction | MediasLoadedAction>,
+        private readonly dispatch: (action: MediaFailedToLoadAction | AlbumsAndMediasLoadedAction | NoAlbumAvailableAction | MediasLoadedAction) => void,
         private readonly mediaPerDayLoader: MediaPerDayLoader,
-        private readonly fetchAlbumsPort: FetchAlbumsPort,
-        private readonly partialState: PartialCatalogLoaderState,
+        private readonly fetchAlbumsPort: FetchAlbumsPort
     ) {
     }
 
-    onPageRefresh = (albumId?: AlbumId): Promise<void> => {
-        const {mediasLoadedFromAlbumId, albumsLoaded, allAlbums, loadingMediasFor} = this.partialState
-
+    onPageRefresh = async ({albumId, allAlbums, albumsLoaded, mediasLoadedFromAlbumId, loadingMediasFor}: OnPageRefreshArgs & {
+        albumId?: AlbumId
+    }): Promise<void> => {
         if (!albumId) {
             if (!albumsLoaded) {
                 return this.loadDefaultAlbum().then(this.dispatch)
@@ -52,23 +62,22 @@ export class CatalogLoader {
     }
 
     private loadSpecificAlbum = async (albumId: AlbumId): Promise<MediaFailedToLoadAction | AlbumsAndMediasLoadedAction> => {
-        const [albumsResp, mediasResp] = await Promise
-            .allSettled([
-                this.fetchAlbumsPort.fetchAlbums(),
-                this.mediaPerDayLoader.loadMedias(albumId),
-            ]);
+        const [albumsResp, mediasResp] = await Promise.allSettled([
+            this.fetchAlbumsPort.fetchAlbums(),
+            this.mediaPerDayLoader.loadMedias(albumId),
+        ]);
 
         if (albumsResp.status === "rejected") {
             return Promise.reject(albumsResp.reason)
 
         } else if (mediasResp.status === "rejected") {
-            const selectedAlbum = albumsResp.value.find(a => albumIdEquals(a.albumId, albumId))
-            return {
+            const selectedAlbum = albumsResp.value.find((a: Album) => albumIdEquals(a.albumId, albumId))
+
+            return catalogActions.mediaFailedToLoadAction({
                 albums: albumsResp.value,
                 selectedAlbum: selectedAlbum,
                 error: new Error(`failed to load medias of ${albumId}`, mediasResp.reason),
-                type: 'MediaFailedToLoadAction',
-            } as MediaFailedToLoadAction
+            })
 
         } else {
             const albums: Album[] = albumsResp.value
@@ -85,28 +94,63 @@ export class CatalogLoader {
 
     private loadDefaultAlbum = async (): Promise<AlbumsAndMediasLoadedAction | NoAlbumAvailableAction | MediaFailedToLoadAction> => {
         const albums = await this.fetchAlbumsPort.fetchAlbums();
-        if (!albums) {
+        if (!albums || albums.length === 0) {
             return {type: 'NoAlbumAvailableAction'} as NoAlbumAvailableAction
         }
-
         const selectedAlbum = albums[0];
         try {
             const medias = await this.mediaPerDayLoader.loadMedias(selectedAlbum.albumId);
-            return ({
-                type: 'AlbumsAndMediasLoadedAction',
+            return catalogActions.albumsAndMediasLoadedAction({
                 albums: albums,
                 medias: medias.medias,
                 selectedAlbum,
                 redirectTo: selectedAlbum.albumId,
-            } as AlbumsAndMediasLoadedAction);
+            });
 
         } catch (e: any) {
-            return {
-                type: 'MediaFailedToLoadAction',
+            return catalogActions.mediaFailedToLoadAction({
                 albums: albums,
                 selectedAlbum,
                 error: new Error(`failed to load medias of ${selectedAlbum.albumId}`, e),
-            } as MediaFailedToLoadAction
+            })
         }
     }
+}
+
+export interface CatalogFactoryArgs {
+    app: DPhotoApplication
+    dispatch: (action: CatalogViewerAction) => void
+}
+
+export const onPageRefreshDeclaration: ThunkDeclaration<
+    CatalogViewerState,
+    OnPageRefreshArgs,
+    (albumId?: AlbumId) => Promise<void>,
+    CatalogFactoryArgs
+> = {
+    factory: ({app, dispatch, partialState}) => {
+        const onPageRefreshInstance = new OnPageRefresh(
+            dispatch,
+            new MediaPerDayLoader(new CatalogFactory(app as DPhotoApplication).restAdapter()),
+            new CatalogFactory(app as DPhotoApplication).restAdapter()
+        );
+        return (albumId?: AlbumId) => {
+            const args = {
+                ...partialState,
+                albumId
+            };
+            return onPageRefreshInstance.onPageRefresh(args);
+        };
+    },
+    selector: ({
+                   allAlbums,
+                   albumsLoaded,
+                   mediasLoadedFromAlbumId,
+                   loadingMediasFor
+               }: CatalogViewerState): Omit<OnPageRefreshArgs, "albumId"> => ({
+        allAlbums,
+        albumsLoaded,
+        mediasLoadedFromAlbumId,
+        loadingMediasFor,
+    })
 }

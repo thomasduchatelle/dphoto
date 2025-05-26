@@ -91,6 +91,131 @@ In web/src/core/catalog/domain/catalog-index.ts, exports:
 * a "catalogActions" object with each function that creates an action instance set as a property
 * the catalog reducer which is built from the 'createReducer' function with the list of the supported actions.
 
+#### UI: Thunks
+
+I'd like to adapt the Catalog loader to be used as a Thunk-like. I'm am NOT using Redux on the project.
+
+The thunk should be usable in the React component as follow:
+
+ ```
+ const thunks = useThunks(catalogThunks);
+
+ useEffect(() => {
+   thunks.onPageRefresh(albumId);
+ }, [thunks, albumId]);
+ ```
+
+`thunks` must be stable (same reference when refreshed.
+
+And the implementation of the thunk should be a function (or a method):
+
+ ```
+ export function async onPageRefresh({albumId, allAlbums, ...otherPropsFromState}: OnPageRefreshProps) {
+         const medias = await fetchMediaPort.fetchMedias(albumId);
+ ^Idispatch(catalogActions.mediaLoaded({albumId, medias})
+ }
+ ```
+
+Where `fetchMediaPort` and `dispatch` are somehow injected. The function could be in a class and they become `this.fetchMediaPort`
+and `this.dispatch`.
+
+Can you give several options on how to implement the middleware necessary to get this behaviour, and your recommendation ?
+
+A special attention should be placed on how the injection would work (through the implementation of `useThunks` and what is exported as `catalogThunks`.
+
+##### Refinement
+
+Let's explore the option 1.
+
+First level would be the parameters that are not changing once the component (context) is mounted: dispatch and API adapters. Then the state to only have the
+required parameters exposed (albumId here).
+
+I would think to use a class with the context parameters set as constructor arguments:
+
+ ```
+ // catalog/thunks/thunks-onPageRefresh.ts
+
+ export interface MediaLoaderPort {
+   findMedias(albumId: AlbumId): Promise<Media[]>
+ }
+
+ export interface OnPageRefreshArgs {
+   albumId: AlbumId
+   allAlbums: Album[]
+   // ...
+ }
+
+ export class OnPageRefresh {
+   constructor(private dispatch: any, // todo find the appropriate type
+               private mediaLoaderPort: MediaLoaderPort,
+               ) {}
+
+   const onPageRefresh = async ({albumId, allAlbums, ...others}: OnPageRefreshArgs => {
+     // ...
+   }
+ }
+ ```
+
+Then I would have a function indicating what parameters are coming from the state:
+
+```
+ // catalog/thunks/thunks-onPageRefresh.ts
+
+ export const onPageRefreshSelector = ({allAlbums}: CatalogViewerState): Omit<OnPageRefreshArgs, "albumId"> => ({
+   allAlbums,
+ })
+```
+
+The naive way to put that together is:
+
+```
+ // catalog-react/thunks.ts
+
+ export const useCatalogThunks = () => {
+   const {dispatch, state} = useContext(CatalogContext)
+
+   return {
+     onPageRefresh: (albumId: AlbumId) => new OnPageRefresh(dispatch, catalogAPIAdapter).onPageRefresh({...onPageRefreshSelector(state), albumId}),
+   }
+ }
+```
+
+But I would need to make the `onPageRefresh` stable when anything other than the selected partial state is changing. How would you suggest to do it ?
+
+##### Drafts
+
+The second level is to be state aware so a function only taking the relevant parameters is exposed (only take the new parameters):
+
+ ```
+ // catalog/thunks/index.ts
+
+ export const thunkFactories = {
+   onPageRefresh: (callback, selectedState) => {
+     return (albumId: AlbumId) => callback({...selectedState, albumId})
+   }
+ }
+ ```
+
+And it is used with a hook:
+
+ ```
+ // catalog-react/thunks.ts
+
+ export const useCatalogThunks = () => {
+   const {dispatch, state} = useContext(CatalogContext)
+
+   const partialState = onPageRefreshSelector(state)
+   const onPageRefresh = useCallback( (albumId: AlbumId) => {
+     const callback = new OnPageRefresh(dispatch, catalogAPIAdapter).onPageRefresh
+     return callback({...partialState, albumId});
+   }, [dispatch, catalogAPIAdapter, ...Object.values(partialState)])
+
+   return {
+     onPageRefresh,
+   }
+ }
+ ```
+
 Discovery path (and tasks)
 ---------------------------------------
 

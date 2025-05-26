@@ -1,7 +1,7 @@
 import {AlbumId} from "./catalog-state";
 import {CreateAlbumListener} from "./CreateAlbumController";
 import {AlbumsLoadedAction, catalogActions} from "./catalog-reducer-v2";
-import {FetchAlbumsPort} from "./CatalogLoader";
+import {FetchAlbumsPort} from "../thunks";
 
 export class PostCreateAlbumHandler implements CreateAlbumListener {
 

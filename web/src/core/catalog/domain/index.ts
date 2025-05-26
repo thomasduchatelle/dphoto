@@ -1,6 +1,5 @@
 export * from "./ActionObserver"
 export * from "./AlbumFilterHandler"
-export * from "./CatalogLoader"
 export * from "./CreateAlbumController"
 export * from "./errors"
 export * from "./MediaPerDayLoader"
