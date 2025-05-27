@@ -1,8 +1,7 @@
-import {AlbumsFilteredAction, CatalogViewerAction, catalogActions} from "./catalog-reducer-v2";
-import {AlbumFilterHandler, AlbumFilterHandlerState} from "./AlbumFilterHandler";
-import {Album, AlbumFilterCriterion, AlbumFilterEntry} from "./catalog-state";
+import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumsFilteredAction, catalogActions, CatalogViewerAction} from "../domain";
+import {onAlbumFilterFunction} from "./thunks-onAlbumFilterChange";
 
-describe('AlbumFilterHandler', () => {
+describe('onAlbumFilterChange', () => {
 
     const albumOtherProps = {totalCount: 0, relativeTemperature: 0, temperature: 0, sharedWith: []}
     const selfOwnedAlbum: Album = {
@@ -24,7 +23,7 @@ describe('AlbumFilterHandler', () => {
     const selfOwnedFilterEntry: AlbumFilterEntry = {avatars: [], criterion: {selfOwned: true, owners: []}, name: "My albums"}
 
     const tests: [string, {
-        partialState: AlbumFilterHandlerState,
+        partialState: { selectedAlbum?: Album, allAlbums: Album[] },
         criterion: AlbumFilterCriterion,
         expectedActions: AlbumsFilteredAction[]
     }][] = [
@@ -64,9 +63,9 @@ describe('AlbumFilterHandler', () => {
 
     it.each(tests)("%s", (name, {criterion, partialState, expectedActions}) => {
         const collector: CatalogViewerAction[] = []
-        const handler = new AlbumFilterHandler(collector.push.bind(collector), partialState);
+        const callback = onAlbumFilterFunction.bind(null, collector.push.bind(collector), partialState)
 
-        handler.onAlbumFilter(criterion)
+        callback(criterion);
 
         expect(collector).toEqual(expectedActions)
     })

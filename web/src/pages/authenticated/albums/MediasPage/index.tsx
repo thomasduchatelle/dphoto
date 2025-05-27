@@ -4,7 +4,7 @@ import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
 import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, MediaWithinADay} from "../../../../core/catalog";
 import AlbumListActions from "../AlbumsListActions/AlbumListActions";
-import {CreateAlbumControls} from "../../../../core/catalog/domain/CreateAlbumController";
+import {CreateAlbumControls} from "../../../../core/catalog/substates/CreateAlbumController";
 
 const albumFilterFeatureFlag = true
 

@@ -1,9 +1,8 @@
-import {Album, AlbumId, CreateAlbumPort, CreateAlbumRequest, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../domain";
+import {Album, AlbumId, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../domain";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
-import {FetchAlbumMediasPort} from "../../index";
-import {SharingAPI} from "../../domain/ShareController";
-import {FetchAlbumsPort} from "../../thunks";
+import {CreateAlbumRequest, FetchAlbumMediasPort} from "../../index";
+import {CreateAlbumPort, FetchAlbumsPort, GrantAlbumSharingAPI, revokeAlbumSharingAPI} from "../../thunks";
 
 interface RestAlbum {
     owner: string
@@ -40,7 +39,7 @@ function castError(err: AxiosError): Error {
     return new Error(`'${err.config.method?.toUpperCase()} ${err.config.url}' failed with status ${err.response?.status} ${err.response?.statusText}: ${err.response?.data?.message ?? err.message}`)
 }
 
-export class CatalogAPIAdapter implements SharingAPI, FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort {
+export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort, GrantAlbumSharingAPI, revokeAlbumSharingAPI {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,

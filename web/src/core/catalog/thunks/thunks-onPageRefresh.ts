@@ -4,7 +4,6 @@ import {
     albumIdEquals,
     AlbumsAndMediasLoadedAction,
     catalogActions,
-    CatalogViewerAction,
     CatalogViewerState,
     MediaFailedToLoadAction,
     MediaPerDayLoader,
@@ -14,6 +13,7 @@ import {
 import {ThunkDeclaration} from "../../thunk-engine";
 import {DPhotoApplication} from "../../application";
 import {CatalogFactory} from "../catalog-factories";
+import {CatalogFactoryArgs} from "./catalog-factory-args";
 
 export interface OnPageRefreshArgs {
     allAlbums: Album[]
@@ -117,11 +117,6 @@ export class OnPageRefresh {
     }
 }
 
-export interface CatalogFactoryArgs {
-    app: DPhotoApplication
-    dispatch: (action: CatalogViewerAction) => void
-}
-
 export const onPageRefreshDeclaration: ThunkDeclaration<
     CatalogViewerState,
     OnPageRefreshArgs,
@@ -129,10 +124,11 @@ export const onPageRefreshDeclaration: ThunkDeclaration<
     CatalogFactoryArgs
 > = {
     factory: ({app, dispatch, partialState}) => {
+        const restAdapter = new CatalogFactory(app as DPhotoApplication).restAdapter();
         const onPageRefreshInstance = new OnPageRefresh(
             dispatch,
-            new MediaPerDayLoader(new CatalogFactory(app as DPhotoApplication).restAdapter()),
-            new CatalogFactory(app as DPhotoApplication).restAdapter()
+            new MediaPerDayLoader(restAdapter),
+            restAdapter
         );
         return (albumId?: AlbumId) => {
             const args = {

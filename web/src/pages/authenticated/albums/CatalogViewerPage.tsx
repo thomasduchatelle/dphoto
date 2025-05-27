@@ -17,7 +17,7 @@ import {useSharingModalController} from "../../../core/catalog-react/CatalogView
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
 
-    const {state, handlers: {onAlbumFilterChange}, selectedAlbumId} = useCatalogContext()
+    const {state, handlers: {onAlbumFilterChange, createAlbum}, selectedAlbumId} = useCatalogContext()
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()
@@ -42,7 +42,7 @@ export function CatalogViewerPage() {
             <Box sx={{mt: 2, pl: 2, pr: 2, display: {lg: 'none'}}}>
                 <MobileNavigation album={isAlbumsPage ? undefined : selectedAlbum}/>
             </Box>
-            <CreateAlbumDialogContainer>
+            <CreateAlbumDialogContainer createAlbum={createAlbum}>
                 {(controls) => isMobileDevice && isAlbumsPage ? (
                     <>
                         <AlbumListActions

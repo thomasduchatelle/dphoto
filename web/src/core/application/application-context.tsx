@@ -1,12 +1,6 @@
 import {DPhotoApplication} from "./DPhotoApplication";
 import {createContext, Dispatch, ReactNode, useEffect, useReducer} from "react";
-import {
-    initialSecurityState,
-    SecurityAction,
-    securityContextReducer,
-    securityContextReducerSupports,
-    SecurityState
-} from "../security";
+import {initialSecurityState, SecurityAction, securityContextReducer, securityContextReducerSupports, SecurityState} from "../security";
 import {GeneralState} from "./application-model";
 import axios from "axios";
 import {ApplicationGenericAction, applicationGenericReducer} from "./application-reducer";

@@ -1,14 +1,4 @@
-import {
-    Avatar,
-    AvatarGroup,
-    Badge,
-    IconButton,
-    ListItemAvatar,
-    ListItemButton,
-    ListItemSecondaryAction,
-    ListItemText,
-    Tooltip
-} from "@mui/material";
+import {Avatar, AvatarGroup, Badge, IconButton, ListItemAvatar, ListItemButton, ListItemSecondaryAction, ListItemText, Tooltip} from "@mui/material";
 import {Link} from "react-router-dom";
 import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
 import {HotIndicator} from "./HotIndicator";

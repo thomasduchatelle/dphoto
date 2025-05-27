@@ -16,7 +16,7 @@ export function ImageInList({media, imageViewportPercentage, autoFocus = false}:
 
     useEffect(() => {
         if (autoFocus && itemRef.current) {
-            itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            itemRef.current.scrollIntoView({behavior: 'smooth', block: 'start'})
         }
     }, [autoFocus, itemRef])
 

@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
 import {screen, userEvent, within} from "@storybook/testing-library";
 import {CreateAlbumDialog, CreateAlbumDialogContainer} from "../pages/authenticated/albums/CreateAlbumDialog";
-import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr, emptyCreateAlbum} from "../core/catalog/domain/CreateAlbumController";
+import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr, emptyCreateAlbum} from "../core/catalog";
 import {Button} from "@mui/material";
 
 dayjs.locale(fr)
@@ -27,7 +27,7 @@ const Template: ComponentStory<typeof CreateAlbumDialog> = (args) => (
 );
 const TemplateInContainer: ComponentStory<typeof CreateAlbumDialog> = (args) => (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
-        <CreateAlbumDialogContainer firstDay={defaultStartDate}>
+        <CreateAlbumDialogContainer firstDay={defaultStartDate} createAlbum={() => Promise.resolve({owner: "tony", folderName: "/ironman-1"})} {...args}>
             {({openDialogForCreateAlbum}) => {
                 return <Button onClick={openDialogForCreateAlbum} variant='contained'>Click to open</Button>
             }}
