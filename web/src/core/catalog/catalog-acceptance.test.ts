@@ -4,7 +4,7 @@ import {CatalogAPIAdapter} from "./adapters/api";
 import {CatalogFactory} from "./catalog-factories";
 import {rest} from "msw";
 import {SetupServer, setupServer} from "msw/node";
-import {OnPageRefresh} from "./thunks";
+import {OnPageRefresh} from "./thunks/thunks-onPageRefresh";
 
 describe('CatalogFactory', () => {
 

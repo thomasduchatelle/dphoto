@@ -42,7 +42,7 @@ describe("useStableSelector", () => {
 
     it("should return the same reference of a function when the component is refreshed with the same selector", () => {
         // Simulate a component refresh by re-rendering the hook with the same selector
-        const { result, rerender } = renderHook(() => useStableSelector(firstJediSelector));
+        const {result, rerender} = renderHook(() => useStableSelector(firstJediSelector));
         const stableSelector1 = result.current;
         rerender();
         const stableSelector2 = result.current;
@@ -76,7 +76,7 @@ describe("useStableSelector", () => {
         const newFirstJedi = {name: "Luke Skywalker", lightsaber: "green", master: "Obi-Wan Kenobi"};
         const updatedState = {
             ...state,
-            jedi: [ {...newFirstJedi}, ...state.jedi.slice(1) ]
+            jedi: [{...newFirstJedi}, ...state.jedi.slice(1)]
         };
 
         const result2 = stableSelector(updatedState);

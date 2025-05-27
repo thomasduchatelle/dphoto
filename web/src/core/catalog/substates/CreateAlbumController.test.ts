@@ -1,15 +1,14 @@
-import {AlbumId, Owner} from "./catalog-state";
+import {AlbumId, Owner} from "../domain/catalog-state";
 import {
     albumFolderNameAlreadyTakenErr,
     albumStartAndEndDateMandatoryErr,
     CreateAlbumController,
-    CreateAlbumListener,
-    CreateAlbumRequest,
     CreateAlbumState,
     emptyCreateAlbum
 } from "./CreateAlbumController";
 import dayjs from "dayjs";
-import {CatalogError} from "./errors";
+import {CatalogError} from "../domain";
+import {CreateAlbumRequest} from "../thunks";
 
 const owner1: Owner = "owner1"
 
@@ -32,7 +31,6 @@ describe("CreateAlbumController", () => {
         ...openWithoutError,
     }
 
-    let listener: CreateAlbumListenerFake
     let albumCatalogFake: AlbumCatalogFake
 
     let stateHolder: StateHolder<CreateAlbumState>
@@ -40,13 +38,11 @@ describe("CreateAlbumController", () => {
 
     beforeEach(() => {
         stateHolder = new StateHolder(emptyCreateAlbum(defaultDateForEmptyAlbum))
-        listener = new CreateAlbumListenerFake()
         albumCatalogFake = new AlbumCatalogFake()
 
         handler = new CreateAlbumController(
             stateHolder.update,
-            albumCatalogFake,
-            listener,
+            albumCatalogFake.createAlbum,
             defaultDateForEmptyAlbum,
         )
     })
@@ -63,7 +59,6 @@ describe("CreateAlbumController", () => {
             ...emptyCreateAlbum(defaultDateForEmptyAlbum),
             open: true,
         })
-        expect(listener.albumIds).toHaveLength(0)
     })
 
     it("it should close the dialog without any other actions when onClose is requested", () => {
@@ -72,7 +67,6 @@ describe("CreateAlbumController", () => {
         handler.onCloseCreateAlbumDialog()
 
         expect(stateHolder.state.open).toEqual(false)
-        expect(listener.albumIds).toHaveLength(0)
     })
 
     it.each([
@@ -88,7 +82,6 @@ describe("CreateAlbumController", () => {
 
         expect(albumCatalogFake.albumCreationRequests).toHaveLength(0)
         expect(stateHolder.state.errorCode).toEqual(albumStartAndEndDateMandatoryErr)
-        expect(listener.albumIds).toHaveLength(0)
     })
 
     it("it should submit the form with requested start date and exclusive end date, then dispatch an action with albums and medias reloaded and close the dialog.", async () => {
@@ -114,7 +107,6 @@ describe("CreateAlbumController", () => {
 
         expect(stateHolder.state.creationInProgress).toEqual(true)
         expect(stateHolder.state.open).toEqual(false)
-        expect(listener.albumIds).toEqual([{owner: owner1, folderName: "/avenger-3"}])
     })
 
     it("it should submit the form with custom start date and end date", async () => {
@@ -178,7 +170,6 @@ describe("CreateAlbumController", () => {
             open: true,
             creationInProgress: false,
         })
-        expect(listener.albumIds).toHaveLength(0)
     })
 
     it("should fallback on a native error when saving fails for an unknown reason", async () => {
@@ -193,7 +184,6 @@ describe("CreateAlbumController", () => {
             open: true,
             creationInProgress: false,
         })
-        expect(listener.albumIds).toHaveLength(0)
     })
 
     it("should accept when start = end dates if the end of day is selected for the end", async () => {
@@ -234,21 +224,13 @@ class AlbumCatalogFake {
     albumCreationRequests: CreateAlbumRequest[] = []
     failsWithError: Error | undefined
 
-    createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
+    createAlbum = (request: CreateAlbumRequest): Promise<AlbumId> => {
         if (this.failsWithError) {
             return Promise.reject(this.failsWithError)
         }
 
         this.albumCreationRequests.push(request); // TODO where is the owner coming from ?
         return Promise.resolve({owner: owner1, folderName: `/${request.name.replaceAll(" ", "-").toLowerCase()}`})
-    }
-}
-
-class CreateAlbumListenerFake implements CreateAlbumListener {
-    public albumIds: AlbumId[] = []
-
-    onAlbumCreated = async (albumId: AlbumId): Promise<void> => {
-        this.albumIds.push(albumId)
     }
 }
 

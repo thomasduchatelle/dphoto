@@ -2,7 +2,7 @@ import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
 import {Box, IconButton, Tooltip} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsIcon from "@mui/icons-material/Settings";
-import {CreateAlbumControls} from "../../../../core/catalog/domain/CreateAlbumController";
+import {CreateAlbumControls} from "../../../../core/catalog/substates/CreateAlbumController";
 
 
 export default function AlbumListActions({openDialogForCreateAlbum, ...props}: OwnerSelectorProps & CreateAlbumControls) {

@@ -46,7 +46,7 @@ export class MediaPageLogic {
         let previousMediaLink = "", nextMediaLink = "", previousMediaSrc = "", nextMediaSrc = "",
             previousIsImage = false,
             nextIsImage = false
-        let backToAlbumLink= `/albums/${owner}/${album}`
+        let backToAlbumLink = `/albums/${owner}/${album}`
 
         if (mediasState.owner === owner && mediasState.folderName === album && mediasState.medias) {
 

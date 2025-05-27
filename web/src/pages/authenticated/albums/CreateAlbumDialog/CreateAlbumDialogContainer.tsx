@@ -1,26 +1,25 @@
-import {CreateAlbumController, CreateAlbumControls, CreateAlbumState, emptyCreateAlbum} from "../../../../core/catalog";
+import {CreateAlbumController, CreateAlbumControls, CreateAlbumState, CreateAlbumThunk, emptyCreateAlbum} from "../../../../core/catalog";
 import {FC, useMemo, useState} from "react";
 import dayjs, {Dayjs} from "dayjs";
 import {CreateAlbumDialog} from "./CreateAlbumDialog";
-import {useCatalogAPIAdapter, useCatalogContext} from "../../../../core/catalog-react";
 
-export const CreateAlbumDialogContainer = ({children: Child, firstDay}: { children: FC<CreateAlbumControls>, firstDay?: Dayjs }) => {
-    const {handlers} = useCatalogContext()
-    const catalogAPIAdapter = useCatalogAPIAdapter()
+export const CreateAlbumDialogContainer = ({createAlbum, children: Child, firstDay}: {
+    children: FC<CreateAlbumControls>,
+    firstDay?: Dayjs,
+    createAlbum: CreateAlbumThunk
+}) => {
     const [state, setState] = useState<CreateAlbumState>(emptyCreateAlbum(dayjs()))
 
-    const controller = useMemo(() => {
+    const {openDialogForCreateAlbum, ...controller} = useMemo(() => {
         return new CreateAlbumController(
             setState,
-            catalogAPIAdapter,
-            handlers,
+            createAlbum,
             firstDay,
         )
-    }, [setState, catalogAPIAdapter, handlers, firstDay])
-
+    }, [setState, createAlbum, firstDay])
 
     return <>
-        <Child {...controller}/>
+        <Child {...{openDialogForCreateAlbum}}/>
         <CreateAlbumDialog state={state} {...controller}/>
     </>
 }

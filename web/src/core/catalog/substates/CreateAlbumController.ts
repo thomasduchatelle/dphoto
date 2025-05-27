@@ -1,6 +1,6 @@
 import dayjs, {Dayjs} from "dayjs";
-import {isCatalogError} from "./errors";
-import {AlbumId} from "./catalog-state";
+import {isCatalogError} from "../domain";
+import {CreateAlbumThunk} from "../thunks";
 
 export const albumFolderNameAlreadyTakenErr = "AlbumFolderNameAlreadyTakenErr";
 export const albumStartAndEndDateMandatoryErr = "AlbumStartAndEndDateMandatoryErr";
@@ -35,26 +35,10 @@ export interface CreateAlbumControls {
     // openEdit: (album: Album) => void // TODO manage EDIT mode
 }
 
-export interface CreateAlbumRequest {
-    name: string
-    start: Date
-    end: Date
-    forcedFolderName: string
-}
-
-export interface CreateAlbumPort {
-    createAlbum(request: CreateAlbumRequest): Promise<AlbumId>
-}
-
-export interface CreateAlbumListener {
-    onAlbumCreated(albumId: AlbumId): Promise<void>
-}
-
 export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumControls {
     constructor(
         private readonly setState: (stateUpdater: (prev: CreateAlbumState) => CreateAlbumState) => void,
-        private readonly createAlbumPort: CreateAlbumPort,
-        private readonly listener: CreateAlbumListener,
+        private readonly createAlbumPort: CreateAlbumThunk,
         private readonly firstDay: Dayjs = dayjs().startOf("week").subtract(9, "days"),
     ) {
     }
@@ -77,18 +61,16 @@ export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumCo
         if (actualStart && actualEnd && actualStart.isBefore(actualEnd)) {
             this.setState(prev => ({...prev, creationInProgress: true}));
 
-            await this.createAlbumPort
-                .createAlbum({
-                    name: state.name,
-                    start: actualStart.toDate(),
-                    end: actualEnd.toDate(),
-                    forcedFolderName: state.withCustomFolderName ? state.forceFolderName : ""
-                })
+            await this.createAlbumPort({
+                name: state.name,
+                start: actualStart.toDate(),
+                end: actualEnd.toDate(),
+                forcedFolderName: state.withCustomFolderName ? state.forceFolderName : ""
+            })
                 .then((albumId) => {
                     this.setState(prev => ({...prev, open: false}))
                     return albumId
                 })
-                .then(this.listener.onAlbumCreated)
                 .catch((err: Error) => {
                     console.log("Failed to create the album", err);
                     this.setState(prev => ({

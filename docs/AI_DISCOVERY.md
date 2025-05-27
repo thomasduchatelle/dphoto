@@ -216,6 +216,34 @@ And it is used with a hook:
  }
  ```
 
+#### UI: Thunk (v2)
+
+Callback used on onClick and similar props on the view are called **Thunk**. A Thunk is characterized by:
+
+* it is a function with any number of arguments which returns either void or Promise<void>
+* its arguments are values used to mutate the state, not values that are already in the state, and neither context object (App, credentials, ...)
+* the thunk is stable against component refresh
+
+A thunk is declared in its own file which contains:
+
+* business logic function or class: logic of the thunk that call a Port to interact with the server, and dispatch actions to update the state of the progress,
+  failure, and success.
+    * a function is used in most cases, it takes its dependencies as argument (dispatch, ports, context, ...) in an order allowing to use `.bind(null, ...)` in
+      the factory ; only used dependencies are in the arguments
+    * a class is used when more than one port is used, for readability: dispatch function and ports are passed on the constructor, state context and new values
+      mutating the state are passed a argument to the method as a merged object.
+* selector: a function taking the `CalalogViewerState` and selecting the context necessary for the thunk implementation to work
+* factory: return a function that have the selected state context and the properties of `CatalogFactoryArgs` injected (recommended to use `.bind(null, ...)`)
+* (optional) a Port interface which exposes the functions wrapping REST calls, stores, and other technologies ; the port interface is instantiated in the
+  factory and injected into the business logic
+
+A `ThunkDeclaration` is exported with the selector and the factory. It is referred in the index.ts file in the `catalogThunks` and the Port interface, if any,
+are exported.
+
+The tests are written against the business logic function or class ; not the `ThunkDeclaration`. Mocks are not used as they coupled the test with the signature
+of adapter methods. We use instead Fake: a simple in-memory implementation behaving the same way the abstracted system is expected to. The write requests are
+asserted by reading properties of the fake-implementation while the read request are not (only output and outcomes are asserted).
+
 Discovery path (and tasks)
 ---------------------------------------
 

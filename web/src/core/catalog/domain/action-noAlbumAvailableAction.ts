@@ -23,7 +23,7 @@ export function reduceNoAlbumAvailable(
 }
 
 export function noAlbumAvailableAction(): NoAlbumAvailableAction {
-    return { type: "NoAlbumAvailableAction" };
+    return {type: "NoAlbumAvailableAction"};
 }
 
 export function noAlbumAvailableReducerRegistration(handlers: any) {

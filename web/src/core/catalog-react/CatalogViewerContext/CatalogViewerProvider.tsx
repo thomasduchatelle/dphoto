@@ -1,43 +1,27 @@
 import {createContext, ReactNode, useCallback, useEffect, useMemo, useReducer} from "react";
 import {
-    Album,
-    AlbumFilterCriterion,
-    AlbumFilterHandler,
     AlbumId,
-    albumIdEquals,
+    CatalogFactoryArgs,
     catalogReducer,
+    catalogThunks,
+    CatalogThunksInterface,
     CatalogViewerAction,
     CatalogViewerState,
     initialCatalogState,
-    isRedirectToAlbumIdAction,
-    PostCreateAlbumHandler,
-    SharingType
+    isRedirectToAlbumIdAction
 } from "../../catalog";
-import {DPhotoApplication, useApplication, useUnrecoverableErrorDispatch} from "../../application";
-import {CatalogFactory} from "../../catalog/catalog-factories";
-import {CatalogHandlers, CatalogViewerStateWithDispatch, ShareHandlers} from "./CatalogViewerStateWithDispatch";
+import {useApplication, useUnrecoverableErrorDispatch} from "../../application";
 import {AuthenticatedUser} from "../../security";
-import {ShareController} from "../../catalog/domain/ShareController";
-import {CatalogAPIAdapter} from "../../catalog/adapters/api";
-import {CatalogFactoryArgs, catalogThunks} from "../../catalog/thunks";
 import {useThunks} from "../../thunk-engine";
+
+export interface CatalogViewerStateWithDispatch {
+    state: CatalogViewerState
+    selectedAlbumId?: AlbumId // state managed from the URL
+    handlers?: Omit<CatalogThunksInterface, "onPageRefresh">
+}
 
 export const CatalogViewerContext = createContext<CatalogViewerStateWithDispatch>({
     state: initialCatalogState({}),
-    handlers: {
-        onAlbumFilterChange: () => {
-        },
-        async onAlbumCreated(albumId: AlbumId): Promise<void> {
-        },
-        async onRevoke(email: string): Promise<void> {
-        },
-        async onGrant(email: string, role: SharingType): Promise<void> {
-        },
-        openSharingModal(album: Album): void {
-        },
-        onClose(): void {
-        },
-    }
 })
 
 export const CatalogViewerProvider = (
@@ -48,7 +32,6 @@ export const CatalogViewerProvider = (
         children?: ReactNode
     }
 ) => {
-    const app = useApplication()
     const unrecoverableErrorDispatch = useUnrecoverableErrorDispatch()
 
     const [catalog, dispatch] = useReducer(catalogReducer, initialCatalogState(authenticatedUser))
@@ -60,18 +43,8 @@ export const CatalogViewerProvider = (
         }
     }, [dispatch, redirectToAlbumId])
 
-    const {allAlbums, shareModal} = catalog
-
-    const handlers = useMemo(() => {
-            const sharingAPI = new CatalogAPIAdapter(app.axiosInstance, app);
-            const shareController = new ShareController(dispatchPropagator, sharingAPI);
-
-            return new CompositeHandler(app, dispatchPropagator, shareController, allAlbums, albumId, shareModal?.sharedAlbumId)
-        },
-        [app, dispatchPropagator, allAlbums, albumId, shareModal]
-    )
-
-    const {onPageRefresh} = useCatalogThunks(catalog, dispatchPropagator);
+    // Use thunks for sharing modal actions instead of ShareController
+    const {onPageRefresh, ...thunks} = useCatalogThunks(catalog, dispatchPropagator);
 
     useEffect(() => {
         onPageRefresh(albumId)
@@ -79,7 +52,7 @@ export const CatalogViewerProvider = (
     }, [onPageRefresh, albumId, unrecoverableErrorDispatch]);
 
     return (
-        <CatalogViewerContext.Provider value={{state: catalog, handlers, selectedAlbumId: albumId}}>
+        <CatalogViewerContext.Provider value={{state: catalog, handlers: thunks, selectedAlbumId: albumId}}>
             {children}
         </CatalogViewerContext.Provider>
     )
@@ -103,46 +76,5 @@ function useCatalogThunks(
         factoryArgs,
         state
     );
-}
-
-class CompositeHandler implements CatalogHandlers, ShareHandlers {
-    constructor(
-        app: DPhotoApplication,
-        dispatch: (action: CatalogViewerAction) => void,
-        private readonly shareController: ShareController,
-        allAlbums: Album[],
-        albumId?: AlbumId,
-        private readonly sharingModalAlbumId?: AlbumId,
-    ) {
-        const selectedAlbum = allAlbums.find(album => albumIdEquals(albumId, album.albumId))
-
-        this.onAlbumFilterChange = new AlbumFilterHandler(dispatch, {selectedAlbum, allAlbums}).onAlbumFilter
-        this.onAlbumCreated = new PostCreateAlbumHandler(dispatch, new CatalogFactory(app).restAdapter()).onAlbumCreated
-    }
-
-    onAlbumCreated: (albumId: AlbumId) => Promise<void>
-    onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
-
-    onRevoke = async (email: string): Promise<void> => {
-        if (!this.sharingModalAlbumId) {
-            return Promise.reject("No album selected");
-        }
-        return this.shareController.revokeAccess(this.sharingModalAlbumId, email);
-    }
-
-    onGrant = async (email: string, role: SharingType): Promise<void> => {
-        if (!this.sharingModalAlbumId) {
-            return Promise.reject("No album selected");
-        }
-        return this.shareController.grantAccess(this.sharingModalAlbumId, email, role);
-    }
-
-    openSharingModal = (album: Album): void => {
-        this.shareController.openSharingModal(album);
-    }
-
-    onClose = (): void => {
-        this.shareController.onClose();
-    }
 }
 
