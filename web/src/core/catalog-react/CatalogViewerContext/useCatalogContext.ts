@@ -1,7 +1,6 @@
 import {CatalogViewerContext} from "./CatalogViewerProvider";
 import {useContext} from "react";
-import {AlbumId, CatalogViewerState} from "../../catalog";
-import {CatalogThunksInterface} from "../../catalog/thunks";
+import {AlbumId, CatalogThunksInterface, CatalogViewerState} from "../../catalog";
 
 export const useCatalogContext = (): {
     state: CatalogViewerState,

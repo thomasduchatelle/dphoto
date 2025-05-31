@@ -1,4 +1,4 @@
-import {AlbumId, Owner} from "../domain/catalog-state";
+import {AlbumId, CatalogError, Owner} from "../domain";
 import {
     albumFolderNameAlreadyTakenErr,
     albumStartAndEndDateMandatoryErr,
@@ -7,7 +7,6 @@ import {
     emptyCreateAlbum
 } from "./CreateAlbumController";
 import dayjs from "dayjs";
-import {CatalogError} from "../domain";
 import {CreateAlbumRequest} from "../thunks";
 
 const owner1: Owner = "owner1"

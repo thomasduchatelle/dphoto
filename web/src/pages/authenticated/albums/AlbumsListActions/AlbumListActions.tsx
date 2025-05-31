@@ -1,11 +1,13 @@
 import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
-import {Box, IconButton, Tooltip} from "@mui/material";
+import {Box, IconButton} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import SettingsIcon from "@mui/icons-material/Settings";
-import {CreateAlbumControls} from "../../../../core/catalog/substates/CreateAlbumController";
+import DeleteIcon from "@mui/icons-material/Delete";
+import {CreateAlbumControls} from "../../../../core/catalog";
 
 
-export default function AlbumListActions({openDialogForCreateAlbum, ...props}: OwnerSelectorProps & CreateAlbumControls) {
+export default function AlbumListActions({openDialogForCreateAlbum, openDeleteAlbumDialog, ...props}: OwnerSelectorProps & CreateAlbumControls & {
+    openDeleteAlbumDialog: () => void
+}) {
     return (
         <Box sx={{
             display: 'flex',
@@ -19,13 +21,9 @@ export default function AlbumListActions({openDialogForCreateAlbum, ...props}: O
             <IconButton color="primary" onClick={openDialogForCreateAlbum} size="large">
                 <AddIcon/>
             </IconButton>
-            <Tooltip title="Album management [Feature not yet available]">
-                <span>
-                    <IconButton color="primary" size="large" disabled={true}>
-                        <SettingsIcon/>
-                    </IconButton>
-                </span>
-            </Tooltip>
+            <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog}>
+                <DeleteIcon/>
+            </IconButton>
         </Box>
     )
 }

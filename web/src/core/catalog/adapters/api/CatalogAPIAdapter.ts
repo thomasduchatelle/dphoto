@@ -2,7 +2,7 @@ import {Album, AlbumId, Media, MediaType, OwnerDetails, SharingType, UserDetails
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
 import {CreateAlbumRequest, FetchAlbumMediasPort} from "../../index";
-import {CreateAlbumPort, FetchAlbumsPort, GrantAlbumSharingAPI, revokeAlbumSharingAPI} from "../../thunks";
+import {CreateAlbumPort, DeleteAlbumPort, FetchAlbumsPort, GrantAlbumSharingAPI, revokeAlbumSharingAPI} from "../../thunks";
 
 interface RestAlbum {
     owner: string
@@ -35,15 +35,49 @@ interface RestOwnerDetails {
     users: RestUserDetails[]
 }
 
+export class DeleteAlbumError extends Error {
+    constructor(public readonly code: string, message: string) {
+        super(message);
+        this.name = "DeleteAlbumError";
+    }
+}
+
+export function isDeleteAlbumError(error: Error): error is DeleteAlbumError {
+    return error.name === "DeleteAlbumError" && typeof (error as any).code === "string";
+}
+
 function castError(err: AxiosError): Error {
     return new Error(`'${err.config.method?.toUpperCase()} ${err.config.url}' failed with status ${err.response?.status} ${err.response?.statusText}: ${err.response?.data?.message ?? err.message}`)
 }
 
-export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort, GrantAlbumSharingAPI, revokeAlbumSharingAPI {
+// Special error caster for deleteAlbum
+function castDeleteAlbumError(err: AxiosError): Error {
+    if (
+        err.response &&
+        err.response?.status >= 400 && err.response?.status < 500 &&
+        typeof err.response.data === "object" &&
+        err.response.data !== null &&
+        "errorType" in err.response.data &&
+        "message" in err.response.data
+    ) {
+        // the message from the server are trusted and contains extra information (OrphanedMedias has the number of media not-reallocate-able)
+        return new DeleteAlbumError(err.response.data.errorType, err.response.data.message);
+    }
+
+    return castError(err);
+}
+
+export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort, GrantAlbumSharingAPI, revokeAlbumSharingAPI, DeleteAlbumPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,
     ) {
+    }
+
+    public async deleteAlbum(albumId: AlbumId): Promise<void> {
+        await this.authenticatedAxios
+            .delete(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}`)
+            .catch((err: AxiosError) => Promise.reject(castDeleteAlbumError(err)));
     }
 
     public async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {

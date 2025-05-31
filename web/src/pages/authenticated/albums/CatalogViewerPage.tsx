@@ -8,16 +8,21 @@ import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../core/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
-import {albumIdEquals} from "../../../core/catalog";
+import {albumIdEquals, selectDeleteAlbumDialog} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 import ShareDialog from "./ShareDialog";
 import {useSharingModalController} from "../../../core/catalog-react/CatalogViewerContext/useSharingModalController";
+import {DeleteAlbumDialog} from "./DeleteAlbumDialog";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
 
-    const {state, handlers: {onAlbumFilterChange, createAlbum}, selectedAlbumId} = useCatalogContext()
+    const {
+        state,
+        handlers: {onAlbumFilterChange, createAlbum, deleteAlbum, closeDeleteAlbumDialog, openDeleteAlbumDialog},
+        selectedAlbumId
+    } = useCatalogContext()
     const logoutCase = useLogoutCase();
 
     const {pathname} = useLocation()
@@ -49,6 +54,7 @@ export function CatalogViewerPage() {
                             selected={state.albumFilter}
                             options={state.albumFilterOptions}
                             onAlbumFiltered={onAlbumFilterChange}
+                            openDeleteAlbumDialog={openDeleteAlbumDialog}
                             {...controls}
                         />
                         <AlbumsList albums={state.albums}
@@ -63,6 +69,7 @@ export function CatalogViewerPage() {
                         onAlbumFilterChange={onAlbumFilterChange}
                         scrollToMedia={search.get("mediaId") ?? undefined}
                         openSharingModal={openSharingModal}
+                        openDeleteAlbumDialog={openDeleteAlbumDialog}
                         {...controls}
                     />
                 )}
@@ -70,6 +77,11 @@ export function CatalogViewerPage() {
             {shareModal && (
                 <ShareDialog {...shareDialogProps} {...shareModal} open={true}/>
             )}
+            <DeleteAlbumDialog
+                {...selectDeleteAlbumDialog(state)}
+                onDelete={deleteAlbum}
+                onClose={closeDeleteAlbumDialog}
+            />
         </Box>
     );
 }

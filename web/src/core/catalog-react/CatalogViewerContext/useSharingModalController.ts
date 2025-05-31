@@ -23,10 +23,10 @@ export function useSharingModalController(): ShareHandlers & {
 
     // Memoize the handlers to ensure referential stability
     return useMemo(() => ({
-        ...handlers,
         onClose: handlers.closeSharingModal,
         onRevoke: handlers.revokeAlbumSharing,
         onGrant: handlers.grantAlbumSharing,
+        openSharingModal: handlers.openSharingModal,
         shareModal,
     }), [handlers, shareModal]);
 }

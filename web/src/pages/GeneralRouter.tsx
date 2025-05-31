@@ -1,8 +1,7 @@
 import AuthenticatedRouter from "./authenticated/AuthenticatedRouter";
 import LoginPage from "./Login";
 import React, {ReactElement, useCallback, useState} from "react";
-import {useIsAuthenticated} from "../core/application/security-hooks";
-import {useGlobalError} from "../core/application";
+import {useGlobalError, useIsAuthenticated} from "../core/application";
 import ErrorPage from "./ErrorPage";
 import {Navigate, useSearchParams} from "react-router-dom";
 
