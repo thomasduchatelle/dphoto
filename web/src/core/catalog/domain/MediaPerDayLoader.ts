@@ -1,4 +1,4 @@
-import {catalogActions, MediasLoadedAction} from "./catalog-reducer-v2";
+import {catalogActions, MediasLoadedAction} from "./actions";
 import {AlbumId, Media, MediaWithinADay} from "./catalog-state";
 
 

@@ -1,4 +1,4 @@
-import {Album, AlbumFilterCriterion, AlbumFilterEntry, albumIsOwnedByCurrentUser, CurrentUserInsight, OwnerDetails} from "./catalog-state";
+import {Album, AlbumFilterCriterion, AlbumFilterEntry, albumIsOwnedByCurrentUser, albumMatchCriterion, CurrentUserInsight, OwnerDetails} from "./catalog-state";
 
 export const ALL_ALBUMS_FILTER_CRITERION: AlbumFilterCriterion = {owners: []}
 const SELF_OWNED_ALBUM_FILTER_CRITERION: AlbumFilterCriterion = {selfOwned: true, owners: []}
@@ -74,4 +74,12 @@ function arraysEqual(a: any, b: any) {
         if (a[i] !== b[i]) return false;
     }
     return true;
+}
+
+export function refreshFilters(currentUser: CurrentUserInsight, currentAlbumFilterEntry: AlbumFilterEntry, allAlbums: Album[]) {
+    const albumFilterOptions = generateAlbumFilterOptions(currentUser, allAlbums);
+    const albumFilter = albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, currentAlbumFilterEntry.criterion)) ?? DEFAULT_ALBUM_FILTER_ENTRY
+    const albums = allAlbums.filter(albumMatchCriterion(albumFilter.criterion))
+
+    return {albumFilterOptions, albumFilter, albums};
 }

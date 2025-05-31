@@ -95,6 +95,14 @@ functions:
       - httpApi:
           path: /api/v1/albums
           method: post
+  delete-albums:
+    handler: bootstrap
+    package:
+      artifact: ../../bin/delete-album.zip
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums/{folderName}
+          method: delete
   share-album:
     handler: bootstrap
     package:

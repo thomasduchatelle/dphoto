@@ -1,0 +1,5 @@
+/drop
+/add       web/src/core/catalog/thunks/index.ts
+/read-only docs/principles_thunks.md
+/read-only web/src/core/catalog/domain/catalog-reducer-v2.ts
+/read-only web/src/core/catalog/domain/catalog-state.ts

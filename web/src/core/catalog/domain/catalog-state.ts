@@ -14,6 +14,7 @@ export interface CatalogViewerState {
     albumsLoaded: boolean
     mediasLoaded: boolean
     shareModal?: ShareModal
+    deleteDialog?: DeleteDialogState
 }
 
 export interface CurrentUserInsight {
@@ -124,4 +125,11 @@ export type RedirectToAlbumIdAction = {
 
 export function isRedirectToAlbumIdAction(arg: any): arg is RedirectToAlbumIdAction {
     return arg.redirectTo
+}
+
+export interface DeleteDialogState {
+    deletableAlbums: Album[]
+    initialSelectedAlbumId?: AlbumId
+    isLoading: boolean
+    error?: string
 }

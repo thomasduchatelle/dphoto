@@ -2,9 +2,8 @@ import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
-import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, MediaWithinADay} from "../../../../core/catalog";
+import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, CreateAlbumControls, MediaWithinADay} from "../../../../core/catalog";
 import AlbumListActions from "../AlbumsListActions/AlbumListActions";
-import {CreateAlbumControls} from "../../../../core/catalog/substates/CreateAlbumController";
 
 const albumFilterFeatureFlag = true
 
@@ -20,6 +19,7 @@ export default function MediasPage({
                                        onAlbumFilterChange,
                                        selectedAlbumId,
                                        openSharingModal,
+                                       openDeleteAlbumDialog,
                                        ...controls
                                    }: {
     albums: Album[]
@@ -33,6 +33,7 @@ export default function MediasPage({
     selectedAlbumId: AlbumId | undefined
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
     openSharingModal: (album: Album) => void
+    openDeleteAlbumDialog: () => void
 } & CreateAlbumControls) {
     const drawerWidth = 450
 
@@ -61,6 +62,7 @@ export default function MediasPage({
                                 selected={albumFilter}
                                 options={albumFilterOptions}
                                 onAlbumFiltered={onAlbumFilterChange}
+                                openDeleteAlbumDialog={openDeleteAlbumDialog}
                                 {...controls}
                             />
                             <Divider/>
