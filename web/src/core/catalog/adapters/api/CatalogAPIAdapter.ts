@@ -1,4 +1,4 @@
-import {Album, AlbumId, Media, MediaType, OwnerDetails, SharingType, UserDetails} from "../../domain";
+import {Album, AlbumId, Media, MediaType, OwnerDetails, UserDetails} from "../../domain";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
 import {CreateAlbumRequest, FetchAlbumMediasPort} from "../../index";
@@ -99,7 +99,7 @@ export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort,
 
                 return Promise.allSettled([
                     this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),
-                    this.findUserDetails(new Set<string>(albums.flatMap(a => Object.entries(a.sharedWith ?? {}).map(([email, role]) => email)))),
+                    this.findUserDetails(new Set<string>(albums.flatMap(a => Object.entries(a.sharedWith ?? {}).map(([email]) => email)))),
                 ]).then(([ownersResp, usersResp]) => {
                     const owners = ownersResp.status === "fulfilled" ? ownersResp.value.reduce(
                         (map, owner) => {
@@ -136,12 +136,11 @@ export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort,
                         totalCount: album.totalCount,
                         temperature: temperature,
                         relativeTemperature: temperature / maxTemperature,
-                        sharedWith: Object.entries(album.sharedWith ?? {}).map(([email, role]) => ({
+                        sharedWith: Object.entries(album.sharedWith ?? {}).map(([email]) => ({
                             user: users.get(email) ?? {
                                 name: email,
                                 email: email,
                             },
-                            role: castAsSharingType(role, SharingType.visitor),
                         })),
                         ownedBy: album.directlyOwned ? undefined : owners.get(album.owner) ?? {
                             name: album.owner,
@@ -202,11 +201,9 @@ export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort,
             })
     }
 
-    public grantAccessToAlbum(albumId: AlbumId, email: string, role: SharingType): Promise<void> {
+    public grantAccessToAlbum(albumId: AlbumId, email: string): Promise<void> {
         return this.authenticatedAxios
-            .put(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`, {
-                role,
-            })
+            .put(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`);
     }
 
     public loadUserDetails(email: string): Promise<UserDetails> {
@@ -249,6 +246,3 @@ function convertToType(type: string): MediaType {
     }
 }
 
-function castAsSharingType(value: string, defaultValue: SharingType): SharingType {
-    return (SharingType as any)[value] ?? defaultValue
-}

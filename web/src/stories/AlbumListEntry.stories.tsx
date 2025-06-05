@@ -3,7 +3,6 @@ import {ComponentMeta, ComponentStory} from '@storybook/react';
 import {List} from "@mui/material";
 import {AlbumListEntry} from "../pages/authenticated/albums/AlbumsList/AlbumListEntry";
 import {StoriesContext} from "./StoriesContext";
-import {SharingType} from "../core/catalog";
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
@@ -78,7 +77,7 @@ SharedToOthers.args = {
         temperature: 25,
         relativeTemperature: 0.6,
         sharedWith: [
-            {user: {name: "Pepper Stark", email: "pepper@stark.com"}, role: SharingType.visitor},
+            {user: {name: "Pepper Stark", email: "pepper@stark.com"}},
         ],
     },
     selected: false,

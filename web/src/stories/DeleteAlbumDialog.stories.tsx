@@ -3,7 +3,6 @@ import {ComponentMeta, ComponentStory} from "@storybook/react";
 import {DeleteAlbumDialog} from "../pages/authenticated/albums/DeleteAlbumDialog";
 import {Button} from "@mui/material";
 import {Album, AlbumId} from "../core/catalog";
-import {AllOptionsOpen} from "./AlbumsListActions.stories";
 
 // Helper to create AlbumId
 const makeAlbumId = (owner: string, folderName: string): AlbumId => ({

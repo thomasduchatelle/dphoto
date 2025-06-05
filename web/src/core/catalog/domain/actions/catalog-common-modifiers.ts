@@ -1,4 +1,12 @@
-import {Album, AlbumFilterCriterion, AlbumFilterEntry, albumIsOwnedByCurrentUser, albumMatchCriterion, CurrentUserInsight, OwnerDetails} from "./catalog-state";
+import {
+    Album,
+    AlbumFilterCriterion,
+    AlbumFilterEntry,
+    albumIsOwnedByCurrentUser,
+    albumMatchCriterion,
+    CurrentUserInsight,
+    OwnerDetails
+} from "../catalog-state";
 
 export const ALL_ALBUMS_FILTER_CRITERION: AlbumFilterCriterion = {owners: []}
 const SELF_OWNED_ALBUM_FILTER_CRITERION: AlbumFilterCriterion = {selfOwned: true, owners: []}

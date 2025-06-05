@@ -1,6 +1,6 @@
 import {closeSharingModalAction, reduceCloseSharingModal} from "./sharing-closeSharingModalAction";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
-import {SharingType} from "../catalog-state";
+import {sharingDialogSelector} from "./selector-sharingDialogSelector";
 
 describe("reduceCloseSharingModal", () => {
     it("should close the sharing modal by clearing the shareModel property", () => {
@@ -11,12 +11,14 @@ describe("reduceCloseSharingModal", () => {
                 sharedWith: [
                     {
                         user: herselfUser,
-                        role: SharingType.visitor,
                     }
                 ],
             }
         };
         const action = closeSharingModalAction();
-        expect(reduceCloseSharingModal(initial, action)).toEqual(loadedStateWithTwoAlbums);
+        expect(sharingDialogSelector(reduceCloseSharingModal(initial, action))).toEqual({
+            open: false,
+            sharedWith: [],
+        });
     });
 });

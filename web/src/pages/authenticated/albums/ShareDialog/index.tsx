@@ -3,22 +3,15 @@ import {
     Avatar,
     Box,
     Button,
-    ButtonGroup,
-    Chip,
-    ClickAwayListener,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    Grow,
     IconButton,
     ListItemIcon,
     ListItemText,
     Menu,
     MenuItem,
-    MenuList,
-    Paper,
-    Popper,
     Table,
     TableBody,
     TableCell,
@@ -29,15 +22,13 @@ import {
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import React, {useRef, useState} from "react";
+import React, {useState} from "react";
 import Grid from '@mui/material/Unstable_Grid2';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import {ShareError, Sharing, SharingType} from "../../../../core/catalog";
+import {ShareError, Sharing} from "../../../../core/catalog";
 import {Delete, MoreHoriz} from "@mui/icons-material";
 
-function OptionButton({onRevoke, role, name, picture}: {
+function OptionButton({onRevoke, name, picture}: {
     onRevoke: () => void
-    role?: string
     name?: string
     picture?: string
 }) {
@@ -69,14 +60,6 @@ function OptionButton({onRevoke, role, name, picture}: {
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
             >
-                {role && (
-                    <MenuItem>
-                        <ListItemText sx={{textAlign: 'center'}}>
-                            {role && <Chip label={role} variant='outlined' color='secondary' size='small'
-                                           sx={{width: "90px"}}/>}
-                        </ListItemText>
-                    </MenuItem>
-                )}
                 {(name || picture) && (
                     <MenuItem>
                         <ListItemIcon>{picture &&
@@ -101,89 +84,12 @@ function OptionButton({onRevoke, role, name, picture}: {
     )
 }
 
-function GrantAccessButton({onClick}: {
-    onClick: (role: SharingType) => void,
-}) {
-    const [open, setOpen] = useState(false);
-    const anchorRef = useRef<HTMLDivElement>(null);
-
-    const handleMenuItemClick = (
-        event: React.MouseEvent<HTMLLIElement, MouseEvent>,
-        role: SharingType,
-    ) => {
-        onClick(role)
-        setOpen(false);
-    };
-
-    const handleToggle = () => {
-        setOpen((prevOpen) => !prevOpen);
-    };
-
-    const handleClose = (event: Event) => {
-        if (anchorRef.current && anchorRef.current.contains(event.target as HTMLElement)) {
-            return;
-        }
-
-        setOpen(false);
-    };
-
-    const asVisitorText = 'As a visitor';
-
-    return (
-        <>
-            <ButtonGroup variant="contained" size='large' ref={anchorRef} aria-label="split button">
-                <Button onClick={evt => onClick(SharingType.visitor)}>{asVisitorText}</Button>
-                <Button
-                    size="small"
-                    onClick={handleToggle}
-                >
-                    <ArrowDropDownIcon/>
-                </Button>
-            </ButtonGroup>
-            <Popper
-                sx={{
-                    zIndex: 1,
-                }}
-                open={open}
-                anchorEl={anchorRef.current}
-                role={undefined}
-                transition
-                disablePortal
-            >
-                {({TransitionProps, placement}) => (
-                    <Grow
-                        {...TransitionProps}
-                        style={{
-                            transformOrigin:
-                                placement === 'bottom' ? 'center top' : 'center bottom',
-                        }}
-                    >
-                        <Paper>
-                            <ClickAwayListener onClickAway={handleClose}>
-                                <MenuList id="split-button-menu" autoFocusItem>
-                                    <MenuItem onClick={(event) => handleMenuItemClick(event, SharingType.visitor)}
-                                              selected>
-                                        {asVisitorText}
-                                    </MenuItem>
-                                    <MenuItem onClick={(event) => handleMenuItemClick(event, SharingType.contributor)}>
-                                        As a contributor
-                                    </MenuItem>
-                                </MenuList>
-                            </ClickAwayListener>
-                        </Paper>
-                    </Grow>
-                )}
-            </Popper>
-        </>
-    );
-}
-
 export default function ShareDialog({open, sharedWith, error, onClose, onGrant, onRevoke}: {
     open: boolean,
     sharedWith: Sharing[],
     error?: ShareError,
     onClose: () => void,
-    onGrant: (email: string, role: SharingType) => Promise<void>,
+    onGrant: (email: string) => Promise<void>,
     onRevoke: (email: string) => Promise<void>,
 }) {
     const [email, setEmail] = useState("")
@@ -191,9 +97,9 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const savingHandler = (role: SharingType) => {
+    const savingHandler = () => {
         if (email) {
-            onGrant(email, role).then(() => setEmail(""))
+            onGrant(email).then(() => setEmail(""))
         }
     }
 
@@ -222,7 +128,7 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
                             label="Email Address"
                             type="email"
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
-                            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => event.key === 'Enter' && savingHandler(SharingType.visitor)}
+                            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => event.key === 'Enter' && savingHandler()}
                             value={email}
                             error={error?.type === "adding"}
                             helperText={error?.type === "adding" ? error?.message : undefined}
@@ -231,7 +137,13 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
                     <Grid sm={4} xs={12} sx={{
                         textAlign: 'center'
                     }}>
-                        <GrantAccessButton onClick={role => savingHandler(role)}/>
+                        <Button
+                            variant="contained"
+                            size='large'
+                            onClick={savingHandler}
+                        >
+                            Grant access
+                        </Button>
                     </Grid>
                 </Grid>
                 {sharedWith.length > 0 && (
@@ -259,17 +171,11 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
                                             sm: "table-cell"
                                         },
                                     }}>Name</TableCell>
-                                    <TableCell sx={{
-                                        display: {
-                                            xs: "none",
-                                            sm: "table-cell"
-                                        },
-                                    }}>Role</TableCell>
                                     <TableCell></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {sharedWith.map(({user, role}) => (
+                                {sharedWith.map(({user}) => (
                                     <TableRow
                                         key={user.email}
                                         sx={{'&:last-child td, &:last-child th': {border: 0}}}
@@ -296,18 +202,8 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
                                                 sm: "table-cell"
                                             },
                                         }}>{user.name}</TableCell>
-                                        <TableCell sx={{
-                                            display: {
-                                                xs: "none",
-                                                sm: "table-cell"
-                                            },
-                                        }}>
-                                            <Chip label={role} variant='outlined' color='secondary' size='small'
-                                                  sx={{width: "90px"}}/>
-                                        </TableCell>
                                         <TableCell>
                                             <OptionButton onRevoke={() => onRevoke(user.email)}
-                                                          role={isMobile ? role : undefined}
                                                           name={isMobile ? user.name : undefined}
                                                           picture={isMobile ? user.picture : undefined}/>
                                         </TableCell>

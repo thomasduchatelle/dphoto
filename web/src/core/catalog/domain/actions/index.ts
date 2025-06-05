@@ -17,7 +17,9 @@ import {AlbumFailedToDeleteAction, albumFailedToDeleteAction, albumFailedToDelet
 import {CloseDeleteAlbumDialogAction, closeDeleteAlbumDialogAction, closeDeleteAlbumDialogReducerRegistration} from "./delete-closeDeleteAlbumDialog";
 import {StartDeleteAlbumAction, startDeleteAlbumAction, startDeleteAlbumReducerRegistration} from "./delete-startDeleteAlbum";
 
-export * from "./delete-album-dialog-selector";
+export * from "./selector-deleteDialogSelector";
+export * from "./selector-sharingDialogSelector";
+export * from "./catalog-common-modifiers";
 
 export const catalogActions = {
     openSharingModalAction,

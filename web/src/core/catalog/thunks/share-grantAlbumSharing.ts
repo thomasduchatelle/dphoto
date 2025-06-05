@@ -1,10 +1,10 @@
-import {AlbumId, catalogActions, CatalogViewerAction, CatalogViewerState, SharingType, UserDetails} from "../domain";
+import {AlbumId, catalogActions, CatalogViewerAction, CatalogViewerState, UserDetails} from "../domain";
 import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "./catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 
 export interface GrantAlbumSharingAPI {
-    grantAccessToAlbum(albumId: AlbumId, email: string, role: SharingType): Promise<void>;
+    grantAccessToAlbum(albumId: AlbumId, email: string): Promise<void>;
 
     loadUserDetails(email: string): Promise<UserDetails>;
 }
@@ -13,13 +13,12 @@ export function grantAlbumSharingThunk(
     dispatch: (action: CatalogViewerAction) => void,
     sharingAPI: GrantAlbumSharingAPI,
     albumId: AlbumId | undefined,
-    email: string,
-    role: SharingType
+    email: string
 ): Promise<void> {
     if (!albumId) {
         return Promise.reject(`ERROR: no albumId selected to be granted, cannot grant access for ${email}`);
     }
-    return sharingAPI.grantAccessToAlbum(albumId, email, role)
+    return sharingAPI.grantAccessToAlbum(albumId, email)
         .then(() =>
             sharingAPI.loadUserDetails(email)
                 .catch(err => {
@@ -33,7 +32,6 @@ export function grantAlbumSharingThunk(
                     dispatch(catalogActions.addSharingAction({
                         sharing: {
                             user: details,
-                            role: role,
                         }
                     }));
                 })
@@ -52,7 +50,7 @@ export function grantAlbumSharingThunk(
 export const grantAlbumSharingDeclaration: ThunkDeclaration<
     CatalogViewerState,
     { albumId?: AlbumId },
-    (email: string, role: SharingType) => Promise<void>,
+    (email: string) => Promise<void>,
     CatalogFactoryArgs
 > = {
     factory: ({dispatch, app, partialState: {albumId}}) => {

@@ -1,6 +1,6 @@
 import {Album, CatalogViewerState, MediaWithinADay, RedirectToAlbumIdAction} from "../catalog-state";
 
-import {refreshFilters} from "../catalog-common-modifiers";
+import {refreshFilters} from "./catalog-common-modifiers";
 
 export interface AlbumsAndMediasLoadedAction extends RedirectToAlbumIdAction {
     type: 'AlbumsAndMediasLoadedAction'

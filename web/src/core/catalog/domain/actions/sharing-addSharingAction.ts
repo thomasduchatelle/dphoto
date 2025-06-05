@@ -1,5 +1,6 @@
-import {CatalogViewerState, Sharing} from "../catalog-state";
+import {albumMatchCriterion, CatalogViewerState, Sharing} from "../catalog-state";
 import {sortSharings} from "./sharing-openSharingModalAction";
+import {albumIdEquals} from "../utils-albumIdEquals";
 
 export interface AddSharingAction {
     type: "AddSharingAction"
@@ -7,10 +8,10 @@ export interface AddSharingAction {
 }
 
 export function addSharingAction(props: Sharing | Omit<AddSharingAction, "type">): AddSharingAction {
-    if ("user" in props && "role" in props) {
+    if ("user" in props) {
         return {
             type: "AddSharingAction",
-            sharing: props,
+            sharing: {user: (props as Sharing).user},
         };
     }
     return {
@@ -30,8 +31,22 @@ export function reduceAddSharing(
         ...current.shareModal.sharedWith.filter(s => s.user.email !== newSharing.user.email),
         newSharing
     ];
+
+    // Also update allAlbums for consistency
+    const updatedAllAlbums = current.allAlbums.map(album => {
+        if (current.shareModal && albumIdEquals(album.albumId, current.shareModal.sharedAlbumId)) {
+            return {
+                ...album,
+                sharedWith: sortSharings(updatedSharedWith),
+            };
+        }
+        return album;
+    });
+
     return {
         ...current,
+        albums: updatedAllAlbums.filter(albumMatchCriterion(current.albumFilter.criterion)),
+        allAlbums: updatedAllAlbums,
         shareModal: {
             ...current.shareModal,
             sharedWith: sortSharings(updatedSharedWith),

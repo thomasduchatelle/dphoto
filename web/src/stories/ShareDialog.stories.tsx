@@ -1,7 +1,6 @@
 import React from 'react';
 import {ComponentMeta, ComponentStory} from '@storybook/react';
 import ShareDialog from "../pages/authenticated/albums/ShareDialog";
-import {SharingType} from "../core/catalog";
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
@@ -26,10 +25,9 @@ export const WithShares = Template.bind({});
 WithShares.args = {
     open: true,
     sharedWith: [
-        {user: {name: "Morgan Stark", email: "morgan@stark.com"}, role: SharingType.contributor},
+        {user: {name: "Morgan Stark", email: "morgan@stark.com"}},
         {
             user: {name: "Natasha", email: "blackwidow@avenger.com", picture: "black-widow-profile.jpg"},
-            role: SharingType.visitor
         },
     ],
 };
@@ -47,7 +45,6 @@ WithGenericError.args = {
     sharedWith: [
         {
             user: {name: "Natasha", email: "blackwidow@avenger.com", picture: "black-widow-profile.jpg"},
-            role: SharingType.visitor
         },
     ],
 };
@@ -65,7 +62,6 @@ WithSaveError.args = {
     sharedWith: [
         {
             user: {name: "Natasha", email: "blackwidow@avenger.com", picture: "black-widow-profile.jpg"},
-            role: SharingType.visitor
         },
     ],
 };

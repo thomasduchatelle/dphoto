@@ -1,5 +1,5 @@
 import {Album, CatalogViewerState} from "../catalog-state";
-import {refreshFilters} from "../catalog-common-modifiers";
+import {refreshFilters} from "./catalog-common-modifiers";
 
 export interface MediaFailedToLoadAction {
     type: 'MediaFailedToLoadAction'

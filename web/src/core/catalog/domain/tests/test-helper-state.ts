@@ -1,4 +1,4 @@
-import {Album, AlbumFilterEntry, CatalogViewerState, CurrentUserInsight, MediaType, MediaWithinADay, SharingType, UserDetails} from "../catalog-state";
+import {Album, AlbumFilterEntry, CatalogViewerState, CurrentUserInsight, MediaType, MediaWithinADay, UserDetails} from "../catalog-state";
 
 export const myselfUser: CurrentUserInsight = {picture: "my-face.jpg"};
 export const herselfUser: UserDetails = {email: "her@self.com", name: "Herself", picture: "her-face.jpg"};
@@ -16,7 +16,6 @@ export const twoAlbums: Album[] = [
         sharedWith: [
             {
                 user: herselfUser,
-                role: SharingType.visitor,
             }
         ],
     },

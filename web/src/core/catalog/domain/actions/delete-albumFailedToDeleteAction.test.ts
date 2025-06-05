@@ -1,7 +1,7 @@
 import {albumFailedToDeleteAction, reduceAlbumFailedToDelete} from "./delete-albumFailedToDeleteAction";
 import {DeleteDialogState} from "../catalog-state";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
-import {selectDeleteAlbumDialog} from "./delete-album-dialog-selector";
+import {deleteDialogSelector} from "./selector-deleteDialogSelector";
 
 describe("AlbumFailedToDeleteAction", () => {
     const deleteDialog: DeleteDialogState = {
@@ -20,7 +20,7 @@ describe("AlbumFailedToDeleteAction", () => {
             albumFailedToDeleteAction({error: errorMsg})
         );
 
-        expect(selectDeleteAlbumDialog(resultState)).toEqual({
+        expect(deleteDialogSelector(resultState)).toEqual({
             albums: twoAlbums,
             initialSelectedAlbumId: twoAlbums[0].albumId,
             isOpen: true,

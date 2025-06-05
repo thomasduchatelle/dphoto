@@ -5,7 +5,7 @@ export interface CloseDeleteAlbumDialogAction {
 }
 
 export function closeDeleteAlbumDialogAction(): CloseDeleteAlbumDialogAction {
-    return { type: "CloseDeleteAlbumDialog" };
+    return {type: "CloseDeleteAlbumDialog"};
 }
 
 export function reduceCloseDeleteAlbumDialog(

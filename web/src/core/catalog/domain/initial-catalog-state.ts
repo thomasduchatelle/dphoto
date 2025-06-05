@@ -1,5 +1,5 @@
 import {CatalogViewerState, CurrentUserInsight} from "./catalog-state";
-import {DEFAULT_ALBUM_FILTER_ENTRY} from "./catalog-common-modifiers";
+import {DEFAULT_ALBUM_FILTER_ENTRY} from "./actions";
 
 export const initialCatalogState = (currentUser: CurrentUserInsight): CatalogViewerState => ({
     currentUser,

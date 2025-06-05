@@ -1,6 +1,6 @@
 /drop
-/add       web/src/core/catalog/domain/catalog-reducer-v2.ts
+/add       web/src/core/catalog/domain/actions/index.ts
 /read-only docs/principles_actions.md
-/read-only web/src/core/catalog/domain/catalog-common-modifiers.ts
+/read-only web/src/core/catalog/domain/actions/catalog-common-modifiers.ts
 /read-only web/src/core/catalog/domain/catalog-state.ts
 /read-only web/src/core/catalog/domain/tests/test-helper-state.ts

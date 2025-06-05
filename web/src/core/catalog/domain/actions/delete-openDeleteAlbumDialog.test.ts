@@ -1,12 +1,12 @@
 import {Album, CatalogViewerState, OwnerDetails} from "../catalog-state";
 import {openDeleteAlbumDialogAction, reduceOpenDeleteAlbumDialog} from "./delete-openDeleteAlbumDialog";
-import {selectDeleteAlbumDialog} from "./delete-album-dialog-selector";
+import {deleteDialogSelector} from "./selector-deleteDialogSelector";
 import {myselfUser, someMedias} from "../tests/test-helper-state";
-import {generateAlbumFilterOptions} from "../catalog-common-modifiers";
+import {generateAlbumFilterOptions} from "./catalog-common-modifiers";
 
 const ownerDetails: OwnerDetails = {
     name: "Other Owner",
-    users: [{ name: "Other", email: "other@example.com" }]
+    users: [{name: "Other", email: "other@example.com"}]
 };
 
 const albumSpring: Album = {
@@ -62,7 +62,7 @@ const stateWithThreeAlbumsLoaded: CatalogViewerState = {
 describe("OpenDeleteAlbumDialog", () => {
     it("results to dialog open, pre-selected album to the one currently loaded, and albums only containing those deletable, when the dialog was not open", () => {
         const next = reduceOpenDeleteAlbumDialog(stateWithThreeAlbumsLoaded, openDeleteAlbumDialogAction());
-        expect(selectDeleteAlbumDialog(next)).toEqual({
+        expect(deleteDialogSelector(next)).toEqual({
             isOpen: true,
             albums: [albumSpring, albumWinter],
             initialSelectedAlbumId: albumSpring.albumId,
@@ -76,7 +76,7 @@ describe("OpenDeleteAlbumDialog", () => {
             loadingMediasFor: albumWinter.albumId,
         }, openDeleteAlbumDialogAction());
 
-        expect(selectDeleteAlbumDialog(next)).toEqual({
+        expect(deleteDialogSelector(next)).toEqual({
             isOpen: true,
             albums: [albumSpring, albumWinter],
             initialSelectedAlbumId: albumWinter.albumId,
@@ -91,7 +91,7 @@ describe("OpenDeleteAlbumDialog", () => {
             mediasLoadedFromAlbumId: albumSummer.albumId,
         }, openDeleteAlbumDialogAction());
 
-        expect(selectDeleteAlbumDialog(next)).toEqual({
+        expect(deleteDialogSelector(next)).toEqual({
             isOpen: true,
             albums: [albumSpring, albumWinter],
             initialSelectedAlbumId: albumSpring.albumId,
@@ -110,7 +110,7 @@ describe("OpenDeleteAlbumDialog", () => {
             },
         }, openDeleteAlbumDialogAction());
 
-        expect(selectDeleteAlbumDialog(next)).toEqual({
+        expect(deleteDialogSelector(next)).toEqual({
             isOpen: true,
             albums: [albumSpring, albumWinter],
             initialSelectedAlbumId: albumSpring.albumId,
