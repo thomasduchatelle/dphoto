@@ -1,5 +1,5 @@
 import {CatalogViewerState} from "../catalog-state";
-import {DEFAULT_ALBUM_FILTER_ENTRY} from "../catalog-common-modifiers";
+import {DEFAULT_ALBUM_FILTER_ENTRY} from "./catalog-common-modifiers";
 
 export interface NoAlbumAvailableAction {
     type: 'NoAlbumAvailableAction'

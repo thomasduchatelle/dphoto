@@ -8,11 +8,10 @@ import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../core/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
-import {albumIdEquals, selectDeleteAlbumDialog} from "../../../core/catalog";
+import {albumIdEquals, deleteDialogSelector, sharingDialogSelector} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 import ShareDialog from "./ShareDialog";
-import {useSharingModalController} from "../../../core/catalog-react/CatalogViewerContext/useSharingModalController";
 import {DeleteAlbumDialog} from "./DeleteAlbumDialog";
 
 export function CatalogViewerPage() {
@@ -20,7 +19,17 @@ export function CatalogViewerPage() {
 
     const {
         state,
-        handlers: {onAlbumFilterChange, createAlbum, deleteAlbum, closeDeleteAlbumDialog, openDeleteAlbumDialog},
+        handlers: {
+            onAlbumFilterChange,
+            createAlbum,
+            deleteAlbum,
+            closeDeleteAlbumDialog,
+            openDeleteAlbumDialog,
+            openSharingModal,
+            closeSharingModal,
+            revokeAlbumSharing,
+            grantAlbumSharing
+        },
         selectedAlbumId
     } = useCatalogContext()
     const logoutCase = useLogoutCase();
@@ -29,8 +38,6 @@ export function CatalogViewerPage() {
     const [search] = useSearchParams()
 
     const theme = useTheme()
-
-    const {openSharingModal, shareModal, ...shareDialogProps} = useSharingModalController()
 
     // '/albums' page is only available on small devices
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
@@ -74,11 +81,14 @@ export function CatalogViewerPage() {
                     />
                 )}
             </CreateAlbumDialogContainer>
-            {shareModal && (
-                <ShareDialog {...shareDialogProps} {...shareModal} open={true}/>
-            )}
+            <ShareDialog
+                {...sharingDialogSelector(state)}
+                onClose={closeSharingModal}
+                onRevoke={revokeAlbumSharing}
+                onGrant={grantAlbumSharing}
+            />
             <DeleteAlbumDialog
-                {...selectDeleteAlbumDialog(state)}
+                {...deleteDialogSelector(state)}
                 onDelete={deleteAlbum}
                 onClose={closeDeleteAlbumDialog}
             />

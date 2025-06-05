@@ -1,7 +1,7 @@
 import {closeDeleteAlbumDialogAction, reduceCloseDeleteAlbumDialog} from "./delete-closeDeleteAlbumDialog";
 import {CatalogViewerState} from "../catalog-state";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
-import {selectDeleteAlbumDialog} from "./delete-album-dialog-selector";
+import {deleteDialogSelector} from "./selector-deleteDialogSelector";
 
 describe("reduceCloseDeleteAlbumDialog", () => {
     it("closes the dialog when it was open, no matter its state", () => {
@@ -15,7 +15,7 @@ describe("reduceCloseDeleteAlbumDialog", () => {
             deleteDialog: undefined,
         });
 
-        expect(selectDeleteAlbumDialog(got)).toEqual({
+        expect(deleteDialogSelector(got)).toEqual({
             albums: [],
             initialSelectedAlbumId: undefined,
             isOpen: false,

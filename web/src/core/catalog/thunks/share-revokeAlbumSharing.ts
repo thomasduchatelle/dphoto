@@ -17,7 +17,7 @@ export function revokeAlbumSharingThunk(
         return Promise.reject(`ERROR: no albumId selected to be revoked, cannot revoke access for ${email}`);
     }
     return sharingAPI.revokeSharingAlbum(albumId, email)
-        .then(() => dispatch(catalogActions.removeSharingAction({email})))
+        .then(() => dispatch(catalogActions.removeSharingAction(email)))
         .catch(err => {
             console.log(`ERROR: ${JSON.stringify(err)}`);
             dispatch(catalogActions.sharingModalErrorAction({

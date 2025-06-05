@@ -1,6 +1,6 @@
 import {Album, AlbumId, CatalogViewerState} from "../catalog-state";
 
-export interface DeleteAlbumDialogSelectorResult {
+export interface DeleteDialogFrag {
     albums: Album[];
     initialSelectedAlbumId?: AlbumId;
     isOpen: boolean;
@@ -8,7 +8,7 @@ export interface DeleteAlbumDialogSelectorResult {
     error?: string;
 }
 
-export function selectDeleteAlbumDialog({deleteDialog}: CatalogViewerState): DeleteAlbumDialogSelectorResult {
+export function deleteDialogSelector({deleteDialog}: CatalogViewerState): DeleteDialogFrag {
     return {
         albums: deleteDialog?.deletableAlbums ?? [],
         initialSelectedAlbumId: deleteDialog?.initialSelectedAlbumId,

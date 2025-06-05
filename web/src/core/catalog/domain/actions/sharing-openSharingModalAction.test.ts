@@ -1,25 +1,21 @@
 import {openSharingModalAction, reduceOpenSharingModal} from "./sharing-openSharingModalAction";
-import {SharingType} from "../catalog-state";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {SharingDialogFrag, sharingDialogSelector} from "./selector-sharingDialogSelector";
 
 describe("reduceOpenSharingModal", () => {
 
     it("should open the sharing modal with the appropriate albumId and already-shared list", () => {
         const action = openSharingModalAction(twoAlbums[0].albumId);
 
-        const expected = {
-            ...loadedStateWithTwoAlbums,
-            shareModal: {
-                sharedAlbumId: twoAlbums[0].albumId,
-                sharedWith: [
-                    {
-                        user: herselfUser,
-                        role: SharingType.visitor,
-                    }
-                ],
-            }
+        const expected: SharingDialogFrag = {
+            open: true,
+            sharedWith: [
+                {
+                    user: herselfUser,
+                }
+            ],
         };
-        expect(reduceOpenSharingModal(loadedStateWithTwoAlbums, action)).toEqual(expected);
+        expect(sharingDialogSelector(reduceOpenSharingModal(loadedStateWithTwoAlbums, action))).toEqual(expected);
     });
 
     it("should close the sharing modal by clearing the shareModel property if album not found", () => {
@@ -27,10 +23,10 @@ describe("reduceOpenSharingModal", () => {
             albumId: {owner: "notfound", folderName: "notfound"},
         });
 
-        const expected = {
-            ...loadedStateWithTwoAlbums,
-            shareModal: undefined,
+        const expected: SharingDialogFrag = {
+            open: false,
+            sharedWith: [],
         };
-        expect(reduceOpenSharingModal(loadedStateWithTwoAlbums, action)).toEqual(expected);
+        expect(sharingDialogSelector(reduceOpenSharingModal(loadedStateWithTwoAlbums, action))).toEqual(expected);
     });
 });

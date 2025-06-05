@@ -1,15 +1,15 @@
 import {GrantAlbumSharingAPI, grantAlbumSharingThunk} from "./share-grantAlbumSharing";
-import {AlbumId, catalogActions, SharingType, UserDetails} from "../domain";
+import {AlbumId, catalogActions, UserDetails} from "../domain";
 
 class FakeSharingAPI implements GrantAlbumSharingAPI {
-    public grantRequests: { albumId: AlbumId, email: string, role: SharingType }[] = [];
+    public grantRequests: { albumId: AlbumId, email: string }[] = [];
     public grantError: any = null;
 
     public userDetails: { [email: string]: UserDetails } = {};
     public userDetailsError: any = null;
 
-    grantAccessToAlbum(albumId: AlbumId, email: string, role: SharingType): Promise<void> {
-        this.grantRequests.push({albumId, email, role});
+    grantAccessToAlbum(albumId: AlbumId, email: string): Promise<void> {
+        this.grantRequests.push({albumId, email});
         if (this.grantError) {
             return Promise.reject(this.grantError);
         }
@@ -30,21 +30,19 @@ class FakeSharingAPI implements GrantAlbumSharingAPI {
 describe("grantAccessThunk", () => {
     const albumId: AlbumId = {owner: "owner", folderName: "album"};
     const email = "user@example.com";
-    const role = SharingType.contributor;
     const userDetails: UserDetails = {email, name: "User Name", picture: "pic.jpg"};
 
     it("should call the sharingAPI.grantAccessToAlbum and dispatch a AddSharingAction with values from sharingAPI.loadUserDetails", async () => {
         const fakeAPI = new FakeSharingAPI();
         fakeAPI.userDetails[email] = userDetails;
         const dispatched: any[] = [];
-        await grantAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email, role);
+        await grantAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email);
 
-        expect(fakeAPI.grantRequests).toEqual([{albumId, email, role}]);
+        expect(fakeAPI.grantRequests).toEqual([{albumId, email}]);
         expect(dispatched).toEqual([
             catalogActions.addSharingAction({
                 sharing: {
                     user: userDetails,
-                    role,
                 }
             })
         ]);
@@ -54,7 +52,7 @@ describe("grantAccessThunk", () => {
         const fakeAPI = new FakeSharingAPI();
         fakeAPI.userDetailsError = new Error("[TEST] fail user details");
         const dispatched: any[] = [];
-        await grantAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email, role);
+        await grantAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email);
 
         expect(dispatched).toEqual([
             catalogActions.addSharingAction({
@@ -63,7 +61,6 @@ describe("grantAccessThunk", () => {
                         email,
                         name: email,
                     },
-                    role,
                 }
             })
         ]);
@@ -73,9 +70,9 @@ describe("grantAccessThunk", () => {
         const fakeAPI = new FakeSharingAPI();
         fakeAPI.grantError = new Error("[TEST] fail grant");
         const dispatched: any[] = [];
-        await grantAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email, role);
+        await grantAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email);
 
-        expect(fakeAPI.grantRequests).toEqual([{albumId, email, role}]);
+        expect(fakeAPI.grantRequests).toEqual([{albumId, email}]);
         expect(dispatched).toEqual([
             catalogActions.sharingModalErrorAction({
                 error: {

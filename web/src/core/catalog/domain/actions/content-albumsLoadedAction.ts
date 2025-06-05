@@ -1,6 +1,6 @@
 import {Album, albumMatchCriterion, CatalogViewerState, RedirectToAlbumIdAction} from "../catalog-state";
 import {albumIdEquals} from "../utils-albumIdEquals";
-import {albumFilterAreCriterionEqual, DEFAULT_ALBUM_FILTER_ENTRY, refreshFilters} from "../catalog-common-modifiers";
+import {albumFilterAreCriterionEqual, DEFAULT_ALBUM_FILTER_ENTRY, refreshFilters} from "./catalog-common-modifiers";
 
 export interface AlbumsLoadedAction extends RedirectToAlbumIdAction {
     type: 'AlbumsLoadedAction'

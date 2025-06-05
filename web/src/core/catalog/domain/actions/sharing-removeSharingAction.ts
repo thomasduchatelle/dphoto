@@ -1,4 +1,5 @@
-import {CatalogViewerState} from "../catalog-state";
+import {albumMatchCriterion, CatalogViewerState} from "../catalog-state";
+import {albumIdEquals} from "../utils-albumIdEquals";
 
 export interface RemoveSharingAction {
     type: "RemoveSharingAction"
@@ -26,8 +27,22 @@ export function reduceRemoveSharing(
     const updatedSharedWith = current.shareModal.sharedWith.filter(
         s => s.user.email !== action.email
     );
+
+    const updatedAllAlbums = current.allAlbums.map(album => {
+        if (current.shareModal && albumIdEquals(album.albumId, current.shareModal.sharedAlbumId)) {
+            const albumUpdatedSharedWith = album.sharedWith.filter(s => s.user.email !== action.email);
+            return {
+                ...album,
+                sharedWith: albumUpdatedSharedWith,
+            };
+        }
+        return album;
+    });
+
     return {
         ...current,
+        albums: updatedAllAlbums.filter(albumMatchCriterion(current.albumFilter.criterion)),
+        allAlbums: updatedAllAlbums,
         shareModal: {
             ...current.shareModal,
             sharedWith: updatedSharedWith,

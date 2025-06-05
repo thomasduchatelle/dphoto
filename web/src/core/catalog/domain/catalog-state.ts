@@ -55,14 +55,8 @@ export interface OwnerDetails {
     users: UserDetails[]
 }
 
-export enum SharingType {
-    visitor = "visitor",
-    contributor = "contributor",
-}
-
 export interface Sharing {
     user: UserDetails
-    role: SharingType
 }
 
 export interface UserDetails {
