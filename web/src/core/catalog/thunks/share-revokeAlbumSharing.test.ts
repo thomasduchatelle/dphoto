@@ -34,8 +34,9 @@ describe("revokeAccessThunk", () => {
         await revokeAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email);
 
         expect(dispatched).toEqual([
+            catalogActions.removeSharingAction(email),
             catalogActions.sharingModalErrorAction({
-                error: {type: "general", message: `Couldn't revoke access of user ${email}, try again later`}
+                error: {type: "revoke", email, message: `Couldn't revoke access of user ${email}, try again later`}
             })
         ]);
     });

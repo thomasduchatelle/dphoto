@@ -25,7 +25,7 @@ function errorToMessage(error: any): string {
         return error.message
     }
 
-    console.error(`Unexpected error: ${error.message}`);
+    console.log(`Unexpected error: ${error}`);
     return "A technical error prevented the album to be deleted, please report it to a developer.";
 }
 

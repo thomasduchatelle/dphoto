@@ -1,107 +1,93 @@
 import {
-    Alert,
     Avatar,
     Box,
     Button,
+    Chip,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
     IconButton,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
+    InputAdornment,
+    Stack,
     TextField,
+    Tooltip,
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import React, {useState} from "react";
+import React, {useRef, useState} from "react";
+import "./ShareDialogChipsAnimation.css";
 import Grid from '@mui/material/Unstable_Grid2';
-import {ShareError, Sharing} from "../../../../core/catalog";
-import {Delete, MoreHoriz} from "@mui/icons-material";
+import {ShareError, Sharing, UserDetails} from "../../../../core/catalog";
+import {Add as AddIcon, Check as CheckIcon, Delete, ErrorOutline as ErrorOutlineIcon, Send as SendIcon, Share as ShareIcon} from "@mui/icons-material";
 
-function OptionButton({onRevoke, name, picture}: {
-    onRevoke: () => void
-    name?: string
-    picture?: string
-}) {
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-    const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget)
-    }
-    const handleClose = () => {
-        setAnchorEl(null)
-    }
-
-    const handleRevoke = () => {
-        setAnchorEl(null)
-        onRevoke()
-    }
-
-    return (
-        <>
-            <IconButton onClick={handleOpen}><MoreHoriz/></IconButton>
-            <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
-                }}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-            >
-                {(name || picture) && (
-                    <MenuItem>
-                        <ListItemIcon>{picture &&
-                            <Avatar alt="?" src={picture} sx={{width: '24px', height: '24px'}}/>}</ListItemIcon>
-                        <ListItemText>{name}</ListItemText>
-                    </MenuItem>
-                )}
-                <MenuItem
-                    onClick={handleRevoke}
-                    sx={theme => ({
-                        cursor: 'unset',
-                        color: theme.palette.error.main,
-                        background: theme.palette.error.contrastText,
-                    })}>
-                    <ListItemIcon sx={{color: 'inherit'}}><Delete/></ListItemIcon>
-                    <ListItemText>
-                        Revoke
-                    </ListItemText>
-                </MenuItem>
-            </Menu>
-        </>
-    )
-}
-
-export default function ShareDialog({open, sharedWith, error, onClose, onGrant, onRevoke}: {
+export default function ShareDialog({
+                                        open,
+                                        sharedWith,
+                                        error,
+                                        onClose,
+                                        onGrant,
+                                        onRevoke,
+                                        suggestions = [],
+                                    }: {
     open: boolean,
     sharedWith: Sharing[],
     error?: ShareError,
     onClose: () => void,
     onGrant: (email: string) => Promise<void>,
     onRevoke: (email: string) => Promise<void>,
+    suggestions?: UserDetails[],
 }) {
-    const [email, setEmail] = useState("")
+    const [email, setEmail] = useState(error?.type === "grant" ? error.email : "");
+    const [recentlyGranted, setRecentlyGranted] = useState<{ [email: string]: boolean }>({});
+    const grantTimeouts = useRef<{ [email: string]: NodeJS.Timeout }>({});
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    const handleGrantSuggestion = (email: string) => {
+        if (recentlyGranted[email]) {
+            // Prevent double click
+            return;
+        }
+
+        setRecentlyGranted(prev => ({...prev, [email]: true}));
+
+        onGrant(email)
+            .then(() => {
+                if (grantTimeouts.current[email]) {
+                    clearTimeout(grantTimeouts.current[email]);
+                }
+                grantTimeouts.current[email] = setTimeout(() => {
+                    setRecentlyGranted(prev => {
+                        const copy = {...prev};
+                        delete copy[email];
+                        return copy;
+                    });
+                }, 2000);
+
+                setEmail("");
+            })
+            .catch(() => {
+                setEmail(email);
+            });
+    };
+
     const savingHandler = () => {
         if (email) {
-            onGrant(email).then(() => setEmail(""))
+            handleGrantSuggestion(email)
         }
     }
+
+    React.useEffect(() => {
+        const timeouts = grantTimeouts.current;
+        return () => {
+            Object.values(timeouts).forEach(timeout => clearTimeout(timeout));
+        };
+    }, []);
+
+    const topSuggestions = suggestions.slice(0, 5);
+    const isRecentlyGranted = (email: string) => recentlyGranted[email];
 
     return (
         <Dialog
@@ -113,11 +99,8 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
         >
             <DialogTitle>Sharing album to ...</DialogTitle>
             <DialogContent>
-                {error?.type === "general" && (
-                    <Alert severity='error' sx={theme => ({mb: theme.spacing(2)})}>{error.message}</Alert>
-                )}
                 <Grid container spacing={2} alignItems='center'>
-                    <Grid sm={8} xs={12}>
+                    <Grid xs={12}>
                         <TextField
                             autoFocus
                             fullWidth
@@ -125,93 +108,114 @@ export default function ShareDialog({open, sharedWith, error, onClose, onGrant, 
                             margin="dense"
                             size='medium'
                             id="email"
-                            label="Email Address"
+                            placeholder="Email Address"
                             type="email"
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
                             onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => event.key === 'Enter' && savingHandler()}
                             value={email}
-                            error={error?.type === "adding"}
-                            helperText={error?.type === "adding" ? error?.message : undefined}
+                            error={(error && error.email === email)}
+                            helperText={error && error.email === email ? error.message : undefined}
+                            autoComplete="off"
+                            InputProps={{
+                                startAdornment:
+                                    <IconButton sx={{pr: '10px', pl: '0'}} aria-label="share" disabled>
+                                        <ShareIcon/>
+                                    </IconButton>,
+                                endAdornment:
+                                    <InputAdornment position="end" variant="filled">
+                                        <Tooltip title="Allow this user to see the pictures and videos of your album">
+                                            <IconButton sx={{p: '10px'}}
+                                                        aria-label="share"
+                                                        onClick={savingHandler}
+                                                        color="primary">
+                                                <SendIcon/>
+                                            </IconButton>
+                                        </Tooltip>
+                                    </InputAdornment>
+                            }}
                         />
-                    </Grid>
-                    <Grid sm={4} xs={12} sx={{
-                        textAlign: 'center'
-                    }}>
-                        <Button
-                            variant="contained"
-                            size='large'
-                            onClick={savingHandler}
-                        >
-                            Grant access
-                        </Button>
+                        {topSuggestions.length > 0 && (
+                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                                {topSuggestions.map(user => {
+                                    const isError = error?.email === user.email;
+                                    return (
+                                        <Chip
+                                            key={user.email}
+                                            size="small"
+                                            avatar={<Avatar alt={user.name} src={user.picture}/>}
+                                            label={user.name}
+                                            variant={isError ? "filled" : "outlined"}
+                                            color={isError ? "error" : "default"}
+                                            onClick={() => handleGrantSuggestion(user.email)}
+                                            deleteIcon={isError ? <ErrorOutlineIcon fontSize="small"/> : <AddIcon fontSize="small"/>}
+                                            onDelete={() => handleGrantSuggestion(user.email)}
+                                            sx={{
+                                                cursor: 'pointer',
+                                                maxWidth: 180,
+                                                overflow: 'hidden',
+                                                whiteSpace: 'nowrap',
+                                                textOverflow: 'ellipsis',
+                                                transition: 'all 0.2s',
+                                                fontWeight: isError ? 600 : undefined,
+                                            }}
+                                            title={`${user.name} <${user.email}>`}
+                                        />
+                                    );
+                                })}
+                            </Stack>
+                        )}
                     </Grid>
                 </Grid>
                 {sharedWith.length > 0 && (
-                    <TableContainer component={Box} sx={theme => ({
+                    <Box sx={theme => ({
                         mt: theme.spacing(3),
                     })}>
-                        <Table sx={{
-                            minWidth: {
-                                xs: 0,
-                                md: 650,
-                            },
-                        }} aria-label="simple table" size='small'>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell width={20} sx={{
-                                        display: {
-                                            xs: "none",
-                                            sm: "table-cell"
-                                        },
-                                    }}></TableCell>
-                                    <TableCell>Email</TableCell>
-                                    <TableCell sx={{
-                                        display: {
-                                            xs: "none",
-                                            sm: "table-cell"
-                                        },
-                                    }}>Name</TableCell>
-                                    <TableCell></TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {sharedWith.map(({user}) => (
-                                    <TableRow
+                        <Box sx={{mb: 1, fontWeight: 600, color: 'text.secondary', fontSize: 15}}>
+                            Users with access
+                        </Box>
+                        <Stack direction="row" spacing={1} flexWrap="wrap">
+                            {sharedWith.map(({user}) => {
+                                const recentlyGranted = isRecentlyGranted(user.email);
+                                const isError = error?.type === "revoke" && error?.email === user.email;
+                                return (
+                                    <Chip
                                         key={user.email}
-                                        sx={{'&:last-child td, &:last-child th': {border: 0}}}
-                                    >
-                                        <TableCell width={20} sx={{
-                                            pl: 0,
-                                            pr: 0,
-                                            "& .MuiAvatar-root": {
-                                                m: 0,
-                                            },
-                                            display: {
-                                                xs: "none",
-                                                sm: "table-cell"
-                                            },
-                                        }}>
-                                            <Avatar alt={user.name} src={user.picture}/>
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.email}
-                                        </TableCell>
-                                        <TableCell sx={{
-                                            display: {
-                                                xs: "none",
-                                                sm: "table-cell"
-                                            },
-                                        }}>{user.name}</TableCell>
-                                        <TableCell>
-                                            <OptionButton onRevoke={() => onRevoke(user.email)}
-                                                          name={isMobile ? user.name : undefined}
-                                                          picture={isMobile ? user.picture : undefined}/>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                                        avatar={<Avatar alt={user.name} src={user.picture}/>}
+                                        label={user.name}
+                                        variant="filled"
+                                        color={isError ? "error" : recentlyGranted ? "success" : "primary"}
+                                        onDelete={() => onRevoke(user.email).catch(async () => {
+                                        })}
+                                        deleteIcon={
+                                            isError
+                                                ? <ErrorOutlineIcon/>
+                                                : recentlyGranted
+                                                    ? <CheckIcon/>
+                                                    : <Delete/>
+                                        }
+                                        sx={{
+                                            maxWidth: 180,
+                                            overflow: 'hidden',
+                                            whiteSpace: 'nowrap',
+                                            textOverflow: 'ellipsis',
+                                            fontWeight: isError || recentlyGranted ? 600 : undefined,
+                                            transition: 'all 0.2s',
+                                        }}
+                                        title={`${user.name} <${user.email}>`}
+                                    />
+                                );
+                            })}
+                        </Stack>
+                        {error?.type === "revoke" && (
+                            <Box sx={{
+                                color: theme => theme.palette.error.main,
+                                fontSize: 13,
+                                mt: 0.5,
+                            }}>
+                                {error.message}
+                            </Box>
+                        )}
+                    </Box>
                 )}
             </DialogContent>
             <DialogActions>

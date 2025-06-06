@@ -1,5 +1,5 @@
-import {AlbumId, CatalogViewerState, Sharing} from "../catalog-state";
-import {albumIdEquals} from "../utils-albumIdEquals";
+import {AlbumId, CatalogViewerState} from "../catalog-state";
+import {withOpenShareModal} from "./sharing";
 
 export interface OpenSharingModalAction {
     type: "OpenSharingModalAction"
@@ -19,38 +19,11 @@ export function openSharingModalAction(props: AlbumId | Omit<OpenSharingModalAct
     };
 }
 
-export function sortSharings(sharings: Sharing[]): Sharing[] {
-    return sharings.slice().sort((a, b) => {
-        const nameA = a.user.name?.trim() || "";
-        const nameB = b.user.name?.trim() || "";
-        if (nameA && nameB) {
-            const cmp = nameA.localeCompare(nameB);
-            if (cmp !== 0) return cmp;
-            return a.user.email.localeCompare(b.user.email);
-        }
-        if (!nameA && !nameB) {
-            return a.user.email.localeCompare(b.user.email);
-        }
-        if (!nameA) return 1;
-        if (!nameB) return -1;
-        return 0;
-    });
-}
-
 export function reduceOpenSharingModal(
     current: CatalogViewerState,
     action: OpenSharingModalAction,
 ): CatalogViewerState {
-    const album = current.allAlbums.find(a => albumIdEquals(a.albumId, action.albumId));
-    return {
-        ...current,
-        shareModal: album
-            ? {
-                sharedAlbumId: album.albumId,
-                sharedWith: sortSharings([...album.sharedWith]),
-            }
-            : undefined,
-    };
+    return withOpenShareModal(current, action.albumId);
 }
 
 export function openSharingModalReducerRegistration(handlers: any) {

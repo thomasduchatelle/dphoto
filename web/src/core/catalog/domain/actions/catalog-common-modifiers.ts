@@ -9,7 +9,7 @@ import {
 } from "../catalog-state";
 
 export const ALL_ALBUMS_FILTER_CRITERION: AlbumFilterCriterion = {owners: []}
-const SELF_OWNED_ALBUM_FILTER_CRITERION: AlbumFilterCriterion = {selfOwned: true, owners: []}
+export const SELF_OWNED_ALBUM_FILTER_CRITERION: AlbumFilterCriterion = {selfOwned: true, owners: []}
 export const DEFAULT_ALBUM_FILTER_ENTRY: AlbumFilterEntry = {
     criterion: ALL_ALBUMS_FILTER_CRITERION,
     avatars: [],
@@ -90,4 +90,11 @@ export function refreshFilters(currentUser: CurrentUserInsight, currentAlbumFilt
     const albums = allAlbums.filter(albumMatchCriterion(albumFilter.criterion))
 
     return {albumFilterOptions, albumFilter, albums};
+}
+
+export function filteredListOfAlbums({allAlbums, albumFilter: {criterion}}: {
+    allAlbums: Album[]
+    albumFilter: AlbumFilterEntry,
+}) {
+    return allAlbums.filter(albumMatchCriterion(criterion));
 }

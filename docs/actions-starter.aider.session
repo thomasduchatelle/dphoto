@@ -4,3 +4,4 @@
 /read-only web/src/core/catalog/domain/actions/catalog-common-modifiers.ts
 /read-only web/src/core/catalog/domain/catalog-state.ts
 /read-only web/src/core/catalog/domain/tests/test-helper-state.ts
+/read-only web/src/core/catalog/domain/utils-albumIdEquals.ts

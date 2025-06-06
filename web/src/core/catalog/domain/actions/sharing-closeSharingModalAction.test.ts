@@ -13,12 +13,14 @@ describe("reduceCloseSharingModal", () => {
                         user: herselfUser,
                     }
                 ],
+                suggestions: [],
             }
         };
         const action = closeSharingModalAction();
         expect(sharingDialogSelector(reduceCloseSharingModal(initial, action))).toEqual({
             open: false,
             sharedWith: [],
+            suggestions: [],
         });
     });
 });

@@ -1,4 +1,5 @@
 import {CatalogViewerState, ShareError} from "../catalog-state";
+import {moveSharedWithToSuggestion, moveSuggestionToSharedWith} from "./sharing";
 
 export interface SharingModalErrorAction {
     type: "SharingModalErrorAction"
@@ -18,18 +19,24 @@ export function sharingModalErrorAction(props: ShareError | Omit<SharingModalErr
     };
 }
 
+
 export function reduceSharingModalError(
     current: CatalogViewerState,
-    action: SharingModalErrorAction,
+    {error}: SharingModalErrorAction,
 ): CatalogViewerState {
-    if (!current.shareModal) return current;
-    return {
-        ...current,
-        shareModal: {
-            ...current.shareModal,
-            error: action.error,
-        }
-    };
+    if (!current.shareModal) {
+        return current;
+    }
+
+    if (error.type === "grant") {
+        return moveSharedWithToSuggestion(current, current.shareModal, error.email, error);
+    }
+    if (error.type === "revoke") {
+        const user = current.shareModal.suggestions.find(s => s.email === error.email) ?? {name: error.email, email: error.email}
+        return moveSuggestionToSharedWith(current, current.shareModal, user, error);
+    }
+
+    return current;
 }
 
 export function sharingModalErrorReducerRegistration(handlers: any) {

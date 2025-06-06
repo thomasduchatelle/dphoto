@@ -220,6 +220,8 @@ export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort,
     public revokeSharingAlbum(albumId: AlbumId, email: string): Promise<void> {
         return this.authenticatedAxios
             .delete(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`)
+            .catch((err: AxiosError) => Promise.reject(castError(err)))
+            .then()
     }
 }
 
