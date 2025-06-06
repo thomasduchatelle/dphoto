@@ -9,11 +9,10 @@ export function closeSharingModalAction(): CloseSharingModalAction {
 }
 
 export function reduceCloseSharingModal(
-    current: CatalogViewerState,
-    action: CloseSharingModalAction,
+    {shareModal, ...rest}: CatalogViewerState,
+    _: CloseSharingModalAction,
 ): CatalogViewerState {
-    const {shareModal, ...rest} = current;
-    return rest as CatalogViewerState;
+    return rest;
 }
 
 export function closeSharingModalReducerRegistration(handlers: any) {

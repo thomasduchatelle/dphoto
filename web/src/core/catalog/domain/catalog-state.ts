@@ -89,13 +89,15 @@ export interface AlbumFilterEntry {
 }
 
 export interface ShareError {
-    type: "adding" | "general"
+    type: "grant" | "revoke"
     message: string
+    email: string
 }
 
 export interface ShareModal {
     sharedAlbumId: AlbumId
     sharedWith: Sharing[]
+    suggestions: UserDetails[]
     error?: ShareError
 }
 

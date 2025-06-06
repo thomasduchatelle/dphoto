@@ -16,12 +16,14 @@ export function revokeAlbumSharingThunk(
     if (!albumId) {
         return Promise.reject(`ERROR: no albumId selected to be revoked, cannot revoke access for ${email}`);
     }
+
+    dispatch(catalogActions.removeSharingAction(email))
+
     return sharingAPI.revokeSharingAlbum(albumId, email)
-        .then(() => dispatch(catalogActions.removeSharingAction(email)))
         .catch(err => {
             console.log(`ERROR: ${JSON.stringify(err)}`);
             dispatch(catalogActions.sharingModalErrorAction({
-                error: {type: "general", message: `Couldn't revoke access of user ${email}, try again later`}
+                error: {type: "revoke", email, message: `Couldn't revoke access of user ${email}, try again later`}
             }));
         });
 }

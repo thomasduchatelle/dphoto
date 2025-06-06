@@ -32,6 +32,17 @@ export const twoAlbums: Album[] = [
     },
 ]
 
+export const march2025: Album = {
+    albumId: {owner: "myself", folderName: "mar-25"},
+    name: "March 2025",
+    start: new Date(2025, 2, 1),
+    end: new Date(2025, 3, 1),
+    totalCount: 0,
+    temperature: 0,
+    relativeTemperature: 0,
+    sharedWith: [],
+}
+
 export const twoAlbumsNoFilterOptions: AlbumFilterEntry = {
     criterion: {
         owners: []

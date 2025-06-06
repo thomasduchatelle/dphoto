@@ -1,121 +1,113 @@
 import {reduceRemoveSharing, removeSharingAction} from "./sharing-removeSharingAction";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
-import {SharingDialogFrag, sharingDialogSelector} from "./selector-sharingDialogSelector";
+import {sharingDialogSelector} from "./selector-sharingDialogSelector";
+import {catalogActions} from "./index";
 
-describe("reduceRemoveSharing", () => {
-    it("should remove a sharing entry by email and keep the modal open when receiving RemoveSharingAction", () => {
-        const bobEmail = "bob@example.com";
+describe("removeSharingAction", () => {
+    it("removes a sharing entry by email, and adds it in the suggestions, while keeping the modal open", () => {
         const initial = {
             ...loadedStateWithTwoAlbums,
             shareModal: {
                 sharedAlbumId: twoAlbums[0].albumId,
-                sharedWith: [
-                    {
-                        user: herselfUser,
-                    },
-                    {
-                        user: {email: bobEmail, name: "Bob", picture: "bob-face.jpg"},
-                    }
-                ],
+                sharedWith: twoAlbums[0].sharedWith,
+                suggestions: [],
             }
         };
-        const action = removeSharingAction(bobEmail);
-        const expected: SharingDialogFrag = {
+        const state = reduceRemoveSharing(initial, removeSharingAction(herselfUser.email));
+        expect(sharingDialogSelector(state)).toEqual({
             open: true,
-            sharedWith: [
-                {
-                    user: herselfUser,
-                }
-            ]
-        };
-        expect(sharingDialogSelector(reduceRemoveSharing(initial, action))).toEqual(expected);
+            sharedWith: [],
+            suggestions: [herselfUser],
+        });
     });
 
-    it("should update the album's sharedWith list in the state when a sharing is revoked", () => {
-        const bobEmail = "bob@example.com";
+    it("keeps consistent the shares in the visible list of albums", () => {
         const initial = {
             ...loadedStateWithTwoAlbums,
-            albums: [
-                {
-                    ...twoAlbums[0],
-                    sharedWith: [
-                        {
-                            user: herselfUser,
-                        },
-                        {
-                            user: {email: bobEmail, name: "Bob", picture: "bob-face.jpg"},
-                        }
-                    ]
-                },
-                twoAlbums[1]
-            ],
-            allAlbums: [
-                {
-                    ...twoAlbums[0],
-                    sharedWith: [
-                        {
-                            user: herselfUser,
-                        },
-                        {
-                            user: {email: bobEmail, name: "Bob", picture: "bob-face.jpg"},
-                        }
-                    ]
-                },
-                twoAlbums[1]
-            ],
             shareModal: {
                 sharedAlbumId: twoAlbums[0].albumId,
-                sharedWith: [
-                    {
-                        user: herselfUser,
-                    },
-                    {
-                        user: {email: bobEmail, name: "Bob", picture: "bob-face.jpg"},
-                    }
-                ],
+                sharedWith: twoAlbums[0].sharedWith,
+                suggestions: [],
             }
         };
-        const action = removeSharingAction(bobEmail);
-        const expected: SharingDialogFrag = {
-            open: true,
-            sharedWith: [
-                {
-                    user: herselfUser,
-                }
-            ]
-        };
-        expect(sharingDialogSelector(reduceRemoveSharing(initial, action))).toEqual(expected);
+        const state = reduceRemoveSharing(initial, removeSharingAction(herselfUser.email));
+        expect(state.albums).toEqual([
+            {
+                ...twoAlbums[0],
+                sharedWith: [],
+            },
+            twoAlbums[1]
+        ]);
     });
 
     it("should not change state when RemoveSharingAction is received and shareModal is undefined", () => {
-        const action = removeSharingAction(herselfUser.email);
-        const result = reduceRemoveSharing(loadedStateWithTwoAlbums, action);
+        const result = reduceRemoveSharing(loadedStateWithTwoAlbums, removeSharingAction(herselfUser.email));
         expect(sharingDialogSelector(result)).toEqual({
             open: false,
             sharedWith: [],
+            suggestions: [],
         });
     });
 
     it("should not change state when RemoveSharingAction is received with an email not in sharedWith", () => {
-        const action = removeSharingAction("notfound@example.com");
         const initial = {
             ...loadedStateWithTwoAlbums,
             shareModal: {
                 sharedAlbumId: twoAlbums[0].albumId,
-                sharedWith: [
-                    {
-                        user: herselfUser,
-                    }
-                ],
+                sharedWith: twoAlbums[0].sharedWith,
+                suggestions: [],
             }
         };
-        expect(sharingDialogSelector(reduceRemoveSharing(initial, action))).toEqual({
+        const state = reduceRemoveSharing(initial, removeSharingAction("notfound@example.com"));
+        expect(sharingDialogSelector(state)).toEqual({
             open: true,
-            sharedWith: [
+            sharedWith: twoAlbums[0].sharedWith,
+            suggestions: [],
+        });
+    });
+
+    it("keeps the suggestions already present when revoking another email, and respect the suggestion order", () => {
+        const aliceUserDetails = {
+            name: "Alice",
+            email: "alice@example.com",
+            picture: "pic"
+        };
+        const bobUserDetails = {
+            name: "Bob",
+            email: "bob@example.com"
+        };
+        const charlieUserDetails = {
+            name: "Charlie",
+            email: "charlie@example.com"
+        };
+
+        const initial = {
+            ...loadedStateWithTwoAlbums,
+            allAlbums: [
                 {
-                    user: herselfUser,
+                    ...twoAlbums[0],
+                    sharedWith: [{user: aliceUserDetails}],
+                },
+                {
+                    ...twoAlbums[1],
+                    sharedWith: [{user: charlieUserDetails}],
+                    ownedBy: undefined,
                 }
-            ]
+            ],
+            shareModal: {
+                sharedAlbumId: twoAlbums[0].albumId,
+                sharedWith: [{user: aliceUserDetails}],
+                suggestions: [charlieUserDetails, bobUserDetails]
+            }
+        };
+
+        const state = reduceRemoveSharing(initial, catalogActions.removeSharingAction(aliceUserDetails.email));
+
+        expect(sharingDialogSelector(state)).toEqual({
+            open: true,
+            sharedWith: [],
+            suggestions: [charlieUserDetails, aliceUserDetails, bobUserDetails],
+            error: undefined,
         });
     });
 });

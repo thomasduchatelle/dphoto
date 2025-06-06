@@ -40,8 +40,9 @@ export function grantAlbumSharingThunk(
             console.log(`ERROR: ${JSON.stringify(err)}`);
             dispatch(catalogActions.sharingModalErrorAction({
                 error: {
-                    type: "adding",
-                    message: "Failed to grant access, verify the email address or contact maintainers"
+                    type: "grant",
+                    message: "Failed to grant access, verify the email address or contact maintainers",
+                    email: email,
                 }
             }));
         });

@@ -244,6 +244,32 @@ The tests are written against the business logic function or class ; not the `Th
 of adapter methods. We use instead Fake: a simple in-memory implementation behaving the same way the abstracted system is expected to. The write requests are
 asserted by reading properties of the fake-implementation while the read request are not (only output and outcomes are asserted).
 
+### Summary of previous discussion
+
+Automatically enable it:
+
+```
+aider --model gpt-4.1 --max-chat-history-tokens 110000
+```
+
+Prompt:
+
+```
++*Briefly* summarize this partial conversation about programming.
++Include less detail about older parts and more detail about the most recent messages.
++Start a new paragraph every time the topic changes!
++
++This is only part of a longer conversation so *DO NOT* conclude the summary with language like "Finally, ...". Because the conversation continues after the summary.
++The summary *MUST* include the function names, libraries, packages that are being discussed.
++The summary *MUST* include the filenames that are being referenced by the assistant inside the ```...``` fenced code blocks!
++The summaries *MUST NOT* include ```...``` fenced code blocks!
++
++Phrase the summary with the USER in first person, telling the ASSISTANT about the conversation.
++Write *as* the user.
++The user should refer to the assistant as *you*.
++Start the summary with "I asked you...".
+```
+
 Discovery path (and tasks)
 ---------------------------------------
 
