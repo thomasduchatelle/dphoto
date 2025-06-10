@@ -64,15 +64,46 @@ export interface AlbumDeletedAction {
 
 #### Action Factory
 
-* The function is named after the action with "Action" suffix, in **camelCase** (example: `albumCreatedAction`)
+* The function is named after the action suffix, in **camelCase** (example: `albumCreated`)
 * It returns the action interface
 * The parameters are either:
-    * if the interface has only no property other than `type`: no parameter
+  * if the interface has no property other than `type`: no parameter
     * if the interface has a single property on top of `type`: parameter is that property. Make sure the type is respected.
     * if the interface has more properties, it takes a single argument of the type `Omit<AlbumCreated, "type"`
 
-Complete example:
+Complete examples:
 
+**Case 1: No additional properties**
+```typescript
+// actions/loading-loadingStarted.ts
+export interface LoadingStartedAction {
+    type: "LoadingStarted";
+}
+
+export function loadingStartedAction(): LoadingStartedAction {
+    return {
+        type: "LoadingStarted",
+    };
+}
+```
+
+**Case 2: Single additional property**
+```typescript
+// actions/error-errorOccurred.ts
+export interface ErrorOccurredAction {
+    type: "ErrorOccurred";
+    message: string;
+}
+
+export function errorOccurredAction(message: string): ErrorOccurredAction {
+    return {
+        message,
+        type: "ErrorOccurred",
+    };
+}
+```
+
+**Case 3: Multiple additional properties**
 ```typescript
 // actions/album-albumDeleted.ts
 export function albumDeletedAction(props: Omit<AlbumDeletedAction, "type">): AlbumDeletedAction {
@@ -189,7 +220,7 @@ describe("action:albumDeleted", () => {
 * The thunk function implements the business logic by executing Adapter methods, and dispatching actions to update the state for progress, failure, and/or
   success.
     * Adapters naming conventions is `<ThunkName>Port` (example: `DeleteAlbumPort`)
-* The thunk functions first argument is a `dispatch` function accepting the type of actions the thunk will generate
+* The thunk functions first argument is a `dispatch` function accepting the specific action interface type(s) that this thunk will dispatch. Use the specific action interface (e.g., `AlbumsLoadedAction`) rather than the broad union type (`CatalogViewerAction`) to make the thunk's behavior explicit.
 * The thunk functions second argument is the dependencies (adapters) the port requires
     * if the thunk has no port, the argument is skipped
 * The thunk function last argument(s) are the data, it can be a single objects or several arguments
@@ -214,75 +245,98 @@ export async function createAlbumThunk( // the function is async only when requi
     const albumId: AlbumId = await createAlbumPort.createAlbum(request);
     const albums: Album[] = await createAlbumPort.fetchAlbums();
     dispatch(catalogActions.albumsLoadedAction({albums, redirectTo: albumId}));
-
-    return albumId;
+    // Note: catalogActions.albumsLoadedAction() is an action factory that returns an AlbumsLoadedAction object
+    // AlbumsLoadedAction is part of the CatalogViewerAction union type
 }
 ```
 
 #### Thunk pre-selector
 
-The thunk might requires new data and data from the state. Data from the state is extracted using the Pre Selector function.
+The thunk might require new data and data from the state. Data from the state is extracted using the Pre Selector function.
 
-* Pre selector function argument is the main State, and it returns what the thunk requires
-* Pre selector function might not be required in which case it returns an empty object
+* The pre selector function argument is the main State, and it returns what the thunk requires
+* The pre selector function might not be required in which case it returns an empty object
+* The pre-selector's output is passed to the factory as `partialState` and gets bound to the thunk function
 
 #### Thunk factory
 
-* The factory function arguments are settled: `app` (which contains the adapters) and `dispacth`.
-* The factory function returns another function used as handler in the views:
-    * handler function arguments are the new data
-* Best implementation of the factory function is to return `<thunk function>.bind(null, dispatch, adapters, ...)`
+The factory function wires up dependencies and returns the thunk handler used by views. The data flow is:
+**State → Selector extracts needed data → Factory binds it → View provides remaining data → Thunk executes**
 
-a function returning another function with the selected state context and the properties of `CatalogFactoryArgs` injected (recommended to use
-`.bind(null, ...)`).
+**Parameter passing patterns:**
 
-* Thunks use a function in most cases. It takes only the dependencies it uses (e.g., `dispatch`, ports, context) as arguments, in an order that allows use of
-  `.bind(null, ...)` in the factory.
-* Use a class if more than one port is used, for readability: pass `dispatch` and ports in the constructor, and pass state context and new values as a
-  merged object to the method.
-* If the thunk interacts with external systems, define a Port interface to abstract those dependencies.
+* **Case 1: Simple case** (≤1 adapter, ≤2 total arguments from state+view)
+  Pass arguments individually: `dispatch, adapter, stateData, viewData`
 
-Complete example of pre-selector and thunk factory:
+* **Case 2: Multiple adapters** (>1 adapter)
+  Pass adapters as single object: `dispatch, {adapter1, adapter2}, stateData, viewData`
+
+* **Case 3: Complex case** (≥3 arguments OR optional arguments)
+  Merge state and view data into single composite object
+
+Complete example:
 
 ```typescript
-// thunks/album-createAlbum.ts
+// thunks/sharing-grantAlbumSharing.ts
 
-import type {ThunkDeclaration} from "../../thunk-engine";
-import type {CatalogFactoryArgs} from "./catalog-factory-args";
-import {CatalogFactory} from "../catalog-factories";
-import {DPhotoApplication} from "../../application";
+export interface GrantAlbumSharingAPI {
+    grantSharing(albumId: AlbumId, email: string): Promise<void>;
+}
 
-export const createAlbumDeclaration: ThunkDeclaration<
+export function grantAlbumSharingThunk(
+    dispatch: (action: CatalogViewerAction) => void,
+    sharingAPI: GrantAlbumSharingAPI,
+    albumId: AlbumId | undefined,
+    email: string
+): Promise<void> {
+    // ... implementation
+}
+
+export const grantAlbumSharingDeclaration: ThunkDeclaration<
     CatalogViewerState, // this is the global state interface, always this type in 'core/catalog/thunks'
-    {}, // this is the type returned by 'selector' 
-    (request: CreateAlbumRequest) => Promise<AlbumId>, // be specific for the type, this is the business function minus the injected arguments
+    { albumId?: AlbumId }, // this is the type returned by 'selector'
+    (email: string) => Promise<void>, // be specific for the type, this is the business function minus the injected arguments
     CatalogFactoryArgs // this is the type of the argument of the factory, always this type in 'core/catalog/thunks'
 > = {
-    // Selector: extracts context from state (none needed here)
-    selector: (_state: CatalogViewerState) => ({}),
+    // Selector: extracts albumId from the share modal state
+    selector: ({shareModal}: CatalogViewerState) => ({
+        albumId: shareModal?.sharedAlbumId,
+    }),
 
     // Factory: wires up dependencies and returns the thunk
-    factory: ({dispatch, app}) => {
-        const restAdapter = new CatalogFactory(app as DPhotoApplication).restAdapter();
-        // Bind dispatch, port, and optionally the partial state returned by the selector
-        // returns a function that takes only the request
-        return createAlbumThunk.bind(null, dispatch, restAdapter);
+    factory: ({dispatch, app, partialState: {albumId}}) => {
+        const sharingAPI: GrantAlbumSharingAPI = new CatalogAPIAdapter(app.axiosInstance, app);
+      // Case 1: Simple case - bind arguments individually
+        return grantAlbumSharingThunk.bind(null, dispatch, sharingAPI, albumId);
     },
 };
 
-// for reference, CatalogFactoryArgs is defined as follow:
-export interface CatalogFactoryArgs {
-    app: DPhotoApplication
-    dispatch: (action: CatalogViewerAction) => void
+// Cases examples:
+// Case 1: Simple case
+factory: ({dispatch, app, partialState: {albumId}}) => {
+    const sharingAPI = new CatalogAPIAdapter(app.axiosInstance, app);
+    return grantAlbumSharingThunk.bind(null, dispatch, sharingAPI, albumId);
+}
+
+// Case 2: Multiple adapters
+factory: ({dispatch, app, partialState}) => {
+    const adapters = {sharingAPI: new SharingAPI(), storageAPI: new StorageAPI()};
+    return thunkFunction.bind(null, dispatch, adapters, partialState.data);
+}
+
+// Case 3: Complex case
+factory: ({dispatch, app, partialState: {albumId}}) => {
+    const adapter = new SomeAdapter();
+    return (viewData) => thunkFunction(dispatch, adapter, {...partialState, ...viewData});
 }
 ```
 
-### Testing
+#### Thunk Testing
 
 * Tests are written against the business function, **not** the `ThunkDeclaration`.
 * Use **Fakes** (in-memory implementations) for ports instead of mocks, to decouple tests from adapter signatures.
-    * assert write requests by inspecting the fake’s state;
-    * assert read requests by checking outputs and outcomes.
+  * assert write requests by inspecting the fake's state;
+  * assert read requests by checking outputs and outcomes.
 
 Complete example:
 
@@ -319,4 +373,144 @@ it("should store the new Album and dispatch albumsLoadedAction", async () => {
         })
     ]);
 });
+```
+
+## Adapters
+
+Adapters abstract specific technologies or external systems to keep the codebase pure and technology-agnostic. They follow a clear separation between interface definition and implementation.
+
+### Port Interface
+
+The **Port** is the interface defined by the thunk based on what the thunk requires. It represents the contract that the thunk needs from external dependencies.
+
+* **Naming convention**: Named after the thunk or the function it fulfills, whichever is most readable
+  * Examples: `CreateAlbumPort`, `DeleteAlbumPort`, `FetchAlbumsPort`
+* **Location**: Defined in the same file as the thunk that uses it
+* **Purpose**: Abstracts external dependencies and makes thunks testable
+
+Complete example:
+
+```typescript
+// thunks/album-createAlbum.ts
+export interface CreateAlbumPort {
+    createAlbum(request: CreateAlbumRequest): Promise<AlbumId>;
+    fetchAlbums(): Promise<Album[]>;
+}
+```
+
+### Adapter Implementation
+
+The **Adapter Implementation** is the concrete class that implements the Port interface, abstracting a specific technology or external system.
+
+* **Naming convention**: Named after the technology or external system it abstracts
+  * Examples: `AxiosCatalogRestApi`, `LocalStorageAdapter`, `S3FileAdapter`
+* **Location**: Typically in `adapters/` directory, organized by technology or domain
+* **Purpose**: Handles the actual communication with external systems (REST APIs, databases, file systems, etc.)
+
+Complete example:
+
+```typescript
+// adapters/api/CatalogAPIAdapter.ts
+export class CatalogAPIAdapter implements CreateAlbumPort, DeleteAlbumPort {
+    constructor(
+        private readonly authenticatedAxios: AxiosInstance,
+        private readonly accessTokenHolder: AccessTokenHolder,
+    ) {}
+
+    async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
+        const response = await this.authenticatedAxios.post('/api/v1/albums', request);
+        return response.data;
+    }
+
+    async fetchAlbums(): Promise<Album[]> {
+        const response = await this.authenticatedAxios.get('/api/v1/albums');
+        return response.data;
+    }
+}
+```
+
+### App Factory
+
+The **App** is a helper class that provides instances of adapters, centralizing dependency creation and configuration.
+
+* **Purpose**: Centralize adapter instantiation and dependency injection
+* **Usage**: Used in thunk factories to get properly configured adapter instances
+
+Complete example:
+
+```typescript
+// Factory usage in thunk declaration
+factory: ({dispatch, app, partialState}) => {
+    const catalogAPI: CreateAlbumPort = app.catalogAdapter(); // App provides the adapter instance
+    return createAlbumThunk.bind(null, dispatch, catalogAPI, partialState.data);
+}
+```
+
+### Adapter Testing
+
+Adapters should be tested independently to verify their contract compliance and data transformation logic:
+
+* **Unit tests**: Test each adapter method independently
+* **Contract tests**: Verify the adapter correctly implements the Port interface
+* **Integration tests**: Test against real external systems when feasible
+
+## Testing Strategy
+
+The testing strategy follows these principles:
+
+* **Test structure does not match code structure exactly:**
+  * **Action Unit tests**: State + single action + selector are tested together to fulfill a requirement
+  * **Behavior tests**: Sequence of several different actions tested when risk of collision between actions is identified
+  * **Thunk unit tests**: Thunk function tested independently
+  * **Adapter unit tests**: Adapters tested independently
+  * **Acceptance tests**: Application tested as early as possible (without browser) to as far as possible (without actual API backend, using wiremock or
+    equivalent)
+  * **End-to-end tests**: Integration validation through one or two critical paths that must never fail
+
+* **TDD principle**: Implementation should **never** have behavior that hasn't been expected or forced by a test case. Without an appropriate test, code must
+  remain extremely simple, even if it means it is wrong.
+
+* **Test as low as possible**: Everything should be tested as unit tests when possible. Higher-level tests (behavior, acceptance, e2e) only cover what couldn't
+  be tested at the unit level. The goal is robust tests
+  that provide high confidence that refactoring hasn't broken anything, not 100% code coverage.
+
+### Test Selection Criteria
+
+**Action Unit tests** - Use when:
+
+- Testing a single user action and its immediate state change
+- Validating reducer logic and selector output
+- The action operates independently of other actions
+
+**Behavior tests** - Use when:
+
+- Multiple actions modify the same state properties
+- Actions have dependencies or ordering requirements
+- Risk of state corruption when actions are combined
+- Complex workflows spanning multiple user interactions
+
+**Thunk unit tests** - Use for:
+
+- All thunk functions (mandatory)
+- Business logic validation
+- Error handling scenarios
+- Adapter interaction verification
+
+**Adapter unit tests** - Use for:
+
+- All adapters (mandatory)
+- Data transformation logic
+- External API contract validation
+
+**Acceptance tests** - Use for:
+
+- Critical user journeys
+- Integration between major components
+- Regression prevention for key features
+
+**End-to-end tests** - Use for:
+
+- Authentication flow
+- One primary happy path per major feature
+- Critical business processes that must never break
 ```

@@ -1,8 +1,10 @@
-import {Album, AlbumId, Media, MediaType, OwnerDetails, UserDetails} from "../../domain";
+import {Album, AlbumId, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
-import {CreateAlbumRequest, FetchAlbumMediasPort} from "../../index";
-import {CreateAlbumPort, DeleteAlbumPort, FetchAlbumsPort, GrantAlbumSharingAPI, revokeAlbumSharingAPI} from "../../thunks";
+import {FetchAlbumMediasPort, FetchAlbumsPort} from "../../navigation";
+import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create";
+import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
+import {DeleteAlbumPort} from "../../album-delete";
 
 interface RestAlbum {
     owner: string
@@ -67,7 +69,7 @@ function castDeleteAlbumError(err: AxiosError): Error {
     return castError(err);
 }
 
-export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort, GrantAlbumSharingAPI, revokeAlbumSharingAPI, DeleteAlbumPort {
+export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,

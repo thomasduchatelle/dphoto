@@ -1,10 +1,10 @@
 import {DPhotoApplication} from "../application";
-import {AlbumsAndMediasLoadedAction, CatalogViewerAction, MediaPerDayLoader, MediasLoadedAction, MediaType} from "./domain";
 import {CatalogAPIAdapter} from "./adapters/api";
 import {CatalogFactory} from "./catalog-factories";
 import {rest} from "msw";
 import {SetupServer, setupServer} from "msw/node";
-import {OnPageRefresh} from "./thunks/thunks-onPageRefresh";
+import {albumsAndMediasLoaded, CatalogViewerAction, MediaPerDayLoader, MediasLoaded, OnPageRefresh} from "./actions";
+import {MediaType} from "./language";
 
 describe('CatalogFactory', () => {
 
@@ -51,10 +51,31 @@ describe('CatalogFactory', () => {
             albumsLoaded: false,
             loadingMediasFor: undefined,
         });
-        expect(dispatch).toEqual([{
-            type: 'AlbumsAndMediasLoadedAction',
-            albums: [
-                {
+        expect(dispatch).toEqual([
+            albumsAndMediasLoaded({
+                albums: [
+                    {
+                        albumId: albumIdAvenger1,
+                        end: new Date(2021, 0, 31),
+                        name: "Avenger 1",
+                        ownedBy: {
+                            name: "Tony Stark",
+                            users: [
+                                {
+                                    email: "tony@stark.com",
+                                    name: "Tony Stark",
+                                    picture: "http://tony-stark.com/picture.jpg"
+                                }
+                            ]
+                        },
+                        relativeTemperature: 1,
+                        sharedWith: [],
+                        start: new Date(2021, 0, 1),
+                        temperature: 0.3333333333333333,
+                        totalCount: 10
+                    }
+                ],
+                selectedAlbum: {
                     albumId: albumIdAvenger1,
                     end: new Date(2021, 0, 31),
                     name: "Avenger 1",
@@ -73,45 +94,24 @@ describe('CatalogFactory', () => {
                     start: new Date(2021, 0, 1),
                     temperature: 0.3333333333333333,
                     totalCount: 10
-                }
-            ],
-            selectedAlbum: {
-                albumId: albumIdAvenger1,
-                end: new Date(2021, 0, 31),
-                name: "Avenger 1",
-                ownedBy: {
-                    name: "Tony Stark",
-                    users: [
-                        {
-                            email: "tony@stark.com",
-                            name: "Tony Stark",
-                            picture: "http://tony-stark.com/picture.jpg"
-                        }
-                    ]
                 },
-                relativeTemperature: 1,
-                sharedWith: [],
-                start: new Date(2021, 0, 1),
-                temperature: 0.3333333333333333,
-                totalCount: 10
-            },
-            medias: [
-                {
-                    day: new Date(2021, 0, 5),
-                    medias: [
-                        {
-                            contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg?access_token=",
-                            id: "media-1",
-                            source: "Ironman Suit",
-                            time: new Date("2021-01-05T12:42:00Z"),
-                            type: MediaType.IMAGE,
-                            uiRelativePath: "media-1/image.jpg"
-                        }
-                    ]
-                }
-            ],
-            redirectTo: albumIdAvenger1,
-        } as AlbumsAndMediasLoadedAction]);
+                medias: [
+                    {
+                        day: new Date(2021, 0, 5),
+                        medias: [
+                            {
+                                contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg?access_token=",
+                                id: "media-1",
+                                source: "Ironman Suit",
+                                time: new Date("2021-01-05T12:42:00Z"),
+                                type: MediaType.IMAGE,
+                                uiRelativePath: "media-1/image.jpg"
+                            }
+                        ]
+                    }
+                ],
+                redirectTo: albumIdAvenger1,
+            })]);
     });
 
     it('should create a new instance of SelectAlbumHandler', async () => {
@@ -131,10 +131,10 @@ describe('CatalogFactory', () => {
             albumId: albumIdAvenger1,
         });
 
-        let mediasLoadedAction = dispatch.find(action => action.type === "MediasLoadedAction");
+        let mediasLoadedAction = dispatch.find(action => action.type === "mediasLoaded");
         expect(mediasLoadedAction).toBeDefined()
 
-        expect((mediasLoadedAction as MediasLoadedAction).medias).toEqual(
+        expect((mediasLoadedAction as MediasLoaded).medias).toEqual(
             [
                 {
                     day: new Date(2021, 0, 5),
