@@ -1,7 +1,7 @@
 import {useMatch, useNavigate} from "react-router-dom";
 import {AlbumId} from "../../../core/catalog";
 import React, {ReactElement, useCallback} from "react";
-import {CatalogViewerProvider} from "../../../core/catalog-react";
+import {CatalogViewerProvider} from "../../../components/catalog-react";
 import {useAuthenticatedUser} from "../../../core/application";
 
 export default function CatalogViewerRoot({children}: {

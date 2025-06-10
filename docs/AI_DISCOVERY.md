@@ -12,6 +12,51 @@ IA Concepts
 
 ### Prompts (wip)
 
+#### Prompting the principles
+
+```
+I'm editing the main development handbook of the project: `docs/principles_web.md`.
+
+The document purpose is to be read by LLM in order to:
+
+1. decouple the requirement into the expected, and defined in the document, concepts
+2. adopt coding style of the project and reduce the number of edit required after LLM propositions
+3. save time when developer is prompting LLM
+
+The document must be directive and leave little to interpretation.
+It must be clear and useful for LLMs.
+
+---
+
+You will review the document against the requirement above. You'll ask me questions to clarify points that needs clarification. Ask me one question at a time we can document a thorough, concise, and clear documenta
+tion.
+Our end goal is to update the document I can handoff to developers and LLM when I'm developing features
+```
+
+#### Refactoring: re-applying the principles
+
+The principles from `docs/principles_web.md` have been breached when writing the actions of the catalog domain in `web/src/core/catalog/domain/actions`.
+
+Draft a detailed inventory of issues found in the code, group them by unit (an action), prioritise the actions from the one having deep design issues to those
+only requiring cosmetic changes. Once you have a solid and prioritised list of units, break it into small steps. Each step must be small enough to be
+implemented
+safely with strong testing, but big enough to move the project forward. Each step should keep the existing tests as guaranty no regression is introduced, and
+remove the redundant one on the next step. Iterate until you feel that the steps are right sized for this project.
+
+From here you should have the foundation to provide a series of prompts for a code-generation LLM that will implement each step. Prioritize best practices, and
+clear instructions, and incremental progress, ensuring no big jumps in complexity at any stage. Make sure that each prompt list the files requiring to be
+changed, builds on the previous prompts of the same unit, and ends with wiring things together. There should be no hanging or orphaned code that isn't
+integrated into a previous step.
+
+Make sure and separate each prompt section. Use markdown. Each prompt should be tagged as text using code tags. The goal is to output prompts, but context, etc
+is important as well.
+
+##### Follow up
+
+Break down the steps further so no action is worked at the same time as another action. Start with high priority ones. Make sure the naming convention (past
+tense event) is respected and integrate the renaming ask>  in the plan otherwise. Don't keep the tests for the end, each step must include the test required to
+validate it. When functions or classes are renamed, reference to them must be updated as well.
+
 #### Testing: Fake
 
 ```
@@ -315,4 +360,13 @@ Models notes
   match.
 * failed to respect the format when used directly - I wonder if it wasn't because of refactoring with read-only files that it tries to change (?)
 * used as weak model for summarisation and git commit looks working well
-* 
+
+### OpenAI - recommendation
+
+As of the 10th of June 2025, OpenAI sent an email to recommend the use of gpt-4o for programming purpose. They dropped the price by 80%, matching the price of
+4.1.
+
+### Aider / claude sonnet 4
+
+    aider --model openrouter/anthropic/claude-sonnet-4
+

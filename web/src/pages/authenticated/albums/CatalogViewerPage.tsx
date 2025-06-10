@@ -6,7 +6,7 @@ import AlbumsList from "./AlbumsList";
 import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
-import {useCatalogContext} from "../../../core/catalog-react";
+import {useCatalogContext} from "../../../components/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
 import {albumIdEquals, deleteDialogSelector, sharingDialogSelector} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
@@ -27,7 +27,7 @@ export function CatalogViewerPage() {
             openDeleteAlbumDialog,
             openSharingModal,
             closeSharingModal,
-            revokeAlbumSharing,
+            revokeAlbumAccess,
             grantAlbumSharing
         },
         selectedAlbumId
@@ -84,7 +84,7 @@ export function CatalogViewerPage() {
             <ShareDialog
                 {...sharingDialogSelector(state)}
                 onClose={closeSharingModal}
-                onRevoke={revokeAlbumSharing}
+                onRevoke={revokeAlbumAccess}
                 onGrant={grantAlbumSharing}
             />
             <DeleteAlbumDialog
