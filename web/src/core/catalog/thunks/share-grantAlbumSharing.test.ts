@@ -66,14 +66,16 @@ describe("grantAccessThunk", () => {
         ]);
     });
 
-    it("should dispatch SharingModalErrorAction if the sharingAPI.grantAccessToAlbum failed", async () => {
+    it("should dispatch SharingModalErrorAction, and throw, if the sharingAPI.grantAccessToAlbum failed", async () => {
         const fakeAPI = new FakeSharingAPI();
         fakeAPI.grantError = new Error("[TEST] fail grant");
         const dispatched: any[] = [];
-        await grantAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email);
+        const error = await grantAlbumSharingThunk(dispatched.push.bind(dispatched), fakeAPI, albumId, email).catch(err => err);
 
+        expect(error).toBeInstanceOf(Error);
         expect(fakeAPI.grantRequests).toEqual([{albumId, email}]);
         expect(dispatched).toEqual([
+            catalogActions.addSharingAction({user: {email, name: email}}),
             catalogActions.sharingModalErrorAction({
                 error: {
                     type: "grant",

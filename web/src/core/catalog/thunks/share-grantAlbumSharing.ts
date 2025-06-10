@@ -18,34 +18,38 @@ export function grantAlbumSharingThunk(
     if (!albumId) {
         return Promise.reject(`ERROR: no albumId selected to be granted, cannot grant access for ${email}`);
     }
-    return sharingAPI.grantAccessToAlbum(albumId, email)
-        .then(() =>
-            sharingAPI.loadUserDetails(email)
-                .catch(err => {
-                    console.log(`WARN: failed to load user details ${email}, ${JSON.stringify(err)}`);
-                    return Promise.resolve({
-                        email: email,
-                        name: email,
-                    } as UserDetails);
-                })
-                .then(details => {
-                    dispatch(catalogActions.addSharingAction({
-                        sharing: {
-                            user: details,
-                        }
-                    }));
-                })
-        )
-        .catch(err => {
-            console.log(`ERROR: ${JSON.stringify(err)}`);
-            dispatch(catalogActions.sharingModalErrorAction({
-                error: {
-                    type: "grant",
-                    message: "Failed to grant access, verify the email address or contact maintainers",
+
+    return Promise.allSettled([
+        sharingAPI.grantAccessToAlbum(albumId, email),
+        sharingAPI.loadUserDetails(email)
+            .catch(err => {
+                console.log(`WARN: failed to load user details ${email}, ${JSON.stringify(err)}`);
+                return Promise.resolve({
                     email: email,
-                }
-            }));
-        });
+                    name: email,
+                } as UserDetails);
+            })
+            .then(details => {
+                dispatch(catalogActions.addSharingAction({
+                    sharing: {
+                        user: details,
+                    }
+                }));
+            })
+    ])
+        .then(([grantResp, _]) => {
+            if (grantResp.status === "rejected") {
+                console.log(`ERROR: ${JSON.stringify(grantResp.reason)}`);
+                dispatch(catalogActions.sharingModalErrorAction({
+                    error: {
+                        type: "grant",
+                        message: "Failed to grant access, verify the email address or contact maintainers",
+                        email: email,
+                    }
+                }));
+                return Promise.reject(grantResp.reason);
+            }
+        })
 }
 
 export const grantAlbumSharingDeclaration: ThunkDeclaration<
