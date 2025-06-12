@@ -8,3 +8,4 @@ bin/
 bin-cli/
 deployments/infra-data/.terraform/
 .aider*
+!.aider.conf.yml

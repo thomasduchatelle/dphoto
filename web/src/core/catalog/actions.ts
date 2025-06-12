@@ -1,14 +1,14 @@
 import {
     AlbumAccessGranted,
     albumAccessGrantedReducerRegistration,
+    AlbumAccessRevoked,
+    albumAccessRevokedReducerRegistration,
     SharingModalClosed,
     sharingModalClosedReducerRegistration,
     SharingModalErrorOccurred,
     sharingModalErrorOccurredReducerRegistration,
     SharingModalOpened,
     sharingModalOpenedReducerRegistration,
-    AlbumAccessRevoked,
-    albumAccessRevokedReducerRegistration,
 } from "./sharing";
 import {
     AlbumsAndMediasLoaded,

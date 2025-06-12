@@ -10,7 +10,490 @@ IA Concepts
 2. Models: _what models perform better on what type of tasks?_
 3. Tools: _how to interact with an IA agent and get to update the code ?_
 
-### Prompts (wip)
+LLM Tradeoffs
+---------------------------------------
+
+Starting point is an **idea** -> target is **accepted code**. Adding the feature on existing code is orders of magnitude more complex: the LLM cannot see the
+whole context.
+
+* **Effort** vs Autonomy: how much effort is expected by the Supervisor ? ... to break down the tasks and bring engineering expertise.
+* **Costs**: how much is the budget by feature to spend on AI models ?
+* **Timeline**: how quickly features should be shipped ? ... onboarding has a ramping costs in time
+
+With unlimited budget, Claude Sonnet 4 + Aider would be my preference so far. But if budget is restricted, over 3 cents per request is getting high too quick.
+So investigation to have next:
+
+1. how much can 3 cents do with Claude Sonnet 4?
+    1. if it goes from idea to accepted code, it would be worth it !
+    2. if it doesn't, would a cheap/free model to collect requirements, and one cheap to do the finish on the code could be an approach ?
+2. is there cheaper alternative from Claude Sonnet 4 that would give consistent good results ? (need to benchmark the instructions)
+3. how much can do an opensource / cheap model ? how much effort would be required to break down the dev cycle into chunks that can be covered by a free/cheap
+   LLM ?
+
+Prompts (wip)
+---------------------------------------
+
+#### A planning that only an expensive model can perform
+
+##### With `docs/principles_web.md`:
+
+```
+Summary:
+----------------------------------------------------------------------
+Model                                    Cost         Time
+----------------------------------------------------------------------
+openrouter/x-ai/grok-3-beta                                  $   0.08000       0:39     4/5 - EditDatesDialogState does not have the dates | tests good.
+openrouter/anthropic/claude-sonnet-4                         $   0.08000       0:52     5/5 - SPOT ON: State + Tests + File structure (including the selector interfacee in the selector file) + index !
+openrouter/google/gemini-2.5-pro-preview                     $   0.08000       1:47     5/5 - State + Tests + File structure
+gpt-4.1                                                      $   0.07000       0:25     3/5 - EditDatesDialogState does not have the dates, selector not in its file (and action badly registered)
+o3                                                           $   0.05000       0:37     1/5 - EditDatesDialogState does not have the dates | tests does test the reducer
+openrouter/google/gemini-2.5-pro-preview-05-06               $   0.05000       0:57     3/5 - Too many tests
+gpt-4.1-mini                                                 $   0.03000       0:28     ZER - no actions, no selector, no tests
+openrouter/google/gemini-2.5-flash-preview-05-20             $   0.00370       0:23     4/5 - EditDatesDialogState does not have the dates | Tests + File structure are good
+openrouter/deepseek/deepseek-r1-0528:free                    $   free          2:30     1/5 - NO TESTS
+openrouter/deepseek/deepseek-chat-v3-0324:free               $   free          1:14     3/5 - Testing intermediatary state props by props instead of testing through the selector
+openrouter/meta-llama/llama-4-maverick:free                  $   free          0:15     ZER - Gives advises but cannot code.
+----------------------------------------------------------------------
+```
+
+##### Without the `webprinciples_web.md`:
+
+```
+------------------------------------------------------------------------------------------
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.1200       1:10     4/5 - EditDatesDialogState does not have the dates ; weird test names and props by props testing
+openrouter/google/gemini-2.5-pro-preview                     $    0.0800       2:17     4/5 - too many and complex tests
+openrouter/x-ai/grok-3-beta                                  $    0.0600       0:33     5/5 - tests props by props
+gpt-4.1                                                      $    0.0300       0:23     5/5 - tests props by props
+openrouter/mistralai/mistral-large-2411                      $    0.0300       0:43     2/5 - EditDatesDialogState does not have the dates ; no tests 
+o3                                                           $    0.0200       0:13     aborted because of missing file
+openrouter/deepseek/deepseek-r1                              $    0.0088       2:03     2/5 - no tests
+openrouter/qwen/qwen3-235b-a22b                              $    0.0076       3:10     failed to provide valid output
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0026       0:17     2/5 - no tests
+openrouter/qwen/qwen3-30b-a3b:free                                  free       2:52     ZER - no reducer, no tests
+------------------------------------------------------------------------------------------
+Total                                                        $    0.3590      13:46
+```
+
+Conclusions:
+
+1. The principles is not absolutely required at this phase but is ironing the style (especially testing)
+2. two next steps are possible:
+    1. get more from `claude-sonnet-4` (and other mid-range expensive) -> skip this step and get more done in one go.
+    2. break down more to use with `gemini-2.5-flash-preview-05-20`: seems the prompt is not to far away to get it perfect (or is peer programming accepted)
+    3. find what the free / opensource LLM are conformable with - this is not the right level
+
+#### Refinement / Story mapping
+
+```
+------------------------------------------------------------------------------------------
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.0500       0:41     4/5 - 5 stories covering everything (except close), a bit technical is places (action and state)
+openrouter/x-ai/grok-3-beta                                  $    0.0400       0:22     4/5 - 5 stories covering everything (except close)
+openrouter/google/gemini-2.5-pro-preview                     $    0.0400       1:10     4/5 - 5 stories incl closing modal, output messed up in the files (with aider)  
+o3                                                           $    0.0300       0:54     3/5 - 7 stories, BDD is very technical
+gpt-4.1                                                      $    0.0200       0:18     NEED TO RERUN - didn't write the files and asked for review (6 stories)
+openrouter/mistralai/mistral-large-2411                      $    0.0200       1:04     1/5 - 7 stories with no AC and no details leaving too much room for interpretation (misswrite the files) 
+openrouter/deepseek/deepseek-r1                              $    0.0073       0:47     2/5 - 7 stories, a bit confused with power user and system
+gpt-4.1-mini                                                 $    0.0045       0:26     3/5 - 6 stories, the refresh and save are 2 stories
+openrouter/meta-llama/llama-4-maverick                       $    0.0030       1:05     3/5 - 6 stories, lack of details with complex behaviour
+openrouter/qwen/qwen3-235b-a22b                              $    0.0016       0:42     4/5 - 5 stories, cover everything with good level of details but didn't write it into files
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0009       0:07     NEED TO RERUN: only 1 story
+openrouter/qwen/qwen3-30b-a3b:free                                  free       2:04     2/5 - 7 stories with fuzy boundaries
+------------------------------------------------------------------------------------------
+Total                                                        $    0.2173       9:44
+```
+
+Need to update the system prompt:
+
+* no technical details (things that are not seen by user)
+* be explicit, do not leave anything for interpretation
+* write into the files, no review, respect the requested format
+* closing case must be added to the original requirements, Gemini pro found it
+
+#### Refinement / Story Mapping v2
+
+    made a mistake and included both requirements
+
+What to expect:
+
+1. Open and close when owner of the album - show the dates appropriately
+2. Button disabled when not the owner
+3. Can update the time - show the time when open with one specific
+4. Happy path - can save and everything is refreshed
+5. API failed path - show an error
+6. Dates validation failed - show an error
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/google/gemini-2.5-pro-preview                     $    0.0600       1:39     5/5 - 8 stories, spot on
+openrouter/x-ai/grok-3-beta                                  $    0.0500       0:29     5/5 - 6 stories, no comment
+openrouter/anthropic/claude-sonnet-4                         $    0.0500       0:41     5/5 - 6 stories, spot on
+o3                                                           $    0.0300       0:51     3/5 - 6 stories, hallocinate and got the dates wrong for the API
+gpt-4.1                                                      $    0.0200       0:19     4/5 - 7 stories, not in files, looks a bit vague
+openrouter/mistralai/mistral-large-2411                      $    0.0200       0:50     4/5 - 8 stories, somehow a bit vague...
+openrouter/deepseek/deepseek-r1                              $    0.0068       0:18     3/5 - 5 stories, non-happy paths are not covered (API error and dates invalid between each other). But the format is good
+gpt-4.1-mini                                                 $    0.0046       0:22     5/5 - 5 stories, looks pretty good and workable
+openrouter/qwen/qwen3-235b-a22b                              $    0.0021       2:14     2/5 - 7 stories, looks a bit confused
+openrouter/meta-llama/llama-4-maverick                       $    0.0019       0:28     4/5 - 7 stories, not well detailed but could work
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0014       0:12     3/5 - 4 stories, too big
+openrouter/qwen/qwen3-30b-a3b:free                                  free       1:45     3/5 - 11 stories, too small to be actionable I would think
+------------------------------------------------------------------------------------------
+Total                                                        $    0.2468      10:12
+```
+
+Error fixed, language directory is not included in the context.
+
+    # using requirements by llama-4-maverick
+    ./benchmark-llm.py update-dates-1.0.1 --repo ../dphoto --read ../dphoto/specs/2025-06_update-album-dates.md  --map-tokens 0 -i instruction/story-breakdown.md 
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.0400       0:42     5/5 - spot on.
+gpt-4.1                                                      $    0.0200       0:22     3/5 - no files, stories badly formatted, some bad extrapolations (second preceision, time input disabled, ...)
+openrouter/google/gemini-2.5-pro-preview                     $    0.0200       3:24     5/5 - no files, but stories are good and with examples
+gpt-4.1-mini                                                 $    0.0073       0:54     5/5 - some imprecisions on the time input, good format
+openrouter/deepseek/deepseek-r1                              $    0.0057       0:25     1/5 - complete hallucination ("Save button becomes enabled again after 5 seconds")  
+openrouter/meta-llama/llama-4-maverick                       $    0.0014       0:23     2/5 - missing API error, inprecise api update
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0010       0:15     5/5 - BDD a bit heady but everything is covered
+------------------------------------------------------------------------------------------
+Total                                                        $    0.0954       6:27                                                     $    0.2468      10:12
+```
+
+This test satisfy the hypothesis that a simple requirement documentation by Llama is enough. The system prompt seems to be working to get stories.
+
+Model recommendation so far:
+
+* **chat** (and requirement): `google/gemini-2.5-flash-preview-05-20`
+    * backup: `meta-llama/llama-4-maverick`
+* **story coding**: ?
+    * assumption is `anthropic/claude-sonnet-4` will do best
+    * others to be tested
+* **code fixing** (assist): `meta-llama/llama-4-maverick`
+
+### Benchmark of independent story implementation
+
+Using BOTH the principles and the advanced prompt inducing the thought process.
+
+```
+./benchmark-llm.py edit-dates-2.1.0 --repo ../dphoto -i instructions/story-implementation.md \
+            --file web/src/core/catalog/language \
+            --file web/src/core/catalog/actions.ts \
+            --file web/src/core/catalog/index.ts \
+            --file web/src/core/catalog/thunks.ts  \
+            --file web/src/pages/authenticated/albums/CatalogViewerPage.tsx \
+            --file web/src/pages/authenticated/albums/CatalogViewerRoot.tsx \
+            --file web/src/pages/authenticated/albums/AlbumsListActions \
+            --file web/src/pages/authenticated/albums/DeleteAlbumDialog \
+            --file web/src/pages/authenticated/albums/MediasPage/index.tsx
+```
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------   act|thu|ui
+openrouter/x-ai/grok-3-beta                                  $    0.2400       2:07     3/5 - 2 | 2 | 1 - design followed the instructions! no tests, selector returns the state, date in the thunk arguments
+openrouter/anthropic/claude-sonnet-4                         $    0.1700       2:37     4/5 - 2 | 2 | 1 - disapointing run compared to the first one which was a 5. Used Album in the state and converted to exclusive in the dialog 
+gpt-4.1                                                      $    0.0900       4:20     1/5 - 0 | 0 | 1 - context exeeded on the last change ; design didn't follow the instructions ; no tests
+o3                                                           $    0.0700       2:02     0/5 - 0 | 0 | 0 - just asked me to do it
+gpt-4.1-mini                                                 $    0.0700       6:22     2/5 - 1 | 0 | 1 - doesn't compile (props not defined, missing imports, ...), missing one action from the design!, no thunks, doesn't use the selector
+openrouter/mistralai/mistral-large-2411                      $    0.0700       6:46     3/5 - 2 | 1 | 2 - good design, AlbumID as payload, no tests, doesn't compile (missing imports), failed writing some files
+openrouter/deepseek/deepseek-r1                              $    0.0200       3:52     3/5 - 2 | 1 | 2 - good start of a design, no tests, no selector (no integration)
+openrouter/qwen/qwen3-235b-a22b                              $    0.0076       6:17     3/5 - 2 | 0 | 2 - design is ok, no tests, different file structure
+openrouter/meta-llama/llama-3.3-70b-instruct                 $    0.0053       1:40     1/5 - 0 | 0 | 0 - design was missing a lot, no actions, generic "edit chunk", ...
+openrouter/meta-llama/llama-4-maverick                       $    0.0049       0:38     1/5 - 2 | 0 | 1 - move to a stackoverflow style with comments like "// ... exiting types"
+------------------------------------------------------------------------------------------
+Total                                                        $    0.7478      36:45
+```
+
+Comments:
+
+* How to prevent the action payload to contain too much ? - say to nuse ID, no duplication of the state unless it will not change together
+* Same for Thunk.
+* Use `YOU` on all prompt, otherwise, with `we`, it ask me to do it.
+* Insist on the tests
+* Checking looks useless
+* Should the "Architect" be introduced ? Most models are overwhelmed.
+* Ask to not run the tests
+
+#### Updated principles and removed the validation from the system prompt
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.4000       3:52     1/5 - failed.
+openrouter/x-ai/grok-3-beta                                  $    0.1500       1:21     3/5 - design phase is good, implementation lack of tests
+openrouter/mistralai/mistral-large-2411                      $    0.0700       5:17     3/5 - design phase is good, implementation lack of tests, writing some files failed
+openrouter/deepseek/deepseek-r1                              $    0.0200       1:39     2/5 - design was incomplete and implementation lost the thunk and the UI, no tests
+openrouter/qwen/qwen3-235b-a22b                              $    0.0095       2:15     2/5 - design was wrong and it didn't follow it anyway
+openrouter/meta-llama/llama-4-maverick                       $    0.0043       0:37     2/5 - forgot the action on the design
+openrouter/google/gemini-2.5-pro-preview                            free       0:06     technical error
+------------------------------------------------------------------------------------------
+Total                                                        $    0.6538      15:11
+```
+
+Comments:
+
+* design of data flow looks useless, it is not used. Maybe I should drive it specifically for WEB development:
+    1. start by defining what properties are displayed by the UI component -> this is the Selection
+    2. then what action can the user trigger -> these are the thunks
+        * for each thunk, what value qualify the action which is not already in the state -> this is the payload of the thunk
+    3. define what the thunk is going to do, what data other that the payload it requires -> this is what the pre-selector returns
+    4. ...
+* actions ended up in the wrong folder after the update of the principles
+
+#### Updated principles and removed the validation from the system prompt (v2.1.6)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/x-ai/grok-3-beta                                  $    0.2300       1:42     4/5 - partially good design (album in the payload), and duplicates the state, only half of the tests 
+openrouter/anthropic/claude-sonnet-4                         $    0.1800       3:05     5/5 - good design and good implementation (the thunks are doing too much)
+openrouter/qwen/qwen3-235b-a22b                              $    0.0060       5:27     2/5 - design was well started but only implemented half of it
+openrouter/meta-llama/llama-4-maverick                       $    0.0039       1:18     1/5 - advise/forum mode
+------------------------------------------------------------------------------------------
+Total                                                        $    0.4199      11:33
+```
+
+#### Very simple prompt, with the principles (v2.1.7)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/x-ai/grok-3-beta                                  $    0.1500       1:49     3/5 - fine design (all album in the action), no tests, thunk contain placeholder
+openrouter/anthropic/claude-sonnet-4                         $    0.1500       1:50     4/5 - good desigm, no tests
+openrouter/qwen/qwen3-235b-a22b                              $    0.0200       4:26     3/5 - it doesn't look bad but editor failed
+openrouter/meta-llama/llama-4-maverick                       $    0.0038       0:23     0/5 - forum mode
+------------------------------------------------------------------------------------------
+Total                                                        $    0.3238       8:29
+```
+
+#### Very simple prompt, architect mode (v2.1.8 & v2.1.12)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/google/gemini-2.5-pro-preview                     $    0.3000       5:58     4/5 - (harsh note, no test) thunk payload is better (empty), but the action contains the full Album
+openrouter/x-ai/grok-3-beta                                  $    0.2500       2:30     5/5 - (no test) no arg thunk -> action with all payload
+openrouter/anthropic/claude-sonnet-4                         $    0.2300       2:49     5/5 - design and implementation looks good.
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0200       2:14     5/5 - (with tests) looks it could work out of the box !
+openrouter/qwen/qwen3-235b-a22b                              $    0.0090       4:20     3/5 - incomplete
+openrouter/meta-llama/llama-4-maverick                       $    0.0068       1:17     1/5 - no actions or thunk
+------------------------------------------------------------------------------------------
+Total                                                        $    0.4958      10:57
+Total                                                        $    0.3200       8:13     (gemini x2)
+```
+
+#### Very simple prompt, no guidelines, architect mode (v2.1.10)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.2100       2:53     3/5 - pretty close from the expectation
+openrouter/x-ai/grok-3-beta                                  $    0.1800       1:55     1/5 - only UI side
+openrouter/qwen/qwen3-235b-a22b                              $    0.0200       6:07     2/5 - tried to extrapolate what was needed, not bad but very incomplete
+openrouter/meta-llama/llama-4-maverick                       $    0.0054       0:47     1/5 - only did the frontend side
+------------------------------------------------------------------------------------------
+Total                                                        $    0.4154      11:43
+```
+
+#### Only ask of the design (ask mode)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------   act|thu|sel
+openrouter/x-ai/grok-3-beta                                  $    0.0900       0:37     5/5 - 2 | 2 | 1 - minor changes on the selector required
+openrouter/anthropic/claude-sonnet-4                         $    0.0700       0:28     4/5 - 2 | 2 | 1 - thunk contains too many args
+openrouter/google/gemini-2.5-pro-preview                     $    0.0400       0:45     3/5 - 2 | 2 | 1 - using the Album in the state
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0037       0:17     5/5 - 2 | 2 | 1 - using AlbumId in the action, too many props in the state
+openrouter/qwen/qwen3-235b-a22b                              $    0.0035       0:38     3/5 - 2 | 2 | 1 - ALbumID and dates in the action, thunks looks overloaded
+openrouter/meta-llama/llama-4-maverick                       $    0.0030       0:11     1/5 - 1 | 1 | 1 - close is mmissing.
+------------------------------------------------------------------------------------------
+Total
+```
+
+#### Design and planning v2
+
+    ## Structural Improvements
+
+    **1. Add a Quick Context Section at the top:**
+    ```markdown
+    **Context**:
+    - Architecture: [brief description of layers - actions/thunks/selectors/components]
+    - Codebase conventions: [key naming patterns, folder structure]
+    - Story scope: [what's in/out of scope]
+    ```
+    
+    **2. Streamline the Design Phase:**
+    Instead of asking for "layers impacted" separately, use a template:
+    ```markdown
+    1. **Design Phase** - For the story "[story text]", identify:
+       * State changes needed (interfaces/types to add/modify)
+       * Actions required (name + payload schema)
+       * Thunks required (name + signature)
+       * Selectors required (name + return type)
+       * UI components required (name + purpose)
+       * Data flow: [brief description]
+    ```
+    
+    **3. Add Design Constraints upfront:**
+    ```markdown
+    **Design Constraints**:
+    - Dialog state must include `open: boolean` property
+    - Use Dayjs for date types
+    - Read-only data should come from selectors, not state duplication
+    - [other architectural rules]
+    ```
+    
+    ## Content Improvements
+    
+    **4. Provide BDD template immediately:**
+    ```markdown
+    **Task Format Template**:
+    GIVEN [initial state description]
+    WHEN [action/thunk name with payload]
+    THEN [selector return value or UI behavior]
+    ```
+    
+    **5. Add explicit scope boundaries:**
+    ```markdown
+    **Story Scope**: Opening and displaying dialog only
+    **Out of Scope**: Closing dialog, editing functionality, validation
+    ```
+    
+    **6. Pre-define prompt structure:**
+    ```markdown
+    **Final Prompt Structure** (for reference):
+    - Introduction: Component type and name
+    - Requirements: BDD statements
+    - Implementation: Folder, TDD, files to edit
+    - Interface: Signatures and types
+    - References: Related tasks/files
+    ```
+    
+    This would reduce the back-and-forth iterations and get to the task breakdown faster while maintaining quality.
+
+#### Design and planning
+
+**Generic prompt in input - generic plan in output**. None of the output is usable. The analysis is far too much generic. The tasks are wide open and unprecise.
+Let's try to fix that:
+
+```
+/read-only web/src/pages/authenticated/albums/CreateAlbumDialog
+/ask
+
+Let's start refining the language + selectors + actions and replace the steps. And we're going to start by the Date Edit.
+
+Start by defining what properties the Dialog would require to function (I added the create dialog as an example).
+
+These properties are what the selector interface must returns. You can define now:
+* the interface of the properties (give it an explicit name)
+* the signature of the selector (give it an explicit name)
+* the property that is added to the main state (give it a name, and define its interface)
+
+From there, think about the thunks (any user interaction) to find how they will mutate with the state (re-read the scenarios). These are actions. List them, define what in
+put parameters they will requires.
+Write your notes about the thunks, we will use them on the next phase of our deisgn and planning.
+
+Once you have the list, create one task per actions. Each task will have the requirements written using BDD looking like:
+
+    GIVEN <description of the initial state>
+    WHEN <name of the action dispatched and description of its payload>
+    THEN <description of what will return the selector>
+
+Also add the interfaces and signatures you defined early on the first task: it needs to create them. Then reference in which file they are for nteh following actions (one
+per step).
+```
+
+The analysis was good but the tasks are not. They are "write this class", "write this function" type in a pretty weird BDD style.
+
+And the scope was far too wide with an integration far too late. I'll try to fix it with:
+
+```
+The analysis is good, but I'm not convienced with the task break down: they don't look like independently implementable and testable. They look like a "write this code" type of
+ tasks which lead to difficult integration and dead code.
+
+We're going to reduce the scope into a vertical slice: "As a user, I can open and close the Edit Date Dialog that displays the name of the album".
+(note to myself: this type of break down need to happen much earlier and need to be added in the prompt)
+
+Then we're going to work more collaboratively:
+
+1. **design**: define the following
+  * properties interface used by the dialog (`EditDatesDialogProperties` minus what's not required anymore due to reducing the scope)
+  * main state (same comment: remove what's not necessary anymore)
+  * list of thunks as you've done it, but define the data it requires. Differentiate the one that are "new" and the ones coming from the state
+  * list of actions as you've done it, but define the payload as well
+2. **collaboration** ask me a feedback, you might iterate several time before moving to the next step
+3. **task breakdown**, each task must be a unit of work:
+  * GOOD example (for the action): "GIVEN the dialog is closed WHEN I dispatch the `editDatesDialogOpened` with an AlbumId THEN `selectEditDatesDialog` returns an open dialog with the appropriate name"
+    it's good because it is describing the behaviour that the thunk that will use it expect, and the feature only exposes what is meant to be exposed: the action.
+  * GOOD example (for the UI component): "WHEN the dialog is open THEN it displays the details (name) of the album"
+    it's good because it describe one state the dialog can take and is described with user oriented languae
+  * BAD example: "GIVEN the system needs to support date editing functionality WHEN defining the state model for the edit dates dialog THEN the selector should return dialog properties for component rendering"
+    it's bad because it is not a behaviour expected by the application running, it's a behaviour the developer should have. But we're not programing the developer, we're progra
+ming the application.
+4. after writing some (2-3), ask me feedback and we can move to the next until it's complete
+```
+
+Claude suggested to write the prompts as defined much earlier from the design then BDD. I asked to write them into files one at a time. Collaboration is
+definitively a WIN to bring feedback earlier. The prompts looks OK - I'll try to get them implemented ...
+
+Proposed new prompt:
+
+```
+We need to implement a new feature using vertical slices and collaborative design. Let's start with a minimal viable slice.
+
+**Feature Scope**: "As a user, I can open and close the Edit Date Dialog that displays the name of the album"
+
+**Process**:
+1. **Design Phase** - Define the minimal state model:
+   - Dialog properties interface (what the React component needs)
+   - Main state structure (what gets stored)
+   - User interactions → actions mapping (with payloads)
+   - Thunks analysis (new data vs state data requirements)
+
+2. **Collaboration** - Present the design and ask for feedback before proceeding
+
+3. **Task Breakdown** - Create independently implementable tasks where each task describes **application behavior**, not developer tasks:
+   - ✅ GOOD: "GIVEN dialog is closed WHEN I dispatch editDatesDialogOpened with AlbumId THEN selectEditDatesDialog returns open dialog with album name"
+   - ❌ BAD: "GIVEN system needs dialog support WHEN defining state model THEN selector should return properties"
+
+   Each task must be:
+   - A unit of work (1 action OR 1 thunk OR 1 component)
+   - Independently testable
+   - Described in BDD format focusing on runtime behavior
+
+**Constraints**:
+- Follow the architectural principles from the handbook
+- Use TDD approach
+- Actions/thunks must be registered when developed
+- Tasks should build incrementally (state → actions → thunks → components)
+
+**Deliverable**: Markdown files with detailed prompts for each task, including BDD requirements, implementation details, references, and TDD guidance.
+
+Start with the design phase for the minimal slice.
+```
+
+##### Task implementation
+
+Try 1: Claude + task spec. Disastrous. No test. No action. No reducer. Context is corrupted and irrecuperable.
+
+Try 2: Claude + task spec + (readonly) `docs/principles_web.md`. Better. Got test. Still not the right folders. Still no action or reducer.
+
+#### Workflow building
+
+... after getting the required document, if any correction have be requested, prompt to improve the prompt:
+
+```
+I'm pleased with this version of the requirements.
+
+You remember the first Prompt I wrote (I'll add it back below) ? What would you change to lead on this final version, rather than the first version ?
+
+Initial prompt:
+```
 
 #### Prompting the principles
 
@@ -378,8 +861,34 @@ As of the 10th of June 2025, OpenAI sent an email to recommend the use of gpt-4o
 
     aider --model openrouter/anthropic/claude-sonnet-4
 
-Do NOT use to restructure the files !!
+Do NOT use to reorganise the files !!
 
 I found that asking to update the files, and then providing the shell script to move them working well. Asking for another script (with grep) to identify the
 missed file worked as well.
 
+### Aider / openrouter/meta-llama/llama-4-maverick
+
+Used for generating the requirement documentation. ($0.0042)
+
+Really basic prompt. Need to try to get the the level of details I got to with gemini-2.5-flash. Document is minimalist but complete.
+
+Note: cost using `gpt-4.1-mini`: $0.0083 ; and using `claude-sonnet-4`: $0.06. While the output is **very similar**!!
+
+### Aider / openrouter/google/gemini-2.5-flash-preview-05-20:thinking
+
+Used for generating the requirement documentation. ($0.02)
+
+He struggled to follow the instructions: asked two questions at a time, and keep asking me to give it the scenario steps instead of generating it !!
+
+Result is good, lots of details with examples. Maybe too much and could be confusing (list of state management libs !). Eager to get things implemented and
+ask (too much) details on the API contract.
+
+### Aider / openrouter/meta-llama/llama-4-maverick
+
+Used to update a script in Python ... painful.
+
+* keep breaking indentation requiring to "fix it" and taking 5-10 min.
+* removes code without reason (--edit-model)
+
+Note: the fulll script have been written with `openrouter/anthropic/claude-sonnet-4` which was working very well. The edit was remade by
+`google/gemini-2.5-flash-preview-05-20` without any issue.
