@@ -57,6 +57,14 @@ Break down the steps further so no action is worked at the same time as another 
 tense event) is respected and integrate the renaming ask>  in the plan otherwise. Don't keep the tests for the end, each step must include the test required to
 validate it. When functions or classes are renamed, reference to them must be updated as well.
 
+#### Refactoring: renaming a concept
+
+Pre-requisite: add the files where the concept is declared, and where it is used... Then:
+
+Rename `sharingRemoved` into `albumAccessRevoked`, and `revokeAlbumSharing` into `revokeAlbumAccess`, in all types, interface, functions, tests, file names, ...
+Keep the same case convention as it was. Provide the shell script to rename the files afterward. Provide another script using grep to idenitify any other
+file that could use the old names so they can be updated on the next step.
+
 #### Testing: Fake
 
 ```
@@ -320,8 +328,8 @@ Discovery path (and tasks)
 
 IA will be used for the following tasks:
 
-1. merging two React State into one more consistent to improve user experience of Sharing feature
-    1. refactoring to break down the massive reducer - needs suggestion and implementation
+1. ~~merging two React State into one more consistent to improve user experience of Sharing feature~~
+    1. ~~refactoring to break down the massive reducer - needs suggestion and implementation~~
 2. migrating to AWS CDK from Terraform and Serverless
     1. aiming for 2 stacks: long term data stores, and WEB overlay
     2. migration paths to be included and executed
@@ -369,4 +377,9 @@ As of the 10th of June 2025, OpenAI sent an email to recommend the use of gpt-4o
 ### Aider / claude sonnet 4
 
     aider --model openrouter/anthropic/claude-sonnet-4
+
+Do NOT use to restructure the files !!
+
+I found that asking to update the files, and then providing the shell script to move them working well. Asking for another script (with grep) to identify the
+missed file worked as well.
 

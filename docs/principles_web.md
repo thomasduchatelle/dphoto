@@ -4,10 +4,26 @@
 
 These general principles must be **strictly respected**. In the rare exception where one cannot, a FIXME comment must be added to alert the reviewer.
 
-1. Always use explicit types or interfaces, never use `any`
-2. In tests, the results must be asserted as a whole, not properties by properties
-3. Do not comment the code to paraphrase what it is doing
-4. Declared objects must be passed as arguments of a function directly, do not declare a transient variables
+1. Prioritise exact semantic over correct syntax
+2. TDD must be used: no behaviour should be implemented if there is no test to validate it (including but not limited to null checking, field validation, ...)
+3. Always use explicit types or interfaces, never use `any`
+4. In tests, the results must be asserted as a whole, not properties by properties
+5. Do not comment the code to paraphrase what it is doing
+6. Declared objects must be passed as arguments of a function directly, do not declare a transient variables
+
+## Repository Tree
+
+The file structure is as follows:
+
+* `components/`
+  * `catalog-react/` - contains the React Components used to integrate the domain to the other components
+* `core/catalog/`
+  * `<feature name>/` - each feature has a folder containing related actions, thunks, and selectors
+  * `language/` - ubiquitous language and definition of the State shared for the domain
+  * `common/` - functionalities reused across most features
+  * `actions.ts` - where the action interface and the partial reducer are registered
+  * `thunks.ts` - where the thunks are registered
+  * `adapters/api/` - where the REST API adapter are implemented
 
 ## "Action" and "Thunk" Principles
 
@@ -42,7 +58,7 @@ Selector function can the provided as part of the model to extract a set of prop
 
 The _Action_ naming convention is the **Past Tense Event Naming** and is represented in **camelCase** (example: `albumCreated`)
 
-An _Action_ is defined by the following parts in a single file named `<feature name>-<action name>.ts` where "feature name" is a lower-case short name used to
+An _Action_ is defined by the following parts in a single file named `action-<action name>.ts` in the folder of the feature is a lower-case short name used to
 regroup related actions, and action name is in camelCase.
 
 #### Action interface
@@ -51,31 +67,20 @@ regroup related actions, and action name is in camelCase.
 * It defines the shape of the action object, including a `type` property and any other required properties.
 * The `type` property is a string literal unique to the action, its value is always the same as the _Action_ name
 
-Complete example:
-
-```typescript
-// actions/album-albumDeleted.ts
-export interface AlbumDeletedAction {
-    type: "AlbumDeleted";
-    albums: Album[];
-    redirectTo?: AlbumId;
-}
-```
-
 #### Action Factory
 
-* The function is named after the action suffix, in **camelCase** (example: `albumCreated`)
+* The function is named after the action, in **camelCase** (example: `albumCreated`)
 * It returns the action interface
 * The parameters are either:
   * if the interface has no property other than `type`: no parameter
     * if the interface has a single property on top of `type`: parameter is that property. Make sure the type is respected.
-    * if the interface has more properties, it takes a single argument of the type `Omit<AlbumCreated, "type"`
+    * if the interface has more properties, it takes a single argument of the type `Omit<AlbumCreated, "type">`
 
 Complete examples:
 
 **Case 1: No additional properties**
 ```typescript
-// actions/loading-loadingStarted.ts
+// catalog/album-delete/album-loadingStartedAction.ts
 export interface LoadingStartedAction {
     type: "LoadingStarted";
 }
@@ -89,7 +94,7 @@ export function loadingStartedAction(): LoadingStartedAction {
 
 **Case 2: Single additional property**
 ```typescript
-// actions/error-errorOccurred.ts
+// catalog/album-delete/album-errorOccurredAction.ts
 export interface ErrorOccurredAction {
     type: "ErrorOccurred";
     message: string;
@@ -105,8 +110,14 @@ export function errorOccurredAction(message: string): ErrorOccurredAction {
 
 **Case 3: Multiple additional properties**
 ```typescript
-// actions/album-albumDeleted.ts
-export function albumDeletedAction(props: Omit<AlbumDeletedAction, "type">): AlbumDeletedAction {
+// catalog/album-delete/action-albumDeleted.ts
+export interface AlbumDeleted {
+  type: "AlbumDeleted";
+  albums: Album[];
+  redirectTo?: AlbumId;
+}
+
+export function albumDeleted(props: Omit<AlbumDeletedAction, "type">): AlbumDeletedAction {
     return {
         ...props,
         type: "AlbumDeleted",
@@ -123,7 +134,7 @@ export function albumDeletedAction(props: Omit<AlbumDeletedAction, "type">): Alb
 Complete example:
 
 ```typescript
-// actions/album-albumDeleted.ts
+// catalog/album-delete/action-albumDeleted.ts
 
 // current and returns are always a `CatalogViewerState` type
 export function reduceAlbumDeleted(
@@ -155,7 +166,7 @@ Then, the action needs to be registered in the file `catalog-reducer-v2.ts` :
 Complete example:
 
 ```typescript
-// actions/album-albumDeleted.ts
+// catalog/album-delete/action-albumDeleted.ts
 export function albumDeletedReducerRegistration(handlers: any) {
     handlers["AlbumDeleted"] = reduceAlbumDeleted as (
         state: CatalogViewerState,
@@ -167,14 +178,14 @@ export function albumDeletedReducerRegistration(handlers: any) {
 #### Action testing
 
 * naming convention of "describe" is `action:<action name>` (example: `action:albumCreated`)
-* types predefined in test helper must be used where possible (`web/src/core/catalog/domain/tests/test-helper-state.ts`)
+* types predefined in test helper must be used where possible (`web/src/core/catalog/tests/test-helper-state.ts`)
 * assertions should be done on the result of selectors, and not directly the state
 * assertions must be done on the whole result or whole state, not on individual properties
 
 ```typescript
-// actions/album-albumDeleted.test.ts
+// catalog/album-delete/action-albumDeleted.test.ts
 
-import {loadedStateWithTwoAlbums, twoAlbums, marchAlbum} from "tests/test-helper-state";
+import {loadedStateWithTwoAlbums, twoAlbums, marchAlbum} from "../tests/test-helper-state";
 
 describe("action:albumDeleted", () => {
     const deleteDialog = {deletableAlbums: twoAlbums, isLoading: true};
@@ -206,7 +217,7 @@ describe("action:albumDeleted", () => {
 
 ### Thunks
 
-* Naming convention of thunk is an verb with a complement, example: `createAlbum`, or `sendEmail`
+* Naming convention of thunk is a verb with a complement, example: `createAlbum`, or `sendEmail`
 * A thunk implement one and only one responsibility: single-responsibility principle
 * Thunks are **pure-business logic functions** handling the user commands triggered by the view: they do not use any framework of technology
     * adapters are injected to access lower-level technologies like REST API or Local Storage
@@ -228,7 +239,7 @@ describe("action:albumDeleted", () => {
 Complete example:
 
 ```typescript
-// thunks/album-createAlbum.ts
+// catalog/album-delete/thunk-createAlbum.ts
 
 // Port interface: abstracts external dependencies (e.g., REST calls)
 export interface CreateAlbumPort {
@@ -277,7 +288,7 @@ The factory function wires up dependencies and returns the thunk handler used by
 Complete example:
 
 ```typescript
-// thunks/sharing-grantAlbumSharing.ts
+// catalog/sharing/thunk-grantAlbumSharing.ts
 
 export interface GrantAlbumSharingAPI {
     grantSharing(albumId: AlbumId, email: string): Promise<void>;
@@ -406,6 +417,7 @@ The **Adapter Implementation** is the concrete class that implements the Port in
   * Examples: `AxiosCatalogRestApi`, `LocalStorageAdapter`, `S3FileAdapter`
 * **Location**: Typically in `adapters/` directory, organized by technology or domain
 * **Purpose**: Handles the actual communication with external systems (REST APIs, databases, file systems, etc.)
+* **Testing**: Adapters should be tested independently to verify their contract compliance and data transformation logic
 
 Complete example:
 
@@ -445,14 +457,6 @@ factory: ({dispatch, app, partialState}) => {
     return createAlbumThunk.bind(null, dispatch, catalogAPI, partialState.data);
 }
 ```
-
-### Adapter Testing
-
-Adapters should be tested independently to verify their contract compliance and data transformation logic:
-
-* **Unit tests**: Test each adapter method independently
-* **Contract tests**: Verify the adapter correctly implements the Port interface
-* **Integration tests**: Test against real external systems when feasible
 
 ## Testing Strategy
 
@@ -513,4 +517,3 @@ The testing strategy follows these principles:
 - Authentication flow
 - One primary happy path per major feature
 - Critical business processes that must never break
-```
