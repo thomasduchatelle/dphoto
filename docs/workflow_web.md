@@ -4,6 +4,12 @@ VIBE WORKFLOW: WEB FEATURE
 Step 1 - Requirements collection
 ---------------------------------------
 
+```
+aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0 
+/read-only web/src/core/catalog/language
+/ask
+```
+
 We're starting a new feature, and you have to produce the Requirement Document. The document will be used for planning and must gather the following
 information:
 
