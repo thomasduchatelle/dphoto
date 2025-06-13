@@ -12,6 +12,18 @@ IA Concepts
 
 ### Prompts (wip)
 
+#### Workflow building
+
+... after getting the required document, if any correction have be requested, prompt to improve the prompt:
+
+```
+I'm pleased with this version of the requirements.
+
+You remember the first Prompt I wrote (I'll add it back below) ? What would you change to lead on this final version, rather than the first version ?
+
+Initial prompt:
+```
+
 #### Prompting the principles
 
 ```
