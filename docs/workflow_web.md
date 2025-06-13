@@ -33,15 +33,17 @@ my previous answers, and the process should continue until all relevant details 
 
 Here's the idea:
 
-Step 2 - Planning
+Step 2 - Design and Planning
 ---------------------------------------
 
 ```
 aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0 
 /read-only web/src/core/catalog/language
-/read-only docs/principles_web.md
-/read-only docs/feature_edit_album_claude_sonnet_4.md
+           docs/principles_web.md
+           docs/feature_edit_album_claude_sonnet_4.md
 /ask
+
+tail -n +853 .aider.chat.history.md > docs/feature_edit_album_plan_0.1-claude.md
 ```
 
 We've just finished the requirement gathering phase and we are now moving to the planning phase. The objective is to write a detailed and iterative list of
@@ -65,3 +67,7 @@ Then, write a prompt for each of the task. One prompt per task that:
 
 The principle handbook is:
 The requirement document is:
+
+### Notes:
+
+* break down by vertical slice first (edit date / edit names) - then by layer - then each component (like action) needs to have its own task

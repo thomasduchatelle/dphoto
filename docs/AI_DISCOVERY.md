@@ -12,6 +12,68 @@ IA Concepts
 
 ### Prompts (wip)
 
+#### Design and planning
+
+**Generic prompt in input - generic plan in output**. None of the output is usable. The analysis is far too much generic. The tasks are wide open and unprecise.
+Let's try to fix that:
+
+```
+/read-only web/src/pages/authenticated/albums/CreateAlbumDialog
+/ask
+
+Let's start refining the language + selectors + actions and replace the steps. And we're going to start by the Date Edit.
+
+Start by defining what properties the Dialog would require to function (I added the create dialog as an example).
+
+These properties are what the selector interface must returns. You can define now:
+* the interface of the properties (give it an explicit name)
+* the signature of the selector (give it an explicit name)
+* the property that is added to the main state (give it a name, and define its interface)
+
+From there, think about the thunks (any user interaction) to find how they will mutate with the state (re-read the scenarios). These are actions. List them, define what in
+put parameters they will requires.
+Write your notes about the thunks, we will use them on the next phase of our deisgn and planning.
+
+Once you have the list, create one task per actions. Each task will have the requirements written using BDD looking like:
+
+    GIVEN <description of the initial state>
+    WHEN <name of the action dispatched and description of its payload>
+    THEN <description of what will return the selector>
+
+Also add the interfaces and signatures you defined early on the first task: it needs to create them. Then reference in which file they are for nteh following actions (one
+per step).
+```
+
+The analysis was good but the tasks are not. They are "write this class", "write this function" type in a pretty weird BDD style.
+
+And the scope was far too wide with an integration far too late. I'll try to fix it with:
+
+```
+The analysis is good, but I'm not convienced with the task break down: they don't look like independently implementable and testable. They look like a "write this code" type of
+ tasks which lead to difficult integration and dead code.
+
+We're going to reduce the scope into a vertical slice: "As a user, I can open and close the Edit Date Dialog that displays the name of the album".
+(note to myself: this type of break down need to happen much earlier and need to be added in the prompt)
+
+Then we're going to work more collaboratively:
+
+1. **design**: define the following
+  * properties interface used by the dialog (`EditDatesDialogProperties` minus what's not required anymore due to reducing the scope)
+  * main state (same comment: remove what's not necessary anymore)
+  * list of thunks as you've done it, but define the data it requires. Differentiate the one that are "new" and the ones coming from the state
+  * list of actions as you've done it, but define the payload as well
+2. **collaboration** ask me a feedback, you might iterate several time before moving to the next step
+3. **task breakdown**, each task must be a unit of work:
+  * GOOD example (for the action): "GIVEN the dialog is closed WHEN I dispatch the `editDatesDialogOpened` with an AlbumId THEN `selectEditDatesDialog` returns an open dialog with the appropriate name"
+    it's good because it is describing the behaviour that the thunk that will use it expect, and the feature only exposes what is meant to be exposed: the action.
+  * GOOD example (for the UI component): "WHEN the dialog is open THEN it displays the details (name) of the album"
+    it's good because it describe one state the dialog can take and is described with user oriented languae
+  * BAD example: "GIVEN the system needs to support date editing functionality WHEN defining the state model for the edit dates dialog THEN the selector should return dialog properties for component rendering"
+    it's bad because it is not a behaviour expected by the application running, it's a behaviour the developer should have. But we're not programing the developer, we're progra
+ming the application.
+4. after writing some (2-3), ask me feedback and we can move to the next until it's complete
+```
+
 #### Workflow building
 
 ... after getting the required document, if any correction have be requested, prompt to improve the prompt:
