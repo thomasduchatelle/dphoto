@@ -33,3 +33,35 @@ my previous answers, and the process should continue until all relevant details 
 
 Here's the idea:
 
+Step 2 - Planning
+---------------------------------------
+
+```
+aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0 
+/read-only web/src/core/catalog/language
+/read-only docs/principles_web.md
+/read-only docs/feature_edit_album_claude_sonnet_4.md
+/ask
+```
+
+We've just finished the requirement gathering phase and we are now moving to the planning phase. The objective is to write a detailed and iterative list of
+prompts that are actionable and testable individually by an LLM.
+
+Start by breaking down the data flow and requirements, using the Principle Handbook, into the different layers described in the handbook. Make sure each layer
+is **never going beyond its responsibilities**, and **never leak its responsibilities** to other layers. **The principles are absolute and must be respected.**
+
+Once you have the flow broken down by layer, for each layer, break it down further into a list of tasks to develop. Each task must be small enough to fit into
+the smallest LLM context, but it must progress the project forward by being a **unit of work implementable and testable autonomously**. Order the tasks to start
+with structural ones on which the others will be built from.
+
+Then, write a prompt for each of the task. One prompt per task that:
+
+1. describes in details the requirements expected from the task using BDD style `GIVEN ... WHEN ... THEN ..`.
+2. describes the names of the functions, interfaces, classes that will be implemented and exported as part of the task, and the filenames where they should be
+   implemented.
+3. gives the references and description of the previous tasks **relevant** to implement this tasks. Only the references that are expected to be used.
+4. quote the principles from the handbook that must be followed to implement the task. Only the part relevant for the layer of the task.
+5. insist on the TDD approach: no code should be written if no test make it necessary.
+
+The principle handbook is:
+The requirement document is:
