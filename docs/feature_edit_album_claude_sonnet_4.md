@@ -2,6 +2,10 @@
 
 ## Requirements
 
+```
+Idea: A user should be able to edit an existing Album. He can either edit the name (and the folder name), or the dates (start and end date).
+```
+
 ### Feature Summary
 
 Album owners can edit their albums through a dropdown menu offering two options: editing the album name/folderName or editing the start/end dates. Each option
