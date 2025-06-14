@@ -25,36 +25,28 @@ The file structure is as follows:
   * `thunks.ts` - where the thunks are registered
   * `adapters/api/` - where the REST API adapter are implemented
 
-## "Action" and "Thunk" Principles
+## "Action" and "Thunk" Design Pattern
 
-Data cycle in the UI is as follows:
+In the UI, the data flow through:
 
-1. Every data rendered by the view is coming from the _State_
-    1. a _Selector_ should be used to access a specific subset of the _State_ properties for composite cases (dialogs or modals)
-2. User activity, including browser loading and URL change, is triggering the appropriate _Thunk_ (through `onClick` and `useEffect`)
-3. The _Thunk_ executes the appropriated request(s) on the server using an _Adapter_, and _dispatches_ _Action(s)_ containing the new data
-4. Dispatched _Actions_ are merged into the _State_ by the _Reducer_
-5. A change on the _State_ triggers a refresh on the UI (and back to step 1)
+1. **State** - domain model, and ubiquitous language, containing the data used to render the views
 
-### State and Selectors
+2. **Selector** (optional) - function returning a purpose oriented should be used to access a specific subset of the _State_ properties for composite cases (
+   dialogs or modals)
 
-#### When / Where to create a state ?
+3. **View** - UI components in TSX (React) rendering the data from the selectors, or from the State. Callbacks (`onClick` and `useEffect`) triggers _Thunks_.
 
-1. Properties displayed in several place should be present in a **single state**, never replicated they are passed down as properties / hooks
-2. Properties that **change together must be within the same state**
-3. States should be **as small as possible** _without infringing the previous rule_
-4. States should be as low as possible in the document tree _without infringing previous rules_
+4. **Thunk** - function triggered by a user activity (including browser loading and URL change): often the value of `onClick` and `useEffect`.
+   It executes the appropriate requests (through a port) and _dispatches Actions_.
+  * **Port** - an interface declared next to the Thunk to abstract specific technologies (REST API, Local store, ...)
+  * **Adapter** - a class implementation of the _Port_ for a specific technology (example: Axios)
 
-#### State is a read-only domain model
+5. **Action** - interface with a `type: "<action type>"` and a payload ; **dispatching an action is the only way to mutate the _State_**
+   The _Reducer_ is a function taking the current state and the action, and returning the mutated state.
 
-The state model is common across the slice of the application, it should not be based on the REST model nor a specific UI component, it should be designed to
-represent the best the business.
+A change on the _State_ triggers a refresh on the UI (and back to step 1).
 
-The state model is **never updated directly**. Any change is done by dispatching an _Action_ which is then reduce by the _Reducer_ function.
-
-Selector function can the provided as part of the model to extract a set of properties used by a component like a Dialog.
-
-### Action
+### Actions
 
 The _Action_ naming convention is the **Past Tense Event Naming** and is represented in **camelCase** (example: `albumCreated`)
 
@@ -214,6 +206,12 @@ describe("action:albumDeleted", () => {
     });
 });
 ```
+
+### Selectors
+
+* Selectors are returning a called `<name of the selector>Selection` (example,
+  `function sharingDialogSelector(state: CatalogViewerState): SharingDialogSelection`)
+* Data in the main state should is **duplicated only to be edited** (in a form) ; otherwise, selectors get them where they are
 
 ### Thunks
 

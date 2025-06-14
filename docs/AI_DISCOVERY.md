@@ -12,6 +12,67 @@ IA Concepts
 
 ### Prompts (wip)
 
+#### Design and planning v2
+
+    ## Structural Improvements
+
+    **1. Add a Quick Context Section at the top:**
+    ```markdown
+    **Context**:
+    - Architecture: [brief description of layers - actions/thunks/selectors/components]
+    - Codebase conventions: [key naming patterns, folder structure]
+    - Story scope: [what's in/out of scope]
+    ```
+    
+    **2. Streamline the Design Phase:**
+    Instead of asking for "layers impacted" separately, use a template:
+    ```markdown
+    1. **Design Phase** - For the story "[story text]", identify:
+       * State changes needed (interfaces/types to add/modify)
+       * Actions required (name + payload schema)
+       * Thunks required (name + signature)
+       * Selectors required (name + return type)
+       * UI components required (name + purpose)
+       * Data flow: [brief description]
+    ```
+    
+    **3. Add Design Constraints upfront:**
+    ```markdown
+    **Design Constraints**:
+    - Dialog state must include `open: boolean` property
+    - Use Dayjs for date types
+    - Read-only data should come from selectors, not state duplication
+    - [other architectural rules]
+    ```
+    
+    ## Content Improvements
+    
+    **4. Provide BDD template immediately:**
+    ```markdown
+    **Task Format Template**:
+    GIVEN [initial state description]
+    WHEN [action/thunk name with payload]
+    THEN [selector return value or UI behavior]
+    ```
+    
+    **5. Add explicit scope boundaries:**
+    ```markdown
+    **Story Scope**: Opening and displaying dialog only
+    **Out of Scope**: Closing dialog, editing functionality, validation
+    ```
+    
+    **6. Pre-define prompt structure:**
+    ```markdown
+    **Final Prompt Structure** (for reference):
+    - Introduction: Component type and name
+    - Requirements: BDD statements
+    - Implementation: Folder, TDD, files to edit
+    - Interface: Signatures and types
+    - References: Related tasks/files
+    ```
+    
+    This would reduce the back-and-forth iterations and get to the task breakdown faster while maintaining quality.
+
 #### Design and planning
 
 **Generic prompt in input - generic plan in output**. None of the output is usable. The analysis is far too much generic. The tasks are wide open and unprecise.

@@ -40,6 +40,8 @@ TBD
 
 Delivery: list of stories "As a user, I can open the edit date dialog with for a given AlbumId and I can see on the dialog its name and its dates"
 
+In scope and Out of Scope must be detailed - LLM has tendency to go too far.
+
 Step 3 - Design and Planning
 ---------------------------------------
 
@@ -57,9 +59,13 @@ To develop a User Story, we're going to write a detailed and iterative list of p
 
 **Process**:
 
-1. **Design Phase** - Think about the flow process and, using the principles from the handbook, identify:
-   * the layers that are impacted (actions, thunks, dialog, ...)
-   * the data flow: what each layer will require from the underlying layers
+1. **Design Phase** - use the Design Pattern concepts from the principle handbook to:
+    * describe the data flow of the story: what each concept will require from the underlying layers
+    * give the details of each concept required:
+        * interfaces: name, with their schema and properties to add/modify
+        * functions: name and signature
+        * events / actions: name and payload schema
+        * UI component: name and purpose
 
 2. **Collaboration** - Present the design and ask for feedback before proceeding ; we will iterate on the design
    * exhaustive list of each component to create and its layer
@@ -69,17 +75,22 @@ To develop a User Story, we're going to write a detailed and iterative list of p
    * if the component is a UI component: explain what it will contain
 
 3. **Task Breakdown** - Create independently implementable tasks where each task describes **application behavior**, not developer tasks:
-   - ✅ GOOD: "GIVEN dialog is closed WHEN I dispatch editDatesDialogOpened with AlbumId THEN selectEditDatesDialog returns open dialog with album name"
-   - ❌ BAD: "GIVEN system needs dialog support WHEN defining state model THEN selector should return properties"
+    * GOOD: "GIVEN dialog is closed WHEN I dispatch editDatesDialogOpened with AlbumId THEN selectEditDatesDialog returns open dialog with album name"
+    * BAD: "GIVEN system needs dialog support WHEN defining state model THEN selector should return properties"
 
    Each task must be:
-   - A unit of work (1 action OR 1 thunk OR 1 component) ; selectors and state change are part of the action task that requires it.
-   - Independently testable
-   - Described in BDD format focusing on runtime behavior
+    * A unit of work (1 action OR 1 thunk OR 1 component) ; selectors and state change are part of the action task that requires it.
+    * Independently testable
+    * Described in BDD format focusing on runtime behavior and writen in a code block. Example for an action:
+      ```
+      GIVEN <description of the initial state>
+      WHEN <name of the action dispatched and description of its payload>
+      THEN <description of what will return the selector>
+      ```
 
 4. **Collaboration** - present the tasks and ask for feedback
 
-5. **Prompt Writing** - Write down a prompt that will be read by the LLM agent to write a clean a well tested code. The prompt must contains:
+5. **Prompt Structure**:
 
    * _Introduction_: "you are implementing ..." ; be specific of the type (or layer) and name of the component(s) the agent have to implement
    * _Requirements_: the BDD-style requirements defined and reviewed on the previous step
@@ -96,5 +107,13 @@ To develop a User Story, we're going to write a detailed and iterative list of p
      used.
 
 The principle handbook is:
+
 The requirement document is:
+
 The story to work on is:
+
+#### Summary
+
+```
+/code The break down is good. Write the prompts in `docs/prompts_edit_date/task_<number>_<two words summary>.md` in markdown, one prompt per file.
+```
