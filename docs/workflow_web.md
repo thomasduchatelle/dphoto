@@ -33,7 +33,14 @@ my previous answers, and the process should continue until all relevant details 
 
 Here's the idea:
 
-Step 2 - Design and Planning
+Step 2 - Story Mapping
+---------------------------------------
+
+TBD
+
+Delivery: list of stories "As a user, I can open the edit date dialog with for a given AlbumId and I can see on the dialog its name and its dates"
+
+Step 3 - Design and Planning
 ---------------------------------------
 
 ```
@@ -46,28 +53,48 @@ aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0
 tail -n +853 .aider.chat.history.md > docs/feature_edit_album_plan_0.1-claude.md
 ```
 
-We've just finished the requirement gathering phase and we are now moving to the planning phase. The objective is to write a detailed and iterative list of
-prompts that are actionable and testable individually by an LLM.
+To develop a User Story, we're going to write a detailed and iterative list of prompts that are actionable and testable individually by an LLM.
 
-Start by breaking down the data flow and requirements, using the Principle Handbook, into the different layers described in the handbook. Make sure each layer
-is **never going beyond its responsibilities**, and **never leak its responsibilities** to other layers. **The principles are absolute and must be respected.**
+**Process**:
 
-Once you have the flow broken down by layer, for each layer, break it down further into a list of tasks to develop. Each task must be small enough to fit into
-the smallest LLM context, but it must progress the project forward by being a **unit of work implementable and testable autonomously**. Order the tasks to start
-with structural ones on which the others will be built from.
+1. **Design Phase** - Think about the flow process and, using the principles from the handbook, identify:
+   * the layers that are impacted (actions, thunks, dialog, ...)
+   * the data flow: what each layer will require from the underlying layers
 
-Then, write a prompt for each of the task. One prompt per task that:
+2. **Collaboration** - Present the design and ask for feedback before proceeding ; we will iterate on the design
+   * exhaustive list of each component to create and its layer
+   * if the component is a state or a domain model: give a code snippet of the changes
+   * if the component is an event or an action: give the schema of its payload
+   * if the component is a function: give its signature
+   * if the component is a UI component: explain what it will contain
 
-1. describes in details the requirements expected from the task using BDD style `GIVEN ... WHEN ... THEN ..`.
-2. describes the names of the functions, interfaces, classes that will be implemented and exported as part of the task, and the filenames where they should be
-   implemented.
-3. gives the references and description of the previous tasks **relevant** to implement this tasks. Only the references that are expected to be used.
-4. quote the principles from the handbook that must be followed to implement the task. Only the part relevant for the layer of the task.
-5. insist on the TDD approach: no code should be written if no test make it necessary.
+3. **Task Breakdown** - Create independently implementable tasks where each task describes **application behavior**, not developer tasks:
+   - ✅ GOOD: "GIVEN dialog is closed WHEN I dispatch editDatesDialogOpened with AlbumId THEN selectEditDatesDialog returns open dialog with album name"
+   - ❌ BAD: "GIVEN system needs dialog support WHEN defining state model THEN selector should return properties"
+
+   Each task must be:
+   - A unit of work (1 action OR 1 thunk OR 1 component) ; selectors and state change are part of the action task that requires it.
+   - Independently testable
+   - Described in BDD format focusing on runtime behavior
+
+4. **Collaboration** - present the tasks and ask for feedback
+
+5. **Prompt Writing** - Write down a prompt that will be read by the LLM agent to write a clean a well tested code. The prompt must contains:
+
+   * _Introduction_: "you are implementing ..." ; be specific of the type (or layer) and name of the component(s) the agent have to implement
+   * _Requirements_: the BDD-style requirements defined and reviewed on the previous step
+   * _Implementation Details_:
+      * in what folder the new components must be created (feature related), insist on the naming convention to be respected
+      * add the TDD principle: "Implement the tests first, then implement the code **the simplest and most readable possible**: no behaviour should be
+        implemented if it is not required by
+        one test"
+      * list the general files that must be edited, and for each what's expected ("general" because not specific for the feature: global state, actions/thunks
+        register, ...)
+      * any recommendation raised during the design
+   * _Interface Specification_: data structure and signature that have been decided during design
+   * _References_: gives the references and description of the previous tasks **relevant** to implement this tasks. Only the references that are expected to be
+     used.
 
 The principle handbook is:
 The requirement document is:
-
-### Notes:
-
-* break down by vertical slice first (edit date / edit names) - then by layer - then each component (like action) needs to have its own task
+The story to work on is:
