@@ -80,12 +80,12 @@ Complete examples:
 
 **Case 1: No additional properties**
 ```typescript
-// catalog/album-delete/album-loadingStartedAction.ts
-export interface LoadingStartedAction {
+// catalog/album-delete/action-loadingStarted.ts
+export interface LoadingStarted {
     type: "LoadingStarted";
 }
 
-export function loadingStartedAction(): LoadingStartedAction {
+export function loadingStarted(): LoadingStarted {
     return {
         type: "LoadingStarted",
     };
@@ -94,13 +94,13 @@ export function loadingStartedAction(): LoadingStartedAction {
 
 **Case 2: Single additional property**
 ```typescript
-// catalog/album-delete/album-errorOccurredAction.ts
-export interface ErrorOccurredAction {
+// catalog/album-delete/album-errorOccurred.ts
+export interface ErrorOccurred {
     type: "ErrorOccurred";
     message: string;
 }
 
-export function errorOccurredAction(message: string): ErrorOccurredAction {
+export function errorOccurred(message: string): ErrorOccurred {
     return {
         message,
         type: "ErrorOccurred",
@@ -117,7 +117,7 @@ export interface AlbumDeleted {
   redirectTo?: AlbumId;
 }
 
-export function albumDeleted(props: Omit<AlbumDeletedAction, "type">): AlbumDeletedAction {
+export function albumDeleted(props: Omit<AlbumDeletedAction, "type">): AlbumDeleted {
     return {
         ...props,
         type: "AlbumDeleted",
