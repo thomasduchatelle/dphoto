@@ -7,15 +7,15 @@ You are implementing the **action** `editDatesDialogOpened` and its associated *
 
 **GIVEN** the catalog state contains albums in `allAlbums`
 **WHEN** I dispatch `editDatesDialogOpened` with an AlbumId that exists in the state
-**THEN** the selector `selectEditDatesDialog` returns an `EditDatesDialogFrag` with `open: true`, the album name, and the dates converted to Dayjs format
+**THEN** the selector `editDatesDialogSelector` returns an `EditDatesDialogSelection` with `open: true`, the album name, and the dates converted to Dayjs format
 
 **GIVEN** the catalog state contains albums in `allAlbums`
 **WHEN** I dispatch `editDatesDialogOpened` with an AlbumId that does not exist in the state
-**THEN** the selector `selectEditDatesDialog` returns an `EditDatesDialogFrag` with `open: false`
+**THEN** the selector `editDatesDialogSelector` returns an `EditDatesDialogSelection` with `open: false`
 
 **GIVEN** a catalog state with no dialog open
 **WHEN** no action is dispatched
-**THEN** the selector `selectEditDatesDialog` returns the `CLOSED_EDIT_DATES_DIALOG` constant
+**THEN** the selector `editDatesDialogSelector` returns the `closedEditDatesDialogProperties` constant
 
 ## Implementation Details
 
@@ -31,7 +31,7 @@ You are implementing the **action** `editDatesDialogOpened` and its associated *
 **Recommendations**:
 - Use `dayjs()` to convert Date objects to Dayjs format
 - Handle the case where album is not found by returning a closed dialog state
-- The selector should always return a valid `EditDatesDialogFrag`, never undefined
+- The selector should always return a valid `EditDatesDialogSelection`, never undefined
 
 ## Interface Specification
 
@@ -43,14 +43,14 @@ export interface EditDatesDialogState {
     endDate: Dayjs
 }
 
-export interface EditDatesDialogFrag {
+export interface EditDatesDialogSelection {
     open: boolean
     albumName: string
     startDate: Dayjs
     endDate: Dayjs
 }
 
-export const CLOSED_EDIT_DATES_DIALOG: EditDatesDialogFrag = {
+export const closedEditDatesDialogProperties: EditDatesDialogSelection = {
     open: false,
     albumName: "",
     startDate: dayjs(),
@@ -73,7 +73,7 @@ export function reduceEditDatesDialogOpened(
 ): CatalogViewerState
 
 // Selector signature
-export function selectEditDatesDialog(state: CatalogViewerState): EditDatesDialogFrag
+export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDialogSelection
 ```
 
 ## References

@@ -5,11 +5,11 @@ You are implementing the **React component** `EditDatesDialog` for displaying th
 
 ## Requirements
 
-**GIVEN** an `EditDatesDialogFrag` with `open: false`
+**GIVEN** an `EditDatesDialogSelection` with `open: false`
 **WHEN** the `EditDatesDialog` component is rendered
 **THEN** no dialog is displayed
 
-**GIVEN** an `EditDatesDialogFrag` with `open: true` and album data
+**GIVEN** an `EditDatesDialogSelection` with `open: true` and album data
 **WHEN** the `EditDatesDialog` component is rendered
 **THEN** a modal dialog is displayed showing the album name (read-only) and the current start and end dates in a user-friendly format
 
@@ -27,14 +27,14 @@ You are implementing the **React component** `EditDatesDialog` for displaying th
 - Display dates in a user-friendly format (consider using dayjs formatting)
 - Album name should be read-only text display
 - Component should not handle any actions (this story is display-only)
-- Use the selector `selectEditDatesDialog` to get dialog data
+- Use the selector `editDatesDialogSelector` to get dialog data
 
 ## Interface Specification
 
 ```typescript
 // Component props (derived from selector)
 interface EditDatesDialogProps {
-    dialogFrag: EditDatesDialogFrag
+    dialogSelection: EditDatesDialogSelection
 }
 
 // Component signature
@@ -43,7 +43,7 @@ export function EditDatesDialog(props: EditDatesDialogProps): JSX.Element
 
 ## References
 
-- `web/src/core/catalog/edit-dates/action-editDatesDialogOpened.ts` - For the selector `selectEditDatesDialog` (from Task 1)
-- `web/src/core/catalog/language/catalog-state.ts` - For the `EditDatesDialogFrag` interface
+- `web/src/core/catalog/edit-dates/action-editDatesDialogOpened.ts` - For the selector `editDatesDialogSelector` (from Task 1)
+- `web/src/core/catalog/language/catalog-state.ts` - For the `EditDatesDialogSelection` interface
 - Existing dialog components in the codebase for styling and modal patterns
 - `docs/principles_web.md` - For React component testing guidelines
