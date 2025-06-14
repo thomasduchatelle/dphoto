@@ -3,19 +3,21 @@
 ## Introduction
 You are implementing the **action** `editDatesDialogOpened` and its associated **selector** `selectEditDatesDialog` for the edit dates dialog feature.
 
-## Requirements
+## Requirements (BDD Style)
 
-**GIVEN** the catalog state contains albums in `allAlbums`
-**WHEN** I dispatch `editDatesDialogOpened` with an AlbumId that exists in the state
-**THEN** the selector `editDatesDialogSelector` returns an `EditDatesDialogSelection` with `open: true`, the album name, and the dates converted to Dayjs format
+```
+GIVEN the catalog state contains albums in allAlbums
+WHEN I dispatch editDatesDialogOpened with an AlbumId that exists in the state
+THEN the selector editDatesDialogSelector returns an EditDatesDialogSelection with open: true, the album name, and the dates converted to Dayjs format
 
-**GIVEN** the catalog state contains albums in `allAlbums`
-**WHEN** I dispatch `editDatesDialogOpened` with an AlbumId that does not exist in the state
-**THEN** the selector `editDatesDialogSelector` returns an `EditDatesDialogSelection` with `open: false`
+GIVEN the catalog state contains albums in allAlbums
+WHEN I dispatch editDatesDialogOpened with an AlbumId that does not exist in the state
+THEN the selector editDatesDialogSelector returns an EditDatesDialogSelection with open: false
 
-**GIVEN** a catalog state with no dialog open
-**WHEN** no action is dispatched
-**THEN** the selector `editDatesDialogSelector` returns the `closedEditDatesDialogProperties` constant
+GIVEN a catalog state with no dialog open
+WHEN no action is dispatched
+THEN the selector editDatesDialogSelector returns the closedEditDatesDialogProperties constant
+```
 
 ## Implementation Details
 

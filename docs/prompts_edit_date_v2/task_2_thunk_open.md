@@ -3,11 +3,13 @@
 ## Introduction
 You are implementing the **thunk** `openEditDateDialog` for opening the edit dates dialog.
 
-## Requirements
+## Requirements (BDD Style)
 
-**GIVEN** a catalog state with albums loaded
-**WHEN** I call `openEditDateDialog` thunk with an AlbumId
-**THEN** it dispatches `editDatesDialogOpened` action with that AlbumId
+```
+GIVEN a catalog state with albums loaded
+WHEN I call openEditDateDialog thunk with an AlbumId
+THEN it dispatches editDatesDialogOpened action with that AlbumId
+```
 
 ## Implementation Details
 

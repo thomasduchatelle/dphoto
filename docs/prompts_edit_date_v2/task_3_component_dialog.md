@@ -3,15 +3,17 @@
 ## Introduction
 You are implementing the **React component** `EditDatesDialog` for displaying the edit dates dialog.
 
-## Requirements
+## Requirements (BDD Style)
 
-**GIVEN** an `EditDatesDialogSelection` with `open: false`
-**WHEN** the `EditDatesDialog` component is rendered
-**THEN** no dialog is displayed
+```
+GIVEN an EditDatesDialogSelection with open: false
+WHEN the EditDatesDialog component is rendered
+THEN no dialog is displayed
 
-**GIVEN** an `EditDatesDialogSelection` with `open: true` and album data
-**WHEN** the `EditDatesDialog` component is rendered
-**THEN** a modal dialog is displayed showing the album name (read-only) and the current start and end dates in a user-friendly format
+GIVEN an EditDatesDialogSelection with open: true and album data
+WHEN the EditDatesDialog component is rendered
+THEN a modal dialog is displayed showing the album name (read-only) and the current start and end dates in a user-friendly format
+```
 
 ## Implementation Details
 
