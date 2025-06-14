@@ -74,6 +74,45 @@ ming the application.
 4. after writing some (2-3), ask me feedback and we can move to the next until it's complete
 ```
 
+Claude suggested to write the prompts as defined much earlier from the design then BDD. I asked to write them into files one at a time. Collaboration is
+definitively a WIN to bring feedback earlier. The prompts looks OK - I'll try to get them implemented ...
+
+Proposed new prompt:
+
+```
+We need to implement a new feature using vertical slices and collaborative design. Let's start with a minimal viable slice.
+
+**Feature Scope**: "As a user, I can open and close the Edit Date Dialog that displays the name of the album"
+
+**Process**:
+1. **Design Phase** - Define the minimal state model:
+   - Dialog properties interface (what the React component needs)
+   - Main state structure (what gets stored)
+   - User interactions → actions mapping (with payloads)
+   - Thunks analysis (new data vs state data requirements)
+
+2. **Collaboration** - Present the design and ask for feedback before proceeding
+
+3. **Task Breakdown** - Create independently implementable tasks where each task describes **application behavior**, not developer tasks:
+   - ✅ GOOD: "GIVEN dialog is closed WHEN I dispatch editDatesDialogOpened with AlbumId THEN selectEditDatesDialog returns open dialog with album name"
+   - ❌ BAD: "GIVEN system needs dialog support WHEN defining state model THEN selector should return properties"
+
+   Each task must be:
+   - A unit of work (1 action OR 1 thunk OR 1 component)
+   - Independently testable
+   - Described in BDD format focusing on runtime behavior
+
+**Constraints**:
+- Follow the architectural principles from the handbook
+- Use TDD approach
+- Actions/thunks must be registered when developed
+- Tasks should build incrementally (state → actions → thunks → components)
+
+**Deliverable**: Markdown files with detailed prompts for each task, including BDD requirements, implementation details, references, and TDD guidance.
+
+Start with the design phase for the minimal slice.
+```
+
 #### Workflow building
 
 ... after getting the required document, if any correction have be requested, prompt to improve the prompt:
