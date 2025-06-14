@@ -23,7 +23,7 @@ THEN the selector editDatesDialogSelector returns the closedEditDatesDialogPrope
 
 **TDD Principle**: Implement the tests first, then implement the code **the simplest and most readable possible**: no behaviour should be implemented if it is not required by one test.
 
-**Folder Structure**: Create the action in `web/src/core/catalog/edit-dates/` following the naming convention `action-editDatesDialogOpened.ts`.
+**Folder Structure**: Create the action in `web/src/core/catalog/album-edit-dates/` following the naming convention `action-editDatesDialogOpened.ts`.
 
 **Files to Edit**:
 - `web/src/core/catalog/language/catalog-state.ts` - Add the new interfaces and constant

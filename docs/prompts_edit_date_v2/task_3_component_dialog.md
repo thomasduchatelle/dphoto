@@ -45,7 +45,7 @@ export function EditDatesDialog(props: EditDatesDialogProps): JSX.Element
 
 ## References
 
-- `web/src/core/catalog/edit-dates/action-editDatesDialogOpened.ts` - For the selector `editDatesDialogSelector` (from Task 1)
+- `web/src/core/catalog/album-edit-dates/action-editDatesDialogOpened.ts` - For the selector `editDatesDialogSelector` (from Task 1)
 - `web/src/core/catalog/language/catalog-state.ts` - For the `EditDatesDialogSelection` interface
 - Existing dialog components in the codebase for styling and modal patterns
 - `docs/principles_web.md` - For React component testing guidelines

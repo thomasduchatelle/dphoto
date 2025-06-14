@@ -115,5 +115,19 @@ The story to work on is:
 #### Summary
 
 ```
-/code The break down is good. Write the prompts in `docs/prompts_edit_date/task_<number>_<two words summary>.md` in markdown, one prompt per file.
+/code The break down is good. Write the prompts in `docs/prompts_edit_dates/task_<number>_<two words summary>.md` in markdown, one prompt per file.
 ```
+
+#### Review (optional)
+
+```
+/reset
+/add `docs/prompts_edit_dates`
+/ask
+```
+
+Review the documents in `docs/prompts_edit_dates`. They are prompts to implement a feature and will be consumed by an LLM agent.
+
+Find and list any inconsistency, and anything that could be misleading for the agent.
+
+Then propose a solution for each.
