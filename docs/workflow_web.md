@@ -131,3 +131,13 @@ Review the documents in `docs/prompts_edit_dates`. They are prompts to implement
 Find and list any inconsistency, and anything that could be misleading for the agent.
 
 Then propose a solution for each.
+
+Step 4 - Implementation
+---------------------------------------
+
+```
+aider --model openrouter/anthropic/claude-sonnet-4
+/read-only docs/principles_web.md
+```
+
+> paste the prompt from the file.
