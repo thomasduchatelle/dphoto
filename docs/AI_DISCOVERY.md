@@ -113,6 +113,12 @@ We need to implement a new feature using vertical slices and collaborative desig
 Start with the design phase for the minimal slice.
 ```
 
+##### Task implementation
+
+Try 1: Claude + task spec. Disastrous. No test. No action. No reducer. Context is corrupted and irrecuperable.
+
+Try 2: Claude + task spec + (readonly) `docs/principles_web.md`. Better. Got test. Still not the right folders. Still no action or reducer. 
+
 #### Workflow building
 
 ... after getting the required document, if any correction have be requested, prompt to improve the prompt:
