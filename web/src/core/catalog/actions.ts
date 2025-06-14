@@ -1,14 +1,14 @@
 import {
     AlbumAccessGranted,
     albumAccessGrantedReducerRegistration,
+    AlbumAccessRevoked,
+    albumAccessRevokedReducerRegistration,
     SharingModalClosed,
     sharingModalClosedReducerRegistration,
     SharingModalErrorOccurred,
     sharingModalErrorOccurredReducerRegistration,
     SharingModalOpened,
     sharingModalOpenedReducerRegistration,
-    AlbumAccessRevoked,
-    albumAccessRevokedReducerRegistration,
 } from "./sharing";
 import {
     AlbumsAndMediasLoaded,
@@ -39,6 +39,7 @@ import {
     deleteAlbumStartedReducerRegistration
 } from "./album-delete";
 import {CatalogViewerState} from "./language";
+import {EditDatesDialogOpened, editDatesDialogOpenedReducerRegistration} from "./album-edit-dates";
 
 export * from "./album-delete/selector-deleteDialogSelector";
 export * from "./sharing/selector-sharingDialogSelector";
@@ -62,6 +63,7 @@ export type {
     AlbumDeleteFailed,
     DeleteAlbumDialogClosed,
     DeleteAlbumStarted,
+    EditDatesDialogOpened,
 };
 
 export type CatalogViewerAction =
@@ -82,6 +84,7 @@ export type CatalogViewerAction =
     | AlbumDeleteFailed
     | DeleteAlbumDialogClosed
     | DeleteAlbumStarted
+    | EditDatesDialogOpened
 
 const reducerRegistrations = [
     albumAccessGrantedReducerRegistration,
@@ -101,6 +104,7 @@ const reducerRegistrations = [
     albumDeleteFailedReducerRegistration,
     deleteAlbumDialogClosedReducerRegistration,
     deleteAlbumStartedReducerRegistration,
+    editDatesDialogOpenedReducerRegistration,
 ];
 
 function buildHandlers() {

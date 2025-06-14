@@ -1,11 +1,11 @@
 import {AlbumId, CatalogViewerState} from "../language";
 
-export interface EditDatesDialogOpenedAction {
+export interface EditDatesDialogOpened {
     type: "EditDatesDialogOpened";
     albumId: AlbumId;
 }
 
-export function editDatesDialogOpenedAction(albumId: AlbumId): EditDatesDialogOpenedAction {
+export function editDatesDialogOpened(albumId: AlbumId): EditDatesDialogOpened {
     return {
         albumId,
         type: "EditDatesDialogOpened",
@@ -14,7 +14,7 @@ export function editDatesDialogOpenedAction(albumId: AlbumId): EditDatesDialogOp
 
 export function reduceEditDatesDialogOpened(
     current: CatalogViewerState,
-    {albumId}: EditDatesDialogOpenedAction,
+    {albumId}: EditDatesDialogOpened,
 ): CatalogViewerState {
     return {
         ...current,
@@ -27,6 +27,6 @@ export function reduceEditDatesDialogOpened(
 export function editDatesDialogOpenedReducerRegistration(handlers: any) {
     handlers["EditDatesDialogOpened"] = reduceEditDatesDialogOpened as (
         state: CatalogViewerState,
-        action: EditDatesDialogOpenedAction
+        action: EditDatesDialogOpened
     ) => CatalogViewerState;
 }

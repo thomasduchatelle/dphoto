@@ -1,6 +1,6 @@
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {CatalogViewerState} from "../language";
-import {editDatesDialogOpenedAction, reduceEditDatesDialogOpened} from "./action-editDatesDialogOpened";
+import {editDatesDialogOpened, reduceEditDatesDialogOpened} from "./action-editDatesDialogOpened";
 import {selectEditDatesDialog} from "./selector-editDatesDialog";
 
 describe("action:editDatesDialogOpened", () => {
@@ -16,7 +16,7 @@ describe("action:editDatesDialogOpened", () => {
     it("returns isOpen: true and the correct album name when action is dispatched with ID of one of the albums", () => {
         const state = reduceEditDatesDialogOpened(
             loadedStateWithTwoAlbums,
-            editDatesDialogOpenedAction(twoAlbums[0].albumId)
+            editDatesDialogOpened(twoAlbums[0].albumId)
         );
 
         const got = selectEditDatesDialog(state);
@@ -32,7 +32,7 @@ describe("action:editDatesDialogOpened", () => {
         
         const state = reduceEditDatesDialogOpened(
             loadedStateWithTwoAlbums,
-            editDatesDialogOpenedAction(nonExistentAlbumId)
+            editDatesDialogOpened(nonExistentAlbumId)
         );
 
         const got = selectEditDatesDialog(state);
@@ -53,7 +53,7 @@ describe("action:editDatesDialogOpened", () => {
 
         const state = reduceEditDatesDialogOpened(
             stateWithDialogOpen,
-            editDatesDialogOpenedAction(twoAlbums[1].albumId)
+            editDatesDialogOpened(twoAlbums[1].albumId)
         );
 
         const got = selectEditDatesDialog(state);
