@@ -85,4 +85,3 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
 
 - `web/src/core/catalog/language/catalog-state.ts` - For existing state interfaces and patterns
 - `web/src/core/catalog/language/utils-albumIdEquals.ts` - For album comparison logic
-- `docs/principles_web.md` - For action implementation patterns and testing guidelines

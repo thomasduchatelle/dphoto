@@ -14,7 +14,7 @@ IA Concepts
 
 #### A planning that only an expensive model can perform
 
-With `docs/principles_web.md`:
+##### With `docs/principles_web.md`:
 
 ```
 Summary:
@@ -43,6 +43,26 @@ What's the most efficient way to get from **IDEA** -> **WORKING and ACCEPTED COD
     * Using expensive model then handoff to cheap model for coding ? -> how can the handoff happen ?
     * Using the free/cheap to write the task break down then handover to the expensive model ?
 * How much can an expensive model take to the finish line (working and accepted code) ? (how much break down is required)
+
+##### Without the `webprinciples_web.md`:
+
+False!
+
+```
+------------------------------------------------------------------------------------------
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.0900       1:02     5/5 - Same result (except a small messed-up where the state definition ended up a in different file) 
+openrouter/google/gemini-2.5-pro-preview                     $    0.0800       1:51     5/5
+openrouter/x-ai/grok-3-beta                                  $    0.0700       0:31
+gpt-4.1                                                      $    0.0700       1:43
+o3                                                           $    0.0500       0:49
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0037       0:22
+openrouter/deepseek/deepseek-chat-v3-0324:free                      free       1:18
+openrouter/deepseek/deepseek-r1-0528:free                           free       7:53
+------------------------------------------------------------------------------------------
+Total                                                        $    0.3637      15:32
+```
 
 #### Design and planning v2
 
