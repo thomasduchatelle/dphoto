@@ -12,6 +12,21 @@ IA Concepts
 
 ### Prompts (wip)
 
+#### A planning that only an expensive model can perform
+
+```
+Summary:
+----------------------------------------------------------------------
+Model                                    Cost         Time
+----------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4     $   0.08000       0:52
+openrouter/deepseek/deepseek-r1-0528:free $   0.00000       2:30
+openrouter/deepseek/deepseek-chat-v3-0324:free $   0.00000       1:14
+openrouter/meta-llama/llama-4-maverick:free $   0.00000       0:15
+----------------------------------------------------------------------
+Total                                    $   0.08000       4:53
+```
+
 #### Design and planning v2
 
     ## Structural Improvements
