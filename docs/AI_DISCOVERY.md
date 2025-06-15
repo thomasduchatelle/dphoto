@@ -46,23 +46,31 @@ What's the most efficient way to get from **IDEA** -> **WORKING and ACCEPTED COD
 
 ##### Without the `webprinciples_web.md`:
 
-False!
-
 ```
 ------------------------------------------------------------------------------------------
 Model                                                        Cost         Time
 ------------------------------------------------------------------------------------------
-openrouter/anthropic/claude-sonnet-4                         $    0.0900       1:02     5/5 - Same result (except a small messed-up where the state definition ended up a in different file) 
-openrouter/google/gemini-2.5-pro-preview                     $    0.0800       1:51     5/5
-openrouter/x-ai/grok-3-beta                                  $    0.0700       0:31
-gpt-4.1                                                      $    0.0700       1:43
-o3                                                           $    0.0500       0:49
-openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0037       0:22
-openrouter/deepseek/deepseek-chat-v3-0324:free                      free       1:18
-openrouter/deepseek/deepseek-r1-0528:free                           free       7:53
+openrouter/anthropic/claude-sonnet-4                         $    0.1200       1:10     4/5 - EditDatesDialogState does not have the dates ; weird test names and props by props testing
+openrouter/google/gemini-2.5-pro-preview                     $    0.0800       2:17     4/5 - too many and complex tests
+openrouter/x-ai/grok-3-beta                                  $    0.0600       0:33     5/5 - tests props by props
+gpt-4.1                                                      $    0.0300       0:23     5/5 - tests props by props
+openrouter/mistralai/mistral-large-2411                      $    0.0300       0:43     2/5 - EditDatesDialogState does not have the dates ; no tests 
+o3                                                           $    0.0200       0:13     aborted because of missing file
+openrouter/deepseek/deepseek-r1                              $    0.0088       2:03     2/5 - no tests
+openrouter/qwen/qwen3-235b-a22b                              $    0.0076       3:10     failed to provide valid output
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0026       0:17     2/5 - no tests
+openrouter/qwen/qwen3-30b-a3b:free                                  free       2:52     ZER - no reducer, no tests
 ------------------------------------------------------------------------------------------
-Total                                                        $    0.3637      15:32
+Total                                                        $    0.3590      13:46
 ```
+
+Conclusions:
+
+1. The principles is not absolutely required at this phase but is ironing the style (especially testing)
+2. two next steps are possible:
+    1. get more from `claude-sonnet-4` (and other mid-range expensive) -> skip this step and get more done in one go.
+    2. break down more to use with `gemini-2.5-flash-preview-05-20`: seems the prompt is not to far away to get it perfect (or is peer programming accepted)
+    3. find what the free / opensource LLM are conformable with - this is not the right level
 
 #### Design and planning v2
 
