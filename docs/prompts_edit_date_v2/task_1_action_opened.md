@@ -1,7 +1,10 @@
 # Task 1: Action - Edit Dates Dialog Opened
 
 ## Introduction
+
 You are implementing the **action** `editDatesDialogOpened` and its associated **selector** `selectEditDatesDialog` for the edit dates dialog feature.
+Deliveries
+must include the tests as defined in the requirements.
 
 ## Requirements (BDD Style)
 

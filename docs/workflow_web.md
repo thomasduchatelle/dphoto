@@ -92,7 +92,8 @@ To develop a User Story, we're going to write a detailed and iterative list of p
 
 5. **Prompt Structure**:
 
-   * _Introduction_: "you are implementing ..." ; be specific of the type (or layer) and name of the component(s) the agent have to implement
+   * _Introduction_: "you are implementing ..." ; be specific of the type (or layer) and name of the component(s) the agent have to implement ; make explicit
+     that the deliveries must include the tests validating the requirements.
    * _Requirements_: the BDD-style requirements defined and reviewed on the previous step
    * _Implementation Details_:
       * in what folder the new components must be created (feature related), insist on the naming convention to be respected
