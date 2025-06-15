@@ -14,18 +14,35 @@ IA Concepts
 
 #### A planning that only an expensive model can perform
 
+With `docs/principles_web.md`:
+
 ```
 Summary:
 ----------------------------------------------------------------------
 Model                                    Cost         Time
 ----------------------------------------------------------------------
-openrouter/anthropic/claude-sonnet-4     $   0.08000       0:52
-openrouter/deepseek/deepseek-r1-0528:free $   0.00000       2:30
-openrouter/deepseek/deepseek-chat-v3-0324:free $   0.00000       1:14
-openrouter/meta-llama/llama-4-maverick:free $   0.00000       0:15
+openrouter/x-ai/grok-3-beta                                  $   0.08000       0:39     4/5 - EditDatesDialogState does not have the dates | tests good.
+openrouter/anthropic/claude-sonnet-4                         $   0.08000       0:52     5/5 - SPOT ON: State + Tests + File structure (including the selector interfacee in the selector file) + index !
+openrouter/google/gemini-2.5-pro-preview                     $   0.08000       1:47     5/5 - State + Tests + File structure
+gpt-4.1                                                      $   0.07000       0:25     3/5 - EditDatesDialogState does not have the dates, selector not in its file (and action badly registered)
+o3                                                           $   0.05000       0:37     1/5 - EditDatesDialogState does not have the dates | tests does test the reducer
+openrouter/google/gemini-2.5-pro-preview-05-06               $   0.05000       0:57     3/5 - Too many tests
+gpt-4.1-mini                                                 $   0.03000       0:28     ZER - no actions, no selector, no tests
+openrouter/google/gemini-2.5-flash-preview-05-20             $   0.00370       0:23     4/5 - EditDatesDialogState does not have the dates | Tests + File structure are good
+openrouter/deepseek/deepseek-r1-0528:free                    $   free          2:30     1/5 - NO TESTS
+openrouter/deepseek/deepseek-chat-v3-0324:free               $   free          1:14     3/5 - Testing intermediatary state props by props instead of testing through the selector
+openrouter/meta-llama/llama-4-maverick:free                  $   free          0:15     ZER - Gives advises but cannot code.
 ----------------------------------------------------------------------
-Total                                    $   0.08000       4:53
 ```
+
+What's the most efficient way to get from **IDEA** -> **WORKING and ACCEPTED CODE** ??
+
+* Is it possible only with free models ??
+* Is it possible only with cheap models ??
+* If using an expensive model, how can the cost and effort be minimum ?
+    * Using expensive model then handoff to cheap model for coding ? -> how can the handoff happen ?
+    * Using the free/cheap to write the task break down then handover to the expensive model ?
+* How much can an expensive model take to the finish line (working and accepted code) ? (how much break down is required)
 
 #### Design and planning v2
 
