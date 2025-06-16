@@ -29,7 +29,8 @@ No new terms or entities are introduced.
    - The "Edit Dates" button on the left menu is disabled.
 
 ## 4. Technical Context
-* The feature reuses the existing dialog and logic from the "Create Dialog".
+* The feature uses a new dialog for editing album dates.
+* The dialog reuses components from the "Create Dialog", such as date text fields and associated tick boxes.
 * The API is used to update the album dates and re-fetch album and media data after a successful update.
 * The feature is integrated into the existing album management UI.
 
