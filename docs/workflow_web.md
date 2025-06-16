@@ -36,7 +36,7 @@ The document produced must follow the structure:
 To build this requirement document, ask me one question at a time, focusing on concrete implementation details and user journeys. Each question should build on
 my previous answers, and the process should continue until all relevant details are gathered for a detailed and complete vision of the feature to build.
 
-If asked, the requirements should be written in the file: `specs/YYYY-MM_<feature name>.md` (in markdown).
+If asked, the requirements should be written in the file: `specs/YYYY-MM_<feature name>.md` in markdown (ask for the current date).
 
 Here's the idea:
 
