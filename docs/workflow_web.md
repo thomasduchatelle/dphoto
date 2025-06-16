@@ -7,7 +7,8 @@ Step 1 - Requirements collection
 ```
 # cost using `gpt-4.1-mini`: $0.0083 ; and using `claude-sonnet-4`: $0.06. While the output is **very similar**!!
 
-aider --model gpt-4.1-mini --map-tokens 0 
+aider --model openrouter/google/gemini-2.5-flash-preview-05-20:thinking --map-tokens 0 
+aider --model openrouter/meta-llama/llama-4-maverick --map-tokens 0 
 /read-only web/src/core/catalog/language
 /ask
 ```
@@ -34,6 +35,8 @@ The document produced must follow the structure:
 
 To build this requirement document, ask me one question at a time, focusing on concrete implementation details and user journeys. Each question should build on
 my previous answers, and the process should continue until all relevant details are gathered for a detailed and complete vision of the feature to build.
+
+If asked, the requirements should be written in the file: `specs/YYYY-MM_<feature name>.md` (in markdown).
 
 Here's the idea:
 
