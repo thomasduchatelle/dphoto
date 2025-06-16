@@ -5,17 +5,19 @@ Step 1 - Requirements collection
 ---------------------------------------
 
 ```
-aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0 
+# cost using `gpt-4.1-mini`: $0.0083 ; and using `claude-sonnet-4`: $0.06. While the output is **very similar**!!
+
+aider --model gpt-4.1-mini --map-tokens 0 
 /read-only web/src/core/catalog/language
 /ask
 ```
 
-We're starting a new feature, and you have to produce the Requirement Document. The document will be used for planning and must gather the following
-information:
+We're starting a new feature, and you have to produce the Requirement Document that gives strong and detailed vision of what you want to build and how it should
+work. The document will be used for planning and must gather the following information:
 
 * What the feature **must do**?
-* What are the **specific UI components, and user flows** needed?
-* What are the interactions with external systems (user, APIs, ...), including what happens before and after each operation?
+* What are the **user flows** ? How the the interact with the feature (specific UI component) ?
+* What are the **interactions with external systems** (user, APIs, ...), including what happens before and after each operation?
 * What is unknown and would need to be explored first?
 
 The document produced must follow the structure:
@@ -23,23 +25,18 @@ The document produced must follow the structure:
 1. Feature **Summary** (1-3 sentences)
 2. **Ubiquity Language** (only the new terms/entities, skip the section if empty)
 3. **Scenarios** (ideally 5, maximum 8): For each, provide a complete, step-by-step user journey from start to finish, showing how the user accomplishes the
-   goal using the
-   feature. They should cover permissions or restriction cases, and error handling.
-4. **Technical Context**: bullet points of the things provided by the platform, supporting APIs, other domains, ...
-5. List of **Explorations**: formulated as questions in bullet points
+   goal using the feature. They should cover permissions or restriction cases, and error handling, data validation.
+4. **Technical Context**: bullet points list of what is done by services external of this feature: provided by the platform, by supporting APIs, or by other
+   domains or the same application, ... It should also contain an **out of scope** section.
+5. List of **Explorations**: questions that couldn't be answered during this chat, and will have an impact on the design of the feature. Do not add question
+   related to implementation details (good example: "what are the authorisation capabilities of the Provider X ? Feature will extend it only for the use cases
+   not already covered."" ; bad example: "how to use AxiosJS?" because it has not functional impact)
 
 To build this requirement document, ask me one question at a time, focusing on concrete implementation details and user journeys. Each question should build on
-my previous answers, and the process should continue until all relevant details are gathered for a complete, actionable requirements document.
+my previous answers, and the process should continue until all relevant details are gathered for a detailed and complete vision of the feature to build.
 
 Here's the idea:
 
-### TODOs
-
-* the "List of **Explorations**" is not valuable. It is supposed to highlight the spikes but is usually a dump of unnecessary technical questions.
-  need to find a way to make sure there are **question that couldn't be answered** and **have an impact of the requirements** (unknowns to break first), or *
-  *mentioned items that will be answered before implementation**
-* cost using `gpt-4.1-mini`: $0.0083 ; same using `claude-sonnet-4`: $0.06. The output is **very similar**!!
-* try with a free / opensource LLM ?
 
 Step 2 - Story Mapping
 ---------------------------------------

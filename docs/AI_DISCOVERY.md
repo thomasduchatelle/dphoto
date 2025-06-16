@@ -10,7 +10,28 @@ IA Concepts
 2. Models: _what models perform better on what type of tasks?_
 3. Tools: _how to interact with an IA agent and get to update the code ?_
 
-### Prompts (wip)
+LLM Tradeoffs
+---------------------------------------
+
+Starting point is an **idea** -> target is **accepted code**. Adding the feature on existing code is orders of magnitude more complex: the LLM cannot see the
+whole context.
+
+* **Effort** vs Autonomy: how much effort is expected by the Supervisor ? ... to break down the tasks and bring engineering expertise.
+* **Costs**: how much is the budget by feature to spend on AI models ?
+* **Timeline**: how quickly features should be shipped ? ... onboarding has a ramping costs in time
+
+With unlimited budget, Claude Sonnet 4 + Aider would be my preference so far. But if budget is restricted, over 3 cents per request is getting high too quick.
+So investigation to have next:
+
+1. how much can 3 cents do with Claude Sonnet 4?
+    1. if it goes from idea to accepted code, it would be worth it !
+    2. if it doesn't, would a cheap/free model to collect requirements, and one cheap to do the finish on the code could be an approach ?
+2. is there cheaper alternative from Claude Sonnet 4 that would give consistent good results ? (need to benchmark the instructions)
+3. how much can do an opensource / cheap model ? how much effort would be required to break down the dev cycle into chunks that can be covered by a free/cheap
+   LLM ?
+
+Prompts (wip)
+---------------------------------------
 
 #### A planning that only an expensive model can perform
 
@@ -34,15 +55,6 @@ openrouter/deepseek/deepseek-chat-v3-0324:free               $   free          1
 openrouter/meta-llama/llama-4-maverick:free                  $   free          0:15     ZER - Gives advises but cannot code.
 ----------------------------------------------------------------------
 ```
-
-What's the most efficient way to get from **IDEA** -> **WORKING and ACCEPTED CODE** ??
-
-* Is it possible only with free models ??
-* Is it possible only with cheap models ??
-* If using an expensive model, how can the cost and effort be minimum ?
-    * Using expensive model then handoff to cheap model for coding ? -> how can the handoff happen ?
-    * Using the free/cheap to write the task break down then handover to the expensive model ?
-* How much can an expensive model take to the finish line (working and accepted code) ? (how much break down is required)
 
 ##### Without the `webprinciples_web.md`:
 
@@ -238,7 +250,7 @@ Start with the design phase for the minimal slice.
 
 Try 1: Claude + task spec. Disastrous. No test. No action. No reducer. Context is corrupted and irrecuperable.
 
-Try 2: Claude + task spec + (readonly) `docs/principles_web.md`. Better. Got test. Still not the right folders. Still no action or reducer. 
+Try 2: Claude + task spec + (readonly) `docs/principles_web.md`. Better. Got test. Still not the right folders. Still no action or reducer.
 
 #### Workflow building
 
