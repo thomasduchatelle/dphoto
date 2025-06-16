@@ -630,8 +630,22 @@ As of the 10th of June 2025, OpenAI sent an email to recommend the use of gpt-4o
 
     aider --model openrouter/anthropic/claude-sonnet-4
 
-Do NOT use to restructure the files !!
+Do NOT use to reorganise the files !!
 
 I found that asking to update the files, and then providing the shell script to move them working well. Asking for another script (with grep) to identify the
 missed file worked as well.
 
+### Aider / openrouter/meta-llama/llama-4-maverick
+
+Used for generating the requirement documentation. ($0.0042)
+
+Really basic prompt. Need to try to get the the level of details I got to with gemini-2.5-flash. Document is minimalist but complete.
+
+### Aider / openrouter/google/gemini-2.5-flash-preview-05-20:thinking
+
+Used for generating the requirement documentation. ($0.02)
+
+He struggled to follow the instructions: asked two questions at a time, and keep asking me to give it the scenario steps instead of generating it !!
+
+Result is good, lots of details with examples. Maybe too much and could be confusing (list of state management libs !). Eager to get things implemented and
+ask (too much) details on the API contract.
