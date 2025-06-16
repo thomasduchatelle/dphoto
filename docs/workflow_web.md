@@ -33,6 +33,14 @@ my previous answers, and the process should continue until all relevant details 
 
 Here's the idea:
 
+### TODOs
+
+* the "List of **Explorations**" is not valuable. It is supposed to highlight the spikes but is usually a dump of unnecessary technical questions.
+  need to find a way to make sure there are **question that couldn't be answered** and **have an impact of the requirements** (unknowns to break first), or *
+  *mentioned items that will be answered before implementation**
+* cost using `gpt-4.1-mini`: $0.0083 ; same using `claude-sonnet-4`: $0.06. The output is **very similar**!!
+* try with a free / opensource LLM ?
+
 Step 2 - Story Mapping
 ---------------------------------------
 
