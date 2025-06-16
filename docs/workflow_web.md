@@ -17,8 +17,8 @@ We're starting a new feature, and you have to produce the Requirement Document t
 work. The document will be used for planning and must gather the following information:
 
 * What the feature **must do**?
-* What are the **user flows** ? How the the interact with the feature (specific UI component) ?
-* What are the **interactions with external systems** (user, APIs, ...), including what happens before and after each operation?
+* What are the **user flows** (including what happens before and after each operation) ? How the user interacts with the feature (specific UI component, ...) ?
+* How the feature is **integrated to the existing application**, or leveraging **external systems** ?
 * What is unknown and would need to be explored first?
 
 The document produced must follow the structure:
