@@ -38,9 +38,19 @@ The "Edit Dates" feature allows users to update the start and end dates of an al
 
 5. **Date and Time Selection**
    - User navigates to an album they own and clicks the "Edit Dates" button.
-   - User can select a start date and optionally a time by unticking "at the start of the day".
-   - User can select an end date and optionally a time by unticking "at the end of the day".
-   - The selected dates are displayed in a user-friendly format.
+   - The dialog displays the start date with a checkbox "at the start of the day" (default: checked) and the end date with a checkbox "at the end of the day" (default: checked).
+   - When "at the start of the day" is checked, the start time is set to 00:00. When unchecked, the user can input a specific time.
+   - When "at the end of the day" is checked, the end time is set to 23:59. When unchecked, the user can input a specific time.
+   - The selected dates are displayed in a user-friendly format (date only when time is not specified).
+
+### Date Conversion Examples
+* For an album covering the full month of January 2025:
+  - API/State format: start = 2025-01-01T00:00:00, end = 2025-02-01T00:00:00
+  - Displayed format (default): start = 2025-01-01, end = 2025-01-31
+  - Displayed format (with time): start = 2025-01-01 00:00 (when "at the start of the day" is checked), end = 2025-01-31 23:59 (when "at the end of the day" is checked)
+* When the user updates the dates:
+  - If the user selects start = 2025-01-15 and unticks "at the start of the day" to input 10:00, the internal state should be 2025-01-15T10:00:00.
+  - If the user selects end = 2025-01-20 and unticks "at the end of the day" to input 15:00, the internal state should be 2025-01-20T15:00:00. Upon saving, this should be converted to an exclusive end date: 2025-01-20T15:00:01.
 
 ## 4. Technical Context
 * The feature uses a new dialog for editing album dates.
