@@ -43,7 +43,7 @@ The "Edit Dates" feature allows users to update the start and end dates of an al
 4. When "at the end of the day" is checked, the end time is set to 23:59. When unchecked, the user can input a specific time.
 5. The selected dates are displayed in a user-friendly format (date only when time is not specified).
 
-### Date Conversion Examples
+#### Date Conversion Examples
 * For an album covering the full month of January 2025:
   - API/State format: start = 2025-01-01T00:00:00, end = 2025-02-01T00:00:00
   - Displayed format (default): start = 2025-01-01, end = 2025-01-31
