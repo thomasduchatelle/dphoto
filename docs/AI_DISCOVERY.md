@@ -113,6 +113,41 @@ Need to update the system prompt:
 * write into the files, no review, respect the requested format
 * closing case must be added to the original requirements, Gemini pro found it
 
+#### Refinement / Story Mapping v2
+
+Note: language is not included in the context.
+
+    # using requirements by llama-4-maverick
+    ./benchmark-llm.py update-dates-1.0.1 --repo ../dphoto --read ../dphoto/specs/2025-06_update-album-dates.md  --map-tokens 0 -i instruction/story-breakdown.md 
+
+What to expect:
+
+1. Open and close when owner of the album - show the dates appropriately
+2. Button disabled when not the owner
+3. Can update the time - show the time when open with one specific
+4. Happy path - can save and everything is refreshed
+5. API failed path - show an error
+6. Dates validation failed - show an error
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/google/gemini-2.5-pro-preview                     $    0.0600       1:39     5/5 - 8 stories, spot on
+openrouter/x-ai/grok-3-beta                                  $    0.0500       0:29     5/5 - 6 stories, no comment
+openrouter/anthropic/claude-sonnet-4                         $    0.0500       0:41     5/5 - 6 stories, spot on
+o3                                                           $    0.0300       0:51     3/5 - 6 stories, hallocinate and got the dates wrong for the API
+gpt-4.1                                                      $    0.0200       0:19     4/5 - 7 stories, not in files, looks a bit vague
+openrouter/mistralai/mistral-large-2411                      $    0.0200       0:50     4/5 - 8 stories, somehow a bit vague...
+openrouter/deepseek/deepseek-r1                              $    0.0068       0:18     3/5 - 5 stories, non-happy paths are not covered (API error and dates invalid between each other). But the format is good
+gpt-4.1-mini                                                 $    0.0046       0:22     5/5 - 5 stories, looks pretty good and workable
+openrouter/qwen/qwen3-235b-a22b                              $    0.0021       2:14     2/5 - 7 stories, looks a bit confused
+openrouter/meta-llama/llama-4-maverick                       $    0.0019       0:28     4/5 - 7 stories, not well detailed but could work
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0014       0:12     3/5 - 4 stories, too big
+openrouter/qwen/qwen3-30b-a3b:free                                  free       1:45     3/5 - 11 stories, too small to be actionable I would think
+------------------------------------------------------------------------------------------
+Total                                                        $    0.2468      10:12
+```
+
 #### Design and planning v2
 
     ## Structural Improvements

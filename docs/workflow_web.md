@@ -55,12 +55,14 @@ Before starting the development of the new feature, you need to break it down in
 * each story must be an interation that bring the project forward, but small enough to be done by an LLM Agent
 * each story must represent a vertical slice of the feature: an end-to-end journey, never a technical layer
 
-Iterate as many times as you need until you have a strong and actionable list of stories. You will then write them in a clear and concise format following the
-format:
+Iterate as many times as you need until you have a strong and actionable list of stories. You will then write them in a clear and concise way following the
+structure:
 
-* **title**: use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable albums to
+* **title** (as header): use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable
+  albums to
   choose from").
-* **Acceptance Criteria**: be thorough, do not leave any behaviour free for interpretation, write from user point of view (not technical), and **stay concise**
+* **Acceptance Criteria**: be thorough, give examples, do not leave any behaviour free for interpretation (all commutations must be explained), write from user
+  point of view (not technical), and **stay concise**. Use the BDD-style:
   ```
   GIVEN <description of the initial state>
   WHEN <name of the action dispatched and description of its payload>
@@ -102,11 +104,11 @@ To develop a User Story, we're going to write a detailed and iterative list of p
         * UI component: name and purpose
 
 2. **Collaboration** - Present the design and ask for feedback before proceeding ; we will iterate on the design
-   * exhaustive list of each component to create and its layer
-   * if the component is a state or a domain model: give a code snippet of the changes
-   * if the component is an event or an action: give the schema of its payload
-   * if the component is a function: give its signature
-   * if the component is a UI component: explain what it will contain
+    * exhaustive list of each component to create and its layer
+    * if the component is a state or a domain model: give a code snippet of the changes
+    * if the component is an event or an action: give the schema of its payload
+    * if the component is a function: give its signature
+    * if the component is a UI component: explain what it will contain
 
 3. **Task Breakdown** - Create independently implementable tasks where each task describes **application behavior**, not developer tasks:
     * GOOD: "GIVEN dialog is closed WHEN I dispatch editDatesDialogOpened with AlbumId THEN selectEditDatesDialog returns open dialog with album name"
@@ -126,20 +128,20 @@ To develop a User Story, we're going to write a detailed and iterative list of p
 
 5. **Prompt Structure**:
 
-   * _Introduction_: "you are implementing ..." ; be specific of the type (or layer) and name of the component(s) the agent have to implement ; make explicit
-     that the deliveries must include the tests validating the requirements.
-   * _Requirements_: the BDD-style requirements defined and reviewed on the previous step
-   * _Implementation Details_:
-      * in what folder the new components must be created (feature related), insist on the naming convention to be respected
-      * add the TDD principle: "Implement the tests first, then implement the code **the simplest and most readable possible**: no behaviour should be
-        implemented if it is not required by
-        one test"
-      * list the general files that must be edited, and for each what's expected ("general" because not specific for the feature: global state, actions/thunks
-        register, ...)
-      * any recommendation raised during the design
-   * _Interface Specification_: data structure and signature that have been decided during design
-   * _References_: gives the references and description of the previous tasks **relevant** to implement this tasks. Only the references that are expected to be
-     used.
+    * _Introduction_: "you are implementing ..." ; be specific of the type (or layer) and name of the component(s) the agent have to implement ; make explicit
+      that the deliveries must include the tests validating the requirements.
+    * _Requirements_: the BDD-style requirements defined and reviewed on the previous step
+    * _Implementation Details_:
+        * in what folder the new components must be created (feature related), insist on the naming convention to be respected
+        * add the TDD principle: "Implement the tests first, then implement the code **the simplest and most readable possible**: no behaviour should be
+          implemented if it is not required by
+          one test"
+        * list the general files that must be edited, and for each what's expected ("general" because not specific for the feature: global state, actions/thunks
+          register, ...)
+        * any recommendation raised during the design
+    * _Interface Specification_: data structure and signature that have been decided during design
+    * _References_: gives the references and description of the previous tasks **relevant** to implement this tasks. Only the references that are expected to be
+      used.
 
 The principle handbook is:
 
