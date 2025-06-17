@@ -41,14 +41,38 @@ If asked, the requirements should be written in the file: `specs/YYYY-MM_<featur
 Here's the idea:
 
 
-Step 2 - Story Mapping
+Step 2 - Refinement and Story Mapping
 ---------------------------------------
 
-TBD
+```
+aider --model openrouter/meta-llama/llama-4-maverick --map-tokens 0 
+/ask
+```
 
-Delivery: list of stories "As a user, I can open the edit date dialog with for a given AlbumId and I can see on the dialog its name and its dates"
+Before starting the development of the new feature, you need to break it down into stories following these rules:
 
-In scope and Out of Scope must be detailed - LLM has tendency to go too far.
+* the list of stories must cover the complete requirement: nothing should be left out
+* each story must be an interation that bring the project forward, but small enough to be done by an LLM Agent
+* each story must represent a vertical slice of the feature: an end-to-end journey, never a technical layer
+
+Iterate as many times as you need until you have a strong and actionable list of stories. You will then write them in a clear and concise format following the
+format "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable albums to choose from").
+
+For each story, add the Acceptance Criteria under the format:
+
+```
+GIVEN <description of the initial state>
+WHEN <name of the action dispatched and description of its payload>
+THEN <description of what will return the selector>
+```
+
+And make explicit what is out of scope, because covered by another story.
+
+You'll write your findings in `specs/YYYY-MM_<feature-name>_story_<N>_<few words description>.md`. Use the name of the requirement files for the date and
+feature name. `N` is the story number, starts with 1.
+
+The requirement to refine is written in the file:
+
 
 Step 3 - Design and Planning
 ---------------------------------------
