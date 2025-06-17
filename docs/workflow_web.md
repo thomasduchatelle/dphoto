@@ -89,23 +89,27 @@ Before starting the development of the new feature, you need to break it down in
 * each story must be an interation that bring the project forward, but small enough to be done by an LLM Agent
 * each story must represent a vertical slice of the feature: an end-to-end journey, never a technical layer
 
-Iterate as many times as you need until you have a strong and actionable list of stories. Ask your peering partner to review it. Give him the full list of title
-at once. Listen and adapt the list based on its comments, feel free to ask clarification questions.
+Iterate as many times as you need until you have a strong and actionable enumerated list of stories. Ask your peering partner to review it. Give him the full
+list of title at once. Listen and adapt the list based on its comments, feel free to ask clarification questions.
 
 You will then write each story in a clear and concise way with the following structure:
 
 * **title** (as header): use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable
   albums to choose from").
 * **Acceptance Criteria**: be thorough, give examples, do not leave any behaviour free for interpretation (all commutations must be explained), write from user
-  point of view (not technical), and **stay concise**. Use the BDD-style:
+  point of view (not technical), and **stay concise**. Use the BDD-style in a code:
   ```
   GIVEN <description of the initial state>
   WHEN <name of the action dispatched and description of its payload>
   THEN <description of what will return the selector>
   ```
 
+  Place them in a code block and prefer several clear "given ... when ... then" than a big one with log of "ands".
+
 * **Out of scope**: reread the title and acceptance criteria and list here what an LLM would be tempted to do but is not in scope of this story (for example "
   validation of the fields is done by the underlying API)
+
+Write them one by one and ask for feedback after each one.
 
 When asked, you will write each story in its own file named
 `specs/<requirement filename without extension>_story_<story number in tweo digits>_<few words description>.md`. Respect the instructions to write the file as
