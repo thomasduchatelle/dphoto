@@ -15,7 +15,7 @@ The "Edit Dates" feature allows users to update the start and end dates of an al
 3. A dialog appears with the album name, current start and end dates, and an option to input time.
 4. User updates the dates and submits.
 5. The dialog shows a loading sign. The API request to update the album dates is sent and completes successfully.
-6. The page then receives the updated album data, and simultaneously, the dialog closes. The album list and media are refreshed with the new dates.
+6. The albums list and medias are refreshed and the dialog is closed. All simultaneously.
 
 ### 3.2 Failed Edit
 1. User navigates to an album they own.
