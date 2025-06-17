@@ -97,23 +97,22 @@ You will then write each story in a clear and concise way with the following str
 * **title** (as header): use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable
   albums to choose from").
 * **Acceptance Criteria**: be thorough, give examples, do not leave any behaviour free for interpretation (all commutations must be explained), write from user
-  point of view (not technical), and **stay concise**. Use the BDD-style in a code:
+  point of view (not technical), and **stay concise**. Use the BDD-style:
   ```
   GIVEN <description of the initial state>
   WHEN <name of the action dispatched and description of its payload>
   THEN <description of what will return the selector>
   ```
 
-  Place them in a code block and prefer several clear "given ... when ... then" than a big one with log of "ands".
+  Place them in an indented code block. Don't overcharge each statement: prefer multiple and simple "given ... when ... then". Add example where relevant.
 
 * **Out of scope**: reread the title and acceptance criteria and list here what an LLM would be tempted to do but is not in scope of this story (for example "
   validation of the fields is done by the underlying API)
 
-Write them one by one and ask for feedback after each one.
+Present them one by one to ask for feedback after each one. Upon acceptance, write the story in the file named
+`specs/<requirement filename without extension>_story_<story number in tweo digits>_<few words description>.md`, and present the next story.
 
-When asked, you will write each story in its own file named
-`specs/<requirement filename without extension>_story_<story number in tweo digits>_<few words description>.md`. Respect the instructions to write the file as
-you would do to make code change.
+**Respect the instructions to update files as you would do to make code change!**
 
 The requirement to refine is written in the file:
 
