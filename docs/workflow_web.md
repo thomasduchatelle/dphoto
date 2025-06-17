@@ -55,8 +55,8 @@ Before starting the development of the new feature, you need to break it down in
 * each story must be an interation that bring the project forward, but small enough to be done by an LLM Agent
 * each story must represent a vertical slice of the feature: an end-to-end journey, never a technical layer
 
-Iterate as many times as you need until you have a strong and actionable list of stories. You will then write them in a clear and concise way following the
-structure:
+Iterate as many times as you need until you have a strong and actionable list of stories. You will then write them in a clear and concise way with the following
+content:
 
 * **title** (as header): use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable
   albums to
