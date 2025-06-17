@@ -5,10 +5,8 @@ Step 1 - Requirements collection
 ---------------------------------------
 
 ```
-# cost using `gpt-4.1-mini`: $0.0083 ; and using `claude-sonnet-4`: $0.06. While the output is **very similar**!!
-
-aider --model openrouter/google/gemini-2.5-flash-preview-05-20:thinking --map-tokens 0 
-aider --model openrouter/meta-llama/llama-4-maverick --map-tokens 0 
+aider --map-tokens 0 --model openrouter/google/gemini-2.5-flash-preview-05-20
+#aider --map-tokens 0 --model openrouter/meta-llama/llama-4-maverick
 /read-only web/src/core/catalog/language
 /ask
 ```
@@ -44,6 +42,8 @@ Here's the idea:
 Step 2 - Refinement and Story Mapping
 ---------------------------------------
 
+### Non-interactive
+
 ```
 aider --model openrouter/meta-llama/llama-4-maverick --map-tokens 0 
 /ask
@@ -59,8 +59,7 @@ Iterate as many times as you need until you have a strong and actionable list of
 content:
 
 * **title** (as header): use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable
-  albums to
-  choose from").
+  albums to choose from").
 * **Acceptance Criteria**: be thorough, give examples, do not leave any behaviour free for interpretation (all commutations must be explained), write from user
   point of view (not technical), and **stay concise**. Use the BDD-style:
   ```
@@ -77,8 +76,89 @@ all the stories before asking for anything. Respect the instructions to write th
 
 The requirement to refine is written in the file:
 
+### Interactive
 
-Step 3 - Design and Planning
+```
+aider --model openrouter/meta-llama/llama-4-maverick --map-tokens 0 
+/ask
+```
+
+Before starting the development of the new feature, you need to break it down into stories following these rules:
+
+* the list of stories must cover the complete requirement: nothing should be left out
+* each story must be an interation that bring the project forward, but small enough to be done by an LLM Agent
+* each story must represent a vertical slice of the feature: an end-to-end journey, never a technical layer
+
+Iterate as many times as you need until you have a strong and actionable list of stories. Ask your peering partner to review it. Give him the full list of title
+at once. Listen and adapt the list based on its comments, feel free to ask clarification questions.
+
+You will then write each story in a clear and concise way with the following structure:
+
+* **title** (as header): use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable
+  albums to choose from").
+* **Acceptance Criteria**: be thorough, give examples, do not leave any behaviour free for interpretation (all commutations must be explained), write from user
+  point of view (not technical), and **stay concise**. Use the BDD-style:
+  ```
+  GIVEN <description of the initial state>
+  WHEN <name of the action dispatched and description of its payload>
+  THEN <description of what will return the selector>
+  ```
+
+* **Out of scope**: reread the title and acceptance criteria and list here what an LLM would be tempted to do but is not in scope of this story (for example "
+  validation of the fields is done by the underlying API)
+
+When asked, you will write each story in its own file named
+`specs/<requirement filename without extension>_story_<story number in tweo digits>_<few words description>.md`. Respect the instructions to write the file as
+you would do to make code change.
+
+The requirement to refine is written in the file:
+
+Step 3 - Feature Coding
+---------------------------------------
+
+### Non interactive
+
+```
+aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0 
+/read-only docs/principles_web.md
+/add web/src/core/catalog/language
+/ask
+```
+
+You are a strong developer prioritizing simple and well tested code. You **strictly follow the coding principles** defined in `docs/principles_web.md`. And you
+are now implementing a new story part of a larger epic. You will use the epic to contextualise your changes but will focus to only deliver what is requested in
+the story.
+
+**Process**
+
+1. **Design Phase** - using the coding principles from the document:
+    1. **data flow**: define the components (by name and type) involved to deliver the story
+    2. **re-usability**: identify the _existing components_ that can be leveraged (function, events, ...). Do not be too eager: prioritise
+       single-responsibility principle over trying to avoid code duplication.
+    3. **technical design**: specify for each component a thorough description:
+        * name
+        * if it's "new", or "updated", or "reused" (and not updated)
+        * if the component is a state or a domain model: give a code snippet of the properties to add or change
+        * if the component is an event or an action: give the schema of its payload
+        * if the component is a function: give its signature
+        * if the component is a UI component: explain what data is rendered, what data can be input, and how the user can interact with it
+
+2. **Design validation** - re-read the story, verify that your design cover the complete journey describe, but does not overlap on the out-scoped items
+   Restart the design phase if it is not satisfying.
+
+3. **Implementation** - focus on the implementation of one component at a time with its tests:
+    1. Start with writing the tests: following the BDD requirements is recommended
+    2. Then write an implementation that pass the test
+    3. Finally, move on to the next component
+
+4. **Checking** - re-read the story, re-read your design, verify that everything have been implemented, tested, and integrated with the rest.
+   Update your code if anything is missing or required to be edited.
+
+Your story to implement is:
+
+It's part of the epic:
+
+Step X - Design and Planning
 ---------------------------------------
 
 ```

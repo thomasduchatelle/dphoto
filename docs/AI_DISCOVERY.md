@@ -115,10 +115,7 @@ Need to update the system prompt:
 
 #### Refinement / Story Mapping v2
 
-Note: language is not included in the context.
-
-    # using requirements by llama-4-maverick
-    ./benchmark-llm.py update-dates-1.0.1 --repo ../dphoto --read ../dphoto/specs/2025-06_update-album-dates.md  --map-tokens 0 -i instruction/story-breakdown.md 
+    made a mistake and included both requirements
 
 What to expect:
 
@@ -147,6 +144,36 @@ openrouter/qwen/qwen3-30b-a3b:free                                  free       1
 ------------------------------------------------------------------------------------------
 Total                                                        $    0.2468      10:12
 ```
+
+Error fixed, language directory is not included in the context.
+
+    # using requirements by llama-4-maverick
+    ./benchmark-llm.py update-dates-1.0.1 --repo ../dphoto --read ../dphoto/specs/2025-06_update-album-dates.md  --map-tokens 0 -i instruction/story-breakdown.md 
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.0400       0:42     5/5 - spot on.
+gpt-4.1                                                      $    0.0200       0:22     3/5 - no files, stories badly formatted, some bad extrapolations (second preceision, time input disabled, ...)
+openrouter/google/gemini-2.5-pro-preview                     $    0.0200       3:24     5/5 - no files, but stories are good and with examples
+gpt-4.1-mini                                                 $    0.0073       0:54     5/5 - some imprecisions on the time input, good format
+openrouter/deepseek/deepseek-r1                              $    0.0057       0:25     1/5 - complete hallucination ("Save button becomes enabled again after 5 seconds")  
+openrouter/meta-llama/llama-4-maverick                       $    0.0014       0:23     2/5 - missing API error, inprecise api update
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0010       0:15     5/5 - BDD a bit heady but everything is covered
+------------------------------------------------------------------------------------------
+Total                                                        $    0.0954       6:27                                                     $    0.2468      10:12
+```
+
+This test satisfy the hypothesis that a simple requirement documentation by Llama is enough. The system prompt seems to be working to get stories.
+
+Model recommendation so far:
+
+* **chat** (and requirement): `google/gemini-2.5-flash-preview-05-20`
+    * backup: `meta-llama/llama-4-maverick`
+* **story coding**: ?
+    * assumption is `anthropic/claude-sonnet-4` will do best
+    * others to be tested
+* **code fixing** (assist): `meta-llama/llama-4-maverick`
 
 #### Design and planning v2
 
@@ -704,6 +731,8 @@ missed file worked as well.
 Used for generating the requirement documentation. ($0.0042)
 
 Really basic prompt. Need to try to get the the level of details I got to with gemini-2.5-flash. Document is minimalist but complete.
+
+Note: cost using `gpt-4.1-mini`: $0.0083 ; and using `claude-sonnet-4`: $0.06. While the output is **very similar**!!
 
 ### Aider / openrouter/google/gemini-2.5-flash-preview-05-20:thinking
 
