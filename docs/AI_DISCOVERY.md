@@ -84,6 +84,35 @@ Conclusions:
     2. break down more to use with `gemini-2.5-flash-preview-05-20`: seems the prompt is not to far away to get it perfect (or is peer programming accepted)
     3. find what the free / opensource LLM are conformable with - this is not the right level
 
+#### Refinement / Story mapping
+
+```
+------------------------------------------------------------------------------------------
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.0500       0:41     4/5 - 5 stories covering everything (except close), a bit technical is places (action and state)
+openrouter/x-ai/grok-3-beta                                  $    0.0400       0:22     4/5 - 5 stories covering everything (except close)
+openrouter/google/gemini-2.5-pro-preview                     $    0.0400       1:10     4/5 - 5 stories incl closing modal, output messed up in the files (with aider)  
+o3                                                           $    0.0300       0:54     3/5 - 7 stories, BDD is very technical
+gpt-4.1                                                      $    0.0200       0:18     NEED TO RERUN - didn't write the files and asked for review (6 stories)
+openrouter/mistralai/mistral-large-2411                      $    0.0200       1:04     1/5 - 7 stories with no AC and no details leaving too much room for interpretation (misswrite the files) 
+openrouter/deepseek/deepseek-r1                              $    0.0073       0:47     2/5 - 7 stories, a bit confused with power user and system
+gpt-4.1-mini                                                 $    0.0045       0:26     3/5 - 6 stories, the refresh and save are 2 stories
+openrouter/meta-llama/llama-4-maverick                       $    0.0030       1:05     3/5 - 6 stories, lack of details with complex behaviour
+openrouter/qwen/qwen3-235b-a22b                              $    0.0016       0:42     4/5 - 5 stories, cover everything with good level of details but didn't write it into files
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0009       0:07     NEED TO RERUN: only 1 story
+openrouter/qwen/qwen3-30b-a3b:free                                  free       2:04     2/5 - 7 stories with fuzy boundaries
+------------------------------------------------------------------------------------------
+Total                                                        $    0.2173       9:44
+```
+
+Need to update the system prompt:
+
+* no technical details (things that are not seen by user)
+* be explicit, do not leave anything for interpretation
+* write into the files, no review, respect the requested format
+* closing case must be added to the original requirements, Gemini pro found it
+
 #### Design and planning v2
 
     ## Structural Improvements

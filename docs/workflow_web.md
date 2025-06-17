@@ -56,20 +56,22 @@ Before starting the development of the new feature, you need to break it down in
 * each story must represent a vertical slice of the feature: an end-to-end journey, never a technical layer
 
 Iterate as many times as you need until you have a strong and actionable list of stories. You will then write them in a clear and concise format following the
-format "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable albums to choose from").
+format:
 
-For each story, add the Acceptance Criteria under the format:
+* **title**: use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable albums to
+  choose from").
+* **Acceptance Criteria**: be thorough, do not leave any behaviour free for interpretation, write from user point of view (not technical), and **stay concise**
+  ```
+  GIVEN <description of the initial state>
+  WHEN <name of the action dispatched and description of its payload>
+  THEN <description of what will return the selector>
+  ```
 
-```
-GIVEN <description of the initial state>
-WHEN <name of the action dispatched and description of its payload>
-THEN <description of what will return the selector>
-```
+* **Out of scope**: reread the title and acceptance criteria and list here what an LLM would be tempted to do but is not in scope of this story (for example "
+  validation of the fields is done by the underlying API)
 
-And make explicit what is out of scope, because covered by another story.
-
-You'll write your findings in `specs/YYYY-MM_<feature-name>_story_<N>_<few words description>.md`. Use the name of the requirement files for the date and
-feature name. `N` is the story number, starts with 1.
+Write each story in its own file named `specs/<requirement filename without extension>_story_<story number in tweo digits>_<few words description>.md`. Write
+all the stories before asking for anything. Respect the instructions to write the file as you would do to make code change.
 
 The requirement to refine is written in the file:
 
