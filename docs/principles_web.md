@@ -18,7 +18,7 @@ The file structure is as follows:
 * `components/`
   * `catalog-react/` - contains the React Components used to integrate the domain to the other components
 * `core/catalog/`
-  * `<feature name>/` - each feature has a folder containing related actions, thunks, and selectors
+  * `<feature name in dash-case>/` - each feature has a folder containing related actions, thunks, and selectors
   * `language/` - ubiquitous language and definition of the State shared for the domain
   * `common/` - functionalities reused across most features
   * `actions.ts` - where the action interface and the partial reducer are registered
@@ -31,13 +31,14 @@ In the UI, the data flow through:
 
 1. **State** - domain model, and ubiquitous language, containing the data used to render the views
 
-2. **Selector** (optional) - function returning a purpose oriented should be used to access a specific subset of the _State_ properties for composite cases (
-   dialogs or modals)
+2. **Selector** (optional) - function returning a purpose oriented data structure. It must be used to access a complex subset of the _State_ properties for
+   composite cases (dialogs or modals)
 
 3. **View** - UI components in TSX (React) rendering the data from the selectors, or from the State. Callbacks (`onClick` and `useEffect`) triggers _Thunks_.
 
 4. **Thunk** - function triggered by a user activity (including browser loading and URL change): often the value of `onClick` and `useEffect`.
    It executes the appropriate requests (through a port) and _dispatches Actions_.
+
   * **Port** - an interface declared next to the Thunk to abstract specific technologies (REST API, Local store, ...)
   * **Adapter** - a class implementation of the _Port_ for a specific technology (example: Axios)
 
@@ -50,14 +51,18 @@ A change on the _State_ triggers a refresh on the UI (and back to step 1).
 
 The _Action_ naming convention is the **Past Tense Event Naming** and is represented in **camelCase** (example: `albumCreated`)
 
-An _Action_ is defined by the following parts in a single file named `action-<action name>.ts` in the folder of the feature is a lower-case short name used to
-regroup related actions, and action name is in camelCase.
+An _Action_ is defined by an interface, a factory, and a reducer function, all in a single file named
+`.../<feature in dash-case>/action-<action name in camelCase>.ts`.
 
 #### Action interface
 
-* The interface is the name of the _Action_, starting with an upper case (ex: `AlbumCreated`)
-* It defines the shape of the action object, including a `type` property and any other required properties.
+* The interface is the name of the _Action_ in PascalCase (ex: `AlbumCreated`)
+* It defines the payload of the action, plus the property `type`
 * The `type` property is a string literal unique to the action, its value is always the same as the _Action_ name
+* The payload is kept minimum: only what cannot be found on the current state. Examples:
+  * Good: ID of the selected object, the rest of the object will be found in the state
+  * Good: Value updated from an input field
+  * Bad: copy of an object from the state
 
 #### Action Factory
 
@@ -71,6 +76,7 @@ regroup related actions, and action name is in camelCase.
 Complete examples:
 
 **Case 1: No additional properties**
+
 ```typescript
 // catalog/album-delete/action-loadingStarted.ts
 export interface LoadingStarted {
@@ -85,6 +91,7 @@ export function loadingStarted(): LoadingStarted {
 ```
 
 **Case 2: Single additional property**
+
 ```typescript
 // catalog/album-delete/album-errorOccurred.ts
 export interface ErrorOccurred {
@@ -101,6 +108,7 @@ export function errorOccurred(message: string): ErrorOccurred {
 ```
 
 **Case 3: Multiple additional properties**
+
 ```typescript
 // catalog/album-delete/action-albumDeleted.ts
 export interface AlbumDeleted {
@@ -169,6 +177,7 @@ export function albumDeletedReducerRegistration(handlers: any) {
 
 #### Action testing
 
+* **Every action MUST have tests associated with it - tested in combination of selector(s) and the state.**
 * naming convention of "describe" is `action:<action name>` (example: `action:albumCreated`)
 * types predefined in test helper must be used where possible (`web/src/core/catalog/tests/test-helper-state.ts`)
 * assertions should be done on the result of selectors, and not directly the state
@@ -209,14 +218,34 @@ describe("action:albumDeleted", () => {
 
 ### Selectors
 
-* Selectors are returning a called `<name of the selector>Selection` (example,
+* Selectors are returning a called `<name of the selector>Selection` (example:
   `function sharingDialogSelector(state: CatalogViewerState): SharingDialogSelection`)
-* Data in the main state should is **duplicated only to be edited** (in a form) ; otherwise, selectors get them where they are
+* Data in the main state is **duplicated ONLY to be edited**, IDs are used as reference.
+  Example:
+    ```
+    export interface State {
+        albums: []Album,
+        currentAlbum: AlbumId, // ID is used to not duplicate data
+    }
+    
+    export function currentAlbumNameSelector({albums, currentAlbum}: CatalogViewerState): CurrentAlbumNameSelection {
+        return { name: albums.find(album => isAlbumIdEquals(album, currentAlbum))?.name }
+    }
+    ```
+* Data is **transformed in the selectors**, not in the UI components.
+  Example:
+  ```
+  export function createDialogSelector({createDialog}: CatalogViewerState): CreateDialogSelection {
+      if (!createDialog) return { open: false };
+
+      return { capitalizedName: capitalize(createDialog.name) }
+  }
+  ```
 
 ### Thunks
 
 * Naming convention of thunk is a verb with a complement, example: `createAlbum`, or `sendEmail`
-* A thunk implement one and only one responsibility: single-responsibility principle
+* A thunk implement one and only one responsibility: single-responsibility principle (good example: `renameAlbum`, bad example: `updateAlbum`)
 * Thunks are **pure-business logic functions** handling the user commands triggered by the view: they do not use any framework of technology
     * adapters are injected to access lower-level technologies like REST API or Local Storage
 * Thunks are stateless
@@ -229,10 +258,11 @@ describe("action:albumDeleted", () => {
 * The thunk function implements the business logic by executing Adapter methods, and dispatching actions to update the state for progress, failure, and/or
   success.
     * Adapters naming conventions is `<ThunkName>Port` (example: `DeleteAlbumPort`)
-* The thunk functions first argument is a `dispatch` function accepting the specific action interface type(s) that this thunk will dispatch. Use the specific action interface (e.g., `AlbumsLoadedAction`) rather than the broad union type (`CatalogViewerAction`) to make the thunk's behavior explicit.
+* The thunk functions first argument is a `dispatch` function accepting the specific action interface type(s) that this thunk will dispatch. Use the specific
+  action interface (e.g., `AlbumsLoadedAction`) rather than the broad union type (`CatalogViewerAction`) to make the thunk's behavior explicit.
 * The thunk functions second argument is the dependencies (adapters) the port requires
     * if the thunk has no port, the argument is skipped
-* The thunk function last argument(s) are the data, it can be a single objects or several arguments
+* The thunk function last argument(s) are the data, it can be a single object or several arguments
 
 Complete example:
 
@@ -261,9 +291,10 @@ export async function createAlbumThunk( // the function is async only when requi
 
 #### Thunk pre-selector
 
-The thunk might require new data and data from the state. Data from the state is extracted using the Pre Selector function.
+A thunk have a `payload` and/or access to the current state. It might not require any.
 
-* The pre selector function argument is the main State, and it returns what the thunk requires
+* The Payload are the attributes from the UI components, usually IDs referencing object in the state or new values to set in the state
+* The pre selector function argument is the main State, and it returns the properties required by the thunk
 * The pre selector function might not be required in which case it returns an empty object
 * The pre-selector's output is passed to the factory as `partialState` and gets bound to the thunk function
 
@@ -342,6 +373,7 @@ factory: ({dispatch, app, partialState: {albumId}}) => {
 
 #### Thunk Testing
 
+* **Every thunk MUST have tests associated with it.**
 * Tests are written against the business function, **not** the `ThunkDeclaration`.
 * Use **Fakes** (in-memory implementations) for ports instead of mocks, to decouple tests from adapter signatures.
   * assert write requests by inspecting the fake's state;
@@ -386,7 +418,8 @@ it("should store the new Album and dispatch albumsLoadedAction", async () => {
 
 ## Adapters
 
-Adapters abstract specific technologies or external systems to keep the codebase pure and technology-agnostic. They follow a clear separation between interface definition and implementation.
+Adapters abstract specific technologies or external systems to keep the codebase pure and technology-agnostic. They follow a clear separation between interface
+definition and implementation.
 
 ### Port Interface
 
@@ -403,7 +436,8 @@ Complete example:
 // thunks/album-createAlbum.ts
 export interface CreateAlbumPort {
     createAlbum(request: CreateAlbumRequest): Promise<AlbumId>;
-    fetchAlbums(): Promise<Album[]>;
+
+  fetchAlbums(): Promise<Album[]>;
 }
 ```
 
@@ -425,7 +459,8 @@ export class CatalogAPIAdapter implements CreateAlbumPort, DeleteAlbumPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,
-    ) {}
+    ) {
+    }
 
     async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
         const response = await this.authenticatedAxios.post('/api/v1/albums', request);

@@ -177,6 +177,8 @@ Model recommendation so far:
 
 ### Benchmark of independent story implementation
 
+Using BOTH the principles and the advanced prompt inducing the thought process.
+
 ```
 ./benchmark-llm.py edit-dates-2.1.0 --repo ../dphoto -i instructions/story-implementation.md \
             --file web/src/core/catalog/language \
@@ -189,6 +191,33 @@ Model recommendation so far:
             --file web/src/pages/authenticated/albums/DeleteAlbumDialog \
             --file web/src/pages/authenticated/albums/MediasPage/index.tsx
 ```
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------   act|thu|ui
+openrouter/x-ai/grok-3-beta                                  $    0.2400       2:07     3/5 - 2 | 2 | 1 - no tests, selector returns the state, date in the thunk arguments
+openrouter/anthropic/claude-sonnet-4                         $    0.1700       2:37     4/5 - 2 | 2 | 1 - disapointing run compared to the first one which was a 5. Used Album in the state and converted to exclusive in the dialog 
+gpt-4.1                                                      $    0.0900       4:20     1/5 - 0 | 0 | 1 - context exeeded on the last change ; design didn't follow the instructions ; no tests
+o3                                                           $    0.0700       2:02     0/5 - 0 | 0 | 0 - just asked me to do it
+gpt-4.1-mini                                                 $    0.0700       6:22     2/5 - 1 | 0 | 1 - doesn't compile (props not defined, missing imports, ...), missing one action from the design!, no thunks, doesn't use the selector
+openrouter/mistralai/mistral-large-2411                      $    0.0700       6:46     3/5 - 2 | 1 | 2 - good design, AlbumID as payload, no tests, doesn't compile (missing imports), failed writing some files
+openrouter/deepseek/deepseek-r1                              $    0.0200       3:52     3/5 - 2 | 1 | 2 - good start of a design, no tests, no selector (no integration)
+openrouter/qwen/qwen3-235b-a22b                              $    0.0076       6:17     3/5 - 2 | 0 | 2 - design is ok, no tests, different file structure
+openrouter/meta-llama/llama-3.3-70b-instruct                 $    0.0053       1:40     1/5 - 0 | 0 | 0 - design was missing a lot, no actions, generic "edit chunk", ...
+openrouter/meta-llama/llama-4-maverick                       $    0.0049       0:38     1/5 - 2 | 0 | 1 - move to a stackoverflow style with comments like "// ... exiting types"
+------------------------------------------------------------------------------------------
+Total                                                        $    0.7478      36:45
+```
+
+Comments:
+
+* How to prevent the action payload to contain too much ? - say to nuse ID, no duplication of the state unless it will not change together
+* Same for Thunk.
+* Use `YOU` on all prompt, otherwise, with `we`, it ask me to do it.
+* Insist on the tests
+* Checking looks useless
+* Should the "Architect" be introduced ? Most models are overwhelmed.
+* Ask to not run the tests
 
 #### Design and planning v2
 

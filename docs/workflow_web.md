@@ -147,18 +147,12 @@ the story.
         * if the component is a function: give its signature
         * if the component is a UI component: explain what data is rendered, what data can be input, and how the user can interact with it
 
-2. **Design validation** - re-read the story, verify that your design cover the complete journey describe, but does not overlap on the out-scoped items
-   Restart the design phase if it is not satisfying.
-
-3. **Implementation** - focus on the implementation of one component at a time with its tests:
-    1. Start with writing the tests: following the BDD requirements is recommended
+2. **Implementation** - focus on the implementation of one component at a time. **Do not forget its tests.**
+    1. Start with writing the tests following the BDD requirements
     2. Then write an implementation that pass the test
     3. Finally, move on to the next component
 
-4. **Checking** - re-read the story, re-read your design, verify that everything have been implemented, tested, and integrated with the rest.
-   Update your code if anything is missing or required to be edited.
-
-Do not wait for confirmation at any stage: write the complete implementation of the story immediately.
+Do not wait for confirmation at any stage: write the complete implementation of the story immediately. Do not ask to run the tests.
 
 Your story to implement is:
 
