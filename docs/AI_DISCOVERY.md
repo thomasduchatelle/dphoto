@@ -186,7 +186,8 @@ Model recommendation so far:
             --file web/src/pages/authenticated/albums/CatalogViewerPage.tsx \
             --file web/src/pages/authenticated/albums/CatalogViewerRoot.tsx \
             --file web/src/pages/authenticated/albums/AlbumsListActions \
-            --file web/src/pages/authenticated/albums/DeleteAlbumDialog
+            --file web/src/pages/authenticated/albums/DeleteAlbumDialog \
+            --file web/src/pages/authenticated/albums/MediasPage/index.tsx
 ```
 
 #### Design and planning v2

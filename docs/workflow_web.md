@@ -126,8 +126,7 @@ Step 3 - Feature Coding
 ```
 aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0 
 /read-only docs/principles_web.md
-/add web/src/core/catalog/language
-/ask
+# ... all the files required to change
 ```
 
 You are a strong developer prioritizing simple and well tested code. You **strictly follow the coding principles** defined in `docs/principles_web.md`. And you
@@ -158,6 +157,8 @@ the story.
 
 4. **Checking** - re-read the story, re-read your design, verify that everything have been implemented, tested, and integrated with the rest.
    Update your code if anything is missing or required to be edited.
+
+Do not wait for confirmation at any stage: write the complete implementation of the story immediately.
 
 Your story to implement is:
 
