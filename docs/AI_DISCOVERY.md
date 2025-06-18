@@ -175,6 +175,20 @@ Model recommendation so far:
     * others to be tested
 * **code fixing** (assist): `meta-llama/llama-4-maverick`
 
+### Benchmark of independent story implementation
+
+```
+./benchmark-llm.py edit-dates-2.1.0 --repo ../dphoto -i instructions/story-implementation.md \
+            --file web/src/core/catalog/language \
+            --file web/src/core/catalog/actions.ts \
+            --file web/src/core/catalog/index.ts \
+            --file web/src/core/catalog/thunks.ts  \
+            --file web/src/pages/authenticated/albums/CatalogViewerPage.tsx \
+            --file web/src/pages/authenticated/albums/CatalogViewerRoot.tsx \
+            --file web/src/pages/authenticated/albums/AlbumsListActions \
+            --file web/src/pages/authenticated/albums/DeleteAlbumDialog
+```
+
 #### Design and planning v2
 
     ## Structural Improvements

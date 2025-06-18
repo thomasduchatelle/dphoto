@@ -56,7 +56,7 @@ Before starting the development of the new feature, you need to break it down in
 * each story must represent a vertical slice of the feature: an end-to-end journey, never a technical layer
 
 Iterate as many times as you need until you have a strong and actionable list of stories. You will then write them in a clear and concise way with the following
-content:
+structure:
 
 * **title** (as header): use the pattern "As a [user], I want [feature]" (example: "As a user, I can open the delete dialog where I can see a list of deletable
   albums to choose from").
@@ -67,6 +67,8 @@ content:
   WHEN <name of the action dispatched and description of its payload>
   THEN <description of what will return the selector>
   ```
+
+  Place them in an indented code block. Don't overcharge each statement: prefer multiple and simple "given ... when ... then". Add examples where relevant.
 
 * **Out of scope**: reread the title and acceptance criteria and list here what an LLM would be tempted to do but is not in scope of this story (for example "
   validation of the fields is done by the underlying API)
