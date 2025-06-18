@@ -195,7 +195,7 @@ Using BOTH the principles and the advanced prompt inducing the thought process.
 ```
 Model                                                        Cost         Time
 ------------------------------------------------------------------------------------------   act|thu|ui
-openrouter/x-ai/grok-3-beta                                  $    0.2400       2:07     3/5 - 2 | 2 | 1 - no tests, selector returns the state, date in the thunk arguments
+openrouter/x-ai/grok-3-beta                                  $    0.2400       2:07     3/5 - 2 | 2 | 1 - design followed the instructions! no tests, selector returns the state, date in the thunk arguments
 openrouter/anthropic/claude-sonnet-4                         $    0.1700       2:37     4/5 - 2 | 2 | 1 - disapointing run compared to the first one which was a 5. Used Album in the state and converted to exclusive in the dialog 
 gpt-4.1                                                      $    0.0900       4:20     1/5 - 0 | 0 | 1 - context exeeded on the last change ; design didn't follow the instructions ; no tests
 o3                                                           $    0.0700       2:02     0/5 - 0 | 0 | 0 - just asked me to do it
