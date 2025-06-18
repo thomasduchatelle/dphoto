@@ -219,6 +219,71 @@ Comments:
 * Should the "Architect" be introduced ? Most models are overwhelmed.
 * Ask to not run the tests
 
+#### Updated principles and removed the validation from the system prompt
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.4000       3:52     1/5 - failed.
+openrouter/x-ai/grok-3-beta                                  $    0.1500       1:21     3/5 - design phase is good, implementation lack of tests
+openrouter/mistralai/mistral-large-2411                      $    0.0700       5:17     3/5 - design phase is good, implementation lack of tests, writing some files failed
+openrouter/deepseek/deepseek-r1                              $    0.0200       1:39     2/5 - design was incomplete and implementation lost the thunk and the UI, no tests
+openrouter/qwen/qwen3-235b-a22b                              $    0.0095       2:15     2/5 - design was wrong and it didn't follow it anyway
+openrouter/meta-llama/llama-4-maverick                       $    0.0043       0:37     2/5 - forgot the action on the design
+openrouter/google/gemini-2.5-pro-preview                            free       0:06     technical error
+------------------------------------------------------------------------------------------
+Total                                                        $    0.6538      15:11
+```
+
+Comments:
+
+* design of data flow looks useless, it is not used. Maybe I should drive it specifically for WEB development:
+    1. start by defining what properties are displayed by the UI component -> this is the Selection
+    2. then what action can the user trigger -> these are the thunks
+        * for each thunk, what value qualify the action which is not already in the state -> this is the payload of the thunk
+    3. define what the thunk is going to do, what data other that the payload it requires -> this is what the pre-selector returns
+    4. ...
+* actions ended up in the wrong folder after the update of the principles
+
+#### Updated principles and removed the validation from the system prompt (v2.1.6)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/x-ai/grok-3-beta                                  $    0.2300       1:42     4/5 - partially good design (album in the payload), and duplicates the state, only half of the tests 
+openrouter/anthropic/claude-sonnet-4                         $    0.1800       3:05     5/5 - good design and good implementation (the thunks are doing too much)
+openrouter/qwen/qwen3-235b-a22b                              $    0.0060       5:27     2/5 - design was well started but only implemented half of it
+openrouter/meta-llama/llama-4-maverick                       $    0.0039       1:18     1/5 - advise/forum mode
+------------------------------------------------------------------------------------------
+Total                                                        $    0.4199      11:33
+```
+
+#### Very simple prompt, with the principles (v2.1.7)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/x-ai/grok-3-beta                                  $    0.1500       1:49     3/5 - fine design (all album in the action), no tests, thunk contain placeholder
+openrouter/anthropic/claude-sonnet-4                         $    0.1500       1:50     4/5 - good desigm, no tests
+openrouter/qwen/qwen3-235b-a22b                              $    0.0200       4:26     3/5 - it doesn't look bad but editor failed
+openrouter/meta-llama/llama-4-maverick                       $    0.0038       0:23     0/5 - forum mode
+------------------------------------------------------------------------------------------
+Total                                                        $    0.3238       8:29
+```
+
+#### Very simple prompt, architect mode (v2.1.8)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/x-ai/grok-3-beta                                  $    0.2500       2:30     5/5 - (no test) no arg thunk -> action with all payload
+openrouter/anthropic/claude-sonnet-4                         $    0.2300       2:49     5/5 - design and implementation looks good.
+openrouter/qwen/qwen3-235b-a22b                              $    0.0090       4:20     3/5 - incomplete
+openrouter/meta-llama/llama-4-maverick                       $    0.0068       1:17     1/5 - no actions or thunk
+------------------------------------------------------------------------------------------
+Total                                                        $    0.4958      10:57
+```
+
 #### Design and planning v2
 
     ## Structural Improvements
