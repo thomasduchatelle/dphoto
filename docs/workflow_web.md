@@ -124,9 +124,8 @@ Step 3 - Feature Coding
 ### Interactive
 
 ```
-aider --model openrouter/google/gemini-2.5-flash-preview-05-20
-/add instructions/story-implementation-empty.md
-    web/src/core/catalog/language 
+aider
+/add web/src/core/catalog/language 
     web/src/core/catalog/actions.ts 
     web/src/core/catalog/index.ts 
     web/src/core/catalog/thunks.ts  
@@ -152,6 +151,48 @@ for code snippet for clarity:
 * if the component is an event or an action: give the schema of its payload
 * if the component is a function: give its signature
 * if the component is a UI component: explain what data is rendered, what data can be input, and how the user can interact with it
+
+Your story you are designing is:
+
+It's part of the epic:
+
+### Interactive (v2)
+
+```
+aider
+/add web/src/core/catalog/language 
+    web/src/core/catalog/actions.ts 
+    web/src/core/catalog/index.ts 
+    web/src/core/catalog/thunks.ts  
+    web/src/pages/authenticated/albums/CatalogViewerPage.tsx 
+    web/src/pages/authenticated/albums/CatalogViewerRoot.tsx 
+    web/src/pages/authenticated/albums/AlbumsListActions 
+    web/src/pages/authenticated/albums/DeleteAlbumDialog 
+    web/src/pages/authenticated/albums/MediasPage/index.tsx
+/ask        
+```
+
+You are a strong developer prioritizing simple and well tested code. You **strictly follow the coding principles** defined in `docs/principles_web.md`.
+
+You are **presenting to me the guiding principles of your design to implement the story**. You have access of the complete epic to give you context, but you
+will **focus ONLY on what is required for the story**.
+
+Using coding principles from the document, define the components involved to deliver the story. Give a thorough description of each of them, using code blocks
+for code snippet for clarity:
+
+1. **UI Component**: what data is required ? what thunks are required ?
+   For each component (updated or created), write the interface representing the properties the component(s) need to receive.
+
+2. **Thunks**: what data and ports will be required for the thunk(s) to perform their business logic
+   For each thunk, gives the function signature, and the port interface.
+
+3. **Actions**: what is the payload of each actions ?
+   For each action, gives the interface representing it.
+
+4. **State**: what changes are required in the state ? Provide a code snippet of the changes
+
+5. **Selectors**: does it need new selector(s), or updating the existing ones ? What are the properties selected ? How are they captured ?
+   Write the interface of the selection, add a comment from each comment to describe from what State properties it will come
 
 Your story you are designing is:
 
