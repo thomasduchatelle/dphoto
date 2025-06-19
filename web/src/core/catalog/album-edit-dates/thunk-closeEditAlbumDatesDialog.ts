@@ -11,13 +11,12 @@ export function closeEditAlbumDatesDialogThunk(
 
 export const closeEditAlbumDatesDialogDeclaration: ThunkDeclaration<
     CatalogViewerState,
-    {}, // No specific partial state needed from selector for this thunk
+    {},
     () => void,
     CatalogFactoryArgs
 > = {
-    selector: (state: CatalogViewerState) => ({}), // No specific data needed from state for the factory
-    factory: ({dispatch, app}) => {
-        // Bind the thunk with dispatch
-        return () => closeEditAlbumDatesDialogThunk(dispatch);
+    selector: ({}: CatalogViewerState) => ({}),
+    factory: ({dispatch}) => {
+        return closeEditAlbumDatesDialogThunk.bind(null, dispatch);
     },
 };

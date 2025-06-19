@@ -1,4 +1,4 @@
-import {Album, AlbumFilterCriterion, albumIdEquals, albumMatchCriterion, CatalogViewerState} from "../language";
+import {Album, AlbumFilterCriterion, albumIdEquals, albumMatchCriterion, CatalogViewerState, currentAlbumIdSelector} from "../language";
 import {AlbumsFiltered, albumsFiltered} from "./action-albumsFiltered";
 import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
@@ -27,8 +27,8 @@ export const onAlbumFilterChangeDeclaration: ThunkDeclaration<
     factory: ({dispatch, partialState}) => {
         return onAlbumFilterFunction.bind(null, dispatch, partialState);
     },
-    selector: ({mediasLoadedFromAlbumId, loadingMediasFor, allAlbums}: CatalogViewerState): AlbumFilterHandlerState => {
-        const albumId = loadingMediasFor || mediasLoadedFromAlbumId;
+    selector: ({allAlbums, ...state}: CatalogViewerState): AlbumFilterHandlerState => {
+        const albumId = currentAlbumIdSelector(state);
         const selectedAlbum = allAlbums.find(album => albumId && albumIdEquals(albumId, album.albumId))
 
         return {

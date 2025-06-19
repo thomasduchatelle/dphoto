@@ -1,24 +1,25 @@
-import {AlbumId} from "../../language";
+import {AlbumId, CatalogViewerState, currentAlbumIdSelector} from "../language";
 import {editAlbumDatesDialogOpened, EditAlbumDatesDialogOpened} from "./action-editAlbumDatesDialogOpened";
-import {CatalogViewerState} from "../language";
 import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 
 export function openEditAlbumDatesDialogThunk(
     dispatch: (action: EditAlbumDatesDialogOpened) => void,
-    albumId: AlbumId,
+    albumId?: AlbumId,
 ): void {
-    dispatch(editAlbumDatesDialogOpened(albumId));
+    if (albumId) {
+        dispatch(editAlbumDatesDialogOpened(albumId));
+    }
 }
 
 export const openEditAlbumDatesDialogDeclaration: ThunkDeclaration<
     CatalogViewerState,
-    {},
-    (albumId: AlbumId) => void,
+    { albumId?: AlbumId },
+    () => void,
     CatalogFactoryArgs
 > = {
-    selector: (state: CatalogViewerState) => ({}),
-    factory: ({dispatch, app}) => {
-        return (albumId: AlbumId) => openEditAlbumDatesDialogThunk(dispatch, albumId);
+    selector: (state: CatalogViewerState) => ({albumId: currentAlbumIdSelector(state)}),
+    factory: ({dispatch, partialState: {albumId}}) => {
+        return openEditAlbumDatesDialogThunk.bind(null, dispatch, albumId);
     },
 };
