@@ -28,7 +28,9 @@ export function CatalogViewerPage() {
             openSharingModal,
             closeSharingModal,
             revokeAlbumAccess,
-            grantAlbumSharing
+            grantAlbumSharing,
+            openEditAlbumDatesDialog, // New thunk handler
+            closeEditAlbumDatesDialog, // New thunk handler
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -62,6 +64,7 @@ export function CatalogViewerPage() {
                             options={state.albumFilterOptions}
                             onAlbumFiltered={onAlbumFilterChange}
                             openDeleteAlbumDialog={openDeleteAlbumDialog}
+                            openEditAlbumDatesDialog={openEditAlbumDatesDialog} // Pass new thunk
                             {...controls}
                         />
                         <AlbumsList albums={state.albums}
@@ -77,6 +80,7 @@ export function CatalogViewerPage() {
                         scrollToMedia={search.get("mediaId") ?? undefined}
                         openSharingModal={openSharingModal}
                         openDeleteAlbumDialog={openDeleteAlbumDialog}
+                        openEditAlbumDatesDialog={openEditAlbumDatesDialog} // Pass new thunk
                         {...controls}
                     />
                 )}

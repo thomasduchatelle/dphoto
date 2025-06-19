@@ -3,6 +3,8 @@ import type {ThunkDeclaration} from "../thunk-engine";
 import {createAlbumDeclaration} from "./album-create";
 import {onAlbumFilterChangeDeclaration, onPageRefreshDeclaration} from "./navigation";
 import {closeDeleteAlbumDialogDeclaration, deleteAlbumDeclaration, openDeleteAlbumDialogDeclaration} from "./album-delete";
+import {openEditAlbumDatesDialogDeclaration} from "./album-edit-dates/thunk-openEditAlbumDatesDialog"; // New import
+import {closeEditAlbumDatesDialogDeclaration} from "./album-edit-dates/thunk-closeEditAlbumDatesDialog"; // New import
 
 export * from "./common/catalog-factory-args";
 export type {FetchAlbumsPort} from "./navigation/thunk-onPageRefresh";
@@ -12,6 +14,8 @@ export type {CreateAlbumThunk, CreateAlbumRequest, CreateAlbumPort} from "./albu
 export type {DeleteAlbumThunk, DeleteAlbumPort} from "./album-delete/thunk-deleteAlbum";
 export {openDeleteAlbumDialogThunk} from "./album-delete/thunk-openDeleteAlbumDialog";
 export {closeDeleteAlbumDialogThunk} from "./album-delete/thunk-closeDeleteAlbumDialog";
+export {openEditAlbumDatesDialogThunk} from "./album-edit-dates/thunk-openEditAlbumDatesDialog"; // New export
+export {closeEditAlbumDatesDialogThunk} from "./album-edit-dates/thunk-closeEditAlbumDatesDialog"; // New export
 
 export const catalogThunks = {
     onPageRefresh: onPageRefreshDeclaration,
@@ -24,6 +28,8 @@ export const catalogThunks = {
     deleteAlbum: deleteAlbumDeclaration,
     openDeleteAlbumDialog: openDeleteAlbumDialogDeclaration,
     closeDeleteAlbumDialog: closeDeleteAlbumDialogDeclaration,
+    openEditAlbumDatesDialog: openEditAlbumDatesDialogDeclaration, // New thunk registration
+    closeEditAlbumDatesDialog: closeEditAlbumDatesDialogDeclaration, // New thunk registration
 };
 
 // Dynamically infer the interface from catalogThunks
