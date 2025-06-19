@@ -1,5 +1,4 @@
-import {AlbumId, CatalogViewerState} from "../../language";
-import {albumIdEquals} from "../../language/utils-albumIdEquals";
+import {albumIdEquals, CatalogViewerState} from "../language";
 
 export interface EditAlbumDatesDialogSelection {
     isOpen: boolean;
