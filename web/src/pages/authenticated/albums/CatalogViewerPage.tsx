@@ -8,11 +8,12 @@ import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
-import {albumIdEquals, deleteDialogSelector, sharingDialogSelector} from "../../../core/catalog";
+import {albumIdEquals, deleteDialogSelector, sharingDialogSelector, editAlbumDatesDialogSelector} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 import ShareDialog from "./ShareDialog";
 import {DeleteAlbumDialog} from "./DeleteAlbumDialog";
+import {EditAlbumDatesDialog} from "./EditAlbumDatesDialog";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
@@ -30,6 +31,7 @@ export function CatalogViewerPage() {
             revokeAlbumAccess,
             grantAlbumSharing,
             openEditAlbumDatesDialog,
+            closeEditAlbumDatesDialog,
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -93,6 +95,10 @@ export function CatalogViewerPage() {
                 {...deleteDialogSelector(state)}
                 onDelete={deleteAlbum}
                 onClose={closeDeleteAlbumDialog}
+            />
+            <EditAlbumDatesDialog
+                {...editAlbumDatesDialogSelector(state)}
+                onClose={closeEditAlbumDatesDialog}
             />
         </Box>
     );
