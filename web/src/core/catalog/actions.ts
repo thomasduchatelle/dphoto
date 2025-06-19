@@ -39,10 +39,19 @@ import {
     deleteAlbumStartedReducerRegistration
 } from "./album-delete";
 import {CatalogViewerState} from "./language";
+import {
+    EditAlbumDatesDialogClosed,
+    editAlbumDatesDialogClosedReducerRegistration
+} from "./album-edit-dates/action-editAlbumDatesDialogClosed"; // New import
+import {
+    EditAlbumDatesDialogOpened,
+    editAlbumDatesDialogOpenedReducerRegistration
+} from "./album-edit-dates/action-editAlbumDatesDialogOpened"; // New import
 
 export * from "./album-delete/selector-deleteDialogSelector";
 export * from "./sharing/selector-sharingDialogSelector";
 export * from "./navigation";
+export * from "./album-edit-dates/selector-editAlbumDatesDialogSelector"; // New export
 
 export type {
     AlbumAccessGranted,
@@ -62,6 +71,8 @@ export type {
     AlbumDeleteFailed,
     DeleteAlbumDialogClosed,
     DeleteAlbumStarted,
+    EditAlbumDatesDialogOpened, // New type export
+    EditAlbumDatesDialogClosed, // New type export
 };
 
 export type CatalogViewerAction =
@@ -82,6 +93,8 @@ export type CatalogViewerAction =
     | AlbumDeleteFailed
     | DeleteAlbumDialogClosed
     | DeleteAlbumStarted
+    | EditAlbumDatesDialogOpened // New action type
+    | EditAlbumDatesDialogClosed // New action type
 
 const reducerRegistrations = [
     albumAccessGrantedReducerRegistration,
@@ -101,6 +114,8 @@ const reducerRegistrations = [
     albumDeleteFailedReducerRegistration,
     deleteAlbumDialogClosedReducerRegistration,
     deleteAlbumStartedReducerRegistration,
+    editAlbumDatesDialogOpenedReducerRegistration, // New reducer registration
+    editAlbumDatesDialogClosedReducerRegistration, // New reducer registration
 ];
 
 function buildHandlers() {
