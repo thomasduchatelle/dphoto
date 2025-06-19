@@ -30,7 +30,7 @@ describe("action:editAlbumDatesDialogOpened", () => {
         });
     });
 
-    it("opens the dialog even when the AlbumId doesn't exist in the current albums list, displaying default values", () => {
+    it("should not open the dialog when the AlbumId doesn't exist", () => {
         const nonExistentAlbumId = {owner: "unknown", folderName: "non-existent"};
         const stateWithoutAlbum: CatalogViewerState = {
             ...baseState,
@@ -43,14 +43,7 @@ describe("action:editAlbumDatesDialogOpened", () => {
 
         const selection = editAlbumDatesDialogSelector(newState);
 
-        expect(selection.isOpen).toBe(true);
-        expect(selection.albumName).toBe(""); // Default empty string
-        expect(selection.startDate).toEqual(expect.any(Date)); // Default new Date()
-        expect(selection.endDate).toEqual(expect.any(Date));   // Default new Date()
-        expect(selection.isStartDateAtStartOfDay).toBe(true);
-        expect(selection.isEndDateAtEndOfDay).toBe(true);
-
-        // Verify that the state itself reflects the dialog being open with the non-existent albumId
-        expect(newState.editAlbumDatesDialog).toEqual({albumId: nonExistentAlbumId});
+        expect(selection.isOpen).toBe(false);
+        expect(newState.editAlbumDatesDialog).toBeUndefined();
     });
 });
