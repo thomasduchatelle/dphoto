@@ -1,10 +1,9 @@
-import {CatalogViewerState, initialCatalogState} from "../language";
-import {loadedStateWithTwoAlbums, myselfUser, twoAlbums} from "../tests/test-helper-state";
+import {CatalogViewerState} from "../language";
+import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {editAlbumDatesDialogClosed, reduceEditAlbumDatesDialogClosed} from "./action-editAlbumDatesDialogClosed";
 import {editAlbumDatesDialogSelector} from "./selector-editAlbumDatesDialogSelector";
 
 describe("action:editAlbumDatesDialogClosed", () => {
-    const baseState = initialCatalogState(myselfUser);
     const jan2025Album = twoAlbums[0];
 
     const editDateDialogOpenForAlbum0: Partial<CatalogViewerState> = {

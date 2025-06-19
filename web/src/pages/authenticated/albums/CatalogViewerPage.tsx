@@ -29,8 +29,8 @@ export function CatalogViewerPage() {
             closeSharingModal,
             revokeAlbumAccess,
             grantAlbumSharing,
-            openEditAlbumDatesDialog, // New thunk handler
-            closeEditAlbumDatesDialog, // New thunk handler
+            openEditAlbumDatesDialog,
+            closeEditAlbumDatesDialog,
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -41,7 +41,6 @@ export function CatalogViewerPage() {
 
     const theme = useTheme()
 
-    // '/albums' page is only available on small devices
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
     const isAlbumsPage = pathname === '/albums'
 
@@ -64,7 +63,8 @@ export function CatalogViewerPage() {
                             options={state.albumFilterOptions}
                             onAlbumFiltered={onAlbumFilterChange}
                             openDeleteAlbumDialog={openDeleteAlbumDialog}
-                            openEditAlbumDatesDialog={openEditAlbumDatesDialog} // Pass new thunk
+                            openEditAlbumDatesDialog={openEditAlbumDatesDialog}
+                            selectedAlbumId={selectedAlbumId}
                             {...controls}
                         />
                         <AlbumsList albums={state.albums}
@@ -80,7 +80,7 @@ export function CatalogViewerPage() {
                         scrollToMedia={search.get("mediaId") ?? undefined}
                         openSharingModal={openSharingModal}
                         openDeleteAlbumDialog={openDeleteAlbumDialog}
-                        openEditAlbumDatesDialog={openEditAlbumDatesDialog} // Pass new thunk
+                        openEditAlbumDatesDialog={openEditAlbumDatesDialog}
                         {...controls}
                     />
                 )}

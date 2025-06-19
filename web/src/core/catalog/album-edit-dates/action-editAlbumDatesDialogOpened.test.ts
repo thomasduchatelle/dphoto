@@ -9,7 +9,7 @@ describe("action:editAlbumDatesDialogOpened", () => {
 
     it("opens the dialog with an inclusive-exclusive dates range for the album ID for January 2025", () => {
         const stateWithAlbums: CatalogViewerState = {
-            ...(loadedStateWithTwoAlbums),
+            ...loadedStateWithTwoAlbums,
             albums: [jan2025Album, feb2025Album],
             allAlbums: [jan2025Album, feb2025Album],
         };
@@ -32,7 +32,7 @@ describe("action:editAlbumDatesDialogOpened", () => {
     it("should not open the dialog when the AlbumId doesn't exist", () => {
         const nonExistentAlbumId = {owner: "unknown", folderName: "non-existent"};
         const stateWithoutAlbum: CatalogViewerState = {
-            ...(loadedStateWithTwoAlbums),
+            ...loadedStateWithTwoAlbums,
             albums: [jan2025Album], // Only one album, not the one we're looking for
             allAlbums: [jan2025Album],
         };
