@@ -1,20 +1,21 @@
 import {initialCatalogState} from "../../language/initial-catalog-state";
-import {myselfUser, summerTripAlbum} from "../tests/test-helper-state";
+import {myselfUser, twoAlbums} from "../tests/test-helper-state";
 import {reduceEditAlbumDatesDialogClosed, editAlbumDatesDialogClosed} from "./action-editAlbumDatesDialogClosed";
 import {editAlbumDatesDialogSelector} from "./selector-editAlbumDatesDialogSelector";
 import {CatalogViewerState} from "../../language";
 
 describe("action:editAlbumDatesDialogClosed", () => {
     const baseState = initialCatalogState(myselfUser);
+    const jan2025Album = twoAlbums[0];
 
     it("closes the dialog and clears the album ID", () => {
         const stateWithDialogOpened: CatalogViewerState = {
             ...baseState,
             editAlbumDatesDialog: {
-                albumId: summerTripAlbum.albumId,
+                albumId: jan2025Album.albumId,
             },
-            albums: [summerTripAlbum], // Ensure album is present for selector to find it
-            allAlbums: [summerTripAlbum],
+            albums: [jan2025Album], // Ensure album is present for selector to find it
+            allAlbums: [jan2025Album],
         };
 
         const action = editAlbumDatesDialogClosed();
@@ -37,10 +38,10 @@ describe("action:editAlbumDatesDialogClosed", () => {
         const stateWithDialogOpened: CatalogViewerState = {
             ...baseState,
             editAlbumDatesDialog: {
-                albumId: summerTripAlbum.albumId,
+                albumId: jan2025Album.albumId,
             },
-            albums: [summerTripAlbum],
-            allAlbums: [summerTripAlbum],
+            albums: [jan2025Album],
+            allAlbums: [jan2025Album],
             mediasLoaded: true, // Example of another property
         };
 

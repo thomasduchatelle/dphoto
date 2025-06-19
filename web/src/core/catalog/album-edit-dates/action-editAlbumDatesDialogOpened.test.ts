@@ -1,51 +1,53 @@
 import {initialCatalogState} from "../../language/initial-catalog-state";
-import {myselfUser, summerTripAlbum, winterHolidaysAlbum} from "../tests/test-helper-state";
+import {myselfUser, twoAlbums} from "../tests/test-helper-state";
 import {reduceEditAlbumDatesDialogOpened, editAlbumDatesDialogOpened} from "./action-editAlbumDatesDialogOpened";
 import {editAlbumDatesDialogSelector} from "./selector-editAlbumDatesDialogSelector";
 import {CatalogViewerState} from "../../language";
 
 describe("action:editAlbumDatesDialogOpened", () => {
     const baseState = initialCatalogState(myselfUser);
+    const jan2025Album = twoAlbums[0];
+    const feb2025Album = twoAlbums[1];
 
-    it("opens the dialog and sets the album ID for Summer Trip", () => {
+    it("opens the dialog and sets the album ID for January 2025", () => {
         const stateWithAlbums: CatalogViewerState = {
             ...baseState,
-            albums: [summerTripAlbum, winterHolidaysAlbum],
-            allAlbums: [summerTripAlbum, winterHolidaysAlbum],
+            albums: [jan2025Album, feb2025Album],
+            allAlbums: [jan2025Album, feb2025Album],
         };
 
-        const action = editAlbumDatesDialogOpened(summerTripAlbum.albumId);
+        const action = editAlbumDatesDialogOpened(jan2025Album.albumId);
         const newState = reduceEditAlbumDatesDialogOpened(stateWithAlbums, action);
 
         const selection = editAlbumDatesDialogSelector(newState);
 
         expect(selection).toEqual({
             isOpen: true,
-            albumName: "Summer Trip",
-            startDate: new Date("2023-07-01T00:00:00.000Z"),
-            endDate: new Date("2023-07-31T23:59:59.999Z"), // Inclusive end date
+            albumName: "January 2025",
+            startDate: new Date(2025, 0, 1),
+            endDate: new Date(2025, 0, 31, 23, 59, 59, 999), // Inclusive end date
             isStartDateAtStartOfDay: true,
             isEndDateAtEndOfDay: true,
         });
     });
 
-    it("opens the dialog and sets the album ID for Winter Holidays", () => {
+    it("opens the dialog and sets the album ID for February 2025", () => {
         const stateWithAlbums: CatalogViewerState = {
             ...baseState,
-            albums: [summerTripAlbum, winterHolidaysAlbum],
-            allAlbums: [summerTripAlbum, winterHolidaysAlbum],
+            albums: [jan2025Album, feb2025Album],
+            allAlbums: [jan2025Album, feb2025Album],
         };
 
-        const action = editAlbumDatesDialogOpened(winterHolidaysAlbum.albumId);
+        const action = editAlbumDatesDialogOpened(feb2025Album.albumId);
         const newState = reduceEditAlbumDatesDialogOpened(stateWithAlbums, action);
 
         const selection = editAlbumDatesDialogSelector(newState);
 
         expect(selection).toEqual({
             isOpen: true,
-            albumName: "Winter Holidays",
-            startDate: new Date("2024-12-20T00:00:00.000Z"),
-            endDate: new Date("2025-01-04T23:59:59.999Z"), // Inclusive end date
+            albumName: "February 2025",
+            startDate: new Date(2025, 1, 1),
+            endDate: new Date(2025, 1, 28, 23, 59, 59, 999), // Inclusive end date (Feb 2025 has 28 days)
             isStartDateAtStartOfDay: true,
             isEndDateAtEndOfDay: true,
         });
@@ -54,12 +56,12 @@ describe("action:editAlbumDatesDialogOpened", () => {
     it("should not change other state properties", () => {
         const stateWithAlbums: CatalogViewerState = {
             ...baseState,
-            albums: [summerTripAlbum, winterHolidaysAlbum],
-            allAlbums: [summerTripAlbum, winterHolidaysAlbum],
+            albums: [jan2025Album, feb2025Album],
+            allAlbums: [jan2025Album, feb2025Album],
             mediasLoaded: true, // Example of another property
         };
 
-        const action = editAlbumDatesDialogOpened(summerTripAlbum.albumId);
+        const action = editAlbumDatesDialogOpened(jan2025Album.albumId);
         const newState = reduceEditAlbumDatesDialogOpened(stateWithAlbums, action);
 
         expect(newState.mediasLoaded).toBe(true);
