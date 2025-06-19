@@ -1,8 +1,9 @@
-const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export function toLocaleDate(date: Date): string {
+    return date.toLocaleDateString('en-CA', {year: 'numeric', month: '2-digit', day: '2-digit'});
+}
 
-export function toLocaleDateWithDay(date: Date) {
-    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
+export function toLocaleDateWithDay(date: Date): string {
+    return `${date.toLocaleDateString('en-CA', {weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit'})}`
 }
 
 export function dateTimeToString(date: Date) {
