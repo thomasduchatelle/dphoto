@@ -30,7 +30,6 @@ export function CatalogViewerPage() {
             revokeAlbumAccess,
             grantAlbumSharing,
             openEditAlbumDatesDialog,
-            closeEditAlbumDatesDialog,
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -64,7 +63,6 @@ export function CatalogViewerPage() {
                             onAlbumFiltered={onAlbumFilterChange}
                             openDeleteAlbumDialog={openDeleteAlbumDialog}
                             openEditAlbumDatesDialog={openEditAlbumDatesDialog}
-                            selectedAlbumId={selectedAlbumId}
                             {...controls}
                         />
                         <AlbumsList albums={state.albums}

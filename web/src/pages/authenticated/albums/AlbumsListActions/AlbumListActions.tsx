@@ -2,19 +2,18 @@ import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
 import {Box, IconButton} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
-import {AlbumId, CreateAlbumControls} from "../../../../core/catalog";
+import EditIcon from "@mui/icons-material/Edit";
+import {CreateAlbumControls} from "../../../../core/catalog";
 
 
 export default function AlbumListActions({
                                              openDialogForCreateAlbum,
                                              openDeleteAlbumDialog,
                                              openEditAlbumDatesDialog,
-                                             selectedAlbumId,
                                              ...props
                                          }: OwnerSelectorProps & CreateAlbumControls & {
     openDeleteAlbumDialog: () => void;
-    openEditAlbumDatesDialog: (albumId: AlbumId) => void;
-    selectedAlbumId?: AlbumId;
+    openEditAlbumDatesDialog: () => void;
 }) {
     return (
         <Box sx={{
@@ -29,16 +28,8 @@ export default function AlbumListActions({
             <IconButton color="primary" onClick={openDialogForCreateAlbum} size="large">
                 <AddIcon/>
             </IconButton>
-            <IconButton
-                color="primary"
-                size="large"
-                onClick={() => {
-                    if (selectedAlbumId) {
-                        openEditAlbumDatesDialog(selectedAlbumId);
-                    }
-                }}
-            >
-                <DeleteIcon/>
+            <IconButton color="primary" onClick={openEditAlbumDatesDialog} size="large">
+                <EditIcon/>
             </IconButton>
             <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog}>
                 <DeleteIcon/>
