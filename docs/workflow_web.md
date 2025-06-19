@@ -143,7 +143,8 @@ You are a strong developer prioritizing simple and well tested code. You **stric
 You are **presenting to me the guiding principles of your design to implement the story**. You have access of the complete epic to give you context, but you
 will **focus ONLY on what is required for the story**.
 
-Using coding principles from the document, define the components (by name and type) involved to deliver the story. Give a thorough description of each of them:
+Using coding principles from the document, define the components involved to deliver the story. Give a thorough description of each of them, using code blocks
+for code snippet for clarity:
 
 * name
 * if it's "new", or "updated", or "reused" (and not updated)

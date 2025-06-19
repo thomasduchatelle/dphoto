@@ -271,17 +271,48 @@ openrouter/meta-llama/llama-4-maverick                       $    0.0038       0
 Total                                                        $    0.3238       8:29
 ```
 
-#### Very simple prompt, architect mode (v2.1.8)
+#### Very simple prompt, architect mode (v2.1.8 & v2.1.12)
 
 ```
 Model                                                        Cost         Time
 ------------------------------------------------------------------------------------------
+openrouter/google/gemini-2.5-pro-preview                     $    0.3000       5:58     4/5 - (harsh note, no test) thunk payload is better (empty), but the action contains the full Album
 openrouter/x-ai/grok-3-beta                                  $    0.2500       2:30     5/5 - (no test) no arg thunk -> action with all payload
 openrouter/anthropic/claude-sonnet-4                         $    0.2300       2:49     5/5 - design and implementation looks good.
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0200       2:14     5/5 - (with tests) looks it could work out of the box !
 openrouter/qwen/qwen3-235b-a22b                              $    0.0090       4:20     3/5 - incomplete
 openrouter/meta-llama/llama-4-maverick                       $    0.0068       1:17     1/5 - no actions or thunk
 ------------------------------------------------------------------------------------------
 Total                                                        $    0.4958      10:57
+Total                                                        $    0.3200       8:13     (gemini x2)
+```
+
+#### Very simple prompt, no guidelines, architect mode (v2.1.10)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------
+openrouter/anthropic/claude-sonnet-4                         $    0.2100       2:53     3/5 - pretty close from the expectation
+openrouter/x-ai/grok-3-beta                                  $    0.1800       1:55     1/5 - only UI side
+openrouter/qwen/qwen3-235b-a22b                              $    0.0200       6:07     2/5 - tried to extrapolate what was needed, not bad but very incomplete
+openrouter/meta-llama/llama-4-maverick                       $    0.0054       0:47     1/5 - only did the frontend side
+------------------------------------------------------------------------------------------
+Total                                                        $    0.4154      11:43
+```
+
+#### Only ask of the design (ask mode)
+
+```
+Model                                                        Cost         Time
+------------------------------------------------------------------------------------------   act|thu|sel
+openrouter/x-ai/grok-3-beta                                  $    0.0900       0:37     5/5 - 2 | 2 | 1 - minor changes on the selector required
+openrouter/anthropic/claude-sonnet-4                         $    0.0700       0:28     4/5 - 2 | 2 | 1 - thunk contains too many args
+openrouter/google/gemini-2.5-pro-preview                     $    0.0400       0:45     3/5 - 2 | 2 | 1 - using the Album in the state
+openrouter/google/gemini-2.5-flash-preview-05-20             $    0.0037       0:17     5/5 - 2 | 2 | 1 - using AlbumId in the action, too many props in the state
+openrouter/qwen/qwen3-235b-a22b                              $    0.0035       0:38     3/5 - 2 | 2 | 1 - ALbumID and dates in the action, thunks looks overloaded
+openrouter/meta-llama/llama-4-maverick                       $    0.0030       0:11     1/5 - 1 | 1 | 1 - close is mmissing.
+------------------------------------------------------------------------------------------
+Total
 ```
 
 #### Design and planning v2
