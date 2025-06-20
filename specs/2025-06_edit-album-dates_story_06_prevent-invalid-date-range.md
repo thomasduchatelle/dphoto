@@ -26,6 +26,12 @@ AND the start date is "2023-01-25" and the end date is "2023-01-20" (an invalid 
 WHEN I correct the start date to "2023-01-15" (making it valid)
 THEN the error message next to the end date field disappears
 AND the "Save" button becomes enabled
+
+GIVEN the "Edit Dates" dialog is open for an album I own
+AND the start date is "2023-01-10" and the end date is "2023-01-10" (same date)
+THEN no error message is displayed
+AND the "Save" button remains enabled
+AND the album covers the full day from 2023-01-10T00:00:00 to 2023-01-11T00:00:00 when saved
 ```
 
 ## Out of scope:

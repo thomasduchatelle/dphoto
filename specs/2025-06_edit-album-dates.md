@@ -48,9 +48,21 @@ The "Edit Dates" feature allows users to update the start and end dates of an al
   - API/State format: start = 2025-01-01T00:00:00, end = 2025-02-01T00:00:00
   - Displayed format (default): start = 2025-01-01, end = 2025-01-31
   - Displayed format (with time): start = 2025-01-01 00:00 (when "at the start of the day" is checked), end = 2025-01-31 23:59 (when "at the end of the day" is checked)
-* When the user updates the dates:
-  - If the user selects start = 2025-01-15 and unticks "at the start of the day" to input 10:00, the internal state should be 2025-01-15T10:00:00.
-  - If the user selects end = 2025-01-20 and unticks "at the end of the day" to input 15:00, the internal state should be 2025-01-20T15:00:00. Upon saving, this should be converted to an exclusive end date: 2025-01-20T15:00:01.
+
+#### Time Conversion Logic
+**Start Times (always inclusive):**
+* When "at the start of the day" is checked: store as 00:00:00
+* When unchecked: store exactly as entered (e.g., 10:00 → 10:00:00)
+
+**End Times (converted to exclusive):**
+* When "at the end of the day" is checked: store as next day 00:00:00 (e.g., 2025-01-31 end of day → 2025-02-01T00:00:00)
+* When unchecked with default 23:59: store as next day 00:00:00 (e.g., 2025-01-31 23:59 → 2025-02-01T00:00:00)
+* When unchecked with specific time: add 1 minute to make exclusive (e.g., 15:00 → 15:01:00, 11:42 → 11:43:00)
+
+**Examples:**
+* User selects start = 2025-01-15 and unticks "at the start of the day" to input 10:00 → stored as 2025-01-15T10:00:00
+* User selects end = 2025-01-20 and unticks "at the end of the day" to input 15:00 → stored as 2025-01-20T15:01:00
+* User selects end = 2025-01-20 and unticks "at the end of the day" to input 11:42 → stored as 2025-01-20T11:43:00
 
 ## 4. Technical Context
 * The feature uses a new dialog for editing album dates.
