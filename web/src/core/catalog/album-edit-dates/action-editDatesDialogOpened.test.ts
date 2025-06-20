@@ -1,7 +1,7 @@
 import {editDatesDialogOpened, reduceEditDatesDialogOpened} from "./action-editDatesDialogOpened";
 import {CatalogViewerState} from "../language";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
-import {editDatesDialogSelector} from "./selector-editDatesDialogSelector";
+import {DEFAULT_EDIT_DATES_DIALOG_SELECTION, editDatesDialogSelector} from "./selector-editDatesDialogSelector";
 
 const jan25Album = twoAlbums[0];
 const feb25Album = twoAlbums[1];
@@ -12,13 +12,11 @@ describe("action:editDatesDialogOpened", () => {
         const got = editDatesDialogSelector(state);
 
         expect(got).toEqual({
+            ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
             isOpen: true,
             albumName: jan25Album.name,
             startDate: new Date(2025, 0, 1),
             endDate: new Date(2025, 0, 31),
-            startAtDayStart: true,
-            endAtDayEnd: true,
-            isLoading: false,
         });
     });
 
@@ -33,13 +31,11 @@ describe("action:editDatesDialogOpened", () => {
         const got = editDatesDialogSelector(state);
 
         expect(got).toEqual({
+            ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
             isOpen: true,
             albumName: feb25Album.name,
             startDate: new Date(2025, 1, 1),
             endDate: new Date(2025, 2, 0),
-            startAtDayStart: true,
-            endAtDayEnd: true,
-            isLoading: false,
         });
     });
 
@@ -55,6 +51,7 @@ describe("action:editDatesDialogOpened", () => {
         const dialogSelection = editDatesDialogSelector(got);
 
         expect(dialogSelection.isOpen).toBeFalsy();
+        expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
         expect(got).toEqual(state); // Ensure no other state changes
     });
 
@@ -69,6 +66,7 @@ describe("action:editDatesDialogOpened", () => {
         const dialogSelection = editDatesDialogSelector(got);
 
         expect(dialogSelection.isOpen).toBeFalsy();
+        expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
         expect(got).toEqual(state); // Ensure no other state changes
     });
 });
