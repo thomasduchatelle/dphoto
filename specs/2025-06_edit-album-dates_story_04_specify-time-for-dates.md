@@ -21,8 +21,7 @@ THEN a time input field appears next to the end date field
 AND the time input field defaults to "23:59"
 WHEN I enter "15:00" into the end time input field
 AND I click the "Save" button
-THEN the API request to update the album includes the end date with the specified time, converted to be exclusive by adding one minute, for example, if the user selected "YYYY-MM-DD 15:00", the API request will con
-tain "YYYY-MM-DDT15:01:00"
+THEN the API request to update the album includes the end date with the specified time, converted to be exclusive by adding one minute, for example, if the user selected "YYYY-MM-DD 15:00", the API request will contain "YYYY-MM-DDT15:01:00"
 
 GIVEN the "Edit Dates" dialog is open for an album I own
 AND the "at the start of the day" checkbox for the start date is unchecked
@@ -38,7 +37,7 @@ AND a specific time is entered in the end time input field (e.g., "15:00")
 WHEN I check the "at the end of the day" checkbox
 THEN the time input field for the end date disappears
 AND the internal time for the end date reverts to "23:59"
-AND if I click the "Save" button, the API request will contain "YYYY-MM-DDT23:59:00" for the end date, which will be converted to "YYYY-MM-DD+1T00:00:00" for the exclusive end date in the API request
+AND if I click the "Save" button, the API request will contain "YYYY-MM-DD+1T00:00:00" for the exclusive end date (converting 23:59 end-of-day to next day 00:00:00)
 
 GIVEN I open the "Edit Dates" dialog for an album that has a start date of "2023-01-01T10:00:00" and an end date of "2023-01-05T14:30:00"
 THEN the "at the start of the day" checkbox for the start date is unchecked
