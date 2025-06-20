@@ -1,14 +1,15 @@
-import {AlbumId, Album, Media} from "../language";
+import {AlbumId, Album, Media, MediaWithinADay} from "../language";
 import {albumDatesUpdateStarted, AlbumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumDatesUpdated, AlbumDatesUpdated} from "./action-albumDatesUpdated";
 import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
+import {MediaPerDayLoader} from "../navigation/MediaPerDayLoader";
 
 export interface UpdateAlbumDatesPort {
     updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void>;
     fetchAlbums(): Promise<Album[]>;
-    fetchMedias(albumId: AlbumId): Promise<Media[]>;
+    fetchMedias(albumId: AlbumId): Promise<{medias: MediaWithinADay[]}>;
 }
 
 export async function updateAlbumDatesThunk(
@@ -29,12 +30,12 @@ export async function updateAlbumDatesThunk(
 
     await updateAlbumDatesPort.updateAlbumDates(albumId, apiStartDate, apiEndDate);
 
-    const [albums, medias] = await Promise.all([
+    const [albums, mediasResp] = await Promise.all([
         updateAlbumDatesPort.fetchAlbums(),
         updateAlbumDatesPort.fetchMedias(albumId)
     ]);
 
-    dispatch(albumDatesUpdated({albums, medias}));
+    dispatch(albumDatesUpdated({albums, medias: mediasResp.medias}));
 }
 
 export const updateAlbumDatesDeclaration: ThunkDeclaration<
@@ -50,7 +51,11 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
     }),
 
     factory: ({dispatch, app, partialState: {albumId, startDate, endDate}}) => {
-        const updateAlbumDatesPort: UpdateAlbumDatesPort = new CatalogAPIAdapter(app.axiosInstance, app);
+        const restAdapter = new CatalogAPIAdapter(app.axiosInstance, app);
+        const updateAlbumDatesPort: UpdateAlbumDatesPort = {
+            ...restAdapter,
+            fetchMedias: (albumId: AlbumId) => new MediaPerDayLoader(restAdapter).loadMedias(albumId)
+        };
         return (newStartDate: Date, newEndDate: Date) => 
             updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, albumId, newStartDate, newEndDate);
     },

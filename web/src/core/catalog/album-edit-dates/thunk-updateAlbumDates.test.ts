@@ -2,14 +2,14 @@ import {updateAlbumDatesThunk, UpdateAlbumDatesPort} from "./thunk-updateAlbumDa
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumDatesUpdated} from "./action-albumDatesUpdated";
 import {twoAlbums, someMedias} from "../tests/test-helper-state";
-import {Album, Media, AlbumId} from "../language";
+import {Album, Media, AlbumId, MediaWithinADay} from "../language";
 
 class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
     public updatedAlbums: {albumId: AlbumId, startDate: Date, endDate: Date}[] = [];
     
     constructor(
         private albums: Album[] = [],
-        private medias: Media[] = []
+        private medias: MediaWithinADay[] = []
     ) {}
 
     async updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void> {
@@ -20,14 +20,14 @@ class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
         return this.albums;
     }
 
-    async fetchMedias(albumId: AlbumId): Promise<Media[]> {
-        return this.medias;
+    async fetchMedias(albumId: AlbumId): Promise<{medias: MediaWithinADay[]}> {
+        return {medias: this.medias};
     }
 }
 
 describe("thunk:updateAlbumDates", () => {
     it("should convert display dates to API format and dispatch actions", async () => {
-        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, someMedias[0].medias);
+        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, someMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
         const displayStartDate = new Date("2023-07-10");
@@ -51,7 +51,7 @@ describe("thunk:updateAlbumDates", () => {
             albumDatesUpdateStarted(),
             albumDatesUpdated({
                 albums: twoAlbums,
-                medias: someMedias[0].medias,
+                medias: someMedias,
             })
         ]);
     });
