@@ -118,6 +118,24 @@ Present them one by one to ask for feedback after each one. Upon acceptance, wri
 
 The requirement to refine is written in the file:
 
+### Review
+
+```
+aider
+add specs/
+/ask
+```
+
+You are the lead engineer of a software team. You are reviewing the **epic** and the **stories** that have been created. You need to make sure that the stories
+are clear, that they cover the entirety of the epic, and that they is no details missing.
+
+Give a short list (5 items max) of the most impactful improvements. Look after specifically the **Acceptance Criteria** (no duplicate, examples when
+useful, ...).
+
+The Epic is in the file:
+
+The rest are the stories.
+
 Step 3 - Feature Coding
 ---------------------------------------
 
@@ -161,6 +179,7 @@ It's part of the epic:
 ```
 aider
 /add web/src/core/catalog/language 
+    web/src/core/catalog/tests/test-helper-state.ts
     web/src/core/catalog/actions.ts 
     web/src/core/catalog/index.ts 
     web/src/core/catalog/thunks.ts  
@@ -197,6 +216,26 @@ for code snippet for clarity:
 Your story you are designing is:
 
 It's part of the epic:
+
+#### Then - implementation
+
+```
+/code
+```
+
+Implement the story. **Strictly follow the coding principles from `docs/principles_web.md`**. Implement the tests to make sure the Acceptance Criteria are
+covered. Do not add comments to your code. Once complete, leave a comment to the reviewer of places he needs to bring a special attention.
+
+#### Finally - Code review
+
+```
+/model bb8
+/reset
+!git diff HEAD^
+/ask You are the senior developer in charge of reviewing the code written by your peer. You use the `docs/principles_web.md`, and your personal knowledge, as 
+    references of what a good code look like. You promote clean code, well tested with a suite robust to refactoring, secure and performant. You will present a 
+    list of actionable changes to get the code closer from idums.
+```
 
 ---
 
