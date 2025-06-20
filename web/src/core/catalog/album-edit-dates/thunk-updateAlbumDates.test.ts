@@ -57,8 +57,8 @@ describe("thunk:updateAlbumDates", () => {
 
         expect(fakePort.updatedAlbums).toEqual([{
             albumId,
-            startDate: new Date("2023-07-10T00:00:00.000Z"),
-            endDate: new Date("2023-07-21T00:00:00.000Z"),
+            startDate: new Date(Date.UTC(2023, 6, 10, 0, 0, 0, 0)), // Expected UTC date for 2023-07-10 00:00:00 local
+            endDate: new Date(Date.UTC(2023, 6, 21, 0, 0, 0, 0)),   // Expected UTC date for 2023-07-21 00:00:00 local
         }]);
 
         expect(dispatched).toEqual([
