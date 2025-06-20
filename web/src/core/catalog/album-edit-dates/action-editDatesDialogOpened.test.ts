@@ -1,42 +1,45 @@
 import {editDatesDialogOpened, reduceEditDatesDialogOpened} from "./action-editDatesDialogOpened";
 import {CatalogViewerState} from "../language";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {editDatesDialogSelector} from "./selector-editDatesDialogSelector";
 
 const jan25Album = twoAlbums[0];
 const feb25Album = twoAlbums[1];
 
 describe("action:editDatesDialogOpened", () => {
     it("opens the dialog with the currently selected album data", () => {
-        const got = reduceEditDatesDialogOpened(loadedStateWithTwoAlbums, editDatesDialogOpened());
+        const state = reduceEditDatesDialogOpened(loadedStateWithTwoAlbums, editDatesDialogOpened());
+        const got = editDatesDialogSelector(state);
 
         expect(got).toEqual({
-            ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
-                albumId: jan25Album.albumId,
-                albumName: jan25Album.name,
-                startDate: new Date(2025, 0, 1),
-                endDate: new Date(2025, 0, 31),
-            },
+            isOpen: true,
+            albumName: jan25Album.name,
+            startDate: new Date(2025, 0, 1),
+            endDate: new Date(2025, 0, 31),
+            startAtDayStart: true,
+            endAtDayEnd: true,
+            isLoading: false,
         });
     });
 
     it("opens the dialog with the album specified by loadingMediasFor", () => {
-        const state: CatalogViewerState = {
+        const initialState: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             mediasLoadedFromAlbumId: jan25Album.albumId, // This should be ignored
             loadingMediasFor: feb25Album.albumId,
         };
 
-        const got = reduceEditDatesDialogOpened(state, editDatesDialogOpened());
+        const state = reduceEditDatesDialogOpened(initialState, editDatesDialogOpened());
+        const got = editDatesDialogSelector(state);
 
         expect(got).toEqual({
-            ...state,
-            editDatesDialog: {
-                albumId: feb25Album.albumId,
-                albumName: feb25Album.name,
-                startDate: new Date(2025, 1, 1),
-                endDate: new Date(2025, 2, 0),
-            },
+            isOpen: true,
+            albumName: feb25Album.name,
+            startDate: new Date(2025, 1, 1),
+            endDate: new Date(2025, 2, 0),
+            startAtDayStart: true,
+            endAtDayEnd: true,
+            isLoading: false,
         });
     });
 
@@ -49,8 +52,10 @@ describe("action:editDatesDialogOpened", () => {
         };
 
         const got = reduceEditDatesDialogOpened(state, editDatesDialogOpened());
+        const dialogSelection = editDatesDialogSelector(got);
 
-        expect(got).toEqual(state);
+        expect(dialogSelection.isOpen).toBeFalsy();
+        expect(got).toEqual(state); // Ensure no other state changes
     });
 
     it("does not open dialog when selected album is not found", () => {
@@ -61,7 +66,9 @@ describe("action:editDatesDialogOpened", () => {
         };
 
         const got = reduceEditDatesDialogOpened(state, editDatesDialogOpened());
+        const dialogSelection = editDatesDialogSelector(got);
 
-        expect(got).toEqual(state);
+        expect(dialogSelection.isOpen).toBeFalsy();
+        expect(got).toEqual(state); // Ensure no other state changes
     });
 });
