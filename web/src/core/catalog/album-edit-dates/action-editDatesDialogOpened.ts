@@ -30,6 +30,7 @@ export function reduceEditDatesDialogOpened(
             albumName: selectedAlbum.name,
             startDate: selectedAlbum.start,
             endDate: selectedAlbum.end,
+            isLoading: false,
         },
     };
 }

@@ -100,6 +100,8 @@ export function CatalogViewerPage() {
             <EditDatesDialog
                 {...editDatesDialogSelector(state)}
                 onClose={closeEditDatesDialog}
+                onSave={() => {
+                }}
                 onStartDateChange={() => {
                 }}
                 onEndDateChange={() => {

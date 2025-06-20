@@ -11,6 +11,7 @@ describe("action:editDatesDialogClosed", () => {
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00"),
                 endDate: new Date("2023-08-01T00:00:00"),
+                isLoading: false,
             },
         };
 
