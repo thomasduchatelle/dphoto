@@ -3,13 +3,14 @@ import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumDatesUpdated} from "./action-albumDatesUpdated";
 import {twoAlbums, someMedias} from "../tests/test-helper-state";
 import {Album, Media, AlbumId, MediaWithinADay} from "../language";
+import {MediaPerDayLoader} from "../navigation/MediaPerDayLoader"; // Import MediaPerDayLoader
 
 class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
     public updatedAlbums: {albumId: AlbumId, startDate: Date, endDate: Date}[] = [];
     
     constructor(
         private albums: Album[] = [],
-        private medias: MediaWithinADay[] = []
+        private medias: Media[] = [] // Changed to Media[]
     ) {}
 
     async updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void> {
@@ -20,14 +21,26 @@ class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
         return this.albums;
     }
 
-    async fetchMedias(albumId: AlbumId): Promise<{medias: MediaWithinADay[]}> {
-        return {medias: this.medias};
+    async fetchMedias(albumId: AlbumId): Promise<Media[]> { // Changed to Media[]
+        return this.medias;
+    }
+}
+
+// Mock MediaPerDayLoader
+class MediaPerDayLoaderFake extends MediaPerDayLoader {
+    constructor(private mockMedias: MediaWithinADay[]) {
+        super(null as any); // Pass null or a mock for FetchAlbumMediasPort as it's not used in this mock
+    }
+
+    public async loadMedias(albumId: AlbumId): Promise<{ medias: MediaWithinADay[] }> {
+        return { medias: this.mockMedias };
     }
 }
 
 describe("thunk:updateAlbumDates", () => {
     it("should convert display dates to API format and dispatch actions", async () => {
-        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, someMedias);
+        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, someMedias[0].medias); // Pass raw medias
+        const mediaPerDayLoaderFake = new MediaPerDayLoaderFake(someMedias); // Pass grouped medias
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
         const displayStartDate = new Date("2023-07-10");
@@ -36,6 +49,7 @@ describe("thunk:updateAlbumDates", () => {
         await updateAlbumDatesThunk(
             dispatched.push.bind(dispatched),
             fakePort,
+            mediaPerDayLoaderFake, // Pass the fake MediaPerDayLoader
             albumId,
             displayStartDate,
             displayEndDate

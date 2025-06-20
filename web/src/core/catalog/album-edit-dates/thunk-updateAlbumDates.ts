@@ -9,12 +9,13 @@ import {MediaPerDayLoader} from "../navigation/MediaPerDayLoader";
 export interface UpdateAlbumDatesPort {
     updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void>;
     fetchAlbums(): Promise<Album[]>;
-    fetchMedias(albumId: AlbumId): Promise<{medias: MediaWithinADay[]}>;
+    fetchMedias(albumId: AlbumId): Promise<Media[]>; // Changed to Media[] as MediaPerDayLoader will group them
 }
 
 export async function updateAlbumDatesThunk(
     dispatch: (action: AlbumDatesUpdateStarted | AlbumDatesUpdated) => void,
     updateAlbumDatesPort: UpdateAlbumDatesPort,
+    mediaPerDayLoader: MediaPerDayLoader, // Injected MediaPerDayLoader
     albumId: AlbumId,
     startDate: Date,
     endDate: Date
@@ -32,7 +33,7 @@ export async function updateAlbumDatesThunk(
 
     const [albums, mediasResp] = await Promise.all([
         updateAlbumDatesPort.fetchAlbums(),
-        updateAlbumDatesPort.fetchMedias(albumId)
+        mediaPerDayLoader.loadMedias(albumId) // Use MediaPerDayLoader to load and group medias
     ]);
 
     dispatch(albumDatesUpdated({albums, medias: mediasResp.medias}));
@@ -52,11 +53,9 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
 
     factory: ({dispatch, app, partialState: {albumId, startDate, endDate}}) => {
         const restAdapter = new CatalogAPIAdapter(app.axiosInstance, app);
-        const updateAlbumDatesPort: UpdateAlbumDatesPort = {
-            ...restAdapter,
-            fetchMedias: (albumId: AlbumId) => new MediaPerDayLoader(restAdapter).loadMedias(albumId)
-        };
+        const mediaPerDayLoader = new MediaPerDayLoader(restAdapter); // Instantiate MediaPerDayLoader
+        const updateAlbumDatesPort: UpdateAlbumDatesPort = restAdapter; // Use restAdapter directly for the port
         return (newStartDate: Date, newEndDate: Date) => 
-            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, albumId, newStartDate, newEndDate);
+            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, mediaPerDayLoader, albumId, newStartDate, newEndDate);
     },
 };
