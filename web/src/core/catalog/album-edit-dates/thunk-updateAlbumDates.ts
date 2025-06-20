@@ -22,12 +22,9 @@ export async function updateAlbumDatesThunk(
 ): Promise<void> {
     dispatch(albumDatesUpdateStarted());
 
-    const apiStartDate = new Date(startDate);
-    apiStartDate.setHours(0, 0, 0, 0);
+    const apiStartDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
 
-    const apiEndDate = new Date(endDate);
-    apiEndDate.setDate(apiEndDate.getDate() + 1);
-    apiEndDate.setHours(0, 0, 0, 0);
+    const apiEndDate = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1));
 
     await updateAlbumDatesPort.updateAlbumDates(albumId, apiStartDate, apiEndDate);
 

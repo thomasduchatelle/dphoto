@@ -52,7 +52,7 @@ export const twoAlbumsNoFilterOptions: AlbumFilterEntry = {
 };
 
 export const someMedias: MediaWithinADay[] = [{
-    day: new Date(2025, 0, 1),
+    day: new Date(2025, 0, 5),
     medias: [{
         id: "media-1",
         type: MediaType.IMAGE,
