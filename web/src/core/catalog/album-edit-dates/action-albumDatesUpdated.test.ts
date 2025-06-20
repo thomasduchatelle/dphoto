@@ -27,7 +27,6 @@ describe("action:albumDatesUpdated", () => {
             albumDatesUpdated({
                 albums: updatedAlbums,
                 medias: [],
-                updatedAlbumId: twoAlbums[0].albumId,
             })
         );
 

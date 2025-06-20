@@ -5,7 +5,6 @@ export interface AlbumDatesUpdated {
     type: "AlbumDatesUpdated";
     albums: Album[];
     medias: Media[];
-    updatedAlbumId: AlbumId;
 }
 
 export function albumDatesUpdated(props: Omit<AlbumDatesUpdated, "type">): AlbumDatesUpdated {
@@ -17,7 +16,7 @@ export function albumDatesUpdated(props: Omit<AlbumDatesUpdated, "type">): Album
 
 export function reduceAlbumDatesUpdated(
     current: CatalogViewerState,
-    {albums, medias, updatedAlbumId}: AlbumDatesUpdated,
+    {albums, medias}: AlbumDatesUpdated,
 ): CatalogViewerState {
     const {albumFilterOptions, albumFilter, albums: filteredAlbums} = refreshFilters(
         current.currentUser,
@@ -48,7 +47,7 @@ export function reduceAlbumDatesUpdated(
         albumFilter,
         albums: filteredAlbums,
         medias: mediasWithinDays,
-        mediasLoadedFromAlbumId: updatedAlbumId,
+        mediasLoadedFromAlbumId: current.editDatesDialog?.albumId, // Use albumId from dialog state
         albumsLoaded: true,
         mediasLoaded: true,
         editDatesDialog: undefined,

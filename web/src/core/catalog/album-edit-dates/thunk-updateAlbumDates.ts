@@ -34,7 +34,7 @@ export async function updateAlbumDatesThunk(
         updateAlbumDatesPort.fetchMedias(albumId)
     ]);
 
-    dispatch(albumDatesUpdated({albums, medias, updatedAlbumId: albumId}));
+    dispatch(albumDatesUpdated({albums, medias}));
 }
 
 export const updateAlbumDatesDeclaration: ThunkDeclaration<

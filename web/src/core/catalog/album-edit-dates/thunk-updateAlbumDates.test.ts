@@ -52,7 +52,6 @@ describe("thunk:updateAlbumDates", () => {
             albumDatesUpdated({
                 albums: twoAlbums,
                 medias: someMedias[0].medias,
-                updatedAlbumId: albumId,
             })
         ]);
     });
