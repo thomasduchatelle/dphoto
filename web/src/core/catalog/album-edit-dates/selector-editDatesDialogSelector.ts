@@ -7,6 +7,7 @@ export interface EditDatesDialogSelection {
     endDate: Date;
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
+    isLoading: boolean;
 }
 
 export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDialogSelection {
@@ -18,6 +19,7 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
             endDate: new Date(),
             startAtDayStart: true,
             endAtDayEnd: true,
+            isLoading: false,
         };
     }
 
@@ -33,5 +35,6 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
         endDate: displayEndDate,
         startAtDayStart: true,
         endAtDayEnd: true,
+        isLoading: state.editDatesDialog.isLoading,
     };
 }

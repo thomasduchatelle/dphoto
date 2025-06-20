@@ -41,6 +41,7 @@ const Template: ComponentStory<typeof EditDatesDialog> = (args) => {
                 onEndDateChange={setEndDate}
                 onStartAtDayStartChange={setStartAtDayStart}
                 onEndAtDayEndChange={setEndAtDayEnd}
+                onSave={() => console.log('Save clicked')}
             />
         </LocalizationProvider>
     );
@@ -53,6 +54,7 @@ Default.args = {
     endDate: new Date("2063-04-05T23:59:00Z"),
     startAtDayStart: true,
     endAtDayEnd: true,
+    isLoading: false,
 };
 Default.parameters = {
     delay: 300,
