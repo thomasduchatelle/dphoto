@@ -1,7 +1,7 @@
 # Edit Album Dates Feature
 
 ## 1. Feature Summary
-The "Edit Dates" feature allows users to update the start and end dates of an album. The feature is accessible via a button on the left menu.
+The "Edit Dates" feature allows users to update the start and end dates of an album. The feature is accessible via a button between the "Create" and "Delete" buttons above the list of albums.
 
 ## 2. Ubiquity Language
 * **Inclusive Start Date**: The start date of an album, inclusive of the time specified.
@@ -27,7 +27,7 @@ The "Edit Dates" feature allows users to update the start and end dates of an al
 
 ### 3.3 Permission Check
 1. User navigates to an album they don't own.
-2. The "Edit Dates" button on the left menu is disabled.
+2. The "Edit Dates" button between the "Create" and "Delete" buttons is disabled.
 
 ### 3.4 Date Validation
 1. User navigates to an album they own and clicks the "Edit Dates" button.
