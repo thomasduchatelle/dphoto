@@ -9,7 +9,7 @@ export const twoAlbums: Album[] = [
         albumId: {owner: "myself", folderName: "jan-25"},
         name: "January 2025",
         start: new Date(2025, 0, 1),
-        end: new Date(2025, 0, 31),
+        end: new Date(2025, 1, 1),
         totalCount: 42,
         temperature: 0.25,
         relativeTemperature: 1,
@@ -23,7 +23,7 @@ export const twoAlbums: Album[] = [
         albumId: {owner: herselfOwner, folderName: "feb-25"},
         name: "February 2025",
         start: new Date(2025, 1, 1),
-        end: new Date(2025, 2, 0),
+        end: new Date(2025, 2, 1),
         totalCount: 12,
         temperature: 0.25,
         relativeTemperature: 1,
@@ -52,14 +52,15 @@ export const twoAlbumsNoFilterOptions: AlbumFilterEntry = {
 };
 
 export const someMedias: MediaWithinADay[] = [{
-    day: new Date(2025, 0, 1), medias: [{
+    day: new Date(2025, 0, 1),
+    medias: [{
         id: "media-1",
         type: MediaType.IMAGE,
         time: new Date("2025-01-05T12:42:00Z"),
         uiRelativePath: "media-1/image.jpg",
         contentPath: "/media-1.jpg",
         source: "",
-    }]
+    }],
 }]
 
 export const loadedStateWithTwoAlbums: CatalogViewerState = {
