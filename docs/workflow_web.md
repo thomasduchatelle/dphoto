@@ -220,11 +220,9 @@ It's part of the epic:
 #### Then - implementation
 
 ```
-/code
-```
-
-Implement the story. **Strictly follow the coding principles from `docs/principles_web.md`**. Implement the tests to make sure the Acceptance Criteria are
+/code Implement the story. **Strictly follow the coding principles from `docs/principles_web.md`**. Implement the tests to make sure the Acceptance Criteria are
 covered. Do not add comments to your code. Once complete, leave a comment to the reviewer of places he needs to bring a special attention.
+```
 
 #### Finally - Code review
 
@@ -233,8 +231,9 @@ covered. Do not add comments to your code. Once complete, leave a comment to the
 /reset
 !git diff HEAD^
 /ask You are the senior developer in charge of reviewing the code written by your peer. You use the `docs/principles_web.md`, and your personal knowledge, as 
-    references of what a good code look like. You promote clean code, well tested with a suite robust to refactoring, secure and performant. You will present a 
-    list of actionable changes to get the code closer from idums.
+    references of what a good code looks like. You promote clean code, well tested with a suite robust to refactoring, secure and performant. 
+    
+    Present your comments like in a Merge Request, with the file name and the code snippet.
 ```
 
 ---
