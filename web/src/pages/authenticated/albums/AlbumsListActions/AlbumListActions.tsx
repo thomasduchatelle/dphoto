@@ -1,12 +1,19 @@
 import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
-import {Box, IconButton} from "@mui/material";
+import {Box, IconButton, Tooltip} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import {CreateAlbumControls} from "../../../../core/catalog";
 
 
-export default function AlbumListActions({openDialogForCreateAlbum, openDeleteAlbumDialog, ...props}: OwnerSelectorProps & CreateAlbumControls & {
+export default function AlbumListActions({
+                                             openDialogForCreateAlbum,
+                                             openDeleteAlbumDialog,
+                                             openEditDatesDialog,
+                                             ...props
+                                         }: OwnerSelectorProps & CreateAlbumControls & {
     openDeleteAlbumDialog: () => void
+    openEditDatesDialog: () => void
 }) {
     return (
         <Box sx={{
@@ -21,6 +28,13 @@ export default function AlbumListActions({openDialogForCreateAlbum, openDeleteAl
             <IconButton color="primary" onClick={openDialogForCreateAlbum} size="large">
                 <AddIcon/>
             </IconButton>
+            <Tooltip title="Function not yet available, stay tuned !">
+                <span>
+                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled>
+                        <EditIcon/>
+                    </IconButton>
+                </span>
+            </Tooltip>
             <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog}>
                 <DeleteIcon/>
             </IconButton>

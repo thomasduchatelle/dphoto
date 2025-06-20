@@ -15,6 +15,7 @@ export interface CatalogViewerState {
     mediasLoaded: boolean
     shareModal?: ShareModal
     deleteDialog?: DeleteDialogState
+    editDatesDialog?: EditDatesDialogState
 }
 
 export interface CurrentUserInsight {
@@ -128,4 +129,11 @@ export interface DeleteDialogState {
     initialSelectedAlbumId?: AlbumId
     isLoading: boolean
     error?: string
+}
+
+export interface EditDatesDialogState {
+    albumId: AlbumId
+    albumName: string
+    startDate: Date
+    endDate: Date
 }

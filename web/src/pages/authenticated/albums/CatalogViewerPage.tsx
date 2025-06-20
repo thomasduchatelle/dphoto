@@ -8,11 +8,12 @@ import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
-import {albumIdEquals, deleteDialogSelector, sharingDialogSelector} from "../../../core/catalog";
+import {albumIdEquals, deleteDialogSelector, editDatesDialogSelector, sharingDialogSelector} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 import ShareDialog from "./ShareDialog";
 import {DeleteAlbumDialog} from "./DeleteAlbumDialog";
+import {EditDatesDialog} from "./EditDatesDialog";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
@@ -25,6 +26,8 @@ export function CatalogViewerPage() {
             deleteAlbum,
             closeDeleteAlbumDialog,
             openDeleteAlbumDialog,
+            openEditDatesDialog,
+            closeEditDatesDialog,
             openSharingModal,
             closeSharingModal,
             revokeAlbumAccess,
@@ -62,6 +65,7 @@ export function CatalogViewerPage() {
                             options={state.albumFilterOptions}
                             onAlbumFiltered={onAlbumFilterChange}
                             openDeleteAlbumDialog={openDeleteAlbumDialog}
+                            openEditDatesDialog={openEditDatesDialog}
                             {...controls}
                         />
                         <AlbumsList albums={state.albums}
@@ -77,6 +81,7 @@ export function CatalogViewerPage() {
                         scrollToMedia={search.get("mediaId") ?? undefined}
                         openSharingModal={openSharingModal}
                         openDeleteAlbumDialog={openDeleteAlbumDialog}
+                        openEditDatesDialog={openEditDatesDialog}
                         {...controls}
                     />
                 )}
@@ -91,6 +96,18 @@ export function CatalogViewerPage() {
                 {...deleteDialogSelector(state)}
                 onDelete={deleteAlbum}
                 onClose={closeDeleteAlbumDialog}
+            />
+            <EditDatesDialog
+                {...editDatesDialogSelector(state)}
+                onClose={closeEditDatesDialog}
+                onStartDateChange={() => {
+                }}
+                onEndDateChange={() => {
+                }}
+                onStartAtDayStartChange={() => {
+                }}
+                onEndAtDayEndChange={() => {
+                }}
             />
         </Box>
     );

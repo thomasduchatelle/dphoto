@@ -20,6 +20,7 @@ export default function MediasPage({
                                        selectedAlbumId,
                                        openSharingModal,
                                        openDeleteAlbumDialog,
+                                       openEditDatesDialog,
                                        ...controls
                                    }: {
     albums: Album[]
@@ -34,6 +35,7 @@ export default function MediasPage({
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
     openSharingModal: (album: Album) => void
     openDeleteAlbumDialog: () => void
+    openEditDatesDialog: () => void
 } & CreateAlbumControls) {
     const drawerWidth = 450
 
@@ -63,6 +65,7 @@ export default function MediasPage({
                                 options={albumFilterOptions}
                                 onAlbumFiltered={onAlbumFilterChange}
                                 openDeleteAlbumDialog={openDeleteAlbumDialog}
+                                openEditDatesDialog={openEditDatesDialog}
                                 {...controls}
                             />
                             <Divider/>

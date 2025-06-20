@@ -9,7 +9,6 @@ import {
     DialogContent,
     DialogTitle,
     Divider,
-    FormControlLabel,
     IconButton,
     InputBase,
     LinearProgress,
@@ -21,8 +20,9 @@ import {
 } from "@mui/material";
 import Grid from '@mui/material/Unstable_Grid2';
 import {Close} from "@mui/icons-material";
-import {DatePicker, DateTimePicker} from '@mui/x-date-pickers';
 import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr, CreateAlbumHandlers, CreateAlbumState} from "../../../../core/catalog";
+import {DateRangePicker} from "../DateRangePicker";
+import dayjs from "dayjs";
 
 export function CreateAlbumDialog({
                                       state,
@@ -42,10 +42,8 @@ export function CreateAlbumDialog({
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const canBeSubmitted = state.name.length > 0 && !state.creationInProgress;
-    const dateErrorArgs = state.errorCode === albumStartAndEndDateMandatoryErr ? {
-        error: true,
-        helperText: "Start and end dates are mandatory, and end date must be after the start date.",
-    } : {};
+    const dateError = state.errorCode === albumStartAndEndDateMandatoryErr;
+    const dateHelperText = dateError ? "Start and end dates are mandatory, and end date must be after the start date." : "";
 
     const errorMessage = getErrorMessage(state.errorCode);
 
@@ -101,54 +99,19 @@ export function CreateAlbumDialog({
                             error={state.errorCode === albumFolderNameAlreadyTakenErr}
                         />
                     </Grid>
-                    <Grid xs={6}>
-                        {state.startsAtStartOfTheDay ? (
-                            <DatePicker
-                                label="First day"
-                                disabled={state.creationInProgress}
-                                value={state.start}
-                                onChange={onStartDateChange}
-                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} helperText=''/>}
-                            />) : (
-                            <DateTimePicker
-                                label="First day"
-                                disabled={state.creationInProgress}
-                                value={state.start}
-                                onChange={onStartDateChange}
-                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} helperText=''/>}
-                            />
-                        )}
-                    </Grid>
-                    <Grid xs={6}>
-                        <FormControlLabel control={<Checkbox checked={state.startsAtStartOfTheDay}
-                                                             disabled={state.creationInProgress}
-                                                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => onStartsAtStartOfTheDayChange(event.target.checked)}/>}
-                                          label="at the start of the day"/>
-                    </Grid>
-                    <Grid xs={6}>
-                        {state.endsAtEndOfTheDay ? (
-                            <DatePicker
-                                label="Last day"
-                                disabled={state.creationInProgress}
-                                value={state.end}
-                                onChange={onEndDateChange}
-                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} />}
-                            />) : (
-                            <DateTimePicker
-                                label="Last day"
-                                disabled={state.creationInProgress}
-                                value={state.end}
-                                onChange={onEndDateChange}
-                                renderInput={(params: any) => <TextField {...params} sx={{width: "100%"}} {...dateErrorArgs} />}
-                            />
-                        )}
-                    </Grid>
-                    <Grid xs={6}>
-                        <FormControlLabel control={<Checkbox checked={state.endsAtEndOfTheDay}
-                                                             disabled={state.creationInProgress}
-                                                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => onEndsAtEndOfTheDayChange(event.target.checked)}/>}
-                                          label="at the end of the day"/>
-                    </Grid>
+                    <DateRangePicker
+                        startDate={state.start ? state.start.toDate() : new Date()} // Convert Dayjs to Date
+                        endDate={state.end ? state.end.toDate() : new Date()} // Convert Dayjs to Date
+                        startAtDayStart={state.startsAtStartOfTheDay}
+                        endAtDayEnd={state.endsAtEndOfTheDay}
+                        onStartDateChange={(date) => onStartDateChange(date ? dayjs(date) : null)} // Convert Date back to Dayjs
+                        onEndDateChange={(date) => onEndDateChange(date ? dayjs(date) : null)} // Convert Date back to Dayjs
+                        onStartsAtStartOfTheDayChange={onStartsAtStartOfTheDayChange}
+                        onEndsAtEndOfTheDayChange={onEndsAtEndOfTheDayChange}
+                        disabled={state.creationInProgress}
+                        dateError={dateError}
+                        dateHelperText={dateHelperText}
+                    />
                     <Grid xs={12}>
                         <Tooltip title="The name of the physical folder name is generated from the date and the name; but can be overridden.">
                             <Paper
