@@ -1,17 +1,5 @@
 import React from "react";
-import {
-    Alert,
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    IconButton,
-    LinearProgress,
-    useMediaQuery,
-    useTheme
-} from "@mui/material";
+import {Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, useMediaQuery, useTheme} from "@mui/material";
 import {Close} from "@mui/icons-material";
 import Grid from "@mui/material/Unstable_Grid2";
 import {DateRangePicker} from "../DateRangePicker";
@@ -76,7 +64,7 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                     },
                 }}/>}
             </Box>
-            <DialogTitle>Edit album dates</DialogTitle>
+            <DialogTitle>Edit dates of {albumName}</DialogTitle>
             <IconButton
                 aria-label="close"
                 onClick={onClose}
