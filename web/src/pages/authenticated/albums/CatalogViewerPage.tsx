@@ -103,11 +103,7 @@ export function CatalogViewerPage() {
             <EditDatesDialog
                 {...editDatesDialogState}
                 onClose={closeEditDatesDialog}
-                onSave={() => updateAlbumDates({
-                    albumId: editDatesDialogState.albumId!, // Assuming albumId is always present when dialog is open
-                    startDate: editDatesDialogState.startDate,
-                    endDate: editDatesDialogState.endDate
-                })}
+                onSave={updateAlbumDates}
                 onStartDateChange={() => {
                 }}
                 onEndDateChange={() => {

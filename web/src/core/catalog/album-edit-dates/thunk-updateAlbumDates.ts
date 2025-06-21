@@ -43,7 +43,7 @@ export async function updateAlbumDatesThunk(
 export const updateAlbumDatesDeclaration: ThunkDeclaration<
     any,
     { albumId: AlbumId, startDate: Date, endDate: Date },
-    (args: UpdateAlbumDatesThunkArgs) => Promise<void>,
+    () => Promise<void>,
     CatalogFactoryArgs
 > = {
     selector: (state: any) => ({
@@ -52,11 +52,11 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
         endDate: state.editDatesDialog?.endDate,
     }),
 
-    factory: ({dispatch, app, partialState: {albumId, startDate, endDate}}) => {
+    factory: ({dispatch, app, partialState}) => {
         const restAdapter = new CatalogAPIAdapter(app.axiosInstance, app);
         const mediaPerDayLoader = new MediaPerDayLoader(restAdapter);
         const updateAlbumDatesPort: UpdateAlbumDatesPort = restAdapter;
-        return (args: UpdateAlbumDatesThunkArgs) =>
-            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, mediaPerDayLoader, args);
+        return () =>
+            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, mediaPerDayLoader, partialState);
     },
 };
