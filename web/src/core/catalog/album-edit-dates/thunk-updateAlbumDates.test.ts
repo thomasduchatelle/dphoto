@@ -40,9 +40,11 @@ describe("thunk:updateAlbumDates", () => {
             dispatched.push.bind(dispatched),
             fakePort,
             mediaPerDayLoaderFake,
-            albumId,
-            displayStartDate,
-            displayEndDate
+            { // Pass arguments as a single object
+                albumId,
+                startDate: displayStartDate,
+                endDate: displayEndDate
+            }
         );
 
         expect(fakePort.updatedAlbums).toEqual([{

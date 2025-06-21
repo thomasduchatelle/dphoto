@@ -31,7 +31,8 @@ export function CatalogViewerPage() {
             openSharingModal,
             closeSharingModal,
             revokeAlbumAccess,
-            grantAlbumSharing
+            grantAlbumSharing,
+            updateAlbumDates // Add updateAlbumDates handler
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -47,6 +48,8 @@ export function CatalogViewerPage() {
     const isAlbumsPage = pathname === '/albums'
 
     const selectedAlbum = state.albums.find(album => albumIdEquals(album.albumId, selectedAlbumId))
+
+    const editDatesDialogState = editDatesDialogSelector(state);
 
     return (
         <Box>
@@ -98,10 +101,13 @@ export function CatalogViewerPage() {
                 onClose={closeDeleteAlbumDialog}
             />
             <EditDatesDialog
-                {...editDatesDialogSelector(state)}
+                {...editDatesDialogState}
                 onClose={closeEditDatesDialog}
-                onSave={() => {
-                }}
+                onSave={() => updateAlbumDates({
+                    albumId: editDatesDialogState.albumId!, // Assuming albumId is always present when dialog is open
+                    startDate: editDatesDialogState.startDate,
+                    endDate: editDatesDialogState.endDate
+                })}
                 onStartDateChange={() => {
                 }}
                 onEndDateChange={() => {

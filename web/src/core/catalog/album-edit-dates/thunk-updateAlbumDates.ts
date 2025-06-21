@@ -12,25 +12,29 @@ export interface UpdateAlbumDatesPort {
     fetchAlbums(): Promise<Album[]>;
 }
 
+export interface UpdateAlbumDatesThunkArgs {
+    albumId: AlbumId;
+    startDate: Date;
+    endDate: Date;
+}
+
 export async function updateAlbumDatesThunk(
     dispatch: (action: AlbumDatesUpdateStarted | AlbumDatesUpdated) => void,
     updateAlbumDatesPort: UpdateAlbumDatesPort,
     mediaPerDayLoader: MediaPerDayLoader,
-    albumId: AlbumId,
-    startDate: Date,
-    endDate: Date
+    args: UpdateAlbumDatesThunkArgs
 ): Promise<void> {
     dispatch(albumDatesUpdateStarted());
 
-    const apiStartDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
+    const apiStartDate = new Date(Date.UTC(args.startDate.getUTCFullYear(), args.startDate.getUTCMonth(), args.startDate.getUTCDate()));
 
-    const apiEndDate = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1));
+    const apiEndDate = new Date(Date.UTC(args.endDate.getUTCFullYear(), args.endDate.getUTCMonth(), args.endDate.getUTCDate() + 1));
 
-    await updateAlbumDatesPort.updateAlbumDates(albumId, apiStartDate, apiEndDate);
+    await updateAlbumDatesPort.updateAlbumDates(args.albumId, apiStartDate, apiEndDate);
 
     const [albums, mediasResp] = await Promise.all([
         updateAlbumDatesPort.fetchAlbums(),
-        mediaPerDayLoader.loadMedias(albumId)
+        mediaPerDayLoader.loadMedias(args.albumId)
     ]);
 
     dispatch(albumDatesUpdated({albums, medias: mediasResp.medias}));
@@ -39,7 +43,7 @@ export async function updateAlbumDatesThunk(
 export const updateAlbumDatesDeclaration: ThunkDeclaration<
     any,
     { albumId: AlbumId, startDate: Date, endDate: Date },
-    (startDate: Date, endDate: Date) => Promise<void>,
+    (args: UpdateAlbumDatesThunkArgs) => Promise<void>,
     CatalogFactoryArgs
 > = {
     selector: (state: any) => ({
@@ -52,7 +56,7 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
         const restAdapter = new CatalogAPIAdapter(app.axiosInstance, app);
         const mediaPerDayLoader = new MediaPerDayLoader(restAdapter); // Instantiate MediaPerDayLoader
         const updateAlbumDatesPort: UpdateAlbumDatesPort = restAdapter; // Use restAdapter directly for the port
-        return (newStartDate: Date, newEndDate: Date) =>
-            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, mediaPerDayLoader, albumId, newStartDate, newEndDate);
+        return (args: UpdateAlbumDatesThunkArgs) =>
+            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, mediaPerDayLoader, args);
     },
 };
