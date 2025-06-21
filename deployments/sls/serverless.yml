@@ -149,6 +149,14 @@ functions:
       - httpApi:
           path: /api/v1/owners/{owner}/medias/{mediaId}/{filename}
           method: get
+  amend-album-dates:
+    handler: bootstrap
+    package:
+      artifact: ../../bin/amend-album-dates.zip
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums/{folderName}/dates
+          method: put
 
   # ASYNC lambdas - using FIFO for deduplication made a SQS required
   #####################################
