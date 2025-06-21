@@ -1,32 +1,18 @@
 import {CatalogViewerState} from "../language";
+import {createActionWithoutPayload} from "../common/action-factory";
 
-export interface EditDatesDialogClosed {
-    type: "EditDatesDialogClosed";
-}
+export const editDatesDialogClosed = createActionWithoutPayload(
+    "EditDatesDialogClosed",
+    (current: CatalogViewerState) => {
+        if (!current.editDatesDialog) {
+            return current;
+        }
 
-export function editDatesDialogClosed(): EditDatesDialogClosed {
-    return {
-        type: "EditDatesDialogClosed",
-    };
-}
-
-export function reduceEditDatesDialogClosed(
-    current: CatalogViewerState,
-    _: EditDatesDialogClosed,
-): CatalogViewerState {
-    if (!current.editDatesDialog) {
-        return current;
+        return {
+            ...current,
+            editDatesDialog: undefined,
+        };
     }
+);
 
-    return {
-        ...current,
-        editDatesDialog: undefined,
-    };
-}
-
-export function editDatesDialogClosedReducerRegistration(handlers: any) {
-    handlers["EditDatesDialogClosed"] = reduceEditDatesDialogClosed as (
-        state: CatalogViewerState,
-        action: EditDatesDialogClosed
-    ) => CatalogViewerState;
-}
+export type EditDatesDialogClosed = ReturnType<typeof editDatesDialogClosed>;

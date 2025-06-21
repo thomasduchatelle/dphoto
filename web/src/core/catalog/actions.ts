@@ -108,6 +108,9 @@ export type CatalogViewerAction =
     | EditDatesDialogStartDateUpdated
     | EditDatesDialogEndDateUpdated
 
+import {editDatesDialogClosed} from "./album-edit-dates/action-editDatesDialogClosed";
+import {editDatesDialogStartDateUpdated} from "./album-edit-dates/action-editDatesDialogStartDateUpdated";
+
 const reducerRegistrations = [
     albumAccessGrantedReducerRegistration,
     albumsAndMediasLoadedReducerRegistration,
@@ -127,18 +130,30 @@ const reducerRegistrations = [
     deleteAlbumDialogClosedReducerRegistration,
     deleteAlbumStartedReducerRegistration,
     editDatesDialogOpenedReducerRegistration,
-    editDatesDialogClosedReducerRegistration,
     albumDatesUpdateStartedReducerRegistration,
     albumDatesUpdatedReducerRegistration,
-    editDatesDialogStartDateUpdatedReducerRegistration,
     editDatesDialogEndDateUpdatedReducerRegistration,
+];
+
+// New-style action creators with built-in reducers
+const newStyleActions = [
+    editDatesDialogClosed,
+    editDatesDialogStartDateUpdated,
 ];
 
 function buildHandlers() {
     const handlers: any = {};
+    
+    // Register old-style reducers
     for (const register of reducerRegistrations) {
         register(handlers);
     }
+    
+    // Register new-style action reducers
+    for (const actionCreator of newStyleActions) {
+        handlers[actionCreator.type] = actionCreator.reducer;
+    }
+    
     return handlers;
 }
 
