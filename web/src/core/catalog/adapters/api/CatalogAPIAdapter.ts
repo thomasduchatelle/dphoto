@@ -229,7 +229,7 @@ export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort,
 
     public async updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void> {
         await this.authenticatedAxios
-            .put(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}`, {
+            .put(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/dates`, {
                 start: startDate.toISOString(),
                 end: endDate.toISOString(),
             })
