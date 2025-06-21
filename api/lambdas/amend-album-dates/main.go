@@ -9,6 +9,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"time"
@@ -23,7 +24,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	ctx := context.Background()
 
 	owner := request.PathParameters["owner"]
-	folderName := common.ConvertFolderNameFromREST(request.PathParameters["folderName"])
+	folderName := request.PathParameters["folderName"]
 
 	requestDto := &AmendAlbumDatesRequestDTO{}
 	err := json.Unmarshal([]byte(request.Body), requestDto)
@@ -32,10 +33,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	}
 
 	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
-		albumId := catalog.AlbumId{
-			Owner:      catalog.OwnerId(owner),
-			FolderName: folderName,
-		}
+		albumId := catalog.AlbumId{Owner: ownermodel.Owner(owner), FolderName: catalog.NewFolderName(folderName)}
 
 		if err := pkgfactory.AclCatalogAuthoriser(ctx).CanAmendAlbumDates(ctx, user, albumId); err != nil {
 			if errors.Is(err, aclcore.AccessForbiddenError) {

@@ -74,7 +74,7 @@ func TestAlbumQueries_FindAlbum(t *testing.T) {
 			},
 			want: nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.AlbumNotFoundError, i...)
+				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
 			},
 		},
 	}

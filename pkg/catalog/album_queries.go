@@ -48,7 +48,7 @@ func (a *AlbumQueries) FindAlbum(ctx context.Context, albumId AlbumId) (*Album, 
 	}
 
 	if len(albums) == 0 {
-		return nil, AlbumNotFoundError
+		return nil, AlbumNotFoundErr
 	}
 
 	return albums[0], nil

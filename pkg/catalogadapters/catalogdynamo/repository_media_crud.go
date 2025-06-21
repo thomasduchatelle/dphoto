@@ -69,7 +69,7 @@ func (r *Repository) FindMediaCurrentAlbum(ctx context.Context, owner ownermodel
 	}
 
 	if len(item.Item) == 0 {
-		return nil, catalog.AlbumNotFoundError
+		return nil, catalog.AlbumNotFoundErr
 	}
 
 	if albumIndexPk, ok := item.Item["AlbumIndexPK"]; ok {

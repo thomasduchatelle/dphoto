@@ -306,7 +306,7 @@ func (a *MediaCrudTestSuite) TestFindMediaCurrentAlbum() {
 			args: args{owner: "this#is#my#owner", mediaId: "foobar"},
 			want: "",
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.AlbumNotFoundError)
+				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr)
 			},
 		},
 	}

@@ -224,7 +224,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.AlbumNotFoundError)
+				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr)
 			},
 		},
 		{
@@ -337,7 +337,7 @@ func stubFindAlbumByIdWith(existingAlbum *catalog.Album) func(t *testing.T) cata
 			if existingAlbum.AlbumId.IsEqual(id) {
 				return existingAlbum, nil
 			}
-			return nil, catalog.AlbumNotFoundError
+			return nil, catalog.AlbumNotFoundErr
 		})
 	}
 }

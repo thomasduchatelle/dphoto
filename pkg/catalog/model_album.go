@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	AlbumNotFoundError = errors.New("album hasn't been found")
+	AlbumNotFoundErr = errors.New("album hasn't been found")
 
 	EmptyFolderNameError = errors.New("folderName is mandatory and must be not empty")
 )

@@ -18,7 +18,7 @@ func (q *MediaQueries) ListMedias(ctx context.Context, albumId AlbumId) ([]*Medi
 	return q.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
 }
 
-// FindMediaOwnership returns the folderName containing the media, or AlbumNotFoundError.
+// FindMediaOwnership returns the folderName containing the media, or AlbumNotFoundErr.
 func (q *MediaQueries) FindMediaOwnership(ctx context.Context, owner ownermodel.Owner, mediaId MediaId) (*AlbumId, error) {
 	return q.MediaReadRepository.FindMediaCurrentAlbum(ctx, owner, mediaId)
 }

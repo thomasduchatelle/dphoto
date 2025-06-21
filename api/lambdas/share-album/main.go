@@ -35,7 +35,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		switch method {
 		case "PUT":
 			err := pkgfactory.AclCatalogShare(ctx).ShareAlbumWith(ctx, albumId, userId)
-			if errors.Is(err, catalog.AlbumNotFoundError) {
+			if errors.Is(err, catalog.AlbumNotFoundErr) {
 				return common.NotFound(fmt.Sprintf("%s/%s hasn't been found", owner, folderName))
 			} else if err != nil {
 				return common.InternalError(err)
