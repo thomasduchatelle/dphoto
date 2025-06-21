@@ -1,36 +1,20 @@
 import {CatalogViewerState} from "../language";
+import {createActionWithPayload} from "../common/action-factory";
 
-export interface EditDatesDialogEndDateUpdated {
-    type: "EditDatesDialogEndDateUpdated";
-    endDate: Date;
-}
-
-export function editDatesDialogEndDateUpdated(endDate: Date): EditDatesDialogEndDateUpdated {
-    return {
-        type: "EditDatesDialogEndDateUpdated",
-        endDate,
-    };
-}
-
-export function reduceEditDatesDialogEndDateUpdated(
-    current: CatalogViewerState,
-    {endDate}: EditDatesDialogEndDateUpdated,
-): CatalogViewerState {
-    if (!current.editDatesDialog) {
-        return current;
+export const editDatesDialogEndDateUpdated = createActionWithPayload<CatalogViewerState, Date>(
+    "EditDatesDialogEndDateUpdated",
+    (current: CatalogViewerState, action) => {
+        if (!current.editDatesDialog) {
+            return current;
+        }
+        return {
+            ...current,
+            editDatesDialog: {
+                ...current.editDatesDialog,
+                endDate: action.payload!,
+            },
+        };
     }
-    return {
-        ...current,
-        editDatesDialog: {
-            ...current.editDatesDialog,
-            endDate,
-        },
-    };
-}
+);
 
-export function editDatesDialogEndDateUpdatedReducerRegistration(handlers: any) {
-    handlers["EditDatesDialogEndDateUpdated"] = reduceEditDatesDialogEndDateUpdated as (
-        state: CatalogViewerState,
-        action: EditDatesDialogEndDateUpdated
-    ) => CatalogViewerState;
-}
+export type EditDatesDialogEndDateUpdated = ReturnType<typeof editDatesDialogEndDateUpdated>;

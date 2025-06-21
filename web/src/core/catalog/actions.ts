@@ -83,6 +83,7 @@ export type {
     AlbumDatesUpdated,
 };
 
+// Legacy action types for backward compatibility
 export type CatalogViewerAction =
     AlbumAccessGranted
     | AlbumsAndMediasLoaded
@@ -101,15 +102,10 @@ export type CatalogViewerAction =
     | AlbumDeleteFailed
     | DeleteAlbumDialogClosed
     | DeleteAlbumStarted
-    | EditDatesDialogOpened
-    | EditDatesDialogClosed
     | AlbumDatesUpdateStarted
     | AlbumDatesUpdated
-    | EditDatesDialogStartDateUpdated
-    | EditDatesDialogEndDateUpdated
 
-import {editDatesDialogClosed} from "./album-edit-dates/action-editDatesDialogClosed";
-import {editDatesDialogStartDateUpdated} from "./album-edit-dates/action-editDatesDialogStartDateUpdated";
+import {ActionWithReducer} from "./common/action-factory";
 
 const reducerRegistrations = [
     albumAccessGrantedReducerRegistration,
@@ -129,16 +125,8 @@ const reducerRegistrations = [
     albumDeleteFailedReducerRegistration,
     deleteAlbumDialogClosedReducerRegistration,
     deleteAlbumStartedReducerRegistration,
-    editDatesDialogOpenedReducerRegistration,
     albumDatesUpdateStartedReducerRegistration,
     albumDatesUpdatedReducerRegistration,
-    editDatesDialogEndDateUpdatedReducerRegistration,
-];
-
-// New-style action creators with built-in reducers
-const newStyleActions = [
-    editDatesDialogClosed,
-    editDatesDialogStartDateUpdated,
 ];
 
 function buildHandlers() {
@@ -149,31 +137,31 @@ function buildHandlers() {
         register(handlers);
     }
     
-    // Register new-style action reducers
-    for (const actionCreator of newStyleActions) {
-        handlers[actionCreator.type] = actionCreator.reducer;
-    }
-    
     return handlers;
 }
 
-function createReducer<TState, TActions extends { type: string }>(
-    handlers: {
-        [K in TActions["type"]]: (state: TState, action: Extract<TActions, { type: K }>) => TState
-    }
-): (state: TState, action: TActions) => TState {
-    return (state: TState, action: TActions): TState => {
-        const handler = handlers[action.type as keyof typeof handlers];
-        if (handler) {
-            return handler(state, action as any);
+function createGenericReducer<TState>(
+    legacyHandlers: Record<string, (state: TState, action: any) => TState>
+): (state: TState, action: ActionWithReducer<TState> | { type: string }) => TState {
+    return (state: TState, action: ActionWithReducer<TState> | { type: string }): TState => {
+        // Check if action has a built-in reducer
+        if ('reducer' in action && typeof action.reducer === 'function') {
+            return action.reducer(state, action as ActionWithReducer<TState>);
         }
+        
+        // Fall back to legacy handlers
+        const handler = legacyHandlers[action.type];
+        if (handler) {
+            return handler(state, action);
+        }
+        
         return state;
     };
 }
 
-function createCatalogReducer(): (state: CatalogViewerState, action: CatalogViewerAction) => CatalogViewerState {
+function createCatalogReducer(): (state: CatalogViewerState, action: ActionWithReducer<CatalogViewerState> | { type: string }) => CatalogViewerState {
     const handlers = buildHandlers();
-    return createReducer(handlers);
+    return createGenericReducer(handlers);
 }
 
 export const catalogReducer = createCatalogReducer();

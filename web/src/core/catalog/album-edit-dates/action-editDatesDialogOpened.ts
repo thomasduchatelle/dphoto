@@ -1,48 +1,34 @@
 import {albumIdEquals, CatalogViewerState} from "../language";
 import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
+import {createActionWithoutPayload} from "../common/action-factory";
 
-export interface EditDatesDialogOpened {
-    type: "EditDatesDialogOpened";
-}
+export const editDatesDialogOpened = createActionWithoutPayload<CatalogViewerState>(
+    "EditDatesDialogOpened",
+    (current: CatalogViewerState, action) => {
+        const {albumId: displayedAlbumId} = displayedAlbumSelector(current);
 
-export function editDatesDialogOpened(): EditDatesDialogOpened {
-    return {
-        type: "EditDatesDialogOpened",
-    };
-}
+        const selectedAlbum = current.albums.find(album => displayedAlbumId && albumIdEquals(displayedAlbumId, album.albumId));
 
-export function reduceEditDatesDialogOpened(
-    current: CatalogViewerState,
-    _: EditDatesDialogOpened,
-): CatalogViewerState {
-    const {albumId: displayedAlbumId} = displayedAlbumSelector(current);
+        if (!selectedAlbum) {
+            return current;
+        }
 
-    const selectedAlbum = current.albums.find(album => displayedAlbumId && albumIdEquals(displayedAlbumId, album.albumId));
+        const displayEndDate = new Date(selectedAlbum.end);
+        if (displayEndDate.getHours() === 0 && displayEndDate.getMinutes() === 0 && displayEndDate.getSeconds() === 0) {
+            displayEndDate.setDate(displayEndDate.getDate() - 1);
+        }
 
-    if (!selectedAlbum) {
-        return current;
+        return {
+            ...current,
+            editDatesDialog: {
+                albumId: selectedAlbum.albumId,
+                albumName: selectedAlbum.name,
+                startDate: selectedAlbum.start,
+                endDate: displayEndDate,
+                isLoading: false,
+            },
+        };
     }
+);
 
-    const displayEndDate = new Date(selectedAlbum.end);
-    if (displayEndDate.getHours() === 0 && displayEndDate.getMinutes() === 0 && displayEndDate.getSeconds() === 0) {
-        displayEndDate.setDate(displayEndDate.getDate() - 1);
-    }
-
-    return {
-        ...current,
-        editDatesDialog: {
-            albumId: selectedAlbum.albumId,
-            albumName: selectedAlbum.name,
-            startDate: selectedAlbum.start,
-            endDate: displayEndDate,
-            isLoading: false,
-        },
-    };
-}
-
-export function editDatesDialogOpenedReducerRegistration(handlers: any) {
-    handlers["EditDatesDialogOpened"] = reduceEditDatesDialogOpened as (
-        state: CatalogViewerState,
-        action: EditDatesDialogOpened
-    ) => CatalogViewerState;
-}
+export type EditDatesDialogOpened = ReturnType<typeof editDatesDialogOpened>;

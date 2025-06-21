@@ -1,7 +1,7 @@
 import {CatalogViewerState} from "../language";
 import {createActionWithPayload} from "../common/action-factory";
 
-export const editDatesDialogStartDateUpdated = createActionWithPayload(
+export const editDatesDialogStartDateUpdated = createActionWithPayload<CatalogViewerState, Date>(
     "EditDatesDialogStartDateUpdated",
     (current: CatalogViewerState, action) => {
         if (!current.editDatesDialog) {

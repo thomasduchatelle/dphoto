@@ -1,4 +1,4 @@
-import {editDatesDialogOpened, reduceEditDatesDialogOpened} from "./action-editDatesDialogOpened";
+import {editDatesDialogOpened} from "./action-editDatesDialogOpened";
 import {CatalogViewerState} from "../language";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {DEFAULT_EDIT_DATES_DIALOG_SELECTION, editDatesDialogSelector} from "./selector-editDatesDialogSelector";
@@ -8,7 +8,8 @@ const feb25Album = twoAlbums[1];
 
 describe("action:editDatesDialogOpened", () => {
     it("opens the dialog with the currently selected album data", () => {
-        const state = reduceEditDatesDialogOpened(loadedStateWithTwoAlbums, editDatesDialogOpened());
+        const action = editDatesDialogOpened();
+        const state = action.reducer(loadedStateWithTwoAlbums, action);
         const got = editDatesDialogSelector(state);
 
         expect(got).toEqual({
@@ -27,7 +28,8 @@ describe("action:editDatesDialogOpened", () => {
             loadingMediasFor: feb25Album.albumId,
         };
 
-        const state = reduceEditDatesDialogOpened(initialState, editDatesDialogOpened());
+        const action = editDatesDialogOpened();
+        const state = action.reducer(initialState, action);
         const got = editDatesDialogSelector(state);
 
         expect(got).toEqual({
@@ -47,7 +49,8 @@ describe("action:editDatesDialogOpened", () => {
             loadingMediasFor: undefined,
         };
 
-        const got = reduceEditDatesDialogOpened(state, editDatesDialogOpened());
+        const action = editDatesDialogOpened();
+        const got = action.reducer(state, action);
         const dialogSelection = editDatesDialogSelector(got);
 
         expect(dialogSelection.isOpen).toBeFalsy();
@@ -62,11 +65,20 @@ describe("action:editDatesDialogOpened", () => {
             mediasLoadedFromAlbumId: feb25Album.albumId,
         };
 
-        const got = reduceEditDatesDialogOpened(state, editDatesDialogOpened());
+        const action = editDatesDialogOpened();
+        const got = action.reducer(state, action);
         const dialogSelection = editDatesDialogSelector(got);
 
         expect(dialogSelection.isOpen).toBeFalsy();
         expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
         expect(got).toEqual(state); // Ensure no other state changes
+    });
+
+    it("supports action comparison for testing", () => {
+        const action1 = editDatesDialogOpened();
+        const action2 = editDatesDialogOpened();
+        
+        expect(action1).toEqual(action2);
+        expect([action1]).toContain(action2);
     });
 });
