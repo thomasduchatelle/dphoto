@@ -18,18 +18,18 @@ interface DateRangePickerProps {
 }
 
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
-    startDate,
-    endDate,
-    startAtDayStart,
-    endAtDayEnd,
-    onStartDateChange,
-    onEndDateChange,
-    onStartsAtStartOfTheDayChange,
-    onEndsAtEndOfTheDayChange,
-    disabled = false,
-    dateError = false,
-    dateHelperText = "",
-}) => {
+                                                                    startDate,
+                                                                    endDate,
+                                                                    startAtDayStart,
+                                                                    endAtDayEnd,
+                                                                    onStartDateChange,
+                                                                    onEndDateChange,
+                                                                    onStartsAtStartOfTheDayChange,
+                                                                    onEndsAtEndOfTheDayChange,
+                                                                    disabled = false,
+                                                                    dateError = false,
+                                                                    dateHelperText = "",
+                                                                }) => {
     const commonDateInputProps = {
         error: dateError,
         helperText: dateHelperText,
@@ -42,20 +42,20 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DatePicker
                         label="First day"
                         disabled={disabled}
-                        value={startDate} 
-                        onChange={(newValue: Date | null) => onStartDateChange(newValue)} // Receive Date object
+                        value={startDate}
+                        onChange={(newValue: Date | null) => onStartDateChange(newValue)}
                         renderInput={(params: any) => (
-                            <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText="" />
+                            <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText=""/>
                         )}
                     />
                 ) : (
                     <DateTimePicker
                         label="First day"
                         disabled={disabled}
-                        value={startDate} 
-                        onChange={(newValue: Date | null) => onStartDateChange(newValue)} // Receive Date object
+                        value={startDate}
+                        onChange={(newValue: Date | null) => onStartDateChange(newValue)}
                         renderInput={(params: any) => (
-                            <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText="" />
+                            <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText=""/>
                         )}
                     />
                 )}
@@ -79,7 +79,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DatePicker
                         label="Last day"
                         disabled={disabled}
-                        value={endDate} 
+                        value={endDate}
                         onChange={(newValue: Date | null) => onEndDateChange(newValue)} // Receive Date object
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} />
@@ -89,7 +89,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DateTimePicker
                         label="Last day"
                         disabled={disabled}
-                        value={endDate} 
+                        value={endDate}
                         onChange={(newValue: Date | null) => onEndDateChange(newValue)} // Receive Date object
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} />
