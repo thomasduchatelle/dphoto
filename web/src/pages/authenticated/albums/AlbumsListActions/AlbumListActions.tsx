@@ -15,6 +15,10 @@ export default function AlbumListActions({
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
 }) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const features = urlParams.get('features');
+    const isEditAlbumFeatureEnabled = features && features.includes('edit-album');
+
     return (
         <Box sx={{
             display: 'flex',
@@ -28,9 +32,9 @@ export default function AlbumListActions({
             <IconButton color="primary" onClick={openDialogForCreateAlbum} size="large">
                 <AddIcon/>
             </IconButton>
-            <Tooltip title="Function not yet available, stay tuned !">
+            <Tooltip title={isEditAlbumFeatureEnabled ? "" : "Function not yet available, stay tuned !"}>
                 <span>
-                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled>
+                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled={!isEditAlbumFeatureEnabled}>
                         <EditIcon/>
                     </IconButton>
                 </span>
