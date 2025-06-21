@@ -118,7 +118,7 @@ func (t *TimelineAggregate) RemoveAlbum(deletedAlbumId AlbumId) (MediaTransferRe
 
 	t.albums, deletedAlbum = t.removeAlbumFrom(t.albums, deletedAlbumId.FolderName)
 	if deletedAlbum == nil {
-		return nil, nil, AlbumNotFoundError
+		return nil, nil, AlbumNotFoundErr
 	}
 
 	t.timeline, err = NewTimeline(t.albums)
@@ -163,7 +163,7 @@ func (t *TimelineAggregate) ValidateAmendDates(albumId AlbumId, start, end time.
 	})
 
 	if index == -1 {
-		return nil, errors.Wrapf(AlbumNotFoundError, "album %s not found", albumId)
+		return nil, errors.Wrapf(AlbumNotFoundErr, "album %s not found", albumId)
 	}
 
 	amended := DatesUpdate{
@@ -182,7 +182,7 @@ func (t *TimelineAggregate) AmendDates(amendedAlbum DatesUpdate) (MediaTransferR
 		return album.AlbumId.IsEqual(amendedAlbum.UpdatedAlbum.AlbumId)
 	})
 	if index == -1 {
-		return nil, nil, errors.Wrapf(AlbumNotFoundError, "album %s not found", amendedAlbum.UpdatedAlbum.AlbumId)
+		return nil, nil, errors.Wrapf(AlbumNotFoundErr, "album %s not found", amendedAlbum.UpdatedAlbum.AlbumId)
 	}
 
 	var err error

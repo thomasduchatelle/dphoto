@@ -7,31 +7,30 @@ export interface EditDatesDialogSelection {
     endDate: Date;
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
+    isLoading: boolean;
 }
+
+export const DEFAULT_EDIT_DATES_DIALOG_SELECTION: EditDatesDialogSelection = {
+    isOpen: false,
+    albumName: "",
+    startDate: new Date(),
+    endDate: new Date(),
+    startAtDayStart: true,
+    endAtDayEnd: true,
+    isLoading: false,
+};
 
 export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDialogSelection {
     if (!state.editDatesDialog) {
-        return {
-            isOpen: false,
-            albumName: "",
-            startDate: new Date(),
-            endDate: new Date(),
-            startAtDayStart: true,
-            endAtDayEnd: true,
-        };
-    }
-
-    const displayEndDate = new Date(state.editDatesDialog.endDate);
-    if (displayEndDate.getHours() === 0 && displayEndDate.getMinutes() === 0 && displayEndDate.getSeconds() === 0) {
-        displayEndDate.setDate(displayEndDate.getDate() - 1);
+        return DEFAULT_EDIT_DATES_DIALOG_SELECTION;
     }
 
     return {
+        ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
         isOpen: true,
         albumName: state.editDatesDialog.albumName,
         startDate: state.editDatesDialog.startDate,
-        endDate: displayEndDate,
-        startAtDayStart: true,
-        endAtDayEnd: true,
+        endDate: state.editDatesDialog.endDate,
+        isLoading: state.editDatesDialog.isLoading,
     };
 }

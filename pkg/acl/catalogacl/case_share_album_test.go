@@ -68,14 +68,14 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 			name: "it should return an error if the album doesn't exists",
 			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.FindAlbumPort) {
 				catalogMock := mocks.NewFindAlbumPort(t)
-				catalogMock.EXPECT().FindAlbum(mock.Anything, albumId).Return(nil, catalog.AlbumNotFoundError)
+				catalogMock.EXPECT().FindAlbum(mock.Anything, albumId).Return(nil, catalog.AlbumNotFoundErr)
 
 				return mocks.NewScopeWriter(t), catalogMock
 			},
 			args:         args{owner, folderName, userEmail},
 			wantObserved: nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.AlbumNotFoundError, i)
+				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i)
 			},
 		},
 		{

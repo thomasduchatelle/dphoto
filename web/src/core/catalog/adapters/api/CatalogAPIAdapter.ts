@@ -5,6 +5,7 @@ import {FetchAlbumMediasPort, FetchAlbumsPort} from "../../navigation";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort} from "../../album-delete";
+import {UpdateAlbumDatesPort} from "../../album-edit-dates";
 
 interface RestAlbum {
     owner: string
@@ -69,7 +70,7 @@ function castDeleteAlbumError(err: AxiosError): Error {
     return castError(err);
 }
 
-export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort {
+export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort, UpdateAlbumDatesPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,
@@ -224,6 +225,15 @@ export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort,
             .delete(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`)
             .catch((err: AxiosError) => Promise.reject(castError(err)))
             .then()
+    }
+
+    public async updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void> {
+        await this.authenticatedAxios
+            .put(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/dates`, {
+                start: startDate.toISOString(),
+                end: endDate.toISOString(),
+            })
+            .catch((err: AxiosError) => Promise.reject(castError(err)));
     }
 }
 

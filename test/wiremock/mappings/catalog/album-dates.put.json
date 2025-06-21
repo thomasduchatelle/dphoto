@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "PUT",
+    "urlPattern": "/api/v1/owners/[^/]+/albums/[^/]+/dates"
+  },
+  "response": {
+    "status": 204
+  }
+}

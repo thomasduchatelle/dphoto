@@ -162,7 +162,7 @@ func (r *Repository) FindAlbumById(ctx context.Context, id catalog.AlbumId) (*ca
 	}
 
 	if len(albums) == 0 {
-		return nil, catalog.AlbumNotFoundError
+		return nil, catalog.AlbumNotFoundErr
 	}
 	return albums[0], nil
 }
@@ -217,7 +217,7 @@ func (r *Repository) AmendDates(ctx context.Context, albumId catalog.AlbumId, st
 	})
 	var conditionalCheckFailedException *types.ConditionalCheckFailedException
 	if errors.As(err, &conditionalCheckFailedException) {
-		return catalog.AlbumNotFoundError
+		return catalog.AlbumNotFoundErr
 	}
 
 	return errors.Wrapf(err, "failed to exec update [%s -> %s] expression for album %s", start, end, albumId)

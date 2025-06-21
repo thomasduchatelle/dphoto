@@ -25,7 +25,7 @@ type ShareAlbumCase struct {
 func (s *ShareAlbumCase) ShareAlbumWith(ctx context.Context, albumId catalog.AlbumId, userEmail usermodel.UserId) error {
 	_, err := s.FindAlbumPort.FindAlbum(ctx, albumId)
 	if err != nil {
-		return errors.Wrapf(err, "album %s cannot be shared to %s", albumId, userEmail) // it can be a catalog.AlbumNotFoundError
+		return errors.Wrapf(err, "album %s cannot be shared to %s", albumId, userEmail) // it can be a catalog.AlbumNotFoundErr
 	}
 
 	err = s.ScopeWriter.SaveIfNewScope(aclcore.Scope{

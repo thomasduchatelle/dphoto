@@ -136,4 +136,5 @@ export interface EditDatesDialogState {
     albumName: string
     startDate: Date
     endDate: Date
+    isLoading: boolean
 }

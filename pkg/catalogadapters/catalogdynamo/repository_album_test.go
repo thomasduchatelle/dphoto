@@ -101,7 +101,7 @@ func (a *AlbumCrudTestSuite) TestInsertTwiceFails() {
 }
 
 func (a *AlbumCrudTestSuite) TestFindNotFound() {
-	ttName := "it should return [?, AlbumNotFoundError] when searched album do not exists"
+	ttName := "it should return [?, AlbumNotFoundErr] when searched album do not exists"
 	albums, err := a.repo.FindAlbumByIds(context.TODO(), catalog.AlbumId{Owner: a.owner, FolderName: "_donotexist"})
 	if a.NoError(err, ttName) {
 		a.Empty(albums)
@@ -317,7 +317,7 @@ func TestRepository_AmendDates(t *testing.T) {
 			before: nil,
 			after:  nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.AlbumNotFoundError, i...)
+				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
 			},
 		},
 	}

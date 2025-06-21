@@ -1,6 +1,7 @@
 import {editDatesDialogClosed, reduceEditDatesDialogClosed} from "./action-editDatesDialogClosed";
 import {CatalogViewerState} from "../language";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
+import {DEFAULT_EDIT_DATES_DIALOG_SELECTION, editDatesDialogSelector} from "./selector-editDatesDialogSelector";
 
 describe("action:editDatesDialogClosed", () => {
     it("closes the dialog by setting editDatesDialog to undefined", () => {
@@ -11,15 +12,14 @@ describe("action:editDatesDialogClosed", () => {
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00"),
                 endDate: new Date("2023-08-01T00:00:00"),
+                isLoading: false,
             },
         };
 
         const got = reduceEditDatesDialogClosed(state, editDatesDialogClosed());
+        const dialogSelection = editDatesDialogSelector(got);
 
-        expect(got).toEqual({
-            ...state,
-            editDatesDialog: undefined,
-        });
+        expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
     });
 
     it("does nothing when dialog is already closed", () => {
@@ -29,7 +29,9 @@ describe("action:editDatesDialogClosed", () => {
         };
 
         const got = reduceEditDatesDialogClosed(state, editDatesDialogClosed());
+        const dialogSelection = editDatesDialogSelector(got);
 
+        expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
         expect(got).toBe(state);
     });
 });

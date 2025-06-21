@@ -143,3 +143,22 @@ func (a *CatalogAuthorizer) CanDeleteAlbum(ctx context.Context, user usermodel.C
 
 	return aclcore.AccessForbiddenError
 }
+
+// CanAmendAlbumDates returns nil if the user is allowed to amend the album dates, or an error otherwise.
+func (a *CatalogAuthorizer) CanAmendAlbumDates(ctx context.Context, user usermodel.CurrentUser, albumId catalog.AlbumId) error {
+	if user.Owner != nil && *user.Owner == albumId.Owner {
+		return nil
+	}
+
+	permissions, err := a.HasPermissionPort.ListScopesByUser(ctx, user.UserId, aclcore.MainOwnerScope)
+	if err != nil {
+		return errors.Wrapf(err, "failed to check permissions for user %s", user.UserId)
+	}
+	for _, perm := range permissions {
+		if perm.ResourceOwner == albumId.Owner {
+			return nil
+		}
+	}
+
+	return aclcore.AccessForbiddenError
+}

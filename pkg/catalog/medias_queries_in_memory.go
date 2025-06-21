@@ -35,7 +35,7 @@ func (q *MediaQueriesInMemory) ListMedias(ctx context.Context, albumId AlbumId) 
 	return medias, nil
 }
 
-// FindMediaOwnership returns the folderName containing the media, or AlbumNotFoundError.
+// FindMediaOwnership returns the folderName containing the media, or AlbumNotFoundErr.
 func (q *MediaQueriesInMemory) FindMediaOwnership(ctx context.Context, owner ownermodel.Owner, mediaId MediaId) (*AlbumId, error) {
 	for _, media := range q.Medias {
 		if media.Id == mediaId {
