@@ -7,7 +7,7 @@ import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
-import {useLocation, useSearchParams} from "react-router-dom";
+import {useLocation, useSearchParams} from "react-router-router";
 import {albumIdEquals, deleteDialogSelector, editDatesDialogSelector, sharingDialogSelector} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
@@ -32,7 +32,9 @@ export function CatalogViewerPage() {
             closeSharingModal,
             revokeAlbumAccess,
             grantAlbumSharing,
-            updateAlbumDates // Add updateAlbumDates handler
+            updateAlbumDates,
+            updateEditDatesDialogStartDate,
+            updateEditDatesDialogEndDate
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -43,7 +45,6 @@ export function CatalogViewerPage() {
 
     const theme = useTheme()
 
-    // '/albums' page is only available on small devices
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
     const isAlbumsPage = pathname === '/albums'
 
@@ -104,10 +105,8 @@ export function CatalogViewerPage() {
                 {...editDatesDialogState}
                 onClose={closeEditDatesDialog}
                 onSave={updateAlbumDates}
-                onStartDateChange={() => {
-                }}
-                onEndDateChange={() => {
-                }}
+                onStartDateChange={updateEditDatesDialogStartDate}
+                onEndDateChange={updateEditDatesDialogEndDate}
                 onStartAtDayStartChange={() => {
                 }}
                 onEndAtDayEndChange={() => {
