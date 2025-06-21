@@ -527,3 +527,110 @@ func TestCatalogAuthorizer_CanDeleteAlbum(t *testing.T) {
 		})
 	}
 }
+
+func TestCatalogAuthorizer_CanAmendAlbumDates(t *testing.T) {
+	owner1 := ownermodel.Owner("owner-1")
+	owner2 := ownermodel.Owner("owner-2")
+	userOfOwner1 := usermodel.CurrentUser{UserId: "user-1", Owner: &owner1}
+	userOfOwner2 := usermodel.CurrentUser{UserId: "user-2", Owner: &owner2}
+	userNoOwner := usermodel.CurrentUser{UserId: "user-3"}
+	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/folder-1")}
+	isAccessForbidden := func(t assert.TestingT, err error, i ...interface{}) bool {
+		return assert.ErrorIs(t, err, aclcore.AccessForbiddenError)
+	}
+
+	type fields struct {
+		HasPermissionPort HasPermissionPort
+	}
+	type args struct {
+		ctx     context.Context
+		user    usermodel.CurrentUser
+		albumId catalog.AlbumId
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "allows amending dates when CurrentUser.Owner is defined and equals AlbumId.Owner",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{},
+			},
+			args: args{
+				ctx:     context.Background(),
+				user:    userOfOwner1,
+				albumId: albumId1,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "denies amending dates when CurrentUser.Owner is not defined and user has no MainOwner permissions",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{},
+			},
+			args: args{
+				ctx:     context.Background(),
+				user:    userNoOwner,
+				albumId: albumId1,
+			},
+			wantErr: isAccessForbidden,
+		},
+		{
+			name: "denies amending dates when CurrentUser.Owner is defined but not equals AlbumId.Owner",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{},
+			},
+			args: args{
+				ctx:     context.Background(),
+				user:    userOfOwner2,
+				albumId: albumId1,
+			},
+			wantErr: isAccessForbidden,
+		},
+		{
+			name: "allows amending dates when CurrentUser.Owner is not defined and user is MainOwner of AlbumId.Owner",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{
+					Scopes: []*aclcore.Scope{
+						{Type: aclcore.MainOwnerScope, GrantedTo: userNoOwner.UserId, ResourceOwner: owner2},
+						{Type: aclcore.MainOwnerScope, GrantedTo: userNoOwner.UserId, ResourceOwner: owner1},
+					},
+				},
+			},
+			args: args{
+				ctx:     context.Background(),
+				user:    userNoOwner,
+				albumId: albumId1,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "denies amending dates when CurrentUser.Owner is not defined and user is MainOwner of different owners",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{
+					Scopes: []*aclcore.Scope{
+						{Type: aclcore.MainOwnerScope, GrantedTo: userNoOwner.UserId, ResourceOwner: owner2},
+					},
+				},
+			},
+			args: args{
+				ctx:     context.Background(),
+				user:    userNoOwner,
+				albumId: albumId1,
+			},
+			wantErr: isAccessForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &CatalogAuthorizer{
+				HasPermissionPort: tt.fields.HasPermissionPort,
+			}
+			err := a.CanAmendAlbumDates(tt.args.ctx, tt.args.user, tt.args.albumId)
+			tt.wantErr(t, err, "CanAmendAlbumDates(%v, %v, %v)", tt.args.ctx, tt.args.user, tt.args.albumId)
+		})
+	}
+}
