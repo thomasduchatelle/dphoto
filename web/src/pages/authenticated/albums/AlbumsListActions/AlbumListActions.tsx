@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import {CreateAlbumControls} from "../../../../core/catalog";
+import {useSearchParams} from "react-router-dom";
 
 
 export default function AlbumListActions({
@@ -15,6 +16,10 @@ export default function AlbumListActions({
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
 }) {
+    const [urlParams] = useSearchParams()
+    const features = urlParams.get('features');
+    const isEditAlbumFeatureEnabled = features && features.includes('edit-album');
+
     return (
         <Box sx={{
             display: 'flex',
@@ -28,9 +33,9 @@ export default function AlbumListActions({
             <IconButton color="primary" onClick={openDialogForCreateAlbum} size="large">
                 <AddIcon/>
             </IconButton>
-            <Tooltip title="Function not yet available, stay tuned !">
+            <Tooltip title={isEditAlbumFeatureEnabled ? "" : "Function not yet available, stay tuned !"}>
                 <span>
-                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled>
+                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled={!isEditAlbumFeatureEnabled}>
                         <EditIcon/>
                     </IconButton>
                 </span>
