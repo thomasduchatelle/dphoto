@@ -79,6 +79,6 @@ describe("action:editDatesDialogOpened", () => {
         const action2 = editDatesDialogOpened();
         
         expect(action1).toEqual(action2);
-        expect([action1]).toContain(action2);
+        expect([action1]).toContainEqual(action2);
     });
 });
