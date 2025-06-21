@@ -1,8 +1,21 @@
 import React from "react";
-import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, useMediaQuery, useTheme} from "@mui/material";
+import {
+    Alert,
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    LinearProgress,
+    useMediaQuery,
+    useTheme
+} from "@mui/material";
 import {Close} from "@mui/icons-material";
 import Grid from "@mui/material/Unstable_Grid2";
 import {DateRangePicker} from "../DateRangePicker";
+import {albumStartAndEndDateMandatoryErr} from "../../../../core/catalog";
 
 interface EditDatesDialogProps {
     isOpen: boolean;
@@ -12,6 +25,7 @@ interface EditDatesDialogProps {
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
     isLoading: boolean;
+    errorCode?: string; // Added for error handling
     onClose: () => void;
     onStartDateChange: (date: Date | null) => void;
     onEndDateChange: (date: Date | null) => void;
@@ -28,6 +42,7 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                                                                     startAtDayStart,
                                                                     endAtDayEnd,
                                                                     isLoading,
+                                                                    errorCode, // Destructure errorCode
                                                                     onClose,
                                                                     onStartDateChange,
                                                                     onEndDateChange,
@@ -37,6 +52,11 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                                                                 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const dateError = errorCode === albumStartAndEndDateMandatoryErr;
+    const dateHelperText = dateError ? "Start and end dates are mandatory, and end date must be after the start date." : "";
+
+    const errorMessage = getErrorMessage(errorCode);
 
     return (
         <Dialog
@@ -50,8 +70,13 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                 height: '4px',
                 marginTop: '0px !important',
             }}>
+                {isLoading && <LinearProgress sx={{
+                    borderRadius: {
+                        sm: '4px 4px 0px 0px'
+                    },
+                }}/>}
             </Box>
-            <DialogTitle>{albumName}</DialogTitle>
+            <DialogTitle>Edit album dates</DialogTitle>
             <IconButton
                 aria-label="close"
                 onClick={onClose}
@@ -67,6 +92,11 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
             </IconButton>
             <DialogContent>
                 <Grid container spacing={2} alignItems='center'>
+                    <Grid sm={12} xs={12}>
+                        {errorMessage && <Alert severity="error">
+                            {errorMessage}
+                        </Alert>}
+                    </Grid>
                     <DateRangePicker
                         startDate={startDate}
                         endDate={endDate}
@@ -76,6 +106,9 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                         onEndDateChange={onEndDateChange}
                         onStartsAtStartOfTheDayChange={onStartAtDayStartChange}
                         onEndsAtEndOfTheDayChange={onEndAtDayEndChange}
+                        disabled={isLoading}
+                        dateError={dateError}
+                        dateHelperText={dateHelperText}
                     />
                 </Grid>
             </DialogContent>
@@ -83,16 +116,27 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                 <Button onClick={onClose} color="info" disabled={isLoading}>
                     Cancel
                 </Button>
-                <Button 
-                    onClick={onSave} 
-                    color="primary" 
+                <Button
+                    onClick={onSave}
+                    color="primary"
                     variant="contained"
                     disabled={isLoading}
-                    startIcon={isLoading ? <CircularProgress size={20} /> : undefined}
                 >
-                    {isLoading ? 'Saving...' : 'Save'}
+                    Save
                 </Button>
             </DialogActions>
         </Dialog>
     );
 };
+
+function getErrorMessage(errorCode: string | undefined): string {
+    switch (errorCode) {
+        case undefined:
+        case "":
+        case albumStartAndEndDateMandatoryErr:
+            return "";
+
+        default:
+            return "Album dates couldn't be saved. Refresh your page and retry, or let the developer known.";
+    }
+}
