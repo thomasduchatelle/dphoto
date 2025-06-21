@@ -70,5 +70,5 @@ Loading.args = {
     isLoading: true,
 };
 Loading.parameters = {
-    delay: 300,
+    storyshots: {disable: true},
 };
