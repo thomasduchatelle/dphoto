@@ -1,4 +1,4 @@
-import {CatalogViewerState, Album, Media, AlbumId, MediaWithinADay} from "../language";
+import {Album, CatalogViewerState, MediaWithinADay} from "../language";
 import {refreshFilters} from "../common/utils";
 
 export interface AlbumDatesUpdated {

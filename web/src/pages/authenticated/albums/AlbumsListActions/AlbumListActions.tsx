@@ -30,7 +30,7 @@ export default function AlbumListActions({
             </IconButton>
             <Tooltip title="Function not yet available, stay tuned !">
                 <span>
-                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled>
+                    <IconButton color="primary" size="large" onClick={openEditDatesDialog}>
                         <EditIcon/>
                     </IconButton>
                 </span>

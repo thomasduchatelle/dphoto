@@ -23,13 +23,18 @@ export function reduceEditDatesDialogOpened(
         return current;
     }
 
+    const displayEndDate = new Date(selectedAlbum.end);
+    if (displayEndDate.getHours() === 0 && displayEndDate.getMinutes() === 0 && displayEndDate.getSeconds() === 0) {
+        displayEndDate.setDate(displayEndDate.getDate() - 1);
+    }
+
     return {
         ...current,
         editDatesDialog: {
             albumId: selectedAlbum.albumId,
             albumName: selectedAlbum.name,
             startDate: selectedAlbum.start,
-            endDate: selectedAlbum.end,
+            endDate: displayEndDate,
             isLoading: false,
         },
     };

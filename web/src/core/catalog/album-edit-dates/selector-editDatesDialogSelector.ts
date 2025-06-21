@@ -25,17 +25,12 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
         return DEFAULT_EDIT_DATES_DIALOG_SELECTION;
     }
 
-    const displayEndDate = new Date(state.editDatesDialog.endDate);
-    if (displayEndDate.getHours() === 0 && displayEndDate.getMinutes() === 0 && displayEndDate.getSeconds() === 0) {
-        displayEndDate.setDate(displayEndDate.getDate() - 1);
-    }
-
     return {
         ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
         isOpen: true,
         albumName: state.editDatesDialog.albumName,
         startDate: state.editDatesDialog.startDate,
-        endDate: displayEndDate,
+        endDate: state.editDatesDialog.endDate,
         isLoading: state.editDatesDialog.isLoading,
     };
 }

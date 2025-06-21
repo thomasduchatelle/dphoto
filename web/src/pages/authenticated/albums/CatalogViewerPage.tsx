@@ -7,7 +7,7 @@ import MediasPage from "./MediasPage";
 import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
-import {useLocation, useSearchParams} from "react-router-router";
+import {useLocation, useSearchParams} from "react-router-dom";
 import {albumIdEquals, deleteDialogSelector, editDatesDialogSelector, sharingDialogSelector} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";

@@ -3,7 +3,13 @@ import type {ThunkDeclaration} from "../thunk-engine";
 import {createAlbumDeclaration} from "./album-create";
 import {onAlbumFilterChangeDeclaration, onPageRefreshDeclaration} from "./navigation";
 import {closeDeleteAlbumDialogDeclaration, deleteAlbumDeclaration, openDeleteAlbumDialogDeclaration} from "./album-delete";
-import {closeEditDatesDialogDeclaration, openEditDatesDialogDeclaration, updateAlbumDatesDeclaration} from "./album-edit-dates";
+import {
+    closeEditDatesDialogDeclaration,
+    openEditDatesDialogDeclaration,
+    updateAlbumDatesDeclaration,
+    updateEditDatesDialogEndDateDeclaration,
+    updateEditDatesDialogStartDateDeclaration
+} from "./album-edit-dates";
 
 export * from "./common/catalog-factory-args";
 export type {FetchAlbumsPort} from "./navigation/thunk-onPageRefresh";
@@ -28,6 +34,8 @@ export const catalogThunks = {
     openEditDatesDialog: openEditDatesDialogDeclaration,
     closeEditDatesDialog: closeEditDatesDialogDeclaration,
     updateAlbumDates: updateAlbumDatesDeclaration,
+    updateEditDatesDialogStartDate: updateEditDatesDialogStartDateDeclaration,
+    updateEditDatesDialogEndDate: updateEditDatesDialogEndDateDeclaration,
 };
 
 // Dynamically infer the interface from catalogThunks
