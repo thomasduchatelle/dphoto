@@ -4,7 +4,6 @@ import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {mediaLoadFailed} from "./action-mediaLoadFailed";
 import {FetchAlbumsAndMediasPort, OnPageRefresh, OnPageRefreshArgs} from "./thunk-onPageRefresh";
 import {CatalogViewerAction} from "../actions";
-import {groupByDay} from "./group-by-day";
 
 
 const twoAlbums: Album[] = [
@@ -35,8 +34,6 @@ const medias = [
     newMedia('02', "2024-12-01T13:09:00Z"),
     newMedia('03', "2024-12-02T09:45:00Z"),
 ];
-
-const expectedMediasPerDay = groupByDay(medias);
 
 interface PartialCatalogLoaderState extends Omit<OnPageRefreshArgs, "albumId"> {
 }
@@ -243,7 +240,7 @@ function newMedia(mediaId: MediaId, dateTime: string): Media {
         time: new Date(dateTime),
         uiRelativePath: `${mediaId}/image-${mediaId}.jpg`,
         contentPath: `/content/$\{id}/image-${mediaId}.jpg`,
-        source: 'Samsung Galaxy S24'
+        source: 'Samsung S24'
     };
 }
 
