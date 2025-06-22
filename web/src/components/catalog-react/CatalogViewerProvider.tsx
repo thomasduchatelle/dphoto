@@ -12,7 +12,7 @@ import {
 } from "../../core/catalog";
 import {useApplication, useUnrecoverableErrorDispatch} from "../../core/application";
 import {AuthenticatedUser} from "../../core/security";
-import {useThunks} from "../../core/thunk-engine";
+import {useThunks} from "../../libs/thunks/react/useThunks";
 
 export interface CatalogViewerStateWithDispatch {
     state: CatalogViewerState

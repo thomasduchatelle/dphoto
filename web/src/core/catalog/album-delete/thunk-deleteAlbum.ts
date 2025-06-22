@@ -1,4 +1,3 @@
-import type {ThunkDeclaration} from "../../thunk-engine";
 import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogFactory} from "../catalog-factories";
 import {DPhotoApplication} from "../../application";
@@ -7,6 +6,7 @@ import {Album, AlbumId, albumIdEquals, CatalogViewerState} from "../language";
 import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
 import {albumDeleted} from "./action-albumDeleted";
+import {ThunkDeclaration} from "src/libs/thunks";
 
 
 export interface DeleteAlbumPort {

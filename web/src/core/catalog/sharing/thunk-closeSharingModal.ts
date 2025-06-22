@@ -1,7 +1,7 @@
 import {CatalogViewerState} from "../language";
-import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {SharingModalClosed, sharingModalClosed} from "./action-sharingModalClosed";
+import {ThunkDeclaration} from "src/libs/thunks";
 
 export function closeSharingModalThunk(dispatch: (action: SharingModalClosed) => void): void {
     dispatch(sharingModalClosed());

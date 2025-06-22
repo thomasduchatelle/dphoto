@@ -3,10 +3,10 @@ import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {mediaLoadFailed} from "./action-mediaLoadFailed";
 import {mediasLoaded} from "./action-mediasLoaded";
 import {noAlbumAvailable} from "./action-noAlbumAvailable";
-import {ThunkDeclaration} from "../../thunk-engine";
 import {DPhotoApplication} from "../../application";
 import {CatalogFactory} from "../catalog-factories";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
+import {ThunkDeclaration} from "src/libs/thunks";
 
 export interface OnPageRefreshArgs {
     allAlbums: Album[]

@@ -1,5 +1,4 @@
 import {closeSharingModalDeclaration, grantAlbumAccessDeclaration, openSharingModalDeclaration, revokeAlbumAccessDeclaration} from "./sharing";
-import type {ThunkDeclaration} from "../thunk-engine";
 import {createAlbumDeclaration} from "./album-create";
 import {onAlbumFilterChangeDeclaration, onPageRefreshDeclaration} from "./navigation";
 import {closeDeleteAlbumDialogDeclaration, deleteAlbumDeclaration, openDeleteAlbumDialogDeclaration} from "./album-delete";
@@ -10,6 +9,7 @@ import {
     updateEditDatesDialogEndDateDeclaration,
     updateEditDatesDialogStartDateDeclaration
 } from "./album-edit-dates";
+import {ThunkDeclaration} from "src/libs/thunks";
 
 export * from "./common/catalog-factory-args";
 export type {RevokeAlbumAccessAPI} from "./sharing/thunk-revokeAlbumAccess";

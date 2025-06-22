@@ -1,9 +1,9 @@
 import {Album, AlbumId, CatalogViewerState} from "../language";
 import {AlbumsLoaded, albumsLoaded} from "../navigation";
-import type {ThunkDeclaration} from "../../thunk-engine";
 import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogFactory} from "../catalog-factories";
 import {DPhotoApplication} from "../../application";
+import {ThunkDeclaration} from "src/libs/thunks";
 
 export interface CreateAlbumRequest {
     name: string

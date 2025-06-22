@@ -1,11 +1,11 @@
 import {Album, AlbumId, CatalogViewerState, Media} from "../language";
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumDatesUpdated} from "./action-albumDatesUpdated";
-import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {Action} from "src/libs/daction";
 import {groupByDay} from "../navigation/group-by-day";
+import {ThunkDeclaration} from "src/libs/thunks";
 
 export interface UpdateAlbumDatesPort {
     updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void>;

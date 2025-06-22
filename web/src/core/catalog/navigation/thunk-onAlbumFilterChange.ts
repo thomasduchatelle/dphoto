@@ -1,7 +1,7 @@
 import {Album, AlbumFilterCriterion, albumIdEquals, albumMatchCriterion, CatalogViewerState} from "../language";
 import {albumsFiltered} from "./action-albumsFiltered";
-import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
+import {ThunkDeclaration} from "src/libs/thunks";
 
 export interface AlbumFilterHandlerState {
     selectedAlbum?: Album

@@ -1,5 +1,6 @@
 import {renderHook} from "@testing-library/react-hooks";
-import {ThunkDeclaration, useThunks} from "./index";
+import {useThunks} from "./useThunks";
+import {ThunkDeclaration} from "../api";
 
 // Dummy Star Wars state and types
 type StarWarsState = {

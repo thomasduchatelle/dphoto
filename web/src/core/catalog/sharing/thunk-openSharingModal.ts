@@ -1,7 +1,7 @@
 import {Album, CatalogViewerState} from "../language";
-import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {SharingModalOpened, sharingModalOpened} from "./action-sharingModalOpened";
+import {ThunkDeclaration} from "src/libs/thunks";
 
 export function openSharingModalThunk(dispatch: (action: SharingModalOpened) => void, album: Album): void {
     dispatch(sharingModalOpened(album.albumId));
