@@ -1,65 +1,74 @@
-export interface ActionWithReducer<TState = any, TArgs extends any[] = any[]> {
+export interface ActionWithReducer<TState = any, TPayload = void> {
     type: string;
-    reducer: (state: TState, action: ActionWithReducer<TState, TArgs>) => TState;
-    payload?: TArgs extends [] ? never : TArgs extends [infer T] ? T : TArgs;
+    reducer: (state: TState, action: ActionWithReducer<TState, TPayload>) => TState;
+    payload?: TPayload;
 }
 
-export interface ActionCreator<TState, TArgs extends any[]> {
-    (...args: TArgs): ActionWithReducer<TState, TArgs>;
-    type: string;
-    reducer: (state: TState, action: ActionWithReducer<TState, TArgs>) => TState;
-}
-
-export function createAction<TState, TArgs extends any[] = []>(
+// Overloaded function signatures for different payload types
+export function createAction<TState>(
     type: string,
-    reducer: (state: TState, action: ActionWithReducer<TState, TArgs>) => TState
-): ActionCreator<TState, TArgs> {
-    const actionCreator = ((...args: TArgs) => {
-        const action: ActionWithReducer<TState, TArgs> = { 
-            type,
-            reducer
-        };
-        
-        if (args.length === 1) {
-            action.payload = args[0] as any;
-        } else if (args.length > 1) {
-            action.payload = args as any;
+    reducer: (state: TState) => TState
+): () => ActionWithReducer<TState, void>;
+
+export function createAction<TState, TPayload>(
+    type: string,
+    reducer: (state: TState, payload: TPayload) => TState
+): (payload: TPayload) => ActionWithReducer<TState, TPayload>;
+
+export function createAction<TState, TPayload extends readonly any[]>(
+    type: string,
+    reducer: (state: TState, ...payload: TPayload) => TState
+): (...payload: TPayload) => ActionWithReducer<TState, TPayload>;
+
+// Implementation
+export function createAction<TState, TPayload = void>(
+    type: string,
+    reducer: (state: TState, ...args: any[]) => TState
+): any {
+    const internalReducer = (state: TState, action: ActionWithReducer<TState, TPayload>) => {
+        if (action.payload === undefined) {
+            return reducer(state);
+        } else if (Array.isArray(action.payload)) {
+            return reducer(state, ...action.payload);
+        } else {
+            return reducer(state, action.payload);
         }
-        
+    };
+
+    const actionCreator = (...args: any[]) => {
+        const action: ActionWithReducer<TState, TPayload> = {
+            type,
+            reducer: internalReducer
+        };
+
+        if (args.length === 0) {
+            // No payload
+        } else if (args.length === 1) {
+            action.payload = args[0] as TPayload;
+        } else {
+            action.payload = args as TPayload;
+        }
+
         return action;
-    }) as ActionCreator<TState, TArgs>;
+    };
 
     actionCreator.type = type;
-    actionCreator.reducer = reducer;
+    actionCreator.reducer = internalReducer;
 
     return actionCreator;
 }
 
-// Convenience functions for common patterns
+// Legacy convenience functions for backward compatibility
 export function createActionWithoutPayload<TState>(
     type: string,
-    reducer: (state: TState, action: ActionWithReducer<TState, []>) => TState
-): ActionCreator<TState, []> {
+    reducer: (state: TState) => TState
+): () => ActionWithReducer<TState, void> {
     return createAction(type, reducer);
 }
 
 export function createActionWithPayload<TState, TPayload>(
     type: string,
-    reducer: (state: TState, action: ActionWithReducer<TState, [TPayload]>) => TState
-): ActionCreator<TState, [TPayload]> {
-    return createAction(type, reducer);
-}
-
-export function createActionWith2Payloads<TState, T1, T2>(
-    type: string,
-    reducer: (state: TState, action: ActionWithReducer<TState, [T1, T2]>) => TState
-): ActionCreator<TState, [T1, T2]> {
-    return createAction(type, reducer);
-}
-
-export function createActionWith3Payloads<TState, T1, T2, T3>(
-    type: string,
-    reducer: (state: TState, action: ActionWithReducer<TState, [T1, T2, T3]>) => TState
-): ActionCreator<TState, [T1, T2, T3]> {
+    reducer: (state: TState, payload: TPayload) => TState
+): (payload: TPayload) => ActionWithReducer<TState, TPayload> {
     return createAction(type, reducer);
 }

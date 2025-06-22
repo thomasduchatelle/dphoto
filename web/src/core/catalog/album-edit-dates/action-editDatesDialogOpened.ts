@@ -1,10 +1,10 @@
 import {albumIdEquals, CatalogViewerState} from "../language";
 import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
-import {createActionWithoutPayload} from "../common/action-factory";
+import {createAction} from "../common/action-factory";
 
-export const editDatesDialogOpened = createActionWithoutPayload<CatalogViewerState>(
+export const editDatesDialogOpened = createAction<CatalogViewerState>(
     "EditDatesDialogOpened",
-    (current: CatalogViewerState, action) => {
+    (current: CatalogViewerState) => {
         const {albumId: displayedAlbumId} = displayedAlbumSelector(current);
 
         const selectedAlbum = current.albums.find(album => displayedAlbumId && albumIdEquals(displayedAlbumId, album.albumId));

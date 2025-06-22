@@ -1,9 +1,9 @@
 import {CatalogViewerState} from "../language";
-import {createActionWithoutPayload} from "../common/action-factory";
+import {createAction} from "../common/action-factory";
 
-export const editDatesDialogClosed = createActionWithoutPayload<CatalogViewerState>(
+export const editDatesDialogClosed = createAction<CatalogViewerState>(
     "EditDatesDialogClosed",
-    (current: CatalogViewerState, action) => {
+    (current: CatalogViewerState) => {
         if (!current.editDatesDialog) {
             return current;
         }

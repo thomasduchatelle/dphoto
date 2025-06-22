@@ -1,9 +1,9 @@
 import {CatalogViewerState} from "../language";
-import {createActionWithPayload} from "../common/action-factory";
+import {createAction} from "../common/action-factory";
 
-export const editDatesDialogEndDateUpdated = createActionWithPayload<CatalogViewerState, Date>(
+export const editDatesDialogEndDateUpdated = createAction<CatalogViewerState, Date>(
     "EditDatesDialogEndDateUpdated",
-    (current: CatalogViewerState, action) => {
+    (current: CatalogViewerState, endDate: Date) => {
         if (!current.editDatesDialog) {
             return current;
         }
@@ -11,7 +11,7 @@ export const editDatesDialogEndDateUpdated = createActionWithPayload<CatalogView
             ...current,
             editDatesDialog: {
                 ...current.editDatesDialog,
-                endDate: action.payload!,
+                endDate,
             },
         };
     }
