@@ -1,84 +1,15 @@
-import {
-    AlbumAccessGranted,
-    albumAccessGrantedReducerRegistration,
-    AlbumAccessRevoked,
-    albumAccessRevokedReducerRegistration,
-    SharingModalClosed,
-    sharingModalClosedReducerRegistration,
-    SharingModalErrorOccurred,
-    sharingModalErrorOccurredReducerRegistration,
-    SharingModalOpened,
-    sharingModalOpenedReducerRegistration,
-} from "./sharing";
-import {EditDatesDialogClosed, EditDatesDialogOpened} from "./album-edit-dates";
 import {CatalogViewerState} from "./language";
-import {Action} from "src/light-state-lib";
+import {Action, createGenericReducer} from "src/light-state-lib";
 
 export * from "./album-delete/selector-deleteDialogSelector";
 export * from "./album-edit-dates/selector-editDatesDialogSelector";
 export * from "./sharing/selector-sharingDialogSelector";
-export * from "./navigation";
 
-export type {
-    AlbumAccessGranted,
-    SharingModalClosed,
-    SharingModalOpened,
-    AlbumAccessRevoked,
-    SharingModalErrorOccurred,
-    EditDatesDialogOpened,
-    EditDatesDialogClosed,
-};
+export type CatalogViewerAction = Action<CatalogViewerState, any>
 
-// Legacy action types for backward compatibility
-export type CatalogViewerAction =
-    Action<CatalogViewerState, any>
-    | AlbumAccessGranted
-    | SharingModalClosed
-    | SharingModalOpened
-    | AlbumAccessRevoked
-    | SharingModalErrorOccurred
-
-const reducerRegistrations = [
-    albumAccessGrantedReducerRegistration,
-    sharingModalOpenedReducerRegistration,
-    albumAccessRevokedReducerRegistration,
-    sharingModalClosedReducerRegistration,
-    sharingModalErrorOccurredReducerRegistration,
-];
-
-function buildHandlers() {
-    const handlers: any = {};
-
-    // Register old-style reducers
-    for (const register of reducerRegistrations) {
-        register(handlers);
-    }
-
-    return handlers;
-}
-
-function createGenericReducer<TState>(
-    legacyHandlers: Record<string, (state: TState, action: any) => TState>
-): (state: TState, action: Action<TState> | { type: string }) => TState {
-    return (state: TState, action: Action<TState> | { type: string }): TState => {
-        // Check if action has a built-in reducer
-        if ('reducer' in action && typeof action.reducer === 'function') {
-            return action.reducer(state, action as Action<TState>);
-        }
-
-        // Fall back to legacy handlers
-        const handler = legacyHandlers[action.type];
-        if (handler) {
-            return handler(state, action);
-        }
-
-        return state;
-    };
-}
 
 function createCatalogReducer(): (state: CatalogViewerState, action: Action<CatalogViewerState> | CatalogViewerAction) => CatalogViewerState {
-    const handlers = buildHandlers();
-    return createGenericReducer(handlers);
+    return createGenericReducer();
 }
 
 export const catalogReducer = createCatalogReducer();

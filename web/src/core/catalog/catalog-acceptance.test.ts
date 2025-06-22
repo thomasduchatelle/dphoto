@@ -3,8 +3,9 @@ import {CatalogAPIAdapter} from "./adapters/api";
 import {CatalogFactory} from "./catalog-factories";
 import {rest} from "msw";
 import {SetupServer, setupServer} from "msw/node";
-import {albumsAndMediasLoaded, CatalogViewerAction, MediaPerDayLoader, MediasLoaded, OnPageRefresh} from "./actions";
 import {MediaType} from "./language";
+import {CatalogViewerAction} from "./actions";
+import {albumsAndMediasLoaded, MediaPerDayLoader, MediasLoaded, OnPageRefresh} from "./navigation";
 
 describe('CatalogFactory', () => {
 
