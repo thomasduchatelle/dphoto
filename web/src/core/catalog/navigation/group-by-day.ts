@@ -19,4 +19,4 @@ export function groupByDay(medias: Media[]): MediaWithinADay[] {
 
     result.reverse()
     return result
-}````
+}

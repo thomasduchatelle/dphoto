@@ -23,7 +23,6 @@ describe("action:mediaLoadFailed", () => {
             medias: [],
             displayedAlbum: twoAlbums[0],
             mediasLoaded: true,
-            mediasLoadedFromAlbumId: undefined,
             error: testError,
         });
     });

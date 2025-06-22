@@ -20,6 +20,7 @@ export const mediaLoadFailed = createAction<CatalogViewerState, MediaLoadFailedP
             allAlbums,
             albumFilterOptions,
             albumFilter,
+            mediasLoadedFromAlbumId: selectedAlbum?.albumId,
             albums: filteredAlbums,
             albumNotFound: false,
             medias: [],
