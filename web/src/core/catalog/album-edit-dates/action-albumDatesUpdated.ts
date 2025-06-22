@@ -1,6 +1,6 @@
 import {Album, CatalogViewerState, MediaWithinADay} from "../language";
 import {refreshFilters} from "../common/utils";
-import {createAction} from "../common/action-factory";
+import {createAction} from "../../../light-state-lib/action-factory";
 
 interface AlbumDatesUpdatedPayload {
     albums: Album[];

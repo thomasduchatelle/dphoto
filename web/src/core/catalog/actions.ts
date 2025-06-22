@@ -40,7 +40,7 @@ import {
 } from "./album-delete";
 import {EditDatesDialogClosed, EditDatesDialogOpened} from "./album-edit-dates";
 import {CatalogViewerState} from "./language";
-import {ActionWithReducer} from "./common/action-factory";
+import {Action} from "@light-state";
 
 export * from "./album-delete/selector-deleteDialogSelector";
 export * from "./album-edit-dates/selector-editDatesDialogSelector";
@@ -71,7 +71,7 @@ export type {
 
 // Legacy action types for backward compatibility
 export type CatalogViewerAction =
-    ActionWithReducer<CatalogViewerState, any>
+    Action<CatalogViewerState, any>
     | AlbumAccessGranted
     | AlbumsAndMediasLoaded
     | AlbumsFiltered
@@ -123,11 +123,11 @@ function buildHandlers() {
 
 function createGenericReducer<TState>(
     legacyHandlers: Record<string, (state: TState, action: any) => TState>
-): (state: TState, action: ActionWithReducer<TState> | { type: string }) => TState {
-    return (state: TState, action: ActionWithReducer<TState> | { type: string }): TState => {
+): (state: TState, action: Action<TState> | { type: string }) => TState {
+    return (state: TState, action: Action<TState> | { type: string }): TState => {
         // Check if action has a built-in reducer
         if ('reducer' in action && typeof action.reducer === 'function') {
-            return action.reducer(state, action as ActionWithReducer<TState>);
+            return action.reducer(state, action as Action<TState>);
         }
 
         // Fall back to legacy handlers
@@ -140,7 +140,7 @@ function createGenericReducer<TState>(
     };
 }
 
-function createCatalogReducer(): (state: CatalogViewerState, action: ActionWithReducer<CatalogViewerState> | CatalogViewerAction) => CatalogViewerState {
+function createCatalogReducer(): (state: CatalogViewerState, action: Action<CatalogViewerState> | CatalogViewerAction) => CatalogViewerState {
     const handlers = buildHandlers();
     return createGenericReducer(handlers);
 }

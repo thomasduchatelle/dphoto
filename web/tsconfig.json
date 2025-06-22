@@ -6,6 +6,11 @@
       "dom.iterable",
       "esnext"
     ],
+    "paths": {
+      "@light-state": [
+        "src/light-state-lib"
+      ]
+    },
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

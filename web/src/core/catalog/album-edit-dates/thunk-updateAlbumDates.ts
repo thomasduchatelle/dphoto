@@ -5,7 +5,7 @@ import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {MediaPerDayLoader} from "../navigation";
-import {ActionWithReducer} from "../common/action-factory";
+import {Action} from "../../../light-state-lib/action-factory";
 
 export interface UpdateAlbumDatesPort {
     updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void>;
@@ -20,7 +20,7 @@ export interface UpdateAlbumDatesThunkArgs {
 }
 
 export async function updateAlbumDatesThunk(
-    dispatch: (action: ActionWithReducer<CatalogViewerState, any>) => void,
+    dispatch: (action: Action<CatalogViewerState, any>) => void,
     updateAlbumDatesPort: UpdateAlbumDatesPort,
     mediaPerDayLoader: MediaPerDayLoader,
     dialog?: UpdateAlbumDatesThunkArgs

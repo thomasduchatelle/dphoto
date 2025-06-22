@@ -1,6 +1,5 @@
-import { createAction } from './action-factory';
+import {createAction} from './action-factory';
 
-// Star Wars inspired state for testing
 interface DeathStarState {
     isOperational: boolean;
     shieldGenerator: {
