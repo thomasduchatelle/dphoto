@@ -1,4 +1,4 @@
-import {CreateAlbumPort, CreateAlbumRequest, createAlbumThunk} from "./album-createAlbum";
+import {createAlbum, CreateAlbumPort, CreateAlbumPayload} from "./album-createAlbum";
 import {Album, AlbumId, albumIdEquals} from "../language";
 import {albumsLoaded} from "../navigation";
 
@@ -15,7 +15,7 @@ class CreateAlbumPortFake implements CreateAlbumPort {
         public albums: Album[] = []) {
     }
 
-    async createAlbum({name, start, end, forcedFolderName}: CreateAlbumRequest): Promise<AlbumId> {
+    async createAlbum({name, start, end, forcedFolderName}: CreateAlbumPayload): Promise<AlbumId> {
         const album = {
             ...this.defaultAlbumValues,
             name,
@@ -32,10 +32,10 @@ class CreateAlbumPortFake implements CreateAlbumPort {
     }
 }
 
-describe("createAlbumThunk", () => {
+describe("createAlbum action", () => {
     it("should call store the new Album and dispatch a albumsLoadedAction action with an existing album with the newly created one", async () => {
         const expectedAlbumId: AlbumId = {owner: "myself", folderName: "/album:new-album"};
-        const request: CreateAlbumRequest = {
+        const request: CreateAlbumPayload = {
             name: "Album 1",
             start: new Date("2025-01-01"),
             end: new Date("2025-01-02"),
@@ -56,7 +56,16 @@ describe("createAlbumThunk", () => {
 
         const dispatched: any[] = [];
 
-        await createAlbumThunk(dispatched.push.bind(dispatched), fakePort, request);
+        // Simulate the thunk execution
+        const albumId = await createAlbum.reducer(
+            {
+                dispatch: dispatched.push.bind(dispatched),
+                createAlbumPort: fakePort
+            },
+            request
+        );
+
+        expect(albumId).toEqual(expectedAlbumId);
 
         expect(
             fakePort.albums
@@ -92,5 +101,34 @@ describe("createAlbumThunk", () => {
                 redirectTo: expectedAlbumId
             })
         ]);
+    });
+
+    it("supports action comparison for testing", () => {
+        const payload1: CreateAlbumPayload = {
+            name: "Album A",
+            start: new Date("2025-01-01"),
+            end: new Date("2025-01-02"),
+            forcedFolderName: "/album:album-a",
+        };
+        const payload2: CreateAlbumPayload = {
+            name: "Album A",
+            start: new Date("2025-01-01"),
+            end: new Date("2025-01-02"),
+            forcedFolderName: "/album:album-a",
+        };
+        const payload3: CreateAlbumPayload = {
+            name: "Album B",
+            start: new Date("2025-01-01"),
+            end: new Date("2025-01-02"),
+            forcedFolderName: "/album:album-b",
+        };
+
+        const action1 = createAlbum(payload1);
+        const action2 = createAlbum(payload2);
+        const action3 = createAlbum(payload3);
+
+        expect(action1).toEqual(action2);
+        expect(action1).not.toEqual(action3);
+        expect([action1]).toContainEqual(action2);
     });
 });
