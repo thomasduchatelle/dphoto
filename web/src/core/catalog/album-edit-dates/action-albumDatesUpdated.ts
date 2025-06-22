@@ -1,46 +1,34 @@
 import {Album, CatalogViewerState, MediaWithinADay} from "../language";
 import {refreshFilters} from "../common/utils";
+import {createAction} from "../common/action-factory";
 
-export interface AlbumDatesUpdated {
-    type: "AlbumDatesUpdated";
+interface AlbumDatesUpdatedPayload {
     albums: Album[];
     medias: MediaWithinADay[];
 }
 
-export function albumDatesUpdated(props: Omit<AlbumDatesUpdated, "type">): AlbumDatesUpdated {
-    return {
-        ...props,
-        type: "AlbumDatesUpdated",
-    };
-}
+export const albumDatesUpdated = createAction<CatalogViewerState, AlbumDatesUpdatedPayload>(
+    "AlbumDatesUpdated",
+    (current: CatalogViewerState, {albums, medias}: AlbumDatesUpdatedPayload) => {
+        const {albumFilterOptions, albumFilter, albums: filteredAlbums} = refreshFilters(
+            current.currentUser,
+            current.albumFilter,
+            albums
+        );
 
-export function reduceAlbumDatesUpdated(
-    current: CatalogViewerState,
-    {albums, medias}: AlbumDatesUpdated,
-): CatalogViewerState {
-    const {albumFilterOptions, albumFilter, albums: filteredAlbums} = refreshFilters(
-        current.currentUser,
-        current.albumFilter,
-        albums
-    );
+        return {
+            ...current,
+            allAlbums: albums,
+            albumFilterOptions,
+            albumFilter,
+            albums: filteredAlbums,
+            medias: medias,
+            mediasLoadedFromAlbumId: current.editDatesDialog?.albumId, // Use albumId from dialog state
+            albumsLoaded: true,
+            mediasLoaded: true,
+            editDatesDialog: undefined,
+        };
+    }
+);
 
-    return {
-        ...current,
-        allAlbums: albums,
-        albumFilterOptions,
-        albumFilter,
-        albums: filteredAlbums,
-        medias: medias,
-        mediasLoadedFromAlbumId: current.editDatesDialog?.albumId, // Use albumId from dialog state
-        albumsLoaded: true,
-        mediasLoaded: true,
-        editDatesDialog: undefined,
-    };
-}
-
-export function albumDatesUpdatedReducerRegistration(handlers: any) {
-    handlers["AlbumDatesUpdated"] = reduceAlbumDatesUpdated as (
-        state: CatalogViewerState,
-        action: AlbumDatesUpdated
-    ) => CatalogViewerState;
-}
+export type AlbumDatesUpdated = ReturnType<typeof albumDatesUpdated>;

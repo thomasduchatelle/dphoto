@@ -39,10 +39,6 @@ import {
     deleteAlbumStartedReducerRegistration
 } from "./album-delete";
 import {
-    AlbumDatesUpdated,
-    albumDatesUpdatedReducerRegistration,
-    AlbumDatesUpdateStarted,
-    albumDatesUpdateStartedReducerRegistration,
     EditDatesDialogClosed,
     EditDatesDialogOpened
 } from "./album-edit-dates";
@@ -74,8 +70,6 @@ export type {
     DeleteAlbumStarted,
     EditDatesDialogOpened,
     EditDatesDialogClosed,
-    AlbumDatesUpdateStarted,
-    AlbumDatesUpdated,
 };
 
 // Legacy action types for backward compatibility
@@ -97,8 +91,6 @@ export type CatalogViewerAction =
     | AlbumDeleteFailed
     | DeleteAlbumDialogClosed
     | DeleteAlbumStarted
-    | AlbumDatesUpdateStarted
-    | AlbumDatesUpdated
 
 const reducerRegistrations = [
     albumAccessGrantedReducerRegistration,
@@ -118,8 +110,6 @@ const reducerRegistrations = [
     albumDeleteFailedReducerRegistration,
     deleteAlbumDialogClosedReducerRegistration,
     deleteAlbumStartedReducerRegistration,
-    albumDatesUpdateStartedReducerRegistration,
-    albumDatesUpdatedReducerRegistration,
 ];
 
 function buildHandlers() {
