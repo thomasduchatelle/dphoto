@@ -1,4 +1,4 @@
-import {reduceSharingModalErrorOccurred, sharingModalErrorOccurred} from "./action-sharingModalErrorOccurred";
+import {sharingModalErrorOccurred} from "./action-sharingModalErrorOccurred";
 import {herselfUser, loadedStateWithTwoAlbums, march2025, twoAlbums} from "../tests/test-helper-state";
 import {ShareError} from "../language";
 import {SharingDialogFrag, sharingDialogSelector} from "./selector-sharingDialogSelector";
@@ -10,13 +10,14 @@ describe("action:sharingModalErrorOccurred:grant", () => {
             sharedWith: [],
             suggestions: [],
         };
-        expect(sharingDialogSelector(reduceSharingModalErrorOccurred(
+        const action = sharingModalErrorOccurred({
+            type: "grant",
+            message: "Failed to add user",
+            email: "foo@example.com"
+        });
+        expect(sharingDialogSelector(action.reducer(
             loadedStateWithTwoAlbums,
-            sharingModalErrorOccurred({
-                type: "grant",
-                message: "Failed to add user",
-                email: "foo@example.com"
-            })
+            action
         ))).toEqual(expected);
     });
 
@@ -44,7 +45,8 @@ describe("action:sharingModalErrorOccurred:grant", () => {
             suggestions: [],
             error,
         };
-        expect(sharingDialogSelector(reduceSharingModalErrorOccurred(initial, sharingModalErrorOccurred(error)))).toEqual(expected);
+        const action = sharingModalErrorOccurred(error);
+        expect(sharingDialogSelector(action.reducer(initial, action))).toEqual(expected);
     });
 
     it("removes the user from sharedWith in the dialog and visible albums, and adds it to suggestions", () => {
@@ -60,7 +62,7 @@ describe("action:sharingModalErrorOccurred:grant", () => {
         const error: ShareError = {type: "grant", message: "Failed to add user", email: herselfUserDetails.email};
         const action = sharingModalErrorOccurred(error);
 
-        const state = reduceSharingModalErrorOccurred(initial, action)
+        const state = action.reducer(initial, action)
         expect(sharingDialogSelector(state)).toEqual({
             open: true,
             sharedWith: [], // restored to before grant
@@ -123,7 +125,7 @@ describe("action:sharingModalErrorOccurred:grant", () => {
         const error: ShareError = {type: "grant", message: "Failed to add user", email: "alice@example.com"};
         const action = sharingModalErrorOccurred(error);
 
-        const state = reduceSharingModalErrorOccurred(initial, action);
+        const state = action.reducer(initial, action);
         expect(sharingDialogSelector(state)).toEqual({
             open: true,
             sharedWith: [],
@@ -135,13 +137,14 @@ describe("action:sharingModalErrorOccurred:grant", () => {
 
 describe("action:sharingModalErrorOccurred:revoke", () => {
     it("ignores the error if the modal is closed", () => {
-        const state = reduceSharingModalErrorOccurred(
+        const action = sharingModalErrorOccurred({
+            type: "revoke",
+            message: "Failed to revoke user",
+            email: "foo@example.com"
+        });
+        const state = action.reducer(
             loadedStateWithTwoAlbums,
-            sharingModalErrorOccurred({
-                type: "revoke",
-                message: "Failed to revoke user",
-                email: "foo@example.com"
-            })
+            action
         );
         expect(sharingDialogSelector(state)).toEqual({
             open: false,
@@ -170,7 +173,8 @@ describe("action:sharingModalErrorOccurred:revoke", () => {
             }
         };
         const error: ShareError = {type: "revoke", message: "Failed to revoke user", email: "foo@example.com"};
-        const state = reduceSharingModalErrorOccurred(initial, sharingModalErrorOccurred(error));
+        const action = sharingModalErrorOccurred(error);
+        const state = action.reducer(initial, action);
         expect(sharingDialogSelector(state)).toEqual({
             open: true,
             sharedWith: [
@@ -220,7 +224,8 @@ describe("action:sharingModalErrorOccurred:revoke", () => {
             }
         };
         const error: ShareError = {type: "revoke", message: "Failed to revoke user", email: "alice@example.com"};
-        const state = reduceSharingModalErrorOccurred(initial, sharingModalErrorOccurred(error));
+        const action = sharingModalErrorOccurred(error);
+        const state = action.reducer(initial, action);
 
         expect(sharingDialogSelector(state)).toEqual({
             open: true,

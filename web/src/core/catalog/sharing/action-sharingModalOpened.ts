@@ -1,28 +1,12 @@
 import {AlbumId, CatalogViewerState} from "../language";
 import {withOpenShareModal} from "./sharing";
+import {createAction} from "src/light-state-lib";
 
-export interface SharingModalOpened {
-    type: "sharingModalOpened"
-    albumId: AlbumId
-}
+export const sharingModalOpened = createAction<CatalogViewerState, AlbumId>(
+    "sharingModalOpened",
+    (current: CatalogViewerState, albumId: AlbumId) => {
+        return withOpenShareModal(current, albumId);
+    }
+);
 
-export function sharingModalOpened(albumId: AlbumId): SharingModalOpened {
-    return {
-        albumId,
-        type: "sharingModalOpened",
-    };
-}
-
-export function reduceSharingModalOpened(
-    current: CatalogViewerState,
-    action: SharingModalOpened,
-): CatalogViewerState {
-    return withOpenShareModal(current, action.albumId);
-}
-
-export function sharingModalOpenedReducerRegistration(handlers: any) {
-    handlers["sharingModalOpened"] = reduceSharingModalOpened as (
-        state: CatalogViewerState,
-        action: SharingModalOpened
-    ) => CatalogViewerState;
-}
+export type SharingModalOpened = ReturnType<typeof sharingModalOpened>;

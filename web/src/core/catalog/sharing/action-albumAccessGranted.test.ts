@@ -1,4 +1,4 @@
-import {albumAccessGranted, reduceAlbumAccessGranted} from "./action-albumAccessGranted";
+import {albumAccessGranted} from "./action-albumAccessGranted";
 import {UserDetails} from "../language";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {SharingDialogFrag, sharingDialogSelector} from "./selector-sharingDialogSelector";
@@ -22,9 +22,10 @@ describe("action:albumAccessGranted", () => {
         };
         const newUser: UserDetails = {email: "bob@example.com", name: "Bob", picture: "bob-face.jpg"};
 
-        const state = reduceAlbumAccessGranted(initial, albumAccessGranted({
+        const action = albumAccessGranted({
             user: newUser,
-        }));
+        });
+        const state = action.reducer(initial, action);
         expect(sharingDialogSelector(state)).toEqual({
             open: true,
             sharedWith: [
@@ -63,12 +64,12 @@ describe("action:albumAccessGranted", () => {
             ],
             suggestions: [],
         };
-        expect(sharingDialogSelector(reduceAlbumAccessGranted(initial, action))).toEqual(expected);
+        expect(sharingDialogSelector(action.reducer(initial, action))).toEqual(expected);
     });
 
     it("should not change state when AlbumAccessGranted is received and shareModal is closed", () => {
         const action = albumAccessGranted(twoAlbums[0].sharedWith[0]);
-        const result = reduceAlbumAccessGranted(loadedStateWithTwoAlbums, action);
+        const result = action.reducer(loadedStateWithTwoAlbums, action);
         expect(sharingDialogSelector(result)).toEqual({
             open: false,
             sharedWith: [],
@@ -90,9 +91,10 @@ describe("action:albumAccessGranted", () => {
             }
         };
 
-        const state = reduceAlbumAccessGranted(initial, albumAccessGranted({
+        const action = albumAccessGranted({
             user: newUser,
-        }));
+        });
+        const state = action.reducer(initial, action);
         expect(sharingDialogSelector(state)).toEqual({
             open: true,
             sharedWith: [

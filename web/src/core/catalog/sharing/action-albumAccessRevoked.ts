@@ -1,33 +1,16 @@
 import {CatalogViewerState} from "../language";
-
 import {moveSharedWithToSuggestion} from "./sharing";
+import {createAction} from "src/light-state-lib";
 
-export interface AlbumAccessRevoked {
-    type: "albumAccessRevoked"
-    email: string
-}
+export const albumAccessRevoked = createAction<CatalogViewerState, string>(
+    "albumAccessRevoked",
+    (current: CatalogViewerState, email: string) => {
+        if (!current.shareModal) {
+            return current;
+        }
 
-export function albumAccessRevoked(email: string): AlbumAccessRevoked {
-    return {
-        email,
-        type: "albumAccessRevoked",
-    };
-}
-
-export function reduceAlbumAccessRevoked(
-    current: CatalogViewerState,
-    action: AlbumAccessRevoked,
-): CatalogViewerState {
-    if (!current.shareModal) {
-        return current;
+        return moveSharedWithToSuggestion(current, current.shareModal, email);
     }
+);
 
-    return moveSharedWithToSuggestion(current, current.shareModal, action.email);
-}
-
-export function albumAccessRevokedReducerRegistration(handlers: any) {
-    handlers["albumAccessRevoked"] = reduceAlbumAccessRevoked as (
-        state: CatalogViewerState,
-        action: AlbumAccessRevoked
-    ) => CatalogViewerState;
-}
+export type AlbumAccessRevoked = ReturnType<typeof albumAccessRevoked>;

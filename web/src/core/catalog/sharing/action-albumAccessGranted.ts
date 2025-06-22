@@ -1,27 +1,14 @@
 import {CatalogViewerState, Sharing} from "../language";
 import {moveSuggestionToSharedWith} from "./sharing";
+import {createAction} from "src/light-state-lib";
 
-export interface AlbumAccessGranted {
-    type: "albumAccessGranted"
-    sharing: Sharing
-}
+export const albumAccessGranted = createAction<CatalogViewerState, Sharing>(
+    "albumAccessGranted",
+    (current: CatalogViewerState, sharing: Sharing) => {
+        if (!current.shareModal) return current;
 
-export function albumAccessGranted(sharing: Sharing): AlbumAccessGranted {
-    return {
-        sharing,
-        type: "albumAccessGranted",
-    };
-}
+        return moveSuggestionToSharedWith(current, current.shareModal, sharing.user);
+    }
+);
 
-export function reduceAlbumAccessGranted(
-    current: CatalogViewerState,
-    action: AlbumAccessGranted,
-): CatalogViewerState {
-    if (!current.shareModal) return current;
-
-    return moveSuggestionToSharedWith(current, current.shareModal, action.sharing.user);
-}
-
-export function albumAccessGrantedReducerRegistration(handlers: any) {
-    handlers["albumAccessGranted"] = reduceAlbumAccessGranted as (state: CatalogViewerState, action: AlbumAccessGranted) => CatalogViewerState;
-}
+export type AlbumAccessGranted = ReturnType<typeof albumAccessGranted>;

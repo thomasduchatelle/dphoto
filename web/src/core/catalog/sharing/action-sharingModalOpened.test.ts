@@ -1,4 +1,4 @@
-import {reduceSharingModalOpened, sharingModalOpened} from "./action-sharingModalOpened";
+import {sharingModalOpened} from "./action-sharingModalOpened";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {SharingDialogFrag, sharingDialogSelector} from "./selector-sharingDialogSelector";
 import {UserDetails} from "../language";
@@ -13,7 +13,7 @@ describe("action:sharingModalOpened", () => {
             sharedWith: [],
             suggestions: [],
         };
-        expect(sharingDialogSelector(reduceSharingModalOpened(loadedStateWithTwoAlbums, action))).toEqual(expected);
+        expect(sharingDialogSelector(action.reducer(loadedStateWithTwoAlbums, action))).toEqual(expected);
     });
 
     it("should suggest all known users not already shared with the album, sorted by popularity then name", () => {
@@ -52,7 +52,7 @@ describe("action:sharingModalOpened", () => {
                 userC, // 1 album
             ],
         };
-        expect(sharingDialogSelector(reduceSharingModalOpened(state, action))).toEqual(expected);
+        expect(sharingDialogSelector(action.reducer(state, action))).toEqual(expected);
     });
 
     it("should open the dialog with an empty suggestion list if all known users already have access", () => {
@@ -72,7 +72,7 @@ describe("action:sharingModalOpened", () => {
             ],
             suggestions: [],
         };
-        expect(sharingDialogSelector(reduceSharingModalOpened(state, action))).toEqual(expected);
+        expect(sharingDialogSelector(action.reducer(state, action))).toEqual(expected);
     });
 
     it("should return empty suggestions if there are no known users", () => {
@@ -89,6 +89,6 @@ describe("action:sharingModalOpened", () => {
             sharedWith: [],
             suggestions: [],
         };
-        expect(sharingDialogSelector(reduceSharingModalOpened(state, action))).toEqual(expected);
+        expect(sharingDialogSelector(action.reducer(state, action))).toEqual(expected);
     });
 });
