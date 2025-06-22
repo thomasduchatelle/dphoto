@@ -44,15 +44,10 @@ import {
     AlbumDatesUpdateStarted,
     albumDatesUpdateStartedReducerRegistration,
     EditDatesDialogClosed,
-    editDatesDialogClosedReducerRegistration,
-    EditDatesDialogEndDateUpdated,
-    editDatesDialogEndDateUpdatedReducerRegistration,
-    EditDatesDialogOpened,
-    editDatesDialogOpenedReducerRegistration,
-    EditDatesDialogStartDateUpdated,
-    editDatesDialogStartDateUpdatedReducerRegistration
+    EditDatesDialogOpened
 } from "./album-edit-dates";
 import {CatalogViewerState} from "./language";
+import {ActionWithReducer} from "./common/action-factory";
 
 export * from "./album-delete/selector-deleteDialogSelector";
 export * from "./album-edit-dates/selector-editDatesDialogSelector";
@@ -105,8 +100,6 @@ export type CatalogViewerAction =
     | AlbumDatesUpdateStarted
     | AlbumDatesUpdated
 
-import {ActionWithReducer} from "./common/action-factory";
-
 const reducerRegistrations = [
     albumAccessGrantedReducerRegistration,
     albumsAndMediasLoadedReducerRegistration,
@@ -131,12 +124,12 @@ const reducerRegistrations = [
 
 function buildHandlers() {
     const handlers: any = {};
-    
+
     // Register old-style reducers
     for (const register of reducerRegistrations) {
         register(handlers);
     }
-    
+
     return handlers;
 }
 
@@ -148,18 +141,18 @@ function createGenericReducer<TState>(
         if ('reducer' in action && typeof action.reducer === 'function') {
             return action.reducer(state, action as ActionWithReducer<TState>);
         }
-        
+
         // Fall back to legacy handlers
         const handler = legacyHandlers[action.type];
         if (handler) {
             return handler(state, action);
         }
-        
+
         return state;
     };
 }
 
-function createCatalogReducer(): (state: CatalogViewerState, action: ActionWithReducer<CatalogViewerState> | { type: string }) => CatalogViewerState {
+function createCatalogReducer(): (state: CatalogViewerState, action: ActionWithReducer<CatalogViewerState> | CatalogViewerAction) => CatalogViewerState {
     const handlers = buildHandlers();
     return createGenericReducer(handlers);
 }
