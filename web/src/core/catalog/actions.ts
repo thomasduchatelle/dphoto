@@ -71,7 +71,7 @@ export type {
 
 // Legacy action types for backward compatibility
 export type CatalogViewerAction =
-    ActionWithReducer<CatalogViewerState>
+    ActionWithReducer<CatalogViewerState, any>
     | AlbumAccessGranted
     | AlbumsAndMediasLoaded
     | AlbumsFiltered
