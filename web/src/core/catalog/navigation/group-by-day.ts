@@ -20,5 +20,3 @@ export function groupByDay(medias: Media[]): MediaWithinADay[] {
     result.reverse()
     return result
 }````
-
-web/src/core/catalog/navigation/action-albumsFiltered.ts
