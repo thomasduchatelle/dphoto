@@ -1,8 +1,9 @@
 import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
-import {loadedStateWithTwoAlbums, myselfUser, someMedias, twoAlbums} from "../tests/test-helper-state";
+import {loadedStateWithTwoAlbums, myselfUser, selectionForLoadedStateWithTwoAlbums, someMedias, twoAlbums} from "../tests/test-helper-state";
 
 import {Album, initialCatalogState} from "../language";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
+import {groupByDay} from "./group-by-day";
 
 describe("action:albumsAndMediasLoaded", () => {
 
@@ -19,7 +20,7 @@ describe("action:albumsAndMediasLoaded", () => {
             mediasLoaded: false,
         }, action);
 
-        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual(catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId));
+        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual(selectionForLoadedStateWithTwoAlbums);
     });
 
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums) when receiving AlbumsAndMediasLoaded", () => {
@@ -38,10 +39,13 @@ describe("action:albumsAndMediasLoaded", () => {
             name: "All albums",
         };
         expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId),
+            ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[0]],
             albumFilter: allAlbumFilter,
             albumFilterOptions: [allAlbumFilter],
+            selectedAlbum: twoAlbums[0],
+            medias: groupByDay(someMedias.flatMap(m => m.medias)),
+            mediasLoadedFromAlbumId: twoAlbums[0].albumId,
         });
     });
 
@@ -77,9 +81,12 @@ describe("action:albumsAndMediasLoaded", () => {
 
         // The filter should remain unchanged, and albums should contain both directly owned albums
         expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId),
+            ...selectionForLoadedStateWithTwoAlbums,
             albumFilter: directlyOwnedFilter,
             albums: [loadedStateWithTwoAlbums.albums[0], newDirectlyOwnedAlbum],
+            selectedAlbum: twoAlbums[0],
+            medias: groupByDay(someMedias.flatMap(m => m.medias)),
+            mediasLoadedFromAlbumId: twoAlbums[0].albumId,
         });
     });
 });

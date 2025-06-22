@@ -1,6 +1,5 @@
 import {albumsFiltered} from "./action-albumsFiltered";
-import {herselfOwner, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
-import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
+import {loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
 describe("action:albumsFiltered", () => {
     it("should show only directly owned album after the AlbumsFiltered", () => {
@@ -9,11 +8,8 @@ describe("action:albumsFiltered", () => {
             loadedStateWithTwoAlbums,
             action
         );
-        expect(catalogViewerPageSelector(got)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums),
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
-            albums: [twoAlbums[0]],
-        });
+        expect(got.albums).toEqual([twoAlbums[0]]);
+        expect(got.albumFilter).toEqual(loadedStateWithTwoAlbums.albumFilterOptions[0]);
     });
 
     it("should show all albums when the filter moves back to 'All albums'", () => {
@@ -25,15 +21,12 @@ describe("action:albumsFiltered", () => {
             },
             action
         );
-        expect(catalogViewerPageSelector(got)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums),
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
-            albums: twoAlbums,
-        });
+        expect(got.albums).toEqual(twoAlbums);
+        expect(got.albumFilter).toEqual(loadedStateWithTwoAlbums.albumFilterOptions[1]);
     });
 
     it("should filter albums to those with a certain owner when the filter with that owner is selected", () => {
-        const action = albumsFiltered({criterion: {owners: [herselfOwner]}});
+        const action = albumsFiltered({criterion: {owners: [{name: "Herself", users: []}]}});
         const got = action.reducer(
             {
                 ...loadedStateWithTwoAlbums,
@@ -41,10 +34,7 @@ describe("action:albumsFiltered", () => {
             },
             action
         );
-        expect(catalogViewerPageSelector(got)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums),
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[2],
-            albums: [twoAlbums[1]],
-        });
+        expect(got.albums).toEqual([twoAlbums[1]]);
+        expect(got.albumFilter).toEqual(loadedStateWithTwoAlbums.albumFilterOptions[2]);
     });
 });

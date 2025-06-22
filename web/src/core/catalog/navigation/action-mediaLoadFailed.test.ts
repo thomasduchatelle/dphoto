@@ -1,5 +1,5 @@
 import {mediaLoadFailed} from "./action-mediaLoadFailed";
-import {loadedStateWithTwoAlbums, myselfUser, twoAlbums} from "../tests/test-helper-state";
+import {loadedStateWithTwoAlbums, myselfUser, selectionForLoadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
 import {initialCatalogState} from "../language";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
@@ -17,13 +17,15 @@ describe("action:mediaLoadFailed", () => {
             action
         );
         expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId),
+            ...selectionForLoadedStateWithTwoAlbums,
             albums: twoAlbums, // albums are loaded even if medias fail
             albumsLoaded: true, // albums are loaded even if medias fail
             medias: [],
             selectedAlbum: twoAlbums[0],
+            mediasLoaded: true,
+            mediasLoadedFromAlbumId: undefined,
+            error: testError,
         });
-        expect(got.error).toEqual(testError); // Assert error directly as it's not part of the selector's output
     });
 
     it("should set the errors and clears medias and media loading status when reducing MediaLoadFailed that hasn't the albums", () => {
@@ -40,10 +42,12 @@ describe("action:mediaLoadFailed", () => {
             action
         );
         expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId),
+            ...selectionForLoadedStateWithTwoAlbums,
             medias: [],
             selectedAlbum: twoAlbums[0],
+            mediasLoaded: true,
+            mediasLoadedFromAlbumId: twoAlbums[0].albumId, // This remains as it was not reset by the action
+            error: testError,
         });
-        expect(got.error).toEqual(testError); // Assert error directly as it's not part of the selector's output
     });
 });

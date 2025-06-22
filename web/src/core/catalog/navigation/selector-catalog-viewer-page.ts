@@ -1,4 +1,4 @@
-import {Album, AlbumFilterEntry, CatalogViewerState} from "../language/catalog-state";
+import {Album, AlbumFilterEntry, CatalogViewerState, MediaWithinADay} from "../language/catalog-state";
 import {albumIdEquals} from "../language/utils-albumIdEquals";
 import {AlbumId} from "../language";
 
@@ -8,6 +8,12 @@ export interface CatalogViewerPageSelection {
     albumsLoaded: boolean;
     albums: Album[];
     selectedAlbum: Album | undefined;
+    medias: MediaWithinADay[];
+    mediasLoaded: boolean;
+    mediasLoadedFromAlbumId?: AlbumId;
+    loadingMediasFor?: AlbumId;
+    albumNotFound: boolean;
+    error?: Error;
 }
 
 export function catalogViewerPageSelector(state: CatalogViewerState, selectedAlbumId?: AlbumId): CatalogViewerPageSelection {
@@ -19,5 +25,11 @@ export function catalogViewerPageSelector(state: CatalogViewerState, selectedAlb
         albumsLoaded: state.albumsLoaded,
         albums: state.albums,
         selectedAlbum: selectedAlbum,
+        medias: state.medias,
+        mediasLoaded: state.mediasLoaded,
+        mediasLoadedFromAlbumId: state.mediasLoadedFromAlbumId,
+        loadingMediasFor: state.loadingMediasFor,
+        albumNotFound: state.albumNotFound,
+        error: state.error,
     };
 }

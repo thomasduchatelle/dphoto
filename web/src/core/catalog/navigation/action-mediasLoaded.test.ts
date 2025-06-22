@@ -1,5 +1,5 @@
 import {mediasLoaded} from "./action-mediasLoaded";
-import {loadedStateWithTwoAlbums, someMedias, twoAlbums} from "../tests/test-helper-state";
+import {loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, someMedias, twoAlbums} from "../tests/test-helper-state";
 import {groupByDay} from "./group-by-day";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 
@@ -19,12 +19,15 @@ describe("action:mediasLoaded", () => {
         }, action);
 
         expect(catalogViewerPageSelector(got, twoAlbums[1].albumId)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[1].albumId),
-            medias: groupByDay(someMedias.flatMap(m => m.medias)),
+            ...selectionForLoadedStateWithTwoAlbums,
             selectedAlbum: twoAlbums[1],
+            medias: groupByDay(someMedias.flatMap(m => m.medias)),
+            mediasLoaded: true,
+            mediasLoadedFromAlbumId: twoAlbums[1].albumId,
+            loadingMediasFor: undefined,
+            albumNotFound: false,
+            error: undefined,
         });
-        expect(got.mediasLoadedFromAlbumId).toEqual(twoAlbums[1].albumId);
-        expect(got.error).toBeUndefined();
     });
 
     it("should ignore MediasLoaded if the medias are not for the expected album", () => {
@@ -39,10 +42,12 @@ describe("action:mediasLoaded", () => {
         }, action);
 
         expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
-            ...catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId),
-            medias: [],
+            ...selectionForLoadedStateWithTwoAlbums,
             selectedAlbum: twoAlbums[0],
+            medias: [],
+            mediasLoaded: true, // Still true from initial state, as action was ignored
+            mediasLoadedFromAlbumId: twoAlbums[0].albumId, // Still from initial state
+            loadingMediasFor: twoAlbums[0].albumId, // Still from initial state
         });
-        expect(got.loadingMediasFor).toEqual(twoAlbums[0].albumId);
     });
 });

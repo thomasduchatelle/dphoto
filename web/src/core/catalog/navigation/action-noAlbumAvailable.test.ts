@@ -13,11 +13,17 @@ describe("action:noAlbumAvailable", () => {
             action
         );
         expect(catalogViewerPageSelector(got)).toEqual({
-            ...catalogViewerPageSelector(initialCatalogState(myselfUser)),
-            albums: [],
-            albumsLoaded: true,
             albumFilter: DEFAULT_ALBUM_FILTER_ENTRY,
             albumFilterOptions: [DEFAULT_ALBUM_FILTER_ENTRY],
+            albumsLoaded: true,
+            albums: [],
+            selectedAlbum: undefined,
+            medias: [],
+            mediasLoaded: true,
+            mediasLoadedFromAlbumId: undefined,
+            loadingMediasFor: undefined,
+            albumNotFound: true,
+            error: undefined,
         });
     });
 });
