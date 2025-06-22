@@ -18,7 +18,7 @@ export default function AlbumListActions({
 }) {
     const [urlParams] = useSearchParams()
     const features = urlParams.get('features');
-    const isEditAlbumFeatureEnabled = features && features.includes('edit-album');
+    const isEditAlbumFeatureEnabled = features && features.includes('edit');
 
     return (
         <Box sx={{
