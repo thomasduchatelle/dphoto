@@ -1,5 +1,5 @@
 import {CatalogViewerState} from "../language";
-import {createAction} from "../../common/action-factory";
+import {createAction} from "@light-state";
 
 export const deleteAlbumDialogClosed = createAction<CatalogViewerState>(
     "deleteAlbumDialogClosed",

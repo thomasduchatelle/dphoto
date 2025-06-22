@@ -1,5 +1,5 @@
 import {Album, AlbumId, albumIsOwnedByCurrentUser, CatalogViewerState} from "../language";
-import {createAction} from "../../common/action-factory";
+import {createAction} from "@light-state";
 
 function isDeletable(album: Album): boolean {
     return albumIsOwnedByCurrentUser(album);

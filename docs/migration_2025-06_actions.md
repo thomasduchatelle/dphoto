@@ -194,7 +194,7 @@ Remove migrated actions from the registration system:
 
 ### 5. Always Include
 
-- Import `createAction` from `"../common/action-factory"`
+- Import `createAction` from `"@light-state"`
 - Export the type: `export type ActionName = ReturnType<typeof actionName>;`
 - Update all test files to use `action.reducer(state, action)` instead of separate reducer functions
 - Add action comparison tests to verify testing compatibility
@@ -232,7 +232,7 @@ export function userLoggedInReducerRegistration(handlers: any) {
 
 ```typescript
 // action-userLoggedIn.ts
-import {createAction} from "../common/action-factory";
+import {createAction} from "@light-state";
 
 interface UserLoggedInPayload {
     userId: string;

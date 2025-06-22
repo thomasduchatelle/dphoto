@@ -56,7 +56,7 @@ An _Action_ is defined using the `createAction` function in a single file named
 
 #### Action Definition
 
-* Actions are created using `createAction<StateType, PayloadType?>` from `../common/action-factory`
+* Actions are created using `createAction<StateType, PayloadType?>` from `@light-state`
 * The action name is a string literal unique to the action, matching the _Action_ name
 * The payload is kept minimum: only what cannot be found on the current state. Examples:
     * Good: ID of the selected object, the rest of the object will be found in the state

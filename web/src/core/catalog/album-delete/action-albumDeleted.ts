@@ -1,6 +1,6 @@
 import {Album, AlbumId, albumIdEquals, CatalogViewerState, RedirectToAlbumIdAction} from "../language";
 import {albumFilterAreCriterionEqual, ALL_ALBUMS_FILTER_CRITERION, DEFAULT_ALBUM_FILTER_ENTRY, refreshFilters} from "../navigation";
-import {createAction} from "../../common/action-factory";
+import {createAction} from "@light-state";
 
 interface AlbumDeletedPayload extends RedirectToAlbumIdAction {
     albums: Album[];
