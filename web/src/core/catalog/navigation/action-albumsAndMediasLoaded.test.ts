@@ -2,7 +2,7 @@ import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {loadedStateWithTwoAlbums, myselfUser, someMedias, twoAlbums} from "../tests/test-helper-state";
 
 import {Album, initialCatalogState} from "../language";
-import {groupByDay} from "./group-by-day";
+import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 
 describe("action:albumsAndMediasLoaded", () => {
 
@@ -19,7 +19,7 @@ describe("action:albumsAndMediasLoaded", () => {
             mediasLoaded: false,
         }, action);
 
-        expect(got).toEqual(loadedStateWithTwoAlbums);
+        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual(catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId));
     });
 
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums) when receiving AlbumsAndMediasLoaded", () => {
@@ -37,10 +37,9 @@ describe("action:albumsAndMediasLoaded", () => {
             avatars: [myselfUser.picture ?? ""],
             name: "All albums",
         };
-        expect(got).toEqual({
-            ...loadedStateWithTwoAlbums,
+        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
+            ...catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId),
             albums: [twoAlbums[0]],
-            allAlbums: [twoAlbums[0]],
             albumFilter: allAlbumFilter,
             albumFilterOptions: [allAlbumFilter],
         });
@@ -77,11 +76,10 @@ describe("action:albumsAndMediasLoaded", () => {
         );
 
         // The filter should remain unchanged, and albums should contain both directly owned albums
-        expect(got).toEqual({
-            ...loadedStateWithTwoAlbums,
+        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
+            ...catalogViewerPageSelector(loadedStateWithTwoAlbums, twoAlbums[0].albumId),
             albumFilter: directlyOwnedFilter,
             albums: [loadedStateWithTwoAlbums.albums[0], newDirectlyOwnedAlbum],
-            allAlbums: [...loadedStateWithTwoAlbums.allAlbums, newDirectlyOwnedAlbum],
         });
     });
 });

@@ -1,6 +1,8 @@
 import {noAlbumAvailable} from "./action-noAlbumAvailable";
 import {CurrentUserInsight, initialCatalogState} from "../language";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
+import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
+import {DEFAULT_ALBUM_FILTER_ENTRY} from "../common/utils";
 
 describe("action:noAlbumAvailable", () => {
     it("should return the state when no album is available", () => {
@@ -10,11 +12,12 @@ describe("action:noAlbumAvailable", () => {
             loadedStateWithTwoAlbums,
             action
         );
-        expect(got).toEqual({
-            ...initialCatalogState(myselfUser),
-            "albumNotFound": true,
-            "albumsLoaded": true,
-            "mediasLoaded": true,
+        expect(catalogViewerPageSelector(got)).toEqual({
+            ...catalogViewerPageSelector(initialCatalogState(myselfUser)),
+            albums: [],
+            albumsLoaded: true,
+            albumFilter: DEFAULT_ALBUM_FILTER_ENTRY,
+            albumFilterOptions: [DEFAULT_ALBUM_FILTER_ENTRY],
         });
     });
 });

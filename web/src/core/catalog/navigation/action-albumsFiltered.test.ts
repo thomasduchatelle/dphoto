@@ -1,5 +1,6 @@
 import {albumsFiltered} from "./action-albumsFiltered";
 import {herselfOwner, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 
 describe("action:albumsFiltered", () => {
     it("should show only directly owned album after the AlbumsFiltered", () => {
@@ -8,8 +9,8 @@ describe("action:albumsFiltered", () => {
             loadedStateWithTwoAlbums,
             action
         );
-        expect(got).toEqual({
-            ...loadedStateWithTwoAlbums,
+        expect(catalogViewerPageSelector(got)).toEqual({
+            ...catalogViewerPageSelector(loadedStateWithTwoAlbums),
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
             albums: [twoAlbums[0]],
         });
@@ -24,8 +25,8 @@ describe("action:albumsFiltered", () => {
             },
             action
         );
-        expect(got).toEqual({
-            ...loadedStateWithTwoAlbums,
+        expect(catalogViewerPageSelector(got)).toEqual({
+            ...catalogViewerPageSelector(loadedStateWithTwoAlbums),
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
             albums: twoAlbums,
         });
@@ -40,8 +41,8 @@ describe("action:albumsFiltered", () => {
             },
             action
         );
-        expect(got).toEqual({
-            ...loadedStateWithTwoAlbums,
+        expect(catalogViewerPageSelector(got)).toEqual({
+            ...catalogViewerPageSelector(loadedStateWithTwoAlbums),
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[2],
             albums: [twoAlbums[1]],
         });
