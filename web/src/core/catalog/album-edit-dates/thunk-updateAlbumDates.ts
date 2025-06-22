@@ -5,7 +5,7 @@ import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {MediaPerDayLoader} from "../navigation";
-import {Action} from "../../../light-state-lib/action-factory";
+import {Action} from "@light-state";
 
 export interface UpdateAlbumDatesPort {
     updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void>;

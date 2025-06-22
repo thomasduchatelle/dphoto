@@ -3,7 +3,7 @@ import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumDatesUpdated} from "./action-albumDatesUpdated";
 import {someMedias, twoAlbums} from "../tests/test-helper-state";
 import {Album, AlbumId, Media} from "../language";
-import {MediaPerDayLoader} from "../navigation/MediaPerDayLoader"; // Import MediaPerDayLoader
+import {MediaPerDayLoader} from "../navigation"; // Import MediaPerDayLoader
 
 class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
     public updatedAlbums: { albumId: AlbumId, startDate: Date, endDate: Date }[] = [];

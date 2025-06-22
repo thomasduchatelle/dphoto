@@ -1,6 +1,6 @@
 import {albumIdEquals, CatalogViewerState} from "../language";
 import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
-import {createAction} from "../../../light-state-lib/action-factory";
+import {createAction} from "@light-state";
 
 export const editDatesDialogOpened = createAction<CatalogViewerState>(
     "EditDatesDialogOpened",
