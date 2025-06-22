@@ -1,11 +1,10 @@
 import {CatalogViewerState} from "../language";
-import {editDatesDialogClosed} from "./action-editDatesDialogClosed";
+import {editDatesDialogClosed, EditDatesDialogClosed} from "./action-editDatesDialogClosed";
 import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {ActionWithReducer} from "../common/action-factory";
 
 export function closeEditDatesDialogThunk(
-    dispatch: (action: ActionWithReducer) => void
+    dispatch: (action: EditDatesDialogClosed) => void
 ): void {
     dispatch(editDatesDialogClosed());
 }
