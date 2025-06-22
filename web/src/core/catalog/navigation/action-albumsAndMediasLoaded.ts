@@ -25,7 +25,6 @@ export const albumsAndMediasLoaded = createAction<CatalogViewerState, AlbumsAndM
             mediasLoaded: true,
             albumFilterOptions,
             albumFilter: albumFilter,
-            redirectTo: redirectTo,
         }
     }
 );

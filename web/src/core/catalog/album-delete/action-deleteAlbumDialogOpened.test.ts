@@ -1,4 +1,4 @@
-import {CatalogViewerState, OwnerDetails} from "../language";
+import {Album, CatalogViewerState, OwnerDetails} from "../language";
 import {deleteAlbumDialogOpened} from "./action-deleteAlbumDialogOpened";
 import {deleteDialogSelector} from "./selector-deleteDialogSelector";
 import {myselfUser, someMedias} from "../tests/test-helper-state";

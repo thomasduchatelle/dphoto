@@ -45,7 +45,7 @@ export async function updateAlbumDatesThunk(
         mediaPerDayLoader.loadMedias(albumId)
     ]);
 
-    dispatch(albumDatesUpdated({albums, medias: mediasResp.medias}));
+    dispatch(albumDatesUpdated({albums, medias: mediasResp}));
 }
 
 export const updateAlbumDatesDeclaration: ThunkDeclaration<

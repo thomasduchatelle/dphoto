@@ -42,7 +42,7 @@ export class OnPageRefresh {
         } else if (albumsLoaded && !albumIdEquals(mediasLoadedFromAlbumId, albumId) && !albumIdEquals(loadingMediasFor, albumId)) {
             return this.mediaPerDayLoader.loadMedias(albumId)
                 .then(medias => {
-                    this.dispatch(mediasLoaded({albumId, medias: medias.medias}))
+                    this.dispatch(mediasLoaded({albumId, medias}))
                 })
                 .catch(error => {
                     this.dispatch(mediaLoadFailed({
@@ -75,7 +75,7 @@ export class OnPageRefresh {
 
         } else {
             const albums: Album[] = albumsResp.value
-            const medias = mediasResp.value.medias
+            const medias = mediasResp.value
 
             const selectedAlbum = albums.find(a => albumIdEquals(a.albumId, albumId))
             return albumsAndMediasLoaded({
@@ -96,7 +96,7 @@ export class OnPageRefresh {
             const medias = await this.mediaPerDayLoader.loadMedias(selectedAlbum.albumId);
             return albumsAndMediasLoaded({
                 albums: albums,
-                medias: medias.medias,
+                medias: medias,
                 selectedAlbum,
                 redirectTo: selectedAlbum.albumId,
             });

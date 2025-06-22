@@ -17,7 +17,6 @@ export const albumsFiltered = createAction<CatalogViewerState, AlbumsFilteredPay
             ...current,
             albums: filteredAlbums,
             albumFilter: current.albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, criterion)) ?? allAlbumFilter,
-            redirectTo: redirectTo,
         }
     }
 );

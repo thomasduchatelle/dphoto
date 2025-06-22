@@ -10,22 +10,6 @@ import {
     SharingModalOpened,
     sharingModalOpenedReducerRegistration,
 } from "./sharing";
-import {
-    AlbumsAndMediasLoaded,
-    albumsAndMediasLoadedReducerRegistration,
-    AlbumsFiltered,
-    albumsFilteredReducerRegistration,
-    AlbumsLoaded,
-    albumsLoadedReducerRegistration,
-    MediaLoadFailed,
-    mediaLoadFailedReducerRegistration,
-    MediasLoaded,
-    mediasLoadedReducerRegistration,
-    MediasLoadingStarted,
-    mediasLoadingStartedReducerRegistration,
-    NoAlbumAvailable,
-    noAlbumAvailableReducerRegistration
-} from "./navigation";
 import {EditDatesDialogClosed, EditDatesDialogOpened} from "./album-edit-dates";
 import {CatalogViewerState} from "./language";
 import {Action} from "src/light-state-lib";
@@ -37,17 +21,10 @@ export * from "./navigation";
 
 export type {
     AlbumAccessGranted,
-    AlbumsAndMediasLoaded,
-    AlbumsFiltered,
-    AlbumsLoaded,
     SharingModalClosed,
-    MediaLoadFailed,
-    MediasLoaded,
-    NoAlbumAvailable,
     SharingModalOpened,
     AlbumAccessRevoked,
     SharingModalErrorOccurred,
-    MediasLoadingStarted,
     EditDatesDialogOpened,
     EditDatesDialogClosed,
 };
@@ -56,31 +33,17 @@ export type {
 export type CatalogViewerAction =
     Action<CatalogViewerState, any>
     | AlbumAccessGranted
-    | AlbumsAndMediasLoaded
-    | AlbumsFiltered
-    | AlbumsLoaded
     | SharingModalClosed
-    | MediaLoadFailed
-    | MediasLoaded
-    | NoAlbumAvailable
     | SharingModalOpened
     | AlbumAccessRevoked
     | SharingModalErrorOccurred
-    | MediasLoadingStarted
 
 const reducerRegistrations = [
     albumAccessGrantedReducerRegistration,
-    albumsAndMediasLoadedReducerRegistration,
-    albumsLoadedReducerRegistration,
-    mediaLoadFailedReducerRegistration,
-    noAlbumAvailableReducerRegistration,
-    mediasLoadingStartedReducerRegistration,
-    albumsFilteredReducerRegistration,
     sharingModalOpenedReducerRegistration,
     albumAccessRevokedReducerRegistration,
     sharingModalClosedReducerRegistration,
     sharingModalErrorOccurredReducerRegistration,
-    mediasLoadedReducerRegistration,
 ];
 
 function buildHandlers() {

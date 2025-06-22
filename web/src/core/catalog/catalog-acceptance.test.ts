@@ -134,7 +134,7 @@ describe('CatalogFactory', () => {
         let mediasLoadedAction = dispatch.find(action => action.type === "mediasLoaded");
         expect(mediasLoadedAction).toBeDefined()
 
-        expect((mediasLoadedAction as MediasLoaded).medias).toEqual(
+        expect((mediasLoadedAction as MediasLoaded).payload?.medias).toEqual(
             [
                 {
                     day: new Date(2021, 0, 5),

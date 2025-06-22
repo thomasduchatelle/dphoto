@@ -1,4 +1,3 @@
-import {mediasLoaded} from "./action-mediasLoaded";
 import {AlbumId, Media, MediaWithinADay} from "../language";
 
 
@@ -13,9 +12,9 @@ export class MediaPerDayLoader {
     ) {
     }
 
-    public async loadMedias(albumId: AlbumId): Promise<ReturnType<typeof mediasLoaded>> {
+    public async loadMedias(albumId: AlbumId): Promise<MediaWithinADay[]> {
         const medias = await this.fetchAlbumMediasPort.fetchMedias(albumId)
-        return mediasLoaded({albumId, medias: this.groupByDay(medias)})
+        return this.groupByDay(medias)
     }
 
     private groupByDay(medias: Media[]): MediaWithinADay[] {
