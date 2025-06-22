@@ -1,5 +1,5 @@
 import {CatalogViewerState} from "../language";
-import {createAction} from "@light-state";
+import {createAction} from "src/light-state-lib";
 
 export const albumDatesUpdateStarted = createAction<CatalogViewerState>(
     "AlbumDatesUpdateStarted",

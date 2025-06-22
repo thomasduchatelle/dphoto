@@ -1,6 +1,6 @@
 import {Album, AlbumId, albumIdEquals, CatalogViewerState, RedirectToAlbumIdAction} from "../language";
 import {albumFilterAreCriterionEqual, ALL_ALBUMS_FILTER_CRITERION, DEFAULT_ALBUM_FILTER_ENTRY, refreshFilters} from "../navigation";
-import {createAction} from "@light-state";
+import {createAction} from "src/light-state-lib";
 
 interface AlbumDeletedPayload extends RedirectToAlbumIdAction {
     albums: Album[];
@@ -14,7 +14,7 @@ export const albumDeleted = createAction<CatalogViewerState, AlbumDeletedPayload
 
         if (
             redirectTo &&
-            !newAlbums.some(album => albumIdEquals(album.albumId, redirectTo))
+            !albums.some(album => albumIdEquals(album.albumId, redirectTo))
         ) {
             albumFilter =
                 albumFilterOptions.find(option =>

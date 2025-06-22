@@ -40,8 +40,14 @@ describe("action:albumDeleteFailed", () => {
     });
 
     it("fails to create the action if the error message is empty or blank", () => {
-        expect(() => albumDeleteFailed("")).toThrow();
-        expect(() => albumDeleteFailed("   ")).toThrow();
+        expect(() => {
+            const action = albumDeleteFailed("")
+            action.reducer(loadedStateWithTwoAlbums, action);
+        }).toThrow();
+        expect(() => {
+            const action = albumDeleteFailed("   ")
+            action.reducer(loadedStateWithTwoAlbums, action);
+        }).toThrow();
     });
 
     it("supports action comparison for testing", () => {

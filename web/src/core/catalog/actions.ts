@@ -26,21 +26,9 @@ import {
     NoAlbumAvailable,
     noAlbumAvailableReducerRegistration
 } from "./navigation";
-import {
-    AlbumDeleted,
-    albumDeletedReducerRegistration,
-    AlbumDeleteFailed,
-    albumDeleteFailedReducerRegistration,
-    DeleteAlbumDialogClosed,
-    deleteAlbumDialogClosedReducerRegistration,
-    DeleteAlbumDialogOpened,
-    deleteAlbumDialogOpenedReducerRegistration,
-    DeleteAlbumStarted,
-    deleteAlbumStartedReducerRegistration
-} from "./album-delete";
 import {EditDatesDialogClosed, EditDatesDialogOpened} from "./album-edit-dates";
 import {CatalogViewerState} from "./language";
-import {Action} from "@light-state";
+import {Action} from "src/light-state-lib";
 
 export * from "./album-delete/selector-deleteDialogSelector";
 export * from "./album-edit-dates/selector-editDatesDialogSelector";
@@ -52,7 +40,6 @@ export type {
     AlbumsAndMediasLoaded,
     AlbumsFiltered,
     AlbumsLoaded,
-    AlbumDeleted,
     SharingModalClosed,
     MediaLoadFailed,
     MediasLoaded,
@@ -61,10 +48,6 @@ export type {
     AlbumAccessRevoked,
     SharingModalErrorOccurred,
     MediasLoadingStarted,
-    DeleteAlbumDialogOpened,
-    AlbumDeleteFailed,
-    DeleteAlbumDialogClosed,
-    DeleteAlbumStarted,
     EditDatesDialogOpened,
     EditDatesDialogClosed,
 };
@@ -76,7 +59,6 @@ export type CatalogViewerAction =
     | AlbumsAndMediasLoaded
     | AlbumsFiltered
     | AlbumsLoaded
-    | AlbumDeleted
     | SharingModalClosed
     | MediaLoadFailed
     | MediasLoaded
@@ -85,16 +67,11 @@ export type CatalogViewerAction =
     | AlbumAccessRevoked
     | SharingModalErrorOccurred
     | MediasLoadingStarted
-    | DeleteAlbumDialogOpened
-    | AlbumDeleteFailed
-    | DeleteAlbumDialogClosed
-    | DeleteAlbumStarted
 
 const reducerRegistrations = [
     albumAccessGrantedReducerRegistration,
     albumsAndMediasLoadedReducerRegistration,
     albumsLoadedReducerRegistration,
-    albumDeletedReducerRegistration,
     mediaLoadFailedReducerRegistration,
     noAlbumAvailableReducerRegistration,
     mediasLoadingStartedReducerRegistration,
@@ -104,10 +81,6 @@ const reducerRegistrations = [
     sharingModalClosedReducerRegistration,
     sharingModalErrorOccurredReducerRegistration,
     mediasLoadedReducerRegistration,
-    deleteAlbumDialogOpenedReducerRegistration,
-    albumDeleteFailedReducerRegistration,
-    deleteAlbumDialogClosedReducerRegistration,
-    deleteAlbumStartedReducerRegistration,
 ];
 
 function buildHandlers() {

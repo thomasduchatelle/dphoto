@@ -70,7 +70,7 @@ Complete examples:
 
 ```typescript
 // catalog/album-delete/action-loadingStarted.ts
-import {createAction} from "@light-state";
+import {createAction} from "src/light-state-lib";
 
 export const loadingStarted = createAction<CatalogViewerState>(
     "LoadingStarted",
@@ -89,7 +89,7 @@ export type LoadingStarted = ReturnType<typeof loadingStarted>;
 
 ```typescript
 // catalog/album-delete/action-errorOccurred.ts
-import {createAction} from "@light-state";
+import {createAction} from "src/light-state-lib";
 
 export const errorOccurred = createAction<CatalogViewerState, string>(
     "ErrorOccurred",
@@ -109,7 +109,7 @@ export type ErrorOccurred = ReturnType<typeof errorOccurred>;
 
 ```typescript
 // catalog/album-delete/action-albumDeleted.ts
-import {createAction} from "@light-state";
+import {createAction} from "src/light-state-lib";
 
 interface AlbumDeletedPayload {
     albums: Album[];
