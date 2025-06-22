@@ -1,4 +1,4 @@
-import {albumsLoaded, reduceAlbumsLoaded} from "./action-albumsLoaded";
+import {albumsLoaded} from "./action-albumsLoaded";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
 describe("action:albumsLoaded", () => {
@@ -6,7 +6,7 @@ describe("action:albumsLoaded", () => {
 
     it("should update the list of albums and clear errors when AlbumsLoaded is received", () => {
         const action = albumsLoaded({albums: twoAlbums});
-        const got = reduceAlbumsLoaded({
+        const got = action.reducer({
             ...loadedStateWithTwoAlbums,
             allAlbums: [twoAlbums[0]],
             albums: [twoAlbums[0]],
@@ -19,7 +19,7 @@ describe("action:albumsLoaded", () => {
 
     it("should update the available filters and re-apply the selected filter when receiving AlbumsLoaded", () => {
         const action = albumsLoaded({albums: twoAlbums, redirectTo: twoAlbums[0].albumId});
-        const got = reduceAlbumsLoaded({
+        const got = action.reducer({
             ...loadedStateWithTwoAlbums,
             albumFilterOptions: [loadedStateWithTwoAlbums.albumFilterOptions[0]],
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
@@ -38,7 +38,7 @@ describe("action:albumsLoaded", () => {
 
     it("should remove the album filter if the redirectTo in AlbumsLoaded wouldn't be displayed", () => {
         const action = albumsLoaded({albums: twoAlbums, redirectTo: twoAlbums[1].albumId});
-        const got = reduceAlbumsLoaded({
+        const got = action.reducer({
             ...loadedStateWithTwoAlbums,
             allAlbums: [twoAlbums[0]],
             albums: [],

@@ -1,5 +1,5 @@
 import {Album, AlbumFilterCriterion, AlbumFilterEntry} from "../language";
-import {AlbumsFiltered, albumsFiltered} from "./action-albumsFiltered";
+import {albumsFiltered} from "./action-albumsFiltered";
 import {onAlbumFilterFunction} from "./thunk-onAlbumFilterChange";
 import {CatalogViewerAction} from "../actions";
 
@@ -27,7 +27,7 @@ describe('onAlbumFilterChange', () => {
     const tests: [string, {
         partialState: { selectedAlbum?: Album, allAlbums: Album[] },
         criterion: AlbumFilterCriterion,
-        expectedActions: AlbumsFiltered[]
+        expectedActions: ReturnType<typeof albumsFiltered>[]
     }][] = [
         ["should trigger the AlbumFilteredAction with the new criterion if the selected AlbumID is still selected",
             {

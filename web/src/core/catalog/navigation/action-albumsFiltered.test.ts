@@ -1,11 +1,12 @@
-import {albumsFiltered, reduceAlbumsFiltered} from "./action-albumsFiltered";
+import {albumsFiltered} from "./action-albumsFiltered";
 import {herselfOwner, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
 describe("action:albumsFiltered", () => {
     it("should show only directly owned album after the AlbumsFiltered", () => {
-        const got = reduceAlbumsFiltered(
+        const action = albumsFiltered({criterion: {selfOwned: true, owners: []}});
+        const got = action.reducer(
             loadedStateWithTwoAlbums,
-            albumsFiltered({criterion: {selfOwned: true, owners: []}})
+            action
         );
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,
@@ -15,12 +16,13 @@ describe("action:albumsFiltered", () => {
     });
 
     it("should show all albums when the filter moves back to 'All albums'", () => {
-        const got = reduceAlbumsFiltered(
+        const action = albumsFiltered({criterion: {owners: []}});
+        const got = action.reducer(
             {
                 ...loadedStateWithTwoAlbums,
                 albums: [],
             },
-            albumsFiltered({criterion: {owners: []}})
+            action
         );
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,
@@ -30,12 +32,13 @@ describe("action:albumsFiltered", () => {
     });
 
     it("should filter albums to those with a certain owner when the filter with that owner is selected", () => {
-        const got = reduceAlbumsFiltered(
+        const action = albumsFiltered({criterion: {owners: [herselfOwner]}});
+        const got = action.reducer(
             {
                 ...loadedStateWithTwoAlbums,
                 albums: [],
             },
-            albumsFiltered({criterion: {owners: [herselfOwner]}})
+            action
         );
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,

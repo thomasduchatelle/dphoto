@@ -1,19 +1,20 @@
-import {mediasLoaded, reduceMediasLoaded} from "./action-mediasLoaded";
+import {mediasLoaded} from "./action-mediasLoaded";
 import {loadedStateWithTwoAlbums, someMedias, twoAlbums} from "../tests/test-helper-state";
 
 describe("action:mediasLoaded", () => {
     it("should only change the medias and loading status when reducing MediasLoaded, and clear errors", () => {
-        expect(reduceMediasLoaded({
+        const action = mediasLoaded({
+            albumId: twoAlbums[1].albumId,
+            medias: someMedias,
+        });
+        expect(action.reducer({
             ...loadedStateWithTwoAlbums,
             medias: [],
             mediasLoaded: false,
             loadingMediasFor: twoAlbums[1].albumId,
             albumNotFound: true,
             error: new Error("TEST previous error to clear"),
-        }, mediasLoaded({
-            albumId: twoAlbums[1].albumId,
-            medias: someMedias,
-        }))).toEqual({
+        }, action)).toEqual({
             ...loadedStateWithTwoAlbums,
             medias: someMedias,
             mediasLoadedFromAlbumId: twoAlbums[1].albumId,
@@ -21,14 +22,15 @@ describe("action:mediasLoaded", () => {
     });
 
     it("should ignore MediasLoaded if the medias are not for the expected album", () => {
-        expect(reduceMediasLoaded({
+        const action = mediasLoaded({
+            albumId: twoAlbums[1].albumId,
+            medias: someMedias,
+        });
+        expect(action.reducer({
             ...loadedStateWithTwoAlbums,
             medias: [],
             loadingMediasFor: twoAlbums[0].albumId,
-        }, mediasLoaded({
-            albumId: twoAlbums[1].albumId,
-            medias: someMedias,
-        }))).toEqual({
+        }, action)).toEqual({
             ...loadedStateWithTwoAlbums,
             medias: [],
             loadingMediasFor: twoAlbums[0].albumId,

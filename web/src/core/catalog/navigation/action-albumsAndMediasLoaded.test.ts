@@ -1,4 +1,4 @@
-import {albumsAndMediasLoaded, reduceAlbumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
+import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {loadedStateWithTwoAlbums, myselfUser, someMedias, twoAlbums} from "../tests/test-helper-state";
 
 import {Album, initialCatalogState} from "../language";
@@ -11,7 +11,7 @@ describe("action:albumsAndMediasLoaded", () => {
             medias: someMedias,
             selectedAlbum: twoAlbums[0],
         });
-        const got = reduceAlbumsAndMediasLoaded({
+        const got = action.reducer({
             ...initialCatalogState(myselfUser),
             albumNotFound: true,
             albumsLoaded: false,
@@ -27,7 +27,7 @@ describe("action:albumsAndMediasLoaded", () => {
             medias: someMedias,
             selectedAlbum: twoAlbums[0],
         });
-        const got = reduceAlbumsAndMediasLoaded(initialCatalogState(myselfUser), action);
+        const got = action.reducer(initialCatalogState(myselfUser), action);
 
         const allAlbumFilter = {
             criterion: {
@@ -61,17 +61,18 @@ describe("action:albumsAndMediasLoaded", () => {
             sharedWith: []
         };
 
-        const got = reduceAlbumsAndMediasLoaded(
+        const action = albumsAndMediasLoaded({
+            albums: [...twoAlbums, newDirectlyOwnedAlbum],
+            medias: someMedias,
+            selectedAlbum: twoAlbums [0],
+        });
+        const got = action.reducer(
             {
                 ...loadedStateWithTwoAlbums,
                 albumFilter: directlyOwnedFilter,
                 albums: [loadedStateWithTwoAlbums.albums[0]],
             },
-            albumsAndMediasLoaded({
-                albums: [...twoAlbums, newDirectlyOwnedAlbum],
-                medias: someMedias,
-                selectedAlbum: twoAlbums [0],
-            })
+            action
         );
 
         // The filter should remain unchanged, and albums should contain both directly owned albums
