@@ -1,9 +1,10 @@
-import {AlbumId, albumIdEquals, CatalogViewerState, MediaWithinADay} from "../language";
+import {AlbumId, albumIdEquals, CatalogViewerState, MediaWithinADay, Media} from "../language";
 import {createAction} from "src/light-state-lib";
+import {groupByDay} from "./group-by-day";
 
 interface MediasLoadedPayload {
     albumId: AlbumId
-    medias: MediaWithinADay[]
+    medias: Media[]
 }
 
 export const mediasLoaded = createAction<CatalogViewerState, MediasLoadedPayload>(
@@ -18,7 +19,7 @@ export const mediasLoaded = createAction<CatalogViewerState, MediasLoadedPayload
             ...current,
             loadingMediasFor: undefined,
             mediasLoadedFromAlbumId: albumId,
-            medias: medias,
+            medias: groupByDay(medias),
             error: undefined,
             mediasLoaded: true,
             albumNotFound: false,

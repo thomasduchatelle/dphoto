@@ -2,13 +2,14 @@ import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {loadedStateWithTwoAlbums, myselfUser, someMedias, twoAlbums} from "../tests/test-helper-state";
 
 import {Album, initialCatalogState} from "../language";
+import {groupByDay} from "./group-by-day";
 
 describe("action:albumsAndMediasLoaded", () => {
 
     it("should add the loaded albums and medias to the state, and reset all status when receiving AlbumsAndMediasLoaded", () => {
         const action = albumsAndMediasLoaded({
             albums: twoAlbums,
-            medias: someMedias,
+            medias: someMedias.flatMap(m => m.medias), // Pass raw medias
             selectedAlbum: twoAlbums[0],
         });
         const got = action.reducer({
@@ -24,7 +25,7 @@ describe("action:albumsAndMediasLoaded", () => {
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums) when receiving AlbumsAndMediasLoaded", () => {
         const action = albumsAndMediasLoaded({
             albums: [twoAlbums[0]],
-            medias: someMedias,
+            medias: someMedias.flatMap(m => m.medias), // Pass raw medias
             selectedAlbum: twoAlbums[0],
         });
         const got = action.reducer(initialCatalogState(myselfUser), action);
@@ -63,7 +64,7 @@ describe("action:albumsAndMediasLoaded", () => {
 
         const action = albumsAndMediasLoaded({
             albums: [...twoAlbums, newDirectlyOwnedAlbum],
-            medias: someMedias,
+            medias: someMedias.flatMap(m => m.medias), // Pass raw medias
             selectedAlbum: twoAlbums [0],
         });
         const got = action.reducer(

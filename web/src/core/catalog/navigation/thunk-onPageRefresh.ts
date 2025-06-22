@@ -1,13 +1,11 @@
-import {Album, AlbumId, albumIdEquals, CatalogViewerState} from "../language";
+import {Album, AlbumId, albumIdEquals, CatalogViewerState, Media} from "../language";
 import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {mediaLoadFailed} from "./action-mediaLoadFailed";
 import {mediasLoaded} from "./action-mediasLoaded";
 import {noAlbumAvailable} from "./action-noAlbumAvailable";
-import {MediaPerDayLoader} from "./MediaPerDayLoader";
 import {ThunkDeclaration} from "../../thunk-engine";
 import {DPhotoApplication} from "../../application";
 import {CatalogFactory} from "../catalog-factories";
-import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 
 export interface OnPageRefreshArgs {
     allAlbums: Album[]
@@ -16,15 +14,16 @@ export interface OnPageRefreshArgs {
     loadingMediasFor?: AlbumId
 }
 
-export interface FetchAlbumsPort {
+export interface FetchAlbumsAndMediasPort {
     fetchAlbums(): Promise<Album[]>
+
+    fetchMedias(albumId: AlbumId): Promise<Media[]>
 }
 
 export class OnPageRefresh {
     constructor(
         private readonly dispatch: (action: ReturnType<typeof mediaLoadFailed> | ReturnType<typeof albumsAndMediasLoaded> | ReturnType<typeof noAlbumAvailable> | ReturnType<typeof mediasLoaded>) => void,
-        private readonly mediaPerDayLoader: MediaPerDayLoader,
-        private readonly fetchAlbumsPort: FetchAlbumsPort
+        private readonly fetchAlbumsAndMediasPort: FetchAlbumsAndMediasPort
     ) {
     }
 
@@ -40,7 +39,7 @@ export class OnPageRefresh {
             return this.loadSpecificAlbum(albumId).then(this.dispatch)
 
         } else if (albumsLoaded && !albumIdEquals(mediasLoadedFromAlbumId, albumId) && !albumIdEquals(loadingMediasFor, albumId)) {
-            return this.mediaPerDayLoader.loadMedias(albumId)
+            return this.fetchAlbumsAndMediasPort.fetchMedias(albumId)
                 .then(medias => {
                     this.dispatch(mediasLoaded({albumId, medias}))
                 })
@@ -57,8 +56,8 @@ export class OnPageRefresh {
 
     private loadSpecificAlbum = async (albumId: AlbumId): Promise<ReturnType<typeof mediaLoadFailed> | ReturnType<typeof albumsAndMediasLoaded>> => {
         const [albumsResp, mediasResp] = await Promise.allSettled([
-            this.fetchAlbumsPort.fetchAlbums(),
-            this.mediaPerDayLoader.loadMedias(albumId),
+            this.fetchAlbumsAndMediasPort.fetchAlbums(),
+            this.fetchAlbumsAndMediasPort.fetchMedias(albumId),
         ]);
 
         if (albumsResp.status === "rejected") {
@@ -87,13 +86,13 @@ export class OnPageRefresh {
     }
 
     private loadDefaultAlbum = async (): Promise<ReturnType<typeof albumsAndMediasLoaded> | ReturnType<typeof noAlbumAvailable> | ReturnType<typeof mediaLoadFailed>> => {
-        const albums = await this.fetchAlbumsPort.fetchAlbums();
+        const albums = await this.fetchAlbumsAndMediasPort.fetchAlbums();
         if (!albums || albums.length === 0) {
             return noAlbumAvailable()
         }
         const selectedAlbum = albums[0];
         try {
-            const medias = await this.mediaPerDayLoader.loadMedias(selectedAlbum.albumId);
+            const medias = await this.fetchAlbumsAndMediasPort.fetchMedias(selectedAlbum.albumId);
             return albumsAndMediasLoaded({
                 albums: albums,
                 medias: medias,
@@ -121,7 +120,6 @@ export const onPageRefreshDeclaration: ThunkDeclaration<
         const restAdapter = new CatalogFactory(app as DPhotoApplication).restAdapter();
         const onPageRefreshInstance = new OnPageRefresh(
             dispatch,
-            new MediaPerDayLoader(restAdapter),
             restAdapter
         );
         return (albumId?: AlbumId) => {
