@@ -7,3 +7,4 @@ export * from "./action-noAlbumAvailable";
 export * from "../common/utils";
 export * from "./thunk-onAlbumFilterChange";
 export * from "./thunk-onPageRefresh";
+export * from "./selector-catalog-viewer-page";

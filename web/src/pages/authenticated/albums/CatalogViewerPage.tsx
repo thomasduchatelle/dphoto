@@ -8,7 +8,12 @@ import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
-import {albumIdEquals, deleteDialogSelector, editDatesDialogSelector, sharingDialogSelector} from "../../../core/catalog";
+import {
+    deleteDialogSelector,
+    editDatesDialogSelector,
+    sharingDialogSelector,
+    catalogViewerPageSelector
+} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 import ShareDialog from "./ShareDialog";
@@ -48,7 +53,7 @@ export function CatalogViewerPage() {
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
     const isAlbumsPage = pathname === '/albums'
 
-    const selectedAlbum = state.albums.find(album => albumIdEquals(album.albumId, selectedAlbumId))
+    const {albumFilter, albumFilterOptions, albumsLoaded, albums, selectedAlbum} = catalogViewerPageSelector(state, selectedAlbumId);
 
     const editDatesDialogState = editDatesDialogSelector(state);
 
@@ -65,15 +70,15 @@ export function CatalogViewerPage() {
                 {(controls) => isMobileDevice && isAlbumsPage ? (
                     <>
                         <AlbumListActions
-                            selected={state.albumFilter}
-                            options={state.albumFilterOptions}
+                            selected={albumFilter}
+                            options={albumFilterOptions}
                             onAlbumFiltered={onAlbumFilterChange}
                             openDeleteAlbumDialog={openDeleteAlbumDialog}
                             openEditDatesDialog={openEditDatesDialog}
                             {...controls}
                         />
-                        <AlbumsList albums={state.albums}
-                                    loaded={state.albumsLoaded}
+                        <AlbumsList albums={albums}
+                                    loaded={albumsLoaded}
                                     selectedAlbumId={selectedAlbumId}
                                     openSharingModal={openSharingModal}/>
                     </>
