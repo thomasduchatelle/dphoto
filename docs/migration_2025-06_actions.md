@@ -255,18 +255,18 @@ export type UserLoggedIn = ReturnType<typeof userLoggedIn>;
 
 ## Key Benefits
 
-1. **Reduced boilerplate**: Single declaration instead of 4+ separate pieces
-2. **Type safety**: Full TypeScript inference and checking
-3. **Auto-registration**: No manual reducer registration needed
-4. **Testing compatibility**: Actions remain comparable with `toEqual()`
-5. **Backward compatibility**: Works alongside existing legacy actions
+1.  **Reduced boilerplate**: Single declaration instead of 4+ separate pieces
+2.  **Type safety**: Full TypeScript inference and checking
+3.  **Auto-registration**: No manual reducer registration needed
+4.  **Testing compatibility**: Actions remain comparable with `toEqual()`
+5.  **Backward compatibility**: Works alongside existing legacy actions
 
 ## Important Notes
 
-- The `createAction` function supports 0-3 parameters automatically
-- For tuple payloads, use: `createAction<State, [Type1, Type2]>`
-- Always test action comparison to ensure testing compatibility
-- The generic reducer automatically handles actions with built-in reducers
-- Legacy actions continue to work during the migration period
+-   The `createAction` function supports 0-3 parameters automatically
+-   For tuple payloads, use: `createAction<State, [Type1, Type2]>`
+-   Always test action comparison to ensure testing compatibility
+-   The generic reducer automatically handles actions with built-in reducers
+-   Legacy actions continue to work during the migration period
 
 Migrate one folder at a time, ensuring all tests pass before moving to the next folder.

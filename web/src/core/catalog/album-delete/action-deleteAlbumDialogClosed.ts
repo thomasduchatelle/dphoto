@@ -1,27 +1,15 @@
 import {CatalogViewerState} from "../language";
+import {createAction} from "../../common/action-factory";
 
-export interface DeleteAlbumDialogClosed {
-    type: "deleteAlbumDialogClosed";
-}
+export const deleteAlbumDialogClosed = createAction<CatalogViewerState>(
+    "deleteAlbumDialogClosed",
+    (state: CatalogViewerState) => {
+        if (!state.deleteDialog) return state;
+        return {
+            ...state,
+            deleteDialog: undefined,
+        };
+    }
+);
 
-export function deleteAlbumDialogClosed(): DeleteAlbumDialogClosed {
-    return {type: "deleteAlbumDialogClosed"};
-}
-
-export function reduceDeleteAlbumDialogClosed(
-    state: CatalogViewerState,
-    _action: DeleteAlbumDialogClosed
-): CatalogViewerState {
-    if (!state.deleteDialog) return state;
-    return {
-        ...state,
-        deleteDialog: undefined,
-    };
-}
-
-export function deleteAlbumDialogClosedReducerRegistration(handlers: any) {
-    handlers["deleteAlbumDialogClosed"] = reduceDeleteAlbumDialogClosed as (
-        state: CatalogViewerState,
-        action: DeleteAlbumDialogClosed
-    ) => CatalogViewerState;
-}
+export type DeleteAlbumDialogClosed = ReturnType<typeof deleteAlbumDialogClosed>;

@@ -1,41 +1,26 @@
 import {CatalogViewerState} from "../language";
+import {createAction} from "../../common/action-factory";
 
-export interface AlbumDeleteFailed {
-    type: "albumDeleteFailed";
-    error: string;
-}
+export const albumDeleteFailed = createAction<CatalogViewerState, string>(
+    "albumDeleteFailed",
+    (current: CatalogViewerState, error: string) => {
+        if (!error || error.trim() === "") {
+            throw new Error("AlbumDeleteFailed requires a non-empty error message");
+        }
 
-export function albumDeleteFailed(error: string): AlbumDeleteFailed {
-    if (!error || error.trim() === "") {
-        throw new Error("AlbumDeleteFailed requires a non-empty error message");
+        if (!current.deleteDialog) {
+            return current;
+        }
+
+        return {
+            ...current,
+            deleteDialog: {
+                ...current.deleteDialog,
+                error: error,
+                isLoading: false,
+            },
+        };
     }
-    return {
-        error,
-        type: "albumDeleteFailed",
-    };
-}
+);
 
-export function reduceAlbumDeleteFailed(
-    current: CatalogViewerState,
-    action: AlbumDeleteFailed,
-): CatalogViewerState {
-    if (!current.deleteDialog) {
-        return current;
-    }
-
-    return {
-        ...current,
-        deleteDialog: {
-            ...current.deleteDialog,
-            error: action.error,
-            isLoading: false,
-        },
-    };
-}
-
-export function albumDeleteFailedReducerRegistration(handlers: any) {
-    handlers["albumDeleteFailed"] = reduceAlbumDeleteFailed as (
-        state: CatalogViewerState,
-        action: AlbumDeleteFailed
-    ) => CatalogViewerState;
-}
+export type AlbumDeleteFailed = ReturnType<typeof albumDeleteFailed>;

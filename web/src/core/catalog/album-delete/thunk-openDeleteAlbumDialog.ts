@@ -1,10 +1,10 @@
 import type {ThunkDeclaration} from "../../thunk-engine";
 import type {CatalogViewerState} from "../language";
-import {DeleteAlbumDialogOpened, deleteAlbumDialogOpened} from "./action-deleteAlbumDialogOpened";
+import {deleteAlbumDialogOpened} from "./action-deleteAlbumDialogOpened";
 import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
 
 export function openDeleteAlbumDialogThunk(
-    dispatch: (action: DeleteAlbumDialogOpened) => void
+    dispatch: (action: ReturnType<typeof deleteAlbumDialogOpened>) => void
 ): void {
     console.debug("Opening delete album dialog");
     dispatch(deleteAlbumDialogOpened());

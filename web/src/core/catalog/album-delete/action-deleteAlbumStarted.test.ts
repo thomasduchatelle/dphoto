@@ -1,5 +1,5 @@
 import {CatalogViewerState, DeleteDialogState} from "../language";
-import {deleteAlbumStarted, reduceDeleteAlbumStarted} from "./action-deleteAlbumStarted";
+import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
 describe("action:deleteAlbumStarted", () => {
@@ -14,7 +14,8 @@ describe("action:deleteAlbumStarted", () => {
             deleteDialog,
         };
 
-        const got = reduceDeleteAlbumStarted(state, deleteAlbumStarted());
+        const action = deleteAlbumStarted();
+        const got = action.reducer(state, action);
 
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,
@@ -32,8 +33,17 @@ describe("action:deleteAlbumStarted", () => {
             deleteDialog: undefined,
         };
 
-        const got = reduceDeleteAlbumStarted(state, deleteAlbumStarted());
+        const action = deleteAlbumStarted();
+        const got = action.reducer(state, action);
 
         expect(got).toBe(state);
+    });
+
+    it("supports action comparison for testing", () => {
+        const action1 = deleteAlbumStarted();
+        const action2 = deleteAlbumStarted();
+
+        expect(action1).toEqual(action2);
+        expect([action1]).toContainEqual(action2);
     });
 });

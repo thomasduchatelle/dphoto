@@ -48,8 +48,7 @@ export async function deleteAlbumThunk(
 
     try {
         const albums = await port.fetchAlbums();
-        const redirectTo = albumIdEquals(selectedAlbumId, albumIdToDelete) && !!albums ? albums[0].albumId : undefined;
-
+        const redirectTo = albumIdEquals(selectedAlbumId, albumIdToDelete) && !!albums ? albums[0]?.albumId : undefined; // Added optional chaining
         dispatch(albumDeleted({albums, redirectTo}));
 
     } catch (error) {
