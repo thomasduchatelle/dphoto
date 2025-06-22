@@ -34,7 +34,7 @@ export function someActionReducerRegistration(handlers: any) {
 **NEW PATTERN** (simplified):
 
 ```typescript
-import {createAction} from "src/light-state-lib";
+import {createAction} from "src/libs/daction";
 
 export const someAction = createAction<State, PayloadType>(
     "SomeAction",
@@ -185,7 +185,7 @@ Remove migrated actions from the registration system:
 
 ### 5. Always Include
 
-- Import `createAction` from `"src/light-state-lib"`
+- Import `createAction` from `"src/libs/daction"`
 - Export the type: `export type ActionName = ReturnType<typeof actionName>;`
 - Update all test files to use `action.reducer(state, action)` instead of separate reducer functions
 
@@ -222,7 +222,7 @@ export function userLoggedInReducerRegistration(handlers: any) {
 
 ```typescript
 // action-userLoggedIn.ts
-import {createAction} from "src/light-state-lib";
+import {createAction} from "src/libs/daction";
 
 interface UserLoggedInPayload {
     userId: string;

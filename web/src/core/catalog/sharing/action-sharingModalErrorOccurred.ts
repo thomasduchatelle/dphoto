@@ -1,6 +1,6 @@
 import {CatalogViewerState, ShareError} from "../language";
 import {moveSharedWithToSuggestion, moveSuggestionToSharedWith} from "./sharing";
-import {createAction} from "src/light-state-lib";
+import {createAction} from "src/libs/daction";
 
 export const sharingModalErrorOccurred = createAction<CatalogViewerState, ShareError>(
     "sharingModalErrorOccurred",

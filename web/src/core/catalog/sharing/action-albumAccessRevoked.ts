@@ -1,6 +1,6 @@
 import {CatalogViewerState} from "../language";
 import {moveSharedWithToSuggestion} from "./sharing";
-import {createAction} from "src/light-state-lib";
+import {createAction} from "src/libs/daction";
 
 export const albumAccessRevoked = createAction<CatalogViewerState, string>(
     "albumAccessRevoked",

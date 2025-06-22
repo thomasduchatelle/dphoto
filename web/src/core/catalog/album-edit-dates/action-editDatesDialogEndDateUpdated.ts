@@ -1,5 +1,5 @@
 import {CatalogViewerState} from "../language";
-import {createAction} from "src/light-state-lib";
+import {createAction} from "src/libs/daction";
 
 export const editDatesDialogEndDateUpdated = createAction<CatalogViewerState, Date>(
     "EditDatesDialogEndDateUpdated",

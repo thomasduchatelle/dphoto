@@ -1,6 +1,6 @@
 import {AlbumId, CatalogViewerState} from "../language";
 import {withOpenShareModal} from "./sharing";
-import {createAction} from "src/light-state-lib";
+import {createAction} from "src/libs/daction";
 
 export const sharingModalOpened = createAction<CatalogViewerState, AlbumId>(
     "sharingModalOpened",

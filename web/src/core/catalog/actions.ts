@@ -1,5 +1,5 @@
 import {CatalogViewerState} from "./language";
-import {Action, createGenericReducer} from "src/light-state-lib";
+import {Action, createGenericReducer} from "src/libs/daction";
 
 export * from "./album-delete/selector-deleteDialogSelector";
 export * from "./album-edit-dates/selector-editDatesDialogSelector";

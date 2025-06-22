@@ -4,7 +4,7 @@ import {albumDatesUpdated} from "./action-albumDatesUpdated";
 import {ThunkDeclaration} from "../../thunk-engine";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
-import {Action} from "src/light-state-lib";
+import {Action} from "src/libs/daction";
 import {groupByDay} from "../navigation/group-by-day";
 
 export interface UpdateAlbumDatesPort {

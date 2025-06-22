@@ -1,6 +1,6 @@
 import {AlbumFilterCriterion, albumMatchCriterion, CatalogViewerState, RedirectToAlbumIdAction} from "../language";
 import {albumFilterAreCriterionEqual, ALL_ALBUMS_FILTER_CRITERION, DEFAULT_ALBUM_FILTER_ENTRY} from "../common/utils";
-import {createAction} from "src/light-state-lib";
+import {createAction} from "src/libs/daction";
 
 interface AlbumsFilteredPayload extends RedirectToAlbumIdAction {
     criterion: AlbumFilterCriterion

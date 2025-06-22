@@ -1,5 +1,5 @@
 import {Album, AlbumId, albumIsOwnedByCurrentUser, CatalogViewerState} from "../language";
-import {createAction} from "src/light-state-lib";
+import {createAction} from "src/libs/daction";
 
 function isDeletable(album: Album): boolean {
     return albumIsOwnedByCurrentUser(album);
