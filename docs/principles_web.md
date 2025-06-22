@@ -16,14 +16,14 @@ These general principles must be **strictly respected**. In the rare exception w
 The file structure is as follows:
 
 * `components/`
-  * `catalog-react/` - contains the React Components used to integrate the domain to the other components
+    * `catalog-react/` - contains the React Components used to integrate the domain to the other components
 * `core/catalog/`
-  * `<feature name in dash-case>/` - each feature has a folder containing related actions, thunks, and selectors
-  * `language/` - ubiquitous language and definition of the State shared for the domain
-  * `common/` - functionalities reused across most features
-  * `actions.ts` - where the action interface and the partial reducer are registered
-  * `thunks.ts` - where the thunks are registered
-  * `adapters/api/` - where the REST API adapter are implemented
+    * `<feature name in dash-case>/` - each feature has a folder containing related actions, thunks, and selectors
+    * `language/` - ubiquitous language and definition of the State shared for the domain
+    * `common/` - functionalities reused across most features
+    * `actions.ts` - where the action interface and the partial reducer are registered
+    * `thunks.ts` - where the thunks are registered
+    * `adapters/api/` - where the REST API adapter are implemented
 
 ## "Action" and "Thunk" Design Pattern
 
@@ -39,8 +39,8 @@ In the UI, the data flow through:
 4. **Thunk** - function triggered by a user activity (including browser loading and URL change): often the value of `onClick` and `useEffect`.
    It executes the appropriate requests (through a port) and _dispatches Actions_.
 
-  * **Port** - an interface declared next to the Thunk to abstract specific technologies (REST API, Local store, ...)
-  * **Adapter** - a class implementation of the _Port_ for a specific technology (example: Axios)
+    * **Port** - an interface declared next to the Thunk to abstract specific technologies (REST API, Local store, ...)
+    * **Adapter** - a class implementation of the _Port_ for a specific technology (example: Axios)
 
 5. **Action** - interface with a `type: "<action type>"` and a payload ; **dispatching an action is the only way to mutate the _State_**
    The _Reducer_ is a function taking the current state and the action, and returning the mutated state.
@@ -59,11 +59,10 @@ An _Action_ is defined using the `createAction` function in a single file named
 * Actions are created using `createAction<StateType, PayloadType?>` from `../common/action-factory`
 * The action name is a string literal unique to the action, matching the _Action_ name
 * The payload is kept minimum: only what cannot be found on the current state. Examples:
-  * Good: ID of the selected object, the rest of the object will be found in the state
-  * Good: Value updated from an input field
-  * Bad: copy of an object from the state
+    * Good: ID of the selected object, the rest of the object will be found in the state
+    * Good: Value updated from an input field
+    * Bad: copy of an object from the state
 * The reducer function receives the state and payload directly as parameters
-* No manual registration is required - actions with built-in reducers are automatically handled
 
 Complete examples:
 
@@ -71,7 +70,7 @@ Complete examples:
 
 ```typescript
 // catalog/album-delete/action-loadingStarted.ts
-import { createAction } from "../common/action-factory";
+import {createAction} from "../common/action-factory";
 
 export const loadingStarted = createAction<CatalogViewerState>(
     "LoadingStarted",
@@ -90,7 +89,7 @@ export type LoadingStarted = ReturnType<typeof loadingStarted>;
 
 ```typescript
 // catalog/album-delete/action-errorOccurred.ts
-import { createAction } from "../common/action-factory";
+import {createAction} from "../common/action-factory";
 
 export const errorOccurred = createAction<CatalogViewerState, string>(
     "ErrorOccurred",
@@ -110,7 +109,7 @@ export type ErrorOccurred = ReturnType<typeof errorOccurred>;
 
 ```typescript
 // catalog/album-delete/action-albumDeleted.ts
-import { createAction } from "../common/action-factory";
+import {createAction} from "../common/action-factory";
 
 interface AlbumDeletedPayload {
     albums: Album[];
@@ -138,10 +137,12 @@ export type AlbumDeleted = ReturnType<typeof albumDeleted>;
 
 * **Every action MUST have tests associated with it - tested in combination of selector(s) and the state.**
 * naming convention of "describe" is `action:<action name>` (example: `action:albumCreated`)
-* types predefined in test helper must be used where possible (`web/src/core/catalog/tests/test-helper-state.ts`)
-* assertions should be done on the result of selectors, and not directly the state
-* assertions must be done on the whole result or whole state, not on individual properties
-* actions must be tested for comparison to ensure testing compatibility
+* Typical unit-test will:
+  1. initiate a state using the helpers in `web/src/core/catalog/tests/test-helper-state.ts`: only the minimum properties should be set on top of the helpers
+  2. execute the reducer
+  3. execute the selector: the state is considered private and is not asserted directly
+  4. assert the whole result of the selector, not on individual properties
+
 
 ```typescript
 // catalog/album-delete/action-albumDeleted.test.ts
@@ -167,21 +168,11 @@ describe("action:albumDeleted", () => {
             action
         );
 
-        expect(got).toEqual({ // always test the COMPLETE state as a single assertion, never test each property independently
-            ...loadedStateWithTwoAlbums,
-            medias: [],
-            mediasLoaded: false,
-            mediasLoadedFromAlbumId: undefined,
+        expect(listOfAlbumsSelector(got)).toEqual({ // always test the COMPLETE selection as a single assertion, never test each property independently
+            loading: false,
+            albums: twoAlbums,
+            filter: loadedStateWithTwoAlbums.filter,
         });
-    });
-
-    it("supports action comparison for testing", () => {
-        const payload = {albums: twoAlbums};
-        const action1 = albumDeleted(payload);
-        const action2 = albumDeleted(payload);
-        
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
     });
 });
 ```
@@ -284,7 +275,7 @@ The factory function wires up dependencies and returns the thunk handler used by
 * **Case 3: Complex case** (≥3 arguments OR optional arguments)
   Merge state and view data into single composite object
 
-Complete example:
+Complete examples:
 
 ```typescript
 // catalog/sharing/thunk-grantAlbumSharing.ts
@@ -316,7 +307,7 @@ export const grantAlbumSharingDeclaration: ThunkDeclaration<
     // Factory: wires up dependencies and returns the thunk
     factory: ({dispatch, app, partialState: {albumId}}) => {
         const sharingAPI: GrantAlbumSharingAPI = new CatalogAPIAdapter(app.axiosInstance, app);
-      // Case 1: Simple case - bind arguments individually
+        // Case 1: Simple case - bind arguments individually
         return grantAlbumSharingThunk.bind(null, dispatch, sharingAPI, albumId);
     },
 };
@@ -346,8 +337,8 @@ factory: ({dispatch, app, partialState: {albumId}}) => {
 * **Every thunk MUST have tests associated with it.**
 * Tests are written against the business function, **not** the `ThunkDeclaration`.
 * Use **Fakes** (in-memory implementations) for ports instead of mocks, to decouple tests from adapter signatures.
-  * assert write requests by inspecting the fake's state;
-  * assert read requests by checking outputs and outcomes.
+    * assert write requests by inspecting the fake's state;
+    * assert read requests by checking outputs and outcomes.
 
 Complete example:
 
@@ -370,7 +361,7 @@ class CreateAlbumPortFake implements CreateAlbumPort {
 
 it("should store the new Album and dispatch albumsLoadedAction", async () => {
     const fakePort = new CreateAlbumPortFake([existingAlbum]);
-    const dispatched: any[] = [];
+    const dispatched: any[] = []; //TODO
 
     await createAlbumThunk(dispatched.push.bind(dispatched), fakePort, request);
 
@@ -396,7 +387,7 @@ definition and implementation.
 The **Port** is the interface defined by the thunk based on what the thunk requires. It represents the contract that the thunk needs from external dependencies.
 
 * **Naming convention**: Named after the thunk or the function it fulfills, whichever is most readable
-  * Examples: `CreateAlbumPort`, `DeleteAlbumPort`, `FetchAlbumsPort`
+    * Examples: `CreateAlbumPort`, `DeleteAlbumPort`, `FetchAlbumsPort`
 * **Location**: Defined in the same file as the thunk that uses it
 * **Purpose**: Abstracts external dependencies and makes thunks testable
 
@@ -407,7 +398,7 @@ Complete example:
 export interface CreateAlbumPort {
     createAlbum(request: CreateAlbumRequest): Promise<AlbumId>;
 
-  fetchAlbums(): Promise<Album[]>;
+    fetchAlbums(): Promise<Album[]>;
 }
 ```
 
@@ -416,7 +407,7 @@ export interface CreateAlbumPort {
 The **Adapter Implementation** is the concrete class that implements the Port interface, abstracting a specific technology or external system.
 
 * **Naming convention**: Named after the technology or external system it abstracts
-  * Examples: `AxiosCatalogRestApi`, `LocalStorageAdapter`, `S3FileAdapter`
+    * Examples: `AxiosCatalogRestApi`, `LocalStorageAdapter`, `S3FileAdapter`
 * **Location**: Typically in `adapters/` directory, organized by technology or domain
 * **Purpose**: Handles the actual communication with external systems (REST APIs, databases, file systems, etc.)
 * **Testing**: Adapters should be tested independently to verify their contract compliance and data transformation logic
@@ -466,13 +457,13 @@ factory: ({dispatch, app, partialState}) => {
 The testing strategy follows these principles:
 
 * **Test structure does not match code structure exactly:**
-  * **Action Unit tests**: State + single action + selector are tested together to fulfill a requirement
-  * **Behavior tests**: Sequence of several different actions tested when risk of collision between actions is identified
-  * **Thunk unit tests**: Thunk function tested independently
-  * **Adapter unit tests**: Adapters tested independently
-  * **Acceptance tests**: Application tested as early as possible (without browser) to as far as possible (without actual API backend, using wiremock or
-    equivalent)
-  * **End-to-end tests**: Integration validation through one or two critical paths that must never fail
+    * **Action Unit tests**: State + single action + selector are tested together to fulfill a requirement
+    * **Behavior tests**: Sequence of several different actions tested when risk of collision between actions is identified
+    * **Thunk unit tests**: Thunk function tested independently
+    * **Adapter unit tests**: Adapters tested independently
+    * **Acceptance tests**: Application tested as early as possible (without browser) to as far as possible (without actual API backend, using wiremock or
+      equivalent)
+    * **End-to-end tests**: Integration validation through one or two critical paths that must never fail
 
 * **TDD principle**: Implementation should **never** have behavior that hasn't been expected or forced by a test case. Without an appropriate test, code must
   remain extremely simple, even if it means it is wrong.

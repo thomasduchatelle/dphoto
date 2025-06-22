@@ -38,10 +38,7 @@ import {
     DeleteAlbumStarted,
     deleteAlbumStartedReducerRegistration
 } from "./album-delete";
-import {
-    EditDatesDialogClosed,
-    EditDatesDialogOpened
-} from "./album-edit-dates";
+import {EditDatesDialogClosed, EditDatesDialogOpened} from "./album-edit-dates";
 import {CatalogViewerState} from "./language";
 import {ActionWithReducer} from "./common/action-factory";
 
@@ -74,7 +71,8 @@ export type {
 
 // Legacy action types for backward compatibility
 export type CatalogViewerAction =
-    AlbumAccessGranted
+    ActionWithReducer<CatalogViewerState>
+    | AlbumAccessGranted
     | AlbumsAndMediasLoaded
     | AlbumsFiltered
     | AlbumsLoaded
