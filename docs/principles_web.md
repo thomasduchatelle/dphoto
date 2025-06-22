@@ -70,7 +70,7 @@ Complete examples:
 
 ```typescript
 // catalog/album-delete/action-loadingStarted.ts
-import {createAction} from "../common/action-factory";
+import {createAction} from "@light-state";
 
 export const loadingStarted = createAction<CatalogViewerState>(
     "LoadingStarted",
@@ -89,7 +89,7 @@ export type LoadingStarted = ReturnType<typeof loadingStarted>;
 
 ```typescript
 // catalog/album-delete/action-errorOccurred.ts
-import {createAction} from "../common/action-factory";
+import {createAction} from "@light-state";
 
 export const errorOccurred = createAction<CatalogViewerState, string>(
     "ErrorOccurred",
@@ -109,7 +109,7 @@ export type ErrorOccurred = ReturnType<typeof errorOccurred>;
 
 ```typescript
 // catalog/album-delete/action-albumDeleted.ts
-import {createAction} from "../common/action-factory";
+import {createAction} from "@light-state";
 
 interface AlbumDeletedPayload {
     albums: Album[];
@@ -344,36 +344,37 @@ Complete example:
 
 ```typescript
 // Fake implementation reproduce the expected behaviour of the actual implementation
+
 class CreateAlbumPortFake implements CreateAlbumPort {
-    albums: Album[] = [];
+  albums: Album[] = [];
 
-    async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
-        // Simulate album creation
-        const albumId = {owner: "myself", folderName: request.forcedFolderName};
-        this.albums.push({...request, albumId, ...defaultAlbumValues});
-        return albumId;
-    }
+  async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
+    // Simulate album creation
+    const albumId = {owner: "myself", folderName: request.forcedFolderName};
+    this.albums.push({...request, albumId, ...defaultAlbumValues});
+    return albumId;
+  }
 
-    async fetchAlbums(): Promise<Album[]> {
-        return this.albums;
-    }
+  async fetchAlbums(): Promise<Album[]> {
+    return this.albums;
+  }
 }
 
 it("should store the new Album and dispatch albumsLoadedAction", async () => {
-    const fakePort = new CreateAlbumPortFake([existingAlbum]);
-    const dispatched: any[] = []; //TODO
+  const fakePort = new CreateAlbumPortFake([existingAlbum]);
+  const dispatched: Action<CatalogViewerState, any>[] = [];
 
-    await createAlbumThunk(dispatched.push.bind(dispatched), fakePort, request);
+  await createAlbumThunk(dispatched.push.bind(dispatched), fakePort, request);
 
-    expect(fakePort.albums).toContainEqual(expect.objectContaining({name: "Album 1"}));
+  expect(fakePort.albums).toContainEqual(expect.objectContaining({name: "Album 1"}));
 
-    // Dispatched actions are tested in a sigle assertion of an array (not individually)
-    expect(dispatched).toEqual([
-        albumsLoaded({
-            albums: expect.any(Array),
-            redirectTo: expect.any(Object)
-        })
-    ]);
+  // Dispatched actions are tested in a sigle assertion of an array (not individually)
+  expect(dispatched).toEqual([
+    albumsLoaded({
+      albums: expect.any(Array),
+      redirectTo: expect.any(Object)
+    })
+  ]);
 });
 ```
 

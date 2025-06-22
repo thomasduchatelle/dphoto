@@ -1,10 +1,12 @@
 # Action Migration Prompt
 
-You are tasked with migrating Redux-style actions from the old verbose pattern to the new simplified `createAction` pattern. This migration reduces boilerplate and eliminates the need for separate interfaces, factory functions, and reducer registrations.
+You are tasked with migrating Redux-style actions from the old verbose pattern to the new simplified `createAction` pattern. This migration reduces boilerplate
+and eliminates the need for separate interfaces, factory functions, and reducer registrations.
 
 ## Overview
 
 **OLD PATTERN** (verbose):
+
 ```typescript
 // Interface
 export interface SomeAction {
@@ -14,7 +16,7 @@ export interface SomeAction {
 
 // Factory function
 export function someAction(payload?: SomePayload): SomeAction {
-    return { type: "SomeAction", payload };
+    return {type: "SomeAction", payload};
 }
 
 // Reducer function
@@ -30,8 +32,9 @@ export function someActionReducerRegistration(handlers: any) {
 ```
 
 **NEW PATTERN** (simplified):
+
 ```typescript
-import { createAction } from "../common/action-factory";
+import {createAction} from "@light-state";
 
 export const someAction = createAction<State, PayloadType>(
     "SomeAction",
@@ -49,6 +52,7 @@ export type SomeAction = ReturnType<typeof someAction>;
 ### 1. Identify Action Patterns
 
 Look for files with this structure:
+
 - `action-*.ts` files containing interfaces, factory functions, and reducers
 - Corresponding `action-*.test.ts` files
 - Registration functions ending with `ReducerRegistration`
@@ -56,6 +60,7 @@ Look for files with this structure:
 ### 2. Transform Actions
 
 #### For actions WITHOUT payload:
+
 ```typescript
 // OLD
 export interface ActionName {
@@ -63,7 +68,7 @@ export interface ActionName {
 }
 
 export function actionName(): ActionName {
-    return { type: "ActionName" };
+    return {type: "ActionName"};
 }
 
 export function reduceActionName(state: State, action: ActionName): State {
@@ -82,6 +87,7 @@ export const actionName = createAction<State>(
 ```
 
 #### For actions WITH single payload:
+
 ```typescript
 // OLD
 export interface ActionName {
@@ -90,7 +96,7 @@ export interface ActionName {
 }
 
 export function actionName(payload: PayloadType): ActionName {
-    return { type: "ActionName", payload };
+    return {type: "ActionName", payload};
 }
 
 export function reduceActionName(state: State, {payload}: ActionName): State {
@@ -109,6 +115,7 @@ export const actionName = createAction<State, PayloadType>(
 ```
 
 #### For actions WITH multiple properties:
+
 ```typescript
 // OLD
 export interface ActionName {
@@ -118,7 +125,7 @@ export interface ActionName {
 }
 
 export function actionName(props: Omit<ActionName, "type">): ActionName {
-    return { ...props, type: "ActionName" };
+    return {...props, type: "ActionName"};
 }
 
 export function reduceActionName(state: State, {prop1, prop2}: ActionName): State {
@@ -147,7 +154,7 @@ Transform test files to use the new action pattern:
 
 ```typescript
 // OLD
-import { actionName, reduceActionName } from "./action-actionName";
+import {actionName, reduceActionName} from "./action-actionName";
 
 it("test description", () => {
     const action = actionName(payload);
@@ -156,7 +163,7 @@ it("test description", () => {
 });
 
 // NEW
-import { actionName } from "./action-actionName";
+import {actionName} from "./action-actionName";
 
 it("test description", () => {
     const action = actionName(payload);
@@ -168,7 +175,7 @@ it("test description", () => {
 it("supports action comparison for testing", () => {
     const action1 = actionName(payload);
     const action2 = actionName(payload);
-    
+
     expect(action1).toEqual(action2);
     expect([action1]).toContainEqual(action2);
 });
@@ -195,6 +202,7 @@ Remove migrated actions from the registration system:
 ## Example Migration
 
 **Before:**
+
 ```typescript
 // action-userLoggedIn.ts
 export interface UserLoggedIn {
@@ -204,13 +212,13 @@ export interface UserLoggedIn {
 }
 
 export function userLoggedIn(userId: string, username: string): UserLoggedIn {
-    return { type: "UserLoggedIn", userId, username };
+    return {type: "UserLoggedIn", userId, username};
 }
 
 export function reduceUserLoggedIn(state: AppState, {userId, username}: UserLoggedIn): AppState {
     return {
         ...state,
-        currentUser: { userId, username },
+        currentUser: {userId, username},
         isAuthenticated: true,
     };
 }
@@ -221,9 +229,10 @@ export function userLoggedInReducerRegistration(handlers: any) {
 ```
 
 **After:**
+
 ```typescript
 // action-userLoggedIn.ts
-import { createAction } from "../common/action-factory";
+import {createAction} from "../common/action-factory";
 
 interface UserLoggedInPayload {
     userId: string;
@@ -235,7 +244,7 @@ export const userLoggedIn = createAction<AppState, UserLoggedInPayload>(
     (state: AppState, {userId, username}: UserLoggedInPayload) => {
         return {
             ...state,
-            currentUser: { userId, username },
+            currentUser: {userId, username},
             isAuthenticated: true,
         };
     }
