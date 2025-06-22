@@ -3,7 +3,7 @@ import {AlbumsLoaded, albumsLoaded} from "../navigation";
 import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogFactory} from "../catalog-factories";
 import {DPhotoApplication} from "../../application";
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export interface CreateAlbumRequest {
     name: string

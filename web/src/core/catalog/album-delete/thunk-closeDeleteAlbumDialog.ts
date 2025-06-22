@@ -1,7 +1,7 @@
 import type {CatalogViewerState} from "../language";
 import {deleteAlbumDialogClosed} from "./action-deleteAlbumDialogClosed";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export function closeDeleteAlbumDialogThunk(
     dispatch: (action: ReturnType<typeof deleteAlbumDialogClosed>) => void

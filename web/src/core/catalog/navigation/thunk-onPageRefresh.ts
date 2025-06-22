@@ -6,7 +6,7 @@ import {noAlbumAvailable} from "./action-noAlbumAvailable";
 import {DPhotoApplication} from "../../application";
 import {CatalogFactory} from "../catalog-factories";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export interface OnPageRefreshArgs {
     allAlbums: Album[]

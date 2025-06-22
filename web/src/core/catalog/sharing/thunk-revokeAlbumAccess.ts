@@ -3,7 +3,7 @@ import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {AlbumAccessRevoked, albumAccessRevoked} from "./action-albumAccessRevoked";
 import {SharingModalErrorOccurred, sharingModalErrorOccurred} from "./action-sharingModalErrorOccurred";
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export interface RevokeAlbumAccessAPI {
     revokeSharingAlbum(albumId: AlbumId, email: string): Promise<void>;

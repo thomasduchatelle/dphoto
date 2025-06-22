@@ -9,7 +9,7 @@ import {
     updateEditDatesDialogEndDateDeclaration,
     updateEditDatesDialogStartDateDeclaration
 } from "./album-edit-dates";
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export * from "./common/catalog-factory-args";
 export type {RevokeAlbumAccessAPI} from "./sharing/thunk-revokeAlbumAccess";

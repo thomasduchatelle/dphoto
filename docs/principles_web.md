@@ -279,7 +279,7 @@ Complete examples:
 
 ```typescript
 // catalog/sharing/thunk-grantAlbumSharing.ts
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export interface GrantAlbumSharingAPI {
     grantSharing(albumId: AlbumId, email: string): Promise<void>;

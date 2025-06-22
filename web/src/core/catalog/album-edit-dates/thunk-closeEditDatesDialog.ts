@@ -1,7 +1,7 @@
 import {CatalogViewerState} from "../language";
 import {editDatesDialogClosed, EditDatesDialogClosed} from "./action-editDatesDialogClosed";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export function closeEditDatesDialogThunk(
     dispatch: (action: EditDatesDialogClosed) => void

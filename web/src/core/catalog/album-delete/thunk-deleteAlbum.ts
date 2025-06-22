@@ -6,7 +6,7 @@ import {Album, AlbumId, albumIdEquals, CatalogViewerState} from "../language";
 import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
 import {albumDeleted} from "./action-albumDeleted";
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 
 export interface DeleteAlbumPort {

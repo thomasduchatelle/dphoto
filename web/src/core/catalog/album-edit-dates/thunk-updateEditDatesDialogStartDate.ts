@@ -1,7 +1,7 @@
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogViewerState} from "../language";
 import {editDatesDialogStartDateUpdated, EditDatesDialogStartDateUpdated} from "./action-editDatesDialogStartDateUpdated";
-import {ThunkDeclaration} from "src/libs/thunks";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export async function updateEditDatesDialogStartDateThunk(
     dispatch: (action: EditDatesDialogStartDateUpdated) => void,
