@@ -44,10 +44,10 @@ describe("action:mediaLoadFailed", () => {
         expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             medias: [],
-            selectedAlbum: twoAlbums[0],
-            mediasLoaded: true,
-            mediasLoadedFromAlbumId: twoAlbums[0].albumId, // This remains as it was not reset by the action
+            mediasLoadedFromAlbumId: undefined,
             error: testError,
+            albumsLoaded: true,
+            mediasLoaded: true,
         });
     });
 });

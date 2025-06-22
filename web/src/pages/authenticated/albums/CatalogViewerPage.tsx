@@ -8,12 +8,7 @@ import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
-import {
-    deleteDialogSelector,
-    editDatesDialogSelector,
-    sharingDialogSelector,
-    catalogViewerPageSelector
-} from "../../../core/catalog";
+import {catalogViewerPageSelector, deleteDialogSelector, editDatesDialogSelector, sharingDialogSelector} from "../../../core/catalog";
 import {CreateAlbumDialogContainer} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 import ShareDialog from "./ShareDialog";
@@ -84,7 +79,7 @@ export function CatalogViewerPage() {
                     </>
                 ) : (
                     <MediasPage
-                        {...state}
+                        {...catalogViewerPageSelector(state)}
                         selectedAlbumId={selectedAlbumId}
                         onAlbumFilterChange={onAlbumFilterChange}
                         scrollToMedia={search.get("mediaId") ?? undefined}

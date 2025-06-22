@@ -15,10 +15,7 @@ describe("action:albumsLoaded", () => {
             albumsLoaded: false,
         }, action);
 
-        expect(catalogViewerPageSelector(got)).toEqual({
-            ...selectionForLoadedStateWithTwoAlbums,
-            error: undefined,
-        });
+        expect(catalogViewerPageSelector(got)).toEqual({selectionForLoadedStateWithTwoAlbums});
     });
 
     it("should update the available filters and re-apply the selected filter when receiving AlbumsLoaded", () => {

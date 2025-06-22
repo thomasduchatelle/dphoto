@@ -105,5 +105,4 @@ export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = 
     mediasLoadedFromAlbumId: twoAlbums[0].albumId,
     loadingMediasFor: undefined,
     albumNotFound: false,
-    error: undefined,
 };

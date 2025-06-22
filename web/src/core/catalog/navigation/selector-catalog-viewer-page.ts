@@ -1,6 +1,4 @@
-import {Album, AlbumFilterEntry, CatalogViewerState, MediaWithinADay} from "../language/catalog-state";
-import {albumIdEquals} from "../language/utils-albumIdEquals";
-import {AlbumId} from "../language";
+import {Album, AlbumFilterEntry, AlbumId, albumIdEquals, CatalogViewerState, MediaWithinADay} from "../language";
 
 export interface CatalogViewerPageSelection {
     albumFilter: AlbumFilterEntry;
