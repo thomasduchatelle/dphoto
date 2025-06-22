@@ -1,7 +1,6 @@
 import {Album, AlbumId, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
-import {FetchAlbumMediasPort, FetchAlbumsPort} from "../../navigation";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort} from "../../album-delete";
@@ -70,7 +69,7 @@ function castDeleteAlbumError(err: AxiosError): Error {
     return castError(err);
 }
 
-export class CatalogAPIAdapter implements FetchAlbumsPort, FetchAlbumMediasPort, CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort, UpdateAlbumDatesPort {
+export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort, UpdateAlbumDatesPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,

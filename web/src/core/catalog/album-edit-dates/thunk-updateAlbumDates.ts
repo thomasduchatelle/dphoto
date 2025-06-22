@@ -1,4 +1,4 @@
-import {Album, AlbumId, CatalogViewerState, MediaWithinADay} from "../language";
+import {Album, AlbumId, CatalogViewerState, Media} from "../language";
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumDatesUpdated} from "./action-albumDatesUpdated";
 import {ThunkDeclaration} from "../../thunk-engine";
@@ -12,7 +12,7 @@ export interface UpdateAlbumDatesPort {
 
     fetchAlbums(): Promise<Album[]>;
 
-    fetchMedias(albumId: AlbumId): Promise<MediaWithinADay[]>;
+    fetchMedias(albumId: AlbumId): Promise<Media[]>;
 }
 
 export interface UpdateAlbumDatesThunkArgs {
@@ -63,8 +63,7 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
     ),
 
     factory: ({dispatch, app, partialState}) => {
-        const restAdapter = new CatalogAPIAdapter(app.axiosInstance, app);
-        const updateAlbumDatesPort: UpdateAlbumDatesPort = restAdapter;
+        const updateAlbumDatesPort: UpdateAlbumDatesPort = new CatalogAPIAdapter(app.axiosInstance, app);
         return () =>
             updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, partialState);
     },

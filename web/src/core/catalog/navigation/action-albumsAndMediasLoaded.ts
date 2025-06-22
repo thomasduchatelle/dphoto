@@ -1,7 +1,8 @@
-import {Album, CatalogViewerState, MediaWithinADay, RedirectToAlbumIdAction, Media} from "../language";
+import {Album, CatalogViewerState, Media, RedirectToAlbumIdAction} from "../language";
 
 import {refreshFilters} from "../common/utils";
 import {createAction} from "src/light-state-lib";
+
 import {groupByDay} from "./group-by-day";
 
 interface AlbumsAndMediasLoadedPayload extends RedirectToAlbumIdAction {

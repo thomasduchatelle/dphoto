@@ -1,10 +1,5 @@
 import {Media, MediaWithinADay} from "../language";
 
-
-export interface FetchAlbumMediasPort {
-    fetchMedias(albumId: AlbumId): Promise<Media[]>
-}
-
 export function groupByDay(medias: Media[]): MediaWithinADay[] {
     let result: MediaWithinADay[] = []
 

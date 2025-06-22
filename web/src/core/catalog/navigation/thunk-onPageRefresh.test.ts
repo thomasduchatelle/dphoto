@@ -1,4 +1,4 @@
-import {Album, AlbumId, Media, MediaType} from "../language";
+import {Album, AlbumId, Media, MediaId, MediaType} from "../language";
 import {mediasLoaded} from "./action-mediasLoaded";
 import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {mediaLoadFailed} from "./action-mediaLoadFailed";
@@ -44,7 +44,10 @@ describe("CatalogLoader", () => {
     const firstAlbumLoading: PartialCatalogLoaderState = {albumsLoaded: false, allAlbums: twoAlbums, loadingMediasFor: twoAlbums[0].albumId}
 
     const newThunk = (dispatch: ActionObserverFake) => {
-        return new OnPageRefresh(dispatch.onAction, new AlbumAndMediaRepositoryFake(twoAlbums, medias))
+        return new OnPageRefresh(dispatch.onAction, new AlbumAndMediaRepositoryFake(
+            twoAlbums,
+            new Map([[twoAlbums[0].albumId, medias]])
+        ))
     }
 
     const newLoaderFailingGettingMedias = (dispatch: ActionObserverFake, error: Error) => {
@@ -189,7 +192,7 @@ class ActionObserverFake {
 class AlbumAndMediaRepositoryFake implements FetchAlbumsAndMediasPort {
     constructor(
         private albums: Album[] = [],
-        private medias: Media[] = []
+        private medias: Map<AlbumId, Media[]> = new Map(),
     ) {
     }
 
@@ -198,7 +201,7 @@ class AlbumAndMediaRepositoryFake implements FetchAlbumsAndMediasPort {
     }
 
     fetchMedias(albumId: AlbumId): Promise<Media[]> {
-        return Promise.resolve(this.medias)
+        return Promise.resolve(this.medias.get(albumId) || [])
     }
 }
 
@@ -240,7 +243,7 @@ function newMedia(mediaId: MediaId, dateTime: string): Media {
         time: new Date(dateTime),
         uiRelativePath: `${mediaId}/image-${mediaId}.jpg`,
         contentPath: `/content/$\{id}/image-${mediaId}.jpg`,
-        source: 'Samsung S24'
+        source: 'Samsung Galaxy S24'
     };
 }
 
