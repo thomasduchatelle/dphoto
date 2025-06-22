@@ -17,7 +17,7 @@ export interface CatalogViewerPageSelection {
 }
 
 export function catalogViewerPageSelector(state: CatalogViewerState, selectedAlbumId?: AlbumId): CatalogViewerPageSelection {
-    const selectedAlbum = state.albums.find(album => albumIdEquals(album.albumId, selectedAlbumId));
+    const selectedAlbum = state.allAlbums.find(album => albumIdEquals(album.albumId, selectedAlbumId));
 
     return {
         albumFilter: state.albumFilter,

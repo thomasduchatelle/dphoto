@@ -4,6 +4,7 @@ import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
 import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, CreateAlbumControls, MediaWithinADay} from "../../../../core/catalog";
 import AlbumListActions from "../AlbumsListActions/AlbumListActions";
+import {CatalogViewerPageSelection} from "../../../../core/catalog/navigation/selector-catalog-viewer-page";
 
 const albumFilterFeatureFlag = true
 
@@ -23,20 +24,12 @@ export default function MediasPage({
                                        openEditDatesDialog,
                                        ...controls
                                    }: {
-    albums: Album[]
-    albumNotFound: boolean
-    albumsLoaded: boolean
-    mediasLoaded: boolean
-    medias: MediaWithinADay[]
-    scrollToMedia?: string
-    albumFilterOptions: AlbumFilterEntry[]
-    albumFilter: AlbumFilterEntry
     selectedAlbumId: AlbumId | undefined
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
     openSharingModal: (album: Album) => void
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
-} & CreateAlbumControls) {
+} & CreateAlbumControls & CatalogViewerPageSelection) {
     const drawerWidth = 450
 
     return (

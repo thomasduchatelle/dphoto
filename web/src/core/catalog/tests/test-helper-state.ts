@@ -1,4 +1,5 @@
 import {Album, AlbumFilterEntry, CatalogViewerState, CurrentUserInsight, MediaType, MediaWithinADay, UserDetails} from "../language";
+import {CatalogViewerPageSelection} from "../navigation";
 
 export const myselfUser: CurrentUserInsight = {picture: "my-face.jpg"};
 export const herselfUser: UserDetails = {email: "her@self.com", name: "Herself", picture: "her-face.jpg"};
@@ -91,4 +92,18 @@ export const loadedStateWithTwoAlbums: CatalogViewerState = {
     mediasLoadedFromAlbumId: twoAlbums[0].albumId,
     albumsLoaded: true,
     mediasLoaded: true,
+};
+
+export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = {
+    albumFilter: loadedStateWithTwoAlbums.albumFilter,
+    albumFilterOptions: loadedStateWithTwoAlbums.albumFilterOptions,
+    albumsLoaded: true,
+    albums: twoAlbums,
+    selectedAlbum: twoAlbums[0],
+    medias: someMedias,
+    mediasLoaded: true,
+    mediasLoadedFromAlbumId: twoAlbums[0].albumId,
+    loadingMediasFor: undefined,
+    albumNotFound: false,
+    error: undefined,
 };
