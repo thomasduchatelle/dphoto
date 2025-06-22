@@ -51,128 +51,87 @@ A change on the _State_ triggers a refresh on the UI (and back to step 1).
 
 The _Action_ naming convention is the **Past Tense Event Naming** and is represented in **camelCase** (example: `albumCreated`)
 
-An _Action_ is defined by an interface, a factory, and a reducer function, all in a single file named
+An _Action_ is defined using the `createAction` function in a single file named
 `.../<feature in dash-case>/action-<action name in camelCase>.ts`.
 
-#### Action interface
+#### Action Definition
 
-* The interface is the name of the _Action_ in PascalCase (ex: `AlbumCreated`)
-* It defines the payload of the action, plus the property `type`
-* The `type` property is a string literal unique to the action, its value is always the same as the _Action_ name
+* Actions are created using `createAction<StateType, PayloadType?>` from `../common/action-factory`
+* The action name is a string literal unique to the action, matching the _Action_ name
 * The payload is kept minimum: only what cannot be found on the current state. Examples:
   * Good: ID of the selected object, the rest of the object will be found in the state
   * Good: Value updated from an input field
   * Bad: copy of an object from the state
-
-#### Action Factory
-
-* The function is named after the action, in **camelCase** (example: `albumCreated`)
-* It returns the action interface
-* The parameters are either:
-  * if the interface has no property other than `type`: no parameter
-    * if the interface has a single property on top of `type`: parameter is that property. Make sure the type is respected.
-    * if the interface has more properties, it takes a single argument of the type `Omit<AlbumCreated, "type">`
+* The reducer function receives the state and payload directly as parameters
+* No manual registration is required - actions with built-in reducers are automatically handled
 
 Complete examples:
 
-**Case 1: No additional properties**
+**Case 1: No payload**
 
 ```typescript
 // catalog/album-delete/action-loadingStarted.ts
-export interface LoadingStarted {
-    type: "LoadingStarted";
-}
+import { createAction } from "../common/action-factory";
 
-export function loadingStarted(): LoadingStarted {
-    return {
-        type: "LoadingStarted",
-    };
-}
+export const loadingStarted = createAction<CatalogViewerState>(
+    "LoadingStarted",
+    (current: CatalogViewerState) => {
+        return {
+            ...current,
+            isLoading: true,
+        };
+    }
+);
+
+export type LoadingStarted = ReturnType<typeof loadingStarted>;
 ```
 
-**Case 2: Single additional property**
+**Case 2: Single payload**
 
 ```typescript
-// catalog/album-delete/album-errorOccurred.ts
-export interface ErrorOccurred {
-    type: "ErrorOccurred";
-    message: string;
-}
+// catalog/album-delete/action-errorOccurred.ts
+import { createAction } from "../common/action-factory";
 
-export function errorOccurred(message: string): ErrorOccurred {
-    return {
-        message,
-        type: "ErrorOccurred",
-    };
-}
+export const errorOccurred = createAction<CatalogViewerState, string>(
+    "ErrorOccurred",
+    (current: CatalogViewerState, message: string) => {
+        return {
+            ...current,
+            error: message,
+            isLoading: false,
+        };
+    }
+);
+
+export type ErrorOccurred = ReturnType<typeof errorOccurred>;
 ```
 
-**Case 3: Multiple additional properties**
-
-```typescript
-// catalog/album-delete/action-albumDeleted.ts
-export interface AlbumDeleted {
-  type: "AlbumDeleted";
-  albums: Album[];
-  redirectTo?: AlbumId;
-}
-
-export function albumDeleted(props: Omit<AlbumDeletedAction, "type">): AlbumDeleted {
-    return {
-        ...props,
-        type: "AlbumDeleted",
-    };
-}
-```
-
-#### Reducer function
-
-* The reducer function is named after the action, prefixed by "reduce" (example: `reduceAlbumCreated`)
-* The reducer function that takes two parameters: the current state, and the action interface. Make sure the types are explicits.
-* It returns the updated state, same type as the first parameter.
-
-Complete example:
+**Case 3: Multiple properties**
 
 ```typescript
 // catalog/album-delete/action-albumDeleted.ts
+import { createAction } from "../common/action-factory";
 
-// current and returns are always a `CatalogViewerState` type
-export function reduceAlbumDeleted(
-    current: CatalogViewerState,
-    {deletedAlbumId}: AlbumDeletedAction,
-): CatalogViewerState {
-    return {
-        ...current,
-        allAlbums: current.allAlbums.filter(album => !albumIdEquals(deletedAlbumId.albumId, album.albumId)),
-        albums: current.albums.filter(album => !albumIdEquals(deletedAlbumId.albumId, album.albumId)),
-        error: undefined,
-        albumsLoaded: true,
-        deleteDialog: undefined,
-    };
+interface AlbumDeletedPayload {
+    albums: Album[];
+    redirectTo?: AlbumId;
 }
-```
 
-#### Reducer Registration
+export const albumDeleted = createAction<CatalogViewerState, AlbumDeletedPayload>(
+    "AlbumDeleted",
+    (current: CatalogViewerState, {albums, redirectTo}: AlbumDeletedPayload) => {
+        return {
+            ...current,
+            allAlbums: albums,
+            albums: albums,
+            error: undefined,
+            albumsLoaded: true,
+            deleteDialog: undefined,
+        };
+    }
+);
 
-A function that registers the reducer function in the handlers map, keyed by the action's `type`.
-
-Then, the action needs to be registered in the file `catalog-reducer-v2.ts` :
-
-1. add the creator function to `catalogActions`
-2. export the Action Interface
-3. adds the action to `CatalogViewerAction` list
-4. adds the Reducer Registration to `reducerRegistrations`
-
-Complete example:
-
-```typescript
-// catalog/album-delete/action-albumDeleted.ts
-export function albumDeletedReducerRegistration(handlers: any) {
-    handlers["AlbumDeleted"] = reduceAlbumDeleted as (
-        state: CatalogViewerState,
-        action: AlbumDeletedAction
-    ) => CatalogViewerState;
-}
+export type AlbumDeleted = ReturnType<typeof albumDeleted>;
 ```
 
 #### Action testing
@@ -182,6 +141,7 @@ export function albumDeletedReducerRegistration(handlers: any) {
 * types predefined in test helper must be used where possible (`web/src/core/catalog/tests/test-helper-state.ts`)
 * assertions should be done on the result of selectors, and not directly the state
 * assertions must be done on the whole result or whole state, not on individual properties
+* actions must be tested for comparison to ensure testing compatibility
 
 ```typescript
 // catalog/album-delete/action-albumDeleted.test.ts
@@ -198,12 +158,13 @@ describe("action:albumDeleted", () => {
     }
 
     it("closes the dialog and update the lists of albums list like an initial loading", () => {
-        const got = reduceAlbumDeleted(
+        const action = albumDeleted({albums: twoAlbums});
+        const got = action.reducer(
             {
                 ...initialCatalogState(myselfUser),
                 deleteDialog,
             },
-            albumDeletedAction({albums: twoAlbums})
+            action
         );
 
         expect(got).toEqual({ // always test the COMPLETE state as a single assertion, never test each property independently
@@ -212,6 +173,15 @@ describe("action:albumDeleted", () => {
             mediasLoaded: false,
             mediasLoadedFromAlbumId: undefined,
         });
+    });
+
+    it("supports action comparison for testing", () => {
+        const payload = {albums: twoAlbums};
+        const action1 = albumDeleted(payload);
+        const action2 = albumDeleted(payload);
+        
+        expect(action1).toEqual(action2);
+        expect([action1]).toContainEqual(action2);
     });
 });
 ```
@@ -258,8 +228,8 @@ describe("action:albumDeleted", () => {
 * The thunk function implements the business logic by executing Adapter methods, and dispatching actions to update the state for progress, failure, and/or
   success.
     * Adapters naming conventions is `<ThunkName>Port` (example: `DeleteAlbumPort`)
-* The thunk functions first argument is a `dispatch` function accepting the specific action interface type(s) that this thunk will dispatch. Use the specific
-  action interface (e.g., `AlbumsLoadedAction`) rather than the broad union type (`CatalogViewerAction`) to make the thunk's behavior explicit.
+* The thunk functions first argument is a `dispatch` function accepting the specific action type(s) that this thunk will dispatch. Use the specific
+  action type (e.g., `AlbumsLoaded`) rather than the broad union type (`CatalogViewerAction`) to make the thunk's behavior explicit.
 * The thunk functions second argument is the dependencies (adapters) the port requires
     * if the thunk has no port, the argument is skipped
 * The thunk function last argument(s) are the data, it can be a single object or several arguments
@@ -277,15 +247,15 @@ export interface CreateAlbumPort {
 }
 
 export async function createAlbumThunk( // the function is async only when required
-    dispatch: (action: AlbumsLoadedAction) => void, // use 'AlbumsLoadedAction' as the type implemented by a actions raised by thunks in 'core/catalog/thunks'
+    dispatch: (action: AlbumsLoaded) => void, // use 'AlbumsLoaded' as the type implemented by actions raised by thunks in 'core/catalog/thunks'
     createAlbumPort: CreateAlbumPort,
     request: CreateAlbumRequest
 ): Promise<void> {  // the function returns void or Promise<void> unless explicitely specified in the test cases
     const albumId: AlbumId = await createAlbumPort.createAlbum(request);
     const albums: Album[] = await createAlbumPort.fetchAlbums();
-    dispatch(catalogActions.albumsLoadedAction({albums, redirectTo: albumId}));
-    // Note: catalogActions.albumsLoadedAction() is an action factory that returns an AlbumsLoadedAction object
-    // AlbumsLoadedAction is part of the CatalogViewerAction union type
+    dispatch(albumsLoaded({albums, redirectTo: albumId}));
+    // Note: albumsLoaded() is an action creator that returns an AlbumsLoaded action object
+    // AlbumsLoaded is part of the CatalogViewerAction union type
 }
 ```
 
@@ -408,7 +378,7 @@ it("should store the new Album and dispatch albumsLoadedAction", async () => {
 
     // Dispatched actions are tested in a sigle assertion of an array (not individually)
     expect(dispatched).toEqual([
-        catalogActions.albumsLoadedAction({
+        albumsLoaded({
             albums: expect.any(Array),
             redirectTo: expect.any(Object)
         })
