@@ -9,7 +9,7 @@
     "baseUrl": ".",
     "paths": {
       "@light-state": [
-        "src/light-state-lib/index.ts"
+        "src/light-state-lib"
       ]
     },
     "allowJs": true,
