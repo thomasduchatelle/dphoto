@@ -6,6 +6,7 @@
       "dom.iterable",
       "esnext"
     ],
+    "baseUrl": ".",
     "paths": {
       "@light-state": [
         "src/light-state-lib"
