@@ -18,9 +18,9 @@ describe("action:mediasLoaded", () => {
             error: new Error("TEST previous error to clear"),
         }, action);
 
-        expect(catalogViewerPageSelector(got, twoAlbums[1].albumId)).toEqual({
+        expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
-            selectedAlbum: twoAlbums[1],
+            displayedAlbum: twoAlbums[1],
             medias: groupByDay(someMedias.flatMap(m => m.medias)),
             mediasLoaded: true,
             mediasLoadedFromAlbumId: twoAlbums[1].albumId,
@@ -41,9 +41,9 @@ describe("action:mediasLoaded", () => {
             loadingMediasFor: twoAlbums[0].albumId,
         }, action);
 
-        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
+        expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
-            selectedAlbum: twoAlbums[0],
+            displayedAlbum: twoAlbums[0],
             medias: [],
             mediasLoaded: true, // Still true from initial state, as action was ignored
             mediasLoadedFromAlbumId: twoAlbums[0].albumId, // Still from initial state

@@ -1,11 +1,12 @@
 import {Album, AlbumFilterEntry, AlbumId, albumIdEquals, CatalogViewerState, MediaWithinADay} from "../language";
+import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
 
 export interface CatalogViewerPageSelection {
     albumFilter: AlbumFilterEntry;
     albumFilterOptions: AlbumFilterEntry[];
     albumsLoaded: boolean;
     albums: Album[];
-    selectedAlbum: Album | undefined;
+    displayedAlbum: Album | undefined;
     medias: MediaWithinADay[];
     mediasLoaded: boolean;
     mediasLoadedFromAlbumId?: AlbumId;
@@ -14,15 +15,16 @@ export interface CatalogViewerPageSelection {
     error?: Error;
 }
 
-export function catalogViewerPageSelector(state: CatalogViewerState, selectedAlbumId?: AlbumId): CatalogViewerPageSelection {
-    const selectedAlbum = state.allAlbums.find(album => albumIdEquals(album.albumId, selectedAlbumId));
+export function catalogViewerPageSelector(state: CatalogViewerState): CatalogViewerPageSelection {
+    const {albumId: displayedAlbumId} = displayedAlbumSelector(state);
+    const displayedAlbum = state.allAlbums.find(album => albumIdEquals(album.albumId, displayedAlbumId));
 
     return {
         albumFilter: state.albumFilter,
         albumFilterOptions: state.albumFilterOptions,
         albumsLoaded: state.albumsLoaded,
         albums: state.albums,
-        selectedAlbum: selectedAlbum,
+        displayedAlbum: displayedAlbum,
         medias: state.medias,
         mediasLoaded: state.mediasLoaded,
         mediasLoadedFromAlbumId: state.mediasLoadedFromAlbumId,

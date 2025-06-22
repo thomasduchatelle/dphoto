@@ -20,7 +20,7 @@ describe("action:albumsAndMediasLoaded", () => {
             mediasLoaded: false,
         }, action);
 
-        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual(selectionForLoadedStateWithTwoAlbums);
+        expect(catalogViewerPageSelector(got)).toEqual(selectionForLoadedStateWithTwoAlbums);
     });
 
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums) when receiving AlbumsAndMediasLoaded", () => {
@@ -38,12 +38,12 @@ describe("action:albumsAndMediasLoaded", () => {
             avatars: [myselfUser.picture ?? ""],
             name: "All albums",
         };
-        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
+        expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[0]],
             albumFilter: allAlbumFilter,
             albumFilterOptions: [allAlbumFilter],
-            selectedAlbum: twoAlbums[0],
+            displayedAlbum: twoAlbums[0],
             medias: groupByDay(someMedias.flatMap(m => m.medias)),
             mediasLoadedFromAlbumId: twoAlbums[0].albumId,
         });
@@ -80,11 +80,11 @@ describe("action:albumsAndMediasLoaded", () => {
         );
 
         // The filter should remain unchanged, and albums should contain both directly owned albums
-        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
+        expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albumFilter: directlyOwnedFilter,
             albums: [loadedStateWithTwoAlbums.albums[0], newDirectlyOwnedAlbum],
-            selectedAlbum: twoAlbums[0],
+            displayedAlbum: twoAlbums[0],
             medias: groupByDay(someMedias.flatMap(m => m.medias)),
             mediasLoadedFromAlbumId: twoAlbums[0].albumId,
         });

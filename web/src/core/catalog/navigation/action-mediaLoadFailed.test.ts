@@ -16,12 +16,12 @@ describe("action:mediaLoadFailed", () => {
             initialCatalogState(myselfUser),
             action
         );
-        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
+        expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: twoAlbums, // albums are loaded even if medias fail
             albumsLoaded: true, // albums are loaded even if medias fail
             medias: [],
-            selectedAlbum: twoAlbums[0],
+            displayedAlbum: twoAlbums[0],
             mediasLoaded: true,
             mediasLoadedFromAlbumId: undefined,
             error: testError,
@@ -41,7 +41,7 @@ describe("action:mediaLoadFailed", () => {
             },
             action
         );
-        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
+        expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             medias: [],
             mediasLoadedFromAlbumId: undefined,

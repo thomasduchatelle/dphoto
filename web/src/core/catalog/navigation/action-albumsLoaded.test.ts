@@ -15,7 +15,7 @@ describe("action:albumsLoaded", () => {
             albumsLoaded: false,
         }, action);
 
-        expect(catalogViewerPageSelector(got)).toEqual({selectionForLoadedStateWithTwoAlbums});
+        expect(catalogViewerPageSelector(got)).toEqual(selectionForLoadedStateWithTwoAlbums);
     });
 
     it("should update the available filters and re-apply the selected filter when receiving AlbumsLoaded", () => {
@@ -29,11 +29,11 @@ describe("action:albumsLoaded", () => {
             mediasLoadedFromAlbumId: twoAlbums[0].albumId, // no effect
         }, action);
 
-        expect(catalogViewerPageSelector(got, twoAlbums[0].albumId)).toEqual({
+        expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
             albums: [twoAlbums[0]],
-            selectedAlbum: twoAlbums[0],
+            displayedAlbum: twoAlbums[0],
         });
     });
 
@@ -46,11 +46,11 @@ describe("action:albumsLoaded", () => {
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
         }, action);
 
-        expect(catalogViewerPageSelector(got, twoAlbums[1].albumId)).toEqual({
+        expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
             albums: twoAlbums,
-            selectedAlbum: twoAlbums[1],
+            displayedAlbum: twoAlbums[1],
         });
     });
 });

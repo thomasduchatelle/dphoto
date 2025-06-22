@@ -17,13 +17,13 @@ export default function MediasPage({
                                        albumFilterOptions,
                                        albumFilter,
                                        onAlbumFilterChange,
-                                       selectedAlbumId,
+                                       displayedAlbum,
                                        openSharingModal,
                                        openDeleteAlbumDialog,
                                        openEditDatesDialog,
                                        ...controls
                                    }: {
-    selectedAlbumId: AlbumId | undefined
+    displayedAlbum: Album | undefined
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
     openSharingModal: (album: Album) => void
     openDeleteAlbumDialog: () => void
@@ -66,7 +66,7 @@ export default function MediasPage({
                     )}
                     <AlbumsList albums={albums}
                                 loaded={albumsLoaded}
-                                selectedAlbumId={selectedAlbumId}
+                                selectedAlbumId={displayedAlbum?.albumId}
                                 openSharingModal={openSharingModal}/>
                 </Drawer>
             </Box>

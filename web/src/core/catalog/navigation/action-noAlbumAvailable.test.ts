@@ -17,7 +17,7 @@ describe("action:noAlbumAvailable", () => {
             albumFilterOptions: [DEFAULT_ALBUM_FILTER_ENTRY],
             albumsLoaded: true,
             albums: [],
-            selectedAlbum: undefined,
+            displayedAlbum: undefined,
             medias: [],
             mediasLoaded: true,
             mediasLoadedFromAlbumId: undefined,

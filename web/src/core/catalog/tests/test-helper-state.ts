@@ -99,7 +99,7 @@ export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = 
     albumFilterOptions: loadedStateWithTwoAlbums.albumFilterOptions,
     albumsLoaded: true,
     albums: twoAlbums,
-    selectedAlbum: twoAlbums[0],
+    displayedAlbum: twoAlbums[0],
     medias: someMedias,
     mediasLoaded: true,
     mediasLoadedFromAlbumId: twoAlbums[0].albumId,
