@@ -170,15 +170,6 @@ it("test description", () => {
     const result = action.reducer(state, action);
     // assertions
 });
-
-// Add comparison tests
-it("supports action comparison for testing", () => {
-    const action1 = actionName(payload);
-    const action2 = actionName(payload);
-
-    expect(action1).toEqual(action2);
-    expect([action1]).toContainEqual(action2);
-});
 ```
 
 ### 4. Update Main Actions File
@@ -197,7 +188,6 @@ Remove migrated actions from the registration system:
 - Import `createAction` from `"src/light-state-lib"`
 - Export the type: `export type ActionName = ReturnType<typeof actionName>;`
 - Update all test files to use `action.reducer(state, action)` instead of separate reducer functions
-- Add action comparison tests to verify testing compatibility
 
 ## Example Migration
 
@@ -265,7 +255,6 @@ export type UserLoggedIn = ReturnType<typeof userLoggedIn>;
 
 -   The `createAction` function supports 0-3 parameters automatically
 -   For tuple payloads, use: `createAction<State, [Type1, Type2]>`
--   Always test action comparison to ensure testing compatibility
 -   The generic reducer automatically handles actions with built-in reducers
 -   Legacy actions continue to work during the migration period
 
