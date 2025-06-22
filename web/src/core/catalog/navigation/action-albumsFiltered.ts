@@ -8,15 +8,21 @@ interface AlbumsFilteredPayload extends RedirectToAlbumIdAction {
 
 export const albumsFiltered = createAction<CatalogViewerState, AlbumsFilteredPayload>(
     'albumsFiltered',
-    (current: CatalogViewerState, {criterion, redirectTo}: AlbumsFilteredPayload): CatalogViewerState => {
-        const filteredAlbums = current.allAlbums.filter(albumMatchCriterion(criterion))
+    (current: CatalogViewerState, {criterion}: AlbumsFilteredPayload): CatalogViewerState => {
+        let albumFilter = current.albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, criterion));
+        if (!albumFilter) {
+            albumFilter = current.albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, ALL_ALBUMS_FILTER_CRITERION));
+        }
+        if (!albumFilter) {
+            albumFilter = DEFAULT_ALBUM_FILTER_ENTRY;
+        }
 
-        const allAlbumFilter = current.albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, ALL_ALBUMS_FILTER_CRITERION)) ?? DEFAULT_ALBUM_FILTER_ENTRY
+        const filteredAlbums = current.allAlbums.filter(albumMatchCriterion(criterion))
 
         return {
             ...current,
             albums: filteredAlbums,
-            albumFilter: current.albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, criterion)) ?? allAlbumFilter,
+            albumFilter,
         }
     }
 );

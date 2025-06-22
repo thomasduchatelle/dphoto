@@ -44,8 +44,7 @@ describe("action:albumsAndMediasLoaded", () => {
             albumFilter: allAlbumFilter,
             albumFilterOptions: [allAlbumFilter],
             displayedAlbum: twoAlbums[0],
-            medias: groupByDay(someMedias.flatMap(m => m.medias)),
-            mediasLoadedFromAlbumId: twoAlbums[0].albumId,
+            medias: someMedias,
         });
     });
 
@@ -86,7 +85,6 @@ describe("action:albumsAndMediasLoaded", () => {
             albums: [loadedStateWithTwoAlbums.albums[0], newDirectlyOwnedAlbum],
             displayedAlbum: twoAlbums[0],
             medias: groupByDay(someMedias.flatMap(m => m.medias)),
-            mediasLoadedFromAlbumId: twoAlbums[0].albumId,
         });
     });
 });

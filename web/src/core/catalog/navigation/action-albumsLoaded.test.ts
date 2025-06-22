@@ -33,7 +33,6 @@ describe("action:albumsLoaded", () => {
             ...selectionForLoadedStateWithTwoAlbums,
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
             albums: [twoAlbums[0]],
-            displayedAlbum: twoAlbums[0],
         });
     });
 
@@ -50,7 +49,6 @@ describe("action:albumsLoaded", () => {
             ...selectionForLoadedStateWithTwoAlbums,
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
             albums: twoAlbums,
-            displayedAlbum: twoAlbums[1],
         });
     });
 });

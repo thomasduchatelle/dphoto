@@ -12,7 +12,6 @@ import {
 } from "./album-edit-dates";
 
 export * from "./common/catalog-factory-args";
-export type {FetchAlbumsPort} from "./navigation/thunk-onPageRefresh";
 export type {RevokeAlbumAccessAPI} from "./sharing/thunk-revokeAlbumAccess";
 export type {GrantAlbumAccessAPI} from "./sharing/thunk-grantAlbumAccess";
 export type {CreateAlbumThunk, CreateAlbumRequest, CreateAlbumPort} from "./album-create/album-createAlbum";

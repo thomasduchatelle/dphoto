@@ -1,5 +1,5 @@
 import {noAlbumAvailable} from "./action-noAlbumAvailable";
-import {CurrentUserInsight, initialCatalogState} from "../language";
+import {CurrentUserInsight} from "../language";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 import {DEFAULT_ALBUM_FILTER_ENTRY} from "../common/utils";

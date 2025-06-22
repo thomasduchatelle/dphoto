@@ -37,7 +37,7 @@ describe("action:albumDatesUpdateStarted", () => {
     it("supports action comparison for testing", () => {
         const action1 = albumDatesUpdateStarted();
         const action2 = albumDatesUpdateStarted();
-        
+
         expect(action1).toEqual(action2);
         expect([action1]).toContainEqual(action2);
     });

@@ -77,7 +77,7 @@ describe("action:editDatesDialogOpened", () => {
     it("supports action comparison for testing", () => {
         const action1 = editDatesDialogOpened();
         const action2 = editDatesDialogOpened();
-        
+
         expect(action1).toEqual(action2);
         expect([action1]).toContainEqual(action2);
     });

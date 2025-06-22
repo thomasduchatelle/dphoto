@@ -39,7 +39,7 @@ describe("action:editDatesDialogStartDateUpdated", () => {
         const date = new Date("2023-07-15T00:00:00");
         const action1 = editDatesDialogStartDateUpdated(date);
         const action2 = editDatesDialogStartDateUpdated(date);
-        
+
         expect(action1).toEqual(action2);
         expect([action1]).toContainEqual(action2);
     });
@@ -47,7 +47,7 @@ describe("action:editDatesDialogStartDateUpdated", () => {
     it("demonstrates the new simplified API with payload", () => {
         const date = new Date("2023-07-15T00:00:00");
         const action = editDatesDialogStartDateUpdated(date);
-        
+
         expect(action.type).toBe("EditDatesDialogStartDateUpdated");
         expect(action.payload).toBe(date);
         expect(typeof action.reducer).toBe("function");
@@ -56,10 +56,10 @@ describe("action:editDatesDialogStartDateUpdated", () => {
     it("distinguishes between different payloads", () => {
         const date1 = new Date("2023-07-15T00:00:00");
         const date2 = new Date("2023-07-16T00:00:00");
-        
+
         const action1 = editDatesDialogStartDateUpdated(date1);
         const action2 = editDatesDialogStartDateUpdated(date2);
-        
+
         expect(action1).not.toEqual(action2);
         expect([action1]).not.toContainEqual(action2);
     });

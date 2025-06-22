@@ -1,4 +1,4 @@
-import {AlbumId, albumIdEquals, CatalogViewerState, MediaWithinADay, Media} from "../language";
+import {AlbumId, albumIdEquals, CatalogViewerState, Media} from "../language";
 import {createAction} from "src/light-state-lib";
 import {groupByDay} from "./group-by-day";
 

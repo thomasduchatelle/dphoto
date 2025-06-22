@@ -21,7 +21,7 @@ describe("action:albumDatesUpdated", () => {
             end: new Date("2023-07-21T00:00:00Z"),
         };
         const updatedAlbums = [updatedAlbum, twoAlbums[1]];
-        
+
         const action = albumDatesUpdated({
             albums: updatedAlbums,
             medias: [],
@@ -39,10 +39,10 @@ describe("action:albumDatesUpdated", () => {
     });
 
     it("supports action comparison for testing", () => {
-        const payload = { albums: twoAlbums, medias: [] };
+        const payload = {albums: twoAlbums, medias: []};
         const action1 = albumDatesUpdated(payload);
         const action2 = albumDatesUpdated(payload);
-        
+
         expect(action1).toEqual(action2);
         expect([action1]).toContainEqual(action2);
     });

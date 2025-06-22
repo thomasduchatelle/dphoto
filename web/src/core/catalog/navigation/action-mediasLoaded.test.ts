@@ -1,13 +1,12 @@
 import {mediasLoaded} from "./action-mediasLoaded";
 import {loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, someMedias, twoAlbums} from "../tests/test-helper-state";
-import {groupByDay} from "./group-by-day";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 
 describe("action:mediasLoaded", () => {
-    it("should only change the medias and loading status when reducing MediasLoaded, and clear errors", () => {
+    it("should change the medias and loading status when reducing MediasLoaded, and clear errors", () => {
         const action = mediasLoaded({
             albumId: twoAlbums[1].albumId,
-            medias: someMedias.flatMap(m => m.medias), // Pass raw medias
+            medias: someMedias.flatMap(m => m.medias),
         });
         const got = action.reducer({
             ...loadedStateWithTwoAlbums,
@@ -21,33 +20,22 @@ describe("action:mediasLoaded", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             displayedAlbum: twoAlbums[1],
-            medias: groupByDay(someMedias.flatMap(m => m.medias)),
-            mediasLoaded: true,
-            mediasLoadedFromAlbumId: twoAlbums[1].albumId,
-            loadingMediasFor: undefined,
-            albumNotFound: false,
-            error: undefined,
+            medias: someMedias,
         });
     });
 
     it("should ignore MediasLoaded if the medias are not for the expected album", () => {
         const action = mediasLoaded({
             albumId: twoAlbums[1].albumId,
-            medias: someMedias.flatMap(m => m.medias), // Pass raw medias
+            medias: someMedias.flatMap(m => m.medias),
         });
-        const got = action.reducer({
+        const state = {
             ...loadedStateWithTwoAlbums,
             medias: [],
             loadingMediasFor: twoAlbums[0].albumId,
-        }, action);
+        };
+        const got = action.reducer(state, action);
 
-        expect(catalogViewerPageSelector(got)).toEqual({
-            ...selectionForLoadedStateWithTwoAlbums,
-            displayedAlbum: twoAlbums[0],
-            medias: [],
-            mediasLoaded: true, // Still true from initial state, as action was ignored
-            mediasLoadedFromAlbumId: twoAlbums[0].albumId, // Still from initial state
-            loadingMediasFor: twoAlbums[0].albumId, // Still from initial state
-        });
+        expect(got).toBe(state);
     });
 });

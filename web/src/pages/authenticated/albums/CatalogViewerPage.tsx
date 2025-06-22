@@ -48,7 +48,7 @@ export function CatalogViewerPage() {
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
     const isAlbumsPage = pathname === '/albums'
 
-    const {albumFilter, albumFilterOptions, albumsLoaded, albums, selectedAlbum} = catalogViewerPageSelector(state, selectedAlbumId);
+    const {albumFilter, albumFilterOptions, albumsLoaded, albums, displayedAlbum} = catalogViewerPageSelector(state);
 
     const editDatesDialogState = editDatesDialogSelector(state);
 
@@ -59,7 +59,7 @@ export function CatalogViewerPage() {
             />
             <Toolbar/>
             <Box sx={{mt: 2, pl: 2, pr: 2, display: {lg: 'none'}}}>
-                <MobileNavigation album={isAlbumsPage ? undefined : selectedAlbum}/>
+                <MobileNavigation album={isAlbumsPage ? undefined : displayedAlbum}/>
             </Box>
             <CreateAlbumDialogContainer createAlbum={createAlbum}>
                 {(controls) => isMobileDevice && isAlbumsPage ? (
@@ -80,7 +80,6 @@ export function CatalogViewerPage() {
                 ) : (
                     <MediasPage
                         {...catalogViewerPageSelector(state)}
-                        selectedAlbumId={selectedAlbumId}
                         onAlbumFilterChange={onAlbumFilterChange}
                         scrollToMedia={search.get("mediaId") ?? undefined}
                         openSharingModal={openSharingModal}
