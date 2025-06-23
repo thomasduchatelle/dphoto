@@ -5,6 +5,18 @@ export * from "./action-mediasLoaded";
 export * from "./action-mediaLoadFailed";
 export * from "./action-noAlbumAvailable";
 export * from "../common/utils";
-export * from "./thunk-onAlbumFilterChange";
-export * from "./thunk-onPageRefresh";
+import {onAlbumFilterChangeDeclaration} from "./thunk-onAlbumFilterChange";
+import {onPageRefreshDeclaration} from "./thunk-onPageRefresh";
+
+/**
+ * Thunks related to catalog navigation.
+ *
+ * Expected handler types:
+ * - `onAlbumFilterChange`: `(criterion: AlbumFilterCriterion) => void`
+ * - `onPageRefresh`: `(albumId?: AlbumId) => Promise<void>`
+ */
+export const navigationThunks = {
+    onAlbumFilterChange: onAlbumFilterChangeDeclaration,
+    onPageRefresh: onPageRefreshDeclaration,
+};
 export * from "./selector-catalog-viewer-page";

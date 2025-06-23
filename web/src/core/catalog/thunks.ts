@@ -1,6 +1,6 @@
 import {closeSharingModalDeclaration, grantAlbumAccessDeclaration, openSharingModalDeclaration, revokeAlbumAccessDeclaration} from "./sharing";
 import {createAlbumDeclaration} from "./album-create";
-import {onAlbumFilterChangeDeclaration, onPageRefreshDeclaration} from "./navigation";
+import {navigationThunks} from "./navigation";
 import {albumDeleteThunks} from "./album-delete";
 import {albumEditDatesThunks} from "./album-edit-dates";
 import {ThunkDeclaration} from "src/libs/dthunks";
@@ -13,15 +13,14 @@ export type {DeleteAlbumThunk, DeleteAlbumPort} from "./album-delete/thunk-delet
 
 
 export const catalogThunks = {
-    onPageRefresh: onPageRefreshDeclaration,
-    onAlbumFilterChange: onAlbumFilterChangeDeclaration,
+    ...navigationThunks,
     openSharingModal: openSharingModalDeclaration,
     closeSharingModal: closeSharingModalDeclaration,
     revokeAlbumAccess: revokeAlbumAccessDeclaration,
     grantAlbumSharing: grantAlbumAccessDeclaration,
     createAlbum: createAlbumDeclaration,
     ...albumDeleteThunks,
-    ...albumEditDatesThunks, // Aggregate albumEditDatesThunks here
+    ...albumEditDatesThunks,
 };
 
 // Dynamically infer the interface from catalogThunks
