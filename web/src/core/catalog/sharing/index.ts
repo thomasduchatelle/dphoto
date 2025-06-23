@@ -1,13 +1,16 @@
+import {closeSharingModalDeclaration} from "./thunk-closeSharingModal"
+import {grantAlbumAccessDeclaration} from "./thunk-grantAlbumAccess"
+import {openSharingModalDeclaration} from "./thunk-openSharingModal"
+import {revokeAlbumAccessDeclaration} from "./thunk-revokeAlbumAccess"
+
 export * from "./action-albumAccessGranted"
 export * from "./action-sharingModalClosed"
 export * from "./action-sharingModalErrorOccurred"
 export * from "./action-sharingModalOpened"
 export * from "./action-albumAccessRevoked"
 export * from "./selector-sharingDialogSelector"
-import {closeSharingModalDeclaration} from "./thunk-closeSharingModal"
-import {grantAlbumAccessDeclaration} from "./thunk-grantAlbumAccess"
-import {openSharingModalDeclaration} from "./thunk-openSharingModal"
-import {revokeAlbumAccessDeclaration} from "./thunk-revokeAlbumAccess"
+export type {RevokeAlbumAccessAPI} from "./thunk-revokeAlbumAccess"
+export type {GrantAlbumAccessAPI} from "./thunk-grantAlbumAccess"
 
 /**
  * Thunks related to album sharing.

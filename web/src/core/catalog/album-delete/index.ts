@@ -3,6 +3,7 @@ import {openDeleteAlbumDialogDeclaration} from "./thunk-openDeleteAlbumDialog";
 import {deleteAlbumDeclaration} from "./thunk-deleteAlbum";
 
 export * from "./selector-deleteDialogSelector"
+export type {DeleteAlbumPort} from "./thunk-deleteAlbum";
 
 /**
  * Thunks related to album deletion.

@@ -5,6 +5,7 @@ import {updateEditDatesDialogStartDateDeclaration} from "./thunk-updateEditDates
 import {updateEditDatesDialogEndDateDeclaration} from "./thunk-updateEditDatesDialogEndDate";
 
 export * from "./selector-editDatesDialogSelector";
+export type {UpdateAlbumDatesPort} from "./thunk-updateAlbumDates";
 
 /**
  * Thunks related to album date editing.

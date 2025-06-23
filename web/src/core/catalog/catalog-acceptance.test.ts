@@ -5,8 +5,9 @@ import {rest} from "msw";
 import {SetupServer, setupServer} from "msw/node";
 import {MediaType} from "./language";
 import {CatalogViewerAction} from "./actions";
-import {albumsAndMediasLoaded, MediasLoaded, OnPageRefresh} from "./navigation";
+import {albumsAndMediasLoaded, MediasLoaded} from "./navigation";
 import {groupByDay} from "./navigation/group-by-day";
+import {OnPageRefresh} from "./navigation/thunk-onPageRefresh";
 
 describe('CatalogFactory', () => {
 

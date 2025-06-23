@@ -7,7 +7,7 @@ const AlbumsList = ({albums, loaded, selectedAlbumId, openSharingModal}: {
     albums: Album[]
     loaded: boolean
     selectedAlbumId?: AlbumId
-    openSharingModal: (album: Album) => void
+    openSharingModal: (albumId: AlbumId) => void
 }) => {
     const isSelected = (album: Album) => albumIdEquals(selectedAlbumId, album.albumId)
 

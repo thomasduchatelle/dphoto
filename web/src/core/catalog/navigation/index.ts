@@ -1,3 +1,6 @@
+import {onAlbumFilterChangeDeclaration} from "./thunk-onAlbumFilterChange";
+import {onPageRefreshDeclaration} from "./thunk-onPageRefresh";
+
 export * from "./action-albumsAndMediasLoaded";
 export * from "./action-albumsLoaded";
 export * from "./action-albumsFiltered";
@@ -5,8 +8,7 @@ export * from "./action-mediasLoaded";
 export * from "./action-mediaLoadFailed";
 export * from "./action-noAlbumAvailable";
 export * from "../common/utils";
-import {onAlbumFilterChangeDeclaration} from "./thunk-onAlbumFilterChange";
-import {onPageRefreshDeclaration} from "./thunk-onPageRefresh";
+export type {FetchAlbumsAndMediasPort} from "./thunk-onPageRefresh";
 
 /**
  * Thunks related to catalog navigation.

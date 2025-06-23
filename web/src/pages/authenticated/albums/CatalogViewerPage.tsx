@@ -31,7 +31,7 @@ export function CatalogViewerPage() {
             openSharingModal,
             closeSharingModal,
             revokeAlbumAccess,
-            grantAlbumSharing,
+            grantAlbumAccess,
             updateAlbumDates,
             updateEditDatesDialogStartDate,
             updateEditDatesDialogEndDate
@@ -93,7 +93,7 @@ export function CatalogViewerPage() {
                 {...sharingDialogSelector(state)}
                 onClose={closeSharingModal}
                 onRevoke={revokeAlbumAccess}
-                onGrant={grantAlbumSharing}
+                onGrant={grantAlbumAccess}
             />
             <DeleteAlbumDialog
                 {...deleteDialogSelector(state)}

@@ -2,6 +2,7 @@ import React from 'react';
 import {ComponentMeta, ComponentStory} from '@storybook/react';
 import {userEvent, within} from "@storybook/testing-library";
 import AlbumsListActions from "../pages/authenticated/albums/AlbumsListActions/AlbumListActions";
+import {BrowserRouter} from 'react-router-dom';
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
@@ -13,7 +14,7 @@ export default {
 } as ComponentMeta<typeof AlbumsListActions>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof AlbumsListActions> = (args) => (<AlbumsListActions {...args}/>);
+const Template: ComponentStory<typeof AlbumsListActions> = (args) => (<BrowserRouter><AlbumsListActions {...args}/></BrowserRouter>);
 
 export const NoOptions = Template.bind({});
 NoOptions.args = {

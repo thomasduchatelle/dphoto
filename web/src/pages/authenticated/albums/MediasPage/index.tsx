@@ -2,7 +2,7 @@ import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
-import {Album, AlbumFilterCriterion, CatalogViewerPageSelection, CreateAlbumControls} from "../../../../core/catalog";
+import {AlbumFilterCriterion, AlbumId, CatalogViewerPageSelection, CreateAlbumControls} from "../../../../core/catalog";
 import AlbumListActions from "../AlbumsListActions/AlbumListActions";
 
 
@@ -23,7 +23,7 @@ export default function MediasPage({
                                        ...controls
                                    }: {
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
-    openSharingModal: (album: Album) => void
+    openSharingModal: (albumId: AlbumId) => void
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
     scrollToMedia?: string
