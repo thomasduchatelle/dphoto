@@ -137,4 +137,5 @@ export interface EditDatesDialogState {
     startDate: Date
     endDate: Date
     isLoading: boolean
+    error?: string
 }

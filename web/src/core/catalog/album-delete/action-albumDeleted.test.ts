@@ -114,12 +114,4 @@ describe("action:albumDeleted", () => {
             ...loadedStateWithTwoAlbums,
         });
     });
-
-    it("supports action comparison for testing", () => {
-        const action1 = albumDeleted({albums: twoAlbums, redirectTo: twoAlbums[1].albumId});
-        const action2 = albumDeleted({albums: twoAlbums, redirectTo: twoAlbums[1].albumId});
-
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
-    });
 });

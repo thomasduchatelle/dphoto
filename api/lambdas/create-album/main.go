@@ -54,13 +54,13 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		if err != nil {
 			switch {
 			case errors.Is(err, catalog.AlbumNameMandatoryErr):
-				return common.InvalidRequest("AlbumNameMandatoryErr", err.Error())
+				return common.UnprocessableEntityResponse("AlbumNameMandatoryErr", err.Error())
 			case errors.Is(err, catalog.AlbumStartAndEndDateMandatoryErr):
-				return common.InvalidRequest("AlbumStartAndEndDateMandatoryErr", err.Error())
+				return common.UnprocessableEntityResponse("AlbumStartAndEndDateMandatoryErr", err.Error())
 			case errors.Is(err, catalog.AlbumEndDateMustBeAfterStartErr):
-				return common.InvalidRequest("AlbumEndDateMustBeAfterStartErr", err.Error())
+				return common.UnprocessableEntityResponse("AlbumEndDateMustBeAfterStartErr", err.Error())
 			case errors.Is(err, catalog.AlbumFolderNameAlreadyTakenErr):
-				return common.InvalidRequest("AlbumFolderNameAlreadyTakenErr", err.Error())
+				return common.UnprocessableEntityResponse("AlbumFolderNameAlreadyTakenErr", err.Error())
 			default:
 				return common.InternalError(err)
 			}

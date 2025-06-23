@@ -144,50 +144,10 @@ Step 3 - Feature Coding
 ```
 aider
 /add web/src/core/catalog/language 
-    web/src/core/catalog/actions.ts 
-    web/src/core/catalog/index.ts 
-    web/src/core/catalog/thunks.ts  
-    web/src/pages/authenticated/albums/CatalogViewerPage.tsx 
-    web/src/pages/authenticated/albums/CatalogViewerRoot.tsx 
-    web/src/pages/authenticated/albums/AlbumsListActions 
-    web/src/pages/authenticated/albums/DeleteAlbumDialog 
-    web/src/pages/authenticated/albums/MediasPage/index.tsx
-/ask        
-```
-
-You are a strong developer prioritizing simple and well tested code. You **strictly follow the coding principles** defined in `docs/principles_web.md`.
-
-You are **presenting to me the guiding principles of your design to implement the story**. You have access of the complete epic to give you context, but you
-will **focus ONLY on what is required for the story**.
-
-Using coding principles from the document, define the components involved to deliver the story. Give a thorough description of each of them, using code blocks
-for code snippet for clarity:
-
-* name
-* if it's "new", or "updated", or "reused" (and not updated)
-* if the component is a state or a domain model: give a code snippet of the properties to add or change
-* if the component is an event or an action: give the schema of its payload
-* if the component is a function: give its signature
-* if the component is a UI component: explain what data is rendered, what data can be input, and how the user can interact with it
-
-Your story you are designing is:
-
-It's part of the epic:
-
-### Interactive (v2)
-
-```
-aider
-/add web/src/core/catalog/language 
     web/src/core/catalog/tests/test-helper-state.ts
     web/src/core/catalog/actions.ts 
     web/src/core/catalog/index.ts 
-    web/src/core/catalog/thunks.ts  
-    web/src/pages/authenticated/albums/CatalogViewerPage.tsx 
-    web/src/pages/authenticated/albums/CatalogViewerRoot.tsx 
-    web/src/pages/authenticated/albums/AlbumsListActions 
-    web/src/pages/authenticated/albums/DeleteAlbumDialog 
-    web/src/pages/authenticated/albums/MediasPage/index.tsx
+    web/src/core/catalog/thunks.ts
 /ask        
 ```
 
@@ -213,6 +173,9 @@ for code snippet for clarity:
 5. **Selectors**: does it need new selector(s), or updating the existing ones ? What are the properties selected ? How are they captured ?
    Write the interface of the selection, add a comment from each comment to describe from what State properties it will come
 
+Present your design, ask your question(s) **only if you have any**, and request the file(s) you will need to update to be added on the chat (**only the
+files requiring to be edited**).
+
 Your story you are designing is:
 
 It's part of the epic:
@@ -221,7 +184,9 @@ It's part of the epic:
 
 ```
 /code Implement the story. **Strictly follow the coding principles from `docs/principles_web.md`**. Implement the tests to make sure the Acceptance Criteria are
-covered. Do not add comments to your code. Once complete, leave a comment to the reviewer of places he needs to bring a special attention.
+covered. Once complete, leave a comment to the reviewer of places he needs to bring a special attention.
+
+Do not update the existing tests: add new ones. Do not add comments to your code.
 ```
 
 #### Finally - Code review

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"strings"
 	"time"
 )
 
@@ -137,11 +136,7 @@ func (a *AmendAlbumMediaTransfer) OnAlbumDatesAmendedWithTimeline(ctx context.Co
 			return err
 		}
 		if count > 0 {
-			var orphanedDesc []string
-			for _, o := range orphaned {
-				orphanedDesc = append(orphanedDesc, o.String())
-			}
-			return errors.Wrapf(OrphanedMediasError, "%d medias belongs to %s and would be orphaned in the range %s ; aborting amending date operation.", count, updatedAlbum.UpdatedAlbum.AlbumId, strings.Join(orphanedDesc, ", "))
+			return errors.Wrapf(OrphanedMediasErr, "%d medias from %s cannot be reallocated to a different album", count, updatedAlbum.UpdatedAlbum.AlbumId)
 		}
 	}
 

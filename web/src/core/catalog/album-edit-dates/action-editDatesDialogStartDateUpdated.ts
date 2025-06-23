@@ -12,6 +12,7 @@ export const editDatesDialogStartDateUpdated = createAction<CatalogViewerState, 
             editDatesDialog: {
                 ...current.editDatesDialog,
                 startDate,
+                error: undefined,
             },
         };
     }

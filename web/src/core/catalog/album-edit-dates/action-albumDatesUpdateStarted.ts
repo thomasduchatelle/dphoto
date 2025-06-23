@@ -13,6 +13,7 @@ export const albumDatesUpdateStarted = createAction<CatalogViewerState>(
             editDatesDialog: {
                 ...current.editDatesDialog,
                 isLoading: true,
+                error: undefined,
             },
         };
     }

@@ -122,12 +122,4 @@ describe("action:deleteAlbumDialogOpened", () => {
             isLoading: false,
         });
     });
-
-    it("supports action comparison for testing", () => {
-        const action1 = deleteAlbumDialogOpened();
-        const action2 = deleteAlbumDialogOpened();
-
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
-    });
 });

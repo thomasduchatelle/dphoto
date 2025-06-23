@@ -72,3 +72,17 @@ Loading.args = {
 Loading.parameters = {
     storyshots: {disable: true},
 };
+
+export const WithError = Template.bind({});
+WithError.args = {
+    albumName: "First Contact",
+    startDate: new Date("2063-04-05T00:00:00Z"),
+    endDate: new Date("2063-04-05T23:59:00Z"),
+    startAtDayStart: true,
+    endAtDayEnd: true,
+    isLoading: false,
+    errorCode: "This is a user friendly error message (or technical).",
+};
+WithError.parameters = {
+    delay: 300,
+};

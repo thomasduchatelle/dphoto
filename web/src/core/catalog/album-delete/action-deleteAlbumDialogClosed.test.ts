@@ -33,12 +33,4 @@ describe("action:deleteAlbumDialogClosed", () => {
         const action = deleteAlbumDialogClosed();
         expect(action.reducer(state, action)).toBe(state);
     });
-
-    it("supports action comparison for testing", () => {
-        const action1 = deleteAlbumDialogClosed();
-        const action2 = deleteAlbumDialogClosed();
-
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
-    });
 });

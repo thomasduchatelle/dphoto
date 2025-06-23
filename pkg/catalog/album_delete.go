@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	OrphanedMediasError = errors.New("albums cannot be deleted if it makes some medias orphaned")
+	OrphanedMediasErr = errors.New("albums cannot be deleted or amended if it orphans medias.")
 )
 
 type CountMediasBySelectorsPort interface {
@@ -85,7 +85,7 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 			return err
 		}
 		if count > 0 {
-			return errors.Wrapf(OrphanedMediasError, "%d orphaned medias prevent %s to be deleted", count, albumId)
+			return errors.Wrapf(OrphanedMediasErr, "%d medias from %s cannot be reallocated", count, albumId)
 		}
 	}
 

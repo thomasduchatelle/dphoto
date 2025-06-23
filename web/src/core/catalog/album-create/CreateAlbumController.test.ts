@@ -155,10 +155,10 @@ describe("CreateAlbumController", () => {
     })
 
     it("should display the business error when saving failed", async () => {
-        albumCatalogFake.failsWithError = {
-            errorCode: albumFolderNameAlreadyTakenErr,
-            message: "TEST error",
-        } as CatalogError
+        albumCatalogFake.failsWithError = new CatalogError(
+            albumFolderNameAlreadyTakenErr,
+            "TEST error",
+        )
 
         stateHolder.state = stateValidForSubmission
         await expect(handler.onSubmitCreateAlbum(stateHolder.state)).rejects.toEqual(albumCatalogFake.failsWithError)

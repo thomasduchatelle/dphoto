@@ -1,4 +1,4 @@
-import {Album, AlbumId, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
+import {Album, AlbumId, CatalogError, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create";
@@ -37,38 +37,6 @@ interface RestOwnerDetails {
     users: RestUserDetails[]
 }
 
-export class DeleteAlbumError extends Error {
-    constructor(public readonly code: string, message: string) {
-        super(message);
-        this.name = "DeleteAlbumError";
-    }
-}
-
-export function isDeleteAlbumError(error: Error): error is DeleteAlbumError {
-    return error.name === "DeleteAlbumError" && typeof (error as any).code === "string";
-}
-
-function castError(err: AxiosError): Error {
-    return new Error(`'${err.config.method?.toUpperCase()} ${err.config.url}' failed with status ${err.response?.status} ${err.response?.statusText}: ${err.response?.data?.message ?? err.message}`)
-}
-
-// Special error caster for deleteAlbum
-function castDeleteAlbumError(err: AxiosError): Error {
-    if (
-        err.response &&
-        err.response?.status >= 400 && err.response?.status < 500 &&
-        typeof err.response.data === "object" &&
-        err.response.data !== null &&
-        "errorType" in err.response.data &&
-        "message" in err.response.data
-    ) {
-        // the message from the server are trusted and contains extra information (OrphanedMedias has the number of media not-reallocate-able)
-        return new DeleteAlbumError(err.response.data.errorType, err.response.data.message);
-    }
-
-    return castError(err);
-}
-
 export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort, UpdateAlbumDatesPort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
@@ -79,7 +47,7 @@ export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, 
     public async deleteAlbum(albumId: AlbumId): Promise<void> {
         await this.authenticatedAxios
             .delete(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}`)
-            .catch((err: AxiosError) => Promise.reject(castDeleteAlbumError(err)));
+            .catch((err: AxiosError) => Promise.reject(castError(err)));
     }
 
     public async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
@@ -236,6 +204,24 @@ export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, 
     }
 }
 
+function castError(err: AxiosError): Error {
+    // when the main user is also the main developer, a user-friendly error message is a complete stacktrace !
+    const defaultMessage = `'${err.config.method?.toUpperCase()} ${err.config.url}' failed with status ${err.response?.status} ${err.response?.statusText}: ${err.response?.data?.message ?? err.message}`;
+
+    if (
+        err.response &&
+        err.response?.status >= 400 && err.response?.status < 500 &&
+        typeof err.response.data === "object" &&
+        err.response.data !== null &&
+        "code" in err.response.data &&
+        "message" in err.response.data
+    ) {
+        return new CatalogError(err.response.data.code as string, err.response.data.message as string ?? defaultMessage);
+    }
+
+    return new CatalogError("", defaultMessage)
+}
+
 function numberOfDays(start: Date, end: Date) {
     if (!start || !end) {
         return 1
@@ -243,6 +229,7 @@ function numberOfDays(start: Date, end: Date) {
 
     return Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 3600 * 24)) ?? 1;
 }
+
 
 function convertToType(type: string): MediaType {
     if (!type) {
@@ -258,4 +245,3 @@ function convertToType(type: string): MediaType {
             return MediaType.OTHER
     }
 }
-

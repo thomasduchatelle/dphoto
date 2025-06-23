@@ -149,7 +149,7 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 				albumId: toDeleteAlbumId,
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.OrphanedMediasError, i...)
+				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
 			},
 		},
 		{
