@@ -121,7 +121,7 @@ export type RedirectToAlbumIdPayload = {
 }
 
 export function isRedirectToAlbumIdPayload(arg: any): arg is RedirectToAlbumIdPayload {
-    return arg.redirectTo
+    return arg && arg.redirectTo
 }
 
 export interface DeleteDialogState {
