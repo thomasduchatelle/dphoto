@@ -4,6 +4,18 @@ export * from "./action-deleteAlbumDialogClosed"
 export * from "./action-deleteAlbumDialogOpened"
 export * from "./action-deleteAlbumStarted"
 export * from "./selector-deleteDialogSelector"
-export * from "./thunk-closeDeleteAlbumDialog"
 export * from "./thunk-deleteAlbum"
-export * from "./thunk-openDeleteAlbumDialog"
+
+/**
+ * Thunks related to album deletion.
+ *
+ * Expected handler types:
+ * - `closeDeleteAlbumDialog`: `() => void`
+ * - `openDeleteAlbumDialog`: `() => void`
+ * - `deleteAlbum`: `(albumIdToDelete: AlbumId) => Promise<void>`
+ */
+export const albumDeleteThunks = {
+    closeDeleteAlbumDialog: closeDeleteAlbumDialogDeclaration,
+    openDeleteAlbumDialog: openDeleteAlbumDialogDeclaration,
+    deleteAlbum: deleteAlbumDeclaration,
+};
