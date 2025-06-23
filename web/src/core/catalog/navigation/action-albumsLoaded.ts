@@ -1,8 +1,8 @@
-import {Album, albumIdEquals, albumMatchCriterion, CatalogViewerState, RedirectToAlbumIdAction} from "../language";
+import {Album, albumIdEquals, albumMatchCriterion, CatalogViewerState, RedirectToAlbumIdPayload} from "../language";
 import {albumFilterAreCriterionEqual, DEFAULT_ALBUM_FILTER_ENTRY, refreshFilters} from "../common/utils";
 import {createAction} from "src/libs/daction";
 
-interface AlbumsLoadedPayload extends RedirectToAlbumIdAction {
+interface AlbumsLoadedPayload extends RedirectToAlbumIdPayload {
     albums: Album[]
 }
 

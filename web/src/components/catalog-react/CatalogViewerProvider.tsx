@@ -8,11 +8,12 @@ import {
     CatalogViewerAction,
     CatalogViewerState,
     initialCatalogState,
-    isRedirectToAlbumIdAction
+    isRedirectToAlbumIdPayload
 } from "../../core/catalog";
 import {useApplication, useUnrecoverableErrorDispatch} from "../../core/application";
 import {AuthenticatedUser} from "../../core/security";
 import {useThunks} from "../../libs/dthunks/react/useThunks";
+import {getPayload} from "../../libs/daction";
 
 export interface CatalogViewerStateWithDispatch {
     state: CatalogViewerState
@@ -38,8 +39,9 @@ export const CatalogViewerProvider = (
     const dispatchPropagator = useCallback((action: CatalogViewerAction) => {
         dispatch(action)
 
-        if (isRedirectToAlbumIdAction(action) && action.redirectTo) {
-            redirectToAlbumId(action.redirectTo);
+        const payload = getPayload(action);
+        if (isRedirectToAlbumIdPayload(payload) && payload.redirectTo) {
+            redirectToAlbumId(payload.redirectTo);
         }
     }, [dispatch, redirectToAlbumId])
 

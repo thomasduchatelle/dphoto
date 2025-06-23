@@ -1,11 +1,11 @@
-import {Album, CatalogViewerState, Media, RedirectToAlbumIdAction} from "../language";
+import {Album, CatalogViewerState, Media, RedirectToAlbumIdPayload} from "../language";
 
 import {refreshFilters} from "../common/utils";
 import {createAction} from "src/libs/daction";
 
 import {groupByDay} from "./group-by-day";
 
-interface AlbumsAndMediasLoadedPayload extends RedirectToAlbumIdAction {
+interface AlbumsAndMediasLoadedPayload extends RedirectToAlbumIdPayload {
     albums: Album[]
     medias: Media[]
     selectedAlbum?: Album

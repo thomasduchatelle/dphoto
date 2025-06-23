@@ -65,3 +65,7 @@ export function createAction<TState, TPayload = void>(
 
     return actionCreator;
 }
+
+export function getPayload<TPayload>(action: Action<any, TPayload>): TPayload | undefined {
+    return action.payload;
+}
