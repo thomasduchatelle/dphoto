@@ -44,6 +44,8 @@ For a given feature directory (e.g., `web/src/core/catalog/album-create`), perfo
 
 2.  **Aggregate Thunks into a Single Export**:
     *   In the `index.ts` file of the target directory (e.g., `web/src/core/catalog/album-create/index.ts`), create a new `const` export named `[featureName]Thunks` (e.g., `albumCreateThunks`).
+    * Remove thunks exports
+    * Import the thunks to be used
     *   This new object should contain all the `ThunkDeclaration` exports from the directory.
     *   **Example**:
 
@@ -56,8 +58,9 @@ For a given feature directory (e.g., `web/src/core/catalog/album-create`), perfo
 
         **After (`web/src/core/catalog/album-create/index.ts`):**
         ```typescript
-        // Removes the actions and thunks exports
-        // Keep the selectors exports
+        // Removes the thunks exports
+        // Keep the selectors and action exports
+        import {createAlbumDeclaration} from "./thunk-createAlbum" // add the required imports 
 
         /**
          * Thunks related to album creation.

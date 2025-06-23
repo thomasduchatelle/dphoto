@@ -1,10 +1,8 @@
-export * from "./action-albumDeleted"
-export * from "./action-albumDeleteFailed"
-export * from "./action-deleteAlbumDialogClosed"
-export * from "./action-deleteAlbumDialogOpened"
-export * from "./action-deleteAlbumStarted"
+import {closeDeleteAlbumDialogDeclaration} from "./thunk-closeDeleteAlbumDialog";
+import {openDeleteAlbumDialogDeclaration} from "./thunk-openDeleteAlbumDialog";
+import {deleteAlbumDeclaration} from "./thunk-deleteAlbum";
+
 export * from "./selector-deleteDialogSelector"
-export * from "./thunk-deleteAlbum"
 
 /**
  * Thunks related to album deletion.
