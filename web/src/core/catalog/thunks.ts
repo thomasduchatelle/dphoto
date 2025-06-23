@@ -3,6 +3,7 @@ import {createAlbumDeclaration} from "./album-create";
 import {onAlbumFilterChangeDeclaration, onPageRefreshDeclaration} from "./navigation";
 import {closeDeleteAlbumDialogDeclaration, deleteAlbumDeclaration, openDeleteAlbumDialogDeclaration} from "./album-delete";
 import {
+    albumEditDatesThunks,
     closeEditDatesDialogDeclaration,
     openEditDatesDialogDeclaration,
     updateAlbumDatesDeclaration,
@@ -30,11 +31,7 @@ export const catalogThunks = {
     deleteAlbum: deleteAlbumDeclaration,
     openDeleteAlbumDialog: openDeleteAlbumDialogDeclaration,
     closeDeleteAlbumDialog: closeDeleteAlbumDialogDeclaration,
-    openEditDatesDialog: openEditDatesDialogDeclaration,
-    closeEditDatesDialog: closeEditDatesDialogDeclaration,
-    updateAlbumDates: updateAlbumDatesDeclaration,
-    updateEditDatesDialogStartDate: updateEditDatesDialogStartDateDeclaration,
-    updateEditDatesDialogEndDate: updateEditDatesDialogEndDateDeclaration,
+    ...albumEditDatesThunks, // Aggregate albumEditDatesThunks here
 };
 
 // Dynamically infer the interface from catalogThunks
