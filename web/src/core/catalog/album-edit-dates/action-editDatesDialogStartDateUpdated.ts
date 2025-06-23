@@ -1,10 +1,10 @@
 import {CatalogViewerState} from "../language";
 import {createAction} from "src/libs/daction";
 
-export const editDatesDialogStartDateUpdated = createAction<CatalogViewerState, Date>(
+export const editDatesDialogStartDateUpdated = createAction<CatalogViewerState, Date | null>(
     "EditDatesDialogStartDateUpdated",
-    (current: CatalogViewerState, startDate: Date) => {
-        if (!current.editDatesDialog) {
+    (current: CatalogViewerState, startDate: Date | null) => {
+        if (!current.editDatesDialog || !startDate) {
             return current;
         }
         return {
