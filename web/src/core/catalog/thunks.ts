@@ -1,9 +1,9 @@
-import {closeSharingModalDeclaration, grantAlbumAccessDeclaration, openSharingModalDeclaration, revokeAlbumAccessDeclaration} from "./sharing";
 import {createAlbumDeclaration} from "./album-create";
 import {navigationThunks} from "./navigation";
 import {albumDeleteThunks} from "./album-delete";
 import {albumEditDatesThunks} from "./album-edit-dates";
 import {ThunkDeclaration} from "src/libs/dthunks";
+import {sharingThunks} from "./sharing";
 
 export * from "./common/catalog-factory-args";
 export type {RevokeAlbumAccessAPI} from "./sharing/thunk-revokeAlbumAccess";
@@ -14,10 +14,7 @@ export type {DeleteAlbumThunk, DeleteAlbumPort} from "./album-delete/thunk-delet
 
 export const catalogThunks = {
     ...navigationThunks,
-    openSharingModal: openSharingModalDeclaration,
-    closeSharingModal: closeSharingModalDeclaration,
-    revokeAlbumAccess: revokeAlbumAccessDeclaration,
-    grantAlbumSharing: grantAlbumAccessDeclaration,
+    ...sharingThunks,
     createAlbum: createAlbumDeclaration,
     ...albumDeleteThunks,
     ...albumEditDatesThunks,
