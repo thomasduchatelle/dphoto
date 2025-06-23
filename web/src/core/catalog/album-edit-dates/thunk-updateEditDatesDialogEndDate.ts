@@ -1,16 +1,7 @@
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogViewerState} from "../language";
 import {editDatesDialogEndDateUpdated, EditDatesDialogEndDateUpdated} from "./action-editDatesDialogEndDateUpdated";
-import {ThunkDeclaration} from "src/libs/dthunks";
-
-export async function updateEditDatesDialogEndDateThunk(
-    dispatch: (action: EditDatesDialogEndDateUpdated) => void,
-    endDate: Date | null
-): Promise<void> {
-    if (endDate) {
-        dispatch(editDatesDialogEndDateUpdated(endDate));
-    }
-}
+import {ThunkDeclaration, createSimpleThunkDeclaration} from "src/libs/dthunks";
 
 export const updateEditDatesDialogEndDateDeclaration: ThunkDeclaration<
     CatalogViewerState,
@@ -18,8 +9,12 @@ export const updateEditDatesDialogEndDateDeclaration: ThunkDeclaration<
     (endDate: Date | null) => Promise<void>,
     CatalogFactoryArgs
 > = {
-    selector: (state: CatalogViewerState) => ({}),
+    selector: () => ({}),
     factory: ({dispatch}) => {
-        return (endDate: Date | null) => updateEditDatesDialogEndDateThunk(dispatch, endDate);
+        return async (endDate: Date | null) => {
+            if (endDate) {
+                dispatch(editDatesDialogEndDateUpdated(endDate));
+            }
+        };
     },
 };
