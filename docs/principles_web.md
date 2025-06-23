@@ -275,6 +275,9 @@ The factory function wires up dependencies and returns the thunk handler used by
 * **Case 3: Complex case** (≥3 arguments OR optional arguments)
   Merge state and view data into single composite object
 
+* **Case 4: function solely dispatches a single action** (i.e., its logic is `({dispatch}) => (...args) => { dispatch(actionCreator(...args)); }`)
+  Use `createSimpleThunkDeclaration` to declare it. Do not add tests.
+
 Complete examples:
 
 ```typescript
@@ -330,6 +333,53 @@ factory: ({dispatch, app, partialState}) => {
 factory: ({dispatch, app, partialState: {albumId}}) => {
     const adapter = new SomeAdapter();
     return (viewData) => thunkFunction(dispatch, adapter, {...partialState, ...viewData});
+}
+```
+
+Case 4 complete example:
+
+```typescript
+// web/src/core/catalog/album-create/thunk-createAlbum.ts
+import {createAlbum} from "./action-createAlbum";
+import {createSimpleThunkDeclaration} from "src/libs/dthunks";
+
+export const createAlbumDeclaration = createSimpleThunkDeclaration(createAlbum);
+```
+
+#### Exporting the thunks
+
+Aggregate Thunks into a Single Export per feature (per folder):
+
+* In the `index.ts` file of the target directory (e.g., `web/src/core/catalog/album-create/index.ts`), create a new `const` export named `[featureName]Thunks` (
+  e.g., `albumCreateThunks`).
+* Add all the thunks related to the feature
+* Add JSDoc Documentation to Aggregated Thunks including a brief description and a list of `Expected handler types` for each thunk within the object. This helps
+  LLM agents understand the expected function signature when these thunks are used as handlers.
+
+```typescript
+// web/src/core/catalog/album-create/index.ts
+import {createAlbumDeclaration} from "./thunk-createAlbum"
+
+/**
+ * Thunks related to album creation.
+ *
+ * Expected handler types:
+ * - `createAlbum`: `(name: string) => void`
+ */
+export const albumCreateThunks = {
+  createAlbum: createAlbumDeclaration,
+};
+```
+
+If the `[featureName]Thunks` is new, add it to the mai thunks:
+
+```
+// web/src/core/catalog/index.ts
+import {albumCreateThunks} from "./album-create";
+
+export const thunks = {
+  ...albumCreateThunks,
+  // other aggregated thunk from other features
 }
 ```
 
