@@ -56,9 +56,8 @@ For a given feature directory (e.g., `web/src/core/catalog/album-create`), perfo
 
         **After (`web/src/core/catalog/album-create/index.ts`):**
         ```typescript
-        export * from "./action-createAlbum";
-        export * from "./thunk-createAlbum"; // Keep this export for now, will be removed later
-        // ... other exports
+        // Removes the actions and thunks exports
+        // Keep the selectors exports
 
         /**
          * Thunks related to album creation.
@@ -91,7 +90,7 @@ For a given feature directory (e.g., `web/src/core/catalog/album-create`), perfo
         **After (`web/src/core/catalog/thunks.ts`):**
         ```typescript
         import {albumCreateThunks} from "./album-create"; // New import
-        // ... other imports, remove individual createAlbumDeclaration import
+        // ... other imports, remove individual thunks import
 
         export const catalogThunks = {
             ...albumCreateThunks, // Spread the new aggregated object
@@ -114,17 +113,3 @@ For a given feature directory (e.g., `web/src/core/catalog/album-create`), perfo
             createAlbum: createAlbumDeclaration,
         };
         ```
-
-## Target Directory for this Task
-
-`web/src/core/catalog/album-create`
-
-## Files to Consider
-
-*   `web/src/core/catalog/album-create/thunk-createAlbum.ts`
-*   `web/src/core/catalog/album-create/index.ts`
-*   `web/src/core/catalog/thunks.ts`
-
-## Output Format
-
-Provide the complete content of each modified file using the specified file listing format.

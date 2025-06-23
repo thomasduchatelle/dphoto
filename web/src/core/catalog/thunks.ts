@@ -2,14 +2,7 @@ import {closeSharingModalDeclaration, grantAlbumAccessDeclaration, openSharingMo
 import {createAlbumDeclaration} from "./album-create";
 import {onAlbumFilterChangeDeclaration, onPageRefreshDeclaration} from "./navigation";
 import {closeDeleteAlbumDialogDeclaration, deleteAlbumDeclaration, openDeleteAlbumDialogDeclaration} from "./album-delete";
-import {
-    albumEditDatesThunks,
-    closeEditDatesDialogDeclaration,
-    openEditDatesDialogDeclaration,
-    updateAlbumDatesDeclaration,
-    updateEditDatesDialogEndDateDeclaration,
-    updateEditDatesDialogStartDateDeclaration
-} from "./album-edit-dates";
+import {albumEditDatesThunks} from "./album-edit-dates";
 import {ThunkDeclaration} from "src/libs/dthunks";
 
 export * from "./common/catalog-factory-args";
