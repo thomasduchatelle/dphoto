@@ -1,38 +1,30 @@
-import {AlbumId, albumIdEquals, CatalogViewerState, MediaWithinADay} from "../language";
+import {AlbumId, albumIdEquals, CatalogViewerState, Media} from "../language";
+import {createAction} from "src/libs/daction";
+import {groupByDay} from "./group-by-day";
 
-export interface MediasLoaded {
-    type: "mediasLoaded"
+interface MediasLoadedPayload {
     albumId: AlbumId
-    medias: MediaWithinADay[]
+    medias: Media[]
 }
 
-export function mediasLoaded(props: Omit<MediasLoaded, "type">): MediasLoaded {
-    return {
-        ...props,
-        type: "mediasLoaded",
-    };
-}
+export const mediasLoaded = createAction<CatalogViewerState, MediasLoadedPayload>(
+    "mediasLoaded",
+    (current: CatalogViewerState, {albumId, medias}: MediasLoadedPayload): CatalogViewerState => {
+        if (current.loadingMediasFor && !albumIdEquals(current.loadingMediasFor, albumId)) {
+            // concurrency management - ignore if not the last album requested
+            return current
+        }
 
-export function reduceMediasLoaded(
-    current: CatalogViewerState,
-    action: MediasLoaded,
-): CatalogViewerState {
-    if (current.loadingMediasFor && !albumIdEquals(current.loadingMediasFor, action.albumId)) {
-        // concurrency management - ignore if not the last album requested
-        return current
+        return {
+            ...current,
+            loadingMediasFor: undefined,
+            mediasLoadedFromAlbumId: albumId,
+            medias: groupByDay(medias),
+            error: undefined,
+            mediasLoaded: true,
+            albumNotFound: false,
+        }
     }
+);
 
-    return {
-        ...current,
-        loadingMediasFor: undefined,
-        mediasLoadedFromAlbumId: action.albumId,
-        medias: action.medias,
-        error: undefined,
-        mediasLoaded: true,
-        albumNotFound: false,
-    }
-}
-
-export function mediasLoadedReducerRegistration(handlers: any) {
-    handlers["mediasLoaded"] = reduceMediasLoaded as (state: CatalogViewerState, action: MediasLoaded) => CatalogViewerState;
-}
+export type MediasLoaded = ReturnType<typeof mediasLoaded>;

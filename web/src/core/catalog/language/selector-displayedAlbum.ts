@@ -5,14 +5,18 @@ export interface DisplayedAlbumSelection {
     isOwned: boolean;
 }
 
+export function getDisplayedAlbumId(state: CatalogViewerState) {
+    return state.loadingMediasFor || state.mediasLoadedFromAlbumId;
+}
+
 export function displayedAlbumSelector(state: CatalogViewerState): DisplayedAlbumSelection {
-    const targetAlbumId: AlbumId | undefined = state.loadingMediasFor || state.mediasLoadedFromAlbumId;
+    const targetAlbumId: AlbumId | undefined = getDisplayedAlbumId(state);
 
     if (!targetAlbumId) {
         return {isOwned: false};
     }
 
-    const selectedAlbum = state.albums.find(album =>
+    const selectedAlbum = state.allAlbums.find(album =>
         album.albumId.owner === targetAlbumId.owner &&
         album.albumId.folderName === targetAlbumId.folderName
     );

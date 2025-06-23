@@ -1,4 +1,4 @@
-import {albumDeleteFailed, reduceAlbumDeleteFailed} from "./action-albumDeleteFailed";
+import {albumDeleteFailed} from "./action-albumDeleteFailed";
 import {DeleteDialogState} from "../language";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {deleteDialogSelector} from "./selector-deleteDialogSelector";
@@ -12,12 +12,13 @@ describe("action:albumDeleteFailed", () => {
 
     it("sets the error value in deleteDialog.error when the dialog is open", () => {
         const errorMsg = "Failed to delete album";
-        const resultState = reduceAlbumDeleteFailed(
+        const action = albumDeleteFailed(errorMsg);
+        const resultState = action.reducer(
             {
                 ...loadedStateWithTwoAlbums,
                 deleteDialog,
             },
-            albumDeleteFailed(errorMsg)
+            action
         );
 
         expect(deleteDialogSelector(resultState)).toEqual({
@@ -30,15 +31,32 @@ describe("action:albumDeleteFailed", () => {
     });
 
     it("ignores if the dialog is closed", () => {
-        const resultState = reduceAlbumDeleteFailed(
+        const action = albumDeleteFailed("Failed to delete album");
+        const resultState = action.reducer(
             loadedStateWithTwoAlbums,
-            albumDeleteFailed("Failed to delete album")
+            action
         );
         expect(resultState).toBe(loadedStateWithTwoAlbums);
     });
 
     it("fails to create the action if the error message is empty or blank", () => {
-        expect(() => albumDeleteFailed("")).toThrow();
-        expect(() => albumDeleteFailed("   ")).toThrow();
+        expect(() => {
+            const action = albumDeleteFailed("")
+            action.reducer(loadedStateWithTwoAlbums, action);
+        }).toThrow();
+        expect(() => {
+            const action = albumDeleteFailed("   ")
+            action.reducer(loadedStateWithTwoAlbums, action);
+        }).toThrow();
+    });
+
+    it("supports action comparison for testing", () => {
+        const action1 = albumDeleteFailed("error");
+        const action2 = albumDeleteFailed("error");
+        const action3 = albumDeleteFailed("another error");
+
+        expect(action1).toEqual(action2);
+        expect(action1).not.toEqual(action3);
+        expect([action1]).toContainEqual(action2);
     });
 });

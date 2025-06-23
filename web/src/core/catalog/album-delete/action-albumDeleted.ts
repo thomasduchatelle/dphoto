@@ -1,51 +1,39 @@
-import {Album, AlbumId, albumIdEquals, CatalogViewerState, RedirectToAlbumIdAction} from "../language";
+import {Album, AlbumId, albumIdEquals, CatalogViewerState, RedirectToAlbumIdPayload} from "../language";
 import {albumFilterAreCriterionEqual, ALL_ALBUMS_FILTER_CRITERION, DEFAULT_ALBUM_FILTER_ENTRY, refreshFilters} from "../navigation";
+import {createAction} from "src/libs/daction";
 
-export interface AlbumDeleted extends RedirectToAlbumIdAction {
-    type: "albumDeleted";
+interface AlbumDeletedPayload extends RedirectToAlbumIdPayload {
     albums: Album[];
     redirectTo?: AlbumId;
 }
 
-export function albumDeleted(props: Omit<AlbumDeleted, "type">): AlbumDeleted {
-    return {
-        ...props,
-        type: "albumDeleted",
-    };
-}
+export const albumDeleted = createAction<CatalogViewerState, AlbumDeletedPayload>(
+    "albumDeleted",
+    (current: CatalogViewerState, {albums: newAlbums, redirectTo}: AlbumDeletedPayload) => {
+        let {albumFilterOptions, albumFilter, albums} = refreshFilters(current.currentUser, current.albumFilter, newAlbums);
 
-export function reduceAlbumDeleted(
-    current: CatalogViewerState,
-    action: AlbumDeleted,
-): CatalogViewerState {
-    let {albumFilterOptions, albumFilter, albums} = refreshFilters(current.currentUser, current.albumFilter, action.albums);
+        if (
+            redirectTo &&
+            !albums.some(album => albumIdEquals(album.albumId, redirectTo))
+        ) {
+            albumFilter =
+                albumFilterOptions.find(option =>
+                    albumFilterAreCriterionEqual(option.criterion, ALL_ALBUMS_FILTER_CRITERION)
+                ) ?? DEFAULT_ALBUM_FILTER_ENTRY;
+            albums = newAlbums
+        }
 
-    if (
-        action.redirectTo &&
-        !albums.some(album => albumIdEquals(album.albumId, action.redirectTo))
-    ) {
-        albumFilter =
-            albumFilterOptions.find(option =>
-                albumFilterAreCriterionEqual(option.criterion, ALL_ALBUMS_FILTER_CRITERION)
-            ) ?? DEFAULT_ALBUM_FILTER_ENTRY;
-        albums = action.albums
+        return {
+            ...current,
+            albumFilterOptions,
+            albumFilter,
+            allAlbums: newAlbums,
+            albums: albums,
+            error: undefined,
+            albumsLoaded: true,
+            deleteDialog: undefined,
+        };
     }
+);
 
-    return {
-        ...current,
-        albumFilterOptions,
-        albumFilter,
-        allAlbums: action.albums,
-        albums: albums,
-        error: undefined,
-        albumsLoaded: true,
-        deleteDialog: undefined,
-    };
-}
-
-export function albumDeletedReducerRegistration(handlers: any) {
-    handlers["albumDeleted"] = reduceAlbumDeleted as (
-        state: CatalogViewerState,
-        action: AlbumDeleted
-    ) => CatalogViewerState;
-}
+export type AlbumDeleted = ReturnType<typeof albumDeleted>;

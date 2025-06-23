@@ -1,37 +1,41 @@
-import {mediasLoaded, reduceMediasLoaded} from "./action-mediasLoaded";
-import {loadedStateWithTwoAlbums, someMedias, twoAlbums} from "../tests/test-helper-state";
+import {mediasLoaded} from "./action-mediasLoaded";
+import {loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, someMedias, twoAlbums} from "../tests/test-helper-state";
+import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 
 describe("action:mediasLoaded", () => {
-    it("should only change the medias and loading status when reducing MediasLoaded, and clear errors", () => {
-        expect(reduceMediasLoaded({
+    it("should change the medias and loading status when reducing MediasLoaded, and clear errors", () => {
+        const action = mediasLoaded({
+            albumId: twoAlbums[1].albumId,
+            medias: someMedias.flatMap(m => m.medias),
+        });
+        const got = action.reducer({
             ...loadedStateWithTwoAlbums,
             medias: [],
             mediasLoaded: false,
             loadingMediasFor: twoAlbums[1].albumId,
             albumNotFound: true,
             error: new Error("TEST previous error to clear"),
-        }, mediasLoaded({
-            albumId: twoAlbums[1].albumId,
+        }, action);
+
+        expect(catalogViewerPageSelector(got)).toEqual({
+            ...selectionForLoadedStateWithTwoAlbums,
+            displayedAlbum: twoAlbums[1],
             medias: someMedias,
-        }))).toEqual({
-            ...loadedStateWithTwoAlbums,
-            medias: someMedias,
-            mediasLoadedFromAlbumId: twoAlbums[1].albumId,
-        })
+        });
     });
 
     it("should ignore MediasLoaded if the medias are not for the expected album", () => {
-        expect(reduceMediasLoaded({
-            ...loadedStateWithTwoAlbums,
-            medias: [],
-            loadingMediasFor: twoAlbums[0].albumId,
-        }, mediasLoaded({
+        const action = mediasLoaded({
             albumId: twoAlbums[1].albumId,
-            medias: someMedias,
-        }))).toEqual({
+            medias: someMedias.flatMap(m => m.medias),
+        });
+        const state = {
             ...loadedStateWithTwoAlbums,
             medias: [],
             loadingMediasFor: twoAlbums[0].albumId,
-        })
+        };
+        const got = action.reducer(state, action);
+
+        expect(got).toBe(state);
     });
 });

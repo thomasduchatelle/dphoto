@@ -1,4 +1,4 @@
-import {reduceAlbumDatesUpdateStarted, albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
+import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {CatalogViewerState} from "../language";
 
@@ -15,7 +15,8 @@ describe("action:albumDatesUpdateStarted", () => {
             },
         };
 
-        const got = reduceAlbumDatesUpdateStarted(stateWithEditDialog, albumDatesUpdateStarted());
+        const action = albumDatesUpdateStarted();
+        const got = action.reducer(stateWithEditDialog, action);
 
         expect(got).toEqual({
             ...stateWithEditDialog,
@@ -27,8 +28,17 @@ describe("action:albumDatesUpdateStarted", () => {
     });
 
     it("returns unchanged state when edit dates dialog is not open", () => {
-        const got = reduceAlbumDatesUpdateStarted(loadedStateWithTwoAlbums, albumDatesUpdateStarted());
+        const action = albumDatesUpdateStarted();
+        const got = action.reducer(loadedStateWithTwoAlbums, action);
 
         expect(got).toEqual(loadedStateWithTwoAlbums);
+    });
+
+    it("supports action comparison for testing", () => {
+        const action1 = albumDatesUpdateStarted();
+        const action2 = albumDatesUpdateStarted();
+
+        expect(action1).toEqual(action2);
+        expect([action1]).toContainEqual(action2);
     });
 });

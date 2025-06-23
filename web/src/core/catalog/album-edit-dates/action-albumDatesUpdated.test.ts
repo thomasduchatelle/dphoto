@@ -1,4 +1,4 @@
-import {albumDatesUpdated, reduceAlbumDatesUpdated} from "./action-albumDatesUpdated";
+import {albumDatesUpdated} from "./action-albumDatesUpdated";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {CatalogViewerState} from "../language";
 
@@ -15,20 +15,18 @@ describe("action:albumDatesUpdated", () => {
             },
         };
 
-
         const updatedAlbum = {
             ...twoAlbums[0],
             start: new Date("2023-07-10T00:00:00Z"),
             end: new Date("2023-07-21T00:00:00Z"),
         };
         const updatedAlbums = [updatedAlbum, twoAlbums[1]];
-        const got = reduceAlbumDatesUpdated(
-            stateWithEditDialog,
-            albumDatesUpdated({
-                albums: updatedAlbums,
-                medias: [],
-            })
-        );
+
+        const action = albumDatesUpdated({
+            albums: updatedAlbums,
+            medias: [],
+        });
+        const got = action.reducer(stateWithEditDialog, action);
 
         expect(got).toEqual({
             ...loadedStateWithTwoAlbums,
@@ -38,5 +36,14 @@ describe("action:albumDatesUpdated", () => {
             albumsLoaded: true,
             mediasLoaded: true,
         });
+    });
+
+    it("supports action comparison for testing", () => {
+        const payload = {albums: twoAlbums, medias: []};
+        const action1 = albumDatesUpdated(payload);
+        const action2 = albumDatesUpdated(payload);
+
+        expect(action1).toEqual(action2);
+        expect([action1]).toContainEqual(action2);
     });
 });

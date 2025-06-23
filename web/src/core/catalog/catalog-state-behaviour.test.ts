@@ -1,8 +1,8 @@
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
 import {Album, albumIdEquals, UserDetails} from "./language";
-import {albumsFiltered, catalogReducer, sharingDialogSelector} from "./actions";
-import {SELF_OWNED_ALBUM_FILTER_CRITERION} from "./navigation";
-import {albumAccessGranted, sharingModalClosed, sharingModalErrorOccurred, sharingModalOpened, albumAccessRevoked} from "./sharing";
+import {albumsFiltered, SELF_OWNED_ALBUM_FILTER_CRITERION} from "./navigation";
+import {albumAccessGranted, albumAccessRevoked, sharingDialogSelector, sharingModalClosed, sharingModalErrorOccurred, sharingModalOpened} from "./sharing";
+import {catalogReducer} from "./actions";
 
 describe("State: behaviour", () => {
     it("keeps the album shares consistent when closing and reopening the dialog", () => {

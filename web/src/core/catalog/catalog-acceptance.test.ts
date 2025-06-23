@@ -3,8 +3,11 @@ import {CatalogAPIAdapter} from "./adapters/api";
 import {CatalogFactory} from "./catalog-factories";
 import {rest} from "msw";
 import {SetupServer, setupServer} from "msw/node";
-import {albumsAndMediasLoaded, CatalogViewerAction, MediaPerDayLoader, MediasLoaded, OnPageRefresh} from "./actions";
 import {MediaType} from "./language";
+import {CatalogViewerAction} from "./actions";
+import {albumsAndMediasLoaded, MediasLoaded} from "./navigation";
+import {groupByDay} from "./navigation/group-by-day";
+import {OnPageRefresh} from "./navigation/thunk-onPageRefresh";
 
 describe('CatalogFactory', () => {
 
@@ -36,7 +39,7 @@ describe('CatalogFactory', () => {
     it('should create a new instance of CatalogViewerLoader', async () => {
         const dispatch: CatalogViewerAction[] = []
         const restAdapter = newCatalogFactory().restAdapter();
-        const mediaViewLoader = new OnPageRefresh(dispatch.push.bind(dispatch), new MediaPerDayLoader(restAdapter), restAdapter);
+        const mediaViewLoader = new OnPageRefresh(dispatch.push.bind(dispatch), restAdapter);
         expect(mediaViewLoader).toBeInstanceOf(OnPageRefresh);
 
         server.use(
@@ -97,17 +100,12 @@ describe('CatalogFactory', () => {
                 },
                 medias: [
                     {
-                        day: new Date(2021, 0, 5),
-                        medias: [
-                            {
-                                contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg?access_token=",
-                                id: "media-1",
-                                source: "Ironman Suit",
-                                time: new Date("2021-01-05T12:42:00Z"),
-                                type: MediaType.IMAGE,
-                                uiRelativePath: "media-1/image.jpg"
-                            }
-                        ]
+                        contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg?access_token=",
+                        id: "media-1",
+                        source: "Ironman Suit",
+                        time: new Date("2021-01-05T12:42:00Z"),
+                        type: MediaType.IMAGE,
+                        uiRelativePath: "media-1/image.jpg"
                     }
                 ],
                 redirectTo: albumIdAvenger1,
@@ -117,7 +115,7 @@ describe('CatalogFactory', () => {
     it('should create a new instance of SelectAlbumHandler', async () => {
         const dispatch: CatalogViewerAction[] = []
         const restAdapter = newCatalogFactory().restAdapter();
-        const mediaViewLoader = new OnPageRefresh(dispatch.push.bind(dispatch), new MediaPerDayLoader(restAdapter), restAdapter);
+        const mediaViewLoader = new OnPageRefresh(dispatch.push.bind(dispatch), restAdapter);
 
         server.use(
             getMediasForAvenger1(),
@@ -134,7 +132,7 @@ describe('CatalogFactory', () => {
         let mediasLoadedAction = dispatch.find(action => action.type === "mediasLoaded");
         expect(mediasLoadedAction).toBeDefined()
 
-        expect((mediasLoadedAction as MediasLoaded).medias).toEqual(
+        expect(groupByDay((mediasLoadedAction as MediasLoaded).payload?.medias || [])).toEqual(
             [
                 {
                     day: new Date(2021, 0, 5),

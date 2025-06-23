@@ -1,15 +1,18 @@
-import {Album, AlbumId, CatalogViewerState} from "../language";
-import {albumDatesUpdateStarted, AlbumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
-import {albumDatesUpdated, AlbumDatesUpdated} from "./action-albumDatesUpdated";
-import {ThunkDeclaration} from "../../thunk-engine";
+import {Album, AlbumId, CatalogViewerState, Media} from "../language";
+import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
+import {albumDatesUpdated} from "./action-albumDatesUpdated";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
-import {MediaPerDayLoader} from "../navigation";
+import {Action} from "src/libs/daction";
+import {groupByDay} from "../navigation/group-by-day";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export interface UpdateAlbumDatesPort {
     updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void>;
 
     fetchAlbums(): Promise<Album[]>;
+
+    fetchMedias(albumId: AlbumId): Promise<Media[]>;
 }
 
 export interface UpdateAlbumDatesThunkArgs {
@@ -19,9 +22,8 @@ export interface UpdateAlbumDatesThunkArgs {
 }
 
 export async function updateAlbumDatesThunk(
-    dispatch: (action: AlbumDatesUpdateStarted | AlbumDatesUpdated) => void,
+    dispatch: (action: Action<CatalogViewerState, any>) => void,
     updateAlbumDatesPort: UpdateAlbumDatesPort,
-    mediaPerDayLoader: MediaPerDayLoader,
     dialog?: UpdateAlbumDatesThunkArgs
 ): Promise<void> {
     if (!dialog) {
@@ -39,12 +41,12 @@ export async function updateAlbumDatesThunk(
 
     await updateAlbumDatesPort.updateAlbumDates(albumId, apiStartDate, apiEndDate);
 
-    const [albums, mediasResp] = await Promise.all([
+    const [albums, medias] = await Promise.all([
         updateAlbumDatesPort.fetchAlbums(),
-        mediaPerDayLoader.loadMedias(albumId)
+        updateAlbumDatesPort.fetchMedias(albumId)
     ]);
 
-    dispatch(albumDatesUpdated({albums, medias: mediasResp.medias}));
+    dispatch(albumDatesUpdated({albums, medias: groupByDay(medias)}));
 }
 
 export const updateAlbumDatesDeclaration: ThunkDeclaration<
@@ -61,10 +63,8 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
     ),
 
     factory: ({dispatch, app, partialState}) => {
-        const restAdapter = new CatalogAPIAdapter(app.axiosInstance, app);
-        const mediaPerDayLoader = new MediaPerDayLoader(restAdapter);
-        const updateAlbumDatesPort: UpdateAlbumDatesPort = restAdapter;
+        const updateAlbumDatesPort: UpdateAlbumDatesPort = new CatalogAPIAdapter(app.axiosInstance, app);
         return () =>
-            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, mediaPerDayLoader, partialState);
+            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, partialState);
     },
 };

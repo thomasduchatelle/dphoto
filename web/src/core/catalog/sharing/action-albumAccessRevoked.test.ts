@@ -1,4 +1,4 @@
-import {albumAccessRevoked, reduceAlbumAccessRevoked} from "./action-albumAccessRevoked";
+import {albumAccessRevoked} from "./action-albumAccessRevoked";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {sharingDialogSelector} from "./selector-sharingDialogSelector";
 
@@ -12,7 +12,8 @@ describe("action:albumAccessRevoked", () => {
                 suggestions: [],
             }
         };
-        const state = reduceAlbumAccessRevoked(initial, albumAccessRevoked(herselfUser.email));
+        const action = albumAccessRevoked(herselfUser.email);
+        const state = action.reducer(initial, action);
         expect(sharingDialogSelector(state)).toEqual({
             open: true,
             sharedWith: [],
@@ -29,7 +30,8 @@ describe("action:albumAccessRevoked", () => {
                 suggestions: [],
             }
         };
-        const state = reduceAlbumAccessRevoked(initial, albumAccessRevoked(herselfUser.email));
+        const action = albumAccessRevoked(herselfUser.email);
+        const state = action.reducer(initial, action);
         expect(state.albums).toEqual([
             {
                 ...twoAlbums[0],
@@ -40,7 +42,8 @@ describe("action:albumAccessRevoked", () => {
     });
 
     it("should not change state when AlbumAccessRevoked is received and shareModal is undefined", () => {
-        const result = reduceAlbumAccessRevoked(loadedStateWithTwoAlbums, albumAccessRevoked(herselfUser.email));
+        const action = albumAccessRevoked(herselfUser.email);
+        const result = action.reducer(loadedStateWithTwoAlbums, action);
         expect(sharingDialogSelector(result)).toEqual({
             open: false,
             sharedWith: [],
@@ -57,7 +60,8 @@ describe("action:albumAccessRevoked", () => {
                 suggestions: [],
             }
         };
-        const state = reduceAlbumAccessRevoked(initial, albumAccessRevoked("notfound@example.com"));
+        const action = albumAccessRevoked("notfound@example.com");
+        const state = action.reducer(initial, action);
         expect(sharingDialogSelector(state)).toEqual({
             open: true,
             sharedWith: twoAlbums[0].sharedWith,
@@ -100,7 +104,8 @@ describe("action:albumAccessRevoked", () => {
             }
         };
 
-        const state = reduceAlbumAccessRevoked(initial, albumAccessRevoked(aliceUserDetails.email));
+        const action = albumAccessRevoked(aliceUserDetails.email);
+        const state = action.reducer(initial, action);
 
         expect(sharingDialogSelector(state)).toEqual({
             open: true,

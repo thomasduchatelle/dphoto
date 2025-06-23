@@ -116,12 +116,12 @@ export function albumMatchCriterion(criterion: AlbumFilterCriterion): (album: Al
     };
 }
 
-export type RedirectToAlbumIdAction = {
+export type RedirectToAlbumIdPayload = {
     redirectTo?: AlbumId
 }
 
-export function isRedirectToAlbumIdAction(arg: any): arg is RedirectToAlbumIdAction {
-    return arg.redirectTo
+export function isRedirectToAlbumIdPayload(arg: any): arg is RedirectToAlbumIdPayload {
+    return arg && arg.redirectTo
 }
 
 export interface DeleteDialogState {

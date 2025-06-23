@@ -1,5 +1,5 @@
 import {Album, CatalogViewerState, OwnerDetails} from "../language";
-import {deleteAlbumDialogOpened, reduceDeleteAlbumDialogOpened} from "./action-deleteAlbumDialogOpened";
+import {deleteAlbumDialogOpened} from "./action-deleteAlbumDialogOpened";
 import {deleteDialogSelector} from "./selector-deleteDialogSelector";
 import {myselfUser, someMedias} from "../tests/test-helper-state";
 import {generateAlbumFilterOptions} from "../navigation";
@@ -61,7 +61,8 @@ const stateWithThreeAlbumsLoaded: CatalogViewerState = {
 
 describe("action:deleteAlbumDialogOpened", () => {
     it("results to dialog open, pre-selected album to the one currently loaded, and albums only containing those deletable, when the dialog was not open", () => {
-        const next = reduceDeleteAlbumDialogOpened(stateWithThreeAlbumsLoaded, deleteAlbumDialogOpened());
+        const action = deleteAlbumDialogOpened();
+        const next = action.reducer(stateWithThreeAlbumsLoaded, action);
         expect(deleteDialogSelector(next)).toEqual({
             isOpen: true,
             albums: [albumSpring, albumWinter],
@@ -71,10 +72,11 @@ describe("action:deleteAlbumDialogOpened", () => {
     });
 
     it("results to dialog open, pre-selected album to the one being loaded, and albums only containing those deletable, when the dialog was not open and medias are currently being loaded", () => {
-        const next = reduceDeleteAlbumDialogOpened({
+        const action = deleteAlbumDialogOpened();
+        const next = action.reducer({
             ...stateWithThreeAlbumsLoaded,
             loadingMediasFor: albumWinter.albumId,
-        }, deleteAlbumDialogOpened());
+        }, action);
 
         expect(deleteDialogSelector(next)).toEqual({
             isOpen: true,
@@ -86,10 +88,11 @@ describe("action:deleteAlbumDialogOpened", () => {
 
     it("results to dialog open with first deletable album selected when a non-deletable album is the one loaded", () => {
         // mediasLoadedFromAlbumId is set to albumSummer (not deletable)
-        const next = reduceDeleteAlbumDialogOpened({
+        const action = deleteAlbumDialogOpened();
+        const next = action.reducer({
             ...stateWithThreeAlbumsLoaded,
             mediasLoadedFromAlbumId: albumSummer.albumId,
-        }, deleteAlbumDialogOpened());
+        }, action);
 
         expect(deleteDialogSelector(next)).toEqual({
             isOpen: true,
@@ -100,7 +103,8 @@ describe("action:deleteAlbumDialogOpened", () => {
     });
 
     it("results to dialog open with deletable albums, no error and loading false, when the dialog were already open", () => {
-        const next = reduceDeleteAlbumDialogOpened({
+        const action = deleteAlbumDialogOpened();
+        const next = action.reducer({
             ...stateWithThreeAlbumsLoaded,
             deleteDialog: {
                 deletableAlbums: [albumWinter],
@@ -108,7 +112,7 @@ describe("action:deleteAlbumDialogOpened", () => {
                 isLoading: true,
                 error: "Some error",
             },
-        }, deleteAlbumDialogOpened());
+        }, action);
 
         expect(deleteDialogSelector(next)).toEqual({
             isOpen: true,
@@ -117,5 +121,13 @@ describe("action:deleteAlbumDialogOpened", () => {
             error: undefined,
             isLoading: false,
         });
+    });
+
+    it("supports action comparison for testing", () => {
+        const action1 = deleteAlbumDialogOpened();
+        const action2 = deleteAlbumDialogOpened();
+
+        expect(action1).toEqual(action2);
+        expect([action1]).toContainEqual(action2);
     });
 });

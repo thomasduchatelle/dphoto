@@ -1,36 +1,20 @@
 import {CatalogViewerState} from "../language";
+import {createAction} from "src/libs/daction";
 
-export interface EditDatesDialogEndDateUpdated {
-    type: "EditDatesDialogEndDateUpdated";
-    endDate: Date;
-}
-
-export function editDatesDialogEndDateUpdated(endDate: Date): EditDatesDialogEndDateUpdated {
-    return {
-        type: "EditDatesDialogEndDateUpdated",
-        endDate,
-    };
-}
-
-export function reduceEditDatesDialogEndDateUpdated(
-    current: CatalogViewerState,
-    {endDate}: EditDatesDialogEndDateUpdated,
-): CatalogViewerState {
-    if (!current.editDatesDialog) {
-        return current;
+export const editDatesDialogEndDateUpdated = createAction<CatalogViewerState, Date | null>(
+    "EditDatesDialogEndDateUpdated",
+    (current: CatalogViewerState, endDate: Date | null) => {
+        if (!current.editDatesDialog || !endDate) {
+            return current;
+        }
+        return {
+            ...current,
+            editDatesDialog: {
+                ...current.editDatesDialog,
+                endDate,
+            },
+        };
     }
-    return {
-        ...current,
-        editDatesDialog: {
-            ...current.editDatesDialog,
-            endDate,
-        },
-    };
-}
+);
 
-export function editDatesDialogEndDateUpdatedReducerRegistration(handlers: any) {
-    handlers["EditDatesDialogEndDateUpdated"] = reduceEditDatesDialogEndDateUpdated as (
-        state: CatalogViewerState,
-        action: EditDatesDialogEndDateUpdated
-    ) => CatalogViewerState;
-}
+export type EditDatesDialogEndDateUpdated = ReturnType<typeof editDatesDialogEndDateUpdated>;

@@ -1,9 +1,8 @@
 import {Album, AlbumId, Media, MediaId, MediaType} from "../language";
-import {FetchAlbumMediasPort, MediaPerDayLoader} from "./MediaPerDayLoader";
 import {mediasLoaded} from "./action-mediasLoaded";
 import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {mediaLoadFailed} from "./action-mediaLoadFailed";
-import {FetchAlbumsPort, OnPageRefresh, OnPageRefreshArgs} from "./thunk-onPageRefresh";
+import {FetchAlbumsAndMediasPort, OnPageRefresh, OnPageRefreshArgs} from "./thunk-onPageRefresh";
 import {CatalogViewerAction} from "../actions";
 
 
@@ -36,25 +35,6 @@ const medias = [
     newMedia('03', "2024-12-02T09:45:00Z"),
 ];
 
-const expectedMediasPerDay = [
-    {
-        day: new Date(2024, 11, 1),
-        medias: [medias[0], medias[1]],
-    },
-    {
-        day: new Date(2024, 11, 2),
-        medias: [medias[2]],
-    },
-];
-
-function repositoryWithThreeMedias() {
-    const map = new Map<AlbumId, Media[]>();
-
-    map.set(twoAlbums[0].albumId, medias)
-    return new MediaPerDayLoader(new MediaRepositoryFake(map));
-
-}
-
 interface PartialCatalogLoaderState extends Omit<OnPageRefreshArgs, "albumId"> {
 }
 
@@ -64,11 +44,14 @@ describe("CatalogLoader", () => {
     const firstAlbumLoading: PartialCatalogLoaderState = {albumsLoaded: false, allAlbums: twoAlbums, loadingMediasFor: twoAlbums[0].albumId}
 
     const newThunk = (dispatch: ActionObserverFake) => {
-        return new OnPageRefresh(dispatch.onAction, repositoryWithThreeMedias(), new AlbumRepositoryFake(twoAlbums))
+        return new OnPageRefresh(dispatch.onAction, new AlbumAndMediaRepositoryFake(
+            twoAlbums,
+            new Map([[twoAlbums[0].albumId, medias]])
+        ))
     }
 
     const newLoaderFailingGettingMedias = (dispatch: ActionObserverFake, error: Error) => {
-        return new OnPageRefresh(dispatch.onAction, new MediaPerDayLoader(new MediaRepositoryFakeWithFailure(error)), new AlbumRepositoryFake(twoAlbums))
+        return new OnPageRefresh(dispatch.onAction, new AlbumAndMediaRepositoryFakeWithMediaFailure(twoAlbums, error))
     }
 
     let dispatch: ActionObserverFake
@@ -84,7 +67,7 @@ describe("CatalogLoader", () => {
         expect(dispatch.actions).toEqual([
             albumsAndMediasLoaded({
                 albums: twoAlbums,
-                medias: expectedMediasPerDay,
+                medias: medias,
                 selectedAlbum: twoAlbums[0],
             }),
         ])
@@ -106,7 +89,7 @@ describe("CatalogLoader", () => {
 
     it("should throw an error if the albums cannot be loaded", async () => {
         const error = new Error("TEST simulate albums failing to load");
-        const loader = new OnPageRefresh(dispatch.onAction, new MediaPerDayLoader(new MediaRepositoryFake()), new AlbumRepositoryFakeWithError(error))
+        const loader = new OnPageRefresh(dispatch.onAction, new AlbumAndMediaRepositoryFakeWithAlbumFailure(error))
         await expect(loader.onPageRefresh({...stateNotLoaded, albumId: twoAlbums[0].albumId})).rejects.toThrow(error)
 
         expect(dispatch.actions).toHaveLength(0)
@@ -126,7 +109,7 @@ describe("CatalogLoader", () => {
         expect(dispatch.actions).toEqual([
             albumsAndMediasLoaded({
                 albums: twoAlbums,
-                medias: expectedMediasPerDay,
+                medias: medias,
                 selectedAlbum: twoAlbums[0],
                 redirectTo: twoAlbums[0].albumId,
             }),
@@ -206,18 +189,23 @@ class ActionObserverFake {
     }
 }
 
-class AlbumRepositoryFake implements FetchAlbumsPort {
+class AlbumAndMediaRepositoryFake implements FetchAlbumsAndMediasPort {
     constructor(
-        private albums: Album[] = []
+        private albums: Album[] = [],
+        private medias: Map<AlbumId, Media[]> = new Map(),
     ) {
     }
 
     fetchAlbums = (): Promise<Album[]> => {
         return Promise.resolve(this.albums)
     }
+
+    fetchMedias(albumId: AlbumId): Promise<Media[]> {
+        return Promise.resolve(this.medias.get(albumId) || [])
+    }
 }
 
-class AlbumRepositoryFakeWithError implements FetchAlbumsPort {
+class AlbumAndMediaRepositoryFakeWithAlbumFailure implements FetchAlbumsAndMediasPort {
     constructor(
         private error: Error,
     ) {
@@ -226,24 +214,21 @@ class AlbumRepositoryFakeWithError implements FetchAlbumsPort {
     fetchAlbums = (): Promise<Album[]> => {
         return Promise.reject(this.error)
     }
-}
-
-class MediaRepositoryFake implements FetchAlbumMediasPort {
-    constructor(
-        private medias: Map<AlbumId, Media[]> = new Map()
-    ) {
-    }
-
 
     fetchMedias(albumId: AlbumId): Promise<Media[]> {
-        return Promise.resolve(this.medias.get(albumId) ?? [])
+        return Promise.resolve([])
     }
 }
 
-class MediaRepositoryFakeWithFailure implements FetchAlbumMediasPort {
+class AlbumAndMediaRepositoryFakeWithMediaFailure implements FetchAlbumsAndMediasPort {
     constructor(
+        private albums: Album[] = [],
         private error: Error,
     ) {
+    }
+
+    fetchAlbums = (): Promise<Album[]> => {
+        return Promise.resolve(this.albums)
     }
 
     fetchMedias(albumId: AlbumId): Promise<Media[]> {

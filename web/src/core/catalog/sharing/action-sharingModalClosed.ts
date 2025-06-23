@@ -1,23 +1,11 @@
 import {CatalogViewerState} from "../language";
+import {createAction} from "src/libs/daction";
 
-export interface SharingModalClosed {
-    type: "sharingModalClosed";
-}
+export const sharingModalClosed = createAction<CatalogViewerState>(
+    "sharingModalClosed",
+    ({shareModal, ...rest}: CatalogViewerState) => {
+        return rest;
+    }
+);
 
-export function sharingModalClosed(): SharingModalClosed {
-    return {type: "sharingModalClosed"};
-}
-
-export function reduceSharingModalClosed(
-    {shareModal, ...rest}: CatalogViewerState,
-    _: SharingModalClosed,
-): CatalogViewerState {
-    return rest;
-}
-
-export function sharingModalClosedReducerRegistration(handlers: any) {
-    handlers["sharingModalClosed"] = reduceSharingModalClosed as (
-        state: CatalogViewerState,
-        action: SharingModalClosed
-    ) => CatalogViewerState;
-}
+export type SharingModalClosed = ReturnType<typeof sharingModalClosed>;

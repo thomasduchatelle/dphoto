@@ -5,10 +5,6 @@ import {useGlobalError, useIsAuthenticated} from "../core/application";
 import ErrorPage from "./ErrorPage";
 import {Navigate, useSearchParams} from "react-router-dom";
 
-// interface PathParam {
-//     path?: string
-// }
-
 const RestoreAPIGatewayOriginalPath = ({children}: {
     children: ReactElement;
 }) => {

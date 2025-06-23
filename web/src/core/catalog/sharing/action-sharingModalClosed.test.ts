@@ -1,4 +1,4 @@
-import {reduceSharingModalClosed, sharingModalClosed} from "./action-sharingModalClosed";
+import {sharingModalClosed} from "./action-sharingModalClosed";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {sharingDialogSelector} from "./selector-sharingDialogSelector";
 
@@ -17,7 +17,7 @@ describe("action:sharingModalClosed", () => {
             }
         };
         const action = sharingModalClosed();
-        expect(sharingDialogSelector(reduceSharingModalClosed(initial, action))).toEqual({
+        expect(sharingDialogSelector(action.reducer(initial, action))).toEqual({
             open: false,
             sharedWith: [],
             suggestions: [],

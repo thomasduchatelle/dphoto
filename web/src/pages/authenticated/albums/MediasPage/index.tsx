@@ -2,10 +2,9 @@ import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
-import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, CreateAlbumControls, MediaWithinADay} from "../../../../core/catalog";
+import {AlbumFilterCriterion, AlbumId, CatalogViewerPageSelection, CreateAlbumControls} from "../../../../core/catalog";
 import AlbumListActions from "../AlbumsListActions/AlbumListActions";
 
-const albumFilterFeatureFlag = true
 
 export default function MediasPage({
                                        albums,
@@ -17,26 +16,18 @@ export default function MediasPage({
                                        albumFilterOptions,
                                        albumFilter,
                                        onAlbumFilterChange,
-                                       selectedAlbumId,
+                                       displayedAlbum,
                                        openSharingModal,
                                        openDeleteAlbumDialog,
                                        openEditDatesDialog,
                                        ...controls
                                    }: {
-    albums: Album[]
-    albumNotFound: boolean
-    albumsLoaded: boolean
-    mediasLoaded: boolean
-    medias: MediaWithinADay[]
-    scrollToMedia?: string
-    albumFilterOptions: AlbumFilterEntry[]
-    albumFilter: AlbumFilterEntry
-    selectedAlbumId: AlbumId | undefined
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
-    openSharingModal: (album: Album) => void
+    openSharingModal: (albumId: AlbumId) => void
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
-} & CreateAlbumControls) {
+    scrollToMedia?: string
+} & CreateAlbumControls & CatalogViewerPageSelection) {
     const drawerWidth = 450
 
     return (
@@ -58,7 +49,7 @@ export default function MediasPage({
                     }}
                 >
                     <Toolbar/>
-                    {albumFilterFeatureFlag && albumsLoaded && (
+                    {albumsLoaded && (
                         <>
                             <AlbumListActions
                                 selected={albumFilter}
@@ -73,7 +64,7 @@ export default function MediasPage({
                     )}
                     <AlbumsList albums={albums}
                                 loaded={albumsLoaded}
-                                selectedAlbumId={selectedAlbumId}
+                                selectedAlbumId={displayedAlbum?.albumId}
                                 openSharingModal={openSharingModal}/>
                 </Drawer>
             </Box>

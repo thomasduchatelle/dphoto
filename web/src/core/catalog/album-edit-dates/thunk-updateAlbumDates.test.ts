@@ -3,14 +3,14 @@ import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumDatesUpdated} from "./action-albumDatesUpdated";
 import {someMedias, twoAlbums} from "../tests/test-helper-state";
 import {Album, AlbumId, Media} from "../language";
-import {MediaPerDayLoader} from "../navigation/MediaPerDayLoader"; // Import MediaPerDayLoader
+import {groupByDay} from "../navigation/group-by-day";
 
 class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
     public updatedAlbums: { albumId: AlbumId, startDate: Date, endDate: Date }[] = [];
 
     constructor(
         private albums: Album[] = [],
-        private medias: Media[] = [] // Changed to Media[]
+        private medias: Media[] = []
     ) {
     }
 
@@ -22,15 +22,15 @@ class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
         return this.albums;
     }
 
-    async fetchMedias(albumId: AlbumId): Promise<Media[]> { // Changed to Media[]
+    async fetchMedias(albumId: AlbumId): Promise<Media[]> {
         return this.medias;
     }
 }
 
 describe("thunk:updateAlbumDates", () => {
     it("should convert display dates to API format and dispatch actions", async () => {
-        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, someMedias[0].medias);
-        const mediaPerDayLoaderFake = new MediaPerDayLoader(fakePort);
+        const rawMedias = someMedias.flatMap(m => m.medias);
+        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
         const displayStartDate = new Date("2023-07-10");
@@ -39,7 +39,6 @@ describe("thunk:updateAlbumDates", () => {
         await updateAlbumDatesThunk(
             dispatched.push.bind(dispatched),
             fakePort,
-            mediaPerDayLoaderFake,
             { // Pass arguments as a single object
                 albumId,
                 startDate: displayStartDate,
@@ -57,7 +56,7 @@ describe("thunk:updateAlbumDates", () => {
             albumDatesUpdateStarted(),
             albumDatesUpdated({
                 albums: twoAlbums,
-                medias: someMedias,
+                medias: groupByDay(rawMedias),
             })
         ]);
     });

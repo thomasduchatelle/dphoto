@@ -1,14 +1,14 @@
 import {Album, AlbumFilterCriterion, albumIdEquals, albumMatchCriterion, CatalogViewerState} from "../language";
-import {AlbumsFiltered, albumsFiltered} from "./action-albumsFiltered";
-import {ThunkDeclaration} from "../../thunk-engine";
+import {albumsFiltered} from "./action-albumsFiltered";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
+import {ThunkDeclaration} from "src/libs/dthunks";
 
 export interface AlbumFilterHandlerState {
     selectedAlbum?: Album
     allAlbums: Album[]
 }
 
-export function onAlbumFilterFunction(dispatch: (action: AlbumsFiltered) => void, partialState: AlbumFilterHandlerState, criterion: AlbumFilterCriterion) {
+export function onAlbumFilterFunction(dispatch: (action: ReturnType<typeof albumsFiltered>) => void, partialState: AlbumFilterHandlerState, criterion: AlbumFilterCriterion) {
     const match = albumMatchCriterion(criterion);
     if (partialState.selectedAlbum && match(partialState.selectedAlbum)) {
         dispatch(albumsFiltered({criterion: criterion}));

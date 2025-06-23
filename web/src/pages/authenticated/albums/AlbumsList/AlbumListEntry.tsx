@@ -4,17 +4,18 @@ import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
 import {HotIndicator} from "./HotIndicator";
 import {Share} from "@mui/icons-material";
 import React from "react";
-import {Album} from "../../../../core/catalog";
+import {Album, AlbumId} from "../../../../core/catalog";
 
 export function AlbumListEntry({album, selected, onClickOnSharedWith}: {
     album: Album
     selected: boolean
-    onClickOnSharedWith: (album: Album) => void
+    onClickOnSharedWith: (albumId: AlbumId) => void
+
 }) {
 
     const handleClickOnSharedWith = (evt: React.MouseEvent<HTMLElement>) => {
         evt.preventDefault()
-        onClickOnSharedWith(album)
+        onClickOnSharedWith(album.albumId)
     }
 
     return <ListItemButton
