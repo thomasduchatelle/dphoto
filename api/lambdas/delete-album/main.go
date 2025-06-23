@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
@@ -12,13 +12,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"net/http"
 )
-
-type errorResponse struct {
-	ErrorType string `json:"errorType"`
-	Message   string `json:"message"`
-}
 
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	ctx := context.Background()
@@ -45,29 +39,17 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		err = common.Factory.CreateAlbumDeleteCase(ctx).DeleteAlbum(ctx, albumId)
 		if err != nil {
 			switch {
-			case errors.Is(err, catalog.OrphanedMediasError):
-				return errorJSONResponse("OrphanedMedias", err.Error(), http.StatusUnprocessableEntity)
+			case errors.Is(err, catalog.OrphanedMediasErr):
+				return common.UnprocessableEntityResponse("OrphanedMedias", err.Error())
 			case errors.Is(err, aclcore.AccessForbiddenError):
-				return errorJSONResponse("NotAuthorized", "You are not authorized to delete this album", http.StatusForbidden)
+				return common.UnauthorizedResponse(fmt.Sprintf("You are not authorized to delete the album %s", albumId))
 			default:
-				return errorJSONResponse("InternalError", err.Error(), http.StatusInternalServerError)
+				return common.UnprocessableEntityResponse("InternalError", err.Error())
 			}
 		}
 
 		return common.NoContent()
 	})
-}
-
-func errorJSONResponse(errorType, message string, status int) (common.Response, error) {
-	body, _ := json.Marshal(errorResponse{
-		ErrorType: errorType,
-		Message:   message,
-	})
-	return common.Response{
-		StatusCode: status,
-		Body:       string(body),
-		Headers:    map[string]string{"Content-Type": "application/json"},
-	}, nil
 }
 
 func main() {

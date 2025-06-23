@@ -13,7 +13,7 @@ interface EditDatesDialogProps {
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
     isLoading: boolean;
-    errorCode?: string; // Added for error handling
+    errorCode?: string;
     onClose: () => void;
     onStartDateChange: (date: Date | null) => void;
     onEndDateChange: (date: Date | null) => void;
@@ -30,7 +30,7 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                                                                     startAtDayStart,
                                                                     endAtDayEnd,
                                                                     isLoading,
-                                                                    errorCode, // Destructure errorCode
+                                                                    errorCode,
                                                                     onClose,
                                                                     onStartDateChange,
                                                                     onEndDateChange,
@@ -43,8 +43,6 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
 
     const dateError = errorCode === albumStartAndEndDateMandatoryErr;
     const dateHelperText = dateError ? "Start and end dates are mandatory, and end date must be after the start date." : "";
-
-    const errorMessage = getErrorMessage(errorCode);
 
     return (
         <Dialog
@@ -81,8 +79,8 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
             <DialogContent>
                 <Grid container spacing={2} alignItems='center'>
                     <Grid sm={12} xs={12}>
-                        {errorMessage && <Alert severity="error">
-                            {errorMessage}
+                        {errorCode && errorCode !== albumStartAndEndDateMandatoryErr && <Alert severity="error">
+                            {errorCode}
                         </Alert>}
                     </Grid>
                     <DateRangePicker
@@ -116,15 +114,3 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
         </Dialog>
     );
 };
-
-function getErrorMessage(errorCode: string | undefined): string {
-    switch (errorCode) {
-        case undefined:
-        case "":
-        case albumStartAndEndDateMandatoryErr:
-            return "";
-
-        default:
-            return "Album dates couldn't be saved. Refresh your page and retry, or let the developer known.";
-    }
-}

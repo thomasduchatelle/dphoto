@@ -34,11 +34,29 @@ describe("action:albumDatesUpdateStarted", () => {
         expect(got).toEqual(loadedStateWithTwoAlbums);
     });
 
-    it("supports action comparison for testing", () => {
-        const action1 = albumDatesUpdateStarted();
-        const action2 = albumDatesUpdateStarted();
+    it("clears error when starting update", () => {
+        const stateWithError: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            editDatesDialog: {
+                albumId: twoAlbums[0].albumId,
+                albumName: twoAlbums[0].name,
+                startDate: twoAlbums[0].start,
+                endDate: twoAlbums[0].end,
+                isLoading: false,
+                error: "Previous error",
+            },
+        };
 
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
+        const action = albumDatesUpdateStarted();
+        const got = action.reducer(stateWithError, action);
+
+        expect(got).toEqual({
+            ...stateWithError,
+            editDatesDialog: {
+                ...stateWithError.editDatesDialog,
+                isLoading: true,
+                error: undefined,
+            },
+        });
     });
 });

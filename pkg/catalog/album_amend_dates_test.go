@@ -98,7 +98,7 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 				end:     jun24,
 			},
 			wantError: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.OrphanedMediasError, i...)
+				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
 			},
 		},
 	}
@@ -449,7 +449,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, junAlbum.Start, junAlbum.End),
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.OrphanedMediasError, i...)
+				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
 			},
 		},
 	}

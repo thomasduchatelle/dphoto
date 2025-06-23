@@ -1,11 +1,15 @@
-import {Album, AlbumId, CatalogViewerState, Media} from "../language";
+import {Album, AlbumId, CatalogViewerState, getErrorMessage, isCatalogError, Media} from "../language";
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumDatesUpdated} from "./action-albumDatesUpdated";
+import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {Action} from "src/libs/daction";
 import {groupByDay} from "../navigation/group-by-day";
 import {ThunkDeclaration} from "src/libs/dthunks";
+
+/** When deletion or date edit is not possible because it would orphan medias */
+export const editDatesOrphanedMediasErrorCode = "OrphanedMediasErr";
 
 export interface UpdateAlbumDatesPort {
     updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void>;
@@ -36,17 +40,26 @@ export async function updateAlbumDatesThunk(
 
     dispatch(albumDatesUpdateStarted());
 
-    const apiStartDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
-    const apiEndDate = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1));
+    try {
+        const apiStartDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
+        const apiEndDate = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1));
 
-    await updateAlbumDatesPort.updateAlbumDates(albumId, apiStartDate, apiEndDate);
+        await updateAlbumDatesPort.updateAlbumDates(albumId, apiStartDate, apiEndDate);
 
-    const [albums, medias] = await Promise.all([
-        updateAlbumDatesPort.fetchAlbums(),
-        updateAlbumDatesPort.fetchMedias(albumId)
-    ]);
+        const [albums, medias] = await Promise.all([
+            updateAlbumDatesPort.fetchAlbums(),
+            updateAlbumDatesPort.fetchMedias(albumId)
+        ]);
 
-    dispatch(albumDatesUpdated({albums, medias: groupByDay(medias)}));
+        dispatch(albumDatesUpdated({albums, medias: groupByDay(medias)}));
+
+    } catch (error) {
+        if (isCatalogError(error) && error.code === editDatesOrphanedMediasErrorCode) {
+            dispatch(albumDatesUpdateFailed({error: error.message}));
+        } else {
+            dispatch(albumDatesUpdateFailed({error: getErrorMessage(error)}));
+        }
+    }
 }
 
 export const updateAlbumDatesDeclaration: ThunkDeclaration<

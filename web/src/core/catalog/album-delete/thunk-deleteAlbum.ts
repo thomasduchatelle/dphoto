@@ -1,8 +1,7 @@
 import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogFactory} from "../catalog-factories";
 import {DPhotoApplication} from "../../application";
-import {isDeleteAlbumError} from "../adapters/api";
-import {Album, AlbumId, albumIdEquals, CatalogViewerState} from "../language";
+import {Album, AlbumId, albumIdEquals, CatalogViewerState, getErrorMessage} from "../language";
 import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
 import {albumDeleted} from "./action-albumDeleted";
@@ -21,16 +20,6 @@ function getSelectedAlbumId(state: CatalogViewerState): AlbumId | undefined {
     return state.loadingMediasFor ?? state.mediasLoadedFromAlbumId;
 }
 
-function errorToMessage(error: any): string {
-    if (isDeleteAlbumError(error)) {
-        console.error(`Client error [${error.code}]: ${error.message}`);
-        return error.message
-    }
-
-    console.log(`Unexpected error: ${error}`);
-    return "A technical error prevented the album to be deleted, please report it to a developer.";
-}
-
 export async function deleteAlbumThunk(
     dispatch: (action: any) => void,
     port: DeleteAlbumPort,
@@ -42,7 +31,7 @@ export async function deleteAlbumThunk(
     try {
         await port.deleteAlbum(albumIdToDelete);
     } catch (error) {
-        dispatch(albumDeleteFailed(errorToMessage(error)));
+        dispatch(albumDeleteFailed(getErrorMessage(error) ?? "A technical error prevented the album to be deleted, please report it to a developer."));
         return;
     }
 

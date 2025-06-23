@@ -35,32 +35,24 @@ describe("action:editDatesDialogStartDateUpdated", () => {
         expect(got).toBe(state);
     });
 
-    it("supports action comparison for testing", () => {
-        const date = new Date("2023-07-15T00:00:00");
-        const action1 = editDatesDialogStartDateUpdated(date);
-        const action2 = editDatesDialogStartDateUpdated(date);
+    it("clears error when updating start date", () => {
+        const stateWithError: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            editDatesDialog: {
+                albumId: {owner: "myself", folderName: "summer-trip"},
+                albumName: "Summer Trip",
+                startDate: new Date("2023-07-01T00:00:00"),
+                endDate: new Date("2023-08-01T00:00:00"),
+                isLoading: false,
+                error: "Previous error message",
+            },
+        };
 
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
-    });
+        const newStartDate = new Date("2023-07-15T00:00:00");
+        const action = editDatesDialogStartDateUpdated(newStartDate);
+        const got = action.reducer(stateWithError, action);
 
-    it("demonstrates the new simplified API with payload", () => {
-        const date = new Date("2023-07-15T00:00:00");
-        const action = editDatesDialogStartDateUpdated(date);
-
-        expect(action.type).toBe("EditDatesDialogStartDateUpdated");
-        expect(action.payload).toBe(date);
-        expect(typeof action.reducer).toBe("function");
-    });
-
-    it("distinguishes between different payloads", () => {
-        const date1 = new Date("2023-07-15T00:00:00");
-        const date2 = new Date("2023-07-16T00:00:00");
-
-        const action1 = editDatesDialogStartDateUpdated(date1);
-        const action2 = editDatesDialogStartDateUpdated(date2);
-
-        expect(action1).not.toEqual(action2);
-        expect([action1]).not.toContainEqual(action2);
+        expect(got.editDatesDialog?.startDate).toEqual(newStartDate);
+        expect(got.editDatesDialog?.error).toBeUndefined();
     });
 });

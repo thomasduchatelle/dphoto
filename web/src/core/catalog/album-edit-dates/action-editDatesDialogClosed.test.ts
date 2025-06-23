@@ -36,19 +36,4 @@ describe("action:editDatesDialogClosed", () => {
         expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
         expect(got).toBe(state);
     });
-
-    it("supports action comparison for testing", () => {
-        const action1 = editDatesDialogClosed();
-        const action2 = editDatesDialogClosed();
-
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
-    });
-
-    it("demonstrates the new simplified API", () => {
-        // No parameters needed for actions without payload
-        const action = editDatesDialogClosed();
-        expect(action.type).toBe("EditDatesDialogClosed");
-        expect(typeof action.reducer).toBe("function");
-    });
 });

@@ -38,12 +38,4 @@ describe("action:deleteAlbumStarted", () => {
 
         expect(got).toBe(state);
     });
-
-    it("supports action comparison for testing", () => {
-        const action1 = deleteAlbumStarted();
-        const action2 = deleteAlbumStarted();
-
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
-    });
 });

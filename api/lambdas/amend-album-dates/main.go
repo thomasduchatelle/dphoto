@@ -48,11 +48,11 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			case errors.Is(err, catalog.AlbumNotFoundErr):
 				return common.NotFound(err.Error())
 			case errors.Is(err, catalog.AlbumStartAndEndDateMandatoryErr):
-				return common.InvalidRequest("AlbumStartAndEndDateMandatoryErr", err.Error())
+				return common.UnprocessableEntityResponse("AlbumStartAndEndDateMandatoryErr", err.Error())
 			case errors.Is(err, catalog.AlbumEndDateMustBeAfterStartErr):
-				return common.InvalidRequest("AlbumEndDateMustBeAfterStartErr", err.Error())
-			case errors.Is(err, catalog.OrphanedMediasError):
-				return common.InvalidRequest("OrphanedMediasError", err.Error())
+				return common.UnprocessableEntityResponse("AlbumEndDateMustBeAfterStartErr", err.Error())
+			case errors.Is(err, catalog.OrphanedMediasErr):
+				return common.UnprocessableEntityResponse("OrphanedMediasErr", err.Error())
 			default:
 				return common.InternalError(err)
 			}

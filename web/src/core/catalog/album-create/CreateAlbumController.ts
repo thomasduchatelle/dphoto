@@ -75,7 +75,7 @@ export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumCo
                     console.log("Failed to create the album", err);
                     this.setState(prev => ({
                         ...prev,
-                        errorCode: isCatalogError(err) ? err.errorCode : err.message,
+                        errorCode: isCatalogError(err) ? err.code : err.message,
                         creationInProgress: false,
                     }))
                     return Promise.reject(err);

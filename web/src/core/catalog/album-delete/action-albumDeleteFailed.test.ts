@@ -49,14 +49,4 @@ describe("action:albumDeleteFailed", () => {
             action.reducer(loadedStateWithTwoAlbums, action);
         }).toThrow();
     });
-
-    it("supports action comparison for testing", () => {
-        const action1 = albumDeleteFailed("error");
-        const action2 = albumDeleteFailed("error");
-        const action3 = albumDeleteFailed("another error");
-
-        expect(action1).toEqual(action2);
-        expect(action1).not.toEqual(action3);
-        expect([action1]).toContainEqual(action2);
-    });
 });

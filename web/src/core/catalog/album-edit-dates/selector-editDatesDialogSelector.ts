@@ -8,6 +8,7 @@ export interface EditDatesDialogSelection {
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
     isLoading: boolean;
+    errorCode?: string;
 }
 
 export const DEFAULT_EDIT_DATES_DIALOG_SELECTION: EditDatesDialogSelection = {
@@ -18,6 +19,7 @@ export const DEFAULT_EDIT_DATES_DIALOG_SELECTION: EditDatesDialogSelection = {
     startAtDayStart: true,
     endAtDayEnd: true,
     isLoading: false,
+    errorCode: undefined,
 };
 
 export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDialogSelection {
@@ -32,5 +34,6 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
         startDate: state.editDatesDialog.startDate,
         endDate: state.editDatesDialog.endDate,
         isLoading: state.editDatesDialog.isLoading,
+        errorCode: state.editDatesDialog.error,
     };
 }

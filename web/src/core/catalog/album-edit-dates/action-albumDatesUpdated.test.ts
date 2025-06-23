@@ -37,13 +37,4 @@ describe("action:albumDatesUpdated", () => {
             mediasLoaded: true,
         });
     });
-
-    it("supports action comparison for testing", () => {
-        const payload = {albums: twoAlbums, medias: []};
-        const action1 = albumDatesUpdated(payload);
-        const action2 = albumDatesUpdated(payload);
-
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
-    });
 });

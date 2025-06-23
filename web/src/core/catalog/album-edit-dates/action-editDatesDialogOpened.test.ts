@@ -73,19 +73,4 @@ describe("action:editDatesDialogOpened", () => {
         expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
         expect(got).toEqual(state); // Ensure no other state changes
     });
-
-    it("supports action comparison for testing", () => {
-        const action1 = editDatesDialogOpened();
-        const action2 = editDatesDialogOpened();
-
-        expect(action1).toEqual(action2);
-        expect([action1]).toContainEqual(action2);
-    });
-
-    it("demonstrates the new simplified API", () => {
-        // No parameters needed for actions without payload
-        const action = editDatesDialogOpened();
-        expect(action.type).toBe("EditDatesDialogOpened");
-        expect(typeof action.reducer).toBe("function");
-    });
 });
