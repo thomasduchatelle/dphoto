@@ -1,7 +1,7 @@
 import {editDatesDialogStartAtDayStartUpdated} from "./action-editDatesDialogStartAtDayStartUpdated";
 import {CatalogViewerState} from "../language";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
-import {editDatesDialogSelector} from "./selector-editDatesDialogSelector";
+import {DEFAULT_EDIT_DATES_DIALOG_SELECTION, editDatesDialogSelector} from "./selector-editDatesDialogSelector";
 
 describe("action:editDatesDialogStartAtDayStartUpdated", () => {
     it("unchecks start at day start and keeps current time", () => {
@@ -22,14 +22,13 @@ describe("action:editDatesDialogStartAtDayStartUpdated", () => {
         const got = action.reducer(state, action);
 
         expect(editDatesDialogSelector(got)).toEqual({
+            ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
             isOpen: true,
             albumName: "Summer Trip",
             startDate: new Date("2023-07-01T00:00:00"),
             endDate: new Date("2023-08-01T00:00:00"),
             startAtDayStart: false,
             endAtDayEnd: true,
-            isLoading: false,
-            errorCode: undefined,
         });
     });
 
@@ -51,14 +50,13 @@ describe("action:editDatesDialogStartAtDayStartUpdated", () => {
         const got = action.reducer(state, action);
 
         expect(editDatesDialogSelector(got)).toEqual({
+            ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
             isOpen: true,
             albumName: "Summer Trip",
             startDate: new Date("2023-07-01T00:00:00"),
             endDate: new Date("2023-08-01T00:00:00"),
             startAtDayStart: true,
             endAtDayEnd: true,
-            isLoading: false,
-            errorCode: undefined,
         });
     });
 

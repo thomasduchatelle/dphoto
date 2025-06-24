@@ -55,6 +55,7 @@ Default.args = {
     startAtDayStart: true,
     endAtDayEnd: true,
     isLoading: false,
+    isSaveEnabled: true,
 };
 Default.parameters = {
     delay: 300,
@@ -68,6 +69,7 @@ WithSpecificTimes.args = {
     startAtDayStart: false,
     endAtDayEnd: false,
     isLoading: false,
+    isSaveEnabled: true,
 };
 WithSpecificTimes.parameters = {
     delay: 300,
@@ -81,6 +83,7 @@ Loading.args = {
     startAtDayStart: true,
     endAtDayEnd: true,
     isLoading: true,
+    isSaveEnabled: false,
 };
 Loading.parameters = {
     storyshots: {disable: true},
@@ -95,7 +98,23 @@ WithError.args = {
     endAtDayEnd: true,
     isLoading: false,
     errorCode: "This is a user friendly error message (or technical).",
+    isSaveEnabled: true,
 };
 WithError.parameters = {
+    delay: 300,
+};
+
+export const WithDateRangeError = Template.bind({});
+WithDateRangeError.args = {
+    albumName: "First Contact",
+    startDate: new Date("2063-04-07T00:00:00Z"),
+    endDate: new Date("2063-04-05T00:00:00Z"),
+    startAtDayStart: true,
+    endAtDayEnd: true,
+    isLoading: false,
+    dateRangeError: "The end date cannot be before the start date",
+    isSaveEnabled: false,
+};
+WithDateRangeError.parameters = {
     delay: 300,
 };
