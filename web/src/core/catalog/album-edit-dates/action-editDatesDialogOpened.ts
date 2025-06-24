@@ -1,4 +1,4 @@
-import {albumIdEquals, CatalogViewerState} from "../language";
+import {albumIdEquals, CatalogViewerState, EditDatesDialog} from "../language";
 import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
 import {createAction} from "src/libs/daction";
 import {isRoundTime} from "../common/date-helper";
@@ -22,21 +22,24 @@ export const editDatesDialogOpened = createAction<CatalogViewerState>(
 
         if (endAtDayEnd) {
             endDate.setDate(endDate.getDate() - 1);
-        } else if (!isRoundTime(endDate)) { // Only subtract 1 minute if it's a precise time
+        } else if (!isRoundTime(endDate)) {
             endDate.setUTCMinutes(endDate.getUTCMinutes() - 1);
         }
 
+        const newDialog: EditDatesDialog = {
+            type: "EditDatesDialog",
+            albumId: selectedAlbum.albumId,
+            albumName: selectedAlbum.name,
+            startDate: startDate,
+            endDate: endDate,
+            isLoading: false,
+            startAtDayStart: startAtDayStart,
+            endAtDayEnd: endAtDayEnd,
+        };
+
         return {
             ...current,
-            editDatesDialog: {
-                albumId: selectedAlbum.albumId,
-                albumName: selectedAlbum.name,
-                startDate: startDate,
-                endDate: endDate,
-                isLoading: false,
-                startAtDayStart: startAtDayStart,
-                endAtDayEnd: endAtDayEnd,
-            },
+            dialog: newDialog,
         };
     }
 );

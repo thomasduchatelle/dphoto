@@ -1,4 +1,4 @@
-import {AlbumId, CatalogViewerState} from "../language";
+import {AlbumId, CatalogViewerState, isShareDialog} from "../language";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {AlbumAccessRevoked, albumAccessRevoked} from "./action-albumAccessRevoked";
@@ -40,7 +40,13 @@ export const revokeAlbumAccessDeclaration: ThunkDeclaration<
         const sharingAPI: RevokeAlbumAccessAPI = new CatalogAPIAdapter(app.axiosInstance, app);
         return revokeAlbumAccessThunk.bind(null, dispatch, sharingAPI, albumId);
     },
-    selector: ({shareModal}: CatalogViewerState) => ({
-        albumId: shareModal?.sharedAlbumId,
-    }),
+    selector: (state: CatalogViewerState) => {
+        const dialog = state.dialog;
+        if (!isShareDialog(dialog)) {
+            return { albumId: undefined };
+        }
+        return {
+            albumId: dialog.sharedAlbumId,
+        };
+    },
 };

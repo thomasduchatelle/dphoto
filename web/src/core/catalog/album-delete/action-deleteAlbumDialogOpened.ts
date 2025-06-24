@@ -1,5 +1,6 @@
-import {Album, AlbumId, albumIsOwnedByCurrentUser, CatalogViewerState} from "../language";
+import {Album, AlbumId, albumIsOwnedByCurrentUser, CatalogViewerState, DeleteDialog} from "../language";
 import {createAction} from "src/libs/daction";
+import {albumIdEquals} from "../language/utils-albumIdEquals";
 
 function isDeletable(album: Album): boolean {
     return albumIsOwnedByCurrentUser(album);
@@ -12,15 +13,11 @@ function getInitialSelectedAlbumId(
 ): AlbumId | undefined {
     const albumId = loadingMediasFor ?? mediasLoadedFromAlbumId
 
-    if (deletableAlbums && (!albumId || !deletableAlbums.some(a => isAlbumIdEqual(a.albumId, albumId)))) {
+    if (deletableAlbums && (!albumId || !deletableAlbums.some(a => albumIdEquals(a.albumId, albumId)))) {
         return deletableAlbums[0]?.albumId; // Added optional chaining for safety
     }
 
     return albumId;
-}
-
-function isAlbumIdEqual(a: AlbumId, b: AlbumId): boolean {
-    return a.owner === b.owner && a.folderName === b.folderName;
 }
 
 export const deleteAlbumDialogOpened = createAction<CatalogViewerState>(
@@ -32,14 +29,16 @@ export const deleteAlbumDialogOpened = createAction<CatalogViewerState>(
             current.loadingMediasFor,
             current.mediasLoadedFromAlbumId
         );
+        const deleteDialog: DeleteDialog = {
+            type: "DeleteDialog",
+            deletableAlbums,
+            initialSelectedAlbumId,
+            isLoading: false,
+            error: undefined,
+        }
         return {
             ...current,
-            deleteDialog: {
-                deletableAlbums,
-                initialSelectedAlbumId,
-                isLoading: false,
-                error: undefined,
-            }
+            dialog: deleteDialog
         };
     }
 );

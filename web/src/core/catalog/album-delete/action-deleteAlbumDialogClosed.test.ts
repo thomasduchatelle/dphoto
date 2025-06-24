@@ -1,5 +1,5 @@
 import {deleteAlbumDialogClosed} from "./action-deleteAlbumDialogClosed";
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, DeleteDialog} from "../language";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
 import {deleteDialogSelector} from "./selector-deleteDialogSelector";
 
@@ -7,13 +7,13 @@ describe("action:deleteAlbumDialogClosed", () => {
     it("closes the dialog when it was open, no matter its state", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            deleteDialog: {deletableAlbums: [], isLoading: false, error: "some error"},
+            dialog: {type: "DeleteDialog", deletableAlbums: [], isLoading: false, error: "some error"},
         };
         const action = deleteAlbumDialogClosed();
         const got = action.reducer(state, action);
         expect(got).toEqual({
             ...state,
-            deleteDialog: undefined,
+            dialog: undefined,
         });
 
         expect(deleteDialogSelector(got)).toEqual({
@@ -28,7 +28,7 @@ describe("action:deleteAlbumDialogClosed", () => {
     it("ignores when the dialog is already closed", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            deleteDialog: undefined,
+            dialog: undefined,
         };
         const action = deleteAlbumDialogClosed();
         expect(action.reducer(state, action)).toBe(state);

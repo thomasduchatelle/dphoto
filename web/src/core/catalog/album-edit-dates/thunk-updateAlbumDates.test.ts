@@ -1,6 +1,6 @@
 import {UpdateAlbumDatesPort, updateAlbumDatesThunk} from "./thunk-updateAlbumDates";
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
-import {albumDatesUpdated} from "./action-albumDatesUpdated";
+import {albumsAndMediasLoaded} from "../navigation/action-albumsAndMediasLoaded";
 import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
 import {someMedias, twoAlbums} from "../tests/test-helper-state";
 import {Album, AlbumId, Media} from "../language";
@@ -67,9 +67,10 @@ describe("thunk:updateAlbumDates", () => {
 
         expect(dispatched).toEqual([
             albumDatesUpdateStarted(),
-            albumDatesUpdated({
+            albumsAndMediasLoaded({
                 albums: twoAlbums,
-                medias: someMedias,
+                medias: rawMedias,
+                mediasFromAlbumId: albumId,
             })
         ]);
     });
@@ -102,9 +103,10 @@ describe("thunk:updateAlbumDates", () => {
 
         expect(dispatched).toEqual([
             albumDatesUpdateStarted(),
-            albumDatesUpdated({
+            albumsAndMediasLoaded({
                 albums: twoAlbums,
-                medias: someMedias,
+                medias: rawMedias,
+                mediasFromAlbumId: albumId,
             })
         ]);
     });
@@ -137,9 +139,10 @@ describe("thunk:updateAlbumDates", () => {
 
         expect(dispatched).toEqual([
             albumDatesUpdateStarted(),
-            albumDatesUpdated({
+            albumsAndMediasLoaded({
                 albums: twoAlbums,
-                medias: someMedias,
+                medias: rawMedias,
+                mediasFromAlbumId: albumId,
             })
         ]);
     });
@@ -172,9 +175,10 @@ describe("thunk:updateAlbumDates", () => {
 
         expect(dispatched).toEqual([
             albumDatesUpdateStarted(),
-            albumDatesUpdated({
+            albumsAndMediasLoaded({
                 albums: twoAlbums,
-                medias: someMedias,
+                medias: rawMedias,
+                mediasFromAlbumId: albumId,
             })
         ]);
     });
@@ -207,9 +211,10 @@ describe("thunk:updateAlbumDates", () => {
 
         expect(dispatched).toEqual([
             albumDatesUpdateStarted(),
-            albumDatesUpdated({
+            albumsAndMediasLoaded({
                 albums: twoAlbums,
-                medias: someMedias,
+                medias: rawMedias,
+                mediasFromAlbumId: albumId,
             })
         ]);
     });
@@ -242,9 +247,10 @@ describe("thunk:updateAlbumDates", () => {
 
         expect(dispatched).toEqual([
             albumDatesUpdateStarted(),
-            albumDatesUpdated({
+            albumsAndMediasLoaded({
                 albums: twoAlbums,
-                medias: someMedias,
+                medias: rawMedias,
+                mediasFromAlbumId: albumId,
             })
         ]);
     });

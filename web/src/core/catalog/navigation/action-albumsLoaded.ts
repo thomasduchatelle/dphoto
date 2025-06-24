@@ -1,5 +1,5 @@
-import {Album, albumIdEquals, albumMatchCriterion, CatalogViewerState, RedirectToAlbumIdPayload} from "../language";
-import {albumFilterAreCriterionEqual, DEFAULT_ALBUM_FILTER_ENTRY, refreshFilters} from "../common/utils";
+import {Album, CatalogViewerState, RedirectToAlbumIdPayload} from "../language";
+import {refreshFilters} from "../common/utils";
 import {createAction} from "src/libs/daction";
 
 interface AlbumsLoadedPayload extends RedirectToAlbumIdPayload {
@@ -9,9 +9,9 @@ interface AlbumsLoadedPayload extends RedirectToAlbumIdPayload {
 export const albumsLoaded = createAction<CatalogViewerState, AlbumsLoadedPayload>(
     'albumsLoaded',
     (current: CatalogViewerState, {albums, redirectTo}: AlbumsLoadedPayload): CatalogViewerState => {
-        const {albumFilterOptions, albumFilter, albums: filteredAlbums} = refreshFilters(current.currentUser, current.albumFilter, albums);
+        const {albumFilterOptions, albumFilter, albums: filteredAlbums} = refreshFilters(current.currentUser, current.albumFilter, albums, redirectTo);
 
-        let staging: CatalogViewerState = {
+        return {
             ...current,
             albumFilterOptions,
             albumFilter,
@@ -20,17 +20,6 @@ export const albumsLoaded = createAction<CatalogViewerState, AlbumsLoadedPayload
             error: undefined,
             albumsLoaded: true,
         }
-
-        if (redirectTo && !staging.albums.find(album => albumIdEquals(album.albumId, redirectTo))) {
-            const albumFilter = current.albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, DEFAULT_ALBUM_FILTER_ENTRY.criterion)) ?? DEFAULT_ALBUM_FILTER_ENTRY
-            staging = {
-                ...staging,
-                albumFilter,
-                albums: albums.filter(albumMatchCriterion(albumFilter.criterion)),
-            }
-        }
-
-        return staging
     }
 );
 

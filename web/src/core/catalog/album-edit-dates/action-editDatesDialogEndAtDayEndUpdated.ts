@@ -1,23 +1,23 @@
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, isEditDatesDialog} from "../language";
 import {createAction} from "src/libs/daction";
 
 export const editDatesDialogEndAtDayEndUpdated = createAction<CatalogViewerState, boolean>(
     "EditDatesDialogEndAtDayEndUpdated",
     (current: CatalogViewerState, endAtDayEnd: boolean) => {
-        if (!current.editDatesDialog) {
+        if (!isEditDatesDialog(current.dialog)) {
             return current;
         }
 
-        let updatedEndDate = current.editDatesDialog.endDate;
-        if (!endAtDayEnd) {
-            updatedEndDate = new Date(current.editDatesDialog.endDate);
+        let updatedEndDate = current.dialog.endDate;
+        if (!endAtDayEnd && current.dialog.endDate) {
+            updatedEndDate = new Date(current.dialog.endDate);
             updatedEndDate.setUTCHours(23, 59, 0, 0);
         }
         
         return {
             ...current,
-            editDatesDialog: {
-                ...current.editDatesDialog,
+            dialog: {
+                ...current.dialog,
                 endAtDayEnd,
                 endDate: updatedEndDate,
                 error: undefined,

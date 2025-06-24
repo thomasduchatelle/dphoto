@@ -1,16 +1,16 @@
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, isEditDatesDialog} from "../language";
 import {createAction} from "src/libs/daction";
 
 export const ALBUM_DATES_ORPHANED_MEDIAS_ERROR_CODE = "OrphanedMediasError";
 
 interface AlbumDatesUpdateFailedPayload {
-    error?: string; // This will be the error code or message from the API
+    error?: string;
 }
 
 export const albumDatesUpdateFailed = createAction<CatalogViewerState, AlbumDatesUpdateFailedPayload>(
     "AlbumDatesUpdateFailed",
     (current: CatalogViewerState, {error}: AlbumDatesUpdateFailedPayload) => {
-        if (!current.editDatesDialog) {
+        if (!isEditDatesDialog(current.dialog)) {
             return current;
         }
 
@@ -26,10 +26,10 @@ export const albumDatesUpdateFailed = createAction<CatalogViewerState, AlbumDate
 
         return {
             ...current,
-            editDatesDialog: {
-                ...current.editDatesDialog,
+            dialog: {
+                ...current.dialog,
                 isLoading: false,
-                error: errorMessage, // Store the user-friendly message
+                error: errorMessage,
             },
         };
     }

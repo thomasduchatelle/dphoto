@@ -11,7 +11,7 @@ describe("action:albumsAndMediasLoaded", () => {
         const action = albumsAndMediasLoaded({
             albums: twoAlbums,
             medias: someMedias.flatMap(m => m.medias), // Pass raw medias
-            selectedAlbum: twoAlbums[0],
+            mediasFromAlbumId: twoAlbums[0].albumId,
         });
         const got = action.reducer({
             ...initialCatalogState(myselfUser),
@@ -27,7 +27,7 @@ describe("action:albumsAndMediasLoaded", () => {
         const action = albumsAndMediasLoaded({
             albums: [twoAlbums[0]],
             medias: someMedias.flatMap(m => m.medias), // Pass raw medias
-            selectedAlbum: twoAlbums[0],
+            mediasFromAlbumId: twoAlbums[0].albumId,
         });
         const got = action.reducer(initialCatalogState(myselfUser), action);
 
@@ -67,7 +67,7 @@ describe("action:albumsAndMediasLoaded", () => {
         const action = albumsAndMediasLoaded({
             albums: [...twoAlbums, newDirectlyOwnedAlbum],
             medias: someMedias.flatMap(m => m.medias), // Pass raw medias
-            selectedAlbum: twoAlbums [0],
+            mediasFromAlbumId: twoAlbums [0].albumId,
         });
         const got = action.reducer(
             {
@@ -85,6 +85,32 @@ describe("action:albumsAndMediasLoaded", () => {
             albums: [loadedStateWithTwoAlbums.albums[0], newDirectlyOwnedAlbum],
             displayedAlbum: twoAlbums[0],
             medias: groupByDay(someMedias.flatMap(m => m.medias)),
+        });
+    });
+
+    it("change the filter so the loaded album is visible", () => {
+        const directlyOwnedFilter = loadedStateWithTwoAlbums.albumFilterOptions[0];
+
+        const action = albumsAndMediasLoaded({
+            albums: twoAlbums,
+            medias: someMedias.flatMap(m => m.medias),
+            mediasFromAlbumId: twoAlbums[1].albumId,
+        });
+        const got = action.reducer(
+            {
+                ...loadedStateWithTwoAlbums,
+                albumFilter: directlyOwnedFilter,
+                albums: [loadedStateWithTwoAlbums.albums[0]],
+            },
+            action
+        );
+
+        expect(catalogViewerPageSelector(got)).toEqual({
+            ...selectionForLoadedStateWithTwoAlbums,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
+            albums: twoAlbums,
+            displayedAlbum: twoAlbums[1],
+            medias: someMedias,
         });
     });
 });

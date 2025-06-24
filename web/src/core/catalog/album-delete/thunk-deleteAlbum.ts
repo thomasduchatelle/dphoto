@@ -1,17 +1,19 @@
 import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogFactory} from "../catalog-factories";
 import {DPhotoApplication} from "../../application";
-import {Album, AlbumId, albumIdEquals, CatalogViewerState, getErrorMessage} from "../language";
+import {Album, AlbumId, CatalogViewerState, getErrorMessage, Media} from "../language";
 import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
-import {albumDeleted} from "./action-albumDeleted";
 import {ThunkDeclaration} from "src/libs/dthunks";
+import {loadAlbumsAndMedias} from "../navigation/utils-loadAlbumsAndMedias";
 
 
 export interface DeleteAlbumPort {
     deleteAlbum(albumId: AlbumId): Promise<void>;
 
     fetchAlbums(): Promise<Album[]>;
+
+    fetchMedias(albumId: AlbumId): Promise<Media[]>;
 }
 
 export type DeleteAlbumThunk = (albumIdToDelete: AlbumId) => Promise<void>;
@@ -35,14 +37,8 @@ export async function deleteAlbumThunk(
         return;
     }
 
-    try {
-        const albums = await port.fetchAlbums();
-        const redirectTo = albumIdEquals(selectedAlbumId, albumIdToDelete) && !!albums ? albums[0]?.albumId : undefined; // Added optional chaining
-        dispatch(albumDeleted({albums, redirectTo}));
-
-    } catch (error) {
-        dispatch(albumDeleteFailed(`Failed to fetch albums after deletion: ${error}`));
-    }
+    const action = await loadAlbumsAndMedias(port, selectedAlbumId)
+    dispatch(action);
 }
 
 export const deleteAlbumDeclaration: ThunkDeclaration<

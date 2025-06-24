@@ -1,22 +1,24 @@
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
-import {DeleteDialogState} from "../language";
+import {DeleteDialog} from "../language";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {deleteDialogSelector} from "./selector-deleteDialogSelector";
+import {CatalogViewerState} from "../language";
 
 describe("action:albumDeleteFailed", () => {
-    const deleteDialog: DeleteDialogState = {
+    const deleteDialog: DeleteDialog = {
+        type: "DeleteDialog",
         deletableAlbums: twoAlbums,
         isLoading: true,
         initialSelectedAlbumId: twoAlbums[0].albumId,
     };
 
-    it("sets the error value in deleteDialog.error when the dialog is open", () => {
+    it("sets the error value in dialog.error when the dialog is open and is a DeleteDialog", () => {
         const errorMsg = "Failed to delete album";
         const action = albumDeleteFailed(errorMsg);
         const resultState = action.reducer(
             {
                 ...loadedStateWithTwoAlbums,
-                deleteDialog,
+                dialog: deleteDialog,
             },
             action
         );
@@ -37,6 +39,16 @@ describe("action:albumDeleteFailed", () => {
             action
         );
         expect(resultState).toBe(loadedStateWithTwoAlbums);
+    });
+
+    it("ignores if the dialog is open but not a DeleteDialog", () => {
+        const state: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            dialog: {type: "EditDatesDialog", albumId: {owner: "o", folderName: "f"}, albumName: "n", startDate: new Date(), endDate: new Date(), startAtDayStart: true, endAtDayEnd: true, isLoading: false},
+        };
+        const action = albumDeleteFailed("Failed to delete album");
+        const resultState = action.reducer(state, action);
+        expect(resultState).toBe(state);
     });
 
     it("fails to create the action if the error message is empty or blank", () => {

@@ -2,9 +2,9 @@ import {CatalogViewerState} from "../language";
 import {DEFAULT_ALBUM_FILTER_ENTRY} from "../common/utils";
 import {createAction} from "src/libs/daction";
 
-export const noAlbumAvailable = createAction<CatalogViewerState>(
+export const noAlbumAvailable = createAction<CatalogViewerState, Error | undefined>(
     'noAlbumAvailable',
-    (current: CatalogViewerState): CatalogViewerState => {
+    (current: CatalogViewerState, error): CatalogViewerState => {
         return {
             currentUser: current.currentUser,
             albumNotFound: true,
@@ -15,6 +15,7 @@ export const noAlbumAvailable = createAction<CatalogViewerState>(
             mediasLoaded: true,
             albumFilterOptions: [DEFAULT_ALBUM_FILTER_ENTRY],
             albumFilter: DEFAULT_ALBUM_FILTER_ENTRY,
+            error,
         };
     }
 );

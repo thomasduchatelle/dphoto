@@ -106,7 +106,8 @@ describe("action:deleteAlbumDialogOpened", () => {
         const action = deleteAlbumDialogOpened();
         const next = action.reducer({
             ...stateWithThreeAlbumsLoaded,
-            deleteDialog: {
+            dialog: {
+                type: "DeleteDialog",
                 deletableAlbums: [albumWinter],
                 initialSelectedAlbumId: albumWinter.albumId,
                 isLoading: true,

@@ -150,7 +150,7 @@ describe("State: behaviour", () => {
             );
 
             const {endDate} = editDatesDialogSelector(state);
-            expect(endDate.toISOString()).toMatch(testCase.displayedEndRegex)
+            expect(endDate?.toISOString()).toMatch(testCase.displayedEndRegex)
 
             expect(fakePort.updatedAlbums).toHaveLength(1);
             expect(fakePort.updatedAlbums[0]).toEqual({

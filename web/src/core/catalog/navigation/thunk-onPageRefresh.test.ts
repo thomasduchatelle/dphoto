@@ -68,7 +68,7 @@ describe("CatalogLoader", () => {
             albumsAndMediasLoaded({
                 albums: twoAlbums,
                 medias: medias,
-                selectedAlbum: twoAlbums[0],
+                mediasFromAlbumId: twoAlbums[0].albumId,
             }),
         ])
     })
@@ -81,7 +81,7 @@ describe("CatalogLoader", () => {
         expect(dispatch.actions).toEqual([
             mediaLoadFailed({
                 albums: twoAlbums,
-                selectedAlbum: twoAlbums[0],
+                displayedAlbumId: twoAlbums[0].albumId,
                 error: new Error(`failed to load medias of ${twoAlbums[0].albumId}`, error),
             })
         ])
@@ -110,7 +110,7 @@ describe("CatalogLoader", () => {
             albumsAndMediasLoaded({
                 albums: twoAlbums,
                 medias: medias,
-                selectedAlbum: twoAlbums[0],
+                mediasFromAlbumId: twoAlbums[0].albumId,
                 redirectTo: twoAlbums[0].albumId,
             }),
         ])
@@ -131,7 +131,7 @@ describe("CatalogLoader", () => {
         expect(dispatch.actions).toEqual([
             mediaLoadFailed({
                 albums: twoAlbums,
-                selectedAlbum: twoAlbums[0],
+                displayedAlbumId: twoAlbums[0].albumId,
                 error: new Error(`failed to load medias of ${twoAlbums[0].albumId}`, error),
             }),
         ])
@@ -174,7 +174,7 @@ describe("CatalogLoader", () => {
 
         expect(dispatch.actions).toEqual([
             mediaLoadFailed({
-                selectedAlbum: twoAlbums[1],
+                displayedAlbumId: twoAlbums[1].albumId,
                 error,
             }),
         ])

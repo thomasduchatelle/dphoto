@@ -1,12 +1,13 @@
 import {Album, AlbumId, albumIdEquals, CatalogViewerState, Media} from "../language";
-import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
-import {mediaLoadFailed} from "./action-mediaLoadFailed";
+import {AlbumsAndMediasLoaded, albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
+import {MediaLoadFailed, mediaLoadFailed} from "./action-mediaLoadFailed";
 import {mediasLoaded} from "./action-mediasLoaded";
-import {noAlbumAvailable} from "./action-noAlbumAvailable";
+import {NoAlbumAvailable} from "./action-noAlbumAvailable";
 import {DPhotoApplication} from "../../application";
 import {CatalogFactory} from "../catalog-factories";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {ThunkDeclaration} from "src/libs/dthunks";
+import {loadAlbumsAndMedias} from "./utils-loadAlbumsAndMedias";
 
 export interface OnPageRefreshArgs {
     allAlbums: Album[]
@@ -23,12 +24,12 @@ export interface FetchAlbumsAndMediasPort {
 
 export class OnPageRefresh {
     constructor(
-        private readonly dispatch: (action: ReturnType<typeof mediaLoadFailed> | ReturnType<typeof albumsAndMediasLoaded> | ReturnType<typeof noAlbumAvailable> | ReturnType<typeof mediasLoaded>) => void,
+        private readonly dispatch: (action: MediaLoadFailed | AlbumsAndMediasLoaded | NoAlbumAvailable | ReturnType<typeof mediasLoaded>) => void,
         private readonly fetchAlbumsAndMediasPort: FetchAlbumsAndMediasPort
     ) {
     }
 
-    onPageRefresh = async ({albumId, allAlbums, albumsLoaded, mediasLoadedFromAlbumId, loadingMediasFor}: OnPageRefreshArgs & {
+    onPageRefresh = async ({albumId, albumsLoaded, mediasLoadedFromAlbumId, loadingMediasFor}: OnPageRefreshArgs & {
         albumId?: AlbumId
     }): Promise<void> => {
         if (!albumId) {
@@ -46,7 +47,7 @@ export class OnPageRefresh {
                 })
                 .catch(error => {
                     this.dispatch(mediaLoadFailed({
-                        selectedAlbum: allAlbums.find(a => albumIdEquals(a.albumId, albumId)),
+                        displayedAlbumId: albumId,
                         error,
                     }))
                 })
@@ -55,7 +56,7 @@ export class OnPageRefresh {
         return Promise.resolve()
     }
 
-    private loadSpecificAlbum = async (albumId: AlbumId): Promise<ReturnType<typeof mediaLoadFailed> | ReturnType<typeof albumsAndMediasLoaded>> => {
+    private loadSpecificAlbum = async (albumId: AlbumId): Promise<MediaLoadFailed | AlbumsAndMediasLoaded> => {
         const [albumsResp, mediasResp] = await Promise.allSettled([
             this.fetchAlbumsAndMediasPort.fetchAlbums(),
             this.fetchAlbumsAndMediasPort.fetchMedias(albumId),
@@ -65,11 +66,9 @@ export class OnPageRefresh {
             return Promise.reject(albumsResp.reason)
 
         } else if (mediasResp.status === "rejected") {
-            const selectedAlbum = albumsResp.value.find((a: Album) => albumIdEquals(a.albumId, albumId))
-
             return mediaLoadFailed({
                 albums: albumsResp.value,
-                selectedAlbum: selectedAlbum,
+                displayedAlbumId: albumId,
                 error: new Error(`failed to load medias of ${albumId}`, mediasResp.reason),
             })
 
@@ -77,37 +76,16 @@ export class OnPageRefresh {
             const albums: Album[] = albumsResp.value
             const medias = mediasResp.value
 
-            const selectedAlbum = albums.find(a => albumIdEquals(a.albumId, albumId))
             return albumsAndMediasLoaded({
                 albums: albums,
                 medias,
-                selectedAlbum,
+                mediasFromAlbumId: albumId,
             })
         }
     }
 
-    private loadDefaultAlbum = async (): Promise<ReturnType<typeof albumsAndMediasLoaded> | ReturnType<typeof noAlbumAvailable> | ReturnType<typeof mediaLoadFailed>> => {
-        const albums = await this.fetchAlbumsAndMediasPort.fetchAlbums();
-        if (!albums || albums.length === 0) {
-            return noAlbumAvailable()
-        }
-        const selectedAlbum = albums[0];
-        try {
-            const medias = await this.fetchAlbumsAndMediasPort.fetchMedias(selectedAlbum.albumId);
-            return albumsAndMediasLoaded({
-                albums: albums,
-                medias: medias,
-                selectedAlbum,
-                redirectTo: selectedAlbum.albumId,
-            });
-
-        } catch (e: any) {
-            return mediaLoadFailed({
-                albums: albums,
-                selectedAlbum,
-                error: new Error(`failed to load medias of ${selectedAlbum.albumId}`, e),
-            })
-        }
+    private loadDefaultAlbum = async (): Promise<AlbumsAndMediasLoaded | NoAlbumAvailable | MediaLoadFailed> => {
+        return await loadAlbumsAndMedias(this.fetchAlbumsAndMediasPort);
     }
 }
 

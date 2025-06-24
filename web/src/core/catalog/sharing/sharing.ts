@@ -1,4 +1,4 @@
-import {AlbumId, albumIdEquals, CatalogViewerState, ShareError, ShareModal, Sharing, UserDetails} from "../language";
+import {AlbumId, albumIdEquals, CatalogViewerState, ShareDialog, ShareError, Sharing, UserDetails} from "../language";
 import {filteredListOfAlbums} from "../navigation";
 
 export function sortSharings(sharings: Sharing[]): Sharing[] {
@@ -54,11 +54,12 @@ export function getSharingSuggestions(
         .map(entry => entry.user);
 }
 
-export function withOpenShareModal(state: CatalogViewerState, albumId: AlbumId, extra: Partial<ShareModal> = {}): CatalogViewerState {
+export function withOpenShareDialog(state: CatalogViewerState, albumId: AlbumId, extra: Partial<ShareDialog> = {}): CatalogViewerState {
     const album = state.allAlbums.find(a => albumIdEquals(a.albumId, albumId));
     return {
         ...state,
-        shareModal: album ? {
+        dialog: album ? {
+            type: "ShareDialog",
             sharedAlbumId: albumId,
             sharedWith: sortSharings([...album.sharedWith]),
             ...extra,
@@ -69,12 +70,12 @@ export function withOpenShareModal(state: CatalogViewerState, albumId: AlbumId, 
 
 export function moveSharedWithToSuggestion(
     {allAlbums, albums: _, ...current}: CatalogViewerState,
-    {sharedWith: previousSharedWith, suggestions: previousSuggestions, error: _2, ...shareModal}: ShareModal,
+    {sharedWith: previousSharedWith, suggestions: previousSuggestions, error: _2, ...shareDialog}: ShareDialog,
     email: string,
     error ?: ShareError
 ): CatalogViewerState {
     const restoredAllAlbums = allAlbums.map(album => {
-        if (albumIdEquals(album.albumId, shareModal.sharedAlbumId)) {
+        if (albumIdEquals(album.albumId, shareDialog.sharedAlbumId)) {
             return {
                 ...album,
                 sharedWith: album.sharedWith.filter(s => s.user.email !== email),
@@ -84,13 +85,13 @@ export function moveSharedWithToSuggestion(
         return album;
     });
 
-    return withOpenShareModal(
+    return withOpenShareDialog(
         {
             ...current,
             allAlbums: restoredAllAlbums,
             albums: filteredListOfAlbums({...current, allAlbums: restoredAllAlbums}),
         },
-        shareModal.sharedAlbumId,
+        shareDialog.sharedAlbumId,
         {
             suggestions: previousSuggestions.concat(previousSharedWith.filter(({user}) => user.email === email).map(({user}) => user)),
             error,
@@ -100,12 +101,12 @@ export function moveSharedWithToSuggestion(
 
 export function moveSuggestionToSharedWith(
     {allAlbums, albums: _, ...current}: CatalogViewerState,
-    {sharedWith: previousSharedWith, suggestions: previousSuggestions, error: _2, ...shareModal}: ShareModal,
+    {sharedWith: previousSharedWith, suggestions: previousSuggestions, error: _2, ...shareDialog}: ShareDialog,
     user: UserDetails,
     error?: ShareError,
 ): CatalogViewerState {
     const restoredAllAlbums = allAlbums.map(album => {
-        if (albumIdEquals(album.albumId, shareModal.sharedAlbumId) && !album.sharedWith.some(s => s.user.email === user.email)) {
+        if (albumIdEquals(album.albumId, shareDialog.sharedAlbumId) && !album.sharedWith.some(s => s.user.email === user.email)) {
             const sharedWith = sortSharings([...album.sharedWith, {user}]);
             return {
                 ...album,
@@ -115,13 +116,13 @@ export function moveSuggestionToSharedWith(
         return album;
     });
 
-    return withOpenShareModal(
+    return withOpenShareDialog(
         {
             ...current,
             allAlbums: restoredAllAlbums,
             albums: filteredListOfAlbums({...current, allAlbums: restoredAllAlbums}),
         },
-        shareModal.sharedAlbumId,
+        shareDialog.sharedAlbumId,
         {
             suggestions: previousSuggestions.filter(s => s.email !== user.email),
             error,

@@ -7,7 +7,8 @@ describe("action:albumDatesUpdateFailed", () => {
     it("sets error and stops loading when dialog is open", () => {
         const stateWithEditDialog: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: twoAlbums[0].albumId,
                 albumName: twoAlbums[0].name,
                 startDate: twoAlbums[0].start,
@@ -37,7 +38,7 @@ describe("action:albumDatesUpdateFailed", () => {
     it("does nothing when dialog is closed", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: undefined,
+            dialog: undefined,
         };
 
         const action = albumDatesUpdateFailed({error: "Some error"});

@@ -25,7 +25,7 @@ describe("action:editDatesDialogOpened", () => {
     it("opens the dialog with the album specified by loadingMediasFor", () => {
         const initialState: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            mediasLoadedFromAlbumId: jan25Album.albumId, // This should be ignored
+            mediasLoadedFromAlbumId: jan25Album.albumId,
             loadingMediasFor: feb25Album.albumId,
         };
 
@@ -56,7 +56,7 @@ describe("action:editDatesDialogOpened", () => {
 
         expect(dialogSelection.isOpen).toBeFalsy();
         expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
-        expect(got).toEqual(state); // Ensure no other state changes
+        expect(got).toEqual(state);
     });
 
     it("does not open dialog when selected album is not found", () => {
@@ -72,7 +72,7 @@ describe("action:editDatesDialogOpened", () => {
 
         expect(dialogSelection.isOpen).toBeFalsy();
         expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
-        expect(got).toEqual(state); // Ensure no other state changes
+        expect(got).toEqual(state);
     });
 
     it("opens the dialog with correct startAtDayStart and endAtDayEnd when dates have non-zero time", () => {

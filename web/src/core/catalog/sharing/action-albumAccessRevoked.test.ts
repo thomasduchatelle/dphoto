@@ -1,12 +1,14 @@
 import {albumAccessRevoked} from "./action-albumAccessRevoked";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {sharingDialogSelector} from "./selector-sharingDialogSelector";
+import {CatalogViewerState} from "../language";
 
 describe("action:albumAccessRevoked", () => {
     it("removes a sharing entry by email, and adds it in the suggestions, while keeping the modal open", () => {
         const initial = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: twoAlbums[0].sharedWith,
                 suggestions: [],
@@ -24,7 +26,8 @@ describe("action:albumAccessRevoked", () => {
     it("keeps consistent the shares in the visible list of albums", () => {
         const initial = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: twoAlbums[0].sharedWith,
                 suggestions: [],
@@ -52,9 +55,10 @@ describe("action:albumAccessRevoked", () => {
     });
 
     it("should not change state when AlbumAccessRevoked is received with an email not in sharedWith", () => {
-        const initial = {
+        const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog",
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: twoAlbums[0].sharedWith,
                 suggestions: [],
@@ -97,7 +101,8 @@ describe("action:albumAccessRevoked", () => {
                     ownedBy: undefined,
                 }
             ],
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: [{user: aliceUserDetails}],
                 suggestions: [charlieUserDetails, bobUserDetails]

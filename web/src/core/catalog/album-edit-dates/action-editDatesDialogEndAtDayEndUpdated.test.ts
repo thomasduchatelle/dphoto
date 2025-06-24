@@ -7,7 +7,8 @@ describe("action:editDatesDialogEndAtDayEndUpdated", () => {
     it("unchecks end at day end and keeps current time", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00Z"),
@@ -35,7 +36,8 @@ describe("action:editDatesDialogEndAtDayEndUpdated", () => {
     it("checks end at day end and resets time to 23:59", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00Z"),
@@ -49,14 +51,13 @@ describe("action:editDatesDialogEndAtDayEndUpdated", () => {
         const action = editDatesDialogEndAtDayEndUpdated(true);
         const got = action.reducer(state, action);
 
-        // End date will have an undefined time: it will be ignored by the update logic, and reset if endAtDayEnd becomes false
         expect(editDatesDialogSelector(got).endAtDayEnd).toEqual(true);
     });
 
     it("does nothing when dialog is closed", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: undefined,
+            dialog: undefined,
         };
 
         const action = editDatesDialogEndAtDayEndUpdated(true);
@@ -68,7 +69,8 @@ describe("action:editDatesDialogEndAtDayEndUpdated", () => {
     it("unchecks end at day end and sets time to 23:59 even if it was different", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00Z"),

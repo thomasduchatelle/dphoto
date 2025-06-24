@@ -11,5 +11,5 @@ export const initialCatalogState = (currentUser: CurrentUserInsight): CatalogVie
     medias: [],
     albumsLoaded: false,
     mediasLoaded: false,
-    deleteDialog: undefined
+    dialog: undefined,
 })

@@ -1,4 +1,5 @@
 import {AlbumId, albumIsOwnedByCurrentUser, CatalogViewerState} from "./catalog-state";
+import {albumIdEquals} from "./utils-albumIdEquals";
 
 export interface DisplayedAlbumSelection {
     displayedAlbumId?: AlbumId;
@@ -17,8 +18,7 @@ export function displayedAlbumSelector(state: CatalogViewerState): DisplayedAlbu
     }
 
     const selectedAlbum = state.allAlbums.find(album =>
-        album.albumId.owner === targetAlbumId.owner &&
-        album.albumId.folderName === targetAlbumId.folderName
+        albumIdEquals(album.albumId, targetAlbumId)
     );
 
     if (!selectedAlbum) {

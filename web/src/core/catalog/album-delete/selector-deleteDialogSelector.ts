@@ -1,4 +1,4 @@
-import {Album, AlbumId, CatalogViewerState} from "../language";
+import {Album, AlbumId, CatalogViewerState, isDeleteDialog} from "../language";
 
 export interface DeleteDialogFrag {
     albums: Album[];
@@ -8,12 +8,21 @@ export interface DeleteDialogFrag {
     error?: string;
 }
 
-export function deleteDialogSelector({deleteDialog}: CatalogViewerState): DeleteDialogFrag {
+export function deleteDialogSelector({dialog}: CatalogViewerState): DeleteDialogFrag {
+    if (!isDeleteDialog(dialog)) {
+        return {
+            albums: [],
+            initialSelectedAlbumId: undefined,
+            isOpen: false,
+            isLoading: false,
+            error: undefined,
+        };
+    }
     return {
-        albums: deleteDialog?.deletableAlbums ?? [],
-        initialSelectedAlbumId: deleteDialog?.initialSelectedAlbumId,
-        isOpen: !!deleteDialog,
-        isLoading: deleteDialog?.isLoading ?? false,
-        error: deleteDialog?.error,
+        albums: dialog.deletableAlbums ?? [],
+        initialSelectedAlbumId: dialog.initialSelectedAlbumId,
+        isOpen: true,
+        isLoading: dialog.isLoading ?? false,
+        error: dialog.error,
     };
 }
