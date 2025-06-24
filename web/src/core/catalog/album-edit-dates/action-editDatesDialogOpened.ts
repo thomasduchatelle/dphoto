@@ -5,7 +5,7 @@ import {createAction} from "src/libs/daction";
 export const editDatesDialogOpened = createAction<CatalogViewerState>(
     "EditDatesDialogOpened",
     (current: CatalogViewerState) => {
-        const {albumId: displayedAlbumId} = displayedAlbumSelector(current);
+        const {displayedAlbumId: displayedAlbumId} = displayedAlbumSelector(current);
 
         const selectedAlbum = current.albums.find(album => displayedAlbumId && albumIdEquals(displayedAlbumId, album.albumId));
 

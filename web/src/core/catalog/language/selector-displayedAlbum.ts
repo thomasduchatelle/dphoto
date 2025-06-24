@@ -1,8 +1,8 @@
 import {AlbumId, albumIsOwnedByCurrentUser, CatalogViewerState} from "./catalog-state";
 
 export interface DisplayedAlbumSelection {
-    albumId?: AlbumId;
-    isOwned: boolean;
+    displayedAlbumId?: AlbumId;
+    displayedAlbumIdIsOwned: boolean;
 }
 
 export function getDisplayedAlbumId(state: CatalogViewerState) {
@@ -13,7 +13,7 @@ export function displayedAlbumSelector(state: CatalogViewerState): DisplayedAlbu
     const targetAlbumId: AlbumId | undefined = getDisplayedAlbumId(state);
 
     if (!targetAlbumId) {
-        return {isOwned: false};
+        return {displayedAlbumIdIsOwned: false};
     }
 
     const selectedAlbum = state.allAlbums.find(album =>
@@ -22,11 +22,11 @@ export function displayedAlbumSelector(state: CatalogViewerState): DisplayedAlbu
     );
 
     if (!selectedAlbum) {
-        return {isOwned: false};
+        return {displayedAlbumIdIsOwned: false};
     }
 
     return {
-        albumId: selectedAlbum.albumId,
-        isOwned: albumIsOwnedByCurrentUser(selectedAlbum),
+        displayedAlbumId: selectedAlbum.albumId,
+        displayedAlbumIdIsOwned: albumIsOwnedByCurrentUser(selectedAlbum),
     };
 }

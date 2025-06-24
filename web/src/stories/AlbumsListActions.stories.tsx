@@ -155,3 +155,31 @@ NoOwnAlbumsOpen.play = async ({canvasElement}) => {
 
     await userEvent.click(canvas.getAllByRole("button")[0]);
 };
+
+export const EditDatesButtonDisabled = Template.bind({});
+EditDatesButtonDisabled.args = {
+    selected: {
+        criterion: {
+            owners: ['black-widow', 'hulk']
+        },
+        avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+        name: "Avenger Family",
+    },
+    options: [
+        {
+            criterion: {
+                owners: []
+            },
+            avatars: ['black-widow-profile.jpg', 'hulk-profile.webp', 'tonystark-profile.jpg', '4.jpg', '5.jpg'],
+            name: "All Albums",
+        },
+        {
+            criterion: {
+                owners: ['black-widow', 'hulk']
+            },
+            avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+            name: "Avengers Family",
+        },
+    ],
+    displayedAlbumIdIsOwned: false,
+};

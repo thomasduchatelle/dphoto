@@ -11,10 +11,12 @@ export default function AlbumListActions({
                                              openDialogForCreateAlbum,
                                              openDeleteAlbumDialog,
                                              openEditDatesDialog,
+                                             displayedAlbumIdIsOwned = true,
                                              ...props
                                          }: OwnerSelectorProps & CreateAlbumControls & {
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
+    displayedAlbumIdIsOwned: boolean
 }) {
     const [urlParams] = useSearchParams()
     const features = urlParams.get('features');
@@ -35,7 +37,7 @@ export default function AlbumListActions({
             </IconButton>
             <Tooltip title={isEditAlbumFeatureEnabled ? "" : "Function not yet available, stay tuned !"}>
                 <span>
-                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled={!isEditAlbumFeatureEnabled}>
+                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled={!isEditAlbumFeatureEnabled || !displayedAlbumIdIsOwned}>
                         <EditIcon/>
                     </IconButton>
                 </span>
