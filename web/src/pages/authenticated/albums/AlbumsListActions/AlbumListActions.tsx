@@ -1,10 +1,9 @@
 import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
-import {Box, IconButton, Tooltip} from "@mui/material";
+import {Box, IconButton} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import {CreateAlbumControls} from "../../../../core/catalog";
-import {useSearchParams} from "react-router-dom";
 
 
 export default function AlbumListActions({
@@ -18,10 +17,6 @@ export default function AlbumListActions({
     openEditDatesDialog: () => void
     displayedAlbumIdIsOwned: boolean
 }) {
-    const [urlParams] = useSearchParams()
-    const features = urlParams.get('features');
-    const isEditAlbumFeatureEnabled = features && features.includes('edit');
-
     return (
         <Box sx={{
             display: 'flex',
@@ -35,13 +30,9 @@ export default function AlbumListActions({
             <IconButton color="primary" onClick={openDialogForCreateAlbum} size="large">
                 <AddIcon/>
             </IconButton>
-            <Tooltip title={isEditAlbumFeatureEnabled ? "" : "Function not yet available, stay tuned !"}>
-                <span>
-                    <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled={!isEditAlbumFeatureEnabled || !displayedAlbumIdIsOwned}>
-                        <EditIcon/>
-                    </IconButton>
-                </span>
-            </Tooltip>
+            <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled={!displayedAlbumIdIsOwned}>
+                <EditIcon/>
+            </IconButton>
             <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog}>
                 <DeleteIcon/>
             </IconButton>

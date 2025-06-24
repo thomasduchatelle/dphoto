@@ -3,6 +3,9 @@ import {Album, albumIdEquals, UserDetails} from "./language";
 import {albumsFiltered, SELF_OWNED_ALBUM_FILTER_CRITERION} from "./navigation";
 import {albumAccessGranted, albumAccessRevoked, sharingDialogSelector, sharingModalClosed, sharingModalErrorOccurred, sharingModalOpened} from "./sharing";
 import {catalogReducer} from "./actions";
+import {editDatesDialogOpened} from "./album-edit-dates/action-editDatesDialogOpened";
+import {updateAlbumDatesDeclaration, UpdateAlbumDatesPort, updateAlbumDatesThunk} from "./album-edit-dates/thunk-updateAlbumDates";
+import {editDatesDialogSelector} from "./album-edit-dates";
 
 describe("State: behaviour", () => {
     it("keeps the album shares consistent when closing and reopening the dialog", () => {
@@ -79,4 +82,84 @@ describe("State: behaviour", () => {
         expect(state).toEqual(loadedStateWithTwoAlbums);
         expect(ownedAlbums).toEqual([loadedStateWithTwoAlbums.albums[0]]);
     });
+
+    const testCases = [
+        {
+            name: "full day album (start and end at midnight)",
+            album: {
+                ...twoAlbums[0],
+                start: new Date("2025-01-01T00:00:00.000Z"),
+                end: new Date("2025-02-01T00:00:00.000Z"),
+            },
+            displayedEndRegex: /^2025-01-31.*/,
+        },
+        {
+            name: "album with round start time and precise end time",
+            album: {
+                ...twoAlbums[0],
+                start: new Date("2025-01-01T00:00:00.000Z"),
+                end: new Date("2025-01-31T14:43:00.000Z"),
+            },
+            displayedEndRegex: /^2025-01-31T14:42.*/,
+        },
+        {
+            name: "album with precise start time and round end time",
+            album: {
+                ...twoAlbums[0],
+                start: new Date("2025-01-01T00:00:00.000Z"),
+                end: new Date("2025-01-31T16:00:00.000Z"),
+            },
+            displayedEndRegex: /^2025-01-31T16:00.*/,
+        },
+    ];
+
+    for (const testCase of testCases) {
+        it(`preserves original album dates when edit dialog is opened and submitted without changes: ${testCase.name}`, async () => {
+            class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
+                public updatedAlbums: { albumId: any, startDate: Date, endDate: Date }[] = [];
+
+                async updateAlbumDates(albumId: any, startDate: Date, endDate: Date): Promise<void> {
+                    this.updatedAlbums.push({albumId, startDate, endDate});
+                }
+
+                async fetchAlbums(): Promise<Album[]> {
+                    return twoAlbums;
+                }
+
+                async fetchMedias(): Promise<any[]> {
+                    return [];
+                }
+            }
+
+            const fakePort = new UpdateAlbumDatesPortFake();
+            const dispatched: any[] = [];
+
+            const stateWithAlbum = {
+                ...loadedStateWithTwoAlbums,
+                albums: [testCase.album],
+                allAlbums: [testCase.album],
+                mediasLoadedFromAlbumId: testCase.album.albumId,
+            };
+
+            let state = catalogReducer(stateWithAlbum, editDatesDialogOpened());
+
+            await updateAlbumDatesThunk(
+                dispatched.push.bind(dispatched),
+                fakePort,
+                updateAlbumDatesDeclaration.selector(state),
+            );
+
+            const {endDate} = editDatesDialogSelector(state);
+            expect(endDate.toISOString()).toMatch(testCase.displayedEndRegex)
+
+            expect(fakePort.updatedAlbums).toHaveLength(1);
+            expect(fakePort.updatedAlbums[0]).toEqual({
+                albumId: testCase.album.albumId,
+                startDate: testCase.album.start,
+                endDate: testCase.album.end,
+            });
+
+            fakePort.updatedAlbums = [];
+        });
+    }
 });

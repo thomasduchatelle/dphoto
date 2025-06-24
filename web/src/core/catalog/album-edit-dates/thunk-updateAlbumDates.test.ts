@@ -74,13 +74,13 @@ describe("thunk:updateAlbumDates", () => {
         ]);
     });
 
-    it("should convert specific times to API format with exclusive end", async () => {
+    it("should convert round end times (full hours) to API format without adding 1 minute", async () => {
         const rawMedias = someMedias.flatMap(m => m.medias);
         const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
         const displayStartDate = new Date("2023-07-10T10:30:00");
-        const displayEndDate = new Date("2023-07-20T15:00:00");
+        const displayEndDate = new Date("2023-07-20T16:00:00");
 
         await updateAlbumDatesThunk(
             dispatched.push.bind(dispatched),
@@ -97,7 +97,112 @@ describe("thunk:updateAlbumDates", () => {
         expect(fakePort.updatedAlbums).toEqual([{
             albumId,
             startDate: new Date("2023-07-10T10:30:00.000Z"),
-            endDate: new Date("2023-07-20T15:01:00.000Z"),
+            endDate: new Date("2023-07-20T16:00:00.000Z"),
+        }]);
+
+        expect(dispatched).toEqual([
+            albumDatesUpdateStarted(),
+            albumDatesUpdated({
+                albums: twoAlbums,
+                medias: someMedias,
+            })
+        ]);
+    });
+
+    it("should convert round end times (half hours) to API format without adding 1 minute", async () => {
+        const rawMedias = someMedias.flatMap(m => m.medias);
+        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
+        const dispatched: any[] = [];
+        const albumId = twoAlbums[0].albumId;
+        const displayStartDate = new Date("2023-07-10T10:30:00");
+        const displayEndDate = new Date("2023-07-20T09:30:00");
+
+        await updateAlbumDatesThunk(
+            dispatched.push.bind(dispatched),
+            fakePort,
+            {
+                albumId,
+                startDate: displayStartDate,
+                endDate: displayEndDate,
+                startAtDayStart: false,
+                endAtDayEnd: false,
+            }
+        );
+
+        expect(fakePort.updatedAlbums).toEqual([{
+            albumId,
+            startDate: new Date("2023-07-10T10:30:00.000Z"),
+            endDate: new Date("2023-07-20T09:30:00.000Z"),
+        }]);
+
+        expect(dispatched).toEqual([
+            albumDatesUpdateStarted(),
+            albumDatesUpdated({
+                albums: twoAlbums,
+                medias: someMedias,
+            })
+        ]);
+    });
+
+    it("should convert precise end times to API format with +1 minute for exclusivity", async () => {
+        const rawMedias = someMedias.flatMap(m => m.medias);
+        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
+        const dispatched: any[] = [];
+        const albumId = twoAlbums[0].albumId;
+        const displayStartDate = new Date("2023-07-10T10:30:00");
+        const displayEndDate = new Date("2023-07-20T11:42:00");
+
+        await updateAlbumDatesThunk(
+            dispatched.push.bind(dispatched),
+            fakePort,
+            {
+                albumId,
+                startDate: displayStartDate,
+                endDate: displayEndDate,
+                startAtDayStart: false,
+                endAtDayEnd: false,
+            }
+        );
+
+        expect(fakePort.updatedAlbums).toEqual([{
+            albumId,
+            startDate: new Date("2023-07-10T10:30:00.000Z"),
+            endDate: new Date("2023-07-20T11:43:00.000Z"),
+        }]);
+
+        expect(dispatched).toEqual([
+            albumDatesUpdateStarted(),
+            albumDatesUpdated({
+                albums: twoAlbums,
+                medias: someMedias,
+            })
+        ]);
+    });
+
+    it("should convert another precise end time to API format with +1 minute for exclusivity", async () => {
+        const rawMedias = someMedias.flatMap(m => m.medias);
+        const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
+        const dispatched: any[] = [];
+        const albumId = twoAlbums[0].albumId;
+        const displayStartDate = new Date("2023-07-10T10:30:00");
+        const displayEndDate = new Date("2023-07-20T14:17:00");
+
+        await updateAlbumDatesThunk(
+            dispatched.push.bind(dispatched),
+            fakePort,
+            {
+                albumId,
+                startDate: displayStartDate,
+                endDate: displayEndDate,
+                startAtDayStart: false,
+                endAtDayEnd: false,
+            }
+        );
+
+        expect(fakePort.updatedAlbums).toEqual([{
+            albumId,
+            startDate: new Date("2023-07-10T10:30:00.000Z"),
+            endDate: new Date("2023-07-20T14:18:00.000Z"),
         }]);
 
         expect(dispatched).toEqual([
