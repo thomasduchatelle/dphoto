@@ -23,6 +23,8 @@ export interface UpdateAlbumDatesThunkArgs {
     albumId: AlbumId;
     startDate: Date;
     endDate: Date;
+    startAtDayStart: boolean;
+    endAtDayEnd: boolean;
 }
 
 export async function updateAlbumDatesThunk(
@@ -34,15 +36,13 @@ export async function updateAlbumDatesThunk(
         return
     }
 
-    let {albumId, startDate, endDate} = dialog;
-    startDate = new Date(startDate);
-    endDate = new Date(endDate);
+    const {albumId, startDate, endDate, startAtDayStart, endAtDayEnd} = dialog;
 
     dispatch(albumDatesUpdateStarted());
 
     try {
-        const apiStartDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
-        const apiEndDate = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1));
+        const apiStartDate = convertToApiStartDate(startDate, startAtDayStart);
+        const apiEndDate = convertToApiEndDate(endDate, endAtDayEnd);
 
         await updateAlbumDatesPort.updateAlbumDates(albumId, apiStartDate, apiEndDate);
 
@@ -62,6 +62,24 @@ export async function updateAlbumDatesThunk(
     }
 }
 
+function convertToApiStartDate(original: Date, atDayStart: boolean): Date {
+    const date = new Date(original);
+    if (atDayStart) {
+        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    }
+    
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getHours(), date.getMinutes()));
+}
+
+function convertToApiEndDate(original: Date, atDayEnd: boolean): Date {
+    const date = new Date(original);
+    if (atDayEnd) {
+        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1));
+    }
+
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getHours(), date.getMinutes() + 1));
+}
+
 export const updateAlbumDatesDeclaration: ThunkDeclaration<
     CatalogViewerState,
     UpdateAlbumDatesThunkArgs | undefined,
@@ -72,6 +90,8 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
             albumId: state.editDatesDialog.albumId,
             startDate: state.editDatesDialog.startDate,
             endDate: state.editDatesDialog.endDate,
+            startAtDayStart: state.editDatesDialog.startAtDayStart,
+            endAtDayEnd: state.editDatesDialog.endAtDayEnd,
         } : undefined
     ),
 

@@ -2,6 +2,7 @@ import {editDatesDialogOpened} from "./action-editDatesDialogOpened";
 import {CatalogViewerState} from "../language";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {DEFAULT_EDIT_DATES_DIALOG_SELECTION, editDatesDialogSelector} from "./selector-editDatesDialogSelector";
+import {Album} from "../language/catalog-state";
 
 const jan25Album = twoAlbums[0];
 const feb25Album = twoAlbums[1];
@@ -72,5 +73,35 @@ describe("action:editDatesDialogOpened", () => {
         expect(dialogSelection.isOpen).toBeFalsy();
         expect(dialogSelection).toEqual(DEFAULT_EDIT_DATES_DIALOG_SELECTION);
         expect(got).toEqual(state); // Ensure no other state changes
+    });
+
+    it("opens the dialog with correct startAtDayStart and endAtDayEnd when dates have non-zero time", () => {
+        const albumWithTime: Album = {
+            ...jan25Album,
+            start: new Date(2025, 0, 1, 10, 30, 0),
+            end: new Date(2025, 0, 31, 14, 44, 0),
+        };
+
+        const initialState: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            allAlbums: [albumWithTime],
+            albums: [albumWithTime],
+            mediasLoadedFromAlbumId: albumWithTime.albumId,
+            loadingMediasFor: undefined,
+        };
+
+        const action = editDatesDialogOpened();
+        const state = action.reducer(initialState, action);
+        const got = editDatesDialogSelector(state);
+
+        expect(got).toEqual({
+            ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
+            isOpen: true,
+            albumName: albumWithTime.name,
+            startDate: new Date(2025, 0, 1, 10, 30, 0),
+            endDate: new Date(2025, 0, 31, 14, 43, 0),
+            startAtDayStart: false,
+            endAtDayEnd: false,
+        });
     });
 });

@@ -139,16 +139,64 @@ The rest are the stories.
 Step 3 - Feature Coding
 ---------------------------------------
 
-### Interactive
+### Non-interactive
 
 ```
-aider
+aider --model six
 /add web/src/core/catalog/language 
     web/src/core/catalog/tests/test-helper-state.ts
     web/src/core/catalog/actions.ts 
     web/src/core/catalog/index.ts 
     web/src/core/catalog/thunks.ts
-/ask        
+    
+/add <existing UI components, actions or thunk to update or use, ...>
+```
+
+You are a strong developer prioritizing simple and well tested code. You **strictly follow the coding principles** defined in `docs/principles_web.md`.
+
+You are implementing the user story linked below. You have access of the complete epic to give you context, but you will **focus ONLY on what is required for
+this story**.
+
+Follow the important design principles below:
+
+1. Do not update the existing tests: create new ones.
+2. Do no add comments in your code.
+3. Only add on the UI components the properties they **require** for the **current story**
+    * Data must come from a selector
+4. Keep the payload of action and thunk **minimum**:
+    * _actions_ payload is only what's new on the state, or the Identifiers required to update it
+    * _thunks_ arguments is only what it is required to perform the business logic (REST requests, making decisions, ...) ; only extract from the state what's
+      needed ; only take as parameters what cannot be derived from the state
+5. Write tests that are both readable and robust against refactoring
+    * use the tests to make sure **the story's Acceptance Criteria are covered**
+    * **always test together** actions and selectors: state is considered as private (robust: changing it won't affect the tests). The result of a selection is
+      tested as a whole to prevent unexpected regressions.
+    * **use pre-defined constants** of the states and the selections in a known situation: when adding new properties, only these constants are updated so it
+      doesn't affect the tests (robust)
+
+Once your listing complete, provide a list of next step considerations (only if you have any):
+
+* ask questions that would help to refine the behaviour and improve user experience, security, or error handling
+* suggest simplifications or improvements that would involve files out of the current context (and couldn't be done otherwise)
+* suggest behaviour tests or acceptance tests to be added if you identify a case that would require them, justify them thoroughly: what sequence they will test and why they are required.
+
+Your story you are designing is:
+
+It's part of the epic:
+
+
+### Interactive
+
+```
+
+aider
+/add web/src/core/catalog/language
+web/src/core/catalog/tests/test-helper-state.ts
+web/src/core/catalog/actions.ts
+web/src/core/catalog/index.ts
+web/src/core/catalog/thunks.ts
+/ask
+
 ```
 
 You are a strong developer prioritizing simple and well tested code. You **strictly follow the coding principles** defined in `docs/principles_web.md`.
@@ -183,163 +231,30 @@ It's part of the epic:
 #### Then - implementation
 
 ```
+
 /code Implement the story. **Strictly follow the coding principles from `docs/principles_web.md`**. Implement the tests to make sure the Acceptance Criteria are
 covered. Once complete, leave a comment to the reviewer of places he needs to bring a special attention.
 
 Do not update the existing tests: add new ones. Do not add comments to your code.
-```
-
-#### Finally - Code review
 
 ```
-/model bb8
-/reset
-!git diff HEAD^
-/ask You are the senior developer in charge of reviewing the code written by your peer. You use the `docs/principles_web.md`, and your personal knowledge, as 
-    references of what a good code looks like. You promote clean code, well tested with a suite robust to refactoring, secure and performant. 
-    
-    Present your comments like in a Merge Request, with the file name and the code snippet.
-```
+
 
 ---
 
 NON VALIDATED DRAFT
 =======================================
 
-### Non interactive
+#### Finally - Code review
 
 ```
-aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0 
-/read-only docs/principles_web.md
-# ... all the files required to change
-```
 
-You are a strong developer prioritizing simple and well tested code. You **strictly follow the coding principles** defined in `docs/principles_web.md`. And you
-are now implementing a new story part of a larger epic. You will use the epic to contextualise your changes but will focus to only deliver what is requested in
-the story.
-
-**Process**
-
-1. **Design Phase** - using the coding principles from the document:
-    1. **data flow**: define the components (by name and type) involved to deliver the story
-    2. **re-usability**: identify the _existing components_ that can be leveraged (function, events, ...). Do not be too eager: prioritise
-       single-responsibility principle over trying to avoid code duplication.
-    3. **technical design**: specify for each component a thorough description:
-        * name
-        * if it's "new", or "updated", or "reused" (and not updated)
-        * if the component is a state or a domain model: give a code snippet of the properties to add or change
-        * if the component is an event or an action: give the schema of its payload
-        * if the component is a function: give its signature
-        * if the component is a UI component: explain what data is rendered, what data can be input, and how the user can interact with it
-
-2. **Implementation** - focus on the implementation of one component at a time. **Do not forget its tests.**
-    1. Start with writing the tests following the BDD requirements
-    2. Then write an implementation that pass the test
-    3. Finally, move on to the next component
-
-Do not wait for confirmation at any stage: write the complete implementation of the story immediately. Do not ask to run the tests.
-
-Your story to implement is:
-
-It's part of the epic:
-
-Step X - Design and Planning
----------------------------------------
-
-```
-aider --model openrouter/anthropic/claude-sonnet-4 --map-tokens 0 
-/read-only web/src/core/catalog/language
-           docs/principles_web.md
-           docs/feature_edit_album_claude_sonnet_4.md
-/ask
-
-tail -n +853 .aider.chat.history.md > docs/feature_edit_album_plan_0.1-claude.md
-```
-
-To develop a User Story, we're going to write a detailed and iterative list of prompts that are actionable and testable individually by an LLM.
-
-**Process**:
-
-1. **Design Phase** - use the Design Pattern concepts from the principle handbook to:
-    * describe the data flow of the story: what each concept will require from the underlying layers
-    * give the details of each concept required:
-        * interfaces: name, with their schema and properties to add/modify
-        * functions: name and signature
-        * events / actions: name and payload schema
-        * UI component: name and purpose
-
-2. **Collaboration** - Present the design and ask for feedback before proceeding ; we will iterate on the design
-    * exhaustive list of each component to create and its layer
-    * if the component is a state or a domain model: give a code snippet of the changes
-    * if the component is an event or an action: give the schema of its payload
-    * if the component is a function: give its signature
-    * if the component is a UI component: explain what it will contain
-
-3. **Task Breakdown** - Create independently implementable tasks where each task describes **application behavior**, not developer tasks:
-    * GOOD: "GIVEN dialog is closed WHEN I dispatch editDatesDialogOpened with AlbumId THEN selectEditDatesDialog returns open dialog with album name"
-    * BAD: "GIVEN system needs dialog support WHEN defining state model THEN selector should return properties"
-
-   Each task must be:
-    * A unit of work (1 action OR 1 thunk OR 1 component) ; selectors and state change are part of the action task that requires it.
-    * Independently testable
-    * Described in BDD format focusing on runtime behavior and writen in a code block. Example for an action:
-      ```
-      GIVEN <description of the initial state>
-      WHEN <name of the action dispatched and description of its payload>
-      THEN <description of what will return the selector>
-      ```
-
-4. **Collaboration** - present the tasks and ask for feedback
-
-5. **Prompt Structure**:
-
-    * _Introduction_: "you are implementing ..." ; be specific of the type (or layer) and name of the component(s) the agent have to implement ; make explicit
-      that the deliveries must include the tests validating the requirements.
-    * _Requirements_: the BDD-style requirements defined and reviewed on the previous step
-    * _Implementation Details_:
-        * in what folder the new components must be created (feature related), insist on the naming convention to be respected
-        * add the TDD principle: "Implement the tests first, then implement the code **the simplest and most readable possible**: no behaviour should be
-          implemented if it is not required by
-          one test"
-        * list the general files that must be edited, and for each what's expected ("general" because not specific for the feature: global state, actions/thunks
-          register, ...)
-        * any recommendation raised during the design
-    * _Interface Specification_: data structure and signature that have been decided during design
-    * _References_: gives the references and description of the previous tasks **relevant** to implement this tasks. Only the references that are expected to be
-      used.
-
-The principle handbook is:
-
-The requirement document is:
-
-The story to work on is:
-
-#### Summary
-
-```
-/code The break down is good. Write the prompts in `docs/prompts_edit_dates/task_<number>_<two words summary>.md` in markdown, one prompt per file.
-```
-
-#### Review (optional)
-
-```
+/model bb8
 /reset
-/add `docs/prompts_edit_dates`
-/ask
-```
+!git diff HEAD^
+/ask You are the senior developer in charge of reviewing the code written by your peer. You use the `docs/principles_web.md`, and your personal knowledge, as
+references of what a good code looks like. You promote clean code, well tested with a suite robust to refactoring, secure and performant.
 
-Review the documents in `docs/prompts_edit_dates`. They are prompts to implement a feature and will be consumed by an LLM agent.
-
-Find and list any inconsistency, and anything that could be misleading for the agent.
-
-Then propose a solution for each.
-
-Step 4 - Implementation
----------------------------------------
+    Present your comments like in a Merge Request, with the file name and the code snippet.
 
 ```
-aider --model openrouter/anthropic/claude-sonnet-4
-/read-only docs/principles_web.md
-```
-
-> paste the prompt from the file.
