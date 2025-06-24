@@ -20,12 +20,14 @@ export default function MediasPage({
                                        openSharingModal,
                                        openDeleteAlbumDialog,
                                        openEditDatesDialog,
+                                       displayedAlbumIdIsOwned,
                                        ...controls
                                    }: {
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
     openSharingModal: (albumId: AlbumId) => void
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
+    displayedAlbumIdIsOwned: boolean
     scrollToMedia?: string
 } & CreateAlbumControls & CatalogViewerPageSelection) {
     const drawerWidth = 450
@@ -57,6 +59,7 @@ export default function MediasPage({
                                 onAlbumFiltered={onAlbumFilterChange}
                                 openDeleteAlbumDialog={openDeleteAlbumDialog}
                                 openEditDatesDialog={openEditDatesDialog}
+                                displayedAlbumIdIsOwned={displayedAlbumIdIsOwned}
                                 {...controls}
                             />
                             <Divider/>

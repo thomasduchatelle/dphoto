@@ -14,6 +14,7 @@ import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 import ShareDialog from "./ShareDialog";
 import {DeleteAlbumDialog} from "./DeleteAlbumDialog";
 import {EditDatesDialog} from "./EditDatesDialog";
+import {displayedAlbumSelector} from "../../../core/catalog/language/selector-displayedAlbum";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
@@ -72,6 +73,7 @@ export function CatalogViewerPage() {
                             onAlbumFiltered={onAlbumFilterChange}
                             openDeleteAlbumDialog={openDeleteAlbumDialog}
                             openEditDatesDialog={openEditDatesDialog}
+                            {...displayedAlbumSelector(state)}
                             {...controls}
                         />
                         <AlbumsList albums={albums}
@@ -82,6 +84,7 @@ export function CatalogViewerPage() {
                 ) : (
                     <MediasPage
                         {...catalogViewerPageSelector(state)}
+                        {...displayedAlbumSelector(state)}
                         onAlbumFilterChange={onAlbumFilterChange}
                         scrollToMedia={search.get("mediaId") ?? undefined}
                         openSharingModal={openSharingModal}
