@@ -1,12 +1,14 @@
 import {sharingModalClosed} from "./action-sharingModalClosed";
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {sharingDialogSelector} from "./selector-sharingDialogSelector";
+import {CatalogViewerState} from "../language";
 
 describe("action:sharingModalClosed", () => {
     it("should close the sharing modal by clearing the shareModel property", () => {
-        const initial = {
+        const initial: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog",
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: [
                     {

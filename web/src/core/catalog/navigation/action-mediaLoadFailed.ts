@@ -1,26 +1,26 @@
-import {Album, CatalogViewerState} from "../language";
+import {Album, AlbumId, CatalogViewerState} from "../language";
 import {refreshFilters} from "../common/utils";
 import {createAction} from "src/libs/daction";
 
 interface MediaLoadFailedPayload {
     albums?: Album[]
-    selectedAlbum?: Album
+    displayedAlbumId?: AlbumId
     error: Error
 }
 
 export const mediaLoadFailed = createAction<CatalogViewerState, MediaLoadFailedPayload>(
     'mediaLoadFailed',
-    (current: CatalogViewerState, {albums, selectedAlbum, error}: MediaLoadFailedPayload): CatalogViewerState => {
+    (current: CatalogViewerState, {albums, displayedAlbumId, error}: MediaLoadFailedPayload): CatalogViewerState => {
         const allAlbums = albums ?? current.allAlbums;
 
-        const {albumFilterOptions, albumFilter, albums: filteredAlbums} = refreshFilters(current.currentUser, current.albumFilter, allAlbums);
+        const {albumFilterOptions, albumFilter, albums: filteredAlbums} = refreshFilters(current.currentUser, current.albumFilter, allAlbums, displayedAlbumId);
 
         return {
             currentUser: current.currentUser,
             allAlbums,
             albumFilterOptions,
             albumFilter,
-            mediasLoadedFromAlbumId: selectedAlbum?.albumId,
+            mediasLoadedFromAlbumId: displayedAlbumId,
             albums: filteredAlbums,
             albumNotFound: false,
             medias: [],

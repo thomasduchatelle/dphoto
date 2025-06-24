@@ -1,15 +1,13 @@
-import {Album, AlbumId, CatalogViewerState, getErrorMessage, isCatalogError, Media} from "../language";
+import {Album, AlbumId, CatalogViewerState, getErrorMessage, isCatalogError, isEditDatesDialog, Media} from "../language";
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
-import {albumDatesUpdated} from "./action-albumDatesUpdated";
+import {albumsAndMediasLoaded} from "../navigation/action-albumsAndMediasLoaded";
 import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {Action} from "src/libs/daction";
-import {groupByDay} from "../navigation/group-by-day";
 import {ThunkDeclaration} from "src/libs/dthunks";
 import {isRoundTime} from "../common/date-helper";
 
-/** When deletion or date edit is not possible because it would orphan medias */
 export const editDatesOrphanedMediasErrorCode = "OrphanedMediasErr";
 
 export interface UpdateAlbumDatesPort {
@@ -52,7 +50,7 @@ export async function updateAlbumDatesThunk(
             updateAlbumDatesPort.fetchMedias(albumId)
         ]);
 
-        dispatch(albumDatesUpdated({albums, medias: groupByDay(medias)}));
+        dispatch(albumsAndMediasLoaded({albums, medias, mediasFromAlbumId: albumId}));
 
     } catch (error) {
         if (isCatalogError(error) && error.code === editDatesOrphanedMediasErrorCode) {
@@ -68,7 +66,7 @@ function convertToApiStartDate(original: Date, atDayStart: boolean): Date {
     if (atDayStart) {
         return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
     }
-    
+
     return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getHours(), date.getMinutes()));
 }
 
@@ -91,14 +89,19 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
     () => Promise<void>,
     CatalogFactoryArgs
 > = {
-    selector: (state: CatalogViewerState) => (state.editDatesDialog ? {
-            albumId: state.editDatesDialog.albumId,
-            startDate: state.editDatesDialog.startDate,
-            endDate: state.editDatesDialog.endDate,
-            startAtDayStart: state.editDatesDialog.startAtDayStart,
-            endAtDayEnd: state.editDatesDialog.endAtDayEnd,
-        } : undefined
-    ),
+    selector: (state: CatalogViewerState) => {
+        const dialog = state.dialog;
+        if (!isEditDatesDialog(dialog) || !dialog.startDate || !dialog.endDate) {
+            return undefined;
+        }
+        return {
+            albumId: dialog.albumId,
+            startDate: dialog.startDate,
+            endDate: dialog.endDate,
+            startAtDayStart: dialog.startAtDayStart,
+            endAtDayEnd: dialog.endAtDayEnd,
+        };
+    },
 
     factory: ({dispatch, app, partialState}) => {
         const updateAlbumDatesPort: UpdateAlbumDatesPort = new CatalogAPIAdapter(app.axiosInstance, app);

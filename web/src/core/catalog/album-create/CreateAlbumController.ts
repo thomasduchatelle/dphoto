@@ -32,7 +32,6 @@ export interface CreateAlbumHandlers {
 
 export interface CreateAlbumControls {
     openDialogForCreateAlbum: () => void
-    // openEdit: (album: Album) => void // TODO manage EDIT mode
 }
 
 export class CreateAlbumController implements CreateAlbumHandlers, CreateAlbumControls {

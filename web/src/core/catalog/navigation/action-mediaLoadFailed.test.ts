@@ -10,7 +10,7 @@ describe("action:mediaLoadFailed", () => {
         const action = mediaLoadFailed({
             error: testError,
             albums: twoAlbums,
-            selectedAlbum: twoAlbums[0],
+            displayedAlbumId: twoAlbums[0].albumId,
         });
         const got = action.reducer(
             initialCatalogState(myselfUser),
@@ -27,7 +27,7 @@ describe("action:mediaLoadFailed", () => {
         const testError = new Error("TEST loading error");
         const action = mediaLoadFailed({
             error: testError,
-            selectedAlbum: twoAlbums[0],
+            displayedAlbumId: twoAlbums[0].albumId,
         });
         const got = action.reducer(
             loadedStateWithTwoAlbums,
@@ -39,6 +39,34 @@ describe("action:mediaLoadFailed", () => {
             error: testError,
             albumsLoaded: true,
             mediasLoaded: true,
+        });
+    });
+
+    it("change the filter so the loaded album is visible", () => {
+        const testError = new Error("TEST loading error");
+        const directlyOwnedFilter = loadedStateWithTwoAlbums.albumFilterOptions[0];
+
+        const action = mediaLoadFailed({
+            error: testError,
+            albums: twoAlbums,
+            displayedAlbumId: twoAlbums[1].albumId,
+        });
+        const got = action.reducer(
+            {
+                ...loadedStateWithTwoAlbums,
+                albumFilter: directlyOwnedFilter,
+                albums: [loadedStateWithTwoAlbums.albums[0]],
+            },
+            action
+        );
+
+        expect(catalogViewerPageSelector(got)).toEqual({
+            ...selectionForLoadedStateWithTwoAlbums,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
+            albums: twoAlbums,
+            displayedAlbum: twoAlbums[1],
+            medias: [],
+            error: testError,
         });
     });
 });

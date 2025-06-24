@@ -24,7 +24,8 @@ describe("action:sharingModalErrorOccurred:grant", () => {
     it("should set the error field when receiving SharingModalErrorOccurred even if the user not found in sharedWith", () => {
         const initial = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: [
                     {
@@ -53,7 +54,8 @@ describe("action:sharingModalErrorOccurred:grant", () => {
         const herselfUserDetails = twoAlbums[0].sharedWith[0].user;
         const initial = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: twoAlbums[0].sharedWith,
                 suggestions: []
@@ -116,7 +118,8 @@ describe("action:sharingModalErrorOccurred:grant", () => {
             ...loadedStateWithTwoAlbums,
             allAlbums: albums,
             albums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: albums[0].albumId,
                 sharedWith: [{user: aliceUserDetails}],
                 suggestions: []
@@ -166,7 +169,8 @@ describe("action:sharingModalErrorOccurred:revoke", () => {
                     sharedWith: [{user: herselfUser}]
                 }
             ],
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: [],
                 suggestions: [herselfUser],
@@ -217,7 +221,8 @@ describe("action:sharingModalErrorOccurred:revoke", () => {
                     sharedWith: [{user: charlieUserDetails}]
                 }
             ],
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: [{user: bobUserDetails}],
                 suggestions: [aliceUserDetails, charlieUserDetails]

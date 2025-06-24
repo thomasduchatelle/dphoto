@@ -1,17 +1,18 @@
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, isEditDatesDialog} from "../language";
 import {createAction} from "src/libs/daction";
 
 export const albumDatesUpdateStarted = createAction<CatalogViewerState>(
     "AlbumDatesUpdateStarted",
     (current: CatalogViewerState) => {
-        if (!current.editDatesDialog) {
+        const dialog = current.dialog;
+        if (!isEditDatesDialog(dialog)) {
             return current;
         }
 
         return {
             ...current,
-            editDatesDialog: {
-                ...current.editDatesDialog,
+            dialog: {
+                ...dialog,
                 isLoading: true,
                 error: undefined,
             },

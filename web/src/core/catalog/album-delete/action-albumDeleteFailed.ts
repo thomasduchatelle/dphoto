@@ -1,4 +1,4 @@
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, isDeleteDialog} from "../language";
 import {createAction} from "src/libs/daction";
 
 export const albumDeleteFailed = createAction<CatalogViewerState, string>(
@@ -8,14 +8,14 @@ export const albumDeleteFailed = createAction<CatalogViewerState, string>(
             throw new Error("AlbumDeleteFailed requires a non-empty error message");
         }
 
-        if (!current.deleteDialog) {
+        if (!isDeleteDialog(current.dialog)) {
             return current;
         }
 
         return {
             ...current,
-            deleteDialog: {
-                ...current.deleteDialog,
+            dialog: {
+                ...current.dialog,
                 error: error,
                 isLoading: false,
             },

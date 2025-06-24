@@ -7,7 +7,8 @@ describe("action:editDatesDialogStartAtDayStartUpdated", () => {
     it("unchecks start at day start and keeps current time", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00"),
@@ -35,7 +36,8 @@ describe("action:editDatesDialogStartAtDayStartUpdated", () => {
     it("checks start at day start and resets time to 00:00", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T10:30:00"),
@@ -63,7 +65,7 @@ describe("action:editDatesDialogStartAtDayStartUpdated", () => {
     it("does nothing when dialog is closed", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: undefined,
+            dialog: undefined,
         };
 
         const action = editDatesDialogStartAtDayStartUpdated(false);

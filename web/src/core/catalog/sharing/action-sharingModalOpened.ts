@@ -1,11 +1,11 @@
 import {AlbumId, CatalogViewerState} from "../language";
-import {withOpenShareModal} from "./sharing";
+import {withOpenShareDialog} from "./sharing";
 import {createAction} from "src/libs/daction";
 
 export const sharingModalOpened = createAction<CatalogViewerState, AlbumId>(
     "sharingModalOpened",
     (current: CatalogViewerState, albumId: AlbumId) => {
-        return withOpenShareModal(current, albumId);
+        return withOpenShareDialog(current, albumId);
     }
 );
 

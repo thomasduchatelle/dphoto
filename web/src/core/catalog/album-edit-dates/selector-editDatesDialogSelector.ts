@@ -1,10 +1,10 @@
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, isEditDatesDialog} from "../language";
 
 export interface EditDatesDialogSelection {
     isOpen: boolean;
     albumName: string;
-    startDate: Date;
-    endDate: Date;
+    startDate: Date | null;
+    endDate: Date | null;
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
     isLoading: boolean;
@@ -27,24 +27,26 @@ export const DEFAULT_EDIT_DATES_DIALOG_SELECTION: EditDatesDialogSelection = {
 };
 
 export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDialogSelection {
-    if (!state.editDatesDialog) {
+    const dialog = state.dialog;
+    if (!isEditDatesDialog(dialog)) {
         return DEFAULT_EDIT_DATES_DIALOG_SELECTION;
     }
 
-    const isDateRangeValid = state.editDatesDialog.startDate <= state.editDatesDialog.endDate;
+    const areDatesValid = dialog.startDate !== null && dialog.endDate !== null;
+    const isDateRangeValid = !(dialog.startDate !== null && dialog.endDate !== null) || dialog.startDate <= dialog.endDate;
     const dateRangeError = isDateRangeValid ? undefined : "The end date cannot be before the start date";
 
     return {
         ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
         isOpen: true,
-        albumName: state.editDatesDialog.albumName,
-        startDate: state.editDatesDialog.startDate,
-        endDate: state.editDatesDialog.endDate,
-        startAtDayStart: state.editDatesDialog.startAtDayStart,
-        endAtDayEnd: state.editDatesDialog.endAtDayEnd,
-        isLoading: state.editDatesDialog.isLoading,
-        errorCode: state.editDatesDialog.error,
+        albumName: dialog.albumName,
+        startDate: dialog.startDate,
+        endDate: dialog.endDate,
+        startAtDayStart: dialog.startAtDayStart,
+        endAtDayEnd: dialog.endAtDayEnd,
+        isLoading: dialog.isLoading,
+        errorCode: dialog.error,
         dateRangeError,
-        isSaveEnabled: isDateRangeValid && !state.editDatesDialog.isLoading,
+        isSaveEnabled: areDatesValid && isDateRangeValid && !dialog.isLoading,
     };
 }

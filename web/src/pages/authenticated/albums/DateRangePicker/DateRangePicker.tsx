@@ -1,11 +1,15 @@
-import React from "react";
+import React, {useCallback} from "react";
 import {Checkbox, FormControlLabel, TextField} from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import {DatePicker, DateTimePicker} from "@mui/x-date-pickers";
+import dayjs, {Dayjs} from "dayjs";
+// import utc from 'dayjs/plugin/utc';
+
+// dayjs.extend(utc)
 
 interface DateRangePickerProps {
-    startDate: Date;
-    endDate: Date;
+    startDate: Date | null;
+    endDate: Date | null;
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
     onStartDateChange: (date: Date | null) => void;
@@ -15,6 +19,13 @@ interface DateRangePickerProps {
     disabled?: boolean;
     dateError?: boolean;
     dateHelperText?: string;
+}
+
+
+function toUTCDate(newValue: Dayjs | null) {
+    const utcValue = newValue ? newValue.toDate() : null;
+    utcValue?.setTime(utcValue.getTime() - utcValue.getTimezoneOffset() * 60 * 1000)
+    return utcValue;
 }
 
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -35,6 +46,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         helperText: dateHelperText,
     };
 
+    const onStartChange = useCallback((newValue: Dayjs | null) => onStartDateChange(toUTCDate(newValue)), [onStartDateChange]);
+    const onEndChange = useCallback((newValue: Dayjs | null) => onEndDateChange(toUTCDate(newValue)), [onEndDateChange]);
+
     return (
         <>
             <Grid xs={6}>
@@ -42,8 +56,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DatePicker
                         label="First day"
                         disabled={disabled}
-                        value={startDate}
-                        onChange={(newValue: Date | null) => onStartDateChange(newValue)}
+                        value={startDate ? dayjs(startDate) : null}
+                        onChange={onStartChange}
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText=""/>
                         )}
@@ -52,8 +66,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DateTimePicker
                         label="First day"
                         disabled={disabled}
-                        value={startDate}
-                        onChange={(newValue: Date | null) => onStartDateChange(newValue)}
+                        value={startDate ? dayjs(startDate) : null}
+                        onChange={onStartChange}
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText=""/>
                         )}
@@ -79,8 +93,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DatePicker
                         label="Last day"
                         disabled={disabled}
-                        value={endDate}
-                        onChange={(newValue: Date | null) => onEndDateChange(newValue)} // Receive Date object
+                        value={endDate ? dayjs(endDate) : null}
+                        onChange={onEndChange}
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} />
                         )}
@@ -89,8 +103,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DateTimePicker
                         label="Last day"
                         disabled={disabled}
-                        value={endDate}
-                        onChange={(newValue: Date | null) => onEndDateChange(newValue)} // Receive Date object
+                        value={endDate ? dayjs(endDate) : null}
+                        onChange={onEndChange}
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} />
                         )}

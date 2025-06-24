@@ -1,10 +1,16 @@
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, isShareDialog} from "../language";
 import {createAction} from "src/libs/daction";
 
 export const sharingModalClosed = createAction<CatalogViewerState>(
     "sharingModalClosed",
-    ({shareModal, ...rest}: CatalogViewerState) => {
-        return rest;
+    (current: CatalogViewerState) => {
+        if (!isShareDialog(current.dialog)) {
+            return current;
+        }
+        return {
+            ...current,
+            dialog: undefined,
+        };
     }
 );
 

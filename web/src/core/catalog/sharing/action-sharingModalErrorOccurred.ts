@@ -1,20 +1,20 @@
-import {CatalogViewerState, ShareError} from "../language";
+import {CatalogViewerState, ShareError, isShareDialog} from "../language";
 import {moveSharedWithToSuggestion, moveSuggestionToSharedWith} from "./sharing";
 import {createAction} from "src/libs/daction";
 
 export const sharingModalErrorOccurred = createAction<CatalogViewerState, ShareError>(
     "sharingModalErrorOccurred",
     (current: CatalogViewerState, error: ShareError) => {
-        if (!current.shareModal) {
+        if (!isShareDialog(current.dialog)) {
             return current;
         }
 
         if (error.type === "grant") {
-            return moveSharedWithToSuggestion(current, current.shareModal, error.email, error);
+            return moveSharedWithToSuggestion(current, current.dialog, error.email, error);
         }
         if (error.type === "revoke") {
-            const user = current.shareModal.suggestions.find(s => s.email === error.email) ?? {name: error.email, email: error.email}
-            return moveSuggestionToSharedWith(current, current.shareModal, user, error);
+            const user = current.dialog.suggestions.find(s => s.email === error.email) ?? {name: error.email, email: error.email}
+            return moveSuggestionToSharedWith(current, current.dialog, user, error);
         }
 
         return current;

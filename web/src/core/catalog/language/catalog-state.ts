@@ -13,9 +13,7 @@ export interface CatalogViewerState {
     loadingMediasFor?: AlbumId
     albumsLoaded: boolean
     mediasLoaded: boolean
-    shareModal?: ShareModal
-    deleteDialog?: DeleteDialogState
-    editDatesDialog?: EditDatesDialogState
+    dialog?: CatalogDialog
 }
 
 export interface CurrentUserInsight {
@@ -102,6 +100,14 @@ export interface ShareModal {
     error?: ShareError
 }
 
+export interface ShareDialog {
+    type: "ShareDialog"
+    sharedAlbumId: AlbumId
+    sharedWith: Sharing[]
+    suggestions: UserDetails[]
+    error?: ShareError
+}
+
 export function albumIsOwnedByCurrentUser(album: Album) {
     return album.ownedBy === undefined;
 }
@@ -124,20 +130,36 @@ export function isRedirectToAlbumIdPayload(arg: any): arg is RedirectToAlbumIdPa
     return arg && arg.redirectTo
 }
 
-export interface DeleteDialogState {
+export interface DeleteDialog {
+    type: "DeleteDialog";
     deletableAlbums: Album[]
     initialSelectedAlbumId?: AlbumId
     isLoading: boolean
     error?: string
 }
 
-export interface EditDatesDialogState {
+export interface EditDatesDialog {
+    type: "EditDatesDialog"
     albumId: AlbumId
     albumName: string
-    startDate: Date
-    endDate: Date
+    startDate: Date | null
+    endDate: Date | null
     startAtDayStart: boolean
     endAtDayEnd: boolean
     isLoading: boolean
     error?: string
+}
+
+export type CatalogDialog = EditDatesDialog | DeleteDialog | ShareDialog;
+
+export function isEditDatesDialog(dialog: CatalogDialog | undefined): dialog is EditDatesDialog {
+    return dialog?.type === "EditDatesDialog";
+}
+
+export function isDeleteDialog(dialog: CatalogDialog | undefined): dialog is DeleteDialog {
+    return dialog?.type === "DeleteDialog";
+}
+
+export function isShareDialog(dialog: CatalogDialog | undefined): dialog is ShareDialog {
+    return dialog?.type === "ShareDialog";
 }

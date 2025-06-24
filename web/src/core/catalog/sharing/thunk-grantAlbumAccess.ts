@@ -1,4 +1,4 @@
-import {AlbumId, CatalogViewerState, UserDetails} from "../language";
+import {AlbumId, CatalogViewerState, isShareDialog, UserDetails} from "../language";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {AlbumAccessGranted, albumAccessGranted} from "./action-albumAccessGranted";
@@ -60,7 +60,9 @@ export const grantAlbumAccessDeclaration: ThunkDeclaration<
         const sharingAPI: GrantAlbumAccessAPI = new CatalogAPIAdapter(app.axiosInstance, app);
         return grantAlbumAccessThunk.bind(null, dispatch, sharingAPI, albumId);
     },
-    selector: ({shareModal}: CatalogViewerState) => ({
-        albumId: shareModal?.sharedAlbumId,
-    }),
+    selector: ({dialog}: CatalogViewerState) => {
+        return {
+            albumId: isShareDialog(dialog) ? dialog.sharedAlbumId : undefined,
+        };
+    },
 };

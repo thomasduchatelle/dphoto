@@ -7,7 +7,8 @@ describe("action:editDatesDialogStartDateUpdated", () => {
     it("updates the start date when dialog is open", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00"),
@@ -31,13 +32,14 @@ describe("action:editDatesDialogStartDateUpdated", () => {
             endDate: new Date("2023-08-01T00:00:00"),
             startAtDayStart: true,
             endAtDayEnd: true,
+            isSaveEnabled: true,
         });
     });
 
     it("does nothing when dialog is closed", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: undefined,
+            dialog: undefined,
         };
 
         const newStartDate = new Date("2023-07-15T00:00:00");
@@ -50,7 +52,8 @@ describe("action:editDatesDialogStartDateUpdated", () => {
     it("clears error when updating start date", () => {
         const stateWithError: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00"),
@@ -75,13 +78,15 @@ describe("action:editDatesDialogStartDateUpdated", () => {
             endDate: new Date("2023-08-01T00:00:00"),
             startAtDayStart: true,
             endAtDayEnd: true,
+            isSaveEnabled: true,
         });
     });
 
     it("creates invalid date range when start date is set after end date", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-01-10T00:00:00Z"),
@@ -113,7 +118,8 @@ describe("action:editDatesDialogStartDateUpdated", () => {
     it("corrects invalid date range when start date is set before end date", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-01-25T00:00:00Z"),
@@ -137,6 +143,38 @@ describe("action:editDatesDialogStartDateUpdated", () => {
             endDate: new Date("2023-01-20T00:00:00Z"),
             startAtDayStart: true,
             endAtDayEnd: true,
+            isSaveEnabled: true,
+        });
+    });
+
+    it("sets start date to null disable the Save button", () => {
+        const state: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            dialog: {
+                type: "EditDatesDialog",
+                albumId: {owner: "myself", folderName: "summer-trip"},
+                albumName: "Summer Trip",
+                startDate: new Date("2023-07-01T00:00:00"),
+                endDate: new Date("2023-08-01T00:00:00"),
+                isLoading: false,
+                startAtDayStart: true,
+                endAtDayEnd: true,
+            },
+        };
+
+        const action = editDatesDialogStartDateUpdated(null);
+        const got = action.reducer(state, action);
+        const selection = editDatesDialogSelector(got);
+
+        expect(selection).toEqual({
+            ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
+            isOpen: true,
+            albumName: "Summer Trip",
+            startDate: null,
+            endDate: new Date("2023-08-01T00:00:00"),
+            startAtDayStart: true,
+            endAtDayEnd: true,
+            isSaveEnabled: false,
         });
     });
 });

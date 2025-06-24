@@ -7,11 +7,11 @@ import {albumStartAndEndDateMandatoryErr} from "../../../../core/catalog";
 
 interface EditDatesDialogProps {
     isOpen: boolean;
-    albumName: string;
-    startDate: Date;
-    endDate: Date;
-    startAtDayStart: boolean;
-    endAtDayEnd: boolean;
+    albumName?: string;
+    startDate: Date | null;
+    endDate: Date | null;
+    startAtDayStart?: boolean;
+    endAtDayEnd?: boolean;
     isLoading: boolean;
     errorCode?: string;
     dateRangeError?: string;
@@ -45,8 +45,10 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const dateError = errorCode === albumStartAndEndDateMandatoryErr || !!dateRangeError;
-    const dateHelperText = dateRangeError || (errorCode === albumStartAndEndDateMandatoryErr ? "Start and end dates are mandatory, and end date must be after the start date." : "");
+    // The dateError and dateHelperText should only show if there's a date range error,
+    // not just because a date is null. Null dates disable the save button.
+    const dateError = !!dateRangeError;
+    const dateHelperText = dateRangeError || "";
 
     return (
         <Dialog
@@ -90,8 +92,8 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                     <DateRangePicker
                         startDate={startDate}
                         endDate={endDate}
-                        startAtDayStart={startAtDayStart}
-                        endAtDayEnd={endAtDayEnd}
+                        startAtDayStart={startAtDayStart || false}
+                        endAtDayEnd={endAtDayEnd || false}
                         onStartDateChange={onStartDateChange}
                         onEndDateChange={onEndDateChange}
                         onStartsAtStartOfTheDayChange={onStartAtDayStartChange}

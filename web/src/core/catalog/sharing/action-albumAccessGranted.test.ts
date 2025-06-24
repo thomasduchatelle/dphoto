@@ -8,7 +8,8 @@ describe("action:albumAccessGranted", () => {
     it("should add a new sharing entry and keep the list of suggestions if user was not suggested", () => {
         const initial = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: [
                     {
@@ -41,7 +42,8 @@ describe("action:albumAccessGranted", () => {
     it("should replace an existing sharing entry for the same user when receiving AlbumAccessGranted", () => {
         const initial = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: [
                     {
@@ -81,7 +83,8 @@ describe("action:albumAccessGranted", () => {
         const newUser: UserDetails = {email: "bob@example.com", name: "Bob", picture: "bob-face.jpg"};
         const initial = {
             ...loadedStateWithTwoAlbums,
-            shareModal: {
+            dialog: {
+                type: "ShareDialog" as const,
                 sharedAlbumId: twoAlbums[0].albumId,
                 sharedWith: twoAlbums[0].sharedWith,
                 suggestions: [

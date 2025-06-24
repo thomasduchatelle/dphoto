@@ -1,16 +1,16 @@
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, isDeleteDialog} from "../language";
 import {createAction} from "src/libs/daction";
 
 export const deleteAlbumStarted = createAction<CatalogViewerState>(
     "deleteAlbumStarted",
     (current: CatalogViewerState) => {
-        if (!current.deleteDialog) {
+        if (!isDeleteDialog(current.dialog)) {
             return current;
         }
         return {
             ...current,
-            deleteDialog: {
-                ...current.deleteDialog,
+            dialog: {
+                ...current.dialog,
                 isLoading: true,
                 error: undefined,
             },

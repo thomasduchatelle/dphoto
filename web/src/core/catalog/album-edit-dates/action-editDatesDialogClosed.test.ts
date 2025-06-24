@@ -4,10 +4,11 @@ import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
 import {DEFAULT_EDIT_DATES_DIALOG_SELECTION, editDatesDialogSelector} from "./selector-editDatesDialogSelector";
 
 describe("action:editDatesDialogClosed", () => {
-    it("closes the dialog by setting editDatesDialog to undefined", () => {
+    it("closes the dialog by setting dialog to undefined", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00"),
@@ -28,7 +29,7 @@ describe("action:editDatesDialogClosed", () => {
     it("does nothing when dialog is already closed", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: undefined,
+            dialog: undefined,
         };
 
         const action = editDatesDialogClosed();

@@ -1,4 +1,14 @@
-import {Album, AlbumFilterCriterion, AlbumFilterEntry, albumIsOwnedByCurrentUser, albumMatchCriterion, CurrentUserInsight, OwnerDetails} from "../language";
+import {
+    Album,
+    AlbumFilterCriterion,
+    AlbumFilterEntry,
+    AlbumId,
+    albumIdEquals,
+    albumIsOwnedByCurrentUser,
+    albumMatchCriterion,
+    CurrentUserInsight,
+    OwnerDetails
+} from "../language";
 
 export const ALL_ALBUMS_FILTER_CRITERION: AlbumFilterCriterion = {owners: []}
 export const SELF_OWNED_ALBUM_FILTER_CRITERION: AlbumFilterCriterion = {selfOwned: true, owners: []}
@@ -65,23 +75,27 @@ function arraysEqual(a: any, b: any) {
     if (a == null || b == null) return false;
     if (a.length !== b.length) return false;
 
-    // If you don't care about the order of the elements inside
-    // the array, you should sort both arrays here.
-    // Please note that calling sort on an array will modify that array.
-    // you might want to clone your array first.
-
     for (var i = 0; i < a.length; ++i) {
         if (a[i] !== b[i]) return false;
     }
     return true;
 }
 
-export function refreshFilters(currentUser: CurrentUserInsight, currentAlbumFilterEntry: AlbumFilterEntry, allAlbums: Album[]) {
+export function refreshFilters(currentUser: CurrentUserInsight, currentAlbumFilterEntry: AlbumFilterEntry, allAlbums: Album[], mustBePresentAlbumId ?: AlbumId) {
     const albumFilterOptions = generateAlbumFilterOptions(currentUser, allAlbums);
     const albumFilter = albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, currentAlbumFilterEntry.criterion)) ?? DEFAULT_ALBUM_FILTER_ENTRY
     const albums = allAlbums.filter(albumMatchCriterion(albumFilter.criterion))
 
-    return {albumFilterOptions, albumFilter, albums};
+    if (!mustBePresentAlbumId || albums.some(album => albumIdEquals(album.albumId, mustBePresentAlbumId))) {
+        return {albumFilterOptions, albumFilter, albums};
+    }
+
+    const allAlbumFilter = albumFilterOptions.find(option => albumFilterAreCriterionEqual(option.criterion, DEFAULT_ALBUM_FILTER_ENTRY.criterion)) ?? DEFAULT_ALBUM_FILTER_ENTRY;
+    return {
+        albumFilterOptions,
+        albumFilter: allAlbumFilter,
+        albums: allAlbums,
+    };
 }
 
 export function filteredListOfAlbums({allAlbums, albumFilter: {criterion}}: {

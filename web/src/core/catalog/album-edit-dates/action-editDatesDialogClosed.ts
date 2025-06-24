@@ -1,16 +1,16 @@
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, isEditDatesDialog} from "../language";
 import {createAction} from "src/libs/daction";
 
 export const editDatesDialogClosed = createAction<CatalogViewerState>(
     "EditDatesDialogClosed",
     (current: CatalogViewerState) => {
-        if (!current.editDatesDialog) {
+        if (!isEditDatesDialog(current.dialog)) {
             return current;
         }
 
         return {
             ...current,
-            editDatesDialog: undefined,
+            dialog: undefined,
         };
     }
 );

@@ -6,7 +6,8 @@ describe("action:albumDatesUpdateStarted", () => {
     it("sets loading state to true when edit dates dialog is open", () => {
         const stateWithEditDialog: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: twoAlbums[0].albumId,
                 albumName: twoAlbums[0].name,
                 startDate: twoAlbums[0].start,
@@ -22,8 +23,8 @@ describe("action:albumDatesUpdateStarted", () => {
 
         expect(got).toEqual({
             ...stateWithEditDialog,
-            editDatesDialog: {
-                ...stateWithEditDialog.editDatesDialog,
+            dialog: {
+                ...stateWithEditDialog.dialog,
                 isLoading: true,
             },
         });
@@ -39,7 +40,8 @@ describe("action:albumDatesUpdateStarted", () => {
     it("clears error when starting update", () => {
         const stateWithError: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: twoAlbums[0].albumId,
                 albumName: twoAlbums[0].name,
                 startDate: twoAlbums[0].start,
@@ -56,8 +58,8 @@ describe("action:albumDatesUpdateStarted", () => {
 
         expect(got).toEqual({
             ...stateWithError,
-            editDatesDialog: {
-                ...stateWithError.editDatesDialog,
+            dialog: {
+                ...stateWithError.dialog,
                 isLoading: true,
                 error: undefined,
             },

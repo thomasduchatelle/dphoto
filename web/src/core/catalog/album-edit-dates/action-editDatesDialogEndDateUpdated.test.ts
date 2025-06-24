@@ -7,7 +7,8 @@ describe("action:editDatesDialogEndDateUpdated", () => {
     it("updates the end date when dialog is open", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-07-01T00:00:00"),
@@ -39,7 +40,7 @@ describe("action:editDatesDialogEndDateUpdated", () => {
     it("does nothing when dialog is closed", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: undefined,
+            dialog: undefined,
         };
 
         const newEndDate = new Date("2023-07-25T00:00:00");
@@ -52,7 +53,8 @@ describe("action:editDatesDialogEndDateUpdated", () => {
     it("creates invalid date range when end date is set before start date", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-01-10T00:00:00Z"),
@@ -84,7 +86,8 @@ describe("action:editDatesDialogEndDateUpdated", () => {
     it("corrects invalid date range when end date is set after start date", () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
-            editDatesDialog: {
+            dialog: {
+                type: "EditDatesDialog",
                 albumId: {owner: "myself", folderName: "summer-trip"},
                 albumName: "Summer Trip",
                 startDate: new Date("2023-01-25T00:00:00Z"),
@@ -108,6 +111,38 @@ describe("action:editDatesDialogEndDateUpdated", () => {
             endDate: newEndDate,
             startAtDayStart: true,
             endAtDayEnd: true,
+            isSaveEnabled: true,
+        });
+    });
+
+    it("sets end date to null disable the Save button", () => {
+        const state: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            dialog: {
+                type: "EditDatesDialog",
+                albumId: {owner: "myself", folderName: "summer-trip"},
+                albumName: "Summer Trip",
+                startDate: new Date("2023-07-01T00:00:00"),
+                endDate: new Date("2023-08-01T00:00:00"),
+                isLoading: false,
+                startAtDayStart: true,
+                endAtDayEnd: true,
+            },
+        };
+
+        const action = editDatesDialogEndDateUpdated(null);
+        const got = action.reducer(state, action);
+        const selection = editDatesDialogSelector(got);
+
+        expect(selection).toEqual({
+            ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
+            isOpen: true,
+            albumName: "Summer Trip",
+            startDate: new Date("2023-07-01T00:00:00"),
+            endDate: null,
+            startAtDayStart: true,
+            endAtDayEnd: true,
+            isSaveEnabled: false,
         });
     });
 });

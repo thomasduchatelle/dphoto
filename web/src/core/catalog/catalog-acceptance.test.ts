@@ -78,26 +78,7 @@ describe('CatalogFactory', () => {
                         totalCount: 10
                     }
                 ],
-                selectedAlbum: {
-                    albumId: albumIdAvenger1,
-                    end: new Date(2021, 0, 31),
-                    name: "Avenger 1",
-                    ownedBy: {
-                        name: "Tony Stark",
-                        users: [
-                            {
-                                email: "tony@stark.com",
-                                name: "Tony Stark",
-                                picture: "http://tony-stark.com/picture.jpg"
-                            }
-                        ]
-                    },
-                    relativeTemperature: 1,
-                    sharedWith: [],
-                    start: new Date(2021, 0, 1),
-                    temperature: 0.3333333333333333,
-                    totalCount: 10
-                },
+                mediasFromAlbumId: albumIdAvenger1,
                 medias: [
                     {
                         contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg?access_token=",

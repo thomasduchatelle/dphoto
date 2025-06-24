@@ -1,4 +1,4 @@
-import {Album, CatalogViewerState, Media, RedirectToAlbumIdPayload} from "../language";
+import {Album, AlbumId, CatalogViewerState, Media, RedirectToAlbumIdPayload} from "../language";
 
 import {refreshFilters} from "../common/utils";
 import {createAction} from "src/libs/daction";
@@ -8,20 +8,24 @@ import {groupByDay} from "./group-by-day";
 interface AlbumsAndMediasLoadedPayload extends RedirectToAlbumIdPayload {
     albums: Album[]
     medias: Media[]
-    selectedAlbum?: Album
+    mediasFromAlbumId?: AlbumId
 }
 
 export const albumsAndMediasLoaded = createAction<CatalogViewerState, AlbumsAndMediasLoadedPayload>(
     'albumsAndMediasLoaded',
-    (current: CatalogViewerState, {albums, medias, selectedAlbum, redirectTo}: AlbumsAndMediasLoadedPayload): CatalogViewerState => {
-        const {albumFilterOptions, albumFilter, albums: filteredAlbums} = refreshFilters(current.currentUser, current.albumFilter, albums);
+    (current: CatalogViewerState, {albums: allAlbums, medias, mediasFromAlbumId}: AlbumsAndMediasLoadedPayload): CatalogViewerState => {
+        const {
+            albumFilterOptions,
+            albumFilter,
+            albums: filteredAlbums
+        } = refreshFilters(current.currentUser, current.albumFilter, allAlbums, mediasFromAlbumId);
 
         return {
             currentUser: current.currentUser,
             albumNotFound: false,
-            allAlbums: albums,
+            allAlbums,
             albums: filteredAlbums,
-            mediasLoadedFromAlbumId: selectedAlbum?.albumId,
+            mediasLoadedFromAlbumId: mediasFromAlbumId,
             medias: groupByDay(medias),
             albumsLoaded: true,
             mediasLoaded: true,

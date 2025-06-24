@@ -1,4 +1,4 @@
-import {CatalogViewerState, ShareError, Sharing, UserDetails} from "../language";
+import {CatalogViewerState, ShareError, Sharing, UserDetails, isShareDialog} from "../language";
 
 export interface SharingDialogFrag {
     open: boolean;
@@ -7,8 +7,8 @@ export interface SharingDialogFrag {
     error?: ShareError;
 }
 
-export function sharingDialogSelector({shareModal}: CatalogViewerState): SharingDialogFrag {
-    if (!shareModal) {
+export function sharingDialogSelector(state: CatalogViewerState): SharingDialogFrag {
+    if (!isShareDialog(state.dialog)) {
         return {
             open: false,
             sharedWith: [],
@@ -17,8 +17,8 @@ export function sharingDialogSelector({shareModal}: CatalogViewerState): Sharing
     }
     return {
         open: true,
-        sharedWith: shareModal.sharedWith,
-        suggestions: shareModal.suggestions,
-        error: shareModal.error,
+        sharedWith: state.dialog.sharedWith,
+        suggestions: state.dialog.suggestions,
+        error: state.dialog.error,
     };
 }
