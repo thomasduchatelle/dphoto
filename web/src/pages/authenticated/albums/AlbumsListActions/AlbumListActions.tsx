@@ -1,10 +1,9 @@
 import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
-import {Box, IconButton, Tooltip} from "@mui/material";
+import {Box, IconButton} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import {CreateAlbumControls} from "../../../../core/catalog";
-import {useSearchParams} from "react-router-dom";
 
 
 export default function AlbumListActions({
@@ -18,8 +17,6 @@ export default function AlbumListActions({
     openEditDatesDialog: () => void
     displayedAlbumIdIsOwned: boolean
 }) {
-    const [urlParams] = useSearchParams()
-
     return (
         <Box sx={{
             display: 'flex',
