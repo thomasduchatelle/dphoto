@@ -14,6 +14,8 @@ interface EditDatesDialogProps {
     endAtDayEnd: boolean;
     isLoading: boolean;
     errorCode?: string;
+    dateRangeError?: string;
+    isSaveEnabled: boolean;
     onClose: () => void;
     onStartDateChange: (date: Date | null) => void;
     onEndDateChange: (date: Date | null) => void;
@@ -31,6 +33,8 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                                                                     endAtDayEnd,
                                                                     isLoading,
                                                                     errorCode,
+                                                                    dateRangeError,
+                                                                    isSaveEnabled,
                                                                     onClose,
                                                                     onStartDateChange,
                                                                     onEndDateChange,
@@ -41,8 +45,8 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const dateError = errorCode === albumStartAndEndDateMandatoryErr;
-    const dateHelperText = dateError ? "Start and end dates are mandatory, and end date must be after the start date." : "";
+    const dateError = errorCode === albumStartAndEndDateMandatoryErr || !!dateRangeError;
+    const dateHelperText = dateRangeError || (errorCode === albumStartAndEndDateMandatoryErr ? "Start and end dates are mandatory, and end date must be after the start date." : "");
 
     return (
         <Dialog
@@ -106,7 +110,7 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                     onClick={onSave}
                     color="primary"
                     variant="contained"
-                    disabled={isLoading}
+                    disabled={!isSaveEnabled}
                 >
                     Save
                 </Button>

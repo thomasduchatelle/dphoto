@@ -1,7 +1,7 @@
 import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
 import {CatalogViewerState} from "../language";
 import {loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
-import {editDatesDialogSelector} from "./selector-editDatesDialogSelector";
+import {DEFAULT_EDIT_DATES_DIALOG_SELECTION, editDatesDialogSelector} from "./selector-editDatesDialogSelector";
 
 describe("action:albumDatesUpdateFailed", () => {
     it("sets error and stops loading when dialog is open", () => {
@@ -23,13 +23,13 @@ describe("action:albumDatesUpdateFailed", () => {
         const got = action.reducer(stateWithEditDialog, action);
 
         expect(editDatesDialogSelector(got)).toEqual({
+            ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
             isOpen: true,
             albumName: twoAlbums[0].name,
             startDate: twoAlbums[0].start,
             endDate: twoAlbums[0].end,
             startAtDayStart: true,
             endAtDayEnd: true,
-            isLoading: false,
             errorCode: errorMessage,
         });
     });

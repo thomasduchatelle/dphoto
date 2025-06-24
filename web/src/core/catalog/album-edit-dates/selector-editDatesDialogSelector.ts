@@ -9,6 +9,8 @@ export interface EditDatesDialogSelection {
     endAtDayEnd: boolean;
     isLoading: boolean;
     errorCode?: string;
+    dateRangeError?: string;
+    isSaveEnabled: boolean;
 }
 
 export const DEFAULT_EDIT_DATES_DIALOG_SELECTION: EditDatesDialogSelection = {
@@ -20,12 +22,17 @@ export const DEFAULT_EDIT_DATES_DIALOG_SELECTION: EditDatesDialogSelection = {
     endAtDayEnd: true,
     isLoading: false,
     errorCode: undefined,
+    dateRangeError: undefined,
+    isSaveEnabled: true,
 };
 
 export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDialogSelection {
     if (!state.editDatesDialog) {
         return DEFAULT_EDIT_DATES_DIALOG_SELECTION;
     }
+
+    const isDateRangeValid = state.editDatesDialog.startDate <= state.editDatesDialog.endDate;
+    const dateRangeError = isDateRangeValid ? undefined : "The end date cannot be before the start date";
 
     return {
         ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
@@ -37,5 +44,7 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
         endAtDayEnd: state.editDatesDialog.endAtDayEnd,
         isLoading: state.editDatesDialog.isLoading,
         errorCode: state.editDatesDialog.error,
+        dateRangeError,
+        isSaveEnabled: isDateRangeValid && !state.editDatesDialog.isLoading,
     };
 }
