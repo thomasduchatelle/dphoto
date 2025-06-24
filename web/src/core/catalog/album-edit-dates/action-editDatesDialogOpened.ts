@@ -1,6 +1,7 @@
 import {albumIdEquals, CatalogViewerState} from "../language";
 import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
 import {createAction} from "src/libs/daction";
+import {isRoundTime} from "../common/date-helper";
 
 export const editDatesDialogOpened = createAction<CatalogViewerState>(
     "EditDatesDialogOpened",
@@ -21,7 +22,7 @@ export const editDatesDialogOpened = createAction<CatalogViewerState>(
 
         if (endAtDayEnd) {
             endDate.setDate(endDate.getDate() - 1);
-        } else {
+        } else if (!isRoundTime(endDate)) { // Only subtract 1 minute if it's a precise time
             endDate.setUTCMinutes(endDate.getUTCMinutes() - 1);
         }
 

@@ -180,7 +180,7 @@ Once your listing complete, provide a list of next step considerations (only if 
 * suggest simplifications or improvements that would involve files out of the current context (and couldn't be done otherwise)
 * suggest behaviour tests or acceptance tests to be added if you identify a case that would require them, justify them thoroughly: what sequence they will test and why they are required.
 
-Your story you are designing is:
+The story you are implementing is:
 
 It's part of the epic:
 

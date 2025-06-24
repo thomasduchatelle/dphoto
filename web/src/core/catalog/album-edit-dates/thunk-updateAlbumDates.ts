@@ -7,6 +7,7 @@ import {CatalogAPIAdapter} from "../adapters/api";
 import {Action} from "src/libs/daction";
 import {groupByDay} from "../navigation/group-by-day";
 import {ThunkDeclaration} from "src/libs/dthunks";
+import {isRoundTime} from "../common/date-helper";
 
 /** When deletion or date edit is not possible because it would orphan medias */
 export const editDatesOrphanedMediasErrorCode = "OrphanedMediasErr";
@@ -75,6 +76,10 @@ function convertToApiEndDate(original: Date, atDayEnd: boolean): Date {
     const date = new Date(original);
     if (atDayEnd) {
         return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1));
+    }
+
+    if (isRoundTime(date)) {
+        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getHours(), date.getMinutes()));
     }
 
     return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getHours(), date.getMinutes() + 1));
