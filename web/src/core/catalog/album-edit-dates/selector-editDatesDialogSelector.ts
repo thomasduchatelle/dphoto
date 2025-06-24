@@ -33,6 +33,8 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
         albumName: state.editDatesDialog.albumName,
         startDate: state.editDatesDialog.startDate,
         endDate: state.editDatesDialog.endDate,
+        startAtDayStart: state.editDatesDialog.startAtDayStart,
+        endAtDayEnd: state.editDatesDialog.endAtDayEnd,
         isLoading: state.editDatesDialog.isLoading,
         errorCode: state.editDatesDialog.error,
     };

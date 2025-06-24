@@ -8,7 +8,7 @@ These general principles must be **strictly respected**. In the rare exception w
 2. TDD must be used: no behaviour should be implemented if there is no test to validate it (including but not limited to null checking, field validation, ...)
 3. Always use explicit types or interfaces, never use `any`
 4. In tests, the results must be asserted as a whole, not properties by properties
-5. Do not comment the code to paraphrase what it is doing
+5. Do not comment the code to paraphrase what it is doing, nor to explain your change
 6. Declared objects must be passed as arguments of a function directly, do not declare a transient variables
 
 ## Repository Tree
@@ -138,11 +138,10 @@ export type AlbumDeleted = ReturnType<typeof albumDeleted>;
 * **Every action MUST have tests associated with it - tested in combination of selector(s) and the state.**
 * naming convention of "describe" is `action:<action name>` (example: `action:albumCreated`)
 * Typical unit-test will:
-  1. initiate a state using the helpers in `web/src/core/catalog/tests/test-helper-state.ts`: only the minimum properties should be set on top of the helpers
-  2. execute the reducer
-  3. execute the selector: the state is considered private and is not asserted directly
-  4. assert the whole result of the selector, not on individual properties
-
+    1. initiate a state using the helpers in `web/src/core/catalog/tests/test-helper-state.ts`: only the minimum properties should be set on top of the helpers
+    2. execute the reducer
+    3. execute the selector: the state is considered private and is not asserted directly
+    4. assert the whole result of the selector, not on individual properties
 
 ```typescript
 // catalog/album-delete/action-albumDeleted.test.ts
@@ -367,7 +366,7 @@ import {createAlbumDeclaration} from "./thunk-createAlbum"
  * - `createAlbum`: `(name: string) => void`
  */
 export const albumCreateThunks = {
-  createAlbum: createAlbumDeclaration,
+    createAlbum: createAlbumDeclaration,
 };
 ```
 
@@ -386,6 +385,7 @@ export const thunks = {
 #### Thunk Testing
 
 * **Every thunk MUST have tests associated with it.**
+    * exception is the case 4 that solely dispatches an action where no test should be added
 * Tests are written against the business function, **not** the `ThunkDeclaration`.
 * Use **Fakes** (in-memory implementations) for ports instead of mocks, to decouple tests from adapter signatures.
     * assert write requests by inspecting the fake's state;
@@ -397,35 +397,35 @@ Complete example:
 // Fake implementation reproduce the expected behaviour of the actual implementation
 
 class CreateAlbumPortFake implements CreateAlbumPort {
-  albums: Album[] = [];
+    albums: Album[] = [];
 
-  async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
-    // Simulate album creation
-    const albumId = {owner: "myself", folderName: request.forcedFolderName};
-    this.albums.push({...request, albumId, ...defaultAlbumValues});
-    return albumId;
-  }
+    async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
+        // Simulate album creation
+        const albumId = {owner: "myself", folderName: request.forcedFolderName};
+        this.albums.push({...request, albumId, ...defaultAlbumValues});
+        return albumId;
+    }
 
-  async fetchAlbums(): Promise<Album[]> {
-    return this.albums;
-  }
+    async fetchAlbums(): Promise<Album[]> {
+        return this.albums;
+    }
 }
 
 it("should store the new Album and dispatch albumsLoadedAction", async () => {
-  const fakePort = new CreateAlbumPortFake([existingAlbum]);
-  const dispatched: Action<CatalogViewerState, any>[] = [];
+    const fakePort = new CreateAlbumPortFake([existingAlbum]);
+    const dispatched: Action<CatalogViewerState, any>[] = [];
 
-  await createAlbumThunk(dispatched.push.bind(dispatched), fakePort, request);
+    await createAlbumThunk(dispatched.push.bind(dispatched), fakePort, request);
 
-  expect(fakePort.albums).toContainEqual(expect.objectContaining({name: "Album 1"}));
+    expect(fakePort.albums).toContainEqual(expect.objectContaining({name: "Album 1"}));
 
-  // Dispatched actions are tested in a sigle assertion of an array (not individually)
-  expect(dispatched).toEqual([
-    albumsLoaded({
-      albums: expect.any(Array),
-      redirectTo: expect.any(Object)
-    })
-  ]);
+    // Dispatched actions are tested in a sigle assertion of an array (not individually)
+    expect(dispatched).toEqual([
+        albumsLoaded({
+            albums: expect.any(Array),
+            redirectTo: expect.any(Object)
+        })
+    ]);
 });
 ```
 
@@ -506,60 +506,37 @@ factory: ({dispatch, app, partialState}) => {
 
 ## Testing Strategy
 
-The testing strategy follows these principles:
+Components holding a logic are tested to demonstrate the Acceptance Criteria are fulfilled. All the tests must follow these principles:
 
-* **Test structure does not match code structure exactly:**
-    * **Action Unit tests**: State + single action + selector are tested together to fulfill a requirement
-    * **Behavior tests**: Sequence of several different actions tested when risk of collision between actions is identified
-    * **Thunk unit tests**: Thunk function tested independently
-    * **Adapter unit tests**: Adapters tested independently
-    * **Acceptance tests**: Application tested as early as possible (without browser) to as far as possible (without actual API backend, using wiremock or
-      equivalent)
-    * **End-to-end tests**: Integration validation through one or two critical paths that must never fail
+1. **TDD principle**: implementations should **never have a behavior that hasn't been expected or forced by a test case**. Without an appropriate test, code
+   must remain extremely simple, even if it means it is wrong.
 
-* **TDD principle**: Implementation should **never** have behavior that hasn't been expected or forced by a test case. Without an appropriate test, code must
-  remain extremely simple, even if it means it is wrong.
+2. **Robust Tests**: tests must be robust to refactoring
+    * test actions and selectors together: the state structure can be changed without affecting the tests
+    * use pre-defined constants of the states and the selections in a known situation: adding new properties is done on these constants and do not affect the
+      tests
+    * use fake implementations: method signature of the Ports can change, the fakes are updated, but it does not affect the tests
 
-* **Test as low as possible**: Everything should be tested as unit tests when possible. Higher-level tests (behavior, acceptance, e2e) only cover what couldn't
-  be tested at the unit level. The goal is robust tests
-  that provide high confidence that refactoring hasn't broken anything, not 100% code coverage.
+3. **Unit test first**: the code is structured so most of the acceptance criteria can be validated on a unit of code, and never depends on the integration of
+   several layers
+    * actions and selectors: jest unit tests
+    * thunks: jest unit tests
+    * UI components: StoryBook with the component set in each of the relevant situations (examples: "default", "loading", "with a technical error", "success")
+    * react hooks: jest + testing-library
 
-### Test Selection Criteria
+4. **Behaviour tests** (also called integration): validate consistency when a unit might affect another unit ; use one when you identify a case that requires a
+   sequence of events to be played to validate the system behaviour is user-friendly and predictable.
+    * example 1: when a dialog is closed and re-open, the data shown in it should reflect what have been saved previously ; if the data is not reloaded from the
+      server, it
+      should be tested as behaviour test
+    * example 2: when a dialog is open, it should close another dialog ; run the sequence of actions to confirm it behave as expected
 
-**Action Unit tests** - Use when:
+5. **Acceptance tests**: validate the integration of the domain and its adapters ; they are limited to the strick minimum viable end to end features.
+    * Domain focused acceptance test: instantiate the domain with the adapters implementation and a REST mock server (but without the React libraries). End to
+      end scenario will be played by calling the domain functions and asserting the results through selectors.
+    * Complete acceptance test: integrate as much as possible of code, interact with the `testing-library` (simulated browser) and backed with a mock rest
+      server
 
-- Testing a single user action and its immediate state change
-- Validating reducer logic and selector output
-- The action operates independently of other actions
+The unit tests must always be implemented alongside the new or updated code.
 
-**Behavior tests** - Use when:
-
-- Multiple actions modify the same state properties
-- Actions have dependencies or ordering requirements
-- Risk of state corruption when actions are combined
-- Complex workflows spanning multiple user interactions
-
-**Thunk unit tests** - Use for:
-
-- All thunk functions (mandatory)
-- Business logic validation
-- Error handling scenarios
-- Adapter interaction verification
-
-**Adapter unit tests** - Use for:
-
-- All adapters (mandatory)
-- Data transformation logic
-- External API contract validation
-
-**Acceptance tests** - Use for:
-
-- Critical user journeys
-- Integration between major components
-- Regression prevention for key features
-
-**End-to-end tests** - Use for:
-
-- Authentication flow
-- One primary happy path per major feature
-- Critical business processes that must never break
+Behaviour tests and Acceptance tests can be suggested as consideration for next steps, with justification that it cannot be done at unit level.

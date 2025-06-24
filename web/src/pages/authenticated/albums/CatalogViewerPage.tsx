@@ -34,7 +34,9 @@ export function CatalogViewerPage() {
             grantAlbumAccess,
             updateAlbumDates,
             updateEditDatesDialogStartDate,
-            updateEditDatesDialogEndDate
+            updateEditDatesDialogEndDate,
+            updateEditDatesDialogStartAtDayStart,
+            updateEditDatesDialogEndAtDayEnd,
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -106,10 +108,8 @@ export function CatalogViewerPage() {
                 onSave={updateAlbumDates}
                 onStartDateChange={updateEditDatesDialogStartDate}
                 onEndDateChange={updateEditDatesDialogEndDate}
-                onStartAtDayStartChange={() => {
-                }}
-                onEndAtDayEndChange={() => {
-                }}
+                onStartAtDayStartChange={updateEditDatesDialogStartAtDayStart}
+                onEndAtDayEndChange={updateEditDatesDialogEndAtDayEnd}
             />
         </Box>
     );

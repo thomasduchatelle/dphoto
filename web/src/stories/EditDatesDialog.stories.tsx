@@ -60,6 +60,19 @@ Default.parameters = {
     delay: 300,
 };
 
+export const WithSpecificTimes = Template.bind({});
+WithSpecificTimes.args = {
+    albumName: "Mission to Mars",
+    startDate: new Date("2063-04-05T10:30:00Z"),
+    endDate: new Date("2063-04-07T15:45:00Z"),
+    startAtDayStart: false,
+    endAtDayEnd: false,
+    isLoading: false,
+};
+WithSpecificTimes.parameters = {
+    delay: 300,
+};
+
 export const Loading = Template.bind({});
 Loading.args = {
     albumName: "First Contact",

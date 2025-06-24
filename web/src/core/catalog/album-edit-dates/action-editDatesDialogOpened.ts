@@ -13,9 +13,16 @@ export const editDatesDialogOpened = createAction<CatalogViewerState>(
             return current;
         }
 
-        const displayEndDate = new Date(selectedAlbum.end);
-        if (displayEndDate.getHours() === 0 && displayEndDate.getMinutes() === 0 && displayEndDate.getSeconds() === 0) {
-            displayEndDate.setDate(displayEndDate.getDate() - 1);
+        const startDate = selectedAlbum.start;
+        const endDate = new Date(selectedAlbum.end);
+
+        const startAtDayStart = startDate.getUTCHours() === 0 && startDate.getUTCMinutes() === 0 && startDate.getUTCSeconds() === 0 && startDate.getUTCMilliseconds() === 0;
+        const endAtDayEnd = endDate.getUTCHours() === 0 && endDate.getUTCMinutes() === 0 && endDate.getUTCSeconds() === 0 && endDate.getUTCMilliseconds() === 0;
+
+        if (endAtDayEnd) {
+            endDate.setDate(endDate.getDate() - 1);
+        } else {
+            endDate.setUTCMinutes(endDate.getUTCMinutes() - 1);
         }
 
         return {
@@ -23,9 +30,11 @@ export const editDatesDialogOpened = createAction<CatalogViewerState>(
             editDatesDialog: {
                 albumId: selectedAlbum.albumId,
                 albumName: selectedAlbum.name,
-                startDate: selectedAlbum.start,
-                endDate: displayEndDate,
+                startDate: startDate,
+                endDate: endDate,
                 isLoading: false,
+                startAtDayStart: startAtDayStart,
+                endAtDayEnd: endAtDayEnd,
             },
         };
     }

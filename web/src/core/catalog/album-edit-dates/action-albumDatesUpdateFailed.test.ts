@@ -13,6 +13,8 @@ describe("action:albumDatesUpdateFailed", () => {
                 startDate: twoAlbums[0].start,
                 endDate: twoAlbums[0].end,
                 isLoading: true,
+                startAtDayStart: true,
+                endAtDayEnd: true,
             },
         };
 

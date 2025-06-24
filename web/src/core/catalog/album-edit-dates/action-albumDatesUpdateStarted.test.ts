@@ -12,6 +12,8 @@ describe("action:albumDatesUpdateStarted", () => {
                 startDate: twoAlbums[0].start,
                 endDate: twoAlbums[0].end,
                 isLoading: false,
+                startAtDayStart: true,
+                endAtDayEnd: true,
             },
         };
 
@@ -44,6 +46,8 @@ describe("action:albumDatesUpdateStarted", () => {
                 endDate: twoAlbums[0].end,
                 isLoading: false,
                 error: "Previous error",
+                startAtDayStart: true,
+                endAtDayEnd: true,
             },
         };
 
