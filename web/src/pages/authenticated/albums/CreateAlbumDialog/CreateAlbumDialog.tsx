@@ -20,14 +20,35 @@ import {
 } from "@mui/material";
 import Grid from '@mui/material/Unstable_Grid2';
 import {Close} from "@mui/icons-material";
-import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr, CreateAlbumHandlers, CreateAlbumState} from "../../../../core/catalog";
+import {CreateDialogSelection} from "../../../../core/catalog";
 import {DateRangePicker} from "../DateRangePicker";
-import dayjs from "dayjs";
+
+export interface CreateAlbumDialogHandlers {
+    onClose: () => void;
+    onSubmit: () => Promise<void>;
+    onNameChange: (name: string) => void;
+    onFolderNameChange: (folderName: string) => void;
+    onWithCustomFolderNameChange: (withCustom: boolean) => void;
+    onStartsAtStartOfTheDayChange: (startsAtStart: boolean) => void;
+    onEndsAtEndOfTheDayChange: (endsAtEnd: boolean) => void;
+    onStartDateChange: (date: Date | null) => void;
+    onEndDateChange: (date: Date | null) => void;
+}
 
 export function CreateAlbumDialog({
-                                      state,
-                                      onCloseCreateAlbumDialog,
-                                      onSubmitCreateAlbum,
+                                      open,
+                                      name,
+                                      start,
+                                      end,
+                                      forceFolderName,
+                                      startsAtStartOfTheDay,
+                                      endsAtEndOfTheDay,
+                                      withCustomFolderName,
+                                      isLoading,
+                                      error,
+                                      canSubmit,
+                                      onClose,
+                                      onSubmit,
                                       onNameChange,
                                       onFolderNameChange,
                                       onWithCustomFolderNameChange,
@@ -35,22 +56,19 @@ export function CreateAlbumDialog({
                                       onEndsAtEndOfTheDayChange,
                                       onStartDateChange,
                                       onEndDateChange,
-                                  }: {
-    state: CreateAlbumState,
-} & CreateAlbumHandlers) {
+                                  }: CreateDialogSelection & CreateAlbumDialogHandlers) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const canBeSubmitted = state.name.length > 0 && !state.creationInProgress;
-    const dateError = state.errorCode === albumStartAndEndDateMandatoryErr;
+    const dateError = error === "AlbumStartAndEndDateMandatoryErr";
     const dateHelperText = dateError ? "Start and end dates are mandatory, and end date must be after the start date." : "";
 
-    const errorMessage = getErrorMessage(state.errorCode);
+    const errorMessage = getErrorMessage(error);
 
     return (
         <Dialog
-            open={state.open}
-            onClose={onCloseCreateAlbumDialog}
+            open={open}
+            onClose={onClose}
             fullWidth
             fullScreen={isMobile}
             maxWidth='md'
@@ -59,7 +77,7 @@ export function CreateAlbumDialog({
                 height: '4px',
                 marginTop: '0px !important',
             }}>
-                {state.creationInProgress && <LinearProgress sx={{
+                {isLoading && <LinearProgress sx={{
                     borderRadius: {
                         sm: '4px 4px 0px 0px'
                     },
@@ -68,7 +86,7 @@ export function CreateAlbumDialog({
             <DialogTitle>Creates an album</DialogTitle>
             <IconButton
                 aria-label="close"
-                onClick={onCloseCreateAlbumDialog}
+                onClick={onClose}
                 color='primary'
                 sx={{
                     position: 'absolute',
@@ -92,23 +110,23 @@ export function CreateAlbumDialog({
                             fullWidth
                             label="Name"
                             type="string"
-                            disabled={state.creationInProgress}
+                            disabled={isLoading}
                             onChange={(event) => onNameChange(event.target.value)}
-                            value={state.name}
-                            helperText={state.errorCode === albumFolderNameAlreadyTakenErr && "The name must be unique (or the folder name must be explicitly set)"}
-                            error={state.errorCode === albumFolderNameAlreadyTakenErr}
+                            value={name}
+                            helperText={error === "AlbumFolderNameAlreadyTakenErr" && "The name must be unique (or the folder name must be explicitly set)"}
+                            error={error === "AlbumFolderNameAlreadyTakenErr"}
                         />
                     </Grid>
                     <DateRangePicker
-                        startDate={state.start ? state.start.toDate() : new Date()} // Convert Dayjs to Date
-                        endDate={state.end ? state.end.toDate() : new Date()} // Convert Dayjs to Date
-                        startAtDayStart={state.startsAtStartOfTheDay}
-                        endAtDayEnd={state.endsAtEndOfTheDay}
-                        onStartDateChange={(date) => onStartDateChange(date ? dayjs(date) : null)} // Convert Date back to Dayjs
-                        onEndDateChange={(date) => onEndDateChange(date ? dayjs(date) : null)} // Convert Date back to Dayjs
+                        startDate={start || new Date()}
+                        endDate={end || new Date()}
+                        startAtDayStart={startsAtStartOfTheDay}
+                        endAtDayEnd={endsAtEndOfTheDay}
+                        onStartDateChange={onStartDateChange}
+                        onEndDateChange={onEndDateChange}
                         onStartsAtStartOfTheDayChange={onStartsAtStartOfTheDayChange}
                         onEndsAtEndOfTheDayChange={onEndsAtEndOfTheDayChange}
-                        disabled={state.creationInProgress}
+                        disabled={isLoading}
                         dateError={dateError}
                         dateHelperText={dateHelperText}
                     />
@@ -125,16 +143,16 @@ export function CreateAlbumDialog({
                                 })}
                                 elevation={0}
                             >
-                                <Checkbox checked={state.withCustomFolderName}
-                                          disabled={state.creationInProgress}
+                                <Checkbox checked={withCustomFolderName}
+                                          disabled={isLoading}
                                           onChange={(event: React.ChangeEvent<HTMLInputElement>) => onWithCustomFolderNameChange(event.target.checked)}
                                 />
                                 <Divider sx={{height: 28, m: 0.5}} orientation="vertical"/>
                                 <InputBase
                                     sx={{ml: 1, flex: 1}}
                                     placeholder="Custom folder name (ex: '/2025-08_Summer')"
-                                    disabled={!state.withCustomFolderName || state.creationInProgress}
-                                    value={state.forceFolderName}
+                                    disabled={!withCustomFolderName || isLoading}
+                                    value={forceFolderName}
                                     onChange={(event) => onFolderNameChange(event.target.value)}
                                 />
                             </Paper>
@@ -143,19 +161,19 @@ export function CreateAlbumDialog({
                 </Grid>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onCloseCreateAlbumDialog} color='info'>Cancel</Button>
-                <Button onClick={() => onSubmitCreateAlbum(state)} color='primary' variant='contained' disabled={!canBeSubmitted}>Save</Button>
+                <Button onClick={onClose} color='info'>Cancel</Button>
+                <Button onClick={onSubmit} color='primary' variant='contained' disabled={!canSubmit}>Save</Button>
             </DialogActions>
         </Dialog>
     );
 }
 
-function getErrorMessage(errorCode: string | undefined): string {
-    switch (errorCode) {
+function getErrorMessage(error: string | undefined): string {
+    switch (error) {
         case undefined:
         case "":
-        case albumFolderNameAlreadyTakenErr:
-        case albumStartAndEndDateMandatoryErr:
+        case "AlbumFolderNameAlreadyTakenErr":
+        case "AlbumStartAndEndDateMandatoryErr":
             return "";
 
         default:

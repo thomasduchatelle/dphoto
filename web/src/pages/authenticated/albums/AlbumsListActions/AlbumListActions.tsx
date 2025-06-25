@@ -3,16 +3,14 @@ import {Box, IconButton} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import {CreateAlbumControls} from "../../../../core/catalog";
-
-
 export default function AlbumListActions({
-                                             openDialogForCreateAlbum,
+                                             openCreateDialog,
                                              openDeleteAlbumDialog,
                                              openEditDatesDialog,
                                              displayedAlbumIdIsOwned = true,
                                              ...props
-                                         }: OwnerSelectorProps & CreateAlbumControls & {
+                                         }: OwnerSelectorProps & {
+    openCreateDialog: () => void
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
     displayedAlbumIdIsOwned: boolean
@@ -27,7 +25,7 @@ export default function AlbumListActions({
             <Box sx={{mr: 2}}>
                 <OwnerSelector {...props} />
             </Box>
-            <IconButton color="primary" onClick={openDialogForCreateAlbum} size="large">
+            <IconButton color="primary" onClick={openCreateDialog} size="large">
                 <AddIcon/>
             </IconButton>
             <IconButton color="primary" size="large" onClick={openEditDatesDialog} disabled={!displayedAlbumIdIsOwned}>

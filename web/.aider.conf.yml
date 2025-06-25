@@ -1,0 +1,14 @@
+model: six
+
+read:
+  - ../docs/principles_web_v2.md
+  - src/core/catalog/tests/test-helper-state.ts
+  #- src/core/catalog/language
+
+# re-enable the Context Map
+map-tokens: "4096"
+
+# To try with Sonnet 4 - does it reduce the costs ?
+cache-prompts: true
+cache-keepalive-pings: "5"
+stream: false

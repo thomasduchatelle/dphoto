@@ -1,4 +1,5 @@
 import {CatalogViewerState, isEditDatesDialog} from "../language";
+import {validateDateRange} from "../date-range/date-helper";
 
 export interface EditDatesDialogSelection {
     isOpen: boolean;
@@ -32,9 +33,12 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
         return DEFAULT_EDIT_DATES_DIALOG_SELECTION;
     }
 
-    const areDatesValid = dialog.startDate !== null && dialog.endDate !== null;
-    const isDateRangeValid = !(dialog.startDate !== null && dialog.endDate !== null) || dialog.startDate <= dialog.endDate;
-    const dateRangeError = isDateRangeValid ? undefined : "The end date cannot be before the start date";
+    const validation = validateDateRange({
+        startDate: dialog.startDate,
+        endDate: dialog.endDate,
+        startAtDayStart: dialog.startAtDayStart,
+        endAtDayEnd: dialog.endAtDayEnd,
+    });
 
     return {
         ...DEFAULT_EDIT_DATES_DIALOG_SELECTION,
@@ -46,7 +50,7 @@ export function editDatesDialogSelector(state: CatalogViewerState): EditDatesDia
         endAtDayEnd: dialog.endAtDayEnd,
         isLoading: dialog.isLoading,
         errorCode: dialog.error,
-        dateRangeError,
-        isSaveEnabled: areDatesValid && isDateRangeValid && !dialog.isLoading,
+        dateRangeError: validation.dateRangeError,
+        isSaveEnabled: validation.areDatesValid && validation.isDateRangeValid && !dialog.isLoading,
     };
 }

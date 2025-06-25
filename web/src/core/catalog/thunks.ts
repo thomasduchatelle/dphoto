@@ -1,4 +1,4 @@
-import {createAlbumDeclaration} from "./album-create";
+import {albumCreateThunks} from "./album-create";
 import {navigationThunks} from "./navigation";
 import {albumDeleteThunks} from "./album-delete";
 import {albumEditDatesThunks} from "./album-edit-dates";
@@ -15,7 +15,7 @@ export type {DeleteAlbumThunk, DeleteAlbumPort} from "./album-delete/thunk-delet
 export const catalogThunks = {
     ...navigationThunks,
     ...sharingThunks,
-    createAlbum: createAlbumDeclaration,
+    ...albumCreateThunks,
     ...albumDeleteThunks,
     ...albumEditDatesThunks,
 };

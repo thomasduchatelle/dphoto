@@ -2,7 +2,7 @@ import {UpdateAlbumDatesPort, updateAlbumDatesThunk} from "./thunk-updateAlbumDa
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumsAndMediasLoaded} from "../navigation/action-albumsAndMediasLoaded";
 import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
-import {someMedias, twoAlbums} from "../tests/test-helper-state";
+import {someMediasByDays, twoAlbums} from "../tests/test-helper-state";
 import {Album, AlbumId, Media} from "../language";
 
 class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
@@ -40,7 +40,7 @@ class UpdateAlbumDatesPortFake implements UpdateAlbumDatesPort {
 
 describe("thunk:updateAlbumDates", () => {
     it("should convert display dates to API format with default times and dispatch actions", async () => {
-        const rawMedias = someMedias.flatMap(m => m.medias);
+        const rawMedias = someMediasByDays.flatMap(m => m.medias);
         const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
@@ -76,7 +76,7 @@ describe("thunk:updateAlbumDates", () => {
     });
 
     it("should convert round end times (full hours) to API format without adding 1 minute", async () => {
-        const rawMedias = someMedias.flatMap(m => m.medias);
+        const rawMedias = someMediasByDays.flatMap(m => m.medias);
         const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
@@ -112,7 +112,7 @@ describe("thunk:updateAlbumDates", () => {
     });
 
     it("should convert round end times (half hours) to API format without adding 1 minute", async () => {
-        const rawMedias = someMedias.flatMap(m => m.medias);
+        const rawMedias = someMediasByDays.flatMap(m => m.medias);
         const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
@@ -148,7 +148,7 @@ describe("thunk:updateAlbumDates", () => {
     });
 
     it("should convert precise end times to API format with +1 minute for exclusivity", async () => {
-        const rawMedias = someMedias.flatMap(m => m.medias);
+        const rawMedias = someMediasByDays.flatMap(m => m.medias);
         const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
@@ -184,7 +184,7 @@ describe("thunk:updateAlbumDates", () => {
     });
 
     it("should convert another precise end time to API format with +1 minute for exclusivity", async () => {
-        const rawMedias = someMedias.flatMap(m => m.medias);
+        const rawMedias = someMediasByDays.flatMap(m => m.medias);
         const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;
@@ -220,7 +220,7 @@ describe("thunk:updateAlbumDates", () => {
     });
 
     it("should prioritize start/end of day flags over specific times", async () => {
-        const rawMedias = someMedias.flatMap(m => m.medias);
+        const rawMedias = someMediasByDays.flatMap(m => m.medias);
         const fakePort = new UpdateAlbumDatesPortFake(twoAlbums, rawMedias);
         const dispatched: any[] = [];
         const albumId = twoAlbums[0].albumId;

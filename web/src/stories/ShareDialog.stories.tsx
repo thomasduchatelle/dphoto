@@ -22,14 +22,14 @@ const InteractiveContainer = ({sharedWith, suggestions, failures = []}: Interact
 
     const onGrant = useCallback(async (email: string) => {
         if (state.failures?.some((forbiddenEmail) => email === forbiddenEmail)) {
-            setState({
+            setState(state => ({
                 ...state,
                 error: {
                     type: "grant",
                     message: `Cannot grant access to ${email}, you are not allowed to do so`,
                     email,
                 },
-            });
+            }));
             throw new Error(`Cannot grant access to ${email}, you are not allowed to do so`);
         }
 
@@ -46,18 +46,18 @@ const InteractiveContainer = ({sharedWith, suggestions, failures = []}: Interact
             sharedWith = sharedWith.sort((a, b) => a.user.name.localeCompare(b.user.name));
             return {sharedWith, suggestions, failures};
         })
-    }, [setState]);
+    }, [state, setState]);
 
     const onRevoke = useCallback(async (email: string) => {
         if (state.failures?.some((forbiddenEmail) => email === forbiddenEmail)) {
-            setState({
+            setState(state => ({
                 ...state,
                 error: {
                     type: "revoke",
                     message: `Cannot revoke access from ${email}, you are not allowed to do so`,
                     email,
                 },
-            });
+            }));
             throw new Error(`Cannot revoke access from ${email}, you are not allowed to do so`);
         }
 
@@ -70,7 +70,7 @@ const InteractiveContainer = ({sharedWith, suggestions, failures = []}: Interact
             }
             return {sharedWith, suggestions, failures};
         })
-    }, [setState]);
+    }, [state, setState]);
 
     const onClose = useCallback(() => setOpen(false), [setOpen]);
 

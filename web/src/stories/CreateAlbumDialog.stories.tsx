@@ -4,10 +4,7 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
-import {screen, userEvent, within} from "@storybook/testing-library";
-import {CreateAlbumDialog, CreateAlbumDialogContainer} from "../pages/authenticated/albums/CreateAlbumDialog";
-import {albumFolderNameAlreadyTakenErr, albumStartAndEndDateMandatoryErr, emptyCreateAlbum} from "../core/catalog";
-import {Button} from "@mui/material";
+import {CreateAlbumDialog} from "../pages/authenticated/albums/CreateAlbumDialog";
 
 dayjs.locale(fr)
 
@@ -17,7 +14,8 @@ export default {
     component: CreateAlbumDialog,
 } as ComponentMeta<typeof CreateAlbumDialog>;
 
-const defaultStartDate = dayjs("2024-12-21")
+const defaultStartDate = new Date("2024-12-21T00:00:00Z")
+const endDate = new Date("2024-12-29T23:59:00Z")
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 const Template: ComponentStory<typeof CreateAlbumDialog> = (args) => (
@@ -25,41 +23,37 @@ const Template: ComponentStory<typeof CreateAlbumDialog> = (args) => (
         <CreateAlbumDialog {...args}/>
     </LocalizationProvider>
 );
-const TemplateInContainer: ComponentStory<typeof CreateAlbumDialog> = (args) => (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
-        <CreateAlbumDialogContainer firstDay={defaultStartDate} createAlbum={() => Promise.resolve({owner: "tony", folderName: "/ironman-1"})} {...args}>
-            {({openDialogForCreateAlbum}) => {
-                return <Button onClick={openDialogForCreateAlbum} variant='contained'>Click to open</Button>
-            }}
-        </CreateAlbumDialogContainer>
-    </LocalizationProvider>
-);
-
-// it should open the dialog and set a name when used with the container
-export const InContainer = TemplateInContainer.bind({});
-InContainer.args = {};
-InContainer.parameters = {
-    delay: 300,
-};
-InContainer.play = async ({canvasElement}) => {
-    const fullCanvas = within(canvasElement);
-    await userEvent.click(fullCanvas.getAllByRole("button")[0]);
-
-    const canvas = within(screen.getByRole('dialog'));
-    const nameInput = canvas.getByLabelText(/Name/, {
-        selector: 'input',
-    })
-
-    userEvent.type(nameInput, 'Avenger 3');
-};
 
 // it should display the model with no name, defaulted start and end date (1 week apart), no folder name, "create" button disabled
 export const Empty = Template.bind({});
 Empty.args = {
-    state: {
-        ...emptyCreateAlbum(defaultStartDate),
-        open: true,
-    }
+    open: true,
+    name: "",
+    start: defaultStartDate,
+    end: endDate,
+    forceFolderName: "",
+    startsAtStartOfTheDay: true,
+    endsAtEndOfTheDay: true,
+    withCustomFolderName: false,
+    isLoading: false,
+    canSubmit: false,
+    onClose: () => {
+    },
+    onSubmit: () => Promise.resolve(),
+    onNameChange: () => {
+    },
+    onStartDateChange: () => {
+    },
+    onEndDateChange: () => {
+    },
+    onFolderNameChange: () => {
+    },
+    onWithCustomFolderNameChange: () => {
+    },
+    onStartsAtStartOfTheDayChange: () => {
+    },
+    onEndsAtEndOfTheDayChange: () => {
+    },
 };
 Empty.parameters = {
     delay: 300,
@@ -68,11 +62,9 @@ Empty.parameters = {
 // it should have the "save" button enabled when the name is not empty
 export const WithAName = Template.bind({});
 WithAName.args = {
-    state: {
-        ...emptyCreateAlbum(defaultStartDate),
-        open: true,
-        name: 'Avenger 3',
-    }
+    ...Empty.args,
+    name: 'Avenger 3',
+    canSubmit: true,
 };
 WithAName.parameters = {
     delay: 300,
@@ -81,11 +73,8 @@ WithAName.parameters = {
 // it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
 export const AlreadyExists = Template.bind({});
 AlreadyExists.args = {
-    state: {
-        ...emptyCreateAlbum(defaultStartDate),
-        open: true,
-        errorCode: albumFolderNameAlreadyTakenErr
-    },
+    ...Empty.args,
+    error: "AlbumFolderNameAlreadyTakenErr"
 };
 AlreadyExists.parameters = {
     delay: 300,
@@ -94,11 +83,8 @@ AlreadyExists.parameters = {
 // it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
 export const StartAndEndDateAreMandatory = Template.bind({});
 StartAndEndDateAreMandatory.args = {
-    state: {
-        ...emptyCreateAlbum(defaultStartDate),
-        open: true,
-        errorCode: albumStartAndEndDateMandatoryErr
-    },
+    ...Empty.args,
+    error: "AlbumStartAndEndDateMandatoryErr"
 };
 StartAndEndDateAreMandatory.parameters = {
     delay: 300,
@@ -107,12 +93,9 @@ StartAndEndDateAreMandatory.parameters = {
 // it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
 export const Loading = Template.bind({});
 Loading.args = {
-    state: {
-        ...emptyCreateAlbum(defaultStartDate),
-        name: 'Avenger 3',
-        creationInProgress: true,
-        open: true,
-    },
+    ...WithAName.args,
+    isLoading: true,
+    canSubmit: false,
 };
 Loading.parameters = {
     storyshots: {disable: true},
@@ -121,12 +104,8 @@ Loading.parameters = {
 // it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
 export const GenericError = Template.bind({});
 GenericError.args = {
-    state: {
-        ...emptyCreateAlbum(defaultStartDate),
-        name: 'Avenger 3',
-        open: true,
-        errorCode: 'Something weird and different than the known errors.'
-    },
+    ...WithAName.args,
+    error: 'Something weird and different than the known errors.'
 };
 GenericError.parameters = {
     delay: 300,
