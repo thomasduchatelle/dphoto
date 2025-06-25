@@ -19,6 +19,7 @@ export const albumsLoaded = createAction<CatalogViewerState, AlbumsLoadedPayload
             albums: filteredAlbums,
             error: undefined,
             albumsLoaded: true,
+            dialog: undefined,
         }
     }
 );

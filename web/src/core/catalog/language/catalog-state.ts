@@ -20,6 +20,13 @@ export interface CurrentUserInsight {
     picture?: string
 }
 
+export interface DateRangeState {
+    startDate: Date | null;
+    endDate: Date | null;
+    startAtDayStart: boolean;
+    endAtDayEnd: boolean;
+}
+
 export enum MediaType {
     IMAGE,
     VIDEO,
@@ -138,19 +145,24 @@ export interface DeleteDialog {
     error?: string
 }
 
-export interface EditDatesDialog {
-    type: "EditDatesDialog"
-    albumId: AlbumId
-    albumName: string
-    startDate: Date | null
-    endDate: Date | null
-    startAtDayStart: boolean
-    endAtDayEnd: boolean
+export interface CreateDialog extends DateRangeState {
+    type: "CreateDialog"
+    name: string
+    forceFolderName: string
+    withCustomFolderName: boolean
     isLoading: boolean
     error?: string
 }
 
-export type CatalogDialog = EditDatesDialog | DeleteDialog | ShareDialog;
+export interface EditDatesDialog extends DateRangeState {
+    type: "EditDatesDialog"
+    albumId: AlbumId
+    albumName: string
+    isLoading: boolean
+    error?: string
+}
+
+export type CatalogDialog = CreateDialog | EditDatesDialog | DeleteDialog | ShareDialog;
 
 export function isEditDatesDialog(dialog: CatalogDialog | undefined): dialog is EditDatesDialog {
     return dialog?.type === "EditDatesDialog";
@@ -158,6 +170,10 @@ export function isEditDatesDialog(dialog: CatalogDialog | undefined): dialog is 
 
 export function isDeleteDialog(dialog: CatalogDialog | undefined): dialog is DeleteDialog {
     return dialog?.type === "DeleteDialog";
+}
+
+export function isCreateDialog(dialog: CatalogDialog | undefined): dialog is CreateDialog {
+    return dialog?.type === "CreateDialog";
 }
 
 export function isShareDialog(dialog: CatalogDialog | undefined): dialog is ShareDialog {

@@ -6,7 +6,7 @@ import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogAPIAdapter} from "../adapters/api";
 import {Action} from "src/libs/daction";
 import {ThunkDeclaration} from "src/libs/dthunks";
-import {isRoundTime} from "../common/date-helper";
+import {convertToModelEndDate, convertToModelStartDate} from "../date-range/date-helper";
 
 export const editDatesOrphanedMediasErrorCode = "OrphanedMediasErr";
 
@@ -40,8 +40,8 @@ export async function updateAlbumDatesThunk(
     dispatch(albumDatesUpdateStarted());
 
     try {
-        const apiStartDate = convertToApiStartDate(startDate, startAtDayStart);
-        const apiEndDate = convertToApiEndDate(endDate, endAtDayEnd);
+        const apiStartDate = convertToModelStartDate(startDate, startAtDayStart);
+        const apiEndDate = convertToModelEndDate(endDate, endAtDayEnd);
 
         await updateAlbumDatesPort.updateAlbumDates(albumId, apiStartDate, apiEndDate);
 
@@ -61,27 +61,6 @@ export async function updateAlbumDatesThunk(
     }
 }
 
-function convertToApiStartDate(original: Date, atDayStart: boolean): Date {
-    const date = new Date(original);
-    if (atDayStart) {
-        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-    }
-
-    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getHours(), date.getMinutes()));
-}
-
-function convertToApiEndDate(original: Date, atDayEnd: boolean): Date {
-    const date = new Date(original);
-    if (atDayEnd) {
-        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1));
-    }
-
-    if (isRoundTime(date)) {
-        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getHours(), date.getMinutes()));
-    }
-
-    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getHours(), date.getMinutes() + 1));
-}
 
 export const updateAlbumDatesDeclaration: ThunkDeclaration<
     CatalogViewerState,

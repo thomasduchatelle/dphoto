@@ -51,4 +51,24 @@ describe("action:albumsLoaded", () => {
             albums: twoAlbums,
         });
     });
+
+    it("should close all dialogs when albums are reloaded", () => {
+        const action = albumsLoaded({albums: twoAlbums});
+        const got = action.reducer({
+            ...loadedStateWithTwoAlbums,
+            dialog: {
+                type: "CreateDialog",
+                name: "Test Album",
+                startDate: new Date("2025-01-01"),
+                endDate: new Date("2025-01-31"),
+                startAtDayStart: true,
+                endAtDayEnd: true,
+                forceFolderName: "",
+                withCustomFolderName: false,
+                isLoading: false,
+            },
+        }, action);
+
+        expect(got.dialog).toBeUndefined();
+    });
 });

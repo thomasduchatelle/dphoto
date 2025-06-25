@@ -1,7 +1,7 @@
 import {Album, CatalogViewerState, OwnerDetails} from "../language";
 import {deleteAlbumDialogOpened} from "./action-deleteAlbumDialogOpened";
 import {deleteDialogSelector} from "./selector-deleteDialogSelector";
-import {myselfUser, someMedias} from "../tests/test-helper-state";
+import {myselfUser, someMediasByDays} from "../tests/test-helper-state";
 import {generateAlbumFilterOptions} from "../navigation";
 
 const ownerDetails: OwnerDetails = {
@@ -52,7 +52,7 @@ const stateWithThreeAlbumsLoaded: CatalogViewerState = {
     albumFilterOptions: albumFilterOptions,
     albumFilter: albumFilterOptions[0],
     albums: allAlbums,
-    medias: someMedias,
+    medias: someMediasByDays,
     albumNotFound: false,
     mediasLoadedFromAlbumId: allAlbums[0].albumId,
     albumsLoaded: true,

@@ -1,7 +1,7 @@
 import {albumIdEquals, CatalogViewerState, EditDatesDialog} from "../language";
 import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
 import {createAction} from "src/libs/daction";
-import {isRoundTime} from "../common/date-helper";
+import {convertFromModelToDisplayDate, isDateAtDayEnd, isDateAtDayStart} from "../date-range/date-helper";
 
 export const editDatesDialogOpened = createAction<CatalogViewerState>(
     "EditDatesDialogOpened",
@@ -15,16 +15,9 @@ export const editDatesDialogOpened = createAction<CatalogViewerState>(
         }
 
         const startDate = selectedAlbum.start;
-        const endDate = new Date(selectedAlbum.end);
-
-        const startAtDayStart = startDate.getUTCHours() === 0 && startDate.getUTCMinutes() === 0 && startDate.getUTCSeconds() === 0 && startDate.getUTCMilliseconds() === 0;
-        const endAtDayEnd = endDate.getUTCHours() === 0 && endDate.getUTCMinutes() === 0 && endDate.getUTCSeconds() === 0 && endDate.getUTCMilliseconds() === 0;
-
-        if (endAtDayEnd) {
-            endDate.setDate(endDate.getDate() - 1);
-        } else if (!isRoundTime(endDate)) {
-            endDate.setUTCMinutes(endDate.getUTCMinutes() - 1);
-        }
+        const startAtDayStart = isDateAtDayStart(startDate);
+        const endAtDayEnd = isDateAtDayEnd(selectedAlbum.end);
+        const endDate = convertFromModelToDisplayDate(selectedAlbum.end, true, endAtDayEnd);
 
         const newDialog: EditDatesDialog = {
             type: "EditDatesDialog",

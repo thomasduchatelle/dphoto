@@ -23,9 +23,24 @@ interface DateRangePickerProps {
 
 
 function toUTCDate(newValue: Dayjs | null) {
-    const utcValue = newValue ? newValue.toDate() : null;
-    utcValue?.setTime(utcValue.getTime() - utcValue.getTimezoneOffset() * 60 * 1000)
+    if (!newValue) {
+        return null;
+    }
+
+    const utcValue = newValue.toDate();
+    utcValue.setTime(utcValue.getTime() - utcValue.getTimezoneOffset() * 60 * 1000)
     return utcValue;
+}
+
+function fromUTCDate(utcDate: Date | null): Dayjs | null {
+    if (!utcDate) {
+        return null;
+    }
+
+    const hacked = new Date(utcDate)
+    hacked.setTime(hacked.getTime() + hacked.getTimezoneOffset() * 60 * 1000)
+
+    return dayjs(hacked);
 }
 
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -56,7 +71,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DatePicker
                         label="First day"
                         disabled={disabled}
-                        value={startDate ? dayjs(startDate) : null}
+                        value={fromUTCDate(startDate)}
                         onChange={onStartChange}
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText=""/>
@@ -66,7 +81,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DateTimePicker
                         label="First day"
                         disabled={disabled}
-                        value={startDate ? dayjs(startDate) : null}
+                        value={fromUTCDate(startDate)}
                         onChange={onStartChange}
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText=""/>
@@ -93,7 +108,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DatePicker
                         label="Last day"
                         disabled={disabled}
-                        value={endDate ? dayjs(endDate) : null}
+                        value={fromUTCDate(endDate)}
                         onChange={onEndChange}
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} />
@@ -103,7 +118,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <DateTimePicker
                         label="Last day"
                         disabled={disabled}
-                        value={endDate ? dayjs(endDate) : null}
+                        value={fromUTCDate(endDate)}
                         onChange={onEndChange}
                         renderInput={(params: any) => (
                             <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} />

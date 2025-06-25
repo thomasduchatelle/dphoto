@@ -1,10 +1,7 @@
 import {openEditDatesDialogDeclaration} from "./thunk-openEditDatesDialog";
 import {closeEditDatesDialogDeclaration} from "./thunk-closeEditDatesDialog";
 import {updateAlbumDatesDeclaration} from "./thunk-updateAlbumDates";
-import {updateEditDatesDialogStartDateDeclaration} from "./thunk-updateEditDatesDialogStartDate";
-import {updateEditDatesDialogEndDateDeclaration} from "./thunk-updateEditDatesDialogEndDate";
-import {updateEditDatesDialogStartAtDayStartDeclaration} from "./thunk-updateEditDatesDialogStartAtDayStart";
-import {updateEditDatesDialogEndAtDayEndDeclaration} from "./thunk-updateEditDatesDialogEndAtDayEnd";
+import {dateRangeThunks} from "../date-range";
 
 export * from "./selector-editDatesDialogSelector";
 export type {UpdateAlbumDatesPort} from "./thunk-updateAlbumDates";
@@ -25,8 +22,8 @@ export const albumEditDatesThunks = {
     openEditDatesDialog: openEditDatesDialogDeclaration,
     closeEditDatesDialog: closeEditDatesDialogDeclaration,
     updateAlbumDates: updateAlbumDatesDeclaration,
-    updateEditDatesDialogStartDate: updateEditDatesDialogStartDateDeclaration,
-    updateEditDatesDialogEndDate: updateEditDatesDialogEndDateDeclaration,
-    updateEditDatesDialogStartAtDayStart: updateEditDatesDialogStartAtDayStartDeclaration,
-    updateEditDatesDialogEndAtDayEnd: updateEditDatesDialogEndAtDayEndDeclaration,
+    updateEditDatesDialogStartDate: dateRangeThunks.updateDateRangeStartDate,
+    updateEditDatesDialogEndDate: dateRangeThunks.updateDateRangeEndDate,
+    updateEditDatesDialogStartAtDayStart: dateRangeThunks.updateDateRangeStartAtDayStart,
+    updateEditDatesDialogEndAtDayEnd: dateRangeThunks.updateDateRangeEndAtDayEnd,
 };

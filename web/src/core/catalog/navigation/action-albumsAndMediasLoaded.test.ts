@@ -1,5 +1,5 @@
 import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
-import {loadedStateWithTwoAlbums, myselfUser, selectionForLoadedStateWithTwoAlbums, someMedias, twoAlbums} from "../tests/test-helper-state";
+import {loadedStateWithTwoAlbums, myselfUser, selectionForLoadedStateWithTwoAlbums, someMediasByDays, twoAlbums} from "../tests/test-helper-state";
 
 import {Album, initialCatalogState} from "../language";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
@@ -10,7 +10,7 @@ describe("action:albumsAndMediasLoaded", () => {
     it("should add the loaded albums and medias to the state, and reset all status when receiving AlbumsAndMediasLoaded", () => {
         const action = albumsAndMediasLoaded({
             albums: twoAlbums,
-            medias: someMedias.flatMap(m => m.medias), // Pass raw medias
+            medias: someMediasByDays.flatMap(m => m.medias), // Pass raw medias
             mediasFromAlbumId: twoAlbums[0].albumId,
         });
         const got = action.reducer({
@@ -26,7 +26,7 @@ describe("action:albumsAndMediasLoaded", () => {
     it("should use 'All albums' filter even when it's the only selection available (only directly owned albums) when receiving AlbumsAndMediasLoaded", () => {
         const action = albumsAndMediasLoaded({
             albums: [twoAlbums[0]],
-            medias: someMedias.flatMap(m => m.medias), // Pass raw medias
+            medias: someMediasByDays.flatMap(m => m.medias), // Pass raw medias
             mediasFromAlbumId: twoAlbums[0].albumId,
         });
         const got = action.reducer(initialCatalogState(myselfUser), action);
@@ -44,7 +44,7 @@ describe("action:albumsAndMediasLoaded", () => {
             albumFilter: allAlbumFilter,
             albumFilterOptions: [allAlbumFilter],
             displayedAlbum: twoAlbums[0],
-            medias: someMedias,
+            medias: someMediasByDays,
         });
     });
 
@@ -66,7 +66,7 @@ describe("action:albumsAndMediasLoaded", () => {
 
         const action = albumsAndMediasLoaded({
             albums: [...twoAlbums, newDirectlyOwnedAlbum],
-            medias: someMedias.flatMap(m => m.medias), // Pass raw medias
+            medias: someMediasByDays.flatMap(m => m.medias), // Pass raw medias
             mediasFromAlbumId: twoAlbums [0].albumId,
         });
         const got = action.reducer(
@@ -84,7 +84,7 @@ describe("action:albumsAndMediasLoaded", () => {
             albumFilter: directlyOwnedFilter,
             albums: [loadedStateWithTwoAlbums.albums[0], newDirectlyOwnedAlbum],
             displayedAlbum: twoAlbums[0],
-            medias: groupByDay(someMedias.flatMap(m => m.medias)),
+            medias: groupByDay(someMediasByDays.flatMap(m => m.medias)),
         });
     });
 
@@ -93,7 +93,7 @@ describe("action:albumsAndMediasLoaded", () => {
 
         const action = albumsAndMediasLoaded({
             albums: twoAlbums,
-            medias: someMedias.flatMap(m => m.medias),
+            medias: someMediasByDays.flatMap(m => m.medias),
             mediasFromAlbumId: twoAlbums[1].albumId,
         });
         const got = action.reducer(
@@ -110,7 +110,7 @@ describe("action:albumsAndMediasLoaded", () => {
             albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
             albums: twoAlbums,
             displayedAlbum: twoAlbums[1],
-            medias: someMedias,
+            medias: someMediasByDays,
         });
     });
 });

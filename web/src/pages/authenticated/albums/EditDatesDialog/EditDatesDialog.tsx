@@ -3,7 +3,6 @@ import {Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, I
 import {Close} from "@mui/icons-material";
 import Grid from "@mui/material/Unstable_Grid2";
 import {DateRangePicker} from "../DateRangePicker";
-import {albumStartAndEndDateMandatoryErr} from "../../../../core/catalog";
 
 interface EditDatesDialogProps {
     isOpen: boolean;
@@ -85,7 +84,7 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
             <DialogContent>
                 <Grid container spacing={2} alignItems='center'>
                     <Grid sm={12} xs={12}>
-                        {errorCode && errorCode !== albumStartAndEndDateMandatoryErr && <Alert severity="error">
+                        {errorCode && <Alert severity="error">
                             {errorCode}
                         </Alert>}
                     </Grid>
