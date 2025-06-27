@@ -6,11 +6,14 @@ import {
     CurrentUserInsight,
     DeleteDialog,
     EditDatesDialog,
+    EditNameDialog,
+    editNameDialogNoError,
     MediaType,
     MediaWithinADay,
     UserDetails
 } from "../language";
 import {CatalogViewerPageSelection} from "../navigation";
+import {EditNameDialogSelection} from "../album-edit-name";
 
 // **IMPORTANT** - to LLM Agents
 // Use the constants defined in this file in all your tests to make them more readable, and robust to changes
@@ -165,4 +168,27 @@ export const editDatesDialogForJanAlbum: EditDatesDialog = {
     endAtDayEnd: true,
     isLoading: false,
 }
+
+export const editJanAlbumNameDialog: EditNameDialog = {
+    type: "EditNameDialog",
+    albumId: twoAlbums[0].albumId,
+    albumName: twoAlbums[0].name,
+    customFolderName: "",
+    isCustomFolderNameEnabled: false,
+    isLoading: false,
+    error: editNameDialogNoError,
+}
+
+export const editJanAlbumNameSelection: EditNameDialogSelection = {
+    isOpen: true,
+    albumName: twoAlbums[0].name,
+    originalName: twoAlbums[0].name,
+    customFolderName: "",
+    isCustomFolderNameEnabled: false,
+    isLoading: false,
+    isSaveEnabled: true,
+}
+
+
+
 

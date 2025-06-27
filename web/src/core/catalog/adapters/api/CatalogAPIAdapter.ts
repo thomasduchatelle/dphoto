@@ -5,6 +5,7 @@ import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort} from "../../album-delete";
 import {UpdateAlbumDatesPort} from "../../album-edit-dates";
+import {SaveAlbumNamePort} from "../../album-edit-name/thunk-saveAlbumName";
 
 interface RestAlbum {
     owner: string
@@ -37,7 +38,7 @@ interface RestOwnerDetails {
     users: RestUserDetails[]
 }
 
-export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort, UpdateAlbumDatesPort {
+export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort, UpdateAlbumDatesPort, SaveAlbumNamePort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
         private readonly accessTokenHolder: AccessTokenHolder,
@@ -200,6 +201,16 @@ export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, 
                 start: startDate.toISOString(),
                 end: endDate.toISOString(),
             })
+            .catch((err: AxiosError) => Promise.reject(castError(err)));
+    }
+
+    public async renameAlbum(albumId: AlbumId, newName: string, newFolderName?: string): Promise<AlbumId> {
+        return this.authenticatedAxios
+            .put<AlbumId>(`/api/v1/owners/${albumId.owner}/albums/${albumId.folderName}/name`, {
+                name: newName,
+                folderName: newFolderName,
+            })
+            .then(resp => resp.data)
             .catch((err: AxiosError) => Promise.reject(castError(err)));
     }
 }

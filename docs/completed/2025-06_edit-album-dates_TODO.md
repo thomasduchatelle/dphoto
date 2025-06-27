@@ -7,4 +7,4 @@
 * [X] extract a selector for the albums !
 * [X] Delete or create albums does not redirect (regression)
 * [X] retire albumDatesUpdated in favour of using the albumAndMediasUpdated action (which needs to close the dialog)
-* [ ] refactor the create dialog to match the new style
+* [X] refactor the create dialog to match the new style

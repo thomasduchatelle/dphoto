@@ -8,12 +8,20 @@ import MobileNavigation from "./MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
-import {catalogViewerPageSelector, deleteDialogSelector, editDatesDialogSelector, sharingDialogSelector, createDialogSelector} from "../../../core/catalog";
+import {
+    catalogViewerPageSelector,
+    createDialogSelector,
+    deleteDialogSelector,
+    editDatesDialogSelector,
+    editNameDialogSelector,
+    sharingDialogSelector
+} from "../../../core/catalog";
 import {CreateAlbumDialog} from "./CreateAlbumDialog";
 import AlbumListActions from "./AlbumsListActions/AlbumListActions";
 import ShareDialog from "./ShareDialog";
 import {DeleteAlbumDialog} from "./DeleteAlbumDialog";
 import {EditDatesDialog} from "./EditDatesDialog";
+import {EditNameDialog} from "./EditNameDialog";
 import {displayedAlbumSelector} from "../../../core/catalog/language/selector-displayedAlbum";
 
 export function CatalogViewerPage() {
@@ -38,6 +46,8 @@ export function CatalogViewerPage() {
             openDeleteAlbumDialog,
             openEditDatesDialog,
             closeEditDatesDialog,
+            openEditNameDialog,
+            closeEditNameDialog,
             openSharingModal,
             closeSharingModal,
             revokeAlbumAccess,
@@ -47,6 +57,10 @@ export function CatalogViewerPage() {
             updateEditDatesDialogEndDate,
             updateEditDatesDialogStartAtDayStart,
             updateEditDatesDialogEndAtDayEnd,
+            changeFolderNameEnabled,
+            changeFolderName,
+            changeAlbumName,
+            saveAlbumName,
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -63,6 +77,7 @@ export function CatalogViewerPage() {
     const {albumFilter, albumFilterOptions, albumsLoaded, albums, displayedAlbum} = catalogViewerPageSelector(state);
 
     const editDatesDialogState = editDatesDialogSelector(state);
+    const editNameDialogState = editNameDialogSelector(state);
     const createDialogState = createDialogSelector(state);
 
     return (
@@ -82,6 +97,7 @@ export function CatalogViewerPage() {
                         onAlbumFiltered={onAlbumFilterChange}
                         openDeleteAlbumDialog={openDeleteAlbumDialog}
                         openEditDatesDialog={openEditDatesDialog}
+                        openEditNameDialog={openEditNameDialog}
                         openCreateDialog={openCreateDialog}
                         {...displayedAlbumSelector(state)}
                     />
@@ -99,6 +115,7 @@ export function CatalogViewerPage() {
                     openSharingModal={openSharingModal}
                     openDeleteAlbumDialog={openDeleteAlbumDialog}
                     openEditDatesDialog={openEditDatesDialog}
+                    openEditNameDialog={openEditNameDialog}
                     openCreateDialog={openCreateDialog}
                 />
             )}
@@ -133,6 +150,14 @@ export function CatalogViewerPage() {
                 onEndDateChange={updateEditDatesDialogEndDate}
                 onStartAtDayStartChange={updateEditDatesDialogStartAtDayStart}
                 onEndAtDayEndChange={updateEditDatesDialogEndAtDayEnd}
+            />
+            <EditNameDialog
+                {...editNameDialogState}
+                onClose={closeEditNameDialog}
+                onFolderNameChange={changeFolderName}
+                onFolderNameEnabledChange={changeFolderNameEnabled}
+                onAlbumNameChange={changeAlbumName}
+                onSave={saveAlbumName}
             />
         </Box>
     );

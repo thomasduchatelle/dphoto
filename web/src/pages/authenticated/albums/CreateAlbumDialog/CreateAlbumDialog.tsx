@@ -3,18 +3,13 @@ import {
     Alert,
     Box,
     Button,
-    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    Divider,
     IconButton,
-    InputBase,
     LinearProgress,
-    Paper,
     TextField,
-    Tooltip,
     useMediaQuery,
     useTheme
 } from "@mui/material";
@@ -22,6 +17,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import {Close} from "@mui/icons-material";
 import {CreateDialogSelection} from "../../../../core/catalog";
 import {DateRangePicker} from "../DateRangePicker";
+import {FolderNameInput} from "../FolderNameInput";
 
 export interface CreateAlbumDialogHandlers {
     onClose: () => void;
@@ -113,8 +109,6 @@ export function CreateAlbumDialog({
                             disabled={isLoading}
                             onChange={(event) => onNameChange(event.target.value)}
                             value={name}
-                            helperText={error === "AlbumFolderNameAlreadyTakenErr" && "The name must be unique (or the folder name must be explicitly set)"}
-                            error={error === "AlbumFolderNameAlreadyTakenErr"}
                         />
                     </Grid>
                     <DateRangePicker
@@ -131,32 +125,15 @@ export function CreateAlbumDialog({
                         dateHelperText={dateHelperText}
                     />
                     <Grid xs={12}>
-                        <Tooltip title="The name of the physical folder name is generated from the date and the name; but can be overridden.">
-                            <Paper
-                                component="form"
-                                sx={theme => ({
-                                    p: '2px 4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    width: "99%",
-                                    border: `solid 1px ${theme.palette.grey.A400}`
-                                })}
-                                elevation={0}
-                            >
-                                <Checkbox checked={withCustomFolderName}
-                                          disabled={isLoading}
-                                          onChange={(event: React.ChangeEvent<HTMLInputElement>) => onWithCustomFolderNameChange(event.target.checked)}
-                                />
-                                <Divider sx={{height: 28, m: 0.5}} orientation="vertical"/>
-                                <InputBase
-                                    sx={{ml: 1, flex: 1}}
-                                    placeholder="Custom folder name (ex: '/2025-08_Summer')"
-                                    disabled={!withCustomFolderName || isLoading}
-                                    value={forceFolderName}
-                                    onChange={(event) => onFolderNameChange(event.target.value)}
-                                />
-                            </Paper>
-                        </Tooltip>
+                        <FolderNameInput
+                            useCustomFolderName={withCustomFolderName}
+                            value={forceFolderName}
+                            placeholder="Custom folder name (ex: '/2025-08_Summer')"
+                            disabled={isLoading}
+                            onEnabledChange={onWithCustomFolderNameChange}
+                            onValueChange={onFolderNameChange}
+                            error={error === "AlbumFolderNameAlreadyTakenErr" ? "The folder name must be unique" : undefined}
+                        />
                     </Grid>
                 </Grid>
             </DialogContent>

@@ -2,6 +2,7 @@ import {albumCreateThunks} from "./album-create";
 import {navigationThunks} from "./navigation";
 import {albumDeleteThunks} from "./album-delete";
 import {albumEditDatesThunks} from "./album-edit-dates";
+import {albumEditNameThunks} from "./album-edit-name";
 import {ThunkDeclaration} from "src/libs/dthunks";
 import {sharingThunks} from "./sharing";
 
@@ -10,6 +11,7 @@ export type {RevokeAlbumAccessAPI} from "./sharing/thunk-revokeAlbumAccess";
 export type {GrantAlbumAccessAPI} from "./sharing/thunk-grantAlbumAccess";
 export type {CreateAlbumThunk, CreateAlbumRequest, CreateAlbumPort} from "./album-create/album-createAlbum";
 export type {DeleteAlbumThunk, DeleteAlbumPort} from "./album-delete/thunk-deleteAlbum";
+export type {SaveAlbumNamePort} from "./album-edit-name/thunk-saveAlbumName";
 
 
 export const catalogThunks = {
@@ -18,6 +20,7 @@ export const catalogThunks = {
     ...albumCreateThunks,
     ...albumDeleteThunks,
     ...albumEditDatesThunks,
+    ...albumEditNameThunks,
 };
 
 // Dynamically infer the interface from catalogThunks
