@@ -20,6 +20,7 @@ export default function MediasPage({
                                        openSharingModal,
                                        openDeleteAlbumDialog,
                                        openEditDatesDialog,
+                                       openEditNameDialog,
                                        openCreateDialog,
                                        displayedAlbumIdIsOwned,
                                    }: {
@@ -28,6 +29,7 @@ export default function MediasPage({
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
     openCreateDialog: () => void
+    openEditNameDialog: () => void
     displayedAlbumIdIsOwned: boolean
     scrollToMedia?: string
 } & CatalogViewerPageSelection) {
@@ -60,6 +62,7 @@ export default function MediasPage({
                                 onAlbumFiltered={onAlbumFilterChange}
                                 openDeleteAlbumDialog={openDeleteAlbumDialog}
                                 openEditDatesDialog={openEditDatesDialog}
+                                openEditNameDialog={openEditNameDialog}
                                 openCreateDialog={openCreateDialog}
                                 displayedAlbumIdIsOwned={displayedAlbumIdIsOwned}
                             />

@@ -162,7 +162,23 @@ export interface EditDatesDialog extends DateRangeState {
     error?: string
 }
 
-export type CatalogDialog = CreateDialog | EditDatesDialog | DeleteDialog | ShareDialog;
+export interface NameError {
+    technicalError?: string;
+    nameError?: string;
+    folderNameError?: string;
+}
+
+export interface EditNameDialog {
+    type: "EditNameDialog"
+    albumId: AlbumId
+    albumName: string
+    customFolderName: string
+    isCustomFolderNameEnabled: boolean
+    isLoading: boolean
+    error: NameError
+}
+
+export type CatalogDialog = CreateDialog | EditDatesDialog | DeleteDialog | ShareDialog | EditNameDialog;
 
 export function isEditDatesDialog(dialog: CatalogDialog | undefined): dialog is EditDatesDialog {
     return dialog?.type === "EditDatesDialog";
@@ -179,3 +195,9 @@ export function isCreateDialog(dialog: CatalogDialog | undefined): dialog is Cre
 export function isShareDialog(dialog: CatalogDialog | undefined): dialog is ShareDialog {
     return dialog?.type === "ShareDialog";
 }
+
+export function isEditNameDialog(dialog: CatalogDialog | undefined): dialog is EditNameDialog {
+    return dialog?.type === "EditNameDialog";
+}
+
+export const editNameDialogNoError: NameError = {};

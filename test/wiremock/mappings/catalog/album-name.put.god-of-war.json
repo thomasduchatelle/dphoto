@@ -1,0 +1,14 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "PUT",
+    "urlPattern": "/api/v1/owners/tony@stark.com/albums/2021-12_christmas/name"
+  },
+  "response": {
+    "status": 409,
+    "jsonBody": {
+      "code": "AlbumFolderNameAlreadyTakenErr",
+      "message": "The requested folder name is already in use by another album"
+    }
+  }
+}
