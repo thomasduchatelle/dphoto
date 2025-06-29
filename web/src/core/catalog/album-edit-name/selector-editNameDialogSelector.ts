@@ -1,5 +1,5 @@
-import {CatalogViewerState, EditNameDialog, isEditNameDialog} from "../language";
-import {baseEditNameSelector, BaseEditNameSelection} from "../base-name-edit/selector-baseEditNameSelector";
+import {CatalogViewerState, isEditNameDialog} from "../language";
+import {BaseEditNameSelection, baseEditNameSelector} from "../base-name-edit/selector-baseEditNameSelector";
 
 export interface EditNameDialogSelection extends BaseEditNameSelection {
     isOpen: boolean;
@@ -18,19 +18,22 @@ const closedEditNameSelection: EditNameDialogSelection = {
 };
 
 export function editNameDialogSelector(state: CatalogViewerState): EditNameDialogSelection {
-    const baseSelection = baseEditNameSelector(state);
-    
+    if (!isEditNameDialog(state.dialog)) {
+        return closedEditNameSelection;
+    }
+
+    const {isSavable, ...baseSelection} = baseEditNameSelector(state, state.dialog);
+
     if (!baseSelection) {
         return closedEditNameSelection;
     }
 
-    const dialog: EditNameDialog = state.dialog as EditNameDialog;
-    const isSaveEnabled = !baseSelection.nameError && !baseSelection.folderNameError && !dialog.isLoading;
+    const isSaveEnabled = isSavable && !state.dialog.isLoading;
 
     return {
         ...baseSelection,
         isOpen: true,
-        isLoading: dialog.isLoading,
+        isLoading: state.dialog.isLoading,
         isSaveEnabled,
     };
 }
