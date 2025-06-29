@@ -157,10 +157,10 @@ functions:
       - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/dates
           method: put
-  rename-album:
+  amend-album-name:
     handler: bootstrap
     package:
-      artifact: ../../bin/rename-album.zip
+      artifact: ../../bin/amend-album-name.zip
     events:
       - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/name
