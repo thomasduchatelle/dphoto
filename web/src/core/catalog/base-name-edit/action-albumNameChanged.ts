@@ -1,5 +1,5 @@
 import {createAction} from "src/libs/daction";
-import {CatalogViewerState, editNameDialogNoError, isNameEditBase} from "../language";
+import {CatalogViewerState, isNameEditBase} from "../language";
 
 export const albumNameChanged = createAction<CatalogViewerState, string>(
     "AlbumNameChanged",
