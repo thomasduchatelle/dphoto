@@ -29,13 +29,13 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 
 	argParser := common.NewArgParser(&request)
 	owner := ownermodel.Owner(argParser.ReadPathParameterString("owner"))
-	folderName := catalog.NewFolderName("/" + argParser.ReadPathParameterString("folderName"))
+	folderName := catalog.NewFolderName(argParser.ReadPathParameterString("folderName"))
 
 	if argParser.HasViolations() {
 		return argParser.BadRequest()
 	}
 
-	albumId := catalog.AlbumId{Owner: owner, FolderName: folderName}
+	currentAlbumId := catalog.AlbumId{Owner: owner, FolderName: folderName}
 
 	requestDto := &RenameAlbumRequestDTO{}
 	err := json.Unmarshal([]byte(request.Body), requestDto)
@@ -44,7 +44,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	}
 
 	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
-		err := pkgfactory.AclCatalogAuthoriser(ctx).CanRenameAlbum(ctx, user, albumId)
+		err := pkgfactory.AclCatalogAuthoriser(ctx).CanRenameAlbum(ctx, user, currentAlbumId)
 		if err != nil {
 			if errors.Is(err, aclcore.AccessForbiddenError) {
 				return common.ForbiddenResponse(err.Error())
@@ -52,7 +52,12 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			return common.InternalError(err)
 		}
 
-		newAlbumId, err := common.Factory.RenameAlbumCase(ctx).RenameAlbum(ctx, albumId, requestDto.Name, requestDto.FolderName)
+		err = common.Factory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
+			CurrentId:        currentAlbumId,
+			NewName:          requestDto.Name,
+			RenameFolder:     requestDto.FolderName != "",
+			ForcedFolderName: catalog.NewFolderName(requestDto.FolderName).String(),
+		})
 		if err != nil {
 			switch {
 			case errors.Is(err, catalog.AlbumNameMandatoryErr):
@@ -68,9 +73,14 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			}
 		}
 
+		updatedFolderName := currentAlbumId.FolderName
+		if requestDto.FolderName != "" {
+			updatedFolderName = catalog.NewFolderName(requestDto.FolderName)
+		}
+
 		return common.Ok(albumIdDTO{
-			Owner:      newAlbumId.Owner.Value(),
-			FolderName: common.ConvertFolderNameForREST(newAlbumId.FolderName),
+			Owner:      currentAlbumId.Owner.Value(),
+			FolderName: common.ConvertFolderNameForREST(updatedFolderName),
 		})
 	})
 }

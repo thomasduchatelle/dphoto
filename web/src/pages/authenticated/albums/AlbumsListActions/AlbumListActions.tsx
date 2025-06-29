@@ -64,7 +64,7 @@ export default function AlbumListActions({
                 }}
             >
                 <MenuItem onClick={handleEditDatesClick}>Edit Dates</MenuItem>
-                <MenuItem onClick={handleEditNameClick} disabled>Edit Name</MenuItem>
+                <MenuItem onClick={handleEditNameClick}>Edit Name</MenuItem>
             </Menu>
             <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog}>
                 <DeleteIcon/>
