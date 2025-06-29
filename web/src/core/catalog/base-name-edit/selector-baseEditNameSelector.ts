@@ -10,7 +10,11 @@ export interface BaseEditNameSelection {
     folderNameError?: string;
 }
 
-export function baseEditNameSelector(state: CatalogViewerState, dialog: EditNameDialog): BaseEditNameSelection & { isSavable: boolean } {
+export interface BaseEditNameSelectionWithSavable extends BaseEditNameSelection {
+    isSavable: boolean
+}
+
+export function baseEditNameSelector(state: CatalogViewerState, dialog: EditNameDialog): BaseEditNameSelectionWithSavable {
     const {technicalError, nameError, folderNameError} = dialog.nameError
 
     const originalName = state.allAlbums.find(album => albumIdEquals(album.albumId, dialog.albumId))?.name || dialog.albumName;
@@ -23,6 +27,6 @@ export function baseEditNameSelector(state: CatalogViewerState, dialog: EditName
         technicalError,
         nameError,
         folderNameError,
-        isSavable: !!nameError && !!folderNameError,
+        isSavable: !nameError && !folderNameError,
     };
 }
