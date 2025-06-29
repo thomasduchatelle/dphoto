@@ -62,12 +62,12 @@ describe('action:albumNameChanged', () => {
         });
     });
 
-    it('should clear technical error when album name is changed', () => {
+    it('should preserve technical error when album name is changed', () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             dialog: {
                 ...editJanAlbumNameDialog,
-                nameError: {technicalError: "Some technical error"},
+                nameError: {technicalError: "Some technical error", folderNameError: "Some folder error"},
             },
         };
 
@@ -76,11 +76,13 @@ describe('action:albumNameChanged', () => {
 
         const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
         expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
-            isSavable: true,
+            isSavable: false,
             albumName: "New Name",
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: editJanAlbumNameSelection.customFolderName,
             isCustomFolderNameEnabled: editJanAlbumNameSelection.isCustomFolderNameEnabled,
+            technicalError: "Some technical error",
+            folderNameError: "Some folder error",
         });
     });
 });

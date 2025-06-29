@@ -13,7 +13,10 @@ export const customFolderNameChanged = createAction<CatalogViewerState, string>(
             dialog: {
                 ...current.dialog,
                 customFolderName: folderName,
-                nameError: !!folderName ? editNameDialogNoError : {folderNameError: "Folder name is mandatory"},
+                nameError: {
+                    ...current.dialog.nameError,
+                    folderNameError: !!folderName ? undefined : "Folder name is mandatory",
+                },
             },
         };
     }

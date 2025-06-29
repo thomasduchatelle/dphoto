@@ -64,13 +64,13 @@ describe('action:folderNameChanged', () => {
         expect(got.dialog?.type).not.toBe("EditNameDialog");
     });
 
-    it('should clear technical error when folder name is changed', () => {
+    it('should preserve technical error when folder name is changed', () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             dialog: {
                 ...editJanAlbumNameDialog,
                 isCustomFolderNameEnabled: true,
-                nameError: {technicalError: "Some technical error"},
+                nameError: {technicalError: "Some technical error", nameError: "Some name error"},
             },
         };
 
@@ -79,11 +79,13 @@ describe('action:folderNameChanged', () => {
 
         const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
         expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
-            isSavable: true,
+            isSavable: false,
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "new-folder",
             isCustomFolderNameEnabled: true,
+            technicalError: "Some technical error",
+            nameError: "Some name error",
         });
     });
 });
