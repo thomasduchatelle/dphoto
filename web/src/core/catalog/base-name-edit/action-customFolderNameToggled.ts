@@ -14,7 +14,7 @@ export const customFolderNameToggled = createAction<CatalogViewerState, boolean>
                 ...current.dialog,
                 isCustomFolderNameEnabled: isFolderNameEnabled,
                 customFolderName: isFolderNameEnabled ? current.dialog.albumId.folderName : "",
-                error: editNameDialogNoError,
+                nameError: editNameDialogNoError,
             },
         };
     }

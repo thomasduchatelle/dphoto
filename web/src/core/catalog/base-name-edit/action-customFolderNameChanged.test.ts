@@ -65,7 +65,7 @@ describe('action:folderNameChanged', () => {
             dialog: {
                 ...editJanAlbumNameDialog,
                 isCustomFolderNameEnabled: true,
-                error: {technicalError: "Some technical error"},
+                nameError: {technicalError: "Some technical error"},
             },
         };
 

@@ -176,7 +176,7 @@ export const editJanAlbumNameDialog: EditNameDialog = {
     customFolderName: "",
     isCustomFolderNameEnabled: false,
     isLoading: false,
-    error: editNameDialogNoError,
+    nameError: editNameDialogNoError,
 }
 
 export const editJanAlbumNameSelection: EditNameDialogSelection = {

@@ -29,7 +29,7 @@ export function editNameDialogSelector(state: CatalogViewerState): EditNameDialo
     }
 
     const dialog: EditNameDialog = state.dialog;
-    const {technicalError, nameError, folderNameError} = dialog.error
+    const {technicalError, nameError, folderNameError} = dialog.nameError
 
     const originalName = state.allAlbums.find(album => albumIdEquals(album.albumId, dialog.albumId))?.name || dialog.albumName;
 

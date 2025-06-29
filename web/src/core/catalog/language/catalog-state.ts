@@ -169,15 +169,15 @@ export interface NameError {
 }
 
 export interface NameEditBase {
+    albumId: AlbumId
     albumName: string
     customFolderName: string
     isCustomFolderNameEnabled: boolean
-    error: NameError
+    nameError: NameError
 }
 
 export interface EditNameDialog extends NameEditBase {
     type: "EditNameDialog"
-    albumId: AlbumId
     isLoading: boolean
 }
 

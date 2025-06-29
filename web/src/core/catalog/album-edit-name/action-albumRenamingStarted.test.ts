@@ -9,7 +9,7 @@ describe('action:albumRenamingStarted', () => {
             ...loadedStateWithTwoAlbums,
             dialog: {
                 ...editJanAlbumNameDialog,
-                error: {folderNameError: "Previous error"},
+                nameError: {folderNameError: "Previous error"},
             },
         };
 

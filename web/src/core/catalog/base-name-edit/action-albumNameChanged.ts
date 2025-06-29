@@ -14,7 +14,7 @@ export const albumNameChanged = createAction<CatalogViewerState, string>(
             dialog: {
                 ...current.dialog,
                 albumName,
-                error: !!albumName ? editNameDialogNoError : {nameError: "Album name is mandatory"},
+                nameError: !!albumName ? editNameDialogNoError : {nameError: "Album name is mandatory"},
             },
         };
     }

@@ -1,5 +1,5 @@
 import {albumNameChanged} from "./action-albumNameChanged";
-import {editNameDialogSelector} from "../album-edit-name/selector-editNameDialogSelector";
+import {editNameDialogSelector} from "../album-edit-name";
 import {CatalogViewerState} from "../language";
 import {editDatesDialogForJanAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
@@ -60,7 +60,7 @@ describe('action:albumNameChanged', () => {
             ...loadedStateWithTwoAlbums,
             dialog: {
                 ...editJanAlbumNameDialog,
-                error: {technicalError: "Some technical error"},
+                nameError: {technicalError: "Some technical error"},
             },
         };
 
