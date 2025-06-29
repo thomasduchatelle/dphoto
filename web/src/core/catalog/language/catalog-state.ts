@@ -145,11 +145,8 @@ export interface DeleteDialog {
     error?: string
 }
 
-export interface CreateDialog extends DateRangeState {
+export interface CreateDialog extends DateRangeState, NameEditBase {
     type: "CreateDialog"
-    name: string
-    forceFolderName: string
-    withCustomFolderName: boolean
     isLoading: boolean
     error?: string
 }

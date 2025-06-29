@@ -21,13 +21,15 @@ describe('action:createDialogOpened', () => {
 
         expect(newState.dialog).toEqual({
             type: "CreateDialog",
-            name: "",
+            albumId: {owner: "", folderName: ""},
+            albumName: "",
+            customFolderName: "",
+            isCustomFolderNameEnabled: false,
+            nameError: {},
             startDate: expectedStartDate,
             endDate: expectedEndDate,
             startAtDayStart: true,
             endAtDayEnd: true,
-            forceFolderName: "",
-            withCustomFolderName: false,
             isLoading: false,
         });
 

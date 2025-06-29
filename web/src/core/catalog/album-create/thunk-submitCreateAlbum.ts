@@ -10,13 +10,13 @@ import {albumsLoaded} from "../navigation";
 import {convertToModelEndDate, convertToModelStartDate, validateDateRange} from "../date-range/date-helper";
 
 interface CreateDialogData {
-    name: string;
+    albumName: string;
     startDate: Date | null;
     endDate: Date | null;
-    forceFolderName: string;
+    customFolderName: string;
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
-    withCustomFolderName: boolean;
+    isCustomFolderNameEnabled: boolean;
 }
 
 export async function submitCreateAlbumThunk(
@@ -24,7 +24,7 @@ export async function submitCreateAlbumThunk(
     createAlbumPort: CreateAlbumPort,
     dialogData: CreateDialogData
 ): Promise<void> {
-    const {name, startDate, endDate, forceFolderName, startAtDayStart, endAtDayEnd, withCustomFolderName} = dialogData;
+    const {albumName, startDate, endDate, customFolderName, startAtDayStart, endAtDayEnd, isCustomFolderNameEnabled} = dialogData;
     
     const validation = validateDateRange({
         startDate,
@@ -45,10 +45,10 @@ export async function submitCreateAlbumThunk(
         const actualEnd = convertToModelEndDate(endDate!, endAtDayEnd);
 
         const albumId = await createAlbumPort.createAlbum({
-            name,
+            name: albumName,
             start: actualStart,
             end: actualEnd,
-            forcedFolderName: withCustomFolderName ? forceFolderName : "",
+            forcedFolderName: isCustomFolderNameEnabled ? customFolderName : "",
         });
 
         const albums = await createAlbumPort.fetchAlbums();
@@ -70,24 +70,24 @@ export const submitCreateAlbumDeclaration: ThunkDeclaration<
         const dialog = state.dialog;
         if (!isCreateDialog(dialog)) {
             return {
-                name: "",
+                albumName: "",
                 startDate: null,
                 endDate: null,
-                forceFolderName: "",
+                customFolderName: "",
                 startAtDayStart: true,
                 endAtDayEnd: true,
-                withCustomFolderName: false,
+                isCustomFolderNameEnabled: false,
             };
         }
 
         return {
-            name: dialog.name,
+            albumName: dialog.albumName,
             startDate: dialog.startDate,
             endDate: dialog.endDate,
-            forceFolderName: dialog.forceFolderName,
+            customFolderName: dialog.customFolderName,
             startAtDayStart: dialog.startAtDayStart,
             endAtDayEnd: dialog.endAtDayEnd,
-            withCustomFolderName: dialog.withCustomFolderName,
+            isCustomFolderNameEnabled: dialog.isCustomFolderNameEnabled,
         };
     },
     factory: ({dispatch, app, partialState}) => {
