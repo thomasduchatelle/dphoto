@@ -33,11 +33,8 @@ export function CatalogViewerPage() {
             onAlbumFilterChange,
             openCreateDialog,
             closeCreateDialog,
-            updateCreateDialogName,
             updateCreateDialogStartDate,
             updateCreateDialogEndDate,
-            updateCreateDialogFolderName,
-            updateCreateDialogWithCustomFolderName,
             updateCreateDialogStartsAtStartOfTheDay,
             updateCreateDialogEndsAtEndOfTheDay,
             submitCreateAlbum,
@@ -57,10 +54,10 @@ export function CatalogViewerPage() {
             updateEditDatesDialogEndDate,
             updateEditDatesDialogStartAtDayStart,
             updateEditDatesDialogEndAtDayEnd,
-            changeFolderNameEnabled,
-            changeFolderName,
-            changeAlbumName,
             saveAlbumName,
+            changeFolderNameEnabled,
+            changeAlbumName,
+            changeFolderName,
         },
         selectedAlbumId
     } = useCatalogContext()
@@ -123,11 +120,11 @@ export function CatalogViewerPage() {
                 {...createDialogState}
                 onClose={closeCreateDialog}
                 onSubmit={submitCreateAlbum}
-                onNameChange={updateCreateDialogName}
+                onNameChange={changeAlbumName}
                 onStartDateChange={updateCreateDialogStartDate}
                 onEndDateChange={updateCreateDialogEndDate}
-                onFolderNameChange={updateCreateDialogFolderName}
-                onWithCustomFolderNameChange={updateCreateDialogWithCustomFolderName}
+                onFolderNameChange={changeFolderName}
+                onWithCustomFolderNameChange={changeFolderNameEnabled}
                 onStartsAtStartOfTheDayChange={updateCreateDialogStartsAtStartOfTheDay}
                 onEndsAtEndOfTheDayChange={updateCreateDialogEndsAtEndOfTheDay}
             />

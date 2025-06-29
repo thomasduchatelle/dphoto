@@ -33,13 +33,13 @@ export interface CreateAlbumDialogHandlers {
 
 export function CreateAlbumDialog({
                                       open,
-                                      name,
+                                      albumName,
                                       start,
                                       end,
-                                      forceFolderName,
+                                      customFolderName,
                                       startsAtStartOfTheDay,
                                       endsAtEndOfTheDay,
-                                      withCustomFolderName,
+                                      isCustomFolderNameEnabled,
                                       isLoading,
                                       error,
                                       canSubmit,
@@ -52,14 +52,12 @@ export function CreateAlbumDialog({
                                       onEndsAtEndOfTheDayChange,
                                       onStartDateChange,
                                       onEndDateChange,
+                                      folderNameError,
+                                      dateRangeError,
+                                      nameError,
                                   }: CreateDialogSelection & CreateAlbumDialogHandlers) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-    const dateError = error === "AlbumStartAndEndDateMandatoryErr";
-    const dateHelperText = dateError ? "Start and end dates are mandatory, and end date must be after the start date." : "";
-
-    const errorMessage = getErrorMessage(error);
 
     return (
         <Dialog
@@ -96,8 +94,8 @@ export function CreateAlbumDialog({
             <DialogContent>
                 <Grid container spacing={2} alignItems='center'>
                     <Grid sm={12} xs={12}>
-                        {errorMessage && <Alert severity="error">
-                            {errorMessage}
+                        {error && <Alert severity="error">
+                            {error}
                         </Alert>}
                     </Grid>
                     <Grid sm={12} xs={12}>
@@ -108,7 +106,9 @@ export function CreateAlbumDialog({
                             type="string"
                             disabled={isLoading}
                             onChange={(event) => onNameChange(event.target.value)}
-                            value={name}
+                            value={albumName}
+                            helperText={nameError}
+                            error={!!nameError}
                         />
                     </Grid>
                     <DateRangePicker
@@ -121,18 +121,18 @@ export function CreateAlbumDialog({
                         onStartsAtStartOfTheDayChange={onStartsAtStartOfTheDayChange}
                         onEndsAtEndOfTheDayChange={onEndsAtEndOfTheDayChange}
                         disabled={isLoading}
-                        dateError={dateError}
-                        dateHelperText={dateHelperText}
+                        dateError={!!dateRangeError}
+                        dateHelperText={dateRangeError}
                     />
                     <Grid xs={12}>
                         <FolderNameInput
-                            useCustomFolderName={withCustomFolderName}
-                            value={forceFolderName}
+                            useCustomFolderName={isCustomFolderNameEnabled}
+                            value={customFolderName}
                             placeholder="Custom folder name (ex: '/2025-08_Summer')"
                             disabled={isLoading}
                             onEnabledChange={onWithCustomFolderNameChange}
                             onValueChange={onFolderNameChange}
-                            error={error === "AlbumFolderNameAlreadyTakenErr" ? "The folder name must be unique" : undefined}
+                            error={folderNameError}
                         />
                     </Grid>
                 </Grid>
@@ -143,17 +143,4 @@ export function CreateAlbumDialog({
             </DialogActions>
         </Dialog>
     );
-}
-
-function getErrorMessage(error: string | undefined): string {
-    switch (error) {
-        case undefined:
-        case "":
-        case "AlbumFolderNameAlreadyTakenErr":
-        case "AlbumStartAndEndDateMandatoryErr":
-            return "";
-
-        default:
-            return "Album couldn't be saved. Refresh your page and retry, or let the developer known.";
-    }
 }

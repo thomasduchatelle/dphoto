@@ -137,6 +137,14 @@ export function isRedirectToAlbumIdPayload(arg: any): arg is RedirectToAlbumIdPa
     return arg && arg.redirectTo
 }
 
+export interface NameEditBase {
+    originalFolderName?: string // originalFolderName is used to pre-fill the custom folder name field
+    albumName: string
+    customFolderName: string
+    isCustomFolderNameEnabled: boolean
+    nameError: NameError
+}
+
 export interface DeleteDialog {
     type: "DeleteDialog";
     deletableAlbums: Album[]
@@ -145,11 +153,8 @@ export interface DeleteDialog {
     error?: string
 }
 
-export interface CreateDialog extends DateRangeState {
+export interface CreateDialog extends DateRangeState, NameEditBase {
     type: "CreateDialog"
-    name: string
-    forceFolderName: string
-    withCustomFolderName: boolean
     isLoading: boolean
     error?: string
 }
@@ -163,19 +168,15 @@ export interface EditDatesDialog extends DateRangeState {
 }
 
 export interface NameError {
-    technicalError?: string;
     nameError?: string;
     folderNameError?: string;
 }
 
-export interface EditNameDialog {
+export interface EditNameDialog extends NameEditBase {
     type: "EditNameDialog"
     albumId: AlbumId
-    albumName: string
-    customFolderName: string
-    isCustomFolderNameEnabled: boolean
+    technicalError?: string;
     isLoading: boolean
-    error: NameError
 }
 
 export type CatalogDialog = CreateDialog | EditDatesDialog | DeleteDialog | ShareDialog | EditNameDialog;
@@ -198,6 +199,10 @@ export function isShareDialog(dialog: CatalogDialog | undefined): dialog is Shar
 
 export function isEditNameDialog(dialog: CatalogDialog | undefined): dialog is EditNameDialog {
     return dialog?.type === "EditNameDialog";
+}
+
+export function isNameEditBase(dialog: CatalogDialog | undefined): dialog is NameEditBase & CatalogDialog {
+    return dialog?.type === "EditNameDialog" || dialog?.type === "CreateDialog";
 }
 
 export const editNameDialogNoError: NameError = {};

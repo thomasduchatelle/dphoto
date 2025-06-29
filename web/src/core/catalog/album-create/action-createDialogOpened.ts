@@ -21,13 +21,15 @@ export const createDialogOpened = createAction<CatalogViewerState>(
             ...current,
             dialog: {
                 type: "CreateDialog",
-                name: "",
+                albumId: {owner: "", folderName: ""}, // Will be set when creating
+                albumName: "",
+                customFolderName: "",
+                isCustomFolderNameEnabled: false,
+                nameError: {},
                 startDate: startDate,
                 endDate: endDate,
                 startAtDayStart: true,
                 endAtDayEnd: true,
-                forceFolderName: "",
-                withCustomFolderName: false,
                 isLoading: false,
             },
         };

@@ -1,7 +1,7 @@
 import {createAction} from "src/libs/daction";
-import {AlbumId, albumIdEquals, albumMatchCriterion, CatalogViewerState} from "../language";
+import {AlbumId, albumIdEquals, albumMatchCriterion, CatalogViewerState, RedirectToAlbumIdPayload} from "../language";
 
-interface AlbumRenamedPayload {
+interface AlbumRenamedPayload extends RedirectToAlbumIdPayload {
     previousAlbumId: AlbumId;
     newAlbumId: AlbumId;
     newName: string;

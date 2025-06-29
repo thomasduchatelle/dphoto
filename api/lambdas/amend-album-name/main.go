@@ -52,11 +52,16 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			return common.InternalError(err)
 		}
 
+		forcedFolderName := catalog.NewFolderName(requestDto.FolderName)
+		if forcedFolderName == currentAlbumId.FolderName {
+			forcedFolderName = ""
+		}
+
 		err = common.Factory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
 			CurrentId:        currentAlbumId,
 			NewName:          requestDto.Name,
-			RenameFolder:     requestDto.FolderName != "",
-			ForcedFolderName: catalog.NewFolderName(requestDto.FolderName).String(),
+			RenameFolder:     requestDto.FolderName == "",
+			ForcedFolderName: forcedFolderName.String(),
 		})
 		if err != nil {
 			switch {

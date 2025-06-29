@@ -1,5 +1,5 @@
 import {createAction} from "src/libs/daction";
-import {CatalogViewerState, isEditNameDialog} from "../language";
+import {CatalogViewerState, editNameDialogNoError, isEditNameDialog, NameError} from "../language";
 
 interface AlbumRenamingFailedPayload {
     code?: string;
@@ -13,18 +13,19 @@ export const albumRenamingFailed = createAction<CatalogViewerState, AlbumRenamin
             return current;
         }
 
-        let error = {};
+        let nameError: NameError = editNameDialogNoError
+        let technicalError: string | undefined = undefined;
 
         if (code === "AlbumFolderNameAlreadyTakenErr") {
             if (current.dialog.isCustomFolderNameEnabled) {
-                error = {folderNameError: message};
+                nameError = {folderNameError: message};
             } else {
-                error = {nameError: message};
+                nameError = {nameError: message};
             }
         } else if (code === "AlbumNameMandatoryErr") {
-            error = {nameError: message};
+            nameError = {nameError: message};
         } else {
-            error = {technicalError: message};
+            technicalError = message
         }
 
         return {
@@ -32,7 +33,8 @@ export const albumRenamingFailed = createAction<CatalogViewerState, AlbumRenamin
             dialog: {
                 ...current.dialog,
                 isLoading: false,
-                error,
+                nameError,
+                technicalError,
             },
         };
     }

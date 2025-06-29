@@ -10,7 +10,7 @@ type RenameAlbumRequest struct {
 	CurrentId        AlbumId
 	NewName          string
 	RenameFolder     bool   // RenameFolder set to TRUE will create a new album with a FolderName generated from the NewName
-	ForcedFolderName string // ForcedFolderName will create a new album with a specific FolderName (RenameFolder is ignored)
+	ForcedFolderName string // ForcedFolderName set to non-empty will create a new album with the requested FolderName (RenameFolder is ignored)
 }
 
 // NewRenameAlbum creates the service to rename an album

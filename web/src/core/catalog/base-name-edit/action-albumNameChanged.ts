@@ -1,10 +1,10 @@
 import {createAction} from "src/libs/daction";
-import {CatalogViewerState, editNameDialogNoError, isEditNameDialog} from "../language";
+import {CatalogViewerState, isNameEditBase} from "../language";
 
 export const albumNameChanged = createAction<CatalogViewerState, string>(
     "AlbumNameChanged",
     (current: CatalogViewerState, albumName: string) => {
-        if (!isEditNameDialog(current.dialog)) {
+        if (!isNameEditBase(current.dialog)) {
             return current;
         }
 
@@ -14,7 +14,10 @@ export const albumNameChanged = createAction<CatalogViewerState, string>(
             dialog: {
                 ...current.dialog,
                 albumName,
-                error: !!albumName ? editNameDialogNoError : {nameError: "Album name is mandatory"},
+                nameError: {
+                    ...current.dialog.nameError,
+                    nameError: !!albumName ? undefined : "Album name is mandatory",
+                },
             },
         };
     }

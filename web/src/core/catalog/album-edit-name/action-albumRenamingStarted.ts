@@ -13,7 +13,7 @@ export const albumRenamingStarted = createAction<CatalogViewerState>(
             dialog: {
                 ...current.dialog,
                 isLoading: true,
-                error: editNameDialogNoError,
+                nameError: editNameDialogNoError,
             },
         };
     }

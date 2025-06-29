@@ -1,15 +1,13 @@
 import {CatalogViewerState, isCreateDialog} from "../language";
 import {validateDateRange} from "../date-range/date-helper";
+import {BaseEditNameSelection, baseEditNameSelector} from "../base-name-edit/selector-baseEditNameSelector";
 
-export interface CreateDialogSelection {
+export interface CreateDialogSelection extends BaseEditNameSelection {
     open: boolean;
-    name: string;
     start: Date | null;
     end: Date | null;
-    forceFolderName: string;
     startsAtStartOfTheDay: boolean;
     endsAtEndOfTheDay: boolean;
-    withCustomFolderName: boolean;
     isLoading: boolean;
     error?: string;
     canSubmit: boolean;
@@ -22,19 +20,21 @@ export function createDialogSelector(state: CatalogViewerState): CreateDialogSel
     if (!isCreateDialog(dialog)) {
         return {
             open: false,
-            name: "",
+            albumName: "",
+            customFolderName: "",
+            isCustomFolderNameEnabled: false,
             start: null,
             end: null,
-            forceFolderName: "",
             startsAtStartOfTheDay: true,
             endsAtEndOfTheDay: true,
-            withCustomFolderName: false,
             isLoading: false,
             canSubmit: false,
             dateRangeError: undefined,
         };
     }
 
+    const {isSavable, ...baseSelection} = baseEditNameSelector(state, dialog);
+    
     const validation = validateDateRange({
         startDate: dialog.startDate,
         endDate: dialog.endDate,
@@ -43,17 +43,15 @@ export function createDialogSelector(state: CatalogViewerState): CreateDialogSel
     });
 
     return {
+        ...baseSelection,
         open: true,
-        name: dialog.name,
         start: dialog.startDate,
         end: dialog.endDate,
-        forceFolderName: dialog.forceFolderName,
         startsAtStartOfTheDay: dialog.startAtDayStart,
         endsAtEndOfTheDay: dialog.endAtDayEnd,
-        withCustomFolderName: dialog.withCustomFolderName,
         isLoading: dialog.isLoading,
         error: dialog.error,
         dateRangeError: validation.dateRangeError,
-        canSubmit: dialog.name.length > 0 && validation.areDatesValid && validation.isDateRangeValid && !dialog.isLoading,
+        canSubmit: isSavable && validation.areDatesValid && validation.isDateRangeValid && !dialog.isLoading,
     };
 }
