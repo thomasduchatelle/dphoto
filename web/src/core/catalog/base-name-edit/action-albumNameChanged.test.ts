@@ -1,11 +1,19 @@
 import {albumNameChanged} from "./action-albumNameChanged";
-import {editNameDialogSelector} from "./selector-editNameDialogSelector";
-import {CatalogViewerState} from "../language";
-import {editDatesDialogForJanAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {BaseEditNameSelectionWithSavable, baseEditNameSelector} from "./selector-baseEditNameSelector";
+import {CatalogViewerState, EditNameDialog} from "../language";
+import {editDatesDialogForJanAlbum, editJanAlbumNameDialog, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
 describe('action:albumNameChanged', () => {
-    const albumId = twoAlbums[0].albumId;
     const newAlbumName = "Updated Album Name";
+
+    const baseEditSelectionForJan: BaseEditNameSelectionWithSavable = {
+        albumName: twoAlbums[0].name,
+        customFolderName: "",
+        isCustomFolderNameEnabled: false,
+        nameError: undefined,
+        folderNameError: undefined,
+        isSavable: true,
+    }
 
     it('should update album name in edit name dialog', () => {
         const state: CatalogViewerState = {
@@ -18,8 +26,9 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged(newAlbumName);
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual({
-            ...editJanAlbumNameSelection,
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            ...baseEditSelectionForJan,
             albumName: newAlbumName,
         });
     });
@@ -33,7 +42,7 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged(newAlbumName);
         const got = action.reducer(state, action);
 
-        expect(got).toBe(state);
+        expect(got.dialog?.type).not.toBe("EditNameDialog");
     });
 
     it('should disable save button when album name is blank', () => {
@@ -47,29 +56,34 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("");
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual({
-            ...editJanAlbumNameSelection,
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            ...baseEditSelectionForJan,
+            isSavable: false,
             albumName: "",
             nameError: "Album name is mandatory",
-            isSaveEnabled: false,
         });
     });
 
-    it('should clear technical error when album name is changed', () => {
+    it('should clear name error but preserve other errors when album name is changed', () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             dialog: {
                 ...editJanAlbumNameDialog,
-                error: {technicalError: "Some technical error"},
+                technicalError: "Some technical error",
+                nameError: {folderNameError: "Some folder error", nameError: "Some name error"},
             },
         };
 
         const action = albumNameChanged("New Name");
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual({
-            ...editJanAlbumNameSelection,
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            ...baseEditSelectionForJan,
+            isSavable: false,
             albumName: "New Name",
+            folderNameError: "Some folder error",
         });
     });
 });

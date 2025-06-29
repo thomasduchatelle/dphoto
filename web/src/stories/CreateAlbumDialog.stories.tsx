@@ -28,13 +28,13 @@ const Template: ComponentStory<typeof CreateAlbumDialog> = (args) => (
 export const Empty = Template.bind({});
 Empty.args = {
     open: true,
-    name: "",
+    albumName: "",
     start: defaultStartDate,
     end: endDate,
-    forceFolderName: "",
+    customFolderName: "",
     startsAtStartOfTheDay: true,
     endsAtEndOfTheDay: true,
-    withCustomFolderName: false,
+    isCustomFolderNameEnabled: false,
     isLoading: false,
     canSubmit: false,
     onClose: () => {
@@ -63,7 +63,7 @@ Empty.parameters = {
 export const WithAName = Template.bind({});
 WithAName.args = {
     ...Empty.args,
-    name: 'Avenger 3',
+    albumName: 'Avenger 3',
     canSubmit: true,
 };
 WithAName.parameters = {
@@ -71,12 +71,24 @@ WithAName.parameters = {
 };
 
 // it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
-export const AlreadyExists = Template.bind({});
-AlreadyExists.args = {
+export const NameAlreadyExists = Template.bind({});
+NameAlreadyExists.args = {
     ...Empty.args,
-    error: "AlbumFolderNameAlreadyTakenErr"
+    nameError: "Name must be unique",
 };
-AlreadyExists.parameters = {
+NameAlreadyExists.parameters = {
+    delay: 300,
+};
+
+// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
+export const FolderNameAlreadyExists = Template.bind({});
+FolderNameAlreadyExists.args = {
+    ...Empty.args,
+    folderNameError: "Name must be unique",
+    customFolderName: "/avenger-3",
+    isCustomFolderNameEnabled: true,
+};
+FolderNameAlreadyExists.parameters = {
     delay: 300,
 };
 
@@ -84,7 +96,7 @@ AlreadyExists.parameters = {
 export const StartAndEndDateAreMandatory = Template.bind({});
 StartAndEndDateAreMandatory.args = {
     ...Empty.args,
-    error: "AlbumStartAndEndDateMandatoryErr"
+    dateRangeError: "Start date must be before end date",
 };
 StartAndEndDateAreMandatory.parameters = {
     delay: 300,

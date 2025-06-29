@@ -18,7 +18,7 @@ export function FolderNameInput({
     disabled = false,
     onEnabledChange,
     onValueChange,
-    tooltip = "The name of the physical folder name is generated from the date and the name; but can be overridden.",
+    tooltip = "Generate the name of the folder from the date and the name",
     error
 }: FolderNameInputProps) {
     return (

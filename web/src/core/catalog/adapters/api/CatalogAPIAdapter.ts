@@ -1,11 +1,11 @@
 import {Album, AlbumId, CatalogError, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import axios, {AxiosError, AxiosInstance} from "axios";
 import {AccessTokenHolder} from "../../../application";
-import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort} from "../../album-delete";
 import {UpdateAlbumDatesPort} from "../../album-edit-dates";
 import {SaveAlbumNamePort} from "../../album-edit-name/thunk-saveAlbumName";
+import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
 
 interface RestAlbum {
     owner: string

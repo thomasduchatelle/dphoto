@@ -1,13 +1,9 @@
 import {openCreateDialogDeclaration} from "./thunk-openCreateDialog";
 import {closeCreateDialogDeclaration} from "./thunk-closeCreateDialog";
-import {updateCreateDialogNameDeclaration} from "./thunk-updateCreateDialogName";
-import {updateCreateDialogFolderNameDeclaration} from "./thunk-updateCreateDialogFolderName";
-import {updateCreateDialogWithCustomFolderNameDeclaration} from "./thunk-updateCreateDialogWithCustomFolderName";
 import {submitCreateAlbumDeclaration} from "./thunk-submitCreateAlbum";
-import {createAlbumDeclaration} from "./album-createAlbum";
 import {dateRangeThunks} from "../date-range";
+import {baseNameEditThunks} from "../base-name-edit";
 
-export * from "./album-createAlbum";
 export * from "./selector-createDialogSelector";
 
 /**
@@ -16,26 +12,24 @@ export * from "./selector-createDialogSelector";
  * Expected handler types:
  * - `openCreateDialog`: `() => void`
  * - `closeCreateDialog`: `() => void`
- * - `updateCreateDialogName`: `(name: string) => void`
+ * - `changeAlbumName`: `(albumName: string) => void`
  * - `updateCreateDialogStartDate`: `(date: Date | null) => void`
  * - `updateCreateDialogEndDate`: `(date: Date | null) => void`
- * - `updateCreateDialogFolderName`: `(folderName: string) => void`
- * - `updateCreateDialogWithCustomFolderName`: `(withCustom: boolean) => void`
+ * - `changeFolderName`: `(folderName: string) => void`
+ * - `changeFolderNameEnabled`: `(isFolderNameEnabled: boolean) => void`
  * - `updateCreateDialogStartsAtStartOfTheDay`: `(startsAtStart: boolean) => void`
  * - `updateCreateDialogEndsAtEndOfTheDay`: `(endsAtEnd: boolean) => void`
  * - `submitCreateAlbum`: `() => Promise<void>`
- * - `createAlbum`: `(request: CreateAlbumRequest) => Promise<AlbumId>`
  */
 export const albumCreateThunks = {
     openCreateDialog: openCreateDialogDeclaration,
     closeCreateDialog: closeCreateDialogDeclaration,
-    updateCreateDialogName: updateCreateDialogNameDeclaration,
+    changeAlbumName: baseNameEditThunks.changeAlbumName,
     updateCreateDialogStartDate: dateRangeThunks.updateDateRangeStartDate,
     updateCreateDialogEndDate: dateRangeThunks.updateDateRangeEndDate,
-    updateCreateDialogFolderName: updateCreateDialogFolderNameDeclaration,
-    updateCreateDialogWithCustomFolderName: updateCreateDialogWithCustomFolderNameDeclaration,
+    changeFolderName: baseNameEditThunks.changeFolderName,
+    changeFolderNameEnabled: baseNameEditThunks.changeFolderNameEnabled,
     updateCreateDialogStartsAtStartOfTheDay: dateRangeThunks.updateDateRangeStartAtDayStart,
     updateCreateDialogEndsAtEndOfTheDay: dateRangeThunks.updateDateRangeEndAtDayEnd,
     submitCreateAlbum: submitCreateAlbumDeclaration,
-    createAlbum: createAlbumDeclaration,
 };

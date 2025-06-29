@@ -1,5 +1,5 @@
 import {createAction} from "src/libs/daction";
-import {albumIdEquals, CatalogViewerState} from "../language";
+import {albumIdEquals, CatalogViewerState, editNameDialogNoError} from "../language";
 import {getDisplayedAlbumId} from "../language/selector-displayedAlbum";
 
 export const editNameDialogOpened = createAction<CatalogViewerState>(
@@ -23,10 +23,12 @@ export const editNameDialogOpened = createAction<CatalogViewerState>(
                 type: "EditNameDialog",
                 albumId,
                 albumName: album.name,
+                originalAlbumName: album.albumId.folderName,
+                originalFolderName: album.albumId.folderName,
                 customFolderName: "",
                 isCustomFolderNameEnabled: false,
                 isLoading: false,
-                error: {},
+                nameError: editNameDialogNoError,
             },
         };
     }

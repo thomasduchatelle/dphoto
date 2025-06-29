@@ -14,6 +14,7 @@ import {
 } from "../language";
 import {CatalogViewerPageSelection} from "../navigation";
 import {EditNameDialogSelection} from "../album-edit-name";
+import {CreateDialogSelection} from "../album-create";
 
 // **IMPORTANT** - to LLM Agents
 // Use the constants defined in this file in all your tests to make them more readable, and robust to changes
@@ -147,14 +148,29 @@ export const deleteDialogWithOneAlbum: DeleteDialog = {
 // use it as default opened create dialog - it match the March 2025 album
 export const createDialogPrefilledForMar25: CreateDialog = {
     type: "CreateDialog",
-    name: "March 2025",
-    startDate: new Date("2025-02-01"),
-    endDate: new Date("2025-03-31"),
+    albumName: "March 2025",
+    customFolderName: "",
+    isCustomFolderNameEnabled: false,
+    nameError: {},
+    startDate: new Date("2025-02-01Z"),
+    endDate: new Date("2025-03-31Z"),
     startAtDayStart: true,
     endAtDayEnd: true,
-    forceFolderName: "",
-    withCustomFolderName: false,
     isLoading: false,
+}
+
+export const createDialogSelectionPrefilledForMar25: CreateDialogSelection = {
+    albumName: "March 2025",
+    canSubmit: true,
+    end: new Date("2025-03-31Z"),
+    endsAtEndOfTheDay: true,
+    customFolderName: "",
+    isCustomFolderNameEnabled: false,
+    isLoading: false,
+    open: true,
+    start: new Date("2025-02-01Z"),
+    startsAtStartOfTheDay: true,
+
 }
 
 // use it as default opened edit dates dialog - it matches the January 2025 album
@@ -173,10 +189,11 @@ export const editJanAlbumNameDialog: EditNameDialog = {
     type: "EditNameDialog",
     albumId: twoAlbums[0].albumId,
     albumName: twoAlbums[0].name,
+    originalFolderName: twoAlbums[0].albumId.folderName,
     customFolderName: "",
     isCustomFolderNameEnabled: false,
     isLoading: false,
-    error: editNameDialogNoError,
+    nameError: editNameDialogNoError,
 }
 
 export const editJanAlbumNameSelection: EditNameDialogSelection = {

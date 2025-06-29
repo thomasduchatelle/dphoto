@@ -1,15 +1,11 @@
 import {albumIdEquals, CatalogViewerState, EditNameDialog, isEditNameDialog} from "../language";
+import {BaseEditNameSelection, baseEditNameSelector} from "../base-name-edit/selector-baseEditNameSelector";
 
-export interface EditNameDialogSelection {
+export interface EditNameDialogSelection extends BaseEditNameSelection {
     isOpen: boolean;
-    albumName: string;
     originalName: string;
-    customFolderName: string;
-    isCustomFolderNameEnabled: boolean;
-    isLoading: boolean;
     technicalError?: string;
-    nameError?: string;
-    folderNameError?: string;
+    isLoading: boolean;
     isSaveEnabled: boolean;
 }
 
@@ -29,22 +25,23 @@ export function editNameDialogSelector(state: CatalogViewerState): EditNameDialo
     }
 
     const dialog: EditNameDialog = state.dialog;
-    const {technicalError, nameError, folderNameError} = dialog.error
 
-    const originalName = state.allAlbums.find(album => albumIdEquals(album.albumId, dialog.albumId))?.name || dialog.albumName;
+    const {isSavable, ...baseSelection} = baseEditNameSelector(state, dialog);
 
-    const isSaveEnabled = !nameError && !folderNameError && !dialog.isLoading;
+    if (!baseSelection) {
+        return closedEditNameSelection;
+    }
+
+    const isSaveEnabled = isSavable && !dialog.isLoading;
+
+    const originalName = state.allAlbums.find(album => albumIdEquals(album.albumId, dialog.albumId))?.name || "";
 
     return {
+        ...baseSelection,
         isOpen: true,
-        albumName: dialog.albumName,
-        originalName,
-        customFolderName: dialog.customFolderName,
-        isCustomFolderNameEnabled: dialog.isCustomFolderNameEnabled,
-        isLoading: dialog.isLoading,
-        technicalError,
-        nameError,
-        folderNameError,
+        isLoading: state.dialog.isLoading,
+        technicalError: state.dialog.technicalError,
         isSaveEnabled,
+        originalName,
     };
 }
