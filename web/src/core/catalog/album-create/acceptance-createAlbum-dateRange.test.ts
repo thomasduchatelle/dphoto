@@ -21,7 +21,7 @@ describe("acceptance:createAlbum-dateRange", () => {
         // Initial state should have default dates
         let selection = createDialogSelector(state);
         expect(selection.open).toBe(true);
-        expect(selection.canSubmit).toBe(false); // No name yet
+        expect(selection.canSubmit).toBe(false); // No album name yet
         expect(selection.dateRangeError).toBeUndefined();
 
         // Update start date

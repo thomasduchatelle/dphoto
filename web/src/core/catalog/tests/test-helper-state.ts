@@ -147,13 +147,15 @@ export const deleteDialogWithOneAlbum: DeleteDialog = {
 // use it as default opened create dialog - it match the March 2025 album
 export const createDialogPrefilledForMar25: CreateDialog = {
     type: "CreateDialog",
-    name: "March 2025",
+    albumId: {owner: "", folderName: ""},
+    albumName: "March 2025",
+    customFolderName: "",
+    isCustomFolderNameEnabled: false,
+    nameError: {},
     startDate: new Date("2025-02-01"),
     endDate: new Date("2025-03-31"),
     startAtDayStart: true,
     endAtDayEnd: true,
-    forceFolderName: "",
-    withCustomFolderName: false,
     isLoading: false,
 }
 
