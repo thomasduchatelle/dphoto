@@ -157,6 +157,14 @@ functions:
       - httpApi:
           path: /api/v1/owners/{owner}/albums/{folderName}/dates
           method: put
+  rename-album:
+    handler: bootstrap
+    package:
+      artifact: ../../bin/rename-album.zip
+    events:
+      - httpApi:
+          path: /api/v1/owners/{owner}/albums/{folderName}/name
+          method: put
 
   # ASYNC lambdas - using FIFO for deduplication made a SQS required
   #####################################
