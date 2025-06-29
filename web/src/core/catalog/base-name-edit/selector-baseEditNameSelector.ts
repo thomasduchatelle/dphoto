@@ -1,4 +1,4 @@
-import {albumIdEquals, CatalogViewerState, EditNameDialog} from "../language";
+import {albumIdEquals, CatalogViewerState, NameEditBase} from "../language";
 
 export interface BaseEditNameSelection {
     albumName: string;
@@ -14,7 +14,7 @@ export interface BaseEditNameSelectionWithSavable extends BaseEditNameSelection 
     isSavable: boolean
 }
 
-export function baseEditNameSelector(state: CatalogViewerState, dialog: EditNameDialog): BaseEditNameSelectionWithSavable {
+export function baseEditNameSelector(state: CatalogViewerState, dialog: NameEditBase): BaseEditNameSelectionWithSavable {
     const {technicalError, nameError, folderNameError} = dialog.nameError
 
     const originalName = state.allAlbums.find(album => albumIdEquals(album.albumId, dialog.albumId))?.name || dialog.albumName;
