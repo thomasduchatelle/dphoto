@@ -33,11 +33,11 @@ export function CatalogViewerPage() {
             onAlbumFilterChange,
             openCreateDialog,
             closeCreateDialog,
-            updateCreateDialogName,
+            changeAlbumName,
             updateCreateDialogStartDate,
             updateCreateDialogEndDate,
-            updateCreateDialogFolderName,
-            updateCreateDialogWithCustomFolderName,
+            changeFolderName,
+            changeFolderNameEnabled,
             updateCreateDialogStartsAtStartOfTheDay,
             updateCreateDialogEndsAtEndOfTheDay,
             submitCreateAlbum,
@@ -123,11 +123,11 @@ export function CatalogViewerPage() {
                 {...createDialogState}
                 onClose={closeCreateDialog}
                 onSubmit={submitCreateAlbum}
-                onNameChange={updateCreateDialogName}
+                onNameChange={changeAlbumName}
                 onStartDateChange={updateCreateDialogStartDate}
                 onEndDateChange={updateCreateDialogEndDate}
-                onFolderNameChange={updateCreateDialogFolderName}
-                onWithCustomFolderNameChange={updateCreateDialogWithCustomFolderName}
+                onFolderNameChange={changeFolderName}
+                onWithCustomFolderNameChange={changeFolderNameEnabled}
                 onStartsAtStartOfTheDayChange={updateCreateDialogStartsAtStartOfTheDay}
                 onEndsAtEndOfTheDayChange={updateCreateDialogEndsAtEndOfTheDay}
             />

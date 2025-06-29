@@ -28,13 +28,13 @@ const Template: ComponentStory<typeof CreateAlbumDialog> = (args) => (
 export const Empty = Template.bind({});
 Empty.args = {
     open: true,
-    name: "",
+    albumName: "",
     start: defaultStartDate,
     end: endDate,
-    forceFolderName: "",
+    customFolderName: "",
     startsAtStartOfTheDay: true,
     endsAtEndOfTheDay: true,
-    withCustomFolderName: false,
+    isCustomFolderNameEnabled: false,
     isLoading: false,
     canSubmit: false,
     onClose: () => {
@@ -63,7 +63,7 @@ Empty.parameters = {
 export const WithAName = Template.bind({});
 WithAName.args = {
     ...Empty.args,
-    name: 'Avenger 3',
+    albumName: 'Avenger 3',
     canSubmit: true,
 };
 WithAName.parameters = {

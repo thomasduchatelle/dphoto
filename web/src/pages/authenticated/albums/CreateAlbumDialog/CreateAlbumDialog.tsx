@@ -33,13 +33,13 @@ export interface CreateAlbumDialogHandlers {
 
 export function CreateAlbumDialog({
                                       open,
-                                      name,
+                                      albumName,
                                       start,
                                       end,
-                                      forceFolderName,
+                                      customFolderName,
                                       startsAtStartOfTheDay,
                                       endsAtEndOfTheDay,
-                                      withCustomFolderName,
+                                      isCustomFolderNameEnabled,
                                       isLoading,
                                       error,
                                       canSubmit,
@@ -108,7 +108,7 @@ export function CreateAlbumDialog({
                             type="string"
                             disabled={isLoading}
                             onChange={(event) => onNameChange(event.target.value)}
-                            value={name}
+                            value={albumName}
                         />
                     </Grid>
                     <DateRangePicker
@@ -126,8 +126,8 @@ export function CreateAlbumDialog({
                     />
                     <Grid xs={12}>
                         <FolderNameInput
-                            useCustomFolderName={withCustomFolderName}
-                            value={forceFolderName}
+                            useCustomFolderName={isCustomFolderNameEnabled}
+                            value={customFolderName}
                             placeholder="Custom folder name (ex: '/2025-08_Summer')"
                             disabled={isLoading}
                             onEnabledChange={onWithCustomFolderNameChange}
