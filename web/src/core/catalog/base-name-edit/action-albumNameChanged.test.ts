@@ -18,8 +18,9 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged(newAlbumName);
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
-        expect(baseSelection).toEqual<BaseEditNameSelection>({
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            isSavable: true,
             albumName: newAlbumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: editJanAlbumNameSelection.customFolderName,
