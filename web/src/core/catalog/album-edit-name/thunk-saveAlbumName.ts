@@ -28,7 +28,7 @@ export async function saveAlbumNameThunk(
         const newFolderName = preselection.isCustomFolderNameEnabled ? preselection.customFolderName : undefined;
         const newAlbumId = await saveAlbumNamePort.renameAlbum(preselection.albumId, preselection.albumName, newFolderName);
 
-        const redirectTo = albumIdEquals(newAlbumId, preselection.albumId) ? newAlbumId : undefined;
+        const redirectTo = albumIdEquals(newAlbumId, preselection.albumId) ? undefined : newAlbumId;
 
         dispatch(albumRenamed({previousAlbumId: preselection.albumId, newAlbumId, newName: preselection.albumName, redirectTo}));
     } catch (err) {
