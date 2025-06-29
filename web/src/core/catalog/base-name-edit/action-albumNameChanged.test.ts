@@ -18,7 +18,8 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged(newAlbumName);
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: newAlbumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: editJanAlbumNameSelection.customFolderName,
@@ -35,7 +36,7 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged(newAlbumName);
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toBe(null);
+        expect(got.dialog?.type).not.toBe("EditNameDialog");
     });
 
     it('should disable save button when album name is blank', () => {
@@ -49,7 +50,8 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("");
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: "",
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: editJanAlbumNameSelection.customFolderName,
@@ -70,7 +72,8 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("New Name");
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: "New Name",
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: editJanAlbumNameSelection.customFolderName,

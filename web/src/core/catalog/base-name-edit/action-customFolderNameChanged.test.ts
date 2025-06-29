@@ -19,7 +19,8 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged(newFolderName);
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: newFolderName,
@@ -39,7 +40,8 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged("");
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "",
@@ -57,7 +59,7 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged(newFolderName);
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toBe(null);
+        expect(got.dialog?.type).not.toBe("EditNameDialog");
     });
 
     it('should clear technical error when folder name is changed', () => {
@@ -73,7 +75,8 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged("new-folder");
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "new-folder",

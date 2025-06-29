@@ -16,7 +16,8 @@ describe('action:folderNameEnabledChanged', () => {
         const action = customFolderNameToggled(true);
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: albumId.folderName,
@@ -37,7 +38,8 @@ describe('action:folderNameEnabledChanged', () => {
         const action = customFolderNameToggled(false);
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "",
@@ -54,6 +56,6 @@ describe('action:folderNameEnabledChanged', () => {
         const action = customFolderNameToggled(true);
         const got = action.reducer(state, action);
 
-        expect(baseEditNameSelector(got)).toBe(null);
+        expect(got.dialog?.type).not.toBe("EditNameDialog");
     });
 });
