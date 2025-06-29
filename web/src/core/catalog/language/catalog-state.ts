@@ -203,4 +203,8 @@ export function isEditNameDialog(dialog: CatalogDialog | undefined): dialog is E
     return dialog?.type === "EditNameDialog";
 }
 
+export function isNameEditBase(dialog: CatalogDialog | undefined): dialog is NameEditBase & CatalogDialog {
+    return dialog?.type === "EditNameDialog" || dialog?.type === "CreateDialog";
+}
+
 export const editNameDialogNoError: NameError = {};

@@ -1,10 +1,10 @@
 import {createAction} from "src/libs/daction";
-import {CatalogViewerState, editNameDialogNoError, isEditNameDialog} from "../language";
+import {CatalogViewerState, editNameDialogNoError, isNameEditBase} from "../language";
 
 export const customFolderNameToggled = createAction<CatalogViewerState, boolean>(
     "CustomFolderNameToggled",
     (current: CatalogViewerState, isFolderNameEnabled: boolean) => {
-        if (!isEditNameDialog(current.dialog)) {
+        if (!isNameEditBase(current.dialog)) {
             return current;
         }
 
