@@ -168,14 +168,17 @@ export interface NameError {
     folderNameError?: string;
 }
 
-export interface EditNameDialog {
-    type: "EditNameDialog"
-    albumId: AlbumId
+export interface NameEditBase {
     albumName: string
     customFolderName: string
     isCustomFolderNameEnabled: boolean
-    isLoading: boolean
     error: NameError
+}
+
+export interface EditNameDialog extends NameEditBase {
+    type: "EditNameDialog"
+    albumId: AlbumId
+    isLoading: boolean
 }
 
 export type CatalogDialog = CreateDialog | EditDatesDialog | DeleteDialog | ShareDialog | EditNameDialog;

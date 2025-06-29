@@ -1,5 +1,5 @@
-import {folderNameChanged} from "./action-folderNameChanged";
-import {EditNameDialogSelection, editNameDialogSelector} from "./selector-editNameDialogSelector";
+import {customFolderNameChanged} from "./action-customFolderNameChanged";
+import {EditNameDialogSelection, editNameDialogSelector} from "../album-edit-name/selector-editNameDialogSelector";
 import {CatalogViewerState} from "../language";
 import {deleteDialogWithOneAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
@@ -16,7 +16,7 @@ describe('action:folderNameChanged', () => {
             },
         };
 
-        const action = folderNameChanged(newFolderName);
+        const action = customFolderNameChanged(newFolderName);
         const got = action.reducer(state, action);
 
         expect(editNameDialogSelector(got)).toEqual<EditNameDialogSelection>({
@@ -35,7 +35,7 @@ describe('action:folderNameChanged', () => {
             },
         };
 
-        const action = folderNameChanged("");
+        const action = customFolderNameChanged("");
         const got = action.reducer(state, action);
 
         expect(editNameDialogSelector(got)).toEqual<EditNameDialogSelection>({
@@ -53,7 +53,7 @@ describe('action:folderNameChanged', () => {
             dialog: deleteDialogWithOneAlbum,
         };
 
-        const action = folderNameChanged(newFolderName);
+        const action = customFolderNameChanged(newFolderName);
         const got = action.reducer(state, action);
 
         expect(got).toBe(state);
@@ -69,7 +69,7 @@ describe('action:folderNameChanged', () => {
             },
         };
 
-        const action = folderNameChanged("new-folder");
+        const action = customFolderNameChanged("new-folder");
         const got = action.reducer(state, action);
 
         expect(editNameDialogSelector(got)).toEqual<EditNameDialogSelection>({

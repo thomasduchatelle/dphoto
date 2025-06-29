@@ -5,6 +5,7 @@ import {albumEditDatesThunks} from "./album-edit-dates";
 import {albumEditNameThunks} from "./album-edit-name";
 import {ThunkDeclaration} from "src/libs/dthunks";
 import {sharingThunks} from "./sharing";
+import {baseNameEditThunks} from "./base-name-edit";
 
 export * from "./common/catalog-factory-args";
 export type {RevokeAlbumAccessAPI} from "./sharing/thunk-revokeAlbumAccess";
@@ -21,6 +22,7 @@ export const catalogThunks = {
     ...albumDeleteThunks,
     ...albumEditDatesThunks,
     ...albumEditNameThunks,
+    ...baseNameEditThunks,
 };
 
 // Dynamically infer the interface from catalogThunks

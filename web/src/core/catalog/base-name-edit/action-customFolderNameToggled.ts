@@ -1,8 +1,8 @@
 import {createAction} from "src/libs/daction";
 import {CatalogViewerState, editNameDialogNoError, isEditNameDialog} from "../language";
 
-export const folderNameEnabledChanged = createAction<CatalogViewerState, boolean>(
-    "FolderNameEnabledChanged",
+export const customFolderNameToggled = createAction<CatalogViewerState, boolean>(
+    "CustomFolderNameToggled",
     (current: CatalogViewerState, isFolderNameEnabled: boolean) => {
         if (!isEditNameDialog(current.dialog)) {
             return current;
@@ -19,5 +19,3 @@ export const folderNameEnabledChanged = createAction<CatalogViewerState, boolean
         };
     }
 );
-
-export type FolderNameEnabledChanged = ReturnType<typeof folderNameEnabledChanged>;

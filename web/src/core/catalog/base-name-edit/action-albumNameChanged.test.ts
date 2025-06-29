@@ -1,5 +1,5 @@
 import {albumNameChanged} from "./action-albumNameChanged";
-import {editNameDialogSelector} from "./selector-editNameDialogSelector";
+import {editNameDialogSelector} from "../album-edit-name/selector-editNameDialogSelector";
 import {CatalogViewerState} from "../language";
 import {editDatesDialogForJanAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
