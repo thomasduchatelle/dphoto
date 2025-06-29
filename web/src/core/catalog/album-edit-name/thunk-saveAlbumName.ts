@@ -1,5 +1,5 @@
 import {ThunkDeclaration} from "src/libs/dthunks";
-import {AlbumId, CatalogViewerState, getErrorMessage, isCatalogError} from "../language";
+import {AlbumId, albumIdEquals, CatalogViewerState, getErrorMessage, isCatalogError} from "../language";
 import {albumRenamingStarted, AlbumRenamingStarted} from "./action-albumRenamingStarted";
 import {albumRenamed, AlbumRenamed} from "./action-albumRenamed";
 import {albumRenamingFailed, AlbumRenamingFailed} from "./action-albumRenamingFailed";
@@ -27,10 +27,9 @@ export async function saveAlbumNameThunk(
     try {
         const newFolderName = preselection.isCustomFolderNameEnabled ? preselection.customFolderName : undefined;
         const newAlbumId = await saveAlbumNamePort.renameAlbum(preselection.albumId, preselection.albumName, newFolderName);
-        
-        const hasAlbumIdChanged = newAlbumId.owner !== preselection.albumId.owner || newAlbumId.folderName !== preselection.albumId.folderName;
-        const redirectTo = hasAlbumIdChanged ? newAlbumId : undefined;
-        
+
+        const redirectTo = albumIdEquals(newAlbumId, preselection.albumId) ? newAlbumId : undefined;
+
         dispatch(albumRenamed({previousAlbumId: preselection.albumId, newAlbumId, newName: preselection.albumName, redirectTo}));
     } catch (err) {
         if (isCatalogError(err)) {
