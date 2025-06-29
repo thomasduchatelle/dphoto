@@ -56,7 +56,7 @@ describe("thunk:saveAlbumNameThunk", () => {
 
         expect(dispatchedActions).toEqual([
             albumRenamingStarted(),
-            albumRenamed({previousAlbumId: albumId, newAlbumId, newName}),
+            albumRenamed({previousAlbumId: albumId, newAlbumId, newName, redirectTo: newAlbumId}),
         ]);
     });
 
@@ -87,7 +87,7 @@ describe("thunk:saveAlbumNameThunk", () => {
 
         expect(dispatchedActions).toEqual([
             albumRenamingStarted(),
-            albumRenamed({previousAlbumId: albumId, newAlbumId, newName}),
+            albumRenamed({previousAlbumId: albumId, newAlbumId, newName, redirectTo: newAlbumId}),
         ]);
     });
 
@@ -169,6 +169,33 @@ describe("thunk:saveAlbumNameThunk", () => {
         expect(dispatchedActions).toEqual([
             albumRenamingStarted(),
             albumRenamingFailed(new CatalogError("UnexpectedError", "Something unexpected happened")),
+        ]);
+    });
+
+    it("should not redirect when album ID remains the same", async () => {
+        const albumId = {owner: "myself", folderName: "same-folder"};
+        const newName = "New Album Name";
+        const sameAlbumId = {owner: "myself", folderName: "same-folder"};
+
+        const fakePort = new FakeSaveAlbumNamePort();
+        fakePort.renameAlbum = async () => sameAlbumId;
+
+        const dispatchedActions: Action<CatalogViewerState, any>[] = [];
+
+        await saveAlbumNameThunk(
+            dispatchedActions.push.bind(dispatchedActions),
+            fakePort,
+            {
+                albumId,
+                albumName: newName,
+                customFolderName: "",
+                isCustomFolderNameEnabled: false
+            }
+        );
+
+        expect(dispatchedActions).toEqual([
+            albumRenamingStarted(),
+            albumRenamed({previousAlbumId: albumId, newAlbumId: sameAlbumId, newName, redirectTo: undefined}),
         ]);
     });
 
