@@ -1,15 +1,18 @@
 import {albumIdEquals, CatalogViewerState, EditNameDialog, isEditNameDialog} from "../language";
 
-export interface EditNameDialogSelection {
-    isOpen: boolean;
+export interface BaseEditNameSelection {
     albumName: string;
     originalName: string;
     customFolderName: string;
     isCustomFolderNameEnabled: boolean;
-    isLoading: boolean;
     technicalError?: string;
     nameError?: string;
     folderNameError?: string;
+}
+
+export interface EditNameDialogSelection extends BaseEditNameSelection {
+    isOpen: boolean;
+    isLoading: boolean;
     isSaveEnabled: boolean;
 }
 
