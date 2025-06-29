@@ -1,5 +1,5 @@
 import {customFolderNameChanged} from "./action-customFolderNameChanged";
-import {baseEditNameSelector, BaseEditNameSelection} from "./selector-baseEditNameSelector";
+import {BaseEditNameSelectionWithSavable, baseEditNameSelector} from "./selector-baseEditNameSelector";
 import {CatalogViewerState, EditNameDialog} from "../language";
 import {deleteDialogWithOneAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
