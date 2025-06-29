@@ -1,5 +1,5 @@
 import {customFolderNameChanged} from "./action-customFolderNameChanged";
-import {EditNameDialogSelection, editNameDialogSelector} from "../album-edit-name/selector-editNameDialogSelector";
+import {baseEditNameSelector, BaseEditNameSelection} from "./selector-baseEditNameSelector";
 import {CatalogViewerState} from "../language";
 import {deleteDialogWithOneAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
@@ -19,8 +19,9 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged(newFolderName);
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual<EditNameDialogSelection>({
-            ...editJanAlbumNameSelection,
+        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+            albumName: editJanAlbumNameSelection.albumName,
+            originalName: editJanAlbumNameSelection.originalName,
             customFolderName: newFolderName,
             isCustomFolderNameEnabled: true,
         });
@@ -38,12 +39,12 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged("");
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual<EditNameDialogSelection>({
-            ...editJanAlbumNameSelection,
+        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+            albumName: editJanAlbumNameSelection.albumName,
+            originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "",
             folderNameError: "Folder name is mandatory",
             isCustomFolderNameEnabled: true,
-            isSaveEnabled: false,
         });
     });
 
@@ -56,7 +57,7 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged(newFolderName);
         const got = action.reducer(state, action);
 
-        expect(got).toBe(state);
+        expect(baseEditNameSelector(got)).toBe(null);
     });
 
     it('should clear technical error when folder name is changed', () => {
@@ -72,8 +73,9 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged("new-folder");
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual<EditNameDialogSelection>({
-            ...editJanAlbumNameSelection,
+        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+            albumName: editJanAlbumNameSelection.albumName,
+            originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "new-folder",
             isCustomFolderNameEnabled: true,
         });

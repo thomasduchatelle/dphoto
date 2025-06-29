@@ -1,5 +1,5 @@
 import {albumNameChanged} from "./action-albumNameChanged";
-import {editNameDialogSelector} from "../album-edit-name";
+import {baseEditNameSelector, BaseEditNameSelection} from "./selector-baseEditNameSelector";
 import {CatalogViewerState} from "../language";
 import {editDatesDialogForJanAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
@@ -18,9 +18,11 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged(newAlbumName);
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual({
-            ...editJanAlbumNameSelection,
+        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
             albumName: newAlbumName,
+            originalName: editJanAlbumNameSelection.originalName,
+            customFolderName: editJanAlbumNameSelection.customFolderName,
+            isCustomFolderNameEnabled: editJanAlbumNameSelection.isCustomFolderNameEnabled,
         });
     });
 
@@ -33,7 +35,7 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged(newAlbumName);
         const got = action.reducer(state, action);
 
-        expect(got).toBe(state);
+        expect(baseEditNameSelector(got)).toBe(null);
     });
 
     it('should disable save button when album name is blank', () => {
@@ -47,11 +49,12 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("");
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual({
-            ...editJanAlbumNameSelection,
+        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
             albumName: "",
+            originalName: editJanAlbumNameSelection.originalName,
+            customFolderName: editJanAlbumNameSelection.customFolderName,
+            isCustomFolderNameEnabled: editJanAlbumNameSelection.isCustomFolderNameEnabled,
             nameError: "Album name is mandatory",
-            isSaveEnabled: false,
         });
     });
 
@@ -67,9 +70,11 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("New Name");
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual({
-            ...editJanAlbumNameSelection,
+        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
             albumName: "New Name",
+            originalName: editJanAlbumNameSelection.originalName,
+            customFolderName: editJanAlbumNameSelection.customFolderName,
+            isCustomFolderNameEnabled: editJanAlbumNameSelection.isCustomFolderNameEnabled,
         });
     });
 });

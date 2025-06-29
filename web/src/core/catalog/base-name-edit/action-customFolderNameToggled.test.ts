@@ -1,5 +1,5 @@
 import {customFolderNameToggled} from "./action-customFolderNameToggled";
-import {editNameDialogSelector} from "../album-edit-name/selector-editNameDialogSelector";
+import {baseEditNameSelector, BaseEditNameSelection} from "./selector-baseEditNameSelector";
 import {CatalogViewerState} from "../language";
 import {deleteDialogWithOneAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
@@ -16,8 +16,9 @@ describe('action:folderNameEnabledChanged', () => {
         const action = customFolderNameToggled(true);
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual({
-            ...editJanAlbumNameSelection,
+        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+            albumName: editJanAlbumNameSelection.albumName,
+            originalName: editJanAlbumNameSelection.originalName,
             customFolderName: albumId.folderName,
             isCustomFolderNameEnabled: true,
         });
@@ -36,11 +37,11 @@ describe('action:folderNameEnabledChanged', () => {
         const action = customFolderNameToggled(false);
         const got = action.reducer(state, action);
 
-        expect(editNameDialogSelector(got)).toEqual({
-            ...editJanAlbumNameSelection,
+        expect(baseEditNameSelector(got)).toEqual<BaseEditNameSelection>({
+            albumName: editJanAlbumNameSelection.albumName,
+            originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "",
             isCustomFolderNameEnabled: false,
-            isSaveEnabled: true,
         });
     });
 
@@ -53,6 +54,6 @@ describe('action:folderNameEnabledChanged', () => {
         const action = customFolderNameToggled(true);
         const got = action.reducer(state, action);
 
-        expect(got).toBe(state);
+        expect(baseEditNameSelector(got)).toBe(null);
     });
 });
