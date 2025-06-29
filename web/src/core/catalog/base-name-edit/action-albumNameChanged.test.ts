@@ -1,6 +1,6 @@
 import {albumNameChanged} from "./action-albumNameChanged";
 import {baseEditNameSelector, BaseEditNameSelection} from "./selector-baseEditNameSelector";
-import {CatalogViewerState} from "../language";
+import {CatalogViewerState, EditNameDialog} from "../language";
 import {editDatesDialogForJanAlbum, editJanAlbumNameDialog, editJanAlbumNameSelection, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 
 describe('action:albumNameChanged', () => {
@@ -18,7 +18,7 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged(newAlbumName);
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
         expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: newAlbumName,
             originalName: editJanAlbumNameSelection.originalName,
@@ -50,7 +50,7 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("");
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
         expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: "",
             originalName: editJanAlbumNameSelection.originalName,
@@ -72,7 +72,7 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("New Name");
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog);
+        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
         expect(baseSelection).toEqual<BaseEditNameSelection>({
             albumName: "New Name",
             originalName: editJanAlbumNameSelection.originalName,
