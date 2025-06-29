@@ -19,8 +19,9 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged(newFolderName);
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
-        expect(baseSelection).toEqual<BaseEditNameSelection>({
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            isSavable: true,
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: newFolderName,
@@ -40,8 +41,9 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged("");
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
-        expect(baseSelection).toEqual<BaseEditNameSelection>({
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            isSavable: false,
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "",
@@ -75,8 +77,9 @@ describe('action:folderNameChanged', () => {
         const action = customFolderNameChanged("new-folder");
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
-        expect(baseSelection).toEqual<BaseEditNameSelection>({
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            isSavable: true,
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "new-folder",

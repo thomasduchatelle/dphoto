@@ -16,8 +16,9 @@ describe('action:folderNameEnabledChanged', () => {
         const action = customFolderNameToggled(true);
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
-        expect(baseSelection).toEqual<BaseEditNameSelection>({
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            isSavable: true,
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: albumId.folderName,
@@ -38,8 +39,9 @@ describe('action:folderNameEnabledChanged', () => {
         const action = customFolderNameToggled(false);
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
-        expect(baseSelection).toEqual<BaseEditNameSelection>({
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            isSavable: true,
             albumName: editJanAlbumNameSelection.albumName,
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: "",

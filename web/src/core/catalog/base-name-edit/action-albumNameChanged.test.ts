@@ -50,8 +50,9 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("");
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
-        expect(baseSelection).toEqual<BaseEditNameSelection>({
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            isSavable: false,
             albumName: "",
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: editJanAlbumNameSelection.customFolderName,
@@ -72,8 +73,9 @@ describe('action:albumNameChanged', () => {
         const action = albumNameChanged("New Name");
         const got = action.reducer(state, action);
 
-        const {isSavable, ...baseSelection} = baseEditNameSelector(got, got.dialog as EditNameDialog);
-        expect(baseSelection).toEqual<BaseEditNameSelection>({
+        const selection = baseEditNameSelector(got, got.dialog as EditNameDialog);
+        expect(selection).toEqual<BaseEditNameSelectionWithSavable>({
+            isSavable: true,
             albumName: "New Name",
             originalName: editJanAlbumNameSelection.originalName,
             customFolderName: editJanAlbumNameSelection.customFolderName,
