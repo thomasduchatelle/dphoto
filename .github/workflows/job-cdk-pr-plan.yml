@@ -1,0 +1,104 @@
+name: CDK PR Plan Job
+
+on:
+  workflow_call:
+    inputs:
+      issue-number:
+        description: "Override the issue number on which the comment is posted"
+        required: false
+        type: string
+
+jobs:
+  cdk-pr-plan:
+    runs-on: ubuntu-latest
+    environment:
+      name: live
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '^22.0.0'
+          cache: 'npm'
+          cache-dependency-path: deployments/cdk/package-lock.json
+
+      - name: Install CDK dependencies
+        working-directory: deployments/cdk
+        run: npm ci
+
+      - name: Install AWS CDK CLI
+        run: npm install -g aws-cdk
+
+      - name: CDK Diff (live)
+        id: diff
+        working-directory: deployments/cdk
+        run: |
+          set +e  # Don't exit on command failure
+          DIFF_OUTPUT=$(cdk diff --context environment=live --no-color 2>&1)
+          RC=$?
+          
+          echo "$DIFF_OUTPUT"
+          
+          if [[ $RC -ne 0 ]]; then
+            echo "CDK diff failed with exit code $RC"
+            exit $RC
+          fi
+          
+          # Check if there are actual changes in the output
+          if echo "$DIFF_OUTPUT" | grep -q "Stack.*"; then
+            if echo "$DIFF_OUTPUT" | grep -qE "([\+\-\~]|\[[\+\-\~]]|Resources|Parameters|Outputs)"; then
+              echo "no_change=false" >> $GITHUB_OUTPUT
+            else
+              echo "no_change=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "no_change=true" >> $GITHUB_OUTPUT
+          fi
+          
+          # Save output for PR comment
+          echo "stdout<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIFF_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        continue-on-error: true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+
+      - name: Update Pull Request
+        uses: actions/github-script@v7
+        env:
+          DIFF: "cdk\n${{ steps.diff.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let summary = "";
+            if ('${{ steps.diff.outputs.no_change }}' === 'true' ) {
+              summary = " - no change"
+            }
+            
+            const output = `### CDK live
+
+            <details><summary>Show Diff${summary}</summary>
+
+            \`\`\`\n
+            ${process.env.DIFF}
+            \`\`\`
+
+            </details>
+
+            *Action: \`${{ github.event_name }}\`*`;
+            
+            const issueNumber = "${{ inputs.issue-number }}"
+
+            github.rest.issues.createComment({
+              issue_number: issueNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: CDK Diff Status
+        if: contains(steps.*.outcome, 'failure')
+        run: exit 1
