@@ -52,6 +52,11 @@ export function CreateAlbumDialog({
                                       onEndsAtEndOfTheDayChange,
                                       onStartDateChange,
                                       onEndDateChange,
+                                      folderNameError,
+                                      dateRangeError,
+                                      technicalError,
+                                      originalName,
+                                      nameError,
                                   }: CreateDialogSelection & CreateAlbumDialogHandlers) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -96,7 +101,7 @@ export function CreateAlbumDialog({
             <DialogContent>
                 <Grid container spacing={2} alignItems='center'>
                     <Grid sm={12} xs={12}>
-                        {errorMessage && <Alert severity="error">
+                        {(errorMessage) && <Alert severity="error">
                             {errorMessage}
                         </Alert>}
                     </Grid>
@@ -109,6 +114,8 @@ export function CreateAlbumDialog({
                             disabled={isLoading}
                             onChange={(event) => onNameChange(event.target.value)}
                             value={albumName}
+                            helperText={nameError}
+                            error={!!nameError}
                         />
                     </Grid>
                     <DateRangePicker
@@ -132,7 +139,7 @@ export function CreateAlbumDialog({
                             disabled={isLoading}
                             onEnabledChange={onWithCustomFolderNameChange}
                             onValueChange={onFolderNameChange}
-                            error={error === "AlbumFolderNameAlreadyTakenErr" ? "The folder name must be unique" : undefined}
+                            error={folderNameError}
                         />
                     </Grid>
                 </Grid>

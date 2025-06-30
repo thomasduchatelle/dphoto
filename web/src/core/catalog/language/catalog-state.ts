@@ -137,6 +137,14 @@ export function isRedirectToAlbumIdPayload(arg: any): arg is RedirectToAlbumIdPa
     return arg && arg.redirectTo
 }
 
+export interface NameEditBase {
+    albumId: AlbumId
+    albumName: string
+    customFolderName: string
+    isCustomFolderNameEnabled: boolean
+    nameError: NameError
+}
+
 export interface DeleteDialog {
     type: "DeleteDialog";
     deletableAlbums: Album[]
@@ -163,14 +171,6 @@ export interface NameError {
     technicalError?: string;
     nameError?: string;
     folderNameError?: string;
-}
-
-export interface NameEditBase {
-    albumId: AlbumId
-    albumName: string
-    customFolderName: string
-    isCustomFolderNameEnabled: boolean
-    nameError: NameError
 }
 
 export interface EditNameDialog extends NameEditBase {

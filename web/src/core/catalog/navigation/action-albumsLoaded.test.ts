@@ -1,5 +1,5 @@
 import {albumsLoaded} from "./action-albumsLoaded";
-import {loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {createDialogPrefilledForMar25, loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 
 describe("action:albumsLoaded", () => {
@@ -56,17 +56,7 @@ describe("action:albumsLoaded", () => {
         const action = albumsLoaded({albums: twoAlbums});
         const got = action.reducer({
             ...loadedStateWithTwoAlbums,
-            dialog: {
-                type: "CreateDialog",
-                name: "Test Album",
-                startDate: new Date("2025-01-01"),
-                endDate: new Date("2025-01-31"),
-                startAtDayStart: true,
-                endAtDayEnd: true,
-                forceFolderName: "",
-                withCustomFolderName: false,
-                isLoading: false,
-            },
+            dialog: createDialogPrefilledForMar25,
         }, action);
 
         expect(got.dialog).toBeUndefined();

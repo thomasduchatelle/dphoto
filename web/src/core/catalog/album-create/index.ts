@@ -1,11 +1,9 @@
 import {openCreateDialogDeclaration} from "./thunk-openCreateDialog";
 import {closeCreateDialogDeclaration} from "./thunk-closeCreateDialog";
 import {submitCreateAlbumDeclaration} from "./thunk-submitCreateAlbum";
-import {createAlbumDeclaration} from "./album-createAlbum";
 import {dateRangeThunks} from "../date-range";
 import {baseNameEditThunks} from "../base-name-edit";
 
-export * from "./album-createAlbum";
 export * from "./selector-createDialogSelector";
 
 /**
@@ -22,7 +20,6 @@ export * from "./selector-createDialogSelector";
  * - `updateCreateDialogStartsAtStartOfTheDay`: `(startsAtStart: boolean) => void`
  * - `updateCreateDialogEndsAtEndOfTheDay`: `(endsAtEnd: boolean) => void`
  * - `submitCreateAlbum`: `() => Promise<void>`
- * - `createAlbum`: `(request: CreateAlbumRequest) => Promise<AlbumId>`
  */
 export const albumCreateThunks = {
     openCreateDialog: openCreateDialogDeclaration,
@@ -35,5 +32,4 @@ export const albumCreateThunks = {
     updateCreateDialogStartsAtStartOfTheDay: dateRangeThunks.updateDateRangeStartAtDayStart,
     updateCreateDialogEndsAtEndOfTheDay: dateRangeThunks.updateDateRangeEndAtDayEnd,
     submitCreateAlbum: submitCreateAlbumDeclaration,
-    createAlbum: createAlbumDeclaration,
 };

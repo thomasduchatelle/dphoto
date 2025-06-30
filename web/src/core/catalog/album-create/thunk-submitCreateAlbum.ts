@@ -1,7 +1,6 @@
 import {ThunkDeclaration} from "src/libs/dthunks";
-import {CatalogViewerAction, CatalogViewerState, getErrorMessage, isCatalogError, isCreateDialog} from "../language";
+import {Album, AlbumId, CatalogViewerAction, CatalogViewerState, getErrorMessage, isCatalogError, isCreateDialog} from "../language";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {CreateAlbumPort} from "./album-createAlbum";
 import {CatalogFactory} from "../catalog-factories";
 import {DPhotoApplication} from "../../application";
 import {createAlbumStarted} from "./action-createAlbumStarted";
@@ -17,6 +16,19 @@ interface CreateDialogData {
     startAtDayStart: boolean;
     endAtDayEnd: boolean;
     isCustomFolderNameEnabled: boolean;
+}
+
+export interface CreateAlbumRequest {
+    name: string
+    start: Date
+    end: Date
+    forcedFolderName: string
+}
+
+export interface CreateAlbumPort {
+    createAlbum(request: CreateAlbumRequest): Promise<AlbumId>
+
+    fetchAlbums(): Promise<Album[]>
 }
 
 export async function submitCreateAlbumThunk(
