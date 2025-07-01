@@ -22,21 +22,21 @@ DPhoto: Personal photo backup system with Go Lambda backend, React frontend, CDK
     │   │   ├── dphoto-infrastructure-stack.ts   # Core AWS resources
     │   │   └── dphoto-application-stack.ts      # Application components
     │   ├── constructs/
-    │   │   ├── lambda-function.ts               # Reusable Lambda construct
-    │   │   ├── s3-bucket.ts                     # Standardized S3 buckets
-    │   │   └── dynamodb-table.ts               # DynamoDB table construct
+    │   │   ├── golang-lambda-function.ts               # Lambda construct for GoLang deployment
+    │   │   ├── infra_media_storage.ts                  # Media storage construct - complex combination of S3 resource and policies
+    │   │   ├── infra_catalog_dynamodb.ts               # DynamoDB table construct - abstracted for stack readability
+    │   │   └── ... # constructs abstract complex resource combinations from stacks
     │   ├── config/
     │   │   └── environments.ts                 # Environment configurations
     │   └── utils/
-    │       ├── ssm-parameters.ts               # SSM parameter helpers
-    │       └── naming.ts                       # Resource naming conventions
+    │       └── ...                             # Pure functions for complex logic extraction (clean code)
     ├── test/
     │   ├── unit/
     │   │   ├── infrastructure-stack.test.ts
     │   │   └── application-stack.test.ts
     │   └── integration/
     │       └── deployment.test.ts
-    ├── cdk.json                                # CDK configuration
+    ├── cdk.json                               # CDK configuration
     ├── package.json                           # Dependencies
     ├── tsconfig.json                          # TypeScript configuration
     └── jest.config.js                         # Test configuration
@@ -56,6 +56,40 @@ DPhoto: Personal photo backup system with Go Lambda backend, React frontend, CDK
 - Stateless, frequently deployed resources
 - Lambda functions, API Gateway, CloudFront, IAM roles
 - Imports infrastructure ARNs via SSM parameters
+
+### Clean Code
+
+#### Stack Design Principles
+
+- **Descriptive & Functional:** Stacks read like high-level blueprints, not implementation details
+- **Single Responsibility:** Each construct handles one logical component
+- **Abstraction Layers:** Complex resource combinations moved to constructs, complex logic to utils
+
+_Implementation Pattern:_
+
+    // Stack: High-level, declarative, readable
+    export class DPhotoInfrastructureStack extends Stack {
+      constructor(scope: Construct, id: string, props: StackProps) {
+        super(scope, id, props);
+        
+        // Clean, descriptive resource creation
+        const mediaStorage = new MediaStorageConstruct(this, 'MediaStorage', config);
+        const catalogDb = new CatalogDynamoDbConstruct(this, 'CatalogDb', config);
+        
+        // Export parameters for application stack
+        exportSsmParameters(this, mediaStorage, catalogDb);
+      }
+    }
+
+_Construct Extraction Rules:_
+
+1. **Complexity:** >3 related resources or complex configuration
+2. **Readability:** Improves stack comprehension by abstracting implementation
+
+_Utils Extraction Rules:_
+
+1. **Logic Complexity:** Conditional resource creation, parameter transformation
+2. **Testability:** Complex business logic that benefits from unit testing
 
 ### Cross-Stack Communication
 
@@ -82,40 +116,22 @@ All references via SSM parameters at `/dphoto/{env}/{service}/{param}`:
 
 ## Resource Naming
 
-**Pattern:** `dphoto-{env}-{resource-type}`
+**Pattern:** names are in hyphen case and contains the environment name (example: `dphoto-next-catalog-db`, where `next` is the environment)
 
-**NamingConvention class** in `lib/utils/naming.ts`:
-
-- `dynamoTable()`: `dphoto-${env}-index`
-- `s3Bucket(type)`: `dphoto-${env}-${type}`
-- `lambdaFunctionName(name)`: `dphoto-${env}-${name}`
+If imported resources are not named following the pattern, the name must be set in the configuration.
 
 ## Environment Configuration
 
     export interface EnvironmentConfig {
-      account: string;
-      region: string;
-      domainName?: string;
-      enableMonitoring: boolean;
-      lambdaMemory: number;
-      dynamoDbBillingMode: 'PAY_PER_REQUEST' | 'PROVISIONED';
-      useDefaultVpc: boolean;
-      useDefaultEncryption: boolean;
+      domainName: string;
+      // ... ONLY the properties that are different between the environment are set explicitly. In this case, they should NOT have a default value.
     }
 
 **Context-based selection:**
 
 - `cdk deploy --context environment=next`
+- `cdk deploy --context environment=dev`
 - `cdk deploy --context environment=live`
-
-## Lambda Patterns
-
-**GoLambdaFunction construct:**
-
-- Runtime: `PROVIDED_AL2`
-- Build: `GOOS=linux GOARCH=amd64 CGO_ENABLED=0`
-- Handler: `bootstrap`
-- Source: relative to CDK root
 
 ## Testing Philosophy
 
@@ -137,28 +153,3 @@ All references via SSM parameters at `/dphoto/{env}/{service}/{param}`:
         // Verify bucket cannot be accidentally deleted
       });
     });
-
-## Development Workflow
-
-1. **Deploy order:** Infrastructure → Application
-2. **Development:** Use `next` environment
-3. **Updates:** Application stack independent, infrastructure requires planning
-4. **Migration:** Use CDK import, preserve existing resource names
-
-## Cost Optimization
-
-**Critical Constraint: <$5/month total**
-
-**Infrastructure:**
-
-- Default VPC (no NAT costs)
-- Default encryption (no KMS costs)
-- Single AZ deployment
-- Minimal CloudWatch alarms
-- On-demand billing
-
-## Security
-
-**IAM:** Least privilege, SSM parameter references, no hardcoded ARNs
-**Encryption:** AWS managed keys only
-**Network:** Default VPC security groups

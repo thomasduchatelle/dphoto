@@ -1,4 +1,4 @@
-name: CDK Validation Job
+name: test-cdk
 
 on:
   workflow_call:
@@ -17,23 +17,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: deployments/cdk/package-lock.json
+      - name: Setup CDK
+        uses: ./.github/actions/install-cdk
 
-      - name: Install CDK dependencies
+      - name: CDK Syntax Check (next)
         working-directory: deployments/cdk
-        run: npm ci
-
-      - name: Install AWS CDK CLI
-        run: npm install -g aws-cdk
-
-      - name: CDK Syntax Check (dev)
-        working-directory: deployments/cdk
-        run: cdk synth --context environment=dev
+        run: cdk synth --context environment=next
 
       - name: CDK Syntax Check (live)
         working-directory: deployments/cdk
@@ -42,12 +31,3 @@ jobs:
       - name: Run CDK unit tests
         working-directory: deployments/cdk
         run: npm test
-
-      - name: CDK diff (dev) - if AWS credentials available
-        working-directory: deployments/cdk
-        run: cdk diff --context environment=dev || echo "No AWS credentials - skipping diff"
-        continue-on-error: true
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1

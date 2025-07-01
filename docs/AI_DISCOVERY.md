@@ -892,3 +892,64 @@ Used to update a script in Python ... painful.
 
 Note: the fulll script have been written with `openrouter/anthropic/claude-sonnet-4` which was working very well. The edit was remade by
 `google/gemini-2.5-flash-preview-05-20` without any issue.
+
+### Tabnine / Claude Sonnet 4
+
+`/code-explain` is pretty impressive !
+
+Integration with the IDE is definitively good when editing code and pair programing. The approach of giving code snippet to apply is fine but slow (looks like
+it re-running a model to actually apply it on the code - kind of `/architect` mode from aider).
+
+No distinction between "ask" and "code" mode ; it requires to always be explicit of wht type of outcome we're looking for.
+
+**Impossible to do ABD (Agentic Based Development©):** no control on the context which is often far too small (summary of the project and the current file).
+Edit mode requiring to apply each change on each file is also tedious. Aider is far more advanced on this topic. (I tried the migration Terraform -> CDK which
+cost $0.4 with Aider+Sonnet4).
+
+#### Custom behaviour
+
+```
+I'm a senior engineer with broad technical knowledge. You do not need to explain the patterns and principles and their benefits, you only need to name them and I will ask further questions if I want to.
+
+I'm peering with you: you don't need to agree with what I'm proposing and you should propose alternatives when there is a substantial improvement to gain.
+```
+
+#### Some discovery prompts
+
+```
+/code-explore 
+```
+
+Note - the second sentence triggered a "Reality Check" subpart with a lot of good insights:
+
+```
+Give me a list of the submodules with the business logic they are handling.
+
+Don't be overly positive, developers have issue working on it so stay realistic.
+```
+
+This one gave the happy path journey with all the endpoint to calls for each step. Broad-level was accurate:
+
+```
+Can you give me a typical user journey throw the application ?
+```
+
+The conclusion of that prompt with "The Real Problem" is spot on:
+
+```
+Could you identify 3 critical issues on how the flow is orchestrated ?
+```
+
+> [...] are symptoms of trying to work around these fundamental architectural issues rather than solving them.
+
+To edit Markdown files (four backticks `` ` `` might work as well):
+
+````
+Send back this but using code block indentation:
+
+    this is working
+
+```
+this is not working
+```
+````

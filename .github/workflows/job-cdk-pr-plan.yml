@@ -16,19 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '^22.0.0'
-          cache: 'npm'
-          cache-dependency-path: deployments/cdk/package-lock.json
-
-      - name: Install CDK dependencies
-        working-directory: deployments/cdk
-        run: npm ci
-
-      - name: Install AWS CDK CLI
-        run: npm install -g aws-cdk
+      - name: Setup CDK
+        uses: ./.github/actions/install-cdk
 
       - name: CDK Diff (live)
         id: diff
@@ -99,6 +88,6 @@ jobs:
               body: output
             })
 
-      - name: CDK Diff Status
+      - name: Report failure (or skip)
         if: contains(steps.*.outcome, 'failure')
         run: exit 1

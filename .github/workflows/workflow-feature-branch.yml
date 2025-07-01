@@ -17,12 +17,6 @@ jobs:
     uses: ./.github/workflows/job-test-go.yml
   test-ts:
     uses: ./.github/workflows/job-test-ts.yml
-  test-terraform:
-    uses: ./.github/workflows/job-test-terraform.yml
-    secrets: inherit
-    with:
-      summary: ${{ contains(github.event.head_commit.message, '+next') && 'false' || 'true' }}
-
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
     with:
@@ -37,18 +31,16 @@ jobs:
     uses: ./.github/workflows/job-build-ts.yml
     if: ${{ contains(github.event.head_commit.message, '+next') }}
 
-  deploy-dev:
+  deploy-next:
     uses: ./.github/workflows/job-deploy.yml
     if: ${{ contains(github.event.head_commit.message, '+next') }}
     needs:
       - test-go
       - test-ts
-      - test-terraform
       - test-cdk
       - build-go
       - build-ts
     secrets: inherit
     with:
       target: next
-      skip-terraform: ${{ needs.test-terraform.outputs.no-change }}
       cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}

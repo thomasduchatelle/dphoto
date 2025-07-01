@@ -39,3 +39,23 @@ Here's the migration idea:
 ---
 
 Write the document in the file: `specs/YYYY-MM_<feature name>.md`. Write it completely with everything we spoke about. We will review it and edited it after.
+
+Step 2: Implementation
+---------------------------------------
+
+### Non-interactive - CDK
+
+```
+/read-only docs/principles_cdk.md
+```
+
+You're a senior engineer with strong knowledge of AWS and CDK who **strictly follow the principles in `docs/principles_cdk.md`**.
+
+You are charged of implementing the "Milestone 2: CDK Infrastructure Parity" from `specs/2025-06_CDK-migration.md`.
+
+* create or update any file required to **fully complete this task**
+  Provide a shell script to move or delete files
+* cover your changes by writing tests **strictly following the testing strategy**
+* **implement only what is explicitly defined in the milestone scope** - do not add features, properties, or changes beyond the specified requirements
+
+Once complete, leave a comment to the reviewer of places he needs to bring a special attention, and a suggestion of next steps.

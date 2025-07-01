@@ -2,8 +2,16 @@ module.exports = async ({options, resolveVariable}) => {
     const stage = await resolveVariable('sls:stage');
     // const region = await resolveVariable('opt:region, self:provider.region, "eu-west-1"');
 
-    const rootDomain = `duchatelle.net`;
-    const hostPrefix = stage === 'live' ? 'dphoto' : 'dphoto-dev'
+    let rootDomain = `duchatelle.net`;
+    let hostPrefix;
+    if (stage === 'live') {
+        hostPrefix = 'dphoto';
+    } else if (stage === 'next') {
+        rootDomain = 'duchatelle.me'
+        hostPrefix = 'next';
+    } else { // stage === 'dev' (default)
+        hostPrefix = 'dphoto-dev'; // fallback
+    }
     const domain = `${hostPrefix}.${rootDomain}`
 
     return {
