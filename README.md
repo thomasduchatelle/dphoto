@@ -1,7 +1,7 @@
 ![Licence](https://img.shields.io/github/license/thomasduchatelle/dphoto)
 ![CLI Version](https://img.shields.io/github/tag/thomasduchatelle/dphoto?include_prereleases=&sort=semver&color=007bff)
 [![live version](https://img.shields.io/badge/dynamic/json?label=live+version&query=%24.version&url=https%3A%2F%2Fdphoto.duchatelle.net%2Fapi%2Fv1%2Fversion&color=dc3545)](https://dphoto.duchatelle.net)
-[![dev version](https://img.shields.io/badge/dynamic/json?label=dev+version&query=%24.version&url=https%3A%2F%2Fdphoto-dev.duchatelle.net%2Fapi%2Fv1%2Fversion&color=28a745)](https://dphoto-dev.duchatelle.net)
+[![next version](https://img.shields.io/badge/dynamic/json?label=dev+version&query=%24.version&url=https%3A%2F%2Fnext.duchatelle.me%2Fapi%2Fv1%2Fversion&color=28a745)](https://next.duchatelle.me)
 
 [comment]: <> (Generate badges: https://michaelcurrin.github.io/badge-generator/#/generic or https://shields.io/)
 
@@ -120,6 +120,8 @@ With:
 Bootstrap an environment with built-in command (one-of pre-requisite):
 
     go run ./tools/infra-bootstrap -domain <domain> -email <email> -env dev -google-client-id <id>
+
+Get a Google Client ID from https://console.cloud.google.com/apis/credentials
 
 To release a new version:
 
