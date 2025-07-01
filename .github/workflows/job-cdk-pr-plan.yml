@@ -1,71 +1,75 @@
-name: PR Terraform plan
+name: CDK PR Plan Job
+
 on:
-  pull_request:
-    branches:
-      - main
-      - next
   workflow_call:
     inputs:
       issue-number:
         description: "Override the issue number on which the comment is posted"
-        required: true
+        required: false
         type: string
 
 jobs:
-  post-live-terraform-plan:
+  cdk-pr-plan:
     runs-on: ubuntu-latest
     environment:
       name: live
-    env:
-      TF_WORKSPACE: live
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup terraform
-        uses: ./.github/actions/install-terraform
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          tf-api-token: ${{ secrets.TF_API_TOKEN }}
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: deployments/cdk/package-lock.json
 
-      - name: Terraform init
-        id: init
-        run: cd deployments/infra-data && terraform init
+      - name: Install CDK dependencies
+        working-directory: deployments/cdk
+        run: npm ci
 
-      - name: Terraform Plan
-        id: plan
-        run:  |
-          cd deployments/infra-data
+      - name: Install AWS CDK CLI
+        run: npm install -g aws-cdk
+
+      - name: CDK Diff (live)
+        id: diff
+        working-directory: deployments/cdk
+        run: |
           RC=0
-          terraform plan -no-color -detailed-exitcode || RC=$?
-
+          cdk diff --context environment=live --no-color || RC=$?
+          
           if [[ $RC -eq 0 ]] ; then
-           echo "no_change=true" >> $GITHUB_OUTPUT
+            echo "no_change=true" >> $GITHUB_OUTPUT
           else
-            if [[ $RC -eq 2 ]] ; then 
+            if [[ $RC -eq 1 ]] ; then 
               echo "no_change=false" >> $GITHUB_OUTPUT
             else
-              return $RC
+              exit $RC
             fi
           fi
         continue-on-error: true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
 
       - name: Update Pull Request
         uses: actions/github-script@v7
         env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+          DIFF: "cdk\n${{ steps.diff.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             let summary = "";
-            if ('${{ steps.plan.outputs.no_change }}' === 'true' ) {
+            if ('${{ steps.diff.outputs.no_change }}' === 'true' ) {
               summary = " - no change"
             }
             
-            const output = `### live
+            const output = `### CDK live
 
-            <details><summary>Show Plan${summary}</summary>
+            <details><summary>Show Diff${summary}</summary>
 
             \`\`\`\n
-            ${process.env.PLAN}
+            ${process.env.DIFF}
             \`\`\`
 
             </details>
@@ -81,6 +85,6 @@ jobs:
               body: output
             })
 
-      - name: Terraform Plan Status
+      - name: CDK Diff Status
         if: contains(steps.*.outcome, 'failure')
         run: exit 1

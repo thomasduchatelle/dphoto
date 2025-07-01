@@ -97,7 +97,7 @@ jobs:
     needs:
       - pull-request
     if: ${{ success() && needs.pull-request.outputs.pr-created == 'true' }}
-    uses: ./.github/workflows/workflow-pull-request-tf-plan.yml
+    uses: ./.github/workflows/workflow-pull-request.yml
     secrets: inherit
     with:
       issue-number: ${{ needs.pull-request.outputs.pr-number }}

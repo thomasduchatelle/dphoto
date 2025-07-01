@@ -1,0 +1,92 @@
+name: PR Terraform plan
+on:
+  pull_request:
+    branches:
+      - main
+      - next
+  workflow_call:
+    inputs:
+      issue-number:
+        description: "Override the issue number on which the comment is posted"
+        required: true
+        type: string
+
+jobs:
+  post-live-terraform-plan:
+    runs-on: ubuntu-latest
+    environment:
+      name: live
+    env:
+      TF_WORKSPACE: live
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup terraform
+        uses: ./.github/actions/install-terraform
+        with:
+          tf-api-token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform init
+        id: init
+        run: cd deployments/infra-data && terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run:  |
+          cd deployments/infra-data
+          RC=0
+          terraform plan -no-color -detailed-exitcode || RC=$?
+
+          if [[ $RC -eq 0 ]] ; then
+           echo "no_change=true" >> $GITHUB_OUTPUT
+          else
+            if [[ $RC -eq 2 ]] ; then 
+              echo "no_change=false" >> $GITHUB_OUTPUT
+            else
+              return $RC
+            fi
+          fi
+        continue-on-error: true
+
+      - name: Update Pull Request
+        uses: actions/github-script@v7
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let summary = "";
+            if ('${{ steps.plan.outputs.no_change }}' === 'true' ) {
+              summary = " - no change"
+            }
+            
+            const output = `### live
+
+            <details><summary>Show Plan${summary}</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Action: \`${{ github.event_name }}\`*`;
+            
+            const issueNumber = "${{ github.event_name }}" === "pull_request" ? context.issue.number : "${{ inputs.issue-number }}"
+
+            github.rest.issues.createComment({
+              issue_number: issueNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Terraform Plan Status
+        if: contains(steps.*.outcome, 'failure')
+        run: exit 1
+
+  cdk-pr-plan:
+    uses: ./.github/workflows/job-cdk-pr-plan.yml
+    secrets: inherit
+    with:
+      issue-number: ${{ github.event.number }}
