@@ -16,6 +16,11 @@ jobs:
   build-ts:
     uses: ./.github/workflows/job-build-ts.yml
 
+  test-cdk:
+    uses: ./.github/workflows/job-test-cdk.yml
+    with:
+      cache-suffix: ${{ github.run_number }}
+
   deploy-next:
     uses: ./.github/workflows/job-deploy.yml
     needs:
@@ -23,6 +28,7 @@ jobs:
       - test-ts
       - build-go
       - build-ts
+      - test-cdk
     secrets: inherit
     with:
       target: next
@@ -35,6 +41,7 @@ jobs:
       - test-ts
       - build-go
       - build-ts
+      - test-cdk
     secrets: inherit
     with:
       target: live

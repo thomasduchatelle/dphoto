@@ -23,6 +23,11 @@ jobs:
     with:
       summary: ${{ contains(github.event.head_commit.message, '+next') && 'false' || 'true' }}
 
+  test-cdk:
+    uses: ./.github/workflows/job-test-cdk.yml
+    with:
+      cache-suffix: ${{ github.run_number }}
+
   build-go:
     uses: ./.github/workflows/job-build-go.yml
     if: ${{ contains(github.event.head_commit.message, '+next') }}
@@ -39,6 +44,7 @@ jobs:
       - test-go
       - test-ts
       - test-terraform
+      - test-cdk
       - build-go
       - build-ts
     secrets: inherit
