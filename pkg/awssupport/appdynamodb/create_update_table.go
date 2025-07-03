@@ -14,6 +14,10 @@ const (
 	tableVersion = "2.1" // tableVersion should be bumped manually when schema is updated
 )
 
+// TODO /!\ NOTICE OF EVICTION /!\
+// TODO /!\ DYNAMODB STRUCTURE AND INDEX IS TO BE MANAGED BY CDK /!\
+// TODO /!\ DO NOT UPDATE THIS FILE - MIGRATE THE STRUCTURE TO CDK ! /!\
+
 // CreateTableIfNecessary creates the table if it doesn't exist ; or update it.
 func CreateTableIfNecessary(ctx context.Context, table string, client *dynamodb.Client, localDynamodb bool) error {
 

@@ -5,35 +5,31 @@ all: clean test build
 clean: clean-web clean-api
 	go clean -testcache
 
-setup: setup-infra-data setup-app
+setup: setup-cdk setup-app
 
-test: test-infra-data test-go test-web
+test: test-cdk test-go test-web
 
 build: build-go build-app
 
-deploy: deploy-infra-data deploy-app install-cli
+deploy: deploy-cdk deploy-app install-cli
 
 #######################################
-## INFRA DATA
+## CDK
 #######################################
 
-.PHONY: setup-infra-data test-infra-data deploy-infra-data
-INFRA_DATA := deployments/infra-data
+.PHONY: setup-cdk test-cdk deploy-cdk
+CDK_DIR := deployments/cdk
 
-setup-infra-data:
-	command -v tfenv > /dev/null \
-		cd $(INFRA_DATA) && \
-		tfenv install && tfenv use
-	cd $(INFRA_DATA) && \
-		terraform init
+setup-cdk:
+	command -v npm > /dev/null || (echo "npm is required" && exit 1)
+	cd $(CDK_DIR) && npm install
+	command -v cdk > /dev/null || npm install -g aws-cdk
 
-test-infra-data:
-	cd $(INFRA_DATA) && \
-		terraform validate
+test-cdk:
+	cd $(CDK_DIR) && npm test
 
-deploy-infra-data:
-	cd $(INFRA_DATA) && \
-		terraform apply
+deploy-cdk:
+	cd $(CDK_DIR) && cdk deploy --context environment=next
 
 #######################################
 ## PKG & CLI

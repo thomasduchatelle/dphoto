@@ -10,7 +10,7 @@ on:
 
 jobs:
   cdk-validation:
-    name: CDK Validation
+    name: test-cdk
     runs-on: ubuntu-latest
     
     steps:

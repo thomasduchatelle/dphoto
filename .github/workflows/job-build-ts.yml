@@ -2,7 +2,7 @@ on:
   workflow_call:
     outputs:
       cache-suffix:
-        description: Terraform plan
+        description: Typescript cache suffix
         value: ${{ jobs.build-ts.outputs.cache-suffix }}
 
 jobs:

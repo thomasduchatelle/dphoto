@@ -15,6 +15,9 @@ var (
 	}{}
 )
 
+// FIXME - NOTICE FOR RETIREMENT !!
+// FIXME - THIS COMMAND TO UPDATE THE DYNAMODB TABLE STRUCTURE IS REDUNDANT WITH CDK AND WOULD BE RETIRED ONCE CDK IS FULLY MIGRATED.
+
 var migrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Apply migration script on storages (DynamoDB, ...)",
