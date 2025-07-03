@@ -1,4 +1,4 @@
-name: PR Terraform plan
+name: Post PR Comment With AWS Changes
 on:
   pull_request:
     branches:

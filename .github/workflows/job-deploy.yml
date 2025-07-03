@@ -36,10 +36,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-1
 
-      # TODO Why GO ??
-      - name: Setup GO
-        uses: ./.github/actions/install-go
-
       - name: Setup NODE
         uses: ./.github/actions/install-node
         with:

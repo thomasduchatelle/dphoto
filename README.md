@@ -66,13 +66,12 @@ Contribute
 
 Components:
 
-* `deployments/infra-data`: terraform project to create required infrastructure on AWS for the CLI to work. Project
-  won't be re-usable in a different context without overriding backend and some other defaults.
+* `deployments/cdk`: CDK project to create required infrastructure on AWS for the CLI to work.
 * `pkg`: core domain model and business logic from Hexagonal Architecture. This domain is used from both CLI and app's
   APIs
 * [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line
   interface
-* [APP](deployments/sls/README.md): deployed on top of `infra-data`, contains the APP (API deployed on AWS lambdas, and
+* [APP](deployments/sls/README.md): deployed on top of `deployments/cdk`, contains the APP (API deployed on AWS lambdas, and
   WEB)
 
 Note: the repository follow https://github.com/golang-standards/project-layout structure convention.
@@ -82,7 +81,7 @@ Note: the repository follow https://github.com/golang-standards/project-layout s
 Required tools:
 
 * Infra:
-    * terraform: `brew install tfenv`, [Makefile](./Makefile)
+  * cdk: `npm install -g cdk`, [Makefile](./Makefile)
     * Serverless Framework: `npm install -g serverless`
     * AWS CLI: `brew install awscli`
 * Languages & build tools:
@@ -126,7 +125,7 @@ Get a Google Client ID from https://console.cloud.google.com/apis/credentials
 To release a new version:
 
 1. Push a change on a feature branch with `+pr` or `+next` in the commit message
-2. (optional) Verify "next" is working, check the terraform plan in the PR comment
+2. (optional) Verify "next" is working, check the CDK diff which has been commented in the PR
 3. Accept and merge the PR (created automatically on step 1)
 
 Any machine should update to the latest version of the CLI:

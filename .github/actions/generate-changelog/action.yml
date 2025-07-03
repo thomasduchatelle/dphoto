@@ -4,11 +4,6 @@ inputs:
   version:
     description: Software version (target or released)
     required: true
-  tf-plan:
-    description: Terraform plan (for live)
-  tf-no-change:
-    description: "'true' if there is no change to be applied to the infrastructure ; 'false' if no change ; '' (empty) if it shouldn't be mentioned."
-    default: ""
 outputs:
   title:
     description: "Change title"
@@ -46,8 +41,6 @@ runs:
     - name: Changelog
       id: changelog
       shell: 'bash'
-      env:
-        PLAN: ${{ inputs.tf-plan }}
       run: |
         first_hash="$(git log "${{ steps.source.outputs.before }}..${{ steps.source.outputs.after }}" --pretty=format:%h | tail -1)"
         commits="$(git log "${{ steps.source.outputs.before }}..${{ steps.source.outputs.after }}" --pretty=tformat:%h | wc -l)"
@@ -81,18 +74,6 @@ runs:
           echo "## $(($commits - 1)) other commits" >> $CHANGELOG
           echo "" >> $CHANGELOG
           echo "$description_others" >> $CHANGELOG
-        fi
-        if [[ "${{ inputs.tf-no-change }}" != "" ]] ; then
-          echo "" >> $CHANGELOG
-          echo "## Terraform plan" >> $CHANGELOG
-          echo "" >> $CHANGELOG
-          if [[ "${{ inputs.tf-no-change }}" == "true" ]] ; then
-            echo "_No change_" >> $CHANGELOG
-          else
-            echo '```' >> $CHANGELOG
-            echo "$PLAN" >> $CHANGELOG
-            echo '```' >> $CHANGELOG
-          fi
         fi
         cat $CHANGELOG
 
