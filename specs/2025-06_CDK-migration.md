@@ -76,8 +76,8 @@ experience, and creating a more consistent codebase.
 - **Value:** Proof of concept complete, risk validation done
 - **GitHub Actions Provisioning:**
     - **Current:** Terraform (dev/live) → Serverless (dev/live)
-  - **Added:** CDK deployment to isolated `next` environment
-  - **Workflow:** Terraform (dev/live) + CDK(next) → Serverless (dev/live/next)
+    - **Added:** CDK deployment to isolated `next` environment
+    - **Workflow:** Terraform (dev/live) + CDK(next) → Serverless (dev/live/next)
 
 ### Phase 2: Infrastructure Migration (Milestone 3-4)
 
@@ -90,9 +90,9 @@ experience, and creating a more consistent codebase.
 - Validate SLS deployment still works with CDK-managed infrastructure
 - **Value:** `dev` environment fully migrated, reduced Terraform maintenance
 - **GitHub Actions Provisioning:**
-  - **Current:** Terraform (dev/live) + CDK(next) → Serverless (dev/live/next)
-  - **Changed:** CDK (dev) → Serverless (dev)
-  - **Workflow:** Terraform (live) + CDK(next/dev) → Serverless (dev/live/next)
+    - **Current:** Terraform (dev/live) + CDK(next) → Serverless (dev/live/next)
+    - **Changed:** CDK (dev) → Serverless (dev)
+    - **Workflow:** Terraform (live) + CDK(next/dev) → Serverless (dev/live/next)
 
 **Milestone 4: Production Migration**
 
@@ -101,9 +101,42 @@ experience, and creating a more consistent codebase.
 - Update CI/CD to use CDK only for infrastructure
 - **Value:** Complete infrastructure migration, single tool for infrastructure
 - **GitHub Actions Provisioning:**
-  - **Target:** CDK(dev/live/next) → Serverless (dev/live/next)
-    - **Workflow:** CDK infrastructure deployment followed by Serverless application deployment
-    - **Terraform removed** from CI/CD pipeline entirely
+    - **Target:** CDK(dev/live/next) → Serverless (dev/live/next)
+        - **Workflow:** CDK infrastructure deployment followed by Serverless application deployment
+        - **Terraform removed** from CI/CD pipeline entirely
+
+### Phase 3: Application Migration
+
+You're going to migrate iteratively the resource managed by SLS in the file `deployments/sls/serverless.yml` into CDK in `deployments/cdk`. The CDK project is
+already setup, you'll need to create stacks and constructs to describe the resource you migrate by **strictly following the principles
+in `docs/principles_cdk.md`**. Do not try to recreate the CDK project structure or write other resources: **focus on the set of resources you are charged of
+migrating**.
+
+On the first iteration, you need to create:
+
+1. The lambda to generate the certificate on CRON schedule
+    1. the lambda must be trigger once when it is newly created, and before the Gateway is created
+2. The API Gateway configured to receive traffic, and to be ready to be extended with routes. It must have at least:
+    1. default route
+    2. DNS configuration
+    3. 404 handler
+    4. version endpoint
+
+You will create for that the application stack that doesn't exist yet, and one construct.
+
+Note for later:
+
+1. authentication
+2. static website
+3. read-only endpoints
+4. read/write endpoints
+5. async endpoints
+
+####     
+
+---
+
+## DISCARDED DRAFTS
 
 ### Phase 3: Application Migration (Milestone 5-7)
 
