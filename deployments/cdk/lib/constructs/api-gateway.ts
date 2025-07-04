@@ -149,6 +149,13 @@ export class ApiGatewayConstruct extends Construct {
                 certificateArn
             )
         });
+
+        new apigatewayv2.ApiMapping(this, 'ApiMapping', {
+            api: httpApi,
+            domainName: domainName,
+            stage: httpApi.defaultStage
+        });
+
         const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
             domainName: props.rootDomain
         });
