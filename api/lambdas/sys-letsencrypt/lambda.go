@@ -27,11 +27,17 @@ func main() {
 		panic(errors.Wrapf(err, "invalid credentials").Error())
 	}
 	environment := env.Getenv("DPHOTO_ENVIRONMENT")
-	dns.CertificateManager = route53_adapter.NewCertificateManager(cfg, map[string]string{
-		"Application": "dphoto-app",
-		"Environment": environment,
-		"CreatedBy":   "lambda",
-	}, environment)
+	ssmKeyCertificateArn := env.Getenv("SSM_KEY_CERTIFICATE_ARN")
+	dns.CertificateManager = route53_adapter.NewCertificateManager(
+		cfg,
+		map[string]string{
+			"Application": "dphoto-app",
+			"Environment": environment,
+			"CreatedBy":   "lambda",
+		},
+		environment,
+		ssmKeyCertificateArn,
+	)
 	dns.CertificateAuthority = letsencrypt.NewCertificateAuthority()
 
 	lambda.Start(Handler)

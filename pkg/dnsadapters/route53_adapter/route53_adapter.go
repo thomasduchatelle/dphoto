@@ -14,19 +14,24 @@ import (
 )
 
 type manager struct {
-	acmClient   *acm.Client
-	environment string
-	ssmClient   *ssm.Client
-	tags        map[string]string
+	acmClient       *acm.Client
+	ssmParameterKey string
+	ssmClient       *ssm.Client
+	tags            map[string]string
 }
 
-// NewCertificateManager creates an adapter to use Route53
-func NewCertificateManager(cfg aws.Config, tags map[string]string, environment string) dnsdomain.CertificateManager {
+// NewCertificateManager creates an adapter to use Route53 ; 'environment' is deprecated, the SSM parameter name should be used instead
+func NewCertificateManager(cfg aws.Config, tags map[string]string, environment string, ssmParameterKey string) dnsdomain.CertificateManager {
+	key := ssmParameterKey
+	if key == "" {
+		key = fmt.Sprintf("/dphoto/%s/acm/domainCertARN", environment)
+	}
+
 	return &manager{
-		acmClient:   acm.NewFromConfig(cfg),
-		environment: environment,
-		ssmClient:   ssm.NewFromConfig(cfg),
-		tags:        tags,
+		acmClient:       acm.NewFromConfig(cfg),
+		ssmParameterKey: key,
+		ssmClient:       ssm.NewFromConfig(cfg),
+		tags:            tags,
 	}
 }
 
@@ -68,7 +73,7 @@ func (m *manager) InstallCertificate(ctx context.Context, id string, certificate
 
 	putParameterInput := &ssm.PutParameterInput{
 		DataType: aws.String("text"),
-		Name:     aws.String(fmt.Sprintf("/dphoto/%s/acm/domainCertARN", m.environment)),
+		Name:     aws.String(m.ssmParameterKey),
 		Type:     ssmtypes.ParameterTypeString,
 	}
 

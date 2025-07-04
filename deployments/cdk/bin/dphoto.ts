@@ -3,6 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import {environments} from '../lib/config/environments';
 import {DPhotoInfrastructureStack} from '../lib/stacks/dphoto-infrastructure-stack';
+import {DPhotoApplicationStack} from "../lib/stacks/dphoto-application-stack";
 
 const app = new cdk.App();
 
@@ -17,7 +18,7 @@ console.log(`Initializing CDK for environment: ${envName}`);
 console.log(`Configuration:`, config);
 
 // Create infrastructure stack
-new DPhotoInfrastructureStack(app, `dphoto-${envName}-infra`, {
+const infrastructureStack = new DPhotoInfrastructureStack(app, `dphoto-${envName}-infra`, {
     environmentName: envName,
     config: config,
     env: {
@@ -26,3 +27,14 @@ new DPhotoInfrastructureStack(app, `dphoto-${envName}-infra`, {
     },
     description: `DPhoto infrastructure stack for ${envName} environment`
 });
+
+const applicationStack = new DPhotoApplicationStack(app, `dphoto-${envName}-application`, {
+    environmentName: envName,
+    config,
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION || 'eu-west-1'
+    }
+});
+
+applicationStack.addDependency(infrastructureStack);
