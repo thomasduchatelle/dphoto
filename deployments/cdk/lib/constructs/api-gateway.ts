@@ -21,8 +21,6 @@ export interface ApiGatewayConstructProps {
 export class ApiGatewayConstruct extends Construct {
     public readonly httpApi: apigatewayv2.HttpApi;
     public readonly domainName: apigatewayv2.DomainName;
-    // public readonly uiBucket: s3.Bucket;
-    private letsEncryptLambda: lambda.Function;
 
     constructor(scope: Construct, id: string, props: ApiGatewayConstructProps) {
         super(scope, id);
@@ -31,64 +29,9 @@ export class ApiGatewayConstruct extends Construct {
 
         const certificateArn = this.readCertificateARN(letsEncryptLambdaTrigger, props.environmentName);
 
-        ({httpApi: this.httpApi, domainName: this.domainName} = this.createAPiGateway(props, certificateArn))
-
-        // Create version lambda
-        // const versionLambda = new lambda.Function(this, 'VersionLambda', {
-        //     functionName: `dphoto-${props.environmentName}-version`,
-        //     runtime: lambda.Runtime.PROVIDED_AL2,
-        //     architecture: lambda.Architecture.ARM_64,
-        //     handler: 'bootstrap',
-        //     code: lambda.Code.fromAsset('../../bin/version.zip'),
-        //     timeout: cdk.Duration.seconds(30),
-        //     memorySize: 256,
-        //     logRetention: logs.RetentionDays.ONE_WEEK
-        // });
-        //
-        // // Create not-found lambda
-        // const notFoundLambda = new lambda.Function(this, 'NotFoundLambda', {
-        //     functionName: `dphoto-${props.environmentName}-not-found`,
-        //     runtime: lambda.Runtime.PROVIDED_AL2,
-        //     architecture: lambda.Architecture.ARM_64,
-        //     handler: 'bootstrap',
-        //     code: lambda.Code.fromAsset('../../bin/not-found.zip'),
-        //     timeout: cdk.Duration.seconds(30),
-        //     memorySize: 256,
-        //     logRetention: logs.RetentionDays.ONE_WEEK
-        // });
-        //
-        // // Add version route
-        // this.httpApi.addRoutes({
-        //     path: '/api/v1/version',
-        //     methods: [apigatewayv2.HttpMethod.GET],
-        //     integration: new apigatewayv2_integrations.HttpLambdaIntegration('VersionIntegration', versionLambda)
-        // });
-        //
-        // // Add not-found route for API paths
-        // this.httpApi.addRoutes({
-        //     path: '/api/{path+}',
-        //     methods: [apigatewayv2.HttpMethod.ANY],
-        //     integration: new apigatewayv2_integrations.HttpLambdaIntegration('NotFoundIntegration', notFoundLambda)
-        // });
-        //
-        // // Get certificate ARN from SSM
-        //
-        // // Create custom domain
-        //
-        // // Create API mapping
-        // new apigatewayv2.ApiMapping(this, 'ApiMapping', {
-        //     api: this.httpApi,
-        //     domainName: this.domainName,
-        //     stage: this.httpApi.defaultStage
-        // });
-        //
-        // // Get hosted zone and create DNS record
-        //
-        // // Output bucket name for S3 sync
-        // new cdk.CfnOutput(this, 'ViewerUiBucketName', {
-        //     value: this.uiBucket.bucketName,
-        //     description: 'Bucket name where static resources of DPhoto are stored'
-        // });
+        const {httpApi, domainName} = this.createAPIGateway(props, certificateArn)
+        this.httpApi = httpApi;
+        this.domainName = domainName;
     }
 
     private installCertificateRenewalMechanism({environmentName, certificateEmail, domainName}: ApiGatewayConstructProps) {
@@ -135,7 +78,7 @@ export class ApiGatewayConstruct extends Construct {
             }
         });
 
-        this.letsEncryptLambda = new lambda.Function(this, 'LetsEncryptRenewal', {
+        const letsEncryptLambda = new lambda.Function(this, 'LetsEncryptRenewal', {
             functionName: `dphoto-${environmentName}-sys-letsencrypt`,
             runtime: lambda.Runtime.PROVIDED_AL2,
             architecture: lambda.Architecture.ARM_64,
@@ -160,10 +103,10 @@ export class ApiGatewayConstruct extends Construct {
                 hour: '9',
                 weekDay: '2'
             })
-        }).addTarget(new targets.LambdaFunction(this.letsEncryptLambda));
+        }).addTarget(new targets.LambdaFunction(letsEncryptLambda));
 
         return new triggers.Trigger(this, 'LetsEncryptRenewalTrigger', {
-            handler: this.letsEncryptLambda,
+            handler: letsEncryptLambda,
             timeout: Duration.minutes(5),
             invocationType: triggers.InvocationType.REQUEST_RESPONSE,
         });
@@ -188,7 +131,7 @@ export class ApiGatewayConstruct extends Construct {
         return certificateLookup.getResponseField('Parameter.Value');
     }
 
-    private createAPiGateway(props: ApiGatewayConstructProps, certificateArn: string) {
+    private createAPIGateway(props: ApiGatewayConstructProps, certificateArn: string) {
         const httpApi = new apigatewayv2.HttpApi(this, 'HttpApi', {
             apiName: `dphoto-${props.environmentName}-api`,
             description: `DPhoto API for ${props.environmentName} environment`,
