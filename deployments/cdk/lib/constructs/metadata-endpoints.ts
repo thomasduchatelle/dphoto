@@ -5,6 +5,7 @@ import {ApiGatewayConstruct} from './api-gateway';
 
 export interface MetadataEndpointsProps {
     environmentName: string;
+    apiGateway: ApiGatewayConstruct;
 }
 
 export class MetadataEndpoints extends Construct {
@@ -17,6 +18,7 @@ export class MetadataEndpoints extends Construct {
         this.notFoundEndpoint = new SimpleGoEndpoint(this, 'NotFound', {
             environmentName: props.environmentName,
             functionName: 'not-found',
+            httpApi: props.apiGateway.httpApi,
             path: '/api/{path+}',
             method: apigatewayv2.HttpMethod.ANY
         });
@@ -24,13 +26,9 @@ export class MetadataEndpoints extends Construct {
         this.versionEndpoint = new SimpleGoEndpoint(this, 'Version', {
             environmentName: props.environmentName,
             functionName: 'version',
+            httpApi: props.apiGateway.httpApi,
             path: '/api/v1/version',
             method: apigatewayv2.HttpMethod.GET
         });
-    }
-
-    public addToApiGateway(apiGateway: ApiGatewayConstruct): void {
-        this.notFoundEndpoint.addToApiGateway(apiGateway.httpApi, '/api/{path+}', apigatewayv2.HttpMethod.ANY);
-        this.versionEndpoint.addToApiGateway(apiGateway.httpApi, '/api/v1/version', apigatewayv2.HttpMethod.GET);
     }
 }

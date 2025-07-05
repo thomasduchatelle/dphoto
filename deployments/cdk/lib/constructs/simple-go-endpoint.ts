@@ -6,6 +6,7 @@ import {Duration} from "aws-cdk-lib";
 export interface SimpleGoEndpointProps {
     environmentName: string;
     functionName: string;
+    httpApi: apigatewayv2.HttpApi;
     path: string;
     method: apigatewayv2.HttpMethod;
     artifactPath?: string;
@@ -26,21 +27,8 @@ export class SimpleGoEndpoint extends Construct {
             memorySize: props.memorySize || 256,
             timeout: props.timeout || Duration.minutes(1),
         });
-    }
 
-    public addToApiGateway(httpApi: apigatewayv2.HttpApi, path?: string, method?: apigatewayv2.HttpMethod): void {
-        this.lambda.addToApiGateway(
-            httpApi,
-            path || this.getPath(),
-            method || this.getMethod()
-        );
-    }
-
-    protected getPath(): string {
-        throw new Error('Path must be provided either in constructor or addToApiGateway method');
-    }
-
-    protected getMethod(): apigatewayv2.HttpMethod {
-        throw new Error('Method must be provided either in constructor or addToApiGateway method');
+        // Add the lambda to the API Gateway as part of construction
+        this.lambda.addToApiGateway(props.httpApi, props.path, props.method);
     }
 }

@@ -28,9 +28,9 @@ export class DPhotoApplicationStack extends cdk.Stack {
 
         // Add metadata endpoints (version, not-found)
         const metadataEndpoints = new MetadataEndpoints(this, 'MetadataEndpoints', {
-            environmentName: props.environmentName
+            environmentName: props.environmentName,
+            apiGateway: apiGateway
         });
-        metadataEndpoints.addToApiGateway(apiGateway);
 
         // Outputs
         new cdk.CfnOutput(this, 'PublicURL', {
