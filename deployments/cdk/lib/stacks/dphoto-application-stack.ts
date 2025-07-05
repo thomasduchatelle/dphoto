@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../constructs/api-gateway';
-import {NotFoundRoutesConstruct} from '../constructs/not-found-routes';
+import {MetadataEndpoints} from '../constructs/metadata-endpoints';
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -26,11 +26,11 @@ export class DPhotoApplicationStack extends cdk.Stack {
             ...config,
         });
 
-        // Add not found routes using visitor pattern
-        const notFoundRoutes = new NotFoundRoutesConstruct(this, 'NotFoundRoutes', {
+        // Add metadata endpoints (version, not-found)
+        const metadataEndpoints = new MetadataEndpoints(this, 'MetadataEndpoints', {
             environmentName: props.environmentName
         });
-        notFoundRoutes.addToApiGateway(apiGateway);
+        metadataEndpoints.addToApiGateway(apiGateway);
 
         // Outputs
         new cdk.CfnOutput(this, 'PublicURL', {
