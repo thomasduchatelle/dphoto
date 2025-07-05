@@ -19,7 +19,7 @@ func TestCertificateManager(t *testing.T) {
 		return
 	}
 	cfg := factory.GetCfg()
-	certManager := NewCertificateManager(cfg, nil, "unittest")
+	certManager := NewCertificateManager(cfg, nil, "", "/dphoto/unittest/acm/domainCertificateArn")
 
 	acmClient := cleanup(ctx, cfg)
 
