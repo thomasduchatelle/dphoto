@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../constructs/api-gateway';
-import {MetadataEndpoints} from '../constructs/metadata-endpoints';
+import {MetadataEndpointsConstruct} from '../constructs/metadata-endpoints-construct';
 import {StaticWebsiteEndpointConstruct} from '../constructs/static-website-endpoint';
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
@@ -21,34 +21,25 @@ export class DPhotoApplicationStack extends cdk.Stack {
         cdk.Tags.of(this).add('Stack', "DPhotoApplicationStack");
 
 
-        // Create API Gateway with domain configuration
         const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
             environmentName: props.environmentName,
             ...config,
         });
 
-        // Add metadata endpoints (version, not-found)
-        new MetadataEndpoints(this, 'MetadataEndpoints', {
+        new MetadataEndpointsConstruct(this, 'MetadataEndpoints', {
             environmentName: props.environmentName,
             apiGateway: apiGateway
         });
 
-        // Add static website endpoint
-        const staticWebsite = new StaticWebsiteEndpointConstruct(this, 'StaticWebsite', {
+        new StaticWebsiteEndpointConstruct(this, 'StaticWebsite', {
             environmentName: props.environmentName,
             domainName: config.domainName,
             httpApi: apiGateway.httpApi
         });
 
-        // Outputs
         new cdk.CfnOutput(this, 'PublicURL', {
             value: `https://${config.domainName}`,
             description: 'User friendly HTTPS url where the application has been deployed'
-        });
-
-        new cdk.CfnOutput(this, 'ViewerUiBucketName', {
-            value: staticWebsite.uiBucket.bucketName,
-            description: 'Bucket name where static resources of DPhoto are stored'
         });
     }
 }

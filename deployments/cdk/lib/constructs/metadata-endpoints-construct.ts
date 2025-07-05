@@ -8,7 +8,7 @@ export interface MetadataEndpointsProps {
     apiGateway: ApiGatewayConstruct;
 }
 
-export class MetadataEndpoints extends Construct {
+export class MetadataEndpointsConstruct extends Construct {
 
     constructor(scope: Construct, id: string, props: MetadataEndpointsProps) {
         super(scope, id);
