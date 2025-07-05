@@ -3,6 +3,8 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import {Construct} from 'constructs';
 
+export const CatalogTableIndexes = ["AlbumIndex", "ReverseLocationIndex", "ReverseGrantIndex", "RefreshTokenExpiration"];
+
 export interface CatalogDynamoDbProps {
     environmentName: string;
 }
@@ -73,3 +75,4 @@ export class CatalogDynamoDbConstruct extends Construct {
         });
     }
 }
+

@@ -2,8 +2,8 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import {environments} from '../lib/config/environments';
-import {DPhotoInfrastructureStack} from '../lib/stacks/dphoto-infrastructure-stack';
-import {DPhotoApplicationStack} from "../lib/stacks/dphoto-application-stack";
+import {InfrastructureStack} from '../lib/stacks/infrastructure-stack';
+import {ApplicationStack} from "../lib/stacks/application-stack";
 
 export default function main(
     defaultEnvName: string = "next",
@@ -22,8 +22,7 @@ export default function main(
     console.log(`Initializing CDK for environment: ${envName}`);
     console.log(`Configuration:`, config);
 
-// Create infrastructure stack
-    const infrastructureStack = new DPhotoInfrastructureStack(app, `dphoto-${envName}-infra`, {
+    const infrastructureStack = new InfrastructureStack(app, `dphoto-${envName}-infra`, {
         environmentName: envName,
         config: config,
         env: {
@@ -33,7 +32,7 @@ export default function main(
         description: `DPhoto infrastructure stack for ${envName} environment`
     });
 
-    const applicationStack = new DPhotoApplicationStack(app, `dphoto-${envName}-application`, {
+    const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
         environmentName: envName,
         config,
         env: {

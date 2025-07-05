@@ -31,10 +31,6 @@ type ImageToResizeMessageV1 struct {
 	Widths   []int  `json:"widths"`
 }
 
-func New(cfg aws.Config, topicARN string, queueURL string, imagesPerMessage int) archive.AsyncJobAdapter {
-	return NewFromClients(sns.NewFromConfig(cfg), sqs.NewFromConfig(cfg), topicARN, queueURL, imagesPerMessage)
-}
-
 func NewFromClients(snsClient *sns.Client, sqsClient *sqs.Client, topicARN string, queueURL string, imagesPerMessage int) archive.AsyncJobAdapter {
 	return &adapter{
 		snsClient:        snsClient,

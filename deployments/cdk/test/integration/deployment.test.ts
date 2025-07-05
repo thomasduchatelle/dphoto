@@ -17,6 +17,20 @@ jest.mock('aws-cdk-lib/aws-lambda', () => {
     };
 });
 
+jest.mock('aws-cdk-lib/aws-s3-deployment', () => {
+    const actual = jest.requireActual('aws-cdk-lib/aws-s3-deployment');
+
+    return {
+        ...actual,
+        Source: {
+            ...actual.Source,
+            asset: jest.fn().mockImplementation(() => {
+                const validAsset = "bin/";
+                return actual.Source.asset(validAsset);
+            }),
+        }
+    };
+});
 
 describe('CDK Integration Tests', () => {
     test.each(['next', 'live'])('deployment has required resources for env %s', (envName) => {

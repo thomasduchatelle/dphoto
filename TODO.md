@@ -14,7 +14,8 @@ TODOs
 5. [ ] migrating to Waku from native React: very light React Framework in beta/exploration
    1. progressive migration - decoupling behaviours from framework before re-integrating them to new framework
    2. parallel deployment - /v2 would get to the new UI
-   3. Auth0 - moving to public IDP must be considered
+   3. Auth0/AWS Cognito - moving to public IDP must be considered ; suggestion is to start from scratch, then add authentication, then add the pages and
+      features
    4. NPM - Yarn or PNPM don't look justified for this project
    5. Visual testing to rethink as the tools used seem discontinued and incompatible with new ones
 6. [ ] Upload: support a sync mechanism from Android to AWS (existing backup software), post-upload management (inbox: deletion, rotation, datetime
