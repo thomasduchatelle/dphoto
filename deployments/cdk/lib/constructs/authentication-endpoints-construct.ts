@@ -12,7 +12,6 @@ export class AuthenticationEndpointsConstruct extends Construct {
     constructor(scope: Construct, id: string, props: AuthenticationEndpointsProps) {
         super(scope, id);
 
-        // OAuth Token endpoint
         new SimpleGoEndpoint(this, 'OAuthToken', {
             environmentName: props.environmentName,
             functionName: 'oauth-token',
@@ -21,7 +20,6 @@ export class AuthenticationEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.POST
         });
 
-        // OAuth Logout endpoint
         new SimpleGoEndpoint(this, 'OAuthLogout', {
             environmentName: props.environmentName,
             functionName: 'oauth-revoke',
@@ -30,16 +28,15 @@ export class AuthenticationEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.POST
         });
 
-        // Environment Config endpoint with Google Client ID
-        const envConfigEndpoint = new SimpleGoEndpoint(this, 'EnvConfig', {
+        new SimpleGoEndpoint(this, 'EnvConfig', {
             environmentName: props.environmentName,
             functionName: 'env-config',
             httpApi: props.apiGateway.httpApi,
             path: '/env-config.json',
-            method: apigatewayv2.HttpMethod.GET
+            method: apigatewayv2.HttpMethod.GET,
+            environment: {
+                GOOGLE_LOGIN_CLIENT_ID: props.googleLoginClientId,
+            }
         });
-
-        // Add Google Login Client ID environment variable
-        envConfigEndpoint.lambda.function.addEnvironment('GOOGLE_LOGIN_CLIENT_ID', props.googleLoginClientId);
     }
 }

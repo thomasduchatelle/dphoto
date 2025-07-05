@@ -15,7 +15,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         rootDomain: 'duchatelle.me',
         domainName: 'dphoto.duchatelle.me',
         certificateEmail: 'duchatelle.thomas@gmail.com',
-        googleLoginClientId: 'PLACEHOLDER_GOOGLE_CLIENT_ID_FOR_PROD'
+        googleLoginClientId: '841197197570-e78pmti86rg3gjrl03cd93th4tuiml8a.apps.googleusercontent.com'
     },
     next: {
         production: false,

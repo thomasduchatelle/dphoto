@@ -12,6 +12,7 @@ export interface SimpleGoEndpointProps {
     artifactPath?: string;
     memorySize?: number;
     timeout?: Duration;
+    environment?: Record<string, string>;
 }
 
 export class SimpleGoEndpoint extends Construct {
@@ -26,6 +27,7 @@ export class SimpleGoEndpoint extends Construct {
             artifactPath: props.artifactPath || `../../bin/${props.functionName}.zip`,
             memorySize: props.memorySize || 256,
             timeout: props.timeout || Duration.minutes(1),
+            environment: props.environment,
         });
 
         this.lambda.addToApiGateway(props.httpApi, props.path, props.method);
