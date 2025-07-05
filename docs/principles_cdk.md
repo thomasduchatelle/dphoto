@@ -145,7 +145,7 @@ For standard Go Lambda endpoints, use the `SimpleGoEndpoint` construct:
 // In lib/constructs/your-endpoints.ts
 new SimpleGoEndpoint(this, 'YourEndpoint', {
     environmentName: props.environmentName,
-    functionName: 'your-function-name',  // Must match binary name in ../../bin/
+    functionName: 'your-function-name',  // Will be prefixed with dphoto-{env}- automatically
     httpApi: props.apiGateway.httpApi,
     path: '/api/v1/your/path',
     method: apigatewayv2.HttpMethod.GET,
@@ -177,7 +177,8 @@ const yourEndpoints = new YourEndpoints(this, 'YourEndpoints', {
 **Naming Convention:**
 - Construct: `{Domain}Endpoints` (e.g., `AuthEndpoints`)
 - Endpoint ID: Descriptive name (e.g., `CreateAlbum`, `ListMedias`)
-- Function name: kebab-case matching binary (e.g., `create-album`)
+- Function name: kebab-case matching binary (e.g., `create-album`) - will be automatically prefixed with `dphoto-{env}-`
+- Lambda function name: `dphoto-{env}-{function-name}` (e.g., `dphoto-next-create-album`)
 
 ### Complex Endpoints
 

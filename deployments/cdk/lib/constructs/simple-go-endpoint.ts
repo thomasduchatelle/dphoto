@@ -22,7 +22,7 @@ export class SimpleGoEndpoint extends Construct {
 
         this.lambda = new GoLangLambdaFunction(this, 'Lambda', {
             environmentName: props.environmentName,
-            functionName: props.functionName,
+            functionName: `dphoto-${props.environmentName}-${props.functionName}`,
             artifactPath: props.artifactPath || `../../bin/${props.functionName}.zip`,
             memorySize: props.memorySize || 256,
             timeout: props.timeout || Duration.minutes(1),
