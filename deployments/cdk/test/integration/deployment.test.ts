@@ -1,41 +1,68 @@
-import * as cdk from 'aws-cdk-lib';
-import {DPhotoInfrastructureStack} from '../../lib/stacks/dphoto-infrastructure-stack';
 import {environments} from '../../lib/config/environments';
-import {DPhotoApplicationStack} from "../../lib/stacks/dphoto-application-stack";
+import {Template} from 'aws-cdk-lib/assertions';
+import * as cxapi from "aws-cdk-lib/cx-api";
+import main from '../../bin/dphoto';
 
-describe('Deployment Integration Tests', () => {
-    test('infrastructure stack can be synthesized for test environment', () => {
-        const app = new cdk.App();
+jest.mock('aws-cdk-lib/aws-lambda', () => {
+    const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
+    return {
+        ...actual,
+        Code: {
+            ...actual.Code,
+            fromAsset: jest.fn().mockReturnValue(actual.Code.fromInline('exports.handler = async () => ({ statusCode: 200 });'))
+        }
+    };
+});
 
-        // This should not throw
-        const infraStack = new DPhotoInfrastructureStack(app, 'TestDeploymentStack', {
-            environmentName: 'test',
-            config: environments.test,
-            env: {
-                account: '123456789012',
-                region: 'eu-west-1',
-            },
-        });
-        const appStack = new DPhotoApplicationStack(app, 'TestApplicationStack',
-            {
-                config: environments.test,
-                environmentName: "test",
-                env: {
-                    account: '123456789012',
-                    region: 'eu-west-1',
-                },
-            })
 
-        // Verify stack can be synthesized
+describe('CDK Integration Tests', () => {
+    test.each(['next', 'live'])('deployment has required resources for env %s', (envName) => {
+        // Call your main function to create the app with stacks
+        const app = main(envName);
+
         const assembly = app.synth();
-        const infraStackArtifact = assembly.getStackByName(infraStack.stackName);
+        expect(assembly).toBeDefined();
+        expect(assembly.stacks.length).toBeGreaterThan(0);
 
-        expect(infraStackArtifact).toBeDefined();
-        expect(infraStackArtifact.template).toBeDefined();
+        const matcher = createAssemblyMatcher(assembly);
 
-        const appStackArtifact = assembly.getStackByName(appStack.stackName);
+        // Test that required resources exist somewhere in the deployment
+        matcher.hasResource('AWS::S3::Bucket', {
+            // BucketName: `dphoto-${envName}-storage`
+        });
 
-        expect(appStackArtifact).toBeDefined();
-        expect(appStackArtifact.template).toBeDefined();
+        matcher.hasResource('AWS::ApiGateway::ApiMapping', {
+            ApiId: {Ref: 'DPhotoAPIGateway'},
+            DomainName: environments[envName].domainName,
+            Stage: 'prod'
+        });
     });
+});
+
+const createAssemblyMatcher = (assembly: cxapi.CloudAssembly) => ({
+    hasResource: (resourceType: string, properties?: any) => {
+        const inspection = assembly.stacks.map(stack => {
+            const template = Template.fromJSON(stack.template);
+            try {
+                template.hasResourceProperties(resourceType, properties || {});
+                return {name: stack.stackName, error: undefined};
+            } catch (e) {
+                return {name: stack.stackName, error: e};
+            }
+        })
+
+        const resourceHasBeenFound = inspection.some(i => !i.error);
+        if (resourceHasBeenFound) {
+            return
+        }
+
+        let message = `Resource ${resourceType} ${JSON.stringify(properties)} not found in any stack (${assembly.stacks.length}):`;
+        inspection.forEach(i => {
+            if (i.error) {
+                message += `\n- Stack: ${i.name}, Error: ${i.error}`;
+            }
+        });
+
+        throw new Error(message);
+    }
 });
