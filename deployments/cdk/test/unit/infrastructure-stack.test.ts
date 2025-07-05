@@ -1,18 +1,18 @@
 import * as cdk from 'aws-cdk-lib';
 import {Match, Template} from 'aws-cdk-lib/assertions';
-import {DPhotoInfrastructureStack} from '../../lib/stacks/dphoto-infrastructure-stack';
+import {InfrastructureStack} from '../../lib/stacks/infrastructure-stack';
 import {environments} from '../../lib/config/environments';
 
 describe('DPhotoInfrastructureStack', () => {
     describe("prod-like", () => {
 
         let app: cdk.App;
-        let stack: DPhotoInfrastructureStack;
+        let stack: InfrastructureStack;
         let template: Template;
 
         beforeEach(() => {
             app = new cdk.App();
-            stack = new DPhotoInfrastructureStack(app, 'TestStack', {
+            stack = new InfrastructureStack(app, 'TestStack', {
                 environmentName: 'test',
                 config: environments.test,
             });
@@ -165,12 +165,12 @@ describe('DPhotoInfrastructureStack', () => {
 
     describe("non-prod", () => {
         let app: cdk.App;
-        let stack: DPhotoInfrastructureStack;
+        let stack: InfrastructureStack;
         let template: Template;
 
         beforeEach(() => {
             app = new cdk.App();
-            stack = new DPhotoInfrastructureStack(app, 'TestStack', {
+            stack = new InfrastructureStack(app, 'TestStack', {
                 environmentName: 'test',
                 config: {
                     ...environments.test,

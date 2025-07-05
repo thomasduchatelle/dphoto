@@ -1,8 +1,8 @@
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import {Construct} from 'constructs';
-import {MediaStorageConstruct} from '../constructs/media-storage';
-import {CatalogDynamoDbConstruct} from '../constructs/catalog-dynamodb';
-import {ArchiveMessagingConstruct} from '../constructs/archive-messaging';
+import {MediaStorageConstruct} from '../constructs-storages/media-storage';
+import {CatalogDynamoDbConstruct} from '../constructs-storages/catalog-dynamodb';
+import {ArchiveMessagingConstruct} from '../constructs-storages/archive-messaging';
 
 export function exportSsmParameters(
     scope: Construct,
