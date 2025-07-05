@@ -30,7 +30,7 @@ jobs:
 
   cdk-live-plan:
     uses: ./.github/workflows/job-comment-cdk-diff.yml
-    if: needs.pull-request.outputs.pr-number != ''
+    if: needs.pull-request.outputs.pr-number
     needs:
       - pull-request
       - build-go
