@@ -44,3 +44,15 @@ jobs:
     with:
       target: next
       cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
+
+  comment-cdk-diff:
+    uses: ./.github/workflows/job-comment-cdk-diff.yml
+    if: ${{ needs.pull-request.outputs.pr-created == 'true' && (contains(github.event.head_commit.message, '+next') || contains(github.event.head_commit.message, '+pr')) }}
+    needs:
+      - pull-request
+      - build-go
+      - build-ts
+    secrets: inherit
+    with:
+      issue-number: ${{ needs.pull-request.outputs.pr-number }}
+      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
