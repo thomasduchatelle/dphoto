@@ -5,7 +5,11 @@ import {environments} from '../lib/config/environments';
 import {DPhotoInfrastructureStack} from '../lib/stacks/dphoto-infrastructure-stack';
 import {DPhotoApplicationStack} from "../lib/stacks/dphoto-application-stack";
 
-export default function main(defaultEnvName: string = "next") {
+export default function main(
+    defaultEnvName: string = "next",
+    account: string | undefined = process.env.CDK_DEFAULT_ACCOUNT,
+    region: string | undefined = process.env.CDK_DEFAULT_REGION || 'eu-west-1',
+) {
     const app = new cdk.App();
 
     const envName = app.node.tryGetContext('environment') || defaultEnvName
@@ -23,8 +27,8 @@ export default function main(defaultEnvName: string = "next") {
         environmentName: envName,
         config: config,
         env: {
-            account: process.env.CDK_DEFAULT_ACCOUNT,
-            region: process.env.CDK_DEFAULT_REGION || 'eu-west-1'
+            account: account,
+            region: region
         },
         description: `DPhoto infrastructure stack for ${envName} environment`
     });
@@ -33,8 +37,8 @@ export default function main(defaultEnvName: string = "next") {
         environmentName: envName,
         config,
         env: {
-            account: process.env.CDK_DEFAULT_ACCOUNT,
-            region: process.env.CDK_DEFAULT_REGION || 'eu-west-1'
+            account: account,
+            region: region
         }
     });
 

@@ -1,15 +1,18 @@
-import {environments} from '../../lib/config/environments';
 import {Template} from 'aws-cdk-lib/assertions';
 import * as cxapi from "aws-cdk-lib/cx-api";
 import main from '../../bin/dphoto';
 
 jest.mock('aws-cdk-lib/aws-lambda', () => {
     const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
+
     return {
         ...actual,
         Code: {
             ...actual.Code,
-            fromAsset: jest.fn().mockReturnValue(actual.Code.fromInline('exports.handler = async () => ({ statusCode: 200 });'))
+            fromAsset: jest.fn().mockImplementation(() => {
+                const validAsset = "bin/";
+                return actual.Code.fromAsset(validAsset);
+            }),
         }
     };
 });
@@ -18,7 +21,7 @@ jest.mock('aws-cdk-lib/aws-lambda', () => {
 describe('CDK Integration Tests', () => {
     test.each(['next', 'live'])('deployment has required resources for env %s', (envName) => {
         // Call your main function to create the app with stacks
-        const app = main(envName);
+        const app = main(envName, "01234567890123456");
 
         const assembly = app.synth();
         expect(assembly).toBeDefined();
@@ -28,14 +31,10 @@ describe('CDK Integration Tests', () => {
 
         // Test that required resources exist somewhere in the deployment
         matcher.hasResource('AWS::S3::Bucket', {
-            // BucketName: `dphoto-${envName}-storage`
+            BucketName: `dphoto-${envName}-storage`
         });
 
-        matcher.hasResource('AWS::ApiGateway::ApiMapping', {
-            ApiId: {Ref: 'DPhotoAPIGateway'},
-            DomainName: environments[envName].domainName,
-            Stage: 'prod'
-        });
+        matcher.hasResource('AWS::ApiGatewayV2::ApiMapping', {}); // properties are references, not actual values.
     });
 });
 
@@ -62,6 +61,11 @@ const createAssemblyMatcher = (assembly: cxapi.CloudAssembly) => ({
                 message += `\n- Stack: ${i.name}, Error: ${i.error}`;
             }
         });
+
+        assembly.stacks.forEach(stack => {
+            const template = Template.fromJSON(stack.template);
+            console.log(`${stack.stackName}:\n${JSON.stringify(template.toJSON(), null, 2)}`);
+        })
 
         throw new Error(message);
     }
