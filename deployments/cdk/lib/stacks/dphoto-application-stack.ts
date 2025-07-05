@@ -3,6 +3,7 @@ import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../constructs/api-gateway';
 import {MetadataEndpoints} from '../constructs/metadata-endpoints';
+import {StaticWebsiteEndpointConstruct} from '../constructs/static-website-endpoint';
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -32,10 +33,22 @@ export class DPhotoApplicationStack extends cdk.Stack {
             apiGateway: apiGateway
         });
 
+        // Add static website endpoint
+        const staticWebsite = new StaticWebsiteEndpointConstruct(this, 'StaticWebsite', {
+            environmentName: props.environmentName,
+            domainName: config.domainName,
+            httpApi: apiGateway.httpApi
+        });
+
         // Outputs
         new cdk.CfnOutput(this, 'PublicURL', {
             value: `https://${config.domainName}`,
             description: 'User friendly HTTPS url where the application has been deployed'
+        });
+
+        new cdk.CfnOutput(this, 'ViewerUiBucketName', {
+            value: staticWebsite.uiBucket.bucketName,
+            description: 'Bucket name where static resources of DPhoto are stored'
         });
     }
 }
