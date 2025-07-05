@@ -1,6 +1,13 @@
 on:
   workflow_call:
     inputs: { }
+    outputs:
+      pr-created:
+        description: True/False, indicating whether a pull request was created
+        value: ${{ jobs.pull-request.outputs.pr-created }}
+      pr-number:
+        description: Issue number of the pull request, created or already existing
+        value: ${{ jobs.pull-request.outputs.pr-number }}
 
 jobs:
   pull-request:
