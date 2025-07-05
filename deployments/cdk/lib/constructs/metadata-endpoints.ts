@@ -9,13 +9,11 @@ export interface MetadataEndpointsProps {
 }
 
 export class MetadataEndpoints extends Construct {
-    private readonly notFoundEndpoint: SimpleGoEndpoint;
-    private readonly versionEndpoint: SimpleGoEndpoint;
 
     constructor(scope: Construct, id: string, props: MetadataEndpointsProps) {
         super(scope, id);
 
-        this.notFoundEndpoint = new SimpleGoEndpoint(this, 'NotFound', {
+        new SimpleGoEndpoint(this, 'NotFound', {
             environmentName: props.environmentName,
             functionName: 'not-found',
             httpApi: props.apiGateway.httpApi,
@@ -23,7 +21,7 @@ export class MetadataEndpoints extends Construct {
             method: apigatewayv2.HttpMethod.ANY
         });
 
-        this.versionEndpoint = new SimpleGoEndpoint(this, 'Version', {
+        new SimpleGoEndpoint(this, 'Version', {
             environmentName: props.environmentName,
             functionName: 'version',
             httpApi: props.apiGateway.httpApi,

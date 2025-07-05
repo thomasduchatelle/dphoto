@@ -28,7 +28,6 @@ export class SimpleGoEndpoint extends Construct {
             timeout: props.timeout || Duration.minutes(1),
         });
 
-        // Add the lambda to the API Gateway as part of construction
         this.lambda.addToApiGateway(props.httpApi, props.path, props.method);
     }
 }
