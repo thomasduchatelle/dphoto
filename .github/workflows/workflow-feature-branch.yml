@@ -10,7 +10,6 @@ on:
 jobs:
   pull-request:
     uses: ./.github/workflows/job-pull-request.yml
-    if: ${{ contains(github.event.head_commit.message, '+pr') || contains(github.event.head_commit.message, '+next') }}
     secrets: inherit
 
   test-go:
@@ -31,7 +30,7 @@ jobs:
 
   cdk-live-plan:
     uses: ./.github/workflows/job-comment-cdk-diff.yml
-    if: ${{ needs.pull-request.outputs.pr-created == 'true' && (contains(github.event.head_commit.message, '+next') || contains(github.event.head_commit.message, '+pr')) }}
+    if: ${{ needs.pull-request.outputs.pr-number != '' }}
     needs:
       - pull-request
       - build-go
