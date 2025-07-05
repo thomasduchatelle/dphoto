@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3_deployment from 'aws-cdk-lib/aws-s3-deployment';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigatewayv2_integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import {Construct} from 'constructs';
@@ -61,6 +62,14 @@ export class StaticWebsiteEndpointConstruct extends Construct {
             httpApi: props.httpApi,
             routeKey: apigatewayv2.HttpRouteKey.DEFAULT,
             integration: staticIntegration
+        });
+
+        // Deploy static website content to S3 bucket
+        new s3_deployment.BucketDeployment(this, 'UiBucketDeployment', {
+            sources: [s3_deployment.Source.asset('../../web/build')],
+            destinationBucket: this.uiBucket,
+            prune: true, // Remove files that are no longer in the source
+            retainOnDelete: false // Clean up on stack deletion
         });
     }
 }
