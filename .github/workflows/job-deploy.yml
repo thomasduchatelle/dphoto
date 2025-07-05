@@ -25,6 +25,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download api
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-api
+          path: bin
+
+      - name: Download web
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-web
+          path: web/build
+
       - name: Setup CDK
         uses: ./.github/actions/install-cdk
 
@@ -41,18 +53,6 @@ jobs:
         with:
           sls: true
           cache-suffix: ${{ inputs.cache-suffix }}
-
-      - name: Download api
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-api
-          path: bin
-
-      - name: Download web
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-web
-          path: web/build
 
       - name: Deploy SLS
         run: cd deployments/sls && sls deploy --stage "$SLS_STAGE"
