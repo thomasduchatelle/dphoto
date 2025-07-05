@@ -2,7 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../constructs/api-gateway';
-import {NotFoundRoutesConstruct} from '../constructs/not-found-routes';
+import {MetadataEndpointsConstruct} from '../constructs/metadata-endpoints-construct';
+import {AuthenticationEndpointsConstruct} from '../constructs/authentication-endpoints-construct';
+import {StaticWebsiteEndpointConstruct} from '../constructs/static-website-endpoint';
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -20,19 +22,28 @@ export class DPhotoApplicationStack extends cdk.Stack {
         cdk.Tags.of(this).add('Stack', "DPhotoApplicationStack");
 
 
-        // Create API Gateway with domain configuration
         const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
             environmentName: props.environmentName,
             ...config,
         });
 
-        // Add not found routes using visitor pattern
-        const notFoundRoutes = new NotFoundRoutesConstruct(this, 'NotFoundRoutes', {
-            environmentName: props.environmentName
+        new MetadataEndpointsConstruct(this, 'MetadataEndpoints', {
+            environmentName: props.environmentName,
+            apiGateway: apiGateway
         });
-        notFoundRoutes.addToApiGateway(apiGateway);
 
-        // Outputs
+        new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
+            environmentName: props.environmentName,
+            apiGateway: apiGateway,
+            googleLoginClientId: config.googleLoginClientId
+        });
+
+        new StaticWebsiteEndpointConstruct(this, 'StaticWebsite', {
+            environmentName: props.environmentName,
+            domainName: config.domainName,
+            httpApi: apiGateway.httpApi
+        });
+
         new cdk.CfnOutput(this, 'PublicURL', {
             value: `https://${config.domainName}`,
             description: 'User friendly HTTPS url where the application has been deployed'

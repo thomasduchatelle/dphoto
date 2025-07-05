@@ -25,23 +25,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup CDK
-        uses: ./.github/actions/install-cdk
-
-      - name: CDK Deploy
-        working-directory: deployments/cdk
-        run: cdk deploy --context environment=${{ inputs.target }} --require-approval never
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-1
-
-      - name: Setup NODE
-        uses: ./.github/actions/install-node
-        with:
-          sls: true
-          cache-suffix: ${{ inputs.cache-suffix }}
-
       - name: Download api
         uses: actions/download-artifact@v4
         with:
@@ -53,6 +36,23 @@ jobs:
         with:
           name: dist-web
           path: web/build
+
+      - name: Setup CDK
+        uses: ./.github/actions/install-cdk
+
+      - name: CDK Deploy
+        working-directory: deployments/cdk
+        run: cdk deploy --context environment=${{ inputs.target }} --require-approval never --all
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+
+      - name: Setup NODE
+        uses: ./.github/actions/install-node
+        with:
+          sls: true
+          cache-suffix: ${{ inputs.cache-suffix }}
 
       - name: Deploy SLS
         run: cd deployments/sls && sls deploy --stage "$SLS_STAGE"

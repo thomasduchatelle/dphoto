@@ -133,6 +133,78 @@ If imported resources are not named following the pattern, the name must be set 
 - `cdk deploy --context environment=dev`
 - `cdk deploy --context environment=live`
 
+## Adding New Endpoints
+
+### Simple Go Endpoints
+
+For standard Go Lambda endpoints, use the `SimpleGoEndpoint` construct:
+
+**Step 1:** Add the endpoint to an appropriate construct (or create a new one):
+
+```typescript
+// In lib/constructs/your-endpoints.ts
+new SimpleGoEndpoint(this, 'YourEndpoint', {
+    environmentName: props.environmentName,
+    functionName: 'your-function-name',  // Will be prefixed with dphoto-{env}- automatically
+    httpApi: props.apiGateway.httpApi,
+    path: '/api/v1/your/path',
+    method: apigatewayv2.HttpMethod.GET,
+    // Optional overrides:
+    memorySize: 512,                     // Default: 256
+    timeout: Duration.seconds(30),       // Default: 1 minute
+    artifactPath: '../../bin/custom.zip' // Default: ../../bin/{functionName}.zip
+});
+```
+
+**Step 2:** Add the construct to the application stack:
+
+```typescript
+// In lib/stacks/dphoto-application-stack.ts
+const yourEndpoints = new YourEndpoints(this, 'YourEndpoints', {
+    environmentName: props.environmentName,
+    apiGateway: apiGateway
+});
+```
+
+### Endpoint Organization
+
+**Group related endpoints** into logical constructs:
+- `MetadataEndpoints`: version, health, not-found
+- `AuthEndpoints`: login, logout, token refresh
+- `AlbumEndpoints`: CRUD operations for albums
+- `MediaEndpoints`: media upload, download, metadata
+
+**Naming Convention:**
+- Construct: `{Domain}Endpoints` (e.g., `AuthEndpoints`)
+- Endpoint ID: Descriptive name (e.g., `CreateAlbum`, `ListMedias`)
+- Function name: kebab-case matching binary (e.g., `create-album`) - will be automatically prefixed with `dphoto-{env}-`
+- Lambda function name: `dphoto-{env}-{function-name}` (e.g., `dphoto-next-create-album`)
+
+### Complex Endpoints
+
+For endpoints requiring custom configuration (environment variables, IAM permissions, etc.), extend `SimpleGoEndpoint` or create a specialized construct:
+
+```typescript
+export class CustomEndpoint extends SimpleGoEndpoint {
+    constructor(scope: Construct, id: string, props: CustomEndpointProps) {
+        super(scope, id, {
+            ...props,
+            memorySize: 1024,
+            timeout: Duration.minutes(5)
+        });
+        
+        // Add custom environment variables
+        this.lambda.addEnvironment('CUSTOM_CONFIG', props.customValue);
+        
+        // Add custom IAM permissions
+        this.lambda.addToRolePolicy(new PolicyStatement({
+            actions: ['s3:GetObject'],
+            resources: ['arn:aws:s3:::bucket/*']
+        }));
+    }
+}
+```
+
 ## Testing Philosophy
 
 **Test only critical contracts:**
