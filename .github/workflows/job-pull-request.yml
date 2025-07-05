@@ -1,6 +1,6 @@
 on:
   workflow_call:
-    inputs: {}
+    inputs: { }
 
 jobs:
   pull-request:
@@ -91,13 +91,3 @@ jobs:
             }
 
             return ""
-
-  tf-plan-live:
-    name: "Comment live plan on PR"
-    needs:
-      - pull-request
-    if: ${{ success() && needs.pull-request.outputs.pr-created == 'true' }}
-    uses: ./.github/workflows/workflow-pull-request.yml
-    secrets: inherit
-    with:
-      issue-number: ${{ needs.pull-request.outputs.pr-number }}
