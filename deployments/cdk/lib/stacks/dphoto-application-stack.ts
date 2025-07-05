@@ -3,6 +3,7 @@ import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../constructs/api-gateway';
 import {MetadataEndpointsConstruct} from '../constructs/metadata-endpoints-construct';
+import {AuthenticationEndpointsConstruct} from '../constructs/authentication-endpoints-construct';
 import {StaticWebsiteEndpointConstruct} from '../constructs/static-website-endpoint';
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
@@ -29,6 +30,12 @@ export class DPhotoApplicationStack extends cdk.Stack {
         new MetadataEndpointsConstruct(this, 'MetadataEndpoints', {
             environmentName: props.environmentName,
             apiGateway: apiGateway
+        });
+
+        new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
+            environmentName: props.environmentName,
+            apiGateway: apiGateway,
+            googleLoginClientId: config.googleLoginClientId
         });
 
         new StaticWebsiteEndpointConstruct(this, 'StaticWebsite', {
