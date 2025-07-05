@@ -101,7 +101,7 @@ func createAndInstallSSL(cfg aws.Config, domain *string, email *string, environm
 		"Application": "dphoto-app",
 		"Environment": *environment,
 		"CreatedBy":   "lambda",
-	}, *environment)
+	}, *environment, "")
 	dns.CertificateAuthority = letsencrypt.NewCertificateAuthority()
 
 	return dns.RenewCertificate(*email, *domain, *force)

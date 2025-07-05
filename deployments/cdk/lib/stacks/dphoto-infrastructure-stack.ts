@@ -20,6 +20,7 @@ export class DPhotoInfrastructureStack extends cdk.Stack {
         cdk.Tags.of(this).add('CreatedBy', 'cdk');
         cdk.Tags.of(this).add('Application', 'dphoto');
         cdk.Tags.of(this).add('Environment', props.environmentName);
+        cdk.Tags.of(this).add('Stack', "DPhotoInfrastructureStack");
 
         const importOnly = this.node.tryGetContext('importOnly') === 'true';
 
@@ -53,7 +54,6 @@ export class DPhotoInfrastructureStack extends cdk.Stack {
         const cliUser = new CliUserConstruct(this, 'CliUser', {
             environmentName: props.environmentName,
             cliAccessKeys: props.config.cliAccessKeys || ['2024-04'],
-            keybaseUser: props.config.keybaseUser || 'keybase:thomasduchatelle',
             storageRwPolicyArn: mediaStorage.storageRwPolicy.managedPolicyArn,
             cacheRwPolicyArn: mediaStorage.cacheRwPolicy.managedPolicyArn,
             indexRwPolicyArn: catalogDb.indexRwPolicy.managedPolicyArn,

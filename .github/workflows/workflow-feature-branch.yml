@@ -10,7 +10,6 @@ on:
 jobs:
   pull-request:
     uses: ./.github/workflows/job-pull-request.yml
-    if: ${{ contains(github.event.head_commit.message, '+pr') || contains(github.event.head_commit.message, '+next') }}
     secrets: inherit
 
   test-go:
@@ -24,12 +23,22 @@ jobs:
 
   build-go:
     uses: ./.github/workflows/job-build-go.yml
-    if: ${{ contains(github.event.head_commit.message, '+next') }}
     with:
       snapshot: "true"
   build-ts:
     uses: ./.github/workflows/job-build-ts.yml
-    if: ${{ contains(github.event.head_commit.message, '+next') }}
+
+  cdk-live-plan:
+    uses: ./.github/workflows/job-comment-cdk-diff.yml
+    if: needs.pull-request.outputs.pr-number != ''
+    needs:
+      - pull-request
+      - build-go
+      - build-ts
+    secrets: inherit
+    with:
+      issue-number: ${{ needs.pull-request.outputs.pr-number }}
+      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
 
   deploy-next:
     uses: ./.github/workflows/job-deploy.yml

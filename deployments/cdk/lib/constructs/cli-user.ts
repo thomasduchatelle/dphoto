@@ -1,11 +1,9 @@
-import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { Construct } from 'constructs';
+import {Construct} from 'constructs';
 
 export interface CliUserProps {
     environmentName: string;
     cliAccessKeys: string[];
-    keybaseUser: string;
     storageRwPolicyArn: string;
     cacheRwPolicyArn: string;
     indexRwPolicyArn: string;

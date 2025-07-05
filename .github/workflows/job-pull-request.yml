@@ -1,14 +1,21 @@
 on:
   workflow_call:
-    inputs: {}
+    inputs: { }
+    outputs:
+      pr-created:
+        description: True/False, indicating whether a pull request was created
+        value: ${{ jobs.pull-request.outputs.pr-created }}
+      pr-number:
+        description: Issue number of the pull request, created or already existing
+        value: ${{ jobs.pull-request.outputs.pr-number }}
 
 jobs:
   pull-request:
     name: Pull Request
     runs-on: ubuntu-latest
     outputs:
-      pr-created: ${{ steps.pr.outputs.result != '' && 'true' || 'false' }}
-      pr-number: ${{ steps.pr.outputs.result }}
+      pr-created: ${{ steps.pr.outputs.pr-created }}
+      pr-number: ${{ steps.pr.outputs.pr-number }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,7 +39,6 @@ jobs:
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          result-encoding: string
           script: |
             const prs = await github.rest.pulls.list({
               owner: context.repo.owner,
@@ -43,35 +49,51 @@ jobs:
 
             const title = process.env.TITLE
             const body = process.env.CHANGELOG
+            const shouldCreateOrUpdate = '${{ contains(github.event.head_commit.message, '+pr') }}' === 'true' || '${{ contains(github.event.head_commit.message, '+next') }}' === 'true'
 
             if (prs.status !== 200) {
               console.log("error fetching exiting PRs: " + JSON.stringify(prs))
+              core.setOutput('pr-created', 'false')
+              core.setOutput('pr-number', '')
+              return
 
             } else if (prs.data.length == 0) {
-              console.log("Creating a PR for ${{ github.ref }}");
-              const created = await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                head: 'thomasduchatelle:${{ github.ref_name }}',
-                base: 'main',
-                title: title,
-                body: body,
-              });
+              if (shouldCreateOrUpdate) {
+                console.log("Creating a PR for ${{ github.ref }}");
+                const created = await github.rest.pulls.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  head: 'thomasduchatelle:${{ github.ref_name }}',
+                  base: 'main',
+                  title: title,
+                  body: body,
+                });
 
-              if (created.status == 201) {
-                console.log("PR '"+ created.data.number + "' has been created");
-                return created.data.number
+                if (created.status == 201) {
+                  console.log("PR '"+ created.data.number + "' has been created");
+                  core.setOutput('pr-created', 'true')
+                  core.setOutput('pr-number', created.data.number.toString())
+                  return
+                } else {
+                  console.log("Error when creating the PR: " + JSON.stringify(created));
+                  core.setOutput('pr-created', 'false')
+                  core.setOutput('pr-number', '')
+                  return
+                }
               } else {
-                console.log("Error when creating the PR: " + JSON.stringify(created));
+                console.log("No PR exists and no +pr/+next flag found")
+                core.setOutput('pr-created', 'false')
+                core.setOutput('pr-number', '')
                 return
               }
             }
 
             const pr = prs.data[0]
+            console.log("Found existing PR: " + pr.number)
+            core.setOutput('pr-created', 'false')
+            core.setOutput('pr-number', pr.number.toString())
 
-            if (('${{ contains(github.event.head_commit.message, '+pr') }}' === 'true' || '${{ contains(github.event.head_commit.message, '+next') }}' === 'true') &&
-              (pr.title !== title || pr.body !== body)
-              ) {
+            if (shouldCreateOrUpdate && (pr.title !== title || pr.body !== body)) {
               console.log("PR " + pr.number + " will be updated ...")
               console.log("Old title -> " + pr.title)
               console.log("New title -> " + title)
@@ -87,17 +109,5 @@ jobs:
               });
 
             } else {
-              console.log("PR not updated, match = " + (pr.title !== title || pr.body !== body) + " ; +pr = ${{ contains(github.event.head_commit.message, '+pr') }}")
+              console.log("PR not updated, shouldCreateOrUpdate = " + shouldCreateOrUpdate + " ; content changed = " + (pr.title !== title || pr.body !== body))
             }
-
-            return ""
-
-  tf-plan-live:
-    name: "Comment live plan on PR"
-    needs:
-      - pull-request
-    if: ${{ success() && needs.pull-request.outputs.pr-created == 'true' }}
-    uses: ./.github/workflows/workflow-pull-request.yml
-    secrets: inherit
-    with:
-      issue-number: ${{ needs.pull-request.outputs.pr-number }}

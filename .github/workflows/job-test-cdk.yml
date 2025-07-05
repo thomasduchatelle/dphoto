@@ -20,14 +20,6 @@ jobs:
       - name: Setup CDK
         uses: ./.github/actions/install-cdk
 
-      - name: CDK Syntax Check (next)
-        working-directory: deployments/cdk
-        run: cdk synth --context environment=next
-
-      - name: CDK Syntax Check (live)
-        working-directory: deployments/cdk
-        run: cdk synth --context environment=live
-
-      - name: Run CDK unit tests
+      - name: Run CDK tests
         working-directory: deployments/cdk
         run: npm test
