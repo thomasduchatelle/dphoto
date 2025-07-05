@@ -1,6 +1,7 @@
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {GoLangLambdaFunction} from './golang-lambda-function';
+import {Duration} from "aws-cdk-lib";
 
 export interface SimpleGoEndpointProps {
     environmentName: string;
@@ -9,7 +10,7 @@ export interface SimpleGoEndpointProps {
     method: apigatewayv2.HttpMethod;
     artifactPath?: string;
     memorySize?: number;
-    timeout?: number;
+    timeout?: Duration;
 }
 
 export class SimpleGoEndpoint extends Construct {
@@ -23,7 +24,7 @@ export class SimpleGoEndpoint extends Construct {
             functionName: props.functionName,
             artifactPath: props.artifactPath || `../../bin/${props.functionName}.zip`,
             memorySize: props.memorySize || 256,
-            timeout: props.timeout
+            timeout: props.timeout || Duration.minutes(1),
         });
     }
 
