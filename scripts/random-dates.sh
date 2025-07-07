@@ -14,8 +14,8 @@ fi
 function random_datetime() {
 #    year=$((2024 + $RANDOM % 1))
     year=2025
-    month=$((7 + $RANDOM % 5))
-    day=$((1 + $RANDOM % 30))
+    month=$((5 + $RANDOM % 1))
+    day=$((1 + $RANDOM % 5))
     hour=$(($RANDOM % 24))
     minute=$(($RANDOM % 60))
     second=$(($RANDOM % 60))

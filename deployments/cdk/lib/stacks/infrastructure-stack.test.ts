@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import {Match, Template} from 'aws-cdk-lib/assertions';
-import {InfrastructureStack} from '../../lib/stacks/infrastructure-stack';
-import {environments} from '../../lib/config/environments';
+import {InfrastructureStack} from './infrastructure-stack';
+import {environments} from '../config/environments';
 
 describe('DPhotoInfrastructureStack', () => {
     describe("prod-like", () => {
@@ -62,13 +62,19 @@ describe('DPhotoInfrastructureStack', () => {
         });
 
         test('DynamoDB table has point-in-time recovery enabled', () => {
-            template.hasResource('AWS::DynamoDB::Table', {
+            template.hasResource('AWS::DynamoDB::GlobalTable', {
                 DeletionPolicy: 'Retain',
                 Properties: {
                     TableName: 'dphoto-test-index',
-                    PointInTimeRecoverySpecification: {
-                        PointInTimeRecoveryEnabled: true
-                    }
+                    BillingMode: "PAY_PER_REQUEST",
+                    Replicas: [
+                        {
+                            DeletionProtectionEnabled: true,
+                            PointInTimeRecoverySpecification: {
+                                PointInTimeRecoveryEnabled: true
+                            },
+                        }
+                    ],
                 }
             });
         });
@@ -103,6 +109,106 @@ describe('DPhotoInfrastructureStack', () => {
                 ManagedPolicyName: 'dphoto-test-index-rw',
                 Path: '/dphoto/'
             });
+        });
+
+        test('critical resources have pinned logical IDs to prevent recreation', () => {
+            const resourceHasPinnedId = (expectedLogicalId: string, resourceType: string, matcher: any) => {
+                expect(Object.keys(template.findResources(resourceType, matcher))).toEqual([expectedLogicalId]);
+            };
+
+            resourceHasPinnedId('MediaStorageStorageBucket1696C64E', 'AWS::S3::Bucket', {
+                Properties: {
+                    BucketName: 'dphoto-test-storage'
+                }
+            });
+
+            resourceHasPinnedId('MediaStorageCacheBucketFB633A3D', 'AWS::S3::Bucket', {
+                Properties: {
+                    BucketName: 'dphoto-test-cache'
+                }
+            });
+
+            resourceHasPinnedId('CatalogStoreCatalogTable874E34D1', 'AWS::DynamoDB::GlobalTable', {
+                Properties: {
+                    TableName: 'dphoto-test-index'
+                }
+            });
+
+            resourceHasPinnedId('ArchiveMessagingArchiveTopic4F67B9F5', 'AWS::SNS::Topic', {
+                Properties: {
+                    TopicName: 'dphoto-test-archive-jobs'
+                }
+            });
+
+            resourceHasPinnedId('ArchiveMessagingArchiveQueue02DEF245', 'AWS::SQS::Queue', {
+                Properties: {
+                    QueueName: 'dphoto-test-async-archive-caching-jobs.fifo'
+                }
+            });
+
+            resourceHasPinnedId('ArchiveMessagingArchiveRelocateQueue32B7B729', 'AWS::SQS::Queue', {
+                Properties: {
+                    QueueName: 'dphoto-test-archive-relocate'
+                }
+            });
+
+            resourceHasPinnedId('MediaStorageStorageKeyA14447B2', 'AWS::KMS::Key', {});
+
+            resourceHasPinnedId('CliUserA7F35037', 'AWS::IAM::User', {
+                Properties: {
+                    UserName: 'dphoto-test-cli'
+                }
+            });
+        });
+
+        test('managed policy resources have pinned logical IDs to prevent recreation', () => {
+            const resourceHasPinnedId = (expectedLogicalId: string, resourceType: string, matcher: any) => {
+                expect(Object.keys(template.findResources(resourceType, matcher))).toEqual([expectedLogicalId]);
+            };
+
+            resourceHasPinnedId('MediaStorageStorageRwPolicyC4C10BB9', 'AWS::IAM::ManagedPolicy', {
+                Properties: {
+                    ManagedPolicyName: 'dphoto-test-storage-rw'
+                }
+            });
+
+            resourceHasPinnedId('MediaStorageStorageRoPolicyAE409884', 'AWS::IAM::ManagedPolicy', {
+                Properties: {
+                    ManagedPolicyName: 'dphoto-test-storage-ro'
+                }
+            });
+
+            resourceHasPinnedId('MediaStorageCacheRwPolicyBBDEDD20', 'AWS::IAM::ManagedPolicy', {
+                Properties: {
+                    ManagedPolicyName: 'dphoto-test-cache-rw'
+                }
+            });
+
+            resourceHasPinnedId('CatalogDbIndexRwPolicy18F429CA', 'AWS::IAM::ManagedPolicy', {
+                Properties: {
+                    ManagedPolicyName: 'dphoto-test-index-rw'
+                }
+            });
+
+            resourceHasPinnedId('ArchiveMessagingArchiveSnsPublishPolicy3A80ABCB', 'AWS::IAM::ManagedPolicy', {
+                Properties: {
+                    ManagedPolicyName: 'dphoto-test-archive-sns-publish'
+                }
+            });
+
+            resourceHasPinnedId('ArchiveMessagingArchiveSqsSendPolicy07AA8FDC', 'AWS::IAM::ManagedPolicy', {
+                Properties: {
+                    ManagedPolicyName: 'dphoto-test-archive-sqs-send'
+                }
+            });
+
+            resourceHasPinnedId('ArchiveMessagingArchiveRelocatePolicyFFC7CD89', 'AWS::IAM::ManagedPolicy', {
+                Properties: {
+                    ManagedPolicyName: 'dphoto-test-archive-relocate-sqs-send'
+                }
+            });
+
+            resourceHasPinnedId('CliUserAccessKey202507148E1156', 'AWS::IAM::AccessKey', {});
         });
 
         test('all resources have correct tags', () => {
@@ -205,13 +311,19 @@ describe('DPhotoInfrastructureStack', () => {
         });
 
         test('DynamoDB table has point-in-time recovery disabled and will be DELETED with the Stack', () => {
-            template.hasResource('AWS::DynamoDB::Table', {
+            template.hasResource('AWS::DynamoDB::GlobalTable', {
                 DeletionPolicy: 'Delete',
                 Properties: {
                     TableName: 'dphoto-test-index',
-                    PointInTimeRecoverySpecification: {
-                        PointInTimeRecoveryEnabled: false
-                    }
+                    BillingMode: "PAY_PER_REQUEST",
+                    Replicas: [
+                        {
+                            DeletionProtectionEnabled: false,
+                            PointInTimeRecoverySpecification: {
+                                PointInTimeRecoveryEnabled: false
+                            },
+                        }
+                    ],
                 }
             });
         });

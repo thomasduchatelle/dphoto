@@ -2,21 +2,26 @@ import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../utils/api-gateway-construct';
-import {MetadataEndpointsConstruct} from '../constructs-web/metadata-endpoints-construct';
-import {AuthenticationEndpointsConstruct} from '../constructs-users/authentication-endpoints-construct';
-import {CatalogEndpointsConstruct} from '../constructs-catalog/catalog-endpoints-construct';
-import {StaticWebsiteEndpointConstruct} from '../constructs-web/static-website-endpoint';
-import {StoragesConnectorConstruct} from '../constructs-storages/storages-connector-construct';
-import {ArchiveEndpointsConstruct} from "../constructs-archive/archive-endpoints-construct";
-import {UserEndpointsConstruct} from "../constructs-users/users-endpoints-construct";
+import {AuthenticationEndpointsConstruct} from '../access/authentication-endpoints-construct';
+import {CatalogEndpointsConstruct} from '../catalog/catalog-endpoints-construct';
+import {StaticWebUiConstruct} from '../utils/static-web-ui-construct';
+import {ArchiveEndpointsConstruct} from "../archive/archive-endpoints-construct";
+import {VersionEndpointConstruct} from "../utils/version-endpoint-construct";
+import {UserEndpointsConstruct} from "../access/user-endpoints-construct";
+import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
+import {CatalogStoreConstruct} from "../catalog/catalog-store-construct";
+import {ArchivistConstruct} from "../archive/archivist-construct";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
     config: EnvironmentConfig;
+    archiveStore: ArchiveStoreConstruct;
+    catalogStore: CatalogStoreConstruct;
+    archivist: ArchivistConstruct;
 }
 
 export class ApplicationStack extends cdk.Stack {
-    constructor(scope: Construct, id: string, {config, ...props}: DPhotoApplicationStackProps) {
+    constructor(scope: Construct, id: string, {config, archiveStore, catalogStore, archivist, ...props}: DPhotoApplicationStackProps) {
         super(scope, id, props);
 
         // Apply tags to all resources in this stack
@@ -25,50 +30,51 @@ export class ApplicationStack extends cdk.Stack {
         cdk.Tags.of(this).add('Environment', props.environmentName);
         cdk.Tags.of(this).add('Stack', "DPhotoApplicationStack");
 
-
-        const connector = new StoragesConnectorConstruct(this, 'InfrastructureConfiguration', {
-            environmentName: props.environmentName
-        });
-
         const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
             environmentName: props.environmentName,
             ...config,
         });
 
-        new StaticWebsiteEndpointConstruct(this, 'StaticWebsite', {
+        new StaticWebUiConstruct(this, 'StaticWebUi', {
             environmentName: props.environmentName,
             domainName: config.domainName,
-            httpApi: apiGateway.httpApi
+            apiGateway: apiGateway
         });
 
-        new MetadataEndpointsConstruct(this, 'MetadataEndpoints', {
+        new VersionEndpointConstruct(this, 'VersionEndpoint', {
             environmentName: props.environmentName,
-            apiGateway: apiGateway,
-        });
+            httpApi: apiGateway.httpApi,
+        })
 
         new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
             environmentName: props.environmentName,
-            apiGateway: apiGateway,
+            httpApi: apiGateway.httpApi,
+            catalogStore,
+            archiveStore,
             googleLoginClientId: config.googleLoginClientId,
-            context: connector,
-        });
-
-        new CatalogEndpointsConstruct(this, 'CatalogEndpoints', {
-            environmentName: props.environmentName,
-            apiGateway: apiGateway,
-            context: connector,
-        });
-
-        new ArchiveEndpointsConstruct(this, 'ArchiveEndpoints', {
-            environmentName: props.environmentName,
-            apiGateway: apiGateway,
-            context: connector,
         });
 
         new UserEndpointsConstruct(this, 'UserEndpoints', {
             environmentName: props.environmentName,
-            apiGateway: apiGateway,
-            context: connector,
+            httpApi: apiGateway.httpApi,
+            catalogStore,
+            archiveStore,
+            googleLoginClientId: config.googleLoginClientId,
+        });
+
+        new CatalogEndpointsConstruct(this, 'CatalogEndpoints', {
+            environmentName: props.environmentName,
+            httpApi: apiGateway.httpApi,
+            catalogStore,
+            archiveMessaging: archivist,
+        });
+
+        new ArchiveEndpointsConstruct(this, 'ArchiveEndpoints', {
+            environmentName: props.environmentName,
+            httpApi: apiGateway.httpApi,
+            archiveStore,
+            catalogStore,
+            archivist: archivist,
         });
 
         new cdk.CfnOutput(this, 'PublicURL', {

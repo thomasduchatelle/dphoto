@@ -4,17 +4,18 @@ import * as s3_deployment from 'aws-cdk-lib/aws-s3-deployment';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigatewayv2_integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import {Construct} from 'constructs';
+import {ApiGatewayConstruct} from './api-gateway-construct';
 
-export interface StaticWebsiteEndpointProps {
+export interface AccessWebConstructProps {
     environmentName: string;
     domainName: string;
-    httpApi: apigatewayv2.HttpApi;
+    apiGateway: ApiGatewayConstruct;
 }
 
-export class StaticWebsiteEndpointConstruct extends Construct {
+export class StaticWebUiConstruct extends Construct {
     public readonly uiBucket: s3.Bucket;
 
-    constructor(scope: Construct, id: string, props: StaticWebsiteEndpointProps) {
+    constructor(scope: Construct, id: string, props: AccessWebConstructProps) {
         super(scope, id);
 
         const prefix = `dphoto-${props.environmentName}`;
@@ -54,7 +55,7 @@ export class StaticWebsiteEndpointConstruct extends Construct {
         );
 
         new apigatewayv2.HttpRoute(this, 'StaticDefaultRoute', {
-            httpApi: props.httpApi,
+            httpApi: props.apiGateway.httpApi,
             routeKey: apigatewayv2.HttpRouteKey.DEFAULT,
             integration: staticIntegration
         });
