@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import {Duration, triggers} from 'aws-cdk-lib';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import {HttpApi} from 'aws-cdk-lib/aws-apigatewayv2';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
@@ -10,6 +11,7 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import {Construct, IDependable} from 'constructs';
 import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from 'aws-cdk-lib/custom-resources';
+import {createSingleRouteEndpoint} from "./simple-go-endpoint";
 
 export interface ApiGatewayConstructProps {
     environmentName: string;
@@ -32,6 +34,8 @@ export class ApiGatewayConstruct extends Construct {
         const {httpApi, domainName} = this.createAPIGateway(props, certificateArn)
         this.httpApi = httpApi;
         this.domainName = domainName;
+
+        this.addsDefaultRoutes(httpApi, props.environmentName);
     }
 
     private installCertificateRenewalMechanism({environmentName, certificateEmail, domainName}: ApiGatewayConstructProps) {
@@ -176,5 +180,15 @@ export class ApiGatewayConstruct extends Construct {
 
     private getSsmKeyCertificateArn(environmentName: string) {
         return `/dphoto/${environmentName}/acm/domainCertificationArn`;
+    }
+
+    private addsDefaultRoutes(httpApi: HttpApi, environmentName: string) {
+        createSingleRouteEndpoint(this, 'NotFound', {
+            functionName: 'not-found',
+            path: '/api/{path+}',
+            method: apigatewayv2.HttpMethod.ANY,
+            httpApi,
+            environmentName,
+        });
     }
 }

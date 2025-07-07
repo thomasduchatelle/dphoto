@@ -50,32 +50,4 @@ export class GoLangLambdaFunction extends Construct {
             role: this.role
         });
     }
-
-    private addPermissions(permissions: LambdaPermissions, environmentName: string): void {
-        const managedPolicies: string[] = [];
-
-        if (permissions.cacheRw) {
-            managedPolicies.push(`/dphoto/${environmentName}/iam/policies/cacheRWArn`);
-        }
-
-        if (permissions.dynamodbRw) {
-            managedPolicies.push(`/dphoto/${environmentName}/iam/policies/indexRWArn`);
-        }
-
-        if (permissions.storageRw) {
-            managedPolicies.push(`/dphoto/${environmentName}/iam/policies/storageRWArn`);
-        } else if (permissions.storageRo) {
-            managedPolicies.push(`/dphoto/${environmentName}/iam/policies/storageROArn`);
-        }
-
-        // Attach managed policies from SSM parameters
-        managedPolicies.forEach((policyPath, index) => {
-            const policyArn = cdk.aws_ssm.StringParameter.valueForStringParameter(this, policyPath);
-            this.role.addManagedPolicy(iam.ManagedPolicy.fromManagedPolicyArn(
-                this,
-                `ManagedPolicy${index}`,
-                policyArn
-            ));
-        });
-    }
 }

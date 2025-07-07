@@ -35,6 +35,9 @@ export default function main(
     const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
         environmentName: envName,
         config,
+        archiveStore: infrastructureStack.archiveStore,
+        catalogStore: infrastructureStack.catalogStore,
+        archivist: infrastructureStack.archivist,
         env: {
             account: account,
             region: region

@@ -1,22 +1,24 @@
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint} from '../utils/simple-go-endpoint';
-import {StoragesConnectorConstruct} from '../constructs-storages/storages-connector-construct';
+import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
+import {ArchiveStoreConstruct} from '../archive/archive-store-construct';
 
-export interface AuthenticationEndpointsProps {
+export interface AccessEndpointsConstructProps {
     environmentName: string;
-    apiGateway: { httpApi: apigatewayv2.HttpApi };
-    context: StoragesConnectorConstruct;
+    httpApi: apigatewayv2.HttpApi;
+    catalogStore: CatalogStoreConstruct;
+    archiveStore: ArchiveStoreConstruct;
     googleLoginClientId: string;
 }
 
 export class AuthenticationEndpointsConstruct extends Construct {
-    constructor(scope: Construct, id: string, {context, ...props}: AuthenticationEndpointsProps) {
+    constructor(scope: Construct, id: string, props: AccessEndpointsConstructProps) {
         super(scope, id);
 
         const endpointProps = {
             environmentName: props.environmentName,
-            httpApi: props.apiGateway.httpApi,
+            httpApi: props.httpApi,
         }
 
         const authToken = createSingleRouteEndpoint(this, 'OAuthToken', {
@@ -25,8 +27,7 @@ export class AuthenticationEndpointsConstruct extends Construct {
             path: '/oauth/token',
             method: apigatewayv2.HttpMethod.POST,
         });
-        context.grantRWToCatalogTable(authToken.lambda)
-
+        props.catalogStore.grantReadWriteAccess(authToken.lambda);
 
         const logout = createSingleRouteEndpoint(this, 'OAuthLogout', {
             ...endpointProps,
@@ -34,7 +35,7 @@ export class AuthenticationEndpointsConstruct extends Construct {
             path: '/oauth/logout',
             method: apigatewayv2.HttpMethod.POST,
         });
-        context.grantRWToCatalogTable(logout.lambda)
+        props.catalogStore.grantReadWriteAccess(logout.lambda);
 
         createSingleRouteEndpoint(this, 'EnvConfig', {
             ...endpointProps,

@@ -1,21 +1,24 @@
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint} from '../utils/simple-go-endpoint';
-import {StoragesConnectorConstruct} from '../constructs-storages/storages-connector-construct';
+import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
+import {ArchiveStoreConstruct} from '../archive/archive-store-construct';
 
-export interface UserEndpointsProps {
+export interface AccessEndpointsConstructProps {
     environmentName: string;
-    apiGateway: { httpApi: apigatewayv2.HttpApi };
-    context: StoragesConnectorConstruct;
+    httpApi: apigatewayv2.HttpApi;
+    catalogStore: CatalogStoreConstruct;
+    archiveStore: ArchiveStoreConstruct;
+    googleLoginClientId: string;
 }
 
 export class UserEndpointsConstruct extends Construct {
-    constructor(scope: Construct, id: string, {context, ...props}: UserEndpointsProps) {
+    constructor(scope: Construct, id: string, props: AccessEndpointsConstructProps) {
         super(scope, id);
 
         const endpointProps = {
             environmentName: props.environmentName,
-            httpApi: props.apiGateway.httpApi,
+            httpApi: props.httpApi,
         }
 
         const listUsers = createSingleRouteEndpoint(this, 'ListUsers', {
@@ -24,7 +27,7 @@ export class UserEndpointsConstruct extends Construct {
             path: '/api/v1/users',
             method: apigatewayv2.HttpMethod.GET,
         });
-        context.grantReadToCatalogTable(listUsers.lambda);
+        props.catalogStore.grantReadAccess(listUsers.lambda);
 
         const listOwners = createSingleRouteEndpoint(this, 'ListOwners', {
             ...endpointProps,
@@ -32,7 +35,7 @@ export class UserEndpointsConstruct extends Construct {
             path: '/api/v1/owners',
             method: apigatewayv2.HttpMethod.GET,
         });
-        context.grantReadToStorageAndCache(listOwners.lambda);
+        props.archiveStore.grantReadAccessToRawAndCacheMedias(listOwners.lambda);
 
     }
 }

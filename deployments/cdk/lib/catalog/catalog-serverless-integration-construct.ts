@@ -1,42 +1,21 @@
-import * as cdk from 'aws-cdk-lib';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import {Construct} from 'constructs';
+import {CatalogStoreConstruct} from './catalog-store-construct';
+import * as iam from "aws-cdk-lib/aws-iam";
+import {pinLogicalId} from "../utils/override-logical-ids";
 
-export const CatalogTableIndexes = ["AlbumIndex", "ReverseLocationIndex", "ReverseGrantIndex", "RefreshTokenExpiration"];
-
-export interface CatalogDynamoDbProps {
+export interface CatalogServerlessIntegrationConstructProps {
     environmentName: string;
+    catalogStore: CatalogStoreConstruct;
 }
 
-export class CatalogDynamoDbConstruct extends Construct {
-    public readonly table: dynamodb.Table;
-    public readonly indexRwPolicy: iam.ManagedPolicy;
-
-    constructor(scope: Construct, id: string, props: { environmentName: string; production: boolean }) {
+export class CatalogServerlessIntegrationConstruct extends Construct {
+    constructor(scope: Construct, id: string, props: CatalogServerlessIntegrationConstructProps) {
         super(scope, id);
 
         const prefix = `dphoto-${props.environmentName}`;
-        const tableName = `${prefix}-index`;
 
-        // DynamoDB Table
-        this.table = new dynamodb.Table(this, 'CatalogTable', {
-            tableName: tableName,
-            partitionKey: {
-                name: 'PK',
-                type: dynamodb.AttributeType.STRING
-            },
-            sortKey: {
-                name: 'SK',
-                type: dynamodb.AttributeType.STRING
-            },
-            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            removalPolicy: props.production ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-            pointInTimeRecovery: props.production,
-        });
-
-        // IAM Policy for DynamoDB access
-        this.indexRwPolicy = new iam.ManagedPolicy(this, 'IndexRwPolicy', {
+        const indexRwPolicy = new iam.ManagedPolicy(this, 'IndexRwPolicy', {
             managedPolicyName: `${prefix}-index-rw`,
             path: '/dphoto/',
             statements: [
@@ -67,12 +46,24 @@ export class CatalogDynamoDbConstruct extends Construct {
                         'dynamodb:TagResource'
                     ],
                     resources: [
-                        this.table.tableArn,
-                        `${this.table.tableArn}/*`
+                        props.catalogStore.table.tableArn,
+                        `${props.catalogStore.table.tableArn}/*`
                     ]
                 })
             ]
         });
+        pinLogicalId(indexRwPolicy, "CatalogDbIndexRwPolicy18F429CA");
+
+        new ssm.StringParameter(scope, 'IamPolicyIndexRwArnSSM', {
+            parameterName: `/dphoto/${props.environmentName}/iam/policies/indexRWArn`,
+            stringValue: indexRwPolicy.managedPolicyArn,
+            description: 'ARN of the index read-write policy'
+        });
+
+        new ssm.StringParameter(scope, 'CatalogTableNameSSM', {
+            parameterName: `/dphoto/${props.environmentName}/dynamodb/catalog/tableName`,
+            stringValue: props.catalogStore.table.tableName,
+            description: 'Name of the catalog table'
+        });
     }
 }
-

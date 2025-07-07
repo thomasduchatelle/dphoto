@@ -2,38 +2,38 @@ import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import {HttpApi} from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint, SimpleGoEndpoint} from '../utils/simple-go-endpoint';
-import {StoragesConnectorConstruct} from '../constructs-storages/storages-connector-construct';
+import {CatalogStoreConstruct} from './catalog-store-construct';
+import {ArchivistConstruct} from '../archive/archivist-construct';
 
-export interface CatalogEndpointsProps {
+export interface CatalogEndpointsConstructProps {
     environmentName: string;
-    apiGateway: { httpApi: apigatewayv2.HttpApi };
-    context: StoragesConnectorConstruct;
+    httpApi: apigatewayv2.HttpApi;
+    catalogStore: CatalogStoreConstruct;
+    archiveMessaging: ArchivistConstruct;
 }
 
 export class CatalogEndpointsConstruct extends Construct {
-    constructor(scope: Construct, id: string, {context, ...props}: CatalogEndpointsProps) {
+    constructor(scope: Construct, id: string, props: CatalogEndpointsConstructProps) {
         super(scope, id);
 
         const endpointProps = {
             environmentName: props.environmentName,
-            httpApi: props.apiGateway.httpApi,
+            httpApi: props.httpApi,
         }
 
-        this.readOnlyCatalogEndpoints(endpointProps, context);
-
-        this.amendTimelineEndpoints(endpointProps, context);
-
-        this.accessControlEndpoints(endpointProps, context);
+        this.readOnlyCatalogEndpoints(endpointProps, props.catalogStore);
+        this.amendTimelineEndpoints(endpointProps, props.catalogStore, props.archiveMessaging);
+        this.accessControlEndpoints(endpointProps, props.catalogStore);
     }
 
-    private readOnlyCatalogEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi }, context: StoragesConnectorConstruct) {
+    private readOnlyCatalogEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi }, catalogStore: CatalogStoreConstruct) {
         const listAlbums = createSingleRouteEndpoint(this, 'ListAlbums', {
             ...endpointProps,
             functionName: 'list-albums',
             path: '/api/v1/albums',
             method: apigatewayv2.HttpMethod.GET,
         });
-        context.grantReadToCatalogTable(listAlbums.lambda);
+        catalogStore.grantReadAccess(listAlbums.lambda);
 
         const listMedias = createSingleRouteEndpoint(this, 'ListMedias', {
             ...endpointProps,
@@ -41,18 +41,21 @@ export class CatalogEndpointsConstruct extends Construct {
             path: '/api/v1/owners/{owner}/albums/{folderName}/medias',
             method: apigatewayv2.HttpMethod.GET,
         });
-        context.grantReadToCatalogTable(listMedias.lambda);
+        catalogStore.grantReadAccess(listMedias.lambda);
     }
 
-    private amendTimelineEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi }, context: StoragesConnectorConstruct) {
+    private amendTimelineEndpoints(endpointProps: {
+        environmentName: string;
+        httpApi: HttpApi
+    }, catalogStore: CatalogStoreConstruct, archivist: ArchivistConstruct) {
         const createAlbums = createSingleRouteEndpoint(this, 'CreateAlbums', {
             ...endpointProps,
             functionName: 'create-album',
             path: '/api/v1/albums',
             method: apigatewayv2.HttpMethod.POST,
         });
-        context.grantRWToCatalogTable(createAlbums.lambda);
-        context.grantTriggerOptimisationToArchive(createAlbums.lambda);
+        catalogStore.grantReadWriteAccess(createAlbums.lambda);
+        archivist.grantAccessToAsyncArchivist(createAlbums.lambda);
 
         const deleteAlbums = createSingleRouteEndpoint(this, 'DeleteAlbums', {
             ...endpointProps,
@@ -60,8 +63,8 @@ export class CatalogEndpointsConstruct extends Construct {
             path: '/api/v1/owners/{owner}/albums/{folderName}',
             method: apigatewayv2.HttpMethod.DELETE,
         });
-        context.grantRWToCatalogTable(deleteAlbums.lambda);
-        context.grantTriggerOptimisationToArchive(deleteAlbums.lambda);
+        catalogStore.grantReadWriteAccess(deleteAlbums.lambda);
+        archivist.grantAccessToAsyncArchivist(deleteAlbums.lambda);
 
         const amendAlbumDates = createSingleRouteEndpoint(this, 'AmendAlbumDates', {
             ...endpointProps,
@@ -69,8 +72,8 @@ export class CatalogEndpointsConstruct extends Construct {
             path: '/api/v1/owners/{owner}/albums/{folderName}/dates',
             method: apigatewayv2.HttpMethod.PUT,
         });
-        context.grantRWToCatalogTable(amendAlbumDates.lambda);
-        context.grantTriggerOptimisationToArchive(amendAlbumDates.lambda);
+        catalogStore.grantReadWriteAccess(amendAlbumDates.lambda);
+        archivist.grantAccessToAsyncArchivist(amendAlbumDates.lambda);
 
         const amendAlbumName = createSingleRouteEndpoint(this, 'AmendAlbumName', {
             ...endpointProps,
@@ -78,11 +81,11 @@ export class CatalogEndpointsConstruct extends Construct {
             path: '/api/v1/owners/{owner}/albums/{folderName}/name',
             method: apigatewayv2.HttpMethod.PUT,
         });
-        context.grantRWToCatalogTable(amendAlbumName.lambda);
-        context.grantTriggerOptimisationToArchive(amendAlbumName.lambda);
+        catalogStore.grantReadWriteAccess(amendAlbumName.lambda);
+        archivist.grantAccessToAsyncArchivist(amendAlbumName.lambda);
     }
 
-    private accessControlEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi }, context: StoragesConnectorConstruct) {
+    private accessControlEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi }, catalogStore: CatalogStoreConstruct) {
         const shareAlbum = new SimpleGoEndpoint(this, 'ShareAlbum', {
             ...endpointProps,
             functionName: 'share-album',
@@ -97,6 +100,6 @@ export class CatalogEndpointsConstruct extends Construct {
                 }
             ]
         });
-        context.grantRWToCatalogTable(shareAlbum.lambda);
+        catalogStore.grantReadWriteAccess(shareAlbum.lambda);
     }
 }

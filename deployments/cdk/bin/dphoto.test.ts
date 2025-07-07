@@ -1,6 +1,6 @@
 import {Template} from 'aws-cdk-lib/assertions';
 import * as cxapi from "aws-cdk-lib/cx-api";
-import main from '../../bin/dphoto';
+import main from './dphoto';
 
 jest.mock('aws-cdk-lib/aws-lambda', () => {
     const actual = jest.requireActual('aws-cdk-lib/aws-lambda');

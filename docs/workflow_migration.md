@@ -40,7 +40,47 @@ Here's the migration idea:
 
 Write the document in the file: `specs/YYYY-MM_<feature name>.md`. Write it completely with everything we spoke about. We will review it and edited it after.
 
-Step 2: Implementation
+Step 2: Restructure existing code
+---------------------------------------
+
+### Pinning IDs
+
+```
+aider
+```
+
+The CDK project do not respect the principles from `docs/principles_cdk.md` and we're starting a migration of the exiting code to re-align the code.
+
+The first step is to pin the logical IDs of the resource managed by the `InfrastructureStack`. Write a test asserting them, if you don't know the IDs, leave a
+placeholder I'll complete them.
+
+### Design
+
+```
+/ask
+```
+
+You're in charge of updating the CDK project structure to **strictly follow the principles `docs/principles_cdk.md`**. You are to present the high level target
+design
+that will respect the principles. Do not describe _how_ to migrate, only _where_ you are aiming: file structure with short description of what's expected in
+each file.
+
+The main domains are:
+
+* **archive**: storage and access to raw medias and cached transformations
+* **catalog**: management and listing of albums and medias
+* **access**: access control to the service, user management, authentication, CLI access
+
+### Execution
+
+```
+/code
+```
+
+Execute the plan we discussed. Do not leave anything behind. Do not edit the files to be deleted or moved: create the new file and provide a script to delete
+old files. Only make the strictly necessary changes on tests to follow the new structure.
+
+Step 3: Implementation
 ---------------------------------------
 
 ### Non-interactive - CDK

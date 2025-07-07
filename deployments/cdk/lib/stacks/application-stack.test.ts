@@ -1,27 +1,15 @@
 import * as cdk from 'aws-cdk-lib';
 import {Template} from 'aws-cdk-lib/assertions';
-import {ApplicationStack} from '../../lib/stacks/application-stack';
-import {environments} from '../../lib/config/environments';
+import {ApplicationStack} from './application-stack';
+import {environments} from '../config/environments';
+import {ArchiveStoreConstruct} from '../archive/archive-store-construct';
+import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
+import {ArchivistConstruct} from '../archive/archivist-construct';
 
-jest.mock('aws-cdk-lib/aws-ssm', () => {
-    const actual = jest.requireActual('aws-cdk-lib/aws-ssm');
-    return {
-        ...actual,
-        StringParameter: {
-            ...actual.StringParameter,
-            valueForStringParameter: jest.fn().mockImplementation((scope, parameterName) => {
-                if (parameterName.includes('/dynamodb/catalog/tableName')) return 'mock-table-name';
-                if (parameterName.includes('/s3/cache/bucketName')) return 'mock-cache-bucket';
-                if (parameterName.includes('/s3/storage/bucketName')) return 'mock-storage-bucket';
-                if (parameterName.includes('/sns/archive/arn')) return 'arn:aws:sns:region:account:mock-topic';
-                if (parameterName.includes('/sqs/archive/url')) return 'https://sqs.region.amazonaws.com/account/mock-queue';
-                if (parameterName.includes('/sqs/archive_relocate/arn')) return 'arn:aws:sqs:region:account:mock-relocate-queue';
-                if (parameterName.includes('/sqs/archive_relocate/url')) return 'https://sqs.region.amazonaws.com/account/mock-relocate-queue';
-                return 'mock-value';
-            })
-        }
-    };
-});
+// Mock the store constructs to provide test implementations
+jest.mock('../archive/archive-store-construct');
+jest.mock('../catalog/catalog-store-construct');
+jest.mock('../archive/archivist-construct');
 
 jest.mock('aws-cdk-lib/aws-lambda', () => {
     const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
@@ -53,16 +41,37 @@ describe('DPhotoApplicationStack', () => {
     let app: cdk.App;
     let stack: ApplicationStack;
     let template: Template;
+    let mockArchiveStore: jest.Mocked<ArchiveStoreConstruct>;
+    let mockCatalogStore: jest.Mocked<CatalogStoreConstruct>;
+    let mockArchivist: jest.Mocked<ArchivistConstruct>;
 
     beforeEach(() => {
+        // Create mock store constructs
+        mockArchiveStore = {
+            grantReadAccessToRawAndCacheMedias: jest.fn(),
+            grantWriteAccessToRawAndCachedMedias: jest.fn(),
+        } as any;
+
+        mockCatalogStore = {
+            grantReadAccess: jest.fn(),
+            grantReadWriteAccess: jest.fn(),
+        } as any;
+
+        mockArchivist = {
+            grantAccessToAsyncArchivist: jest.fn(),
+        } as any;
+
         app = new cdk.App();
         stack = new ApplicationStack(app, 'TestStack', {
             environmentName: 'test',
             config: environments.test,
+            archiveStore: mockArchiveStore,
+            catalogStore: mockCatalogStore,
+            archivist: mockArchivist,
             env: {
                 region: 'eu-west-1',
                 account: '0123456789',
-            }
+            },
         });
         template = Template.fromStack(stack);
     });
@@ -71,10 +80,7 @@ describe('DPhotoApplicationStack', () => {
         const oauthTokenFunction = findLambdaByRoute(template, '/oauth/token', 'POST');
 
         expect(oauthTokenFunction).toBeDefined();
-
-        assertLambdaEnvironmentVariables(oauthTokenFunction, {
-            CATALOG_TABLE_NAME: 'mock-table-name',
-        });
+        expect(mockCatalogStore.grantReadWriteAccess).toHaveBeenCalled();
     });
 
     test('lambda for the endpoint /env-config.json has the environment variable GOOGLE_LOGIN_CLIENT_ID set', () => {

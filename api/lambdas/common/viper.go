@@ -6,15 +6,16 @@ import (
 )
 
 const (
-	JWTIssuer            = "DPHOTO_JWT_ISSUER"
-	JWTKeyB64            = "DPHOTO_JWT_KEY_B64"
-	JWTValidity          = "DPHOTO_JWT_VALIDITY"
-	RefreshTokenValidity = "DPHOTO_REFRESH_TOKEN_VALIDITY"
-	DynamoDBTableName    = "CATALOG_TABLE_NAME"
-	StorageBucketName    = "STORAGE_BUCKET_NAME"
-	CacheBucketName      = "CACHE_BUCKET_NAME"
-	SNSArchiveARN        = "SNS_ARCHIVE_ARN"
-	SQSArchiveURL        = "SQS_ARCHIVE_RELOCATE_URL"
+	JWTIssuer             = "DPHOTO_JWT_ISSUER"
+	JWTKeyB64             = "DPHOTO_JWT_KEY_B64"
+	JWTValidity           = "DPHOTO_JWT_VALIDITY"
+	RefreshTokenValidity  = "DPHOTO_REFRESH_TOKEN_VALIDITY"
+	DynamoDBTableName     = "CATALOG_TABLE_NAME"
+	StorageBucketName     = "STORAGE_BUCKET_NAME"
+	CacheBucketName       = "CACHE_BUCKET_NAME"
+	SNSArchiveARN         = "SNS_ARCHIVE_ARN"
+	SQSArchiveURL         = "SQS_ARCHIVE_URL"
+	SQSArchiveRelocateURL = "SQS_ARCHIVE_RELOCATE_URL"
 )
 
 func initViper() {
@@ -69,9 +70,9 @@ func (l *LambdaViperNames) ArchiveJobsSQSURL() string {
 }
 
 func (l *LambdaViperNames) ArchiveRelocateJobsSQSURL() string {
-	archiveJobsSqsURL := viper.GetString(SQSArchiveURL)
+	archiveJobsSqsURL := viper.GetString(SQSArchiveRelocateURL)
 	if archiveJobsSqsURL == "" {
-		panic(fmt.Sprintf("%s must be set and non-empty", SQSArchiveURL))
+		panic(fmt.Sprintf("%s must be set and non-empty", SQSArchiveRelocateURL))
 	}
 	return archiveJobsSqsURL
 }
