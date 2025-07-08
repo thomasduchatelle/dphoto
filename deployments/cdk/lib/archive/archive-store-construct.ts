@@ -90,9 +90,9 @@ export class ArchiveStoreConstruct extends Construct {
 
     public grantReadAccessToRawAndCacheMedias(workload: Workload): void {
         this.storageBucket.grantRead(workload.role);
-        this.cacheBucket.grantRead(workload.role);
+        this.cacheBucket.grantReadWrite(workload.role);
         if (this.storageKey) {
-            this.storageKey.grantDecrypt(workload.role)
+            this.storageKey.grantEncryptDecrypt(workload.role)
         }
 
         workload.function?.addEnvironment("CACHE_BUCKET_NAME", this.cacheBucket.bucketName);
