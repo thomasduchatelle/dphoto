@@ -51,14 +51,14 @@ type AnalyserDecoratorObserver interface {
 
 func newDefaultAnalyser(readers ...DetailsReader) Analyser {
 	return &AnalyserFromMediaDetails{
-		detailsReaders: readers,
+		DetailsReaders: readers,
 	}
 }
 
 // AnalyserFromMediaDetails is using DetailsReader to extract data from the file (EXIF, MP4, ...).
 type AnalyserFromMediaDetails struct {
 	options        DetailsReaderOptions
-	detailsReaders []DetailsReader
+	DetailsReaders []DetailsReader
 }
 
 func (a *AnalyserFromMediaDetails) Analyse(ctx context.Context, found FoundMedia) (*AnalysedMedia, error) {
@@ -97,8 +97,8 @@ func (a *AnalyserFromMediaDetails) Analyse(ctx context.Context, found FoundMedia
 func (a *AnalyserFromMediaDetails) extractDetails(found FoundMedia, reader io.Reader, options DetailsReaderOptions) (MediaType, *MediaDetails, error) {
 	mediaType := getMediaType(found)
 
-	loadedReaders := make([]string, len(a.detailsReaders), len(a.detailsReaders))
-	for i, detailsReader := range a.detailsReaders {
+	loadedReaders := make([]string, len(a.DetailsReaders), len(a.DetailsReaders))
+	for i, detailsReader := range a.DetailsReaders {
 		loadedReaders[i] = fmt.Sprint(detailsReader)
 
 		if detailsReader.Supports(found, mediaType) {
