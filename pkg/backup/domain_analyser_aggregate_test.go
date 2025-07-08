@@ -121,7 +121,7 @@ func Test_analyserAggregate_OnFoundMedia(t *testing.T) {
 
 			a := &analyserAggregate{
 				analyser: &AnalyserFromMediaDetails{
-					detailsReaders: tt.fields.detailReaders,
+					DetailsReaders: tt.fields.detailReaders,
 				},
 				analysedMediaObservers: []AnalysedMediaObserver{observer},
 				rejectedMediaObservers: []RejectedMediaObserver{observer},
