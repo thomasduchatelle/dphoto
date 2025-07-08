@@ -58,13 +58,12 @@ func (a *adapter) WarmUpCacheByFolder(owner, missedStoreKey string, width int) e
 	if err != nil {
 		return errors.Wrapf(err, "marshaling [%s, %s, %d]", owner, missedStoreKey, width)
 	}
-
 	_, err = a.sqsClient.SendMessage(context.TODO(), &sqs.SendMessageInput{
 		MessageAttributes: map[string]sqstypes.MessageAttributeValue{
 			"ContentType": aSQSStringAttribute("WarmUpCacheByFolderMessageV1"),
 		},
 		MessageBody:            aws.String(string(mess)),
-		MessageDeduplicationId: aws.String(fmt.Sprintf("WarmUpCacheByFolder-%s", path.Dir(missedStoreKey))),
+		MessageDeduplicationId: aws.String(fmt.Sprintf("WarmUpCacheByFolder-%s-%d", path.Dir(missedStoreKey), width)),
 		MessageGroupId:         &owner,
 		QueueUrl:               &a.queueURL,
 	})
