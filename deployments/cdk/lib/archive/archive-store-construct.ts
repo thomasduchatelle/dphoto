@@ -26,6 +26,7 @@ export class ArchiveStoreConstruct extends Construct {
                 removalPolicy: cdk.RemovalPolicy.RETAIN,
                 pendingWindow: cdk.Duration.days(30)
             });
+            this.storageKey.addAlias(`${prefix}-archive`)
             pinLogicalId(this.storageKey, "MediaStorageStorageKeyA14447B2");
 
             cdk.Tags.of(this.storageKey).add('Name', `${prefix}-encryption-key`);
