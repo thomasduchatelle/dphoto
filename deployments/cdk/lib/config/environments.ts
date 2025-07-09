@@ -21,7 +21,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         production: false,
         cliAccessKeys: ['2025-07'],
         rootDomain: 'duchatelle.me',
-        domainName: 'nextcdk.duchatelle.me',
+        domainName: 'next.duchatelle.me',
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com'
     },
