@@ -233,6 +233,20 @@ func TestCreateAlbumStateless_Create(t *testing.T) {
 			wantErr:      assert.NoError,
 		},
 		{
+			name: "it should create the album with a generated name when the folderName is just a slash '/'",
+			args: args{
+				request: catalog.CreateAlbumRequest{
+					Owner:            standardRequest.Owner,
+					Name:             standardRequest.Name,
+					Start:            standardRequest.Start,
+					End:              standardRequest.End,
+					ForcedFolderName: "/",
+				},
+			},
+			wantObserved: []catalog.Album{ironmanOneAlbum},
+			wantErr:      assert.NoError,
+		},
+		{
 			name: "it should create the album with a forced name",
 			args: args{
 				request: catalog.CreateAlbumRequest{

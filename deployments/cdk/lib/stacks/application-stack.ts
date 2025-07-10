@@ -66,6 +66,7 @@ export class ApplicationStack extends cdk.Stack {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
             catalogStore,
+            archiveStore,
             archiveMessaging: archivist,
         });
 

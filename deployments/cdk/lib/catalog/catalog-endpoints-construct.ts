@@ -4,11 +4,13 @@ import {Construct} from 'constructs';
 import {createSingleRouteEndpoint, SimpleGoEndpoint} from '../utils/simple-go-endpoint';
 import {CatalogStoreConstruct} from './catalog-store-construct';
 import {ArchivistConstruct} from '../archive/archivist-construct';
+import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
 
 export interface CatalogEndpointsConstructProps {
     environmentName: string;
     httpApi: apigatewayv2.HttpApi;
     catalogStore: CatalogStoreConstruct;
+    archiveStore: ArchiveStoreConstruct;
     archiveMessaging: ArchivistConstruct;
 }
 
@@ -22,7 +24,7 @@ export class CatalogEndpointsConstruct extends Construct {
         }
 
         this.readOnlyCatalogEndpoints(endpointProps, props.catalogStore);
-        this.amendTimelineEndpoints(endpointProps, props.catalogStore, props.archiveMessaging);
+        this.amendTimelineEndpoints(endpointProps, props.catalogStore, props.archiveMessaging, props.archiveStore);
         this.accessControlEndpoints(endpointProps, props.catalogStore);
     }
 
@@ -47,7 +49,7 @@ export class CatalogEndpointsConstruct extends Construct {
     private amendTimelineEndpoints(endpointProps: {
         environmentName: string;
         httpApi: HttpApi
-    }, catalogStore: CatalogStoreConstruct, archivist: ArchivistConstruct) {
+    }, catalogStore: CatalogStoreConstruct, archivist: ArchivistConstruct, archiveStore: ArchiveStoreConstruct) {
         const createAlbums = createSingleRouteEndpoint(this, 'CreateAlbums', {
             ...endpointProps,
             functionName: 'create-album',
@@ -55,6 +57,7 @@ export class CatalogEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.POST,
         });
         catalogStore.grantReadWriteAccess(createAlbums.lambda);
+        archiveStore.grantReadAccessToRawAndCacheMedias(createAlbums.lambda);
         archivist.grantAccessToAsyncArchivist(createAlbums.lambda);
 
         const deleteAlbums = createSingleRouteEndpoint(this, 'DeleteAlbums', {
@@ -64,6 +67,7 @@ export class CatalogEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.DELETE,
         });
         catalogStore.grantReadWriteAccess(deleteAlbums.lambda);
+        archiveStore.grantReadAccessToRawAndCacheMedias(deleteAlbums.lambda);
         archivist.grantAccessToAsyncArchivist(deleteAlbums.lambda);
 
         const amendAlbumDates = createSingleRouteEndpoint(this, 'AmendAlbumDates', {
@@ -73,6 +77,7 @@ export class CatalogEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.PUT,
         });
         catalogStore.grantReadWriteAccess(amendAlbumDates.lambda);
+        archiveStore.grantReadAccessToRawAndCacheMedias(amendAlbumDates.lambda);
         archivist.grantAccessToAsyncArchivist(amendAlbumDates.lambda);
 
         const amendAlbumName = createSingleRouteEndpoint(this, 'AmendAlbumName', {
@@ -82,6 +87,7 @@ export class CatalogEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.PUT,
         });
         catalogStore.grantReadWriteAccess(amendAlbumName.lambda);
+        archiveStore.grantReadAccessToRawAndCacheMedias(amendAlbumName.lambda);
         archivist.grantAccessToAsyncArchivist(amendAlbumName.lambda);
     }
 
