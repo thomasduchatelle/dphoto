@@ -41,7 +41,7 @@ func (t *TimelineAggregate) CreateNewAlbum(request CreateAlbumRequest) (Album, e
 
 func (t *TimelineAggregate) convert(request CreateAlbumRequest) (*Album, error) {
 	folderName := generateFolderName(request.Name, request.Start)
-	if request.ForcedFolderName != "" {
+	if request.ForcedFolderName != "" && request.ForcedFolderName != "/" {
 		folderName = NewFolderName(request.ForcedFolderName)
 	}
 
