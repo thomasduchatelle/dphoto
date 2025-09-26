@@ -37,20 +37,6 @@ jobs:
           name: dist-web
           path: web/build
 
-      - name: Setup NODE
-        uses: ./.github/actions/install-node
-        with:
-          sls: true
-          cache-suffix: ${{ inputs.cache-suffix }}
-
-      - name: Deploy SLS
-        run: cd deployments/sls && sls remove --stage "$SLS_STAGE"
-        continue-on-error: true
-        env:
-          AWS_DEFAULT_REGION: eu-west-1
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
       - name: Setup CDK
         uses: ./.github/actions/install-cdk
 
