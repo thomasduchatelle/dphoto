@@ -1,10 +1,6 @@
 name: 'NodeJS Setup'
 description: 'Run npm install and yarn install everywhere required and cache node_modules'
 inputs:
-  sls:
-    description: install globally serverless cli
-    required: false
-    default: 'false'
   cache-suffix:
     description: Suffix to add to the cache key (cache has a tendency to be locked otherwise)
     required: false
@@ -23,17 +19,12 @@ runs:
         path: |
           ~/.npm
           web/node_modules
-          deployments/sls/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock', 'deployments/sls/yarn.lock') }}-${{ inputs.cache-suffix }}
+        key: ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock') }}-${{ inputs.cache-suffix }}
         restore-keys: |
-          ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock', 'deployments/sls/yarn.lock') }}
+          ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock') }}
     - name: Download deps
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
       run: make setup-app
-      shell: bash
-    - name: Install SLS
-      if: ${{ inputs.sls == 'true' }}
-      run: npm install -g serverless@v3
       shell: bash
     - name: YARN Cache (always save)
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
@@ -42,5 +33,4 @@ runs:
         path: |
           ~/.npm
           web/node_modules
-          deployments/sls/node_modules
         key: ${{ steps.cache-restore.outputs.cache-primary-key }}

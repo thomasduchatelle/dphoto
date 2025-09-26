@@ -125,7 +125,6 @@ build-api:
 .PHONY: setup-app test-app build-app deploy-app bg down
 
 setup-app: setup-web
-	cd deployments/sls && yarn
 
 clean-app: clean-api clean-web
 
