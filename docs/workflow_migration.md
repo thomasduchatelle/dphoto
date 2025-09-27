@@ -1,40 +1,67 @@
 VIBE WORKFLOW: MIGRATION
 =======================================
 
+Step 1: Planning
+---------------------------------------
+
+We're planning a technical migration that will be done in 3 steps:
+
+1. **Anticipation**: advance the migration as far as possible without breaking the current build. It might involve:
+    * **forward compatible refactoring**: extract business logic into classes/functions that can be used by both retired and introduced technologies
+    * **removal of incompatible libraries**: remove or replace libraries that will not be compatible with the introduced technology
+    * **blue/green**: create a side project with the introduced technology, deployed alongside the legacy one, to migrate iteratively and test without
+      affecting the production version
+2. **Swap and stabilise**: swap the technologies and get a build shippable to production as quickly as possible
+    * switch the feature flag (if one has been implemented), or update the build scripts to use the introduced technology
+    * fix anything critical that got broken (but couldn't be anticipated)
+    * disable anything broken non-essential (like testing capabilities, auto housekeeping, ...)
+3. **Completion and cleanup**: get the project back to its initial level of capabilities and remove any trace of the legacy technology
+
+Each steps can have several tasks, each must have a well-defined acceptance criteria and must as independent of the others as possible.
+
+You will interact with the lead developer to build a concrete and robust migration plan. Your role is:
+
+* **bring your expertise** and search capability to present the recommended approach to migrate these technologies, and the known gotchas.
+* **be concrete and specific of the current project** using sentence like "migrate the authentication module first to get a website on which we can log on, then
+  add the subscription functionality", rather than "migrate the modules one by one iteratively".
+* **give constructive feedback**: be balanced and objective, consider alternative perspectives, avoid excessive positivity or agreement.
+* **write the requirements**. You're also the scribe of the exercise, use the full range of markdown capabilities to write the conclusion of this interaction: a
+  plan that can be immediately used by a team of agents to perform the migration.
+
+---
+
+Now, give me direction to perform the migration and ask me the questions - one at a time - to do the inventory of the project so we can build the plan. The
+technologies to migrate is:
+
 Step 1: Evaluation & Scoping
 ---------------------------------------
 
-We're starting a new technological migration, and you have to produce the Requirement Document that gives strong and detailed vision of the target and how it
-should be delivered. **We prioritise iterative migration where small chunks can be deployed and immediately bring value**, instead of waiting the project to be
-complete and deployed as a major release.
+We're starting a new technological migration, and you have to produce the Technical Planning Document that details the plan, as a series of tasks, that will be
+followed and implemented by agents to completely migrate from the legacy technology.
 
-Your role is to use your knowledge, experience, and problem-solving skill to understand what I want to get to and help me to structure a complex migration into
-milestones. Each milestone will be mergeable into the main code base to bring a value (even minor). Think out of the box to solve the problem: pre-requisites
-that can be done before introducing the new technology, side-by-side deployments, feature flags, ... everything should be considered.
+You need to ensure that the project is never far (in time and effort) to be shippable to production by leveraging side-by-side deployments, feature flags, and
+pre-migration refactors whenever possible.
 
-You will then produce a document to report our discussions and summarise our plan, which will then be used for planning. We should have answered the following
-questions:
+Start by listing the changes that are required to perform the migration:
 
-* What the technology(ies) or practice(s) being retired, and what's the one getting introduced ?
-* How will the application look like once migrated ?
-* What are the migration milestones to continuously merge the chunks to migrate iteratively the application ?
-* What are the most complex part of this migration ? How can they be mitigated ?
+* use your knowledge of the legacy and the new technology: how they differ, and how migrations are recommended
+* inspect the code, and ask targeted questions to identify precisely, for this project, what needs to be done
 
-The document produced must follow the structure:
+Then, write 3 list of tasks:
 
-1. Migration **Summary** (1-3 sentences)
-2. **Technology landscape**: technologies retired, upgraded, introduced ; and the impact on other components
-3. **Milestones**: for each, write:
-    * a **one-sentence outcome** summary using clear, factual, and concise declarative statements (examples: "Terraform 0.x is not used
-      anywhere on the application", "A developer can run locally the whole stack")
-    * a **list of the main tasks** to achieve this outcome, not the one that are obvious from the outcome summary, only the one that brings better understanding
-      of the milestone.
-    * any notes or consideration we had during our discussion
+* **forward compatible refactoring**: tasks that can be done before the new technology is introduced to make the code forward compatible. Be creative:
+  remove/replace non-compatible libraries, extract business logic from code too coupled with legacy technology, ...
+* **swap technology and stabilise**: tasks to introduce the new technology and get a project shippable to production as quickly as possible even if it's
+  degraded: side deployment not feature complete yet, missing testing capabilities, ...
+* **completion and clean up**: tasks to get the new migrated codebase at the same level the previous one was (features and testing capabilities), and remove all
+  trace of the previous technology
 
-Ask me one question at a time. Each question should build on my previous answers, and the process should continue until all relevant details are gathered for a
-detailed and complete vision of the migration to execute.
+You should prefer using your knowledge and inspecting the code but you might ask me some questions if you need details, one at a time so you can build on my
+previous answer to ask the next question.
 
-Here's the migration idea:
+---
+
+Now, we're migrating from Create-React-App to Waku framework.
 
 ---
 
