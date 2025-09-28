@@ -51,7 +51,7 @@ User → API Gateway → Lambda (Waku SSR)
 
 ### Routing Migration Strategy
 
-**Decision**: Use gradual component migration approach (Option 3)
+**Decision**: Use gradual manual migration approach
 
 **Approach**:
 - Reorganize components to match Waku's expected file structure before migration
