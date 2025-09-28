@@ -1,6 +1,38 @@
 VIBE WORKFLOW: MIGRATION
 =======================================
 
+Step 1: Planning
+---------------------------------------
+
+We're planning a technical migration that will be done in 3 steps:
+
+1. **Anticipation**: advance the migration as far as possible without breaking the current build. It might involve:
+    * **forward compatible refactoring**: extract business logic into classes/functions that can be used by both retired and introduced technologies
+    * **removal of incompatible libraries**: remove or replace libraries that will not be compatible with the introduced technology
+    * **blue/green**: create a side project with the introduced technology, deployed alongside the legacy one, to migrate iteratively and test without
+      affecting the production version
+2. **Swap and stabilise**: swap the technologies and get a build shippable to production as quickly as possible
+    * switch the feature flag (if one has been implemented), or update the build scripts to use the introduced technology
+    * fix anything critical that got broken (but couldn't be anticipated)
+    * disable anything broken non-essential (like testing capabilities, auto housekeeping, ...)
+3. **Completion and cleanup**: get the project back to its initial level of capabilities and remove any trace of the legacy technology
+
+Each steps can have several tasks, each must have a well-defined acceptance criteria and must as independent of the others as possible.
+
+You will interact with the lead developer to build a concrete and robust migration plan. Your role is:
+
+* **bring your expertise** and search capability to present the recommended approach to migrate these technologies, and the known gotchas.
+* **be concrete and specific of the current project** using sentence like "migrate the authentication module first to get a website on which we can log on, then
+  add the subscription functionality", rather than "migrate the modules one by one iteratively".
+* **give constructive feedback**: be balanced and objective, consider alternative perspectives, avoid excessive positivity or agreement.
+* **write the requirements**. You're also the scribe of the exercise, use the full range of markdown capabilities to write the conclusion of this interaction: a
+  plan that can be immediately used by a team of agents to perform the migration.
+
+---
+
+Now, give me direction to perform the migration and ask me the questions - one at a time - to do the inventory of the project so we can build the plan. The
+technologies to migrate is:
+
 Step 1: Evaluation & Scoping
 ---------------------------------------
 
@@ -29,7 +61,7 @@ previous answer to ask the next question.
 
 ---
 
-Now, we're migrating from Create-React-App to Waku framework. 
+Now, we're migrating from Create-React-App to Waku framework.
 
 ---
 
