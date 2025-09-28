@@ -49,6 +49,21 @@ User → API Gateway → Lambda (Waku SSR)
 - **Faster migration**: Avoids complex SSR authentication patterns during initial cutover
 - **Gradual optimization**: Allows post-migration improvements without blocking delivery
 
+### Routing Migration Strategy
+
+**Decision**: Use gradual component migration approach (Option 3)
+
+**Approach**:
+- Reorganize components to match Waku's expected file structure before migration
+- Manually update React Router route definitions to reference new file locations
+- Validate routing works correctly with current system before switching to Waku
+
+**Rationale**:
+- **Simpler implementation**: No need to build automated file-scanning helpers
+- **Manual control**: Each route change can be tested individually
+- **Reduced migration surface area**: File structure changes are completed before Waku switch
+- **Early validation**: Routing conflicts identified while still using React Router
+
 ## Migration Plan
 
 ### Phase 1: Anticipation
@@ -57,10 +72,15 @@ User → API Gateway → Lambda (Waku SSR)
 
 **Steps**:
 1. **Launch empty Waku project** alongside current application under `/waku` path
-   * **Set up parallel build pipeline** for Waku in CDK without affecting current deployment
+2. **Set up parallel build pipeline** for Waku in CDK without affecting current deployment
+3. **Reorganize components to file-based structure** and update React Router route definitions to match Waku expectations
 
 ### Phase 2: Swap and Stabilise
 
+**Goal**: Gradually migrate functionality while maintaining system stability
+
+**Steps**:
+- **Test routing functionality** and fix any issues discovered during file structure migration
 
 ### Phase 3: Completion and Cleanup
 
