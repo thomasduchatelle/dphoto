@@ -35,6 +35,20 @@ User → API Gateway → Lambda (Waku SSR)
 - **Poor cacheability**: Application content is user-specific, making CloudFront caching benefits minimal
 - **Simplified deployment**: Single deployment pattern for all services in the CDK stack
 
+### Authentication and SSR Strategy
+
+**Decision**: Use client components with JWT authentication for initial migration
+
+**Approach**:
+- All components will use `'use client'` directive to maintain current behavior
+- Continue using JWT tokens sent in each API request
+- Migrate from React Router to file-based routing (mandatory for Waku)
+
+**Rationale**:
+- **Minimize migration risk**: Keeps existing authentication flow unchanged
+- **Faster migration**: Avoids complex SSR authentication patterns during initial cutover
+- **Gradual optimization**: Allows post-migration improvements without blocking delivery
+
 ## Migration Plan
 
 ### Phase 1: Anticipation
@@ -50,3 +64,8 @@ User → API Gateway → Lambda (Waku SSR)
 
 ### Phase 3: Completion and Cleanup
 
+**Goal**: Complete migration and remove legacy systems
+
+**Steps**:
+- **Review authentication to use HTTP+cookies** instead of JWT in requests
+- **Optimize components to use SSR** by removing unnecessary `'use client'` directives
