@@ -34,3 +34,30 @@ User → API Gateway → Lambda (Waku SSR)
 - **Consistency with existing system**: Matches the current Golang API architecture using API Gateway + Lambda
 - **Poor cacheability**: Application content is user-specific, making CloudFront caching benefits minimal
 - **Simplified deployment**: Single deployment pattern for all services in the CDK stack
+
+## Migration Plan
+
+### Phase 1: Anticipation
+
+**Goal**: Prepare for migration with minimal risk to current system
+
+**Steps**:
+1. **Launch empty Waku project** alongside current application under `/waku` path
+2. **Audit current dependencies** for React 18+ compatibility and identify breaking changes
+3. **Set up parallel build pipeline** for Waku in CDK without affecting current deployment
+4. **Create dependency compatibility matrix** documenting upgrade paths for key libraries
+5. **Establish testing baseline** by running current test suite and documenting any React 18 compatibility issues
+
+### Phase 2: Swap and Stabilise
+
+**Goal**: Gradually migrate functionality while maintaining system stability
+
+**Steps**:
+- TBD - To be planned after Phase 1 completion
+
+### Phase 3: Completion and Cleanup
+
+**Goal**: Complete migration and remove legacy systems
+
+**Steps**:
+- TBD - To be planned after Phase 2 completion
