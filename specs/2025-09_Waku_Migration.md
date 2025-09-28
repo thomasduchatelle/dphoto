@@ -17,12 +17,17 @@
 
 ### Target Runtime Architecture
 
-**Decision**: Use Option 2 without CloudFront - API Gateway + Lambda for SSR
+**Decision**: Use API Gateway + Lambda architecture without CloudFront for Waku SSR deployment
 
 **Architecture**:
 
 User → API Gateway → Lambda (Waku SSR)
                    ↘ S3 (static assets)
+
+**Alternative options considered**:
+- Lambda@Edge + CloudFront (higher per-request costs)
+- Static Generation + Incremental rendering (not suitable for user-specific content)
+- API Gateway + Lambda + CloudFront (adds unnecessary caching layer and costs)
 
 **Rationale**:
 - **Cost optimization**: Eliminates CloudFront minimum monthly costs (~$0.60/month)
