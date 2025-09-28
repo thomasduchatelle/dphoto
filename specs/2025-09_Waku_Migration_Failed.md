@@ -27,7 +27,7 @@
     │   ├── catalog/                       # Business components
     │   ├── AppNav/                        # Navigation (server)
     │   └── user.menu/                     # User interface (client)
-    └── lib/
+    └── lib/~~~~
         ├── auth/                          # Security logic (preserved)
         ├── catalog/                       # Data fetching + business logic
         └── contexts/                      # Client contexts
