@@ -1,0 +1,23 @@
+on:
+  workflow_call:
+    inputs: {}
+
+jobs:
+  test-waku:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ github.head_ref }}
+      - name: SemVer
+        id: semver
+        uses: ./.github/actions/semver
+      - name: Setup NodeJS
+        uses: ./.github/actions/install-node
+        with:
+          cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+
+      - name: Test Waku app
+        run: make test-waku

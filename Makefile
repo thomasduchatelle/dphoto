@@ -84,6 +84,25 @@ update-snapshots:
 build-web:
 	cd web && CI=true yarn build
 
+#######################################
+## WAKU
+#######################################
+
+.PHONY: clean-waku setup-waku test-waku build-waku
+
+clean-waku:
+	cd web-waku && rm -rf dist/
+
+setup-waku:
+	cd web-waku && npm install
+
+test-waku:
+	@echo "Waku tests - placeholder (no tests configured yet)"
+	cd web-waku && npm run build
+
+build-waku:
+	cd web-waku && npm run build
+
 start:
 	docker-compose up -d wiremock && \
 		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start

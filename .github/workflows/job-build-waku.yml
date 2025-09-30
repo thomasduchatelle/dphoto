@@ -1,0 +1,34 @@
+on:
+  workflow_call:
+    outputs:
+      cache-suffix:
+        description: Waku cache suffix
+        value: ${{ jobs.build-waku.outputs.cache-suffix }}
+
+jobs:
+  build-waku:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: SemVer
+        id: semver
+        uses: ./.github/actions/semver
+      - name: Setup NodeJS
+        uses: ./.github/actions/install-node
+        with:
+          cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+
+      - name: Build for release
+        run: make build-waku
+
+      - name: Dist Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-waku
+          path: |
+            web-waku/dist/**
