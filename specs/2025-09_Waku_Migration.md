@@ -137,4 +137,4 @@ User → API Gateway → Lambda (Waku SSR)
 - **Review authentication to use HTTP+cookies** instead of JWT in requests
 - **Optimize components to use SSR** by removing unnecessary `'use client'` directives
 - **Migrate to server-side data fetching patterns** where appropriate for SSR components
-- **Optimize styling performance for SSR** by improving CSS extraction and reducing hydration mismatches (low priority)
+- **Optimize styling performance for SSR** by migrating to CSS modules (CSS extraction and reducing hydration mismatches) - low priority
