@@ -108,6 +108,22 @@ User → API Gateway → Lambda (Waku SSR)
 - **Risk reduction**: Avoid changing styling and build system simultaneously
 - **Future optimization**: SSR styling improvements can be addressed post-migration
 
+### Unit Testing Strategy
+
+**Decision**: Continue using Jest with React Testing Library, migrate to Vitest post-migration
+
+**Approach**:
+- Keep Jest as test runner during CRA to Waku migration
+- Maintain current React Testing Library patterns and setup
+- Configure Jest explicitly for Waku instead of via react-scripts
+- Migrate to Vitest after Waku migration is stable
+
+**Rationale**:
+- **CRA compatibility**: Vitest cannot be easily used with Create React App
+- **Risk reduction**: Avoid changing testing framework and build system simultaneously
+- **Proven patterns**: Current Jest + RTL setup works well with Waku
+- **Performance optimization**: Vitest migration can provide faster test execution post-migration
+
 ## Migration Plan
 
 ### Phase 1: Anticipation
@@ -125,6 +141,7 @@ User → API Gateway → Lambda (Waku SSR)
 
 **Steps**:
 - **Switch build system from CRA to Waku** while keeping React 18
+- **Configure Jest explicitly** for Waku environment instead of via react-scripts
 - **Test routing functionality** and fix any issues discovered during file structure migration
 - **Validate all functionality** works with Waku + React 18
 
@@ -134,6 +151,7 @@ User → API Gateway → Lambda (Waku SSR)
 
 **Steps**:
 - **Upgrade to React 19** and test compatibility
+- **Migrate from Jest to Vitest** for improved test performance
 - **Review authentication to use HTTP+cookies** instead of JWT in requests
 - **Optimize components to use SSR** by removing unnecessary `'use client'` directives
 - **Migrate to server-side data fetching patterns** where appropriate for SSR components
