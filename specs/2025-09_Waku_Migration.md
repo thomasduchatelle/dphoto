@@ -124,6 +124,22 @@ User → API Gateway → Lambda (Waku SSR)
 - **Proven patterns**: Current Jest + RTL setup works well with Waku
 - **Performance optimization**: Vitest migration can provide faster test execution post-migration
 
+### Visual Testing Strategy
+
+**Decision**: Replace Storybook with Ladle + Playwright, fallback to Storybook 8 + Chromatic if needed
+
+**Approach**:
+- Prototype Ladle + Playwright visual testing solution during Phase 1
+- Complete migration from Storybook 6.5.16 before introducing Waku
+- Fallback to Storybook 8 + Chromatic (free tier) if Ladle prototype doesn't meet requirements
+- Maintain same visual regression workflow: before/after/diff images on failures
+
+**Rationale**:
+- **Cost optimization**: Ladle + Playwright is completely free vs Storybook licensing concerns
+- **Modern tooling**: Replace deprecated addon-storyshots with actively maintained solutions
+- **Early validation**: Test visual tooling compatibility before build system migration
+- **Risk mitigation**: Validate solution works with current React 18 + MUI setup before Waku
+
 ## Migration Plan
 
 ### Phase 1: Anticipation
@@ -133,7 +149,9 @@ User → API Gateway → Lambda (Waku SSR)
 **Steps**:
 1. **Launch empty Waku project** alongside current application under `/waku` path
 2. **Set up parallel build pipeline** for Waku in CDK without affecting current deployment
-3. **Reorganize components to file-based structure** and update React Router route definitions to match Waku expectations
+3. **Prototype Ladle + Playwright visual testing** with current React 18 + CRA setup
+4. **Complete visual testing migration** from Storybook to chosen solution (Ladle + Playwright or Storybook 8 + Chromatic)
+5. **Reorganize components to file-based structure** and update React Router route definitions to match Waku expectations
 
 ### Phase 2: Swap and Stabilise
 
@@ -144,6 +162,7 @@ User → API Gateway → Lambda (Waku SSR)
 - **Configure Jest explicitly** for Waku environment instead of via react-scripts
 - **Test routing functionality** and fix any issues discovered during file structure migration
 - **Validate all functionality** works with Waku + React 18
+- **Verify visual testing integration** works with Waku build system
 
 ### Phase 3: Completion and Cleanup
 
