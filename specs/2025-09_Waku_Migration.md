@@ -92,6 +92,22 @@ User → API Gateway → Lambda (Waku SSR)
 - **Minimize migration complexity**: Avoids changing state management and build system simultaneously
 - **Natural progression**: Server-side data fetching becomes relevant when adopting SSR patterns
 
+### Styling and CSS Strategy
+
+**Decision**: Continue using Material-UI with Emotion for CSS-in-JS
+
+**Approach**:
+- Keep current MUI v5 components and theme system
+- Maintain Emotion for styled components
+- Continue using DPhotoTheme wrapper component
+- No changes to styling approach during initial migration
+
+**Rationale**:
+- **Zero migration effort**: Current styling stack is compatible with Waku
+- **Proven compatibility**: MUI v5 + Emotion work with SSR when properly configured
+- **Risk reduction**: Avoid changing styling and build system simultaneously
+- **Future optimization**: SSR styling improvements can be addressed post-migration
+
 ## Migration Plan
 
 ### Phase 1: Anticipation
@@ -121,3 +137,4 @@ User → API Gateway → Lambda (Waku SSR)
 - **Review authentication to use HTTP+cookies** instead of JWT in requests
 - **Optimize components to use SSR** by removing unnecessary `'use client'` directives
 - **Migrate to server-side data fetching patterns** where appropriate for SSR components
+- **Optimize styling performance for SSR** by improving CSS extraction and reducing hydration mismatches (low priority)
