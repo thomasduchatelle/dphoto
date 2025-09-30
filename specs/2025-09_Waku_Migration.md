@@ -78,6 +78,20 @@ User → API Gateway → Lambda (Waku SSR)
 - **Dependency compatibility**: Current libraries are tested with React 18
 - **Sequential validation**: Test Waku stability before introducing React 19 breaking changes
 
+### State Management and Data Fetching Strategy
+
+**Decision**: Continue using React state patterns, migrate to server-side data fetching with SSR adoption
+
+**Approach**:
+- Keep current React state management (useState, useEffect, useContext) during initial migration
+- Maintain client-side data fetching patterns with JWT authentication
+- Migrate to server component data fetching patterns when adopting SSR optimizations
+
+**Rationale**:
+- **Consistency with client-first approach**: Aligns with keeping all components client-side initially
+- **Minimize migration complexity**: Avoids changing state management and build system simultaneously
+- **Natural progression**: Server-side data fetching becomes relevant when adopting SSR patterns
+
 ## Migration Plan
 
 ### Phase 1: Anticipation
@@ -106,3 +120,4 @@ User → API Gateway → Lambda (Waku SSR)
 - **Upgrade to React 19** and test compatibility
 - **Review authentication to use HTTP+cookies** instead of JWT in requests
 - **Optimize components to use SSR** by removing unnecessary `'use client'` directives
+- **Migrate to server-side data fetching patterns** where appropriate for SSR components
