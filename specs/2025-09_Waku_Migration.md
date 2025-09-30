@@ -1,6 +1,10 @@
 # Waku Migration Decision Log
 
-## Migration Topics to Discuss
+## Context
+
+This document records decisions for migrating a React application from Create React App (CRA) to Waku, a modern React framework with SSR capabilities. The current application uses React 18, Material-UI v5, Emotion for styling, React Router for routing, and JWT authentication. The application runs on AWS using CDK for infrastructure.
+
+## Migration Topics Discussed
 
 - Build System & Configuration
 - Routing Architecture  
@@ -174,4 +178,129 @@ User → API Gateway → Lambda (Waku SSR)
 - **Review authentication to use HTTP+cookies** instead of JWT in requests
 - **Optimize components to use SSR** by removing unnecessary `'use client'` directives
 - **Migrate to server-side data fetching patterns** where appropriate for SSR components
-- **Optimize styling performance for SSR** by migrating to CSS modules (CSS extraction and reducing hydration mismatches) - low priority
+- **Optimize styling performance for SSR** by improving CSS extraction and reducing hydration mismatches (low priority)
+
+## Phase 1 Implementation Prompts
+
+### Task 1: Launch Empty Waku Project
+
+**Context**: Create a minimal Waku project alongside the existing CRA application to validate the framework and prepare for migration. The existing application runs at the root path, and the Waku project should be accessible at `/waku` during development.
+
+**Scope**: 
+- Create a new Waku project in a separate directory (e.g., `waku-app/`)
+- Set up basic Waku configuration with file-based routing
+- Create a simple "Hello World" page to verify the setup works
+- Configure development server to run on a different port than the CRA app
+- Do NOT attempt to migrate any existing components or logic yet
+
+**Requirements**:
+- Use React 18 (not React 19) to match current CRA version
+- Ensure the Waku dev server starts without conflicts with the existing CRA dev server
+- Verify hot reloading and basic functionality work
+- Document the setup process and any configuration needed
+
+**Deliverables**:
+- Working Waku project directory with basic setup
+- Development server running successfully
+- Simple test page accessible at the configured path
+- Setup documentation for other team members
+
+### Task 2: Set Up Parallel Build Pipeline in CDK
+
+**Context**: Add Waku build and deployment configuration to the existing CDK infrastructure without affecting the current CRA deployment. This allows testing the deployment process before the actual migration.
+
+**Scope**:
+- Extend existing CDK stack to include Waku build and deployment alongside current CRA setup
+- Configure API Gateway + Lambda architecture for Waku SSR as decided
+- Set up S3 bucket for Waku static assets separate from current assets
+- Use separate paths/domains to avoid conflicts (e.g., `/waku` prefix)
+- Do NOT modify or affect the existing CRA deployment pipeline
+
+**Requirements**:
+- Deploy to same AWS account but isolated resources where possible
+- Follow the decided architecture: API Gateway + Lambda (SSR) + S3 (static assets)
+- No CloudFront as per the architecture decision
+- Maintain existing CRA deployment unchanged
+- Test deployment pipeline with the basic Waku app from Task 1
+
+**Deliverables**:
+- Updated CDK code with parallel Waku deployment
+- Successful deployment of basic Waku app to AWS
+- Separate build pipeline that doesn't interfere with existing processes
+- Documentation of the deployment process and architecture
+
+### Task 3: Prototype Ladle + Playwright Visual Testing
+
+**Context**: Test Ladle + Playwright as a replacement for the current Storybook 6.5.16 + addon-storyshots setup. The current workflow uses Storybook for component development and addon-storyshots for visual regression testing with before/after/diff images on failures.
+
+**Scope**:
+- Set up Ladle for component development with existing MUI components
+- Configure Playwright for visual regression testing
+- Test with 2-3 existing components from the current application
+- Replicate the current workflow: develop components, take screenshots, detect changes, generate diff images
+- Compare development experience with current Storybook workflow
+- Do NOT migrate the entire component library yet
+
+**Requirements**:
+- Use current React 18 + CRA setup for testing
+- Test with existing Material-UI components and DPhotoTheme
+- Verify screenshot consistency and diff generation works reliably
+- Document any limitations or issues compared to current Storybook setup
+- Test build integration and CI/CD compatibility
+
+**Deliverables**:
+- Working Ladle setup with sample components
+- Playwright visual testing configuration
+- Test results comparing Ladle vs current Storybook workflow
+- Recommendation report on whether to proceed with Ladle or fallback to Storybook 8 + Chromatic
+- Setup documentation and configuration files
+
+### Task 4: Complete Visual Testing Migration
+
+**Context**: Based on the prototype results from Task 3, complete the migration from Storybook 6.5.16 to the chosen solution (Ladle + Playwright or Storybook 8 + Chromatic). This must be completed before introducing Waku to reduce the number of simultaneous changes.
+
+**Scope**:
+- Migrate all existing Storybook stories to the chosen solution
+- Replace addon-storyshots with the new visual testing setup
+- Update CI/CD pipeline to use the new visual testing approach
+- Ensure all team members can use the new development workflow
+- Remove old Storybook 6.5.16 dependencies and configuration
+
+**Requirements**:
+- Maintain exact same visual regression testing workflow as before
+- All existing component stories must work in the new setup
+- CI/CD integration must work with build failures on visual changes
+- Team training/documentation for the new workflow
+- Verify all visual tests pass with the new setup
+
+**Deliverables**:
+- Complete migration to chosen visual testing solution
+- All component stories migrated and working
+- Updated CI/CD pipeline with new visual testing
+- Team documentation and training materials
+- Removal of old Storybook dependencies
+
+### Task 5: Reorganize Components to File-Based Structure
+
+**Context**: Prepare the current React Router-based application for Waku's mandatory file-based routing by reorganizing components to match Waku's expected structure. This must be done while keeping React Router functional to validate the changes before switching to Waku.
+
+**Scope**:
+- Analyze current routing structure and map to Waku's file-based conventions
+- Move components to pages/ directory with appropriate file naming (e.g., [id].tsx for dynamic routes)
+- Update React Router route definitions to reference new file locations
+- Test that all routes work correctly with the new file structure
+- Do NOT remove React Router or change routing logic yet - only reorganize files
+
+**Requirements**:
+- Map current routes to Waku file conventions (index.tsx, [param].tsx, etc.)
+- Maintain all existing functionality and routing behavior
+- Update all imports and references to moved files
+- Verify all routes work correctly after reorganization
+- Document the new file structure and routing conventions
+
+**Deliverables**:
+- Components reorganized into Waku-compatible file structure
+- Updated React Router configuration using new file locations
+- All routes tested and working with new structure
+- Documentation of file structure mapping and conventions
+- Validation that the application works identically to before reorganization
