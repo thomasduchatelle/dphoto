@@ -184,26 +184,22 @@ User → API Gateway → Lambda (Waku SSR)
 
 ### Task 1: Launch Empty Waku Project
 
-**Context**: Create a minimal Waku project alongside the existing CRA application to validate the framework and prepare for migration. The existing application runs at the root path, and the Waku project should be accessible at `/waku` during development.
+**Context**: A minimal WAKU project has been created in `/web-waku`. You need to have it tested, build and deployed alongside the current root application as part of the build pipelines.
 
-**Scope**: 
-- Create a new Waku project in a separate directory (e.g., `waku-app/`)
-- Set up basic Waku configuration with file-based routing
-- Create a simple "Hello World" page to verify the setup works
-- Configure development server to run on a different port than the CRA app
+* `/`: goes to the current WEB application hosted in S3 (unchanged)
+* `/waku`: goes to the new WAKU project (new)
+
+**Scope**:
+* update the project `deployments/cdk` to deploy the new WEB application alongside the existing one
+- create a new job `.github/workflows/job-test-waku.yml` to run the waku tests (similar example: `.github/workflows/job-test-ts.yml`)
+- create a new job `.github/workflows/job-build-waku.yml` to build and publish the artefact (similar example: `.github/workflows/job-build-ts.yml`)
+- update `.github/workflows/workflow-feature-branch.yml` and `.github/workflows/workflow-main.yml` to integrate both test abd build jobs
+- update `.github/workflows/job-deploy.yml` to deploy the WAKU app (using jobs updated previously)
 - Do NOT attempt to migrate any existing components or logic yet
 
 **Requirements**:
-- Use React 18 (not React 19) to match current CRA version
 - Ensure the Waku dev server starts without conflicts with the existing CRA dev server
-- Verify hot reloading and basic functionality work
 - Document the setup process and any configuration needed
-
-**Deliverables**:
-- Working Waku project directory with basic setup
-- Development server running successfully
-- Simple test page accessible at the configured path
-- Setup documentation for other team members
 
 ### Task 2: Set Up Parallel Build Pipeline in CDK
 
