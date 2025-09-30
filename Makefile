@@ -2,14 +2,14 @@
 
 all: clean test build
 
-clean: clean-web clean-api
+clean: clean-web clean-waku clean-api
 	go clean -testcache
 
-setup: setup-cdk setup-app
+setup: setup-cdk setup-waku setup-app
 
-test: test-cdk test-go test-web
+test: test-cdk test-go test-web test-waku
 
-build: build-go build-app
+build: build-go build-app build-waku
 
 deploy: deploy-cdk deploy-app install-cli
 
@@ -68,13 +68,13 @@ install-cli:
 
 .PHONY: clean-web setup-web test-web build-web update-snapshots
 
-clean-web: clean-waku
+clean-web:
 	cd web && yarn clean
 
-setup-web: setup-waku
+setup-web:
 	cd web && yarn
 
-test-web: test-waku
+test-web:
 	cd web && yarn test:ci
 
 update-snapshots:
