@@ -64,6 +64,20 @@ User → API Gateway → Lambda (Waku SSR)
 - **Reduced migration surface area**: File structure changes are completed before Waku switch
 - **Early validation**: Routing conflicts identified while still using React Router
 
+### React Version Migration Strategy
+
+**Decision**: Stay on React 18 for CRA to Waku migration, upgrade to React 19 post-migration
+
+**Approach**:
+- Phase 2: CRA + React 18 → Waku + React 18 (build system migration only)
+- Phase 3: Waku + React 18 → Waku + React 19 (React version upgrade only)
+
+**Rationale**:
+- **CRA incompatibility**: React Scripts 5.0.1 does not support React 19
+- **Risk reduction**: Isolate build system changes from React version changes
+- **Dependency compatibility**: Current libraries are tested with React 18
+- **Sequential validation**: Test Waku stability before introducing React 19 breaking changes
+
 ## Migration Plan
 
 ### Phase 1: Anticipation
@@ -77,15 +91,18 @@ User → API Gateway → Lambda (Waku SSR)
 
 ### Phase 2: Swap and Stabilise
 
-**Goal**: Gradually migrate functionality while maintaining system stability
+**Goal**: Migrate from CRA to Waku while maintaining React 18
 
 **Steps**:
+- **Switch build system from CRA to Waku** while keeping React 18
 - **Test routing functionality** and fix any issues discovered during file structure migration
+- **Validate all functionality** works with Waku + React 18
 
 ### Phase 3: Completion and Cleanup
 
-**Goal**: Complete migration and remove legacy systems
+**Goal**: Complete migration and optimize system
 
 **Steps**:
+- **Upgrade to React 19** and test compatibility
 - **Review authentication to use HTTP+cookies** instead of JWT in requests
 - **Optimize components to use SSR** by removing unnecessary `'use client'` directives
