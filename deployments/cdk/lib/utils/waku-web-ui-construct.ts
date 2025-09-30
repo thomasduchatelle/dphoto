@@ -43,7 +43,15 @@ export class WakuWebUiConstruct extends Construct {
             }
         );
 
-        new apigatewayv2.HttpRoute(this, 'WakuRoute', {
+        // Route for /waku (exact match) - serves index.html
+        new apigatewayv2.HttpRoute(this, 'WakuIndexRoute', {
+            httpApi: props.apiGateway.httpApi,
+            routeKey: apigatewayv2.HttpRouteKey.with('/waku', apigatewayv2.HttpMethod.GET),
+            integration: wakuIntegration
+        });
+
+        // Route for /waku/* (all subroutes) - serves static assets and SPA routes
+        new apigatewayv2.HttpRoute(this, 'WakuProxyRoute', {
             httpApi: props.apiGateway.httpApi,
             routeKey: apigatewayv2.HttpRouteKey.with('/waku/{proxy+}', apigatewayv2.HttpMethod.GET),
             integration: wakuIntegration
