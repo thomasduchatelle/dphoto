@@ -7,7 +7,7 @@ TODOs
 2. [X] merging two React State into one more consistent to improve user experience of Sharing feature
    1. ~~refactoring to break down the massive reducer - needs suggestion and implementation~~
 3. [X] migrating to AWS CDK from Terraform
-4. [ ] migrating to AWS CDK from Serverless
+4. [X] migrating to AWS CDK from Serverless
    1. aiming for 2 stacks: long term data stores, and WEB overlay
    2. migration paths to be included and executed
    3. new domain to be used

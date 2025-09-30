@@ -68,13 +68,13 @@ install-cli:
 
 .PHONY: clean-web setup-web test-web build-web update-snapshots
 
-clean-web:
+clean-web: clean-waku
 	cd web && yarn clean
 
-setup-web:
+setup-web: setup-waku
 	cd web && yarn
 
-test-web:
+test-web: test-waku
 	cd web && yarn test:ci
 
 update-snapshots:
@@ -83,6 +83,17 @@ update-snapshots:
 
 build-web:
 	cd web && CI=true yarn build
+
+start:
+	docker-compose up -d wiremock && \
+		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
+
+storybook:
+	cd web && yarn storybook
+
+test-web-ci:
+	docker build -t dphoto-puppeteer ./tools/puppeteer/
+	docker run --rm -v "$(shell pwd):/app" -it dphoto-puppeteer yarn test:ci
 
 #######################################
 ## WAKU
@@ -103,17 +114,8 @@ test-waku:
 build-waku:
 	cd web-waku && npm run build
 
-start:
-	docker-compose up -d wiremock && \
-		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
-
-storybook:
-	cd web && yarn storybook
-
-test-web-ci:
-	docker build -t dphoto-puppeteer ./tools/puppeteer/
-	docker run --rm -v "$(shell pwd):/app" -it dphoto-puppeteer yarn test:ci
-
+start-waku:
+	cd web-waku && npm run dev
 
 #######################################
 ## API
