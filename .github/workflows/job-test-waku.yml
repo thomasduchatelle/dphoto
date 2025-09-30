@@ -1,6 +1,6 @@
 on:
   workflow_call:
-    inputs: {}
+    inputs: { }
 
 jobs:
   test-waku:
@@ -14,10 +14,17 @@ jobs:
       - name: SemVer
         id: semver
         uses: ./.github/actions/semver
-      - name: Setup NodeJS
-        uses: ./.github/actions/install-node
+
+      - uses: actions/setup-node@v4
         with:
-          cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+          node-version: '24'
+      - name: Cache we-waku/node_modules
+        uses: actions/cache@v4
+        with:
+          path: we-waku/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('we-waku/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Test Waku app
-        run: make test-waku
+        run: make setup-waku test-waku

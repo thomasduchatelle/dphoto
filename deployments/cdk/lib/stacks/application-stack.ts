@@ -44,8 +44,7 @@ export class ApplicationStack extends cdk.Stack {
 
         new WakuWebUiConstruct(this, 'WakuWebUi', {
             environmentName: props.environmentName,
-            domainName: config.domainName,
-            apiGateway: apiGateway
+            httpApi: apiGateway.httpApi,
         });
 
         new VersionEndpointConstruct(this, 'VersionEndpoint', {

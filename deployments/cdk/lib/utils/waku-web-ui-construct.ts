@@ -1,67 +1,44 @@
 import * as cdk from 'aws-cdk-lib';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as s3_deployment from 'aws-cdk-lib/aws-s3-deployment';
-import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
-import * as apigatewayv2_integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import {NodejsFunction} from 'aws-cdk-lib/aws-lambda-nodejs';
 import {Construct} from 'constructs';
-import {ApiGatewayConstruct} from './api-gateway-construct';
+import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
+import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import {HttpLambdaIntegration} from "aws-cdk-lib/aws-apigatewayv2-integrations";
 
 export interface WakuWebUiConstructProps {
     environmentName: string;
-    domainName: string;
-    apiGateway: ApiGatewayConstruct;
+    httpApi: apigatewayv2.HttpApi;
 }
 
 export class WakuWebUiConstruct extends Construct {
-    public readonly wakuBucket: s3.Bucket;
+    private readonly lambda: NodejsFunction;
+    private readonly integration: HttpLambdaIntegration;
 
-    constructor(scope: Construct, id: string, props: WakuWebUiConstructProps) {
+    constructor(scope: Construct, id: string, {httpApi}: WakuWebUiConstructProps) {
         super(scope, id);
 
-        const prefix = `dphoto-${props.environmentName}`;
-
-        this.wakuBucket = new s3.Bucket(this, 'WakuBucket', {
-            bucketName: `${prefix}-waku-static-public`,
-            publicReadAccess: true,
-            blockPublicAccess: new s3.BlockPublicAccess({
-                blockPublicAcls: false,
-                blockPublicPolicy: false,
-                ignorePublicAcls: false,
-                restrictPublicBuckets: false
-            }),
-            websiteIndexDocument: 'index.html',
-            websiteErrorDocument: 'index.html',
-            removalPolicy: cdk.RemovalPolicy.DESTROY,
-            autoDeleteObjects: true
+        this.lambda = new NodejsFunction(this, 'Lambda', {
+            entry: '../../web-waku/dist/serve-asw-lambda.js',
+            handler: 'handler',
+            runtime: lambda.Runtime.NODEJS_20_X,
+            memorySize: 512,
+            timeout: cdk.Duration.seconds(10),
+            environment: {
+                NODE_ENV: 'production',
+            },
         });
 
-        const wakuIntegration = new apigatewayv2_integrations.HttpUrlIntegration(
-            'WakuIntegration',
-            this.wakuBucket.bucketWebsiteUrl,
-            {
-                method: apigatewayv2.HttpMethod.GET
-            }
+
+        this.integration = new apigatewayv2_integrations.HttpLambdaIntegration(
+            `${this.node.id}Integration`,
+            this.lambda,
         );
 
-        // Route for /waku (exact match) - serves index.html
-        new apigatewayv2.HttpRoute(this, 'WakuIndexRoute', {
-            httpApi: props.apiGateway.httpApi,
-            routeKey: apigatewayv2.HttpRouteKey.with('/waku', apigatewayv2.HttpMethod.GET),
-            integration: wakuIntegration
-        });
-
-        // Route for /waku/* (all subroutes) - serves static assets and SPA routes
-        new apigatewayv2.HttpRoute(this, 'WakuProxyRoute', {
-            httpApi: props.apiGateway.httpApi,
-            routeKey: apigatewayv2.HttpRouteKey.with('/waku/{proxy+}', apigatewayv2.HttpMethod.GET),
-            integration: wakuIntegration
-        });
-
-        new s3_deployment.BucketDeployment(this, 'WakuBucketDeployment', {
-            sources: [s3_deployment.Source.asset('../../web-waku/dist/public')],
-            destinationBucket: this.wakuBucket,
-            prune: true,
-            retainOnDelete: false,
+        new apigatewayv2.HttpRoute(this, 'Route', {
+            httpApi,
+            routeKey: apigatewayv2.HttpRouteKey.with('/waku', apigatewayv2.HttpMethod.ANY),
+            integration: this.integration
         });
     }
 }
