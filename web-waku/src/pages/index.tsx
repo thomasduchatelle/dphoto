@@ -21,8 +21,8 @@ export default async function HomePage() {
 const getData = async () => {
   const data = {
     title: 'Waku',
-    headline: 'Waku',
-    body: 'Hello world!',
+    headline: 'Salut Lea',
+    body: "Il est l'heure d'aller se coucher maintenant.",
   };
 
   return data;

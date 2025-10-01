@@ -26,7 +26,6 @@ setup-cdk:
 	command -v cdk > /dev/null || npm install -g aws-cdk
 
 test-cdk:
-	mkdir -p bin && echo "dummy zip content" > bin/waku-lambda.zip
 	cd $(CDK_DIR) && npm test
 
 deploy-cdk:
@@ -103,7 +102,7 @@ test-web-ci:
 .PHONY: clean-waku setup-waku test-waku build-waku
 
 clean-waku:
-	cd web-waku && rm -rf dist/
+	cd web-waku && rm -rf dist/ && rm -f bin/waku-lambda.zip
 
 setup-waku:
 	cd web-waku && npm install
@@ -113,11 +112,7 @@ test-waku:
 	cd web-waku && npm run build
 
 build-waku:
-	cd web-waku && npm run build:ssr
-	# Create Lambda ZIP package
-	cd web-waku/dist && \
-		mkdir -p ../../bin && \
-		zip -r ../../bin/waku-lambda.zip . -x "*.DS_Store"
+	cd web-waku && npm run build:lambda
 
 start-waku:
 	cd web-waku && npm run dev

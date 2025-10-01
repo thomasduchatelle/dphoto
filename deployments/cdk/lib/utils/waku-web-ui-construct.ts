@@ -21,7 +21,6 @@ export class WakuWebUiConstruct extends Construct {
             code: lambda.Code.fromAsset('../../bin/waku-lambda.zip'),
             handler: 'serve-aws-lambda.handler',
             runtime: lambda.Runtime.NODEJS_20_X,
-            architecture: lambda.Architecture.X86_64,
             memorySize: 512,
             timeout: cdk.Duration.seconds(10),
             environment: {
