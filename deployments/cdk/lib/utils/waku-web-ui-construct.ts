@@ -4,6 +4,7 @@ import {Construct} from 'constructs';
 import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import {HttpLambdaIntegration} from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import * as logs from "aws-cdk-lib/aws-logs";
 
 export interface WakuWebUiConstructProps {
     environmentName: string;
@@ -14,15 +15,17 @@ export class WakuWebUiConstruct extends Construct {
     private readonly lambda: lambda.Function;
     private readonly integration: HttpLambdaIntegration;
 
-    constructor(scope: Construct, id: string, {httpApi}: WakuWebUiConstructProps) {
+    constructor(scope: Construct, id: string, {httpApi, environmentName}: WakuWebUiConstructProps) {
         super(scope, id);
 
         this.lambda = new lambda.Function(this, 'Lambda', {
+            functionName: `dphoto-${environmentName}-waku`,
             code: lambda.Code.fromAsset('../../bin/waku-lambda.zip'),
             handler: 'serve-aws-lambda.handler',
             runtime: lambda.Runtime.NODEJS_20_X,
-            memorySize: 512,
+            memorySize: 256,
             timeout: cdk.Duration.seconds(10),
+            logRetention: logs.RetentionDays.ONE_WEEK,
             environment: {
                 NODE_ENV: 'production',
             },
