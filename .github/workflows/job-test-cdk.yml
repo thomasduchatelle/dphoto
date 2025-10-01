@@ -21,5 +21,4 @@ jobs:
         uses: ./.github/actions/install-cdk
 
       - name: Run CDK tests
-        working-directory: deployments/cdk
-        run: npm test
+        run: make test-cdk
