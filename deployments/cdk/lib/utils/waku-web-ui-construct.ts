@@ -20,7 +20,8 @@ export class WakuWebUiConstruct extends Construct {
 
         this.lambda = new lambda.Function(this, 'Lambda', {
             functionName: `dphoto-${environmentName}-waku`,
-            code: lambda.Code.fromAsset('../../bin/waku-lambda.zip'),
+            // code: lambda.Code.fromAsset('../../bin/waku-lambda.zip'),
+            code: lambda.Code.fromAsset('../../web-waku/dist/'),
             handler: 'serve-aws-lambda.handler',
             runtime: lambda.Runtime.NODEJS_20_X,
             memorySize: 256,
@@ -28,14 +29,35 @@ export class WakuWebUiConstruct extends Construct {
             logRetention: logs.RetentionDays.ONE_WEEK,
             environment: {
                 NODE_ENV: 'production',
+                // PUBLIC_URL: '/waku',
             },
         });
 
 
         this.integration = new apigatewayv2_integrations.HttpLambdaIntegration(
-            `${this.node.id}Integration`,
+            `WakuIntegration`,
             this.lambda,
+            // {
+            //     parameterMapping: new apigatewayv2.ParameterMapping().overwritePath(apigatewayv2.MappingValue.custom("/")),
+            // }
+            // {
+            //     parameterMapping: new apigatewayv2.ParameterMapping().overwritePath(apigatewayv2.MappingValue.requestPathParam("proxy")),
+            // }
         );
+
+        new apigatewayv2.HttpRoute(this, 'RouteProxy', {
+            httpApi,
+            routeKey: apigatewayv2.HttpRouteKey.with('/waku/{proxy+}', apigatewayv2.HttpMethod.ANY),
+            integration: this.integration
+        });
+
+        // const integration = new apigatewayv2_integrations.HttpLambdaIntegration(
+        //     `${this.node.id}Integration2`,
+        //     this.lambda,
+        //     {
+        //         parameterMapping: new apigatewayv2.ParameterMapping().overwritePath(apigatewayv2.MappingValue.custom("/")),
+        //     }
+        // );
 
         new apigatewayv2.HttpRoute(this, 'Route', {
             httpApi,

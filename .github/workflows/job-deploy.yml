@@ -41,7 +41,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist-waku
-          path: bin/waku-lambda.zip
+          path: web-waku/dist
 
       - name: Setup CDK
         uses: ./.github/actions/install-cdk

@@ -1,4 +1,4 @@
-.PHONY: all clean setup test build deploy test-go
+.PHONY: all clean setup test build deploy test-go install
 
 all: clean test build
 
@@ -11,7 +11,9 @@ test: test-cdk test-go test-web test-waku
 
 build: build-go build-app build-waku
 
-deploy: deploy-cdk deploy-app install-cli
+deploy: deploy-cdk
+
+install: install-cli
 
 #######################################
 ## CDK
@@ -29,7 +31,7 @@ test-cdk:
 	cd $(CDK_DIR) && npm test
 
 deploy-cdk:
-	cd $(CDK_DIR) && cdk deploy --context environment=next
+	cd $(CDK_DIR) && cdk deploy --context environment=next --all
 
 #######################################
 ## PKG & CLI
@@ -152,10 +154,6 @@ clean-app: clean-api clean-web
 test-app: test-api test-web
 
 build-app: build-api build-web
-
-AWS_PROFILE ?= dphoto
-deploy-app: clean-web clean-api build-app
-	export AWS_PROFILE="$(AWS_PROFILE)" && cd deployments/sls && sls deploy
 
 bg:
 	docker-compose --profile bg up -d

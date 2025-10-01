@@ -7,7 +7,7 @@
     "dev": "waku dev",
     "build": "waku build",
     "start": "waku start",
-    "build:lambda": "waku build --with-aws-lambda && cd dist && mkdir -p ../../bin && rm -f ../../bin/waku-lambda.zip && zip -r ../../bin/waku-lambda.zip ."
+    "build:lambda": "rm -rf dist && waku build --with-aws-lambda"
   },
   "dependencies": {
     "react": "19.1.1",
