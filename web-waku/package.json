@@ -7,7 +7,7 @@
     "dev": "waku dev",
     "build": "waku build",
     "start": "waku start",
-    "build:ssr": "npm run build -- --with-aws-lambda"
+    "build:ssr": "waku build --with-aws-lambda"
   },
   "dependencies": {
     "react": "19.1.1",

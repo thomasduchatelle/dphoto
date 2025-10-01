@@ -19,7 +19,7 @@ export class WakuWebUiConstruct extends Construct {
         super(scope, id);
 
         this.lambda = new NodejsFunction(this, 'Lambda', {
-            entry: '../../web-waku/dist/serve-asw-lambda.js',
+            entry: '../../web-waku/dist/serve-aws-lambda.js',
             handler: 'handler',
             runtime: lambda.Runtime.NODEJS_20_X,
             memorySize: 512,

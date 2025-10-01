@@ -26,6 +26,7 @@ setup-cdk:
 	command -v cdk > /dev/null || npm install -g aws-cdk
 
 test-cdk:
+	touch web-waku/dist/serve-aws-lambda.js
 	cd $(CDK_DIR) && npm test
 
 deploy-cdk:
@@ -112,7 +113,7 @@ test-waku:
 	cd web-waku && npm run build
 
 build-waku:
-	cd web-waku && npm run build
+	cd web-waku && npm run build:ssr
 
 start-waku:
 	cd web-waku && npm run dev
