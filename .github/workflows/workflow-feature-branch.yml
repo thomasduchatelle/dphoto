@@ -20,6 +20,7 @@ jobs:
     uses: ./.github/workflows/job-test-waku.yml
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
+    needs: build-waku
     with:
       cache-suffix: ${{ github.run_number }}
 

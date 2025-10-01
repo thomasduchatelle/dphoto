@@ -39,3 +39,4 @@ jobs:
           name: dist-waku
           path: |
             web-waku/dist/**
+            bin/waku-lambda.zip

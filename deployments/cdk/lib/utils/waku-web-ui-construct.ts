@@ -1,6 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import {NodejsFunction} from 'aws-cdk-lib/aws-lambda-nodejs';
 import {Construct} from 'constructs';
 import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -12,16 +11,17 @@ export interface WakuWebUiConstructProps {
 }
 
 export class WakuWebUiConstruct extends Construct {
-    private readonly lambda: NodejsFunction;
+    private readonly lambda: lambda.Function;
     private readonly integration: HttpLambdaIntegration;
 
     constructor(scope: Construct, id: string, {httpApi}: WakuWebUiConstructProps) {
         super(scope, id);
 
-        this.lambda = new NodejsFunction(this, 'Lambda', {
-            entry: '../../web-waku/dist/serve-aws-lambda.js',
-            handler: 'handler',
+        this.lambda = new lambda.Function(this, 'Lambda', {
+            code: lambda.Code.fromAsset('../../bin/waku-lambda.zip'),
+            handler: 'serve-aws-lambda.handler',
             runtime: lambda.Runtime.NODEJS_20_X,
+            architecture: lambda.Architecture.X86_64,
             memorySize: 512,
             timeout: cdk.Duration.seconds(10),
             environment: {
