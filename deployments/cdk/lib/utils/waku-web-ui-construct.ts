@@ -20,7 +20,6 @@ export class WakuWebUiConstruct extends Construct {
 
         this.lambda = new lambda.Function(this, 'Lambda', {
             functionName: `dphoto-${environmentName}-waku`,
-            // code: lambda.Code.fromAsset('../../bin/waku-lambda.zip'),
             code: lambda.Code.fromAsset('../../web-waku/dist/'),
             handler: 'serve-aws-lambda.handler',
             runtime: lambda.Runtime.NODEJS_20_X,
@@ -37,12 +36,6 @@ export class WakuWebUiConstruct extends Construct {
         this.integration = new apigatewayv2_integrations.HttpLambdaIntegration(
             `WakuIntegration`,
             this.lambda,
-            // {
-            //     parameterMapping: new apigatewayv2.ParameterMapping().overwritePath(apigatewayv2.MappingValue.custom("/")),
-            // }
-            // {
-            //     parameterMapping: new apigatewayv2.ParameterMapping().overwritePath(apigatewayv2.MappingValue.requestPathParam("proxy")),
-            // }
         );
 
         new apigatewayv2.HttpRoute(this, 'RouteProxy', {
@@ -50,14 +43,6 @@ export class WakuWebUiConstruct extends Construct {
             routeKey: apigatewayv2.HttpRouteKey.with('/waku/{proxy+}', apigatewayv2.HttpMethod.ANY),
             integration: this.integration
         });
-
-        // const integration = new apigatewayv2_integrations.HttpLambdaIntegration(
-        //     `${this.node.id}Integration2`,
-        //     this.lambda,
-        //     {
-        //         parameterMapping: new apigatewayv2.ParameterMapping().overwritePath(apigatewayv2.MappingValue.custom("/")),
-        //     }
-        // );
 
         new apigatewayv2.HttpRoute(this, 'Route', {
             httpApi,
