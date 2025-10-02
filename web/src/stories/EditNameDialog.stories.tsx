@@ -25,7 +25,7 @@ const EditNameDialogWrapper: Story<Partial<Props>> = (props) => {
 
     return (
         <EditNameDialog
-            {...props}
+            {...props as Props}
             albumName={albumName}
             customFolderName={folderName}
             isCustomFolderNameEnabled={isFolderNameEnabled}

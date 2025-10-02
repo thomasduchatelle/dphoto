@@ -19,7 +19,7 @@ export default {
 
 type Props = Omit<CreateDialogSelection, "open">
 
-const CreateAlbumDialogLadle = (props: Props) => {
+const CreateAlbumDialogWrapper: Story<Props> = (props) => {
     const [open, setOpen] = React.useState(true);
     const [albumName, setAlbumName] = React.useState(props.albumName);
     const [customFolderName, setCustomFolderName] = React.useState(props.customFolderName);
@@ -58,8 +58,7 @@ const CreateAlbumDialogLadle = (props: Props) => {
     );
 };
 
-export const Default: Story<Props> = (props) => <CreateAlbumDialogLadle {...props} />
-
+export const Default = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 Default.args = {
     albumName: "Return of the Jedi",
     start: defaultStartDate,
@@ -70,4 +69,57 @@ Default.args = {
     isCustomFolderNameEnabled: false,
     isLoading: false,
     canSubmit: true,
+};
+
+export const Empty = (args: Props) => <CreateAlbumDialogWrapper {...args} />
+Empty.args = {
+    albumName: "",
+    start: defaultStartDate,
+    end: endDate,
+    customFolderName: "",
+    startsAtStartOfTheDay: true,
+    endsAtEndOfTheDay: true,
+    isCustomFolderNameEnabled: false,
+    isLoading: false,
+    canSubmit: false,
+};
+
+export const WithAName = (args: Props) => <CreateAlbumDialogWrapper {...args} />
+WithAName.args = {
+    ...Empty.args,
+    albumName: 'Avenger 3',
+    canSubmit: true,
+};
+
+export const NameAlreadyExists = (args: Props) => <CreateAlbumDialogWrapper {...args} />
+NameAlreadyExists.args = {
+    ...Empty.args,
+    nameError: "Name must be unique",
+};
+
+export const FolderNameAlreadyExists = (args: Props) => <CreateAlbumDialogWrapper {...args} />
+FolderNameAlreadyExists.args = {
+    ...Empty.args,
+    folderNameError: "Name must be unique",
+    customFolderName: "/avenger-3",
+    isCustomFolderNameEnabled: true,
+};
+
+export const StartAndEndDateAreMandatory = (args: Props) => <CreateAlbumDialogWrapper {...args} />
+StartAndEndDateAreMandatory.args = {
+    ...Empty.args,
+    dateRangeError: "Start date must be before end date",
+};
+
+export const Loading = (args: Props) => <CreateAlbumDialogWrapper {...args} />
+Loading.args = {
+    ...WithAName.args,
+    isLoading: true,
+    canSubmit: false,
+};
+
+export const GenericError = (args: Props) => <CreateAlbumDialogWrapper {...args} />
+GenericError.args = {
+    ...WithAName.args,
+    error: 'Something weird and different than the known errors.'
 };

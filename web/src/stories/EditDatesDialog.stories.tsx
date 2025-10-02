@@ -31,7 +31,7 @@ const EditDatesDialogWrapper: Story<Partial<Props>> = (props) => {
                 Open Edit Dates Dialog
             </Button>
             <EditDatesDialog
-                {...props}
+                {...props as Props}
                 isOpen={open}
                 onClose={() => setOpen(false)}
                 startDate={startDate!}

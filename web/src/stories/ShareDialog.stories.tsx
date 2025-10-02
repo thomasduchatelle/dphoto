@@ -10,7 +10,12 @@ export default {
 type Props = React.ComponentProps<typeof ShareDialog>;
 
 const ShareDialogWrapper: Story<Partial<Props>> = (props) => (
-    <ShareDialog {...props as Props} onGrant={action('onGrant')} onRevoke={action('onRevoke')} onClose={action('onClose')}/>
+    <ShareDialog 
+        {...props as Props} 
+        onGrant={async (email: string) => { action('onGrant')(email); }} 
+        onRevoke={async (email: string) => { action('onRevoke')(email); }} 
+        onClose={action('onClose')}
+    />
 );
 
 export const Empty = (args: Props) => <ShareDialogWrapper {...args} />

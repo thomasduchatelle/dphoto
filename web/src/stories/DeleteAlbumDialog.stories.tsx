@@ -47,7 +47,7 @@ const DeleteAlbumDialogWrapper: Story<Partial<Props>> = (props) => {
                 Open Delete Dialog
             </Button>
             <DeleteAlbumDialog
-                {...props}
+                {...props as Props}
                 isOpen={open}
                 onClose={() => setOpen(false)}
                 onDelete={action('onDelete')}
