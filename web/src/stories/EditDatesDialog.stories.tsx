@@ -1,5 +1,5 @@
 import React from "react";
-import {ComponentMeta, ComponentStory} from "@storybook/react";
+import {action, Story} from "@ladle/react";
 import {EditDatesDialog} from "../pages/authenticated/albums/EditDatesDialog";
 import {Button} from "@mui/material";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
@@ -7,22 +7,23 @@ import {LocalizationProvider} from "@mui/x-date-pickers";
 
 export default {
     title: "Albums/EditDatesDialog",
-    component: EditDatesDialog,
-} as ComponentMeta<typeof EditDatesDialog>;
+};
 
-const Template: ComponentStory<typeof EditDatesDialog> = (args) => {
+type Props = React.ComponentProps<typeof EditDatesDialog>;
+
+const EditDatesDialogWrapper: Story<Partial<Props>> = (props) => {
     const [open, setOpen] = React.useState(true);
-    const [startDate, setStartDate] = React.useState<Date | null>(args.startDate);
-    const [endDate, setEndDate] = React.useState<Date | null>(args.endDate);
-    const [startAtDayStart, setStartAtDayStart] = React.useState(args.startAtDayStart);
-    const [endAtDayEnd, setEndAtDayEnd] = React.useState(args.endAtDayEnd);
+    const [startDate, setStartDate] = React.useState<Date | null>(props.startDate || null);
+    const [endDate, setEndDate] = React.useState<Date | null>(props.endDate || null);
+    const [startAtDayStart, setStartAtDayStart] = React.useState(props.startAtDayStart || false);
+    const [endAtDayEnd, setEndAtDayEnd] = React.useState(props.endAtDayEnd || false);
 
     React.useEffect(() => {
-        setStartDate(args.startDate);
-        setEndDate(args.endDate);
-        setStartAtDayStart(args.startAtDayStart);
-        setEndAtDayEnd(args.endAtDayEnd);
-    }, [args.startDate, args.endDate, args.startAtDayStart, args.endAtDayEnd]);
+        setStartDate(props.startDate || null);
+        setEndDate(props.endDate || null);
+        setStartAtDayStart(props.startAtDayStart || false);
+        setEndAtDayEnd(props.endAtDayEnd || false);
+    }, [props.startDate, props.endDate, props.startAtDayStart, props.endAtDayEnd]);
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
@@ -30,7 +31,7 @@ const Template: ComponentStory<typeof EditDatesDialog> = (args) => {
                 Open Edit Dates Dialog
             </Button>
             <EditDatesDialog
-                {...args}
+                {...props}
                 isOpen={open}
                 onClose={() => setOpen(false)}
                 startDate={startDate!}
@@ -41,13 +42,13 @@ const Template: ComponentStory<typeof EditDatesDialog> = (args) => {
                 onEndDateChange={setEndDate}
                 onStartAtDayStartChange={setStartAtDayStart}
                 onEndAtDayEndChange={setEndAtDayEnd}
-                onSave={() => console.log('Save clicked')}
+                onSave={action('onSave')}
             />
         </LocalizationProvider>
     );
 };
 
-export const Default = Template.bind({});
+export const Default = (args: Props) => <EditDatesDialogWrapper {...args} />
 Default.args = {
     albumName: "First Contact",
     startDate: new Date("2063-04-05T00:00:00Z"),
@@ -57,11 +58,8 @@ Default.args = {
     isLoading: false,
     isSaveEnabled: true,
 };
-Default.parameters = {
-    delay: 300,
-};
 
-export const WithSpecificTimes = Template.bind({});
+export const WithSpecificTimes = (args: Props) => <EditDatesDialogWrapper {...args} />
 WithSpecificTimes.args = {
     albumName: "Mission to Mars",
     startDate: new Date("2063-04-05T10:30:00Z"),
@@ -71,11 +69,8 @@ WithSpecificTimes.args = {
     isLoading: false,
     isSaveEnabled: true,
 };
-WithSpecificTimes.parameters = {
-    delay: 300,
-};
 
-export const Loading = Template.bind({});
+export const Loading = (args: Props) => <EditDatesDialogWrapper {...args} />
 Loading.args = {
     albumName: "First Contact",
     startDate: new Date("2063-04-05T00:00:00Z"),
@@ -85,11 +80,8 @@ Loading.args = {
     isLoading: true,
     isSaveEnabled: false,
 };
-Loading.parameters = {
-    storyshots: {disable: true},
-};
 
-export const WithError = Template.bind({});
+export const WithError = (args: Props) => <EditDatesDialogWrapper {...args} />
 WithError.args = {
     albumName: "First Contact",
     startDate: new Date("2063-04-05T00:00:00Z"),
@@ -100,11 +92,8 @@ WithError.args = {
     errorCode: "This is a user friendly error message (or technical).",
     isSaveEnabled: true,
 };
-WithError.parameters = {
-    delay: 300,
-};
 
-export const WithDateRangeError = Template.bind({});
+export const WithDateRangeError = (args: Props) => <EditDatesDialogWrapper {...args} />
 WithDateRangeError.args = {
     albumName: "First Contact",
     startDate: new Date("2063-04-07T00:00:00Z"),
@@ -114,7 +103,4 @@ WithDateRangeError.args = {
     isLoading: false,
     dateRangeError: "The end date cannot be before the start date",
     isSaveEnabled: false,
-};
-WithDateRangeError.parameters = {
-    delay: 300,
 };

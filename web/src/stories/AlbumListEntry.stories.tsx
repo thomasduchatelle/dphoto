@@ -1,20 +1,20 @@
 import React from 'react';
-import {ComponentMeta, ComponentStory} from '@storybook/react';
+import {Story} from '@ladle/react';
 import {List} from "@mui/material";
 import {AlbumListEntry} from "../pages/authenticated/albums/AlbumsList/AlbumListEntry";
 import {StoriesContext} from "./StoriesContext";
 
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
     title: 'Albums/AlbumListEntry',
-    component: AlbumListEntry,
-} as ComponentMeta<typeof AlbumListEntry>;
+};
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof AlbumListEntry> = (args) => (
-    <StoriesContext maxWidth={450}><List><AlbumListEntry {...args} /></List></StoriesContext>);
+type Props = React.ComponentProps<typeof AlbumListEntry>;
 
-export const Default = Template.bind({});
+const AlbumListEntryWrapper: Story<Partial<Props>> = (args) => (
+    <StoriesContext maxWidth={450}><List><AlbumListEntry {...args as Props} /></List></StoriesContext>
+);
+
+export const Default = (args: Props) => <AlbumListEntryWrapper {...args} />
 Default.args = {
     album: {
         albumId: {owner: "tony@stark.com", folderName: "2010_Avenger"},
@@ -29,7 +29,7 @@ Default.args = {
     selected: false,
 };
 
-export const Selected = Template.bind({});
+export const Selected = (args: Props) => <AlbumListEntryWrapper {...args} />
 Selected.args = {
     album: {
         albumId: {owner: "tony@stark.com", folderName: "2010_Avenger"},
@@ -44,7 +44,7 @@ Selected.args = {
     selected: true,
 };
 
-export const SharedBySomeoneElse = Template.bind({});
+export const SharedBySomeoneElse = (args: Props) => <AlbumListEntryWrapper {...args} />
 SharedBySomeoneElse.args = {
     album: {
         albumId: {owner: "tony@stark.com", folderName: "2010_Avenger"},
@@ -66,7 +66,7 @@ SharedBySomeoneElse.args = {
     selected: false,
 };
 
-export const SharedToOthers = Template.bind({});
+export const SharedToOthers = (args: Props) => <AlbumListEntryWrapper {...args} />
 SharedToOthers.args = {
     album: {
         albumId: {owner: "tony@stark.com", folderName: "2010_Avenger"},
