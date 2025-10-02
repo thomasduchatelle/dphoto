@@ -10,7 +10,7 @@ runs:
   steps:
     - uses: actions/setup-node@v4
       with:
-        node-version: '19'
+        node-version: '20'
         # cache: yarn # note - directly caching node_modules is MUCH faster (60s -> 1.5s)
     - name: YARN Cache (restore)
       id: cache-restore
