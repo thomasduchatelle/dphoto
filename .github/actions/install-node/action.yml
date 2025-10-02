@@ -24,7 +24,7 @@ runs:
           ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock') }}
     - name: Download deps
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
-      run: make setup-app
+      run: make setup-web-ci
       shell: bash
     - name: YARN Cache (always save)
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
@@ -32,5 +32,6 @@ runs:
       with:
         path: |
           ~/.npm
+          ~/.cache/ms-playwright
           web/node_modules
         key: ${{ steps.cache-restore.outputs.cache-primary-key }}

@@ -74,14 +74,18 @@ clean-web:
 	cd web && yarn clean
 
 setup-web:
+	cd web && yarn && npx playwright install
+
+setup-web-ci:
 	cd web && yarn
+	cd web && npx playwright install chromium --with-deps
 
 test-web:
 	cd web && yarn test:ci
 
 update-snapshots:
 	@echo "Update snapshots [should only be used on CI]"
-	rm -rf web/src/stories/__image_snapshots__ && cd web && CI=true yarn test:ci -u
+	rm -rf web-waku/playwright/visual-regression.spec.ts-snapshots && cd web && CI=true yarn test:visual -u
 
 build-web:
 	cd web && CI=true yarn build
