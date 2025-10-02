@@ -19,6 +19,8 @@ Object.keys(stories).forEach((storyKey) => {
         await page.goto(`${url}/?story=${storyKey}&mode=preview`);
         // stories are code-splitted, wait for them to be loaded
         await page.waitForSelector("[data-storyloaded]");
+        // await page.waitForTimeout(500);
+        await page.waitForLoadState('networkidle');
         // take a screenshot and compare it with the baseline
         await expect(page).toHaveScreenshot(`${storyKey}.png`);
     });
