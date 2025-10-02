@@ -4,8 +4,9 @@ import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
 import {CreateAlbumDialog} from "../pages/authenticated/albums/CreateAlbumDialog";
-import {Story} from "@ladle/react";
+import {Story, action} from "@ladle/react";
 import {CreateDialogSelection} from "../core/catalog";
+import {Button} from "@mui/material";
 
 dayjs.locale(fr)
 
@@ -16,75 +17,46 @@ export default {
     title: 'Albums/CreateAlbumDialog',
 };
 
-type Props = Exclude<CreateDialogSelection, "open">
+type Props = Omit<CreateDialogSelection, "open">
 
-export const Default: Story<Props> = (props) => (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
-        <CreateAlbumDialog onClose={function (): void {
-            throw new Error("Function not implemented.");
-        }} onSubmit={function (): Promise<void> {
-            throw new Error("Function not implemented.");
-        }} onNameChange={function (name: string): void {
-            throw new Error("Function not implemented.");
-        }} onFolderNameChange={function (folderName: string): void {
-            throw new Error("Function not implemented.");
-        }} onWithCustomFolderNameChange={function (withCustom: boolean): void {
-            throw new Error("Function not implemented.");
-        }} onStartsAtStartOfTheDayChange={function (startsAtStart: boolean): void {
-            throw new Error("Function not implemented.");
-        }} onEndsAtEndOfTheDayChange={function (endsAtEnd: boolean): void {
-            throw new Error("Function not implemented.");
-        }} onStartDateChange={function (date: Date | null): void {
-            throw new Error("Function not implemented.");
-        }} onEndDateChange={function (date: Date | null): void {
-            throw new Error("Function not implemented.");
-        }} {...props}/>
-    </LocalizationProvider>
-);
-
-Default.args = {
-    label: 'Hello world',
-    disabled: false,
-    count: 2,
-    colors: ['Red', 'Blue'],
-};
-
-
-export const Default2 = () => {
-    const args = {
-        open: true,
-        albumName: "",
-        start: defaultStartDate,
-        end: endDate,
-        customFolderName: "",
-        startsAtStartOfTheDay: true,
-        endsAtEndOfTheDay: true,
-        isCustomFolderNameEnabled: false,
-        isLoading: false,
-        canSubmit: false,
-        onClose: () => {
-        },
-        onSubmit: () => Promise.resolve(),
-        onNameChange: () => {
-        },
-        onStartDateChange: () => {
-        },
-        onEndDateChange: () => {
-        },
-        onFolderNameChange: () => {
-        },
-        onWithCustomFolderNameChange: () => {
-        },
-        onStartsAtStartOfTheDayChange: () => {
-        },
-        onEndsAtEndOfTheDayChange: () => {
-        },
-    };
+const CreateAlbumDialogLadle = (props: Props) => {
+    const [open, setOpen] = React.useState(true);
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
-            <CreateAlbumDialog {...args}/>
+            <Button variant='contained' onClick={() => setOpen(true)}>
+                Reopen Dialog
+            </Button>
+            <CreateAlbumDialog
+                {...props}
+                open={open}
+                onClose={() => {
+                    setOpen(false);
+                    action("onClose")();
+                }}
+                onSubmit={async () => action("onSubmit")()}
+                onNameChange={action("onNameChange")}
+                onFolderNameChange={action("onFolderNameChange")}
+                onWithCustomFolderNameChange={action("onWithCustomFolderNameChange")}
+                onStartsAtStartOfTheDayChange={action("onStartsAtStartOfTheDayChange")}
+                onEndsAtEndOfTheDayChange={action("onEndsAtEndOfTheDayChange")}
+                onStartDateChange={action("onStartDateChange")}
+                onEndDateChange={action("onEndDateChange")}
+            />
         </LocalizationProvider>
-    )
-}
-// InFrame.meta = {iframed: true}
+    );
+};
+
+export const Default: Story<Props> = (props) => <CreateAlbumDialogLadle {...props} />
+
+Default.args = {
+    albumName: "",
+    start: defaultStartDate,
+    end: endDate,
+    customFolderName: "",
+    startsAtStartOfTheDay: true,
+    endsAtEndOfTheDay: true,
+    isCustomFolderNameEnabled: false,
+    isLoading: false,
+    canSubmit: true,
+};
