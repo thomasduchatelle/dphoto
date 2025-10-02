@@ -71,7 +71,8 @@ Components:
   APIs
 * [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line
   interface
-* [WEB](web): sources of the React WEB application.
+* [WEB](web): sources of the React WEB application (Create React App).
+* [WEB-WAKU](web-waku): new Waku-based web application (parallel deployment at `/waku` path).
 
 Note: the repository follows https://github.com/golang-standards/project-layout structure convention.
 
@@ -96,6 +97,26 @@ Setup the environment:
 
     # Run tests & build (all sub-projects)
     make
+
+### Running development servers
+
+Two web applications can be run in parallel:
+
+**CRA Web Application** (existing, available at `/`):
+```bash
+cd web
+yarn start
+# Runs on http://localhost:3000
+```
+
+**Waku Web Application** (new, available at `/waku`):
+```bash
+cd web-waku
+npm run dev
+# Runs on http://localhost:3001
+```
+
+Both dev servers can run simultaneously without port conflicts.
 
 
 ### Commit messages & Github Actions

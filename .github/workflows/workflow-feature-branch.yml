@@ -16,6 +16,8 @@ jobs:
     uses: ./.github/workflows/job-test-go.yml
   test-ts:
     uses: ./.github/workflows/job-test-ts.yml
+  test-waku:
+    uses: ./.github/workflows/job-test-waku.yml
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
     with:
@@ -27,6 +29,8 @@ jobs:
       snapshot: "true"
   build-ts:
     uses: ./.github/workflows/job-build-ts.yml
+  build-waku:
+    uses: ./.github/workflows/job-build-waku.yml
 
   cdk-live-plan:
     uses: ./.github/workflows/job-comment-cdk-diff.yml
@@ -35,6 +39,7 @@ jobs:
       - pull-request
       - build-go
       - build-ts
+      - build-waku
     secrets: inherit
     with:
       issue-number: ${{ needs.pull-request.outputs.pr-number }}
@@ -46,9 +51,11 @@ jobs:
     needs:
       - test-go
       - test-ts
+      - test-waku
       - test-cdk
       - build-go
       - build-ts
+      - build-waku
     secrets: inherit
     with:
       target: next
