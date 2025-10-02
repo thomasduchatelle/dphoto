@@ -118,6 +118,11 @@ test-waku:
 	@echo "Waku tests - placeholder (no tests configured yet)"
 	cd web-waku && npm run test:visual
 
+waku-update-snapshots:
+	@echo "Update snapshots [should only be used on CI]"
+	rm -rf web-waku/playwright/visual-regression.spec.ts-snapshots
+	cd web-waku && npm run test:visual -- -u
+
 build-waku:
 	cd web-waku && npm run build:lambda
 

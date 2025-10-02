@@ -1,20 +1,9 @@
-import {defineConfig, devices} from '@playwright/test';
+import {defineConfig} from '@playwright/test';
 
 export default defineConfig({
-    /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+    testDir: './playwright',
     reporter: 'html',
-
-    // /* Configure projects for major browsers */
-    // projects: [
-    //     {
-    //         name: 'chromium',
-    //         use: {
-    //             ...devices['Desktop Chrome'],
-    //             // Force consistent viewport for screenshots
-    //             viewport: {width: 1280, height: 720},
-    //         },
-    //     },
-    // ],
+    snapshotPathTemplate: `{testDir}/{testFilePath}-${process.env.CI ? 'snapshots' : 'local'}/{arg}-{platform}{ext}`,
 
     /* Run your local dev server before starting the tests */
     webServer: {

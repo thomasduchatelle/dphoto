@@ -7,3 +7,4 @@ dist
 *.pem
 /test-results/
 /playwright-report/
+/playwright/visual-regression.spec.ts-local/
