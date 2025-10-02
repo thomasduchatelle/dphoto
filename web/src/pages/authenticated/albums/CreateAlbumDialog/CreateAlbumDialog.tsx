@@ -63,8 +63,8 @@ export function CreateAlbumDialog({
         <Dialog
             open={open}
             onClose={onClose}
-            // fullWidth
-            // fullScreen={isMobile}
+            fullWidth
+            fullScreen={isMobile}
             maxWidth='md'
         >
             <Box sx={{

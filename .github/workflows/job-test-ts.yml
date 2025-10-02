@@ -34,9 +34,12 @@ jobs:
       - name: Test and build WEB UI
         run: make test-web
 
-      - name: Upload screenshots
+      - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: storybook-snapshots
-          path: web/src/stories/__image_snapshots__/__diff_output__/
+          name: playwright-report
+          path: |
+            web-waku/playwright-report/
+            web-waku/test-results/
+          retention-days: 30
