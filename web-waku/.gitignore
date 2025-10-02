@@ -5,3 +5,6 @@ dist
 .cache
 .DS_Store
 *.pem
+/test-results/
+/playwright-report/
+/playwright/visual-regression.spec.ts-local/

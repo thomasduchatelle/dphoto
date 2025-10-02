@@ -3,29 +3,58 @@ on:
     inputs: { }
 
 jobs:
-  test-waku:
+  test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-          ref: ${{ github.head_ref }}
-      - name: SemVer
-        id: semver
-        uses: ./.github/actions/semver
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Cache we-waku/node_modules
         uses: actions/cache@v4
         with:
           path: we-waku/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('we-waku/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('web-waku/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Test Waku app
-        run: make setup-waku test-waku
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: web-waku/package-lock.json
+
+      - name: Install dependencies
+        run: make setup-waku-ci
+
+      - name: Generate snapshots
+        id: generate-snapshots
+        if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+        run: |
+          make waku-update-snapshots
+
+      - name: Publish new snapshots
+        if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: web - update visual regression snapshots
+
+      - name: Run Playwright tests
+        run: make test-waku
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: web-waku/playwright-report/
+          retention-days: 30
+
+      - name: Upload NPM Report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: web-waku/test-results/
+          retention-days: 30

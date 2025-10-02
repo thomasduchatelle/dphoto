@@ -7,7 +7,12 @@
     "dev": "waku dev",
     "build": "waku build",
     "start": "waku start",
-    "build:lambda": "rm -rf dist && waku build --with-aws-lambda"
+    "build:lambda": "rm -rf dist && waku build --with-aws-lambda",
+    "ladle": "ladle serve",
+    "test:visual": "npx playwright test",
+    "test:update": "npx playwright test -u",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui"
   },
   "dependencies": {
     "react": "19.1.1",
@@ -16,9 +21,13 @@
     "waku": "0.26.1"
   },
   "devDependencies": {
+    "@ladle/react": "^5.0.3",
+    "@playwright/test": "^1.55.1",
     "@tailwindcss/vite": "4.1.13",
     "@types/react": "19.1.12",
     "@types/react-dom": "19.1.9",
+    "@types/sync-fetch": "^0.4.3",
+    "sync-fetch": "^0.6.0-2",
     "tailwindcss": "4.1.13",
     "typescript": "5.9.2"
   }
