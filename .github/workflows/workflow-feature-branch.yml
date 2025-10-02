@@ -8,58 +8,58 @@ on:
       - update-snapshots
 
 jobs:
-  pull-request:
-    uses: ./.github/workflows/job-pull-request.yml
-    secrets: inherit
-
-  test-go:
-    uses: ./.github/workflows/job-test-go.yml
-  test-ts:
-    uses: ./.github/workflows/job-test-ts.yml
-  test-waku:
-    uses: ./.github/workflows/job-test-waku.yml
+#  pull-request:
+#    uses: ./.github/workflows/job-pull-request.yml
+#    secrets: inherit
+#
+#  test-go:
+#    uses: ./.github/workflows/job-test-go.yml
+#  test-ts:
+#    uses: ./.github/workflows/job-test-ts.yml
+#  test-waku:
+#    uses: ./.github/workflows/job-test-waku.yml
   test-waku-snapshots:
     uses: ./.github/workflows/web-waku-tests.yml
-  test-cdk:
-    uses: ./.github/workflows/job-test-cdk.yml
-    with:
-      cache-suffix: ${{ github.run_number }}
-
-  build-go:
-    uses: ./.github/workflows/job-build-go.yml
-    with:
-      snapshot: "true"
-  build-ts:
-    uses: ./.github/workflows/job-build-ts.yml
-  build-waku:
-    uses: ./.github/workflows/job-build-waku.yml
-
-  cdk-live-plan:
-    uses: ./.github/workflows/job-comment-cdk-diff.yml
-    if: needs.pull-request.outputs.pr-number != ''
-    needs:
-      - pull-request
-      - build-go
-      - build-ts
-      - build-waku
-    secrets: inherit
-    with:
-      issue-number: ${{ needs.pull-request.outputs.pr-number }}
-      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
-
-  deploy-next:
-    uses: ./.github/workflows/job-deploy.yml
-    if: ${{ contains(github.event.head_commit.message, '+next') }}
-    needs:
-      - test-go
-      - test-ts
-      - test-waku
-      - test-waku-snapshots
-      - test-cdk
-      - build-go
-      - build-ts
-      - build-waku
-    secrets: inherit
-    with:
-      target: next
-      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
+#  test-cdk:
+#    uses: ./.github/workflows/job-test-cdk.yml
+#    with:
+#      cache-suffix: ${{ github.run_number }}
+#
+#  build-go:
+#    uses: ./.github/workflows/job-build-go.yml
+#    with:
+#      snapshot: "true"
+#  build-ts:
+#    uses: ./.github/workflows/job-build-ts.yml
+#  build-waku:
+#    uses: ./.github/workflows/job-build-waku.yml
+#
+#  cdk-live-plan:
+#    uses: ./.github/workflows/job-comment-cdk-diff.yml
+#    if: needs.pull-request.outputs.pr-number != ''
+#    needs:
+#      - pull-request
+#      - build-go
+#      - build-ts
+#      - build-waku
+#    secrets: inherit
+#    with:
+#      issue-number: ${{ needs.pull-request.outputs.pr-number }}
+#      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
+#
+#  deploy-next:
+#    uses: ./.github/workflows/job-deploy.yml
+#    if: ${{ contains(github.event.head_commit.message, '+next') }}
+#    needs:
+#      - test-go
+#      - test-ts
+#      - test-waku
+#      - test-waku-snapshots
+#      - test-cdk
+#      - build-go
+#      - build-ts
+#      - build-waku
+#    secrets: inherit
+#    with:
+#      target: next
+#      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}

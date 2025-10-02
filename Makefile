@@ -108,10 +108,15 @@ clean-waku:
 
 setup-waku:
 	cd web-waku && npm install
+	cd web-waku && npx playwright install
+
+setup-waku-ci:
+	cd web-waku && npm ci
+	cd web-waku && npx playwright install chromium --with-deps
 
 test-waku:
 	@echo "Waku tests - placeholder (no tests configured yet)"
-	cd web-waku && npm run build
+	cd web-waku && npm run test:visual
 
 build-waku:
 	cd web-waku && npm run build:lambda

@@ -7,13 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-          ref: ${{ github.head_ref }}
-      - name: SemVer
-        id: semver
-        uses: ./.github/actions/semver
 
       - uses: actions/setup-node@v4
         with:
