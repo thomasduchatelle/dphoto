@@ -10,13 +10,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache we-waku/node_modules
+      - name: Cache NPM
         uses: actions/cache@v4
         with:
-          path: we-waku/node_modules
+          path: |
+            web-waku/node_modules
+            ~/.cache/ms-playwright
           key: ${{ runner.os }}-node-${{ hashFiles('web-waku/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-npm-playwright-
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
