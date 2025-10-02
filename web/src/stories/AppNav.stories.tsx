@@ -1,27 +1,25 @@
 import React from 'react';
-import {ComponentMeta, ComponentStory} from '@storybook/react';
-
+import {action, Story} from '@ladle/react';
 import AppNav from "../components/AppNav";
 import UserMenu from "../components/user.menu";
-import {DefaultMenu} from './UserMenu.stories';
 
 export default {
-    title: 'Layout/AppNav',
-    component: AppNav,
-    subcomponents: {UserMenu},
-} as ComponentMeta<typeof AppNav>;
+    title: 'Layout / AppNav',
+};
 
-const TemplateWithMenu: ComponentStory<typeof AppNav> = (args) => <AppNav
-    {...args}
-    rightContent={(<DefaultMenu user={{email: "foo", name: "bar"}} onLogout={() => {
-    }} {...DefaultMenu.args} />)}
-/>;
+type Props = React.ComponentProps<typeof AppNav>;
 
-export const LoggedIn = TemplateWithMenu.bind({});
-LoggedIn.args = {}
+const AppNavWrapper: Story<Partial<Props>> = (args) => <AppNav {...args as Props} />;
 
-const Template: ComponentStory<typeof AppNav> = (args) => <AppNav
-    {...args}
-/>;
-export const LoggedOut = Template.bind({});
+export const LoggedIn = (args: Props) => <AppNavWrapper {...args} />
+LoggedIn.args = {
+    rightContent: (
+        <UserMenu 
+            user={{email: "foo", name: "bar"}} 
+            onLogout={action('onLogout')} 
+        />
+    )
+};
+
+export const LoggedOut = (args: Props) => <AppNavWrapper {...args} />
 LoggedOut.args = {};

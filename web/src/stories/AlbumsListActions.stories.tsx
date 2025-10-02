@@ -1,22 +1,19 @@
 import React from 'react';
-import {ComponentMeta, ComponentStory} from '@storybook/react';
-import {userEvent, within} from "@storybook/testing-library";
-import AlbumsListActions from "../pages/authenticated/albums/AlbumsListActions/AlbumListActions";
+import {action, Story} from '@ladle/react';
 import {BrowserRouter} from 'react-router-dom';
+import AlbumsListActions from "../pages/authenticated/albums/AlbumsListActions/AlbumListActions";
 
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
-    title: 'Albums/AlbumsListActions',
-    component: AlbumsListActions,
-    argTypes: {
-        onAlbumFiltered: {action: 'onAlbumFiltered'},
-    },
-} as ComponentMeta<typeof AlbumsListActions>;
+    title: 'Albums / AlbumsListActions',
+};
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof AlbumsListActions> = (args) => (<BrowserRouter><AlbumsListActions {...args}/></BrowserRouter>);
+type Props = React.ComponentProps<typeof AlbumsListActions>;
 
-export const NoOptions = Template.bind({});
+const AlbumsListActionsWrapper: Story<Partial<Props>> = (args) => (
+    <BrowserRouter><AlbumsListActions {...args as Props} onAlbumFiltered={action('onAlbumFiltered')}/></BrowserRouter>
+);
+
+export const NoOptions = (args: Props) => <AlbumsListActionsWrapper {...args} />
 NoOptions.args = {
     selected: {
         criterion: {
@@ -27,7 +24,7 @@ NoOptions.args = {
     },
 };
 
-export const AllOptionsOpen = Template.bind({});
+export const AllOptionsOpen = (args: Props) => <AlbumsListActionsWrapper {...args} />
 AllOptionsOpen.args = {
     selected: {
         criterion: {
@@ -75,16 +72,8 @@ AllOptionsOpen.args = {
         }
     ],
 };
-AllOptionsOpen.parameters = {
-    delay: 300,
-};
-AllOptionsOpen.play = async ({canvasElement}) => {
-    const canvas = within(canvasElement);
 
-    await userEvent.click(canvas.getAllByRole("button")[0]);
-};
-
-export const NoOwnAlbums = Template.bind({});
+export const NoOwnAlbums = (args: Props) => <AlbumsListActionsWrapper {...args} />
 NoOwnAlbums.args = {
     selected: {
         criterion: {
@@ -125,7 +114,7 @@ NoOwnAlbums.args = {
     ],
 };
 
-export const OnlyOwnAlbums = Template.bind({});
+export const OnlyOwnAlbums = (args: Props) => <AlbumsListActionsWrapper {...args} />
 OnlyOwnAlbums.args = {
     selected: {
         criterion: {
@@ -145,18 +134,7 @@ OnlyOwnAlbums.args = {
     ],
 };
 
-export const NoOwnAlbumsOpen = Template.bind({});
-NoOwnAlbumsOpen.args = NoOwnAlbums.args;
-NoOwnAlbumsOpen.parameters = {
-    delay: 300,
-};
-NoOwnAlbumsOpen.play = async ({canvasElement}) => {
-    const canvas = within(canvasElement);
-
-    await userEvent.click(canvas.getAllByRole("button")[0]);
-};
-
-export const EditDatesButtonDisabled = Template.bind({});
+export const EditDatesButtonDisabled = (args: Props) => <AlbumsListActionsWrapper {...args} />
 EditDatesButtonDisabled.args = {
     selected: {
         criterion: {
