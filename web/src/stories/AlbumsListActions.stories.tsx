@@ -4,7 +4,7 @@ import {BrowserRouter} from 'react-router-dom';
 import AlbumsListActions from "../pages/authenticated/albums/AlbumsListActions/AlbumListActions";
 
 export default {
-    title: 'Albums/AlbumsListActions',
+    title: 'Albums / AlbumsListActions',
 };
 
 type Props = React.ComponentProps<typeof AlbumsListActions>;

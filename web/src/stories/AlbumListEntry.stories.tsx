@@ -5,7 +5,7 @@ import {AlbumListEntry} from "../pages/authenticated/albums/AlbumsList/AlbumList
 import {StoriesContext} from "./StoriesContext";
 
 export default {
-    title: 'Albums/AlbumListEntry',
+    title: 'Albums / AlbumListEntry',
 };
 
 type Props = React.ComponentProps<typeof AlbumListEntry>;

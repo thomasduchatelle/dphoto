@@ -4,6 +4,10 @@ import {DeleteAlbumDialog} from "../pages/authenticated/albums/DeleteAlbumDialog
 import {Button} from "@mui/material";
 import {Album, AlbumId} from "../core/catalog";
 
+export default {
+    title: "Albums / DeleteAlbumDialog",
+};
+
 const makeAlbumId = (owner: string, folderName: string): AlbumId => ({
     owner,
     folderName,
@@ -32,10 +36,6 @@ const albums: Album[] = [
     makeAlbum("user1", "winter-2022", "Winter 2022", new Date("2022-12-01"), new Date("2023-02-28"), 15),
     makeAlbum("user1", "spring-2024", "Spring 2024", new Date("2024-03-01"), new Date("2024-05-31"), 0),
 ];
-
-export default {
-    title: "Albums/DeleteAlbumDialog",
-};
 
 type Props = React.ComponentProps<typeof DeleteAlbumDialog>;
 

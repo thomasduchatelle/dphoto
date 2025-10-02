@@ -6,7 +6,7 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 
 export default {
-    title: "Albums/EditDatesDialog",
+    title: "Albums / EditDatesDialog",
 };
 
 type Props = React.ComponentProps<typeof EditDatesDialog>;

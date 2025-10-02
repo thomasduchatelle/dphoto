@@ -14,7 +14,7 @@ const defaultStartDate = new Date("2024-12-21T00:00:00Z")
 const endDate = new Date("2024-12-29T23:59:00Z")
 
 export default {
-    title: 'Albums/CreateAlbumDialog',
+    title: 'Albums / CreateAlbumDialog',
 };
 
 type Props = Omit<CreateDialogSelection, "open">

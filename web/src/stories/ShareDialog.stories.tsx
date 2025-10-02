@@ -1,22 +1,33 @@
 import React, {useCallback} from 'react';
 import {action, Story} from '@ladle/react';
+import {Button} from '@mui/material';
 import ShareDialog from "../pages/authenticated/albums/ShareDialog";
 import {ShareError, Sharing, UserDetails} from "../core/catalog";
 
 export default {
-    title: 'Albums/ShareDialog',
+    title: 'Albums / ShareDialog',
 };
 
 type Props = React.ComponentProps<typeof ShareDialog>;
 
-const ShareDialogWrapper: Story<Partial<Props>> = (props) => (
-    <ShareDialog 
-        {...props as Props} 
-        onGrant={async (email: string) => { action('onGrant')(email); }} 
-        onRevoke={async (email: string) => { action('onRevoke')(email); }} 
-        onClose={action('onClose')}
-    />
-);
+const ShareDialogWrapper: Story<Partial<Props>> = (props) => {
+    const [open, setOpen] = React.useState(true);
+
+    return (
+        <>
+            <Button variant='contained' onClick={() => setOpen(true)}>
+                Reopen Dialog
+            </Button>
+            <ShareDialog
+                {...props as Props}
+                open={open}
+                onGrant={async (email: string) => { action('onGrant')(email); }}
+                onRevoke={async (email: string) => { action('onRevoke')(email); }}
+                onClose={() => setOpen(false)}
+            />
+        </>
+    );
+};
 
 export const Empty = (args: Props) => <ShareDialogWrapper {...args} />
 Empty.args = {
@@ -147,18 +158,21 @@ const InteractiveChipsWrapper: Story<InteractiveContainerState> = ({sharedWith, 
         })
     }, [state, setState]);
 
-    const onClose = useCallback(() => setOpen(false), [setOpen]);
-
     return (
-        <ShareDialog
-            open={open}
-            sharedWith={state.sharedWith}
-            suggestions={state.suggestions}
-            error={state.error}
-            onGrant={onGrant}
-            onRevoke={onRevoke}
-            onClose={onClose}
-        />
+        <>
+            <Button variant='contained' onClick={() => setOpen(true)}>
+                Reopen Dialog
+            </Button>
+            <ShareDialog
+                open={open}
+                sharedWith={state.sharedWith}
+                suggestions={state.suggestions}
+                error={state.error}
+                onGrant={onGrant}
+                onRevoke={onRevoke}
+                onClose={() => setOpen(false)}
+            />
+        </>
     );
 }
 

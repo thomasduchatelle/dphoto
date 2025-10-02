@@ -4,7 +4,7 @@ import AppNav from "../components/AppNav";
 import UserMenu from "../components/user.menu";
 
 export default {
-    title: 'Layout/AppNav',
+    title: 'Layout / AppNav',
 };
 
 type Props = React.ComponentProps<typeof AppNav>;
