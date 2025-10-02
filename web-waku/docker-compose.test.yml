@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  web-waku-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CI=true
+    ports:
+      - "61000:61000"
+    command: npm test

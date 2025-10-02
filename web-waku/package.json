@@ -10,7 +10,11 @@
     "build:lambda": "rm -rf dist && waku build --with-aws-lambda",
     "ladle": "ladle serve",
     "test": "npx playwright test",
-    "test:update": "npx playwright test -u"
+    "test:update": "npx playwright test -u",
+    "test:docker": "docker compose -f docker-compose.test.yml up --build --abort-on-container-exit",
+    "test:docker-update": "docker compose -f docker-compose.test.yml run --rm web-waku-test npm run test:update",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui"
   },
   "dependencies": {
     "react": "19.1.1",
@@ -24,6 +28,7 @@
     "@tailwindcss/vite": "4.1.13",
     "@types/react": "19.1.12",
     "@types/react-dom": "19.1.9",
+    "@types/sync-fetch": "^0.4.3",
     "sync-fetch": "^0.6.0-2",
     "tailwindcss": "4.1.13",
     "typescript": "5.9.2"

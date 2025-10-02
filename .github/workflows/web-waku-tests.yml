@@ -1,0 +1,74 @@
+name: Web Waku Tests
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'web-waku/**'
+      - '.github/workflows/web-waku-tests.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'web-waku/**'
+      - '.github/workflows/web-waku-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: web-waku/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd web-waku
+        npm ci
+
+    - name: Install Playwright browsers
+      run: |
+        cd web-waku
+        npx playwright install --with-deps chromium
+
+    - name: Run Playwright tests
+      run: |
+        cd web-waku
+        # Set environment variables for consistent rendering
+        export PLAYWRIGHT_BROWSERS_PATH=0
+        export CI=true
+        npm test
+      env:
+        CI: true
+
+    - name: Upload Playwright Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: web-waku/playwright-report/
+        retention-days: 30
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: web-waku/test-results/
+        retention-days: 30
+
+    - name: Upload Screenshots on Failure
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: failed-screenshots
+        path: |
+          web-waku/test-results/
+          web-waku/playwright-report/
+        retention-days: 30
