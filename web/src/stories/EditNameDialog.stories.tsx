@@ -87,3 +87,4 @@ Loading.args = {
     isCustomFolderNameEnabled: true,
     isLoading: true,
 };
+Loading.meta = {skipSnapshot: true}

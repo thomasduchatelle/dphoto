@@ -117,6 +117,7 @@ Loading.args = {
     isLoading: true,
     canSubmit: false,
 };
+Loading.meta = {skipSnapshot: true}
 
 export const GenericError = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 GenericError.args = {

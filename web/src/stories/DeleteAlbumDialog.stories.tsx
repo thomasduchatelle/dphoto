@@ -79,6 +79,7 @@ Loading.args = {
     isLoading: true,
     error: undefined,
 };
+Loading.meta = {skipSnapshot: true}
 
 export const Error = (args: Props) => <DeleteAlbumDialogWrapper {...args} />
 Error.args = {

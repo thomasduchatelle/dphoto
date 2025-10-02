@@ -25,6 +25,7 @@ const stateWhilePrompting = reduce(initialLoginPageState, {type: "OnUnsuccessful
 
 export const Loading = (args: LoginProps) => <LoginWrapper {...args} />
 Loading.args = initialLoginPageState;
+Loading.meta = {skipSnapshot: true}
 
 export const PromptUser = (args: LoginProps) => <LoginWrapper {...args} />
 PromptUser.args = stateWhilePrompting;

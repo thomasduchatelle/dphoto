@@ -30,11 +30,15 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "test:ci": "yarn build-storybook && STORYBOOK_BUILT=true yarn test -- --watchAll=false",
+    "test:ci": "yarn test -- --watchAll=false && yarn test:visual",
     "eject": "react-scripts eject",
     "clean": "rm -rf build/ storybook-static/",
     "storybook": "start-storybook -p 6006",
-    "ladle": "ladle serve"
+    "ladle": "ladle serve",
+    "test:visual": "npx playwright test",
+    "test:update": "npx playwright test -u",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui"
   },
   "eslintConfig": {
     "extends": [

@@ -80,6 +80,7 @@ Loading.args = {
     isLoading: true,
     isSaveEnabled: false,
 };
+Loading.meta = {skipSnapshot: true}
 
 export const WithError = (args: Props) => <EditDatesDialogWrapper {...args} />
 WithError.args = {
