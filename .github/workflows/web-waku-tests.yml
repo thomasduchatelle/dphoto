@@ -1,16 +1,9 @@
 name: Web Waku Tests
 
 on:
-  push:
-    branches: [ main, master ]
-    paths:
-      - 'web-waku/**'
-      - '.github/workflows/web-waku-tests.yml'
-  pull_request:
-    branches: [ main, master ]
-    paths:
-      - 'web-waku/**'
-      - '.github/workflows/web-waku-tests.yml'
+  workflow_call:
+    inputs: { }
+
 
 jobs:
   test:

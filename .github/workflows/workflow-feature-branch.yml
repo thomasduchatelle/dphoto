@@ -18,6 +18,8 @@ jobs:
     uses: ./.github/workflows/job-test-ts.yml
   test-waku:
     uses: ./.github/workflows/job-test-waku.yml
+  test-waku-snapshots:
+    uses: ./.github/workflows/web-waku-tests.yml
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
     with:
@@ -52,6 +54,7 @@ jobs:
       - test-go
       - test-ts
       - test-waku
+      - test-waku-snapshots
       - test-cdk
       - build-go
       - build-ts
