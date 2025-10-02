@@ -4,7 +4,7 @@ import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
 import {CreateAlbumDialog} from "../pages/authenticated/albums/CreateAlbumDialog";
-import {Story, action} from "@ladle/react";
+import {action, Story} from "@ladle/react";
 import {CreateDialogSelection} from "../core/catalog";
 import {Button} from "@mui/material";
 
@@ -21,6 +21,13 @@ type Props = Omit<CreateDialogSelection, "open">
 
 const CreateAlbumDialogLadle = (props: Props) => {
     const [open, setOpen] = React.useState(true);
+    const [albumName, setAlbumName] = React.useState(props.albumName);
+    const [customFolderName, setCustomFolderName] = React.useState(props.customFolderName);
+    const [isCustomFolderNameEnabled, setIsCustomFolderNameEnabled] = React.useState(props.isCustomFolderNameEnabled);
+    const [startsAtStartOfTheDay, setStartsAtStartOfTheDay] = React.useState(props.startsAtStartOfTheDay);
+    const [endsAtEndOfTheDay, setEndsAtEndOfTheDay] = React.useState(props.endsAtEndOfTheDay);
+    const [start, setStart] = React.useState(props.start);
+    const [end, setEnd] = React.useState(props.end);
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
@@ -29,19 +36,23 @@ const CreateAlbumDialogLadle = (props: Props) => {
             </Button>
             <CreateAlbumDialog
                 {...props}
+                albumName={albumName}
+                customFolderName={customFolderName}
+                isCustomFolderNameEnabled={isCustomFolderNameEnabled}
+                startsAtStartOfTheDay={startsAtStartOfTheDay}
+                endsAtEndOfTheDay={endsAtEndOfTheDay}
+                start={start}
+                end={end}
                 open={open}
-                onClose={() => {
-                    setOpen(false);
-                    action("onClose")();
-                }}
+                onClose={() => setOpen(false)}
                 onSubmit={async () => action("onSubmit")()}
-                onNameChange={action("onNameChange")}
-                onFolderNameChange={action("onFolderNameChange")}
-                onWithCustomFolderNameChange={action("onWithCustomFolderNameChange")}
-                onStartsAtStartOfTheDayChange={action("onStartsAtStartOfTheDayChange")}
-                onEndsAtEndOfTheDayChange={action("onEndsAtEndOfTheDayChange")}
-                onStartDateChange={action("onStartDateChange")}
-                onEndDateChange={action("onEndDateChange")}
+                onNameChange={setAlbumName}
+                onFolderNameChange={setCustomFolderName}
+                onWithCustomFolderNameChange={setIsCustomFolderNameEnabled}
+                onStartsAtStartOfTheDayChange={setStartsAtStartOfTheDay}
+                onEndsAtEndOfTheDayChange={setEndsAtEndOfTheDay}
+                onStartDateChange={setStart}
+                onEndDateChange={setEnd}
             />
         </LocalizationProvider>
     );
@@ -50,7 +61,7 @@ const CreateAlbumDialogLadle = (props: Props) => {
 export const Default: Story<Props> = (props) => <CreateAlbumDialogLadle {...props} />
 
 Default.args = {
-    albumName: "",
+    albumName: "Return of the Jedi",
     start: defaultStartDate,
     end: endDate,
     customFolderName: "",
