@@ -1,5 +1,5 @@
 import AuthenticatedRouter from "./authenticated/AuthenticatedRouter";
-import LoginPage from "./Login";
+import LoginPage from "./index";
 import React, {ReactElement, useCallback, useState} from "react";
 import {useGlobalError, useIsAuthenticated} from "../core/application";
 import ErrorPage from "./ErrorPage";
