@@ -4,10 +4,14 @@ import {EditDatesDialog} from "../pages/authenticated/albums/EditDatesDialog";
 import {Button} from "@mui/material";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
+import dayjs from "dayjs";
+import fr from "dayjs/locale/fr";
 
 export default {
     title: "Albums / EditDatesDialog",
 };
+
+dayjs.locale(fr)
 
 type Props = React.ComponentProps<typeof EditDatesDialog>;
 

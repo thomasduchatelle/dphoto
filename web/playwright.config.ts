@@ -2,7 +2,6 @@ import {defineConfig} from '@playwright/test';
 
 export default defineConfig({
     testDir: './playwright',
-    reporter: 'html',
     snapshotPathTemplate: `{testDir}/{testFilePath}-${process.env.CI ? 'snapshots' : 'local'}/{arg}-{platform}{ext}`,
     workers: process.env.CI ? 2 : undefined,
     fullyParallel: true,

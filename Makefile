@@ -81,11 +81,18 @@ setup-web-ci:
 	cd web && npx playwright install chromium --with-deps
 
 test-web:
+	cd web && yarn test
+
+test-web-ci:
 	cd web && yarn test:ci
 
 update-snapshots:
+	@echo "Update local snapshots"
+	rm -rf web/playwright/visual-regression.spec.ts-local && cd web && yarn test:visual -- -u --reporter list
+
+update-snapshots-ci:
 	@echo "Update snapshots [should only be used on CI]"
-	rm -rf web-waku/playwright/visual-regression.spec.ts-snapshots && cd web && CI=true yarn test:visual -u
+	rm -rf web/playwright/visual-regression.spec.ts-snapshots && cd web && CI=true yarn test:visual -- -u
 
 build-web:
 	cd web && CI=true yarn build
@@ -93,6 +100,12 @@ build-web:
 start:
 	docker-compose up -d wiremock && \
 		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
+
+ladle:
+	cd web && yarn ladle
+
+playwright:
+	cd web && npx playwright test --reporter html
 
 #######################################
 ## WAKU

@@ -29,8 +29,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "test:ci": "yarn test -- --watchAll=false && yarn test:visual",
+    "test": "yarn test:unit -- --watchAll=false && yarn test:visual",
+    "test:ci": "yarn test:unit -- --watchAll=false && yarn test:visual -- --reporter html",
+    "test:unit": "react-scripts test",
     "test:visual": "npx playwright test",
     "test:update": "npx playwright test -u",
     "test:headed": "npx playwright test --headed",

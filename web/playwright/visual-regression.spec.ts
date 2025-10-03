@@ -7,14 +7,16 @@ const stories = fetch(`${url}/meta.json`).json().stories;
 
 // iterate through stories
 Object.keys(stories).forEach((storyKey) => {
-    ["", "&width=414"].forEach(widthOption => {
+    [{width: 1080, height: 800}, {width: 414, height: 915}].forEach(widthOption => {
 
         if (stories[storyKey].meta.skipSnapshot) {
             return
         }
 
-        test(`${storyKey} - compare snapshots [${widthOption}]`, async ({page}) => {
-            await page.goto(`${url}/?story=${storyKey}&mode=preview${widthOption}`);
+        const viewportId = `${widthOption.width}x${widthOption.height}`;
+        test(`${storyKey} - compare snapshots [${viewportId}]`, async ({page}) => {
+            await page.setViewportSize(widthOption)
+            await page.goto(`${url}/?story=${storyKey}&mode=preview`);
 
             // stories are code-splitted, wait for them to be loaded
             await page.waitForSelector("[data-storyloaded]");
@@ -44,8 +46,7 @@ Object.keys(stories).forEach((storyKey) => {
             });
 
             // take a screenshot and compare it with the baseline
-            const suffix = widthOption ? `-${widthOption.substring(widthOption.lastIndexOf("="))}` : "";
-            await expect(page).toHaveScreenshot(`${storyKey}${suffix}.png`, {
+            await expect(page).toHaveScreenshot(`${storyKey}-${viewportId}.png`, {
                 // Use full page screenshots for consistency
                 fullPage: true,
                 // Add threshold for minor rendering differences

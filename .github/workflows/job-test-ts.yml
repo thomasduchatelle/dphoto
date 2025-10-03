@@ -23,7 +23,7 @@ jobs:
         id: generate-snapshots
         if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
         run: |
-          make update-snapshots
+          make update-snapshots-ci
 
       - name: Publish new snapshots
         if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
@@ -32,7 +32,7 @@ jobs:
           commit_message: ui/test - update visual regression snapshots
 
       - name: Test and build WEB UI
-        run: make test-web
+        run: make test-web-ci
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
