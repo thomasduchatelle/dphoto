@@ -10,7 +10,7 @@ runs:
   steps:
     - uses: actions/setup-node@v4
       with:
-        node-version: '19'
+        node-version: '20'
         # cache: yarn # note - directly caching node_modules is MUCH faster (60s -> 1.5s)
     - name: YARN Cache (restore)
       id: cache-restore
@@ -24,7 +24,7 @@ runs:
           ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock') }}
     - name: Download deps
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
-      run: make setup-app
+      run: make setup-web-ci
       shell: bash
     - name: YARN Cache (always save)
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
@@ -32,5 +32,6 @@ runs:
       with:
         path: |
           ~/.npm
+          ~/.cache/ms-playwright
           web/node_modules
         key: ${{ steps.cache-restore.outputs.cache-primary-key }}

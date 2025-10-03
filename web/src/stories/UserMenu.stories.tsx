@@ -1,30 +1,21 @@
 import React from 'react';
-import {ComponentMeta, ComponentStory} from '@storybook/react';
+import {action, Story} from '@ladle/react';
 import UserMenu from "../components/user.menu";
-import {userEvent, within} from "@storybook/testing-library";
 
 export default {
     title: 'Layout/UserMenu',
-    component: UserMenu,
-} as ComponentMeta<typeof UserMenu>;
+};
 
-const Template: ComponentStory<typeof UserMenu> = (args) => <UserMenu {...args} />;
+type Props = React.ComponentProps<typeof UserMenu>;
 
-export const DefaultMenu = Template.bind({});
+const UserMenuWrapper: Story<Partial<Props>> = (args) => <UserMenu {...args as Props} />;
+
+export const DefaultMenu = (args: Props) => <UserMenuWrapper {...args} />
 DefaultMenu.args = {
     user: {
         name: "Tony Ironman Stark",
         email: "tomy@stark.com",
         picture: "tonystark-profile.jpg"
     },
-    onLogout: () => {
-    },
-};
-DefaultMenu.parameters = {
-    delay: 300,
-};
-DefaultMenu.play = async ({canvasElement}) => {
-    const canvas = within(canvasElement);
-
-    await userEvent.click(canvas.getByRole("button"));
+    onLogout: action('onLogout'),
 };

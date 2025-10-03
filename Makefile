@@ -74,14 +74,25 @@ clean-web:
 	cd web && yarn clean
 
 setup-web:
+	cd web && yarn && npx playwright install
+
+setup-web-ci:
 	cd web && yarn
+	cd web && npx playwright install chromium --with-deps
 
 test-web:
+	cd web && yarn test
+
+test-web-ci:
 	cd web && yarn test:ci
 
 update-snapshots:
+	@echo "Update local snapshots"
+	rm -rf web/playwright/visual-regression.spec.ts-local && cd web && yarn test:visual -- -u --reporter list
+
+update-snapshots-ci:
 	@echo "Update snapshots [should only be used on CI]"
-	rm -rf web/src/stories/__image_snapshots__ && cd web && CI=true yarn test:ci -u
+	rm -rf web/playwright/visual-regression.spec.ts-snapshots && cd web && CI=true yarn test:visual -- -u
 
 build-web:
 	cd web && CI=true yarn build
@@ -90,12 +101,11 @@ start:
 	docker-compose up -d wiremock && \
 		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
 
-storybook:
-	cd web && yarn storybook
+ladle:
+	cd web && yarn ladle
 
-test-web-ci:
-	docker build -t dphoto-puppeteer ./tools/puppeteer/
-	docker run --rm -v "$(shell pwd):/app" -it dphoto-puppeteer yarn test:ci
+playwright:
+	cd web && npx playwright test --reporter html
 
 #######################################
 ## WAKU

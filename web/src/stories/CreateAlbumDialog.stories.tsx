@@ -1,33 +1,78 @@
 import React from 'react';
-import {ComponentMeta, ComponentStory} from '@storybook/react';
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
 import {CreateAlbumDialog} from "../pages/authenticated/albums/CreateAlbumDialog";
+import {action, Story} from "@ladle/react";
+import {CreateDialogSelection} from "../core/catalog";
+import {Button} from "@mui/material";
 
 dayjs.locale(fr)
-
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
-export default {
-    title: 'Albums/CreateAlbumDialog',
-    component: CreateAlbumDialog,
-} as ComponentMeta<typeof CreateAlbumDialog>;
 
 const defaultStartDate = new Date("2024-12-21T00:00:00Z")
 const endDate = new Date("2024-12-29T23:59:00Z")
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof CreateAlbumDialog> = (args) => (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
-        <CreateAlbumDialog {...args}/>
-    </LocalizationProvider>
-);
+export default {
+    title: 'Albums / CreateAlbumDialog',
+};
 
-// it should display the model with no name, defaulted start and end date (1 week apart), no folder name, "create" button disabled
-export const Empty = Template.bind({});
+type Props = Omit<CreateDialogSelection, "open">
+
+const CreateAlbumDialogWrapper: Story<Props> = (props) => {
+    const [open, setOpen] = React.useState(true);
+    const [albumName, setAlbumName] = React.useState(props.albumName);
+    const [customFolderName, setCustomFolderName] = React.useState(props.customFolderName);
+    const [isCustomFolderNameEnabled, setIsCustomFolderNameEnabled] = React.useState(props.isCustomFolderNameEnabled);
+    const [startsAtStartOfTheDay, setStartsAtStartOfTheDay] = React.useState(props.startsAtStartOfTheDay);
+    const [endsAtEndOfTheDay, setEndsAtEndOfTheDay] = React.useState(props.endsAtEndOfTheDay);
+    const [start, setStart] = React.useState(props.start);
+    const [end, setEnd] = React.useState(props.end);
+
+    return (
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
+            <Button variant='contained' onClick={() => setOpen(true)}>
+                Reopen Dialog
+            </Button>
+            <CreateAlbumDialog
+                {...props}
+                albumName={albumName}
+                customFolderName={customFolderName}
+                isCustomFolderNameEnabled={isCustomFolderNameEnabled}
+                startsAtStartOfTheDay={startsAtStartOfTheDay}
+                endsAtEndOfTheDay={endsAtEndOfTheDay}
+                start={start}
+                end={end}
+                open={open}
+                onClose={() => setOpen(false)}
+                onSubmit={async () => action("onSubmit")()}
+                onNameChange={setAlbumName}
+                onFolderNameChange={setCustomFolderName}
+                onWithCustomFolderNameChange={setIsCustomFolderNameEnabled}
+                onStartsAtStartOfTheDayChange={setStartsAtStartOfTheDay}
+                onEndsAtEndOfTheDayChange={setEndsAtEndOfTheDay}
+                onStartDateChange={setStart}
+                onEndDateChange={setEnd}
+            />
+        </LocalizationProvider>
+    );
+};
+
+export const Default = (args: Props) => <CreateAlbumDialogWrapper {...args} />
+Default.args = {
+    albumName: "Return of the Jedi",
+    start: defaultStartDate,
+    end: endDate,
+    customFolderName: "",
+    startsAtStartOfTheDay: true,
+    endsAtEndOfTheDay: true,
+    isCustomFolderNameEnabled: false,
+    isLoading: false,
+    canSubmit: true,
+};
+
+export const Empty = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 Empty.args = {
-    open: true,
     albumName: "",
     start: defaultStartDate,
     end: endDate,
@@ -37,89 +82,45 @@ Empty.args = {
     isCustomFolderNameEnabled: false,
     isLoading: false,
     canSubmit: false,
-    onClose: () => {
-    },
-    onSubmit: () => Promise.resolve(),
-    onNameChange: () => {
-    },
-    onStartDateChange: () => {
-    },
-    onEndDateChange: () => {
-    },
-    onFolderNameChange: () => {
-    },
-    onWithCustomFolderNameChange: () => {
-    },
-    onStartsAtStartOfTheDayChange: () => {
-    },
-    onEndsAtEndOfTheDayChange: () => {
-    },
-};
-Empty.parameters = {
-    delay: 300,
 };
 
-// it should have the "save" button enabled when the name is not empty
-export const WithAName = Template.bind({});
+export const WithAName = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 WithAName.args = {
     ...Empty.args,
     albumName: 'Avenger 3',
     canSubmit: true,
 };
-WithAName.parameters = {
-    delay: 300,
-};
 
-// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
-export const NameAlreadyExists = Template.bind({});
+export const NameAlreadyExists = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 NameAlreadyExists.args = {
     ...Empty.args,
     nameError: "Name must be unique",
 };
-NameAlreadyExists.parameters = {
-    delay: 300,
-};
 
-// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
-export const FolderNameAlreadyExists = Template.bind({});
+export const FolderNameAlreadyExists = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 FolderNameAlreadyExists.args = {
     ...Empty.args,
     folderNameError: "Name must be unique",
     customFolderName: "/avenger-3",
     isCustomFolderNameEnabled: true,
 };
-FolderNameAlreadyExists.parameters = {
-    delay: 300,
-};
 
-// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
-export const StartAndEndDateAreMandatory = Template.bind({});
+export const StartAndEndDateAreMandatory = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 StartAndEndDateAreMandatory.args = {
     ...Empty.args,
     dateRangeError: "Start date must be before end date",
 };
-StartAndEndDateAreMandatory.parameters = {
-    delay: 300,
-};
 
-// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
-export const Loading = Template.bind({});
+export const Loading = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 Loading.args = {
     ...WithAName.args,
     isLoading: true,
     canSubmit: false,
 };
-Loading.parameters = {
-    storyshots: {disable: true},
-};
+Loading.meta = {skipSnapshot: true}
 
-// it should render an error on the Name field when the error albumFolderNameAlreadyTakenErr is raised ; and the error should clear when the name of folder name are updated
-export const GenericError = Template.bind({});
+export const GenericError = (args: Props) => <CreateAlbumDialogWrapper {...args} />
 GenericError.args = {
     ...WithAName.args,
     error: 'Something weird and different than the known errors.'
 };
-GenericError.parameters = {
-    delay: 300,
-};
-

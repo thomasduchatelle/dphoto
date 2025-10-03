@@ -32,12 +32,12 @@ jobs:
 
       - name: Generate snapshots
         id: generate-snapshots
-        if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+        if: ${{ contains(github.event.head_commit.message, '+update-snapshots-waku') }}
         run: |
           make waku-update-snapshots
 
       - name: Publish new snapshots
-        if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+        if: ${{ contains(github.event.head_commit.message, '+update-snapshots-waku') }}
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: web - update visual regression snapshots

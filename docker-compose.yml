@@ -28,16 +28,3 @@ services:
       - "8080:8080"
     volumes:
       - "./:/src"
-
-  storybook:
-    profiles: ["bg"]
-    image: node:20-alpine
-    command:
-      - sh
-      - -c
-      - yarn storybook
-    working_dir: /src/web
-    ports:
-      - "6006:6006"
-    volumes:
-      - "./:/src"

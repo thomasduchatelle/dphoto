@@ -29,11 +29,16 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "test:ci": "yarn build-storybook && STORYBOOK_BUILT=true yarn test -- --watchAll=false",
+    "test": "yarn test:unit -- --watchAll=false && yarn test:visual",
+    "test:ci": "yarn test:unit -- --watchAll=false && yarn test:visual -- --reporter html",
+    "test:unit": "react-scripts test",
+    "test:visual": "npx playwright test",
+    "test:update": "npx playwright test -u",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui",
     "eject": "react-scripts eject",
-    "clean": "rm -rf build/ storybook-static/",
-    "storybook": "start-storybook -p 6006"
+    "clean": "rm -rf build/ dist/",
+    "ladle": "ladle serve"
   },
   "eslintConfig": {
     "extends": [
@@ -65,27 +70,15 @@
   },
   "proxy": "http://127.0.0.1:8080",
   "devDependencies": {
-    "@storybook/addon-actions": "^6.5.16",
-    "@storybook/addon-essentials": "^6.5.16",
-    "@storybook/addon-interactions": "^6.5.16",
-    "@storybook/addon-links": "^6.5.16",
-    "@storybook/addon-storyshots": "^6.5.16",
-    "@storybook/addon-storyshots-puppeteer": "^6.5.16",
-    "@storybook/builder-webpack5": "^6.5.16",
-    "@storybook/jest": "^0.0.10",
-    "@storybook/manager-webpack5": "^6.5.16",
-    "@storybook/node-logger": "^6.5.16",
-    "@storybook/preset-create-react-app": "^4.1.2",
-    "@storybook/react": "^6.5.16",
-    "@storybook/test-runner": "^0.9.4",
-    "@storybook/testing-library": "^0.0.13",
+    "@ladle/react": "^5.1.0",
+    "@playwright/test": "^1.55.1",
     "@testing-library/react-hooks": "^8.0.1",
     "babel-plugin-named-exports-order": "^0.0.2",
     "msw": "1",
     "prop-types": "^15.8.1",
-    "puppeteer": "18.1.0",
     "react-test-renderer": "^18.2.0",
     "start-server-and-test": "^2.0.0",
+    "sync-fetch": "^0.6.0-2",
     "webpack": "^5.75.0"
   }
 }

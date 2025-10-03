@@ -28,7 +28,7 @@ Components holding a logic are tested to demonstrate the Acceptance Criteria are
 3. **Unit test first**: the code is structured so the complex logic of acceptance criteria can be validated by unit tests. Use the appropriate framework:
     * actions and selectors: jest unit tests
     * thunks: jest unit tests
-    * UI components: StoryBook with the component set in each of the relevant situations (examples: "default", "loading", "with a technical error", "success")
+    * UI components: Ladle (Storybook like) with the component set in each of the relevant situations (examples: "default", "loading", "with a technical error", "success")
     * react hooks: jest + testing-library
 
 ## Domain-Specific References
@@ -384,4 +384,61 @@ describe("thunk:executeOrder66Thunk", () => {
         ]);
     });
 });
+```
+
+### UI Component testing: Ladle Stories
+
+This is to be used only for pure UI component, without specific behaviour. Components must have a stories file to present it under relevant situations.
+
+#### Example for a simple component (5 properties or less):
+
+```typescript jsx
+// album-card.stories.tsx
+import {action} from "@ladle/react";
+
+export const Default = <AlbumCard name='Jan 2025' size='42' onClick={action('onClick')}/>
+export const Disabled = <AlbumCard name='Jan 2025' size='42' disabled/>
+```
+
+#### Example for complex components (more than 5 properties, or dialogs)
+
+This rules must be followed to make the tests easy to read and update:
+
+1. a component must be created to wrap the component under tests, named after it with `Wraper` suffix (example: `DeleteAlbumDialogWrapper` to wrap `DeleteAlbumDialog`)
+2. a React state must be created when a callback match with a property (example: `onNameChanged` callback and `name` property) 
+3. `action` must be used for the other callbacks (example: `onSubmit`)
+4. a button must be present to set the `open` property if it is present (example: dialogs require a button t reopen them)
+5. other properties can be overridden by setting the args of the stary (example: `Disabled.args = { name: 'Empire Strike Back' }`)
+
+A complete example of the stories of the component `export const DeleteAlbumDialog = (args: DeleteAlbumDialogProps) => { ... }`:
+
+```typescript jsx
+// delete-album-dialog.stories.tsx
+import {action, Story} from "@ladle/react";
+
+type Props = Partial<DeleteAlbumDialogProps>
+
+const DeleteAlbumDialogWrapper : Story<Props> = (props: Props) => {
+    const [open, setOpen] = React.useState(true);
+    const [albumName, setAlbumName] = React.useState(props.albumName);
+
+    return (
+        <>
+            <Button variant='contained' onClick={() => setOpen(true)}>
+                Reopen Dialog
+            </Button>
+            <DeleteAlbumDialog
+                {...props}
+                open={open}
+                albumId={props.albumId}
+                albumName={albumName}
+                onClose={() => setOpen(false)}
+                onDelete={action("onDelete")}
+            />
+        </>
+    );
+};
+
+export const Default = (args) => <DeleteAlbumDialogWrapper {...args} />
+Default.args = {albumName: 'Empire Strike Back'}
 ```
