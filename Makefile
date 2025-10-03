@@ -94,13 +94,6 @@ start:
 	docker-compose up -d wiremock && \
 		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
 
-storybook:
-	cd web && yarn storybook
-
-test-web-ci:
-	docker build -t dphoto-puppeteer ./tools/puppeteer/
-	docker run --rm -v "$(shell pwd):/app" -it dphoto-puppeteer yarn test:ci
-
 #######################################
 ## WAKU
 #######################################

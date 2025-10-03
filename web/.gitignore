@@ -9,7 +9,6 @@
 /coverage
 /src/stories/__image_snapshots__/__diff_output__/
 /src/stories/__local_snapshots__/
-/storybook-static/
 
 # production
 /build
