@@ -21,7 +21,7 @@ services:
       - -c
       # no --track: fswatch doesn't work on mounted volumes :(
       - |
-        apk add --no-cache bash && \
+        apk add --no-cache bash curl && \
         ./scripts/wiremock.sh --debug
     working_dir: /src
     ports:

@@ -278,25 +278,18 @@ User → API Gateway → Lambda (Waku SSR)
 
 ### Task 5: Reorganize Components to File-Based Structure
 
-**Context**: Prepare the current React Router-based application for Waku's mandatory file-based routing by reorganizing components to match Waku's expected structure. This must be done while keeping React Router functional to validate the changes before switching to Waku.
+You're going to implement the changes required to achieve the last step of the anticipation phase of `specs/2025-09_Waku_Migration.md`.
 
-**Scope**:
-- Analyze current routing structure and map to Waku's file-based conventions
-- Move components to pages/ directory with appropriate file naming (e.g., [id].tsx for dynamic routes)
-- Update React Router route definitions to reference new file locations
-- Test that all routes work correctly with the new file structure
-- Do NOT remove React Router or change routing logic yet - only reorganize files
+I'd need you to do the following:
 
-**Requirements**:
-- Map current routes to Waku file conventions (index.tsx, [param].tsx, etc.)
-- Maintain all existing functionality and routing behavior
-- Update all imports and references to moved files
-- Verify all routes work correctly after reorganization
-- Document the new file structure and routing conventions
+1. refactor the code to create the **file-based routing structure compatible with Waku routing**
+   * each index file must be of the type `export default async function NameOfThePage({pathArg1, ...})`
+   * each `NameOfThePage` must be the full page: fetching data, layout, ... They will be client components, keep using `useEffect` as it is currently done. This code is certainly spread through several files at the moment: you need to regroup it into 1 page-component per page.
+   * the page `src/pages/index.tsx` is expected to look like: `export async function GET(request: Request) { return Response.redirect('/albums/album-1') }`. Make a signature that can be used in a CRA context but is functionally similar.
+   * extract the layout of the pages under `/albums/...` into `/albums/_layout.tsx` 
+   * remove code becoming duplicated or dead because of the refactoring 
+2. create a file `src/pages/_cra-router.tsx` which is using the React router, and the page components created on the previous step.
+   * the resulting should be an extremely simple routing: `<Routes><Route path='/albums' element={<NameOfThePage />}/>...</Routes>`
+3. move all the others UI components in `src/components/` in `src/pages/` ; any component which are not a page, a layout, or the cra router.
 
-**Deliverables**:
-- Components reorganized into Waku-compatible file structure
-- Updated React Router configuration using new file locations
-- All routes tested and working with new structure
-- Documentation of file structure mapping and conventions
-- Validation that the application works identically to before reorganization
+The refactoring should result into the same URLs navigation. The code must compile. And make sure you don't leave duplicated code or dead code behind your refactoring.
