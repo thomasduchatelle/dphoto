@@ -1,7 +1,7 @@
 import {CssBaseline} from "@mui/material";
 import {BrowserRouter} from "react-router-dom";
-import DPhotoTheme from "./components/DPhotoTheme";
-import GeneralRouter from "./pages/GeneralRouter";
+import DPhotoTheme from "./pages/DPhotoTheme";
+import CRARouter from "./pages/_cra-router";
 import {ApplicationContextComponent} from "./core/application";
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import {LocalizationProvider} from "@mui/x-date-pickers";
@@ -19,7 +19,7 @@ const App = () => {
                 <BrowserRouter>
                     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
                         <ApplicationContextComponent>
-                            <GeneralRouter/>
+                            <CRARouter/>
                         </ApplicationContextComponent>
                     </LocalizationProvider>
                 </BrowserRouter>
