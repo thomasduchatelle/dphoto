@@ -388,9 +388,9 @@ describe("thunk:executeOrder66Thunk", () => {
 
 ### UI Component testing: Ladle Stories
 
-This is to be used only for pure UI component, without specific behaviour. Components must have a stories file to present it under relevant situations.
+UI components must be tested visually, using Ladle, validating each of their relevant situations (default, saving, displaying an error, loading, ...).
 
-#### Example for a simple component (5 properties or less):
+#### Example for a simple component (5 properties or fewer):
 
 ```typescript jsx
 // album-card.stories.tsx
@@ -400,14 +400,16 @@ export const Default = <AlbumCard name='Jan 2025' size='42' onClick={action('onC
 export const Disabled = <AlbumCard name='Jan 2025' size='42' disabled/>
 ```
 
-#### Example for complex components (more than 5 properties, or dialogs)
+#### Example for complex components (more than 5 properties, or openable components like dialogs)
 
 This rules must be followed to make the tests easy to read and update:
 
-1. a component must be created to wrap the component under tests, named after it with `Wraper` suffix (example: `DeleteAlbumDialogWrapper` to wrap `DeleteAlbumDialog`)
-2. a React state must be created when a callback match with a property (example: `onNameChanged` callback and `name` property) 
-3. `action` must be used for the other callbacks (example: `onSubmit`)
-4. a button must be present to set the `open` property if it is present (example: dialogs require a button t reopen them)
+1. a test component must be created to wrap the component under tests. It is named with `Wraper` suffix (example: `DeleteAlbumDialogWrapper` to wrap `DeleteAlbumDialog`)
+2. a React state must be created when a callback match with a property (example: `onNameChanged` callback and `name` property)
+3. `action('callbackName')` must be used for the other callbacks (example: `<DeleteAlbumDialog onSubmit={action('onSubmit')}`)
+4. if a property `open` is present (or one with a similar meaning):
+   * its value must be managed by a state, defaulted to `true`. Example: `const [open, setOpen] = useState(true)`
+   * a "Reopen Dialog" button must be present to set the value to `true`
 5. other properties can be overridden by setting the args of the stary (example: `Disabled.args = { name: 'Empire Strike Back' }`)
 
 A complete example of the stories of the component `export const DeleteAlbumDialog = (args: DeleteAlbumDialogProps) => { ... }`:
@@ -428,9 +430,9 @@ const DeleteAlbumDialogWrapper : Story<Props> = (props: Props) => {
                 Reopen Dialog
             </Button>
             <DeleteAlbumDialog
+                albumId='sensible-default-id'
                 {...props}
                 open={open}
-                albumId={props.albumId}
                 albumName={albumName}
                 onClose={() => setOpen(false)}
                 onDelete={action("onDelete")}
@@ -440,5 +442,5 @@ const DeleteAlbumDialogWrapper : Story<Props> = (props: Props) => {
 };
 
 export const Default = (args) => <DeleteAlbumDialogWrapper {...args} />
-Default.args = {albumName: 'Empire Strike Back'}
+Default.args = {albumId: 'episode-5', albumName: 'Empire Strike Back'}
 ```
