@@ -2,7 +2,7 @@ import {AxiosError} from "axios";
 import {Dispatch} from "react";
 import {ApplicationAction} from "../application";
 import {AuthenticatedUser, LogoutListener, REFRESH_TOKEN_KEY} from "./security-state";
-import {AuthenticationPort} from "../../pages/Login/domain";
+import {AuthenticationPort} from "../../pages/login-domain";
 
 interface ErrorBody {
     code: string

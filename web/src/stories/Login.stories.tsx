@@ -1,8 +1,8 @@
 import React from 'react';
 import {Story} from '@ladle/react';
 
-import {LoginInternal} from "../pages/Login";
-import {initialLoginPageState, reduce} from "../pages/Login/domain/login-reducer";
+import {LoginInternal} from "../pages/login";
+import {initialLoginPageState, reduce} from "../pages/login-domain/login-reducer";
 import {Button} from "@mui/material";
 
 export default {

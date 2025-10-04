@@ -1,7 +1,7 @@
 import React from 'react';
 import {action, Story} from '@ladle/react';
 import {Button} from '@mui/material';
-import {EditNameDialog} from "../pages/authenticated/albums/EditNameDialog";
+import {EditNameDialog} from "../pages/albums/EditNameDialog";
 
 export default {
     title: 'Albums / EditNameDialog',

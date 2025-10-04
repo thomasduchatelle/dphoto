@@ -1,7 +1,7 @@
 import React from 'react';
 import {action, Story} from '@ladle/react';
 import {BrowserRouter} from 'react-router-dom';
-import AlbumsListActions from "../pages/authenticated/albums/AlbumsListActions/AlbumListActions";
+import AlbumsListActions from "../pages/albums/AlbumsListActions/AlbumListActions";
 
 export default {
     title: 'Albums / AlbumsListActions',

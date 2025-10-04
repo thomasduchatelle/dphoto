@@ -1,6 +1,6 @@
 import React from 'react';
 import {action, Story} from '@ladle/react';
-import UserMenu from "../components/user.menu";
+import UserMenu from "../pages/user.menu";
 
 export default {
     title: 'Layout/UserMenu',

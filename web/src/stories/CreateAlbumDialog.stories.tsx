@@ -3,7 +3,7 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
-import {CreateAlbumDialog} from "../pages/authenticated/albums/CreateAlbumDialog";
+import {CreateAlbumDialog} from "../pages/albums/CreateAlbumDialog";
 import {action, Story} from "@ladle/react";
 import {CreateDialogSelection} from "../core/catalog";
 import {Button} from "@mui/material";
