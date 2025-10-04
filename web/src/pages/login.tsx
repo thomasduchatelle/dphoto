@@ -1,12 +1,12 @@
 import {Alert, Box, LinearProgress, Paper, Typography} from "@mui/material";
 import React, {ReactNode, useCallback, useState} from "react";
-import useLoginController from "./Login/domain";
-import {LoginPageState} from "./Login/domain/login-hook";
-import GoogleLoginButton from "./Login/GoogleLoginButton";
+import useLoginController from "./login-domain";
+import {LoginPageState} from "./login-domain/login-hook";
+import GoogleLoginButton from "./google-login-button";
 import logo from "../images/dphoto-fulllogo-medium.png"
 import {useNavigate} from "react-router-dom";
 
-const LoginInternal = ({
+export const LoginInternal = ({
                            error,
                            loading,
                            promptForLogin,

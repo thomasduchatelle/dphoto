@@ -1,5 +1,5 @@
 import {AuthenticationPort, IdentityProviderError, LoadingPort, LoginPageActions} from "./login-model";
-import {AppAuthenticationError, ExpiredSessionError, LogoutListener, SuccessfulAuthenticationResponse} from "../../../core/security";
+import {AppAuthenticationError, ExpiredSessionError, LogoutListener, SuccessfulAuthenticationResponse} from "../../core/security";
 import {Dispatch} from "react";
 import {initialLoginPageState, PageAction} from "./login-reducer";
 

@@ -1,5 +1,5 @@
 import {LoginPageActions, PageState} from "./login-model";
-import {useAuthenticationCase, useSecurityState} from "../../../core/application";
+import {useAuthenticationCase, useSecurityState} from "../../core/application";
 import {useEffect, useMemo, useReducer} from "react";
 import {LoginController} from "./login-controller";
 import {initialLoginPageState, reduce} from "./login-reducer";

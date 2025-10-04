@@ -1,7 +1,7 @@
 import React from 'react';
 import {action, Story} from '@ladle/react';
-import AppNav from "../components/AppNav";
-import UserMenu from "../components/user.menu";
+import AppNav from "../pages/AppNav";
+import UserMenu from "../pages/user.menu";
 
 export default {
     title: 'Layout / AppNav',

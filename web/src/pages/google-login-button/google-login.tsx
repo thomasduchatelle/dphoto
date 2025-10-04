@@ -1,9 +1,9 @@
 import React, {memo, useEffect, useRef} from "react";
-import {LogoutListener} from "../../../core/security";
-import {useConfigContext} from "../../../core/application";
-import useWindowDimensions from "../../../core/utils/window-utils";
+import {LogoutListener} from "../../core/security";
+import {useConfigContext} from "../../core/application";
+import useWindowDimensions from "../../core/utils/window-utils";
 import {loadScript} from "./loadScript";
-import {IdentityProviderError} from "../domain";
+import {IdentityProviderError} from "../login-domain";
 import {googleLogout} from "./google-logout";
 import {Box} from "@mui/material";
 

@@ -1,5 +1,5 @@
 import {Alert, Container, Paper, Toolbar} from "@mui/material";
-import AppNav from "../../components/AppNav";
+import AppNav from "../AppNav";
 import React from "react";
 
 export default function ErrorPage({error}: {

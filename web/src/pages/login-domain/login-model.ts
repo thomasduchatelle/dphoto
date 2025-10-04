@@ -1,4 +1,4 @@
-import {AuthenticatedUser, LogoutListener, SuccessfulAuthenticationResponse} from "../../../core/security";
+import {AuthenticatedUser, LogoutListener, SuccessfulAuthenticationResponse} from "../../core/security";
 
 export class IdentityProviderError extends Error {
 }
