@@ -1,7 +1,7 @@
 import React, {useCallback} from 'react';
 import {action, Story} from '@ladle/react';
 import {Button} from '@mui/material';
-import ShareDialog from "../pages/authenticated/albums/ShareDialog";
+import ShareDialog from "../components/albums/ShareDialog";
 import {ShareError, Sharing, UserDetails} from "../core/catalog";
 
 export default {

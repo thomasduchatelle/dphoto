@@ -1,3 +1,3 @@
 import {Footer} from "./footer";
 
-export const Default = () => <Footer />
+export const Default = () => <Footer/>

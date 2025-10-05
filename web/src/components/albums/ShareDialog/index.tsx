@@ -18,7 +18,7 @@ import {
 import React, {useRef, useState} from "react";
 import "./ShareDialogChipsAnimation.css";
 import Grid from '@mui/material/Unstable_Grid2';
-import {ShareError, Sharing, UserDetails} from "../../../../core/catalog";
+import {ShareError, Sharing, UserDetails} from "../../../core/catalog";
 import {Add as AddIcon, Check as CheckIcon, Delete, ErrorOutline as ErrorOutlineIcon, Send as SendIcon, Share as ShareIcon} from "@mui/icons-material";
 
 export default function ShareDialog({

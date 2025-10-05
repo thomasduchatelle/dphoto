@@ -1,5 +1,5 @@
 import {MediaPageMediasState} from "./domain";
-import {MustBeAuthenticated} from "../../../../core/application";
+import {MustBeAuthenticated} from "../../../core/application";
 
 interface RestMedia {
     id: string

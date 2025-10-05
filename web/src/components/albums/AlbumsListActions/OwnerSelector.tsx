@@ -1,7 +1,7 @@
 import {memo, useState} from "react";
 import {Avatar, AvatarGroup, Box, Button, Menu, MenuItem} from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import {AlbumFilterCriterion, AlbumFilterEntry} from "../../../../core/catalog";
+import {AlbumFilterCriterion, AlbumFilterEntry} from "../../../core/catalog";
 
 export interface OwnerSelectorProps {
     selected: AlbumFilterEntry

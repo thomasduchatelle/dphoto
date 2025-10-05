@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import Grid from '@mui/material/Unstable_Grid2';
 import {Close} from "@mui/icons-material";
-import {CreateDialogSelection} from "../../../../core/catalog";
+import {CreateDialogSelection} from "../../../core/catalog";
 import {DateRangePicker} from "../DateRangePicker";
 import {FolderNameInput} from "../FolderNameInput";
 
