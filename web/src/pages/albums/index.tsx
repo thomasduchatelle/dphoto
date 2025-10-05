@@ -1,7 +1,7 @@
 import App from 'src/App';
 
-// Root page - all routing is handled internally by React Router in App component
-export default function IndexPage() {
+// Albums page - routing is handled internally by React Router in App component
+export default function AlbumsPage() {
   return <App />;
 }
 
