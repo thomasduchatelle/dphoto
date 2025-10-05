@@ -9,7 +9,7 @@ import MediasPage from "../../../components/albums/MediasPage";
 import MobileNavigation from "../../../components/albums/MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
-import {useLocation, useSearchParams} from "react-router-dom";
+import {useClientRouter} from "../../../components/ClientRouter";
 import {
     catalogViewerPageSelector,
     createDialogSelector,
@@ -65,13 +65,12 @@ export function CatalogViewerPage() {
     } = useCatalogContext()
     const logoutCase = useLogoutCase();
 
-    const {pathname} = useLocation()
-    const [search] = useSearchParams()
+    const {path, query} = useClientRouter()
 
     const theme = useTheme()
 
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
-    const isAlbumsPage = pathname === '/albums'
+    const isAlbumsPage = path === '/albums'
 
     const {albumFilter, albumFilterOptions, albumsLoaded, albums, displayedAlbum} = catalogViewerPageSelector(state);
 
@@ -110,7 +109,7 @@ export function CatalogViewerPage() {
                     {...catalogViewerPageSelector(state)}
                     {...displayedAlbumSelector(state)}
                     onAlbumFilterChange={onAlbumFilterChange}
-                    scrollToMedia={search.get("mediaId") ?? undefined}
+                    scrollToMedia={query.get("mediaId") ?? undefined}
                     openSharingModal={openSharingModal}
                     openDeleteAlbumDialog={openDeleteAlbumDialog}
                     openEditDatesDialog={openEditDatesDialog}

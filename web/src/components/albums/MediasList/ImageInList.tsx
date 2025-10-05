@@ -2,16 +2,17 @@
 
 import DownloadIcon from "@mui/icons-material/Download";
 import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
-import {Link} from "react-router-dom";
 import {dateTimeToString} from "../../../core/utils/date-utils";
 import {Media, MediaType} from "../../../core/catalog";
 import {useEffect, useRef} from "react";
+import {useClientRouter} from "../../../components/ClientRouter";
 
 export function ImageInList({media, imageViewportPercentage, autoFocus = false}: {
     media: Media,
     imageViewportPercentage: number,
     autoFocus?: boolean,
 }) {
+    const {navigate} = useClientRouter();
     const itemRef = useRef<HTMLLIElement | null>(null)
     const imageSrc = media.type === MediaType.IMAGE ? `${media.contentPath}` : '/video-placeholder.png';
     const imageSrcSet = media.type === MediaType.IMAGE ? `${media.contentPath}&w=180 180w, ${media.contentPath}&w=360 360w` : '/video-placeholder.png';
@@ -21,6 +22,11 @@ export function ImageInList({media, imageViewportPercentage, autoFocus = false}:
             itemRef.current.scrollIntoView({behavior: 'smooth', block: 'start'})
         }
     }, [autoFocus, itemRef])
+
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        navigate(media.uiRelativePath);
+    };
 
     return (
         <ImageListItem
@@ -48,7 +54,7 @@ export function ImageInList({media, imageViewportPercentage, autoFocus = false}:
                 },
             }}
         >
-            <Link to={`${media.uiRelativePath}`}>
+            <a href={media.uiRelativePath} onClick={handleClick}>
                 <img
                     src={`${imageSrc}`}
                     srcSet={`${imageSrcSet}`}
@@ -56,7 +62,7 @@ export function ImageInList({media, imageViewportPercentage, autoFocus = false}:
                     alt={dateTimeToString(media.time)}
                     loading="lazy"
                 />
-            </Link>
+            </a>
             <ImageListItemBar
                 title={dateTimeToString(media.time)}
                 subtitle={media.source ? `@${media.source}` : ''}

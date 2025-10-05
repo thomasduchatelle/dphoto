@@ -1,31 +1,47 @@
 'use client';
 
 import React, {useMemo} from "react";
-import {Navigate, Route, Routes, useLocation} from "react-router-dom"
 import MediaPage from "./media";
 import CatalogViewerRoot from "./albums/CatalogViewerRoot";
 import {CatalogViewerPage} from "./albums/CatalogViewerPage";
+import {useClientRouter} from "../../components/ClientRouter";
 
 const RedirectToDefaultOrPrevious = () => {
     // note - API Gateway + S3 static will redirect on '/?path=<previously requested url>' when a page is reloaded
-    const {search} = useLocation();
+    const {query, navigate} = useClientRouter();
 
-    const query = useMemo(() => new URLSearchParams(search), [search]);
     const redirectTo = query.get("path") ?? '/albums'
-    return (
-        <Navigate to={redirectTo}/>
-    )
+    
+    React.useEffect(() => {
+        navigate(redirectTo);
+    }, [redirectTo, navigate]);
+    
+    return null;
 }
 
 const AuthenticatedRouter = () => {
-    return (
-        <Routes>
-            <Route path='/albums' element={<CatalogViewerRoot><CatalogViewerPage/></CatalogViewerRoot>}/>
-            <Route path='/albums/:owner/:album' element={<CatalogViewerRoot><CatalogViewerPage/></CatalogViewerRoot>}/>
-            <Route path='/albums/:owner/:album/:encodedId/:filename' element={<CatalogViewerRoot><MediaPage/></CatalogViewerRoot>}/>
-            <Route path='*' element={<RedirectToDefaultOrPrevious/>}/>
-        </Routes>
-    )
+    const {path} = useClientRouter();
+    
+    // Parse the path to determine which component to render
+    const pathParts = path.split('/').filter(p => p);
+    
+    // /albums/:owner/:album/:encodedId/:filename
+    if (pathParts[0] === 'albums' && pathParts.length >= 5) {
+        return <CatalogViewerRoot><MediaPage/></CatalogViewerRoot>;
+    }
+    
+    // /albums/:owner/:album
+    if (pathParts[0] === 'albums' && pathParts.length >= 3) {
+        return <CatalogViewerRoot><CatalogViewerPage/></CatalogViewerRoot>;
+    }
+    
+    // /albums
+    if (pathParts[0] === 'albums') {
+        return <CatalogViewerRoot><CatalogViewerPage/></CatalogViewerRoot>;
+    }
+    
+    // Default: redirect to /albums
+    return <RedirectToDefaultOrPrevious/>;
 }
 
 export default AuthenticatedRouter

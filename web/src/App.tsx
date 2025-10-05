@@ -1,7 +1,6 @@
 'use client';
 
 import {CssBaseline} from "@mui/material";
-import {BrowserRouter} from "react-router-dom";
 import DPhotoTheme from "./components/DPhotoTheme";
 import GeneralRouter from "./pages-old/GeneralRouter";
 import {ApplicationContextComponent} from "./core/application";
@@ -18,13 +17,11 @@ const App = () => {
         <div className="App">
             <DPhotoTheme>
                 <CssBaseline/>
-                <BrowserRouter>
-                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
-                        <ApplicationContextComponent>
-                            <GeneralRouter/>
-                        </ApplicationContextComponent>
-                    </LocalizationProvider>
-                </BrowserRouter>
+                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
+                    <ApplicationContextComponent>
+                        <GeneralRouter/>
+                    </ApplicationContextComponent>
+                </LocalizationProvider>
             </DPhotoTheme>
         </div>
     )

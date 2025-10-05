@@ -2,22 +2,23 @@
 
 import AuthenticatedRouter from "./authenticated/AuthenticatedRouter";
 import LoginPage from "./Login";
-import React, {ReactElement, useCallback, useState} from "react";
+import React, {ReactElement, useCallback, useEffect, useState} from "react";
 import {useGlobalError, useIsAuthenticated} from "../core/application";
 import ErrorPage from "./ErrorPage";
-import {Navigate, useSearchParams} from "react-router-dom";
+import {useClientRouter} from "../components/ClientRouter";
 
 const RestoreAPIGatewayOriginalPath = ({children}: {
     children: ReactElement;
 }) => {
     // note - API Gateway + S3 static will redirect on '/?path=<previously requested url>' when a page is reloaded
-    const [search] = useSearchParams();
-    const path = search.get('path')
-    if (path) {
-        return (
-            <Navigate to={path}/>
-        )
-    }
+    const {query, navigate} = useClientRouter();
+    const path = query.get('path')
+    
+    useEffect(() => {
+        if (path) {
+            navigate(path);
+        }
+    }, [path, navigate]);
 
     return children
 }

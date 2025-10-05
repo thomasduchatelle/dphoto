@@ -1,12 +1,12 @@
 'use client';
 
 import {Avatar, AvatarGroup, Badge, IconButton, ListItemAvatar, ListItemButton, ListItemSecondaryAction, ListItemText, Tooltip} from "@mui/material";
-import {Link} from "react-router-dom";
 import {toLocaleDateWithDay} from "../../../core/utils/date-utils";
 import {HotIndicator} from "./HotIndicator";
 import {Share} from "@mui/icons-material";
 import React from "react";
 import {Album, AlbumId} from "../../../core/catalog";
+import {useClientRouter} from "../../../components/ClientRouter";
 
 export function AlbumListEntry({album, selected, onClickOnSharedWith}: {
     album: Album
@@ -14,17 +14,21 @@ export function AlbumListEntry({album, selected, onClickOnSharedWith}: {
     onClickOnSharedWith: (albumId: AlbumId) => void
 
 }) {
+    const {navigate} = useClientRouter();
 
     const handleClickOnSharedWith = (evt: React.MouseEvent<HTMLElement>) => {
         evt.preventDefault()
         onClickOnSharedWith(album.albumId)
     }
 
+    const handleClick = () => {
+        navigate(`/albums/${album.albumId.owner}/${album.albumId.folderName}`);
+    };
+
     return <ListItemButton
         divider={false}
         selected={selected}
-        to={`/albums/${album.albumId.owner}/${album.albumId.folderName}`}
-        component={Link}
+        onClick={handleClick}
         sx={{
             borderRadius: '20px',
         }}

@@ -2,12 +2,12 @@
 
 import {Box} from "@mui/material";
 import React, {useEffect, useMemo, useState} from "react";
-import {useNavigate, useParams} from "react-router-dom";
 import {FullHeightLink} from "../../../components/media/FullHeightLink";
 import {MediaPageLogic, MediaPageMediasState, MediaPageMediasStateInit} from "../../../components/media/logic";
 import MediaNavBar from "../../../components/media/MediaNavBar";
 import {Key, useNativeControl} from "../../../components/media/useNativeControl";
 import {useMustBeAuthenticated} from "../../../core/application";
+import {useClientRouter} from "../../../components/ClientRouter";
 
 type MediaPageUrlParams = {
     owner: string
@@ -24,8 +24,8 @@ interface ImageRef {
 
 export default function MediaPage() {
     const mustBeAuthenticated = useMustBeAuthenticated()
-    const navigate = useNavigate()
-    const {owner, album, encodedId, filename} = useParams<MediaPageUrlParams>()
+    const {navigate, params} = useClientRouter()
+    const {owner, album, encodedId, filename} = params as MediaPageUrlParams
     const [state, setState] = useState<MediaPageMediasState>(MediaPageMediasStateInit)
 
     const logic = useMemo(() => new MediaPageLogic(mustBeAuthenticated, setState), [mustBeAuthenticated, setState])
