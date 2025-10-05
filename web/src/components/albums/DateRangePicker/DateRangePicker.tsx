@@ -74,6 +74,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         disabled={disabled}
                         value={fromUTCDate(startDate)}
                         onChange={onStartChange}
+                        enableAccessibleFieldDOMStructure={false}
                         slots={{
                             textField: TextField
                         }}
@@ -91,6 +92,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         disabled={disabled}
                         value={fromUTCDate(startDate)}
                         onChange={onStartChange}
+                        enableAccessibleFieldDOMStructure={false}
                         slots={{
                             textField: TextField
                         }}
@@ -125,6 +127,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         disabled={disabled}
                         value={fromUTCDate(endDate)}
                         onChange={onEndChange}
+                        enableAccessibleFieldDOMStructure={false}
                         slots={{
                             textField: TextField
                         }}
@@ -141,6 +144,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         disabled={disabled}
                         value={fromUTCDate(endDate)}
                         onChange={onEndChange}
+                        enableAccessibleFieldDOMStructure={false}
                         slots={{
                             textField: TextField
                         }}
