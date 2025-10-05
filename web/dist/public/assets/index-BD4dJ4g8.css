@@ -1,0 +1,1 @@
+.chip-move-enter{opacity:0;transform:scale(.8) translateY(20px)}.chip-move-enter-active{opacity:1;transform:scale(1) translateY(0);transition:opacity .3s,transform .3s}.chip-move-exit{opacity:1;transform:scale(1) translateY(0)}.chip-move-exit-active{opacity:0;transform:scale(.8) translateY(-50px);transition:opacity .3s,transform .3s}
