@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'waku';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 
 export interface RouterContextValue {
   path: string;
@@ -13,56 +13,34 @@ export interface RouterContextValue {
 
 export function useClientRouter(): RouterContextValue {
   const router = useRouter();
-  const [path, setPath] = useState('/');
-  const [params, setParams] = useState<Record<string, string>>({});
-  const [query, setQuery] = useState<URLSearchParams>(new URLSearchParams());
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const updateRoute = () => {
-        const currentPath = window.location.pathname;
-        const currentSearch = new URLSearchParams(window.location.search);
-        setPath(currentPath);
-        setQuery(currentSearch);
-        
-        // Parse params from path
-        const parsedParams = parseParams(currentPath);
-        setParams(parsedParams);
-      };
+  const getCurrentPath = () => {
+    if (typeof window === 'undefined') return '/';
+    return window.location.pathname;
+  };
 
-      updateRoute();
+  const getCurrentQuery = () => {
+    if (typeof window === 'undefined') return new URLSearchParams();
+    return new URLSearchParams(window.location.search);
+  };
 
-      // Listen for popstate events (back/forward)
-      window.addEventListener('popstate', updateRoute);
-      
-      return () => {
-        window.removeEventListener('popstate', updateRoute);
-      };
-    }
-  }, []);
+  const getCurrentParams = () => {
+    if (typeof window === 'undefined') return {};
+    return parseParams(window.location.pathname);
+  };
 
   const navigate = (newPath: string) => {
     router.push(newPath);
-    const parsedParams = parseParams(newPath);
-    setParams(parsedParams);
-    setPath(newPath.split('?')[0]);
-    const searchPart = newPath.split('?')[1];
-    setQuery(new URLSearchParams(searchPart || ''));
   };
 
   const replace = (newPath: string) => {
     router.replace(newPath);
-    const parsedParams = parseParams(newPath);
-    setParams(parsedParams);
-    setPath(newPath.split('?')[0]);
-    const searchPart = newPath.split('?')[1];
-    setQuery(new URLSearchParams(searchPart || ''));
   };
 
   return {
-    path,
-    params,
-    query,
+    path: getCurrentPath(),
+    params: getCurrentParams(),
+    query: getCurrentQuery(),
     navigate,
     replace,
   };
