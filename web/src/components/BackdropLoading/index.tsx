@@ -1,3 +1,5 @@
+'use client';
+
 import {Backdrop, CircularProgress} from "@mui/material";
 
 const BackdropLoading = ({loading}: {

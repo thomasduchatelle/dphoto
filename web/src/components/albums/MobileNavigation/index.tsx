@@ -1,3 +1,5 @@
+'use client';
+
 import HomeIcon from '@mui/icons-material/Home';
 import {Breadcrumbs, Link, Typography} from "@mui/material";
 import {Album} from "../../../core/catalog";

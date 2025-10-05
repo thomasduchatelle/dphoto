@@ -1,3 +1,5 @@
+'use client';
+
 import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";

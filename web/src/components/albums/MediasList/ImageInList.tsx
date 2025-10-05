@@ -1,3 +1,5 @@
+'use client';
+
 import DownloadIcon from "@mui/icons-material/Download";
 import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
 import {Link} from "react-router-dom";

@@ -1,3 +1,5 @@
+'use client';
+
 import {memo, useState} from "react";
 import {Avatar, AvatarGroup, Box, Button, Menu, MenuItem} from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';

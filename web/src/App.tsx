@@ -1,7 +1,9 @@
+'use client';
+
 import {CssBaseline} from "@mui/material";
 import {BrowserRouter} from "react-router-dom";
 import DPhotoTheme from "./components/DPhotoTheme";
-import GeneralRouter from "./pages/GeneralRouter";
+import GeneralRouter from "./pages-old/GeneralRouter";
 import {ApplicationContextComponent} from "./core/application";
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import {LocalizationProvider} from "@mui/x-date-pickers";

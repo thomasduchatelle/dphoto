@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import {Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, useMediaQuery, useTheme} from "@mui/material";
 import {Close} from "@mui/icons-material";

@@ -1,3 +1,5 @@
+'use client';
+
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadIcon from '@mui/icons-material/Download';
 import {AppBar, Box, IconButton, Toolbar} from "@mui/material";

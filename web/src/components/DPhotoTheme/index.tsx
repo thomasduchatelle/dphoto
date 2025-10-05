@@ -1,3 +1,5 @@
+'use client';
+
 import {createTheme, LinkProps, ThemeProvider} from "@mui/material";
 import {forwardRef, ReactNode} from "react";
 import {Link as RouterLink, LinkProps as RouterLinkProps} from "react-router-dom";

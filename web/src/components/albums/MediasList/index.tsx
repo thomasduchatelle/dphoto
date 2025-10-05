@@ -1,3 +1,5 @@
+'use client';
+
 import {Alert, Box, CircularProgress, ImageList, Typography, useMediaQuery, useTheme} from "@mui/material";
 import {Fragment} from "react";
 import {toLocaleDateWithDay} from "../../../core/utils/date-utils";

@@ -1,3 +1,5 @@
+'use client';
+
 import {AppBar, Box, Container, Toolbar, useScrollTrigger} from "@mui/material";
 import {cloneElement, ReactElement, ReactNode} from "react";
 import fullLogo from "../../images/dphoto-fulllogo-reversed-50px.png"

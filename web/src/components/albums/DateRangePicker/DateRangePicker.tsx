@@ -1,3 +1,5 @@
+'use client';
+
 import React, {useCallback} from "react";
 import {Checkbox, FormControlLabel, TextField} from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
