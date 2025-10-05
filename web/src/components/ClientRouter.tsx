@@ -19,7 +19,7 @@ export function useClientRouter(): RouterContextValue {
     };
 
     const getCurrentQuery = () => {
-        return router.query;
+        return new URLSearchParams(router.query);
     };
 
     const getCurrentParams = () => {
