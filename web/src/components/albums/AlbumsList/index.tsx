@@ -1,5 +1,5 @@
 import {Box, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Skeleton} from "@mui/material";
-import {Album, AlbumId, albumIdEquals} from "../../../../core/catalog";
+import {Album, AlbumId, albumIdEquals} from "../../../core/catalog";
 import {AlbumListEntry} from "./AlbumListEntry";
 import React from "react";
 

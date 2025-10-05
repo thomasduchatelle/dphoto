@@ -1,6 +1,6 @@
 import React from "react";
 import {action, Story} from "@ladle/react";
-import {EditDatesDialog} from "../pages/authenticated/albums/EditDatesDialog";
+import {EditDatesDialog} from "../components/albums/EditDatesDialog";
 import {Button} from "@mui/material";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";

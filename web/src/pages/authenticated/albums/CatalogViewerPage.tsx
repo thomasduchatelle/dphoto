@@ -2,9 +2,9 @@ import {Box, Toolbar, useMediaQuery, useTheme} from "@mui/material";
 import React from 'react';
 import AppNav from "../../../components/AppNav";
 import UserMenu from "../../../components/user.menu";
-import AlbumsList from "./AlbumsList";
-import MediasPage from "./MediasPage";
-import MobileNavigation from "./MobileNavigation";
+import AlbumsList from "../../../components/albums/AlbumsList";
+import MediasPage from "../../../components/albums/MediasPage";
+import MobileNavigation from "../../../components/albums/MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
 import {useLocation, useSearchParams} from "react-router-dom";
@@ -16,12 +16,12 @@ import {
     editNameDialogSelector,
     sharingDialogSelector
 } from "../../../core/catalog";
-import {CreateAlbumDialog} from "./CreateAlbumDialog";
-import AlbumListActions from "./AlbumsListActions/AlbumListActions";
-import ShareDialog from "./ShareDialog";
-import {DeleteAlbumDialog} from "./DeleteAlbumDialog";
-import {EditDatesDialog} from "./EditDatesDialog";
-import {EditNameDialog} from "./EditNameDialog";
+import {CreateAlbumDialog} from "../../../components/albums/CreateAlbumDialog";
+import AlbumListActions from "../../../components/albums/AlbumsListActions/AlbumListActions";
+import ShareDialog from "../../../components/albums/ShareDialog";
+import {DeleteAlbumDialog} from "../../../components/albums/DeleteAlbumDialog";
+import {EditDatesDialog} from "../../../components/albums/EditDatesDialog";
+import {EditNameDialog} from "../../../components/albums/EditNameDialog";
 import {displayedAlbumSelector} from "../../../core/catalog/language/selector-displayedAlbum";
 
 export function CatalogViewerPage() {

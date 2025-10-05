@@ -1,6 +1,6 @@
 import React from "react";
 import {action, Story} from "@ladle/react";
-import {DeleteAlbumDialog} from "../pages/authenticated/albums/DeleteAlbumDialog";
+import {DeleteAlbumDialog} from "../components/albums/DeleteAlbumDialog";
 import {Button} from "@mui/material";
 import {Album, AlbumId} from "../core/catalog";
 

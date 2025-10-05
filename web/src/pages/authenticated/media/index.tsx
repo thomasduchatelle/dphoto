@@ -1,10 +1,10 @@
 import {Box} from "@mui/material";
 import React, {useEffect, useMemo, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import {FullHeightLink} from "./FullHeightLink";
-import {MediaPageLogic, MediaPageMediasState, MediaPageMediasStateInit} from "./logic";
-import MediaNavBar from "./MediaNavBar";
-import {Key, useNativeControl} from "./useNativeControl";
+import {FullHeightLink} from "../../../components/media/FullHeightLink";
+import {MediaPageLogic, MediaPageMediasState, MediaPageMediasStateInit} from "../../../components/media/logic";
+import MediaNavBar from "../../../components/media/MediaNavBar";
+import {Key, useNativeControl} from "../../../components/media/useNativeControl";
 import {useMustBeAuthenticated} from "../../../core/application";
 
 type MediaPageUrlParams = {

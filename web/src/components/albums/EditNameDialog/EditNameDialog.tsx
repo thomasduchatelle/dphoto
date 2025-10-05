@@ -1,7 +1,7 @@
 import React from 'react';
 import {Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, TextField, useMediaQuery, useTheme} from "@mui/material";
 import {Close} from "@mui/icons-material";
-import {EditNameDialogSelection} from "../../../../core/catalog";
+import {EditNameDialogSelection} from "../../../core/catalog";
 import {FolderNameInput} from "../FolderNameInput";
 
 export interface EditNameDialogHandlers {
