@@ -31,4 +31,4 @@ jobs:
         with:
           name: dist-web
           path: |
-            web/build/**
+            web/dist/**
