@@ -153,11 +153,8 @@ function avenger1Album() {
 }
 
 function getAlbums(...albums: any[]) {
-    return http.get('/api/v1/albums', (req, res, ctx) => {
-
-        return res(
-            ctx.json(albums)
-        )
+    return http.get('/api/v1/albums', ({ request }) => {
+        return Response.json(albums);
     });
 }
 
@@ -176,27 +173,21 @@ function ownerTonyStark() {
 }
 
 function getOwners(...owners: any[]) {
-    return http.get('/api/v1/owners', (req, res, ctx) => {
-
-        return res(
-            ctx.json(owners)
-        )
+    return http.get('/api/v1/owners', ({ request }) => {
+        return Response.json(owners);
     });
 }
 
 function getMediasForAvenger1() {
-    return http.get('/api/v1/owners/tony@stark.com/albums/avenger-1/medias', (req, res, ctx) => {
-
-        return res(
-            ctx.json([
-                {
-                    id: "media-1",
-                    type: "IMAGE",
-                    filename: "image.jpg",
-                    time: "2021-01-05T12:42:00Z",
-                    source: "Ironman Suit",
-                },
-            ])
-        )
+    return http.get('/api/v1/owners/tony@stark.com/albums/avenger-1/medias', ({ request }) => {
+        return Response.json([
+            {
+                id: "media-1",
+                type: "IMAGE",
+                filename: "image.jpg",
+                time: "2021-01-05T12:42:00Z",
+                source: "Ironman Suit",
+            },
+        ]);
     });
 }
