@@ -11,11 +11,11 @@ import {
     DialogTitle,
     IconButton,
     LinearProgress,
+    Stack,
     TextField,
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import Grid from '@mui/material/Unstable_Grid2';
 import {Close} from "@mui/icons-material";
 import {CreateDialogSelection} from "../../../core/catalog";
 import {DateRangePicker} from "../DateRangePicker";
@@ -94,25 +94,23 @@ export function CreateAlbumDialog({
                 <Close/>
             </IconButton>
             <DialogContent>
-                <Grid container spacing={2} alignItems='center'>
-                    <Grid sm={12} xs={12}>
+                <Stack spacing={2} alignItems='stretch'>
+                    <Box>
                         {error && <Alert severity="error">
                             {error}
                         </Alert>}
-                    </Grid>
-                    <Grid sm={12} xs={12}>
-                        <TextField
-                            autoFocus
-                            fullWidth
-                            label="Name"
-                            type="string"
-                            disabled={isLoading}
-                            onChange={(event) => onNameChange(event.target.value)}
-                            value={albumName}
-                            helperText={nameError}
-                            error={!!nameError}
-                        />
-                    </Grid>
+                    </Box>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        label="Name"
+                        type="string"
+                        disabled={isLoading}
+                        onChange={(event) => onNameChange(event.target.value)}
+                        value={albumName}
+                        helperText={nameError}
+                        error={!!nameError}
+                    />
                     <DateRangePicker
                         startDate={start || new Date()}
                         endDate={end || new Date()}
@@ -126,18 +124,16 @@ export function CreateAlbumDialog({
                         dateError={!!dateRangeError}
                         dateHelperText={dateRangeError}
                     />
-                    <Grid xs={12}>
-                        <FolderNameInput
-                            useCustomFolderName={isCustomFolderNameEnabled}
-                            value={customFolderName}
-                            placeholder="Custom folder name (ex: '/2025-08_Summer')"
-                            disabled={isLoading}
-                            onEnabledChange={onWithCustomFolderNameChange}
-                            onValueChange={onFolderNameChange}
-                            error={folderNameError}
-                        />
-                    </Grid>
-                </Grid>
+                    <FolderNameInput
+                        useCustomFolderName={isCustomFolderNameEnabled}
+                        value={customFolderName}
+                        placeholder="Custom folder name (ex: '/2025-08_Summer')"
+                        disabled={isLoading}
+                        onEnabledChange={onWithCustomFolderNameChange}
+                        onValueChange={onFolderNameChange}
+                        error={folderNameError}
+                    />
+                </Stack>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} color='info'>Cancel</Button>

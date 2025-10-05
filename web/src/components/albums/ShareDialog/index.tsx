@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import React, {useRef, useState} from "react";
 import "./ShareDialogChipsAnimation.css";
-import Grid from '@mui/material/Unstable_Grid2';
 import {ShareError, Sharing, UserDetails} from "../../../core/catalog";
 import {Add as AddIcon, Check as CheckIcon, Delete, ErrorOutline as ErrorOutlineIcon, Send as SendIcon, Share as ShareIcon} from "@mui/icons-material";
 
@@ -101,24 +100,24 @@ export default function ShareDialog({
         >
             <DialogTitle>Sharing album to ...</DialogTitle>
             <DialogContent>
-                <Grid container spacing={2} alignItems='center'>
-                    <Grid xs={12}>
-                        <TextField
-                            autoFocus
-                            fullWidth
-                            variant={isMobile ? 'standard' : 'outlined'}
-                            margin="dense"
-                            size='medium'
-                            id="email"
-                            placeholder="Email Address"
-                            type="email"
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
-                            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => event.key === 'Enter' && savingHandler()}
-                            value={email}
-                            error={(error && error.email === email)}
-                            helperText={error && error.email === email ? error.message : undefined}
-                            autoComplete="off"
-                            InputProps={{
+                <Box>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        variant={isMobile ? 'standard' : 'outlined'}
+                        margin="dense"
+                        size='medium'
+                        id="email"
+                        placeholder="Email Address"
+                        type="email"
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
+                        onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => event.key === 'Enter' && savingHandler()}
+                        value={email}
+                        error={(error && error.email === email)}
+                        helperText={error && error.email === email ? error.message : undefined}
+                        autoComplete="off"
+                        slotProps={{
+                            input: {
                                 startAdornment:
                                     <IconButton sx={{pr: '10px', pl: '0'}} aria-label="share" disabled>
                                         <ShareIcon/>
@@ -134,40 +133,40 @@ export default function ShareDialog({
                                             </IconButton>
                                         </Tooltip>
                                     </InputAdornment>
-                            }}
-                        />
-                        {topSuggestions.length > 0 && (
-                            <Stack direction="row" spacing={1} flexWrap="wrap">
-                                {topSuggestions.map(user => {
-                                    const isError = error?.email === user.email;
-                                    return (
-                                        <Chip
-                                            key={user.email}
-                                            size="small"
-                                            avatar={<Avatar alt={user.name} src={user.picture}/>}
-                                            label={user.name}
-                                            variant={isError ? "filled" : "outlined"}
-                                            color={isError ? "error" : "default"}
-                                            onClick={() => handleGrantSuggestion(user.email)}
-                                            deleteIcon={isError ? <ErrorOutlineIcon fontSize="small"/> : <AddIcon fontSize="small"/>}
-                                            onDelete={() => handleGrantSuggestion(user.email)}
-                                            sx={{
-                                                cursor: 'pointer',
-                                                maxWidth: 180,
-                                                overflow: 'hidden',
-                                                whiteSpace: 'nowrap',
-                                                textOverflow: 'ellipsis',
-                                                transition: 'all 0.2s',
-                                                fontWeight: isError ? 600 : undefined,
-                                            }}
-                                            title={`${user.name} <${user.email}>`}
-                                        />
-                                    );
-                                })}
-                            </Stack>
-                        )}
-                    </Grid>
-                </Grid>
+                            }
+                        }}
+                    />
+                    {topSuggestions.length > 0 && (
+                        <Stack direction="row" spacing={1} flexWrap="wrap">
+                            {topSuggestions.map(user => {
+                                const isError = error?.email === user.email;
+                                return (
+                                    <Chip
+                                        key={user.email}
+                                        size="small"
+                                        avatar={<Avatar alt={user.name} src={user.picture}/>}
+                                        label={user.name}
+                                        variant={isError ? "filled" : "outlined"}
+                                        color={isError ? "error" : "default"}
+                                        onClick={() => handleGrantSuggestion(user.email)}
+                                        deleteIcon={isError ? <ErrorOutlineIcon fontSize="small"/> : <AddIcon fontSize="small"/>}
+                                        onDelete={() => handleGrantSuggestion(user.email)}
+                                        sx={{
+                                            cursor: 'pointer',
+                                            maxWidth: 180,
+                                            overflow: 'hidden',
+                                            whiteSpace: 'nowrap',
+                                            textOverflow: 'ellipsis',
+                                            transition: 'all 0.2s',
+                                            fontWeight: isError ? 600 : undefined,
+                                        }}
+                                        title={`${user.name} <${user.email}>`}
+                                    />
+                                );
+                            })}
+                        </Stack>
+                    )}
+                </Box>
                 {sharedWith.length > 0 && (
                     <Box sx={theme => ({
                         mt: theme.spacing(3),
