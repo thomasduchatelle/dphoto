@@ -33,7 +33,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist-web
-          path: web/build
+          path: web/dist
 
       - name: Download waku
         uses: actions/download-artifact@v4

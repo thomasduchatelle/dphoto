@@ -19,8 +19,8 @@ export class WakuWebUiConstruct extends Construct {
         super(scope, id);
 
         this.lambda = new lambda.Function(this, 'Lambda', {
-            functionName: `dphoto-${environmentName}-waku`,
-            code: lambda.Code.fromAsset('../../web-waku/dist/'),
+            functionName: `dphoto-${environmentName}-web`,
+            code: lambda.Code.fromAsset('../../web/dist/'),
             handler: 'serve-aws-lambda.handler',
             runtime: lambda.Runtime.NODEJS_20_X,
             memorySize: 256,
@@ -28,7 +28,6 @@ export class WakuWebUiConstruct extends Construct {
             logRetention: logs.RetentionDays.ONE_WEEK,
             environment: {
                 NODE_ENV: 'production',
-                // PUBLIC_URL: '/waku',
             },
         });
 
@@ -40,13 +39,13 @@ export class WakuWebUiConstruct extends Construct {
 
         new apigatewayv2.HttpRoute(this, 'RouteProxy', {
             httpApi,
-            routeKey: apigatewayv2.HttpRouteKey.with('/waku/{proxy+}', apigatewayv2.HttpMethod.ANY),
+            routeKey: apigatewayv2.HttpRouteKey.with('/{proxy+}', apigatewayv2.HttpMethod.ANY),
             integration: this.integration
         });
 
         new apigatewayv2.HttpRoute(this, 'Route', {
             httpApi,
-            routeKey: apigatewayv2.HttpRouteKey.with('/waku', apigatewayv2.HttpMethod.ANY),
+            routeKey: apigatewayv2.HttpRouteKey.DEFAULT,
             integration: this.integration
         });
     }
