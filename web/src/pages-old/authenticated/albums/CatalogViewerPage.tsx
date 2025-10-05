@@ -1,3 +1,5 @@
+'use client';
+
 import {Box, Toolbar, useMediaQuery, useTheme} from "@mui/material";
 import React from 'react';
 import AppNav from "../../../components/AppNav";
@@ -7,8 +9,9 @@ import MediasPage from "../../../components/albums/MediasPage";
 import MobileNavigation from "../../../components/albums/MobileNavigation";
 import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
-import {useLocation, useSearchParams} from "react-router-dom";
+import {useClientRouter} from "../../../components/ClientRouter";
 import {
+    AlbumId,
     catalogViewerPageSelector,
     createDialogSelector,
     deleteDialogSelector,
@@ -63,13 +66,16 @@ export function CatalogViewerPage() {
     } = useCatalogContext()
     const logoutCase = useLogoutCase();
 
-    const {pathname} = useLocation()
-    const [search] = useSearchParams()
+    const {path, query, navigate} = useClientRouter()
+
+    const handleAlbumClick = (albumId: AlbumId) => {
+        navigate(`/albums/${albumId.owner}/${albumId.folderName}`);
+    };
 
     const theme = useTheme()
 
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
-    const isAlbumsPage = pathname === '/albums'
+    const isAlbumsPage = path === '/albums'
 
     const {albumFilter, albumFilterOptions, albumsLoaded, albums, displayedAlbum} = catalogViewerPageSelector(state);
 
@@ -101,14 +107,15 @@ export function CatalogViewerPage() {
                     <AlbumsList albums={albums}
                                 loaded={albumsLoaded}
                                 selectedAlbumId={selectedAlbumId}
-                                openSharingModal={openSharingModal}/>
+                                openSharingModal={openSharingModal}
+                                onAlbumClick={handleAlbumClick}/>
                 </>
             ) : (
                 <MediasPage
                     {...catalogViewerPageSelector(state)}
                     {...displayedAlbumSelector(state)}
                     onAlbumFilterChange={onAlbumFilterChange}
-                    scrollToMedia={search.get("mediaId") ?? undefined}
+                    scrollToMedia={query.get("mediaId") ?? undefined}
                     openSharingModal={openSharingModal}
                     openDeleteAlbumDialog={openDeleteAlbumDialog}
                     openEditDatesDialog={openEditDatesDialog}

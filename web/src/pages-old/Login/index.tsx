@@ -1,3 +1,5 @@
+'use client';
+
 import {Alert, Box, LinearProgress, Paper, Typography} from "@mui/material";
 import React, {ReactNode} from "react";
 import useLoginController from "./domain";

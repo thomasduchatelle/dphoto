@@ -1,6 +1,7 @@
 import {CatalogViewerState} from "../language";
 import {createDialogOpened} from "./action-createDialogOpened";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
+import {vi} from "vitest";
 
 describe('action:createDialogOpened', () => {
     it('should open with the last week open from Saturday to Monday (9 days) both at start of the day', () => {
@@ -11,7 +12,7 @@ describe('action:createDialogOpened', () => {
 
         // Mock Date to control the "current" date for consistent test results
         const mockDate = new Date("2024-03-13T10:00:00Z"); // A Wednesday
-        jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+        vi.spyOn(global, 'Date').mockImplementation(() => mockDate);
 
         const action = createDialogOpened();
         const newState = action.reducer(state, action);
@@ -34,6 +35,6 @@ describe('action:createDialogOpened', () => {
         });
 
         // Restore original Date object
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 });

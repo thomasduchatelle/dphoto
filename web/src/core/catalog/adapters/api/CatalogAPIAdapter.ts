@@ -166,7 +166,7 @@ export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, 
                     source: media.source,
                     type: convertToType(media.type),
                     time: new Date(media.time),
-                    uiRelativePath: `${media.id}/${media.filename}`,
+                    uiRelativePath: `/albums/${albumId.owner}/${albumId.folderName}/${media.id}/${media.filename}`,
                     contentPath: `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}?access_token=${this.accessTokenHolder.getAccessToken()}`,
                 })).sort((a, b) => b.time.getTime() - a.time.getTime())
             })

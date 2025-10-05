@@ -1,0 +1,12 @@
+- [X] Switch build system from CRA to Waku while keeping React 18.
+- [X] Configure Jest explicitly for Waku environment instead of via react-scripts.
+- [X] Test routing functionality and fix any issues discovered during file structure migration.
+- [X] Validate all functionality works with Waku + React 18.
+- [X] Verify visual testing integration works with Waku build system.
+- [X] Upgrade to React 19 and test compatibility.
+- [X] Migrate from Jest to Vitest for improved test performance.
+- [ ] Review authentication to use HTTP+cookies instead of JWT in requests.
+- [ ] Optimize components to use SSR by removing unnecessary 'use client' directives.
+- [ ] Migrate to server-side data fetching patterns where appropriate for SSR components.
+- [ ] Optimize styling performance for SSR by improving CSS extraction and reducing hydration mismatches (low priority).
+

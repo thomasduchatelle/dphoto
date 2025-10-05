@@ -12,6 +12,7 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -27,4 +28,3 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 /playwright/visual-regression.spec.ts-local/
-/package-lock.json

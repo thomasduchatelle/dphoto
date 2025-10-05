@@ -71,38 +71,39 @@ install-cli:
 .PHONY: clean-web setup-web test-web build-web update-snapshots
 
 clean-web:
-	cd web && yarn clean
+	cd web && rm -rf dist/ && rm -f bin/waku-lambda.zip
 
 setup-web:
-	cd web && yarn && npx playwright install
+	cd web && npm install
+	cd web && npx playwright install
 
 setup-web-ci:
-	cd web && yarn
+	cd web && npm ci
 	cd web && npx playwright install chromium --with-deps
 
 test-web:
-	cd web && yarn test
+	cd web && npm test
 
 test-web-ci:
-	cd web && yarn test:ci
+	cd web && npm run test:ci
 
 update-snapshots:
 	@echo "Update local snapshots"
-	rm -rf web/playwright/visual-regression.spec.ts-local && cd web && yarn test:visual -- -u --reporter list
+	rm -rf web/playwright/visual-regression.spec.ts-local && cd web && npm run test:visual -- -u --reporter list
 
 update-snapshots-ci:
 	@echo "Update snapshots [should only be used on CI]"
-	rm -rf web/playwright/visual-regression.spec.ts-snapshots && cd web && CI=true yarn test:visual -- -u
+	rm -rf web/playwright/visual-regression.spec.ts-snapshots && cd web && npm run test:visual -- -u
 
 build-web:
-	cd web && CI=true yarn build
+	cd web && npm run build:lambda
 
 start:
 	docker-compose up -d wiremock && \
-		cd web && DANGEROUSLY_DISABLE_HOST_CHECK=true yarn start
+		cd web && npm run dev
 
 ladle:
-	cd web && yarn ladle
+	cd web && npm run ladle
 
 playwright:
 	cd web && npx playwright test --reporter html

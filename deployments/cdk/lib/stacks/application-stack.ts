@@ -4,7 +4,6 @@ import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../utils/api-gateway-construct';
 import {AuthenticationEndpointsConstruct} from '../access/authentication-endpoints-construct';
 import {CatalogEndpointsConstruct} from '../catalog/catalog-endpoints-construct';
-import {StaticWebUiConstruct} from '../utils/static-web-ui-construct';
 import {WakuWebUiConstruct} from '../utils/waku-web-ui-construct';
 import {ArchiveEndpointsConstruct} from "../archive/archive-endpoints-construct";
 import {VersionEndpointConstruct} from "../utils/version-endpoint-construct";
@@ -34,12 +33,6 @@ export class ApplicationStack extends cdk.Stack {
         const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
             environmentName: props.environmentName,
             ...config,
-        });
-
-        new StaticWebUiConstruct(this, 'StaticWebUi', {
-            environmentName: props.environmentName,
-            domainName: config.domainName,
-            apiGateway: apiGateway
         });
 
         new WakuWebUiConstruct(this, 'WakuWebUi', {

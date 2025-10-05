@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import {InputAdornment, Switch, TextField, Tooltip} from "@mui/material";
 
