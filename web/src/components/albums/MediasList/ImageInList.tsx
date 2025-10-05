@@ -1,8 +1,8 @@
 import DownloadIcon from "@mui/icons-material/Download";
 import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
 import {Link} from "react-router-dom";
-import {dateTimeToString} from "../../../../core/utils/date-utils";
-import {Media, MediaType} from "../../../../core/catalog";
+import {dateTimeToString} from "../../../core/utils/date-utils";
+import {Media, MediaType} from "../../../core/catalog";
 import {useEffect, useRef} from "react";
 
 export function ImageInList({media, imageViewportPercentage, autoFocus = false}: {

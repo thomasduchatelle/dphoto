@@ -14,8 +14,8 @@ import {
     Select,
     Typography
 } from "@mui/material";
-import {Album, AlbumId, albumIdEquals} from "../../../../core/catalog";
-import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
+import {Album, AlbumId, albumIdEquals} from "../../../core/catalog";
+import {toLocaleDateWithDay} from "../../../core/utils/date-utils";
 
 interface DeleteAlbumDialogProps {
     albums: Album[];

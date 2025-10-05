@@ -1,10 +1,10 @@
 import {Avatar, AvatarGroup, Badge, IconButton, ListItemAvatar, ListItemButton, ListItemSecondaryAction, ListItemText, Tooltip} from "@mui/material";
 import {Link} from "react-router-dom";
-import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
+import {toLocaleDateWithDay} from "../../../core/utils/date-utils";
 import {HotIndicator} from "./HotIndicator";
 import {Share} from "@mui/icons-material";
 import React from "react";
-import {Album, AlbumId} from "../../../../core/catalog";
+import {Album, AlbumId} from "../../../core/catalog";
 
 export function AlbumListEntry({album, selected, onClickOnSharedWith}: {
     album: Album

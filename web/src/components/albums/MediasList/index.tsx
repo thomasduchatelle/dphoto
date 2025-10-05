@@ -1,9 +1,9 @@
 import {Alert, Box, CircularProgress, ImageList, Typography, useMediaQuery, useTheme} from "@mui/material";
 import {Fragment} from "react";
-import {toLocaleDateWithDay} from "../../../../core/utils/date-utils";
-import useWindowDimensions from "../../../../core/utils/window-utils";
+import {toLocaleDateWithDay} from "../../../core/utils/date-utils";
+import useWindowDimensions from "../../../core/utils/window-utils";
 import {ImageInList} from "./ImageInList";
-import {MediaWithinADay} from "../../../../core/catalog";
+import {MediaWithinADay} from "../../../core/catalog";
 
 const drawerWidth = 498;
 const marginsWidth = 33;

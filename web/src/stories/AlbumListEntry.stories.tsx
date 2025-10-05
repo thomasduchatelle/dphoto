@@ -1,7 +1,7 @@
 import React from 'react';
 import {Story} from '@ladle/react';
 import {List} from "@mui/material";
-import {AlbumListEntry} from "../pages/authenticated/albums/AlbumsList/AlbumListEntry";
+import {AlbumListEntry} from "../components/albums/AlbumsList/AlbumListEntry";
 import {StoriesContext} from "./StoriesContext";
 
 export default {
