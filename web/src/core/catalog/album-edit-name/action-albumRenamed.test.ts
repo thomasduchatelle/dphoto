@@ -1,9 +1,9 @@
 import {albumRenamed} from "./action-albumRenamed";
 import {editNameDialogSelector} from "./selector-editNameDialogSelector";
-import {catalogViewerPageSelector, SELF_OWNED_ALBUM_FILTER_CRITERION} from "../navigation";
-import {albumsFiltered} from "../navigation/action-albumsFiltered";
+import {albumsFiltered, catalogViewerPageSelector} from "../navigation";
 import {CatalogViewerState} from "../language";
 import {editJanAlbumNameDialog, loadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {SELF_OWNED_ALBUM_FILTER_CRITERION} from "../common/utils";
 
 describe('action:albumRenamed', () => {
     const originalAlbumId = twoAlbums[0].albumId;
@@ -42,7 +42,7 @@ describe('action:albumRenamed', () => {
             {...twoAlbums[0], albumId: newAlbumId, name: newName},
             twoAlbums[1]
         ]);
-        
+
         expect(got.mediasLoadedFromAlbumId).toEqual(newAlbumId);
     });
 

@@ -1,3 +1,5 @@
+'use client';
+
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import {Box} from "@mui/material";
 

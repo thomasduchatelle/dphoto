@@ -1,18 +1,27 @@
-import {useMatch, useNavigate} from "react-router-dom";
+'use client';
+
 import {AlbumId} from "../../../core/catalog";
 import React, {ReactElement, useCallback} from "react";
 import {CatalogViewerProvider} from "../../../components/catalog-react";
 import {useAuthenticatedUser} from "../../../core/application";
+import {useClientRouter} from "../../../components/ClientRouter";
 
 export default function CatalogViewerRoot({children}: {
     children: ReactElement;
 }) {
-    const match = useMatch('/albums/:owner/:folderName/*');
-    const navigate = useNavigate()
+    const {path, params, navigate} = useClientRouter();
     const authenticatedUser = useAuthenticatedUser()
 
-    const albumId = match ? {owner: match.params.owner, folderName: match.params.folderName} as AlbumId : undefined
-    const onSelectedAlbumIdByDefault = useCallback((albumId: AlbumId) => navigate(`/albums/${albumId.owner}/${albumId.folderName}`), [navigate])
+    // Check if we're on an album-specific page
+    const pathParts = path.split('/').filter(p => p);
+    const albumId = pathParts[0] === 'albums' && pathParts.length >= 3
+        ? {owner: params.owner, folderName: params.album} as AlbumId 
+        : undefined;
+    
+    const onSelectedAlbumIdByDefault = useCallback((albumId: AlbumId) => 
+        navigate(`/albums/${albumId.owner}/${albumId.folderName}`), 
+        [navigate]
+    );
 
     return (
         <CatalogViewerProvider

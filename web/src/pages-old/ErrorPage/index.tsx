@@ -1,3 +1,5 @@
+'use client';
+
 import {Alert, Container, Paper, Toolbar} from "@mui/material";
 import AppNav from "../../components/AppNav";
 import React from "react";

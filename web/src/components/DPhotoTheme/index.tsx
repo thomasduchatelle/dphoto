@@ -1,12 +1,20 @@
+'use client';
+
 import {createTheme, LinkProps, ThemeProvider} from "@mui/material";
 import {forwardRef, ReactNode} from "react";
-import {Link as RouterLink, LinkProps as RouterLinkProps} from "react-router-dom";
 
-const LinkBehavior = forwardRef<any,
-    Omit<RouterLinkProps, 'to'> & { href: RouterLinkProps['to'] }>((props, ref) => {
-    const {href, ...other} = props;
-    // Map href (MUI) -> to (react-router)
-    return <RouterLink data-testid="custom-link" ref={ref} to={href} {...other} />;
+// Simple link component that doesn't use react-router
+const LinkBehavior = forwardRef<HTMLAnchorElement,
+    { href: string; [key: string]: any }>((props, ref) => {
+    const {href, onClick, ...other} = props;
+    
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (onClick) {
+            onClick(e);
+        }
+    };
+    
+    return <a data-testid="custom-link" ref={ref} href={href} onClick={handleClick} {...other} />;
 });
 
 // https://mycolor.space/?hex=%23005792&sub=1

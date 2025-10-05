@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import {
     Alert,
@@ -9,11 +11,11 @@ import {
     DialogTitle,
     IconButton,
     LinearProgress,
+    Grid,
     TextField,
     useMediaQuery,
     useTheme
 } from "@mui/material";
-import Grid from '@mui/material/Unstable_Grid2';
 import {Close} from "@mui/icons-material";
 import {CreateDialogSelection} from "../../../core/catalog";
 import {DateRangePicker} from "../DateRangePicker";
@@ -93,12 +95,12 @@ export function CreateAlbumDialog({
             </IconButton>
             <DialogContent>
                 <Grid container spacing={2} alignItems='center'>
-                    <Grid sm={12} xs={12}>
+                    <Grid size={{sm:12, xs: 12}}>
                         {error && <Alert severity="error">
                             {error}
                         </Alert>}
                     </Grid>
-                    <Grid sm={12} xs={12}>
+                    <Grid size={{sm:12, xs: 12}}>
                         <TextField
                             autoFocus
                             fullWidth
@@ -124,7 +126,7 @@ export function CreateAlbumDialog({
                         dateError={!!dateRangeError}
                         dateHelperText={dateRangeError}
                     />
-                    <Grid xs={12}>
+                    <Grid size={12}>
                         <FolderNameInput
                             useCustomFolderName={isCustomFolderNameEnabled}
                             value={customFolderName}

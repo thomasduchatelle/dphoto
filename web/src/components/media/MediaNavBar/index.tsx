@@ -1,6 +1,9 @@
+'use client';
+
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadIcon from '@mui/icons-material/Download';
 import {AppBar, Box, IconButton, Toolbar} from "@mui/material";
+import {useClientRouter} from "../../ClientRouter";
 
 export default function MediaNavBar({backUrl, backId, downloadHref, downloadId}: {
     backUrl: string
@@ -8,6 +11,13 @@ export default function MediaNavBar({backUrl, backId, downloadHref, downloadId}:
     downloadHref: string
     downloadId: string
 }) {
+    const {navigate} = useClientRouter();
+
+    const handleBack = (e: React.MouseEvent<HTMLElement>) => {
+        e.preventDefault();
+        navigate(backUrl);
+    }
+
     return (
         <Box>
             <AppBar
@@ -25,7 +35,7 @@ export default function MediaNavBar({backUrl, backId, downloadHref, downloadId}:
                 })}
             >
                 <Toolbar>
-                    <IconButton href={backUrl} id={backId}>
+                    <IconButton onClick={handleBack} id={backId} style={{color: 'white'}} href='#'>
                         <ArrowBackIcon/>
                     </IconButton>
 

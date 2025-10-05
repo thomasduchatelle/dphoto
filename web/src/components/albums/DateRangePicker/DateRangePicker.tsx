@@ -1,6 +1,7 @@
+'use client';
+
 import React, {useCallback} from "react";
-import {Checkbox, FormControlLabel, TextField} from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import {Checkbox, FormControlLabel, Grid, TextField} from "@mui/material";
 import {DatePicker, DateTimePicker} from "@mui/x-date-pickers";
 import dayjs, {Dayjs} from "dayjs";
 // import utc from 'dayjs/plugin/utc';
@@ -66,16 +67,24 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
     return (
         <>
-            <Grid xs={6}>
+            <Grid size={{xs: 6}}>
                 {startAtDayStart ? (
                     <DatePicker
                         label="First day"
                         disabled={disabled}
                         value={fromUTCDate(startDate)}
                         onChange={onStartChange}
-                        renderInput={(params: any) => (
-                            <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText=""/>
-                        )}
+                        enableAccessibleFieldDOMStructure={false}
+                        slots={{
+                            textField: TextField
+                        }}
+                        slotProps={{
+                            textField: {
+                                sx: {width: "100%"},
+                                ...commonDateInputProps,
+                                helperText: ""
+                            }
+                        }}
                     />
                 ) : (
                     <DateTimePicker
@@ -83,13 +92,21 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         disabled={disabled}
                         value={fromUTCDate(startDate)}
                         onChange={onStartChange}
-                        renderInput={(params: any) => (
-                            <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} helperText=""/>
-                        )}
+                        enableAccessibleFieldDOMStructure={false}
+                        slots={{
+                            textField: TextField
+                        }}
+                        slotProps={{
+                            textField: {
+                                sx: {width: "100%"},
+                                ...commonDateInputProps,
+                                helperText: ""
+                            }
+                        }}
                     />
                 )}
             </Grid>
-            <Grid xs={6}>
+            <Grid size={{xs: 6}}>
                 <FormControlLabel
                     control={
                         <Checkbox
@@ -103,16 +120,23 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     label="at the start of the day"
                 />
             </Grid>
-            <Grid xs={6}>
+            <Grid size={{xs: 6}}>
                 {endAtDayEnd ? (
                     <DatePicker
                         label="Last day"
                         disabled={disabled}
                         value={fromUTCDate(endDate)}
                         onChange={onEndChange}
-                        renderInput={(params: any) => (
-                            <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} />
-                        )}
+                        enableAccessibleFieldDOMStructure={false}
+                        slots={{
+                            textField: TextField
+                        }}
+                        slotProps={{
+                            textField: {
+                                sx: {width: "100%"},
+                                ...commonDateInputProps
+                            }
+                        }}
                     />
                 ) : (
                     <DateTimePicker
@@ -120,13 +144,20 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         disabled={disabled}
                         value={fromUTCDate(endDate)}
                         onChange={onEndChange}
-                        renderInput={(params: any) => (
-                            <TextField {...params} sx={{width: "100%"}} {...commonDateInputProps} />
-                        )}
+                        enableAccessibleFieldDOMStructure={false}
+                        slots={{
+                            textField: TextField
+                        }}
+                        slotProps={{
+                            textField: {
+                                sx: {width: "100%"},
+                                ...commonDateInputProps
+                            }
+                        }}
                     />
                 )}
             </Grid>
-            <Grid xs={6}>
+            <Grid size={{xs: 6}}>
                 <FormControlLabel
                     control={
                         <Checkbox

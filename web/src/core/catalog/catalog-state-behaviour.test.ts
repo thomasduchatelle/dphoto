@@ -1,11 +1,12 @@
 import {herselfUser, loadedStateWithTwoAlbums, twoAlbums} from "./tests/test-helper-state";
 import {Album, albumIdEquals, UserDetails} from "./language";
-import {albumsFiltered, SELF_OWNED_ALBUM_FILTER_CRITERION} from "./navigation";
+import {albumsFiltered} from "./navigation";
 import {albumAccessGranted, albumAccessRevoked, sharingDialogSelector, sharingModalClosed, sharingModalErrorOccurred, sharingModalOpened} from "./sharing";
 import {catalogReducer} from "./actions";
 import {editDatesDialogOpened} from "./album-edit-dates/action-editDatesDialogOpened";
 import {updateAlbumDatesDeclaration, UpdateAlbumDatesPort, updateAlbumDatesThunk} from "./album-edit-dates/thunk-updateAlbumDates";
 import {editDatesDialogSelector} from "./album-edit-dates";
+import {SELF_OWNED_ALBUM_FILTER_CRITERION} from "./common/utils";
 
 describe("State: behaviour", () => {
     it("keeps the album shares consistent when closing and reopening the dialog", () => {

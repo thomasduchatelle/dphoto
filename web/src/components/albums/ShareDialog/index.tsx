@@ -1,3 +1,5 @@
+'use client';
+
 import {
     Avatar,
     Box,
@@ -7,6 +9,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Grid,
     IconButton,
     InputAdornment,
     Stack,
@@ -17,7 +20,6 @@ import {
 } from "@mui/material";
 import React, {useRef, useState} from "react";
 import "./ShareDialogChipsAnimation.css";
-import Grid from '@mui/material/Unstable_Grid2';
 import {ShareError, Sharing, UserDetails} from "../../../core/catalog";
 import {Add as AddIcon, Check as CheckIcon, Delete, ErrorOutline as ErrorOutlineIcon, Send as SendIcon, Share as ShareIcon} from "@mui/icons-material";
 
@@ -100,7 +102,7 @@ export default function ShareDialog({
             <DialogTitle>Sharing album to ...</DialogTitle>
             <DialogContent>
                 <Grid container spacing={2} alignItems='center'>
-                    <Grid xs={12}>
+                    <Grid size={{xs: 12}}>
                         <TextField
                             autoFocus
                             fullWidth
@@ -116,22 +118,24 @@ export default function ShareDialog({
                             error={(error && error.email === email)}
                             helperText={error && error.email === email ? error.message : undefined}
                             autoComplete="off"
-                            InputProps={{
-                                startAdornment:
-                                    <IconButton sx={{pr: '10px', pl: '0'}} aria-label="share" disabled>
-                                        <ShareIcon/>
-                                    </IconButton>,
-                                endAdornment:
-                                    <InputAdornment position="end" variant="filled">
-                                        <Tooltip title="Allow this user to see the pictures and videos of your album">
-                                            <IconButton sx={{p: '10px'}}
-                                                        aria-label="share"
-                                                        onClick={savingHandler}
-                                                        color="primary">
-                                                <SendIcon/>
-                                            </IconButton>
-                                        </Tooltip>
-                                    </InputAdornment>
+                            slotProps={{
+                                input: {
+                                    startAdornment:
+                                        <IconButton sx={{pr: '10px', pl: '0'}} aria-label="share" disabled>
+                                            <ShareIcon/>
+                                        </IconButton>,
+                                    endAdornment:
+                                        <InputAdornment position="end" variant="filled">
+                                            <Tooltip title="Allow this user to see the pictures and videos of your album">
+                                                <IconButton sx={{p: '10px'}}
+                                                            aria-label="share"
+                                                            onClick={savingHandler}
+                                                            color="primary">
+                                                    <SendIcon/>
+                                                </IconButton>
+                                            </Tooltip>
+                                        </InputAdornment>
+                                }
                             }}
                         />
                         {topSuggestions.length > 0 && (

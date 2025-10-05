@@ -1,16 +1,26 @@
+'use client';
+
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {Box, IconButton} from "@mui/material";
 import React from "react";
-import {Link} from "react-router-dom";
+import {useClientRouter} from "../../ClientRouter";
 
 export function FullHeightLink({mediaLink, side}: {
     mediaLink: string | undefined
     side: 'left' | 'right'
 }) {
+    const {navigate} = useClientRouter();
+    
     if (!mediaLink) {
         return null
     }
+    
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        navigate(mediaLink);
+    };
+    
     return (
         <Box sx={theme => ({
             position: 'absolute',
@@ -40,7 +50,7 @@ export function FullHeightLink({mediaLink, side}: {
                 },
             },
         })}>
-            <Link to={mediaLink}>
+            <a href={mediaLink} onClick={handleClick}>
                 <Box sx={{display: 'flex'}}>
                     <IconButton size='large'>
                         {side === "left" ? (
@@ -50,7 +60,7 @@ export function FullHeightLink({mediaLink, side}: {
                         )}
                     </IconButton>
                 </Box>
-            </Link>
+            </a>
         </Box>
     );
 }

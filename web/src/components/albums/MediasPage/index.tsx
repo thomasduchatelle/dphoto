@@ -1,9 +1,12 @@
+'use client';
+
 import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
 import {AlbumFilterCriterion, AlbumId, CatalogViewerPageSelection} from "../../../core/catalog";
 import AlbumListActions from "../AlbumsListActions/AlbumListActions";
+import {useClientRouter} from "../../../components/ClientRouter";
 
 
 export default function MediasPage({
@@ -34,6 +37,11 @@ export default function MediasPage({
     scrollToMedia?: string
 } & CatalogViewerPageSelection) {
     const drawerWidth = 450
+    const {navigate} = useClientRouter();
+    
+    const handleAlbumClick = (albumId: AlbumId) => {
+        navigate(`/albums/${albumId.owner}/${albumId.folderName}`);
+    };
 
     return (
         <Box sx={{display: 'flex'}}>
@@ -72,7 +80,8 @@ export default function MediasPage({
                     <AlbumsList albums={albums}
                                 loaded={albumsLoaded}
                                 selectedAlbumId={displayedAlbum?.albumId}
-                                openSharingModal={openSharingModal}/>
+                                openSharingModal={openSharingModal}
+                                onAlbumClick={handleAlbumClick}/>
                 </Drawer>
             </Box>
             <Box

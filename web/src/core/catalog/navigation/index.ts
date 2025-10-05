@@ -7,7 +7,6 @@ export * from "./action-albumsFiltered";
 export * from "./action-mediasLoaded";
 export * from "./action-mediaLoadFailed";
 export * from "./action-noAlbumAvailable";
-export * from "../common/utils";
 export type {FetchAlbumsAndMediasPort} from "./thunk-onPageRefresh";
 
 /**

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Story} from '@ladle/react';
+import {action, Story} from '@ladle/react';
 import {List} from "@mui/material";
 import {AlbumListEntry} from "../components/albums/AlbumsList/AlbumListEntry";
 import {StoriesContext} from "./StoriesContext";
@@ -11,7 +11,15 @@ export default {
 type Props = React.ComponentProps<typeof AlbumListEntry>;
 
 const AlbumListEntryWrapper: Story<Partial<Props>> = (args) => (
-    <StoriesContext maxWidth={450}><List><AlbumListEntry {...args as Props} /></List></StoriesContext>
+    <StoriesContext maxWidth={450}>
+        <List>
+            <AlbumListEntry 
+                {...args as Props} 
+                onClickOnSharedWith={action('onClickOnSharedWith')}
+                onClick={action('onClick')}
+            />
+        </List>
+    </StoriesContext>
 );
 
 export const Default = (args: Props) => <AlbumListEntryWrapper {...args} />
