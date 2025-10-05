@@ -11,7 +11,7 @@ export const Controls: Story<{
     colors: string[];
     variant: string;
     size: string;
-}> = ({ count, disabled, label, colors, variant, size }) => (
+}> = ({count, disabled, label, colors, variant, size}) => (
     <>
         <p>Count: {count}</p>
         <p>Disabled: {disabled ? 'yes' : 'no'}</p>
@@ -31,12 +31,12 @@ Controls.args = {
 Controls.argTypes = {
     variant: {
         options: ['primary', 'secondary'],
-        control: { type: 'radio' },
+        control: {type: 'radio'},
         defaultValue: 'primary',
     },
     size: {
         options: ['small', 'medium', 'big', 'huuuuge'],
-        control: { type: 'select' },
+        control: {type: 'select'},
     },
 };
 
