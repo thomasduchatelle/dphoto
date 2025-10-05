@@ -1,7 +1,7 @@
 import {DPhotoApplication} from "../application";
 import {CatalogAPIAdapter} from "./adapters/api";
 import {CatalogFactory} from "./catalog-factories";
-import {rest} from "msw";
+import {http} from "msw";
 import {SetupServer, setupServer} from "msw/node";
 import {MediaType} from "./language";
 import {CatalogViewerAction} from "./actions";
@@ -153,7 +153,7 @@ function avenger1Album() {
 }
 
 function getAlbums(...albums: any[]) {
-    return rest.get('/api/v1/albums', (req, res, ctx) => {
+    return http.get('/api/v1/albums', (req, res, ctx) => {
 
         return res(
             ctx.json(albums)
@@ -176,7 +176,7 @@ function ownerTonyStark() {
 }
 
 function getOwners(...owners: any[]) {
-    return rest.get('/api/v1/owners', (req, res, ctx) => {
+    return http.get('/api/v1/owners', (req, res, ctx) => {
 
         return res(
             ctx.json(owners)
@@ -185,7 +185,7 @@ function getOwners(...owners: any[]) {
 }
 
 function getMediasForAvenger1() {
-    return rest.get('/api/v1/owners/tony@stark.com/albums/avenger-1/medias', (req, res, ctx) => {
+    return http.get('/api/v1/owners/tony@stark.com/albums/avenger-1/medias', (req, res, ctx) => {
 
         return res(
             ctx.json([
