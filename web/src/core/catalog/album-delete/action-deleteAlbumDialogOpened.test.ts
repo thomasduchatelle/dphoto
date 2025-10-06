@@ -2,7 +2,7 @@ import {Album, CatalogViewerState, OwnerDetails} from "../language";
 import {deleteAlbumDialogOpened} from "./action-deleteAlbumDialogOpened";
 import {deleteDialogSelector} from "./selector-deleteDialogSelector";
 import {myselfUser, someMediasByDays} from "../tests/test-helper-state";
-import {generateAlbumFilterOptions} from "../navigation";
+import {generateAlbumFilterOptions} from "../common/utils";
 
 const ownerDetails: OwnerDetails = {
     name: "Other Owner",

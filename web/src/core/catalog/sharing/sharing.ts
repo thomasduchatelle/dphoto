@@ -1,5 +1,5 @@
 import {AlbumId, albumIdEquals, CatalogViewerState, ShareDialog, ShareError, Sharing, UserDetails} from "../language";
-import {filteredListOfAlbums} from "../navigation";
+import {filteredListOfAlbums} from "../common/utils";
 
 export function sortSharings(sharings: Sharing[]): Sharing[] {
     return sharings.slice().sort((a, b) => {

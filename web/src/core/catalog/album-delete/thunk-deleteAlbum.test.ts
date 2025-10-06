@@ -1,10 +1,8 @@
 import {DeleteAlbumPort, deleteAlbumThunk} from "./thunk-deleteAlbum";
-import {Album, AlbumId, Media, MediaType} from "../language";
+import {Album, AlbumId, albumIdEquals, Media, MediaType} from "../language";
 import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
-import {albumsAndMediasLoaded} from "../navigation/action-albumsAndMediasLoaded";
-import {albumIdEquals} from "../language/utils-albumIdEquals";
-import {noAlbumAvailable} from "../navigation";
+import {albumsAndMediasLoaded, noAlbumAvailable} from "../navigation";
 
 
 function makeAlbum(id: string): Album {
