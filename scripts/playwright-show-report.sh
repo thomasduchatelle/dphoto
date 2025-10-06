@@ -79,12 +79,16 @@ if [[ -z "$ZIP_FILE" ]] ; then
 fi
 
 if [[ ! -f "$ZIP_FILE" ]] ; then
-  echoe "File not found: $ZIP_FILE" RED
+  echoe "ZIP file not found: $ZIP_FILE" RED
   exit -1
 fi
 
-TMP_DIR=$(mktemp -d)
+# Create temp dir in /tmp with datetime up to the second, no spaces
+DATETIME=$(date +"%Y%m%d%H%M%S")
+TMP_DIR="/tmp/playwright-$DATETIME"
+mkdir -p "$TMP_DIR"
 debug "Created temporary directory: $TMP_DIR"
+
 unzip -q "$ZIP_FILE" -d "$TMP_DIR"
 if [[ $? -ne 0 ]] ; then
   echoe "Error unzipping file: $ZIP_FILE" RED
@@ -93,12 +97,13 @@ fi
 
 REPORT_DIR="$TMP_DIR"
 
-if [[ -d "$REPORT_DIR/playwright-report" ]] ; then
-  REPORT_DIR="$REPORT_DIR/playwright-report"
+if [[ -d "$REPORT_DIR/web/playwright-report" ]] ; then
+  REPORT_DIR="$REPORT_DIR/web/playwright-report"
 fi
 
 info "Opening report from $ZIP_FILE"
-cd "$DIR/../web-waku"
+cd "$DIR/../web"
+debug "npx playwright show-report \"$REPORT_DIR\""
 npx playwright show-report "$REPORT_DIR"
 
 
