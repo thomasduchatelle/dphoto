@@ -54,6 +54,7 @@ describe('CatalogFactory', () => {
             albumsLoaded: false,
             loadingMediasFor: undefined,
         });
+
         expect(dispatch).toEqual([
             albumsAndMediasLoaded({
                 albums: [
@@ -86,7 +87,7 @@ describe('CatalogFactory', () => {
                         source: "Ironman Suit",
                         time: new Date("2021-01-05T12:42:00Z"),
                         type: MediaType.IMAGE,
-                        uiRelativePath: "media-1/image.jpg"
+                        uiRelativePath: "/albums/tony@stark.com/avenger-1/media-1/image.jpg"
                     }
                 ],
                 redirectTo: albumIdAvenger1,
@@ -124,7 +125,7 @@ describe('CatalogFactory', () => {
                             source: "Ironman Suit",
                             time: new Date("2021-01-05T12:42:00Z"),
                             type: MediaType.IMAGE,
-                            uiRelativePath: "media-1/image.jpg"
+                            uiRelativePath: "/albums/tony@stark.com/avenger-1/media-1/image.jpg"
                         }
                     ]
                 }
@@ -153,7 +154,7 @@ function avenger1Album() {
 }
 
 function getAlbums(...albums: any[]) {
-    return http.get('/api/v1/albums', ({ request }) => {
+    return http.get('/api/v1/albums', ({request}) => {
         return Response.json(albums);
     });
 }
@@ -173,13 +174,13 @@ function ownerTonyStark() {
 }
 
 function getOwners(...owners: any[]) {
-    return http.get('/api/v1/owners', ({ request }) => {
+    return http.get('/api/v1/owners', ({request}) => {
         return Response.json(owners);
     });
 }
 
 function getMediasForAvenger1() {
-    return http.get('/api/v1/owners/tony@stark.com/albums/avenger-1/medias', ({ request }) => {
+    return http.get('/api/v1/owners/tony@stark.com/albums/avenger-1/medias', ({request}) => {
         return Response.json([
             {
                 id: "media-1",
