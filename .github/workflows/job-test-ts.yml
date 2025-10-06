@@ -40,6 +40,8 @@ jobs:
         with:
           name: playwright-report
           path: |
+            web/playwright-report/
+            web/test-results/
             web-waku/playwright-report/
             web-waku/test-results/
           retention-days: 30

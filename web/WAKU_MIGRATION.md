@@ -22,12 +22,14 @@ This document summarizes the Phase 2 migration from Create React App (CRA) to Wa
 
 #### 3. Test Infrastructure Migration
 - **Removed**: Test configuration via react-scripts
-- **Added**: Standalone Jest configuration (`jest.config.js`)
+- **Migrated**: Jest → Vitest for faster test execution
+- **Added**: Vitest configuration (`vitest.config.ts`)
 - **Updated**: Testing library to React 19 compatible versions
   - `@testing-library/react` 13.4.0 → 16.3.0
   - Added `@testing-library/dom` 10.4.1 (peer dependency)
   - Removed deprecated `@testing-library/react-hooks`
 - **Updated**: Test files to use new `renderHook` from `@testing-library/react`
+- **Updated**: setupTests.ts to use `@testing-library/jest-dom/vitest`
 
 #### 4. Client Component Architecture
 - **Added**: `'use client'` directive to all React components
@@ -104,7 +106,7 @@ yarn ladle        # Run Ladle (Storybook alternative)
 ### Next Steps (Phase 3 - Future)
 
 The migration spec suggests these could be done in Phase 3:
-- Migrate from Jest to Vitest for faster tests
+- ~~Migrate from Jest to Vitest for faster tests~~ ✅ Complete
 - Optimize components to use SSR (remove unnecessary 'use client')
 - Migrate to server-side data fetching patterns
 - Consider cookie-based authentication instead of JWT
