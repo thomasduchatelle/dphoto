@@ -11,7 +11,7 @@ import {
     DialogTitle,
     IconButton,
     LinearProgress,
-    Stack,
+    Grid,
     TextField,
     useMediaQuery,
     useTheme
@@ -94,23 +94,25 @@ export function CreateAlbumDialog({
                 <Close/>
             </IconButton>
             <DialogContent>
-                <Stack spacing={2} alignItems='stretch'>
-                    <Box>
+                <Grid container spacing={2} alignItems='center'>
+                    <Grid size={{sm:12, xs: 12}}>
                         {error && <Alert severity="error">
                             {error}
                         </Alert>}
-                    </Box>
-                    <TextField
-                        autoFocus
-                        fullWidth
-                        label="Name"
-                        type="string"
-                        disabled={isLoading}
-                        onChange={(event) => onNameChange(event.target.value)}
-                        value={albumName}
-                        helperText={nameError}
-                        error={!!nameError}
-                    />
+                    </Grid>
+                    <Grid size={{sm:12, xs: 12}}>
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            label="Name"
+                            type="string"
+                            disabled={isLoading}
+                            onChange={(event) => onNameChange(event.target.value)}
+                            value={albumName}
+                            helperText={nameError}
+                            error={!!nameError}
+                        />
+                    </Grid>
                     <DateRangePicker
                         startDate={start || new Date()}
                         endDate={end || new Date()}
@@ -124,16 +126,18 @@ export function CreateAlbumDialog({
                         dateError={!!dateRangeError}
                         dateHelperText={dateRangeError}
                     />
-                    <FolderNameInput
-                        useCustomFolderName={isCustomFolderNameEnabled}
-                        value={customFolderName}
-                        placeholder="Custom folder name (ex: '/2025-08_Summer')"
-                        disabled={isLoading}
-                        onEnabledChange={onWithCustomFolderNameChange}
-                        onValueChange={onFolderNameChange}
-                        error={folderNameError}
-                    />
-                </Stack>
+                    <Grid size={12}>
+                        <FolderNameInput
+                            useCustomFolderName={isCustomFolderNameEnabled}
+                            value={customFolderName}
+                            placeholder="Custom folder name (ex: '/2025-08_Summer')"
+                            disabled={isLoading}
+                            onEnabledChange={onWithCustomFolderNameChange}
+                            onValueChange={onFolderNameChange}
+                            error={folderNameError}
+                        />
+                    </Grid>
+                </Grid>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} color='info'>Cancel</Button>

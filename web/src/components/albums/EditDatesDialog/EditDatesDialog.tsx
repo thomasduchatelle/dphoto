@@ -1,7 +1,7 @@
 'use client';
 
 import React from "react";
-import {Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, Stack, useMediaQuery, useTheme} from "@mui/material";
+import {Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, Grid, useMediaQuery, useTheme} from "@mui/material";
 import {Close} from "@mui/icons-material";
 import {DateRangePicker} from "../DateRangePicker";
 
@@ -83,12 +83,12 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                 <Close/>
             </IconButton>
             <DialogContent>
-                <Stack spacing={2} alignItems='stretch'>
-                    <Box>
+                <Grid container spacing={2} alignItems='center'>
+                    <Grid size={{sm:12, xs: 12}}>
                         {errorCode && <Alert severity="error">
                             {errorCode}
                         </Alert>}
-                    </Box>
+                    </Grid>
                     <DateRangePicker
                         startDate={startDate}
                         endDate={endDate}
@@ -102,7 +102,7 @@ export const EditDatesDialog: React.FC<EditDatesDialogProps> = ({
                         dateError={dateError}
                         dateHelperText={dateHelperText}
                     />
-                </Stack>
+                </Grid>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} color="info" disabled={isLoading}>

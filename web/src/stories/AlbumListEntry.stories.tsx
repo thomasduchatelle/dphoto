@@ -4,6 +4,10 @@ import {List} from "@mui/material";
 import {AlbumListEntry} from "../components/albums/AlbumsList/AlbumListEntry";
 import {StoriesContext} from "./StoriesContext";
 
+export default {
+    title: 'Albums / AlbumListEntry',
+};
+
 type Props = React.ComponentProps<typeof AlbumListEntry>;
 
 const AlbumListEntryWrapper: Story<Partial<Props>> = (args) => (
