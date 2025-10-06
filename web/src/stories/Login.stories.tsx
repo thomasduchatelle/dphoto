@@ -1,9 +1,9 @@
 import React from 'react';
 import {Story} from '@ladle/react';
 
-import {LoginInternal} from "../pages/Login";
-import {initialLoginPageState, reduce} from "../pages/Login/domain/login-reducer";
 import {Button} from "@mui/material";
+import {LoginInternal} from "../pages-old/Login";
+import {initialLoginPageState, reduce} from 'src/pages-old/Login/domain/login-reducer';
 
 export default {
     title: 'Layout/Login',
