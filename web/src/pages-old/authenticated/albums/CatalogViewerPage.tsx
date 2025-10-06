@@ -11,6 +11,7 @@ import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
 import {useClientRouter} from "../../../components/ClientRouter";
 import {
+    AlbumId,
     catalogViewerPageSelector,
     createDialogSelector,
     deleteDialogSelector,
@@ -65,7 +66,11 @@ export function CatalogViewerPage() {
     } = useCatalogContext()
     const logoutCase = useLogoutCase();
 
-    const {path, query} = useClientRouter()
+    const {path, query, navigate} = useClientRouter()
+
+    const handleAlbumClick = (albumId: AlbumId) => {
+        navigate(`/albums/${albumId.owner}/${albumId.folderName}`);
+    };
 
     const theme = useTheme()
 
@@ -102,7 +107,8 @@ export function CatalogViewerPage() {
                     <AlbumsList albums={albums}
                                 loaded={albumsLoaded}
                                 selectedAlbumId={selectedAlbumId}
-                                openSharingModal={openSharingModal}/>
+                                openSharingModal={openSharingModal}
+                                onAlbumClick={handleAlbumClick}/>
                 </>
             ) : (
                 <MediasPage

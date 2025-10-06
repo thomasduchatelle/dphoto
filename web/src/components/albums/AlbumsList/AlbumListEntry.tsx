@@ -6,23 +6,20 @@ import {HotIndicator} from "./HotIndicator";
 import {Share} from "@mui/icons-material";
 import React from "react";
 import {Album, AlbumId} from "../../../core/catalog";
-import {useClientRouter} from "../../../components/ClientRouter";
 
-export function AlbumListEntry({album, selected, onClickOnSharedWith}: {
+export function AlbumListEntry({album, selected, onClickOnSharedWith, onClick}: {
     album: Album
     selected: boolean
     onClickOnSharedWith: (albumId: AlbumId) => void
-
+    onClick: (albumId: AlbumId) => void
 }) {
-    const {navigate} = useClientRouter();
-
     const handleClickOnSharedWith = (evt: React.MouseEvent<HTMLElement>) => {
         evt.preventDefault()
         onClickOnSharedWith(album.albumId)
     }
 
     const handleClick = () => {
-        navigate(`/albums/${album.albumId.owner}/${album.albumId.folderName}`);
+        onClick(album.albumId);
     };
 
     return <ListItemButton
