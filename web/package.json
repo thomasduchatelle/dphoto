@@ -28,7 +28,7 @@
     "dev": "waku dev",
     "start": "waku dev",
     "build": "waku build",
-    "build:lambda": "rm -rf dist && waku build --with-aws-lambda",
+    "build:lambda": "rm -rf dist && waku build --with-aws-lambda && sed -i 's/const config = {[^}]*}/const config = { \"basePath\": \"\/\", \"distDir\": \".\", \"rscBase\": \"RSC\" }/' dist/server/index.js",
     "serve": "waku start",
     "test": "vitest run && npm run test:visual",
     "test:ci": "vitest run && npm run test:visual -- --reporter html",

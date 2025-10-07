@@ -31,7 +31,6 @@ export class WakuWebUiConstruct extends Construct {
             },
         });
 
-
         this.integration = new apigatewayv2_integrations.HttpLambdaIntegration(
             `WakuIntegration`,
             this.lambda,
