@@ -2,6 +2,7 @@ import React from 'react';
 import {action, Story} from '@ladle/react';
 import AppNav from "../components/AppNav";
 import UserMenu from "../components/user.menu";
+import {RouterProvider} from "../components/ClientRouter";
 
 export default {
     title: 'Layout / AppNav',
@@ -9,7 +10,7 @@ export default {
 
 type Props = React.ComponentProps<typeof AppNav>;
 
-const AppNavWrapper: Story<Partial<Props>> = (args) => <AppNav {...args as Props} />;
+const AppNavWrapper: Story<Partial<Props>> = (args) => <RouterProvider><AppNav {...args as Props} /></RouterProvider>;
 
 export const LoggedIn = (args: Props) => <AppNavWrapper {...args} />
 LoggedIn.args = {
