@@ -19,10 +19,19 @@ export function useClientRouter(): RouterContextValue {
         return '/';
     });
 
+    // Track query params separately to force re-render when they change
+    const [currentSearch, setCurrentSearch] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.location.search;
+        }
+        return '';
+    });
+
     useEffect(() => {
         // Listen for popstate events (browser back/forward)
         const handlePopState = () => {
             setCurrentPath(window.location.pathname);
+            setCurrentSearch(window.location.search);
         };
 
         window.addEventListener('popstate', handlePopState);
@@ -35,7 +44,7 @@ export function useClientRouter(): RouterContextValue {
 
     const getCurrentQuery = () => {
         if (typeof window !== 'undefined') {
-            return new URLSearchParams(window.location.search);
+            return new URLSearchParams(currentSearch);
         }
         return new URLSearchParams();
     };
@@ -49,6 +58,7 @@ export function useClientRouter(): RouterContextValue {
             // Use pushState to update URL without reload
             window.history.pushState({}, '', newPath);
             setCurrentPath(window.location.pathname);
+            setCurrentSearch(window.location.search);
         }
     };
 
@@ -57,6 +67,7 @@ export function useClientRouter(): RouterContextValue {
             // Use replaceState to update URL without reload
             window.history.replaceState({}, '', newPath);
             setCurrentPath(window.location.pathname);
+            setCurrentSearch(window.location.search);
         }
     };
 
