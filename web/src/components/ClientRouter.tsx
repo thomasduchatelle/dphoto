@@ -1,7 +1,6 @@
 'use client';
 
-import {useRouter} from 'waku';
-import {ReactNode} from 'react';
+import {ReactNode, useEffect, useState} from 'react';
 
 export interface RouterContextValue {
     path: string;
@@ -12,26 +11,53 @@ export interface RouterContextValue {
 }
 
 export function useClientRouter(): RouterContextValue {
-    const router = useRouter();
+    // Use browser location instead of Waku router to enable SPA navigation
+    const [currentPath, setCurrentPath] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.location.pathname;
+        }
+        return '/';
+    });
+
+    useEffect(() => {
+        // Listen for popstate events (browser back/forward)
+        const handlePopState = () => {
+            setCurrentPath(window.location.pathname);
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     const getCurrentPath = () => {
-        return router.path;
+        return currentPath;
     };
 
     const getCurrentQuery = () => {
-        return new URLSearchParams(router.query);
+        if (typeof window !== 'undefined') {
+            return new URLSearchParams(window.location.search);
+        }
+        return new URLSearchParams();
     };
 
     const getCurrentParams = () => {
-        return parseParams(router.path);
+        return parseParams(currentPath);
     };
 
     const navigate = (newPath: string) => {
-        router.push(newPath);
+        if (typeof window !== 'undefined') {
+            // Use pushState to update URL without reload
+            window.history.pushState({}, '', newPath);
+            setCurrentPath(window.location.pathname);
+        }
     };
 
     const replace = (newPath: string) => {
-        router.replace(newPath);
+        if (typeof window !== 'undefined') {
+            // Use replaceState to update URL without reload
+            window.history.replaceState({}, '', newPath);
+            setCurrentPath(window.location.pathname);
+        }
     };
 
     return {
