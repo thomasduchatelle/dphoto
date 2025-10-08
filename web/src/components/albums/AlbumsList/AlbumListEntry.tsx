@@ -11,21 +11,17 @@ export function AlbumListEntry({album, selected, onClickOnSharedWith, onClick}: 
     album: Album
     selected: boolean
     onClickOnSharedWith: (albumId: AlbumId) => void
-    onClick: (albumId: AlbumId) => void
+    onClick: () => void
 }) {
     const handleClickOnSharedWith = (evt: React.MouseEvent<HTMLElement>) => {
         evt.preventDefault()
         onClickOnSharedWith(album.albumId)
     }
 
-    const handleClick = () => {
-        onClick(album.albumId);
-    };
-
     return <ListItemButton
         divider={false}
         selected={selected}
-        onClick={handleClick}
+        onClick={onClick}
         sx={{
             borderRadius: '20px',
         }}
