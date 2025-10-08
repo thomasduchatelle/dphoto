@@ -1,6 +1,6 @@
 'use client';
 
-import {ReactNode, useEffect, useState} from 'react';
+import {ReactNode, useEffect, useState, createContext, useContext} from 'react';
 
 export interface RouterContextValue {
     path: string;
@@ -10,7 +10,9 @@ export interface RouterContextValue {
     replace: (path: string) => void;
 }
 
-export function useClientRouter(): RouterContextValue {
+const RouterContext = createContext<RouterContextValue | null>(null);
+
+export function RouterProvider({children}: {children: ReactNode}) {
     // Use browser location instead of Waku router to enable SPA navigation
     const [currentPath, setCurrentPath] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -71,13 +73,27 @@ export function useClientRouter(): RouterContextValue {
         }
     };
 
-    return {
+    const value: RouterContextValue = {
         path: getCurrentPath(),
         params: getCurrentParams(),
         query: getCurrentQuery(),
         navigate,
         replace,
     };
+
+    return (
+        <RouterContext.Provider value={value}>
+            {children}
+        </RouterContext.Provider>
+    );
+}
+
+export function useClientRouter(): RouterContextValue {
+    const context = useContext(RouterContext);
+    if (!context) {
+        throw new Error('useClientRouter must be used within a RouterProvider');
+    }
+    return context;
 }
 
 function parseParams(path: string): Record<string, string> {

@@ -1,7 +1,13 @@
 import {describe, it, expect, beforeEach, vi} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
-import {useClientRouter, ClientLink} from './ClientRouter';
+import {useClientRouter, ClientLink, RouterProvider} from './ClientRouter';
 import {render, screen, fireEvent} from '@testing-library/react';
+import {ReactNode} from 'react';
+
+// Test wrapper component
+const TestWrapper = ({children}: {children: ReactNode}) => (
+    <RouterProvider>{children}</RouterProvider>
+);
 
 describe('useClientRouter', () => {
     beforeEach(() => {
@@ -10,12 +16,12 @@ describe('useClientRouter', () => {
     });
 
     it('should return current path', () => {
-        const {result} = renderHook(() => useClientRouter());
+        const {result} = renderHook(() => useClientRouter(), {wrapper: TestWrapper});
         expect(result.current.path).toBe('/');
     });
 
     it('should navigate to new path without reload', () => {
-        const {result} = renderHook(() => useClientRouter());
+        const {result} = renderHook(() => useClientRouter(), {wrapper: TestWrapper});
         
         act(() => {
             result.current.navigate('/albums');
@@ -26,7 +32,7 @@ describe('useClientRouter', () => {
     });
 
     it('should replace current path without reload', () => {
-        const {result} = renderHook(() => useClientRouter());
+        const {result} = renderHook(() => useClientRouter(), {wrapper: TestWrapper});
         
         act(() => {
             result.current.navigate('/albums');
@@ -41,7 +47,7 @@ describe('useClientRouter', () => {
     });
 
     it('should parse album params from path', () => {
-        const {result} = renderHook(() => useClientRouter());
+        const {result} = renderHook(() => useClientRouter(), {wrapper: TestWrapper});
         
         act(() => {
             result.current.navigate('/albums/owner1/album1');
@@ -54,7 +60,7 @@ describe('useClientRouter', () => {
     });
 
     it('should parse media params from path', () => {
-        const {result} = renderHook(() => useClientRouter());
+        const {result} = renderHook(() => useClientRouter(), {wrapper: TestWrapper});
         
         act(() => {
             result.current.navigate('/albums/owner1/album1/encoded123/photo.jpg');
@@ -69,7 +75,7 @@ describe('useClientRouter', () => {
     });
 
     it('should parse query parameters', () => {
-        const {result} = renderHook(() => useClientRouter());
+        const {result} = renderHook(() => useClientRouter(), {wrapper: TestWrapper});
         
         act(() => {
             result.current.navigate('/albums?filter=recent');
@@ -79,7 +85,7 @@ describe('useClientRouter', () => {
     });
 
     it('should update when query params change', () => {
-        const {result, rerender} = renderHook(() => useClientRouter());
+        const {result, rerender} = renderHook(() => useClientRouter(), {wrapper: TestWrapper});
         
         act(() => {
             result.current.navigate('/albums?filter=old');
@@ -105,9 +111,11 @@ describe('ClientLink', () => {
         const mockNavigate = vi.fn();
         
         render(
-            <ClientLink to="/albums">
-                Go to Albums
-            </ClientLink>
+            <RouterProvider>
+                <ClientLink to="/albums">
+                    Go to Albums
+                </ClientLink>
+            </RouterProvider>
         );
 
         const link = screen.getByText('Go to Albums');
@@ -124,9 +132,11 @@ describe('ClientLink', () => {
         const mockOnClick = vi.fn();
         
         render(
-            <ClientLink to="/albums" onClick={mockOnClick}>
-                Go to Albums
-            </ClientLink>
+            <RouterProvider>
+                <ClientLink to="/albums" onClick={mockOnClick}>
+                    Go to Albums
+                </ClientLink>
+            </RouterProvider>
         );
 
         const link = screen.getByText('Go to Albums');
@@ -137,9 +147,11 @@ describe('ClientLink', () => {
 
     it('should apply className', () => {
         render(
-            <ClientLink to="/albums" className="test-class">
-                Go to Albums
-            </ClientLink>
+            <RouterProvider>
+                <ClientLink to="/albums" className="test-class">
+                    Go to Albums
+                </ClientLink>
+            </RouterProvider>
         );
 
         const link = screen.getByText('Go to Albums');

@@ -6,6 +6,7 @@ import GeneralRouter from "./pages-old/GeneralRouter";
 import {ApplicationContextComponent} from "./core/application";
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import {LocalizationProvider} from "@mui/x-date-pickers";
+import {RouterProvider} from "./components/ClientRouter";
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
 
@@ -19,7 +20,9 @@ const App = () => {
                 <CssBaseline/>
                 <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
                     <ApplicationContextComponent>
-                        <GeneralRouter/>
+                        <RouterProvider>
+                            <GeneralRouter/>
+                        </RouterProvider>
                     </ApplicationContextComponent>
                 </LocalizationProvider>
             </DPhotoTheme>
