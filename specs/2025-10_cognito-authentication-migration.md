@@ -64,6 +64,40 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 3. New visitor receives invitation and can authenticate via Google SSO
 4. Visitor gains access only to the shared album(s)
 
+### Scenario 8: Session Timeout Error
+1. User navigates to a protected page
+2. Waku SSR finds expired access token and attempts refresh
+3. Refresh token is also expired or invalid
+4. SSR clears both cookies and redirects to `/errors/session-timed-out`
+5. Error page displays "Your session has timed out. Please log in again."
+6. User clicks login button to restart authentication flow
+
+### Scenario 9: Invalid Token Error During SSR
+1. User navigates to a protected page with malformed or tampered tokens
+2. SSR attempts to validate access token but signature verification fails
+3. SSR logs security event and clears cookies
+4. User is redirected to `/errors/session-timed-out` with re-authentication message
+
+### Scenario 10: Network Error During Authentication
+1. User completes Google OAuth flow successfully
+2. Network error occurs while exchanging authorization code for tokens
+3. Authentication Lambda logs error and returns 500
+4. User sees technical error page: "A technical error occurred. Please try again later."
+5. User can retry the authentication process
+
+### Scenario 11: API Authorization Failure
+1. User with `visitors` group makes API request requiring `owners` access
+2. API Gateway authorizer validates token but denies access due to insufficient permissions
+3. API returns 403 Forbidden with error message
+4. Frontend displays user-friendly "Access denied" message
+
+### Scenario 12: API Technical Error
+1. User makes valid API request with proper authorization
+2. API Gateway authorizer Lambda fails due to technical issue
+3. API Gateway returns 500 Internal Server Error
+4. Error is logged in CloudWatch for 30-day retention
+5. Frontend displays technical error message to user
+
 ## Target Architecture and Decisions
 
 ### Cognito User Pool Configuration
@@ -160,6 +194,33 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - **Token Pass-through**: Original access token forwarded to backend services in `Authorization` header
   - **Backend Re-validation**: Each backend service independently validates the token for security
 
+### Error Handling and Edge Cases
+- **Token Validation Failures**:
+  - Invalid, malformed, or expired tokens: Clear cookies and redirect to session timeout error page
+  - Failed token refresh: Clear cookies and redirect with "session timed out" message requiring re-authentication
+  - Security violations (signature failures): Log event and treat as session timeout
+- **Network and Service Errors**:
+  - Network failures during authentication: Return 500 error with technical error message
+  - Service unavailability: Fail with 500 and user-friendly error message, log all errors to CloudWatch (30-day retention)
+- **OAuth Flow Errors**:
+  - State mismatch, session timeouts, or flow failures: Clear session data and redirect to try-again error page
+  - Only secure authorization code flow implemented - no fallback mechanisms
+- **API Authorization**:
+  - Insufficient permissions: Return 403 Forbidden with appropriate error message
+  - Authorizer technical failures: Return 500 with error logged to CloudWatch
+  - SSR authorization failures: Render user-friendly error pages
+- **Stateless Token Design**:
+  - Access tokens remain valid for full lifetime (1 hour) regardless of group changes
+  - No server-side token revocation - rely on short token lifetime
+  - Cognito prevents refresh of revoked refresh tokens automatically
+- **Error Pages Required**:
+  - Technical error page (500 scenarios)
+  - Forbidden access page (403 scenarios)  
+  - Session timed out page (token expiration/invalid)
+  - User must exist page (authentication without valid Cognito user)
+- **No Retry Logic**: All failures are final - users must manually retry operations
+- **Logging Strategy**: All Lambda functions log errors to CloudWatch with 30-day retention, no additional alerting required
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
@@ -168,7 +229,7 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - [X] **Token Management Strategy** - Cookie configuration, token refresh mechanisms, and security considerations (HttpOnly, Secure, SameSite attributes)
 - [X] **Migration Strategy** - How to transition from the current authentication system to Cognito without disrupting existing users
 - [X] **API Gateway Authorizers** - Implementation details for the unified authorizer, token validation logic, and group-based authorization
-- [ ] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
+- [X] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
 - [ ] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
 - [ ] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
 - [ ] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
