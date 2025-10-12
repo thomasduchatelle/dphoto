@@ -281,6 +281,17 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - Monitor performance metrics post-deployment to identify further optimization needs
   - No pre-mature optimization - wait for real-world usage patterns and performance issues
 
+### Device Authentication for CLI
+- **Primary Strategy**: OAuth 2.0 Device Code Flow for Go CLI authentication
+  - CLI requests device code from Cognito and displays user code + verification URL
+  - User completes authentication in browser using existing Google SSO flow
+  - CLI polls Cognito for access token once user authorization is complete
+  - CLI stores refresh token locally for subsequent API access
+- **Fallback Strategy**: Personal Access Tokens if Device Code Flow proves problematic
+  - Users generate long-lived tokens via web application interface
+  - CLI stores and uses personal access tokens for API authentication
+  - Token management and revocation handled through web interface
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
@@ -293,5 +304,5 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - [X] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
 - [X] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
 - [X] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
-- [ ] **Device Authentication for CLI** - Future consideration for migrating CLI from direct AWS access to API-based authentication
+- [X] **Device Authentication for CLI** - Future consideration for migrating CLI from direct AWS access to API-based authentication
 - [ ] **Amazon Verified Permissions** - Evaluate Amazon Verified Permissions service for fine-grained authorization policies and permissions management
