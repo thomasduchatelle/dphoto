@@ -264,6 +264,23 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - **No Custom Dashboards**: Use AWS Console for troubleshooting and metrics review
 - **Health Checks**: Not required - rely on CloudWatch metrics and error alerting for service health monitoring
 
+### Performance Considerations
+- **API Gateway Authorizer Caching**:
+  - Enable API Gateway built-in authorizer result caching based on access token
+  - Cache authorization results as long as the access token remains unchanged
+  - Reduces Lambda invocations for repeated requests with same token
+  - Cache TTL automatically managed by access token expiration (1 hour maximum)
+- **JWKS Caching**:
+  - Cache Cognito JWKS (JSON Web Key Set) in Lambda memory
+  - Reduces external calls to Cognito for token signature validation
+  - JWKS cached across Lambda warm starts for improved performance
+  - Cache invalidation handled by Lambda container lifecycle
+- **Minimal Caching Strategy**:
+  - Only implement the above two caching mechanisms initially
+  - Additional performance optimizations deferred until after feature ships
+  - Monitor performance metrics post-deployment to identify further optimization needs
+  - No pre-mature optimization - wait for real-world usage patterns and performance issues
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
@@ -275,6 +292,6 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - [X] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
 - [X] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
 - [X] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
-- [ ] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
+- [X] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
 - [ ] **Device Authentication for CLI** - Future consideration for migrating CLI from direct AWS access to API-based authentication
 - [ ] **Amazon Verified Permissions** - Evaluate Amazon Verified Permissions service for fine-grained authorization policies and permissions management
