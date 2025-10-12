@@ -292,6 +292,19 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - CLI stores and uses personal access tokens for API authentication
   - Token management and revocation handled through web interface
 
+### Amazon Verified Permissions
+- **V1 Implementation**: Group and path-based authorization only
+  - Lambda authorizer validates user group membership from Cognito token
+  - Authorization decisions based on API path patterns and required group permissions
+  - Fine-grained resource-level authorization (album ownership, sharing permissions) handled by backend application code
+  - Simpler implementation with lower latency and fewer service dependencies
+- **V2 Migration Plan**: Amazon Verified Permissions integration
+  - Migrate fine-grained authorization logic from application code to Amazon Verified Permissions service
+  - Lambda authorizer will call AVP `IsAuthorized` API for resource-level permission checks
+  - Policy-based authorization for complex scenarios (album sharing, dynamic permissions, resource ownership)
+  - Enhanced auditability and centralized policy management through AVP policy store
+- **Migration Trigger**: V2 implementation considered when authorization complexity increases beyond simple group/path combinations
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
@@ -305,4 +318,4 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - [X] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
 - [X] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
 - [X] **Device Authentication for CLI** - Future consideration for migrating CLI from direct AWS access to API-based authentication
-- [ ] **Amazon Verified Permissions** - Evaluate Amazon Verified Permissions service for fine-grained authorization policies and permissions management
+- [X] **Amazon Verified Permissions** - Evaluate Amazon Verified Permissions service for fine-grained authorization policies and permissions management
