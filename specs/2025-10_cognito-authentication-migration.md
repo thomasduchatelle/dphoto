@@ -72,11 +72,25 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - Logout URLs: application domains + `/auth/logout`
 - **Group Strategy**: Users can belong to multiple groups simultaneously, with group membership determining API access permissions through token scopes
 
+### SSR Authentication Flow
+- **Library**: Use `openid-client` library for proper OIDC/OAuth2 flow implementation with automatic JWKS handling and refresh token rotation support
+- **Token Validation**: Local JWT validation using `openid-client` with JWKS cached in Lambda memory
+- **OAuth State Management**: DynamoDB session store for secure OAuth flow state
+  - Session format: `dphoto-auth-session#{sessionId}` storing `{originalUrl, nonce, codeVerifier}`
+  - TTL: 10 minutes for OAuth sessions
+  - Session ID passed in Cognito's state parameter for security
+- **Token Refresh Strategy**: 
+  - Attempt refresh when access token is expired
+  - If refresh succeeds: render page with updated cookies (including rotated refresh token)
+  - If refresh fails: clear cookies and redirect to Cognito login
+- **Internal API Calls**: SSR passes validated access token in `Authorization: Bearer {token}` header to internal APIs
+- **Stateless Design**: No server-side token storage - tokens read from cookies and validated on each request
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
+- [X] **SSR Authentication Flow** - How Waku will handle token validation during server-side rendering and the redirect logic
 - [ ] **Token Management Strategy** - Cookie configuration, token refresh mechanisms, and security considerations (HttpOnly, Secure, SameSite attributes)
-- [ ] **SSR Authentication Flow** - How Waku will handle token validation during server-side rendering and the redirect logic
 - [ ] **API Gateway Authorizers** - Implementation details for the three authorizers (one per group) and token validation logic
 - [ ] **User Matching and Group Assignment** - How Google SSO users will be mapped to existing Cognito users and assigned to appropriate groups
 - [ ] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
