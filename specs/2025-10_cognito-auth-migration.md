@@ -2,15 +2,25 @@
 Migrate authentication and authorization to AWS Cognito using the Hosted UI with Google as the sole IdP. Tokens (access and refresh) will be issued by Cognito and stored in HttpOnly cookies, validated by SSR middleware (Waku) for page rendering, and enforced on APIs via API Gateway authorizers aligned with user groups (admins, owners, visitors).
 
 # Ubiquity Language
-- DPHOTO Cookies: The two cookies used by the app for auth: dphoto-access-token (JWT access token) and dphoto-refresh-token (refresh token). Always HttpOnly and Secure; scoped domain and SameSite decided during design.
-- SSR Gatekeeper: The Waku SSR middleware that validates/refreshes tokens, triggers redirects to Cognito Hosted UI, and preserves the original URL via OAuth state.
-- Login Return URL: The exact URL the user initially requested, encoded into the OAuth state parameter and restored after successful authentication.
-- API Shield Authorizer: The API Gateway authorizer dedicated to a specific group (admins, owners, visitors) that permits/denies requests based on token claims.
-- Auth Session: The pair of Cognito-issued tokens (access + refresh) represented by the DPHOTO Cookies and their lifecycle/rotation rules within the app.
-- User-Unknown Error Route: The canonical error endpoint /errors/user-must-exists used when a Google identity has no matching Cognito user.
+- Turnstile: The SSR authentication gate that runs before page rendering. It validates local auth state, attempts token refresh when possible, or redirects the browser to the Hosted Login carrying a Return Stub.
+- Entry Keycards: The two HttpOnly cookies used by this app to represent the signed-in session: dphoto-access-token (Access Keycard) and dphoto-refresh-token (Refresh Keycard).
+- Return Stub: The URL-safe encoded original request URL we attach to the OAuth state parameter so the user returns to the exact page after login.
+- Stage Pass: The API authorization check bound to a specific group (admins, owners, visitors). Implemented as a per-endpoint policy that evaluates the group claim in the access token.
+- Unknown Guest: The failure state when a signed-in Google identity does not correspond to a known user in our system; we redirect to /errors/user-must-exists.
 
 # Scenarios
-TBD with lead developer during topic-by-topic decisions. We will add 5–8 complete journeys covering happy-path SSR, token refresh, unknown user error, API calls with each role, and logout/invalidation flows.
+## Scenario 1: Happy path SSR + Cognito login with Google SSO
+1. user load a page (SSR rendered with Waku)
+2. SSR page check the cookies to find refresh and access token
+    * if all valid -> render the page
+    * if access token invalid -> refresh it and render the page
+    * if both are invalid or are not present -> redirect to cognito login page, then move to step 3
+3. on cognito login page, user can authenticate with Google SSO (only)
+4. once its Google identity received, it will be matched to users in cognito and its group
+    * if either part of the group `admins`, `owners`, or `visitors` (or a combination of then), issue a set of tokens, then move to step 5
+    * if user is unknown, fail the authentication and redirect to `/errors/user-must-exists`
+5. tokens are recorded in the cookies (`dphoto-access-token` and `dphoto-refresh-token`) and the user is redirected to the original page
+6. the page is rendered
 
 # Target architecture and decisions
 This section will be filled as we converge on each topic. Initial constraints from the brief:
