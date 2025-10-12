@@ -52,6 +52,18 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 4. Token is valid and user has appropriate group membership
 5. Request is authorized and processed successfully
 
+### Scenario 6: Admin Creates New Owner
+1. Admin user (member of `admins` group) calls API endpoint to create a new owner
+2. API validates admin's access token and group membership
+3. New Cognito user is created in the `owners` group with provided email
+4. Owner can now authenticate via Google SSO using that email address
+
+### Scenario 7: Album Sharing Creates Visitor
+1. Owner shares an album with an email address not in the system
+2. API automatically creates a new Cognito user in the `visitors` group
+3. New visitor receives invitation and can authenticate via Google SSO
+4. Visitor gains access only to the shared album(s)
+
 ## Target Architecture and Decisions
 
 ### Cognito User Pool Configuration
@@ -86,15 +98,30 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - **Internal API Calls**: SSR passes validated access token in `Authorization: Bearer {token}` header to internal APIs
 - **Stateless Design**: No server-side token storage - tokens read from cookies and validated on each request
 
+### User Matching and Group Assignment
+- **Pre-provisioning Required**: All users must exist in Cognito before authentication (matches existing system behavior)
+- **Identity Matching**: Google email address must exactly match Cognito username (email field)
+- **No Email Changes**: System does not support users changing their Google email address
+- **Group Assignment Rules**:
+  - `admins`: Users who can create other owners and perform administrative functions
+  - `owners`: Users with full control over their content (MainOwnerScope equivalent)
+  - `visitors`: Users with read access to specific shared albums (AlbumVisitorScope equivalent)
+- **User Creation Flows**:
+  - **Admin creates owner**: API endpoint protected by `admins` group creates new Cognito user in `owners` group
+  - **Album sharing auto-creation**: When owner shares album with unknown email, automatically create Cognito user in `visitors` group
+  - **Migration strategy**: Manually recreate existing 6 users in appropriate Cognito groups (no complex migration needed)
+- **CLI Authentication**: Current CLI will continue using direct AWS resource access via IAM (no device authentication migration)
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
 - [X] **SSR Authentication Flow** - How Waku will handle token validation during server-side rendering and the redirect logic
+- [X] **User Matching and Group Assignment** - How Google SSO users will be mapped to existing Cognito users and assigned to appropriate groups
 - [ ] **Token Management Strategy** - Cookie configuration, token refresh mechanisms, and security considerations (HttpOnly, Secure, SameSite attributes)
 - [ ] **API Gateway Authorizers** - Implementation details for the three authorizers (one per group) and token validation logic
-- [ ] **User Matching and Group Assignment** - How Google SSO users will be mapped to existing Cognito users and assigned to appropriate groups
 - [ ] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
 - [ ] **Migration Strategy** - How to transition from the current authentication system to Cognito without disrupting existing users
 - [ ] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
 - [ ] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
 - [ ] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
+- [ ] **Device Authentication for CLI** - Future consideration for migrating CLI from direct AWS access to API-based authentication
