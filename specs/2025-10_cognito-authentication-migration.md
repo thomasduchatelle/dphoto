@@ -251,6 +251,19 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - 30-day log retention for security audit trail
 - **Content Security Policy**: Not implemented - no CSP requirements
 
+### Testing and Monitoring
+- **Testing Strategy**:
+  - **Automated End-to-End**: Playwright tests covering complete authentication flow (Google SSO integration approach to be determined)
+  - **Manual Testing**: Verify each user group (admins, owners, visitors) can authenticate and access appropriate endpoints
+  - **Integration Testing**: Manual validation of token refresh, error scenarios, and unauthorized access flows
+  - **Cross-browser Testing**: Not required - single browser testing sufficient
+- **Monitoring**:
+  - **CloudWatch Logs**: All Lambda functions log to CloudWatch with 30-day retention
+  - **Standard Metrics**: CloudWatch automatic metrics for Lambda execution duration, error rates, and API Gateway request/response metrics
+  - **Error Alerting**: CloudWatch alarm on API Gateway 5xx error rate for immediate notification of service issues
+  - **No Custom Dashboards**: Use AWS Console for troubleshooting and metrics review
+- **Health Checks**: Not required - rely on CloudWatch metrics and error alerting for service health monitoring
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
@@ -261,7 +274,7 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - [X] **API Gateway Authorizers** - Implementation details for the unified authorizer, token validation logic, and group-based authorization
 - [X] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
 - [X] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
-- [ ] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
+- [X] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
 - [ ] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
 - [ ] **Device Authentication for CLI** - Future consideration for migrating CLI from direct AWS access to API-based authentication
 - [ ] **Amazon Verified Permissions** - Evaluate Amazon Verified Permissions service for fine-grained authorization policies and permissions management
