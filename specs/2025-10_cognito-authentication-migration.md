@@ -54,11 +54,27 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 
 ## Target Architecture and Decisions
 
-*Decisions will be documented here as topics are discussed.*
+### Cognito User Pool Configuration
+- **Single User Pool**: One Cognito User Pool will manage all users with three groups: `admins`, `owners`, and `visitors`
+- **Google SSO Integration**: 
+  - Use Cognito's built-in Google identity provider with OAuth 2.0
+  - No domain restrictions - any Google account will be accepted for authentication
+  - Map Google attributes (email, given_name, family_name) to Cognito user attributes
+- **User Pool Settings**:
+  - Username configuration: email as username
+  - Required attributes: email, given_name, family_name
+  - Email verification: disabled (Google already verifies email)
+  - Password policy: not applicable (Google SSO only)
+- **App Client Configuration**:
+  - Authentication flows: `ALLOW_USER_SRP_AUTH` and `ALLOW_REFRESH_TOKEN_AUTH` only
+  - Token expiration: Access token (1 hour), Refresh token (30 days), ID token (1 hour)
+  - Callback URLs: application domains + `/auth/callback`
+  - Logout URLs: application domains + `/auth/logout`
+- **Group Strategy**: Users can belong to multiple groups simultaneously, with group membership determining API access permissions through token scopes
 
 ## Topics to Discuss
 
-- [ ] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
+- [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
 - [ ] **Token Management Strategy** - Cookie configuration, token refresh mechanisms, and security considerations (HttpOnly, Secure, SameSite attributes)
 - [ ] **SSR Authentication Flow** - How Waku will handle token validation during server-side rendering and the redirect logic
 - [ ] **API Gateway Authorizers** - Implementation details for the three authorizers (one per group) and token validation logic
