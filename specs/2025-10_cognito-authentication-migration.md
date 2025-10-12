@@ -64,34 +64,31 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 3. New visitor receives invitation and can authenticate via Google SSO
 4. Visitor gains access only to the shared album(s)
 
-### Scenario 8: Session Timeout Error
+### Scenario 8: Token Validation Failures During SSR
 1. User navigates to a protected page
-2. Waku SSR finds expired access token and attempts refresh
-3. Refresh token is also expired or invalid
-4. SSR clears both cookies and redirects to `/errors/session-timed-out`
+2. Waku SSR encounters one of the following token issues:
+   - Access token expired and refresh token is also expired/invalid
+   - Malformed or tampered tokens with invalid signatures
+   - Missing or corrupted token data
+3. SSR logs security event (for signature failures) and clears both cookies
+4. User is redirected to `/errors/session-timed-out`
 5. Error page displays "Your session has timed out. Please log in again."
 6. User clicks login button to restart authentication flow
 
-### Scenario 9: Invalid Token Error During SSR
-1. User navigates to a protected page with malformed or tampered tokens
-2. SSR attempts to validate access token but signature verification fails
-3. SSR logs security event and clears cookies
-4. User is redirected to `/errors/session-timed-out` with re-authentication message
-
-### Scenario 10: Network Error During Authentication
+### Scenario 9: Network Error During Authentication
 1. User completes Google OAuth flow successfully
 2. Network error occurs while exchanging authorization code for tokens
 3. Authentication Lambda logs error and returns 500
 4. User sees technical error page: "A technical error occurred. Please try again later."
 5. User can retry the authentication process
 
-### Scenario 11: API Authorization Failure
+### Scenario 10: API Authorization Failure
 1. User with `visitors` group makes API request requiring `owners` access
 2. API Gateway authorizer validates token but denies access due to insufficient permissions
 3. API returns 403 Forbidden with error message
 4. Frontend displays user-friendly "Access denied" message
 
-### Scenario 12: API Technical Error
+### Scenario 11: API Technical Error
 1. User makes valid API request with proper authorization
 2. API Gateway authorizer Lambda fails due to technical issue
 3. API Gateway returns 500 Internal Server Error
