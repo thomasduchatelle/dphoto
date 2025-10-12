@@ -112,15 +112,41 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - **Migration strategy**: Manually recreate existing 6 users in appropriate Cognito groups (no complex migration needed)
 - **CLI Authentication**: Current CLI will continue using direct AWS resource access via IAM (no device authentication migration)
 
+### Token Management Strategy
+- **Cookie Configuration**:
+  - Names: `dphoto-access-token` and `dphoto-refresh-token`
+  - Security: HttpOnly, Secure (HTTPS only), SameSite=Strict
+  - Domain: Set to application domain for cross-subdomain access if needed
+  - Path: `/` for application-wide access
+- **Token Storage**: Cookies only - no server-side token storage for stateless design
+- **Refresh Mechanism**: 
+  - Proactive refresh when access token expires in < 5 minutes
+  - Handle refresh token rotation (Cognito rotates refresh tokens on use)
+  - Clear cookies and redirect on refresh failure
+- **Security Considerations**: 
+  - Tokens never exposed to client-side JavaScript (HttpOnly)
+  - HTTPS required for Secure cookie flag
+  - Short access token lifetime (1 hour) limits exposure window
+
+### Migration Strategy
+- **Simplicity First**: With only 6 existing users, manual recreation is simpler than complex migration
+- **User Recreation Process**:
+  1. Create Cognito User Pool with Google IdP configuration
+  2. Manually create each user in appropriate Cognito group based on current permissions
+  3. Test authentication with each user before go-live
+  4. Deploy new authentication system and decommission old system
+- **Rollback Plan**: Keep old authentication system deployable until new system is fully validated
+- **User Communication**: Inform users of the change and verify their Google email addresses match expectations
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
 - [X] **SSR Authentication Flow** - How Waku will handle token validation during server-side rendering and the redirect logic
 - [X] **User Matching and Group Assignment** - How Google SSO users will be mapped to existing Cognito users and assigned to appropriate groups
-- [ ] **Token Management Strategy** - Cookie configuration, token refresh mechanisms, and security considerations (HttpOnly, Secure, SameSite attributes)
+- [X] **Token Management Strategy** - Cookie configuration, token refresh mechanisms, and security considerations (HttpOnly, Secure, SameSite attributes)
+- [X] **Migration Strategy** - How to transition from the current authentication system to Cognito without disrupting existing users
 - [ ] **API Gateway Authorizers** - Implementation details for the three authorizers (one per group) and token validation logic
 - [ ] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
-- [ ] **Migration Strategy** - How to transition from the current authentication system to Cognito without disrupting existing users
 - [ ] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
 - [ ] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
 - [ ] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
