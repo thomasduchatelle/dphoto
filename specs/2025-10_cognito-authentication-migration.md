@@ -225,7 +225,7 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - Standard CORS headers: `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`
   - No credentials sharing with external domains
 - **Token Security**:
-  - Tokens stored exclusively in HttpOnly cookies (not accessible to JavaScript)
+  - Tokens stored in standard HttpOnly cookies (not accessible to JavaScript)
   - Secure flag enforced (HTTPS-only transmission)
   - SameSite=Strict prevents CSRF attacks
   - Short access token lifetime (1 hour) limits exposure window
@@ -238,7 +238,7 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - Authorization code flow with PKCE (Proof Key for Code Exchange)
   - State parameter validation prevents CSRF
   - Nonce validation in ID tokens prevents replay attacks
-  - Callback URL validation against registered application domains
+  - Callback URL validation handled by Cognito (registered application domains only)
 - **Session Security**:
   - OAuth sessions stored in DynamoDB with 10-minute TTL
   - Session IDs cryptographically secure and unpredictable
@@ -249,6 +249,7 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - Token signature validation failures logged as security events
   - No PII (Personally Identifiable Information) logged in security events
   - 30-day log retention for security audit trail
+- **Content Security Policy**: Not implemented - no CSP requirements
 
 ## Topics to Discuss
 
