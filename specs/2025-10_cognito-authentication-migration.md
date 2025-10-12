@@ -76,11 +76,11 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - **Library**: Use `openid-client` library for proper OIDC/OAuth2 flow implementation with automatic JWKS handling and refresh token rotation support
 - **Token Validation**: Local JWT validation using `openid-client` with JWKS cached in Lambda memory
 - **OAuth State Management**: DynamoDB session store for secure OAuth flow state
-  - Session format: `dphoto-auth-session#{sessionId}` storing `{originalUrl, nonce, codeVerifier}`
+    - Session format: `AUTH_SESSION#{sessionId}` storing `{originalUrl, nonce, codeVerifier}`
   - TTL: 10 minutes for OAuth sessions
   - Session ID passed in Cognito's state parameter for security
 - **Token Refresh Strategy**: 
-  - Attempt refresh when access token is expired
+    - Attempt refresh when access token is about to expire (< 5 min)
   - If refresh succeeds: render page with updated cookies (including rotated refresh token)
   - If refresh fails: clear cookies and redirect to Cognito login
 - **Internal API Calls**: SSR passes validated access token in `Authorization: Bearer {token}` header to internal APIs
