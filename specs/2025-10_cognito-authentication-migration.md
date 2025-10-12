@@ -218,6 +218,38 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - **No Retry Logic**: All failures are final - users must manually retry operations
 - **Logging Strategy**: All Lambda functions log errors to CloudWatch with 30-day retention, no additional alerting required
 
+### Security and Compliance
+- **CORS Configuration**:
+  - API Gateway CORS configured to allow requests only from application domains
+  - Restrict allowed origins to specific application URLs (no wildcard origins)
+  - Standard CORS headers: `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`
+  - No credentials sharing with external domains
+- **Token Security**:
+  - Tokens stored exclusively in HttpOnly cookies (not accessible to JavaScript)
+  - Secure flag enforced (HTTPS-only transmission)
+  - SameSite=Strict prevents CSRF attacks
+  - Short access token lifetime (1 hour) limits exposure window
+  - Refresh token rotation on each use prevents replay attacks
+- **Transport Security**:
+  - HTTPS mandatory for all authentication endpoints and cookie transmission
+  - TLS 1.2+ required for all external communication
+  - No fallback to HTTP for authentication flows
+- **OAuth Security**:
+  - Authorization code flow with PKCE (Proof Key for Code Exchange)
+  - State parameter validation prevents CSRF
+  - Nonce validation in ID tokens prevents replay attacks
+  - Callback URL validation against registered application domains
+- **Session Security**:
+  - OAuth sessions stored in DynamoDB with 10-minute TTL
+  - Session IDs cryptographically secure and unpredictable
+  - No sensitive data stored in browser storage (localStorage/sessionStorage)
+- **Compliance Requirements**: None - this is a personal application with no regulatory compliance requirements
+- **Security Logging**:
+  - Failed authentication attempts logged to CloudWatch
+  - Token signature validation failures logged as security events
+  - No PII (Personally Identifiable Information) logged in security events
+  - 30-day log retention for security audit trail
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
@@ -227,7 +259,7 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - [X] **Migration Strategy** - How to transition from the current authentication system to Cognito without disrupting existing users
 - [X] **API Gateway Authorizers** - Implementation details for the unified authorizer, token validation logic, and group-based authorization
 - [X] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
-- [ ] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
+- [X] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
 - [ ] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
 - [ ] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
 - [ ] **Device Authentication for CLI** - Future consideration for migrating CLI from direct AWS access to API-based authentication
