@@ -138,6 +138,28 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - **Rollback Plan**: Keep old authentication system deployable until new system is fully validated
 - **User Communication**: Inform users of the change and verify their Google email addresses match expectations
 
+### API Gateway Authorizers
+- **Single Lambda Authorizer**: One unified Lambda authorizer function for all API Gateway routes
+- **Token Extraction Logic**:
+  1. Extract token from `Authorization: Bearer {token}` header (priority)
+  2. If not found, extract from `dphoto-access-token` cookie (fallback)
+  3. Return 401 Unauthorized if no token found
+- **Token Validation Process**:
+  1. Validate JWT signature against Cognito JWKS
+  2. Check token expiration and issuer
+  3. Extract user groups from token claims (`cognito:groups`)
+- **Authorization Logic**:
+  - **Route Configuration**: Each API Gateway route specifies required group via authorizer configuration
+  - **Multi-group Support**: Users can belong to multiple groups (`admins` + `owners`)
+  - **Group Access Rules**:
+    - `admins` routes: Require `admins` group membership
+    - `owners` routes: Require `owners` group membership
+    - `visitors` routes: Any group membership grants access (hierarchical)
+- **Backend Integration**:
+  - **No Authorization Caching**: Full token validation on every request
+  - **Token Pass-through**: Original access token forwarded to backend services in `Authorization` header
+  - **Backend Re-validation**: Each backend service independently validates the token for security
+
 ## Topics to Discuss
 
 - [X] **Cognito User Pool Configuration** - How to structure the user pool, groups (admins, owners, visitors), and Google SSO integration
@@ -145,9 +167,10 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 - [X] **User Matching and Group Assignment** - How Google SSO users will be mapped to existing Cognito users and assigned to appropriate groups
 - [X] **Token Management Strategy** - Cookie configuration, token refresh mechanisms, and security considerations (HttpOnly, Secure, SameSite attributes)
 - [X] **Migration Strategy** - How to transition from the current authentication system to Cognito without disrupting existing users
-- [ ] **API Gateway Authorizers** - Implementation details for the three authorizers (one per group) and token validation logic
+- [X] **API Gateway Authorizers** - Implementation details for the unified authorizer, token validation logic, and group-based authorization
 - [ ] **Error Handling and Edge Cases** - Token expiration scenarios, network failures, invalid tokens, and user access denied flows
 - [ ] **Security and Compliance** - CORS configuration, token storage security, and any compliance requirements
 - [ ] **Testing and Monitoring** - How to validate the authentication flow and monitor token usage/failures
 - [ ] **Performance Considerations** - Caching strategies for token validation and potential impact on page load times
 - [ ] **Device Authentication for CLI** - Future consideration for migrating CLI from direct AWS access to API-based authentication
+- [ ] **Amazon Verified Permissions** - Evaluate Amazon Verified Permissions service for fine-grained authorization policies and permissions management
