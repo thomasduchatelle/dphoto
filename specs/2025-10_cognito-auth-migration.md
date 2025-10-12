@@ -2,11 +2,7 @@
 Migrate authentication and authorization to AWS Cognito using the Hosted UI with Google as the sole IdP. Tokens (access and refresh) will be issued by Cognito and stored in HttpOnly cookies, validated by SSR middleware (Waku) for page rendering, and enforced on APIs via API Gateway authorizers aligned with user groups (admins, owners, visitors).
 
 # Ubiquity Language
-- Turnstile: The SSR authentication gate that runs before page rendering. It validates local auth state, attempts token refresh when possible, or redirects the browser to the Hosted Login carrying a Return Stub.
-- Entry Keycards: The two HttpOnly cookies used by this app to represent the signed-in session: dphoto-access-token (Access Keycard) and dphoto-refresh-token (Refresh Keycard).
-- Return Stub: The URL-safe encoded original request URL we attach to the OAuth state parameter so the user returns to the exact page after login.
-- Stage Pass: The API authorization check bound to a specific group (admins, owners, visitors). Implemented as a per-endpoint policy that evaluates the group claim in the access token.
-- Unknown Guest: The failure state when a signed-in Google identity does not correspond to a known user in our system; we redirect to /errors/user-must-exists.
+No project-specific terms have been defined yet. This section will be completed collaboratively during the topics discussion.
 
 # Scenarios
 ## Scenario 1: Happy path SSR + Cognito login with Google SSO
