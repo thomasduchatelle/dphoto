@@ -34,7 +34,7 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
 1. User navigates to a protected page and is redirected to Cognito login
 2. User completes Google OAuth successfully
 3. Cognito cannot find a matching user in any of the configured groups (admins, owners, visitors)
-4. Authentication fails and user is redirected to `/errors/user-must-exists`
+4. Authentication fails and user is redirected to `/errors/user-must-exist`
 5. Error page displays message explaining that access must be granted by an administrator
 
 ### Scenario 4: API Access with Valid Token
@@ -141,7 +141,7 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - **Admin creates owner**: API endpoint protected by `admins` group creates new Cognito user in `owners` group
   - **Album sharing auto-creation**: When owner shares album with unknown email, automatically create Cognito user in `visitors` group
   - **Migration strategy**: Manually recreate existing 6 users in appropriate Cognito groups (no complex migration needed)
-- **CLI Authentication**: Current CLI will continue using direct AWS resource access via IAM (no device authentication migration)
+- **CLI Authentication**: Current CLI will continue using direct AWS resource access via IAM, with device authentication planned for future iterations
 
 ### Token Management Strategy
 - **Cookie Configuration**:
@@ -185,11 +185,11 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - **Group Access Rules**:
     - `admins` routes: Require `admins` group membership
     - `owners` routes: Require `owners` group membership
-    - `visitors` routes: Any group membership grants access (hierarchical)
+    - `visitors` routes: Any group membership grants access (hierarchical - `admins` and `owners` can also access `visitors` endpoints)
 - **Backend Integration**:
-  - **No Authorization Caching**: Full token validation on every request
   - **Token Pass-through**: Original access token forwarded to backend services in `Authorization` header
-  - **Backend Re-validation**: Each backend service independently validates the token for security
+  - **Token Validation Strategy**: During migration, JWT tokens may be validated up to 3 times (SSR Lambda, API Gateway authorizer, backend Lambda) for security and compatibility
+  - **Future Optimization**: Backend Lambda token validation will be removed once API Gateway authorizer is fully trusted and operational
 
 ### Error Handling and Edge Cases
 - **Token Validation Failures**:
@@ -270,8 +270,9 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - Cache authorization results as long as the access token remains unchanged
   - Reduces Lambda invocations for repeated requests with same token
   - Cache TTL automatically managed by access token expiration (1 hour maximum)
+  - This is the only caching mechanism implemented - no additional server-side authorization caching
 - **JWKS Caching**:
-  - Cache Cognito JWKS (JSON Web Key Set) in Lambda memory
+  - Cache Cognito JWKS (JSON Web Key Set) in Lambda memory for any Lambda requiring JWT validation (SSR, authorizer, backend)
   - Reduces external calls to Cognito for token signature validation
   - JWKS cached across Lambda warm starts for improved performance
   - Cache invalidation handled by Lambda container lifecycle
@@ -282,7 +283,8 @@ Migrate the existing authentication and authorization system to AWS Cognito whil
   - No pre-mature optimization - wait for real-world usage patterns and performance issues
 
 ### Device Authentication for CLI
-- **Primary Strategy**: OAuth 2.0 Device Code Flow for Go CLI authentication
+- **Current State**: CLI continues using direct AWS resource access via IAM
+- **Future Implementation**: OAuth 2.0 Device Code Flow for Go CLI authentication
   - CLI requests device code from Cognito and displays user code + verification URL
   - User completes authentication in browser using existing Google SSO flow
   - CLI polls Cognito for access token once user authorization is complete
