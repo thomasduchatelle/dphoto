@@ -52,10 +52,9 @@ type CustomClaims struct {
 func init() {
 	cognitoRegion = getEnv("COGNITO_REGION", "us-east-1")
 	cognitoUserPoolId = getEnv("COGNITO_USER_POOL_ID", "")
-	if cognitoUserPoolId == "" {
-		panic("COGNITO_USER_POOL_ID environment variable is required")
+	if cognitoUserPoolId != "" {
+		cognitoIssuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", cognitoRegion, cognitoUserPoolId)
 	}
-	cognitoIssuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", cognitoRegion, cognitoUserPoolId)
 }
 
 func getEnv(key, defaultValue string) string {
