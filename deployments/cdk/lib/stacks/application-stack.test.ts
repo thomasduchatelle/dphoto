@@ -129,6 +129,61 @@ describe('DPhotoApplicationStack', () => {
         const listOwnersFunction = findLambdaByRoute(template, '/api/v1/owners', 'GET');
         expect(listOwnersFunction).toBeDefined();
     });
+
+    test('all required API routes have Lambda Authoriser attached', () => {
+        // Define the routes that MUST have authorizer
+        const requiredAuthorizedRoutes = [
+            { method: 'PUT', path: '/api/v1/owners/{owner}/albums/{folderName}/dates' },      // amend-album-dates
+            { method: 'PUT', path: '/api/v1/owners/{owner}/albums/{folderName}/name' },       // amend-album-name
+            { method: 'POST', path: '/api/v1/albums' },                                       // create-album
+            { method: 'DELETE', path: '/api/v1/owners/{owner}/albums/{folderName}' },         // delete-album
+            { method: 'GET', path: '/api/v1/owners/{owner}/medias/{mediaId}/{filename}' },    // get-media
+            { method: 'GET', path: '/api/v1/albums' },                                        // list-albums
+            { method: 'GET', path: '/api/v1/owners/{owner}/albums/{folderName}/medias' },     // list-medias
+            { method: 'GET', path: '/api/v1/owners' },                                        // list-owners
+            { method: 'GET', path: '/api/v1/users' },                                         // list-users
+            { method: 'PUT', path: '/api/v1/owners/{owner}/albums/{folderName}/shares/{email}' },    // share-album
+            { method: 'DELETE', path: '/api/v1/owners/{owner}/albums/{folderName}/shares/{email}' }, // share-album
+        ];
+
+        // Define routes that should NOT have authorizer (whitelist)
+        const whitelistedRoutes = [
+            { method: 'POST', path: '/oauth/token' },
+            { method: 'POST', path: '/oauth/logout' },
+            { method: 'GET', path: '/env-config.json' },
+            { method: 'GET', path: '/version' },
+        ];
+
+        // Get all routes from the template
+        const allRoutes = template.findResources('AWS::ApiGatewayV2::Route');
+
+        // Check that required routes have authorizer
+        requiredAuthorizedRoutes.forEach(({ method, path }) => {
+            const routeKey = `${method} ${path}`;
+            const matchingRoutes = Object.entries(allRoutes).filter(
+                ([_, route]: [string, any]) => route.Properties.RouteKey === routeKey
+            );
+
+            expect(matchingRoutes.length).toBe(1);
+            const [routeId, route] = matchingRoutes[0];
+            
+            expect(route.Properties.AuthorizerId).toBeDefined();
+            expect(route.Properties.AuthorizerId.Ref).toBeDefined();
+        });
+
+        // Check that whitelisted routes do NOT have authorizer
+        whitelistedRoutes.forEach(({ method, path }) => {
+            const routeKey = `${method} ${path}`;
+            const matchingRoutes = Object.entries(allRoutes).filter(
+                ([_, route]: [string, any]) => route.Properties.RouteKey === routeKey
+            );
+
+            if (matchingRoutes.length > 0) {
+                const [routeId, route] = matchingRoutes[0];
+                expect(route.Properties.AuthorizerId).toBeUndefined();
+            }
+        });
+    });
 });
 
 function assertLambdaEnvironmentVariables(lambdaFunction: any, expectedVariables: Record<string, string>): void {

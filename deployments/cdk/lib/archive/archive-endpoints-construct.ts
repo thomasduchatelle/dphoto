@@ -1,4 +1,5 @@
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import {IHttpRouteAuthorizer} from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint} from '../utils/simple-go-endpoint';
 import {Duration} from 'aws-cdk-lib';
@@ -12,6 +13,7 @@ export interface ArchiveEndpointsConstructProps {
     archiveStore: ArchiveStoreConstruct;
     catalogStore: CatalogStoreConstruct;
     archivist: ArchivistConstruct;
+    authorizer?: IHttpRouteAuthorizer;
 }
 
 export class ArchiveEndpointsConstruct extends Construct {
@@ -26,6 +28,7 @@ export class ArchiveEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.GET,
             memorySize: 1024,
             timeout: Duration.seconds(29), // maximum allowed by API gateway
+            authorizer: props.authorizer,
         });
 
         props.catalogStore.grantReadAccess(getMedia.lambda);

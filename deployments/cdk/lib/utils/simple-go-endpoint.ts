@@ -1,4 +1,5 @@
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import {IHttpRouteAuthorizer} from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {GoLangLambdaFunction, GoLangLambdaFunctionProps} from './golang-lambda-function';
 import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -11,13 +12,15 @@ export interface RouteConfig {
 export interface SimpleGoEndpointProps extends GoLangLambdaFunctionProps {
     httpApi: apigatewayv2.HttpApi;
     routes: RouteConfig[];
+    authorizer?: IHttpRouteAuthorizer;
 }
 
 export class SimpleGoEndpoint extends Construct {
     public readonly lambda: GoLangLambdaFunction;
     private readonly integration: apigatewayv2_integrations.HttpLambdaIntegration;
+    private readonly authorizer?: IHttpRouteAuthorizer;
 
-    constructor(scope: Construct, id: string, {httpApi, routes, ...props}: SimpleGoEndpointProps) {
+    constructor(scope: Construct, id: string, {httpApi, routes, authorizer, ...props}: SimpleGoEndpointProps) {
         super(scope, id);
 
         this.lambda = new GoLangLambdaFunction(this, 'Lambda', {
@@ -28,6 +31,8 @@ export class SimpleGoEndpoint extends Construct {
             `${this.node.id}Integration`,
             this.lambda.function,
         );
+
+        this.authorizer = authorizer;
 
         routes.forEach((route, index) => {
             this.addRoute(httpApi, route);
@@ -43,7 +48,8 @@ export class SimpleGoEndpoint extends Construct {
         new apigatewayv2.HttpRoute(this, routeId, {
             httpApi,
             routeKey: apigatewayv2.HttpRouteKey.with(route.path, route.method),
-            integration: this.integration
+            integration: this.integration,
+            authorizer: this.authorizer
         });
     }
 }
@@ -54,6 +60,7 @@ export function createSingleRouteEndpoint(
     props: Omit<SimpleGoEndpointProps, 'routes'> & {
         path: string;
         method: apigatewayv2.HttpMethod;
+        authorizer?: IHttpRouteAuthorizer;
     }
 ): SimpleGoEndpoint {
     const {path, method, ...endpointProps} = props;
