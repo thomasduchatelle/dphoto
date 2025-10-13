@@ -11,6 +11,7 @@ import {UserEndpointsConstruct} from "../access/user-endpoints-construct";
 import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
 import {CatalogStoreConstruct} from "../catalog/catalog-store-construct";
 import {ArchivistConstruct} from "../archive/archivist-construct";
+import {LambdaAuthoriserConstruct} from "../access/lambda-authoriser-construct";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -45,6 +46,12 @@ export class ApplicationStack extends cdk.Stack {
             httpApi: apiGateway.httpApi,
         })
 
+        // Create Lambda Authoriser
+        const lambdaAuthoriser = new LambdaAuthoriserConstruct(this, 'LambdaAuthoriser', {
+            environmentName: props.environmentName,
+            catalogStore,
+        });
+
         new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
@@ -59,6 +66,7 @@ export class ApplicationStack extends cdk.Stack {
             catalogStore,
             archiveStore,
             googleLoginClientId: config.googleLoginClientId,
+            authorizer: lambdaAuthoriser.authorizer,
         });
 
         new CatalogEndpointsConstruct(this, 'CatalogEndpoints', {
@@ -67,6 +75,7 @@ export class ApplicationStack extends cdk.Stack {
             catalogStore,
             archiveStore,
             archiveMessaging: archivist,
+            authorizer: lambdaAuthoriser.authorizer,
         });
 
         new ArchiveEndpointsConstruct(this, 'ArchiveEndpoints', {
@@ -75,6 +84,7 @@ export class ApplicationStack extends cdk.Stack {
             archiveStore,
             catalogStore,
             archivist: archivist,
+            authorizer: lambdaAuthoriser.authorizer,
         });
 
         new cdk.CfnOutput(this, 'PublicURL', {

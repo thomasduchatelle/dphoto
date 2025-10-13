@@ -1,5 +1,5 @@
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
-import {HttpApi} from 'aws-cdk-lib/aws-apigatewayv2';
+import {HttpApi, IHttpRouteAuthorizer} from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint, SimpleGoEndpoint} from '../utils/simple-go-endpoint';
 import {CatalogStoreConstruct} from './catalog-store-construct';
@@ -12,6 +12,7 @@ export interface CatalogEndpointsConstructProps {
     catalogStore: CatalogStoreConstruct;
     archiveStore: ArchiveStoreConstruct;
     archiveMessaging: ArchivistConstruct;
+    authorizer?: IHttpRouteAuthorizer;
 }
 
 export class CatalogEndpointsConstruct extends Construct {
@@ -21,6 +22,7 @@ export class CatalogEndpointsConstruct extends Construct {
         const endpointProps = {
             environmentName: props.environmentName,
             httpApi: props.httpApi,
+            authorizer: props.authorizer,
         }
 
         this.readOnlyCatalogEndpoints(endpointProps, props.catalogStore);
@@ -28,7 +30,7 @@ export class CatalogEndpointsConstruct extends Construct {
         this.accessControlEndpoints(endpointProps, props.catalogStore);
     }
 
-    private readOnlyCatalogEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi }, catalogStore: CatalogStoreConstruct) {
+    private readOnlyCatalogEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi; authorizer?: IHttpRouteAuthorizer }, catalogStore: CatalogStoreConstruct) {
         const listAlbums = createSingleRouteEndpoint(this, 'ListAlbums', {
             ...endpointProps,
             functionName: 'list-albums',
@@ -48,7 +50,8 @@ export class CatalogEndpointsConstruct extends Construct {
 
     private amendTimelineEndpoints(endpointProps: {
         environmentName: string;
-        httpApi: HttpApi
+        httpApi: HttpApi;
+        authorizer?: IHttpRouteAuthorizer;
     }, catalogStore: CatalogStoreConstruct, archivist: ArchivistConstruct, archiveStore: ArchiveStoreConstruct) {
         const createAlbums = createSingleRouteEndpoint(this, 'CreateAlbums', {
             ...endpointProps,
@@ -91,7 +94,7 @@ export class CatalogEndpointsConstruct extends Construct {
         archivist.grantAccessToAsyncArchivist(amendAlbumName.lambda);
     }
 
-    private accessControlEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi }, catalogStore: CatalogStoreConstruct) {
+    private accessControlEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi; authorizer?: IHttpRouteAuthorizer }, catalogStore: CatalogStoreConstruct) {
         const shareAlbum = new SimpleGoEndpoint(this, 'ShareAlbum', {
             ...endpointProps,
             functionName: 'share-album',
