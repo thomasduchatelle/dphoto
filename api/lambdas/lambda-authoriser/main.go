@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"strings"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
@@ -14,7 +16,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"strings"
 )
 
 func Handler(request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
@@ -61,7 +62,11 @@ func extractToken(request events.APIGatewayV2CustomAuthorizerV2Request) (string,
 		return token, nil
 	}
 
-	return "", errors.New("no authorization token found")
+	var authHeaders []string
+	for _, header := range request.Headers {
+		authHeaders = append(authHeaders, header)
+	}
+	return "", errors.Errorf("no authorization token found [%s]", strings.Join(authHeaders, ", "))
 }
 
 func checkPermissions(ctx context.Context, user usermodel.CurrentUser, routeKey, rawPath string) error {
