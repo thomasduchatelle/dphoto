@@ -15,6 +15,7 @@
     "axios": "^0.30.2",
     "buffer": "^6.0.3",
     "dayjs": "^1.11.13",
+    "openid-client": "^6.8.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.9.3",
