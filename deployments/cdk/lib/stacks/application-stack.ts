@@ -11,6 +11,8 @@ import {UserEndpointsConstruct} from "../access/user-endpoints-construct";
 import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
 import {CatalogStoreConstruct} from "../catalog/catalog-store-construct";
 import {ArchivistConstruct} from "../archive/archivist-construct";
+import {CognitoUserPoolConstruct} from "../access/cognito-user-pool-construct";
+import {CognitoAuthorizerConstruct} from "../access/cognito-authorizer-construct";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -33,6 +35,21 @@ export class ApplicationStack extends cdk.Stack {
         const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
             environmentName: props.environmentName,
             ...config,
+        });
+
+        // Create Cognito User Pool for authentication
+        const cognitoUserPool = new CognitoUserPoolConstruct(this, 'CognitoUserPool', {
+            environmentName: props.environmentName,
+            domainName: config.domainName,
+            googleClientId: config.googleLoginClientId,
+            googleClientSecret: config.googleClientSecret,
+        });
+
+        // Create Cognito Authorizer for API Gateway
+        const cognitoAuthorizer = new CognitoAuthorizerConstruct(this, 'CognitoAuthorizer', {
+            environmentName: props.environmentName,
+            httpApi: apiGateway.httpApi,
+            cognitoUserPool: cognitoUserPool,
         });
 
         new WakuWebUiConstruct(this, 'WakuWebUi', {
