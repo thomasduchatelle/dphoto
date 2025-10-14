@@ -139,6 +139,7 @@ describe('DPhotoApplicationStack', () => {
             {method: 'GET', path: '/api/v1/version'},
             {method: 'ANY', path: '/api/{path+}'},
             {method: 'ANY', path: '/{proxy+}'},
+            {method: 'GET', path: '/api/v1/owners/{owner}/medias/{mediaId}/{filename}'},
             {method: '$default', path: ''},
         ];
 
@@ -150,12 +151,16 @@ describe('DPhotoApplicationStack', () => {
             const [method, ...pathParts] = routeKey.split(' ');
             const path = pathParts.join(' ');
             const isWhitelisted = whitelistedRoutes.some(r => r.method === method && r.path === path);
-            if (isWhitelisted) {
-                expect(route.Properties.AuthorizerId).toBeUndefined();
-            } else {
-                // console.log(`routeId: ${method} ${path} [${routeId}]`)
-                expect(route.Properties.AuthorizerId).toBeDefined();
-                expect(route.Properties.AuthorizerId.Ref).toBeDefined();
+            try {
+                if (isWhitelisted) {
+                    expect(route.Properties.AuthorizerId).toBeUndefined();
+                } else {
+                    // console.log(`routeId: ${method} ${path} [${routeId}]`)
+                    expect(route.Properties.AuthorizerId).toBeDefined();
+                    expect(route.Properties.AuthorizerId.Ref).toBeDefined();
+                }
+            } catch (e) {
+                throw new Error(`Route ${method} ${path} [${routeId}] failed authorizer check: ${e}`);
             }
         });
     });
