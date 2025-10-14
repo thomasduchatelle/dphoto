@@ -65,3 +65,6 @@ Next steps:
 * SCOPE should be renamed to PERMISSION
    * PERMISSION should have a generic type ('OWNER' or 'VISITOR') and a RESOURCE {TYPE, OWNER, ID}
 * ~~FIX the media listing (reported to miss some files)~~
+* FIX the actions availability above the list of albums:
+    * create only enabled when the user has owner role
+    * delete only enabled when at least one album is owned by the user

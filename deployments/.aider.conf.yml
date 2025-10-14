@@ -1,6 +1,6 @@
 model: six
 
 read:
-  - ../docs/principles_cdk.md
+  - ../docs/coding_standards_cdk.md
 
 map-tokens: 0

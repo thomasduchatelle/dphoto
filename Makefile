@@ -87,6 +87,9 @@ test-web:
 test-web-ci:
 	cd web && npm run test:ci
 
+test-web-agent:
+	cd web && CI=true npm run test:unit
+
 update-snapshots:
 	@echo "Update local snapshots"
 	rm -rf web/playwright/visual-regression.spec.ts-local && cd web && npm run test:visual -- -u --reporter list

@@ -1,7 +1,7 @@
 model: six
 
 read:
-  - ../docs/principles_web_v2.md
+  - ../docs/coding_standards_web.md
   - src/core/catalog/tests/test-helper-state.ts
   #- src/core/catalog/language
 
