@@ -68,6 +68,11 @@ func extractToken(request events.APIGatewayV2CustomAuthorizerV2Request) (string,
 		}
 	}
 
+	// Try query parameter 'access_token'
+	if token, ok := request.QueryStringParameters["access_token"]; ok && token != "" {
+		return token, nil
+	}
+
 	var authHeaders []string
 	for _, header := range request.Headers {
 		authHeaders = append(authHeaders, header)

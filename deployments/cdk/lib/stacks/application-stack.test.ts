@@ -139,7 +139,6 @@ describe('DPhotoApplicationStack', () => {
             {method: 'GET', path: '/api/v1/version'},
             {method: 'ANY', path: '/api/{path+}'},
             {method: 'ANY', path: '/{proxy+}'},
-            {method: 'GET', path: '/api/v1/owners/{owner}/medias/{mediaId}/{filename}'},
             {method: '$default', path: ''},
         ];
 

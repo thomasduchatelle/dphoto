@@ -85,6 +85,7 @@ export class ApplicationStack extends cdk.Stack {
             catalogStore,
             archivist: archivist,
             authorizer: lambdaAuthoriser.authorizer,
+            queryParamAuthorizer: lambdaAuthoriser.queryParamAuthorizer,
         });
 
         new cdk.CfnOutput(this, 'PublicURL', {
