@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
@@ -13,7 +15,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"strings"
 )
 
 func Handler(event *cfn.Event) error {

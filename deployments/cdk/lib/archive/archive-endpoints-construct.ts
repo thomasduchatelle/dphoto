@@ -28,7 +28,7 @@ export class ArchiveEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.GET,
             memorySize: 1024,
             timeout: Duration.seconds(29), // maximum allowed by API gateway
-            authorizer: props.authorizer,
+            // authorizer do not support the query param.
         });
 
         props.catalogStore.grantReadAccess(getMedia.lambda);

@@ -1,10 +1,11 @@
 package main
 
 import (
+	"os"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/meta"
-	"os"
 )
 
 func Handler() (common.Response, error) {

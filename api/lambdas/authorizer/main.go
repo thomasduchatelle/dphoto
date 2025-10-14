@@ -57,9 +57,15 @@ func extractToken(request events.APIGatewayV2CustomAuthorizerV2Request) (string,
 		}
 	}
 
-	// Try query parameter for image loading
-	if token, ok := request.QueryStringParameters["access_token"]; ok {
-		return token, nil
+	// Try cookie 'dphoto-access-token'
+	if cookieHeader, ok := request.Headers["cookie"]; ok {
+		cookies := strings.Split(cookieHeader, ";")
+		for _, cookie := range cookies {
+			cookie = strings.TrimSpace(cookie)
+			if strings.HasPrefix(cookie, "dphoto-access-token=") {
+				return strings.TrimPrefix(cookie, "dphoto-access-token="), nil
+			}
+		}
 	}
 
 	var authHeaders []string

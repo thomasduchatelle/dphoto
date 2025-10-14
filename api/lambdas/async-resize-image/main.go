@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"github.com/thomasduchatelle/dphoto/pkg/archiveadapters/asyncjobadapter"
-	"time"
 )
 
 var (

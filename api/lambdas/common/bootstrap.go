@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"time"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
@@ -15,7 +17,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
-	"time"
 )
 
 var (
