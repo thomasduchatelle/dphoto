@@ -2,11 +2,9 @@
 
 ## Testing Standards
 
-Use idiomatic Go testing patterns with table-driven tests for comprehensive coverage.
-
 ### Table-Driven Tests
 
-Structure tests using a slice of test cases with descriptive names:
+Use idiomatic Go testing with a slice of test cases:
 
 ```go
 func TestCatalogAuthorizer_IsAuthorisedToViewMedia(t *testing.T) {
@@ -87,25 +85,18 @@ func TestCatalogAuthorizer_IsAuthorisedToViewMedia(t *testing.T) {
 }
 ```
 
-### Test Naming
-
-Use descriptive test names starting with "it should":
-
-- `"it should GRANT access to the media owner"`
-- `"it should DENY access to a visitor with no permission"`
-- `"it should match a route which doesn't have any path parameters"`
-- `"it should fail when no route matches the path"`
-
 ### Test Structure
 
-1. **Setup**: Define test fixtures and helper functions at the top
-2. **Type Definitions**: Use `fields` for struct dependencies, `args` for function parameters
-3. **Test Cases**: Array of structs with `name`, input, and expected output
-4. **Execution**: Loop through cases using `t.Run()` for isolated subtests
+1. **Test fixtures** at top (reusable test data)
+2. **Type definitions**: `fields` for struct dependencies, `args` for function parameters
+3. **Test cases**: Array with `name`, inputs, expected outputs
+4. **Execution**: Loop with `t.Run()` for isolated subtests
 
-### Error Assertions
+**Test naming**: Use descriptive names starting with "it should":
+- `"it should GRANT access to the media owner"`
+- `"it should DENY access to a visitor with no permission"`
 
-Use `assert.ErrorAssertionFunc` for flexible error checking:
+**Error assertions**: Use `assert.ErrorAssertionFunc` for flexible checking:
 
 ```go
 isAnAccessForbiddenError := func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -127,9 +118,7 @@ tests := []struct {
 }
 ```
 
-### In-Memory Test Implementations
-
-Use in-memory implementations for ports, not mocks:
+**In-Memory implementations**: Use in-memory ports, not mocks:
 
 ```go
 fields: fields{
@@ -148,19 +137,16 @@ fields: fields{
 
 ## API Endpoints with Authorization
 
-DPhoto uses a Lambda authorizer pattern that validates permissions before handlers execute.
+DPhoto uses Lambda authorizers to validate permissions before handlers execute.
 
-### Architecture Overview
+**Architecture**:
 
 ```
 Request → API Gateway → Lambda Authorizer → Lambda Handler → Response
-                        (validates token)    (uses context)
-                        (checks permissions)
+                        (token + permissions) (uses context)
 ```
 
-### Lambda Authorizer
-
-The authorizer validates JWT tokens and checks permissions:
+### Lambda Authorizer Pattern
 
 ```go
 func Handler(request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
@@ -194,9 +180,9 @@ func Handler(request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGa
 }
 ```
 
-### Route Authorization Configuration
+### Route Configuration
 
-Define routes with authorization logic in a declarative way:
+Configure routes declaratively with authorization logic:
 
 ```go
 type AuthorizationFunc func(ctx context.Context, authoriser *catalogacl.CatalogAuthorizer, user usermodel.CurrentUser, pathParams map[string]string) error
@@ -248,9 +234,9 @@ var supportedRoutes = []AuthorizedRoute{
 }
 ```
 
-### Route Matching with Path Parameters
+### Route Matching
 
-Use regex-based pattern matching to extract path parameters:
+Extract path parameters using regex patterns:
 
 ```go
 type Route struct {
@@ -269,9 +255,9 @@ func MatchRoute(routes []Route, method, path string) (*MatchedRoute, error) {
 }
 ```
 
-### Lambda Handler Pattern
+### Handler Pattern
 
-Handlers read user information from the context passed by the authorizer:
+Read user from context (already authorized):
 
 ```go
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
@@ -337,9 +323,9 @@ func HandleError(err error) (Response, error) {
 }
 ```
 
-### Adding a New Authorized Endpoint
+### Adding an Authorized Endpoint
 
-1. **Define the route in the authorizer**:
+**1. Define route in authorizer** (`api/lambdas/authorizer/main.go`):
 
 ```go
 {
@@ -351,7 +337,7 @@ func HandleError(err error) (Response, error) {
 }
 ```
 
-2. **Create the Lambda handler**:
+**2. Create Lambda handler**:
 
 ```go
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
@@ -365,7 +351,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 }
 ```
 
-3. **Wire it in the CDK**:
+**3. Wire in CDK** (`deployments/cdk/lib/.../endpoints-construct.ts`):
 
 ```typescript
 const deleteAlbum = createSingleRouteEndpoint(this, 'DeleteAlbum', {
@@ -381,14 +367,14 @@ props.catalogStore.grantReadWriteAccess(deleteAlbum.lambda);
 
 ### Authorization Methods
 
-The `CatalogAuthorizer` provides methods for different permission checks:
+`CatalogAuthorizer` provides permission checks:
 
-- `IsAuthorisedToListMedias(ctx, user, albumId)` - View album contents
-- `IsAuthorisedToViewMedia(ctx, user, owner, mediaId)` - View specific media
-- `CanCreateAlbum(ctx, user)` - Create new album (returns owner)
+- `IsAuthorisedToListMedias(ctx, user, albumId)` - View album
+- `IsAuthorisedToViewMedia(ctx, user, owner, mediaId)` - View media
+- `CanCreateAlbum(ctx, user)` - Create album (returns owner)
 - `CanDeleteAlbum(ctx, user, albumId)` - Delete album
-- `CanShareAlbum(ctx, user, albumId)` - Share album with others
-- `CanAmendAlbumDates(ctx, user, albumId)` - Update album dates
+- `CanShareAlbum(ctx, user, albumId)` - Share album
+- `CanAmendAlbumDates(ctx, user, albumId)` - Update dates
 - `CanRenameAlbum(ctx, user, albumId)` - Rename album
 
-Each method returns `nil` for allowed actions or an error for denied access.
+Returns `nil` for allowed, error for denied.
