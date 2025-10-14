@@ -80,68 +80,84 @@ func extractToken(request events.APIGatewayV2CustomAuthorizerV2Request) (string,
 	return "", errors.Errorf("no authorization token found [%s]", strings.Join(authHeaders, ", "))
 }
 
+// Define all supported routes
+var supportedRoutes = []Route{
+	// Catalog endpoints - read-only
+	{Pattern: "/api/v1/albums", Method: "GET"},                                            // list-albums
+	{Pattern: "/api/v1/owners/{owner}/albums/{folderName}/medias", Method: "GET"},         // list-medias
+	
+	// Catalog endpoints - mutations
+	{Pattern: "/api/v1/albums", Method: "POST"},                                           // create-album
+	{Pattern: "/api/v1/owners/{owner}/albums/{folderName}", Method: "DELETE"},             // delete-album
+	{Pattern: "/api/v1/owners/{owner}/albums/{folderName}/dates", Method: "PUT"},          // amend-album-dates
+	{Pattern: "/api/v1/owners/{owner}/albums/{folderName}/name", Method: "PUT"},           // amend-album-name
+	
+	// Archive endpoints
+	{Pattern: "/api/v1/owners/{owner}/medias/{mediaId}/{filename}", Method: "GET"},        // get-media
+	
+	// Access control endpoints
+	{Pattern: "/api/v1/owners/{owner}/albums/{folderName}/shares/{email}", Method: "PUT"},    // share-album (grant)
+	{Pattern: "/api/v1/owners/{owner}/albums/{folderName}/shares/{email}", Method: "DELETE"}, // share-album (revoke)
+	
+	// User endpoints
+	{Pattern: "/api/v1/owners", Method: "GET"},                                            // list-owners
+	{Pattern: "/api/v1/users", Method: "GET"},                                             // list-users
+}
+
 func checkPermissions(ctx context.Context, user usermodel.CurrentUser, routeKey, rawPath string) error {
 	authoriser := pkgfactory.AclCatalogAuthoriser(ctx)
 
-	// Parse route and check permissions based on endpoint
+	// Parse route key to extract method and template path
 	parts := strings.Fields(routeKey)
 	if len(parts) < 2 {
 		return errors.Errorf("invalid route key: %s", routeKey)
 	}
 
 	method := parts[0]
-	path := parts[1]
+	
+	// Match the route using the new route matching system
+	matched, err := MatchRoute(supportedRoutes, method, rawPath)
+	if err != nil {
+		return errors.Wrapf(err, "route %s %s", method, rawPath)
+	}
 
-	// Extract path parameters from rawPath
-	pathParams := extractPathParameters(path, rawPath)
-
-	switch {
-	case method == "GET" && path == "/api/v1/albums":
-		// list-albums - no specific permission check needed (user is authenticated)
-		return nil
-
-	case method == "POST" && path == "/api/v1/albums":
-		// create-album
-		_, err := authoriser.CanCreateAlbum(ctx, user)
-		return err
-
-	case method == "DELETE" && strings.HasPrefix(path, "/api/v1/owners/") && strings.Contains(path, "/albums/") && !strings.Contains(path, "/shares/"):
-		// delete-album
-		owner := pathParams["owner"]
-		folderName := pathParams["folderName"]
-		if owner == "" || folderName == "" {
-			return errors.New("missing owner or folderName")
+	// Check permissions based on the matched route pattern
+	switch matched.Route.Pattern {
+	case "/api/v1/albums":
+		if method == "GET" {
+			// list-albums - no specific permission check needed (user is authenticated)
+			return nil
+		} else if method == "POST" {
+			// create-album
+			_, err := authoriser.CanCreateAlbum(ctx, user)
+			return err
 		}
+
+	case "/api/v1/owners/{owner}/albums/{folderName}":
+		// delete-album
+		owner := matched.PathParams["owner"]
+		folderName := matched.PathParams["folderName"]
 		albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
 		return authoriser.CanDeleteAlbum(ctx, user, albumId)
 
-	case method == "PUT" && strings.Contains(path, "/albums/") && strings.HasSuffix(path, "/dates"):
+	case "/api/v1/owners/{owner}/albums/{folderName}/dates":
 		// amend-album-dates
-		owner := pathParams["owner"]
-		folderName := pathParams["folderName"]
-		if owner == "" || folderName == "" {
-			return errors.New("missing owner or folderName")
-		}
+		owner := matched.PathParams["owner"]
+		folderName := matched.PathParams["folderName"]
 		albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
 		return authoriser.CanAmendAlbumDates(ctx, user, albumId)
 
-	case method == "PUT" && strings.Contains(path, "/albums/") && strings.HasSuffix(path, "/name"):
+	case "/api/v1/owners/{owner}/albums/{folderName}/name":
 		// amend-album-name
-		owner := pathParams["owner"]
-		folderName := pathParams["folderName"]
-		if owner == "" || folderName == "" {
-			return errors.New("missing owner or folderName")
-		}
+		owner := matched.PathParams["owner"]
+		folderName := matched.PathParams["folderName"]
 		albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
 		return authoriser.CanRenameAlbum(ctx, user, albumId)
 
-	case method == "GET" && strings.Contains(path, "/albums/") && strings.HasSuffix(path, "/medias"):
+	case "/api/v1/owners/{owner}/albums/{folderName}/medias":
 		// list-medias
-		owner := pathParams["owner"]
-		folderName := pathParams["folderName"]
-		if owner == "" || folderName == "" {
-			return errors.New("missing owner or folderName")
-		}
+		owner := matched.PathParams["owner"]
+		folderName := matched.PathParams["folderName"]
 		albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
 		err := authoriser.IsAuthorisedToListMedias(ctx, user, albumId)
 		if errors.Is(err, catalogacl.ErrAccessDenied) {
@@ -149,61 +165,33 @@ func checkPermissions(ctx context.Context, user usermodel.CurrentUser, routeKey,
 		}
 		return err
 
-	case method == "GET" && strings.Contains(path, "/medias/"):
+	case "/api/v1/owners/{owner}/medias/{mediaId}/{filename}":
 		// get-media
-		owner := pathParams["owner"]
-		mediaId := pathParams["mediaId"]
-		if owner == "" || mediaId == "" {
-			return errors.New("missing owner or mediaId")
-		}
+		owner := matched.PathParams["owner"]
+		mediaId := matched.PathParams["mediaId"]
 		err := authoriser.IsAuthorisedToViewMedia(ctx, user, ownermodel.Owner(owner), catalog.MediaId(mediaId))
 		if errors.Is(err, aclcore.AccessForbiddenError) {
 			return err
 		}
 		return err
 
-	case method == "GET" && path == "/api/v1/owners":
+	case "/api/v1/owners":
 		// list-owners - no specific permission check needed (user is authenticated)
 		return nil
 
-	case method == "GET" && path == "/api/v1/users":
+	case "/api/v1/users":
 		// list-users - no specific permission check needed (user is authenticated)
 		return nil
 
-	case (method == "PUT" || method == "DELETE") && strings.Contains(path, "/shares/"):
-		// share-album
-		owner := pathParams["owner"]
-		folderName := pathParams["folderName"]
-		if owner == "" || folderName == "" {
-			return errors.New("missing owner or folderName")
-		}
+	case "/api/v1/owners/{owner}/albums/{folderName}/shares/{email}":
+		// share-album (PUT = grant, DELETE = revoke)
+		owner := matched.PathParams["owner"]
+		folderName := matched.PathParams["folderName"]
 		albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
 		return authoriser.CanShareAlbum(ctx, user, albumId)
-
-	default:
-		return errors.Errorf("unknown route: %s %s", method, path)
-	}
-}
-
-func extractPathParameters(template, actualPath string) map[string]string {
-	params := make(map[string]string)
-
-	// Split both paths into segments
-	templateParts := strings.Split(strings.Trim(template, "/"), "/")
-	actualParts := strings.Split(strings.Trim(actualPath, "/"), "/")
-
-	if len(templateParts) != len(actualParts) {
-		return params
 	}
 
-	for i, part := range templateParts {
-		if strings.HasPrefix(part, "{") && strings.HasSuffix(part, "}") {
-			paramName := strings.Trim(part, "{}")
-			params[paramName] = actualParts[i]
-		}
-	}
-
-	return params
+	return errors.Errorf("unknown route pattern: %s", matched.Route.Pattern)
 }
 
 func allowResponse(claims aclcore.Claims) events.APIGatewayV2CustomAuthorizerSimpleResponse {
