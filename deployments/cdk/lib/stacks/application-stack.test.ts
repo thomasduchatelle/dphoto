@@ -129,6 +129,41 @@ describe('DPhotoApplicationStack', () => {
         const listOwnersFunction = findLambdaByRoute(template, '/api/v1/owners', 'GET');
         expect(listOwnersFunction).toBeDefined();
     });
+
+    test('all API routes have Lambda Authoriser attached unless whitelisted', () => {
+        // Define routes that should NOT have authorizer (whitelist)
+        const whitelistedRoutes = [
+            { method: 'POST', path: '/oauth/token' },
+            { method: 'POST', path: '/oauth/logout' },
+            { method: 'GET', path: '/env-config.json' },
+            {method: 'GET', path: '/api/v1/version'},
+            {method: 'ANY', path: '/api/{path+}'},
+            {method: 'ANY', path: '/{proxy+}'},
+            {method: 'GET', path: '/api/v1/owners/{owner}/medias/{mediaId}/{filename}'},
+            {method: '$default', path: ''},
+        ];
+
+        // Get all routes from the template
+        const allRoutes = template.findResources('AWS::ApiGatewayV2::Route');
+
+        Object.entries(allRoutes).forEach(([routeId, route]: [string, any]) => {
+            const routeKey = route.Properties.RouteKey;
+            const [method, ...pathParts] = routeKey.split(' ');
+            const path = pathParts.join(' ');
+            const isWhitelisted = whitelistedRoutes.some(r => r.method === method && r.path === path);
+            try {
+                if (isWhitelisted) {
+                    expect(route.Properties.AuthorizerId).toBeUndefined();
+                } else {
+                    // console.log(`routeId: ${method} ${path} [${routeId}]`)
+                    expect(route.Properties.AuthorizerId).toBeDefined();
+                    expect(route.Properties.AuthorizerId.Ref).toBeDefined();
+                }
+            } catch (e) {
+                throw new Error(`Route ${method} ${path} [${routeId}] failed authorizer check: ${e}`);
+            }
+        });
+    });
 });
 
 function assertLambdaEnvironmentVariables(lambdaFunction: any, expectedVariables: Record<string, string>): void {

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
@@ -11,7 +13,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"time"
 )
 
 type CreateAlbumRequestDTO struct {

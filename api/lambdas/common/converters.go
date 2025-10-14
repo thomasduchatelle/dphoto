@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"strings"
+
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
 func ConvertFolderNameForREST(folderName catalog.FolderName) string {

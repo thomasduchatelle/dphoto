@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

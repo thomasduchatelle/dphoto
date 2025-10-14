@@ -3,14 +3,15 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/tencentyun/scf-go-lib/events"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"net/url"
-	"strings"
 )
 
 type identityDTO struct {

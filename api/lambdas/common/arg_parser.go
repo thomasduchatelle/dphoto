@@ -2,9 +2,10 @@ package common
 
 import (
 	"fmt"
-	"github.com/aws/aws-lambda-go/events"
 	"strconv"
 	"strings"
+
+	"github.com/aws/aws-lambda-go/events"
 )
 
 // ArgParser is a helper to read several parameters from the request

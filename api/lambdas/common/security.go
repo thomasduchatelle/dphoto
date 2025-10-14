@@ -2,11 +2,12 @@ package common
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"strings"
 )
 
 func RequiresAuthenticated(request *events.APIGatewayV2HTTPRequest, process func(user usermodel.CurrentUser) (Response, error)) (Response, error) {
