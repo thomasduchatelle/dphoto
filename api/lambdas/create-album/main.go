@@ -9,10 +9,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
-	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 type CreateAlbumRequestDTO struct {
@@ -36,41 +33,43 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		return common.BadRequest(err.Error())
 	}
 
-	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
-		owner, err := pkgfactory.AclCatalogAuthoriser(ctx).CanCreateAlbum(ctx, user)
-		if err != nil {
-			if errors.Is(err, aclcore.AccessForbiddenError) {
-				return common.ForbiddenResponse(err.Error())
-			}
+	// Extract user from authorizer context (already authenticated and authorized by Lambda Authorizer)
+	user, err := common.GetCurrentUserFromContext(&request)
+	if err != nil {
+		return common.UnauthorizedResponse(err.Error())
+	}
+
+	// Note: CanCreateAlbum permission check is already done by the Lambda Authorizer
+	// We just need to get the owner from the authorizer result
+	if user.Owner == nil {
+		return common.ForbiddenResponse("user does not have an owner")
+	}
+
+	albumId, err := common.Factory.CreateAlbumCase(ctx).Create(ctx, catalog.CreateAlbumRequest{
+		Owner:            *user.Owner,
+		Name:             requestDto.Name,
+		Start:            requestDto.Start,
+		End:              requestDto.End,
+		ForcedFolderName: requestDto.ForcedFolderName,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, catalog.AlbumNameMandatoryErr):
+			return common.UnprocessableEntityResponse("AlbumNameMandatoryErr", err.Error())
+		case errors.Is(err, catalog.AlbumStartAndEndDateMandatoryErr):
+			return common.UnprocessableEntityResponse("AlbumStartAndEndDateMandatoryErr", err.Error())
+		case errors.Is(err, catalog.AlbumEndDateMustBeAfterStartErr):
+			return common.UnprocessableEntityResponse("AlbumEndDateMustBeAfterStartErr", err.Error())
+		case errors.Is(err, catalog.AlbumFolderNameAlreadyTakenErr):
+			return common.UnprocessableEntityResponse("AlbumFolderNameAlreadyTakenErr", err.Error())
+		default:
 			return common.InternalError(err)
 		}
+	}
 
-		albumId, err := common.Factory.CreateAlbumCase(ctx).Create(ctx, catalog.CreateAlbumRequest{
-			Owner:            *owner,
-			Name:             requestDto.Name,
-			Start:            requestDto.Start,
-			End:              requestDto.End,
-			ForcedFolderName: requestDto.ForcedFolderName,
-		})
-		if err != nil {
-			switch {
-			case errors.Is(err, catalog.AlbumNameMandatoryErr):
-				return common.UnprocessableEntityResponse("AlbumNameMandatoryErr", err.Error())
-			case errors.Is(err, catalog.AlbumStartAndEndDateMandatoryErr):
-				return common.UnprocessableEntityResponse("AlbumStartAndEndDateMandatoryErr", err.Error())
-			case errors.Is(err, catalog.AlbumEndDateMustBeAfterStartErr):
-				return common.UnprocessableEntityResponse("AlbumEndDateMustBeAfterStartErr", err.Error())
-			case errors.Is(err, catalog.AlbumFolderNameAlreadyTakenErr):
-				return common.UnprocessableEntityResponse("AlbumFolderNameAlreadyTakenErr", err.Error())
-			default:
-				return common.InternalError(err)
-			}
-		}
-
-		return common.Created(albumIdDTO{
-			Owner:      albumId.Owner.Value(),
-			FolderName: common.ConvertFolderNameForREST(albumId.FolderName),
-		})
+	return common.Created(albumIdDTO{
+		Owner:      albumId.Owner.Value(),
+		FolderName: common.ConvertFolderNameForREST(albumId.FolderName),
 	})
 }
 

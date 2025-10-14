@@ -133,13 +133,12 @@ describe('DPhotoApplicationStack', () => {
     test('all API routes have Lambda Authoriser attached unless whitelisted', () => {
         // Define routes that should NOT have authorizer (whitelist)
         const whitelistedRoutes = [
-            { method: 'POST', path: '/oauth/token' },
-            { method: 'POST', path: '/oauth/logout' },
-            { method: 'GET', path: '/env-config.json' },
+            {method: 'POST', path: '/oauth/token'},
+            {method: 'POST', path: '/oauth/logout'},
+            {method: 'GET', path: '/env-config.json'},
             {method: 'GET', path: '/api/v1/version'},
             {method: 'ANY', path: '/api/{path+}'},
             {method: 'ANY', path: '/{proxy+}'},
-            {method: 'GET', path: '/api/v1/owners/{owner}/medias/{mediaId}/{filename}'},
             {method: '$default', path: ''},
         ];
 
