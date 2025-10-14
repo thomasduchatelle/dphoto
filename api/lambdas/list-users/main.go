@@ -19,29 +19,33 @@ type UserDetailsDTO struct {
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	emails := strings.Split(request.QueryStringParameters["emails"], ",")
 
-	return common.RequiresAuthenticated(&request, func(_ usermodel.CurrentUser) (common.Response, error) {
-		log.Infof("list identities %s", strings.Join(emails, ", "))
+	// Extract user from authorizer context (already authenticated and authorized)
+	_, err := common.GetCurrentUserFromContext(&request)
+	if err != nil {
+		return common.UnauthorizedResponse(err.Error())
+	}
 
-		var userIds []usermodel.UserId
-		for _, email := range emails {
-			userIds = append(userIds, usermodel.UserId(email))
-		}
+	log.Infof("list identities %s", strings.Join(emails, ", "))
 
-		identities, err := common.GetIdentityQueries().FindIdentities(userIds)
-		if err != nil {
-			return common.InternalError(err)
-		}
+	var userIds []usermodel.UserId
+	for _, email := range emails {
+		userIds = append(userIds, usermodel.UserId(email))
+	}
 
-		identitiesDTO := make([]UserDetailsDTO, len(identities), len(identities))
-		for i, identity := range identities {
-			identitiesDTO[i] = UserDetailsDTO{
-				Name:    identity.Name,
-				Email:   identity.Email.Value(),
-				Picture: identity.Picture,
-			}
+	identities, err := common.GetIdentityQueries().FindIdentities(userIds)
+	if err != nil {
+		return common.InternalError(err)
+	}
+
+	identitiesDTO := make([]UserDetailsDTO, len(identities), len(identities))
+	for i, identity := range identities {
+		identitiesDTO[i] = UserDetailsDTO{
+			Name:    identity.Name,
+			Email:   identity.Email.Value(),
+			Picture: identity.Picture,
 		}
-		return common.Ok(identitiesDTO)
-	})
+	}
+	return common.Ok(identitiesDTO)
 }
 
 func main() {

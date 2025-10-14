@@ -8,11 +8,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
-	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 type RenameAlbumRequestDTO struct {
@@ -44,50 +41,48 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		return common.BadRequest(err.Error())
 	}
 
-	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
-		err := pkgfactory.AclCatalogAuthoriser(ctx).CanRenameAlbum(ctx, user, currentAlbumId)
-		if err != nil {
-			if errors.Is(err, aclcore.AccessForbiddenError) {
-				return common.ForbiddenResponse(err.Error())
-			}
+	// Extract user from authorizer context (already authenticated and authorized by Lambda Authorizer)
+	_, err = common.GetCurrentUserFromContext(&request)
+	if err != nil {
+		return common.UnauthorizedResponse(err.Error())
+	}
+
+	// Note: CanRenameAlbum permission check is already done by the Lambda Authorizer
+
+	forcedFolderName := catalog.NewFolderName(requestDto.FolderName)
+	if forcedFolderName == currentAlbumId.FolderName {
+		forcedFolderName = ""
+	}
+
+	err = common.Factory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
+		CurrentId:        currentAlbumId,
+		NewName:          requestDto.Name,
+		RenameFolder:     requestDto.FolderName == "",
+		ForcedFolderName: forcedFolderName.String(),
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, catalog.AlbumNameMandatoryErr):
+			return common.UnprocessableEntityResponse("AlbumNameMandatoryErr", err.Error())
+		case errors.Is(err, catalog.AlbumFolderNameAlreadyTakenErr):
+			return common.UnprocessableEntityResponse("AlbumFolderNameAlreadyTakenErr", err.Error())
+		case errors.Is(err, catalog.AlbumNotFoundErr):
+			return common.NotFound(map[string]string{
+				"error": err.Error(),
+			})
+		default:
 			return common.InternalError(err)
 		}
+	}
 
-		forcedFolderName := catalog.NewFolderName(requestDto.FolderName)
-		if forcedFolderName == currentAlbumId.FolderName {
-			forcedFolderName = ""
-		}
+	updatedFolderName := currentAlbumId.FolderName
+	if requestDto.FolderName != "" {
+		updatedFolderName = catalog.NewFolderName(requestDto.FolderName)
+	}
 
-		err = common.Factory.RenameAlbumCase(ctx).RenameAlbum(ctx, catalog.RenameAlbumRequest{
-			CurrentId:        currentAlbumId,
-			NewName:          requestDto.Name,
-			RenameFolder:     requestDto.FolderName == "",
-			ForcedFolderName: forcedFolderName.String(),
-		})
-		if err != nil {
-			switch {
-			case errors.Is(err, catalog.AlbumNameMandatoryErr):
-				return common.UnprocessableEntityResponse("AlbumNameMandatoryErr", err.Error())
-			case errors.Is(err, catalog.AlbumFolderNameAlreadyTakenErr):
-				return common.UnprocessableEntityResponse("AlbumFolderNameAlreadyTakenErr", err.Error())
-			case errors.Is(err, catalog.AlbumNotFoundErr):
-				return common.NotFound(map[string]string{
-					"error": err.Error(),
-				})
-			default:
-				return common.InternalError(err)
-			}
-		}
-
-		updatedFolderName := currentAlbumId.FolderName
-		if requestDto.FolderName != "" {
-			updatedFolderName = catalog.NewFolderName(requestDto.FolderName)
-		}
-
-		return common.Ok(albumIdDTO{
-			Owner:      currentAlbumId.Owner.Value(),
-			FolderName: common.ConvertFolderNameForREST(updatedFolderName),
-		})
+	return common.Ok(albumIdDTO{
+		Owner:      currentAlbumId.Owner.Value(),
+		FolderName: common.ConvertFolderNameForREST(updatedFolderName),
 	})
 }
 

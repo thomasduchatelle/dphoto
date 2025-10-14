@@ -7,8 +7,36 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
+
+// GetCurrentUserFromContext extracts the CurrentUser from the authorizer context
+// This should be used when the Lambda Authorizer has already validated the request
+func GetCurrentUserFromContext(request *events.APIGatewayV2HTTPRequest) (usermodel.CurrentUser, error) {
+	if request.RequestContext.Authorizer == nil || request.RequestContext.Authorizer.Lambda == nil {
+		return usermodel.CurrentUser{}, errors.New("no authorizer context found")
+	}
+
+	context := request.RequestContext.Authorizer.Lambda
+
+	userIdStr, ok := context["userId"].(string)
+	if !ok || userIdStr == "" {
+		return usermodel.CurrentUser{}, errors.New("userId not found in authorizer context")
+	}
+
+	user := usermodel.CurrentUser{
+		UserId: usermodel.UserId(userIdStr),
+	}
+
+	// Owner is optional
+	if ownerStr, ok := context["owner"].(string); ok && ownerStr != "" {
+		owner := ownermodel.Owner(ownerStr)
+		user.Owner = &owner
+	}
+
+	return user, nil
+}
 
 func RequiresAuthenticated(request *events.APIGatewayV2HTTPRequest, process func(user usermodel.CurrentUser) (Response, error)) (Response, error) {
 	token, err := readToken(request)

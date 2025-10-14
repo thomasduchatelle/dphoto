@@ -31,8 +31,13 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	owner := ownermodel.Owner(ownerValue)
 	mediaId := catalog.MediaId(mediaIdValue)
 
-	// Authorization is handled by the Lambda authorizer
-	// The authorizer has already validated the user and checked permissions via IsAuthorisedToViewMedia
+	// Extract user from authorizer context (already authenticated and authorized by Lambda Authorizer)
+	_, err := common.GetCurrentUserFromContext(&request)
+	if err != nil {
+		return common.UnauthorizedResponse(err.Error())
+	}
+
+	// Note: IsAuthorisedToViewMedia permission check is already done by the Lambda Authorizer
 
 	if width == 0 {
 		return redirectTo(archive.GetMediaOriginalURL(owner.Value(), mediaId.Value()))
@@ -49,7 +54,7 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	if err != nil {
 		return common.InternalError(err)
 	}
-
+  
 	based64Encoded := base64.StdEncoding.EncodeToString(content)
 	log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is served (%d KB ; base64 = %d KB)", owner, mediaId, width, len(content)/1024, len(based64Encoded)/1024)
 	return common.Response{
