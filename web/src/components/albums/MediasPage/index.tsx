@@ -26,6 +26,7 @@ export default function MediasPage({
                                        openEditNameDialog,
                                        openCreateDialog,
                                        displayedAlbumIdIsOwned,
+                                       canCreateAlbum,
                                    }: {
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
     openSharingModal: (albumId: AlbumId) => void
@@ -34,6 +35,7 @@ export default function MediasPage({
     openCreateDialog: () => void
     openEditNameDialog: () => void
     displayedAlbumIdIsOwned: boolean
+    canCreateAlbum: boolean
     scrollToMedia?: string
 } & CatalogViewerPageSelection) {
     const drawerWidth = 450
@@ -73,6 +75,7 @@ export default function MediasPage({
                                 openEditNameDialog={openEditNameDialog}
                                 openCreateDialog={openCreateDialog}
                                 displayedAlbumIdIsOwned={displayedAlbumIdIsOwned}
+                                canCreateAlbum={canCreateAlbum}
                             />
                             <Divider/>
                         </>

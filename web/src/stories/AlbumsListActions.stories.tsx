@@ -161,3 +161,32 @@ EditDatesButtonDisabled.args = {
     ],
     displayedAlbumIdIsOwned: false,
 };
+
+export const VisitorCannotCreateOrDeleteAlbums = (args: Props) => <AlbumsListActionsWrapper {...args} />
+VisitorCannotCreateOrDeleteAlbums.args = {
+    selected: {
+        criterion: {
+            owners: ['black-widow', 'hulk']
+        },
+        avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+        name: "Avenger Family",
+    },
+    options: [
+        {
+            criterion: {
+                owners: []
+            },
+            avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+            name: "All Albums",
+        },
+        {
+            criterion: {
+                owners: ['black-widow', 'hulk']
+            },
+            avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+            name: "Avengers Family",
+        },
+    ],
+    displayedAlbumIdIsOwned: false,
+    canCreateAlbum: false,
+};

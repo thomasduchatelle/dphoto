@@ -12,6 +12,7 @@ import {useCatalogContext} from "../../../components/catalog-react";
 import {useClientRouter} from "../../../components/ClientRouter";
 import {
     AlbumId,
+    canCreateAlbumSelector,
     catalogViewerPageSelector,
     createDialogSelector,
     deleteDialogSelector,
@@ -82,6 +83,7 @@ export function CatalogViewerPage() {
     const editDatesDialogState = editDatesDialogSelector(state);
     const editNameDialogState = editNameDialogSelector(state);
     const createDialogState = createDialogSelector(state);
+    const {canCreateAlbum} = canCreateAlbumSelector(state);
 
     return (
         <Box>
@@ -103,6 +105,7 @@ export function CatalogViewerPage() {
                         openEditNameDialog={openEditNameDialog}
                         openCreateDialog={openCreateDialog}
                         {...displayedAlbumSelector(state)}
+                        canCreateAlbum={canCreateAlbum}
                     />
                     <AlbumsList albums={albums}
                                 loaded={albumsLoaded}
@@ -114,6 +117,7 @@ export function CatalogViewerPage() {
                 <MediasPage
                     {...catalogViewerPageSelector(state)}
                     {...displayedAlbumSelector(state)}
+                    canCreateAlbum={canCreateAlbum}
                     onAlbumFilterChange={onAlbumFilterChange}
                     scrollToMedia={query.get("mediaId") ?? undefined}
                     openSharingModal={openSharingModal}
