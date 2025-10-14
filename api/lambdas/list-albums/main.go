@@ -9,7 +9,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
-	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 type AlbumDTO struct {
@@ -31,33 +30,36 @@ func Handler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (commo
 		return parser.BadRequest()
 	}
 
-	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
-		filter := catalogviews.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned}
-		albums, err := pkgfactory.AlbumView(ctx).ListAlbums(ctx, user, filter)
-		if err != nil {
-			return common.HandleError(err)
-		}
+	// Extract user from authorizer context (already authenticated and authorized)
+	user, err := common.GetCurrentUserFromContext(&request)
+	if err != nil {
+		return common.UnauthorizedResponse(err.Error())
+	}
 
-		restAlbums := make([]AlbumDTO, len(albums))
-		for i, a := range albums {
-			sharedWith := make(map[string]string)
-			for _, visitor := range a.Visitors {
-				sharedWith[visitor.Value()] = "visitor"
-			}
-			restAlbums[i] = AlbumDTO{
-				End:           a.End,
-				FolderName:    common.ConvertFolderNameForREST(a.FolderName),
-				Name:          a.Name,
-				Owner:         a.Owner.String(),
-				Start:         a.Start,
-				TotalCount:    a.MediaCount,
-				SharedWith:    sharedWith,
-				DirectlyOwned: a.OwnedByCurrentUser,
-			}
-		}
-		return common.Ok(restAlbums)
+	filter := catalogviews.ListAlbumsFilter{OnlyDirectlyOwned: onlyDirectlyOwned}
+	albums, err := pkgfactory.AlbumView(ctx).ListAlbums(ctx, user, filter)
+	if err != nil {
+		return common.HandleError(err)
+	}
 
-	})
+	restAlbums := make([]AlbumDTO, len(albums))
+	for i, a := range albums {
+		sharedWith := make(map[string]string)
+		for _, visitor := range a.Visitors {
+			sharedWith[visitor.Value()] = "visitor"
+		}
+		restAlbums[i] = AlbumDTO{
+			End:           a.End,
+			FolderName:    common.ConvertFolderNameForREST(a.FolderName),
+			Name:          a.Name,
+			Owner:         a.Owner.String(),
+			Start:         a.Start,
+			TotalCount:    a.MediaCount,
+			SharedWith:    sharedWith,
+			DirectlyOwned: a.OwnedByCurrentUser,
+		}
+	}
+	return common.Ok(restAlbums)
 }
 
 func main() {

@@ -7,13 +7,10 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
-	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 type Media struct {
@@ -31,31 +28,33 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 
 	albumId := catalog.NewAlbumIdFromStrings(owner, folderName)
 
-	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
-		log.Infof("list medias for album %s/%s", owner, folderName)
-		err := pkgfactory.AclCatalogAuthoriser(ctx).IsAuthorisedToListMedias(ctx, user, albumId)
-		if errors.Is(err, catalogacl.ErrAccessDenied) {
-			return common.ForbiddenResponse(err.Error())
-		}
-		if err != nil {
-			return common.InternalError(err)
-		}
+	// Extract user from authorizer context (already authenticated and authorized by Lambda Authorizer)
+	_, err := common.GetCurrentUserFromContext(&request)
+	if err != nil {
+		return common.UnauthorizedResponse(err.Error())
+	}
 
-		medias, err := pkgfactory.CatalogMediaQueries(ctx).ListMedias(ctx, albumId)
+	// Note: IsAuthorisedToListMedias permission check is already done by the Lambda Authorizer
 
-		resp := make([]Media, len(medias), len(medias))
-		for i, media := range medias {
-			resp[i] = Media{
-				Id:       string(media.Id),
-				Type:     string(media.Type),
-				Filename: media.Filename,
-				Time:     media.Details.DateTime,
-				Source:   strings.Join([]string{media.Details.Make, media.Details.Model}, " "),
-			}
+	log.Infof("list medias for album %s/%s", owner, folderName)
+
+	medias, err := pkgfactory.CatalogMediaQueries(ctx).ListMedias(ctx, albumId)
+	if err != nil {
+		return common.InternalError(err)
+	}
+
+	resp := make([]Media, len(medias), len(medias))
+	for i, media := range medias {
+		resp[i] = Media{
+			Id:       string(media.Id),
+			Type:     string(media.Type),
+			Filename: media.Filename,
+			Time:     media.Details.DateTime,
+			Source:   strings.Join([]string{media.Details.Make, media.Details.Model}, " "),
 		}
+	}
 
-		return common.Ok(resp)
-	})
+	return common.Ok(resp)
 }
 
 func main() {
