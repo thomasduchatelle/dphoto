@@ -11,6 +11,7 @@ export interface LambdaAuthoriserConstructProps {
 
 export class LambdaAuthoriserConstruct extends Construct {
     public readonly authorizer: HttpLambdaAuthorizer;
+    public readonly queryParamAuthorizer: HttpLambdaAuthorizer;
     private readonly authorizerLambda: GoLangLambdaFunction;
 
     constructor(scope: Construct, id: string, props: LambdaAuthoriserConstructProps) {
@@ -32,6 +33,15 @@ export class LambdaAuthoriserConstruct extends Construct {
             authorizerName: `dphoto-${props.environmentName}-authorizer`,
             // identitySource: ['$request.header.Authorization', '$request.querystring.access_token'],
             // identitySource: ['$request.header.Cookie'],
+            responseTypes: [HttpLambdaResponseType.SIMPLE],
+            resultsCacheTtl: Duration.seconds(1800),
+        });
+
+        // Create a second authorizer for endpoints that use query parameter authentication
+        // This is needed for get-media which passes the token as access_token query parameter
+        this.queryParamAuthorizer = new HttpLambdaAuthorizer('LambdaAuthorizerQueryParam', this.authorizerLambda.function, {
+            authorizerName: `dphoto-${props.environmentName}-authorizer-queryparam`,
+            identitySource: ['$request.querystring.access_token'],
             responseTypes: [HttpLambdaResponseType.SIMPLE],
             resultsCacheTtl: Duration.seconds(1800),
         });

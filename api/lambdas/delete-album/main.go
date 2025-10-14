@@ -11,8 +11,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
-	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
@@ -27,30 +25,27 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 		return common.BadRequest("Missing required path parameters: owner or folderName")
 	}
 
-	return common.RequiresAuthenticated(&request, func(user usermodel.CurrentUser) (common.Response, error) {
+	// Extract user from authorizer context (already authenticated and authorized by Lambda Authorizer)
+	_, err := common.GetCurrentUserFromContext(&request)
+	if err != nil {
+		return common.UnauthorizedResponse(err.Error())
+	}
 
-		err := pkgfactory.AclCatalogAuthoriser(ctx).CanDeleteAlbum(ctx, user, albumId)
-		if err != nil {
-			if errors.Is(err, aclcore.AccessForbiddenError) {
-				return common.ForbiddenResponse(err.Error())
-			}
-			return common.InternalError(err)
+	// Note: CanDeleteAlbum permission check is already done by the Lambda Authorizer
+
+	err = common.Factory.CreateAlbumDeleteCase(ctx).DeleteAlbum(ctx, albumId)
+	if err != nil {
+		switch {
+		case errors.Is(err, catalog.OrphanedMediasErr):
+			return common.UnprocessableEntityResponse("OrphanedMedias", err.Error())
+		case errors.Is(err, aclcore.AccessForbiddenError):
+			return common.UnauthorizedResponse(fmt.Sprintf("You are not authorized to delete the album %s", albumId))
+		default:
+			return common.UnprocessableEntityResponse("InternalError", err.Error())
 		}
+	}
 
-		err = common.Factory.CreateAlbumDeleteCase(ctx).DeleteAlbum(ctx, albumId)
-		if err != nil {
-			switch {
-			case errors.Is(err, catalog.OrphanedMediasErr):
-				return common.UnprocessableEntityResponse("OrphanedMedias", err.Error())
-			case errors.Is(err, aclcore.AccessForbiddenError):
-				return common.UnauthorizedResponse(fmt.Sprintf("You are not authorized to delete the album %s", albumId))
-			default:
-				return common.UnprocessableEntityResponse("InternalError", err.Error())
-			}
-		}
-
-		return common.NoContent()
-	})
+	return common.NoContent()
 }
 
 func main() {
