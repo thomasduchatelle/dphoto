@@ -13,6 +13,7 @@ export default function AlbumListActions({
                                              openEditDatesDialog,
                                              openEditNameDialog,
                                              displayedAlbumIdIsOwned = true,
+                                             canDeleteAlbum = true,
                                              ...props
                                          }: OwnerSelectorProps & {
     openCreateDialog: () => void
@@ -20,6 +21,7 @@ export default function AlbumListActions({
     openEditDatesDialog: () => void
     openEditNameDialog: () => void
     displayedAlbumIdIsOwned: boolean
+    canDeleteAlbum: boolean
 }) {
     const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<null | HTMLElement>(null);
     const editMenuOpen = Boolean(editMenuAnchorEl);
@@ -68,7 +70,7 @@ export default function AlbumListActions({
                 <MenuItem onClick={handleEditDatesClick}>Edit Dates</MenuItem>
                 <MenuItem onClick={handleEditNameClick}>Edit Name</MenuItem>
             </Menu>
-            <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog}>
+            <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog} disabled={!canDeleteAlbum}>
                 <DeleteIcon/>
             </IconButton>
         </Box>
