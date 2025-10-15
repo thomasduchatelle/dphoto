@@ -1,26 +1,39 @@
 'use client';
 
-import {OwnerSelector, OwnerSelectorProps} from "./OwnerSelector";
+import {OwnerSelector} from "./OwnerSelector";
 import {Box, IconButton, Menu, MenuItem} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import {useState} from "react";
+import {AlbumFilterCriterion, AlbumFilterEntry} from "../../../core/catalog";
+
+export interface AlbumListActionsProps {
+    selected: AlbumFilterEntry;
+    options: AlbumFilterEntry[];
+    displayedAlbumIdIsOwned: boolean;
+    deleteButtonEnabled: boolean;
+}
+
+export interface AlbumListActionsCallbacks {
+    onAlbumFiltered: (criterion: AlbumFilterCriterion) => void;
+    openCreateDialog: () => void;
+    openDeleteAlbumDialog: () => void;
+    openEditDatesDialog: () => void;
+    openEditNameDialog: () => void;
+}
 
 export default function AlbumListActions({
+                                             selected,
+                                             options,
+                                             displayedAlbumIdIsOwned = true,
+                                             deleteButtonEnabled = false,
+                                             onAlbumFiltered,
                                              openCreateDialog,
                                              openDeleteAlbumDialog,
                                              openEditDatesDialog,
                                              openEditNameDialog,
-                                             displayedAlbumIdIsOwned = true,
-                                             ...props
-                                         }: OwnerSelectorProps & {
-    openCreateDialog: () => void
-    openDeleteAlbumDialog: () => void
-    openEditDatesDialog: () => void
-    openEditNameDialog: () => void
-    displayedAlbumIdIsOwned: boolean
-}) {
+                                         }: AlbumListActionsProps & AlbumListActionsCallbacks) {
     const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<null | HTMLElement>(null);
     const editMenuOpen = Boolean(editMenuAnchorEl);
 
@@ -49,7 +62,7 @@ export default function AlbumListActions({
             '& > :not(style)': {mt: 1, mb: 1},
         }}>
             <Box sx={{mr: 2}}>
-                <OwnerSelector {...props} />
+                <OwnerSelector selected={selected} options={options} onAlbumFiltered={onAlbumFiltered} />
             </Box>
             <IconButton color="primary" onClick={openCreateDialog} size="large">
                 <AddIcon/>
@@ -68,7 +81,7 @@ export default function AlbumListActions({
                 <MenuItem onClick={handleEditDatesClick}>Edit Dates</MenuItem>
                 <MenuItem onClick={handleEditNameClick}>Edit Name</MenuItem>
             </Menu>
-            <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog}>
+            <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog} disabled={!deleteButtonEnabled}>
                 <DeleteIcon/>
             </IconButton>
         </Box>

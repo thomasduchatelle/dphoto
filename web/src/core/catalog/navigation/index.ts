@@ -21,3 +21,4 @@ export const navigationThunks = {
     onPageRefresh: onPageRefreshDeclaration,
 };
 export * from "./selector-catalog-viewer-page";
+export * from "./selector-albumListActions";

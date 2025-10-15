@@ -15,6 +15,7 @@ import {
 import {CatalogViewerPageSelection} from "../navigation";
 import {EditNameDialogSelection} from "../album-edit-name";
 import {CreateDialogSelection} from "../album-create";
+import {AlbumListActionsProps} from "../../../components/albums/AlbumsListActions";
 
 // **IMPORTANT** - to LLM Agents
 // Use the constants defined in this file in all your tests to make them more readable, and robust to changes
@@ -204,6 +205,13 @@ export const editJanAlbumNameSelection: EditNameDialogSelection = {
     isCustomFolderNameEnabled: false,
     isLoading: false,
     isSaveEnabled: true,
+}
+
+export const albumListActionsPropsForLoadedState: AlbumListActionsProps = {
+    selected: twoAlbumsNoFilterOptions,
+    options: loadedStateWithTwoAlbums.albumFilterOptions,
+    displayedAlbumIdIsOwned: true,
+    deleteButtonEnabled: true,
 }
 
 
