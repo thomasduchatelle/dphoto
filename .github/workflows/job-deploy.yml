@@ -37,12 +37,6 @@ jobs:
           name: dist-web
           path: web/dist
 
-      - name: Download waku
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-waku
-          path: web-waku/dist
-
       - name: Setup CDK
         uses: ./.github/actions/install-cdk
 
