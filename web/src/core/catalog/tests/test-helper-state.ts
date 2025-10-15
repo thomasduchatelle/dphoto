@@ -15,6 +15,7 @@ import {
 import {CatalogViewerPageSelection} from "../navigation";
 import {EditNameDialogSelection} from "../album-edit-name";
 import {CreateDialogSelection} from "../album-create";
+import {DisplayedAlbumSelection} from "../language/selector-displayedAlbum";
 
 // **IMPORTANT** - to LLM Agents
 // Use the constants defined in this file in all your tests to make them more readable, and robust to changes
@@ -137,6 +138,13 @@ export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = 
     albumNotFound: false,
 };
 
+// use it as default displayed album selection - it matches the loaded state
+export const displayedAlbumForLoadedState: DisplayedAlbumSelection = {
+    displayedAlbumId: twoAlbums[0].albumId,
+    displayedAlbumIdIsOwned: true,
+    canDeleteAlbum: true,
+};
+
 // use it as a default opened delete dialog - it match what would be expected from the `loadedStateWithTwoAlbums`
 export const deleteDialogWithOneAlbum: DeleteDialog = {
     type: "DeleteDialog",
@@ -205,7 +213,3 @@ export const editJanAlbumNameSelection: EditNameDialogSelection = {
     isLoading: false,
     isSaveEnabled: true,
 }
-
-
-
-

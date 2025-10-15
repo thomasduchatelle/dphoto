@@ -1,21 +1,19 @@
 import {displayedAlbumSelector} from "./selector-displayedAlbum";
 import {albumsLoaded} from "../navigation/action-albumsLoaded";
-import {loadedStateWithTwoAlbums, twoAlbums, herselfOwner} from "../tests/test-helper-state";
-import {Album, CatalogViewerState} from "./catalog-state";
+import {loadedStateWithTwoAlbums, twoAlbums, displayedAlbumForLoadedState} from "../tests/test-helper-state";
+import {Album} from "./catalog-state";
 
 const jan25Album = twoAlbums[0];
 const feb25Album = twoAlbums[1];
 
 describe("selector:displayedAlbumSelector", () => {
     it("should return canDeleteAlbum as true when at least one album is owned by current user", () => {
+        const state = loadedStateWithTwoAlbums;
+
         const action = albumsLoaded({albums: twoAlbums});
-        const state = action.reducer(loadedStateWithTwoAlbums, action);
+        const got = action.reducer(state, action);
 
-        const selection = displayedAlbumSelector(state);
-
-        expect(selection.canDeleteAlbum).toBe(true);
-        expect(selection.displayedAlbumIdIsOwned).toBe(true);
-        expect(selection.displayedAlbumId).toEqual(jan25Album.albumId);
+        expect(displayedAlbumSelector(got)).toEqual(displayedAlbumForLoadedState);
     });
 
     it("should return canDeleteAlbum as false when no albums are owned by current user", () => {
@@ -24,57 +22,68 @@ describe("selector:displayedAlbumSelector", () => {
             ownedBy: {name: "Other Owner", users: [{name: "Other", email: "other@example.com"}]},
         };
 
-        const action = albumsLoaded({albums: [albumOwnedByOther]});
-        const state = action.reducer({
+        const state = {
             ...loadedStateWithTwoAlbums,
             mediasLoadedFromAlbumId: albumOwnedByOther.albumId,
-        }, action);
+        };
 
-        const selection = displayedAlbumSelector(state);
+        const action = albumsLoaded({albums: [albumOwnedByOther]});
+        const got = action.reducer(state, action);
 
-        expect(selection.canDeleteAlbum).toBe(false);
-        expect(selection.displayedAlbumIdIsOwned).toBe(false);
+        expect(displayedAlbumSelector(got)).toEqual({
+            ...displayedAlbumForLoadedState,
+            canDeleteAlbum: false,
+            displayedAlbumIdIsOwned: false,
+        });
     });
 
     it("should return canDeleteAlbum as true even when displayed album is not owned", () => {
-        const action = albumsLoaded({albums: twoAlbums});
-        const state = action.reducer({
+        const state = {
             ...loadedStateWithTwoAlbums,
             mediasLoadedFromAlbumId: feb25Album.albumId,
-        }, action);
+        };
 
-        const selection = displayedAlbumSelector(state);
+        const action = albumsLoaded({albums: twoAlbums});
+        const got = action.reducer(state, action);
 
-        expect(selection.canDeleteAlbum).toBe(true);
-        expect(selection.displayedAlbumIdIsOwned).toBe(false);
-        expect(selection.displayedAlbumId).toEqual(feb25Album.albumId);
+        expect(displayedAlbumSelector(got)).toEqual({
+            ...displayedAlbumForLoadedState,
+            displayedAlbumId: feb25Album.albumId,
+            displayedAlbumIdIsOwned: false,
+        });
     });
 
     it("should return canDeleteAlbum as false when there are no albums", () => {
-        const action = albumsLoaded({albums: []});
-        const state = action.reducer({
+        const state = {
             ...loadedStateWithTwoAlbums,
             mediasLoadedFromAlbumId: undefined,
-        }, action);
+        };
 
-        const selection = displayedAlbumSelector(state);
+        const action = albumsLoaded({albums: []});
+        const got = action.reducer(state, action);
 
-        expect(selection.canDeleteAlbum).toBe(false);
-        expect(selection.displayedAlbumIdIsOwned).toBe(false);
-        expect(selection.displayedAlbumId).toBeUndefined();
+        expect(displayedAlbumSelector(got)).toEqual({
+            ...displayedAlbumForLoadedState,
+            displayedAlbumId: undefined,
+            displayedAlbumIdIsOwned: false,
+            canDeleteAlbum: false,
+        });
     });
 
     it("should return canDeleteAlbum based on all albums even when no album is displayed", () => {
-        const state: CatalogViewerState = {
+        const state = {
             ...loadedStateWithTwoAlbums,
             mediasLoadedFromAlbumId: undefined,
             loadingMediasFor: undefined,
         };
 
-        const selection = displayedAlbumSelector(state);
+        const action = albumsLoaded({albums: twoAlbums});
+        const got = action.reducer(state, action);
 
-        expect(selection.canDeleteAlbum).toBe(true);
-        expect(selection.displayedAlbumIdIsOwned).toBe(false);
-        expect(selection.displayedAlbumId).toBeUndefined();
+        expect(displayedAlbumSelector(got)).toEqual({
+            ...displayedAlbumForLoadedState,
+            displayedAlbumId: undefined,
+            displayedAlbumIdIsOwned: false,
+        });
     });
 });
