@@ -161,3 +161,31 @@ EditDatesButtonDisabled.args = {
     ],
     displayedAlbumIdIsOwned: false,
 };
+
+export const DeleteButtonDisabled = (args: Props) => <AlbumsListActionsWrapper {...args} />
+DeleteButtonDisabled.args = {
+    selected: {
+        criterion: {
+            owners: ['black-widow', 'hulk']
+        },
+        avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+        name: "Avenger Family",
+    },
+    options: [
+        {
+            criterion: {
+                owners: []
+            },
+            avatars: ['black-widow-profile.jpg', 'hulk-profile.webp', 'tonystark-profile.jpg', '4.jpg', '5.jpg'],
+            name: "All Albums",
+        },
+        {
+            criterion: {
+                owners: ['black-widow', 'hulk']
+            },
+            avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+            name: "Avengers Family",
+        },
+    ],
+    deleteButtonEnabled: false,
+};

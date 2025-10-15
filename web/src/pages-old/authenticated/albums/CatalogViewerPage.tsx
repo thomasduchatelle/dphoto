@@ -17,7 +17,8 @@ import {
     deleteDialogSelector,
     editDatesDialogSelector,
     editNameDialogSelector,
-    sharingDialogSelector
+    sharingDialogSelector,
+    albumListActionsSelector
 } from "../../../core/catalog";
 import {CreateAlbumDialog} from "../../../components/albums/CreateAlbumDialog";
 import AlbumListActions from "../../../components/albums/AlbumsListActions/AlbumListActions";
@@ -95,14 +96,12 @@ export function CatalogViewerPage() {
             {isMobileDevice && isAlbumsPage ? (
                 <>
                     <AlbumListActions
-                        selected={albumFilter}
-                        options={albumFilterOptions}
+                        {...albumListActionsSelector(state)}
                         onAlbumFiltered={onAlbumFilterChange}
                         openDeleteAlbumDialog={openDeleteAlbumDialog}
                         openEditDatesDialog={openEditDatesDialog}
                         openEditNameDialog={openEditNameDialog}
                         openCreateDialog={openCreateDialog}
-                        {...displayedAlbumSelector(state)}
                     />
                     <AlbumsList albums={albums}
                                 loaded={albumsLoaded}
@@ -114,6 +113,7 @@ export function CatalogViewerPage() {
                 <MediasPage
                     {...catalogViewerPageSelector(state)}
                     {...displayedAlbumSelector(state)}
+                    deleteButtonEnabled={albumListActionsSelector(state).deleteButtonEnabled}
                     onAlbumFilterChange={onAlbumFilterChange}
                     scrollToMedia={query.get("mediaId") ?? undefined}
                     openSharingModal={openSharingModal}
