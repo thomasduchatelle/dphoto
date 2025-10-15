@@ -20,8 +20,8 @@ export default function AlbumListActions({
     openDeleteAlbumDialog: () => void
     openEditDatesDialog: () => void
     openEditNameDialog: () => void
-    displayedAlbumIdIsOwned: boolean
-    canDeleteAlbum: boolean
+    displayedAlbumIdIsOwned?: boolean
+    canDeleteAlbum?: boolean
 }) {
     const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<null | HTMLElement>(null);
     const editMenuOpen = Boolean(editMenuAnchorEl);

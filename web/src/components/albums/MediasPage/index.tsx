@@ -34,8 +34,8 @@ export default function MediasPage({
     openEditDatesDialog: () => void
     openCreateDialog: () => void
     openEditNameDialog: () => void
-    displayedAlbumIdIsOwned: boolean
-    canDeleteAlbum: boolean
+    displayedAlbumIdIsOwned?: boolean
+    canDeleteAlbum?: boolean
     scrollToMedia?: string
 } & CatalogViewerPageSelection) {
     const drawerWidth = 450
