@@ -5,8 +5,10 @@ export interface CanCreateAlbumSelection {
 }
 
 export function canCreateAlbumSelector(state: CatalogViewerState): CanCreateAlbumSelection {
+    if (state.allAlbums.length === 0) {
+        return {canCreateAlbum: true};
+    }
     const hasOwnedAlbum = state.allAlbums.some(album => albumIsOwnedByCurrentUser(album));
-
     return {
         canCreateAlbum: hasOwnedAlbum,
     };

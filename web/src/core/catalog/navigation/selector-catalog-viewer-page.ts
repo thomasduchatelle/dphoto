@@ -1,4 +1,4 @@
-import {Album, AlbumFilterEntry, albumIdEquals, CatalogViewerState, MediaWithinADay} from "../language";
+import {Album, AlbumFilterEntry, albumIdEquals, albumIsOwnedByCurrentUser, CatalogViewerState, MediaWithinADay} from "../language";
 import {getDisplayedAlbumId} from "../language/selector-displayedAlbum";
 
 export interface CatalogViewerPageSelection {
@@ -28,4 +28,11 @@ export function catalogViewerPageSelector(state: CatalogViewerState): CatalogVie
         albumNotFound: state.albumNotFound,
         error: state.error,
     };
+}
+
+function canCreateAlbumSelector(state: CatalogViewerState): boolean {
+    if (state.allAlbums.length === 0) {
+        return true;
+    }
+    return state.allAlbums.some(album => albumIsOwnedByCurrentUser(album));
 }

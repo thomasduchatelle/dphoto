@@ -1,7 +1,15 @@
 import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
-import {loadedStateWithTwoAlbums, myselfUser, selectionForLoadedStateWithTwoAlbums, someMediasByDays, twoAlbums} from "../tests/test-helper-state";
+import {
+    herselfOwner,
+    herselfUser,
+    loadedStateWithTwoAlbums,
+    myselfUser,
+    selectionForLoadedStateWithTwoAlbums,
+    someMediasByDays,
+    twoAlbums
+} from "../tests/test-helper-state";
 
-import {Album, initialCatalogState} from "../language";
+import {Album, canCreateAlbumSelector, initialCatalogState} from "../language";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 import {groupByDay} from "./group-by-day";
 
@@ -111,6 +119,55 @@ describe("action:albumsAndMediasLoaded", () => {
             albums: twoAlbums,
             displayedAlbum: twoAlbums[1],
             medias: someMediasByDays,
+        });
+    });
+
+    it("should allow album creation when user has owned albums", () => {
+        const action = albumsAndMediasLoaded({
+            albums: twoAlbums,
+            medias: someMediasByDays.flatMap(m => m.medias),
+            mediasFromAlbumId: twoAlbums[0].albumId,
+        });
+        const got = action.reducer(initialCatalogState(myselfUser), action);
+
+        expect(canCreateAlbumSelector(got)).toEqual({
+            canCreateAlbum: true,
+        });
+    });
+
+    it("should not allow album creation when user has no owned albums (visitor)", () => {
+        const visitorAlbum: Album = {
+            albumId: {owner: herselfOwner, folderName: "visitor-album"},
+            name: "Visitor Album",
+            start: new Date(2025, 0, 1),
+            end: new Date(2025, 1, 1),
+            totalCount: 10,
+            temperature: 0.25,
+            relativeTemperature: 1,
+            ownedBy: {name: "Herself", users: [herselfUser]},
+            sharedWith: [],
+        };
+
+        const action = albumsAndMediasLoaded({
+            albums: [visitorAlbum],
+            medias: [],
+        });
+        const got = action.reducer(initialCatalogState(myselfUser), action);
+
+        expect(canCreateAlbumSelector(got)).toEqual({
+            canCreateAlbum: false,
+        });
+    });
+
+    it("should allow album creation when there are no albums at all", () => {
+        const action = albumsAndMediasLoaded({
+            albums: [],
+            medias: [],
+        });
+        const got = action.reducer(initialCatalogState(myselfUser), action);
+
+        expect(canCreateAlbumSelector(got)).toEqual({
+            canCreateAlbum: true,
         });
     });
 });
