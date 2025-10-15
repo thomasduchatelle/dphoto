@@ -1,0 +1,83 @@
+name: Deploy to Next on Comment
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  check-comment:
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '+next') }}
+    runs-on: ubuntu-latest
+    outputs:
+      pr-ref: ${{ steps.pr.outputs.ref }}
+      pr-sha: ${{ steps.pr.outputs.sha }}
+    steps:
+      - name: Get PR details
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            core.setOutput('ref', pr.data.head.ref);
+            core.setOutput('sha', pr.data.head.sha);
+
+      - name: Add reaction to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+  build-go:
+    needs: check-comment
+    uses: ./.github/workflows/job-build-go.yml
+    with:
+      snapshot: 'true'
+
+  build-ts:
+    needs: check-comment
+    uses: ./.github/workflows/job-build-ts.yml
+
+  deploy:
+    needs: [ build-go, build-ts ]
+    uses: ./.github/workflows/job-deploy.yml
+    with:
+      target: next
+      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
+    secrets: inherit
+
+  comment-result:
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment deployment success
+        if: needs.deploy.result == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Deployed to `next` environment successfully!'
+            });
+
+      - name: Comment deployment failure
+        if: needs.deploy.result != 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Deployment to `next` environment failed. Check the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.'
+            });

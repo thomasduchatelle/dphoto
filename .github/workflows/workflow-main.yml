@@ -9,16 +9,12 @@ jobs:
     uses: ./.github/workflows/job-test-go.yml
   test-ts:
     uses: ./.github/workflows/job-test-ts.yml
-  test-waku:
-    uses: ./.github/workflows/job-test-waku.yml
   build-go:
     uses: ./.github/workflows/job-build-go.yml
     with:
       snapshot: "false"
   build-ts:
     uses: ./.github/workflows/job-build-ts.yml
-  build-waku:
-    uses: ./.github/workflows/job-build-waku.yml
 
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
@@ -30,10 +26,8 @@ jobs:
     needs:
       - test-go
       - test-ts
-      - test-waku
       - build-go
       - build-ts
-      - build-waku
       - test-cdk
     secrets: inherit
     with:
@@ -45,10 +39,8 @@ jobs:
     needs:
       - test-go
       - test-ts
-      - test-waku
       - build-go
       - build-ts
-      - build-waku
       - test-cdk
     secrets: inherit
     with:
