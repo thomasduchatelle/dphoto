@@ -114,6 +114,7 @@ export function CatalogViewerPage() {
                     {...catalogViewerPageSelector(state)}
                     {...displayedAlbumSelector(state)}
                     deleteButtonEnabled={albumListActionsSelector(state).deleteButtonEnabled}
+                    createButtonEnabled={albumListActionsSelector(state).createButtonEnabled}
                     onAlbumFilterChange={onAlbumFilterChange}
                     scrollToMedia={query.get("mediaId") ?? undefined}
                     openSharingModal={openSharingModal}
