@@ -27,6 +27,7 @@ export default function MediasPage({
                                        openCreateDialog,
                                        displayedAlbumIdIsOwned,
                                        deleteButtonEnabled,
+                                       createButtonEnabled,
                                    }: {
     onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
     openSharingModal: (albumId: AlbumId) => void
@@ -36,6 +37,7 @@ export default function MediasPage({
     openEditNameDialog: () => void
     displayedAlbumIdIsOwned: boolean
     deleteButtonEnabled?: boolean
+    createButtonEnabled?: boolean
     scrollToMedia?: string
 } & CatalogViewerPageSelection) {
     const drawerWidth = 450
@@ -76,6 +78,7 @@ export default function MediasPage({
                                 openCreateDialog={openCreateDialog}
                                 displayedAlbumIdIsOwned={displayedAlbumIdIsOwned}
                                 deleteButtonEnabled={deleteButtonEnabled ?? false}
+                                createButtonEnabled={createButtonEnabled ?? true}
                             />
                             <Divider/>
                         </>
