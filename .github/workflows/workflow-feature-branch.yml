@@ -16,6 +16,8 @@ jobs:
     uses: ./.github/workflows/job-test-go.yml
   test-ts:
     uses: ./.github/workflows/job-test-ts.yml
+    with:
+      update-snapshots: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
     with:
