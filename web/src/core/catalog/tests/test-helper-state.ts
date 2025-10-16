@@ -22,7 +22,7 @@ import {AlbumListActionsProps} from "../../../components/albums/AlbumsListAction
 // Update this file **only if you add a new property** to set a sensible default value
 
 // use myselfUser as a default and current user
-export const myselfUser: CurrentUserInsight = {picture: "my-face.jpg"};
+export const myselfUser: CurrentUserInsight = {picture: "my-face.jpg", isOwner: true};
 
 // use herselfUser when a second user is required
 export const herselfUser: UserDetails = {email: "her@self.com", name: "Herself", picture: "her-face.jpg"};
@@ -212,6 +212,7 @@ export const albumListActionsPropsForLoadedState: AlbumListActionsProps = {
     options: loadedStateWithTwoAlbums.albumFilterOptions,
     displayedAlbumIdIsOwned: true,
     deleteButtonEnabled: true,
+    createButtonEnabled: true,
 }
 
 

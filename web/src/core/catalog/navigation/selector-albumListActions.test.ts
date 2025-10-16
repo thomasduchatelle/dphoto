@@ -41,4 +41,21 @@ describe("selector:albumListActionsSelector", () => {
 
         expect(got.deleteButtonEnabled).toBe(true);
     });
+
+    it("should return createButtonEnabled as true when the current user is an owner", () => {
+        const got = albumListActionsSelector(loadedStateWithTwoAlbums);
+
+        expect(got.createButtonEnabled).toBe(true);
+    });
+
+    it("should return createButtonEnabled as false when the current user is a visitor", () => {
+        const stateWithVisitorUser: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            currentUser: {picture: "visitor-face.jpg", isOwner: false},
+        };
+
+        const got = albumListActionsSelector(stateWithVisitorUser);
+
+        expect(got.createButtonEnabled).toBe(false);
+    });
 });

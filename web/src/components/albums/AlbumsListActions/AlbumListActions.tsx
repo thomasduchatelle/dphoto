@@ -13,6 +13,7 @@ export interface AlbumListActionsProps {
     options: AlbumFilterEntry[];
     displayedAlbumIdIsOwned: boolean;
     deleteButtonEnabled: boolean;
+    createButtonEnabled: boolean;
 }
 
 export interface AlbumListActionsCallbacks {
@@ -28,6 +29,7 @@ export default function AlbumListActions({
                                              options,
                                              displayedAlbumIdIsOwned = true,
                                              deleteButtonEnabled = false,
+                                             createButtonEnabled = true,
                                              onAlbumFiltered,
                                              openCreateDialog,
                                              openDeleteAlbumDialog,
@@ -64,7 +66,7 @@ export default function AlbumListActions({
             <Box sx={{mr: 2}}>
                 <OwnerSelector selected={selected} options={options} onAlbumFiltered={onAlbumFiltered} />
             </Box>
-            <IconButton color="primary" onClick={openCreateDialog} size="large">
+            <IconButton color="primary" onClick={openCreateDialog} size="large" disabled={!createButtonEnabled}>
                 <AddIcon/>
             </IconButton>
             <IconButton color="primary" size="large" onClick={handleEditClick} disabled={!displayedAlbumIdIsOwned}>

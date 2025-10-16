@@ -18,6 +18,7 @@ export interface CatalogViewerState {
 
 export interface CurrentUserInsight {
     picture?: string
+    isOwner: boolean
 }
 
 export interface DateRangeState {
