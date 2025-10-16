@@ -1,6 +1,7 @@
 import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
 import {
-    albumListActionsPropsForLoadedState, herselfUser,
+    albumListActionsPropsForLoadedState,
+    herselfUser,
     loadedStateWithTwoAlbums,
     myselfUser,
     selectionForLoadedStateWithTwoAlbums,
@@ -12,8 +13,6 @@ import {Album, CurrentUserInsight, initialCatalogState} from "../language";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 import {groupByDay} from "./group-by-day";
 import {albumListActionsSelector} from "./selector-albumListActions";
-import {noAlbumAvailable} from "./action-noAlbumAvailable";
-import {DEFAULT_ALBUM_FILTER_ENTRY} from "../common/utils";
 
 describe("action:albumsAndMediasLoaded", () => {
 

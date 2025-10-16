@@ -10,30 +10,35 @@ export default {
 type Props = React.ComponentProps<typeof AlbumsListActions>;
 
 const AlbumsListActionsWrapper: Story<Partial<Props>> = (args) => (
-    <BrowserRouter><AlbumsListActions {...args as Props} onAlbumFiltered={action('onAlbumFiltered')}/></BrowserRouter>
+    <BrowserRouter><AlbumsListActions
+        {...args as Props}
+        onAlbumFiltered={action('onAlbumFiltered')}/></BrowserRouter>
 );
 
 export const NoOptions = (args: Props) => <AlbumsListActionsWrapper {...args} />
 NoOptions.args = {
-    selected: {
+    albumFilter: {
         criterion: {
             owners: []
         },
         avatars: [],
         name: "All Albums",
     },
+    displayedAlbumIdIsOwned: true,
+    hasAlbumsToDelete: true,
+    canCreateAlbums: true,
 };
 
 export const AllOptionsOpen = (args: Props) => <AlbumsListActionsWrapper {...args} />
 AllOptionsOpen.args = {
-    selected: {
+    albumFilter: {
         criterion: {
             owners: ['black-widow', 'hulk']
         },
         avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
         name: "Avenger Family",
     },
-    options: [
+    albumFilterOptions: [
         {
             criterion: {
                 selfOwned: true,
@@ -71,18 +76,21 @@ AllOptionsOpen.args = {
             name: "Hulk",
         }
     ],
+    displayedAlbumIdIsOwned: true,
+    hasAlbumsToDelete: true,
+    canCreateAlbums: true,
 };
 
 export const NoOwnAlbums = (args: Props) => <AlbumsListActionsWrapper {...args} />
 NoOwnAlbums.args = {
-    selected: {
+    albumFilter: {
         criterion: {
             owners: ['black-widow', 'hulk']
         },
         avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
         name: "Avenger Family",
     },
-    options: [
+    albumFilterOptions: [
         {
             criterion: {
                 owners: []
@@ -112,18 +120,21 @@ NoOwnAlbums.args = {
             name: "Hulk",
         }
     ],
+    displayedAlbumIdIsOwned: true,
+    hasAlbumsToDelete: true,
+    canCreateAlbums: true,
 };
 
 export const OnlyOwnAlbums = (args: Props) => <AlbumsListActionsWrapper {...args} />
 OnlyOwnAlbums.args = {
-    selected: {
+    albumFilter: {
         criterion: {
             owners: []
         },
         avatars: ['tonystark-profile.jpg'],
         name: "All Albums",
     },
-    options: [
+    albumFilterOptions: [
         {
             criterion: {
                 owners: []
@@ -132,18 +143,21 @@ OnlyOwnAlbums.args = {
             name: "All Albums",
         },
     ],
+    displayedAlbumIdIsOwned: true,
+    hasAlbumsToDelete: true,
+    canCreateAlbums: true,
 };
 
 export const EditDatesButtonDisabled = (args: Props) => <AlbumsListActionsWrapper {...args} />
 EditDatesButtonDisabled.args = {
-    selected: {
+    albumFilter: {
         criterion: {
             owners: ['black-widow', 'hulk']
         },
         avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
         name: "Avenger Family",
     },
-    options: [
+    albumFilterOptions: [
         {
             criterion: {
                 owners: []
@@ -159,19 +173,21 @@ EditDatesButtonDisabled.args = {
             name: "Avengers Family",
         },
     ],
+    hasAlbumsToDelete: true,
+    canCreateAlbums: true,
     displayedAlbumIdIsOwned: false,
 };
 
 export const DeleteButtonDisabled = (args: Props) => <AlbumsListActionsWrapper {...args} />
 DeleteButtonDisabled.args = {
-    selected: {
+    albumFilter: {
         criterion: {
             owners: ['black-widow', 'hulk']
         },
         avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
         name: "Avenger Family",
     },
-    options: [
+    albumFilterOptions: [
         {
             criterion: {
                 owners: []
@@ -187,19 +203,21 @@ DeleteButtonDisabled.args = {
             name: "Avengers Family",
         },
     ],
-    deleteButtonEnabled: false,
+    displayedAlbumIdIsOwned: true,
+    hasAlbumsToDelete: false,
+    canCreateAlbums: true,
 };
 
 export const CreateButtonDisabled = (args: Props) => <AlbumsListActionsWrapper {...args} />
 CreateButtonDisabled.args = {
-    selected: {
+    albumFilter: {
         criterion: {
             owners: ['black-widow', 'hulk']
         },
         avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
         name: "Avenger Family",
     },
-    options: [
+    albumFilterOptions: [
         {
             criterion: {
                 owners: []
@@ -215,5 +233,7 @@ CreateButtonDisabled.args = {
             name: "Avengers Family",
         },
     ],
-    createButtonEnabled: false,
+    displayedAlbumIdIsOwned: true,
+    hasAlbumsToDelete: true,
+    canCreateAlbums: false,
 };
