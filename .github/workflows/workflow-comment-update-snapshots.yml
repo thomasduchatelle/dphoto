@@ -1,0 +1,71 @@
+name: Update Snapshots on Comment
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  check-comment:
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '+update-snapshots') }}
+    runs-on: ubuntu-latest
+    outputs:
+      pr-ref: ${{ steps.pr.outputs.ref }}
+      pr-sha: ${{ steps.pr.outputs.sha }}
+    steps:
+      - name: Get PR details
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            core.setOutput('ref', pr.data.head.ref);
+            core.setOutput('sha', pr.data.head.sha);
+
+      - name: Add reaction to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+  test-ts:
+    needs: check-comment
+    uses: ./.github/workflows/job-test-ts.yml
+    with:
+      update-snapshots: true
+
+  comment-result:
+    needs: test-ts
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment update success
+        if: needs.test-ts.result == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Snapshots updated successfully!'
+            });
+
+      - name: Comment update failure
+        if: needs.test-ts.result != 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Snapshot update failed. Check the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.'
+            });

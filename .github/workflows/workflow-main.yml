@@ -9,6 +9,8 @@ jobs:
     uses: ./.github/workflows/job-test-go.yml
   test-ts:
     uses: ./.github/workflows/job-test-ts.yml
+    with:
+      update-snapshots: false
   build-go:
     uses: ./.github/workflows/job-build-go.yml
     with:
