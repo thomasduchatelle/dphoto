@@ -8,10 +8,10 @@ export function albumListActionsSelector(state: CatalogViewerState): AlbumListAc
     const createButtonEnabled = state.currentUser.isOwner;
 
     return {
-        selected: state.albumFilter,
-        options: state.albumFilterOptions,
+        albumFilter: state.albumFilter,
+        albumFilterOptions: state.albumFilterOptions,
         displayedAlbumIdIsOwned,
-        deleteButtonEnabled,
-        createButtonEnabled,
+        hasAlbumsToDelete: deleteButtonEnabled,
+        canCreateAlbums: createButtonEnabled,
     };
 }

@@ -9,11 +9,11 @@ import {useState} from "react";
 import {AlbumFilterCriterion, AlbumFilterEntry} from "../../../core/catalog";
 
 export interface AlbumListActionsProps {
-    selected: AlbumFilterEntry;
-    options: AlbumFilterEntry[];
+    albumFilter: AlbumFilterEntry;
+    albumFilterOptions: AlbumFilterEntry[];
     displayedAlbumIdIsOwned: boolean;
-    deleteButtonEnabled: boolean;
-    createButtonEnabled: boolean;
+    hasAlbumsToDelete: boolean;
+    canCreateAlbums: boolean;
 }
 
 export interface AlbumListActionsCallbacks {
@@ -25,11 +25,11 @@ export interface AlbumListActionsCallbacks {
 }
 
 export default function AlbumListActions({
-                                             selected,
-                                             options,
-                                             displayedAlbumIdIsOwned = true,
-                                             deleteButtonEnabled = false,
-                                             createButtonEnabled = true,
+                                             albumFilter,
+                                             albumFilterOptions,
+                                             displayedAlbumIdIsOwned,
+                                             hasAlbumsToDelete,
+                                             canCreateAlbums,
                                              onAlbumFiltered,
                                              openCreateDialog,
                                              openDeleteAlbumDialog,
@@ -64,9 +64,9 @@ export default function AlbumListActions({
             '& > :not(style)': {mt: 1, mb: 1},
         }}>
             <Box sx={{mr: 2}}>
-                <OwnerSelector selected={selected} options={options} onAlbumFiltered={onAlbumFiltered} />
+                <OwnerSelector selected={albumFilter} options={albumFilterOptions} onAlbumFiltered={onAlbumFiltered} />
             </Box>
-            <IconButton color="primary" onClick={openCreateDialog} size="large" disabled={!createButtonEnabled}>
+            <IconButton color="primary" onClick={openCreateDialog} size="large" disabled={!canCreateAlbums}>
                 <AddIcon/>
             </IconButton>
             <IconButton color="primary" size="large" onClick={handleEditClick} disabled={!displayedAlbumIdIsOwned}>
@@ -83,7 +83,7 @@ export default function AlbumListActions({
                 <MenuItem onClick={handleEditDatesClick}>Edit Dates</MenuItem>
                 <MenuItem onClick={handleEditNameClick}>Edit Name</MenuItem>
             </Menu>
-            <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog} disabled={!deleteButtonEnabled}>
+            <IconButton color="primary" size="large" onClick={openDeleteAlbumDialog} disabled={!hasAlbumsToDelete}>
                 <DeleteIcon/>
             </IconButton>
         </Box>

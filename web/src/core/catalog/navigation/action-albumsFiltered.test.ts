@@ -1,7 +1,14 @@
 import {albumsFiltered} from "./action-albumsFiltered";
-import {herselfOwner, loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {
+    albumListActionsPropsForLoadedState,
+    herselfOwner,
+    loadedStateWithTwoAlbums,
+    selectionForLoadedStateWithTwoAlbums,
+    twoAlbums
+} from "../tests/test-helper-state";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
 import {ALL_ALBUMS_FILTER_CRITERION, SELF_OWNED_ALBUM_FILTER_CRITERION} from "../common/utils";
+import {albumListActionsSelector} from "./selector-albumListActions";
 
 describe("action:albumsFiltered", () => {
     it("should show only directly owned album after the AlbumsFiltered", () => {
@@ -12,8 +19,11 @@ describe("action:albumsFiltered", () => {
         );
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
             albums: [twoAlbums[0]],
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
         });
     });
 
@@ -28,8 +38,11 @@ describe("action:albumsFiltered", () => {
         );
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
             albums: twoAlbums,
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
         });
     });
 
@@ -41,9 +54,12 @@ describe("action:albumsFiltered", () => {
         );
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[2],
             albums: [twoAlbums[1]],
             // displayedAlbum: twoAlbums[1], // Displayed album remains the same
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[2],
         });
     });
 });

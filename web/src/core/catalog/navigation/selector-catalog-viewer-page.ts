@@ -2,8 +2,6 @@ import {Album, AlbumFilterEntry, albumIdEquals, CatalogViewerState, MediaWithinA
 import {getDisplayedAlbumId} from "../language/selector-displayedAlbum";
 
 export interface CatalogViewerPageSelection {
-    albumFilter: AlbumFilterEntry;
-    albumFilterOptions: AlbumFilterEntry[];
     albumsLoaded: boolean;
     albums: Album[];
     displayedAlbum: Album | undefined;
@@ -18,8 +16,6 @@ export function catalogViewerPageSelector(state: CatalogViewerState): CatalogVie
     const displayedAlbum = state.allAlbums.find(album => albumIdEquals(album.albumId, displayedAlbumId));
 
     return {
-        albumFilter: state.albumFilter,
-        albumFilterOptions: state.albumFilterOptions,
         albumsLoaded: state.albumsLoaded,
         albums: state.albums,
         displayedAlbum: displayedAlbum,

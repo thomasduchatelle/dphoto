@@ -128,8 +128,6 @@ export const loadedStateWithTwoAlbums: CatalogViewerState = {
 
 // use it as default selection - it matches the loaded state through the selectors
 export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = {
-    albumFilter: loadedStateWithTwoAlbums.albumFilter,
-    albumFilterOptions: loadedStateWithTwoAlbums.albumFilterOptions,
     albumsLoaded: true,
     albums: twoAlbums,
     displayedAlbum: twoAlbums[0],
@@ -208,11 +206,11 @@ export const editJanAlbumNameSelection: EditNameDialogSelection = {
 }
 
 export const albumListActionsPropsForLoadedState: AlbumListActionsProps = {
-    selected: twoAlbumsNoFilterOptions,
-    options: loadedStateWithTwoAlbums.albumFilterOptions,
+    albumFilter: twoAlbumsNoFilterOptions,
+    albumFilterOptions: loadedStateWithTwoAlbums.albumFilterOptions,
     displayedAlbumIdIsOwned: true,
-    deleteButtonEnabled: true,
-    createButtonEnabled: true,
+    hasAlbumsToDelete: true,
+    canCreateAlbums: true,
 }
 
 

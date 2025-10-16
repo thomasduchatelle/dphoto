@@ -4,8 +4,8 @@ import {Alert, Box, Divider, Drawer, Toolbar} from "@mui/material";
 import React from "react";
 import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
-import {AlbumFilterCriterion, AlbumId, CatalogViewerPageSelection} from "../../../core/catalog";
-import AlbumListActions from "../AlbumsListActions/AlbumListActions";
+import {AlbumId, CatalogViewerPageSelection} from "../../../core/catalog";
+import AlbumListActions, {AlbumListActionsCallbacks, AlbumListActionsProps} from "../AlbumsListActions/AlbumListActions";
 import {useClientRouter} from "../../../components/ClientRouter";
 
 
@@ -16,33 +16,17 @@ export default function MediasPage({
                                        mediasLoaded,
                                        medias,
                                        scrollToMedia,
-                                       albumFilterOptions,
-                                       albumFilter,
-                                       onAlbumFilterChange,
                                        displayedAlbum,
                                        openSharingModal,
-                                       openDeleteAlbumDialog,
-                                       openEditDatesDialog,
-                                       openEditNameDialog,
-                                       openCreateDialog,
-                                       displayedAlbumIdIsOwned,
-                                       deleteButtonEnabled,
-                                       createButtonEnabled,
+                                       albumListActionsProps,
                                    }: {
-    onAlbumFilterChange: (criterion: AlbumFilterCriterion) => void
     openSharingModal: (albumId: AlbumId) => void
-    openDeleteAlbumDialog: () => void
-    openEditDatesDialog: () => void
-    openCreateDialog: () => void
-    openEditNameDialog: () => void
-    displayedAlbumIdIsOwned: boolean
-    deleteButtonEnabled?: boolean
-    createButtonEnabled?: boolean
     scrollToMedia?: string
+    albumListActionsProps: AlbumListActionsProps & AlbumListActionsCallbacks
 } & CatalogViewerPageSelection) {
     const drawerWidth = 450
     const {navigate} = useClientRouter();
-    
+
     const handleAlbumClick = (albumId: AlbumId) => {
         navigate(`/albums/${albumId.owner}/${albumId.folderName}`);
     };
@@ -68,18 +52,7 @@ export default function MediasPage({
                     <Toolbar/>
                     {albumsLoaded && (
                         <>
-                            <AlbumListActions
-                                selected={albumFilter}
-                                options={albumFilterOptions}
-                                onAlbumFiltered={onAlbumFilterChange}
-                                openDeleteAlbumDialog={openDeleteAlbumDialog}
-                                openEditDatesDialog={openEditDatesDialog}
-                                openEditNameDialog={openEditNameDialog}
-                                openCreateDialog={openCreateDialog}
-                                displayedAlbumIdIsOwned={displayedAlbumIdIsOwned}
-                                deleteButtonEnabled={deleteButtonEnabled ?? false}
-                                createButtonEnabled={createButtonEnabled ?? true}
-                            />
+                            <AlbumListActions {...albumListActionsProps} />
                             <Divider/>
                         </>
                     )}

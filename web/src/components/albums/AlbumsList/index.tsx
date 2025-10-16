@@ -4,16 +4,15 @@ import {Box, List, ListItem, ListItemAvatar, ListItemText, Skeleton} from "@mui/
 import {Album, AlbumId, albumIdEquals} from "../../../core/catalog";
 import {AlbumListEntry} from "./AlbumListEntry";
 import React from "react";
-import {useClientRouter} from "../../ClientRouter";
 
-const AlbumsList = ({albums, loaded, selectedAlbumId, openSharingModal}: {
+const AlbumsList = ({albums, loaded, selectedAlbumId, openSharingModal, onAlbumClick}: {
     albums: Album[]
     loaded: boolean
     selectedAlbumId?: AlbumId
     openSharingModal: (albumId: AlbumId) => void
+    onAlbumClick: (albumId: AlbumId) => void
 }) => {
     const isSelected = (album: Album) => albumIdEquals(selectedAlbumId, album.albumId)
-    const {navigate} = useClientRouter()
 
     return (
         <Box sx={{overflow: 'auto'}}>
@@ -38,7 +37,7 @@ const AlbumsList = ({albums, loaded, selectedAlbumId, openSharingModal}: {
                             album={album}
                             selected={isSelected(album)}
                             onClickOnSharedWith={openSharingModal}
-                            onClick={() => navigate(`/albums/${album.albumId.owner}/${album.albumId.folderName}`)}
+                            onClick={() => onAlbumClick(album.albumId)}
                         />
                     ))
                 )}
