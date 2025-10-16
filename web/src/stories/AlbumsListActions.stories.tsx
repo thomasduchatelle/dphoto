@@ -189,3 +189,31 @@ DeleteButtonDisabled.args = {
     ],
     deleteButtonEnabled: false,
 };
+
+export const CreateButtonDisabled = (args: Props) => <AlbumsListActionsWrapper {...args} />
+CreateButtonDisabled.args = {
+    selected: {
+        criterion: {
+            owners: ['black-widow', 'hulk']
+        },
+        avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+        name: "Avenger Family",
+    },
+    options: [
+        {
+            criterion: {
+                owners: []
+            },
+            avatars: ['black-widow-profile.jpg', 'hulk-profile.webp', 'tonystark-profile.jpg', '4.jpg', '5.jpg'],
+            name: "All Albums",
+        },
+        {
+            criterion: {
+                owners: ['black-widow', 'hulk']
+            },
+            avatars: ['black-widow-profile.jpg', 'hulk-profile.webp'],
+            name: "Avengers Family",
+        },
+    ],
+    createButtonEnabled: false,
+};
