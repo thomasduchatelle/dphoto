@@ -15,13 +15,14 @@ import {
 import {CatalogViewerPageSelection} from "../navigation";
 import {EditNameDialogSelection} from "../album-edit-name";
 import {CreateDialogSelection} from "../album-create";
+import {AlbumListActionsProps} from "../../../components/albums/AlbumsListActions";
 
 // **IMPORTANT** - to LLM Agents
 // Use the constants defined in this file in all your tests to make them more readable, and robust to changes
 // Update this file **only if you add a new property** to set a sensible default value
 
 // use myselfUser as a default and current user
-export const myselfUser: CurrentUserInsight = {picture: "my-face.jpg"};
+export const myselfUser: CurrentUserInsight = {picture: "my-face.jpg", isOwner: true};
 
 // use herselfUser when a second user is required
 export const herselfUser: UserDetails = {email: "her@self.com", name: "Herself", picture: "her-face.jpg"};
@@ -127,8 +128,6 @@ export const loadedStateWithTwoAlbums: CatalogViewerState = {
 
 // use it as default selection - it matches the loaded state through the selectors
 export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = {
-    albumFilter: loadedStateWithTwoAlbums.albumFilter,
-    albumFilterOptions: loadedStateWithTwoAlbums.albumFilterOptions,
     albumsLoaded: true,
     albums: twoAlbums,
     displayedAlbum: twoAlbums[0],
@@ -204,6 +203,14 @@ export const editJanAlbumNameSelection: EditNameDialogSelection = {
     isCustomFolderNameEnabled: false,
     isLoading: false,
     isSaveEnabled: true,
+}
+
+export const albumListActionsPropsForLoadedState: AlbumListActionsProps = {
+    albumFilter: twoAlbumsNoFilterOptions,
+    albumFilterOptions: loadedStateWithTwoAlbums.albumFilterOptions,
+    displayedAlbumIdIsOwned: true,
+    hasAlbumsToDelete: true,
+    canCreateAlbums: true,
 }
 
 

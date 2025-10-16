@@ -12,6 +12,7 @@ import {useCatalogContext} from "../../../components/catalog-react";
 import {useClientRouter} from "../../../components/ClientRouter";
 import {
     AlbumId,
+    albumListActionsSelector,
     catalogViewerPageSelector,
     createDialogSelector,
     deleteDialogSelector,
@@ -25,7 +26,6 @@ import ShareDialog from "../../../components/albums/ShareDialog";
 import {DeleteAlbumDialog} from "../../../components/albums/DeleteAlbumDialog";
 import {EditDatesDialog} from "../../../components/albums/EditDatesDialog";
 import {EditNameDialog} from "../../../components/albums/EditNameDialog";
-import {displayedAlbumSelector} from "../../../core/catalog/language/selector-displayedAlbum";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
@@ -77,12 +77,21 @@ export function CatalogViewerPage() {
     const isMobileDevice = useMediaQuery(theme.breakpoints.down('md'));
     const isAlbumsPage = path === '/albums'
 
-    const {albumFilter, albumFilterOptions, albumsLoaded, albums, displayedAlbum} = catalogViewerPageSelector(state);
+    const catalogViewerPageSelection = catalogViewerPageSelector(state);
 
     const editDatesDialogState = editDatesDialogSelector(state);
     const editNameDialogState = editNameDialogSelector(state);
     const createDialogState = createDialogSelector(state);
 
+    const albumListActionsProps = {
+        ...albumListActionsSelector(state),
+
+        onAlbumFiltered: onAlbumFilterChange,
+        openDeleteAlbumDialog: openDeleteAlbumDialog,
+        openEditDatesDialog: openEditDatesDialog,
+        openEditNameDialog: openEditNameDialog,
+        openCreateDialog: openCreateDialog,
+    }
     return (
         <Box>
             <AppNav
@@ -90,37 +99,24 @@ export function CatalogViewerPage() {
             />
             <Toolbar/>
             <Box sx={{mt: 2, pl: 2, pr: 2, display: {lg: 'none'}}}>
-                <MobileNavigation album={isAlbumsPage ? undefined : displayedAlbum}/>
+                <MobileNavigation album={isAlbumsPage ? undefined : catalogViewerPageSelection.displayedAlbum}/>
             </Box>
             {isMobileDevice && isAlbumsPage ? (
                 <>
                     <AlbumListActions
-                        selected={albumFilter}
-                        options={albumFilterOptions}
-                        onAlbumFiltered={onAlbumFilterChange}
-                        openDeleteAlbumDialog={openDeleteAlbumDialog}
-                        openEditDatesDialog={openEditDatesDialog}
-                        openEditNameDialog={openEditNameDialog}
-                        openCreateDialog={openCreateDialog}
-                        {...displayedAlbumSelector(state)}
+                        {...albumListActionsProps}
                     />
-                    <AlbumsList albums={albums}
-                                loaded={albumsLoaded}
+                    <AlbumsList albums={catalogViewerPageSelection.albums}
+                                loaded={catalogViewerPageSelection.albumsLoaded}
                                 selectedAlbumId={selectedAlbumId}
                                 openSharingModal={openSharingModal}
                                 onAlbumClick={handleAlbumClick}/>
                 </>
             ) : (
                 <MediasPage
-                    {...catalogViewerPageSelector(state)}
-                    {...displayedAlbumSelector(state)}
-                    onAlbumFilterChange={onAlbumFilterChange}
-                    scrollToMedia={query.get("mediaId") ?? undefined}
+                    {...catalogViewerPageSelection}
                     openSharingModal={openSharingModal}
-                    openDeleteAlbumDialog={openDeleteAlbumDialog}
-                    openEditDatesDialog={openEditDatesDialog}
-                    openEditNameDialog={openEditNameDialog}
-                    openCreateDialog={openCreateDialog}
+                    albumListActionsProps={albumListActionsProps}
                 />
             )}
             <CreateAlbumDialog

@@ -13,6 +13,7 @@ export type AuthenticatedAction = {
 export type RefreshedTokenAction = {
     type: 'refreshed-token'
     accessToken: AccessToken
+    user: AuthenticatedUser
     currentTimeoutId: NodeJS.Timeout
     nextTimeoutId: NodeJS.Timeout
 }
@@ -50,7 +51,14 @@ export function securityContextReducer(current: ApplicationContextType, action: 
         case "refreshed-token":
             current.application.renewRefreshToken(action.accessToken)
             current.application.authenticationTimeoutIds = [...current.application.authenticationTimeoutIds.filter(id => id !== action.currentTimeoutId), action.nextTimeoutId]
-            break
+            
+            return {
+                ...current,
+                security: {
+                    ...current.security,
+                    authenticatedUser: action.user,
+                },
+            }
 
         case "logged-out":
             current.application.revokeAccessToken()

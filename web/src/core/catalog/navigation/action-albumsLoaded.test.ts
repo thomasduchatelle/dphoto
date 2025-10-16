@@ -1,6 +1,13 @@
 import {albumsLoaded} from "./action-albumsLoaded";
-import {createDialogPrefilledForMar25, loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {
+    albumListActionsPropsForLoadedState,
+    createDialogPrefilledForMar25,
+    loadedStateWithTwoAlbums,
+    selectionForLoadedStateWithTwoAlbums,
+    twoAlbums
+} from "../tests/test-helper-state";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
+import {albumListActionsSelector} from "./selector-albumListActions";
 
 describe("action:albumsLoaded", () => {
 
@@ -16,6 +23,7 @@ describe("action:albumsLoaded", () => {
         }, action);
 
         expect(catalogViewerPageSelector(got)).toEqual(selectionForLoadedStateWithTwoAlbums);
+        expect(albumListActionsSelector(got)).toEqual(albumListActionsPropsForLoadedState);
     });
 
     it("should update the available filters and re-apply the selected filter when receiving AlbumsLoaded", () => {
@@ -31,8 +39,11 @@ describe("action:albumsLoaded", () => {
 
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
             albums: [twoAlbums[0]],
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[0],
         });
     });
 
@@ -47,8 +58,11 @@ describe("action:albumsLoaded", () => {
 
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
             albums: twoAlbums,
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
         });
     });
 

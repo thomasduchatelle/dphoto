@@ -2,7 +2,8 @@ import {AxiosError} from "axios";
 import {Dispatch} from "react";
 import {ApplicationAction} from "../application";
 import {AuthenticatedUser, LogoutListener, REFRESH_TOKEN_KEY} from "./security-state";
-import {AuthenticationPort} from "../../pages/Login/domain";
+import {isOwnerFromJWT} from "./jwt-utils";
+import {AuthenticationPort} from "../../pages-old/Login/domain";
 
 interface ErrorBody {
     code: string
@@ -58,7 +59,10 @@ export class AuthenticateCase implements AuthenticationPort {
                     },
                     logoutListener: logoutListener,
                     refreshTimeoutId: timeoutId,
-                    user: user.details,
+                    user: {
+                        ...user.details,
+                        isOwner: isOwnerFromJWT(user.accessToken),
+                    },
                     type: 'authenticated'
                 })
                 return user
@@ -88,7 +92,10 @@ export class AuthenticateCase implements AuthenticationPort {
                     },
                     logoutListener: logoutListener,
                     refreshTimeoutId: timeoutId,
-                    user: user.details,
+                    user: {
+                        ...user.details,
+                        isOwner: isOwnerFromJWT(user.accessToken),
+                    },
                     type: 'authenticated'
                 })
                 return user
@@ -116,6 +123,10 @@ export class AuthenticateCase implements AuthenticationPort {
                         },
                         nextTimeoutId: nextTimeoutId,
                         currentTimeoutId: timeoutId,
+                        user: {
+                            ...user.details,
+                            isOwner: isOwnerFromJWT(user.accessToken),
+                        },
                         type: "refreshed-token",
                     })
                 })

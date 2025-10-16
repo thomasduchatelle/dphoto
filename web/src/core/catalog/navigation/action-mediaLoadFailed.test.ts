@@ -1,8 +1,15 @@
 import {mediaLoadFailed} from "./action-mediaLoadFailed";
-import {loadedStateWithTwoAlbums, myselfUser, selectionForLoadedStateWithTwoAlbums, twoAlbums} from "../tests/test-helper-state";
+import {
+    albumListActionsPropsForLoadedState,
+    loadedStateWithTwoAlbums,
+    myselfUser,
+    selectionForLoadedStateWithTwoAlbums,
+    twoAlbums
+} from "../tests/test-helper-state";
 
 import {initialCatalogState} from "../language";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
+import {albumListActionsSelector} from "./selector-albumListActions";
 
 describe("action:mediaLoadFailed", () => {
     it("should set the errors and clears medias and media loading status when reducing MediaLoadFailed", () => {
@@ -20,6 +27,9 @@ describe("action:mediaLoadFailed", () => {
             ...selectionForLoadedStateWithTwoAlbums,
             medias: [],
             error: testError,
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
         });
     });
 
@@ -39,6 +49,9 @@ describe("action:mediaLoadFailed", () => {
             error: testError,
             albumsLoaded: true,
             mediasLoaded: true,
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
         });
     });
 
@@ -62,11 +75,15 @@ describe("action:mediaLoadFailed", () => {
 
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
-            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
             albums: twoAlbums,
             displayedAlbum: twoAlbums[1],
             medias: [],
             error: testError,
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
+            albumFilter: loadedStateWithTwoAlbums.albumFilterOptions[1],
+            displayedAlbumIdIsOwned: false,
         });
     });
 });

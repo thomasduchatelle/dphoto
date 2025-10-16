@@ -1,6 +1,13 @@
 import {mediasLoaded} from "./action-mediasLoaded";
-import {loadedStateWithTwoAlbums, selectionForLoadedStateWithTwoAlbums, someMediasByDays, twoAlbums} from "../tests/test-helper-state";
+import {
+    albumListActionsPropsForLoadedState,
+    loadedStateWithTwoAlbums,
+    selectionForLoadedStateWithTwoAlbums,
+    someMediasByDays,
+    twoAlbums
+} from "../tests/test-helper-state";
 import {catalogViewerPageSelector} from "./selector-catalog-viewer-page";
+import {albumListActionsSelector} from "./selector-albumListActions";
 
 describe("action:mediasLoaded", () => {
     it("should change the medias and loading status when reducing MediasLoaded, and clear errors", () => {
@@ -21,6 +28,10 @@ describe("action:mediasLoaded", () => {
             ...selectionForLoadedStateWithTwoAlbums,
             displayedAlbum: twoAlbums[1],
             medias: someMediasByDays,
+        });
+        expect(albumListActionsSelector(got)).toEqual({
+            ...albumListActionsPropsForLoadedState,
+            displayedAlbumIdIsOwned: false,
         });
     });
 
