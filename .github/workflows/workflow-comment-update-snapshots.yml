@@ -37,66 +37,9 @@ jobs:
 
   test-ts:
     needs: check-comment
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-          ref: ${{ needs.check-comment.outputs.pr-ref }}
-
-      - name: SemVer
-        id: semver
-        uses: ./.github/actions/semver
-
-      - name: Cache playwright binaries
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: |
-            ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright
-
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: |
-            ~/.npm
-            web/node_modules
-          key: ${{ runner.os }}-test-${{ hashFiles('web/package-lock.json') }}
-
-      - name: Setup NodeJS
-        uses: ./.github/actions/install-node
-        with:
-          cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
-
-      - name: Generate snapshots
-        id: generate-snapshots
-        run: |
-          make update-snapshots-ci
-
-      - name: Publish new snapshots
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: ui/test - update visual regression snapshots
-
-      - name: Test and build WEB UI
-        run: make test-web-ci
-
-      - name: Upload Playwright Report
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report
-          path: |
-            web/playwright-report/
-            web/test-results/
-            web-waku/playwright-report/
-            web-waku/test-results/
-          retention-days: 30
+    uses: ./.github/workflows/job-test-ts.yml
+    with:
+      update-snapshots: true
 
   comment-result:
     needs: test-ts

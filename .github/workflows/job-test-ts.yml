@@ -1,6 +1,11 @@
 on:
   workflow_call:
-    inputs: {}
+    inputs:
+      update-snapshots:
+        description: "Force update snapshots mode"
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   test-ts:
@@ -41,12 +46,12 @@ jobs:
 
       - name: Generate snapshots
         id: generate-snapshots
-        if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+        if: ${{ inputs.update-snapshots || contains(github.event.head_commit.message, '+update-snapshots') }}
         run: |
           make update-snapshots-ci
 
       - name: Publish new snapshots
-        if: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+        if: ${{ inputs.update-snapshots || contains(github.event.head_commit.message, '+update-snapshots') }}
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: ui/test - update visual regression snapshots
