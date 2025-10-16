@@ -6,6 +6,7 @@ export interface AuthenticatedUser {
     name: string
     email: string
     picture?: string
+    isOwner: boolean
 }
 
 export interface AccessToken {
