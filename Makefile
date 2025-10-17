@@ -2,14 +2,14 @@
 
 all: clean test build
 
-clean: clean-web clean-waku clean-api
+clean: clean-web clean-api
 	go clean -testcache
 
-setup: setup-cdk setup-waku setup-app
+setup: setup-cdk setup-go setup-app
 
-test: test-cdk test-go test-web test-waku
+test: test-cdk test-go test-web
 
-build: build-go build-app build-waku
+build: build-go build-app
 
 deploy: deploy-cdk
 
@@ -110,38 +110,6 @@ ladle:
 
 playwright:
 	cd web && npx playwright test --reporter html
-
-#######################################
-## WAKU
-#######################################
-
-.PHONY: clean-waku setup-waku test-waku build-waku
-
-clean-waku:
-	cd web-waku && rm -rf dist/ && rm -f bin/waku-lambda.zip
-
-setup-waku:
-	cd web-waku && npm install
-	cd web-waku && npx playwright install
-
-setup-waku-ci:
-	cd web-waku && npm ci
-	cd web-waku && npx playwright install chromium --with-deps
-
-test-waku:
-	@echo "Waku tests - placeholder (no tests configured yet)"
-	cd web-waku && npm run test:visual
-
-waku-update-snapshots:
-	@echo "Update snapshots [should only be used on CI]"
-	rm -rf web-waku/playwright/visual-regression.spec.ts-snapshots
-	cd web-waku && npm run test:visual -- -u
-
-build-waku:
-	cd web-waku && npm run build:lambda
-
-start-waku:
-	cd web-waku && npm run dev
 
 #######################################
 ## API
