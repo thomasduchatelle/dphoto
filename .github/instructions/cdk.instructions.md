@@ -1,3 +1,7 @@
+---
+applyTo: "deployments/cdk/**"
+---
+
 # CDK Development Principles for DPhoto
 
 ## Overview
@@ -47,14 +51,14 @@ DPhoto: Personal photo backup system with Go Lambda backend, React frontend, CDK
 
 * Constructs with stateful resources **that must never be lost** (examples: DynamoDB table, S3 buckets)
 * Constructs with resources exposed to other components of the system
-  * SSM parameters used by legacy deployments (Serverless Framework)
-  * SNS topics and SQS queues used a communication between two domains
+    * SSM parameters used by legacy deployments (Serverless Framework)
+    * SNS topics and SQS queues used a communication between two domains
 * Underlying AWS resource must have their Logical ID pinned, and tested, to prevent resources to be re-created when they are moved between constructs
 
 **Application Stack** (`application-stack.ts`):
 
 * Constructs with **stateless, or frequently deployed resources**
-  * examples: Lambda functions, API Gateway, CloudFront, IAM roles
+    * examples: Lambda functions, API Gateway, CloudFront, IAM roles
 
 ### Clean Code
 
@@ -69,26 +73,26 @@ _Implementation Pattern:_
 ```typescript
 // Stack: High-level, declarative, readable
 export class InfrastructureStack extends Stack {
-  public readonly archiveStore: ArchiveStoreConstruct; // exposed for cross-stacks communication
+    public readonly archiveStore: ArchiveStoreConstruct; // exposed for cross-stacks communication
 
-  constructor(scope: Construct, id: string, props: StackProps) {
+    constructor(scope: Construct, id: string, props: StackProps) {
         super(scope, id, props);
 
         // Clean, descriptive resource creation
         this.archiveStore = new ArchiveStoreConstruct(this, 'ArchiveStore', config);
         // ... other "store" constructs
-  }
+    }
 }
 
 export class ApplicationStack extends Stack {
-  constructor(scope: Construct, id: string, props: StackProps & {
-    archiveStore: ArchiveStoreConstruct,
-  }) {
+    constructor(scope: Construct, id: string, props: StackProps & {
+        archiveStore: ArchiveStoreConstruct,
+    }) {
         super(scope, id, props);
 
         new ArchiveWorkersConstruct(this, 'ArchiveWorkers', {...config, archiveStore});
         // ... other "worker" or "endpoints" constructs
-  }
+    }
 }
 ```
 
@@ -114,11 +118,11 @@ The reference of the dependency construct is passed to the construct requiring i
   // lib/utils/workload.ts
   interface Workload { // we define Workload interface instead of taking the concrete implementaiton "GoLangLambdaFunction"
     role: iam.IGrantable;
-    function: {addEnvironment(key: string, value: string)};
+    function: lambda.IFunction;
   }
-
+  
   // lib/catalog/catalog-store-construct.ts
-  class CatalogStoreConstruct {
+  export class CatalogStoreConstruct extends Construct {
     public grantRWToCatalogTable(lambda: Workload) {
         this.catalogTable.grantReadWriteData(lambda.role);
         lambda.function.addEnvironment("CATALOG_TABLE_NAME", this.catalogTable.tableName)
@@ -141,26 +145,26 @@ minor property change, a resource is added or is removed, they lose their value.
 ```typescript
 // deployments/cdk/libs/stacks/infrastructure-stack.test.ts
 describe('InfrastructureStack', () => {
-  test('exports all required SSM parameters for Serverless deployments', () => {
+    test('exports all required SSM parameters for Serverless deployments', () => {
         // Verify SSM parameters exist with correct paths
-  });
+    });
 
-  test('main S3 bucket has deletion protection', () => {
+    test('main S3 bucket has deletion protection', () => {
         // Verify bucket cannot be accidentally deleted
-  });
+    });
 });
 ```
 
 ## Naming Conventions
 
 * **Stacks**:
-  * **Stacks IDs**: hyphen case prefixed with "dphoto-{environment name}" (example: `dphoto-next-infrastructure`, where `next` is the environment)
-  * **Stack Class**: class naming is in PascalCase and suffixed by "Stack" (example: `InfrastructureStack`)
-  * **Stack File**: the file has the same name in hyphen case (example: `infrastructure-stack.ts`)
+    * **Stacks IDs**: hyphen case prefixed with "dphoto-{environment name}" (example: `dphoto-next-infrastructure`, where `next` is the environment)
+    * **Stack Class**: class naming is in PascalCase and suffixed by "Stack" (example: `InfrastructureStack`)
+    * **Stack File**: the file has the same name in hyphen case (example: `infrastructure-stack.ts`)
 * **Resources**:
-  * **Resource IDs**: PascalCase suffixed by "Construct" (example: `CatalogStoreConstruct`)
-  * **Resource Class**: same as the resource ID (example: `CatalogStoreConstruct`)
-  * **Resource File**: same as the class but in hyphen case (example: `catalog-store-construct.ts`)
+    * **Resource IDs**: PascalCase suffixed by "Construct" (example: `CatalogStoreConstruct`)
+    * **Resource Class**: same as the resource ID (example: `CatalogStoreConstruct`)
+    * **Resource File**: same as the class but in hyphen case (example: `catalog-store-construct.ts`)
 
 ## Environment Configuration
 
@@ -185,22 +189,22 @@ It abstracts the Lambda resource function and its associated role, and gives sen
 ```typescript
 // deployments/cdk/lib/utils/golang-lambda-function.ts
 export interface GoLangLambdaFunctionProps {
-  environmentName: string;
-  functionName: string;
-  artifactPath?: string;
-  timeout?: cdk.Duration;
-  memorySize?: number;
-  environment?: Record<string, string>;
+    environmentName: string;
+    functionName: string;
+    artifactPath?: string;
+    timeout?: cdk.Duration;
+    memorySize?: number;
+    environment?: Record<string, string>;
 }
 
 export class GoLangLambdaFunction extends Construct {
-  public readonly function: lambda.Function;
-  public readonly role: iam.Role;
+    public readonly function: lambda.Function;
+    public readonly role: iam.Role;
 
-  constructor(scope: Construct, id: string, props: GoLangLambdaFunctionProps) {
-    super(scope, id, props)
-    // ...
-  }
+    constructor(scope: Construct, id: string, props: GoLangLambdaFunctionProps) {
+        super(scope, id, props)
+        // ...
+    }
 }
 ```
 
@@ -211,22 +215,22 @@ Create a GO Lambda and expose it through the API Gateway
 ```typescript
 // deployments/cdk/lib/utils/simple-go-endpoint.ts
 export interface RouteConfig {
-  path: string;
-  method: apigatewayv2.HttpMethod;
+    path: string;
+    method: apigatewayv2.HttpMethod;
 }
 
 export interface SimpleGoEndpointProps extends GoLangLambdaFunctionProps {
-  httpApi: apigatewayv2.HttpApi;
-  routes: RouteConfig[];
+    httpApi: apigatewayv2.HttpApi;
+    routes: RouteConfig[];
 }
 
 export class SimpleGoEndpoint extends Construct {
-  public readonly lambda: GoLangLambdaFunction;
-  private readonly integration: apigatewayv2_integrations.HttpLambdaIntegration;
+    public readonly lambda: GoLangLambdaFunction;
+    private readonly integration: apigatewayv2_integrations.HttpLambdaIntegration;
 
-  constructor(scope: Construct, id: string, props: SimpleGoEndpointProps) {
-    super(scope, id, props);
-    // ...
+    constructor(scope: Construct, id: string, props: SimpleGoEndpointProps) {
+        super(scope, id, props);
+        // ...
     }
 }
 ```

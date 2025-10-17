@@ -1,3 +1,7 @@
+---
+applyTo: "pkg/**, api/lambdas/**, cmd/**, **/*.go"
+---
+
 # Golang Coding Standards
 
 ## How to write a test ?
