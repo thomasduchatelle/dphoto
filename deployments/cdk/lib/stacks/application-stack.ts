@@ -12,6 +12,8 @@ import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
 import {CatalogStoreConstruct} from "../catalog/catalog-store-construct";
 import {ArchivistConstruct} from "../archive/archivist-construct";
 import {LambdaAuthoriserConstruct} from "../access/lambda-authoriser-construct";
+import {CognitoUserPoolConstruct} from "../access/cognito-user-pool-construct";
+import {CognitoClientConstruct} from "../access/cognito-client-construct";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -19,11 +21,24 @@ export interface DPhotoApplicationStackProps extends cdk.StackProps {
     archiveStore: ArchiveStoreConstruct;
     catalogStore: CatalogStoreConstruct;
     archivist: ArchivistConstruct;
+    cognitoUserPool: CognitoUserPoolConstruct;
+    cognitoCertificate: cdk.aws_certificatemanager.ICertificate;
 }
 
 export class ApplicationStack extends cdk.Stack {
-    constructor(scope: Construct, id: string, {config, archiveStore, catalogStore, archivist, ...props}: DPhotoApplicationStackProps) {
-        super(scope, id, props);
+    constructor(scope: Construct, id: string, {
+        config,
+        archiveStore,
+        catalogStore,
+        archivist,
+        cognitoUserPool,
+        cognitoCertificate,
+        ...props
+    }: DPhotoApplicationStackProps) {
+        super(scope, id, {
+            ...props,
+            crossRegionReferences: true,
+        });
 
         // Apply tags to all resources in this stack
         cdk.Tags.of(this).add('CreatedBy', 'cdk');
@@ -36,9 +51,22 @@ export class ApplicationStack extends cdk.Stack {
             ...config,
         });
 
+        const cognitoClient = new CognitoClientConstruct(this, 'CognitoClient', {
+            environmentName: props.environmentName,
+            userPool: cognitoUserPool.userPool,
+            cognitoDomainName: config.cognitoDomainName,
+            rootDomain: config.rootDomain,
+            domainName: config.domainName,
+            cognitoExtraRedirectDomains: config.cognitoExtraRedirectDomains,
+            cognitoCertificate: cognitoCertificate,
+        });
+
         new WakuWebUiConstruct(this, 'WakuWebUi', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
+            userPool: cognitoUserPool.userPool,
+            userPoolClient: cognitoClient.userPoolClient,
+            cognitoDomainName: cognitoClient.cognitoDomainName,
         });
 
         new VersionEndpointConstruct(this, 'VersionEndpoint', {
