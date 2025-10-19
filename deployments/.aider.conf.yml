@@ -1,6 +1,7 @@
 model: six
 
 read:
-  - ../docs/coding_standards_cdk.md
+  - ../.github/copilot-instructions.md
+  - ../.github/instructions/cdk.instructions.md
 
 map-tokens: 0

@@ -12,6 +12,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import {Construct, IDependable} from 'constructs';
 import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from 'aws-cdk-lib/custom-resources';
 import {createSingleRouteEndpoint} from "./simple-go-endpoint";
+import {ICertificate} from "aws-cdk-lib/aws-certificatemanager";
 
 export interface ApiGatewayConstructProps {
     environmentName: string;
@@ -24,6 +25,7 @@ export interface ApiGatewayConstructProps {
 export class ApiGatewayConstruct extends Construct {
     public readonly httpApi: apigatewayv2.HttpApi;
     public readonly domainName: apigatewayv2.DomainName;
+    public readonly certificate: ICertificate;
     private readonly accessLogEnabled: boolean;
 
     constructor(scope: Construct, id: string, {accessLogEnabled = false, ...props}: ApiGatewayConstructProps) {
@@ -33,8 +35,13 @@ export class ApiGatewayConstruct extends Construct {
         const letsEncryptLambdaTrigger: triggers.Trigger = this.installCertificateRenewalMechanism(props)
 
         const certificateArn = this.readCertificateARN(letsEncryptLambdaTrigger, props.environmentName);
+        this.certificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
+            this,
+            'Certificate',
+            certificateArn
+        )
 
-        const {httpApi, domainName} = this.createAPIGateway(props, certificateArn)
+        const {httpApi, domainName} = this.createAPIGateway(props, this.certificate)
         this.httpApi = httpApi;
         this.domainName = domainName;
 
@@ -138,7 +145,7 @@ export class ApiGatewayConstruct extends Construct {
         return certificateLookup.getResponseField('Parameter.Value');
     }
 
-    private createAPIGateway(props: ApiGatewayConstructProps, certificateArn: string) {
+    private createAPIGateway(props: ApiGatewayConstructProps, certificate: ICertificate) {
 
         const httpApi = new apigatewayv2.HttpApi(this, 'HttpApi', {
             apiName: `dphoto-${props.environmentName}-api`,
@@ -182,11 +189,7 @@ export class ApiGatewayConstruct extends Construct {
         }
         const domainName = new apigatewayv2.DomainName(this, 'DomainName', {
             domainName: props.domainName,
-            certificate: cdk.aws_certificatemanager.Certificate.fromCertificateArn(
-                this,
-                'Certificate',
-                certificateArn
-            )
+            certificate: certificate
         });
 
         new apigatewayv2.ApiMapping(this, 'ApiMapping', {
