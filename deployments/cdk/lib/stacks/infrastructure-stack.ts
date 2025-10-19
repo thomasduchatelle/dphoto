@@ -77,7 +77,6 @@ export class InfrastructureStack extends cdk.Stack {
         const cognitoUserPool = new CognitoUserPoolConstruct(this, 'CognitoUserPool', {
             environmentName: props.environmentName,
             googleClientId: props.config.googleLoginClientId,
-            googleClientSecretEncrypted: props.config.googleClientSecretEncrypted,
         });
 
         new cdk.CfnOutput(this, 'ArchiveBucketName', {

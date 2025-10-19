@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
+import {aws_ssm} from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
 import {Construct} from 'constructs';
 
 export interface CognitoUserPoolConstructProps {
@@ -55,17 +55,16 @@ export class CognitoUserPoolConstruct extends Construct {
                 requireSymbols: false,
             },
             accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
-            removalPolicy: cdk.RemovalPolicy.RETAIN,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
             advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
         });
 
         cdk.Tags.of(this.userPool).add('Name', `${prefix}-user-pool`);
 
-        // Retrieve Google Client Secret from SSM Parameter Store
-        const googleClientSecret = ssm.StringParameter.valueForSecureStringParameter(
+        // SSM SecretString cannot be used, it triggers the error: "SSM Secure reference is not supported in: [AWS::Cognito::UserPoolIdentityProvider/Properties/ProviderDetails/client_secret]"
+        const googleClientSecret = aws_ssm.StringParameter.valueForStringParameter(
             this,
-            `dphoto/cdk-input/googleClientSecret/${props.environmentName}`,
-            1
+            `/dphoto/cdk-input/googleClientSecret/${props.environmentName}`,
         );
 
         // Configure Google Identity Provider
