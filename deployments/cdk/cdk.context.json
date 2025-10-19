@@ -6,5 +6,9 @@
   "hosted-zone:account=472045025110:domainName=duchatelle.me:region=eu-west-1": {
     "Id": "/hostedzone/Z10326223EQACRD68QWGI",
     "Name": "duchatelle.me."
+  },
+  "hosted-zone:account=472045025110:domainName=duchatelle.me:region=us-east-1": {
+    "Id": "/hostedzone/Z10326223EQACRD68QWGI",
+    "Name": "duchatelle.me."
   }
 }

@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import {environments} from '../lib/config/environments';
 import {InfrastructureStack} from '../lib/stacks/infrastructure-stack';
 import {ApplicationStack} from "../lib/stacks/application-stack";
+import {CognitoCertificateStack} from "../lib/stacks/cognito-certificate-stack";
 
 export default function main(
     defaultEnvName: string = "next",
@@ -22,6 +23,7 @@ export default function main(
     console.log(`Initializing CDK for environment: ${envName}`);
     console.log(`Configuration:`, config);
 
+    // Infrastructure Stack has all the data that must be retained and secured (buckets with the medias, storages, queuses, ...)
     const infrastructureStack = new InfrastructureStack(app, `dphoto-${envName}-infra`, {
         environmentName: envName,
         config: config,
@@ -32,12 +34,26 @@ export default function main(
         description: `DPhoto infrastructure stack for ${envName} environment`
     });
 
+    // Stack required by cognito hosted UI, it installs a certificate in us-east-1
+    const cognitoCertificateStack = new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
+        environmentName: envName,
+        config: config,
+        env: {
+            account: account,
+            region: 'us-east-1'
+        },
+        description: `DPhoto Cognito certificate stack for ${envName} environment (us-east-1)`
+    });
+
+    // Infrastructure Stack has everything else, it can be destroyed and recreated at any time (gateway, workload deployments, UI, ...)
     const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
         environmentName: envName,
         config,
         archiveStore: infrastructureStack.archiveStore,
         catalogStore: infrastructureStack.catalogStore,
         archivist: infrastructureStack.archivist,
+        cognitoUserPool: infrastructureStack.cognitoUserPool,
+        cognitoCertificate: cognitoCertificateStack.cognitoCertificate,
         env: {
             account: account,
             region: region
@@ -45,6 +61,7 @@ export default function main(
     });
 
     applicationStack.addDependency(infrastructureStack);
+    applicationStack.addDependency(cognitoCertificateStack);
 
     return app;
 }
