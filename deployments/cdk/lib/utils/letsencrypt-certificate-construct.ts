@@ -13,13 +13,17 @@ export interface LetsEncryptCertificateConstructProps {
     environmentName: string;
     domainName: string;
     certificateEmail: string;
+    ssmParameterSuffix?: string;
 }
 
 export class LetsEncryptCertificateConstruct extends Construct {
     public readonly certificate: ICertificate;
+    private readonly ssmParameterSuffix: string;
 
     constructor(scope: Construct, id: string, props: LetsEncryptCertificateConstructProps) {
         super(scope, id);
+        
+        this.ssmParameterSuffix = props.ssmParameterSuffix || 'domainCertificationArn';
 
         const letsEncryptLambdaTrigger: triggers.Trigger = this.installCertificateRenewalMechanism(props)
         const certificateArn = this.readCertificateARN(letsEncryptLambdaTrigger, props.environmentName);
@@ -128,6 +132,6 @@ export class LetsEncryptCertificateConstruct extends Construct {
     }
 
     private getSsmKeyCertificateArn(environmentName: string) {
-        return `/dphoto/${environmentName}/acm/domainCertificationArn`;
+        return `/dphoto/${environmentName}/acm/${this.ssmParameterSuffix}`;
     }
 }

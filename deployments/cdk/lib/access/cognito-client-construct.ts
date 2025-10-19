@@ -14,6 +14,7 @@ export interface CognitoClientConstructProps {
     cognitoDomainName: string;
     cognitoExtraRedirectDomains: string[]
     certificate: ICertificate;
+    cognitoCertificate: ICertificate;
 }
 
 export class CognitoClientConstruct extends Construct {
@@ -30,7 +31,7 @@ export class CognitoClientConstruct extends Construct {
         const userPoolDomain = new UserPoolDomain(this, "UserPoolDomain", {
             customDomain: {
                 domainName: props.cognitoDomainName,
-                certificate: props.certificate,
+                certificate: props.cognitoCertificate,
             },
             userPool: props.userPool
         })

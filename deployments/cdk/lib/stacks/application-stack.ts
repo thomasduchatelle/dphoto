@@ -22,11 +22,15 @@ export interface DPhotoApplicationStackProps extends cdk.StackProps {
     catalogStore: CatalogStoreConstruct;
     archivist: ArchivistConstruct;
     cognitoUserPool: CognitoUserPoolConstruct;
+    cognitoCertificate: cdk.aws_certificatemanager.ICertificate;
 }
 
 export class ApplicationStack extends cdk.Stack {
-    constructor(scope: Construct, id: string, {config, archiveStore, catalogStore, archivist, cognitoUserPool, ...props}: DPhotoApplicationStackProps) {
-        super(scope, id, props);
+    constructor(scope: Construct, id: string, {config, archiveStore, catalogStore, archivist, cognitoUserPool, cognitoCertificate, ...props}: DPhotoApplicationStackProps) {
+        super(scope, id, {
+            ...props,
+            crossRegionReferences: true,
+        });
 
         // Apply tags to all resources in this stack
         cdk.Tags.of(this).add('CreatedBy', 'cdk');
@@ -47,6 +51,7 @@ export class ApplicationStack extends cdk.Stack {
             domainName: config.domainName,
             cognitoExtraRedirectDomains: config.cognitoExtraRedirectDomains,
             certificate: apiGateway.certificate,
+            cognitoCertificate: cognitoCertificate,
         });
 
         new WakuWebUiConstruct(this, 'WakuWebUi', {
