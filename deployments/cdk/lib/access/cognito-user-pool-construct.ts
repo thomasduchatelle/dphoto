@@ -1,11 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import {Construct} from 'constructs';
 
 export interface CognitoUserPoolConstructProps {
     environmentName: string;
     googleClientId: string;
-    googleClientSecretEncrypted: string;
 }
 
 export class CognitoUserPoolConstruct extends Construct {
@@ -61,19 +61,26 @@ export class CognitoUserPoolConstruct extends Construct {
 
         cdk.Tags.of(this.userPool).add('Name', `${prefix}-user-pool`);
 
+        // Retrieve Google Client Secret from SSM Parameter Store
+        const googleClientSecret = ssm.StringParameter.valueForSecureStringParameter(
+            this,
+            `dphoto/cdk-input/googleClientSecret/${props.environmentName}`,
+            1
+        );
+
         // Configure Google Identity Provider
-        // new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {
-        //     userPool: this.userPool,
-        //     clientId: props.googleClientId,
-        //     clientSecretValue: cdk.SecretValue.unsafePlainText(props.googleClientSecretEncrypted),
-        //     scopes: ['profile', 'email', 'openid'],
-        //     attributeMapping: {
-        //         email: cognito.ProviderAttribute.GOOGLE_EMAIL,
-        //         givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
-        //         familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
-        //         profilePicture: cognito.ProviderAttribute.GOOGLE_PICTURE,
-        //     },
-        // });
+        new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {
+            userPool: this.userPool,
+            clientId: props.googleClientId,
+            clientSecretValue: cdk.SecretValue.unsafePlainText(googleClientSecret),
+            scopes: ['profile', 'email', 'openid'],
+            attributeMapping: {
+                email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+                givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
+                familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
+                profilePicture: cognito.ProviderAttribute.GOOGLE_PICTURE,
+            },
+        });
 
         // Create User Groups
         this.adminsGroup = new cognito.CfnUserPoolGroup(this, 'AdminsGroup', {
