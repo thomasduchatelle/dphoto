@@ -1,10 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import {UserPoolClient, UserPoolDomain} from 'aws-cdk-lib/aws-cognito';
 import {ICertificate} from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
 import {Construct} from 'constructs';
-import {UserPoolDomain} from "aws-cdk-lib/aws-cognito";
 
 export interface CognitoClientConstructProps {
     environmentName: string;
@@ -49,7 +49,8 @@ export class CognitoClientConstruct extends Construct {
         });
 
         // Create User Pool Client with secret for SSR
-        this.userPoolClient = props.userPool.addClient('UserPoolClient', {
+        this.userPoolClient = new UserPoolClient(this, 'UserPoolClient', {
+            userPool: props.userPool,
             userPoolClientName: `${prefix}-web-client`,
             generateSecret: true,
             authFlows: {
@@ -81,7 +82,7 @@ export class CognitoClientConstruct extends Construct {
             accessTokenValidity: cdk.Duration.hours(1),
             idTokenValidity: cdk.Duration.hours(1),
             refreshTokenValidity: cdk.Duration.days(30),
-            preventUserExistenceErrors: true,
+            preventUserExistenceErrors: true
         });
 
         // Outputs

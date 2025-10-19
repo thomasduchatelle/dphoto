@@ -62,18 +62,18 @@ export class CognitoUserPoolConstruct extends Construct {
         cdk.Tags.of(this.userPool).add('Name', `${prefix}-user-pool`);
 
         // Configure Google Identity Provider
-        new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {
-            userPool: this.userPool,
-            clientId: props.googleClientId,
-            clientSecretValue: cdk.SecretValue.unsafePlainText(props.googleClientSecretEncrypted),
-            scopes: ['profile', 'email', 'openid'],
-            attributeMapping: {
-                email: cognito.ProviderAttribute.GOOGLE_EMAIL,
-                givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
-                familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
-                profilePicture: cognito.ProviderAttribute.GOOGLE_PICTURE,
-            },
-        });
+        // new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {
+        //     userPool: this.userPool,
+        //     clientId: props.googleClientId,
+        //     clientSecretValue: cdk.SecretValue.unsafePlainText(props.googleClientSecretEncrypted),
+        //     scopes: ['profile', 'email', 'openid'],
+        //     attributeMapping: {
+        //         email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+        //         givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
+        //         familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
+        //         profilePicture: cognito.ProviderAttribute.GOOGLE_PICTURE,
+        //     },
+        // });
 
         // Create User Groups
         this.adminsGroup = new cognito.CfnUserPoolGroup(this, 'AdminsGroup', {

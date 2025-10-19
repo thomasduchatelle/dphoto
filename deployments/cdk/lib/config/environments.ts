@@ -28,7 +28,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         cognitoExtraRedirectDomains: [],
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-1o0or8ioo9c4m31405q2h2k8hvdb5enh.apps.googleusercontent.com',
-        googleClientSecretEncrypted: 'PLACEHOLDER_ENCRYPTED_SECRET_LIVE',
+        googleClientSecretEncrypted: 'AQICAHiCggJXGqUgcrAL3bSkl4BXA3qIq9BUPq/YRl2JcJ0NBwGN3m8rh8Lb3fCjC9nzkZ4zAAAAgTB/BgkqhkiG9w0BBwagcjBwAgEAMGsGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMtEQZi8qYmo1bD4rcAgEQgD7YKpfOOOwyxaDpYJbKImXQgM1zknVnCo7RV7iAWlTC7qlwOH2xhxM6Knrn+wVZ+nnhLo2bufQlafcw1gdpng==',
     },
     next: {
         production: false,
@@ -39,7 +39,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         cognitoExtraRedirectDomains: ['localhost:3000'],
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com',
-        googleClientSecretEncrypted: 'PLACEHOLDER_ENCRYPTED_SECRET_NEXT',
+        googleClientSecretEncrypted: 'AQICAHiCggJXGqUgcrAL3bSkl4BXA3qIq9BUPq/YRl2JcJ0NBwEfm53cm/BzT6vMOPGnRKlMAAAAgTB/BgkqhkiG9w0BBwagcjBwAgEAMGsGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMNEx2LKXnS6qoShajAgEQgD6PV3WYmoZZnsuKOXCPEz7Ud9Bhxa4gGh7plvVcbl5bRGffZAVKh2KW5D7lSSLNNYF7I7ZZoh9jcw7v92RNog==',
     },
     test: {
         production: true,
