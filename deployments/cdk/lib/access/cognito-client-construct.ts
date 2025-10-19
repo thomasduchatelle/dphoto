@@ -4,6 +4,7 @@ import {ICertificate} from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
 import {Construct} from 'constructs';
+import {UserPoolDomain} from "aws-cdk-lib/aws-cognito";
 
 export interface CognitoClientConstructProps {
     environmentName: string;
@@ -17,7 +18,6 @@ export interface CognitoClientConstructProps {
 
 export class CognitoClientConstruct extends Construct {
     public readonly userPoolClient: cognito.UserPoolClient;
-    public readonly userPoolDomain: cognito.UserPoolDomain;
     public readonly cognitoDomainName: string;
 
     constructor(scope: Construct, id: string, props: CognitoClientConstructProps) {
@@ -27,12 +27,13 @@ export class CognitoClientConstruct extends Construct {
         this.cognitoDomainName = props.cognitoDomainName;
 
         // Create User Pool Domain with custom domain
-        this.userPoolDomain = props.userPool.addDomain('UserPoolDomain', {
+        const userPoolDomain = new UserPoolDomain(this, "UserPoolDomain", {
             customDomain: {
                 domainName: props.cognitoDomainName,
                 certificate: props.certificate,
             },
-        });
+            userPool: props.userPool
+        })
 
         // Create DNS record for custom domain
         const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
@@ -43,7 +44,7 @@ export class CognitoClientConstruct extends Construct {
             zone: hostedZone,
             recordName: props.cognitoDomainName,
             target: route53.RecordTarget.fromAlias(
-                new route53_targets.UserPoolDomainTarget(this.userPoolDomain)
+                new route53_targets.UserPoolDomainTarget(userPoolDomain)
             )
         });
 
@@ -89,8 +90,8 @@ export class CognitoClientConstruct extends Construct {
             description: 'Cognito User Pool Client ID',
         });
 
-        new cdk.CfnOutput(this, 'UserPoolDomain', {
-            value: this.userPoolDomain.domainName,
+        new cdk.CfnOutput(this, 'UserPoolDomainOutput', {
+            value: userPoolDomain.domainName,
             description: 'Cognito User Pool Domain',
         });
     }
