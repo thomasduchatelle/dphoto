@@ -42,8 +42,8 @@ jobs:
       update-snapshots: true
 
   comment-result:
-    needs: test-ts
-    if: always()
+    needs: [check-comment, test-ts]
+    if: always() && needs.check-comment.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Comment update success

@@ -54,8 +54,8 @@ jobs:
     secrets: inherit
 
   comment-result:
-    needs: deploy
-    if: always()
+    needs: [check-comment, deploy]
+    if: always() && needs.check-comment.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Comment deployment success
