@@ -1,7 +1,7 @@
 // Custom Lambda handler wrapper for authentication
 // This file wraps the Waku handler and adds authentication endpoints
 
-import { Issuer, generators } from 'openid-client';
+import * as client from 'openid-client';
 import { serialize, parse } from 'cookie';
 
 // Configuration from environment variables
@@ -37,29 +37,25 @@ const REFRESH_TOKEN_COOKIE = 'dphoto-refresh-token';
 const sessions = new Map();
 const SESSION_TTL = 10 * 60 * 1000; // 10 minutes
 
-// Cached client
-let cachedClient = null;
+// Cached config
+let cachedConfig = null;
 
-async function getCognitoClient(appUrl) {
-  // Note: We cache per appUrl in production, but for simplicity we'll use a single cached client
-  // In production with multiple domains, you'd want a Map<appUrl, Client>
-  if (cachedClient) {
-    return cachedClient;
+async function getCognitoConfiguration() {
+  if (cachedConfig) {
+    return cachedConfig;
   }
 
   const config = getConfig();
-  const issuer = await Issuer.discover(config.issuer);
+  const issuerUrl = new URL(config.issuer);
   
-  const callbackUrl = `${appUrl}/auth/callback`;
-  
-  cachedClient = new issuer.Client({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    redirect_uris: [callbackUrl],
-    response_types: ['code'],
-  });
+  cachedConfig = await client.discovery(
+    issuerUrl,
+    config.clientId,
+    { client_secret: config.clientSecret },
+    client.ClientSecretPost(config.clientSecret),
+  );
 
-  return cachedClient;
+  return cachedConfig;
 }
 
 function setTokenCookies(accessToken, refreshToken) {
@@ -124,13 +120,13 @@ function clearTokenCookies() {
 async function handleAuthLogin(event) {
   try {
     const appUrl = getAppUrl(event);
-    const client = await getCognitoClient(appUrl);
+    const config = await getCognitoConfiguration();
     
     // Generate security parameters
-    const state = generators.state();
-    const nonce = generators.nonce();
-    const codeVerifier = generators.codeVerifier();
-    const codeChallenge = generators.codeChallenge(codeVerifier);
+    const state = client.randomState();
+    const nonce = client.randomNonce();
+    const codeVerifier = client.randomPKCECodeVerifier();
+    const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
     
     // Get original URL from query parameter or default to home
     const originalUrl = event.queryStringParameters?.returnUrl || '/';
@@ -146,19 +142,23 @@ async function handleAuthLogin(event) {
     // Auto-cleanup after TTL
     setTimeout(() => sessions.delete(state), SESSION_TTL);
     
-    // Generate authorization URL
-    const authUrl = client.authorizationUrl({
-      scope: 'openid email profile',
-      state,
-      nonce,
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
-    });
+    // Build authorization URL
+    const redirectUri = `${appUrl}/auth/callback`;
+    const authUrl = new URL(config.serverMetadata().authorization_endpoint);
+    
+    authUrl.searchParams.set('client_id', config.clientMetadata().client_id);
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('scope', 'openid email profile');
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('nonce', nonce);
+    authUrl.searchParams.set('code_challenge', codeChallenge);
+    authUrl.searchParams.set('code_challenge_method', 'S256');
     
     return {
       statusCode: 302,
       headers: {
-        'Location': authUrl,
+        'Location': authUrl.toString(),
       },
       body: '',
     };
@@ -214,13 +214,21 @@ async function handleAuthCallback(event) {
     
     // Exchange code for tokens
     const appUrl = getAppUrl(event);
-    const client = await getCognitoClient(appUrl);
+    const config = await getCognitoConfiguration();
     const callbackUrl = `${appUrl}/auth/callback`;
     
-    const tokenSet = await client.callback(
-      callbackUrl,
-      { code },
-      { code_verifier: session.codeVerifier, nonce: session.nonce }
+    // Build current URL for token exchange
+    const currentUrl = new URL(callbackUrl);
+    currentUrl.searchParams.set('code', code);
+    currentUrl.searchParams.set('state', state);
+    
+    const tokens = await client.authorizationCodeGrant(
+      config,
+      currentUrl,
+      {
+        pkceCodeVerifier: session.codeVerifier,
+        expectedNonce: session.nonce,
+      }
     );
     
     // Clean up session
@@ -228,8 +236,8 @@ async function handleAuthCallback(event) {
     
     // Set cookies
     const cookies = setTokenCookies(
-      tokenSet.access_token,
-      tokenSet.refresh_token
+      tokens.access_token,
+      tokens.refresh_token
     );
     
     return {

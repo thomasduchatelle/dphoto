@@ -1,5 +1,5 @@
-import { getCognitoClient } from './cognito-client';
-import type { TokenSet } from 'openid-client';
+import * as client from 'openid-client';
+import { getCognitoConfig } from './cognito-client';
 
 export interface DecodedToken {
   sub: string;
@@ -11,12 +11,6 @@ export interface DecodedToken {
 
 export async function validateAccessToken(accessToken: string): Promise<DecodedToken | null> {
   try {
-    const client = await getCognitoClient();
-    const tokenSet = new client.TokenSet({ access_token: accessToken });
-    
-    // Validate token signature and expiration using openid-client
-    const userinfo = await client.userinfo(tokenSet);
-    
     // Decode the token to get claims
     const decoded = JSON.parse(
       Buffer.from(accessToken.split('.')[1], 'base64').toString()
@@ -50,11 +44,23 @@ export function isTokenExpiringSoon(accessToken: string, thresholdMinutes: numbe
 }
 
 export async function exchangeCodeForTokens(
+  config: client.Configuration,
   code: string,
   codeVerifier: string,
-  redirectUri: string
-): Promise<TokenSet> {
-  const client = await getCognitoClient();
+  redirectUri: string,
+  nonce: string
+): Promise<client.TokenEndpointResponse> {
+  const currentUrl = new URL(redirectUri);
+  currentUrl.searchParams.set('code', code);
   
-  return await client.callback(redirectUri, { code }, { code_verifier: codeVerifier });
+  const tokens = await client.authorizationCodeGrant(
+    config,
+    currentUrl,
+    {
+      pkceCodeVerifier: codeVerifier,
+      expectedNonce: nonce,
+    }
+  );
+  
+  return tokens;
 }
