@@ -1,21 +1,18 @@
 'use client';
 
 import { useEffect } from 'react';
-import { setClientAccessToken, clearClientAccessToken } from '../libs/auth/token-context';
+import { getClientAccessToken } from '../libs/auth/token-context';
 
-interface TokenInitializerProps {
-  accessToken?: string;
-  expiresAt?: number;
-}
-
-export function TokenInitializer({ accessToken, expiresAt }: TokenInitializerProps) {
+/**
+ * TokenInitializer ensures tokens are loaded from cookies on mount.
+ * The token context will automatically read from cookies when getClientAccessToken is called,
+ * but this component triggers an initial check on mount.
+ */
+export function TokenInitializer() {
   useEffect(() => {
-    if (accessToken && expiresAt) {
-      setClientAccessToken({ accessToken, expiresAt });
-    } else {
-      clearClientAccessToken();
-    }
-  }, [accessToken, expiresAt]);
+    // Trigger initial token load from cookies
+    getClientAccessToken();
+  }, []);
 
   return null;
 }
