@@ -37,10 +37,16 @@ func Handler(request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGa
 		return denyResponse(), nil
 	}
 
-	// Decode and validate JWT token
-	claims, err := common.AccessTokenDecoder().Decode(token)
+	// Decode and validate Cognito JWT token
+	cognitoDecoder, err := common.CognitoTokenDecoder()
 	if err != nil {
-		log.WithError(err).Warn("Failed to decode token")
+		log.WithError(err).Error("Failed to initialize Cognito token decoder")
+		return denyResponse(), nil
+	}
+
+	claims, err := cognitoDecoder.Decode(token)
+	if err != nil {
+		log.WithError(err).Warn("Failed to decode Cognito token")
 		return denyResponse(), nil
 	}
 

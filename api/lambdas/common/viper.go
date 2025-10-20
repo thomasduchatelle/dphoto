@@ -11,6 +11,8 @@ const (
 	JWTKeyB64             = "DPHOTO_JWT_KEY_B64"
 	JWTValidity           = "DPHOTO_JWT_VALIDITY"
 	RefreshTokenValidity  = "DPHOTO_REFRESH_TOKEN_VALIDITY"
+	CognitoUserPoolId     = "COGNITO_USER_POOL_ID"
+	CognitoRegion         = "COGNITO_REGION"
 	DynamoDBTableName     = "CATALOG_TABLE_NAME"
 	StorageBucketName     = "STORAGE_BUCKET_NAME"
 	CacheBucketName       = "CACHE_BUCKET_NAME"
@@ -24,6 +26,7 @@ func initViper() {
 
 	viper.SetDefault(JWTValidity, "15m")
 	viper.SetDefault(RefreshTokenValidity, "")
+	viper.SetDefault(CognitoRegion, "us-east-1")
 }
 
 type LambdaViperNames struct{}
