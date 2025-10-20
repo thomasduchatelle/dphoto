@@ -17,6 +17,7 @@ const (
 	SNSArchiveARN         = "SNS_ARCHIVE_ARN"
 	SQSArchiveURL         = "SQS_ARCHIVE_URL"
 	SQSArchiveRelocateURL = "SQS_ARCHIVE_RELOCATE_URL"
+	CognitoUserPoolId     = "COGNITO_USER_POOL_ID"
 )
 
 func initViper() {
@@ -76,4 +77,9 @@ func (l *LambdaViperNames) ArchiveRelocateJobsSQSURL() string {
 		panic(fmt.Sprintf("%s must be set and non-empty", SQSArchiveRelocateURL))
 	}
 	return archiveJobsSqsURL
+}
+
+func (l *LambdaViperNames) CognitoUserPoolId() string {
+	// Optional - returns empty string if not configured
+	return viper.GetString(CognitoUserPoolId)
 }

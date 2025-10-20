@@ -33,6 +33,7 @@ type AWSAdapterNames interface {
 	ArchiveJobsSNSARN() string
 	ArchiveJobsSQSURL() string
 	ArchiveRelocateJobsSQSURL() string
+	CognitoUserPoolId() string // CognitoUserPoolId returns the Cognito User Pool ID (optional, returns empty string if not configured)
 }
 
 type AWSCloud struct {
@@ -120,6 +121,7 @@ type StaticAWSAdapterNames struct {
 	ArchiveJobsSNSARNValue         string
 	ArchiveJobsSQSURLValue         string
 	ArchiveRelocateJobsSQSURLValue string
+	CognitoUserPoolIdValue         string
 }
 
 func (s StaticAWSAdapterNames) DynamoDBName() string {
@@ -144,4 +146,8 @@ func (s StaticAWSAdapterNames) ArchiveJobsSQSURL() string {
 
 func (s StaticAWSAdapterNames) ArchiveRelocateJobsSQSURL() string {
 	return s.ArchiveRelocateJobsSQSURLValue
+}
+
+func (s StaticAWSAdapterNames) CognitoUserPoolId() string {
+	return s.CognitoUserPoolIdValue
 }

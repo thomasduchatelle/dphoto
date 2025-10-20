@@ -109,4 +109,14 @@ export class CognitoUserPoolConstruct extends Construct {
             description: 'Cognito User Pool ID',
         });
     }
+
+    public grantManageUsers(lambda: any): void {
+        // Grant permissions to create users and manage group membership
+        this.userPool.grant(lambda.role,
+            'cognito-idp:AdminCreateUser',
+            'cognito-idp:AdminAddUserToGroup',
+            'cognito-idp:AdminGetUser'
+        );
+        lambda.function?.addEnvironment('COGNITO_USER_POOL_ID', this.userPool.userPoolId);
+    }
 }

@@ -8,8 +8,9 @@ import (
 )
 
 type CreateUser struct {
-	ScopesReader ScopesReader
-	ScopeWriter  ScopeWriter
+	ScopesReader      ScopesReader
+	ScopeWriter       ScopeWriter
+	CognitoRepository CognitoRepository // CognitoRepository is optional for backward compatibility
 }
 
 // CreateUser create a user capable of backup as 'owner', or update an existing owner to be 'owner'
@@ -62,6 +63,14 @@ func (c *CreateUser) CreateUser(email, ownerOptional string) error {
 	}
 
 	log.WithField("Owner", owner).Infof("Creating new user %s, backup capable as owner '%s'", email, owner)
+
+	// Create user in Cognito if CognitoRepository is configured
+	if c.CognitoRepository != nil {
+		err = c.CognitoRepository.CreateUser(ctx, userId, CognitoGroupOwners)
+		if err != nil {
+			return err
+		}
+	}
 
 	return c.ScopeWriter.SaveIfNewScope(Scope{
 		Type:          MainOwnerScope,
