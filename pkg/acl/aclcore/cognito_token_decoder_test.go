@@ -92,7 +92,7 @@ func TestCognitoTokenDecoder_Decode(t *testing.T) {
 			want: Claims{
 				Subject: usermodel.NewUserId(userEmail),
 				Scopes: map[string]interface{}{
-					"api:visitor": nil,
+					"visitor": nil,
 				},
 				Owner: nil,
 			},
