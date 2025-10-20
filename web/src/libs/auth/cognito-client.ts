@@ -1,19 +1,18 @@
-import { Issuer, Client, generators } from 'openid-client';
+import * as client from 'openid-client';
 
-interface CognitoConfig {
+export interface CognitoConfig {
   userPoolId: string;
   clientId: string;
   clientSecret: string;
   domain: string;
   issuer: string;
-  callbackUrl: string;
 }
 
-let cachedClient: Client | null = null;
+let cachedConfig: client.Configuration | null = null;
 
-export async function getCognitoClient(): Promise<Client> {
-  if (cachedClient) {
-    return cachedClient;
+export async function getCognitoConfig(): Promise<client.Configuration> {
+  if (cachedConfig) {
+    return cachedConfig;
   }
 
   const config: CognitoConfig = {
@@ -22,31 +21,53 @@ export async function getCognitoClient(): Promise<Client> {
     clientSecret: process.env.COGNITO_CLIENT_SECRET || '',
     domain: process.env.COGNITO_DOMAIN || '',
     issuer: process.env.COGNITO_ISSUER || '',
-    callbackUrl: `${process.env.APP_URL || ''}/auth/callback`,
   };
 
-  const issuer = await Issuer.discover(config.issuer);
+  const issuerUrl = new URL(config.issuer);
   
-  cachedClient = new issuer.Client({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    redirect_uris: [config.callbackUrl],
-    response_types: ['code'],
-  });
+  cachedConfig = await client.discovery(
+    issuerUrl,
+    config.clientId,
+    { client_secret: config.clientSecret },
+    client.ClientSecretPost(config.clientSecret),
+  );
 
-  return cachedClient;
+  return cachedConfig;
 }
 
-export function generateAuthorizationUrl(client: Client, state: string, nonce: string, codeVerifier: string): string {
-  const codeChallenge = generators.codeChallenge(codeVerifier);
-  
-  return client.authorizationUrl({
-    scope: 'openid email profile',
-    state,
-    nonce,
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
-  });
+export function generateCodeVerifier(): string {
+  return client.randomPKCECodeVerifier();
 }
 
-export { generators };
+export function generateState(): string {
+  return client.randomState();
+}
+
+export function generateNonce(): string {
+  return client.randomNonce();
+}
+
+export async function generateCodeChallenge(codeVerifier: string): Promise<string> {
+  return await client.calculatePKCECodeChallenge(codeVerifier);
+}
+
+export function buildAuthorizationUrl(
+  config: client.Configuration,
+  redirectUri: string,
+  state: string,
+  nonce: string,
+  codeChallenge: string
+): URL {
+  const authUrl = new URL(config.serverMetadata().authorization_endpoint!);
+  
+  authUrl.searchParams.set('client_id', config.clientMetadata().client_id);
+  authUrl.searchParams.set('redirect_uri', redirectUri);
+  authUrl.searchParams.set('response_type', 'code');
+  authUrl.searchParams.set('scope', 'openid email profile');
+  authUrl.searchParams.set('state', state);
+  authUrl.searchParams.set('nonce', nonce);
+  authUrl.searchParams.set('code_challenge', codeChallenge);
+  authUrl.searchParams.set('code_challenge_method', 'S256');
+  
+  return authUrl;
+}
