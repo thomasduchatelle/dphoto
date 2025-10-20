@@ -78,6 +78,7 @@ export class ApplicationStack extends cdk.Stack {
         const lambdaAuthoriser = new LambdaAuthoriserConstruct(this, 'LambdaAuthoriser', {
             environmentName: props.environmentName,
             catalogStore,
+            cognitoUserPool,
         });
 
         new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
