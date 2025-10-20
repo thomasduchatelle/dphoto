@@ -62,7 +62,7 @@ func (c *CognitoTokenDecoder) Decode(accessToken string) (Claims, error) {
 			owner = &ownerValue
 			scopes[JWTScopeOwnerPrefix+string(ownerValue)] = nil
 		case "visitors":
-			scopes["api:visitor"] = nil
+			scopes["visitor"] = nil
 		}
 	}
 
