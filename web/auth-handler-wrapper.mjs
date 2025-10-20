@@ -65,27 +65,40 @@ async function getCognitoClient(appUrl) {
 function setTokenCookies(accessToken, refreshToken) {
   const isProduction = process.env.NODE_ENV === 'production';
   
-  const cookieOptions = {
+  const secureCookieOptions = {
     httpOnly: true,
     secure: isProduction,
     sameSite: 'strict',
     path: '/',
   };
 
+  const clientCookieOptions = {
+    httpOnly: false, // Allow JavaScript access
+    secure: isProduction,
+    sameSite: 'strict',
+    path: '/',
+  };
+
   return [
+    // HttpOnly cookie for server-side use (most secure)
     serialize(ACCESS_TOKEN_COOKIE, accessToken, {
-      ...cookieOptions,
+      ...secureCookieOptions,
+      maxAge: 60 * 60, // 1 hour
+    }),
+    // Non-HttpOnly cookie for client-side JavaScript (needed for Authorization header)
+    serialize(`${ACCESS_TOKEN_COOKIE}-client`, accessToken, {
+      ...clientCookieOptions,
       maxAge: 60 * 60, // 1 hour
     }),
     serialize(REFRESH_TOKEN_COOKIE, refreshToken, {
-      ...cookieOptions,
+      ...secureCookieOptions,
       maxAge: 60 * 60 * 24 * 30, // 30 days
     }),
   ];
 }
 
 function clearTokenCookies() {
-  const cookieOptions = {
+  const secureCookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
@@ -93,9 +106,18 @@ function clearTokenCookies() {
     maxAge: 0,
   };
 
+  const clientCookieOptions = {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    maxAge: 0,
+  };
+
   return [
-    serialize(ACCESS_TOKEN_COOKIE, '', cookieOptions),
-    serialize(REFRESH_TOKEN_COOKIE, '', cookieOptions),
+    serialize(ACCESS_TOKEN_COOKIE, '', secureCookieOptions),
+    serialize(`${ACCESS_TOKEN_COOKIE}-client`, '', clientCookieOptions),
+    serialize(REFRESH_TOKEN_COOKIE, '', secureCookieOptions),
   ];
 }
 
