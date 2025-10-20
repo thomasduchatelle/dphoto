@@ -1,8 +1,6 @@
-import App from 'src/App';
-
-// Album detail page - routing is handled internally in App component
+// Album detail page - routing is handled internally in GeneralRouter (via _layout.tsx)
 export default function AlbumDetailPage() {
-  return <App />;
+  return null;
 }
 
 export const getConfig = async () => {

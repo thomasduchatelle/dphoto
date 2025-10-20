@@ -44,7 +44,7 @@ Added comprehensive tests covering:
 
 1. **User loads or refreshes a page from URL**
    - Waku file-based navigation loads the page
-   - All pages render the same `<App />` component
+   - The `_layout.tsx` provides common components (Providers) and renders `GeneralRouter`
 
 2. **User clicks on a link**
    - Click handler prevents default browser navigation

@@ -1,8 +1,6 @@
-import App from 'src/App';
-
-// Media page - routing is handled internally in App component
+// Media page - routing is handled internally in GeneralRouter (via _layout.tsx)
 export default function MediaPage() {
-  return <App />;
+  return null;
 }
 
 export const getConfig = async () => {

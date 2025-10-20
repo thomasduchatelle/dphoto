@@ -1,8 +1,6 @@
-import App from 'src/App';
-
-// Albums page - routing is handled internally by React Router in App component
+// Albums page - routing is handled internally by React Router in GeneralRouter (via _layout.tsx)
 export default function AlbumsPage() {
-  return <App />;
+  return null;
 }
 
 export const getConfig = async () => {

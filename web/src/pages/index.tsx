@@ -1,8 +1,6 @@
-import App from 'src/App';
-
-// Root page - all routing is handled internally by React Router in App component
+// Root page - all routing is handled internally by React Router in GeneralRouter (via _layout.tsx)
 export default function IndexPage() {
-  return <App />;
+  return null;
 }
 
 export const getConfig = async () => {
