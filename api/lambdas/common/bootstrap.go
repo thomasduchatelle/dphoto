@@ -111,6 +111,28 @@ func AccessTokenDecoder() *aclcore.AccessTokenDecoder {
 	}
 }
 
+func CognitoTokenDecoder() (*aclcore.CognitoTokenDecoder, error) {
+	userPoolId := viper.GetString(CognitoUserPoolId)
+	region := viper.GetString(CognitoRegion)
+	
+	if userPoolId == "" || region == "" {
+		return nil, fmt.Errorf("COGNITO_USER_POOL_ID and COGNITO_REGION must be set")
+	}
+	
+	// Cognito JWKS URL format: https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json
+	cognitoIssuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", region, userPoolId)
+	openIdConfigUrl := fmt.Sprintf("%s/.well-known/openid-configuration", cognitoIssuer)
+	
+	config, err := jwks.LoadIssuerConfig(openIdConfigUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load Cognito JWKS config: %w", err)
+	}
+	
+	return &aclcore.CognitoTokenDecoder{
+		CognitoIssuers: config,
+	}, nil
+}
+
 // BootstrapCatalogAndArchiveDomains bootstraps all domains
 func BootstrapCatalogAndArchiveDomains() archive.AsyncJobAdapter {
 	BootstrapOAuthDomain()
