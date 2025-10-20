@@ -30,3 +30,7 @@ func (v *ViperAWSName) ArchiveJobsSQSURL() string {
 func (v *ViperAWSName) ArchiveRelocateJobsSQSURL() string {
 	panic("ArchiveRelocateJobsSQSURL is not defined outside AWS LAMBDA environment ; advanced async configuration cannot be used.")
 }
+
+func (v *ViperAWSName) CognitoUserPoolId() string {
+	return viper.GetString(CognitoUserPoolId)
+}

@@ -17,15 +17,24 @@ type AlbumSharedObserver interface {
 }
 
 type ShareAlbumCase struct {
-	ScopeWriter   aclcore.ScopeWriter
-	FindAlbumPort FindAlbumPort
-	Observers     []AlbumSharedObserver
+	ScopeWriter       aclcore.ScopeWriter
+	FindAlbumPort     FindAlbumPort
+	Observers         []AlbumSharedObserver
+	CognitoRepository aclcore.CognitoRepository // CognitoRepository is optional for backward compatibility
 }
 
 func (s *ShareAlbumCase) ShareAlbumWith(ctx context.Context, albumId catalog.AlbumId, userEmail usermodel.UserId) error {
 	_, err := s.FindAlbumPort.FindAlbum(ctx, albumId)
 	if err != nil {
 		return errors.Wrapf(err, "album %s cannot be shared to %s", albumId, userEmail) // it can be a catalog.AlbumNotFoundErr
+	}
+
+	// Auto-create visitor in Cognito if CognitoRepository is configured
+	if s.CognitoRepository != nil {
+		err = s.CognitoRepository.CreateUser(ctx, userEmail, aclcore.CognitoGroupVisitors)
+		if err != nil {
+			return errors.Wrapf(err, "failed to create visitor user in Cognito for %s", userEmail)
+		}
 	}
 
 	err = s.ScopeWriter.SaveIfNewScope(aclcore.Scope{

@@ -15,6 +15,7 @@ const (
 	BackupConcurrencyCataloguer = "backup.concurrency.cataloguer"
 	BackupConcurrencyUploader   = "backup.concurrency.uploader"
 	CatalogDynamodbTable        = "catalog.dynamodb.table"
+	CognitoUserPoolId           = "cognito.user.pool.id"
 	LocalHome                   = "home.dir"
 	Owner                       = "owner"
 )

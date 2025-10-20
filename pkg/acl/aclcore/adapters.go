@@ -41,3 +41,21 @@ type IdentityDetailsStore interface {
 	StoreIdentity(identity Identity) error
 	FindIdentity(email usermodel.UserId) (*Identity, error)
 }
+
+// CognitoUserGroup represents the Cognito user group types
+type CognitoUserGroup string
+
+const (
+	CognitoGroupAdmins   CognitoUserGroup = "admins"
+	CognitoGroupOwners   CognitoUserGroup = "owners"
+	CognitoGroupVisitors CognitoUserGroup = "visitors"
+)
+
+// CognitoRepository provides methods to manage users in AWS Cognito
+type CognitoRepository interface {
+	// CreateUser creates a new user in Cognito with the specified email and adds them to the specified group
+	CreateUser(ctx context.Context, email usermodel.UserId, group CognitoUserGroup) error
+
+	// UserExists checks if a user with the given email exists in Cognito
+	UserExists(ctx context.Context, email usermodel.UserId) (bool, error)
+}

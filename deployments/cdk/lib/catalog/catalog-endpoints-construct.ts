@@ -13,6 +13,7 @@ export interface CatalogEndpointsConstructProps {
     archiveStore: ArchiveStoreConstruct;
     archiveMessaging: ArchivistConstruct;
     authorizer?: IHttpRouteAuthorizer;
+    cognitoUserPool?: any; // CognitoUserPoolConstruct - optional for backward compatibility
 }
 
 export class CatalogEndpointsConstruct extends Construct {
@@ -27,7 +28,7 @@ export class CatalogEndpointsConstruct extends Construct {
 
         this.readOnlyCatalogEndpoints(endpointProps, props.catalogStore);
         this.amendTimelineEndpoints(endpointProps, props.catalogStore, props.archiveMessaging, props.archiveStore);
-        this.accessControlEndpoints(endpointProps, props.catalogStore);
+        this.accessControlEndpoints(endpointProps, props.catalogStore, props.cognitoUserPool);
     }
 
     private readOnlyCatalogEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi; authorizer?: IHttpRouteAuthorizer }, catalogStore: CatalogStoreConstruct) {
@@ -94,7 +95,7 @@ export class CatalogEndpointsConstruct extends Construct {
         archivist.grantAccessToAsyncArchivist(amendAlbumName.lambda);
     }
 
-    private accessControlEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi; authorizer?: IHttpRouteAuthorizer }, catalogStore: CatalogStoreConstruct) {
+    private accessControlEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi; authorizer?: IHttpRouteAuthorizer }, catalogStore: CatalogStoreConstruct, cognitoUserPool?: any) {
         const shareAlbum = new SimpleGoEndpoint(this, 'ShareAlbum', {
             ...endpointProps,
             functionName: 'share-album',
@@ -110,5 +111,10 @@ export class CatalogEndpointsConstruct extends Construct {
             ]
         });
         catalogStore.grantReadWriteAccess(shareAlbum.lambda);
+        
+        // Grant Cognito permissions if user pool is provided
+        if (cognitoUserPool) {
+            cognitoUserPool.grantManageUsers(shareAlbum.lambda);
+        }
     }
 }

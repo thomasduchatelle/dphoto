@@ -104,6 +104,7 @@ export class ApplicationStack extends cdk.Stack {
             archiveStore,
             archiveMessaging: archivist,
             authorizer: lambdaAuthoriser.authorizer,
+            cognitoUserPool: cognitoUserPool,
         });
 
         new ArchiveEndpointsConstruct(this, 'ArchiveEndpoints', {

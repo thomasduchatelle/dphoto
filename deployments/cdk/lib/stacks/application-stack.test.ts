@@ -74,6 +74,7 @@ describe('DPhotoApplicationStack', () => {
                 addDomain: jest.fn(),
             },
             googleProvider: {} as any,
+            grantManageUsers: jest.fn(),
         } as any;
 
         mockCognitoClient = {
