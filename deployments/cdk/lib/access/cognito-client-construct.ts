@@ -12,7 +12,7 @@ export interface CognitoClientConstructProps {
     rootDomain: string;
     domainName: string;
     cognitoDomainName: string;
-    cognitoExtraRedirectDomains: string[]
+    cognitoExtraRedirectURLs: string[]
     cognitoCertificate: ICertificate;
 }
 
@@ -69,11 +69,11 @@ export class CognitoClientConstruct extends Construct {
                 ],
                 callbackUrls: [
                     `https://${props.domainName}/auth/callback`,
-                    ...props.cognitoExtraRedirectDomains.map(domain => `https://${domain}/auth/callback`)
+                    ...props.cognitoExtraRedirectURLs.map(url => `${url}/auth/callback`)
                 ],
                 logoutUrls: [
                     `https://${props.domainName}/`,
-                    ...props.cognitoExtraRedirectDomains.map(domain => `https://${domain}/`)
+                    ...props.cognitoExtraRedirectURLs.map(url => `${url}/`)
                 ],
             },
             supportedIdentityProviders: [
