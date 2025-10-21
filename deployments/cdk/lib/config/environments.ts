@@ -8,8 +8,8 @@ export interface EnvironmentConfig {
     domainName: string
     // (subsub)Domain used for Cognito hosted UI (authentication)
     cognitoDomainName: string
-    // Other domains to allow redirection to after login (Cognito Hosted UI), and logout
-    cognitoExtraRedirectDomains: string[]
+    // Other URLs to allow redirection to after login (Cognito Hosted UI), and logout (must include scheme like http:// or https://)
+    cognitoExtraRedirectURLs: string[]
     // Email used for SSL certificate registration automated by let's encrypt
     certificateEmail: string
     // OAuth2 Client ID for Google SSO, used by Cognito
@@ -23,7 +23,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         rootDomain: 'duchatelle.me',
         domainName: 'dphoto.duchatelle.me',
         cognitoDomainName: 'login.dphoto.duchatelle.me',
-        cognitoExtraRedirectDomains: [],
+        cognitoExtraRedirectURLs: [],
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-1o0or8ioo9c4m31405q2h2k8hvdb5enh.apps.googleusercontent.com',
     },
@@ -33,7 +33,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         rootDomain: 'duchatelle.me',
         domainName: 'next.duchatelle.me',
         cognitoDomainName: 'login.next.duchatelle.me',
-        cognitoExtraRedirectDomains: ['localhost:3000'],
+        cognitoExtraRedirectURLs: ['http://localhost:3000'],
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com',
     },
@@ -43,7 +43,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         rootDomain: 'exmaple.com',
         domainName: 'dphoto.example.com',
         cognitoDomainName: 'login.dphoto.example.com',
-        cognitoExtraRedirectDomains: ["localhost:3210"],
+        cognitoExtraRedirectURLs: ["http://localhost:3210"],
         certificateEmail: 'dphoto@example.com',
         googleLoginClientId: 'test-google-client-id',
     }

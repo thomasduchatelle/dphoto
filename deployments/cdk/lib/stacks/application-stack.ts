@@ -57,7 +57,7 @@ export class ApplicationStack extends cdk.Stack {
             cognitoDomainName: config.cognitoDomainName,
             rootDomain: config.rootDomain,
             domainName: config.domainName,
-            cognitoExtraRedirectDomains: config.cognitoExtraRedirectDomains,
+            cognitoExtraRedirectURLs: config.cognitoExtraRedirectURLs,
             cognitoCertificate: cognitoCertificate,
         });
 
