@@ -9,20 +9,23 @@ import {RouterProvider} from "./ClientRouter";
 import dayjs from "dayjs";
 import fr from "dayjs/locale/fr";
 import {ReactNode} from "react";
+import {ErrorBoundary} from "./ErrorBoundary";
 
 dayjs.locale(fr)
 
 export const Providers = ({children}: {children: ReactNode}) => {
     return (
-        <DPhotoTheme>
-            <CssBaseline/>
-            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
-                <ApplicationContextComponent>
-                    <RouterProvider>
-                        {children}
-                    </RouterProvider>
-                </ApplicationContextComponent>
-            </LocalizationProvider>
-        </DPhotoTheme>
+        <ErrorBoundary>
+            <DPhotoTheme>
+                <CssBaseline/>
+                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
+                    <ApplicationContextComponent>
+                        <RouterProvider>
+                            {children}
+                        </RouterProvider>
+                    </ApplicationContextComponent>
+                </LocalizationProvider>
+            </DPhotoTheme>
+        </ErrorBoundary>
     );
 };
