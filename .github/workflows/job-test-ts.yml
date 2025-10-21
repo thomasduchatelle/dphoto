@@ -5,6 +5,10 @@ on:
         description: "Force update snapshots mode"
         type: boolean
         required: true
+      ref:
+        description: "Git ref to checkout (branch, tag, or SHA)"
+        type: string
+        required: false
 
 jobs:
   test-ts:
@@ -14,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-          ref: ${{ github.head_ref }}
+          ref: ${{ inputs.ref || github.head_ref }}
       - name: SemVer
         id: semver
         uses: ./.github/actions/semver

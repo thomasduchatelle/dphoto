@@ -40,6 +40,7 @@ jobs:
     uses: ./.github/workflows/job-test-ts.yml
     with:
       update-snapshots: true
+      ref: ${{ needs.check-comment.outputs.pr-ref }}
 
   comment-result:
     needs: [check-comment, test-ts]
