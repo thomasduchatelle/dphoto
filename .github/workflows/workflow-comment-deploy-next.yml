@@ -40,10 +40,13 @@ jobs:
     uses: ./.github/workflows/job-build-go.yml
     with:
       snapshot: 'true'
+      ref: ${{ needs.check-comment.outputs.pr-ref }}
 
   build-ts:
     needs: check-comment
     uses: ./.github/workflows/job-build-ts.yml
+    with:
+      ref: ${{ needs.check-comment.outputs.pr-ref }}
 
   deploy:
     needs: [ build-go, build-ts ]

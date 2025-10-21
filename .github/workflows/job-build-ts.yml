@@ -1,5 +1,10 @@
 on:
   workflow_call:
+    inputs:
+      ref:
+        description: "Git ref to checkout (branch, tag, or SHA)"
+        type: string
+        required: false
     outputs:
       cache-suffix:
         description: Typescript cache suffix
@@ -15,6 +20,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          ref: ${{ inputs.ref || github.head_ref }}
       - name: SemVer
         id: semver
         uses: ./.github/actions/semver
