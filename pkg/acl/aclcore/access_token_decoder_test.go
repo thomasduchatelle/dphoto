@@ -1,81 +1,159 @@
 package aclcore
 
 import (
-	"fmt"
+	"crypto/rand"
+	"crypto/rsa"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"testing"
 	"time"
 )
 
 func TestAccessTokenDecoder_Decode(t *testing.T) {
-	config := OAuthConfig{
-		Issuer:         "https://dphoto.unit.test",
-		AccessDuration: 12 * time.Second,
-		SecretJwtKey:   []byte("DPhotoJwtSecret"),
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	cognitoIssuer := "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_TEST"
+	userEmail := "user@example.com"
+	now := time.Now()
+
+	createToken := func(email string, groups []string, tokenUse string) string {
+		claims := cognitoClaims{
+			RegisteredClaims: jwt.RegisteredClaims{
+				Issuer:    cognitoIssuer,
+				Subject:   "user-sub-123",
+				ExpiresAt: jwt.NewNumericDate(now.Add(1 * time.Hour)),
+				IssuedAt:  jwt.NewNumericDate(now),
+			},
+			Email:         email,
+			CognitoGroups: groups,
+			TokenUse:      tokenUse,
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+		token.Header["kid"] = "test-kid"
+		signedToken, _ := token.SignedString(privateKey)
+		return signedToken
 	}
 
-	owner := ownermodel.Owner("ironman")
-	tests := []struct {
-		name        string
+	cognitoIssuers := map[string]OAuth2IssuerConfig{
+		cognitoIssuer: {
+			ConfigSource: "test",
+			PublicKeysLookup: func(method OAuthTokenMethod) (interface{}, error) {
+				return &privateKey.PublicKey, nil
+			},
+		},
+	}
+
+	type args struct {
 		accessToken string
-		want        Claims
-		wantErr     assert.ErrorAssertionFunc
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    Claims
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name:        "it should accept a valid token and parse the Claims",
-			accessToken: "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2RwaG90by51bml0LnRlc3QiLCJzdWIiOiJ0b255QHN0YXJrLmNvbSIsImF1ZCI6WyJodHRwczovL2RwaG90by51bml0LnRlc3QiXSwiZXhwIjoxNjcxODQwMDA0LCJpYXQiOjE2NzE4NDAwMDAsInNjb3BlcyI6Im93bmVyOmlyb25tYW4gYXBpOmFkbWluIn0.num5Agz1j1m86QUJy27J8ON-nOUd-Myjah3TvzJGiWA",
+			name: "it should decode a valid token with owners group",
+			args: args{
+				accessToken: createToken(userEmail, []string{"owners"}, "access"),
+			},
 			want: Claims{
-				Subject: "tony@stark.com",
+				Subject: usermodel.NewUserId(userEmail),
 				Scopes: map[string]interface{}{
-					"owner:ironman": nil,
-					"api:admin":     nil,
+					"owner:user@example.com": nil,
 				},
-				Owner: &owner,
+				Owner: func() *ownermodel.Owner {
+					o := ownermodel.Owner(userEmail)
+					return &o
+				}(),
 			},
 			wantErr: assert.NoError,
 		},
 		{
-			name:        "it should reject a token with wrong signature",
-			accessToken: "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2RwaG90by51bml0LnRlc3QiLCJzdWIiOiJ0b255QHN0YXJrLmNvbSIsImF1ZCI6WyJodHRwczovL2RwaG90by51bml0LnRlc3QiXSwiZXhwIjoxNjcxODQwMDA0LCJpYXQiOjE2NzE4NDAwMDAsInNjb3BlcyI6Im93bmVyOmlyb25tYW4gYXBpOmFkbWluIn0.L6rWdGtpj3pGUNdna8kt_MX7ClXeLjSv90WkDCxmOZs",
-			want:        Claims{},
+			name: "it should decode a valid token with admins group",
+			args: args{
+				accessToken: createToken(userEmail, []string{"admins"}, "access"),
+			},
+			want: Claims{
+				Subject: usermodel.NewUserId(userEmail),
+				Scopes: map[string]interface{}{
+					"api:admin": nil,
+				},
+				Owner: nil,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should decode a valid token with visitors group",
+			args: args{
+				accessToken: createToken(userEmail, []string{"visitors"}, "access"),
+			},
+			want: Claims{
+				Subject: usermodel.NewUserId(userEmail),
+				Scopes: map[string]interface{}{
+					"visitor": nil,
+				},
+				Owner: nil,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should decode a token with multiple groups",
+			args: args{
+				accessToken: createToken(userEmail, []string{"admins", "owners"}, "access"),
+			},
+			want: Claims{
+				Subject: usermodel.NewUserId(userEmail),
+				Scopes: map[string]interface{}{
+					"api:admin":              nil,
+					"owner:user@example.com": nil,
+				},
+				Owner: func() *ownermodel.Owner {
+					o := ownermodel.Owner(userEmail)
+					return &o
+				}(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should reject a token with no groups",
+			args: args{
+				accessToken: createToken(userEmail, []string{}, "access"),
+			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, AccessUnauthorisedError, i) &&
-					assert.Contains(t, err.Error(), "signature is invalid")
+				return assert.ErrorIs(t, err, AccessUnauthorisedError)
 			},
 		},
 		{
-			name:        "it should reject a token with wrong issuer",
-			accessToken: "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2p1c3RpY2VsZWFndWUudW5pdC50ZXN0Iiwic3ViIjoidG9ueUBzdGFyay5jb20iLCJhdWQiOlsiaHR0cHM6Ly9kcGhvdG8udW5pdC50ZXN0Il0sImV4cCI6MTY3MTg0MDAwNCwiaWF0IjoxNjcxODQwMDAwLCJzY29wZXMiOiJvd25lcjppcm9ubWFuIGFwaTphZG1pbiJ9.S8MEodM1xc-waVF8okpjGcqduJEh3FjrBXN9SV_awAY",
-			want:        Claims{},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, AccessUnauthorisedError, i) &&
-					assert.Contains(t, err.Error(), "issuer not accepted")
+			name: "it should reject a token with wrong token_use",
+			args: args{
+				accessToken: createToken(userEmail, []string{"owners"}, "id"),
 			},
-		},
-		{
-			name:        "it should reject a token with wrong audience",
-			accessToken: "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2RwaG90by51bml0LnRlc3QiLCJzdWIiOiJ0b255QHN0YXJrLmNvbSIsImF1ZCI6WyJodHRwczovL2p1c3RpY2VsZWFndWUudW5pdC50ZXN0Il0sImV4cCI6MTY3MTg0MDAwNCwiaWF0IjoxNjcxODQwMDAwLCJzY29wZXMiOiJvd25lcjppcm9ubWFuIGFwaTphZG1pbiJ9.CgTvSgIz_-jG54Co2d-mW-3BnM-3jQ_XrJrgKkKVRec",
-			want:        Claims{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, AccessUnauthorisedError, i) &&
-					assert.Contains(t, err.Error(), "not in the audience list")
+				return assert.ErrorIs(t, err, AccessUnauthorisedError)
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := &AccessTokenDecoder{
-				Config: config,
-				Now: func() time.Time {
-					return time.Date(2022, 12, 24, 0, 0, 0, 0, time.UTC)
-				},
+			decoder := &AccessTokenDecoder{
+				CognitoIssuers: cognitoIssuers,
+				Now:            func() time.Time { return now },
 			}
-			got, err := a.Decode(tt.accessToken)
-			if !tt.wantErr(t, err, fmt.Sprintf("Decode(%v)", tt.accessToken)) {
+
+			got, err := decoder.Decode(tt.args.accessToken)
+
+			if !tt.wantErr(t, err) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "Decode(%v)", tt.accessToken)
+
+			if err == nil {
+				assert.Equal(t, tt.want.Subject, got.Subject)
+				assert.Equal(t, tt.want.Scopes, got.Scopes)
+				assert.Equal(t, tt.want.Owner, got.Owner)
+			}
 		})
 	}
 }
