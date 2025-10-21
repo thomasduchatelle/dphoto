@@ -10,6 +10,8 @@ import type { getConfig as File_AlbumsOwnerAlbumIndex_getConfig } from './pages/
 // prettier-ignore
 import type { getConfig as File_AlbumsIndex_getConfig } from './pages/albums/index';
 // prettier-ignore
+import type { getConfig as File_AuthCallbackIndex_getConfig } from './pages/auth/callback/index';
+// prettier-ignore
 import type { getConfig as File_Index_getConfig } from './pages/index';
 
 // prettier-ignore
@@ -17,6 +19,7 @@ type Page =
 | ({ path: '/albums/[owner]/[album]/[encodedId]/[filename]' } & GetConfigResponse<typeof File_AlbumsOwnerAlbumEncodedIdFilenameIndex_getConfig>)
 | ({ path: '/albums/[owner]/[album]' } & GetConfigResponse<typeof File_AlbumsOwnerAlbumIndex_getConfig>)
 | ({ path: '/albums' } & GetConfigResponse<typeof File_AlbumsIndex_getConfig>)
+| ({ path: '/auth/callback' } & GetConfigResponse<typeof File_AuthCallbackIndex_getConfig>)
 | ({ path: '/' } & GetConfigResponse<typeof File_Index_getConfig>);
 
 // prettier-ignore
