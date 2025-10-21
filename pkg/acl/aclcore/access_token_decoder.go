@@ -5,13 +5,19 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"strings"
 	"time"
 )
 
 type AccessTokenDecoder struct {
-	Config OAuthConfig
-	Now    func() time.Time // Now is defaulted to time.Now
+	CognitoIssuers map[string]OAuth2IssuerConfig // CognitoIssuers contains JWKS configuration for Cognito
+	Now            func() time.Time              // Now is defaulted to time.Now
+}
+
+type cognitoClaims struct {
+	jwt.RegisteredClaims
+	Email         string   `json:"email"`
+	CognitoGroups []string `json:"cognito:groups"`
+	TokenUse      string   `json:"token_use"`
 }
 
 func (a *AccessTokenDecoder) Decode(accessToken string) (Claims, error) {
@@ -21,44 +27,70 @@ func (a *AccessTokenDecoder) Decode(accessToken string) (Claims, error) {
 		jwt.TimeFunc = time.Now
 	}
 
-	claims := new(accessTokenClaims)
-	_, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
-		return a.Config.SecretJwtKey, nil
-	})
+	claims := new(cognitoClaims)
+	token, err := jwt.ParseWithClaims(accessToken, claims, a.keyLookup)
 	if err != nil {
 		return Claims{}, errors.Wrapf(AccessUnauthorisedError, "invalid JWT, %s", err.Error())
 	}
 
-	if claims.Issuer != a.Config.Issuer {
-		return Claims{}, errors.Wrapf(AccessUnauthorisedError, "'%s' issuer not accepted", claims.Issuer)
-	}
-	if !containsAudience(claims.Audience, a.Config.Issuer) {
-		return Claims{}, errors.Wrapf(AccessUnauthorisedError, "%s is not in the audience list %s", a.Config.Issuer, strings.Join(claims.Audience, ", "))
+	if !token.Valid {
+		return Claims{}, errors.Wrapf(AccessUnauthorisedError, "token is not valid")
 	}
 
+	if claims.TokenUse != "access" {
+		return Claims{}, errors.Wrapf(AccessUnauthorisedError, "token_use must be 'access', got '%s'", claims.TokenUse)
+	}
+
+	// Check if user belongs to at least one required group
+	if len(claims.CognitoGroups) == 0 {
+		return Claims{}, errors.Wrapf(AccessUnauthorisedError, "user does not belong to any group")
+	}
+
+	// Build scopes from Cognito groups
 	scopes := make(map[string]interface{})
 	var owner *ownermodel.Owner
-	for _, scope := range strings.Split(claims.Scopes, " ") {
-		scopes[scope] = nil
-		if strings.HasPrefix(scope, JWTScopeOwnerPrefix) {
-			value := ownermodel.Owner(scope[len(JWTScopeOwnerPrefix):])
-			owner = &value
+
+	for _, group := range claims.CognitoGroups {
+		switch group {
+		case "admins":
+			scopes["api:admin"] = nil
+		case "owners":
+			// For owners, create a scope with their owner ID
+			// The owner ID is derived from the username (email)
+			ownerValue := ownermodel.Owner(claims.Email)
+			owner = &ownerValue
+			scopes[JWTScopeOwnerPrefix+string(ownerValue)] = nil
+		case "visitors":
+			scopes["visitor"] = nil
 		}
 	}
 
 	return Claims{
-		Subject: usermodel.NewUserId(claims.Subject),
+		Subject: usermodel.NewUserId(claims.Email),
 		Scopes:  scopes,
 		Owner:   owner,
 	}, nil
 }
 
-func containsAudience(audiences jwt.ClaimStrings, issuer string) bool {
-	for _, audience := range audiences {
-		if audience == issuer {
-			return true
-		}
+func (a *AccessTokenDecoder) keyLookup(token *jwt.Token) (interface{}, error) {
+	claims, ok := token.Claims.(*cognitoClaims)
+	if !ok {
+		return nil, errors.Errorf("claims are expected to be of cognitoClaims type")
 	}
 
-	return false
+	issuerName := claims.Issuer
+
+	if issuerConfig, ok := a.CognitoIssuers[issuerName]; ok {
+		var kid string
+		if kidObj, ok := token.Header["kid"]; ok {
+			kid, _ = kidObj.(string)
+		}
+
+		return issuerConfig.PublicKeysLookup(OAuthTokenMethod{
+			Algorithm: token.Method.Alg(),
+			Kid:       kid,
+		})
+	}
+
+	return nil, errors.Errorf("issuer '%s' is not a trusted Cognito issuer", issuerName)
 }
