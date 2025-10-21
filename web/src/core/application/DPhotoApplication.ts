@@ -1,25 +1,23 @@
-import {AccessToken, LogoutListener} from "../security";
 import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
 import {AccessTokenHolder} from "./application-model";
-import { getClientAccessToken } from "../../libs/auth/token-context";
+import { loadClientSession } from "../../libs/auth/client-token-utils";
 
 export class DPhotoApplication implements AccessTokenHolder {
-    private accessToken?: AccessToken
     private axiosInterceptorId ?: number
 
     constructor(
-        public logoutListeners: LogoutListener[] = [],
+        public logoutListeners: any[] = [],
         public authenticationTimeoutIds: NodeJS.Timeout[] = [],
         public readonly axiosInstance: AxiosInstance = axios.create({}),
     ) {
-        // Set up axios interceptor immediately to use tokens from cookie/context
+        // Set up axios interceptor to use tokens from cookies
         if (!this.axiosInterceptorId) {
             this.axiosInterceptorId = this.axiosInstance.interceptors.request.use(this.axiosRequestInterceptor, error => Promise.reject(error));
         }
     }
 
-    public renewRefreshToken(accessToken: AccessToken) {
-        this.accessToken = accessToken
+    public renewRefreshToken(accessToken: any) {
+        // No-op for backwards compatibility with legacy code
     }
 
     public revokeAccessToken() {
@@ -27,22 +25,15 @@ export class DPhotoApplication implements AccessTokenHolder {
             this.axiosInstance.interceptors.request.eject(this.axiosInterceptorId)
             this.axiosInterceptorId = undefined
         }
-        this.accessToken = undefined
     }
 
     public getAccessToken(): string {
-        // Try to get token from context (Cognito tokens) first
-        const cognitoToken = getClientAccessToken();
-        if (cognitoToken) {
-            return cognitoToken;
-        }
-        
-        // Fall back to legacy token
-        return this.accessToken?.accessToken ?? ''
+        // Get token from Cognito cookies
+        const session = loadClientSession();
+        return session?.accessToken.value ?? '';
     }
 
     private axiosRequestInterceptor = (config: AxiosRequestConfig): AxiosRequestConfig => {
-        // Get token from context (Cognito) or legacy source
         const token = this.getAccessToken();
         
         if (token) {
