@@ -27,6 +27,10 @@ type AuthorizedRoute struct {
 	Authorize AuthorizationFunc
 }
 
+var (
+	tokenDecoder *aclcore.AccessTokenDecoder
+)
+
 func Handler(request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
 	ctx := context.Background()
 
@@ -37,16 +41,10 @@ func Handler(request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGa
 		return denyResponse(), nil
 	}
 
-	// Decode and validate Cognito JWT token
-	cognitoDecoder, err := common.CognitoTokenDecoder()
+	// Decode and validate JWT token
+	claims, err := tokenDecoder.Decode(token)
 	if err != nil {
-		log.WithError(err).Error("Failed to initialize Cognito token decoder")
-		return denyResponse(), nil
-	}
-
-	claims, err := cognitoDecoder.Decode(token)
-	if err != nil {
-		log.WithError(err).Warn("Failed to decode Cognito token")
+		log.WithError(err).Warn("Failed to decode token")
 		return denyResponse(), nil
 	}
 
@@ -266,6 +264,13 @@ func denyResponse() events.APIGatewayV2CustomAuthorizerSimpleResponse {
 
 func main() {
 	common.BootstrapCatalogDomain()
+
+	// Initialize and cache the token decoder with JWKS
+	var err error
+	tokenDecoder, err = common.NewAccessTokenDecoder()
+	if err != nil {
+		log.WithError(err).Fatal("Failed to initialize token decoder")
+	}
 
 	lambda.Start(Handler)
 }

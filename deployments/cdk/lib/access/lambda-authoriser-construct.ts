@@ -22,6 +22,9 @@ export class LambdaAuthoriserConstruct extends Construct {
         // Extract region from stack
         const region = Stack.of(this).region;
 
+        // Construct Cognito JWKS URL
+        const cognitoJwksUrl = `https://cognito-idp.${region}.amazonaws.com/${props.cognitoUserPool.userPool.userPoolId}/.well-known/openid-configuration`;
+
         // Create the Lambda function for the authorizer
         this.authorizerLambda = new GoLangLambdaFunction(this, 'AuthorizerLambda', {
             environmentName: props.environmentName,
@@ -29,8 +32,7 @@ export class LambdaAuthoriserConstruct extends Construct {
             timeout: Duration.seconds(10),
             memorySize: 256,
             environment: {
-                COGNITO_USER_POOL_ID: props.cognitoUserPool.userPool.userPoolId,
-                COGNITO_REGION: region,
+                COGNITO_JWKS_URL: cognitoJwksUrl,
             },
         });
 
