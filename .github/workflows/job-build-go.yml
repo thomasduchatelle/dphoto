@@ -5,6 +5,10 @@ on:
         description: "'false' if it's a released version"
         type: string
         required: true
+      ref:
+        description: "Git ref to checkout (branch, tag, or SHA)"
+        type: string
+        required: false
 
 jobs:
   build-go:
@@ -18,6 +22,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          ref: ${{ inputs.ref || github.head_ref }}
       - name: SemVer
         id: semver
         uses: ./.github/actions/semver
