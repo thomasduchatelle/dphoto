@@ -62,7 +62,8 @@ const cookieMiddleware: Middleware = (): Handler => {
                 name: "Security Middleware",
                 email: "security@middleware.com",
                 isOwner: true,
-            }
+            },
+            googleClientId: process.env.GOOGLE_LOGIN_CLIENT_ID || '',
         }
         console.log(`[middleware] ${ctx.req.url} authenticated with ${JSON.stringify(clientSession)}`)
         ctx.data.session = clientSession
