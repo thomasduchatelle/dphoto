@@ -18,6 +18,8 @@
     "buffer": "^6.0.3",
     "cookie": "^1.0.2",
     "dayjs": "^1.11.13",
+    "hono": "4.9.11",
+    "jotai": "^2.15.0",
     "js-cookie": "^3.0.5",
     "openid-client": "^6.8.1",
     "react": "^19.1.0",
@@ -27,8 +29,7 @@
     "react-swipeable": "^7.0.2",
     "typescript": "^5.9.3",
     "waku": "^0.26.1",
-    "web-vitals": "^5.1.0",
-    "hono": "4.9.11"
+    "web-vitals": "^5.1.0"
   },
   "scripts": {
     "dev": "waku dev",

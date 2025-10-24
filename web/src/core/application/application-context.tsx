@@ -4,6 +4,8 @@ import {initialSecurityState, SecurityAction, securityContextReducer, securityCo
 import {GeneralState} from "./application-model";
 import axios from "axios";
 import {ApplicationGenericAction, applicationGenericReducer} from "./application-reducer";
+import {useAtomValue} from "jotai";
+import {securityAtom} from "../../components/AuthProvider";
 
 export interface ApplicationContextType {
     application: DPhotoApplication
@@ -56,10 +58,22 @@ interface ConfigFile {
     googleClientId: string
 }
 
+const timeoutId = setTimeout(() => {
+    console.log("Refreshed hardcoded timeout ticked")
+
+}, 3600)
+
 export const ApplicationContextComponent = ({children}: {
     children?: ReactNode
 }) => {
-    const [context, dispatch] = useReducer(applicationReducer, initialAppContext)
+    // This is not reading the value magically from the server !
+    const securityValue = useAtomValue(securityAtom)
+    const [context, dispatch] = useReducer(applicationReducer, applicationReducer(initialAppContext, {
+        type: 'authenticated',
+        accessToken: securityValue.accessToken,
+        user: securityValue.user,
+        refreshTimeoutId: timeoutId,
+    }))
 
     useEffect(() => {
         axios.get<ConfigFile>("/env-config.json")
