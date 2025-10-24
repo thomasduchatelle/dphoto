@@ -1,10 +1,9 @@
 'use client';
 
 import {DPhotoApplication} from "./DPhotoApplication";
-import {createContext, Dispatch, ReactNode, useEffect, useReducer} from "react";
+import {createContext, Dispatch, ReactNode, useReducer} from "react";
 import {initialSecurityState, SecurityAction, securityContextReducer, securityContextReducerSupports, SecurityState} from "../security";
 import {GeneralState} from "./application-model";
-import axios from "axios";
 import {ApplicationGenericAction, applicationGenericReducer} from "./application-reducer";
 import {Session} from "../../components/AuthProvider";
 import {atom, useAtomValue} from "jotai";
@@ -42,7 +41,7 @@ export type ApplicationAction = SecurityAction | ApplicationGenericAction
 const applicationReducer = (current: ApplicationContextTypeWithSetter, action: ApplicationAction): ApplicationContextTypeWithSetter => {
     let nextContext = current.context
 
-    if (action.type === 'config-loaded' || action.type === 'unrecoverable-error') {
+    if (action.type === 'unrecoverable-error') {
         nextContext = applicationGenericReducer(current.context, action)
 
     } else if (securityContextReducerSupports(action)) {
@@ -59,10 +58,6 @@ const applicationReducer = (current: ApplicationContextTypeWithSetter, action: A
     return current
 }
 
-interface ConfigFile {
-    googleClientId: string
-}
-
 const timeoutId = setTimeout(() => {
     console.log("Refreshed hardcoded timeout ticked")
 
@@ -74,19 +69,18 @@ export const ApplicationContextComponent = ({children, serverSession}: {
 }) => {
     // This is not reading the value magically from the server !
     const securityValue = useAtomValue(securityAtom)
-    const [context, dispatch] = useReducer(applicationReducer, applicationReducer(initialAppContext, {
+    const [context, dispatch] = useReducer(applicationReducer, applicationReducer({
+        ...initialAppContext,
+        context: {
+            ...initialAppContext.context,
+            general: {googleClientId: serverSession.googleClientId},
+        }
+    }, {
         type: 'authenticated',
         accessToken: serverSession.accessToken,
         user: serverSession.user,
         refreshTimeoutId: timeoutId,
     }))
-
-    useEffect(() => {
-        axios.get<ConfigFile>("/env-config.json")
-            .then(cfg => {
-                dispatch({type: 'config-loaded', googleClientId: cfg.data.googleClientId})
-            })
-    }, [])
 
     return (
         <ApplicationContext.Provider value={{context: context.context, dispatch}}>
