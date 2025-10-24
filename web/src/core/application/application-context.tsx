@@ -1,11 +1,13 @@
+'use client';
+
 import {DPhotoApplication} from "./DPhotoApplication";
 import {createContext, Dispatch, ReactNode, useEffect, useReducer} from "react";
 import {initialSecurityState, SecurityAction, securityContextReducer, securityContextReducerSupports, SecurityState} from "../security";
 import {GeneralState} from "./application-model";
 import axios from "axios";
 import {ApplicationGenericAction, applicationGenericReducer} from "./application-reducer";
-import {useAtomValue} from "jotai";
-import {securityAtom} from "../../components/AuthProvider";
+import {Session} from "../../components/AuthProvider";
+import {atom, useAtomValue} from "jotai";
 
 export interface ApplicationContextType {
     application: DPhotoApplication
@@ -29,6 +31,9 @@ export interface ApplicationContextTypeWithSetter {
     context: ApplicationContextType
     dispatch: Dispatch<ApplicationAction>
 }
+
+
+export const securityAtom = atom<Session | undefined>()
 
 export const ApplicationContext = createContext<ApplicationContextTypeWithSetter>(initialAppContext)
 
@@ -63,15 +68,16 @@ const timeoutId = setTimeout(() => {
 
 }, 3600)
 
-export const ApplicationContextComponent = ({children}: {
+export const ApplicationContextComponent = ({children, serverSession}: {
     children?: ReactNode
+    serverSession: Session
 }) => {
     // This is not reading the value magically from the server !
     const securityValue = useAtomValue(securityAtom)
     const [context, dispatch] = useReducer(applicationReducer, applicationReducer(initialAppContext, {
         type: 'authenticated',
-        accessToken: securityValue.accessToken,
-        user: securityValue.user,
+        accessToken: serverSession.accessToken,
+        user: serverSession.user,
         refreshTimeoutId: timeoutId,
     }))
 

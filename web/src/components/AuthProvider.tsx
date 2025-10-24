@@ -1,6 +1,7 @@
 import {AccessToken, AuthenticatedUser} from "../core/security";
-import {atom} from "jotai";
 import {getContextData} from "waku/middleware/context";
+import {ReactNode} from "react";
+import {ApplicationContextComponent} from "../core/application";
 
 export interface Session {
     accessToken: AccessToken
@@ -9,5 +10,6 @@ export interface Session {
 
 const {session} = getContextData() as { session: Session };
 
-console.log(`session loaded with ${JSON.stringify(session)}`)
-export const securityAtom = atom<Session>(session)
+export const AuthProvider = ({children}: { children: ReactNode }) => {
+    return <ApplicationContextComponent serverSession={session}>{children}</ApplicationContextComponent>
+}
