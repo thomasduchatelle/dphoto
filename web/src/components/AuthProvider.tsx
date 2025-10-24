@@ -6,6 +6,7 @@ import {ApplicationContextComponent} from "../core/application";
 export interface Session {
     accessToken: AccessToken
     user: AuthenticatedUser
+    googleClientId: string
 }
 
 const {session} = getContextData() as { session: Session };
