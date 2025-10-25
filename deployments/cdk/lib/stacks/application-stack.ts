@@ -67,6 +67,7 @@ export class ApplicationStack extends cdk.Stack {
             userPool: cognitoUserPool.userPool,
             userPoolClient: cognitoClient.userPoolClient,
             cognitoDomainName: cognitoClient.cognitoDomainName,
+            googleLoginClientId: config.googleLoginClientId,
         });
 
         new VersionEndpointConstruct(this, 'VersionEndpoint', {
@@ -78,6 +79,7 @@ export class ApplicationStack extends cdk.Stack {
         const lambdaAuthoriser = new LambdaAuthoriserConstruct(this, 'LambdaAuthoriser', {
             environmentName: props.environmentName,
             catalogStore,
+            cognitoUserPool,
         });
 
         new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
@@ -85,7 +87,6 @@ export class ApplicationStack extends cdk.Stack {
             httpApi: apiGateway.httpApi,
             catalogStore,
             archiveStore,
-            googleLoginClientId: config.googleLoginClientId,
         });
 
         new UserEndpointsConstruct(this, 'UserEndpoints', {
@@ -93,7 +94,6 @@ export class ApplicationStack extends cdk.Stack {
             httpApi: apiGateway.httpApi,
             catalogStore,
             archiveStore,
-            googleLoginClientId: config.googleLoginClientId,
             authorizer: lambdaAuthoriser.authorizer,
         });
 

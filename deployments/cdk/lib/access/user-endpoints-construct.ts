@@ -10,7 +10,6 @@ export interface AccessEndpointsConstructProps {
     httpApi: apigatewayv2.HttpApi;
     catalogStore: CatalogStoreConstruct;
     archiveStore: ArchiveStoreConstruct;
-    googleLoginClientId: string;
     authorizer?: IHttpRouteAuthorizer;
 }
 

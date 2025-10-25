@@ -13,13 +13,14 @@ export interface WakuWebUiConstructProps {
     userPool: cognito.IUserPool;
     userPoolClient: cognito.UserPoolClient;
     cognitoDomainName: string;
+    googleLoginClientId: string;
 }
 
 export class WakuWebUiConstruct extends Construct {
     private readonly lambda: lambda.Function;
     private readonly integration: HttpLambdaIntegration;
 
-    constructor(scope: Construct, id: string, {httpApi, environmentName, userPool, userPoolClient, cognitoDomainName}: WakuWebUiConstructProps) {
+    constructor(scope: Construct, id: string, {httpApi, environmentName, userPool, userPoolClient, cognitoDomainName, googleLoginClientId}: WakuWebUiConstructProps) {
         super(scope, id);
 
         this.lambda = new lambda.Function(this, 'Lambda', {
@@ -37,6 +38,7 @@ export class WakuWebUiConstruct extends Construct {
                 COGNITO_CLIENT_SECRET: userPoolClient.userPoolClientSecret.unsafeUnwrap(),
                 COGNITO_DOMAIN: `https://${cognitoDomainName}`,
                 COGNITO_ISSUER: `https://cognito-idp.${cdk.Stack.of(this).region}.amazonaws.com/${userPool.userPoolId}`,
+                GOOGLE_LOGIN_CLIENT_ID: googleLoginClientId,
             },
         });
 

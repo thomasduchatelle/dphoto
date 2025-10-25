@@ -105,10 +105,20 @@ func NewLogout() *aclcore.Logout {
 	return &aclcore.Logout{RevokeAccessTokenAdapter: newRefreshTokenRepository()}
 }
 
-func AccessTokenDecoder() *aclcore.AccessTokenDecoder {
-	return &aclcore.AccessTokenDecoder{
-		Config: appAuthConfig(),
+func NewAccessTokenDecoder() (*aclcore.AccessTokenDecoder, error) {
+	jwksUrl := viper.GetString(CognitoJwksUrl)
+	if jwksUrl == "" {
+		return nil, fmt.Errorf("COGNITO_JWKS_URL must be set")
 	}
+
+	config, err := jwks.LoadIssuerConfig(jwksUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load Cognito JWKS config from %s: %w", jwksUrl, err)
+	}
+
+	return &aclcore.AccessTokenDecoder{
+		CognitoIssuers: config,
+	}, nil
 }
 
 // BootstrapCatalogAndArchiveDomains bootstraps all domains
@@ -128,7 +138,11 @@ func BootstrapCatalogDomain() {
 
 // BootstrapOAuthDomain only bootstraps oauth
 func BootstrapOAuthDomain() {
-	jwtDecoder = AccessTokenDecoder()
+	var err error
+	jwtDecoder, err = NewAccessTokenDecoder()
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize access token decoder: %v", err))
+	}
 	grantRepository = ssoAuthenticatorPermissionReader()
 }
 

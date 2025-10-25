@@ -9,7 +9,6 @@ export interface AccessEndpointsConstructProps {
     httpApi: apigatewayv2.HttpApi;
     catalogStore: CatalogStoreConstruct;
     archiveStore: ArchiveStoreConstruct;
-    googleLoginClientId: string;
 }
 
 export class AuthenticationEndpointsConstruct extends Construct {
@@ -36,15 +35,5 @@ export class AuthenticationEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.POST,
         });
         props.catalogStore.grantReadWriteAccess(logout.lambda);
-
-        createSingleRouteEndpoint(this, 'EnvConfig', {
-            ...endpointProps,
-            functionName: 'env-config',
-            path: '/env-config.json',
-            method: apigatewayv2.HttpMethod.GET,
-            environment: {
-                GOOGLE_LOGIN_CLIENT_ID: props.googleLoginClientId,
-            }
-        });
     }
 }

@@ -11,6 +11,7 @@ const (
 	JWTKeyB64             = "DPHOTO_JWT_KEY_B64"
 	JWTValidity           = "DPHOTO_JWT_VALIDITY"
 	RefreshTokenValidity  = "DPHOTO_REFRESH_TOKEN_VALIDITY"
+	CognitoJwksUrl        = "COGNITO_JWKS_URL"
 	DynamoDBTableName     = "CATALOG_TABLE_NAME"
 	StorageBucketName     = "STORAGE_BUCKET_NAME"
 	CacheBucketName       = "CACHE_BUCKET_NAME"

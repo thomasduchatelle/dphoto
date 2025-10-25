@@ -118,16 +118,6 @@ describe('DPhotoApplicationStack', () => {
         expect(mockCatalogStore.grantReadWriteAccess).toHaveBeenCalled();
     });
 
-    test('lambda for the endpoint /env-config.json has the environment variable GOOGLE_LOGIN_CLIENT_ID set', () => {
-        const envConfigFunction = findLambdaByRoute(template, '/env-config.json', 'GET');
-
-        expect(envConfigFunction).toBeDefined();
-
-        assertLambdaEnvironmentVariables(envConfigFunction, {
-            GOOGLE_LOGIN_CLIENT_ID: environments.test.googleLoginClientId,
-        });
-    });
-
     test('catalog endpoints are served by lambdas', () => {
         // Test key catalog endpoints
         const listAlbumsFunction = findLambdaByRoute(template, '/api/v1/albums', 'GET');
@@ -170,7 +160,6 @@ describe('DPhotoApplicationStack', () => {
         const whitelistedRoutes = [
             {method: 'POST', path: '/oauth/token'},
             {method: 'POST', path: '/oauth/logout'},
-            {method: 'GET', path: '/env-config.json'},
             {method: 'GET', path: '/api/v1/version'},
             {method: 'ANY', path: '/api/{path+}'},
             {method: 'ANY', path: '/{proxy+}'},

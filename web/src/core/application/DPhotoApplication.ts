@@ -1,40 +1,45 @@
-import {AccessToken, LogoutListener} from "../security";
 import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
 import {AccessTokenHolder} from "./application-model";
+import { loadClientSession } from "../../libs/auth/client-token-utils";
 
 export class DPhotoApplication implements AccessTokenHolder {
-    private accessToken?: AccessToken
     private axiosInterceptorId ?: number
 
     constructor(
-        public logoutListeners: LogoutListener[] = [],
+        public logoutListeners: any[] = [],
         public authenticationTimeoutIds: NodeJS.Timeout[] = [],
         public readonly axiosInstance: AxiosInstance = axios.create({}),
     ) {
-    }
-
-    public renewRefreshToken(accessToken: AccessToken) {
-        this.accessToken = accessToken
+        // Set up axios interceptor to use tokens from cookies
         if (!this.axiosInterceptorId) {
             this.axiosInterceptorId = this.axiosInstance.interceptors.request.use(this.axiosRequestInterceptor, error => Promise.reject(error));
         }
     }
 
+    public renewRefreshToken(accessToken: any) {
+        // No-op for backwards compatibility with legacy code
+    }
+
     public revokeAccessToken() {
         if (this.axiosInterceptorId) {
             this.axiosInstance.interceptors.request.eject(this.axiosInterceptorId)
+            this.axiosInterceptorId = undefined
         }
     }
 
     public getAccessToken(): string {
-        return this.accessToken?.accessToken ?? ''
+        // Get token from Cognito cookies
+        const session = loadClientSession();
+        return session?.accessToken.value ?? '';
     }
 
     private axiosRequestInterceptor = (config: AxiosRequestConfig): AxiosRequestConfig => {
-        if (this.accessToken) {
+        const token = this.getAccessToken();
+        
+        if (token) {
             config.headers = {
                 ...config.headers,
-                'Authorization': `Bearer ${this.accessToken.accessToken}`,
+                'Authorization': `Bearer ${token}`,
             }
         }
 
