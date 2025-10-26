@@ -1,13 +1,10 @@
 import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
-import {AccessTokenHolder} from "./application-model";
-import { loadClientSession } from "../../libs/auth/client-token-utils";
+import {tokenHolder} from "../security/client-utils";
 
-export class DPhotoApplication implements AccessTokenHolder {
+export class DPhotoApplication {
     private axiosInterceptorId ?: number
 
     constructor(
-        public logoutListeners: any[] = [],
-        public authenticationTimeoutIds: NodeJS.Timeout[] = [],
         public readonly axiosInstance: AxiosInstance = axios.create({}),
     ) {
         // Set up axios interceptor to use tokens from cookies
@@ -27,19 +24,12 @@ export class DPhotoApplication implements AccessTokenHolder {
         }
     }
 
-    public getAccessToken(): string {
-        // Get token from Cognito cookies
-        const session = loadClientSession();
-        return session?.accessToken.value ?? '';
-    }
-
     private axiosRequestInterceptor = (config: AxiosRequestConfig): AxiosRequestConfig => {
-        const token = this.getAccessToken();
-        
-        if (token) {
+        // TODO AGENT - trigger a refresh if the token is expired or about to expire (<5 min)
+        if (tokenHolder.accessToken) {
             config.headers = {
                 ...config.headers,
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${tokenHolder.accessToken.accessToken}`,
             }
         }
 

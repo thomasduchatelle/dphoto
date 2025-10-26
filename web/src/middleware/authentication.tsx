@@ -1,27 +1,19 @@
 import * as cookie from 'cookie';
 import {SerializeOptions} from 'cookie';
-
 import type {Middleware} from 'waku/config';
 import {Handler, HandlerContext} from "waku/dist/lib/middleware/types";
-import {Session} from "../components/AuthProvider";
+import {ACCESS_TOKEN_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from "../core/security/consts";
+import {BackendSession} from "../core/security/security-model";
 
-// Cookie names for authentication tokens
-export const ACCESS_TOKEN_COOKIE = 'dphoto-access-token';
-export const REFRESH_TOKEN_COOKIE = 'dphoto-refresh-token';
-
-// Cookie for OAuth state during authentication flow
-export const OAUTH_STATE_COOKIE = 'dphoto-oauth-state';
-
-// XXX we would probably like to extend config.
 interface Cookies {
-    accessToken: string | undefined
-    refreshToken: string | undefined
-    // state in only used during the authentication flow
-    state: string | undefined
+    accessToken?: string
+    refreshToken?: string
+    /** state in only used during the authentication flow */
+    state?: string
 }
 
 const COOKIE_OPTS: SerializeOptions = {
-    maxAge: 60,
+    maxAge: 60, // TODO AGENT - use the real expiration time of the JWT token (access and refresh)
     httpOnly: true,
     path: '/',
     secure: true,
@@ -44,7 +36,11 @@ const cookieMiddleware: Middleware = (): Handler => {
                 'set-cookie',
                 cookie.serialize(ACCESS_TOKEN_COOKIE, "jwt-access-token-test", COOKIE_OPTS),
             );
-            ctx.res = new Response("<div>You are not logged in ! <a href='/'>Click here to see the website !</a> </div>", {
+            headers.append(
+                'Content-Type',
+                'text/html',
+            )
+            ctx.res = new Response("<html lang='en'><body><div>You are not logged in ! <a href='/'>Click here to see the website !</a> </div></body></html>", {
                 status: 200,
                 statusText: "OK",
                 headers,
@@ -53,20 +49,23 @@ const cookieMiddleware: Middleware = (): Handler => {
             return
         }
 
-        const clientSession: Session = {
+        const backendSession: BackendSession = {
+            type: "authenticated",
             accessToken: {
                 accessToken: sessions.accessToken,
-                expiryTime: 3600,
+                expiresAt: new Date(),
             },
-            user: {
+            refreshToken: sessions.refreshToken ?? "",
+            authenticatedUser: {
                 name: "Security Middleware",
                 email: "security@middleware.com",
                 isOwner: true,
             },
-            googleClientId: process.env.GOOGLE_LOGIN_CLIENT_ID || '',
         }
-        console.log(`[middleware] ${ctx.req.url} authenticated with ${JSON.stringify(clientSession)}`)
-        ctx.data.session = clientSession
+        ctx.data.backendSession = backendSession
+
+        // backendSession is read by JotialProvider to hydrate the client session
+
         await next();
     };
 };
