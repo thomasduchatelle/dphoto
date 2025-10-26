@@ -1,6 +1,5 @@
 import {Album, AlbumId, CatalogError, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import axios, {AxiosError, AxiosInstance} from "axios";
-import {AccessTokenHolder} from "../../../application";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort} from "../../album-delete";
 import {UpdateAlbumDatesPort} from "../../album-edit-dates";
@@ -41,7 +40,6 @@ interface RestOwnerDetails {
 export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, RevokeAlbumAccessAPI, DeleteAlbumPort, UpdateAlbumDatesPort, SaveAlbumNamePort {
     constructor(
         private readonly authenticatedAxios: AxiosInstance,
-        private readonly accessTokenHolder: AccessTokenHolder,
     ) {
     }
 
@@ -167,7 +165,7 @@ export class CatalogAPIAdapter implements CreateAlbumPort, GrantAlbumAccessAPI, 
                     type: convertToType(media.type),
                     time: new Date(media.time),
                     uiRelativePath: `/albums/${albumId.owner}/${albumId.folderName}/${media.id}/${media.filename}`,
-                    contentPath: `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}?access_token=${this.accessTokenHolder.getAccessToken()}`,
+                    contentPath: `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}`,
                 })).sort((a, b) => b.time.getTime() - a.time.getTime())
             })
     }
