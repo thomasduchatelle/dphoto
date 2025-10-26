@@ -25,28 +25,22 @@ const AuthenticatedRouter = () => {
     // Parse the path to determine which component to render
     const pathParts = path.split('/').filter(p => p);
 
-    console.log("Rendering MediaPage for path:", path);
-
     // /albums/:owner/:album/:encodedId/:filename
     if (pathParts[0] === 'albums' && pathParts.length >= 5) {
-        console.log("rendering path '/albums/:owner/:album/:encodedId/:filename'");
         return <CatalogViewerRoot><MediaPage/></CatalogViewerRoot>;
     }
 
     // /albums/:owner/:album
     if (pathParts[0] === 'albums' && pathParts.length >= 3) {
-        console.log("rendering path '/albums/:owner/:album'");
         return <CatalogViewerRoot><CatalogViewerPage/></CatalogViewerRoot>;
     }
 
     // /albums
     if (pathParts[0] === 'albums') {
-        console.log("rendering path '/albums'");
         return <CatalogViewerRoot><CatalogViewerPage/></CatalogViewerRoot>
     }
 
     // Default: redirect to /albums
-    console.log("Default: redirect to /albums");
     return <RedirectToDefaultOrPrevious/>;
 }
 

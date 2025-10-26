@@ -6,7 +6,7 @@ import AlbumsList from "../AlbumsList";
 import MediaList from "../MediasList";
 import {AlbumId, CatalogViewerPageSelection} from "../../../core/catalog";
 import AlbumListActions, {AlbumListActionsCallbacks, AlbumListActionsProps} from "../AlbumsListActions/AlbumListActions";
-import {useClientRouter} from "../../../components/ClientRouter";
+import {useClientRouter} from "../../ClientRouter";
 
 
 export default function MediasPage({
