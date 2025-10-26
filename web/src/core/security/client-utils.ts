@@ -1,5 +1,3 @@
-'use client';
-
 import {atom, useAtomValue} from "jotai";
 import {AccessToken, AuthenticatedUser, ClientSession} from "./security-model";
 import {AccessForbiddenError} from "../application";
