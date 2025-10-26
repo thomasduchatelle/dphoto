@@ -2,8 +2,7 @@ import * as cookie from 'cookie';
 import {SerializeOptions} from 'cookie';
 import type {Middleware} from 'waku/config';
 import {Handler, HandlerContext} from "waku/dist/lib/middleware/types";
-import {ACCESS_TOKEN_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from "../core/security/consts";
-import {BackendSession} from "../core/security/security-model";
+import {ACCESS_TOKEN_COOKIE, BackendSession, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from "../core/security";
 
 interface Cookies {
     accessToken?: string
