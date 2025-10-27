@@ -91,6 +91,7 @@ export default function MediaPage() {
         }
     }, Key.Left, Key.Right, Key.D, Key.Esc)
 
+    // TODO AGENT - there is an horizontal scroll bar appearing on media page (image after is visible by scrolling on the right), fix it
     return (
         <div {...handlers}>
             {images.filter(ref => ref.src && ref.src !== "")
