@@ -23,6 +23,12 @@ export class WakuWebUiConstruct extends Construct {
     constructor(scope: Construct, id: string, {httpApi, environmentName, userPool, userPoolClient, cognitoDomainName, googleLoginClientId}: WakuWebUiConstructProps) {
         super(scope, id);
 
+        const logGroup = new logs.LogGroup(this, 'LogGroup', {
+            logGroupName: `/aws/lambda/dphoto-${environmentName}-web`,
+            retention: logs.RetentionDays.ONE_WEEK,
+            removalPolicy: cdk.RemovalPolicy.DESTROY
+        });
+
         this.lambda = new lambda.Function(this, 'Lambda', {
             functionName: `dphoto-${environmentName}-web`,
             code: lambda.Code.fromAsset('../../web/dist/'),
@@ -30,7 +36,7 @@ export class WakuWebUiConstruct extends Construct {
             runtime: lambda.Runtime.NODEJS_20_X,
             memorySize: 256,
             timeout: cdk.Duration.seconds(10),
-            logRetention: logs.RetentionDays.ONE_WEEK,
+            logGroup: logGroup,
             environment: {
                 NODE_ENV: 'production',
                 COGNITO_USER_POOL_ID: userPool.userPoolId,
