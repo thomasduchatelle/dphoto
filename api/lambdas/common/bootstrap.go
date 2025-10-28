@@ -20,7 +20,6 @@ import (
 )
 
 var (
-	jwtDecoder      *aclcore.AccessTokenDecoder
 	grantRepository aclscopedynamodb.GrantRepository
 	Factory         pkgfactory.Factory
 )
@@ -138,11 +137,6 @@ func BootstrapCatalogDomain() {
 
 // BootstrapOAuthDomain only bootstraps oauth
 func BootstrapOAuthDomain() {
-	var err error
-	jwtDecoder, err = NewAccessTokenDecoder()
-	if err != nil {
-		panic(fmt.Sprintf("failed to initialize access token decoder: %v", err))
-	}
 	grantRepository = ssoAuthenticatorPermissionReader()
 }
 

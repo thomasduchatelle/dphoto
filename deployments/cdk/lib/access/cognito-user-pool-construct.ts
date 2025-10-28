@@ -32,7 +32,7 @@ export class CognitoUserPoolConstruct extends Construct {
             standardAttributes: {
                 email: {
                     required: true,
-                    mutable: false,
+                    mutable: true, // set to true otherwise the Google authentication is failing due to email not being updatable.
                 },
                 givenName: {
                     required: false,

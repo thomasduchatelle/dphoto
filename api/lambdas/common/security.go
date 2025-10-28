@@ -22,7 +22,7 @@ func GetCurrentUserFromContext(request *events.APIGatewayV2HTTPRequest) (usermod
 
 	userIdStr, ok := context["userId"].(string)
 	if !ok || userIdStr == "" {
-		return usermodel.CurrentUser{}, errors.New("userId not found in authorizer context")
+		return usermodel.CurrentUser{}, errors.Errorf("userId not found in authorizer context: %+v", context)
 	}
 
 	user := usermodel.CurrentUser{
@@ -36,20 +36,6 @@ func GetCurrentUserFromContext(request *events.APIGatewayV2HTTPRequest) (usermod
 	}
 
 	return user, nil
-}
-
-func RequiresAuthenticated(request *events.APIGatewayV2HTTPRequest, process func(user usermodel.CurrentUser) (Response, error)) (Response, error) {
-	token, err := readToken(request)
-	if err != nil {
-		return UnauthorizedResponse(err.Error())
-	}
-
-	claims, err := jwtDecoder.Decode(token)
-	if err != nil {
-		return UnauthorizedResponse(err.Error())
-	}
-
-	return process(claims.AsCurrentUser())
 }
 
 func HandleError(err error) (Response, error) {

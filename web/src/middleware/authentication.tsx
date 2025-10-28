@@ -14,7 +14,7 @@ interface Cookies {
 }
 
 const COOKIE_OPTS: cookie.SerializeOptions = {
-    maxAge: 60,
+    maxAge: 3600,
     httpOnly: true,
     path: '/',
     secure: true,
@@ -58,49 +58,7 @@ const cookieMiddleware: Middleware = (): Handler => {
         const {scheme, host, path} = parse(ctx.req.url);
         const cookies = readCookies(ctx);
 
-        if (path === '/auth/login') {
-            const config = await oidcConfig();
-
-            const codeVerifier: string = client.randomPKCECodeVerifier()
-            const code_challenge: string =
-                await client.calculatePKCECodeChallenge(codeVerifier)
-            let state!: string
-
-            let parameters: Record<string, string> = {
-                redirect_uri: `${scheme}://${host}/auth/callback`,
-                scope: "openid profile email",
-                code_challenge,
-                code_challenge_method: 'S256',
-                state: client.randomState(),
-            }
-
-            let redirectTo: URL = client.buildAuthorizationUrl(config, parameters)
-
-            const headers = new Headers(ctx.res?.headers);
-            const authCookiesOptions = {
-                ...COOKIE_OPTS,
-                maxAge: 5 * 60, // 5 minutes, after which Cognito login will fail anyway
-            };
-            headers.append(
-                'set-cookie',
-                cookie.serialize(OAUTH_STATE_COOKIE, parameters.state, authCookiesOptions),
-            );
-            headers.append(
-                'set-cookie',
-                cookie.serialize(OAUTH_CODE_VERIFIER_COOKIE, codeVerifier, authCookiesOptions),
-            );
-            headers.append(
-                'Location',
-                redirectTo.toString(),
-            )
-            ctx.res = new Response(null, {
-                status: 302,
-                statusText: "Found",
-                headers,
-            });
-
-            return
-        } else if (path === '/auth/callback') {
+        if (path === '/auth/callback') {
             // TODO AGENT - handle errors callback like "http://localhost:3000/auth/callback?error_description=user.email%3A+Attribute+cannot+be+updated.%0A+&state=NJPSQ2B59ghT6oggnSls2SXCx45CJ4Z1XtZIU9oBknU&error=invalid_request". It needs to show an html error with the actual error in the callback. (Just process next() in the middleware, and create a new waku page that show the error.)
             // TODO AGENT - handle errors when authorizationCodeGrant fails with a 400 error and a body content like:
             //   cause: { error: 'invalid_grant' },
@@ -154,21 +112,43 @@ const cookieMiddleware: Middleware = (): Handler => {
                 headers,
             });
             return
-        }
+        } else if (!cookies.accessToken || path === '/auth/login') {
+            const config = await oidcConfig();
 
-        if (!cookies.accessToken) {
+            const codeVerifier: string = client.randomPKCECodeVerifier()
+            const code_challenge: string =
+                await client.calculatePKCECodeChallenge(codeVerifier)
+
+            let parameters: Record<string, string> = {
+                redirect_uri: `${scheme}://${host}/auth/callback`,
+                scope: "openid profile email",
+                code_challenge,
+                code_challenge_method: 'S256',
+                state: client.randomState(),
+            }
+
+            let redirectTo: URL = client.buildAuthorizationUrl(config, parameters)
+
             const headers = new Headers(ctx.res?.headers);
+            const authCookiesOptions = {
+                ...COOKIE_OPTS,
+                maxAge: 5 * 60, // 5 minutes, after which Cognito login will fail anyway
+            };
             headers.append(
                 'set-cookie',
-                cookie.serialize(ACCESS_TOKEN_COOKIE, "jwt-access-token-test", COOKIE_OPTS),
+                cookie.serialize(OAUTH_STATE_COOKIE, parameters.state, authCookiesOptions),
             );
             headers.append(
-                'Content-Type',
-                'text/html',
+                'set-cookie',
+                cookie.serialize(OAUTH_CODE_VERIFIER_COOKIE, codeVerifier, authCookiesOptions),
+            );
+            headers.append(
+                'Location',
+                redirectTo.toString(),
             )
-            ctx.res = new Response("<html lang='en'><body><div>You are not logged in ! <a href='/'>Click here to see the website !</a> </div></body></html>", {
-                status: 200,
-                statusText: "OK",
+            ctx.res = new Response(null, {
+                status: 302,
+                statusText: "Found",
                 headers,
             });
 

@@ -58,6 +58,7 @@ func Handler(request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGa
 	}
 
 	// Return allow response with user context
+	log.Infof("User %s authorised to access %s", user, request.RouteKey)
 	return allowResponse(claims), nil
 }
 
@@ -250,6 +251,7 @@ func allowResponse(claims aclcore.Claims) events.APIGatewayV2CustomAuthorizerSim
 		contextMap["scopes"] = string(scopesJSON)
 	}
 
+	log.Infof("User authorised with context %+v", contextMap)
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 		IsAuthorized: true,
 		Context:      contextMap,
