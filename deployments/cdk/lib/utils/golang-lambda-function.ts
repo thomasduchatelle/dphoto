@@ -37,6 +37,12 @@ export class GoLangLambdaFunction extends Construct {
             ]
         });
 
+        const logGroup = new logs.LogGroup(this, 'LogGroup', {
+            logGroupName: `/aws/lambda/dphoto-${props.environmentName}-${props.functionName}`,
+            retention: logs.RetentionDays.ONE_WEEK,
+            removalPolicy: cdk.RemovalPolicy.DESTROY
+        });
+
         this.function = new lambda.Function(this, 'Function', {
             functionName: `dphoto-${props.environmentName}-${props.functionName}`,
             runtime: lambda.Runtime.PROVIDED_AL2,
@@ -46,7 +52,7 @@ export class GoLangLambdaFunction extends Construct {
             timeout: props.timeout || Duration.minutes(1),
             memorySize: props.memorySize || 256,
             environment: props.environment || {},
-            logRetention: logs.RetentionDays.ONE_WEEK,
+            logGroup: logGroup,
             role: this.role
         });
     }

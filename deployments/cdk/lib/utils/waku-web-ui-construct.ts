@@ -30,7 +30,11 @@ export class WakuWebUiConstruct extends Construct {
             runtime: lambda.Runtime.NODEJS_20_X,
             memorySize: 256,
             timeout: cdk.Duration.seconds(10),
-            logRetention: logs.RetentionDays.ONE_WEEK,
+            logGroup: new logs.LogGroup(this, 'LogGroup', {
+                logGroupName: `/aws/lambda/dphoto-${environmentName}-web`,
+                retention: logs.RetentionDays.ONE_WEEK,
+                removalPolicy: cdk.RemovalPolicy.DESTROY
+            }),
             environment: {
                 NODE_ENV: 'production',
                 COGNITO_USER_POOL_ID: userPool.userPoolId,

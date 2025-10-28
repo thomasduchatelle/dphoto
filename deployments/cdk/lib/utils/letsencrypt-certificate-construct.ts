@@ -93,7 +93,11 @@ export class LetsEncryptCertificateConstruct extends Construct {
                 DPHOTO_ENVIRONMENT: environmentName,
                 SSM_KEY_CERTIFICATE_ARN: this.getSsmKeyCertificateArn(environmentName),
             },
-            logRetention: logs.RetentionDays.ONE_WEEK
+            logGroup: new logs.LogGroup(this, 'RenewalLambdaLogGroup', {
+                logGroupName: `/aws/lambda/dphoto-${environmentName}-system-letsencrypt`,
+                retention: logs.RetentionDays.ONE_WEEK,
+                removalPolicy: cdk.RemovalPolicy.DESTROY
+            })
         });
 
         new events.Rule(this, 'RenewalSchedule', {
