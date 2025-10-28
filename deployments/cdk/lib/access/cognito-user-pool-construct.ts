@@ -56,7 +56,8 @@ export class CognitoUserPoolConstruct extends Construct {
             },
             accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
-            advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
+            featurePlan: cognito.FeaturePlan.PLUS,
+            standardThreatProtectionMode: cognito.StandardThreatProtectionMode.FULL_FUNCTION,
         });
 
         cdk.Tags.of(this.userPool).add('Name', `${prefix}-user-pool`);
