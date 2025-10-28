@@ -79,7 +79,7 @@ export class LetsEncryptCertificateConstruct extends Construct {
         });
 
         const logGroup = new logs.LogGroup(this, 'LogGroup', {
-            logGroupName: `/aws/lambda/dphoto-${environmentName}-system-letsencrypt`,
+            logGroupName: `/dphoto/${environmentName}/lambda/system-letsencrypt`,
             retention: logs.RetentionDays.ONE_WEEK,
             removalPolicy: cdk.RemovalPolicy.DESTROY
         });

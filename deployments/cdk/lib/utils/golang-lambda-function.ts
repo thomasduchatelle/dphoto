@@ -38,7 +38,7 @@ export class GoLangLambdaFunction extends Construct {
         });
 
         const logGroup = new logs.LogGroup(this, 'LogGroup', {
-            logGroupName: `/aws/lambda/dphoto-${props.environmentName}-${props.functionName}`,
+            logGroupName: `/dphoto/${props.environmentName}/lambda/${props.functionName}`,
             retention: logs.RetentionDays.ONE_WEEK,
             removalPolicy: cdk.RemovalPolicy.DESTROY
         });

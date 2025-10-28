@@ -24,7 +24,7 @@ export class WakuWebUiConstruct extends Construct {
         super(scope, id);
 
         const logGroup = new logs.LogGroup(this, 'LogGroup', {
-            logGroupName: `/aws/lambda/dphoto-${environmentName}-web`,
+            logGroupName: `/dphoto/${environmentName}/lambda/waku-web`,
             retention: logs.RetentionDays.ONE_WEEK,
             removalPolicy: cdk.RemovalPolicy.DESTROY
         });

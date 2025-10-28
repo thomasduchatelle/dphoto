@@ -82,26 +82,22 @@ export class CognitoUserPoolConstruct extends Construct {
         });
 
         // Create User Groups
-        this.adminsGroup = new cognito.CfnUserPoolGroup(this, 'AdminsGroup', {
-            userPoolId: this.userPool.userPoolId,
-            groupName: 'admins',
+        this.userPool.addGroup("Admin", {
+            groupName: 'admin',
             description: 'Administrators with full system access',
             precedence: 1,
         });
-
-        this.ownersGroup = new cognito.CfnUserPoolGroup(this, 'OwnersGroup', {
-            userPoolId: this.userPool.userPoolId,
-            groupName: 'owners',
+        this.userPool.addGroup("Owner", {
+            groupName: 'owner',
             description: 'Content owners with full access to their media',
             precedence: 2,
         });
-
-        this.visitorsGroup = new cognito.CfnUserPoolGroup(this, 'VisitorsGroup', {
-            userPoolId: this.userPool.userPoolId,
-            groupName: 'visitors',
+        this.userPool.addGroup("Visitor", {
+            groupName: 'visitor',
             description: 'Visitors with limited access to shared albums',
             precedence: 3,
         });
+
 
         // Outputs
         new cdk.CfnOutput(this, 'UserPoolId', {
