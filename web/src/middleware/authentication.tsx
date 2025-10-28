@@ -72,7 +72,7 @@ const cookieMiddleware: Middleware = (): Handler => {
             console.log("Cookies on callback:", cookies);
             const config = await oidcConfig();
 
-            let tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
+            const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
                 config,
                 new URL(ctx.req.url),
                 {
@@ -81,14 +81,16 @@ const cookieMiddleware: Middleware = (): Handler => {
                 },
             )
 
-            console.log('Token Endpoint Response', tokens)
             // TODO AGENT - capture the identifier token which is required for the full name and picture of the user. The details must be available in the context, and be stored in the dynamodb table (see pkg/acl/aclcore/authenticate_sso.go)
             // TODO AGENT - use the real expiration time of the JWT token (access and refresh) for the expiration of the cookies.
             // TODO AGENT - redirect to the original URL that was requested before login (store it in a cookie before redirecting to /auth/login)
             const headers = new Headers(ctx.res?.headers);
             headers.append(
                 'set-cookie',
-                cookie.serialize(ACCESS_TOKEN_COOKIE, tokens.access_token ?? "", COOKIE_OPTS),
+                cookie.serialize(ACCESS_TOKEN_COOKIE, tokens.access_token ?? "", {
+                    ...COOKIE_OPTS,
+                    maxAge: tokens.expires_in,
+                }),
             );
             headers.append(
                 'set-cookie',
@@ -130,9 +132,9 @@ const cookieMiddleware: Middleware = (): Handler => {
             let redirectTo: URL = client.buildAuthorizationUrl(config, parameters)
 
             const headers = new Headers(ctx.res?.headers);
-            const authCookiesOptions = {
+            const authCookiesOptions: cookie.SerializeOptions = {
                 ...COOKIE_OPTS,
-                maxAge: 5 * 60, // 5 minutes, after which Cognito login will fail anyway
+                maxAge: 30 * 60, // 30 minutes
             };
             headers.append(
                 'set-cookie',

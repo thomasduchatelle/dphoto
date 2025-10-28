@@ -3,6 +3,7 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import {ManagedLoginVersion, UserPoolClient, UserPoolDomain} from 'aws-cdk-lib/aws-cognito';
 import {ICertificate} from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
 import {Construct} from 'constructs';
 
 export interface CognitoClientConstructProps {
@@ -43,12 +44,9 @@ export class CognitoClientConstruct extends Construct {
         new route53.ARecord(this, 'CognitoDnsRecord', {
             zone: hostedZone,
             recordName: props.cognitoDomainName,
-            target: route53.RecordTarget.fromAlias({
-                bind: (): route53.AliasRecordTargetConfig => ({
-                    dnsName: userPoolDomain.cloudFrontEndpoint,
-                    hostedZoneId: hostedZone.hostedZoneId,
-                })
-            })
+            target: route53.RecordTarget.fromAlias(
+                new route53_targets.UserPoolDomainTarget(userPoolDomain)
+            )
         });
 
         // Create User Pool Client with secret for SSR

@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	log "github.com/sirupsen/logrus"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
@@ -33,6 +34,7 @@ func Handler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (commo
 	// Extract user from authorizer context (already authenticated and authorized)
 	user, err := common.GetCurrentUserFromContext(&request)
 	if err != nil {
+		log.Warnf("unauthorized access attempt: %v", err)
 		return common.UnauthorizedResponse(err.Error())
 	}
 
