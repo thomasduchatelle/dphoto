@@ -5,3 +5,4 @@ export const REFRESH_TOKEN_COOKIE = 'dphoto-refresh-token';
 
 // Cookie for OAuth state during authentication flow
 export const OAUTH_STATE_COOKIE = 'dphoto-oauth-state';
+export const OAUTH_CODE_VERIFIER_COOKIE = 'dphoto-oauth-code-verifier';
