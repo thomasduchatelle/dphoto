@@ -22,6 +22,7 @@ export class CognitoUserPoolConstruct extends Construct {
         // Create User Pool
         this.userPool = new cognito.UserPool(this, 'UserPool', {
             userPoolName: `${prefix}-users`,
+            featurePlan: cognito.FeaturePlan.ESSENTIALS,
             selfSignUpEnabled: false,
             signInAliases: {
                 email: true,
@@ -32,7 +33,7 @@ export class CognitoUserPoolConstruct extends Construct {
             standardAttributes: {
                 email: {
                     required: true,
-                    mutable: true, // set to true otherwise the Google authentication is failing due to email not being updatable.
+                    mutable: false, // is it what's causing issues with Google sign-in?
                 },
                 givenName: {
                     required: false,
@@ -56,7 +57,6 @@ export class CognitoUserPoolConstruct extends Construct {
             },
             accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
-            advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
         });
 
         cdk.Tags.of(this.userPool).add('Name', `${prefix}-user-pool`);
