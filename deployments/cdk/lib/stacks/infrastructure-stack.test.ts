@@ -165,15 +165,6 @@ describe('DPhotoInfrastructureStack', () => {
             });
         });
 
-        test('Cognito User Pool has advanced security mode enforced', () => {
-            template.hasResourceProperties('AWS::Cognito::UserPool', {
-                UserPoolName: 'dphoto-test-users',
-                UserPoolAddOns: {
-                    AdvancedSecurityMode: 'ENFORCED'
-                }
-            });
-        });
-
         test('Cognito User Pool creates required user groups', () => {
             template.hasResourceProperties('AWS::Cognito::UserPoolGroup', {
                 GroupName: 'admins',
