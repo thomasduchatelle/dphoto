@@ -33,7 +33,7 @@ export class CognitoUserPoolConstruct extends Construct {
             standardAttributes: {
                 email: {
                     required: true,
-                    mutable: false, // is it what's causing issues with Google sign-in?
+                    mutable: true, // required to be mutable for social identity providers (Google)
                 },
                 givenName: {
                     required: false,

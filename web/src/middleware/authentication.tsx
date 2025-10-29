@@ -134,7 +134,8 @@ const cookieMiddleware: Middleware = (): Handler => {
             const headers = new Headers(ctx.res?.headers);
             const authCookiesOptions: cookie.SerializeOptions = {
                 ...COOKIE_OPTS,
-                maxAge: 30 * 60, // 30 minutes
+                maxAge: 5 * 60, // authentication flow in Cognito is set to 3 minutes.
+                sameSite: 'lax', // required when the Referer is expected to be a different site (which is the case during OIDC flows)
             };
             headers.append(
                 'set-cookie',
