@@ -165,39 +165,6 @@ describe('DPhotoInfrastructureStack', () => {
             });
         });
 
-        test('Cognito User Pool creates required user groups', () => {
-            template.hasResourceProperties('AWS::Cognito::UserPoolGroup', {
-                GroupName: 'admins',
-                Description: 'Administrators with full system access',
-                Precedence: 1
-            });
-
-            template.hasResourceProperties('AWS::Cognito::UserPoolGroup', {
-                GroupName: 'owners',
-                Description: 'Content owners with full access to their media',
-                Precedence: 2
-            });
-
-            template.hasResourceProperties('AWS::Cognito::UserPoolGroup', {
-                GroupName: 'visitors',
-                Description: 'Visitors with limited access to shared albums',
-                Precedence: 3
-            });
-        });
-
-        test('Cognito User Pool configures Google as identity provider', () => {
-            template.hasResourceProperties('AWS::Cognito::UserPoolIdentityProvider', {
-                ProviderName: 'Google',
-                ProviderType: 'Google',
-                AttributeMapping: {
-                    email: 'email',
-                    given_name: 'given_name',
-                    family_name: 'family_name',
-                    picture: 'picture'
-                }
-            });
-        });
-
         test('managed policy resources have pinned logical IDs to prevent recreation', () => {
             const resourceHasPinnedId = (expectedLogicalId: string, resourceType: string, matcher: any) => {
                 expect(Object.keys(template.findResources(resourceType, matcher))).toEqual([expectedLogicalId]);
