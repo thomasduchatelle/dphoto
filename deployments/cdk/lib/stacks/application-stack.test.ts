@@ -88,12 +88,6 @@ describe('DPhotoApplicationStack', () => {
 
         (CognitoClientConstruct as unknown as jest.Mock).mockImplementation(() => mockCognitoClient);
 
-        const mockCognitoCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
-            new cdk.Stack(),
-            'MockCognitoCert',
-            'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
-        );
-
         app = new cdk.App();
         stack = new ApplicationStack(app, 'TestStack', {
             environmentName: 'test',
@@ -101,8 +95,6 @@ describe('DPhotoApplicationStack', () => {
             archiveStore: mockArchiveStore,
             catalogStore: mockCatalogStore,
             archivist: mockArchivist,
-            cognitoUserPool: mockCognitoUserPool,
-            cognitoCertificate: mockCognitoCertificate,
             env: {
                 region: 'eu-west-1',
                 account: '0123456789',

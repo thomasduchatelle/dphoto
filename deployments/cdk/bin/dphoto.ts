@@ -52,8 +52,6 @@ export default function main(
         archiveStore: infrastructureStack.archiveStore,
         catalogStore: infrastructureStack.catalogStore,
         archivist: infrastructureStack.archivist,
-        cognitoUserPool: infrastructureStack.cognitoUserPool,
-        cognitoCertificate: cognitoCertificateStack.cognitoCertificate,
         env: {
             account: account,
             region: region
