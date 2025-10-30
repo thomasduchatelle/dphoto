@@ -93,16 +93,5 @@ export class CognitoClientConstruct extends Construct {
             returnMergedResources: true,
             useCognitoProvidedValues: true,
         });
-
-        // Outputs
-        new cdk.CfnOutput(this, 'UserPoolClientId', {
-            value: this.userPoolClient.userPoolClientId,
-            description: 'Cognito User Pool Client ID',
-        });
-
-        new cdk.CfnOutput(this, 'UserPoolDomainOutput', {
-            value: userPoolDomain.domainName,
-            description: 'Cognito User Pool Domain',
-        });
     }
 }

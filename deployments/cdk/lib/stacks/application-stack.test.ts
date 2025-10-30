@@ -5,15 +5,13 @@ import {environments} from '../config/environments';
 import {ArchiveStoreConstruct} from '../archive/archive-store-construct';
 import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
 import {ArchivistConstruct} from '../archive/archivist-construct';
-import {CognitoUserPoolConstruct} from '../access/cognito-user-pool-construct';
-import {CognitoClientConstruct} from '../access/cognito-client-construct';
+import {CognitoStack} from './cognito-stack';
+import {computeLetsEncryptHash} from '../utils/letsencrypt-certificate-construct';
 
 // Mock the store constructs to provide test implementations
 jest.mock('../archive/archive-store-construct');
 jest.mock('../catalog/catalog-store-construct');
 jest.mock('../archive/archivist-construct');
-jest.mock('../access/cognito-user-pool-construct');
-jest.mock('../access/cognito-client-construct');
 
 jest.mock('aws-cdk-lib/aws-lambda', () => {
     const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
@@ -48,10 +46,11 @@ describe('DPhotoApplicationStack', () => {
     let mockArchiveStore: jest.Mocked<ArchiveStoreConstruct>;
     let mockCatalogStore: jest.Mocked<CatalogStoreConstruct>;
     let mockArchivist: jest.Mocked<ArchivistConstruct>;
-    let mockCognitoUserPool: jest.Mocked<CognitoUserPoolConstruct>;
-    let mockCognitoClient: jest.Mocked<CognitoClientConstruct>;
+    let mockCognitoStack: CognitoStack;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        await computeLetsEncryptHash();
+
         // Create mock store constructs
         mockArchiveStore = {
             grantReadAccessToRawAndCacheMedias: jest.fn(),
@@ -67,27 +66,6 @@ describe('DPhotoApplicationStack', () => {
             grantAccessToAsyncArchivist: jest.fn(),
         } as any;
 
-        mockCognitoUserPool = {
-            userPool: {
-                userPoolId: 'test-user-pool-id',
-                addClient: jest.fn(),
-                addDomain: jest.fn(),
-            },
-            googleProvider: {} as any,
-        } as any;
-
-        mockCognitoClient = {
-            userPoolClient: {
-                userPoolClientId: 'test-client-id',
-                userPoolClientSecret: {
-                    unsafeUnwrap: jest.fn().mockReturnValue('test-client-secret'),
-                },
-            },
-            cognitoDomainName: 'login.dphoto.example.com',
-        } as any;
-
-        (CognitoClientConstruct as unknown as jest.Mock).mockImplementation(() => mockCognitoClient);
-
         const mockCognitoCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
             new cdk.Stack(),
             'MockCognitoCert',
@@ -95,14 +73,25 @@ describe('DPhotoApplicationStack', () => {
         );
 
         app = new cdk.App();
+
+        // Create a real CognitoStack for testing
+        mockCognitoStack = new CognitoStack(app, 'TestCognitoStack', {
+            environmentName: 'test',
+            config: environments.test,
+            cognitoCertificate: mockCognitoCertificate,
+            env: {
+                region: 'eu-west-1',
+                account: '0123456789',
+            },
+        });
+
         stack = new ApplicationStack(app, 'TestStack', {
             environmentName: 'test',
             config: environments.test,
             archiveStore: mockArchiveStore,
             catalogStore: mockCatalogStore,
             archivist: mockArchivist,
-            cognitoUserPool: mockCognitoUserPool,
-            cognitoCertificate: mockCognitoCertificate,
+            cognitoStack: mockCognitoStack,
             env: {
                 region: 'eu-west-1',
                 account: '0123456789',

@@ -33,9 +33,9 @@ jest.mock('aws-cdk-lib/aws-s3-deployment', () => {
 });
 
 describe('CDK Integration Tests', () => {
-    test.each(['next', 'live'])('deployment has required resources for env %s', (envName) => {
+    test.each(['next', 'live'])('deployment has required resources for env %s', async (envName) => {
         // Call your main function to create the app with stacks
-        const app = main(envName, "01234567890123456");
+        const app = await main(envName, "01234567890123456");
 
         const assembly = app.synth();
         expect(assembly).toBeDefined();

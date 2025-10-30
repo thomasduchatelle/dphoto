@@ -5,14 +5,11 @@ import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import {HttpLambdaIntegration} from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as logs from "aws-cdk-lib/aws-logs";
-import * as cognito from 'aws-cdk-lib/aws-cognito';
 
 export interface WakuWebUiConstructProps {
     environmentName: string;
     httpApi: apigatewayv2.HttpApi;
-    userPool: cognito.IUserPool;
-    userPoolClient: cognito.UserPoolClient;
-    cognitoDomainName: string;
+    cognitoEnvironmentVariables: Record<string, string>;
     googleLoginClientId: string;
 }
 
@@ -23,9 +20,7 @@ export class WakuWebUiConstruct extends Construct {
     constructor(scope: Construct, id: string, {
         httpApi,
         environmentName,
-        userPool,
-        userPoolClient,
-        cognitoDomainName,
+        cognitoEnvironmentVariables,
         googleLoginClientId
     }: WakuWebUiConstructProps) {
         super(scope, id);
@@ -46,11 +41,7 @@ export class WakuWebUiConstruct extends Construct {
             logGroup: logGroup,
             environment: {
                 NODE_ENV: 'production',
-                COGNITO_USER_POOL_ID: userPool.userPoolId,
-                COGNITO_CLIENT_ID: userPoolClient.userPoolClientId,
-                COGNITO_CLIENT_SECRET: userPoolClient.userPoolClientSecret.unsafeUnwrap(),
-                COGNITO_DOMAIN: `https://${cognitoDomainName}`,
-                COGNITO_ISSUER: `https://cognito-idp.${cdk.Stack.of(this).region}.amazonaws.com/${userPool.userPoolId}`,
+                ...cognitoEnvironmentVariables,
                 GOOGLE_LOGIN_CLIENT_ID: googleLoginClientId,
             },
         });
