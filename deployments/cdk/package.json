@@ -11,7 +11,7 @@
     "test:watch": "jest --watch",
     "cdk": "cdk",
     "synth": "cdk synth",
-    "synth:test": "cdk synth --context environment=test",
+    "synth:test": "CDK_DEFAULT_ACCOUNT=123456789012 cdk synth --context environment=test",
     "deploy:test": "cdk deploy --context environment=test"
   },
   "devDependencies": {
