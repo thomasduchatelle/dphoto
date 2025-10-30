@@ -5,12 +5,15 @@ import {environments} from '../lib/config/environments';
 import {InfrastructureStack} from '../lib/stacks/infrastructure-stack';
 import {ApplicationStack} from "../lib/stacks/application-stack";
 import {CognitoCertificateStack} from "../lib/stacks/cognito-certificate-stack";
+import {computeLetsEncryptHash} from "../lib/utils/letsencrypt-certificate-construct";
 
-export default function main(
+export default async function main(
     defaultEnvName: string = "next",
     account: string | undefined = process.env.CDK_DEFAULT_ACCOUNT,
     region: string | undefined = process.env.CDK_DEFAULT_REGION || 'eu-west-1',
 ) {
+    await computeLetsEncryptHash()
+
     const app = new cdk.App();
 
     const envName = app.node.tryGetContext('environment') || defaultEnvName

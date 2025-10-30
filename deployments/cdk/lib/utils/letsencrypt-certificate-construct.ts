@@ -8,9 +8,8 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import {Construct, IDependable} from 'constructs';
 import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from 'aws-cdk-lib/custom-resources';
 import {ICertificate} from "aws-cdk-lib/aws-certificatemanager";
-import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
+import {computeHash, GO_FILES} from './hash-utils';
 
 export interface LetsEncryptCertificateConstructProps {
     environmentName: string;
@@ -20,48 +19,24 @@ export interface LetsEncryptCertificateConstructProps {
 }
 
 const hashes = {
-    lambda: '',
+    letsEncryptLambda: '',
 }
 
-export async function computeHash() {
+export async function computeLetsEncryptHash() {
     const rootDir = path.resolve(__dirname, '../../../../');
-    const hash = crypto.createHash('sha256');
-    const filesToHash: string[] = [];
 
-    filesToHash.push(path.join(rootDir, 'go.mod'));
-    filesToHash.push(path.join(rootDir, 'api/lambdas/go.mod'));
+    hashes.letsEncryptLambda = computeHash({
+        directories: [
+            path.join(rootDir, 'go.mod'),
+            path.join(rootDir, 'api/lambdas/go.mod'),
+            path.join(rootDir, 'api/lambdas/sys-letsencrypt'),
+            path.join(rootDir, 'pkg/dns'),
+            path.join(rootDir, 'pkg/dnsadapters'),
+        ],
+        filePatterns: [GO_FILES]
+    });
 
-    const collectGoFiles = (dir: string) => {
-        if (!fs.existsSync(dir)) {
-            return;
-        }
-        const entries = fs.readdirSync(dir, {withFileTypes: true});
-        for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-            if (entry.isDirectory()) {
-                collectGoFiles(fullPath);
-            } else if (entry.isFile() && entry.name.endsWith('.go')) {
-                filesToHash.push(fullPath);
-            }
-        }
-    };
-
-    collectGoFiles(path.join(rootDir, 'api/lambdas/sys-letsencrypt'));
-    collectGoFiles(path.join(rootDir, 'pkg/dns'));
-    collectGoFiles(path.join(rootDir, 'pkg/dnsadapters'));
-
-    filesToHash.sort();
-
-    for (const file of filesToHash) {
-        if (fs.existsSync(file)) {
-            const content = fs.readFileSync(file);
-            hash.update(file);
-            hash.update(new Uint8Array(content));
-        }
-    }
-
-    hashes.lambda = hash.digest('hex');
-    return hashes.lambda;
+    return hashes.letsEncryptLambda;
 }
 
 export class LetsEncryptCertificateConstruct extends Construct {
@@ -70,7 +45,12 @@ export class LetsEncryptCertificateConstruct extends Construct {
 
     constructor(scope: Construct, id: string, props: LetsEncryptCertificateConstructProps) {
         super(scope, id);
-        
+
+        if (!hashes.letsEncryptLambda) {
+            throw new Error('LetsEncrypt lambda hash not computed. Make sure to call computeLetsEncryptHash() before instantiating the LetsEncryptCertificateConstruct.');
+        }
+        console.log("LetsEncrypt Lambda Hash:", hashes.letsEncryptLambda);
+
         this.ssmParameterSuffix = props.ssmParameterSuffix || 'domainCertificationArn';
 
         const letsEncryptLambdaTrigger: triggers.Trigger = this.installCertificateRenewalMechanism(props)
@@ -137,7 +117,9 @@ export class LetsEncryptCertificateConstruct extends Construct {
             runtime: lambda.Runtime.PROVIDED_AL2,
             architecture: lambda.Architecture.ARM_64,
             handler: 'bootstrap',
-            code: lambda.Code.fromAsset('../../bin/sys-letsencrypt.zip'),
+            code: lambda.Code.fromAsset('../../bin/sys-letsencrypt.zip', {
+                assetHash: hashes.letsEncryptLambda,
+            }),
             role: lambdaRole,
             timeout: cdk.Duration.minutes(15),
             memorySize: 128,
