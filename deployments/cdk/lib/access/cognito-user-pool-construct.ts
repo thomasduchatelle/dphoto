@@ -97,12 +97,5 @@ export class CognitoUserPoolConstruct extends Construct {
             description: 'Visitors with limited access to shared albums',
             precedence: 3,
         });
-
-
-        // Outputs
-        new cdk.CfnOutput(this, 'UserPoolId', {
-            value: this.userPool.userPoolId,
-            description: 'Cognito User Pool ID',
-        });
     }
 }
