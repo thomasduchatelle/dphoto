@@ -88,6 +88,12 @@ describe('DPhotoApplicationStack', () => {
 
         (CognitoClientConstruct as unknown as jest.Mock).mockImplementation(() => mockCognitoClient);
 
+        const mockCognitoCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
+            new cdk.Stack(),
+            'MockCognitoCert',
+            'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
+        );
+
         app = new cdk.App();
         stack = new ApplicationStack(app, 'TestStack', {
             environmentName: 'test',
@@ -95,6 +101,8 @@ describe('DPhotoApplicationStack', () => {
             archiveStore: mockArchiveStore,
             catalogStore: mockCatalogStore,
             archivist: mockArchivist,
+            cognitoUserPool: mockCognitoUserPool,
+            cognitoCertificate: mockCognitoCertificate,
             env: {
                 region: 'eu-west-1',
                 account: '0123456789',
@@ -108,16 +116,6 @@ describe('DPhotoApplicationStack', () => {
 
         expect(oauthTokenFunction).toBeDefined();
         expect(mockCatalogStore.grantReadWriteAccess).toHaveBeenCalled();
-    });
-
-    test('lambda for the endpoint /env-config.json has the environment variable GOOGLE_LOGIN_CLIENT_ID set', () => {
-        const envConfigFunction = findLambdaByRoute(template, '/env-config.json', 'GET');
-
-        expect(envConfigFunction).toBeDefined();
-
-        assertLambdaEnvironmentVariables(envConfigFunction, {
-            GOOGLE_LOGIN_CLIENT_ID: environments.test.googleLoginClientId,
-        });
     });
 
     test('catalog endpoints are served by lambdas', () => {
@@ -162,7 +160,6 @@ describe('DPhotoApplicationStack', () => {
         const whitelistedRoutes = [
             {method: 'POST', path: '/oauth/token'},
             {method: 'POST', path: '/oauth/logout'},
-            {method: 'GET', path: '/env-config.json'},
             {method: 'GET', path: '/api/v1/version'},
             {method: 'ANY', path: '/api/{path+}'},
             {method: 'ANY', path: '/{proxy+}'},

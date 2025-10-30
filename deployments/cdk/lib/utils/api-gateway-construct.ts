@@ -42,7 +42,6 @@ export class ApiGatewayConstruct extends Construct {
     }
 
 
-
     private createAPIGateway(props: ApiGatewayConstructProps, certificate: ICertificate) {
 
         const httpApi = new apigatewayv2.HttpApi(this, 'HttpApi', {
@@ -80,7 +79,6 @@ export class ApiGatewayConstruct extends Construct {
                         authorizerUserId: "$context.authorizer.claims.userId",
                         errorMessage: "$context.error.message",
                         integrationErrorMessage: "$context.integration.error",
-                        // authorizer: "$context.authorizer"
                     })
                 };
             }

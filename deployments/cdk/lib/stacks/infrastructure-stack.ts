@@ -7,6 +7,7 @@ import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
 import {CliUserAccessConstruct} from '../access/cli-user-access-construct';
 import {ArchiveServerlessIntegrationConstruct} from '../archive/archive-serverless-integration-construct';
 import {CatalogServerlessIntegrationConstruct} from '../catalog/catalog-serverless-integration-construct';
+import {CognitoUserPoolConstruct} from '../access/cognito-user-pool-construct';
 
 export interface DPhotoInfrastructureStackProps extends cdk.StackProps {
     environmentName: string;
@@ -17,6 +18,7 @@ export class InfrastructureStack extends cdk.Stack {
     public readonly archiveStore: ArchiveStoreConstruct;
     public readonly catalogStore: CatalogStoreConstruct;
     public readonly archivist: ArchivistConstruct;
+    public readonly cognitoUserPool: CognitoUserPoolConstruct;
 
     constructor(scope: Construct, id: string, props: DPhotoInfrastructureStackProps) {
         super(scope, id, props);
@@ -26,16 +28,18 @@ export class InfrastructureStack extends cdk.Stack {
         cdk.Tags.of(this).add('Environment', props.environmentName);
         cdk.Tags.of(this).add('Stack', "DPhotoInfrastructureStack");
 
-        const {archiveStore, catalogStore, archivist} = this.createInfrastructure(props);
+        const {archiveStore, catalogStore, archivist, cognitoUserPool} = this.createInfrastructure(props);
         this.archiveStore = archiveStore;
         this.catalogStore = catalogStore;
         this.archivist = archivist;
+        this.cognitoUserPool = cognitoUserPool;
     }
 
     private createInfrastructure(props: DPhotoInfrastructureStackProps): {
         archiveStore: ArchiveStoreConstruct;
         catalogStore: CatalogStoreConstruct;
         archivist: ArchivistConstruct;
+        cognitoUserPool: CognitoUserPoolConstruct;
     } {
         const archiveStore = new ArchiveStoreConstruct(this, 'ArchiveStore', {
             environmentName: props.environmentName,
@@ -70,10 +74,10 @@ export class InfrastructureStack extends cdk.Stack {
             catalogStore: catalogStore
         });
 
-        // const cognitoUserPool = new CognitoUserPoolConstruct(this, 'CognitoUserPool', {
-        //     environmentName: props.environmentName,
-        //     googleClientId: props.config.googleLoginClientId,
-        // });
+        const cognitoUserPool = new CognitoUserPoolConstruct(this, 'CognitoUserPool', {
+            environmentName: props.environmentName,
+            googleClientId: props.config.googleLoginClientId,
+        });
 
         new cdk.CfnOutput(this, 'ArchiveBucketName', {
             value: archiveStore.storageBucket.bucketName,
@@ -122,6 +126,6 @@ export class InfrastructureStack extends cdk.Stack {
             });
         });
 
-        return {archiveStore, catalogStore, archivist}
+        return {archiveStore, catalogStore, archivist: archivist, cognitoUserPool}
     }
 }
