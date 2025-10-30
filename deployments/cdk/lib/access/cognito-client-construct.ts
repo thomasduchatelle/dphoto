@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
-import {UserPoolClient, UserPoolDomain} from 'aws-cdk-lib/aws-cognito';
+import {ManagedLoginVersion, UserPoolClient, UserPoolDomain} from 'aws-cdk-lib/aws-cognito';
 import {ICertificate} from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
@@ -32,7 +32,8 @@ export class CognitoClientConstruct extends Construct {
                 domainName: props.cognitoDomainName,
                 certificate: props.cognitoCertificate,
             },
-            userPool: props.userPool
+            userPool: props.userPool,
+            managedLoginVersion: ManagedLoginVersion.NEWER_MANAGED_LOGIN,
         })
 
         // Create DNS record for custom domain
@@ -83,6 +84,14 @@ export class CognitoClientConstruct extends Construct {
             idTokenValidity: cdk.Duration.hours(1),
             refreshTokenValidity: cdk.Duration.days(30),
             preventUserExistenceErrors: true
+        });
+
+
+        new cognito.CfnManagedLoginBranding(this, "ManagedLoginBranding", {
+            userPoolId: props.userPool.userPoolId,
+            clientId: this.userPoolClient.userPoolClientId,
+            returnMergedResources: true,
+            useCognitoProvidedValues: true,
         });
 
         // Outputs

@@ -78,6 +78,12 @@ export class LetsEncryptCertificateConstruct extends Construct {
             }
         });
 
+        const logGroup = new logs.LogGroup(this, 'LogGroup', {
+            logGroupName: `/dphoto/${environmentName}/lambda/system-letsencrypt`,
+            retention: logs.RetentionDays.ONE_WEEK,
+            removalPolicy: cdk.RemovalPolicy.DESTROY
+        });
+
         const letsEncryptLambda = new lambda.Function(this, 'RenewalLambda', {
             functionName: `dphoto-${environmentName}-system-letsencrypt`,
             runtime: lambda.Runtime.PROVIDED_AL2,
@@ -93,7 +99,7 @@ export class LetsEncryptCertificateConstruct extends Construct {
                 DPHOTO_ENVIRONMENT: environmentName,
                 SSM_KEY_CERTIFICATE_ARN: this.getSsmKeyCertificateArn(environmentName),
             },
-            logRetention: logs.RetentionDays.ONE_WEEK
+            logGroup: logGroup
         });
 
         new events.Rule(this, 'RenewalSchedule', {

@@ -22,6 +22,7 @@ export class CognitoUserPoolConstruct extends Construct {
         // Create User Pool
         this.userPool = new cognito.UserPool(this, 'UserPool', {
             userPoolName: `${prefix}-users`,
+            featurePlan: cognito.FeaturePlan.ESSENTIALS,
             selfSignUpEnabled: false,
             signInAliases: {
                 email: true,
@@ -32,7 +33,7 @@ export class CognitoUserPoolConstruct extends Construct {
             standardAttributes: {
                 email: {
                     required: true,
-                    mutable: false,
+                    mutable: true, // required to be mutable for social identity providers (Google)
                 },
                 givenName: {
                     required: false,
@@ -56,7 +57,6 @@ export class CognitoUserPoolConstruct extends Construct {
             },
             accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
-            advancedSecurityMode: cognito.AdvancedSecurityMode.OFF,
         });
 
         cdk.Tags.of(this.userPool).add('Name', `${prefix}-user-pool`);
@@ -82,26 +82,22 @@ export class CognitoUserPoolConstruct extends Construct {
         });
 
         // Create User Groups
-        this.adminsGroup = new cognito.CfnUserPoolGroup(this, 'AdminsGroup', {
-            userPoolId: this.userPool.userPoolId,
-            groupName: 'admins',
+        this.userPool.addGroup("Admin", {
+            groupName: 'admin',
             description: 'Administrators with full system access',
             precedence: 1,
         });
-
-        this.ownersGroup = new cognito.CfnUserPoolGroup(this, 'OwnersGroup', {
-            userPoolId: this.userPool.userPoolId,
-            groupName: 'owners',
+        this.userPool.addGroup("Owner", {
+            groupName: 'owner',
             description: 'Content owners with full access to their media',
             precedence: 2,
         });
-
-        this.visitorsGroup = new cognito.CfnUserPoolGroup(this, 'VisitorsGroup', {
-            userPoolId: this.userPool.userPoolId,
-            groupName: 'visitors',
+        this.userPool.addGroup("Visitor", {
+            groupName: 'visitor',
             description: 'Visitors with limited access to shared albums',
             precedence: 3,
         });
+
 
         // Outputs
         new cdk.CfnOutput(this, 'UserPoolId', {

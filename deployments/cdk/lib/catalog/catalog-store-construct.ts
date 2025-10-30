@@ -32,7 +32,9 @@ export class CatalogStoreConstruct extends Construct {
             },
             billing: dynamodb.Billing.onDemand(),
             removalPolicy: props.production ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-            pointInTimeRecovery: props.production,
+            pointInTimeRecoverySpecification: {
+                pointInTimeRecoveryEnabled: props.production
+            },
             deletionProtection: props.production,
             globalSecondaryIndexes: [
                 {

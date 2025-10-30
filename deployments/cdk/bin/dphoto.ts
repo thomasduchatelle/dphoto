@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import {environments} from '../lib/config/environments';
 import {InfrastructureStack} from '../lib/stacks/infrastructure-stack';
 import {ApplicationStack} from "../lib/stacks/application-stack";
+import {CognitoCertificateStack} from "../lib/stacks/cognito-certificate-stack";
 
 export default function main(
     defaultEnvName: string = "next",
@@ -34,15 +35,15 @@ export default function main(
     });
 
     // Stack required by cognito hosted UI, it installs a certificate in us-east-1
-    // const cognitoCertificateStack = new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
-    //     environmentName: envName,
-    //     config: config,
-    //     env: {
-    //         account: account,
-    //         region: 'us-east-1'
-    //     },
-    //     description: `DPhoto Cognito certificate stack for ${envName} environment (us-east-1)`
-    // });
+    const cognitoCertificateStack = new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
+        environmentName: envName,
+        config: config,
+        env: {
+            account: account,
+            region: 'us-east-1'
+        },
+        description: `DPhoto Cognito certificate stack for ${envName} environment (us-east-1)`
+    });
 
     // Infrastructure Stack has everything else, it can be destroyed and recreated at any time (gateway, workload deployments, UI, ...)
     const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
@@ -51,6 +52,8 @@ export default function main(
         archiveStore: infrastructureStack.archiveStore,
         catalogStore: infrastructureStack.catalogStore,
         archivist: infrastructureStack.archivist,
+        cognitoUserPool: infrastructureStack.cognitoUserPool,
+        cognitoCertificate: cognitoCertificateStack.cognitoCertificate,
         env: {
             account: account,
             region: region
@@ -58,7 +61,7 @@ export default function main(
     });
 
     applicationStack.addDependency(infrastructureStack);
-    // applicationStack.addDependency(cognitoCertificateStack);
+    applicationStack.addDependency(cognitoCertificateStack);
 
     return app;
 }
