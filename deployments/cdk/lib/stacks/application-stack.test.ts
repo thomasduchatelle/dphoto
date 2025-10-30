@@ -1,19 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
+import {SecretValue} from 'aws-cdk-lib';
 import {Template} from 'aws-cdk-lib/assertions';
 import {ApplicationStack} from './application-stack';
 import {environments} from '../config/environments';
-import {ArchiveStoreConstruct} from '../archive/archive-store-construct';
-import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
-import {ArchivistConstruct} from '../archive/archivist-construct';
-import {CognitoUserPoolConstruct} from '../access/cognito-user-pool-construct';
-import {CognitoClientConstruct} from '../access/cognito-client-construct';
-
-// Mock the store constructs to provide test implementations
-jest.mock('../archive/archive-store-construct');
-jest.mock('../catalog/catalog-store-construct');
-jest.mock('../archive/archivist-construct');
-jest.mock('../access/cognito-user-pool-construct');
-jest.mock('../access/cognito-client-construct');
+import {computeLetsEncryptHash} from '../utils/letsencrypt-certificate-construct';
+import {FakeArchiveAccessManager, FakeArchivistAccessManager, FakeCatalogAccessManager} from '../test/fakes/fake-access-managers';
 
 jest.mock('aws-cdk-lib/aws-lambda', () => {
     const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
@@ -28,96 +19,42 @@ jest.mock('aws-cdk-lib/aws-lambda', () => {
     };
 });
 
-jest.mock('aws-cdk-lib/aws-s3-deployment', () => {
-    const actual = jest.requireActual('aws-cdk-lib/aws-s3-deployment');
-    return {
-        ...actual,
-        Source: {
-            ...actual.Source,
-            asset: jest.fn().mockImplementation(() => {
-                return actual.Source.asset('bin/');
-            }),
-        }
-    };
-});
-
 describe('DPhotoApplicationStack', () => {
     let app: cdk.App;
     let stack: ApplicationStack;
     let template: Template;
-    let mockArchiveStore: jest.Mocked<ArchiveStoreConstruct>;
-    let mockCatalogStore: jest.Mocked<CatalogStoreConstruct>;
-    let mockArchivist: jest.Mocked<ArchivistConstruct>;
-    let mockCognitoUserPool: jest.Mocked<CognitoUserPoolConstruct>;
-    let mockCognitoClient: jest.Mocked<CognitoClientConstruct>;
+    let fakeArchiveAccessManager: FakeArchiveAccessManager;
+    let fakeArchivistAccessManager: FakeArchivistAccessManager;
+    let fakeCatalogAccessManager: FakeCatalogAccessManager;
 
-    beforeEach(() => {
-        // Create mock store constructs
-        mockArchiveStore = {
-            grantReadAccessToRawAndCacheMedias: jest.fn(),
-            grantWriteAccessToRawAndCachedMedias: jest.fn(),
-        } as any;
-
-        mockCatalogStore = {
-            grantReadAccess: jest.fn(),
-            grantReadWriteAccess: jest.fn(),
-        } as any;
-
-        mockArchivist = {
-            grantAccessToAsyncArchivist: jest.fn(),
-        } as any;
-
-        mockCognitoUserPool = {
-            userPool: {
-                userPoolId: 'test-user-pool-id',
-                addClient: jest.fn(),
-                addDomain: jest.fn(),
-            },
-            googleProvider: {} as any,
-        } as any;
-
-        mockCognitoClient = {
-            userPoolClient: {
-                userPoolClientId: 'test-client-id',
-                userPoolClientSecret: {
-                    unsafeUnwrap: jest.fn().mockReturnValue('test-client-secret'),
-                },
-            },
-            cognitoDomainName: 'login.dphoto.example.com',
-        } as any;
-
-        (CognitoClientConstruct as unknown as jest.Mock).mockImplementation(() => mockCognitoClient);
-
+    beforeEach(async () => {
+        await computeLetsEncryptHash();
+        const mockCognitoCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
+            new cdk.Stack(),
+            'MockCognitoCert',
+            'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
+        );
         app = new cdk.App();
+        fakeArchiveAccessManager = new FakeArchiveAccessManager();
+        fakeArchivistAccessManager = new FakeArchivistAccessManager();
+        fakeCatalogAccessManager = new FakeCatalogAccessManager();
         stack = new ApplicationStack(app, 'TestStack', {
+            archiveAccessManager: fakeArchiveAccessManager,
+            archivistAccessManager: fakeArchivistAccessManager,
+            catalogAccessManager: fakeCatalogAccessManager,
+            oauth2ClientConfig: {
+                cognitoIssuer: "https://issuer-junit-tests-01.example.com",
+                userPoolClientId: "0987654321",
+                userPoolClientSecret: new SecretValue("super-secret-value"),
+            },
             environmentName: 'test',
             config: environments.test,
-            archiveStore: mockArchiveStore,
-            catalogStore: mockCatalogStore,
-            archivist: mockArchivist,
             env: {
                 region: 'eu-west-1',
                 account: '0123456789',
-            },
+            }
         });
         template = Template.fromStack(stack);
-    });
-
-    test('lambda for the endpoint /oauth/token has all access to the catalog table (where refresh tokens are stored)', () => {
-        const oauthTokenFunction = findLambdaByRoute(template, '/oauth/token', 'POST');
-
-        expect(oauthTokenFunction).toBeDefined();
-        expect(mockCatalogStore.grantReadWriteAccess).toHaveBeenCalled();
-    });
-
-    test('lambda for the endpoint /env-config.json has the environment variable GOOGLE_LOGIN_CLIENT_ID set', () => {
-        const envConfigFunction = findLambdaByRoute(template, '/env-config.json', 'GET');
-
-        expect(envConfigFunction).toBeDefined();
-
-        assertLambdaEnvironmentVariables(envConfigFunction, {
-            GOOGLE_LOGIN_CLIENT_ID: environments.test.googleLoginClientId,
-        });
     });
 
     test('catalog endpoints are served by lambdas', () => {
@@ -136,9 +73,35 @@ describe('DPhotoApplicationStack', () => {
 
         const shareAlbumFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/shares/{email}', 'PUT');
         expect(shareAlbumFunction).toBeDefined();
+
+        const amendDateFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/dates', 'PUT');
+        expect(amendDateFunction).toBeDefined();
+
+        const amendNameFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/name', 'PUT');
+        expect(amendDateFunction).toBeDefined();
+
+        const oauthTokenEndpoint = findLambdaByRoute(template, '/oauth/token', 'POST');
+        expect(oauthTokenEndpoint).toBeDefined();
+
+        const oauthLogoutEndpoint = findLambdaByRoute(template, '/oauth/logout', 'POST');
+        expect(oauthLogoutEndpoint).toBeDefined();
+
+        expect(fakeCatalogAccessManager.hasBeenGrantedForCatalogRead(
+            functionName(listAlbumsFunction),
+            functionName(listMediasFunction),
+        )).toBe('');
+        expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo(
+            functionName(createAlbumsFunction),
+            functionName(deleteAlbumsFunction),
+            functionName(shareAlbumFunction),
+            functionName(amendDateFunction),
+            functionName(amendNameFunction),
+            functionName(oauthTokenEndpoint),
+            functionName(oauthLogoutEndpoint),
+        )).toBe('');
     });
 
-    test('archive endpoints are served by lambdas', () => {
+    test('archive get-media endpoint is served by a lambda with read+write access', () => {
         // Test archive endpoints
         const getMediaFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/medias/{mediaId}/{filename}', 'GET');
         expect(getMediaFunction).toBeDefined();
@@ -146,6 +109,10 @@ describe('DPhotoApplicationStack', () => {
         // Verify it has higher memory allocation for media processing
         expect(getMediaFunction.Properties.MemorySize).toBe(1024);
         expect(getMediaFunction.Properties.Timeout).toBe(29);
+
+        expect(fakeCatalogAccessManager.hasBeenGrantedForCatalogRead(functionName(getMediaFunction))).toBe('');
+        expect(fakeArchiveAccessManager.hasBeenGrantedForRawAndCacheMedias(functionName(getMediaFunction))).toBe('');
+        expect(fakeArchivistAccessManager.hasBeenGrantedForAsyncArchivist(functionName(getMediaFunction))).toBe('');
     });
 
     test('user endpoints are served by lambdas', () => {
@@ -157,7 +124,7 @@ describe('DPhotoApplicationStack', () => {
         expect(listOwnersFunction).toBeDefined();
     });
 
-    test('all API routes have Lambda Authoriser attached unless whitelisted', () => {
+    test('all API routes have Lambda Authorizer attached unless whitelisted', () => {
         // Define routes that should NOT have authorizer (whitelist)
         const whitelistedRoutes = [
             {method: 'POST', path: '/oauth/token'},
@@ -191,11 +158,6 @@ describe('DPhotoApplicationStack', () => {
         });
     });
 });
-
-function assertLambdaEnvironmentVariables(lambdaFunction: any, expectedVariables: Record<string, string>): void {
-    const environment = lambdaFunction.Properties.Environment?.Variables;
-    expect(environment).toMatchObject(expectedVariables);
-}
 
 function getIntegrationId(routeResource: { [p: string]: any }, method: string, path: string) {
     const target = routeResource.Properties?.Target;
@@ -250,4 +212,8 @@ function findLambdaByRoute(template: Template, path: string, method: string = 'P
     }
 
     return lambdaFunction;
+}
+
+function functionName(oauthTokenFunction: any) {
+    return oauthTokenFunction.Properties.FunctionName || oauthTokenFunction.Properties.Description || 'unknown';
 }

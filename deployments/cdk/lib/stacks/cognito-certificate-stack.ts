@@ -9,6 +9,7 @@ export interface CognitoCertificateStackProps extends cdk.StackProps {
     config: EnvironmentConfig;
 }
 
+/** Create certificate in us-east-1 which is required for Cognito custom domain. */
 export class CognitoCertificateStack extends cdk.Stack {
     public readonly cognitoCertificate: ICertificate;
 

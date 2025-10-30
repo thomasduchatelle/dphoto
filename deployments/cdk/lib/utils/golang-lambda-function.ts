@@ -5,13 +5,6 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import {Construct} from 'constructs';
 
-export interface LambdaPermissions {
-    cacheRw?: boolean;
-    dynamodbRw?: boolean;
-    storageRw?: boolean;
-    storageRo?: boolean;
-}
-
 export interface GoLangLambdaFunctionProps {
     environmentName: string;
     functionName: string;
@@ -37,6 +30,12 @@ export class GoLangLambdaFunction extends Construct {
             ]
         });
 
+        const logGroup = new logs.LogGroup(this, 'LogGroup', {
+            logGroupName: `/dphoto/${props.environmentName}/lambda/${props.functionName}`,
+            retention: logs.RetentionDays.ONE_WEEK,
+            removalPolicy: cdk.RemovalPolicy.DESTROY
+        });
+
         this.function = new lambda.Function(this, 'Function', {
             functionName: `dphoto-${props.environmentName}-${props.functionName}`,
             runtime: lambda.Runtime.PROVIDED_AL2,
@@ -46,7 +45,7 @@ export class GoLangLambdaFunction extends Construct {
             timeout: props.timeout || Duration.minutes(1),
             memorySize: props.memorySize || 256,
             environment: props.environment || {},
-            logRetention: logs.RetentionDays.ONE_WEEK,
+            logGroup: logGroup,
             role: this.role
         });
     }

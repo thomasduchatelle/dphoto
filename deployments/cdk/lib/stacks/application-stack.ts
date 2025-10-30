@@ -2,31 +2,34 @@ import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../utils/api-gateway-construct';
-import {AuthenticationEndpointsConstruct} from '../access/authentication-endpoints-construct';
 import {CatalogEndpointsConstruct} from '../catalog/catalog-endpoints-construct';
 import {WakuWebUiConstruct} from '../utils/waku-web-ui-construct';
 import {ArchiveEndpointsConstruct} from "../archive/archive-endpoints-construct";
 import {VersionEndpointConstruct} from "../utils/version-endpoint-construct";
 import {UserEndpointsConstruct} from "../access/user-endpoints-construct";
-import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
-import {CatalogStoreConstruct} from "../catalog/catalog-store-construct";
-import {ArchivistConstruct} from "../archive/archivist-construct";
 import {LambdaAuthoriserConstruct} from "../access/lambda-authoriser-construct";
+import {CognitoStackExports} from "./cognito-stack";
+import {ArchiveAccessManager} from "../archive/archive-access-manager";
+import {CatalogAccessManager} from "../catalog/catalog-access-manager";
+import {ArchivistAccessManager} from "../archive/archivist-access-manager";
+import {AuthenticationEndpointsConstruct} from "../access/authentication-endpoints";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
     config: EnvironmentConfig;
-    archiveStore: ArchiveStoreConstruct;
-    catalogStore: CatalogStoreConstruct;
-    archivist: ArchivistConstruct;
+    archiveAccessManager: ArchiveAccessManager;
+    catalogAccessManager: CatalogAccessManager;
+    archivistAccessManager: ArchivistAccessManager;
+    oauth2ClientConfig: CognitoStackExports;
 }
 
 export class ApplicationStack extends cdk.Stack {
     constructor(scope: Construct, id: string, {
         config,
-        archiveStore,
-        catalogStore,
-        archivist,
+        archiveAccessManager,
+        catalogAccessManager,
+        archivistAccessManager,
+        oauth2ClientConfig,
         ...props
     }: DPhotoApplicationStackProps) {
         super(scope, id, {
@@ -45,19 +48,10 @@ export class ApplicationStack extends cdk.Stack {
             ...config,
         });
 
-        // const cognitoClient = new CognitoClientConstruct(this, 'CognitoClient', {
-        //     environmentName: props.environmentName,
-        //     userPool: cognitoUserPool.userPool,
-        //     cognitoDomainName: config.cognitoDomainName,
-        //     rootDomain: config.rootDomain,
-        //     domainName: config.domainName,
-        //     cognitoExtraRedirectURLs: config.cognitoExtraRedirectURLs,
-        //     cognitoCertificate: cognitoCertificate,
-        // });
-
         new WakuWebUiConstruct(this, 'WakuWebUi', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
+            oauth2ClientConfig: oauth2ClientConfig,
         });
 
         new VersionEndpointConstruct(this, 'VersionEndpoint', {
@@ -66,45 +60,46 @@ export class ApplicationStack extends cdk.Stack {
         })
 
         // Create Lambda Authoriser
-        const lambdaAuthoriser = new LambdaAuthoriserConstruct(this, 'LambdaAuthoriser', {
+        const lambdaAuthorizer = new LambdaAuthoriserConstruct(this, 'LambdaAuthoriser', {
             environmentName: props.environmentName,
-            catalogStore,
-        });
-
-        new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
-            environmentName: props.environmentName,
-            httpApi: apiGateway.httpApi,
-            catalogStore,
-            archiveStore,
-            googleLoginClientId: config.googleLoginClientId,
+            catalogStore: catalogAccessManager,
+            issuerUrl: oauth2ClientConfig.cognitoIssuer,
         });
 
         new UserEndpointsConstruct(this, 'UserEndpoints', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
-            catalogStore,
-            archiveStore,
-            googleLoginClientId: config.googleLoginClientId,
-            authorizer: lambdaAuthoriser.authorizer,
+            catalogStore: catalogAccessManager,
+            archiveStore: archiveAccessManager,
+            authorizer: lambdaAuthorizer.authorizer,
         });
 
         new CatalogEndpointsConstruct(this, 'CatalogEndpoints', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
-            catalogStore,
-            archiveStore,
-            archiveMessaging: archivist,
-            authorizer: lambdaAuthoriser.authorizer,
+            catalogStore: catalogAccessManager,
+            archiveStore: archiveAccessManager,
+            archiveMessaging: archivistAccessManager,
+            authorizer: lambdaAuthorizer.authorizer,
         });
 
         new ArchiveEndpointsConstruct(this, 'ArchiveEndpoints', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
-            archiveStore,
-            catalogStore,
-            archivist: archivist,
-            authorizer: lambdaAuthoriser.authorizer,
-            queryParamAuthorizer: lambdaAuthoriser.queryParamAuthorizer,
+            archiveStore: archiveAccessManager,
+            catalogStore: catalogAccessManager,
+            archivist: archivistAccessManager,
+            authorizer: lambdaAuthorizer.authorizer,
+            queryParamAuthorizer: lambdaAuthorizer.queryParamAuthorizer,
+        });
+
+        // TODO AGENTS - Remove the construct (class definition and this instantiation) after Cognito switch over (it won't be used).
+        new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
+            environmentName: props.environmentName,
+            httpApi: apiGateway.httpApi,
+            catalogStore: catalogAccessManager,
+            archiveStore: archiveAccessManager,
+            googleLoginClientId: config.googleLoginClientId,
         });
 
         new cdk.CfnOutput(this, 'PublicURL', {

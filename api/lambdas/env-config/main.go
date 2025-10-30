@@ -8,6 +8,8 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/meta"
 )
 
+// TODO AGENT delete this file, it's mapping i the API gatewaym and the stub data used when running locally
+
 func Handler() (common.Response, error) {
 	return common.Ok(struct {
 		GoogleClientId string `json:"googleClientId"`

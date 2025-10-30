@@ -2,16 +2,16 @@ import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import {HttpApi, IHttpRouteAuthorizer} from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint, SimpleGoEndpoint} from '../utils/simple-go-endpoint';
-import {CatalogStoreConstruct} from './catalog-store-construct';
-import {ArchivistConstruct} from '../archive/archivist-construct';
-import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
+import {CatalogAccessManager} from "./catalog-access-manager";
+import {ArchiveAccessManager} from "../archive/archive-access-manager";
+import {ArchivistAccessManager} from "../archive/archivist-access-manager";
 
 export interface CatalogEndpointsConstructProps {
     environmentName: string;
     httpApi: apigatewayv2.HttpApi;
-    catalogStore: CatalogStoreConstruct;
-    archiveStore: ArchiveStoreConstruct;
-    archiveMessaging: ArchivistConstruct;
+    catalogStore: CatalogAccessManager;
+    archiveStore: ArchiveAccessManager;
+    archiveMessaging: ArchivistAccessManager;
     authorizer?: IHttpRouteAuthorizer;
 }
 
@@ -30,14 +30,18 @@ export class CatalogEndpointsConstruct extends Construct {
         this.accessControlEndpoints(endpointProps, props.catalogStore);
     }
 
-    private readOnlyCatalogEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi; authorizer?: IHttpRouteAuthorizer }, catalogStore: CatalogStoreConstruct) {
+    private readOnlyCatalogEndpoints(endpointProps: {
+        environmentName: string;
+        httpApi: HttpApi;
+        authorizer?: IHttpRouteAuthorizer
+    }, catalogStore: CatalogAccessManager) {
         const listAlbums = createSingleRouteEndpoint(this, 'ListAlbums', {
             ...endpointProps,
             functionName: 'list-albums',
             path: '/api/v1/albums',
             method: apigatewayv2.HttpMethod.GET,
         });
-        catalogStore.grantReadAccess(listAlbums.lambda);
+        catalogStore.grantCatalogReadAccess(listAlbums.lambda);
 
         const listMedias = createSingleRouteEndpoint(this, 'ListMedias', {
             ...endpointProps,
@@ -45,21 +49,21 @@ export class CatalogEndpointsConstruct extends Construct {
             path: '/api/v1/owners/{owner}/albums/{folderName}/medias',
             method: apigatewayv2.HttpMethod.GET,
         });
-        catalogStore.grantReadAccess(listMedias.lambda);
+        catalogStore.grantCatalogReadAccess(listMedias.lambda);
     }
 
     private amendTimelineEndpoints(endpointProps: {
         environmentName: string;
         httpApi: HttpApi;
         authorizer?: IHttpRouteAuthorizer;
-    }, catalogStore: CatalogStoreConstruct, archivist: ArchivistConstruct, archiveStore: ArchiveStoreConstruct) {
+    }, catalogStore: CatalogAccessManager, archivist: ArchivistAccessManager, archiveStore: ArchiveAccessManager) {
         const createAlbums = createSingleRouteEndpoint(this, 'CreateAlbums', {
             ...endpointProps,
             functionName: 'create-album',
             path: '/api/v1/albums',
             method: apigatewayv2.HttpMethod.POST,
         });
-        catalogStore.grantReadWriteAccess(createAlbums.lambda);
+        catalogStore.grantCatalogReadWriteAccess(createAlbums.lambda);
         archiveStore.grantReadAccessToRawAndCacheMedias(createAlbums.lambda);
         archivist.grantAccessToAsyncArchivist(createAlbums.lambda);
 
@@ -69,7 +73,7 @@ export class CatalogEndpointsConstruct extends Construct {
             path: '/api/v1/owners/{owner}/albums/{folderName}',
             method: apigatewayv2.HttpMethod.DELETE,
         });
-        catalogStore.grantReadWriteAccess(deleteAlbums.lambda);
+        catalogStore.grantCatalogReadWriteAccess(deleteAlbums.lambda);
         archiveStore.grantReadAccessToRawAndCacheMedias(deleteAlbums.lambda);
         archivist.grantAccessToAsyncArchivist(deleteAlbums.lambda);
 
@@ -79,7 +83,7 @@ export class CatalogEndpointsConstruct extends Construct {
             path: '/api/v1/owners/{owner}/albums/{folderName}/dates',
             method: apigatewayv2.HttpMethod.PUT,
         });
-        catalogStore.grantReadWriteAccess(amendAlbumDates.lambda);
+        catalogStore.grantCatalogReadWriteAccess(amendAlbumDates.lambda);
         archiveStore.grantReadAccessToRawAndCacheMedias(amendAlbumDates.lambda);
         archivist.grantAccessToAsyncArchivist(amendAlbumDates.lambda);
 
@@ -89,12 +93,16 @@ export class CatalogEndpointsConstruct extends Construct {
             path: '/api/v1/owners/{owner}/albums/{folderName}/name',
             method: apigatewayv2.HttpMethod.PUT,
         });
-        catalogStore.grantReadWriteAccess(amendAlbumName.lambda);
+        catalogStore.grantCatalogReadWriteAccess(amendAlbumName.lambda);
         archiveStore.grantReadAccessToRawAndCacheMedias(amendAlbumName.lambda);
         archivist.grantAccessToAsyncArchivist(amendAlbumName.lambda);
     }
 
-    private accessControlEndpoints(endpointProps: { environmentName: string; httpApi: HttpApi; authorizer?: IHttpRouteAuthorizer }, catalogStore: CatalogStoreConstruct) {
+    private accessControlEndpoints(endpointProps: {
+        environmentName: string;
+        httpApi: HttpApi;
+        authorizer?: IHttpRouteAuthorizer
+    }, catalogStore: CatalogAccessManager) {
         const shareAlbum = new SimpleGoEndpoint(this, 'ShareAlbum', {
             ...endpointProps,
             functionName: 'share-album',
@@ -109,6 +117,6 @@ export class CatalogEndpointsConstruct extends Construct {
                 }
             ]
         });
-        catalogStore.grantReadWriteAccess(shareAlbum.lambda);
+        catalogStore.grantCatalogReadWriteAccess(shareAlbum.lambda);
     }
 }

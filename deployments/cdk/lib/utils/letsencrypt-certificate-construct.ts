@@ -8,6 +8,8 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import {Construct, IDependable} from 'constructs';
 import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from 'aws-cdk-lib/custom-resources';
 import {ICertificate} from "aws-cdk-lib/aws-certificatemanager";
+import * as path from 'path';
+import {computeHash, GO_FILES} from './hash-utils';
 
 export interface LetsEncryptCertificateConstructProps {
     environmentName: string;
@@ -16,13 +18,38 @@ export interface LetsEncryptCertificateConstructProps {
     ssmParameterSuffix?: string;
 }
 
+const hashes = {
+    letsEncryptLambda: '',
+}
+
+export async function computeLetsEncryptHash() {
+    const rootDir = path.resolve(__dirname, '../../../../');
+
+    hashes.letsEncryptLambda = computeHash({
+        directories: [
+            path.join(rootDir, 'go.mod'),
+            path.join(rootDir, 'api/lambdas/go.mod'),
+            path.join(rootDir, 'api/lambdas/sys-letsencrypt'),
+            path.join(rootDir, 'pkg/dns'),
+            path.join(rootDir, 'pkg/dnsadapters'),
+        ],
+        filePatterns: [GO_FILES]
+    });
+
+    return hashes.letsEncryptLambda;
+}
+
 export class LetsEncryptCertificateConstruct extends Construct {
     public readonly certificate: ICertificate;
     private readonly ssmParameterSuffix: string;
 
     constructor(scope: Construct, id: string, props: LetsEncryptCertificateConstructProps) {
         super(scope, id);
-        
+
+        if (!hashes.letsEncryptLambda) {
+            throw new Error('LetsEncrypt lambda hash not computed. Make sure to call computeLetsEncryptHash() before instantiating the LetsEncryptCertificateConstruct.');
+        }
+
         this.ssmParameterSuffix = props.ssmParameterSuffix || 'domainCertificationArn';
 
         const letsEncryptLambdaTrigger: triggers.Trigger = this.installCertificateRenewalMechanism(props)
@@ -78,12 +105,20 @@ export class LetsEncryptCertificateConstruct extends Construct {
             }
         });
 
+        const logGroup = new logs.LogGroup(this, 'LogGroup', {
+            logGroupName: `/dphoto/${environmentName}/lambda/system-letsencrypt`,
+            retention: logs.RetentionDays.ONE_WEEK,
+            removalPolicy: cdk.RemovalPolicy.DESTROY
+        });
+
         const letsEncryptLambda = new lambda.Function(this, 'RenewalLambda', {
             functionName: `dphoto-${environmentName}-system-letsencrypt`,
             runtime: lambda.Runtime.PROVIDED_AL2,
             architecture: lambda.Architecture.ARM_64,
             handler: 'bootstrap',
-            code: lambda.Code.fromAsset('../../bin/sys-letsencrypt.zip'),
+            code: lambda.Code.fromAsset('../../bin/sys-letsencrypt.zip', {
+                assetHash: hashes.letsEncryptLambda,
+            }),
             role: lambdaRole,
             timeout: cdk.Duration.minutes(15),
             memorySize: 128,
@@ -93,7 +128,7 @@ export class LetsEncryptCertificateConstruct extends Construct {
                 DPHOTO_ENVIRONMENT: environmentName,
                 SSM_KEY_CERTIFICATE_ARN: this.getSsmKeyCertificateArn(environmentName),
             },
-            logRetention: logs.RetentionDays.ONE_WEEK
+            logGroup: logGroup
         });
 
         new events.Rule(this, 'RenewalSchedule', {

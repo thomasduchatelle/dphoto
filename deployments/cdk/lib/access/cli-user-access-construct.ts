@@ -30,7 +30,7 @@ export class CliUserAccessConstruct extends Construct {
         pinLogicalId(this.user, "CliUserA7F35037");
 
         // Attach policies
-        props.catalogStore.grantReadWriteAccess({role: this.user});
+        props.catalogStore.grantCatalogReadWriteAccess({role: this.user});
         props.archiveStore.grantWriteAccessToRawAndCachedMedias({role: this.user});
         props.archivist.grantAccessToAsyncArchivist({role: this.user})
 
