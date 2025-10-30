@@ -70,11 +70,6 @@ export class InfrastructureStack extends cdk.Stack {
             catalogStore: catalogStore
         });
 
-        // const cognitoUserPool = new CognitoUserPoolConstruct(this, 'CognitoUserPool', {
-        //     environmentName: props.environmentName,
-        //     googleClientId: props.config.googleLoginClientId,
-        // });
-
         new cdk.CfnOutput(this, 'ArchiveBucketName', {
             value: archiveStore.storageBucket.bucketName,
             description: 'Name of the bucket where medias can be uploaded'
@@ -122,6 +117,6 @@ export class InfrastructureStack extends cdk.Stack {
             });
         });
 
-        return {archiveStore, catalogStore, archivist}
+        return {archiveStore, catalogStore, archivist: archivist}
     }
 }

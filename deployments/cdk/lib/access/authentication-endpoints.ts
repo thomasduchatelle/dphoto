@@ -1,14 +1,14 @@
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint} from '../utils/simple-go-endpoint';
-import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
-import {ArchiveStoreConstruct} from '../archive/archive-store-construct';
+import {ArchiveAccessManager} from "../archive/archive-access-manager";
+import {CatalogAccessManager} from "../catalog/catalog-access-manager";
 
 export interface AccessEndpointsConstructProps {
     environmentName: string;
     httpApi: apigatewayv2.HttpApi;
-    catalogStore: CatalogStoreConstruct;
-    archiveStore: ArchiveStoreConstruct;
+    archiveStore: ArchiveAccessManager;
+    catalogStore: CatalogAccessManager;
     googleLoginClientId: string;
 }
 
@@ -27,7 +27,7 @@ export class AuthenticationEndpointsConstruct extends Construct {
             path: '/oauth/token',
             method: apigatewayv2.HttpMethod.POST,
         });
-        props.catalogStore.grantReadWriteAccess(authToken.lambda);
+        props.catalogStore.grantCatalogReadWriteAccess(authToken.lambda);
 
         const logout = createSingleRouteEndpoint(this, 'OAuthLogout', {
             ...endpointProps,
@@ -35,7 +35,7 @@ export class AuthenticationEndpointsConstruct extends Construct {
             path: '/oauth/logout',
             method: apigatewayv2.HttpMethod.POST,
         });
-        props.catalogStore.grantReadWriteAccess(logout.lambda);
+        props.catalogStore.grantCatalogReadWriteAccess(logout.lambda);
 
         createSingleRouteEndpoint(this, 'EnvConfig', {
             ...endpointProps,

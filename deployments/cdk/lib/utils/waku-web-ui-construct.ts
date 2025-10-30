@@ -5,18 +5,30 @@ import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import {HttpLambdaIntegration} from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as logs from "aws-cdk-lib/aws-logs";
+import {CognitoStackExports} from "../stacks/cognito-stack";
 
 export interface WakuWebUiConstructProps {
     environmentName: string;
     httpApi: apigatewayv2.HttpApi;
+    oauth2ClientConfig: CognitoStackExports;
 }
 
 export class WakuWebUiConstruct extends Construct {
     private readonly lambda: lambda.Function;
     private readonly integration: HttpLambdaIntegration;
 
-    constructor(scope: Construct, id: string, {httpApi, environmentName}: WakuWebUiConstructProps) {
+    constructor(scope: Construct, id: string, {
+        httpApi,
+        environmentName,
+        oauth2ClientConfig,
+    }: WakuWebUiConstructProps) {
         super(scope, id);
+
+        const logGroup = new logs.LogGroup(this, 'LogGroup', {
+            logGroupName: `/dphoto/${environmentName}/lambda/waku-web`,
+            retention: logs.RetentionDays.ONE_WEEK,
+            removalPolicy: cdk.RemovalPolicy.DESTROY
+        });
 
         this.lambda = new lambda.Function(this, 'Lambda', {
             functionName: `dphoto-${environmentName}-web`,
@@ -25,9 +37,12 @@ export class WakuWebUiConstruct extends Construct {
             runtime: lambda.Runtime.NODEJS_20_X,
             memorySize: 256,
             timeout: cdk.Duration.seconds(10),
-            logRetention: logs.RetentionDays.ONE_WEEK,
+            logGroup: logGroup,
             environment: {
                 NODE_ENV: 'production',
+                OAUTH2_ISSUER: oauth2ClientConfig.cognitoIssuer,
+                OAUTH2_CLIENT_ID: oauth2ClientConfig.userPoolClientId,
+                OAUTH2_CLIENT_SECRET: oauth2ClientConfig.userPoolClientSecret.unsafeUnwrap(),
             },
         });
 

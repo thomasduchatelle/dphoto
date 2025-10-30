@@ -2,15 +2,14 @@ import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import {IHttpRouteAuthorizer} from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint} from '../utils/simple-go-endpoint';
-import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
-import {ArchiveStoreConstruct} from '../archive/archive-store-construct';
+import {CatalogAccessManager} from "../catalog/catalog-access-manager";
+import {ArchiveAccessManager} from "../archive/archive-access-manager";
 
 export interface AccessEndpointsConstructProps {
     environmentName: string;
     httpApi: apigatewayv2.HttpApi;
-    catalogStore: CatalogStoreConstruct;
-    archiveStore: ArchiveStoreConstruct;
-    googleLoginClientId: string;
+    catalogStore: CatalogAccessManager;
+    archiveStore: ArchiveAccessManager;
     authorizer?: IHttpRouteAuthorizer;
 }
 
@@ -30,7 +29,7 @@ export class UserEndpointsConstruct extends Construct {
             path: '/api/v1/users',
             method: apigatewayv2.HttpMethod.GET,
         });
-        props.catalogStore.grantReadAccess(listUsers.lambda);
+        props.catalogStore.grantCatalogReadAccess(listUsers.lambda);
 
         const listOwners = createSingleRouteEndpoint(this, 'ListOwners', {
             ...endpointProps,

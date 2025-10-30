@@ -4,12 +4,17 @@ import * as cdk from 'aws-cdk-lib';
 import {environments} from '../lib/config/environments';
 import {InfrastructureStack} from '../lib/stacks/infrastructure-stack';
 import {ApplicationStack} from "../lib/stacks/application-stack";
+import {CognitoCertificateStack} from "../lib/stacks/cognito-certificate-stack";
+import {CognitoStack} from "../lib/stacks/cognito-stack";
+import {computeLetsEncryptHash} from "../lib/utils/letsencrypt-certificate-construct";
 
-export default function main(
+export default async function main(
     defaultEnvName: string = "next",
     account: string | undefined = process.env.CDK_DEFAULT_ACCOUNT,
     region: string | undefined = process.env.CDK_DEFAULT_REGION || 'eu-west-1',
 ) {
+    await computeLetsEncryptHash()
+
     const app = new cdk.App();
 
     const envName = app.node.tryGetContext('environment') || defaultEnvName
@@ -33,24 +38,38 @@ export default function main(
         description: `DPhoto infrastructure stack for ${envName} environment`
     });
 
-    // Stack required by cognito hosted UI, it installs a certificate in us-east-1
-    // const cognitoCertificateStack = new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
-    //     environmentName: envName,
-    //     config: config,
-    //     env: {
-    //         account: account,
-    //         region: 'us-east-1'
-    //     },
-    //     description: `DPhoto Cognito certificate stack for ${envName} environment (us-east-1)`
-    // });
+    // Create certificate in us-east-1 which is required for Cognito custom domain.
+    const cognitoCertificateStack = new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
+        environmentName: envName,
+        config: config,
+        env: {
+            account: account,
+            region: 'us-east-1'
+        },
+        description: `Create certificate in us-east-1 which is required for Cognito custom domain.`
+    });
+
+    // Cognito Stack has all authentication resources (user pool, client, custom domain with managed UI)
+    const cognitoStack = new CognitoStack(app, `dphoto-${envName}-cognito`, {
+        environmentName: envName,
+        config: config,
+        cognitoCertificate: cognitoCertificateStack.cognitoCertificate,
+        env: {
+            account: account,
+            region: region
+        },
+        description: `DPhoto Cognito stack for ${envName} environment`
+    });
+    cognitoStack.addDependency(cognitoCertificateStack);
 
     // Infrastructure Stack has everything else, it can be destroyed and recreated at any time (gateway, workload deployments, UI, ...)
     const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
         environmentName: envName,
         config,
-        archiveStore: infrastructureStack.archiveStore,
-        catalogStore: infrastructureStack.catalogStore,
-        archivist: infrastructureStack.archivist,
+        archiveAccessManager: infrastructureStack.archiveStore,
+        catalogAccessManager: infrastructureStack.catalogStore,
+        archivistAccessManager: infrastructureStack.archivist,
+        oauth2ClientConfig: cognitoStack.getWebEnvironmentVariables(),
         env: {
             account: account,
             region: region
@@ -58,7 +77,7 @@ export default function main(
     });
 
     applicationStack.addDependency(infrastructureStack);
-    // applicationStack.addDependency(cognitoCertificateStack);
+    applicationStack.addDependency(cognitoStack);
 
     return app;
 }

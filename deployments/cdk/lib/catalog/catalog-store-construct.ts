@@ -32,7 +32,9 @@ export class CatalogStoreConstruct extends Construct {
             },
             billing: dynamodb.Billing.onDemand(),
             removalPolicy: props.production ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-            pointInTimeRecovery: props.production,
+            pointInTimeRecoverySpecification: {
+                pointInTimeRecoveryEnabled: props.production
+            },
             deletionProtection: props.production,
             globalSecondaryIndexes: [
                 {
@@ -89,12 +91,12 @@ export class CatalogStoreConstruct extends Construct {
         pinLogicalId(this.table, "CatalogStoreCatalogTable874E34D1");
     }
 
-    public grantReadAccess(workload: Workload): void {
+    public grantCatalogReadAccess(workload: Workload): void {
         this.table.grantReadData(workload.role);
         workload.function?.addEnvironment("CATALOG_TABLE_NAME", this.table.tableName);
     }
 
-    public grantReadWriteAccess(workload: Workload): void {
+    public grantCatalogReadWriteAccess(workload: Workload): void {
         this.table.grantReadWriteData(workload.role);
         workload.function?.addEnvironment("CATALOG_TABLE_NAME", this.table.tableName);
     }

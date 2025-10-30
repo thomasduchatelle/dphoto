@@ -11,20 +11,20 @@
     "test:watch": "jest --watch",
     "cdk": "cdk",
     "synth": "cdk synth",
-    "synth:test": "cdk synth --context environment=test",
+    "synth:test": "CDK_DEFAULT_ACCOUNT=123456789012 cdk synth --context environment=test",
     "deploy:test": "cdk deploy --context environment=test"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "22.5.4",
-    "aws-cdk": "^2.1020.0",
+    "aws-cdk": "^2.221.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "~5.6.2"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.160.0",
+    "aws-cdk-lib": "^2.221.0",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21"
   }
