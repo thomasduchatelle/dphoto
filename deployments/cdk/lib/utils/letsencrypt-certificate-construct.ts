@@ -8,12 +8,60 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import {Construct, IDependable} from 'constructs';
 import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from 'aws-cdk-lib/custom-resources';
 import {ICertificate} from "aws-cdk-lib/aws-certificatemanager";
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
 
 export interface LetsEncryptCertificateConstructProps {
     environmentName: string;
     domainName: string;
     certificateEmail: string;
     ssmParameterSuffix?: string;
+}
+
+const hashes = {
+    lambda: '',
+}
+
+export async function computeHash() {
+    const rootDir = path.resolve(__dirname, '../../../../');
+    const hash = crypto.createHash('sha256');
+    const filesToHash: string[] = [];
+
+    filesToHash.push(path.join(rootDir, 'go.mod'));
+    filesToHash.push(path.join(rootDir, 'api/lambdas/go.mod'));
+
+    const collectGoFiles = (dir: string) => {
+        if (!fs.existsSync(dir)) {
+            return;
+        }
+        const entries = fs.readdirSync(dir, {withFileTypes: true});
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                collectGoFiles(fullPath);
+            } else if (entry.isFile() && entry.name.endsWith('.go')) {
+                filesToHash.push(fullPath);
+            }
+        }
+    };
+
+    collectGoFiles(path.join(rootDir, 'api/lambdas/sys-letsencrypt'));
+    collectGoFiles(path.join(rootDir, 'pkg/dns'));
+    collectGoFiles(path.join(rootDir, 'pkg/dnsadapters'));
+
+    filesToHash.sort();
+
+    for (const file of filesToHash) {
+        if (fs.existsSync(file)) {
+            const content = fs.readFileSync(file);
+            hash.update(file);
+            hash.update(new Uint8Array(content));
+        }
+    }
+
+    hashes.lambda = hash.digest('hex');
+    return hashes.lambda;
 }
 
 export class LetsEncryptCertificateConstruct extends Construct {
