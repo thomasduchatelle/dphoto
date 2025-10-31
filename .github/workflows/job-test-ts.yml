@@ -23,29 +23,11 @@ jobs:
         id: semver
         uses: ./.github/actions/semver
 
-      - name: Cache playwright binaries
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: |
-            ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright
-
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: |
-            ~/.npm
-            web/node_modules
-          key: ${{ runner.os }}-test-${{ hashFiles('web/package-lock.json') }}
-
       - name: Setup NodeJS
         uses: ./.github/actions/install-node
         with:
           cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+          playwright: true
 
       - name: Generate snapshots
         id: generate-snapshots

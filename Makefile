@@ -1,4 +1,4 @@
-.PHONY: all clean setup test build deploy test-go install
+.PHONY: all clean setup test build deploy install
 
 all: clean test build
 
@@ -37,7 +37,7 @@ deploy-cdk:
 ## PKG & CLI
 #######################################
 
-.PHONY: setup-go test-go build-go install-go
+.PHONY: setup-go test-pkg test-go build-go build-cli install-cli
 unquote = $(patsubst "%,%,$(patsubst %",%,$(1)))
 
 APPLICATION_VERSION ?= ""
@@ -68,7 +68,7 @@ install-cli:
 ## WEB
 #######################################
 
-.PHONY: clean-web setup-web test-web build-web update-snapshots
+.PHONY: clean-web setup-web setup-web-ci setup-web-ci-no-playwright test-web test-web-ci test-web-agent update-snapshots update-snapshots-ci build-web start ladle playwright
 
 clean-web:
 	cd web && rm -rf dist/ && rm -f bin/waku-lambda.zip
@@ -77,9 +77,11 @@ setup-web:
 	cd web && npm install
 	cd web && npx playwright install
 
-setup-web-ci:
-	cd web && npm ci
+setup-web-ci: setup-web-ci-no-playwright
 	cd web && npx playwright install chromium --with-deps
+
+setup-web-ci-no-playwright:
+	cd web && npm ci
 
 test-web:
 	cd web && npm test
@@ -137,7 +139,7 @@ build-api:
 ## APP = WEB + API
 #######################################
 
-.PHONY: setup-app test-app build-app deploy-app bg down
+.PHONY: setup-app clean-app test-app build-app bg down
 
 setup-app: setup-web
 
