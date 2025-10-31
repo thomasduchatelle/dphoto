@@ -1,37 +1,50 @@
 name: 'NodeJS Setup'
-description: 'Run npm install and yarn install everywhere required and cache node_modules'
+description: 'Run npm install and cache node_modules with optional Playwright installation'
 inputs:
   cache-suffix:
     description: Suffix to add to the cache key (cache has a tendency to be locked otherwise)
     required: false
     default: '0.1'
+  playwright:
+    description: 'Includes Playwright dependencies (true / [false])'
+    required: false
+    default: 'false'
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        # cache: yarn # note - directly caching node_modules is MUCH faster (60s -> 1.5s)
-    - name: YARN Cache (restore)
-      id: cache-restore
+    - name: Restore NPM Cache
+      id: npm-cache
       uses: actions/cache/restore@v4
       with:
         path: |
           ~/.npm
+          ~/.cache/ms-playwright
           web/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock') }}-${{ inputs.cache-suffix }}
+        key: ${{ runner.os }}-node-${{ inputs.playwright }}-${{ github.ref_name }}-${{ hashFiles('web/package.json') }}-${{ inputs.cache-suffix }}
         restore-keys: |
-          ${{ runner.os }}-node-${{ hashFiles('web/yarn.lock') }}
-    - name: Download deps
-      if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
+          ${{ runner.os }}-node-${{ inputs.playwright }}-${{ github.ref_name }}-
+          ${{ runner.os }}-node-${{ inputs.playwright }}-
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Download deps (no Playwright)
+      if: ${{ steps.npm-cache.outputs.cache-hit != 'true' && inputs.playwright == 'false' }}
+      run: make setup-web-ci-no-playwright
+      shell: bash
+    
+    - name: Download deps (with Playwright)
+      if: ${{ steps.npm-cache.outputs.cache-hit != 'true' && inputs.playwright == 'true' }}
       run: make setup-web-ci
       shell: bash
-    - name: YARN Cache (always save)
-      if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
+    
+    - name: Save NPM Cache
+      if: ${{ steps.npm-cache.outputs.cache-hit != 'true' }}
       uses: actions/cache/save@v4
       with:
         path: |
           ~/.npm
           ~/.cache/ms-playwright
           web/node_modules
-        key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+        key: ${{ runner.os }}-node-${{ inputs.playwright }}-${{ github.ref_name }}-${{ hashFiles('web/package.json') }}-${{ inputs.cache-suffix }}
