@@ -1,9 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
+import {aws_ssm} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
-import {CognitoUserPoolConstruct} from '../access/cognito-user-pool-construct';
-import {CognitoClientConstruct} from '../access/cognito-client-construct';
 import {ICertificate} from 'aws-cdk-lib/aws-certificatemanager';
+import * as cognito from "aws-cdk-lib/aws-cognito";
+import {ManagedLoginVersion, UserPoolClient} from "aws-cdk-lib/aws-cognito";
 
 export interface CognitoStackProps extends cdk.StackProps {
     environmentName: string;
@@ -12,16 +13,14 @@ export interface CognitoStackProps extends cdk.StackProps {
 }
 
 export interface CognitoStackExports {
-    userPoolId: string;
+    cognitoIssuer: string;
     userPoolClientId: string;
     userPoolClientSecret: cdk.SecretValue;
-    cognitoDomain: string;
-    cognitoIssuer: string;
 }
 
 export class CognitoStack extends cdk.Stack {
-    public readonly userPoolConstruct: CognitoUserPoolConstruct;
-    public readonly clientConstruct: CognitoClientConstruct;
+    public readonly userPool: cognito.UserPool;
+    private userPoolClient: UserPoolClient;
 
     constructor(scope: Construct, id: string, props: CognitoStackProps) {
         super(scope, id, {
@@ -34,59 +33,178 @@ export class CognitoStack extends cdk.Stack {
         cdk.Tags.of(this).add('Environment', props.environmentName);
         cdk.Tags.of(this).add('Stack', "CognitoStack");
 
-        // Create User Pool
-        this.userPoolConstruct = new CognitoUserPoolConstruct(this, 'CognitoUserPool', {
-            environmentName: props.environmentName,
-            googleClientId: props.config.googleLoginClientId,
-        });
+        const prefix = `dphoto-${props.environmentName}`;
 
-        // Create Client with custom domain
-        this.clientConstruct = new CognitoClientConstruct(this, 'CognitoClient', {
-            environmentName: props.environmentName,
-            userPool: this.userPoolConstruct.userPool,
-            cognitoDomainName: props.config.cognitoDomainName,
-            rootDomain: props.config.rootDomain,
-            domainName: props.config.domainName,
-            cognitoExtraRedirectURLs: props.config.cognitoExtraRedirectURLs,
-            cognitoCertificate: props.cognitoCertificate,
-        });
+        this.userPool = this.createUserPool(prefix);
+        this.addGroups()
 
-        // Outputs for easy reference
-        new cdk.CfnOutput(this, 'UserPoolId', {
-            value: this.userPoolConstruct.userPool.userPoolId,
-            description: 'Cognito User Pool ID',
-            exportName: `${props.environmentName}-cognito-user-pool-id`,
-        });
+        this.addGoogleSocialIdentityProviders(props.environmentName, props.config.googleLoginClientId);
 
-        new cdk.CfnOutput(this, 'UserPoolClientId', {
-            value: this.clientConstruct.userPoolClient.userPoolClientId,
-            description: 'Cognito User Pool Client ID',
-            exportName: `${props.environmentName}-cognito-user-pool-client-id`,
-        });
+        this.addCustomDomain(props.config.rootDomain, props.config.cognitoDomainName, props.cognitoCertificate);
 
-        new cdk.CfnOutput(this, 'CognitoDomain', {
-            value: `https://${this.clientConstruct.cognitoDomainName}`,
-            description: 'Cognito Custom Domain URL',
-            exportName: `${props.environmentName}-cognito-domain`,
-        });
-
-        new cdk.CfnOutput(this, 'CognitoIssuer', {
-            value: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPoolConstruct.userPool.userPoolId}`,
-            description: 'Cognito Issuer URL',
-            exportName: `${props.environmentName}-cognito-issuer`,
-        });
+        this.userPoolClient = this.createDPhotoClient(prefix, props.config.domainName, props.config.cognitoExtraRedirectURLs);
     }
 
     /**
      * Returns environment variables needed by the web application
      */
-    public getWebEnvironmentVariables(): Record<string, string> {
+    public getWebEnvironmentVariables(): CognitoStackExports {
         return {
-            COGNITO_USER_POOL_ID: this.userPoolConstruct.userPool.userPoolId,
-            COGNITO_CLIENT_ID: this.clientConstruct.userPoolClient.userPoolClientId,
-            COGNITO_CLIENT_SECRET: this.clientConstruct.userPoolClient.userPoolClientSecret.unsafeUnwrap(),
-            COGNITO_DOMAIN: `https://${this.clientConstruct.cognitoDomainName}`,
-            COGNITO_ISSUER: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPoolConstruct.userPool.userPoolId}`,
+            cognitoIssuer: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPool.userPoolId}`,
+            userPoolClientId: this.userPoolClient.userPoolClientId,
+            userPoolClientSecret: this.userPoolClient.userPoolClientSecret!,
         };
+    }
+
+    private createUserPool(prefix: string) {
+        const userPool = new cognito.UserPool(this, 'UserPool', {
+            userPoolName: `${prefix}-users`,
+            featurePlan: cognito.FeaturePlan.ESSENTIALS,
+            selfSignUpEnabled: false,
+            signInAliases: {
+                email: true,
+            },
+            autoVerify: {
+                email: true,
+            },
+            standardAttributes: {
+                email: {
+                    required: true,
+                    mutable: true, // required to be mutable for social identity providers (Google)
+                },
+                givenName: {
+                    required: false,
+                    mutable: true,
+                },
+                familyName: {
+                    required: false,
+                    mutable: true,
+                },
+                profilePicture: {
+                    required: false,
+                    mutable: true,
+                },
+            },
+            passwordPolicy: {
+                minLength: 6,
+                requireLowercase: false,
+                requireUppercase: false,
+                requireDigits: false,
+                requireSymbols: false,
+            },
+            accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+        });
+
+        cdk.Tags.of(this.userPool).add('Name', `${prefix}-user-pool`);
+
+        new cdk.CfnOutput(this, 'UserPoolId', {
+            value: userPool.userPoolId,
+            description: 'Cognito User Pool ID',
+            exportName: `cognito-user-pool-id`,
+        });
+
+        return userPool
+    }
+
+    private addGroups() {
+        this.userPool.addGroup("Admin", {
+            groupName: 'admin',
+            description: 'Administrators with full system access',
+            precedence: 1,
+        });
+        this.userPool.addGroup("Owner", {
+            groupName: 'owner',
+            description: 'Content owners with full access to their media',
+            precedence: 2,
+        });
+        this.userPool.addGroup("Visitor", {
+            groupName: 'visitor',
+            description: 'Visitors with limited access to shared albums',
+            precedence: 3,
+        });
+    }
+
+    private addGoogleSocialIdentityProviders(environmentName: string, googleLoginClientId: string) {
+
+        // SSM SecretString cannot be used, it triggers the error: "SSM Secure reference is not supported in: [AWS::Cognito::UserPoolIdentityProvider/Properties/ProviderDetails/client_secret]"
+        const googleClientSecret = aws_ssm.StringParameter.valueForStringParameter(
+            this,
+            `/dphoto/cdk-input/googleClientSecret/${environmentName}`,
+        );
+
+        // Configure Google Identity Provider
+        new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {
+            userPool: this.userPool,
+            clientId: googleLoginClientId,
+            clientSecretValue: cdk.SecretValue.unsafePlainText(googleClientSecret),
+            scopes: ['profile', 'email', 'openid'],
+            attributeMapping: {
+                email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+                givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
+                familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
+                profilePicture: cognito.ProviderAttribute.GOOGLE_PICTURE,
+            },
+        });
+    }
+
+    private addCustomDomain(rootDomain: string, cognitoDomainName: string, cognitoCertificate: ICertificate) {
+        this.userPool.addDomain("LoginDomain", {
+            customDomain: {
+                domainName: cognitoDomainName,
+                certificate: cognitoCertificate,
+            },
+            managedLoginVersion: ManagedLoginVersion.NEWER_MANAGED_LOGIN,
+        })
+
+        // Create DNS record for custom domain - TODO Is It required ??
+        // const hostedZone = HostedZone.fromLookup(this, 'HostedZone', {
+        //     domainName: rootDomain
+        // });
+        //
+        // new ARecord(this, 'CognitoDnsRecord', {
+        //     zone: hostedZone,
+        //     recordName: cognitoDomainName,
+        //     target: RecordTarget.fromAlias(
+        //         new UserPoolDomainTarget(domain)
+        //     )
+        // });
+    }
+
+    private createDPhotoClient(prefix: string, domainName: string, cognitoExtraRedirectURLs: string[]): UserPoolClient {
+        return this.userPool.addClient('UserPoolClient', {
+            userPoolClientName: `${prefix}-web-client`,
+            generateSecret: true,
+            authFlows: {
+                userPassword: false,
+                userSrp: false,
+                custom: false,
+            },
+            oAuth: {
+                flows: {
+                    authorizationCodeGrant: true,
+                },
+                scopes: [
+                    cognito.OAuthScope.EMAIL,
+                    cognito.OAuthScope.OPENID,
+                    cognito.OAuthScope.PROFILE,
+                ],
+                callbackUrls: [
+                    `https://${domainName}/auth/callback`,
+                    ...cognitoExtraRedirectURLs.map(url => `${url}/auth/callback`)
+                ],
+                logoutUrls: [
+                    `https://${domainName}/`,
+                    ...cognitoExtraRedirectURLs.map(url => `${url}/`)
+                ],
+            },
+            supportedIdentityProviders: [
+                cognito.UserPoolClientIdentityProvider.GOOGLE,
+            ],
+            accessTokenValidity: cdk.Duration.hours(1),
+            idTokenValidity: cdk.Duration.hours(1),
+            refreshTokenValidity: cdk.Duration.days(30),
+            preventUserExistenceErrors: true
+        });
     }
 }

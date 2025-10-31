@@ -38,7 +38,7 @@ export default async function main(
         description: `DPhoto infrastructure stack for ${envName} environment`
     });
 
-    // Stack required by cognito hosted UI, it installs a certificate in us-east-1
+    // Create certificate in us-east-1 which is required for Cognito custom domain.
     const cognitoCertificateStack = new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
         environmentName: envName,
         config: config,
@@ -46,7 +46,7 @@ export default async function main(
             account: account,
             region: 'us-east-1'
         },
-        description: `DPhoto Cognito certificate stack for ${envName} environment (us-east-1)`
+        description: `Create certificate in us-east-1 which is required for Cognito custom domain.`
     });
 
     // Cognito Stack has all authentication resources (user pool, client, custom domain with managed UI)
@@ -69,7 +69,7 @@ export default async function main(
         archiveStore: infrastructureStack.archiveStore,
         catalogStore: infrastructureStack.catalogStore,
         archivist: infrastructureStack.archivist,
-        cognitoStack: cognitoStack,
+        oauth2ClientConfig: cognitoStack.getWebEnvironmentVariables(),
         env: {
             account: account,
             region: region

@@ -12,7 +12,7 @@ import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
 import {CatalogStoreConstruct} from "../catalog/catalog-store-construct";
 import {ArchivistConstruct} from "../archive/archivist-construct";
 import {LambdaAuthoriserConstruct} from "../access/lambda-authoriser-construct";
-import {CognitoStack} from "./cognito-stack";
+import {CognitoStackExports} from "./cognito-stack";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -20,7 +20,7 @@ export interface DPhotoApplicationStackProps extends cdk.StackProps {
     archiveStore: ArchiveStoreConstruct;
     catalogStore: CatalogStoreConstruct;
     archivist: ArchivistConstruct;
-    cognitoStack: CognitoStack;
+    oauth2ClientConfig: CognitoStackExports;
 }
 
 export class ApplicationStack extends cdk.Stack {
@@ -29,7 +29,7 @@ export class ApplicationStack extends cdk.Stack {
         archiveStore,
         catalogStore,
         archivist,
-        cognitoStack,
+        oauth2ClientConfig,
         ...props
     }: DPhotoApplicationStackProps) {
         super(scope, id, {
@@ -51,8 +51,7 @@ export class ApplicationStack extends cdk.Stack {
         new WakuWebUiConstruct(this, 'WakuWebUi', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
-            cognitoEnvironmentVariables: cognitoStack.getWebEnvironmentVariables(),
-            googleLoginClientId: config.googleLoginClientId,
+            oauth2ClientConfig: oauth2ClientConfig,
         });
 
         new VersionEndpointConstruct(this, 'VersionEndpoint', {
@@ -64,7 +63,7 @@ export class ApplicationStack extends cdk.Stack {
         const lambdaAuthoriser = new LambdaAuthoriserConstruct(this, 'LambdaAuthoriser', {
             environmentName: props.environmentName,
             catalogStore,
-            cognitoUserPool: cognitoStack.userPoolConstruct,
+            issuerUrl: oauth2ClientConfig.cognitoIssuer,
         });
 
         new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {

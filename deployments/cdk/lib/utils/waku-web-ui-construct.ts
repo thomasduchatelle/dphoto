@@ -5,12 +5,12 @@ import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import {HttpLambdaIntegration} from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as logs from "aws-cdk-lib/aws-logs";
+import {CognitoStackExports} from "../stacks/cognito-stack";
 
 export interface WakuWebUiConstructProps {
     environmentName: string;
     httpApi: apigatewayv2.HttpApi;
-    cognitoEnvironmentVariables: Record<string, string>;
-    googleLoginClientId: string;
+    oauth2ClientConfig: CognitoStackExports;
 }
 
 export class WakuWebUiConstruct extends Construct {
@@ -20,8 +20,7 @@ export class WakuWebUiConstruct extends Construct {
     constructor(scope: Construct, id: string, {
         httpApi,
         environmentName,
-        cognitoEnvironmentVariables,
-        googleLoginClientId
+        oauth2ClientConfig,
     }: WakuWebUiConstructProps) {
         super(scope, id);
 
@@ -41,8 +40,9 @@ export class WakuWebUiConstruct extends Construct {
             logGroup: logGroup,
             environment: {
                 NODE_ENV: 'production',
-                ...cognitoEnvironmentVariables,
-                GOOGLE_LOGIN_CLIENT_ID: googleLoginClientId,
+                OAUTH2_ISSUER: oauth2ClientConfig.cognitoIssuer,
+                OAUTH2_CLIENT_ID: oauth2ClientConfig.userPoolClientId,
+                OAUTH2_CLIENT_SECRET: oauth2ClientConfig.userPoolClientSecret.unsafeUnwrap(),
             },
         });
 
