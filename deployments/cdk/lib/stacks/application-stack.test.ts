@@ -1,70 +1,18 @@
 import * as cdk from 'aws-cdk-lib';
+import {SecretValue} from 'aws-cdk-lib';
 import {Template} from 'aws-cdk-lib/assertions';
 import {ApplicationStack} from './application-stack';
 import {environments} from '../config/environments';
-import {ArchiveStoreConstruct} from '../archive/archive-store-construct';
-import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
-import {ArchivistConstruct} from '../archive/archivist-construct';
-import {CognitoStack} from './cognito-stack';
 import {computeLetsEncryptHash} from '../utils/letsencrypt-certificate-construct';
 
-// Mock the store constructs to provide test implementations
-jest.mock('../archive/archive-store-construct');
-jest.mock('../catalog/catalog-store-construct');
-jest.mock('../archive/archivist-construct');
-
-jest.mock('aws-cdk-lib/aws-lambda', () => {
-    const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
-    return {
-        ...actual,
-        Code: {
-            ...actual.Code,
-            fromAsset: jest.fn().mockImplementation(() => {
-                return actual.Code.fromAsset('bin/');
-            }),
-        }
-    };
-});
-
-jest.mock('aws-cdk-lib/aws-s3-deployment', () => {
-    const actual = jest.requireActual('aws-cdk-lib/aws-s3-deployment');
-    return {
-        ...actual,
-        Source: {
-            ...actual.Source,
-            asset: jest.fn().mockImplementation(() => {
-                return actual.Source.asset('bin/');
-            }),
-        }
-    };
-});
-
 describe('DPhotoApplicationStack', () => {
+
     let app: cdk.App;
     let stack: ApplicationStack;
     let template: Template;
-    let mockArchiveStore: jest.Mocked<ArchiveStoreConstruct>;
-    let mockCatalogStore: jest.Mocked<CatalogStoreConstruct>;
-    let mockArchivist: jest.Mocked<ArchivistConstruct>;
-    let mockCognitoStack: CognitoStack;
 
     beforeEach(async () => {
         await computeLetsEncryptHash();
-
-        // Create mock store constructs
-        mockArchiveStore = {
-            grantReadAccessToRawAndCacheMedias: jest.fn(),
-            grantWriteAccessToRawAndCachedMedias: jest.fn(),
-        } as any;
-
-        mockCatalogStore = {
-            grantReadAccess: jest.fn(),
-            grantReadWriteAccess: jest.fn(),
-        } as any;
-
-        mockArchivist = {
-            grantAccessToAsyncArchivist: jest.fn(),
-        } as any;
 
         const mockCognitoCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
             new cdk.Stack(),
@@ -74,28 +22,21 @@ describe('DPhotoApplicationStack', () => {
 
         app = new cdk.App();
 
-        // Create a real CognitoStack for testing
-        mockCognitoStack = new CognitoStack(app, 'TestCognitoStack', {
-            environmentName: 'test',
-            config: environments.test,
-            cognitoCertificate: mockCognitoCertificate,
-            env: {
-                region: 'eu-west-1',
-                account: '0123456789',
-            },
-        });
-
         stack = new ApplicationStack(app, 'TestStack', {
+            archiveAccessManager: undefined,
+            archivistAccessManager: undefined,
+            catalogAccessManager: undefined,
+            oauth2ClientConfig: {
+                cognitoIssuer: "https://issuer-junit-tests-01.example.com",
+                userPoolClientId: "0987654321",
+                userPoolClientSecret: new SecretValue("super-secret-value"),
+            },
             environmentName: 'test',
             config: environments.test,
-            archiveStore: mockArchiveStore,
-            catalogStore: mockCatalogStore,
-            archivist: mockArchivist,
-            cognitoStack: mockCognitoStack,
             env: {
                 region: 'eu-west-1',
                 account: '0123456789',
-            },
+            }
         });
         template = Template.fromStack(stack);
     });

@@ -3,16 +3,16 @@ import {IHttpRouteAuthorizer} from 'aws-cdk-lib/aws-apigatewayv2';
 import {Construct} from 'constructs';
 import {createSingleRouteEndpoint} from '../utils/simple-go-endpoint';
 import {Duration} from 'aws-cdk-lib';
-import {ArchiveStoreConstruct} from './archive-store-construct';
-import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
-import {ArchivistConstruct} from './archivist-construct';
+import {ArchiveAccessManager} from "./archive-access-manager";
+import {CatalogAccessManager} from "../catalog/catalog-access-manager";
+import {ArchivistAccessManager} from "./archivist-access-manager";
 
 export interface ArchiveEndpointsConstructProps {
     environmentName: string;
     httpApi: apigatewayv2.HttpApi;
-    archiveStore: ArchiveStoreConstruct;
-    catalogStore: CatalogStoreConstruct;
-    archivist: ArchivistConstruct;
+    archiveStore: ArchiveAccessManager;
+    catalogStore: CatalogAccessManager;
+    archivist: ArchivistAccessManager;
     authorizer?: IHttpRouteAuthorizer;
     queryParamAuthorizer?: IHttpRouteAuthorizer;
 }
@@ -32,7 +32,7 @@ export class ArchiveEndpointsConstruct extends Construct {
             authorizer: props.queryParamAuthorizer,
         });
 
-        props.catalogStore.grantReadAccess(getMedia.lambda);
+        props.catalogStore.grantCatalogReadAccess(getMedia.lambda);
         props.archiveStore.grantReadAccessToRawAndCacheMedias(getMedia.lambda);
         props.archivist.grantAccessToAsyncArchivist(getMedia.lambda);
     }

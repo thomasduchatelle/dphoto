@@ -2,11 +2,11 @@ import {HttpLambdaAuthorizer, HttpLambdaResponseType} from 'aws-cdk-lib/aws-apig
 import {Construct} from 'constructs';
 import {GoLangLambdaFunction} from '../utils/golang-lambda-function';
 import {Duration, Stack} from 'aws-cdk-lib';
-import {CatalogStoreConstruct} from '../catalog/catalog-store-construct';
+import {CatalogAccessManager} from "../catalog/catalog-access-manager";
 
 export interface LambdaAuthoriserConstructProps {
     environmentName: string;
-    catalogStore: CatalogStoreConstruct;
+    catalogStore: CatalogAccessManager;
     issuerUrl: string;
 }
 
@@ -34,7 +34,7 @@ export class LambdaAuthoriserConstruct extends Construct {
         });
 
         // Grant read access to catalog store (for permission checks)
-        props.catalogStore.grantReadAccess(this.authorizerLambda);
+        props.catalogStore.grantCatalogReadAccess(this.authorizerLambda);
 
         // Create the HTTP Lambda Authorizer - "identitySource" must all be present in the request or authorizer will not be called.
         this.authorizer = new HttpLambdaAuthorizer('LambdaAuthorizer', this.authorizerLambda.function, {

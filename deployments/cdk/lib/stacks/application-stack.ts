@@ -8,27 +8,27 @@ import {WakuWebUiConstruct} from '../utils/waku-web-ui-construct';
 import {ArchiveEndpointsConstruct} from "../archive/archive-endpoints-construct";
 import {VersionEndpointConstruct} from "../utils/version-endpoint-construct";
 import {UserEndpointsConstruct} from "../access/user-endpoints-construct";
-import {ArchiveStoreConstruct} from "../archive/archive-store-construct";
-import {CatalogStoreConstruct} from "../catalog/catalog-store-construct";
-import {ArchivistConstruct} from "../archive/archivist-construct";
 import {LambdaAuthoriserConstruct} from "../access/lambda-authoriser-construct";
 import {CognitoStackExports} from "./cognito-stack";
+import {ArchiveAccessManager} from "../archive/archive-access-manager";
+import {CatalogAccessManager} from "../catalog/catalog-access-manager";
+import {ArchivistAccessManager} from "../archive/archivist-access-manager";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
     config: EnvironmentConfig;
-    archiveStore: ArchiveStoreConstruct;
-    catalogStore: CatalogStoreConstruct;
-    archivist: ArchivistConstruct;
+    archiveAccessManager: ArchiveAccessManager;
+    catalogAccessManager: CatalogAccessManager;
+    archivistAccessManager: ArchivistAccessManager;
     oauth2ClientConfig: CognitoStackExports;
 }
 
 export class ApplicationStack extends cdk.Stack {
     constructor(scope: Construct, id: string, {
         config,
-        archiveStore,
-        catalogStore,
-        archivist,
+        archiveAccessManager,
+        catalogAccessManager,
+        archivistAccessManager,
         oauth2ClientConfig,
         ...props
     }: DPhotoApplicationStackProps) {
@@ -60,44 +60,43 @@ export class ApplicationStack extends cdk.Stack {
         })
 
         // Create Lambda Authoriser
-        const lambdaAuthoriser = new LambdaAuthoriserConstruct(this, 'LambdaAuthoriser', {
+        const lambdaAuthorizer = new LambdaAuthoriserConstruct(this, 'LambdaAuthoriser', {
             environmentName: props.environmentName,
-            catalogStore,
+            catalogStore: catalogAccessManager,
             issuerUrl: oauth2ClientConfig.cognitoIssuer,
         });
 
         new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
-            catalogStore,
-            archiveStore,
+            catalogStore: catalogAccessManager,
         });
 
         new UserEndpointsConstruct(this, 'UserEndpoints', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
-            catalogStore,
-            archiveStore,
-            authorizer: lambdaAuthoriser.authorizer,
+            catalogStore: catalogAccessManager,
+            archiveStore: archiveAccessManager,
+            authorizer: lambdaAuthorizer.authorizer,
         });
 
         new CatalogEndpointsConstruct(this, 'CatalogEndpoints', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
-            catalogStore,
-            archiveStore,
-            archiveMessaging: archivist,
-            authorizer: lambdaAuthoriser.authorizer,
+            catalogStore: catalogAccessManager,
+            archiveStore: archiveAccessManager,
+            archiveMessaging: archivistAccessManager,
+            authorizer: lambdaAuthorizer.authorizer,
         });
 
         new ArchiveEndpointsConstruct(this, 'ArchiveEndpoints', {
             environmentName: props.environmentName,
             httpApi: apiGateway.httpApi,
-            archiveStore,
-            catalogStore,
-            archivist: archivist,
-            authorizer: lambdaAuthoriser.authorizer,
-            queryParamAuthorizer: lambdaAuthoriser.queryParamAuthorizer,
+            archiveStore: archiveAccessManager,
+            catalogStore: catalogAccessManager,
+            archivist: archivistAccessManager,
+            authorizer: lambdaAuthorizer.authorizer,
+            queryParamAuthorizer: lambdaAuthorizer.queryParamAuthorizer,
         });
 
         new cdk.CfnOutput(this, 'PublicURL', {

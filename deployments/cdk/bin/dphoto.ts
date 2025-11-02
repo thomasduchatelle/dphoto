@@ -66,9 +66,9 @@ export default async function main(
     const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
         environmentName: envName,
         config,
-        archiveStore: infrastructureStack.archiveStore,
-        catalogStore: infrastructureStack.catalogStore,
-        archivist: infrastructureStack.archivist,
+        archiveAccessManager: infrastructureStack.archiveStore,
+        catalogAccessManager: infrastructureStack.catalogStore,
+        archivistAccessManager: infrastructureStack.archivist,
         oauth2ClientConfig: cognitoStack.getWebEnvironmentVariables(),
         env: {
             account: account,
