@@ -96,7 +96,7 @@ export class CognitoStack extends cdk.Stack {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
         });
 
-        cdk.Tags.of(this.userPool).add('Name', `${prefix}-user-pool`);
+        cdk.Tags.of(userPool).add('Name', `${prefix}-user-pool`);
 
         new cdk.CfnOutput(this, 'UserPoolId', {
             value: userPool.userPoolId,

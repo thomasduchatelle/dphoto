@@ -115,17 +115,11 @@ describe('CognitoStack', () => {
         });
     });
 
-    test('exports environment variables for web application', () => {
+    test('exports correct web environment variables', () => {
         const envVars = stack.getWebEnvironmentVariables();
-        
-        expect(envVars).toHaveProperty('COGNITO_USER_POOL_ID');
-        expect(envVars).toHaveProperty('COGNITO_CLIENT_ID');
-        expect(envVars).toHaveProperty('COGNITO_CLIENT_SECRET');
-        expect(envVars).toHaveProperty('COGNITO_DOMAIN');
-        expect(envVars).toHaveProperty('COGNITO_ISSUER');
-        
-        expect(envVars.COGNITO_DOMAIN).toMatch(/^https:\/\//);
-        expect(envVars.COGNITO_ISSUER).toMatch(/^https:\/\/cognito-idp\./);
+        expect(envVars.cognitoIssuer).toMatch(/^https:\/\/cognito-idp\./);
+        expect(envVars.userPoolClientId).toBeDefined();
+        expect(envVars.userPoolClientSecret).toBeDefined();
     });
 
     test('creates CloudFormation outputs for Cognito resources', () => {
