@@ -2,7 +2,6 @@ import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../utils/api-gateway-construct';
-import {AuthenticationEndpointsConstruct} from '../access/authentication-endpoints-construct';
 import {CatalogEndpointsConstruct} from '../catalog/catalog-endpoints-construct';
 import {WakuWebUiConstruct} from '../utils/waku-web-ui-construct';
 import {ArchiveEndpointsConstruct} from "../archive/archive-endpoints-construct";
@@ -64,12 +63,6 @@ export class ApplicationStack extends cdk.Stack {
             environmentName: props.environmentName,
             catalogStore: catalogAccessManager,
             issuerUrl: oauth2ClientConfig.cognitoIssuer,
-        });
-
-        new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
-            environmentName: props.environmentName,
-            httpApi: apiGateway.httpApi,
-            catalogStore: catalogAccessManager,
         });
 
         new UserEndpointsConstruct(this, 'UserEndpoints', {

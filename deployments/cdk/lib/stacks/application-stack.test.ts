@@ -44,14 +44,6 @@ describe('DPhotoApplicationStack', () => {
         template = Template.fromStack(stack);
     });
 
-    test('lambda for the endpoint /oauth/token has all access to the catalog table (where refresh tokens are stored)', () => {
-        const oauthTokenFunction = findLambdaByRoute(template, '/oauth/token', 'POST');
-
-        expect(oauthTokenFunction).toBeDefined();
-
-        expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo(functionName(oauthTokenFunction))).toBe('');
-    });
-
     test('catalog endpoints are served by lambdas', () => {
         // Test key catalog endpoints
         const listAlbumsFunction = findLambdaByRoute(template, '/api/v1/albums', 'GET');
@@ -69,12 +61,22 @@ describe('DPhotoApplicationStack', () => {
         const shareAlbumFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/shares/{email}', 'PUT');
         expect(shareAlbumFunction).toBeDefined();
 
+        const amendDateFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/dates', 'PUT');
+        expect(amendDateFunction).toBeDefined();
+
+        const amendNameFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/name', 'PUT');
+        expect(amendDateFunction).toBeDefined();
+
         expect(fakeCatalogAccessManager.hasBeenGrantedForCatalogRead(
             functionName(listAlbumsFunction),
-            functionName(createAlbumsFunction),
             functionName(listMediasFunction),
+        )).toBe('');
+        expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo(
+            functionName(createAlbumsFunction),
             functionName(deleteAlbumsFunction),
             functionName(shareAlbumFunction),
+            functionName(amendDateFunction),
+            functionName(amendNameFunction),
         )).toBe('');
     });
 

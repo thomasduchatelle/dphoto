@@ -4,7 +4,9 @@ import {CatalogAccessManager} from '../../catalog/catalog-access-manager';
 import {Workload} from '../../utils/workload';
 
 function getLambdaName(workload: Workload): string {
-    return workload.function?.functionName || 'not-a-lambda';
+    // console.log("getLambdaName", workload);
+    const fn = workload.function as any
+    return fn?.physicalName || 'not-a-lambda';
 }
 
 export class FakeArchiveAccessManager implements ArchiveAccessManager {
@@ -16,8 +18,9 @@ export class FakeArchiveAccessManager implements ArchiveAccessManager {
 
     hasBeenGrantedForRawAndCacheMedias(...lambdaNames: string[]): string {
         const missing = lambdaNames.filter(name => !this.readAccess.has(name));
+        const granted = Array.from(this.readAccess);
         if (missing.length > 0) {
-            return `Read access to raw/cache medias NOT granted for: ${missing.join(', ')}`;
+            return `Read access to raw/cache medias NOT granted for: [${missing.join(', ')}]. Granted: [${granted.join(', ')}]`;
         }
         return '';
     }
@@ -32,8 +35,9 @@ export class FakeArchivistAccessManager implements ArchivistAccessManager {
 
     hasBeenGrantedForAsyncArchivist(...lambdaNames: string[]): string {
         const missing = lambdaNames.filter(name => !this.asyncArchivistAccess.has(name));
+        const granted = Array.from(this.asyncArchivistAccess);
         if (missing.length > 0) {
-            return `Async archivist access NOT granted for: ${missing.join(', ')}`;
+            return `Async archivist access NOT granted for: [${missing.join(', ')}]. Granted: [${granted.join(', ')}]`;
         }
         return '';
     }
@@ -53,8 +57,9 @@ export class FakeCatalogAccessManager implements CatalogAccessManager {
 
     hasBeenGrantedForCatalogRead(...lambdaNames: string[]): string {
         const missing = lambdaNames.filter(name => !this.readAccess.has(name));
+        const granted = Array.from(this.readAccess);
         if (missing.length > 0) {
-            return `Catalog read access NOT granted for: ${missing.join(', ')}`;
+            return `Catalog read access NOT granted for: [${missing.join(', ')}]. Granted: [${granted.join(', ')}]`;
         }
         return '';
     }
@@ -63,11 +68,16 @@ export class FakeCatalogAccessManager implements CatalogAccessManager {
         const granted = Array.from(this.readWriteAccess);
         const missing = lambdaNames.filter(name => !this.readWriteAccess.has(name));
         const extra = granted.filter(name => !lambdaNames.includes(name));
-        if (missing.length > 0) {
-            return `Missing read-write grant for: ${missing.join(', ')}`;
-        }
-        if (extra.length > 0) {
-            return `Unexpected read-write grant for: ${extra.join(', ')}`;
+        if (missing.length > 0 || extra.length > 0) {
+            let msg = '';
+            if (missing.length > 0) {
+                msg += `Missing read-write grant for: [${missing.join(', ')}]. `;
+            }
+            if (extra.length > 0) {
+                msg += `Unexpected read-write grant for: [${extra.join(', ')}]. `;
+            }
+            msg += `Granted: [${granted.join(', ')}]`;
+            return msg.trim();
         }
         return '';
     }

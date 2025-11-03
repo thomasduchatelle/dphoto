@@ -49,7 +49,6 @@ export class LetsEncryptCertificateConstruct extends Construct {
         if (!hashes.letsEncryptLambda) {
             throw new Error('LetsEncrypt lambda hash not computed. Make sure to call computeLetsEncryptHash() before instantiating the LetsEncryptCertificateConstruct.');
         }
-        console.log("LetsEncrypt Lambda Hash:", hashes.letsEncryptLambda);
 
         this.ssmParameterSuffix = props.ssmParameterSuffix || 'domainCertificationArn';
 
