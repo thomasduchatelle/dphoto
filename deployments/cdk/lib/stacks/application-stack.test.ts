@@ -4,28 +4,36 @@ import {Template} from 'aws-cdk-lib/assertions';
 import {ApplicationStack} from './application-stack';
 import {environments} from '../config/environments';
 import {computeLetsEncryptHash} from '../utils/letsencrypt-certificate-construct';
+import {FakeArchiveAccessManager, FakeArchivistAccessManager, FakeCatalogAccessManager} from '../test/fakes/fake-access-managers';
+
+function functionName(oauthTokenFunction: any) {
+    const lambdaName = oauthTokenFunction.Properties.FunctionName || oauthTokenFunction.Properties.Description || 'unknown';
+    return lambdaName;
+}
 
 describe('DPhotoApplicationStack', () => {
-
     let app: cdk.App;
     let stack: ApplicationStack;
     let template: Template;
+    let fakeArchiveAccessManager: FakeArchiveAccessManager;
+    let fakeArchivistAccessManager: FakeArchivistAccessManager;
+    let fakeCatalogAccessManager: FakeCatalogAccessManager;
 
     beforeEach(async () => {
         await computeLetsEncryptHash();
-
         const mockCognitoCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
             new cdk.Stack(),
             'MockCognitoCert',
             'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
         );
-
         app = new cdk.App();
-
+        fakeArchiveAccessManager = new FakeArchiveAccessManager();
+        fakeArchivistAccessManager = new FakeArchivistAccessManager();
+        fakeCatalogAccessManager = new FakeCatalogAccessManager();
         stack = new ApplicationStack(app, 'TestStack', {
-            archiveAccessManager: undefined,
-            archivistAccessManager: undefined,
-            catalogAccessManager: undefined,
+            archiveAccessManager: fakeArchiveAccessManager,
+            archivistAccessManager: fakeArchivistAccessManager,
+            catalogAccessManager: fakeCatalogAccessManager,
             oauth2ClientConfig: {
                 cognitoIssuer: "https://issuer-junit-tests-01.example.com",
                 userPoolClientId: "0987654321",
@@ -45,13 +53,16 @@ describe('DPhotoApplicationStack', () => {
         const oauthTokenFunction = findLambdaByRoute(template, '/oauth/token', 'POST');
 
         expect(oauthTokenFunction).toBeDefined();
-        expect(mockCatalogStore.grantReadWriteAccess).toHaveBeenCalled();
+
+        expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo(functionName(oauthTokenFunction))).toBe('');
     });
 
     test('catalog endpoints are served by lambdas', () => {
         // Test key catalog endpoints
         const listAlbumsFunction = findLambdaByRoute(template, '/api/v1/albums', 'GET');
         expect(listAlbumsFunction).toBeDefined();
+        expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo(functionName(listAlbumsFunction))).toBe('');
+
 
         const createAlbumsFunction = findLambdaByRoute(template, '/api/v1/albums', 'POST');
         expect(createAlbumsFunction).toBeDefined();
@@ -66,7 +77,7 @@ describe('DPhotoApplicationStack', () => {
         expect(shareAlbumFunction).toBeDefined();
     });
 
-    test('archive endpoints are served by lambdas', () => {
+    test('archive get-media endpoint is served by a lambda with read+write access', () => {
         // Test archive endpoints
         const getMediaFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/medias/{mediaId}/{filename}', 'GET');
         expect(getMediaFunction).toBeDefined();
@@ -74,6 +85,9 @@ describe('DPhotoApplicationStack', () => {
         // Verify it has higher memory allocation for media processing
         expect(getMediaFunction.Properties.MemorySize).toBe(1024);
         expect(getMediaFunction.Properties.Timeout).toBe(29);
+
+        expect(fakeCatalogAccessManager.hasBeenGrantedForCatalogRead(functionName(getMediaFunction))).toBe('');
+        expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo([functionName(getMediaFunction)])).toBe('');
     });
 
     test('user endpoints are served by lambdas', () => {
