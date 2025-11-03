@@ -5,13 +5,6 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import {Construct} from 'constructs';
 
-export interface LambdaPermissions {
-    cacheRw?: boolean;
-    dynamodbRw?: boolean;
-    storageRw?: boolean;
-    storageRo?: boolean;
-}
-
 export interface GoLangLambdaFunctionProps {
     environmentName: string;
     functionName: string;

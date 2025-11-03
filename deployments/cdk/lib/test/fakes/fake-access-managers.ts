@@ -4,15 +4,7 @@ import {CatalogAccessManager} from '../../catalog/catalog-access-manager';
 import {Workload} from '../../utils/workload';
 
 function getLambdaName(workload: Workload): string {
-    // Try to extract a name for the lambda for test tracking
-    // Prefer a test-provided property, fallback to role's name if available
-    if ((workload as any).lambdaName) {
-        return (workload as any).lambdaName;
-    }
-    if (workload.role && (workload.role as any).roleName) {
-        return (workload.role as any).roleName;
-    }
-    return 'unknown';
+    return workload.function?.functionName || 'not-a-lambda';
 }
 
 export class FakeArchiveAccessManager implements ArchiveAccessManager {

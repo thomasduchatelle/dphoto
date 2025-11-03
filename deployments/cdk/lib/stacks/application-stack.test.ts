@@ -6,11 +6,6 @@ import {environments} from '../config/environments';
 import {computeLetsEncryptHash} from '../utils/letsencrypt-certificate-construct';
 import {FakeArchiveAccessManager, FakeArchivistAccessManager, FakeCatalogAccessManager} from '../test/fakes/fake-access-managers';
 
-function functionName(oauthTokenFunction: any) {
-    const lambdaName = oauthTokenFunction.Properties.FunctionName || oauthTokenFunction.Properties.Description || 'unknown';
-    return lambdaName;
-}
-
 describe('DPhotoApplicationStack', () => {
     let app: cdk.App;
     let stack: ApplicationStack;
@@ -61,8 +56,6 @@ describe('DPhotoApplicationStack', () => {
         // Test key catalog endpoints
         const listAlbumsFunction = findLambdaByRoute(template, '/api/v1/albums', 'GET');
         expect(listAlbumsFunction).toBeDefined();
-        expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo(functionName(listAlbumsFunction))).toBe('');
-
 
         const createAlbumsFunction = findLambdaByRoute(template, '/api/v1/albums', 'POST');
         expect(createAlbumsFunction).toBeDefined();
@@ -75,6 +68,14 @@ describe('DPhotoApplicationStack', () => {
 
         const shareAlbumFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/shares/{email}', 'PUT');
         expect(shareAlbumFunction).toBeDefined();
+
+        expect(fakeCatalogAccessManager.hasBeenGrantedForCatalogRead(
+            functionName(listAlbumsFunction),
+            functionName(createAlbumsFunction),
+            functionName(listMediasFunction),
+            functionName(deleteAlbumsFunction),
+            functionName(shareAlbumFunction),
+        )).toBe('');
     });
 
     test('archive get-media endpoint is served by a lambda with read+write access', () => {
@@ -87,7 +88,8 @@ describe('DPhotoApplicationStack', () => {
         expect(getMediaFunction.Properties.Timeout).toBe(29);
 
         expect(fakeCatalogAccessManager.hasBeenGrantedForCatalogRead(functionName(getMediaFunction))).toBe('');
-        expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo([functionName(getMediaFunction)])).toBe('');
+        expect(fakeArchiveAccessManager.hasBeenGrantedForRawAndCacheMedias(functionName(getMediaFunction))).toBe('');
+        expect(fakeArchivistAccessManager.hasBeenGrantedForAsyncArchivist(functionName(getMediaFunction))).toBe('');
     });
 
     test('user endpoints are served by lambdas', () => {
@@ -99,7 +101,7 @@ describe('DPhotoApplicationStack', () => {
         expect(listOwnersFunction).toBeDefined();
     });
 
-    test('all API routes have Lambda Authoriser attached unless whitelisted', () => {
+    test('all API routes have Lambda Authorizer attached unless whitelisted', () => {
         // Define routes that should NOT have authorizer (whitelist)
         const whitelistedRoutes = [
             {method: 'POST', path: '/oauth/token'},
@@ -132,11 +134,6 @@ describe('DPhotoApplicationStack', () => {
         });
     });
 });
-
-function assertLambdaEnvironmentVariables(lambdaFunction: any, expectedVariables: Record<string, string>): void {
-    const environment = lambdaFunction.Properties.Environment?.Variables;
-    expect(environment).toMatchObject(expectedVariables);
-}
 
 function getIntegrationId(routeResource: { [p: string]: any }, method: string, path: string) {
     const target = routeResource.Properties?.Target;
@@ -191,4 +188,8 @@ function findLambdaByRoute(template: Template, path: string, method: string = 'P
     }
 
     return lambdaFunction;
+}
+
+function functionName(oauthTokenFunction: any) {
+    return oauthTokenFunction.Properties.FunctionName || oauthTokenFunction.Properties.Description || 'unknown';
 }
