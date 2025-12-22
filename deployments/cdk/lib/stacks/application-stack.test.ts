@@ -6,6 +6,19 @@ import {environments} from '../config/environments';
 import {computeLetsEncryptHash} from '../utils/letsencrypt-certificate-construct';
 import {FakeArchiveAccessManager, FakeArchivistAccessManager, FakeCatalogAccessManager} from '../test/fakes/fake-access-managers';
 
+jest.mock('aws-cdk-lib/aws-lambda', () => {
+    const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
+    return {
+        ...actual,
+        Code: {
+            ...actual.Code,
+            fromAsset: jest.fn().mockImplementation(() => {
+                return actual.Code.fromAsset('bin/');
+            }),
+        }
+    };
+});
+
 describe('DPhotoApplicationStack', () => {
     let app: cdk.App;
     let stack: ApplicationStack;
