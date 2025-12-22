@@ -179,7 +179,7 @@ export class CognitoStack extends cdk.Stack {
     }
 
     private createDPhotoClient(prefix: string, domainName: string, cognitoExtraRedirectURLs: string[]): UserPoolClient {
-        return this.userPool.addClient('WebUIClient', {
+        const userPoolClient = this.userPool.addClient('WebUIClient', {
             userPoolClientName: `${prefix}-web-client`,
             generateSecret: true,
             authFlows: {
@@ -214,5 +214,14 @@ export class CognitoStack extends cdk.Stack {
             preventUserExistenceErrors: true,
 
         });
+
+
+        new cognito.CfnManagedLoginBranding(this, 'DefaultBranding', {
+            userPoolId: this.userPool.userPoolId,
+            clientId: userPoolClient.userPoolClientId,
+            useCognitoProvidedValues: true,
+        });
+
+        return userPoolClient;
     }
 }
