@@ -6,5 +6,8 @@
   "hosted-zone:account=123456789012:domainName=exmaple.com:region=eu-west-1": {
     "Id": "/hostedzone/DUMMY",
     "Name": "exmaple.com."
-  }
+  },
+  "acknowledged-issue-numbers": [
+    34892
+  ]
 }
