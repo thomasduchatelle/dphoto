@@ -6,7 +6,7 @@ import {FullHeightLink} from "../../../components/media/FullHeightLink";
 import {MediaPageLogic, MediaPageMediasState, MediaPageMediasStateInit} from "../../../components/media/logic";
 import MediaNavBar from "../../../components/media/MediaNavBar";
 import {Key, useNativeControl} from "../../../components/media/useNativeControl";
-import {useMustBeAuthenticated} from "../../../core/application";
+import {useAxios} from "../../../core/application";
 import {useClientRouter} from "../../../components/ClientRouter";
 
 type MediaPageUrlParams = {
@@ -23,12 +23,12 @@ interface ImageRef {
 }
 
 export default function MediaPage() {
-    const mustBeAuthenticated = useMustBeAuthenticated()
+    const axios = useAxios()
     const {navigate, params} = useClientRouter()
     const {owner, album, encodedId, filename} = params as MediaPageUrlParams
     const [state, setState] = useState<MediaPageMediasState>(MediaPageMediasStateInit)
 
-    const logic = useMemo(() => new MediaPageLogic(mustBeAuthenticated, setState), [mustBeAuthenticated, setState])
+    const logic = useMemo(() => new MediaPageLogic(axios, setState), [axios, setState])
 
     useEffect(() => {
         if (owner && album) {
@@ -91,6 +91,7 @@ export default function MediaPage() {
         }
     }, Key.Left, Key.Right, Key.D, Key.Esc)
 
+    // TODO AGENT - there is an horizontal scroll bar appearing on media page (image after is visible by scrolling on the right), fix it
     return (
         <div {...handlers}>
             {images.filter(ref => ref.src && ref.src !== "")

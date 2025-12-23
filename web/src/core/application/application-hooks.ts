@@ -1,7 +1,6 @@
 import {Dispatch, useContext} from "react";
 import {ApplicationContext} from "./application-context";
 import {AxiosInstance} from "axios";
-import {GeneralState} from "./application-model";
 import {UnrecoverableErrorAction} from "./application-reducer";
 
 export const useApplication = () => {
@@ -10,10 +9,6 @@ export const useApplication = () => {
 
 export const useAxios = (): AxiosInstance => {
     return useApplication().axiosInstance
-}
-
-export const useConfigContext = (): GeneralState => {
-    return useContext(ApplicationContext).context.general
 }
 
 export const useGlobalError = (): Error | undefined => {
