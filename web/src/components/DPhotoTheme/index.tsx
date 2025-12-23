@@ -1,21 +1,27 @@
 'use client';
 
-import {createTheme, LinkProps, ThemeProvider} from "@mui/material";
+import {createTheme, CssBaseline, LinkProps, ThemeProvider} from "@mui/material";
 import {forwardRef, ReactNode} from "react";
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
+import {LocalizationProvider} from "@mui/x-date-pickers";
+import dayjs from "dayjs";
+import fr from "dayjs/locale/fr";
 
 // Simple link component that doesn't use react-router
 const LinkBehavior = forwardRef<HTMLAnchorElement,
     { href: string; [key: string]: any }>((props, ref) => {
     const {href, onClick, ...other} = props;
-    
+
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         if (onClick) {
             onClick(e);
         }
     };
-    
+
     return <a data-testid="custom-link" ref={ref} href={href} onClick={handleClick} {...other} />;
 });
+
+dayjs.locale(fr)
 
 // https://mycolor.space/?hex=%23005792&sub=1
 const theme = createTheme({
@@ -52,7 +58,10 @@ const DPhotoTheme = ({children}: {
     children: ReactNode
 }) => (
     <ThemeProvider theme={theme}>
-        {children}
+        <CssBaseline/>
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='fr'>
+            {children}
+        </LocalizationProvider>
     </ThemeProvider>
 );
 

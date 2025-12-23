@@ -1,6 +1,7 @@
 'use client';
 
-import {ReactNode, useEffect, useState, createContext, useContext} from 'react';
+import {ReactNode} from 'react';
+import {useRouter} from "waku";
 
 export interface RouterContextValue {
     path: string;
@@ -10,90 +11,19 @@ export interface RouterContextValue {
     replace: (path: string) => void;
 }
 
-const RouterContext = createContext<RouterContextValue | null>(null);
-
-export function RouterProvider({children}: {children: ReactNode}) {
-    // Use browser location instead of Waku router to enable SPA navigation
-    const [currentPath, setCurrentPath] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return window.location.pathname;
-        }
-        return '/';
-    });
-
-    // Track query params separately to force re-render when they change
-    const [currentSearch, setCurrentSearch] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return window.location.search;
-        }
-        return '';
-    });
-
-    useEffect(() => {
-        // Listen for popstate events (browser back/forward)
-        const handlePopState = () => {
-            setCurrentPath(window.location.pathname);
-            setCurrentSearch(window.location.search);
-        };
-
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
-    }, []);
-
-    const getCurrentPath = () => {
-        return currentPath;
-    };
-
-    const getCurrentQuery = () => {
-        if (typeof window !== 'undefined') {
-            return new URLSearchParams(currentSearch);
-        }
-        return new URLSearchParams();
-    };
-
-    const getCurrentParams = () => {
-        return parseParams(currentPath);
-    };
-
-    const navigate = (newPath: string) => {
-        if (typeof window !== 'undefined') {
-            // Use pushState to update URL without reload
-            window.history.pushState({}, '', newPath);
-            setCurrentPath(window.location.pathname);
-            setCurrentSearch(window.location.search);
-        }
-    };
-
-    const replace = (newPath: string) => {
-        if (typeof window !== 'undefined') {
-            // Use replaceState to update URL without reload
-            window.history.replaceState({}, '', newPath);
-            setCurrentPath(window.location.pathname);
-            setCurrentSearch(window.location.search);
-        }
-    };
-
-    const value: RouterContextValue = {
-        path: getCurrentPath(),
-        params: getCurrentParams(),
-        query: getCurrentQuery(),
-        navigate,
-        replace,
-    };
-
-    return (
-        <RouterContext.Provider value={value}>
-            {children}
-        </RouterContext.Provider>
-    );
+export function RouterProvider({children}: { children: ReactNode }) {
+    return children
 }
 
 export function useClientRouter(): RouterContextValue {
-    const context = useContext(RouterContext);
-    if (!context) {
-        throw new Error('useClientRouter must be used within a RouterProvider');
-    }
-    return context;
+    const router = useRouter();
+    return {
+        navigate: (path: string) => router.push(path),
+        params: parseParams(router.path),
+        path: router.path,
+        query: new URLSearchParams(router.query),
+        replace: (path: string) => router.replace(path),
+    };
 }
 
 function parseParams(path: string): Record<string, string> {
@@ -118,27 +48,4 @@ function parseParams(path: string): Record<string, string> {
     }
 
     return {};
-}
-
-export function ClientLink({to, children, className, onClick}: {
-    to: string;
-    children: ReactNode;
-    className?: string;
-    onClick?: (e: React.MouseEvent) => void;
-}) {
-    const {navigate} = useClientRouter();
-
-    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-        e.preventDefault();
-        if (onClick) {
-            onClick(e);
-        }
-        navigate(to);
-    };
-
-    return (
-        <a href={to} onClick={handleClick} className={className}>
-            {children}
-        </a>
-    );
 }

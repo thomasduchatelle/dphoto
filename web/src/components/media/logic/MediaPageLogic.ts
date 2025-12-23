@@ -1,5 +1,5 @@
 import {MediaPageMediasState} from "./domain";
-import {MustBeAuthenticated} from "../../../core/application";
+import {AxiosInstance} from "axios";
 
 interface RestMedia {
     id: string
@@ -9,13 +9,13 @@ interface RestMedia {
 
 export class MediaPageLogic {
     constructor(
-        private mustBeAuthenticated: MustBeAuthenticated,
+        private readonly axios: AxiosInstance,
         private setState: (value: (MediaPageMediasState)) => void,
     ) {
     }
 
     public findMediasWithCache = (owner: string, folderName: string): Promise<void> => {
-        return this.mustBeAuthenticated.authenticatedAxios.get<RestMedia[]>(`/api/v1/owners/${owner}/albums/${folderName}/medias`)
+        return this.axios.get<RestMedia[]>(`/api/v1/owners/${owner}/albums/${folderName}/medias`)
             .then(resp => {
                 this.setState({
                     owner,
@@ -60,21 +60,21 @@ export class MediaPageLogic {
             if (index > 0) {
                 const media = mediasState.medias[index - 1];
                 previousMediaLink = `/albums/${owner}/${album}/${media.encodedId}/${media.filename}`
-                previousMediaSrc = `/api/v1/owners/${owner}/medias/${media.encodedId}/${media.filename}?access_token=${this.mustBeAuthenticated.accessToken}`
+                previousMediaSrc = `/api/v1/owners/${owner}/medias/${media.encodedId}/${media.filename}?`
                 previousIsImage = this.isAnImage(media.filename)
             }
 
             if (index + 1 < mediasState.medias.length) {
                 const media = mediasState.medias[index + 1];
                 nextMediaLink = `/albums/${owner}/${album}/${media.encodedId}/${media.filename}`
-                nextMediaSrc = `/api/v1/owners/${owner}/medias/${media.encodedId}/${media.filename}?access_token=${this.mustBeAuthenticated.accessToken}`
+                nextMediaSrc = `/api/v1/owners/${owner}/medias/${media.encodedId}/${media.filename}?`
                 nextIsImage = this.isAnImage(media.filename)
             }
         }
 
         return {
             backToAlbumLink,
-            imgSrc: `/api/v1/owners/${owner}/medias/${encodedId}/${filename}?access_token=${this.mustBeAuthenticated.accessToken}`,
+            imgSrc: `/api/v1/owners/${owner}/medias/${encodedId}/${filename}?`,
             currentIsImage: this.isAnImage(filename),
             previousMediaLink,
             previousMediaSrc,
