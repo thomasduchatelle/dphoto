@@ -15,26 +15,19 @@ interface IDTokenPayload {
     [key: string]: any;
 }
 
+interface AccessTokenWithUserInfo {
+    name?: string;
+    email?: string;
+    picture?: string;
+    exp?: number;
+    Scopes?: string;
+    [key: string]: any;
+}
+
 interface UserInfo {
     name: string;
     email: string;
     picture?: string;
-}
-
-function decodeToken<T = any>(token: string): T | null {
-    try {
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-            return null;
-        }
-
-        const payload = parts[1];
-        const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-        return decoded as T;
-    } catch (error) {
-        console.error('Failed to decode JWT:', error);
-        return null;
-    }
 }
 
 interface Cookies {
@@ -114,12 +107,21 @@ const cookieMiddleware: Middleware = (): Handler => {
                 },
             )
 
-            const idTokenPayload = tokens.id_token ? decodeToken<IDTokenPayload>(tokens.id_token) : null;
-            const userInfo: UserInfo = {
-                name: idTokenPayload?.name || '',
-                email: idTokenPayload?.email || '',
-                picture: idTokenPayload?.picture,
+            let userInfo: UserInfo = {
+                name: '',
+                email: '',
             };
+            
+            if (tokens.id_token) {
+                const idTokenPayload = decodeJWTPayload(tokens.id_token) as IDTokenPayload | null;
+                if (idTokenPayload) {
+                    userInfo = {
+                        name: idTokenPayload.name || '',
+                        email: idTokenPayload.email || '',
+                        picture: idTokenPayload.picture,
+                    };
+                }
+            }
 
             const headers = new Headers(ctx.res?.headers);
             headers.append(
@@ -200,22 +202,19 @@ const cookieMiddleware: Middleware = (): Handler => {
         }
 
         // backendSession is read by JotialProvider to hydrate the client session
-        const accessTokenPayload = cookies.accessToken ? decodeJWTPayload(cookies.accessToken) : null;
+        const accessTokenPayload = cookies.accessToken ? decodeJWTPayload(cookies.accessToken) as AccessTokenWithUserInfo | null : null;
         const expiresAt = accessTokenPayload?.exp ? new Date(accessTokenPayload.exp * 1000) : new Date();
         
         let userInfo: UserInfo | null = null;
         
         // First try to get user info from the access token itself (if present)
         // Note: access token may contain name, email, picture for testing purposes
-        if (accessTokenPayload) {
-            const tokenWithUserInfo = accessTokenPayload as any;
-            if (tokenWithUserInfo.name || tokenWithUserInfo.email) {
-                userInfo = {
-                    name: tokenWithUserInfo.name || '',
-                    email: tokenWithUserInfo.email || '',
-                    picture: tokenWithUserInfo.picture,
-                };
-            }
+        if (accessTokenPayload && (accessTokenPayload.name || accessTokenPayload.email)) {
+            userInfo = {
+                name: accessTokenPayload.name || '',
+                email: accessTokenPayload.email || '',
+                picture: accessTokenPayload.picture,
+            };
         }
         
         // Otherwise, fall back to the user info cookie
