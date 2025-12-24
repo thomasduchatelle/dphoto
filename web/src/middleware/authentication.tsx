@@ -108,7 +108,6 @@ const cookieMiddleware: Middleware = (): Handler => {
             // }
             // for that, place the error in ctx.data.oidcError and then create a waku page that shows the error to the user.
 
-            console.log("Cookies on callback:", cookies);
             const config = await oidcConfig();
 
             const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
