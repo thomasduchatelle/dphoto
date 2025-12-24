@@ -1,7 +1,7 @@
 import * as cookie from 'cookie';
 import type {Middleware} from 'waku/config';
 import {Handler, HandlerContext} from "waku/dist/lib/middleware/types";
-import {ACCESS_TOKEN_COOKIE, BackendSession, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE, isOwnerFromJWT} from "../core/security";
+import {ACCESS_TOKEN_COOKIE, BackendSession, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE, isOwnerFromJWT, decodeJWTPayload} from "../core/security";
 import * as client from 'openid-client'
 import {getEnv} from "waku";
 
@@ -15,18 +15,13 @@ interface IDTokenPayload {
     [key: string]: any;
 }
 
-interface AccessTokenPayload {
-    exp?: number;
-    [key: string]: any;
-}
-
 interface UserInfo {
     name: string;
     email: string;
     picture?: string;
 }
 
-function decodeJWT(token: string): any | null {
+function decodeToken<T = any>(token: string): T | null {
     try {
         const parts = token.split('.');
         if (parts.length !== 3) {
@@ -35,7 +30,7 @@ function decodeJWT(token: string): any | null {
 
         const payload = parts[1];
         const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-        return decoded;
+        return decoded as T;
     } catch (error) {
         console.error('Failed to decode JWT:', error);
         return null;
@@ -119,7 +114,7 @@ const cookieMiddleware: Middleware = (): Handler => {
                 },
             )
 
-            const idTokenPayload = tokens.id_token ? decodeJWT(tokens.id_token) as IDTokenPayload : null;
+            const idTokenPayload = tokens.id_token ? decodeToken<IDTokenPayload>(tokens.id_token) : null;
             const userInfo: UserInfo = {
                 name: idTokenPayload?.name || '',
                 email: idTokenPayload?.email || '',
@@ -205,21 +200,26 @@ const cookieMiddleware: Middleware = (): Handler => {
         }
 
         // backendSession is read by JotialProvider to hydrate the client session
-        const accessTokenPayload = cookies.accessToken ? decodeJWT(cookies.accessToken) : null;
+        const accessTokenPayload = cookies.accessToken ? decodeJWTPayload(cookies.accessToken) : null;
         const expiresAt = accessTokenPayload?.exp ? new Date(accessTokenPayload.exp * 1000) : new Date();
         
         let userInfo: UserInfo | null = null;
         
         // First try to get user info from the access token itself (if present)
-        if (accessTokenPayload?.name || accessTokenPayload?.email) {
-            userInfo = {
-                name: accessTokenPayload.name || '',
-                email: accessTokenPayload.email || '',
-                picture: accessTokenPayload.picture,
-            };
+        // Note: access token may contain name, email, picture for testing purposes
+        if (accessTokenPayload) {
+            const tokenWithUserInfo = accessTokenPayload as any;
+            if (tokenWithUserInfo.name || tokenWithUserInfo.email) {
+                userInfo = {
+                    name: tokenWithUserInfo.name || '',
+                    email: tokenWithUserInfo.email || '',
+                    picture: tokenWithUserInfo.picture,
+                };
+            }
         }
+        
         // Otherwise, fall back to the user info cookie
-        else if (cookies.userInfo) {
+        if (!userInfo && cookies.userInfo) {
             try {
                 userInfo = JSON.parse(cookies.userInfo);
             } catch (e) {
