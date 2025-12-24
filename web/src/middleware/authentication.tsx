@@ -1,13 +1,51 @@
 import * as cookie from 'cookie';
 import type {Middleware} from 'waku/config';
 import {Handler, HandlerContext} from "waku/dist/lib/middleware/types";
-import {ACCESS_TOKEN_COOKIE, BackendSession, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from "../core/security";
+import {ACCESS_TOKEN_COOKIE, BackendSession, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE, isOwnerFromJWT} from "../core/security";
 import * as client from 'openid-client'
 import {getEnv} from "waku";
+
+const USER_INFO_COOKIE = 'dphoto-user-info';
+
+interface IDTokenPayload {
+    name?: string;
+    email?: string;
+    picture?: string;
+    exp?: number;
+    [key: string]: any;
+}
+
+interface AccessTokenPayload {
+    exp?: number;
+    [key: string]: any;
+}
+
+interface UserInfo {
+    name: string;
+    email: string;
+    picture?: string;
+}
+
+function decodeJWT(token: string): any | null {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            return null;
+        }
+
+        const payload = parts[1];
+        const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+        return decoded;
+    } catch (error) {
+        console.error('Failed to decode JWT:', error);
+        return null;
+    }
+}
 
 interface Cookies {
     accessToken?: string
     refreshToken?: string
+    userInfo?: string
     /** state in only used during the authentication flow */
     state?: string
     codeVerifier?: string
@@ -26,6 +64,7 @@ function readCookies(ctx: HandlerContext): Cookies {
     return {
         accessToken: cookies[ACCESS_TOKEN_COOKIE],
         refreshToken: cookies[REFRESH_TOKEN_COOKIE],
+        userInfo: cookies[USER_INFO_COOKIE],
         state: cookies[OAUTH_STATE_COOKIE],
         codeVerifier: cookies[OAUTH_CODE_VERIFIER_COOKIE],
     }
@@ -81,9 +120,13 @@ const cookieMiddleware: Middleware = (): Handler => {
                 },
             )
 
-            // TODO AGENT - capture the identifier token which is required for the full name and picture of the user. The details must be available in the context, and be stored in the dynamodb table (see pkg/acl/aclcore/authenticate_sso.go)
-            // TODO AGENT - use the real expiration time of the JWT token (access and refresh) for the expiration of the cookies.
-            // TODO AGENT - redirect to the original URL that was requested before login (store it in a cookie before redirecting to /auth/login)
+            const idTokenPayload = tokens.id_token ? decodeJWT(tokens.id_token) as IDTokenPayload : null;
+            const userInfo: UserInfo = {
+                name: idTokenPayload?.name || '',
+                email: idTokenPayload?.email || '',
+                picture: idTokenPayload?.picture,
+            };
+
             const headers = new Headers(ctx.res?.headers);
             headers.append(
                 'set-cookie',
@@ -95,6 +138,10 @@ const cookieMiddleware: Middleware = (): Handler => {
             headers.append(
                 'set-cookie',
                 cookie.serialize(REFRESH_TOKEN_COOKIE, tokens.refresh_token ?? "", COOKIE_OPTS),
+            );
+            headers.append(
+                'set-cookie',
+                cookie.serialize(USER_INFO_COOKIE, JSON.stringify(userInfo), COOKIE_OPTS),
             );
             headers.append(
                 'set-cookie',
@@ -159,17 +206,40 @@ const cookieMiddleware: Middleware = (): Handler => {
         }
 
         // backendSession is read by JotialProvider to hydrate the client session
+        const accessTokenPayload = cookies.accessToken ? decodeJWT(cookies.accessToken) : null;
+        const expiresAt = accessTokenPayload?.exp ? new Date(accessTokenPayload.exp * 1000) : new Date();
+        
+        let userInfo: UserInfo | null = null;
+        
+        // First try to get user info from the access token itself (if present)
+        if (accessTokenPayload?.name || accessTokenPayload?.email) {
+            userInfo = {
+                name: accessTokenPayload.name || '',
+                email: accessTokenPayload.email || '',
+                picture: accessTokenPayload.picture,
+            };
+        }
+        // Otherwise, fall back to the user info cookie
+        else if (cookies.userInfo) {
+            try {
+                userInfo = JSON.parse(cookies.userInfo);
+            } catch (e) {
+                console.error('Failed to parse user info cookie:', e);
+            }
+        }
+
         const backendSession: BackendSession = {
             type: "authenticated",
             accessToken: {
                 accessToken: cookies.accessToken,
-                expiresAt: new Date(),
+                expiresAt: expiresAt,
             },
             refreshToken: cookies.refreshToken ?? "",
             authenticatedUser: {
-                name: "Security Middleware",
-                email: "security@middleware.com",
-                isOwner: true,
+                name: userInfo?.name || '',
+                email: userInfo?.email || '',
+                picture: userInfo?.picture,
+                isOwner: cookies.accessToken ? isOwnerFromJWT(cookies.accessToken) : false,
             },
         }
         ctx.data.backendSession = backendSession
