@@ -106,7 +106,7 @@ const cookieMiddleware: Middleware = (): Handler => {
             );
             headers.append(
                 'Location',
-                `${scheme}://${host}/`,
+                `${scheme}://${host}/`, // TODO AGENT Redirect to the original URL requested before login
             )
             ctx.res = new Response(null, {
                 status: 302,
