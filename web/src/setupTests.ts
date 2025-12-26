@@ -25,8 +25,12 @@ const createRouterState = () => {
             const [pathname, search] = path.split('?');
             state.path = pathname;
             state.query = search || '';
-            if (typeof window !== 'undefined') {
-                window.history.pushState({}, '', path);
+            if (typeof window !== 'undefined' && window.history) {
+                try {
+                    window.history.pushState({}, '', path);
+                } catch (e) {
+                    // Ignore errors in test environment
+                }
             }
             notify();
         },
@@ -34,8 +38,12 @@ const createRouterState = () => {
             const [pathname, search] = path.split('?');
             state.path = pathname;
             state.query = search || '';
-            if (typeof window !== 'undefined') {
-                window.history.replaceState({}, '', path);
+            if (typeof window !== 'undefined' && window.history) {
+                try {
+                    window.history.replaceState({}, '', path);
+                } catch (e) {
+                    // Ignore errors in test environment
+                }
             }
             notify();
         },
@@ -46,8 +54,12 @@ const createRouterState = () => {
         reset: () => {
             state.path = '/';
             state.query = '';
-            if (typeof window !== 'undefined') {
-                window.history.replaceState({}, '', '/');
+            if (typeof window !== 'undefined' && window.history) {
+                try {
+                    window.history.replaceState({}, '', '/');
+                } catch (e) {
+                    // Ignore errors in test environment
+                }
             }
         },
     };
