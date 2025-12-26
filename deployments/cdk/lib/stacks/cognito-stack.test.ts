@@ -23,7 +23,6 @@ describe('CognitoStack', () => {
         stack = new CognitoStack(app, 'TestCognitoStack', {
             environmentName: 'test',
             config: environments.test,
-            cognitoCertificate: mockCognitoCertificate,
             env: {
                 account: '123456789012',
                 region: 'eu-west-1'

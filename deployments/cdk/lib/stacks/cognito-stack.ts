@@ -2,16 +2,12 @@ import * as cdk from 'aws-cdk-lib';
 import {aws_ssm} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
-import {ICertificate} from 'aws-cdk-lib/aws-certificatemanager';
 import * as cognito from "aws-cdk-lib/aws-cognito";
-import {ManagedLoginVersion, UserPoolClient} from "aws-cdk-lib/aws-cognito";
-import {ARecord, HostedZone, RecordTarget} from "aws-cdk-lib/aws-route53";
-import {UserPoolDomainTarget} from "aws-cdk-lib/aws-route53-targets";
+import {UserPoolClient} from "aws-cdk-lib/aws-cognito";
 
 export interface CognitoStackProps extends cdk.StackProps {
     environmentName: string;
     config: EnvironmentConfig;
-    cognitoCertificate: ICertificate;
 }
 
 export interface CognitoStackExports {
@@ -25,10 +21,7 @@ export class CognitoStack extends cdk.Stack {
     private userPoolClient: UserPoolClient;
 
     constructor(scope: Construct, id: string, props: CognitoStackProps) {
-        super(scope, id, {
-            ...props,
-            crossRegionReferences: true,
-        });
+        super(scope, id, props);
 
         cdk.Tags.of(this).add('CreatedBy', 'cdk');
         cdk.Tags.of(this).add('Application', 'dphoto');
@@ -41,8 +34,6 @@ export class CognitoStack extends cdk.Stack {
         this.addGroups()
 
         const googleProvider = this.addGoogleSocialIdentityProviders(props.environmentName, props.config.googleLoginClientId);
-
-        this.addCustomDomain(props.config.rootDomain, props.config.cognitoDomainName, props.cognitoCertificate);
 
         this.userPoolClient = this.createDPhotoClient(prefix, props.config.domainName, props.config.cognitoExtraRedirectURLs);
         this.userPoolClient.node.addDependency(googleProvider)
@@ -104,7 +95,6 @@ export class CognitoStack extends cdk.Stack {
         new cdk.CfnOutput(this, 'UserPoolId', {
             value: userPool.userPoolId,
             description: 'Cognito User Pool ID',
-            exportName: `cognito-user-pool-id`,
         });
 
         return userPool
@@ -153,29 +143,6 @@ export class CognitoStack extends cdk.Stack {
             googleProvider
         );
         return googleProvider
-    }
-
-    private addCustomDomain(rootDomain: string, cognitoDomainName: string, cognitoCertificate: ICertificate) {
-        const domain = this.userPool.addDomain("LoginDomain", {
-            customDomain: {
-                domainName: cognitoDomainName,
-                certificate: cognitoCertificate,
-            },
-            managedLoginVersion: ManagedLoginVersion.NEWER_MANAGED_LOGIN,
-        });
-
-        // Create DNS record for custom domain
-        const hostedZone = HostedZone.fromLookup(this, 'HostedZone', {
-            domainName: rootDomain
-        });
-
-        new ARecord(this, 'CognitoDnsRecord', {
-            zone: hostedZone,
-            recordName: cognitoDomainName,
-            target: RecordTarget.fromAlias(
-                new UserPoolDomainTarget(domain)
-            )
-        });
     }
 
     private createDPhotoClient(prefix: string, domainName: string, cognitoExtraRedirectURLs: string[]): UserPoolClient {
