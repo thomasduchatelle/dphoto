@@ -18,3 +18,10 @@ export const useGlobalError = (): Error | undefined => {
 export const useUnrecoverableErrorDispatch = (): Dispatch<UnrecoverableErrorAction> => {
     return useContext(ApplicationContext).dispatch
 }
+
+// Legacy stub for old pages-old code used in stories
+export const useConfigContext = () => {
+    return {
+        googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    };
+};
