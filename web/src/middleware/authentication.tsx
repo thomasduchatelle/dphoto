@@ -199,9 +199,10 @@ const cookieMiddleware: Middleware = (openIdConfig: OpenIdConfig | undefined = {
                 maxAge: 5 * 60, // authentication flow in Cognito is set to 3 minutes.
                 sameSite: 'lax', // required when the Referer is expected to be a different site (which is the case during OIDC flows)
             };
+            let value = cookie.serialize(OAUTH_STATE_COOKIE, parameters.state, authCookiesOptions);
             headers.append(
-                'set-cookie',
-                cookie.serialize(OAUTH_STATE_COOKIE, parameters.state, authCookiesOptions),
+                'FOO',
+                value,
             );
             headers.append(
                 'set-cookie',

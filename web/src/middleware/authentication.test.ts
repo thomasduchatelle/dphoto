@@ -19,24 +19,24 @@ vi.mock('waku', () => ({
 describe('authentication middleware', () => {
     let fakeOIDCServer: FakeOIDCServer;
 
-    // beforeAll(() => {
-    //     fakeOIDCServer = new FakeOIDCServer(TEST_ISSUER_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
-    //     fakeOIDCServer.start();
-    // });
-    //
-    // afterEach(() => {
-    //     fakeOIDCServer.reset();
-    // });
-    //
-    // afterAll(() => {
-    //     fakeOIDCServer.stop();
-    // });
+    beforeAll(() => {
+        fakeOIDCServer = new FakeOIDCServer(TEST_ISSUER_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
+        fakeOIDCServer.start();
+    });
+
+    afterEach(() => {
+        fakeOIDCServer.reset();
+    });
+
+    afterAll(() => {
+        fakeOIDCServer.stop();
+    });
 
     it('should redirect to authorization authority when requesting home page without access token', async () => {
         const middleware = cookieMiddleware();
 
         const ctx: HandlerContext = {
-            req: new Request('https://next.duchatelle.me/', {
+            req: new Request('https://example.com/', {
                 method: 'GET',
                 headers: {
                     'Accept': 'text/html',
@@ -52,11 +52,15 @@ describe('authentication middleware', () => {
         const location = ctx.res?.headers.get('Location');
         expect(location).toContain('https://cognito.example.com/oauth2/authorize');
         expect(location).toContain('client_id=test-client-id');
-        expect(location).toContain('redirect_uri=https://example.com/auth/callback');
+        expect(location).toContain(`redirect_uri=${encodeURIComponent('https://example.com/auth/callback')}`);
         expect(location).toContain('scope=openid+profile+email');
         expect(location).toContain('code_challenge_method=S256');
         expect(location).toContain('state=');
         expect(location).toContain('code_challenge=');
+
+        for (const header of ctx.res?.headers.entries() ?? []) {
+            console.log("Header:", header);
+        }
 
         const setCookieHeaders = ctx.res?.headers.getSetCookie();
         expect(setCookieHeaders).toBeDefined();

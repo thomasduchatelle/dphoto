@@ -1,6 +1,6 @@
-export const TEST_ISSUER_URL = 'https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_vnHCM2cK8';
-export const TEST_CLIENT_ID = '56hinulqbr0qjcbjam1plfh6cq';
-export const TEST_CLIENT_SECRET = 'ho0b107s4nnfo8tn1dhg6ai6s51kqkp1h36rbrp68u9ricv5tav';
+export const TEST_ISSUER_URL = 'https://cognito.example.com';
+export const TEST_CLIENT_ID = 'test-client-id';
+export const TEST_CLIENT_SECRET = 'test-client-secret';
 
 export const createValidIDToken = (claims: {
     name?: string;

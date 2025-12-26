@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import {defineConfig} from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
@@ -6,10 +6,9 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'happy-dom', // note - JSDOM has an issue with https://github.com/vitest-dev/vitest/pull/1727 making middleware tests failing.
     setupFiles: ['./src/setupTests.ts'],
     include: [
-      'src/**/__tests__/**/*.+(ts|tsx|js)',
       'src/**/?(*.)+(spec|test).+(ts|tsx|js)',
     ],
     exclude: ['**/node_modules/**', '**/dist/**', '**/*.disabled.*'],
