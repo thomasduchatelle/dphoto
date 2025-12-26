@@ -1,5 +1,5 @@
 import {http, HttpResponse} from 'msw';
-import {setupServer} from 'msnow/node';
+import {setupServer} from 'msw/node';
 
 interface TokenResponse {
     access_token: string;
