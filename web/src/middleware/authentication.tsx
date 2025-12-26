@@ -1,7 +1,15 @@
 import * as cookie from 'cookie';
 import type {Middleware} from 'waku/config';
 import {Handler, HandlerContext} from "waku/dist/lib/middleware/types";
-import {ACCESS_TOKEN_COOKIE, BackendSession, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE, isOwnerFromJWT, decodeJWTPayload} from "../core/security";
+import {
+    ACCESS_TOKEN_COOKIE,
+    BackendSession,
+    decodeJWTPayload,
+    isOwnerFromJWT,
+    OAUTH_CODE_VERIFIER_COOKIE,
+    OAUTH_STATE_COOKIE,
+    REFRESH_TOKEN_COOKIE
+} from "../core/security";
 import * as client from 'openid-client'
 import {getEnv} from "waku";
 
@@ -12,6 +20,7 @@ interface IDTokenPayload {
     email?: string;
     picture?: string;
     exp?: number;
+
     [key: string]: any;
 }
 
@@ -21,6 +30,7 @@ interface AccessTokenWithUserInfo {
     picture?: string;
     exp?: number;
     Scopes?: string;
+
     [key: string]: any;
 }
 
@@ -58,14 +68,19 @@ function readCookies(ctx: HandlerContext): Cookies {
     }
 }
 
-async function oidcConfig() {
+type OpenIdConfig = {
+    issuer: string,
+    clientId: string,
+    clientSecret: string,
+};
+
+function oidcConfig({issuer, clientId, clientSecret}: OpenIdConfig): Promise<client.Configuration> {
     // TODO AGENT - fetch the configuration once, and then cache it forever.
-    let config: client.Configuration = await client.discovery(
-        new URL(getEnv("COGNITO_ISSUER")),
-        getEnv("COGNITO_CLIENT_ID"),
-        getEnv("COGNITO_CLIENT_SECRET"),
+    return client.discovery(
+        new URL(issuer),
+        clientId,
+        clientSecret,
     )
-    return config;
 }
 
 function parse(url: string): { scheme: string; host: string; path: string } {
@@ -77,7 +92,11 @@ function parse(url: string): { scheme: string; host: string; path: string } {
     };
 }
 
-const cookieMiddleware: Middleware = (): Handler => {
+const cookieMiddleware: Middleware = (openIdConfig: OpenIdConfig | undefined = {
+    issuer: getEnv("COGNITO_ISSUER"),
+    clientId: getEnv("COGNITO_CLIENT_ID"),
+    clientSecret: getEnv("COGNITO_CLIENT_SECRET"),
+}): Handler => {
 
     return async (ctx: HandlerContext, next: () => Promise<void>) => {
         console.log("Middleware/authentication: processing request ", ctx.req.url);
@@ -96,7 +115,7 @@ const cookieMiddleware: Middleware = (): Handler => {
             // }
             // for that, place the error in ctx.data.oidcError and then create a waku page that shows the error to the user.
 
-            const config = await oidcConfig();
+            const config = await oidcConfig(openIdConfig);
 
             const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
                 config,
@@ -111,7 +130,7 @@ const cookieMiddleware: Middleware = (): Handler => {
                 name: '',
                 email: '',
             };
-            
+
             if (tokens.id_token) {
                 const idTokenPayload = decodeJWTPayload(tokens.id_token) as IDTokenPayload | null;
                 if (idTokenPayload) {
@@ -158,7 +177,7 @@ const cookieMiddleware: Middleware = (): Handler => {
             });
             return
         } else if (!cookies.accessToken || path === '/auth/login') {
-            const config = await oidcConfig();
+            const config = await oidcConfig(openIdConfig);
 
             const codeVerifier: string = client.randomPKCECodeVerifier()
             const code_challenge: string =
@@ -204,9 +223,9 @@ const cookieMiddleware: Middleware = (): Handler => {
         // backendSession is read by JotialProvider to hydrate the client session
         const accessTokenPayload = cookies.accessToken ? decodeJWTPayload(cookies.accessToken) as AccessTokenWithUserInfo | null : null;
         const expiresAt = accessTokenPayload?.exp ? new Date(accessTokenPayload.exp * 1000) : new Date();
-        
+
         let userInfo: UserInfo | null = null;
-        
+
         // First try to get user info from the access token itself (if present)
         // Note: access token may contain name, email, picture for testing purposes
         if (accessTokenPayload && (accessTokenPayload.name || accessTokenPayload.email)) {
@@ -216,7 +235,7 @@ const cookieMiddleware: Middleware = (): Handler => {
                 picture: accessTokenPayload.picture,
             };
         }
-        
+
         // Otherwise, fall back to the user info cookie
         if (!userInfo && cookies.userInfo) {
             try {

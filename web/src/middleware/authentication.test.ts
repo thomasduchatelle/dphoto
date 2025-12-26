@@ -1,4 +1,4 @@
-import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import type {HandlerContext} from 'waku/dist/lib/middleware/types';
 import cookieMiddleware from './authentication';
 import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '../core/security';
@@ -19,24 +19,24 @@ vi.mock('waku', () => ({
 describe('authentication middleware', () => {
     let fakeOIDCServer: FakeOIDCServer;
 
-    beforeAll(() => {
-        fakeOIDCServer = new FakeOIDCServer(TEST_ISSUER_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
-        fakeOIDCServer.start();
-    });
-
-    afterEach(() => {
-        fakeOIDCServer.reset();
-    });
-
-    afterAll(() => {
-        fakeOIDCServer.stop();
-    });
+    // beforeAll(() => {
+    //     fakeOIDCServer = new FakeOIDCServer(TEST_ISSUER_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
+    //     fakeOIDCServer.start();
+    // });
+    //
+    // afterEach(() => {
+    //     fakeOIDCServer.reset();
+    // });
+    //
+    // afterAll(() => {
+    //     fakeOIDCServer.stop();
+    // });
 
     it('should redirect to authorization authority when requesting home page without access token', async () => {
         const middleware = cookieMiddleware();
 
         const ctx: HandlerContext = {
-            req: new Request('https://example.com/', {
+            req: new Request('https://next.duchatelle.me/', {
                 method: 'GET',
                 headers: {
                     'Accept': 'text/html',
