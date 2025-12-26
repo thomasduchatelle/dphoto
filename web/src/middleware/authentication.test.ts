@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 import {describe, expect, it, vi} from 'vitest';
 import type {HandlerContext} from 'waku/dist/lib/middleware/types';
 import cookieMiddleware from './authentication';
@@ -57,10 +59,6 @@ describe('authentication middleware', () => {
         expect(location).toContain('code_challenge_method=S256');
         expect(location).toContain('state=');
         expect(location).toContain('code_challenge=');
-
-        for (const header of ctx.res?.headers.entries() ?? []) {
-            console.log("Header:", header);
-        }
 
         const setCookieHeaders = ctx.res?.headers.getSetCookie();
         expect(setCookieHeaders).toBeDefined();
