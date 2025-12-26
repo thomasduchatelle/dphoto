@@ -1,67 +1,35 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import type {HandlerContext} from 'waku/dist/lib/middleware/types';
-import type * as client from 'openid-client';
 import cookieMiddleware from './authentication';
-import {
-    ACCESS_TOKEN_COOKIE,
-    OAUTH_CODE_VERIFIER_COOKIE,
-    OAUTH_STATE_COOKIE,
-    REFRESH_TOKEN_COOKIE
-} from '../core/security';
+import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '../core/security';
+import {FakeOIDCServer} from './__tests__/fake-oidc-server';
+import {createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from './__tests__/test-helper-oidc';
 
 vi.mock('waku', () => ({
     getEnv: (key: string) => {
         const env: Record<string, string> = {
-            COGNITO_ISSUER: 'https://cognito.example.com',
-            COGNITO_CLIENT_ID: 'test-client-id',
-            COGNITO_CLIENT_SECRET: 'test-client-secret',
+            COGNITO_ISSUER: TEST_ISSUER_URL,
+            COGNITO_CLIENT_ID: TEST_CLIENT_ID,
+            COGNITO_CLIENT_SECRET: TEST_CLIENT_SECRET,
         };
         return env[key] || '';
     }
 }));
 
-const mockConfig: client.Configuration = {
-    authorization_endpoint: 'https://cognito.example.com/oauth2/authorize',
-    token_endpoint: 'https://cognito.example.com/oauth2/token',
-    issuer: 'https://cognito.example.com',
-} as client.Configuration;
-
-let mockRandomPKCECodeVerifier: () => string;
-let mockRandomState: () => string;
-let mockCalculatePKCECodeChallenge: (verifier: string) => Promise<string>;
-let mockBuildAuthorizationUrl: (config: client.Configuration, params: Record<string, string>) => URL;
-let mockAuthorizationCodeGrant: (config: client.Configuration, url: URL, options: any) => Promise<client.TokenEndpointResponse>;
-let mockDiscovery: (issuer: URL, clientId: string, clientSecret: string) => Promise<client.Configuration>;
-
-vi.mock('openid-client', () => {
-    return {
-        discovery: (...args: any[]) => mockDiscovery(...args),
-        randomPKCECodeVerifier: () => mockRandomPKCECodeVerifier(),
-        randomState: () => mockRandomState(),
-        calculatePKCECodeChallenge: (verifier: string) => mockCalculatePKCECodeChallenge(verifier),
-        buildAuthorizationUrl: (config: any, params: any) => mockBuildAuthorizationUrl(config, params),
-        authorizationCodeGrant: (config: any, url: any, options: any) => mockAuthorizationCodeGrant(config, url, options),
-    };
-});
-
 describe('authentication middleware', () => {
-    beforeEach(() => {
-        vi.resetAllMocks();
+    let fakeOIDCServer: FakeOIDCServer;
 
-        mockDiscovery = vi.fn().mockResolvedValue(mockConfig);
-        mockRandomPKCECodeVerifier = vi.fn().mockReturnValue('CODE_VERIFIER_123');
-        mockRandomState = vi.fn().mockReturnValue('GENERATED_STATE_123');
-        mockCalculatePKCECodeChallenge = vi.fn().mockResolvedValue('CODE_CHALLENGE_HASH');
-        mockBuildAuthorizationUrl = vi.fn().mockReturnValue(
-            new URL('https://cognito.example.com/oauth2/authorize?client_id=test-client-id&redirect_uri=https://example.com/auth/callback&scope=openid+profile+email&code_challenge=CODE_CHALLENGE_HASH&code_challenge_method=S256&state=GENERATED_STATE_123')
-        );
-        mockAuthorizationCodeGrant = vi.fn().mockResolvedValue({
-            access_token: 'ACCESS_TOKEN_VALUE',
-            refresh_token: 'REFRESH_TOKEN_VALUE',
-            expires_in: 3600,
-            id_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJlbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJwaWN0dXJlIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9hdmF0YXIuanBnIiwiU2NvcGVzIjoib3duZXI6dGVzdHVzZXIifQ.signature',
-            token_type: 'Bearer',
-        } as client.TokenEndpointResponse);
+    beforeAll(() => {
+        fakeOIDCServer = new FakeOIDCServer(TEST_ISSUER_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
+        fakeOIDCServer.start();
+    });
+
+    afterEach(() => {
+        fakeOIDCServer.reset();
+    });
+
+    afterAll(() => {
+        fakeOIDCServer.stop();
     });
 
     it('should redirect to authorization authority when requesting home page without access token', async () => {
@@ -81,25 +49,26 @@ describe('authentication middleware', () => {
         await middleware(ctx, async () => {});
 
         expect(ctx.res?.status).toBe(302);
-        expect(ctx.res?.headers.get('Location')).toContain('https://cognito.example.com/oauth2/authorize');
-        expect(ctx.res?.headers.get('Location')).toContain('client_id=test-client-id');
-        expect(ctx.res?.headers.get('Location')).toContain('redirect_uri=https://example.com/auth/callback');
-        expect(ctx.res?.headers.get('Location')).toContain('scope=openid+profile+email');
-        expect(ctx.res?.headers.get('Location')).toContain('code_challenge=CODE_CHALLENGE_HASH');
-        expect(ctx.res?.headers.get('Location')).toContain('code_challenge_method=S256');
-        expect(ctx.res?.headers.get('Location')).toContain('state=GENERATED_STATE_123');
+        const location = ctx.res?.headers.get('Location');
+        expect(location).toContain('https://cognito.example.com/oauth2/authorize');
+        expect(location).toContain('client_id=test-client-id');
+        expect(location).toContain('redirect_uri=https://example.com/auth/callback');
+        expect(location).toContain('scope=openid+profile+email');
+        expect(location).toContain('code_challenge_method=S256');
+        expect(location).toContain('state=');
+        expect(location).toContain('code_challenge=');
 
         const setCookieHeaders = ctx.res?.headers.getSetCookie();
         expect(setCookieHeaders).toBeDefined();
         expect(setCookieHeaders?.length).toBeGreaterThanOrEqual(2);
 
         const stateCookie = setCookieHeaders?.find(c => c.startsWith(`${OAUTH_STATE_COOKIE}=`));
-        expect(stateCookie).toContain('GENERATED_STATE_123');
+        expect(stateCookie).toBeDefined();
         expect(stateCookie).toContain('Max-Age=300');
         expect(stateCookie).toContain('SameSite=Lax');
 
         const codeVerifierCookie = setCookieHeaders?.find(c => c.startsWith(`${OAUTH_CODE_VERIFIER_COOKIE}=`));
-        expect(codeVerifierCookie).toContain('CODE_VERIFIER_123');
+        expect(codeVerifierCookie).toBeDefined();
         expect(codeVerifierCookie).toContain('Max-Age=300');
         expect(codeVerifierCookie).toContain('SameSite=Lax');
     });
@@ -122,7 +91,8 @@ describe('authentication middleware', () => {
         await middleware(ctx, async () => {});
 
         expect(ctx.res?.status).toBe(302);
-        expect(ctx.res?.headers.get('Location')).toContain('https://cognito.example.com/oauth2/authorize');
+        const location = ctx.res?.headers.get('Location');
+        expect(location).toContain('https://cognito.example.com/oauth2/authorize');
 
         const setCookieHeaders = ctx.res?.headers.getSetCookie();
         expect(setCookieHeaders).toBeDefined();
@@ -136,10 +106,14 @@ describe('authentication middleware', () => {
     });
 
     it('should handle OAuth callback with valid authorization code', async () => {
+        const authCode = 'AUTH_CODE_123';
+        const tokenResponse = createTokenResponse();
+        fakeOIDCServer.setupSuccessfulTokenExchange(authCode, tokenResponse);
+
         const middleware = cookieMiddleware();
 
         const ctx: HandlerContext = {
-            req: new Request('https://example.com/auth/callback?code=AUTH_CODE_123&state=EXPECTED_STATE', {
+            req: new Request(`https://example.com/auth/callback?code=${authCode}&state=EXPECTED_STATE`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'text/html',
