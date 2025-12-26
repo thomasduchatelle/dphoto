@@ -9,11 +9,14 @@ export const createValidIDToken = (claims: {
     exp?: number;
     Scopes?: string;
 }): string => {
+    const now = Math.floor(Date.now() / 1000);
     const payload = {
+        sub: claims.email || 'test@example.com',  // subject is required by openid-client
         name: claims.name || 'Test User',
         email: claims.email || 'test@example.com',
         picture: claims.picture,
-        exp: claims.exp || Math.floor(Date.now() / 1000) + 3600,
+        iat: now,  // issued at time is required by openid-client
+        exp: claims.exp || now + 3600,
         Scopes: claims.Scopes,
         iss: TEST_ISSUER_URL,
         aud: TEST_CLIENT_ID,

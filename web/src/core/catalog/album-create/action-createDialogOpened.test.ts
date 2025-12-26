@@ -1,9 +1,14 @@
 import {CatalogViewerState} from "../language";
 import {createDialogOpened} from "./action-createDialogOpened";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
-import {vi} from "vitest";
+import {beforeEach, vi} from "vitest";
 
 describe('action:createDialogOpened', () => {
+    beforeEach(() => {
+        // Reset time mocks before each test
+        vi.useRealTimers();
+    });
+
     it('should open with the last week open from Saturday to Monday (9 days) both at start of the day', () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
@@ -12,7 +17,7 @@ describe('action:createDialogOpened', () => {
 
         // Mock Date to control the "current" date for consistent test results
         const mockDate = new Date("2024-03-13T10:00:00Z"); // A Wednesday
-        vi.spyOn(global, 'Date').mockImplementation(() => mockDate);
+        vi.setSystemTime(mockDate);
 
         const action = createDialogOpened();
         const newState = action.reducer(state, action);
@@ -35,6 +40,6 @@ describe('action:createDialogOpened', () => {
         });
 
         // Restore original Date object
-        vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 });
