@@ -9,14 +9,17 @@ export const createValidIDToken = (claims: {
     exp?: number;
     Scopes?: string;
 }): string => {
+    const now = Math.floor(Date.now() / 1000);
     const payload = {
         name: claims.name || 'Test User',
         email: claims.email || 'test@example.com',
         picture: claims.picture,
-        exp: claims.exp || Math.floor(Date.now() / 1000) + 3600,
-        Scopes: claims.Scopes,
+        exp: claims.exp || now + 3600,
+        iat: now,
         iss: TEST_ISSUER_URL,
         aud: TEST_CLIENT_ID,
+        sub: claims.email || 'test@example.com',
+        Scopes: claims.Scopes,
     };
 
     const header = Buffer.from(JSON.stringify({alg: 'RS256', typ: 'JWT'})).toString('base64url');
@@ -51,4 +54,3 @@ export const createTokenResponse = (overrides?: {
     expires_in: overrides?.expires_in || 3600,
     token_type: 'Bearer',
 });
-
