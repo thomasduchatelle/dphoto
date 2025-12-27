@@ -10,15 +10,20 @@ describe('action:createDialogOpened', () => {
             dialog: undefined,
         };
 
-        // Mock Date to control the "current" date for consistent test results
-        const mockDate = new Date("2024-03-13T10:00:00Z"); // A Wednesday
-        vi.spyOn(global, 'Date').mockImplementation(() => mockDate);
+        const mockDate = new Date("2024-03-13T10:00:00Z");
+        const OriginalDate = Date;
+        vi.spyOn(global, 'Date').mockImplementation(function (this: any, ...args: any[]) {
+            if (args.length === 0) {
+                return mockDate;
+            }
+            return new OriginalDate(...args);
+        } as any);
 
         const action = createDialogOpened();
         const newState = action.reducer(state, action);
 
-        const expectedStartDate = new Date("2024-03-02T00:00:00Z"); // Saturday of previous week
-        const expectedEndDate = new Date("2024-03-11T00:00:00Z"); // Monday of current week
+        const expectedStartDate = new Date("2024-03-02T00:00:00Z");
+        const expectedEndDate = new Date("2024-03-11T00:00:00Z");
 
         expect(newState.dialog).toEqual({
             type: "CreateDialog",
@@ -34,7 +39,6 @@ describe('action:createDialogOpened', () => {
             isLoading: false,
         });
 
-        // Restore original Date object
         vi.restoreAllMocks();
     });
 });

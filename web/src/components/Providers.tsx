@@ -1,5 +1,4 @@
 import DPhotoTheme from "./DPhotoTheme";
-import {RouterProvider} from "./ClientRouter";
 import {ReactNode} from "react";
 import {ErrorBoundary} from "./ErrorBoundary";
 import JotaiProvider from "./JotaiProvider";
@@ -11,11 +10,9 @@ export const Providers = ({children}: { children: ReactNode }) => {
         <JotaiProvider>
             <ApplicationContextComponent>
                 <DPhotoTheme>
-                    <RouterProvider>
-                        <ErrorBoundary> {/* Error Boundaries is using AppNav which requires RouterProvider */}
-                            {children}
-                        </ErrorBoundary>
-                    </RouterProvider>
+                    <ErrorBoundary> {/* Error Boundaries is using AppNav which requires RouterProvider */}
+                        {children}
+                    </ErrorBoundary>
                 </DPhotoTheme>
             </ApplicationContextComponent>
         </JotaiProvider>

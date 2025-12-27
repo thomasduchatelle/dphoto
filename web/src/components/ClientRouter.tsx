@@ -1,6 +1,5 @@
 'use client';
 
-import {ReactNode} from 'react';
 import {useRouter} from "waku";
 
 export interface RouterContextValue {
@@ -9,10 +8,6 @@ export interface RouterContextValue {
     query: URLSearchParams;
     navigate: (path: string) => void;
     replace: (path: string) => void;
-}
-
-export function RouterProvider({children}: { children: ReactNode }) {
-    return children
 }
 
 export function useClientRouter(): RouterContextValue {
