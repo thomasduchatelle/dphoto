@@ -82,7 +82,7 @@ describe('CatalogFactory', () => {
                 mediasFromAlbumId: albumIdAvenger1,
                 medias: [
                     {
-                        contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg?access_token=",
+                        contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg",
                         id: "media-1",
                         source: "Ironman Suit",
                         time: new Date("2021-01-05T12:42:00Z"),
@@ -120,7 +120,7 @@ describe('CatalogFactory', () => {
                     day: new Date(2021, 0, 5),
                     medias: [
                         {
-                            contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg?access_token=",
+                            contentPath: "/api/v1/owners/tony@stark.com/medias/media-1/image.jpg",
                             id: "media-1",
                             source: "Ironman Suit",
                             time: new Date("2021-01-05T12:42:00Z"),

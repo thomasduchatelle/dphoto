@@ -5,7 +5,13 @@ import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
 import {dateTimeToString} from "../../../core/utils/date-utils";
 import {Media, MediaType} from "../../../core/catalog";
 import {useEffect, useRef} from "react";
-import {useClientRouter} from "../../../components/ClientRouter";
+import {useClientRouter} from "../../ClientRouter";
+
+function addQueryParam(url: string, param: string, value: string): string {
+    const trimmedUrl = url.replace(/[?&]$/, '');
+    const separator = trimmedUrl.includes('?') ? '&' : '?';
+    return `${trimmedUrl}${separator}${param}=${value}`;
+}
 
 export function ImageInList({media, imageViewportPercentage, autoFocus = false}: {
     media: Media,
@@ -15,7 +21,7 @@ export function ImageInList({media, imageViewportPercentage, autoFocus = false}:
     const {navigate} = useClientRouter();
     const itemRef = useRef<HTMLLIElement | null>(null)
     const imageSrc = media.type === MediaType.IMAGE ? `${media.contentPath}` : '/video-placeholder.png';
-    const imageSrcSet = media.type === MediaType.IMAGE ? `${media.contentPath}&w=180 180w, ${media.contentPath}&w=360 360w` : '/video-placeholder.png';
+    const imageSrcSet = media.type === MediaType.IMAGE ? `${addQueryParam(media.contentPath, 'w', '180')} 180w, ${addQueryParam(media.contentPath, 'w', '360')} 360w` : '/video-placeholder.png';
 
     useEffect(() => {
         if (autoFocus && itemRef.current) {
