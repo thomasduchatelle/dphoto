@@ -43,6 +43,7 @@
     "test:visual": "npx playwright test",
     "test:update": "npx playwright test -u",
     "test:headed": "npx playwright test --headed",
+    "visual": "npx playwright test --reporter html",
     "test:ui": "npx playwright test --ui",
     "clean": "rm -rf build/ dist/",
     "ladle": "ladle serve"
