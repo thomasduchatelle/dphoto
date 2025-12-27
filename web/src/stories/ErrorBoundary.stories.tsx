@@ -1,7 +1,6 @@
 import React from 'react';
 import {Story} from '@ladle/react';
 import {ErrorDisplay} from '../components/ErrorBoundary/ErrorDisplay';
-import {RouterProvider} from '../components/ClientRouter';
 
 export default {
     title: 'Layout/ErrorBoundary',
@@ -10,9 +9,7 @@ export default {
 type ErrorDisplayProps = React.ComponentProps<typeof ErrorDisplay>;
 
 const ErrorDisplayWrapper: Story<ErrorDisplayProps> = (args) => (
-    <RouterProvider>
-        <ErrorDisplay {...args} />
-    </RouterProvider>
+    <ErrorDisplay {...args} />
 );
 
 export const Default: Story<ErrorDisplayProps> = (args) => <ErrorDisplayWrapper {...args} />;

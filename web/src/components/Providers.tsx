@@ -10,7 +10,7 @@ export const Providers = ({children}: { children: ReactNode }) => {
         <JotaiProvider>
             <ApplicationContextComponent>
                 <DPhotoTheme>
-                    <ErrorBoundary> {/* Error Boundaries is using AppNav which requires RouterProvider */}
+                    <ErrorBoundary>
                         {children}
                     </ErrorBoundary>
                 </DPhotoTheme>
