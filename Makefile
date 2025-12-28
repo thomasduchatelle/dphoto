@@ -1,4 +1,4 @@
-.PHONY: all clean setup test build deploy install
+.PHONY: all clean setup test build deploy-next install
 
 all: clean test build
 
@@ -11,7 +11,7 @@ test: test-cdk test-go test-web
 
 build: build-go build-app
 
-deploy: deploy-cdk
+deploy-next: build-app build-web-nextjs deploy-cdk deploy-sst
 
 install: install-cli
 
@@ -101,6 +101,8 @@ update-snapshots-ci:
 	rm -rf web/playwright/visual-regression.spec.ts-snapshots && cd web && npm run test:visual -- -u
 
 build-web:
+	@echo "Includes NextJs public content into Waku public folder to serve static assets under '/'."
+	cp -r web-nextjs/public/* web/public/
 	cd web && npm run build:lambda
 
 start:
@@ -112,6 +114,18 @@ ladle:
 
 playwright:
 	cd web && npx playwright test --reporter html
+
+#######################################
+## WEB - NEXTJS
+#######################################
+
+.PHONY: clean-web setup-web setup-web-ci setup-web-ci-no-playwright test-web test-web-ci test-web-agent update-snapshots update-snapshots-ci build-web start ladle playwright
+
+build-web-nextjs:
+	cd web-nextjs && npm run build
+
+deploy-sst:
+	cd web-nextjs && npx sst --stage next deploy
 
 #######################################
 ## API
@@ -147,7 +161,7 @@ clean-app: clean-api clean-web
 
 test-app: test-api test-web
 
-build-app: build-api build-web
+build-app: build-api build-web build-web-nextjs
 
 bg:
 	docker-compose --profile bg up -d

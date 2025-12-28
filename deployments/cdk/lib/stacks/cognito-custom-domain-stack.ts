@@ -12,7 +12,7 @@ import {Stack} from "aws-cdk-lib";
  * This NEEDS to be done as part of the APPLICATION stack because AWS REQUIRES a ARecord on the parent domain, which is only created with the API Gateway.
  */
 export class CognitoCustomDomainStack extends Stack {
-    constructor(scope: Construct, id: string, {userPool, cognitoDomainName, rootDomain, cognitoCertificate, ...props}: {
+    constructor(scope: Construct, id: string, {userPool, rootDomain, cognitoDomainName, cognitoCertificate, ...props}: {
         userPool: IUserPool,
         rootDomain: string,
         cognitoDomainName: string,

@@ -11,7 +11,7 @@ TODOs
    1. aiming for 2 stacks: long term data stores, and WEB overlay
    2. migration paths to be included and executed
    3. new domain to be used
-5. [ ] migrating to Waku from native React: very light React Framework in beta/exploration
+5. [ ] migrating to NextJS from native React: very light React Framework in beta/exploration
    1. progressive migration - decoupling behaviours from framework before re-integrating them to new framework
    2. parallel deployment - /v2 would get to the new UI
    3. Auth0/AWS Cognito - moving to public IDP must be considered ; suggestion is to start from scratch, then add authentication, then add the pages and

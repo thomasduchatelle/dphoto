@@ -13,21 +13,18 @@ export interface CognitoCertificateStackProps extends cdk.StackProps {
 export class CognitoCertificateStack extends cdk.Stack {
     public readonly cognitoCertificate: ICertificate;
 
-    constructor(scope: Construct, id: string, props: CognitoCertificateStackProps) {
-        super(scope, id, {
-            ...props,
-            crossRegionReferences: true,
-        });
+    constructor(scope: Construct, id: string, {environmentName, config, ...props}: CognitoCertificateStackProps) {
+        super(scope, id, props);
 
         cdk.Tags.of(this).add('CreatedBy', 'cdk');
         cdk.Tags.of(this).add('Application', 'dphoto');
-        cdk.Tags.of(this).add('Environment', props.environmentName);
+        cdk.Tags.of(this).add('Environment', environmentName);
         cdk.Tags.of(this).add('Stack', "CognitoCertificateStack");
 
         const letsEncryptCertificate = new LetsEncryptCertificateConstruct(this, 'CognitoLetsEncryptCertificate', {
-            environmentName: `${props.environmentName}-us-east-1`,
-            domainName: props.config.cognitoDomainName,
-            certificateEmail: props.config.certificateEmail,
+            environmentName: `${environmentName}-us-east-1`,
+            domainName: config.cognitoDomainName,
+            certificateEmail: config.certificateEmail,
             ssmParameterSuffix: 'cognitoDomainCertificationArn',
         });
 
