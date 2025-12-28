@@ -2,13 +2,14 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {act, renderHook} from '@testing-library/react';
 import {useClientRouter} from './ClientRouter';
 import {ReactNode} from 'react';
+import {Router} from "waku/router/client";
 
 // Test wrapper component
 const TestWrapper = ({children}: { children: ReactNode }) => (
-    <>{children}</>
+    <Router>{children}</Router>
 );
 
-describe.skip('useClientRouter', () => {
+describe('useClientRouter', () => {
     beforeEach(() => {
         // Reset window location before each test
         window.history.pushState({}, '', '/');
