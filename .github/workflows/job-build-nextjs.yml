@@ -1,0 +1,52 @@
+on:
+  workflow_call:
+    outputs:
+      cache-suffix:
+        description: NextJS cache suffix
+        value: ${{ jobs.build-nextjs.outputs.cache-suffix }}
+
+jobs:
+  build-nextjs:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-suffix: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache NPM
+        uses: actions/cache@v4
+        with:
+          path: web-nextjs/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('web-nextjs/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Cache NextJS Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            web-nextjs/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('web-nextjs/package-lock.json') }}-${{ hashFiles('web-nextjs/app/**/*', 'web-nextjs/next.config.ts', 'web-nextjs/tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('web-nextjs/package-lock.json') }}-
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: cd web-nextjs && npm ci
+
+      - name: Build for release
+        run: make build-web-nextjs
+
+      - name: Create distribution archive
+        working-directory: web-nextjs
+        run: |
+          zip -r ../nextjs-dist.zip .open-next .next
+
+      - name: Dist Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-nextjs
+          path: nextjs-dist.zip

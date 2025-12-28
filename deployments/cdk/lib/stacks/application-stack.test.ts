@@ -34,6 +34,11 @@ describe('DPhotoApplicationStack', () => {
             'MockCognitoCert',
             'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
         );
+        const mockCdnCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
+            new cdk.Stack(),
+            'MockCdnCert',
+            'arn:aws:acm:us-east-1:123456789012:certificate/87654321-4321-4321-4321-210987654321'
+        );
         app = new cdk.App();
         fakeArchiveAccessManager = new FakeArchiveAccessManager();
         fakeArchivistAccessManager = new FakeArchivistAccessManager();
@@ -156,6 +161,30 @@ describe('DPhotoApplicationStack', () => {
                 throw new Error(`Route ${method} ${path} [${routeId}] failed authorizer check: ${e}`);
             }
         });
+    });
+
+    test('exports SST deployment configuration as CloudFormation outputs', () => {
+        const outputs = template.toJSON().Outputs;
+
+        const findOutputByExportName = (exportName: string): string | undefined => {
+            const entry = Object.entries(outputs).find(([_, output]: [string, any]) =>
+                output.Export?.Name === exportName
+            );
+            const content: any | undefined = entry?.[1]
+            return content?.Value;
+        };
+
+        const cloudfrontDomain = findOutputByExportName('dphoto-test-sst-cloudfront-domain');
+        expect(cloudfrontDomain).toBeTruthy();
+
+        const cognitoIssuer = findOutputByExportName('dphoto-test-sst-cognito-issuer');
+        expect(cognitoIssuer).toBeTruthy();
+
+        const cognitoClientId = findOutputByExportName('dphoto-test-sst-cognito-client-id');
+        expect(cognitoClientId).toBeTruthy();
+
+        const cognitoClientSecret = findOutputByExportName('dphoto-test-sst-cognito-client-secret');
+        expect(cognitoClientSecret).toBeTruthy();
     });
 });
 

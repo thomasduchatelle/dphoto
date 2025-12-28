@@ -108,7 +108,7 @@ export class LetsEncryptCertificateConstruct extends Construct {
         const logGroup = new logs.LogGroup(this, 'LogGroup', {
             logGroupName: `/dphoto/${environmentName}/lambda/system-letsencrypt`,
             retention: logs.RetentionDays.ONE_WEEK,
-            removalPolicy: cdk.RemovalPolicy.DESTROY
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
         });
 
         const letsEncryptLambda = new lambda.Function(this, 'RenewalLambda', {
