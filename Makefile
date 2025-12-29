@@ -181,3 +181,8 @@ dcup:
 	docker-compose up -d
 	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 s3 mb s3://dphoto-local | cat
 	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 sns create-topic --name dphoto-local-archive-jobs | cat
+
+deploy-next:
+	@echo "Make sure you're using NodeJS version 20.x (version 25 is not working). Current NodeJS version: $$(node -v)"
+	cd web-nextjs && npm run build
+	cd deployments/cdk && cdk deploy --context environment=next dphoto-next-nextjs
