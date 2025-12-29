@@ -8,6 +8,7 @@ import {CognitoCertificateStack} from "../lib/stacks/cognito-certificate-stack";
 import {CognitoStack} from "../lib/stacks/cognito-stack";
 import {computeLetsEncryptHash} from "../lib/utils/letsencrypt-certificate-construct";
 import {CognitoCustomDomainStack} from "../lib/access/CognitoCustomDomainStack";
+import {AppRouterStack} from "../lib/stacks/NextjsStack";
 
 export default async function main(
     defaultEnvName: string = "next",
@@ -90,6 +91,13 @@ export default async function main(
     })
     cognitoCustomDomainStack.addDependency(cognitoCertificateStack);
     cognitoCustomDomainStack.addDependency(applicationStack);
+
+    new AppRouterStack(app, `dphoto-${envName}-nextjs`, {
+        env: {
+            account: account,
+            region: region,
+        },
+    })
 
     return app;
 }
