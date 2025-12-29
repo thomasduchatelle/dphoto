@@ -9,6 +9,7 @@ export class AppRouterStack extends Stack {
         const nextjs = new Nextjs(this, 'nextjs', {
             nextjsPath: '../../web-nextjs',
             skipBuild: true,
+            streaming: true,
         });
 
         new CfnOutput(this, "CloudFrontDistributionDomain", {
