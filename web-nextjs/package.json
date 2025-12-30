@@ -3,17 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "build": "npx open-next build",
     "build:next": "next build",
-    "start": "next start",
-    "lint": "eslint",
     "clean": "rm -rf .turbo .next .open-next",
-    "build": "npx open-next build"
+    "dev": "next dev",
+    "lint": "eslint",
+    "start": "next start"
   },
   "dependencies": {
     "next": "^16.1.1",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "sst": "3.17.25"
   },
   "devDependencies": {
     "@opennextjs/aws": "^3.9.7",

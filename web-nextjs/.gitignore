@@ -43,3 +43,6 @@ next-env.d.ts
 # Turborepo
 .turbo
 .open-next
+
+# sst
+.sst
