@@ -4,10 +4,11 @@ import * as cdk from 'aws-cdk-lib';
 import {environments} from '../lib/config/environments';
 import {InfrastructureStack} from '../lib/stacks/infrastructure-stack';
 import {ApplicationStack} from "../lib/stacks/application-stack";
-import {CognitoCertificateStack} from "../lib/stacks/cognito-certificate-stack";
+import {CertificatesStack} from "../lib/stacks/certificates-stack";
 import {CognitoStack} from "../lib/stacks/cognito-stack";
 import {computeLetsEncryptHash} from "../lib/utils/letsencrypt-certificate-construct";
 import {CognitoCustomDomainStack} from "../lib/access/CognitoCustomDomainStack";
+import {CognitoCertificateStack} from "../lib/stacks/cognito-certificate-stack";
 
 export default async function main(
     defaultEnvName: string = "next",
@@ -27,6 +28,23 @@ export default async function main(
 
     console.log(`Initializing CDK for environment: ${envName}`);
     console.log(`Configuration:`, config);
+
+
+    // Create the domains in the US-EAST-1 region
+    const cdnDomainName = `nextjs.${config.domainName}`;
+    const certificatesStack = new CertificatesStack(app, `dphoto-${envName}-certificates`, {
+        environmentName: envName,
+        certificateEmail: config.certificateEmail,
+        domainNames: [
+            config.cognitoDomainName,
+            cdnDomainName,
+        ],
+        env: {
+            account: account,
+            region: 'us-east-1'
+        },
+        description: `Create the certificates in us-east-1, required by cognito and cloudfront.`
+    });
 
     // Infrastructure Stack has all the data that must be retained and secured (buckets with the medias, storages, queuses, ...)
     const infrastructureStack = new InfrastructureStack(app, `dphoto-${envName}-infra`, {
@@ -52,6 +70,10 @@ export default async function main(
 
     // Infrastructure Stack has everything else, it can be destroyed and recreated at any time (gateway, workload deployments, UI, ...)
     const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
+        cdnDomain: {
+            certificate: certificatesStack.certificates[cdnDomainName]!,
+            domainName: cdnDomainName,
+        },
         environmentName: envName,
         config,
         archiveAccessManager: infrastructureStack.archiveStore,
@@ -65,10 +87,24 @@ export default async function main(
     });
 
     applicationStack.addDependency(infrastructureStack);
-    applicationStack.addDependency(cognitoStack);
+    applicationStack.addDependency(certificatesStack);
 
-    // Create a custom domain for Cognito User Pool. It requires the app to be provisioned (ARecord on the parent domain), and the certificate to be provisioned in US-EAST-1.
-    const cognitoCertificateStack = new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
+    const cognitoCustomDomainStack = new CognitoCustomDomainStack(app, `dphoto-${envName}-cognito-domain`, {
+        userPool: cognitoStack.userPool,
+        cognitoDomainName: config.cognitoDomainName,
+        rootDomain: config.rootDomain,
+        cognitoCertificate: certificatesStack.certificates[config.cognitoDomainName]!,
+        env: {
+            account: account,
+            region: region,
+        },
+        crossRegionReferences: true,
+    })
+    cognitoCustomDomainStack.addDependency(certificatesStack);
+    cognitoCustomDomainStack.addDependency(applicationStack);
+
+    // TODO CLEANUP - Delete the stack and resources, and the class once the new certificates will be rolled out.
+    new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
         environmentName: envName,
         config: config,
         env: {
@@ -77,19 +113,6 @@ export default async function main(
         },
         description: `Create certificate in us-east-1 which is required for Cognito custom domain.`
     });
-    const cognitoCustomDomainStack = new CognitoCustomDomainStack(app, `dphoto-${envName}-cognito-domain`, {
-        userPool: cognitoStack.userPool,
-        cognitoDomainName: config.cognitoDomainName,
-        rootDomain: config.rootDomain,
-        cognitoCertificate: cognitoCertificateStack.cognitoCertificate,
-        env: {
-            account: account,
-            region: region,
-        },
-        crossRegionReferences: true,
-    })
-    cognitoCustomDomainStack.addDependency(cognitoCertificateStack);
-    cognitoCustomDomainStack.addDependency(applicationStack);
 
     return app;
 }

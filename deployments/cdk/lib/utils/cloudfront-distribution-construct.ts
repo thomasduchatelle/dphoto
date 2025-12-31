@@ -5,14 +5,14 @@ import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
 import {Construct} from 'constructs';
-import {LetsEncryptCertificateConstruct} from "./letsencrypt-certificate-construct";
+import {ICertificate} from "aws-cdk-lib/aws-certificatemanager";
 
 export interface CloudFrontDistributionConstructProps {
     environmentName: string;
-    domainName: string;
     rootDomain: string;
-    certificateEmail: string;
+    domainName: string;
     httpApi: apigatewayv2.HttpApi;
+    certificate: ICertificate;
 }
 
 export class CloudFrontDistributionConstruct extends Construct {
@@ -36,18 +36,11 @@ export class CloudFrontDistributionConstruct extends Construct {
         // TODO AGENT lock the API Gateway down to only be accessible by the CloudFront distribution ; use a dedicated domain (`api.{domain}`) only if necessary.
         const apiGatewayDomainName = `${props.httpApi.apiId}.execute-api.${cdk.Stack.of(this).region}.amazonaws.com`;
 
-        const letsEncryptCertificate = new LetsEncryptCertificateConstruct(this, 'CloudFrontLetsEncryptCertificate', {
-            environmentName: `${props.environmentName}-us-east-1`,
-            domainName: props.domainName,
-            certificateEmail: props.certificateEmail,
-            ssmParameterSuffix: 'cloudFrontDomainCertificationArn',
-        });
-
         // TODO Make sure the distribution is FLAT PRICING -> FREE.
         this.distribution = new cloudfront.Distribution(this, 'Distribution', {
             comment: `DPhoto ${props.environmentName} - CloudFront distribution for API and NextJS`,
             domainNames: [props.domainName],
-            certificate: letsEncryptCertificate.certificate,
+            certificate: props.certificate,
             defaultBehavior: {
                 origin: new origins.HttpOrigin(apiGatewayDomainName, {
                     protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
