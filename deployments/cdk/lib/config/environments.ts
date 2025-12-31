@@ -8,6 +8,8 @@ export interface EnvironmentConfig {
     domainName: string
     // (subsub)Domain used for Cognito hosted UI (authentication)
     cognitoDomainName: string
+    // (subsub)Domain used for NextJS application (CloudFront)
+    nextjsDomainName: string
     // Other URLs to allow redirection to after login (Cognito Hosted UI), and logout (must include scheme like http:// or https://)
     cognitoExtraRedirectURLs: string[]
     // Email used for SSL certificate registration automated by let's encrypt
@@ -23,6 +25,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         rootDomain: 'duchatelle.me',
         domainName: 'dphoto.duchatelle.me',
         cognitoDomainName: 'login.dphoto.duchatelle.me',
+        nextjsDomainName: 'nextjs.dphoto.duchatelle.me',
         cognitoExtraRedirectURLs: [],
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-1o0or8ioo9c4m31405q2h2k8hvdb5enh.apps.googleusercontent.com',
@@ -33,6 +36,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         rootDomain: 'duchatelle.me',
         domainName: 'next.duchatelle.me',
         cognitoDomainName: 'login.next.duchatelle.me',
+        nextjsDomainName: 'nextjs.next.duchatelle.me',
         cognitoExtraRedirectURLs: ['http://localhost:3000'],
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com',
@@ -43,6 +47,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         rootDomain: 'exmaple.com',
         domainName: 'dphoto.example.com',
         cognitoDomainName: 'login.dphoto.example.com',
+        nextjsDomainName: 'nextjs.dphoto.example.com',
         cognitoExtraRedirectURLs: ["http://localhost:3210"],
         certificateEmail: 'dphoto@example.com',
         googleLoginClientId: 'test-google-client-id',

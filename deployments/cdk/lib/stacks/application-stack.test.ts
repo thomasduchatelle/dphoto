@@ -34,6 +34,11 @@ describe('DPhotoApplicationStack', () => {
             'MockCognitoCert',
             'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
         );
+        const mockCloudFrontCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
+            new cdk.Stack(),
+            'MockCloudFrontCert',
+            'arn:aws:acm:us-east-1:123456789012:certificate/cf-12345678-1234-1234-1234-123456789012'
+        );
         app = new cdk.App();
         fakeArchiveAccessManager = new FakeArchiveAccessManager();
         fakeArchivistAccessManager = new FakeArchivistAccessManager();
@@ -47,6 +52,7 @@ describe('DPhotoApplicationStack', () => {
                 userPoolClientId: "0987654321",
                 userPoolClientSecret: new SecretValue("super-secret-value"),
             },
+            cloudFrontCertificate: mockCloudFrontCertificate,
             environmentName: 'test',
             config: environments.test,
             env: {
