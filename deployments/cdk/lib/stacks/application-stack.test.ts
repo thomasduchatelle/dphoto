@@ -5,6 +5,7 @@ import {ApplicationStack} from './application-stack';
 import {environments} from '../config/environments';
 import {computeLetsEncryptHash} from '../utils/letsencrypt-certificate-construct';
 import {FakeArchiveAccessManager, FakeArchivistAccessManager, FakeCatalogAccessManager} from '../test/fakes/fake-access-managers';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 
 jest.mock('aws-cdk-lib/aws-lambda', () => {
     const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
@@ -189,15 +190,29 @@ describe('DPhotoApplicationStack', () => {
         });
     });
 
-    test('creates CloudFront distribution for API and NextJS', () => {
+    test('CloudFront distribution exposes the API Gateway as the route /api, and disable the cache', () => {
         // Verify CloudFront distribution exists
-        template.hasResourceProperties('AWS::CloudFront::Distribution', {
-            DistributionConfig: {
-                Enabled: true,
-                Aliases: ['nextjs.test.example.com'],
+        const distributions = template.findResources('AWS::CloudFront::Distribution', {
+            Properties: {
+                DistributionConfig: {
+                    Enabled: true,
+                    Aliases: ['nextjs.dphoto.example.com'],
+                }
             }
         });
+        expect(distributions).toBeTruthy()
 
+        const distributionId = Object.keys(distributions)[0];
+        const distribution = distributions[distributionId];
+        const config = distribution.Properties.DistributionConfig;
+
+        // Verify /api origin is the API Gateway and the caching is disabled
+        const apiCacheBehavior = config.CacheBehaviors?.find((behavior: any) =>
+            behavior.PathPattern === '/api' || behavior.PathPattern === '/api/*'
+        );
+
+        expect(apiCacheBehavior).toBeDefined();
+        expect(apiCacheBehavior.CachePolicyId).toBe(cloudfront.CachePolicy.CACHING_DISABLED.cachePolicyId);
     });
 });
 
