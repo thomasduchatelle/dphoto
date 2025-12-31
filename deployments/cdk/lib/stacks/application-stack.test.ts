@@ -35,6 +35,11 @@ describe('DPhotoApplicationStack', () => {
             'MockCognitoCert',
             'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
         );
+        const mockCdnCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
+            new cdk.Stack(),
+            'MockCdnCert',
+            'arn:aws:acm:us-east-1:123456789012:certificate/87654321-4321-4321-4321-210987654321'
+        );
         app = new cdk.App();
         fakeArchiveAccessManager = new FakeArchiveAccessManager();
         fakeArchivistAccessManager = new FakeArchivistAccessManager();
@@ -47,6 +52,10 @@ describe('DPhotoApplicationStack', () => {
                 cognitoIssuer: "https://issuer-junit-tests-01.example.com",
                 userPoolClientId: "0987654321",
                 userPoolClientSecret: new SecretValue("super-secret-value"),
+            },
+            cdnDomain: {
+                domainName: 'nextjs.dphoto.example.com',
+                certificate: mockCdnCertificate,
             },
             environmentName: 'test',
             config: environments.test,
