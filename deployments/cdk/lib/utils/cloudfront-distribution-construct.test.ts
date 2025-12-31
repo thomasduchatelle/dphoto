@@ -60,12 +60,13 @@ describe('CloudFrontDistributionConstruct', () => {
 
         const template = Template.fromStack(stack);
         
-        template.hasOutput('DistributionId', {
-            Description: 'CloudFront Distribution ID',
-            Export: {
-                Name: 'dphoto-test-distribution-id'
-            }
-        });
+        const outputs = template.toJSON().Outputs;
+        const distributionIdOutput = Object.values(outputs).find((output: any) => 
+            output.Description === 'CloudFront Distribution ID' &&
+            output.Export?.Name === 'dphoto-test-distribution-id'
+        );
+        
+        expect(distributionIdOutput).toBeDefined();
     });
 
     test('configures API origin to forward all headers, cookies, and query strings', () => {
@@ -84,7 +85,7 @@ describe('CloudFrontDistributionConstruct', () => {
                     CookieBehavior: 'all'
                 },
                 HeadersConfig: {
-                    HeaderBehavior: 'all'
+                    HeaderBehavior: 'allViewer'
                 },
                 QueryStringsConfig: {
                     QueryStringBehavior: 'all'
