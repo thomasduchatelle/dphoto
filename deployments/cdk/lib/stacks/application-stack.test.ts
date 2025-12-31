@@ -157,6 +157,57 @@ describe('DPhotoApplicationStack', () => {
             }
         });
     });
+
+    test('exports SST deployment configuration as CloudFormation outputs', () => {
+        // Verify all required SST outputs are present
+        template.hasOutput('SSTDistributionId', {
+            Description: 'CloudFront Distribution ID for SST deployment',
+            Export: {
+                Name: 'dphoto-test-sst-distribution-id'
+            }
+        });
+
+        template.hasOutput('SSTCognitoIssuer', {
+            Description: 'Cognito Issuer URL for SST deployment',
+            Export: {
+                Name: 'dphoto-test-sst-cognito-issuer'
+            }
+        });
+
+        template.hasOutput('SSTCognitoClientId', {
+            Description: 'Cognito Client ID for SST deployment',
+            Export: {
+                Name: 'dphoto-test-sst-cognito-client-id'
+            }
+        });
+
+        template.hasOutput('SSTCognitoClientSecret', {
+            Description: 'Cognito Client Secret for SST deployment',
+            Export: {
+                Name: 'dphoto-test-sst-cognito-client-secret'
+            }
+        });
+    });
+
+    test('creates CloudFront distribution for API and NextJS', () => {
+        // Verify CloudFront distribution exists
+        template.hasResourceProperties('AWS::CloudFront::Distribution', {
+            DistributionConfig: {
+                Enabled: true,
+                Comment: 'DPhoto test - CloudFront distribution for API and NextJS'
+            }
+        });
+
+        // Verify no-cache policy for API routes
+        template.hasResourceProperties('AWS::CloudFront::CachePolicy', {
+            CachePolicyConfig: {
+                Comment: 'Policy to never cache API responses',
+                DefaultTTL: 0,
+                MaxTTL: 0,
+                MinTTL: 0,
+            }
+        });
+    });
 });
 
 function getIntegrationId(routeResource: { [p: string]: any }, method: string, path: string) {
