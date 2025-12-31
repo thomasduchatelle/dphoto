@@ -34,11 +34,6 @@ describe('DPhotoApplicationStack', () => {
             'MockCognitoCert',
             'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
         );
-        const mockCloudFrontCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
-            new cdk.Stack(),
-            'MockCloudFrontCert',
-            'arn:aws:acm:us-east-1:123456789012:certificate/cf-12345678-1234-1234-1234-123456789012'
-        );
         app = new cdk.App();
         fakeArchiveAccessManager = new FakeArchiveAccessManager();
         fakeArchivistAccessManager = new FakeArchivistAccessManager();
@@ -52,7 +47,6 @@ describe('DPhotoApplicationStack', () => {
                 userPoolClientId: "0987654321",
                 userPoolClientSecret: new SecretValue("super-secret-value"),
             },
-            cloudFrontCertificate: mockCloudFrontCertificate,
             environmentName: 'test',
             config: environments.test,
             env: {
@@ -200,19 +194,10 @@ describe('DPhotoApplicationStack', () => {
         template.hasResourceProperties('AWS::CloudFront::Distribution', {
             DistributionConfig: {
                 Enabled: true,
-                Comment: 'DPhoto test - CloudFront distribution for API and NextJS'
+                Aliases: ['nextjs.test.example.com'],
             }
         });
 
-        // Verify no-cache policy for API routes
-        template.hasResourceProperties('AWS::CloudFront::CachePolicy', {
-            CachePolicyConfig: {
-                Comment: 'Policy to never cache API responses',
-                DefaultTTL: 0,
-                MaxTTL: 0,
-                MinTTL: 0,
-            }
-        });
     });
 });
 

@@ -5,7 +5,6 @@ import {environments} from '../lib/config/environments';
 import {InfrastructureStack} from '../lib/stacks/infrastructure-stack';
 import {ApplicationStack} from "../lib/stacks/application-stack";
 import {CognitoCertificateStack} from "../lib/stacks/cognito-certificate-stack";
-import {CloudFrontCertificateStack} from "../lib/stacks/cloudfront-certificate-stack";
 import {CognitoStack} from "../lib/stacks/cognito-stack";
 import {computeLetsEncryptHash} from "../lib/utils/letsencrypt-certificate-construct";
 import {CognitoCustomDomainStack} from "../lib/access/CognitoCustomDomainStack";
@@ -51,6 +50,23 @@ export default async function main(
         description: `DPhoto Cognito stack for ${envName} environment`
     });
 
+    // Infrastructure Stack has everything else, it can be destroyed and recreated at any time (gateway, workload deployments, UI, ...)
+    const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
+        environmentName: envName,
+        config,
+        archiveAccessManager: infrastructureStack.archiveStore,
+        catalogAccessManager: infrastructureStack.catalogStore,
+        archivistAccessManager: infrastructureStack.archivist,
+        oauth2ClientConfig: cognitoStack.getWebEnvironmentVariables(),
+        env: {
+            account: account,
+            region: region
+        }
+    });
+
+    applicationStack.addDependency(infrastructureStack);
+    applicationStack.addDependency(cognitoStack);
+
     // Create a custom domain for Cognito User Pool. It requires the app to be provisioned (ARecord on the parent domain), and the certificate to be provisioned in US-EAST-1.
     const cognitoCertificateStack = new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
         environmentName: envName,
@@ -61,37 +77,6 @@ export default async function main(
         },
         description: `Create certificate in us-east-1 which is required for Cognito custom domain.`
     });
-
-    // Create certificate in us-east-1 which is required for CloudFront custom domain.
-    const cloudFrontCertificateStack = new CloudFrontCertificateStack(app, `dphoto-${envName}-cloudfront-cert`, {
-        environmentName: envName,
-        config: config,
-        env: {
-            account: account,
-            region: 'us-east-1'
-        },
-        description: `Create certificate in us-east-1 which is required for CloudFront custom domain.`
-    });
-
-    // Infrastructure Stack has everything else, it can be destroyed and recreated at any time (gateway, workload deployments, UI, ...)
-    const applicationStack = new ApplicationStack(app, `dphoto-${envName}-application`, {
-        environmentName: envName,
-        config,
-        archiveAccessManager: infrastructureStack.archiveStore,
-        catalogAccessManager: infrastructureStack.catalogStore,
-        archivistAccessManager: infrastructureStack.archivist,
-        oauth2ClientConfig: cognitoStack.getWebEnvironmentVariables(),
-        cloudFrontCertificate: cloudFrontCertificateStack.cloudFrontCertificate,
-        env: {
-            account: account,
-            region: region
-        }
-    });
-
-    applicationStack.addDependency(infrastructureStack);
-    applicationStack.addDependency(cognitoStack);
-    applicationStack.addDependency(cloudFrontCertificateStack);
-
     const cognitoCustomDomainStack = new CognitoCustomDomainStack(app, `dphoto-${envName}-cognito-domain`, {
         userPool: cognitoStack.userPool,
         cognitoDomainName: config.cognitoDomainName,

@@ -14,7 +14,6 @@ import {CatalogAccessManager} from "../catalog/catalog-access-manager";
 import {ArchivistAccessManager} from "../archive/archivist-access-manager";
 import {AuthenticationEndpointsConstruct} from "../access/authentication-endpoints";
 import {CloudFrontDistributionConstruct} from "../utils/cloudfront-distribution-construct";
-import {ICertificate} from "aws-cdk-lib/aws-certificatemanager";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -23,7 +22,6 @@ export interface DPhotoApplicationStackProps extends cdk.StackProps {
     catalogAccessManager: CatalogAccessManager;
     archivistAccessManager: ArchivistAccessManager;
     oauth2ClientConfig: CognitoStackExports;
-    cloudFrontCertificate: ICertificate;
 }
 
 export class ApplicationStack extends cdk.Stack {
@@ -33,7 +31,6 @@ export class ApplicationStack extends cdk.Stack {
         catalogAccessManager,
         archivistAccessManager,
         oauth2ClientConfig,
-        cloudFrontCertificate,
         ...props
     }: DPhotoApplicationStackProps) {
         super(scope, id, {
@@ -109,14 +106,14 @@ export class ApplicationStack extends cdk.Stack {
         // Create CloudFront distribution for NextJS and API
         const cloudFrontDistribution = new CloudFrontDistributionConstruct(this, 'CloudFrontDistribution', {
             environmentName: props.environmentName,
-            nextjsDomainName: config.nextjsDomainName,
-            rootDomain: config.rootDomain,
+            rootDomain: config.domainName,
+            domainName: `nextjs.${config.domainName}`,
             httpApi: apiGateway.httpApi,
-            certificate: cloudFrontCertificate,
+            certificateEmail: config.certificateEmail,
         });
 
         new cdk.CfnOutput(this, 'PublicURL', {
-            value: `https://${config.domainName}`,
+            value: cloudFrontDistribution.url,
             description: 'User friendly HTTPS url where the application has been deployed'
         });
 

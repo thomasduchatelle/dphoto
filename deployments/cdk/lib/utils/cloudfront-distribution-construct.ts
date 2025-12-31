@@ -5,45 +5,24 @@ import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
 import {Construct} from 'constructs';
-import {ICertificate} from 'aws-cdk-lib/aws-certificatemanager';
+import {LetsEncryptCertificateConstruct} from "./letsencrypt-certificate-construct";
 
 export interface CloudFrontDistributionConstructProps {
     environmentName: string;
-    nextjsDomainName: string;
+    domainName: string;
     rootDomain: string;
+    certificateEmail: string;
     httpApi: apigatewayv2.HttpApi;
-    certificate: ICertificate;
 }
 
 export class CloudFrontDistributionConstruct extends Construct {
     public readonly distribution: cloudfront.Distribution;
     public readonly distributionId: string;
+    public readonly url: string;
 
     constructor(scope: Construct, id: string, props: CloudFrontDistributionConstructProps) {
         super(scope, id);
 
-        // Create a cache policy that never caches
-        const noCachePolicy = new cloudfront.CachePolicy(this, 'ApiNoCachePolicy', {
-            cachePolicyName: `dphoto-${props.environmentName}-api-no-cache`,
-            comment: 'Policy to never cache API responses',
-            defaultTtl: cdk.Duration.seconds(0),
-            minTtl: cdk.Duration.seconds(0),
-            maxTtl: cdk.Duration.seconds(0),
-            cookieBehavior: cloudfront.CacheCookieBehavior.all(),
-            headerBehavior: cloudfront.CacheHeaderBehavior.allowList(
-                'Authorization',
-                'Content-Type',
-                'Accept',
-                'Origin',
-                'Referer',
-                'User-Agent'
-            ),
-            queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
-            enableAcceptEncodingGzip: true,
-            enableAcceptEncodingBrotli: true,
-        });
-
-        // Create origin request policy to forward all necessary headers, cookies, and query strings
         const apiOriginRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ApiOriginRequestPolicy', {
             originRequestPolicyName: `dphoto-${props.environmentName}-api-forward-all`,
             comment: 'Policy to forward all headers, cookies, and query strings to API',
@@ -54,13 +33,21 @@ export class CloudFrontDistributionConstruct extends Construct {
 
         // Extract the API Gateway domain from the httpApi
         // The API Gateway V2 HTTP API URL format is: https://{api-id}.execute-api.{region}.amazonaws.com
+        // TODO AGENT lock the API Gateway down to only be accessible by the CloudFront distribution ; use a dedicated domain (`api.{domain}`) only if necessary.
         const apiGatewayDomainName = `${props.httpApi.apiId}.execute-api.${cdk.Stack.of(this).region}.amazonaws.com`;
 
-        // Create CloudFront distribution
+        const letsEncryptCertificate = new LetsEncryptCertificateConstruct(this, 'CloudFrontLetsEncryptCertificate', {
+            environmentName: `${props.environmentName}-us-east-1`,
+            domainName: props.domainName,
+            certificateEmail: props.certificateEmail,
+            ssmParameterSuffix: 'cloudFrontDomainCertificationArn',
+        });
+
+        // TODO Make sure the distribution is FREE TIER.
         this.distribution = new cloudfront.Distribution(this, 'Distribution', {
             comment: `DPhoto ${props.environmentName} - CloudFront distribution for API and NextJS`,
-            domainNames: [props.nextjsDomainName],
-            certificate: props.certificate,
+            domainNames: [props.domainName],
+            certificate: letsEncryptCertificate.certificate,
             defaultBehavior: {
                 origin: new origins.HttpOrigin(apiGatewayDomainName, {
                     protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
@@ -77,7 +64,7 @@ export class CloudFrontDistributionConstruct extends Construct {
                     }),
                     viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                     allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-                    cachePolicy: noCachePolicy,
+                    cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
                     originRequestPolicy: apiOriginRequestPolicy,
                 },
             },
@@ -94,7 +81,7 @@ export class CloudFrontDistributionConstruct extends Construct {
 
         new route53.ARecord(this, 'DnsRecord', {
             zone: hostedZone,
-            recordName: props.nextjsDomainName,
+            recordName: props.domainName,
             target: route53.RecordTarget.fromAlias(
                 new route53_targets.CloudFrontTarget(this.distribution)
             )
@@ -117,10 +104,6 @@ export class CloudFrontDistributionConstruct extends Construct {
             description: 'CloudFront Distribution Domain Name',
         });
 
-        // Output the custom domain name
-        new cdk.CfnOutput(this, 'CustomDomainName', {
-            value: props.nextjsDomainName,
-            description: 'CloudFront Custom Domain Name',
-        });
+        this.url = `https://${this.distribution.domainName}`;
     }
 }
