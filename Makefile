@@ -11,7 +11,7 @@ test: test-cdk test-go test-web
 
 build: build-go build-app
 
-deploy: deploy-cdk
+deploy: deploy-cdk deploy-sst
 
 install: install-cli
 
@@ -113,6 +113,12 @@ ladle:
 playwright:
 	cd web && npx playwright test --reporter html
 
+deploy-sst:
+	cd web-nextjs && npx sst deploy --stage next
+
+build-web-nextjs:
+	cd web-nextjs && npm run build
+
 #######################################
 ## API
 #######################################
@@ -147,7 +153,7 @@ clean-app: clean-api clean-web
 
 test-app: test-api test-web
 
-build-app: build-api build-web
+build-app: build-api build-web build-web-nextjs
 
 bg:
 	docker-compose --profile bg up -d
@@ -181,8 +187,3 @@ dcup:
 	docker-compose up -d
 	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 s3 mb s3://dphoto-local | cat
 	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 sns create-topic --name dphoto-local-archive-jobs | cat
-
-deploy-next:
-	@echo "Make sure you're using NodeJS version 20.x (version 25 is not working). Current NodeJS version: $$(node -v)"
-	cd web-nextjs && npm run build
-	cd deployments/cdk && cdk deploy --context environment=next dphoto-next-nextjs
