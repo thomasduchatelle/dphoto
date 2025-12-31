@@ -1,0 +1,22 @@
+{
+  "name": "dphoto",
+  "version": "1.0.0",
+  "description": "DPhoto - Personal photo backup system with cloud storage",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sst:dev": "sst dev",
+    "sst:deploy": "sst deploy",
+    "sst:remove": "sst remove",
+    "sst:synth": "sst deploy --mode=plan",
+    "sst:diff": "sst diff"
+  },
+  "devDependencies": {
+    "sst": "^3.3.29",
+    "aws-cdk-lib": "^2.221.0",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

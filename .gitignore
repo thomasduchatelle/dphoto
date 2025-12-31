@@ -9,3 +9,10 @@ bin-cli/
 deployments/infra-data/.terraform/
 .aider*
 !.aider.conf.yml
+
+# SST
+.sst
+node_modules
+.env
+.env.*
+!.env.example
