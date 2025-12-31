@@ -4,12 +4,16 @@
 /* deno-fmt-ignore-file */
 
 declare module "sst" {
-    export interface Resource {
-        "MyWeb": {
-            "type": "sst.aws.Nextjs"
-            "url": string
-        }
+  export interface Resource {
+    "DPhotoWEB": {
+      "type": "sst.aws.Nextjs"
+      "url": string
     }
+    "MyWeb": {
+      "type": "sst.aws.Nextjs"
+      "url": string
+    }
+  }
 }
 /// <reference path="sst-env.d.ts" />
 
