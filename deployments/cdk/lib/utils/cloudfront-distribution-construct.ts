@@ -43,7 +43,7 @@ export class CloudFrontDistributionConstruct extends Construct {
             ssmParameterSuffix: 'cloudFrontDomainCertificationArn',
         });
 
-        // TODO Make sure the distribution is FREE TIER.
+        // TODO Make sure the distribution is FLAT PRICING -> FREE.
         this.distribution = new cloudfront.Distribution(this, 'Distribution', {
             comment: `DPhoto ${props.environmentName} - CloudFront distribution for API and NextJS`,
             domainNames: [props.domainName],
