@@ -1,0 +1,23 @@
+{
+  "name": "dphoto",
+  "version": "1.8.19",
+  "description": "Backup photo to your private AWS Cloud, and share them with family and friends",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sst": "sst",
+    "dev": "sst dev",
+    "deploy": "sst deploy",
+    "remove": "sst remove",
+    "install:sst": "sst install",
+    "diff": "sst diff",
+    "refresh": "sst refresh"
+  },
+  "devDependencies": {
+    "sst": "^3.3.44",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

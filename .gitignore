@@ -9,3 +9,12 @@ bin-cli/
 deployments/infra-data/.terraform/
 .aider*
 !.aider.conf.yml
+
+# SST
+.sst/
+.open-next/
+node_modules/
+sst-env.d.ts
+package-lock.json
+.env
+.env.local

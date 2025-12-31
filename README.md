@@ -66,7 +66,8 @@ Contribute
 
 Components:
 
-* `deployments/cdk`: CDK project to deploy the application on AWS (storages, APIs, and WEB application)
+* `deployments/cdk`: CDK project to deploy the application on AWS (storages, APIs, and WEB application) - **Currently Active**
+* `sst.config.ts` + `package.json`: SST v3 configuration for future infrastructure migration - **In Progress** (See [SST Migration Guide](docs/sst-migration-guide.md))
 * `pkg`: core domain model and business logic from Hexagonal Architecture. This domain is used from both CLI and app's
   APIs
 * [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line
@@ -76,13 +77,24 @@ Components:
 
 Note: the repository follows https://github.com/golang-standards/project-layout structure convention.
 
+### SST Migration (In Progress)
+
+DPhoto is migrating from AWS CDK to SST (Serverless Stack) for improved developer experience and faster deployment cycles.
+
+**Current Status:** Step 1 - Initial Setup Complete
+- SST v3 installed and configured
+- No resources deployed yet (CDK remains active)
+- See [SST Migration Guide](docs/sst-migration-guide.md) for details
+- See [Migration Spec](specs/2025-12-SST-integration.md) for complete plan
+
 ### Install development environment
 
 Required tools:
 
 * Infra:
-  * cdk: `npm install -g cdk`, [Makefile](./Makefile)
-    * Serverless Framework: `npm install -g serverless`
+  * **Node.js**: `brew install node` (>= 18.0.0) - Required for SST
+  * CDK: `npm install -g cdk`, [Makefile](./Makefile) - Legacy, being replaced by SST
+    * Serverless Framework: `npm install -g serverless` - Legacy
     * AWS CLI: `brew install awscli`
 * Languages & build tools:
     * `make`
