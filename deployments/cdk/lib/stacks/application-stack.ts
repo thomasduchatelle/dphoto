@@ -13,6 +13,7 @@ import {ArchiveAccessManager} from "../archive/archive-access-manager";
 import {CatalogAccessManager} from "../catalog/catalog-access-manager";
 import {ArchivistAccessManager} from "../archive/archivist-access-manager";
 import {AuthenticationEndpointsConstruct} from "../access/authentication-endpoints";
+import {CloudFrontDistributionConstruct} from "../utils/cloudfront-distribution-construct";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -102,9 +103,41 @@ export class ApplicationStack extends cdk.Stack {
             googleLoginClientId: config.googleLoginClientId,
         });
 
+        // Create CloudFront distribution for NextJS and API
+        const cloudFrontDistribution = new CloudFrontDistributionConstruct(this, 'CloudFrontDistribution', {
+            environmentName: props.environmentName,
+            domainName: config.domainName,
+            httpApi: apiGateway.httpApi,
+        });
+
         new cdk.CfnOutput(this, 'PublicURL', {
             value: `https://${config.domainName}`,
             description: 'User friendly HTTPS url where the application has been deployed'
+        });
+
+        // Outputs for SST deployment
+        new cdk.CfnOutput(this, 'SSTDistributionId', {
+            value: cloudFrontDistribution.distributionId,
+            description: 'CloudFront Distribution ID for SST deployment',
+            exportName: `dphoto-${props.environmentName}-sst-distribution-id`,
+        });
+
+        new cdk.CfnOutput(this, 'SSTCognitoIssuer', {
+            value: oauth2ClientConfig.cognitoIssuer,
+            description: 'Cognito Issuer URL for SST deployment',
+            exportName: `dphoto-${props.environmentName}-sst-cognito-issuer`,
+        });
+
+        new cdk.CfnOutput(this, 'SSTCognitoClientId', {
+            value: oauth2ClientConfig.userPoolClientId,
+            description: 'Cognito Client ID for SST deployment',
+            exportName: `dphoto-${props.environmentName}-sst-cognito-client-id`,
+        });
+
+        new cdk.CfnOutput(this, 'SSTCognitoClientSecret', {
+            value: oauth2ClientConfig.userPoolClientSecret.unsafeUnwrap(),
+            description: 'Cognito Client Secret for SST deployment',
+            exportName: `dphoto-${props.environmentName}-sst-cognito-client-secret`,
         });
     }
 }
