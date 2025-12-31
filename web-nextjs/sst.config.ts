@@ -5,12 +5,18 @@ export default $config({
     app(input) {
         return {
             name: "web-nextjs",
-            removal: input?.stage === "production" ? "retain" : "remove",
-            protect: ["production"].includes(input?.stage),
+            removal: "remove",
+            protect: false,
             home: "aws",
         };
     },
     async run() {
-        new sst.aws.Nextjs("MyWeb");
+        const dphotoWeb = new sst.aws.Nextjs("DPhotoWEB", {
+            domain: "nextjs.next.duchatelle.me",
+            buildCommand: "npm run skip", // skip the build (done is previous step)
+            server: {
+                memory: "512 MB",
+            }
+        });
     },
 });

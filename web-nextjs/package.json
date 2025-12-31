@@ -8,7 +8,8 @@
     "clean": "rm -rf .turbo .next .open-next",
     "dev": "next dev",
     "lint": "eslint",
-    "start": "next start"
+    "start": "next start",
+    "skip": ""
   },
   "dependencies": {
     "next": "^16.1.1",
