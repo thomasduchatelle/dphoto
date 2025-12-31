@@ -13,10 +13,10 @@ export default $config({
     async run() {
         const dphotoWeb = new sst.aws.Nextjs("DPhotoWEB", {
             domain: "nextjs.next.duchatelle.me",
-            buildCommand: "npm run skip", // skip the build (done is previous step)
+            buildCommand: "exit 0", // skip the build (done is previous workflow step)
             server: {
                 memory: "512 MB",
-            }
+            },
         });
     },
 });
