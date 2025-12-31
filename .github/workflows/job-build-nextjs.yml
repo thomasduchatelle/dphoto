@@ -1,0 +1,51 @@
+on:
+  workflow_call:
+    outputs:
+      cache-suffix:
+        description: NextJS cache suffix
+        value: ${{ jobs.build-nextjs.outputs.cache-suffix }}
+
+jobs:
+  build-nextjs:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-suffix: ${{ steps.semver.outputs.cache-suffix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SemVer
+        id: semver
+        uses: ./.github/actions/semver
+
+      - name: Cache NPM
+        uses: actions/cache@v4
+        with:
+          path: web-nextjs/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('web-nextjs/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-nextjs-build-
+
+      - name: Cache NextJS Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            web-nextjs/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('web-nextjs/package-lock.json') }}-${{ hashFiles('web-nextjs/**/*.ts', 'web-nextjs/**/*.tsx', 'web-nextjs/**/*.js', 'web-nextjs/**/*.jsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('web-nextjs/package-lock.json') }}-
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: cd web-nextjs && npm ci
+
+      - name: Build for release
+        run: cd web-nextjs && npm run build
+
+      - name: Dist Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-nextjs
+          path: web-nextjs/.open-next
