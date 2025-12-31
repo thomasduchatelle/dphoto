@@ -67,6 +67,7 @@ Contribute
 Components:
 
 * `deployments/cdk`: CDK project to deploy the application on AWS (storages, APIs, and WEB application)
+* `sst`: SST infrastructure scaffolding (in progress migration from CDK) - see [SST README](sst/README.md)
 * `pkg`: core domain model and business logic from Hexagonal Architecture. This domain is used from both CLI and app's
   APIs
 * [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line

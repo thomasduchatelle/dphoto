@@ -87,7 +87,7 @@ This document records the plan for migrating DPhoto's infrastructure from AWS CD
 ## Current Status
 
 - [ ] Step 1: SST Installation and Initial Setup
-- [ ] Step 2: Create SST Stack Scaffolding
+- [x] Step 2: Create SST Stack Scaffolding ✅ **COMPLETED**
 - [ ] Step 3: Local Development Setup
 - [ ] Step 4: Migrate Storage Infrastructure
 - [ ] Step 5: Migrate Lambda Functions
