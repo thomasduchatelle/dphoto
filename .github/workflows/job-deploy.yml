@@ -52,6 +52,7 @@ jobs:
         id: cdk-outputs
         working-directory: deployments/cdk
         run: |
+          # Stack name must match the construction in bin/dphoto.ts: `dphoto-${envName}-nextjs`
           STACK_NAME="dphoto-${{ inputs.target }}-nextjs"
           
           # Get CloudFront Distribution ID
@@ -95,6 +96,11 @@ jobs:
       - name: Generate SST Environment File
         working-directory: web-nextjs
         run: |
+          # Generate .env file for SST deployment
+          # Note: This file is gitignored and only exists during deployment.
+          # We use a file because SST's sst.config.ts reads from process.env,
+          # which requires the variables to be exported in the shell environment.
+          # Using 'source .env' is more secure than passing secrets via command-line args.
           cat > .env.${{ inputs.target }} << EOF
           SST_DISTRIBUTION_ID=${{ steps.cdk-outputs.outputs.distribution-id }}
           SST_COGNITO_ISSUER=${{ steps.cdk-outputs.outputs.cognito-issuer }}

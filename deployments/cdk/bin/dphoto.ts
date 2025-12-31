@@ -1,6 +1,7 @@
-#!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
+import * as fs from 'fs';
+import * as path from 'path';
 import {environments} from '../lib/config/environments';
 import {InfrastructureStack} from '../lib/stacks/infrastructure-stack';
 import {ApplicationStack} from "../lib/stacks/application-stack";
@@ -93,8 +94,6 @@ export default async function main(
     cognitoCustomDomainStack.addDependency(applicationStack);
 
     // Create NextJS stack only if not in test mode, or if .open-next directory exists
-    const fs = require('fs');
-    const path = require('path');
     const openNextPath = path.join(__dirname, '../../web-nextjs/.open-next');
     const shouldCreateNextJS = typeof jest === 'undefined' || fs.existsSync(path.join(openNextPath, 'server-functions/default'));
     
