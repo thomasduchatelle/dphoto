@@ -101,12 +101,12 @@ jobs:
           # We use a file because SST's sst.config.ts reads from process.env,
           # which requires the variables to be exported in the shell environment.
           # Using 'source .env' is more secure than passing secrets via command-line args.
-          cat > .env.${{ inputs.target }} << EOF
-          SST_DISTRIBUTION_ID=${{ steps.cdk-outputs.outputs.distribution-id }}
-          SST_COGNITO_ISSUER=${{ steps.cdk-outputs.outputs.cognito-issuer }}
-          SST_COGNITO_CLIENT_ID=${{ steps.cdk-outputs.outputs.cognito-client-id }}
-          SST_COGNITO_CLIENT_SECRET=${{ steps.cdk-outputs.outputs.cognito-client-secret }}
-          EOF
+          
+          # Write each variable individually with proper quoting to avoid injection
+          echo "SST_DISTRIBUTION_ID=${{ steps.cdk-outputs.outputs.distribution-id }}" > .env.${{ inputs.target }}
+          echo "SST_COGNITO_ISSUER=${{ steps.cdk-outputs.outputs.cognito-issuer }}" >> .env.${{ inputs.target }}
+          echo "SST_COGNITO_CLIENT_ID=${{ steps.cdk-outputs.outputs.cognito-client-id }}" >> .env.${{ inputs.target }}
+          echo "SST_COGNITO_CLIENT_SECRET=${{ steps.cdk-outputs.outputs.cognito-client-secret }}" >> .env.${{ inputs.target }}
           
           echo "✅ Generated .env.${{ inputs.target }} file"
           echo "Contents (secrets redacted):"
@@ -132,11 +132,10 @@ jobs:
       - name: Deploy with SST
         working-directory: web-nextjs
         run: |
+          # Enable automatic export of all variables from .env file
+          set -a
           source .env.${{ inputs.target }}
-          export SST_DISTRIBUTION_ID
-          export SST_COGNITO_ISSUER
-          export SST_COGNITO_CLIENT_ID
-          export SST_COGNITO_CLIENT_SECRET
+          set +a
           
           npx sst --stage ${{ inputs.target }} deploy
         env:

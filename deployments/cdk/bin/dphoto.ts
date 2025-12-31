@@ -94,8 +94,11 @@ export default async function main(
     cognitoCustomDomainStack.addDependency(applicationStack);
 
     // Create NextJS stack only if not in test mode, or if .open-next directory exists
+    // Test mode is detected by NODE_ENV or the presence of jest global variable
+    const isTestMode = process.env.NODE_ENV === 'test' || typeof jest !== 'undefined';
     const openNextPath = path.join(__dirname, '../../web-nextjs/.open-next');
-    const shouldCreateNextJS = typeof jest === 'undefined' || fs.existsSync(path.join(openNextPath, 'server-functions/default'));
+    const buildDirExists = fs.existsSync(path.join(openNextPath, 'server-functions/default'));
+    const shouldCreateNextJS = !isTestMode || buildDirExists;
     
     if (shouldCreateNextJS) {
         const appRouterStack = new AppRouterStack(app, `dphoto-${envName}-nextjs`, {
