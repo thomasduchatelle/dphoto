@@ -1,12 +1,14 @@
 import {App, Stack} from 'aws-cdk-lib';
 import {Template} from 'aws-cdk-lib/assertions';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import {CloudFrontDistributionConstruct} from '../utils/cloudfront-distribution-construct';
 
 describe('CloudFrontDistributionConstruct', () => {
     let app: App;
     let stack: Stack;
     let httpApi: apigatewayv2.HttpApi;
+    let certificate: acm.ICertificate;
 
     beforeEach(() => {
         app = new App();
@@ -14,13 +16,20 @@ describe('CloudFrontDistributionConstruct', () => {
             env: {region: 'us-east-1', account: '123456789012'}
         });
         httpApi = new apigatewayv2.HttpApi(stack, 'TestApi');
+        certificate = acm.Certificate.fromCertificateArn(
+            stack,
+            'TestCert',
+            'arn:aws:acm:us-east-1:123456789012:certificate/test-cert'
+        );
     });
 
     test('creates CloudFront distribution with API origin', () => {
         new CloudFrontDistributionConstruct(stack, 'TestCF', {
             environmentName: 'test',
-            domainName: 'test.example.com',
+            nextjsDomainName: 'nextjs.test.example.com',
+            rootDomain: 'example.com',
             httpApi: httpApi,
+            certificate: certificate,
         });
 
         const template = Template.fromStack(stack);
@@ -35,8 +44,10 @@ describe('CloudFrontDistributionConstruct', () => {
     test('configures /api/* path with no-cache policy', () => {
         new CloudFrontDistributionConstruct(stack, 'TestCF', {
             environmentName: 'test',
-            domainName: 'test.example.com',
+            nextjsDomainName: 'nextjs.test.example.com',
+            rootDomain: 'example.com',
             httpApi: httpApi,
+            certificate: certificate,
         });
 
         const template = Template.fromStack(stack);
@@ -54,8 +65,10 @@ describe('CloudFrontDistributionConstruct', () => {
     test('exports distribution ID as CloudFormation output', () => {
         new CloudFrontDistributionConstruct(stack, 'TestCF', {
             environmentName: 'test',
-            domainName: 'test.example.com',
+            nextjsDomainName: 'nextjs.test.example.com',
+            rootDomain: 'example.com',
             httpApi: httpApi,
+            certificate: certificate,
         });
 
         const template = Template.fromStack(stack);
@@ -72,8 +85,10 @@ describe('CloudFrontDistributionConstruct', () => {
     test('configures API origin to forward all headers, cookies, and query strings', () => {
         new CloudFrontDistributionConstruct(stack, 'TestCF', {
             environmentName: 'test',
-            domainName: 'test.example.com',
+            nextjsDomainName: 'nextjs.test.example.com',
+            rootDomain: 'example.com',
             httpApi: httpApi,
+            certificate: certificate,
         });
 
         const template = Template.fromStack(stack);
@@ -90,6 +105,24 @@ describe('CloudFrontDistributionConstruct', () => {
                 QueryStringsConfig: {
                     QueryStringBehavior: 'all'
                 }
+            }
+        });
+    });
+
+    test('configures custom domain with certificate', () => {
+        new CloudFrontDistributionConstruct(stack, 'TestCF', {
+            environmentName: 'test',
+            nextjsDomainName: 'nextjs.test.example.com',
+            rootDomain: 'example.com',
+            httpApi: httpApi,
+            certificate: certificate,
+        });
+
+        const template = Template.fromStack(stack);
+        
+        template.hasResourceProperties('AWS::CloudFront::Distribution', {
+            DistributionConfig: {
+                Aliases: ['nextjs.test.example.com'],
             }
         });
     });

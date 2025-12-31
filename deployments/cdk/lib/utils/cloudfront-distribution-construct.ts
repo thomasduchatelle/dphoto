@@ -2,12 +2,17 @@ import * as cdk from 'aws-cdk-lib';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
 import {Construct} from 'constructs';
+import {ICertificate} from 'aws-cdk-lib/aws-certificatemanager';
 
 export interface CloudFrontDistributionConstructProps {
     environmentName: string;
-    domainName: string;
+    nextjsDomainName: string;
+    rootDomain: string;
     httpApi: apigatewayv2.HttpApi;
+    certificate: ICertificate;
 }
 
 export class CloudFrontDistributionConstruct extends Construct {
@@ -54,6 +59,8 @@ export class CloudFrontDistributionConstruct extends Construct {
         // Create CloudFront distribution
         this.distribution = new cloudfront.Distribution(this, 'Distribution', {
             comment: `DPhoto ${props.environmentName} - CloudFront distribution for API and NextJS`,
+            domainNames: [props.nextjsDomainName],
+            certificate: props.certificate,
             defaultBehavior: {
                 origin: new origins.HttpOrigin(apiGatewayDomainName, {
                     protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
@@ -80,6 +87,19 @@ export class CloudFrontDistributionConstruct extends Construct {
 
         this.distributionId = this.distribution.distributionId;
 
+        // Create Route53 A record for the custom domain
+        const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
+            domainName: props.rootDomain
+        });
+
+        new route53.ARecord(this, 'DnsRecord', {
+            zone: hostedZone,
+            recordName: props.nextjsDomainName,
+            target: route53.RecordTarget.fromAlias(
+                new route53_targets.CloudFrontTarget(this.distribution)
+            )
+        });
+
         // Tag the distribution
         cdk.Tags.of(this.distribution).add('Name', `dphoto-${props.environmentName}-cdn`);
         cdk.Tags.of(this.distribution).add('Environment', props.environmentName);
@@ -95,6 +115,12 @@ export class CloudFrontDistributionConstruct extends Construct {
         new cdk.CfnOutput(this, 'DistributionDomainName', {
             value: this.distribution.distributionDomainName,
             description: 'CloudFront Distribution Domain Name',
+        });
+
+        // Output the custom domain name
+        new cdk.CfnOutput(this, 'CustomDomainName', {
+            value: props.nextjsDomainName,
+            description: 'CloudFront Custom Domain Name',
         });
     }
 }
