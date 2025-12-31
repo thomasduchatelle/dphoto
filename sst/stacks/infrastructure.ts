@@ -58,6 +58,12 @@ export function createInfrastructureStack(
   config: EnvironmentConfig
 ): InfrastructureStack {
   const stage = $app.stage;
+  
+  // Placeholder values for AWS resources
+  // Note: These will be replaced with actual SST constructs in future steps
+  // Using generic placeholders to avoid hardcoding account IDs and regions
+  const placeholderArn = (service: string, resource: string) => 
+    `arn:aws:${service}:{{REGION}}:{{ACCOUNT_ID}}:${resource}`;
 
   // TODO: Implement Archive Store - S3 buckets for media storage
   // This will include:
@@ -66,12 +72,12 @@ export function createInfrastructureStack(
   // - Appropriate bucket policies and CORS configuration
   const archiveBucket = {
     name: `dphoto-${stage}-archive-placeholder`,
-    arn: `arn:aws:s3:::dphoto-${stage}-archive-placeholder`,
+    arn: placeholderArn("s3", `dphoto-${stage}-archive-placeholder`),
   };
 
   const cacheBucket = {
     name: `dphoto-${stage}-cache-placeholder`,
-    arn: `arn:aws:s3:::dphoto-${stage}-cache-placeholder`,
+    arn: placeholderArn("s3", `dphoto-${stage}-cache-placeholder`),
   };
 
   // TODO: Implement Catalog Store - DynamoDB table
@@ -81,7 +87,7 @@ export function createInfrastructureStack(
   // - Appropriate capacity settings based on environment
   const catalogTable = {
     name: `dphoto-${stage}-catalog-placeholder`,
-    arn: `arn:aws:dynamodb:eu-west-1:123456789012:table/dphoto-${stage}-catalog-placeholder`,
+    arn: placeholderArn("dynamodb", `table/dphoto-${stage}-catalog-placeholder`),
   };
 
   // TODO: Implement Archivist - SNS/SQS for async processing
@@ -91,13 +97,13 @@ export function createInfrastructureStack(
   // - Appropriate message retention and visibility timeout
   const archiveTopic = {
     name: `dphoto-${stage}-archive-topic-placeholder`,
-    arn: `arn:aws:sns:eu-west-1:123456789012:dphoto-${stage}-archive-topic-placeholder`,
+    arn: placeholderArn("sns", `dphoto-${stage}-archive-topic-placeholder`),
   };
 
   const archiveQueue = {
     name: `dphoto-${stage}-archive-queue-placeholder`,
-    arn: `arn:aws:sqs:eu-west-1:123456789012:dphoto-${stage}-archive-queue-placeholder`,
-    url: `https://sqs.eu-west-1.amazonaws.com/123456789012/dphoto-${stage}-archive-queue-placeholder`,
+    arn: placeholderArn("sqs", `dphoto-${stage}-archive-queue-placeholder`),
+    url: `https://sqs.{{REGION}}.amazonaws.com/{{ACCOUNT_ID}}/dphoto-${stage}-archive-queue-placeholder`,
   };
 
   // TODO: Implement CLI User Access - IAM users for CLI access

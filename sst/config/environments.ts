@@ -47,7 +47,7 @@ const environments: Record<string, EnvironmentConfig> = {
     googleLoginClientId: "841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com",
   },
   test: {
-    production: true,
+    production: false,  // Test environment should not have production-level settings
     cliAccessKeys: ["2024-04"],
     rootDomain: "example.com",
     domainName: "dphoto.example.com",

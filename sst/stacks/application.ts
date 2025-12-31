@@ -28,77 +28,38 @@ export interface ApplicationStackProps {
  * Create the Application Stack
  * 
  * @param props Configuration and infrastructure references
+ * 
+ * TODO: Implement the following components in future steps:
+ * 
+ * 1. API Gateway - HTTP API v2 with custom domain, CORS, access logs
+ * 2. Cognito Stack - User Pool with Google SSO, User Pool Client, custom domain, user groups
+ * 3. Lambda Authorizer - JWT validation, user context enrichment
+ * 4. Catalog Endpoints - List/create/update/delete albums, list medias, album sharing
+ * 5. Archive Endpoints - Get/upload/process media (thumbnails, compression)
+ * 6. User Endpoints - Current user, preferences, permissions
+ * 7. Authentication Endpoints - Legacy endpoints (to be deprecated after Cognito migration)
+ * 8. Version Endpoint - API version information
+ * 9. Waku Web UI - SSR Lambda, S3 static assets, OAuth2 config
  */
 export function createApplicationStack(props: ApplicationStackProps): void {
   const { config, infrastructure } = props;
   const stage = $app.stage;
 
-  // TODO: Implement API Gateway
-  // This will include:
-  // - HTTP API v2 with custom domain
-  // - CORS configuration
-  // - Access logs
-  // - Integration with Lambda authorizer
-  console.log(`Application Stack: Setting up API Gateway for ${stage}`);
-
-  // TODO: Implement Cognito Stack
-  // This will include:
-  // - User Pool with Google SSO integration
-  // - User Pool Client
-  // - User Pool Domain (custom domain with certificate)
-  // - User groups (admins, owners, visitors)
-  console.log(`Application Stack: Setting up Cognito for ${stage}`);
-
-  // TODO: Implement Lambda Authorizer
-  // This will include:
-  // - JWT validation
-  // - User context enrichment
-  // - Integration with Cognito
-  console.log(`Application Stack: Setting up Lambda Authorizer for ${stage}`);
-
-  // TODO: Implement Catalog Endpoints
-  // This will include Lambda functions for:
-  // - List albums
-  // - Get album details
-  // - Create/update/delete albums
-  // - List medias
-  // - Album sharing
-  console.log(`Application Stack: Setting up Catalog Endpoints for ${stage}`);
-
-  // TODO: Implement Archive Endpoints
-  // This will include Lambda functions for:
-  // - Get media
-  // - Upload media
-  // - Process media (thumbnails, compression)
-  console.log(`Application Stack: Setting up Archive Endpoints for ${stage}`);
-
-  // TODO: Implement User Endpoints
-  // This will include Lambda functions for:
-  // - Get current user
-  // - User preferences
-  // - User permissions
-  console.log(`Application Stack: Setting up User Endpoints for ${stage}`);
-
-  // TODO: Implement Authentication Endpoints
-  // Note: May be deprecated after Cognito migration completes
-  console.log(`Application Stack: Setting up Authentication Endpoints for ${stage}`);
-
-  // TODO: Implement Version Endpoint
-  // Simple endpoint to return API version information
-  console.log(`Application Stack: Setting up Version Endpoint for ${stage}`);
-
-  // TODO: Implement Waku Web UI
-  // This will include:
-  // - Lambda function for SSR
-  // - S3 bucket for static assets
-  // - CloudFront distribution (or API Gateway integration)
-  // - Environment variables for OAuth2 config
-  console.log(`Application Stack: Setting up Waku Web UI for ${stage}`);
-
-  // Stack dependencies are implicit in SST through the use of resource references
-  // No explicit dependency declaration needed like in CDK
-  console.log(`Application Stack: Configuration complete for ${stage}`);
-  console.log(`  - Archive Bucket: ${infrastructure.archiveBucket.name}`);
-  console.log(`  - Cache Bucket: ${infrastructure.cacheBucket.name}`);
-  console.log(`  - Catalog Table: ${infrastructure.catalogTable.name}`);
+  // Log scaffolding summary
+  console.log(`\n=== Application Stack Scaffolding for ${stage} ===`);
+  console.log(`Components to be implemented in future steps:`);
+  console.log(`  • API Gateway (HTTP v2 with custom domain)`);
+  console.log(`  • Cognito User Pool (with Google SSO)`);
+  console.log(`  • Lambda Authorizer (JWT validation)`);
+  console.log(`  • Catalog Endpoints (albums, medias, sharing)`);
+  console.log(`  • Archive Endpoints (media get/upload/process)`);
+  console.log(`  • User Endpoints (current user, preferences)`);
+  console.log(`  • Authentication Endpoints (to be deprecated)`);
+  console.log(`  • Version Endpoint (API version info)`);
+  console.log(`  • Waku Web UI (SSR with static assets)`);
+  console.log(`\nInfrastructure references:`);
+  console.log(`  • Archive Bucket: ${infrastructure.archiveBucket.name}`);
+  console.log(`  • Cache Bucket: ${infrastructure.cacheBucket.name}`);
+  console.log(`  • Catalog Table: ${infrastructure.catalogTable.name}`);
+  console.log(`===================================================\n`);
 }
