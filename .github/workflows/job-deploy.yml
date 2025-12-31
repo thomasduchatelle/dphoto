@@ -48,9 +48,104 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-1
 
+      - name: Extract CDK Outputs
+        id: cdk-outputs
+        working-directory: deployments/cdk
+        run: |
+          STACK_NAME="dphoto-${{ inputs.target }}-nextjs"
+          
+          # Get CloudFront Distribution ID
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" \
+            --output text)
+          
+          # Get Cognito Issuer
+          COGNITO_ISSUER=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='CognitoIssuer'].OutputValue" \
+            --output text)
+          
+          # Get Cognito Client ID
+          COGNITO_CLIENT_ID=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='CognitoClientId'].OutputValue" \
+            --output text)
+          
+          # Get Cognito Client Secret
+          COGNITO_CLIENT_SECRET=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='CognitoClientSecret'].OutputValue" \
+            --output text)
+          
+          echo "distribution-id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
+          echo "cognito-issuer=$COGNITO_ISSUER" >> $GITHUB_OUTPUT
+          echo "cognito-client-id=$COGNITO_CLIENT_ID" >> $GITHUB_OUTPUT
+          echo "cognito-client-secret=$COGNITO_CLIENT_SECRET" >> $GITHUB_OUTPUT
+          
+          echo "Distribution ID: $DISTRIBUTION_ID"
+          echo "Cognito Issuer: $COGNITO_ISSUER"
+          echo "Cognito Client ID: $COGNITO_CLIENT_ID"
+          echo "Cognito Client Secret: [REDACTED]"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+
+      - name: Generate SST Environment File
+        working-directory: web-nextjs
+        run: |
+          cat > .env.${{ inputs.target }} << EOF
+          SST_DISTRIBUTION_ID=${{ steps.cdk-outputs.outputs.distribution-id }}
+          SST_COGNITO_ISSUER=${{ steps.cdk-outputs.outputs.cognito-issuer }}
+          SST_COGNITO_CLIENT_ID=${{ steps.cdk-outputs.outputs.cognito-client-id }}
+          SST_COGNITO_CLIENT_SECRET=${{ steps.cdk-outputs.outputs.cognito-client-secret }}
+          EOF
+          
+          echo "✅ Generated .env.${{ inputs.target }} file"
+          echo "Contents (secrets redacted):"
+          cat .env.${{ inputs.target }} | sed 's/\(SST_COGNITO_CLIENT_SECRET=\).*/\1[REDACTED]/'
+
+      - name: Setup Node.js for SST
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Cache NPM for SST
+        uses: actions/cache@v4
+        with:
+          path: web-nextjs/node_modules
+          key: ${{ runner.os }}-node-sst-${{ hashFiles('web-nextjs/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-sst-
+
+      - name: Install SST Dependencies
+        working-directory: web-nextjs
+        run: npm install
+
+      - name: Deploy with SST
+        working-directory: web-nextjs
+        run: |
+          source .env.${{ inputs.target }}
+          export SST_DISTRIBUTION_ID
+          export SST_COGNITO_ISSUER
+          export SST_COGNITO_CLIENT_ID
+          export SST_COGNITO_CLIENT_SECRET
+          
+          npx sst --stage ${{ inputs.target }} deploy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+
       - name: Step Summary
         run: |
-          echo '# `${{ inputs.target }}` - CDK + SLS Deployment' >> $GITHUB_STEP_SUMMARY
+          echo '# `${{ inputs.target }}` - CDK + SST Deployment' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "CDK infrastructure and SLS application deployment to ${{ inputs.target }} environment completed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "CDK infrastructure and SST NextJS deployment to ${{ inputs.target }} environment completed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## CDK Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "- CloudFront Distribution ID: ${{ steps.cdk-outputs.outputs.distribution-id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Cognito Issuer: ${{ steps.cdk-outputs.outputs.cognito-issuer }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Cognito Client ID: ${{ steps.cdk-outputs.outputs.cognito-client-id }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
