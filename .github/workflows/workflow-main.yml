@@ -17,6 +17,8 @@ jobs:
       snapshot: "false"
   build-ts:
     uses: ./.github/workflows/job-build-ts.yml
+  build-nextjs:
+    uses: ./.github/workflows/job-build-nextjs.yml
 
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
@@ -30,6 +32,7 @@ jobs:
       - test-ts
       - build-go
       - build-ts
+      - build-nextjs
       - test-cdk
     secrets: inherit
     with:
@@ -43,6 +46,7 @@ jobs:
       - test-ts
       - build-go
       - build-ts
+      - build-nextjs
       - test-cdk
     secrets: inherit
     with:
