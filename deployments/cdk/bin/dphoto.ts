@@ -90,6 +90,7 @@ export default async function main(
 
     applicationStack.addDependency(infrastructureStack);
     applicationStack.addDependency(certificatesStack);
+    applicationStack.addDependency(cognitoStack);
 
     const cognitoCustomDomainStack = new CognitoCustomDomainStack(app, `dphoto-${envName}-cognito-domain`, {
         userPool: cognitoStack.userPool,
@@ -104,17 +105,6 @@ export default async function main(
     })
     cognitoCustomDomainStack.addDependency(certificatesStack);
     cognitoCustomDomainStack.addDependency(applicationStack);
-
-    // TODO CLEANUP - Delete the stack and resources, and the class once the new certificates will be rolled out.
-    new CognitoCertificateStack(app, `dphoto-${envName}-cognito-cert`, {
-        environmentName: envName,
-        config: config,
-        env: {
-            account: account,
-            region: 'us-east-1'
-        },
-        description: `Create certificate in us-east-1 which is required for Cognito custom domain.`
-    });
 
     return app;
 }
