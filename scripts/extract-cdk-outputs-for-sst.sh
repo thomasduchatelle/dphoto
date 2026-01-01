@@ -44,7 +44,11 @@ if [ -z "$DISTRIBUTION_ID" ] || [ -z "$COGNITO_ISSUER" ] || [ -z "$COGNITO_CLIEN
   echo "  DISTRIBUTION_ID: ${DISTRIBUTION_ID:-<missing>}" >&2
   echo "  COGNITO_ISSUER: ${COGNITO_ISSUER:-<missing>}" >&2
   echo "  COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-<missing>}" >&2
-  echo "  COGNITO_CLIENT_SECRET: ${COGNITO_CLIENT_SECRET:+<found>}${COGNITO_CLIENT_SECRET:-<missing>}" >&2
+  if [ -z "$COGNITO_CLIENT_SECRET" ]; then
+    echo "  COGNITO_CLIENT_SECRET: <missing>" >&2
+  else
+    echo "  COGNITO_CLIENT_SECRET: <found>" >&2
+  fi
   exit 1
 fi
 
