@@ -45,6 +45,11 @@ func RenewCertificate(email, domain string, forced bool) error {
 		return err
 	} else {
 		logCtx.WithField("CertARN", existing.ID).Infof("Certificate present and valid until %s", existing.Expiry.Format("02/01/2006 15:04:05"))
+
+		err = CertificateManager.EnsureSSMParameter(ctx, existing.ID)
+		if err != nil {
+			return errors.Wrapf(err, "failed to ensure SSM parameter for certificate %s", existing.ID)
+		}
 	}
 
 	return nil

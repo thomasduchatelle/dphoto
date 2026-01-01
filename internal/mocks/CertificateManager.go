@@ -81,6 +81,53 @@ func (_c *CertificateManager_FindCertificate_Call) RunAndReturn(run func(context
 	return _c
 }
 
+// EnsureSSMParameter provides a mock function with given fields: ctx, certificateArn
+func (_m *CertificateManager) EnsureSSMParameter(ctx context.Context, certificateArn string) error {
+	ret := _m.Called(ctx, certificateArn)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnsureSSMParameter")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, certificateArn)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CertificateManager_EnsureSSMParameter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnsureSSMParameter'
+type CertificateManager_EnsureSSMParameter_Call struct {
+	*mock.Call
+}
+
+// EnsureSSMParameter is a helper method to define mock.On call
+//   - ctx context.Context
+//   - certificateArn string
+func (_e *CertificateManager_Expecter) EnsureSSMParameter(ctx interface{}, certificateArn interface{}) *CertificateManager_EnsureSSMParameter_Call {
+	return &CertificateManager_EnsureSSMParameter_Call{Call: _e.mock.On("EnsureSSMParameter", ctx, certificateArn)}
+}
+
+func (_c *CertificateManager_EnsureSSMParameter_Call) Run(run func(ctx context.Context, certificateArn string)) *CertificateManager_EnsureSSMParameter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *CertificateManager_EnsureSSMParameter_Call) Return(_a0 error) *CertificateManager_EnsureSSMParameter_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CertificateManager_EnsureSSMParameter_Call) RunAndReturn(run func(context.Context, string) error) *CertificateManager_EnsureSSMParameter_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // InstallCertificate provides a mock function with given fields: ctx, id, certificate
 func (_m *CertificateManager) InstallCertificate(ctx context.Context, id string, certificate dnsdomain.CompleteCertificate) error {
 	ret := _m.Called(ctx, id, certificate)
