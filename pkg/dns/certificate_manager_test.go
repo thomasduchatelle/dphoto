@@ -27,6 +27,7 @@ func TestRenewCertificate(t *testing.T) {
 				Domain: domain,
 				Expiry: time.Now().Add(dns.MinimumExpiryDelay * 2),
 			}, nil)
+			certManager.On("EnsureSSMParameter", mock.Anything, "arn::132456").Return(nil)
 		}},
 		{"it should create a new certificate if the existing one has or is about to expire, and override it", func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority) {
 			certManager.On("FindCertificate", mock.Anything, domain).Return(&dnsdomain.ExistingCertificate{
