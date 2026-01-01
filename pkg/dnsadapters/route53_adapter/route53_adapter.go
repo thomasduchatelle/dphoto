@@ -128,8 +128,10 @@ func (m *manager) EnsureSSMParameter(ctx context.Context, certificateArn string)
 	needsUpdate := notFound || (parameter != nil && *parameter.Parameter.Value != certificateArn)
 	if needsUpdate {
 		if !notFound {
+			// Tags cannot be updated via PutParameter, must use AddTagsToResource or RemoveTagsFromResource
 			putParameterInput.Tags = nil
 		}
+		// Overwrite = false when creating new parameter (notFound=true), true when updating existing (notFound=false)
 		putParameterInput.Overwrite = aws.Bool(!notFound)
 
 		_, err = m.ssmClient.PutParameter(ctx, putParameterInput)
