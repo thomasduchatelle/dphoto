@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   deploy-cdk-sls:
-    name: ${{ inputs.target }} - CDK + SLS deployment
+    name: ${{ inputs.target }} - CDK + SST deployment
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.target == 'live' && 'live' || 'dev' }}
@@ -37,6 +37,12 @@ jobs:
           name: dist-web
           path: web/dist
 
+      - name: Download nextjs
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-nextjs
+          path: web-nextjs/.open-next
+
       - name: Setup CDK
         uses: ./.github/actions/install-cdk
 
@@ -48,9 +54,33 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-1
 
+      - name: Extract CDK Outputs for SST
+        run: ./scripts/extract-cdk-outputs-for-sst.sh ${{ inputs.target }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+
+      - name: Setup Node.js for SST
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install SST dependencies
+        working-directory: web-nextjs
+        run: npm ci
+
+      - name: Deploy with SST
+        working-directory: web-nextjs
+        run: npx sst deploy --stage ${{ inputs.target }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+
       - name: Step Summary
         run: |
-          echo '# `${{ inputs.target }}` - CDK + SLS Deployment' >> $GITHUB_STEP_SUMMARY
+          echo '# `${{ inputs.target }}` - CDK + SST Deployment' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "CDK infrastructure and SLS application deployment to ${{ inputs.target }} environment completed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "CDK infrastructure and SST NextJS application deployment to ${{ inputs.target }} environment completed successfully." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
