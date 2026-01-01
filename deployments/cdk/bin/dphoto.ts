@@ -31,13 +31,15 @@ export default async function main(
 
 
     // Create the domains in the US-EAST-1 region
+    const temporaryLoginDomain = `login2.${config.domainName}`;
     const cdnDomainName = `nextjs.${config.domainName}`;
     const certificatesStack = new CertificatesStack(app, `dphoto-${envName}-certificates`, {
         environmentName: envName,
         certificateEmail: config.certificateEmail,
         domainNames: [
-            config.cognitoDomainName,
             cdnDomainName,
+            // config.cognitoDomainName,
+            temporaryLoginDomain,
         ],
         env: {
             account: account,
@@ -91,9 +93,9 @@ export default async function main(
 
     const cognitoCustomDomainStack = new CognitoCustomDomainStack(app, `dphoto-${envName}-cognito-domain`, {
         userPool: cognitoStack.userPool,
-        cognitoDomainName: config.cognitoDomainName,
+        cognitoDomainName: temporaryLoginDomain,
         rootDomain: config.rootDomain,
-        cognitoCertificate: certificatesStack.certificates[config.cognitoDomainName]!,
+        cognitoCertificate: certificatesStack.certificates[temporaryLoginDomain]!,
         env: {
             account: account,
             region: region,

@@ -28,7 +28,7 @@ export class CertificatesStack extends cdk.Stack {
         for (const domainName of props.domainNames) {
             const normalisedName = domainName.split('.').map(name => name[0].toUpperCase() + name.slice(1)).slice(0, 2).join("");
             const certificateConstruct = new LetsEncryptCertificateConstruct(this, normalisedName, {
-                environmentName: `${props.environmentName}-${normalisedName.toLowerCase()}-${this.region}`,
+                environmentName: `${normalisedName.toLowerCase()}-${this.region}`,
                 domainName: domainName,
                 certificateEmail: props.certificateEmail,
             });
