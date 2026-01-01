@@ -60,6 +60,9 @@ SST_COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID}
 SST_COGNITO_CLIENT_SECRET=${COGNITO_CLIENT_SECRET}
 EOF
 
+# Restrict permissions to owner only for security
+chmod 600 "${REPO_ROOT}/${ENV_FILE}"
+
 echo "Successfully created ${ENV_FILE}"
 echo "  SST_DISTRIBUTION_ID=${DISTRIBUTION_ID}"
 echo "  SST_COGNITO_ISSUER=${COGNITO_ISSUER}"

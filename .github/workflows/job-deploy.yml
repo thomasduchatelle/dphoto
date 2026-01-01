@@ -66,6 +66,14 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Cache NPM for SST
+        uses: actions/cache@v4
+        with:
+          path: web-nextjs/node_modules
+          key: ${{ runner.os }}-sst-node-${{ hashFiles('web-nextjs/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-sst-node-
+
       - name: Install SST dependencies
         working-directory: web-nextjs
         run: npm ci
