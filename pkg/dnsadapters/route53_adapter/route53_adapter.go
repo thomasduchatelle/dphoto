@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/acm"
 	acmtypes "github.com/aws/aws-sdk-go-v2/service/acm/types"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	ssmtypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
-	"strings"
 )
 
 type manager struct {
@@ -71,8 +72,9 @@ func (m *manager) InstallCertificate(ctx context.Context, id string, certificate
 		PrivateKey:       certificate.PrivateKey,
 	}
 
-	for key, value := range m.tags {
-		if id == "" {
+	// Tagging is not permitted on re-import.
+	if id == "" {
+		for key, value := range m.tags {
 			importCertificateInput.Tags = append(importCertificateInput.Tags, acmtypes.Tag{
 				Key:   &key,
 				Value: &value,
@@ -108,37 +110,49 @@ func (m *manager) EnsureSSMParameter(ctx context.Context, certificateArn string)
 		Value:    aws.String(certificateArn),
 	}
 
-	for key, value := range m.tags {
-		putParameterInput.Tags = append(putParameterInput.Tags, ssmtypes.Tag{
-			Key:   &key,
-			Value: &value,
-		})
+	notFound, needsUpdating, err := m.isNewOrNeedUpdating(ctx, *putParameterInput.Name, certificateArn)
+	if err != nil {
+		return err
 	}
+	if notFound {
+		// Tags cannot be updated via PutParameter, must use AddTagsToResource or RemoveTagsFromResource ; they will remain out of sync.
+		for key, value := range m.tags {
+			putParameterInput.Tags = append(putParameterInput.Tags, ssmtypes.Tag{
+				Key:   &key,
+				Value: &value,
+			})
+		}
 
-	parameter, err := m.ssmClient.GetParameter(ctx, &ssm.GetParameterInput{
-		Name: putParameterInput.Name,
-	})
-
-	var parameterNotFound *ssmtypes.ParameterNotFound
-	notFound := errors.As(err, &parameterNotFound)
-	if err != nil && !notFound {
+		_, err = m.ssmClient.PutParameter(ctx, putParameterInput)
 		return err
 	}
 
-	needsUpdate := notFound || (parameter != nil && *parameter.Parameter.Value != certificateArn)
-	if needsUpdate {
-		if !notFound {
-			// Tags cannot be updated via PutParameter, must use AddTagsToResource or RemoveTagsFromResource
-			putParameterInput.Tags = nil
-		}
-		// Overwrite = false when creating new parameter (notFound=true), true when updating existing (notFound=false)
-		putParameterInput.Overwrite = aws.Bool(!notFound)
+	if needsUpdating {
+		putParameterInput.Overwrite = aws.Bool(true)
 
 		_, err = m.ssmClient.PutParameter(ctx, putParameterInput)
 		return err
 	}
 
 	return nil
+}
+
+func (m *manager) isNewOrNeedUpdating(ctx context.Context, parameterName string, expectedValue string) (notFound bool, needsUpdating bool, err error) {
+	parameter, err := m.ssmClient.GetParameter(ctx, &ssm.GetParameterInput{
+		Name: &parameterName,
+	})
+
+	var parameterNotFound *ssmtypes.ParameterNotFound
+	notFound = errors.As(err, &parameterNotFound)
+	if notFound {
+		err = nil
+	}
+	if err != nil || notFound {
+		return
+	}
+
+	needsUpdating = *parameter.Parameter.Value != expectedValue
+	return
 }
 
 func (m *manager) awsString(id string) *string {
