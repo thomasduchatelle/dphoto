@@ -30,6 +30,9 @@ type CertificateManager interface {
 
 	// InstallCertificate creates the certificate in ACM (or similar) ; empty 'id' will create a new certificate
 	InstallCertificate(ctx context.Context, id string, certificate CompleteCertificate) error
+
+	// EnsureSSMParameter checks if the SSM parameter exists and updates it if it doesn't match the certificate ARN
+	EnsureSSMParameter(ctx context.Context, certificateArn string) error
 }
 
 type CertificateAuthority interface {

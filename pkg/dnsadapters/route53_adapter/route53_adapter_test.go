@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/acm"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
@@ -57,6 +58,51 @@ func TestCertificateManager(t *testing.T) {
 		panic(err)
 	}
 	a.Len(certificates.CertificateSummaryList, 1, name)
+}
+
+func TestEnsureSSMParameter(t *testing.T) {
+	a := assert.New(t)
+
+	ctx := context.Background()
+	factory, err := awsfactory.LocalstackAWSFactory(ctx, awsfactory.LocalstackEndpoint)
+	if !assert.NoError(t, err) {
+		return
+	}
+	cfg := factory.GetCfg()
+
+	const paramName = "/dphoto/unittest/acm/ensureTest"
+	certManager := NewCertificateManager(cfg, map[string]string{"Environment": "test"}, "", paramName).(*manager)
+
+	name := "it should create SSM parameter if it doesn't exist"
+	err = certManager.EnsureSSMParameter(ctx, "arn:aws:acm:us-east-1:123456789012:certificate/test-cert-1")
+	a.NoError(err, name)
+
+	param, err := certManager.ssmClient.GetParameter(ctx, &ssm.GetParameterInput{
+		Name: aws.String(paramName),
+	})
+	if a.NoError(err, name) {
+		a.Equal("arn:aws:acm:us-east-1:123456789012:certificate/test-cert-1", *param.Parameter.Value, name)
+	}
+
+	name = "it should not update SSM parameter if it matches"
+	err = certManager.EnsureSSMParameter(ctx, "arn:aws:acm:us-east-1:123456789012:certificate/test-cert-1")
+	a.NoError(err, name)
+
+	name = "it should update SSM parameter if it doesn't match"
+	err = certManager.EnsureSSMParameter(ctx, "arn:aws:acm:us-east-1:123456789012:certificate/test-cert-2")
+	a.NoError(err, name)
+
+	param, err = certManager.ssmClient.GetParameter(ctx, &ssm.GetParameterInput{
+		Name: aws.String(paramName),
+	})
+	if a.NoError(err, name) {
+		a.Equal("arn:aws:acm:us-east-1:123456789012:certificate/test-cert-2", *param.Parameter.Value, name)
+	}
+
+	_, err = certManager.ssmClient.DeleteParameter(ctx, &ssm.DeleteParameterInput{
+		Name: aws.String(paramName),
+	})
+	a.NoError(err)
 }
 
 func TestOnlyFirstCert(t *testing.T) {

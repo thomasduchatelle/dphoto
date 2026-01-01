@@ -71,25 +71,13 @@ func (m *manager) InstallCertificate(ctx context.Context, id string, certificate
 		PrivateKey:       certificate.PrivateKey,
 	}
 
-	putParameterInput := &ssm.PutParameterInput{
-		DataType: aws.String("text"),
-		Name:     aws.String(m.ssmParameterKey),
-		Type:     ssmtypes.ParameterTypeString,
-	}
-
 	for key, value := range m.tags {
 		if id == "" {
-			// Tagging is not permitted on re-import.
 			importCertificateInput.Tags = append(importCertificateInput.Tags, acmtypes.Tag{
 				Key:   &key,
 				Value: &value,
 			})
 		}
-
-		putParameterInput.Tags = append(putParameterInput.Tags, ssmtypes.Tag{
-			Key:   &key,
-			Value: &value,
-		})
 	}
 
 	cer, err := m.acmClient.ImportCertificate(ctx, importCertificateInput)
@@ -97,29 +85,7 @@ func (m *manager) InstallCertificate(ctx context.Context, id string, certificate
 		return err
 	}
 
-	parameter, err := m.ssmClient.GetParameter(ctx, &ssm.GetParameterInput{
-		Name: putParameterInput.Name,
-	})
-
-	var parameterNotFound *ssmtypes.ParameterNotFound
-	notFound := errors.As(err, &parameterNotFound)
-	if err != nil && !notFound {
-		return err
-	}
-
-	if notFound || parameter.Parameter.Value != putParameterInput.Value {
-		if !notFound {
-			// "To update tags for an existing parameter, please use AddTagsToResource or RemoveTagsFromResource"
-			putParameterInput.Tags = nil
-		}
-		putParameterInput.Overwrite = aws.Bool(!notFound)
-		putParameterInput.Value = cer.CertificateArn
-
-		_, err = m.ssmClient.PutParameter(ctx, putParameterInput)
-		return err
-	}
-
-	return nil
+	return m.EnsureSSMParameter(ctx, *cer.CertificateArn)
 }
 
 func onlyFirstCertificate(certificate []byte) []byte {
@@ -132,6 +98,44 @@ func onlyFirstCertificate(certificate []byte) []byte {
 	}
 
 	return certificate
+}
+
+func (m *manager) EnsureSSMParameter(ctx context.Context, certificateArn string) error {
+	putParameterInput := &ssm.PutParameterInput{
+		DataType: aws.String("text"),
+		Name:     aws.String(m.ssmParameterKey),
+		Type:     ssmtypes.ParameterTypeString,
+		Value:    aws.String(certificateArn),
+	}
+
+	for key, value := range m.tags {
+		putParameterInput.Tags = append(putParameterInput.Tags, ssmtypes.Tag{
+			Key:   &key,
+			Value: &value,
+		})
+	}
+
+	parameter, err := m.ssmClient.GetParameter(ctx, &ssm.GetParameterInput{
+		Name: putParameterInput.Name,
+	})
+
+	var parameterNotFound *ssmtypes.ParameterNotFound
+	notFound := errors.As(err, &parameterNotFound)
+	if err != nil && !notFound {
+		return err
+	}
+
+	if notFound || *parameter.Parameter.Value != certificateArn {
+		if !notFound {
+			putParameterInput.Tags = nil
+		}
+		putParameterInput.Overwrite = aws.Bool(!notFound)
+
+		_, err = m.ssmClient.PutParameter(ctx, putParameterInput)
+		return err
+	}
+
+	return nil
 }
 
 func (m *manager) awsString(id string) *string {
