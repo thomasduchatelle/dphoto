@@ -125,7 +125,8 @@ func (m *manager) EnsureSSMParameter(ctx context.Context, certificateArn string)
 		return err
 	}
 
-	if notFound || *parameter.Parameter.Value != certificateArn {
+	needsUpdate := notFound || (parameter != nil && *parameter.Parameter.Value != certificateArn)
+	if needsUpdate {
 		if !notFound {
 			putParameterInput.Tags = nil
 		}
