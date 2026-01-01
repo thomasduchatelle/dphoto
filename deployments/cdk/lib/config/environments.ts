@@ -37,6 +37,16 @@ export const environments: Record<string, EnvironmentConfig> = {
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com',
     },
+    dev: {
+        production: false,
+        cliAccessKeys: ['2026-01'],
+        rootDomain: 'duchatelle.me',
+        domainName: 'dev.duchatelle.me',
+        cognitoDomainName: 'login.dev.duchatelle.me',
+        cognitoExtraRedirectURLs: ['http://localhost:3000'],
+        certificateEmail: 'duchatelle.thomas@gmail.com',
+        googleLoginClientId: '841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com',
+    },
     test: {
         production: true,
         cliAccessKeys: ['2024-04'],
