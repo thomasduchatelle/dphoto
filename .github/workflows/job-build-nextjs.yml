@@ -1,5 +1,10 @@
 on:
   workflow_call:
+    inputs:
+      ref:
+        description: "Git ref to checkout (branch, tag, or SHA)"
+        type: string
+        required: false
     outputs:
       cache-suffix:
         description: NextJS cache suffix
@@ -12,6 +17,8 @@ jobs:
       cache-suffix: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.head_ref }}
 
       - name: Cache NPM
         uses: actions/cache@v4

@@ -48,8 +48,14 @@ jobs:
     with:
       ref: ${{ needs.check-comment.outputs.pr-ref }}
 
+  build-nextjs:
+    needs: check-comment
+    uses: ./.github/workflows/job-build-nextjs.yml
+    with:
+      ref: ${{ needs.check-comment.outputs.pr-ref }}
+
   deploy:
-    needs: [ build-go, build-ts ]
+    needs: [ build-go, build-ts, build-nextjs ]
     uses: ./.github/workflows/job-deploy.yml
     with:
       target: next
