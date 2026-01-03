@@ -1,5 +1,5 @@
 ---
-applyTo: "web/**"
+applyTo: "web/**, web-nextjs/**"
 ---
 
 # Coding Principles
