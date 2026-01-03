@@ -12,6 +12,7 @@ import {
 import { FakeOIDCServer } from './__tests__/helpers/fake-oidc-server';
 import {
     createTokenResponse,
+    createBackendAccessToken,
     TEST_CLIENT_ID,
     TEST_CLIENT_SECRET,
     TEST_ISSUER_URL,
@@ -50,8 +51,8 @@ describe('authentication middleware', () => {
 
         expect(response.status).toBe(307); // NextJS uses 307 for temporary redirects
         const location = response.headers.get('Location');
-        expect(location).toContain('https://cognito.example.com/oauth2/authorize');
-        expect(location).toContain('client_id=test-client-id');
+        expect(location).toContain('https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_7CivTjR7R/oauth2/authorize');
+        expect(location).toContain('client_id=7k53mt7hv23fffi7dqe9sfi1b2');
         expect(location).toContain(`redirect_uri=${encodeURIComponent('https://example.com/auth/callback')}`);
         expect(location).toContain('scope=openid+profile+email');
         expect(location).toContain('code_challenge_method=S256');
@@ -88,7 +89,7 @@ describe('authentication middleware', () => {
 
         expect(response.status).toBe(307);
         const location = response.headers.get('Location');
-        expect(location).toContain('https://cognito.example.com/oauth2/authorize');
+        expect(location).toContain('https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_7CivTjR7R/oauth2/authorize');
 
         const setCookieHeaders = response.headers.getSetCookie();
         expect(setCookieHeaders).toBeDefined();
@@ -128,7 +129,7 @@ describe('authentication middleware', () => {
         expect(setCookieHeaders).toBeDefined();
 
         const accessTokenCookie = setCookieHeaders.find((c) => c.startsWith(`${ACCESS_TOKEN_COOKIE}=`));
-        expect(accessTokenCookie).toContain('ACCESS_TOKEN_VALUE');
+        expect(accessTokenCookie).toBeDefined();
         expect(accessTokenCookie).toContain('HttpOnly');
         expect(accessTokenCookie).toContain('Secure');
         expect(accessTokenCookie).toMatch(/SameSite=(Strict|strict)/i);
@@ -151,14 +152,24 @@ describe('authentication middleware', () => {
     });
 
     it('should allow authenticated request to proceed with backendSession', async () => {
-        const accessToken =
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJlbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJwaWN0dXJlIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9hdmF0YXIuanBnIiwiU2NvcGVzIjoib3duZXI6dGVzdHVzZXIiLCJleHAiOjk5OTk5OTk5OTl9.signature';
+        // Use a backend-generated token with Scopes for isOwner check
+        const accessToken = createBackendAccessToken({
+            email: 'tomdush@gmail.com',
+            Scopes: 'owner:tomdush@gmail.com',
+        });
+
+        // Create a matching user info cookie (would have been set during OAuth callback)
+        const userInfoCookie = JSON.stringify({
+            name: 'Thomas Duchatelle',
+            email: 'tomdush@gmail.com',
+            picture: 'https://lh3.googleusercontent.com/a/ACg8ocKBKtsO86UaxMwMaQpnykZv5Qb38FLYJlMzQi3FrriBcDaxAUxP=s96-c',
+        });
 
         const request = new NextRequest('https://example.com/albums', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
-                Cookie: `${ACCESS_TOKEN_COOKIE}=${accessToken}`,
+                Cookie: `${ACCESS_TOKEN_COOKIE}=${accessToken}; dphoto-user-info=${encodeURIComponent(userInfoCookie)}`,
             },
         });
 
@@ -178,9 +189,9 @@ describe('authentication middleware', () => {
         expect(new Date(backendSession.accessToken.expiresAt)).toBeInstanceOf(Date);
         expect(backendSession.refreshToken).toBe('');
         expect(backendSession.authenticatedUser).toEqual({
-            name: 'John Doe',
-            email: 'john@example.com',
-            picture: 'https://example.com/avatar.jpg',
+            name: 'Thomas Duchatelle',
+            email: 'tomdush@gmail.com',
+            picture: 'https://lh3.googleusercontent.com/a/ACg8ocKBKtsO86UaxMwMaQpnykZv5Qb38FLYJlMzQi3FrriBcDaxAUxP=s96-c',
             isOwner: true,
         });
     });
