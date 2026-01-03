@@ -1,40 +1,35 @@
-import {AccessToken, LogoutListener} from "../security";
 import axios, {AxiosInstance, AxiosRequestConfig} from "axios";
-import {AccessTokenHolder} from "./application-model";
+import {tokenHolder} from "../security/client-utils";
 
-export class DPhotoApplication implements AccessTokenHolder {
-    private accessToken?: AccessToken
+export class DPhotoApplication {
     private axiosInterceptorId ?: number
 
     constructor(
-        public logoutListeners: LogoutListener[] = [],
-        public authenticationTimeoutIds: NodeJS.Timeout[] = [],
         public readonly axiosInstance: AxiosInstance = axios.create({}),
     ) {
-    }
-
-    public renewRefreshToken(accessToken: AccessToken) {
-        this.accessToken = accessToken
+        // Set up axios interceptor to use tokens from cookies
         if (!this.axiosInterceptorId) {
             this.axiosInterceptorId = this.axiosInstance.interceptors.request.use(this.axiosRequestInterceptor, error => Promise.reject(error));
         }
     }
 
+    public renewRefreshToken(accessToken: any) {
+        // No-op for backwards compatibility with legacy code
+    }
+
     public revokeAccessToken() {
         if (this.axiosInterceptorId) {
             this.axiosInstance.interceptors.request.eject(this.axiosInterceptorId)
+            this.axiosInterceptorId = undefined
         }
     }
 
-    public getAccessToken(): string {
-        return this.accessToken?.accessToken ?? ''
-    }
-
     private axiosRequestInterceptor = (config: AxiosRequestConfig): AxiosRequestConfig => {
-        if (this.accessToken) {
+        // TODO AGENT - trigger a refresh if the token is expired or about to expire (<5 min)
+        if (tokenHolder.accessToken) {
             config.headers = {
                 ...config.headers,
-                'Authorization': `Bearer ${this.accessToken.accessToken}`,
+                'Authorization': `Bearer ${tokenHolder.accessToken.accessToken}`,
             }
         }
 

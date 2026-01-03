@@ -1,32 +1,26 @@
 import {Dispatch} from "react";
-import {ApplicationAction, DPhotoApplication} from "../application";
-import {AuthenticateAPI} from "./AuthenticateCase";
-import {REFRESH_TOKEN_KEY} from "./security-state";
+
+export interface OAuth2LogoutApi {
+    logout(): Promise<void>;
+}
+
+export type LoggedOutAction = {
+    type: 'logged-out'
+}
 
 export class LogoutCase {
-    constructor(readonly dispatch: Dispatch<ApplicationAction>,
-                readonly application: DPhotoApplication,
-                readonly oauthApi: AuthenticateAPI,
+    constructor(readonly dispatch: Dispatch<LoggedOutAction>,
+                readonly oauthApi: OAuth2LogoutApi,
     ) {
     }
 
     public logout = () => {
-        this.application.authenticationTimeoutIds.forEach(timeoutId => {
-            clearTimeout(timeoutId)
-        })
-        this.application.logoutListeners.forEach(listener => {
-            listener.onLogout()
-        })
-
-        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-        if (refreshToken) {
-            localStorage.removeItem(REFRESH_TOKEN_KEY)
-
-            this.oauthApi
-                .logout(refreshToken)
-                .then(() => this.dispatch({type: 'logged-out'}))
-        } else {
-            this.dispatch({type: 'logged-out'})
-        }
+        this.oauthApi
+            .logout()
+            .then(() => this.dispatch({type: 'logged-out'}))
     }
 }
+
+// TODO AGENT - generate the test: it should dispatch logged-out action after successful logout API call.
+// TODO AGENT - implement the feature, and the test: it should dispatch a generic error if logout API call fails.
+// TODO AGENT - convert the LogoutCase into a thunk as described in the coding conventions.

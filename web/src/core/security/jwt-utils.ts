@@ -8,6 +8,7 @@ export interface JWTPayload {
     jti: string // JWT ID
 }
 
+// TODO AGENT - decodeJWTPayload should NOT be exported, tests should only cover the isOwnerFromJWT.
 /**
  * Decode JWT payload without verification.
  * Note: This is safe because the JWT is verified on the backend.

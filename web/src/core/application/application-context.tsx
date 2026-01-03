@@ -1,14 +1,12 @@
+'use client';
+
 import {DPhotoApplication} from "./DPhotoApplication";
-import {createContext, Dispatch, ReactNode, useEffect, useReducer} from "react";
-import {initialSecurityState, SecurityAction, securityContextReducer, securityContextReducerSupports, SecurityState} from "../security";
+import {createContext, Dispatch, ReactNode, useReducer} from "react";
 import {GeneralState} from "./application-model";
-import axios from "axios";
 import {ApplicationGenericAction, applicationGenericReducer} from "./application-reducer";
 
 export interface ApplicationContextType {
     application: DPhotoApplication
-
-    security: SecurityState
 
     general: GeneralState
 }
@@ -16,8 +14,7 @@ export interface ApplicationContextType {
 const initialAppContext: ApplicationContextTypeWithSetter = {
     context: {
         application: new DPhotoApplication(),
-        security: initialSecurityState,
-        general: {googleClientId: ''},
+        general: {},
     },
     dispatch: () => {
     },
@@ -28,18 +25,16 @@ export interface ApplicationContextTypeWithSetter {
     dispatch: Dispatch<ApplicationAction>
 }
 
+
 export const ApplicationContext = createContext<ApplicationContextTypeWithSetter>(initialAppContext)
 
-export type ApplicationAction = SecurityAction | ApplicationGenericAction
+export type ApplicationAction = ApplicationGenericAction
 
 const applicationReducer = (current: ApplicationContextTypeWithSetter, action: ApplicationAction): ApplicationContextTypeWithSetter => {
     let nextContext = current.context
 
-    if (action.type === 'config-loaded' || action.type === 'unrecoverable-error') {
+    if (action.type === 'unrecoverable-error') {
         nextContext = applicationGenericReducer(current.context, action)
-
-    } else if (securityContextReducerSupports(action)) {
-        nextContext = securityContextReducer(current.context, action);
     }
 
     if (!Object.is(current.context, nextContext)) {
@@ -52,21 +47,10 @@ const applicationReducer = (current: ApplicationContextTypeWithSetter, action: A
     return current
 }
 
-interface ConfigFile {
-    googleClientId: string
-}
-
 export const ApplicationContextComponent = ({children}: {
     children?: ReactNode
 }) => {
     const [context, dispatch] = useReducer(applicationReducer, initialAppContext)
-
-    useEffect(() => {
-        axios.get<ConfigFile>("/env-config.json")
-            .then(cfg => {
-                dispatch({type: 'config-loaded', googleClientId: cfg.data.googleClientId})
-            })
-    }, [])
 
     return (
         <ApplicationContext.Provider value={{context: context.context, dispatch}}>

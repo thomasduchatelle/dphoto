@@ -1,6 +1,6 @@
 import {defineConfig} from 'waku/config';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -25,4 +25,13 @@ export default defineConfig({
             },
         },
     },
+    unstable_honoEnhancer: './src/hono-enhancer',
+    middleware: [
+        'waku/middleware/context',
+
+        './src/middleware/authentication.tsx',
+
+        'waku/middleware/dev-server',
+        'waku/middleware/handler',
+    ],
 });

@@ -7,7 +7,6 @@ import UserMenu from "../../../components/user.menu";
 import AlbumsList from "../../../components/albums/AlbumsList";
 import MediasPage from "../../../components/albums/MediasPage";
 import MobileNavigation from "../../../components/albums/MobileNavigation";
-import {useAuthenticatedUser, useLogoutCase} from "../../../core/application";
 import {useCatalogContext} from "../../../components/catalog-react";
 import {useClientRouter} from "../../../components/ClientRouter";
 import {
@@ -26,6 +25,7 @@ import ShareDialog from "../../../components/albums/ShareDialog";
 import {DeleteAlbumDialog} from "../../../components/albums/DeleteAlbumDialog";
 import {EditDatesDialog} from "../../../components/albums/EditDatesDialog";
 import {EditNameDialog} from "../../../components/albums/EditNameDialog";
+import {useAuthenticatedUser} from "../../../core/security";
 
 export function CatalogViewerPage() {
     const authenticatedUser = useAuthenticatedUser();
@@ -64,7 +64,10 @@ export function CatalogViewerPage() {
         },
         selectedAlbumId
     } = useCatalogContext()
-    const logoutCase = useLogoutCase();
+    const logoutHandler = () => {
+        // TODO AGENT - implements a logout thunk that redirect to the /logout page (which needs to clear the cookies)
+        console.log("User wants to logout - not implemented")
+    }
 
     const {path, query, navigate} = useClientRouter()
 
@@ -95,7 +98,7 @@ export function CatalogViewerPage() {
     return (
         <Box>
             <AppNav
-                rightContent={<UserMenu user={authenticatedUser} onLogout={logoutCase.logout}/>}
+                rightContent={<UserMenu user={authenticatedUser} onLogout={logoutHandler}/>}
             />
             <Toolbar/>
             <Box sx={{mt: 2, pl: 2, pr: 2, display: {lg: 'none'}}}>

@@ -5,28 +5,28 @@ import {IconButton, ImageListItem, ImageListItemBar} from "@mui/material";
 import {dateTimeToString} from "../../../core/utils/date-utils";
 import {Media, MediaType} from "../../../core/catalog";
 import {useEffect, useRef} from "react";
-import {useClientRouter} from "../../../components/ClientRouter";
+import {Link} from "waku"
+
+function addQueryParam(url: string, param: string, value: string): string {
+    const trimmedUrl = url.replace(/[?&]$/, '');
+    const separator = trimmedUrl.includes('?') ? '&' : '?';
+    return `${trimmedUrl}${separator}${param}=${value}`;
+}
 
 export function ImageInList({media, imageViewportPercentage, autoFocus = false}: {
     media: Media,
     imageViewportPercentage: number,
     autoFocus?: boolean,
 }) {
-    const {navigate} = useClientRouter();
     const itemRef = useRef<HTMLLIElement | null>(null)
     const imageSrc = media.type === MediaType.IMAGE ? `${media.contentPath}` : '/video-placeholder.png';
-    const imageSrcSet = media.type === MediaType.IMAGE ? `${media.contentPath}&w=180 180w, ${media.contentPath}&w=360 360w` : '/video-placeholder.png';
+    const imageSrcSet = media.type === MediaType.IMAGE ? `${addQueryParam(media.contentPath, 'w', '180')} 180w, ${addQueryParam(media.contentPath, 'w', '360')} 360w` : '/video-placeholder.png';
 
     useEffect(() => {
         if (autoFocus && itemRef.current) {
             itemRef.current.scrollIntoView({behavior: 'smooth', block: 'start'})
         }
     }, [autoFocus, itemRef])
-
-    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-        e.preventDefault();
-        navigate(media.uiRelativePath);
-    };
 
     return (
         <ImageListItem
@@ -54,7 +54,7 @@ export function ImageInList({media, imageViewportPercentage, autoFocus = false}:
                 },
             }}
         >
-            <a href={media.uiRelativePath} onClick={handleClick}>
+            <Link to={media.uiRelativePath}>
                 <img
                     src={`${imageSrc}`}
                     srcSet={`${imageSrcSet}`}
@@ -62,7 +62,7 @@ export function ImageInList({media, imageViewportPercentage, autoFocus = false}:
                     alt={dateTimeToString(media.time)}
                     loading="lazy"
                 />
-            </a>
+            </Link>
             <ImageListItemBar
                 title={dateTimeToString(media.time)}
                 subtitle={media.source ? `@${media.source}` : ''}

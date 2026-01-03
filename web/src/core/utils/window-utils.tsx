@@ -14,13 +14,17 @@ function getWindowDimensions(): WindowDimension {
 }
 
 export default function useWindowDimensions(): WindowDimension {
-    const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+    const [windowDimensions, setWindowDimensions] = useState({
+        width: 1024,
+        height: 720,
+    });
 
     useEffect(() => {
         function handleResize() {
             setWindowDimensions(getWindowDimensions());
         }
 
+        handleResize()
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);

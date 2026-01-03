@@ -3,10 +3,5 @@ export abstract class ErrorWithPublicMessage extends Error {
 }
 
 export interface GeneralState {
-    googleClientId: string
     error?: ErrorWithPublicMessage
-}
-
-export interface AccessTokenHolder {
-    getAccessToken(): string
 }

@@ -3,8 +3,8 @@
 import {AlbumId} from "../../../core/catalog";
 import React, {ReactElement, useCallback} from "react";
 import {CatalogViewerProvider} from "../../../components/catalog-react";
-import {useAuthenticatedUser} from "../../../core/application";
 import {useClientRouter} from "../../../components/ClientRouter";
+import {useAuthenticatedUser} from "../../../core/security";
 
 export default function CatalogViewerRoot({children}: {
     children: ReactElement;

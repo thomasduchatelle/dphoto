@@ -1,6 +1,7 @@
-// Albums page - routing is handled internally by React Router in GeneralRouter (via _layout.tsx)
+import GeneralRouter from "../../pages-old/GeneralRouter";
+
 export default function AlbumsPage() {
-  return null;
+    return <GeneralRouter/>;
 }
 
 export const getConfig = async () => {

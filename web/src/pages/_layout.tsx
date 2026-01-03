@@ -1,12 +1,11 @@
-import { Providers } from '../components/Providers';
-import GeneralRouter from '../pages-old/GeneralRouter';
+import {Providers} from '../components/Providers';
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="App">
-      <Providers>
-        <GeneralRouter />
-      </Providers>
-    </div>
-  );
+export default async function RootLayout({children}: { children: React.ReactNode }) {
+    return (
+        <div className="App">
+            <Providers>
+                {children}
+            </Providers>
+        </div>
+    );
 }
