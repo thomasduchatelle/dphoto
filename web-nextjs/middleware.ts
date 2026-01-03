@@ -1,8 +1,8 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as cookie from 'cookie';
 import * as client from 'openid-client';
-import {ACCESS_TOKEN_COOKIE, BackendSession, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE,} from './lib/security/constants';
-import {decodeJWTPayload, isOwnerFromJWT} from './lib/security/jwt-utils';
+import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE,} from './lib/security/constants';
+import {decodeJWTPayload} from './lib/security/jwt-utils';
 import {ResponseCookie} from "next/dist/compiled/@edge-runtime/cookies";
 
 const USER_INFO_COOKIE = 'dphoto-user-info';
@@ -13,12 +13,6 @@ interface IDTokenPayload {
     email?: string;
     picture?: string;
     exp?: number;
-    [key: string]: any;
-}
-
-interface AccessTokenPayload {
-    exp?: number;
-    scope?: string;
     [key: string]: any;
 }
 
@@ -170,52 +164,7 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    // For authenticated requests, attach backendSession to headers
-    const accessTokenPayload = cookies.accessToken
-        ? (decodeJWTPayload(cookies.accessToken) as AccessTokenPayload | null)
-        : null;
-    const expiresAt = accessTokenPayload?.exp ? new Date(accessTokenPayload.exp * 1000) : new Date();
-
-    let userInfo: UserInfo | null = null;
-
-    // Get user info from the user info cookie (set during OAuth callback from ID token)
-    if (cookies.userInfo) {
-        try {
-            userInfo = JSON.parse(cookies.userInfo);
-        } catch (e) {
-            console.error('Failed to parse user info cookie:', e);
-        }
-    }
-
-    const backendSession: BackendSession = {
-        type: 'authenticated',
-        accessToken: {
-            accessToken: cookies.accessToken,
-            expiresAt: expiresAt,
-        },
-        authenticatedUser: {
-            name: userInfo?.name || '',
-            email: userInfo?.email || '',
-            picture: userInfo?.picture,
-            isOwner: cookies.accessToken ? isOwnerFromJWT(cookies.accessToken) : false,
-        },
-    };
-
-    // In NextJS, we can't add custom data to the request directly like Waku
-    // Instead, we'll add it as a custom header that can be read by the app
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-backend-session', JSON.stringify(backendSession));
-
-    const response = NextResponse.next({
-        request: {
-            headers: requestHeaders,
-        },
-    });
-
-    // Also set on response headers for testing purposes
-    response.headers.set('x-backend-session', JSON.stringify(backendSession));
-
-    return response;
+    return NextResponse.next();
 }
 
 export const config = {

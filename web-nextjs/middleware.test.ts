@@ -135,7 +135,7 @@ describe('authentication middleware', () => {
         expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
     });
 
-    it('should allow authenticated request to proceed with backendSession', async () => {
+    it('should allow authenticated request to proceed', async () => {
         const accessToken = createBackendAccessToken({
             email: 'user@example.com',
             Scopes: 'owner:user@example.com',
@@ -158,20 +158,5 @@ describe('authentication middleware', () => {
         const response = await middleware(request);
 
         expect(response.status).toBe(200);
-
-        const backendSessionHeader = response.headers.get('x-backend-session');
-        expect(backendSessionHeader).toBeDefined();
-
-        const backendSession = JSON.parse(backendSessionHeader!);
-        expect(backendSession).toBeDefined();
-        expect(backendSession.type).toBe('authenticated');
-        expect(backendSession.accessToken.accessToken).toBe(accessToken);
-        expect(new Date(backendSession.accessToken.expiresAt)).toBeInstanceOf(Date);
-        expect(backendSession.authenticatedUser).toEqual({
-            name: 'Test User',
-            email: 'user@example.com',
-            picture: 'https://example.com/avatar.jpg',
-            isOwner: true,
-        });
     });
 });
