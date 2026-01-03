@@ -27,24 +27,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache NPM for SST
-        uses: actions/cache@v4
-        with:
-          path: |
-            deployments/cdk/.sst/cache
-          key: ${{ runner.os }}-sst-cache-${{ hashFiles('deployments/cdk/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-sst-cache-
-
-      - name: Setup CDK
+      - name: Setup CDK and SST
         uses: ./.github/actions/install-cdk
-
-      - name: Install SST
-        working-directory: deployments/cdk
-        shell: bash
-        run: |
-          npx sst install
-          node ../../scripts/pulumi-patch.js || echo "FAILED to patch pulumi"
+        with:
+          install-sst: 'true'
 
       - name: Download api
         uses: actions/download-artifact@v4
