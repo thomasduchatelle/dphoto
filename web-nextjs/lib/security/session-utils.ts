@@ -12,7 +12,7 @@ interface UserInfo {
 
 interface AccessTokenPayload {
     exp?: number;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export async function getBackendSession(): Promise<BackendSession | null> {
