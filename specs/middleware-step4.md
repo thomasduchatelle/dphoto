@@ -6,9 +6,9 @@ Implement proper error handling for OAuth callback failures, including Cognito e
 
 ## Files to Modify
 
-- `web/src/middleware/authentication.tsx` - add error handling in callback path
+- `web-nextjs/middleware-authentication.tsx` - add error handling in callback path
 - `web/src/pages/auth/error.tsx` - new Waku page to create for displaying errors
-- `web/src/middleware/authentication.test.ts` - add test cases
+- `web-nextjs/middleware-authentication.test.ts` - add test cases
 
 ## Test Cases
 

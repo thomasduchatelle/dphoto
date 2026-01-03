@@ -6,9 +6,9 @@ Extract user information (name, email, picture, isOwner) from the ID token retur
 
 ## Files to Modify
 
-- `web/src/middleware/authentication.tsx` - parse ID token and extract user claims
+- `web-nextjs/middleware-authentication.tsx` - parse ID token and extract user claims
 - `web/src/core/security/jwt-utils.ts` - add JWT decoding utilities if not present
-- `web/src/middleware/authentication.test.ts` - add test cases
+- `web-nextjs/middleware-authentication.test.ts` - add test cases
 
 ## Test Cases
 

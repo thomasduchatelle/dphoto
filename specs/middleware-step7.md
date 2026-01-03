@@ -6,8 +6,8 @@ Implement caching for the OIDC configuration to avoid fetching it on every reque
 
 ## Files to Modify
 
-- `web/src/middleware/authentication.tsx` - implement config caching
-- `web/src/middleware/authentication.test.ts` - add test cases
+- `web-nextjs/middleware-authentication.tsx` - implement config caching
+- `web-nextjs/middleware-authentication.test.ts` - add test cases
 
 ## Test Cases
 

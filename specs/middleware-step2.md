@@ -6,9 +6,9 @@ Implement the ability to remember the originally requested URL before redirectin
 
 ## Files to Modify
 
-- `web/src/middleware/authentication.tsx` - add redirect path cookie logic
+- `web-nextjs/middleware-authentication.tsx` - add redirect path cookie logic
 - `web/src/core/security/consts.ts` - add new cookie constant
-- `web/src/middleware/authentication.test.ts` - add test cases
+- `web-nextjs/middleware-authentication.test.ts` - add test cases
 
 ## New Constants
 

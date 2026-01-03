@@ -6,10 +6,10 @@ Implement the logout functionality that signs the user out from Cognito, clears 
 
 ## Files to Modify
 
-- `web/src/middleware/authentication.tsx` - add logout path handler
+- `web-nextjs/middleware-authentication.tsx` - add logout path handler
 - `web/src/core/security/consts.ts` - may need logout-related constants
 - `web/src/pages/logout.tsx` - create logout confirmation page (optional)
-- `web/src/middleware/authentication.test.ts` - add test cases
+- `web-nextjs/middleware-authentication.test.ts` - add test cases
 
 ## Test Cases
 
