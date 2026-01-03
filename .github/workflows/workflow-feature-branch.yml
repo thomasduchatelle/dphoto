@@ -18,6 +18,8 @@ jobs:
     uses: ./.github/workflows/job-test-ts.yml
     with:
       update-snapshots: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+  test-nextjs:
+    uses: ./.github/workflows/job-test-nextjs.yml
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
     with:
@@ -50,6 +52,7 @@ jobs:
     needs:
       - test-go
       - test-ts
+      - test-nextjs
       - test-cdk
       - build-go
       - build-ts
