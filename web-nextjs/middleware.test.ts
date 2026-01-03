@@ -13,6 +13,11 @@ vi.stubEnv('COGNITO_ISSUER', TEST_ISSUER_URL);
 vi.stubEnv('COGNITO_CLIENT_ID', TEST_CLIENT_ID);
 vi.stubEnv('COGNITO_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
+const deletedCookie = {
+    value: '',
+    maxAge: 0,
+    path: '/',
+};
 describe('authentication middleware', () => {
     let fakeOIDCServer: FakeOIDCServer;
 
@@ -126,17 +131,8 @@ describe('authentication middleware', () => {
             path: '/',
         });
 
-        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject({
-            value: '',
-            maxAge: 0,
-            path: '/',
-        });
-
-        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject({
-            value: '',
-            maxAge: 0,
-            path: '/',
-        });
+        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
     });
 
     it('should allow authenticated request to proceed with backendSession', async () => {

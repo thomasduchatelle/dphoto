@@ -11,6 +11,8 @@ test: test-cdk test-go test-web
 
 build: build-go build-app
 
+deploy-dev: build-app build-web-nextjs deploy-cdk-dev deploy-sst-dev
+
 deploy-next: build-app build-web-nextjs deploy-cdk deploy-sst
 
 install: install-cli
@@ -32,6 +34,9 @@ test-cdk:
 
 deploy-cdk:
 	cd $(CDK_DIR) && cdk deploy --context environment=next --all
+
+deploy-cdk-dev:
+	cd $(CDK_DIR) && cdk deploy --context environment=dev --all
 
 #######################################
 ## PKG & CLI
@@ -125,7 +130,10 @@ build-web-nextjs:
 	cd web-nextjs && npm run build
 
 deploy-sst:
-	cd deployments/cdk && npx sst --stage next deploy
+	cd deployments/cdk && npx sst --stage next deploy --yes
+
+deploy-sst-dev:
+	cd deployments/cdk && npx sst --stage dev deploy --yes
 
 #######################################
 ## API

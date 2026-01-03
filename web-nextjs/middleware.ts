@@ -37,6 +37,7 @@ interface Cookies {
 }
 
 const COOKIE_OPTS: Partial<ResponseCookie> = {
+    maxAge: 3600, // TODO AGENT: use the appropriate expiration based on the token expiry time and refresh token policy. Do not have a default.
     httpOnly: true,
     path: '/',
     secure: true,
@@ -62,11 +63,12 @@ type OpenIdConfig = {
 };
 
 async function oidcConfig({ issuer, clientId, clientSecret }: OpenIdConfig): Promise<client.Configuration> {
-    // TODO: Cache the configuration
+    // TODO AGENT: Load the configuration once, not at very request
     return client.discovery(new URL(issuer), clientId, clientSecret);
 }
 
 function getOidcConfigFromEnv(): OpenIdConfig {
+    // TODO AGENT: environment variables needs to be OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET. Everywhere: in the app process, in the CDK deployment code, in the extracted .env file (with the script in `/scripts/`).
     return {
         issuer: process.env.COGNITO_ISSUER || '',
         clientId: process.env.COGNITO_CLIENT_ID || '',
@@ -74,6 +76,11 @@ function getOidcConfigFromEnv(): OpenIdConfig {
     };
 }
 
+// TODO AGENT: rename middleware into proxy:
+// middleware.ts -> proxy.ts
+//
+// - export function middleware() {
+// + export function proxy() {
 export async function middleware(request: NextRequest) {
     const { pathname, origin } = request.nextUrl;
     const cookies = readCookies(request);
@@ -127,7 +134,7 @@ export async function middleware(request: NextRequest) {
             return response;
         } catch (error) {
             console.error('OAuth callback error:', error);
-            // TODO: Handle errors properly by showing error page
+            // TODO AGENT: create a page to display error pages ; excludes that page from the middleware matcher
             return NextResponse.redirect(new URL('/', request.url));
         }
     }
