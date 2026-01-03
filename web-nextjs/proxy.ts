@@ -1,0 +1,42 @@
+import {NextRequest, NextResponse} from 'next/server';
+import * as cookie from 'cookie';
+import {ACCESS_TOKEN_COOKIE} from './lib/security/constants';
+
+interface Cookies {
+    accessToken?: string;
+}
+
+function readCookies(request: NextRequest): Cookies {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const cookies = cookie.parse(cookieHeader);
+    return {
+        accessToken: cookies[ACCESS_TOKEN_COOKIE],
+    };
+}
+
+export async function proxy(request: NextRequest) {
+    const cookies = readCookies(request);
+
+    if (!cookies.accessToken) {
+        return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+
+    return NextResponse.next();
+}
+
+// Next.js 16 requires the middleware function (even in proxy.ts)
+export const middleware = proxy;
+
+export const config = {
+    matcher: [
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * - auth (auth routes - login and callback)
+         */
+        '/((?!api|_next/static|_next/image|favicon.ico|auth).*)',
+    ],
+};
