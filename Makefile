@@ -125,7 +125,7 @@ build-web-nextjs:
 	cd web-nextjs && npm run build
 
 deploy-sst:
-	cd web-nextjs && npx sst --stage next deploy
+	cd deployments/cdk && npx sst --stage next deploy
 
 #######################################
 ## API

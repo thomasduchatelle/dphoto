@@ -33,6 +33,7 @@ export default $config({
         });
 
         new sst.aws.Nextjs("DPhotoWEB", {
+            path: "../../web-nextjs",
             buildCommand: "exit 0", // skip the build (done is previous workflow step)
             router: {
                 instance: router,

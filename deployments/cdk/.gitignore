@@ -1,6 +1,7 @@
 *.js
 !jest.config.js
 *.d.ts
+!sst-env.d.ts
 node_modules
 
 # CDK asset staging directory
@@ -9,3 +10,7 @@ cdk.out
 
 !bin/
 backups/
+
+# SST
+.sst
+.env.*

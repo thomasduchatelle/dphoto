@@ -1,5 +1,5 @@
-name: 'Setup AWS CDK'
-description: 'Setup Node.js and install AWS CDK CLI and dependencies'
+name: 'Setup AWS CDK and SST'
+description: 'Setup Node.js and install AWS CDK CLI, SST, and dependencies'
 runs:
   using: "composite"
   steps:
@@ -7,14 +7,22 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: '^24'
-        cache: 'npm'
-        cache-dependency-path: deployments/cdk/package-lock.json
 
-    - name: Install CDK dependencies
+    - name: Cache SST platform
+      uses: actions/cache@v4
+      with:
+        path: |
+          deployments/cdk/node_modules
+          deployments/cdk/.sst/cache
+        key: ${{ runner.os }}-sst-cache-${{ hashFiles('deployments/cdk/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-sst-cache-
+
+    - name: NPM install & SST install
       working-directory: deployments/cdk
       shell: bash
-      run: npm ci
-
-    - name: Install AWS CDK CLI
-      shell: bash
-      run: npm install -g aws-cdk
+      run: |
+        npm ci
+        npx sst install
+        node ../../scripts/pulumi-patch.js || echo "FAILED to patch pulumi"
+        npm install -g aws-cdk

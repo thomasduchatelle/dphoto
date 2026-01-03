@@ -5,7 +5,7 @@ const path = require('path');
 
 const errorFile = path.join(
     __dirname,
-    '../web-nextjs/.sst/platform/node_modules/@pulumi/pulumi/cmd/run/error.js'
+    '../deployments/cdk/.sst/platform/node_modules/@pulumi/pulumi/cmd/run/error.js'
 );
 
 const needle = "return util.inspect(err, { colors: true });";

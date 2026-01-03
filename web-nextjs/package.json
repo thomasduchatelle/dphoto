@@ -13,8 +13,7 @@
   "dependencies": {
     "next": "^16.1.1",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "sst": "3.17.25"
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@opennextjs/aws": "^3.9.7",

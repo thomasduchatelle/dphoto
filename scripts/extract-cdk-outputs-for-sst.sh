@@ -2,7 +2,7 @@
 # Usage: extract-cdk-outputs-for-sst.sh <environment>
 # Extracts CDK outputs and creates .env file for SST deployment
 # The script retrieves CloudFormation outputs from the application stack and generates
-# a .env file in web-nextjs directory with SST-required variables
+# a .env file in deployments/cdk directory with SST-required variables
 
 set -euo pipefail
 
@@ -18,7 +18,7 @@ fi
 
 ENVIRONMENT="$1"
 STACK_NAME="dphoto-${ENVIRONMENT}-application"
-ENV_FILE="web-nextjs/.env.${ENVIRONMENT}"
+ENV_FILE="deployments/cdk/.env.${ENVIRONMENT}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "Extracting CDK outputs from stack: ${STACK_NAME}"
