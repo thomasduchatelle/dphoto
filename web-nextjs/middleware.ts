@@ -13,19 +13,17 @@ import { decodeJWTPayload, isOwnerFromJWT } from './lib/security/jwt-utils';
 const USER_INFO_COOKIE = 'dphoto-user-info';
 
 interface IDTokenPayload {
-    name?: string;
+    given_name?: string;
+    family_name?: string;
     email?: string;
     picture?: string;
     exp?: number;
     [key: string]: any;
 }
 
-interface AccessTokenWithUserInfo {
-    name?: string;
-    email?: string;
-    picture?: string;
+interface AccessTokenPayload {
     exp?: number;
-    Scopes?: string;
+    scope?: string;
     [key: string]: any;
 }
 
@@ -109,8 +107,12 @@ export async function middleware(request: NextRequest) {
             if (tokens.id_token) {
                 const idTokenPayload = decodeJWTPayload(tokens.id_token) as IDTokenPayload | null;
                 if (idTokenPayload) {
+                    const firstName = idTokenPayload.given_name || '';
+                    const lastName = idTokenPayload.family_name || '';
+                    const fullName = [firstName, lastName].filter(Boolean).join(' ');
+                    
                     userInfo = {
-                        name: idTokenPayload.name || '',
+                        name: fullName,
                         email: idTokenPayload.email || '',
                         picture: idTokenPayload.picture,
                     };
@@ -169,23 +171,14 @@ export async function middleware(request: NextRequest) {
 
     // For authenticated requests, attach backendSession to headers
     const accessTokenPayload = cookies.accessToken
-        ? (decodeJWTPayload(cookies.accessToken) as AccessTokenWithUserInfo | null)
+        ? (decodeJWTPayload(cookies.accessToken) as AccessTokenPayload | null)
         : null;
     const expiresAt = accessTokenPayload?.exp ? new Date(accessTokenPayload.exp * 1000) : new Date();
 
     let userInfo: UserInfo | null = null;
 
-    // Try to get user info from the access token itself
-    if (accessTokenPayload && (accessTokenPayload.name || accessTokenPayload.email)) {
-        userInfo = {
-            name: accessTokenPayload.name || '',
-            email: accessTokenPayload.email || '',
-            picture: accessTokenPayload.picture,
-        };
-    }
-
-    // Fall back to the user info cookie
-    if (!userInfo && cookies.userInfo) {
+    // Get user info from the user info cookie (set during OAuth callback from ID token)
+    if (cookies.userInfo) {
         try {
             userInfo = JSON.parse(cookies.userInfo);
         } catch (e) {

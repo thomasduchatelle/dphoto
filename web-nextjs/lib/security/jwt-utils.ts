@@ -1,9 +1,7 @@
 interface JWTPayload {
     sub?: string;
-    Scopes?: string;
-    name?: string;
-    email?: string;
-    picture?: string;
+    Scopes?: string;  // Backend token - space-separated scopes with "owner:" prefix
+    scope?: string;   // Cognito token - space-separated OAuth scopes
     exp?: number;
     iat?: number;
     [key: string]: any;
