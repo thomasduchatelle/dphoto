@@ -47,7 +47,6 @@ export class ApiGatewayConstruct extends Construct {
         const httpApi = new apigatewayv2.HttpApi(this, 'HttpApi', {
             apiName: `dphoto-${props.environmentName}-api`,
             description: `DPhoto API for ${props.environmentName} environment`,
-            disableExecuteApiEndpoint: false, // TODO what's the best option to get the API Gateway accessible only via CloudFront Distribution ?
             corsPreflight: {
                 allowOrigins: ['*'],
                 allowMethods: [apigatewayv2.CorsHttpMethod.ANY],
@@ -94,7 +93,7 @@ export class ApiGatewayConstruct extends Construct {
             stage: httpApi.defaultStage
         });
 
-        // TODO The DNS should be configured at the TOP LEVEL to resect the (new) principle: "DNS records are maintained in a central place to facilitate switch overs, blue/green, ..."
+        // TODO AGENT - move the declaration of the ALL the DNS records as a construct instantiated late in the stack: make it readable (what's available on what domain) and it will also become easier to have blue/green deployments.
         const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
             domainName: props.rootDomain
         });
