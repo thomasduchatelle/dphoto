@@ -193,7 +193,6 @@ export async function middleware(request: NextRequest) {
             accessToken: cookies.accessToken,
             expiresAt: expiresAt,
         },
-        refreshToken: cookies.refreshToken ?? '',
         authenticatedUser: {
             name: userInfo?.name || '',
             email: userInfo?.email || '',

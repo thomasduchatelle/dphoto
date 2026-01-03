@@ -167,7 +167,6 @@ describe('authentication middleware', () => {
         expect(backendSession.type).toBe('authenticated');
         expect(backendSession.accessToken.accessToken).toBe(accessToken);
         expect(new Date(backendSession.accessToken.expiresAt)).toBeInstanceOf(Date);
-        expect(backendSession.refreshToken).toBe('');
         expect(backendSession.authenticatedUser).toEqual({
             name: 'Test User',
             email: 'user@example.com',
