@@ -6,8 +6,8 @@ Handle various edge cases, security concerns, and unexpected scenarios to make t
 
 ## Files to Modify
 
-- `web/src/middleware/authentication.tsx` - add edge case handling
-- `web/src/middleware/authentication.test.ts` - add test cases
+- `web-nextjs/middleware-authentication.tsx` - add edge case handling
+- `web-nextjs/middleware-authentication.test.ts` - add test cases
 
 ## Test Cases
 

@@ -151,13 +151,13 @@ it('should redirect to authorization authority when requesting home page without
 
 **Modify:**
 
-- `web/src/middleware/authentication.tsx` - main implementation
+- `web-nextjs/middleware-authentication.tsx` - main implementation
 - `web/src/core/security/consts.ts` - add cookie constants
 - `web/src/core/security/jwt-utils.ts` - JWT parsing utilities
 
 **Create:**
 
-- `web/src/middleware/authentication.test.ts` - test suite
+- `web-nextjs/middleware-authentication.test.ts` - test suite
 - `web/src/pages/auth/error.tsx` - OAuth error page
 - `web/src/pages/auth/logout-complete.tsx` - post-logout page (optional)
 

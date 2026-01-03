@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the comprehensive test-driven plan to make the authentication middleware in `web/src/middleware/authentication.tsx` production-ready. The
+This document outlines the comprehensive test-driven plan to make the authentication middleware in `web-nextjs/middleware-authentication.tsx` production-ready. The
 plan is divided into 8 steps, each focusing on a specific aspect of the middleware functionality.
 
 ## Current State Analysis
@@ -213,7 +213,7 @@ Each step includes:
 
 ### Test File Structure
 
-All tests will be in: `web/src/middleware/authentication.test.ts`
+All tests will be in: `web-nextjs/middleware-authentication.test.ts`
 
 ```typescript
 describe('Authentication Middleware', () => {
@@ -302,13 +302,13 @@ For each step:
 
 ### Modified:
 
-- `web/src/middleware/authentication.tsx` - main implementation
+- `web-nextjs/middleware-authentication.tsx` - main implementation
 - `web/src/core/security/consts.ts` - new cookie constants
 - `web/src/core/security/jwt-utils.ts` - JWT parsing utilities
 
 ### Created:
 
-- `web/src/middleware/authentication.test.ts` - comprehensive test suite
+- `web-nextjs/middleware-authentication.test.ts` - comprehensive test suite
 - `web/src/pages/auth/error.tsx` - OAuth error display page
 - `web/src/pages/auth/logout-complete.tsx` - post-logout page (optional)
 
@@ -323,7 +323,7 @@ For each step:
 To begin implementation:
 
 1. Start with Step 1: Read `specs/middleware-step1.md`
-2. Create `web/src/middleware/authentication.test.ts`
+2. Create `web-nextjs/middleware-authentication.test.ts`
 3. Implement the first 4 test cases
 4. Update middleware to make tests pass
 5. Proceed to Step 7 (caching) for better performance foundation

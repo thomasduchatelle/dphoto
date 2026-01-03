@@ -6,8 +6,8 @@ Implement and test the core authentication flows for the middleware, including r
 
 ## Files to Modify
 
-- `web/src/middleware/authentication.tsx` - main middleware implementation
-- `web/src/middleware/authentication.test.ts` - new test file to create
+- `web-nextjs/middleware-authentication.tsx` - main middleware implementation
+- `web-nextjs/middleware-authentication.test.ts` - new test file to create
 
 ## Test Cases
 

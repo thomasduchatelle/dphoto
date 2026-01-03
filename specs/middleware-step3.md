@@ -7,8 +7,8 @@ redirecting to login.
 
 ## Files to Modify
 
-- `web/src/middleware/authentication.tsx` - add request type detection
-- `web/src/middleware/authentication.test.ts` - add test cases
+- `web-nextjs/middleware-authentication.tsx` - add request type detection
+- `web-nextjs/middleware-authentication.test.ts` - add test cases
 
 ## Test Cases
 

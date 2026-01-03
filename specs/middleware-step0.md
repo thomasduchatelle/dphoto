@@ -1,4 +1,4 @@
-You need to prepare a plan to update the file `web/src/middleware/authentication.tsx` to get this code production ready.
+You need to prepare a plan to update the file `web-nextjs/middleware-authentication.tsx` to get this code production ready.
 
 You'll use the `TODO AGENT` comment in the file to generate your plan, and the following cases must be covered.
 
