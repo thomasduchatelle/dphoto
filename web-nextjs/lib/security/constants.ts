@@ -18,6 +18,5 @@ export interface AccessToken {
 export interface BackendSession {
     type: 'authenticated';
     accessToken: AccessToken;
-    refreshToken: string;
     authenticatedUser: AuthenticatedUser;
 }
