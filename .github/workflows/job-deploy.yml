@@ -29,8 +29,6 @@ jobs:
 
       - name: Setup CDK and SST
         uses: ./.github/actions/install-cdk
-        with:
-          install-sst: 'true'
 
       - name: Download api
         uses: actions/download-artifact@v4
