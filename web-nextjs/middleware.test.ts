@@ -1,22 +1,12 @@
 // @vitest-environment node
 
-import { describe, expect, it, beforeAll, afterEach, afterAll, vi } from 'vitest';
-import { NextRequest } from 'next/server';
-import { middleware } from './middleware';
-import {
-    ACCESS_TOKEN_COOKIE,
-    OAUTH_CODE_VERIFIER_COOKIE,
-    OAUTH_STATE_COOKIE,
-    REFRESH_TOKEN_COOKIE,
-} from './lib/security/constants';
-import { FakeOIDCServer } from './__tests__/helpers/fake-oidc-server';
-import {
-    createTokenResponse,
-    createBackendAccessToken,
-    TEST_CLIENT_ID,
-    TEST_CLIENT_SECRET,
-    TEST_ISSUER_URL,
-} from './__tests__/helpers/test-helper-oidc';
+import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
+import {NextRequest} from 'next/server';
+import {middleware} from './middleware';
+import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE,} from './lib/security/constants';
+import {FakeOIDCServer} from './__tests__/helpers/fake-oidc-server';
+import {createBackendAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL,} from './__tests__/helpers/test-helper-oidc';
+import {redirectionOf, setCookiesOf} from './__tests__/helpers/test-assertions';
 
 // Mock environment variables
 vi.stubEnv('COGNITO_ISSUER', TEST_ISSUER_URL);
@@ -49,31 +39,31 @@ describe('authentication middleware', () => {
 
         const response = await middleware(request);
 
-        expect(response.status).toBe(307); // NextJS uses 307 for temporary redirects
-        const location = response.headers.get('Location');
-        expect(location).toContain('https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_7CivTjR7R/oauth2/authorize');
-        expect(location).toContain('client_id=7k53mt7hv23fffi7dqe9sfi1b2');
-        expect(location).toContain(`redirect_uri=${encodeURIComponent('https://example.com/auth/callback')}`);
-        expect(location).toContain('scope=openid+profile+email');
-        expect(location).toContain('code_challenge_method=S256');
-        expect(location).toContain('state=');
-        expect(location).toContain('code_challenge=');
+        expect(response.status).toBe(307);
 
-        const setCookieHeaders = response.headers.getSetCookie();
-        expect(setCookieHeaders).toBeDefined();
-        expect(setCookieHeaders.length).toBeGreaterThanOrEqual(2);
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
+        expect(redirection.params.client_id).toBe(TEST_CLIENT_ID);
+        expect(redirection.params.redirect_uri).toBe('https://example.com/auth/callback');
+        expect(redirection.params.scope).toBe('openid profile email');
+        expect(redirection.params.code_challenge_method).toBe('S256');
+        expect(redirection.params.state).toBeDefined();
+        expect(redirection.params.code_challenge).toBeDefined();
 
-        const stateCookie = setCookieHeaders.find((c) => c.startsWith(`${OAUTH_STATE_COOKIE}=`));
-        expect(stateCookie).toBeDefined();
-        expect(stateCookie).toContain('Max-Age=300');
-        expect(stateCookie).toMatch(/SameSite=(Lax|lax)/i);
+        const cookies = setCookiesOf(response);
+        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject({
+            maxAge: 300,
+            sameSite: 'lax',
+            path: '/',
+            value: redirection.params.state,
+        });
 
-        const codeVerifierCookie = setCookieHeaders.find((c) =>
-            c.startsWith(`${OAUTH_CODE_VERIFIER_COOKIE}=`)
-        );
-        expect(codeVerifierCookie).toBeDefined();
-        expect(codeVerifierCookie).toContain('Max-Age=300');
-        expect(codeVerifierCookie).toMatch(/SameSite=(Lax|lax)/i);
+        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject({
+            maxAge: 300,
+            sameSite: 'lax',
+            path: '/',
+        });
+        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE].value).toBeTruthy();
     });
 
     it('should redirect to authorization authority when explicitly requesting /auth/login', async () => {
@@ -88,20 +78,13 @@ describe('authentication middleware', () => {
         const response = await middleware(request);
 
         expect(response.status).toBe(307);
-        const location = response.headers.get('Location');
-        expect(location).toContain('https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_7CivTjR7R/oauth2/authorize');
 
-        const setCookieHeaders = response.headers.getSetCookie();
-        expect(setCookieHeaders).toBeDefined();
-        expect(setCookieHeaders.length).toBeGreaterThanOrEqual(2);
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
 
-        const stateCookie = setCookieHeaders.find((c) => c.startsWith(`${OAUTH_STATE_COOKIE}=`));
-        expect(stateCookie).toBeDefined();
-
-        const codeVerifierCookie = setCookieHeaders.find((c) =>
-            c.startsWith(`${OAUTH_CODE_VERIFIER_COOKIE}=`)
-        );
-        expect(codeVerifierCookie).toBeDefined();
+        const cookies = setCookiesOf(response);
+        expect(cookies[OAUTH_STATE_COOKIE]?.value).toBeTruthy();
+        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]?.value).toBeTruthy();
     });
 
     it('should handle OAuth callback with valid authorization code', async () => {
@@ -125,44 +108,47 @@ describe('authentication middleware', () => {
         expect(response.status).toBe(307);
         expect(response.headers.get('Location')).toBe('https://example.com/');
 
-        const setCookieHeaders = response.headers.getSetCookie();
-        expect(setCookieHeaders).toBeDefined();
+        const cookies = setCookiesOf(response);
 
-        const accessTokenCookie = setCookieHeaders.find((c) => c.startsWith(`${ACCESS_TOKEN_COOKIE}=`));
-        expect(accessTokenCookie).toBeDefined();
-        expect(accessTokenCookie).toContain('HttpOnly');
-        expect(accessTokenCookie).toContain('Secure');
-        expect(accessTokenCookie).toMatch(/SameSite=(Strict|strict)/i);
+        expect(cookies[ACCESS_TOKEN_COOKIE]).toMatchObject({
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            path: '/',
+        });
+        expect(cookies[ACCESS_TOKEN_COOKIE].value).toBeTruthy();
 
-        const refreshTokenCookie = setCookieHeaders.find((c) =>
-            c.startsWith(`${REFRESH_TOKEN_COOKIE}=`)
-        );
-        expect(refreshTokenCookie).toContain('REFRESH_TOKEN_VALUE');
-        expect(refreshTokenCookie).toContain('HttpOnly');
-        expect(refreshTokenCookie).toContain('Secure');
-        expect(refreshTokenCookie).toMatch(/SameSite=(Strict|strict)/i);
+        expect(cookies[REFRESH_TOKEN_COOKIE]).toMatchObject({
+            value: 'REFRESH_TOKEN_VALUE',
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            path: '/',
+        });
 
-        const stateClearedCookie = setCookieHeaders.find((c) => c.startsWith(`${OAUTH_STATE_COOKIE}=;`));
-        expect(stateClearedCookie).toContain('Max-Age=0');
+        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject({
+            value: '',
+            maxAge: 0,
+            path: '/',
+        });
 
-        const codeVerifierClearedCookie = setCookieHeaders.find((c) =>
-            c.startsWith(`${OAUTH_CODE_VERIFIER_COOKIE}=;`)
-        );
-        expect(codeVerifierClearedCookie).toContain('Max-Age=0');
+        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject({
+            value: '',
+            maxAge: 0,
+            path: '/',
+        });
     });
 
     it('should allow authenticated request to proceed with backendSession', async () => {
-        // Use a backend-generated token with Scopes for isOwner check
         const accessToken = createBackendAccessToken({
-            email: 'tomdush@gmail.com',
-            Scopes: 'owner:tomdush@gmail.com',
+            email: 'user@example.com',
+            Scopes: 'owner:user@example.com',
         });
 
-        // Create a matching user info cookie (would have been set during OAuth callback)
         const userInfoCookie = JSON.stringify({
-            name: 'Thomas Duchatelle',
-            email: 'tomdush@gmail.com',
-            picture: 'https://lh3.googleusercontent.com/a/ACg8ocKBKtsO86UaxMwMaQpnykZv5Qb38FLYJlMzQi3FrriBcDaxAUxP=s96-c',
+            name: 'Test User',
+            email: 'user@example.com',
+            picture: 'https://example.com/avatar.jpg',
         });
 
         const request = new NextRequest('https://example.com/albums', {
@@ -175,10 +161,8 @@ describe('authentication middleware', () => {
 
         const response = await middleware(request);
 
-        // NextJS middleware returns a NextResponse object when continuing
         expect(response.status).toBe(200);
 
-        // Check that backendSession was added to headers
         const backendSessionHeader = response.headers.get('x-backend-session');
         expect(backendSessionHeader).toBeDefined();
 
@@ -189,9 +173,9 @@ describe('authentication middleware', () => {
         expect(new Date(backendSession.accessToken.expiresAt)).toBeInstanceOf(Date);
         expect(backendSession.refreshToken).toBe('');
         expect(backendSession.authenticatedUser).toEqual({
-            name: 'Thomas Duchatelle',
-            email: 'tomdush@gmail.com',
-            picture: 'https://lh3.googleusercontent.com/a/ACg8ocKBKtsO86UaxMwMaQpnykZv5Qb38FLYJlMzQi3FrriBcDaxAUxP=s96-c',
+            name: 'Test User',
+            email: 'user@example.com',
+            picture: 'https://example.com/avatar.jpg',
             isOwner: true,
         });
     });

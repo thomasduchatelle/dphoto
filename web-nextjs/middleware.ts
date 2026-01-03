@@ -1,14 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest, NextResponse} from 'next/server';
 import * as cookie from 'cookie';
 import * as client from 'openid-client';
-import {
-    ACCESS_TOKEN_COOKIE,
-    REFRESH_TOKEN_COOKIE,
-    OAUTH_STATE_COOKIE,
-    OAUTH_CODE_VERIFIER_COOKIE,
-    BackendSession,
-} from './lib/security/constants';
-import { decodeJWTPayload, isOwnerFromJWT } from './lib/security/jwt-utils';
+import {ACCESS_TOKEN_COOKIE, BackendSession, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE,} from './lib/security/constants';
+import {decodeJWTPayload, isOwnerFromJWT} from './lib/security/jwt-utils';
+import {ResponseCookie} from "next/dist/compiled/@edge-runtime/cookies";
 
 const USER_INFO_COOKIE = 'dphoto-user-info';
 
@@ -41,8 +36,7 @@ interface Cookies {
     codeVerifier?: string;
 }
 
-const COOKIE_OPTS: cookie.SerializeOptions = {
-    maxAge: 3600,
+const COOKIE_OPTS: Partial<ResponseCookie> = {
     httpOnly: true,
     path: '/',
     secure: true,
@@ -157,7 +151,7 @@ export async function middleware(request: NextRequest) {
 
         const response = NextResponse.redirect(redirectTo);
 
-        const authCookiesOptions: cookie.SerializeOptions = {
+        const authCookiesOptions: Partial<ResponseCookie> = {
             ...COOKIE_OPTS,
             maxAge: 5 * 60, // 5 minutes
             sameSite: 'lax',

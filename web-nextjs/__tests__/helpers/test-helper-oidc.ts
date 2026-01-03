@@ -1,6 +1,6 @@
-export const TEST_ISSUER_URL = 'https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_7CivTjR7R';
-export const TEST_CLIENT_ID = '7k53mt7hv23fffi7dqe9sfi1b2';
-export const TEST_CLIENT_SECRET = 'test-client-secret';
+export const TEST_ISSUER_URL = 'https://oidc-provider.example.com';
+export const TEST_CLIENT_ID = 'test-client-id-12345';
+export const TEST_CLIENT_SECRET = 'test-client-secret-67890';
 
 /**
  * Creates a Cognito-style access token (used during OAuth flow)
