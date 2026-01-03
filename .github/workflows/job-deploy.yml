@@ -31,22 +31,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            web-nextjs/node_modules
-            web-nextjs/.sst/cache
-          key: ${{ runner.os }}-sst-node-${{ hashFiles('web-nextjs/package-lock.json') }}
+            deployments/cdk/.sst/cache
+          key: ${{ runner.os }}-sst-cache-${{ hashFiles('deployments/cdk/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-sst-node-
+            ${{ runner.os }}-sst-cache-
 
       - name: Setup CDK
         uses: ./.github/actions/install-cdk
 
       - name: Install SST
-        working-directory: web-nextjs
+        working-directory: deployments/cdk
         shell: bash
         run: |
-          npm ci
           npx sst install
-          node ../scripts/pulumi-patch.js || echo "FAILED to patch pulumi"
+          node ../../scripts/pulumi-patch.js || echo "FAILED to patch pulumi"
 
       - name: Download api
         uses: actions/download-artifact@v4
@@ -88,7 +86,7 @@ jobs:
           AWS_DEFAULT_REGION: eu-west-1
 
       - name: Deploy with SST
-        working-directory: web-nextjs
+        working-directory: deployments/cdk
         run: npx sst deploy --stage ${{ inputs.target }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

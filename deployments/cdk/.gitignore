@@ -9,3 +9,6 @@ cdk.out
 
 !bin/
 backups/
+
+# SST
+.sst
