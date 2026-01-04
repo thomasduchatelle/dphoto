@@ -2,7 +2,7 @@
 
 import {describe, expect, it} from 'vitest';
 import {NextRequest} from 'next/server';
-import {proxy} from './proxy';
+import {middleware} from './middleware';
 import {ACCESS_TOKEN_COOKIE} from './lib/security/constants';
 
 describe('authentication middleware', () => {
@@ -14,7 +14,7 @@ describe('authentication middleware', () => {
             },
         });
 
-        const response = await proxy(request);
+        const response = await middleware(request);
 
         expect(response.status).toBe(307);
         expect(response.headers.get('Location')).toBe('https://example.com/auth/login');
@@ -31,7 +31,7 @@ describe('authentication middleware', () => {
             },
         });
 
-        const response = await proxy(request);
+        const response = await middleware(request);
 
         expect(response.status).toBe(200);
     });

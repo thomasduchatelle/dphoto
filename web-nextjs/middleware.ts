@@ -14,7 +14,7 @@ function readCookies(request: NextRequest): Cookies {
     };
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     
     // Whitelist pages that don't require authentication
@@ -33,9 +33,6 @@ export async function proxy(request: NextRequest) {
 
     return NextResponse.next();
 }
-
-// Next.js 16 requires the middleware function (even in proxy.ts)
-export const middleware = proxy;
 
 export const config = {
     matcher: [

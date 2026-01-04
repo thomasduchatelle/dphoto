@@ -21,8 +21,6 @@ export interface EnvironmentConfig {
     certificateEmail: string
     // OAuth2 Client ID for Google SSO, used by Cognito
     googleLoginClientId: string
-    // FEATURE FLAG
-    featureFlags?: FeatureFlags
 }
 
 export const environments: Record<string, EnvironmentConfig> = {
@@ -58,9 +56,6 @@ export const environments: Record<string, EnvironmentConfig> = {
         cognitoExtraRedirectURLs: ['http://localhost:3000'],
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com',
-        featureFlags: {
-            // useNextJS: true,
-        },
     },
     test: {
         production: true,
@@ -72,8 +67,5 @@ export const environments: Record<string, EnvironmentConfig> = {
         cognitoExtraRedirectURLs: ["http://localhost:3210"],
         certificateEmail: 'dphoto@example.com',
         googleLoginClientId: 'test-google-client-id',
-        featureFlags: {
-            useNextJS: true,
-        },
     }
 };
