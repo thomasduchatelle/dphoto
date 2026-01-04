@@ -21,12 +21,12 @@ function getOidcConfigFromEnv(): OpenIdConfig {
     };
 }
 
-const COOKIE_OPTS: Partial<ResponseCookie> = {
-    maxAge: 3600,
+const AUTH_COOKIE_OPTS: Partial<ResponseCookie> = {
+    maxAge: 5 * 60,
     httpOnly: true,
     path: '/',
     secure: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
 };
 
 export async function GET(request: NextRequest) {
@@ -48,14 +48,8 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.redirect(redirectTo);
 
-    const authCookiesOptions: Partial<ResponseCookie> = {
-        ...COOKIE_OPTS,
-        maxAge: 5 * 60,
-        sameSite: 'lax',
-    };
-
-    response.cookies.set(OAUTH_STATE_COOKIE, parameters.state, authCookiesOptions);
-    response.cookies.set(OAUTH_CODE_VERIFIER_COOKIE, codeVerifier, authCookiesOptions);
+    response.cookies.set(OAUTH_STATE_COOKIE, parameters.state, AUTH_COOKIE_OPTS);
+    response.cookies.set(OAUTH_CODE_VERIFIER_COOKIE, codeVerifier, AUTH_COOKIE_OPTS);
 
     return response;
 }

@@ -15,6 +15,16 @@ function readCookies(request: NextRequest): Cookies {
 }
 
 export async function proxy(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    
+    // Whitelist pages that don't require authentication
+    const publicPaths = ['/auth/login', '/auth/callback', '/error'];
+    const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
+    
+    if (isPublicPath) {
+        return NextResponse.next();
+    }
+
     const cookies = readCookies(request);
 
     if (!cookies.accessToken) {
@@ -35,8 +45,7 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * - auth (auth routes - login and callback)
          */
-        '/((?!api|_next/static|_next/image|favicon.ico|auth).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico).*)',
     ],
 };
