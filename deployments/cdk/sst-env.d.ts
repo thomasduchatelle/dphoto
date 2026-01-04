@@ -5,6 +5,14 @@
 
 declare module "sst" {
   export interface Resource {
+    "DPhotoWEB": {
+      "type": "sst.aws.Nextjs"
+      "url": string
+    }
+    "Router": {
+      "type": "sst.aws.Router"
+      "url": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />

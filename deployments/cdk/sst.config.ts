@@ -11,16 +11,14 @@ export default $config({
     },
     async run() {
         const domainName = process.env.SST_CLOUD_FRONT_DOMAIN;
-        const cognitoIssuer = process.env.SST_COGNITO_ISSUER;
-        const cognitoClientId = process.env.SST_COGNITO_CLIENT_ID;
-        const cognitoClientSecret = process.env.SST_COGNITO_CLIENT_SECRET;
+        const env = {
+            OAUTH_ISSUER_URL: process.env.OAUTH_ISSUER_URL,
+            OAUTH_CLIENT_ID: process.env.OAUTH_CLIENT_ID,
+            OAUTH_CLIENT_SECRET: process.env.OAUTH_CLIENT_SECRET,
+        }
 
         console.log(`SST_CLOUD_FRONT_DOMAIN=${domainName}`);
-        console.log(`SST_COGNITO_ISSUER=${cognitoIssuer}`);
-        console.log(`SST_COGNITO_CLIENT_ID=${cognitoClientId}`);
-        console.log(
-            `SST_COGNITO_CLIENT_SECRET=${cognitoClientSecret ? "****" : "undefined"}`,
-        );
+        console.log(`Environment variables:`, JSON.stringify({...env, OAUTH_CLIENT_SECRET: env.OAUTH_CLIENT_SECRET ? "****" : "undefined"}, null, 2));
 
         if (!domainName) {
             throw new Error("SST_CLOUD_FRONT_DOMAIN is not defined");
@@ -44,9 +42,7 @@ export default $config({
                 memory: "512 MB",
             },
             environment: {
-                NEXT_PUBLIC_COGNITO_ISSUER: cognitoIssuer!,
-                NEXT_PUBLIC_COGNITO_CLIENT_ID: cognitoClientId!,
-                COGNITO_CLIENT_SECRET: cognitoClientSecret!,
+                ...env,
             }
         });
     },
