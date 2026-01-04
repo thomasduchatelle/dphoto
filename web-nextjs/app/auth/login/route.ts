@@ -9,15 +9,17 @@ type OpenIdConfig = {
     clientSecret: string;
 };
 
+export const basePath = '/nextjs'
+
 async function oidcConfig({ issuer, clientId, clientSecret }: OpenIdConfig): Promise<client.Configuration> {
     return client.discovery(new URL(issuer), clientId, clientSecret);
 }
 
 function getOidcConfigFromEnv(): OpenIdConfig {
     return {
-        issuer: process.env.COGNITO_ISSUER || '',
-        clientId: process.env.COGNITO_CLIENT_ID || '',
-        clientSecret: process.env.COGNITO_CLIENT_SECRET || '',
+        issuer: process.env.OAUTH_ISSUER_URL || '',
+        clientId: process.env.OAUTH_CLIENT_ID || '',
+        clientSecret: process.env.OAUTH_CLIENT_SECRET || '',
     };
 }
 
@@ -31,13 +33,13 @@ const AUTH_COOKIE_OPTS: Partial<ResponseCookie> = {
 
 export async function GET(request: NextRequest) {
     const config = await oidcConfig(getOidcConfigFromEnv());
-    const { origin } = request.nextUrl;
+    const {origin} = request.nextUrl;
 
     const codeVerifier: string = client.randomPKCECodeVerifier();
     const code_challenge: string = await client.calculatePKCECodeChallenge(codeVerifier);
 
     const parameters: Record<string, string> = {
-        redirect_uri: `${origin}/auth/callback`,
+        redirect_uri: `${origin}${basePath}/auth/callback`,
         scope: 'openid profile email',
         code_challenge,
         code_challenge_method: 'S256',

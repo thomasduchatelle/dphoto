@@ -4,6 +4,7 @@ import * as client from 'openid-client';
 import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '../../../lib/security/constants';
 import {decodeJWTPayload} from '../../../lib/security/jwt-utils';
 import {ResponseCookie} from "next/dist/compiled/@edge-runtime/cookies";
+import {basePath} from "@/app/auth/login/route";
 
 const USER_INFO_COOKIE = 'dphoto-user-info';
 
@@ -48,9 +49,9 @@ async function oidcConfig({ issuer, clientId, clientSecret }: OpenIdConfig): Pro
 
 function getOidcConfigFromEnv(): OpenIdConfig {
     return {
-        issuer: process.env.COGNITO_ISSUER || '',
-        clientId: process.env.COGNITO_CLIENT_ID || '',
-        clientSecret: process.env.COGNITO_CLIENT_SECRET || '',
+        issuer: process.env.OAUTH_ISSUER_URL || '',
+        clientId: process.env.OAUTH_CLIENT_ID || '',
+        clientSecret: process.env.OAUTH_CLIENT_SECRET || '',
     };
 }
 
@@ -66,6 +67,8 @@ export async function GET(request: NextRequest) {
     const config = await oidcConfig(getOidcConfigFromEnv());
     const url = new URL(request.url);
     const cookies = readCookies(request);
+
+    const targetUrl = new URL(`${basePath ?? '/'}`, request.url);
 
     try {
         const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
@@ -97,7 +100,7 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const response = NextResponse.redirect(new URL('/', request.url));
+        const response = NextResponse.redirect(targetUrl);
 
         response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.access_token ?? '', {
             ...COOKIE_OPTS,
@@ -111,6 +114,6 @@ export async function GET(request: NextRequest) {
         return response;
     } catch (error) {
         console.error('OAuth callback error:', error);
-        return NextResponse.redirect(new URL('/', request.url));
+        return NextResponse.redirect(targetUrl);
     }
 }

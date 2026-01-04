@@ -14,13 +14,14 @@ function readCookies(request: NextRequest): Cookies {
     };
 }
 
+// if basepath was not set, this would work: `export const config = { matcher: [`/(${skipProxyForPageMatching}`] }`
+export const skipProxyForPageMatching = /^(?!_next\/static|_next\/image|favicon.ico|api|auth|.*\.js$|.*\.png$|.*\.svg$|.*\.jpg$|.*\.gif$).*/i
+
 export async function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl;
-    
-    // Whitelist pages that don't require authentication
-    const publicPaths = ['/auth/login', '/auth/callback', '/error'];
-    const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
-    
+    const {pathname, basePath} = request.nextUrl;
+
+    const isPublicPath = !skipProxyForPageMatching.test(pathname.substring(1))
+
     if (isPublicPath) {
         return NextResponse.next();
     }
@@ -28,21 +29,8 @@ export async function middleware(request: NextRequest) {
     const cookies = readCookies(request);
 
     if (!cookies.accessToken) {
-        return NextResponse.redirect(new URL('/auth/login', request.url));
+        return NextResponse.redirect(new URL(`${basePath}/auth/login`, request.url));
     }
 
     return NextResponse.next();
 }
-
-export const config = {
-    matcher: [
-        /*
-         * Match all request paths except for the ones starting with:
-         * - api (API routes)
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         */
-        '/((?!api|_next/static|_next/image|favicon.ico).*)',
-    ],
-};
