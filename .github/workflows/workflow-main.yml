@@ -11,6 +11,8 @@ jobs:
     uses: ./.github/workflows/job-test-ts.yml
     with:
       update-snapshots: false
+  test-nextjs:
+    uses: ./.github/workflows/job-test-nextjs.yml
   build-go:
     uses: ./.github/workflows/job-build-go.yml
     with:
@@ -30,6 +32,7 @@ jobs:
     needs:
       - test-go
       - test-ts
+      - test-nextjs
       - build-go
       - build-ts
       - build-nextjs
@@ -44,6 +47,7 @@ jobs:
     needs:
       - test-go
       - test-ts
+      - test-nextjs
       - build-go
       - build-ts
       - build-nextjs

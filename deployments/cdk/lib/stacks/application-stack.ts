@@ -13,10 +13,8 @@ import {ArchiveAccessManager} from "../archive/archive-access-manager";
 import {CatalogAccessManager} from "../catalog/catalog-access-manager";
 import {ArchivistAccessManager} from "../archive/archivist-access-manager";
 import {AuthenticationEndpointsConstruct} from "../access/authentication-endpoints";
-import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
-import {HttpRoute, HttpRouteKey, MappingValue, ParameterMapping} from "aws-cdk-lib/aws-apigatewayv2";
 import {SSTIntegrationConstruct} from "../utils/sst-integration-construct";
+import {NextJsRoutingConstruct} from "../utils/nextjs-redirection-construct";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -50,41 +48,13 @@ export class ApplicationStack extends cdk.Stack {
             ...config,
         });
 
-        if (config.featureFlags?.useNextJS) {
-            new HttpRoute(this, 'NextJsRoute', {
-                httpApi: apiGateway.httpApi,
-                routeKey: HttpRouteKey.DEFAULT,
-                integration: new apigatewayv2_integrations.HttpUrlIntegration(
-                    `NextJsIntegration`,
-                    `https://${config.nextjsDomainName}`,
-                )
-            });
+        new WakuWebUiConstruct(this, 'WakuWebUi', {
+            environmentName,
+            httpApi: apiGateway.httpApi,
+            oauth2ClientConfig: oauth2ClientConfig,
+        });
 
-        } else {
-            new WakuWebUiConstruct(this, 'WakuWebUi', {
-                environmentName,
-                httpApi: apiGateway.httpApi,
-                oauth2ClientConfig: oauth2ClientConfig,
-            });
-
-            const nextJsHttpIntegration = new apigatewayv2_integrations.HttpUrlIntegration(
-                `NextJsWithBasePathIntegration`,
-                `https://${config.nextjsDomainName}`,
-                {
-                    parameterMapping: new ParameterMapping().overwritePath(MappingValue.requestPath()),
-                },
-            );
-            new apigatewayv2.HttpRoute(this, 'NextJsEagerRoute', {
-                httpApi: apiGateway.httpApi,
-                routeKey: apigatewayv2.HttpRouteKey.with('/nextjs/{proxy+}', apigatewayv2.HttpMethod.ANY),
-                integration: nextJsHttpIntegration
-            });
-            new apigatewayv2.HttpRoute(this, 'NextJsBaseRoute', {
-                httpApi: apiGateway.httpApi,
-                routeKey: apigatewayv2.HttpRouteKey.with('/nextjs', apigatewayv2.HttpMethod.ANY),
-                integration: nextJsHttpIntegration
-            });
-        }
+        this.integrateNextJsUI(config, apiGateway, environmentName, oauth2ClientConfig);
 
         new VersionEndpointConstruct(this, 'VersionEndpoint', {
             environmentName,
@@ -125,12 +95,6 @@ export class ApplicationStack extends cdk.Stack {
             queryParamAuthorizer: lambdaAuthorizer.queryParamAuthorizer,
         });
 
-        new SSTIntegrationConstruct(this, 'SSTIntegration', {
-            environmentName,
-            oauth2ClientConfig,
-            config,
-        });
-
         // TODO AGENTS - Remove the construct (class definition and this instantiation) after Cognito switch over (it won't be used).
         new AuthenticationEndpointsConstruct(this, 'AuthenticationEndpoints', {
             environmentName,
@@ -143,6 +107,19 @@ export class ApplicationStack extends cdk.Stack {
         new cdk.CfnOutput(this, 'PublicURL', {
             value: `https://${config.domainName}`,
             description: 'User friendly HTTPS url where the application has been deployed'
+        });
+    }
+
+    private integrateNextJsUI(config: EnvironmentConfig, apiGateway: ApiGatewayConstruct, environmentName: string, oauth2ClientConfig: CognitoStackExports) {
+        new NextJsRoutingConstruct(this, 'NextJsRouting', {
+            nextjsDomainName: config.nextjsDomainName,
+            httpApi: apiGateway.httpApi,
+        })
+
+        new SSTIntegrationConstruct(this, 'SSTIntegration', {
+            environmentName,
+            oauth2ClientConfig,
+            config,
         });
     }
 }

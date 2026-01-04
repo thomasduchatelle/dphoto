@@ -34,20 +34,20 @@ get_output() {
 
 # Extract the required outputs
 SST_CLOUD_FRONT_DOMAIN=$(get_output "dphoto-${ENVIRONMENT}-sst-cloudfront-domain")
-COGNITO_ISSUER=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-issuer")
-COGNITO_CLIENT_ID=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-client-id")
-COGNITO_CLIENT_SECRET=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-client-secret")
+OAUTH_ISSUER_URL=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-issuer")
+OAUTH_CLIENT_ID=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-client-id")
+OAUTH_CLIENT_SECRET=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-client-secret")
 
 # Validate that all required outputs were found
-if [ -z "$SST_CLOUD_FRONT_DOMAIN" ] || [ -z "$COGNITO_ISSUER" ] || [ -z "$COGNITO_CLIENT_ID" ] || [ -z "$COGNITO_CLIENT_SECRET" ]; then
+if [ -z "$SST_CLOUD_FRONT_DOMAIN" ] || [ -z "$OAUTH_ISSUER_URL" ] || [ -z "$OAUTH_CLIENT_ID" ] || [ -z "$OAUTH_CLIENT_SECRET" ]; then
   echo "Error: Failed to retrieve one or more required CDK outputs from stack ${STACK_NAME}" >&2
   echo "  SST_CLOUD_FRONT_DOMAIN: ${SST_CLOUD_FRONT_DOMAIN:-<missing>}" >&2
-  echo "  COGNITO_ISSUER: ${COGNITO_ISSUER:-<missing>}" >&2
-  echo "  COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-<missing>}" >&2
-  if [ -z "$COGNITO_CLIENT_SECRET" ]; then
-    echo "  COGNITO_CLIENT_SECRET: <missing>" >&2
+  echo "  OAUTH_ISSUER_URL: ${OAUTH_ISSUER_URL:-<missing>}" >&2
+  echo "  OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-<missing>}" >&2
+  if [ -z "$OAUTH_CLIENT_SECRET" ]; then
+    echo "  OAUTH_CLIENT_SECRET: <missing>" >&2
   else
-    echo "  COGNITO_CLIENT_SECRET: <hidden>" >&2
+    echo "  OAUTH_CLIENT_SECRET: <hidden>" >&2
   fi
   exit 1
 fi
@@ -55,13 +55,13 @@ fi
 # Create the .env file
 cat > "${REPO_ROOT}/${ENV_FILE}" <<EOF
 SST_CLOUD_FRONT_DOMAIN=${SST_CLOUD_FRONT_DOMAIN}
-SST_COGNITO_ISSUER=${COGNITO_ISSUER}
-SST_COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID}
-SST_COGNITO_CLIENT_SECRET=${COGNITO_CLIENT_SECRET}
+OAUTH_ISSUER_URL=${OAUTH_ISSUER_URL}
+OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
 EOF
 
 # Restrict permissions to owner only for security
 chmod 600 "${REPO_ROOT}/${ENV_FILE}"
 
 echo "Successfully created ${ENV_FILE}:"
-cat "${REPO_ROOT}/${ENV_FILE}" | sed 's/^\(SST_COGNITO_CLIENT_SECRET=\).*/\1<hidden>/'
+cat "${REPO_ROOT}/${ENV_FILE}" | sed 's/^\(OAUTH_CLIENT_SECRET=\).*/\1<hidden>/'

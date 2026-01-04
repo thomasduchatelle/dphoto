@@ -164,12 +164,12 @@ export class CognitoStack extends cdk.Stack {
                     cognito.OAuthScope.PROFILE,
                 ],
                 callbackUrls: [
-                    `https://${domainName}/auth/callback`,
-                    ...cognitoExtraRedirectURLs.map(url => `${url}/auth/callback`)
+                    `https://${domainName}/nextjs/auth/callback`,
+                    ...cognitoExtraRedirectURLs.map(url => `${url}/nextjs/auth/callback`)
                 ],
                 logoutUrls: [
-                    `https://${domainName}/`,
-                    ...cognitoExtraRedirectURLs.map(url => `${url}/`)
+                    `https://${domainName}/nextjs/auth/logout`,
+                    ...cognitoExtraRedirectURLs.map(url => `${url}/nextjs/auth/logout`)
                 ],
             },
             supportedIdentityProviders: [
