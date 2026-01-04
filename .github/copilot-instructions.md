@@ -18,12 +18,17 @@ EXTREMELY IMPORTANT**. You must take your time, and think carefully, when accomp
 - `api/lambdas/` - in **Golang/AWS SDK** source of the REST API deployed as AWS Lambdas with an AWS API Gateway (v2 HTTP). Each operation is deployed as one
   lambda handler and is in its own folder.
     - `api/lambdas/common/` contains utilities shared by most handlers (get context from authorizer, ...)
-- `web/` - **Typescript / React 19 / Waku framework** Website built on top of the REST API, deployed as a lambda.
+- `web/` - **DEPRECATED! Project will be replaced by web-nextjs** Typescript / React 19 / Waku framework Website built on top of the REST API, deployed as a
+  lambda.
     - `web/src/core/catalog/language/` - data structures used across the web application, **very important for context**.
     - `web/src/core/catalog/**/` - other folders are handlers for the operations available on the UI.
     - `web/src/components/` - React components, usually pure.
     - `web/src/pages/` - Waku page-driven navigation built from the components.
-- `deployments/cdk/` - AWS CDK infrastructure (TypeScript/Jest).
+- `web-nextjs/` - **Typescript / React 19 / NextJS framework** Website built on top of the REST API, deployed using SST.
+    - this is a new project, implemented incrementally to replace `web/`.
+    - **NextJS App Router** is used: file structure must respect its principles.
+    - Files structure must follow the best practices from NextJS.
+- `deployments/cdk/` - AWS CDK infrastructure (TypeScript/Jest), and SST to deploy `web-nextjs`.
 - `.github/` - CI definitions, and Agent instructions.
     - `.github/actions/` - customised actions used within this repository only
     - `.github/workflows/job-*.yml` - reusable sub-workflow to build, test, and deploy the application

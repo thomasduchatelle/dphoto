@@ -59,7 +59,7 @@ export const environments: Record<string, EnvironmentConfig> = {
         certificateEmail: 'duchatelle.thomas@gmail.com',
         googleLoginClientId: '841197197570-7hlq9e86d6u37eoq8nsd8af4aaisl5gb.apps.googleusercontent.com',
         featureFlags: {
-            useNextJS: true,
+            // useNextJS: true,
         },
     },
     test: {
