@@ -72,12 +72,12 @@ describe('CognitoStack', () => {
     test('User Pool Client callback and Logout URLs include main domain and extra URLs', () => {
         template.hasResourceProperties('AWS::Cognito::UserPoolClient', {
             CallbackURLs: [
-                'https://dphoto.example.com/auth/callback',
-                'http://localhost:3210/auth/callback'
+                'https://dphoto.example.com/nextjs/auth/callback',
+                'http://localhost:3210/nextjs/auth/callback'
             ],
             LogoutURLs: [
-                'https://dphoto.example.com/',
-                'http://localhost:3210/'
+                'https://dphoto.example.com/nextjs/auth/logout',
+                'http://localhost:3210/nextjs/auth/logout'
             ],
         });
     });
