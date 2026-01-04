@@ -1,10 +1,8 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as client from 'openid-client';
-import {OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE} from '@/lib/security/constants';
-import {ResponseCookie} from "next/dist/compiled/@edge-runtime/cookies";
-import {basePath, getOidcConfigFromEnv, oidcConfig} from '@/lib/security/oidc-config';
+import {basePath, getOidcConfigFromEnv, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, oidcConfig} from '@/lib/security';
 
-const AUTH_COOKIE_OPTS: Partial<ResponseCookie> = {
+const AUTH_COOKIE_OPTS: any = {
     maxAge: 5 * 60,
     httpOnly: true,
     path: '/',

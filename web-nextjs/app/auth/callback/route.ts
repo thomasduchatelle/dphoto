@@ -1,10 +1,16 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as cookie from 'cookie';
 import * as client from 'openid-client';
-import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '@/lib/security/constants';
-import {decodeJWTPayload} from '@/lib/security/jwt-utils';
-import {ResponseCookie} from "next/dist/compiled/@edge-runtime/cookies";
-import {basePath, getOidcConfigFromEnv, oidcConfig} from '@/lib/security/oidc-config';
+import {
+    ACCESS_TOKEN_COOKIE,
+    basePath,
+    decodeJWTPayload,
+    getOidcConfigFromEnv,
+    OAUTH_CODE_VERIFIER_COOKIE,
+    OAUTH_STATE_COOKIE,
+    oidcConfig,
+    REFRESH_TOKEN_COOKIE
+} from '@/lib/security';
 
 const USER_INFO_COOKIE = 'dphoto-user-info';
 
@@ -14,6 +20,7 @@ interface IDTokenPayload {
     email?: string;
     picture?: string;
     exp?: number;
+
     [key: string]: any;
 }
 
@@ -37,7 +44,7 @@ function readCookies(request: NextRequest): Cookies {
     };
 }
 
-const COOKIE_OPTS: Partial<ResponseCookie> = {
+const COOKIE_OPTS: any = {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
@@ -72,7 +79,7 @@ export async function GET(request: NextRequest) {
                 const firstName = idTokenPayload.given_name || '';
                 const lastName = idTokenPayload.family_name || '';
                 const fullName = [firstName, lastName].filter(Boolean).join(' ');
-                
+
                 userInfo = {
                     name: fullName,
                     email: idTokenPayload.email || '',
@@ -89,8 +96,8 @@ export async function GET(request: NextRequest) {
         });
         response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token ?? '', COOKIE_OPTS);
         response.cookies.set(USER_INFO_COOKIE, JSON.stringify(userInfo), COOKIE_OPTS);
-        response.cookies.set(OAUTH_STATE_COOKIE, '', { maxAge: 0, path: '/' });
-        response.cookies.set(OAUTH_CODE_VERIFIER_COOKIE, '', { maxAge: 0, path: '/' });
+        response.cookies.set(OAUTH_STATE_COOKIE, '', {maxAge: 0, path: '/'});
+        response.cookies.set(OAUTH_CODE_VERIFIER_COOKIE, '', {maxAge: 0, path: '/'});
 
         return response;
     } catch (error) {
