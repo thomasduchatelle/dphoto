@@ -4,13 +4,13 @@ import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {GET} from './route';
 import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '../../../lib/security/constants';
-import {FakeOIDCServer} from '../../../__tests__/helpers/fake-oidc-server';
+import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '../../../__tests__/helpers/test-helper-oidc';
-import {setCookiesOf} from '../../../__tests__/helpers/test-assertions';
+import {setCookiesOf} from '@/__tests__/helpers/test-assertions';
 
-vi.stubEnv('COGNITO_ISSUER', TEST_ISSUER_URL);
-vi.stubEnv('COGNITO_CLIENT_ID', TEST_CLIENT_ID);
-vi.stubEnv('COGNITO_CLIENT_SECRET', TEST_CLIENT_SECRET);
+vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
+vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
+vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
 const deletedCookie = {
     value: '',
@@ -53,7 +53,7 @@ describe('authentication middleware', () => {
         const response = await GET(request);
 
         expect(response.status).toBe(307);
-        expect(response.headers.get('Location')).toBe('https://example.com/');
+        expect(response.headers.get('Location')).toBe('https://example.com/nextjs');
 
         const cookies = setCookiesOf(response);
 

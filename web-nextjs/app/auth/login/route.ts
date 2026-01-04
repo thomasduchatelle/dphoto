@@ -1,27 +1,8 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as client from 'openid-client';
-import {OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE} from '../../../lib/security/constants';
+import {OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE} from '@/lib/security/constants';
 import {ResponseCookie} from "next/dist/compiled/@edge-runtime/cookies";
-
-type OpenIdConfig = {
-    issuer: string;
-    clientId: string;
-    clientSecret: string;
-};
-
-export const basePath = '/nextjs'
-
-async function oidcConfig({ issuer, clientId, clientSecret }: OpenIdConfig): Promise<client.Configuration> {
-    return client.discovery(new URL(issuer), clientId, clientSecret);
-}
-
-function getOidcConfigFromEnv(): OpenIdConfig {
-    return {
-        issuer: process.env.OAUTH_ISSUER_URL || '',
-        clientId: process.env.OAUTH_CLIENT_ID || '',
-        clientSecret: process.env.OAUTH_CLIENT_SECRET || '',
-    };
-}
+import {basePath, getOidcConfigFromEnv, oidcConfig} from '@/lib/security/oidc-config';
 
 const AUTH_COOKIE_OPTS: Partial<ResponseCookie> = {
     maxAge: 5 * 60,

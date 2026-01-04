@@ -1,10 +1,10 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as cookie from 'cookie';
 import * as client from 'openid-client';
-import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '../../../lib/security/constants';
-import {decodeJWTPayload} from '../../../lib/security/jwt-utils';
+import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '@/lib/security/constants';
+import {decodeJWTPayload} from '@/lib/security/jwt-utils';
 import {ResponseCookie} from "next/dist/compiled/@edge-runtime/cookies";
-import {basePath} from "@/app/auth/login/route";
+import {basePath, getOidcConfigFromEnv, oidcConfig} from '@/lib/security/oidc-config';
 
 const USER_INFO_COOKIE = 'dphoto-user-info';
 
@@ -37,30 +37,11 @@ function readCookies(request: NextRequest): Cookies {
     };
 }
 
-type OpenIdConfig = {
-    issuer: string;
-    clientId: string;
-    clientSecret: string;
-};
-
-async function oidcConfig({ issuer, clientId, clientSecret }: OpenIdConfig): Promise<client.Configuration> {
-    return client.discovery(new URL(issuer), clientId, clientSecret);
-}
-
-function getOidcConfigFromEnv(): OpenIdConfig {
-    return {
-        issuer: process.env.OAUTH_ISSUER_URL || '',
-        clientId: process.env.OAUTH_CLIENT_ID || '',
-        clientSecret: process.env.OAUTH_CLIENT_SECRET || '',
-    };
-}
-
 const COOKIE_OPTS: Partial<ResponseCookie> = {
-    maxAge: 3600,
     httpOnly: true,
-    path: '/',
     secure: true,
     sameSite: 'strict',
+    path: '/',
 };
 
 export async function GET(request: NextRequest) {

@@ -3,14 +3,14 @@
 import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {GET} from './route';
-import {OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE} from '../../../lib/security/constants';
-import {FakeOIDCServer} from '../../../__tests__/helpers/fake-oidc-server';
-import {TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '../../../__tests__/helpers/test-helper-oidc';
-import {redirectionOf, setCookiesOf} from '../../../__tests__/helpers/test-assertions';
+import {OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE} from '@/lib/security/constants';
+import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
+import {TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
+import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
 
-vi.stubEnv('COGNITO_ISSUER', TEST_ISSUER_URL);
-vi.stubEnv('COGNITO_CLIENT_ID', TEST_CLIENT_ID);
-vi.stubEnv('COGNITO_CLIENT_SECRET', TEST_CLIENT_SECRET);
+vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
+vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
+vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
 describe('authentication middleware', () => {
     let fakeOIDCServer: FakeOIDCServer;
@@ -43,7 +43,7 @@ describe('authentication middleware', () => {
         const redirection = redirectionOf(response);
         expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
         expect(redirection.params.client_id).toBe(TEST_CLIENT_ID);
-        expect(redirection.params.redirect_uri).toBe('https://example.com/auth/callback');
+        expect(redirection.params.redirect_uri).toBe('https://example.com/nextjs/auth/callback');
         expect(redirection.params.scope).toBe('openid profile email');
         expect(redirection.params.code_challenge_method).toBe('S256');
         expect(redirection.params.state).toBeDefined();
