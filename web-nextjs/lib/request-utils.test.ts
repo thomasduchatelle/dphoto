@@ -142,4 +142,194 @@ describe('getOriginalOrigin', () => {
 
         expect(origin).toBe('https://example.com');
     });
+
+    describe('security validations', () => {
+        it('should fallback when X-Forwarded-Proto contains invalid protocol', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'javascript',
+                    'x-forwarded-host': 'malicious.com',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should fallback when X-Forwarded-Proto contains data protocol', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'data',
+                    'x-forwarded-host': 'malicious.com',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should fallback when X-Forwarded-Proto contains ftp protocol', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'ftp',
+                    'x-forwarded-host': 'malicious.com',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should fallback when X-Forwarded-Host is empty', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': '',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should fallback when X-Forwarded-Host contains invalid characters', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'evil@malicious.com',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should ignore invalid port and omit it from URL', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'example.com',
+                    'x-forwarded-port': 'abc',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should ignore negative port number', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'example.com',
+                    'x-forwarded-port': '-1',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should ignore port number that is too large', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'example.com',
+                    'x-forwarded-port': '999999',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should ignore empty port value', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'example.com',
+                    'x-forwarded-port': '',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should handle comma-separated X-Forwarded-Port values (taking first)', () => {
+            const request = new NextRequest('https://internal-api-gateway.amazonaws.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'example.com',
+                    'x-forwarded-port': '8443, 443',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com:8443');
+        });
+
+        it('should normalize protocol to lowercase', () => {
+            const request = new NextRequest('https://internal-api-gateway.amazonaws.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'HTTPS',
+                    'x-forwarded-host': 'example.com',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should normalize host to lowercase', () => {
+            const request = new NextRequest('https://internal-api-gateway.amazonaws.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'Example.COM',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should accept IPv4 addresses as valid hosts', () => {
+            const request = new NextRequest('https://internal-api-gateway.amazonaws.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': '192.168.1.1',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://192.168.1.1');
+        });
+    });
 });
+
