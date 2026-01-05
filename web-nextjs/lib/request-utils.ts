@@ -1,67 +1,112 @@
 import {NextRequest} from 'next/server';
 
 /**
+ * Parses the RFC 7239 Forwarded header.
+ * Format: "by=<identifier>;for=<identifier>;host=<host>;proto=<protocol>"
+ * 
+ * @param forwardedHeader - The Forwarded header value
+ * @returns Object with extracted proto and host, or null if parsing fails
+ */
+function parseForwardedHeader(forwardedHeader: string): { proto: string; host: string } | null {
+    try {
+        const parts = forwardedHeader.split(';');
+        let proto: string | undefined;
+        let host: string | undefined;
+
+        for (const part of parts) {
+            const [key, value] = part.split('=').map(s => s.trim());
+            if (key === 'proto') {
+                proto = value;
+            } else if (key === 'host') {
+                host = value;
+            }
+        }
+
+        if (proto && host) {
+            return { proto, host };
+        }
+    } catch (e) {
+        // Parsing failed, return null
+    }
+    return null;
+}
+
+/**
  * Extracts the original origin (protocol + host + optional port) from a NextRequest.
  * 
  * When the application is deployed behind AWS API Gateway or CloudFront, the original
- * domain information is passed through X-Forwarded-* headers. This function attempts
- * to reconstruct the original URL from these headers, falling back to request.nextUrl.origin
- * if the headers are not present or invalid.
+ * domain information is passed through the RFC 7239 Forwarded header. This function attempts
+ * to reconstruct the original URL from this header, falling back to request.nextUrl.origin
+ * if the header is not present or invalid.
  * 
  * @param request - The NextRequest object
  * @returns The original origin (e.g., "https://example.com" or "https://example.com:3000")
  */
 export function getOriginalOrigin(request: NextRequest): string {
-    const forwardedProto = request.headers.get('x-forwarded-proto');
-    const forwardedHost = request.headers.get('x-forwarded-host');
-    const forwardedPort = request.headers.get('x-forwarded-port');
+    const forwardedHeader = request.headers.get('forwarded');
 
-    if (forwardedProto && forwardedHost) {
-        // Extract and validate protocol - must be http or https
-        const rawProtocol = forwardedProto.split(',')[0].trim().toLowerCase();
-        if (rawProtocol !== 'http' && rawProtocol !== 'https') {
-            // Invalid protocol, fallback to original URL
-            return request.nextUrl.origin;
-        }
-        const protocol = rawProtocol;
+    if (forwardedHeader) {
+        const parsed = parseForwardedHeader(forwardedHeader);
         
-        // Extract and normalize host
-        const host = forwardedHost.split(',')[0].trim().toLowerCase();
-        
-        // Basic host validation:
-        // - Must not be empty
-        // - Must start and end with alphanumeric
-        // - Can contain alphanumeric, dots, and hyphens in between
-        // - Must not have consecutive dots
-        if (!host || !/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i.test(host) || host.includes('..')) {
-            // Invalid host, fallback to original URL
-            return request.nextUrl.origin;
-        }
-        
-        // Extract and validate port
-        let port: number | undefined;
-        if (forwardedPort) {
-            const portStr = forwardedPort.split(',')[0].trim();
-            const portNum = parseInt(portStr, 10);
+        if (parsed) {
+            const { proto, host } = parsed;
             
-            // Validate port is a valid integer between 1 and 65535
-            if (!isNaN(portNum) && Number.isInteger(portNum) && portNum >= 1 && portNum <= 65535) {
-                port = portNum;
+            // Extract and validate protocol - must be http or https
+            const protocol = proto.toLowerCase();
+            if (protocol !== 'http' && protocol !== 'https') {
+                // Invalid protocol, fallback to original URL
+                return request.nextUrl.origin;
             }
-        }
-        
-        // Only include port if it's valid and non-standard for the protocol
-        const isStandardPort = 
-            (protocol === 'https' && (!port || port === 443)) ||
-            (protocol === 'http' && (!port || port === 80));
-        
-        if (!port || isStandardPort) {
-            return `${protocol}://${host}`;
-        } else {
-            return `${protocol}://${host}:${port}`;
+            
+            // Extract host and optional port
+            const normalizedHost = host.toLowerCase();
+            
+            // Basic host validation:
+            // - Must not be empty
+            // - Must start and end with alphanumeric (allowing port)
+            // - Can contain alphanumeric, dots, hyphens, and colons in between
+            // - Must not have consecutive dots
+            if (!normalizedHost || normalizedHost.includes('..')) {
+                // Invalid host, fallback to original URL
+                return request.nextUrl.origin;
+            }
+            
+            // Check if host contains a port
+            const hostParts = normalizedHost.split(':');
+            const hostWithoutPort = hostParts[0];
+            const portStr = hostParts[1];
+            
+            // Validate host part (without port)
+            if (!/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i.test(hostWithoutPort)) {
+                // Invalid host, fallback to original URL
+                return request.nextUrl.origin;
+            }
+            
+            // Validate port if present
+            let port: number | undefined;
+            if (portStr) {
+                const portNum = parseInt(portStr, 10);
+                if (!isNaN(portNum) && Number.isInteger(portNum) && portNum >= 1 && portNum <= 65535) {
+                    port = portNum;
+                } else {
+                    // Invalid port, fallback to original URL
+                    return request.nextUrl.origin;
+                }
+            }
+            
+            // Only include port if it's valid and non-standard for the protocol
+            const isStandardPort = 
+                (protocol === 'https' && (!port || port === 443)) ||
+                (protocol === 'http' && (!port || port === 80));
+            
+            if (!port || isStandardPort) {
+                return `${protocol}://${hostWithoutPort}`;
+            } else {
+                return `${protocol}://${hostWithoutPort}:${port}`;
+            }
         }
     }
 
-    // Fallback to request URL if X-Forwarded headers are not present
+    // Fallback to request URL if Forwarded header is not present or invalid
     return request.nextUrl.origin;
 }

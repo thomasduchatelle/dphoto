@@ -20,13 +20,12 @@ describe('authentication middleware', () => {
         expect(response.headers.get('Location')).toBe('https://example.com/auth/login');
     });
 
-    it('should redirect to login page using X-Forwarded headers when behind API Gateway', async () => {
+    it('should redirect to login page using Forwarded header when behind API Gateway', async () => {
         const request = new NextRequest('https://internal-gateway.amazonaws.com/', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
-                'x-forwarded-proto': 'https',
-                'x-forwarded-host': 'my-domain.com',
+                'forwarded': 'by=3.248.245.105;for=83.106.145.60;host=my-domain.com;proto=https',
             },
         });
 

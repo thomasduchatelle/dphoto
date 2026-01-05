@@ -77,7 +77,7 @@ describe('authentication middleware', () => {
         expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
     });
 
-    it('should redirect to original domain when using X-Forwarded headers', async () => {
+    it('should redirect to original domain when using Forwarded header', async () => {
         const authCode = 'AUTH_CODE_456';
         const tokenResponse = createTokenResponse();
         fakeOIDCServer.setupSuccessfulTokenExchange(authCode, tokenResponse);
@@ -89,8 +89,7 @@ describe('authentication middleware', () => {
                 headers: {
                     Accept: 'text/html',
                     Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER_123`,
-                    'x-forwarded-proto': 'https',
-                    'x-forwarded-host': 'my-domain.com',
+                    'forwarded': 'by=3.248.245.105;for=83.106.145.60;host=my-domain.com;proto=https',
                 },
             }
         );

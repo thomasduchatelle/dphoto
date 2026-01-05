@@ -85,13 +85,12 @@ describe('authentication middleware', () => {
         expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]?.value).toBeTruthy();
     });
 
-    it('should use X-Forwarded headers for redirect_uri when behind API Gateway', async () => {
+    it('should use Forwarded header for redirect_uri when behind API Gateway', async () => {
         const request = new NextRequest('https://internal-gateway.amazonaws.com/auth/login', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
-                'x-forwarded-proto': 'https',
-                'x-forwarded-host': 'my-domain.com',
+                'forwarded': 'by=3.248.245.105;for=83.106.145.60;host=my-domain.com;proto=https',
             },
         });
 

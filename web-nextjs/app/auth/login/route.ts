@@ -12,17 +12,20 @@ const AUTH_COOKIE_OPTS: any = {
 };
 
 export async function GET(request: NextRequest) {
-    // Debug: Print all request headers
-    console.log('=== Login Route - Request Headers ===');
-    request.headers.forEach((value, key) => {
-        console.log(`${key}: ${value}`);
-    });
-    console.log('request.url:', request.url);
-    console.log('request.nextUrl.origin:', request.nextUrl.origin);
-    console.log('=====================================');
-
     const config = await oidcConfig(getOidcConfigFromEnv());
     const origin = getOriginalOrigin(request);
+    
+    // Debug: Only print headers if 'forwarded' header is not found
+    if (!request.headers.get('forwarded')) {
+        console.log('=== Login Route - Request Headers (no forwarded header found) ===');
+        request.headers.forEach((value, key) => {
+            console.log(`${key}: ${value}`);
+        });
+        console.log('request.url:', request.url);
+        console.log('request.nextUrl.origin:', request.nextUrl.origin);
+        console.log('=====================================');
+    }
+    
     console.log('Computed origin:', origin);
 
     const codeVerifier: string = client.randomPKCECodeVerifier();
