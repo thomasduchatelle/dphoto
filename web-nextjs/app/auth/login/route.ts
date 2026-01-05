@@ -12,8 +12,18 @@ const AUTH_COOKIE_OPTS: any = {
 };
 
 export async function GET(request: NextRequest) {
+    // Debug: Print all request headers
+    console.log('=== Login Route - Request Headers ===');
+    request.headers.forEach((value, key) => {
+        console.log(`${key}: ${value}`);
+    });
+    console.log('request.url:', request.url);
+    console.log('request.nextUrl.origin:', request.nextUrl.origin);
+    console.log('=====================================');
+
     const config = await oidcConfig(getOidcConfigFromEnv());
     const origin = getOriginalOrigin(request);
+    console.log('Computed origin:', origin);
 
     const codeVerifier: string = client.randomPKCECodeVerifier();
     const code_challenge: string = await client.calculatePKCECodeChallenge(codeVerifier);
