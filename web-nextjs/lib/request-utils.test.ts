@@ -327,6 +327,32 @@ describe('getOriginalOrigin', () => {
 
             expect(origin).toBe('https://example.com');
         });
+
+        it('should handle quoted values in Forwarded header', () => {
+            const request = new NextRequest('https://internal-api-gateway.amazonaws.com/path', {
+                method: 'GET',
+                headers: {
+                    'forwarded': 'host="example.com";proto="https"',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should handle quoted host with port in Forwarded header', () => {
+            const request = new NextRequest('https://internal-api-gateway.amazonaws.com/path', {
+                method: 'GET',
+                headers: {
+                    'forwarded': 'host="example.com:8443";proto="https"',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com:8443');
+        });
     });
 });
 

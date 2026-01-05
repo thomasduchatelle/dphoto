@@ -3,6 +3,7 @@ import {NextRequest} from 'next/server';
 /**
  * Parses the RFC 7239 Forwarded header.
  * Format: "by=<identifier>;for=<identifier>;host=<host>;proto=<protocol>"
+ * Note: Values can be quoted according to RFC 7239
  * 
  * @param forwardedHeader - The Forwarded header value
  * @returns Object with extracted proto and host, or null if parsing fails
@@ -14,7 +15,17 @@ function parseForwardedHeader(forwardedHeader: string): { proto: string; host: s
         let host: string | undefined;
 
         for (const part of parts) {
-            const [key, value] = part.split('=').map(s => s.trim());
+            const equalsIndex = part.indexOf('=');
+            if (equalsIndex === -1) continue;
+            
+            const key = part.substring(0, equalsIndex).trim();
+            let value = part.substring(equalsIndex + 1).trim();
+            
+            // Remove quotes if present (RFC 7239 allows quoted values)
+            if (value.startsWith('"') && value.endsWith('"')) {
+                value = value.substring(1, value.length - 1);
+            }
+            
             if (key === 'proto') {
                 proto = value;
             } else if (key === 'host') {
