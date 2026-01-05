@@ -55,11 +55,12 @@ jobs:
       ref: ${{ needs.check-comment.outputs.pr-ref }}
 
   deploy:
-    needs: [ build-go, build-ts, build-nextjs ]
+    needs: [build-go, build-ts, build-nextjs, check-comment]
     uses: ./.github/workflows/job-deploy.yml
     with:
       target: next
       cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
+      ref: ${{ needs.check-comment.outputs.pr-ref }}
     secrets: inherit
 
   comment-result:
