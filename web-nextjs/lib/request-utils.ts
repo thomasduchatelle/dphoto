@@ -28,8 +28,12 @@ export function getOriginalOrigin(request: NextRequest): string {
         // Extract and normalize host
         const host = forwardedHost.split(',')[0].trim().toLowerCase();
         
-        // Basic host validation - must not be empty and contain valid characters
-        if (!host || !/^[a-z0-9.-]+$/i.test(host)) {
+        // Basic host validation:
+        // - Must not be empty
+        // - Must start and end with alphanumeric
+        // - Can contain alphanumeric, dots, and hyphens in between
+        // - Must not have consecutive dots
+        if (!host || !/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i.test(host) || host.includes('..')) {
             // Invalid host, fallback to original URL
             return request.nextUrl.origin;
         }
@@ -38,10 +42,10 @@ export function getOriginalOrigin(request: NextRequest): string {
         let port: number | undefined;
         if (forwardedPort) {
             const portStr = forwardedPort.split(',')[0].trim();
-            const portNum = Number(portStr);
+            const portNum = parseInt(portStr, 10);
             
             // Validate port is a valid integer between 1 and 65535
-            if (Number.isInteger(portNum) && portNum >= 1 && portNum <= 65535 && portStr === portNum.toString()) {
+            if (!isNaN(portNum) && Number.isInteger(portNum) && portNum >= 1 && portNum <= 65535) {
                 port = portNum;
             }
         }

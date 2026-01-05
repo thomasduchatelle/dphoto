@@ -330,6 +330,63 @@ describe('getOriginalOrigin', () => {
 
             expect(origin).toBe('https://192.168.1.1');
         });
+
+        it('should reject hosts with consecutive dots', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'evil..com',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should reject hosts ending with a dot', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'evil.com.',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should reject hosts starting with a dot', () => {
+            const request = new NextRequest('https://example.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': '.evil.com',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com');
+        });
+
+        it('should accept port with leading zeros', () => {
+            const request = new NextRequest('https://internal-api-gateway.amazonaws.com/path', {
+                method: 'GET',
+                headers: {
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'example.com',
+                    'x-forwarded-port': '08443',
+                },
+            });
+
+            const origin = getOriginalOrigin(request);
+
+            expect(origin).toBe('https://example.com:8443');
+        });
     });
 });
 
