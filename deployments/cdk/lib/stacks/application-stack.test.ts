@@ -187,6 +187,9 @@ describe('DPhotoApplicationStack', () => {
 
         const cognitoClientSecret = findOutputByExportName('dphoto-test-sst-cognito-client-secret');
         expect(cognitoClientSecret).toBeTruthy();
+
+        const domainName = findOutputByExportName('dphoto-test-sst-domain-name');
+        expect(domainName).toBeTruthy();
     });
 });
 

@@ -37,13 +37,15 @@ SST_CLOUD_FRONT_DOMAIN=$(get_output "dphoto-${ENVIRONMENT}-sst-cloudfront-domain
 OAUTH_ISSUER_URL=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-issuer")
 OAUTH_CLIENT_ID=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-client-id")
 OAUTH_CLIENT_SECRET=$(get_output "dphoto-${ENVIRONMENT}-sst-cognito-client-secret")
+DPHOTO_DOMAIN_NAME=$(get_output "dphoto-${ENVIRONMENT}-sst-domain-name")
 
 # Validate that all required outputs were found
-if [ -z "$SST_CLOUD_FRONT_DOMAIN" ] || [ -z "$OAUTH_ISSUER_URL" ] || [ -z "$OAUTH_CLIENT_ID" ] || [ -z "$OAUTH_CLIENT_SECRET" ]; then
+if [ -z "$SST_CLOUD_FRONT_DOMAIN" ] || [ -z "$OAUTH_ISSUER_URL" ] || [ -z "$OAUTH_CLIENT_ID" ] || [ -z "$OAUTH_CLIENT_SECRET" ] || [ -z "$DPHOTO_DOMAIN_NAME" ]; then
   echo "Error: Failed to retrieve one or more required CDK outputs from stack ${STACK_NAME}" >&2
   echo "  SST_CLOUD_FRONT_DOMAIN: ${SST_CLOUD_FRONT_DOMAIN:-<missing>}" >&2
   echo "  OAUTH_ISSUER_URL: ${OAUTH_ISSUER_URL:-<missing>}" >&2
   echo "  OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-<missing>}" >&2
+  echo "  DPHOTO_DOMAIN_NAME: ${DPHOTO_DOMAIN_NAME:-<missing>}" >&2
   if [ -z "$OAUTH_CLIENT_SECRET" ]; then
     echo "  OAUTH_CLIENT_SECRET: <missing>" >&2
   else
@@ -58,6 +60,7 @@ SST_CLOUD_FRONT_DOMAIN=${SST_CLOUD_FRONT_DOMAIN}
 OAUTH_ISSUER_URL=${OAUTH_ISSUER_URL}
 OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
 OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+DPHOTO_DOMAIN_NAME=${DPHOTO_DOMAIN_NAME}
 EOF
 
 # Restrict permissions to owner only for security

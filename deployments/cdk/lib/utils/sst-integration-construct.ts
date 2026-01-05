@@ -35,6 +35,12 @@ export class SSTIntegrationConstruct extends Construct {
             description: 'Cognito Client Secret for SST deployment',
             exportName: `dphoto-${environmentName}-sst-cognito-client-secret`,
         });
+
+        new cdk.CfnOutput(this, 'SSTDomainName', {
+            value: config.domainName,
+            description: 'Original domain name for constructing callback URLs',
+            exportName: `dphoto-${environmentName}-sst-domain-name`,
+        });
     }
 
 }

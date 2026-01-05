@@ -84,4 +84,24 @@ describe('authentication middleware', () => {
         expect(cookies[OAUTH_STATE_COOKIE]?.value).toBeTruthy();
         expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]?.value).toBeTruthy();
     });
+
+    it('should use DPHOTO_DOMAIN_NAME for redirect_uri when environment variable is set', async () => {
+        vi.stubEnv('DPHOTO_DOMAIN_NAME', 'dphoto.example.com');
+
+        const request = new NextRequest('https://cloudfront-distribution.cloudfront.net/auth/login', {
+            method: 'GET',
+            headers: {
+                Accept: 'text/html',
+            },
+        });
+
+        const response = await GET(request);
+
+        expect(response.status).toBe(307);
+
+        const redirection = redirectionOf(response);
+        expect(redirection.params.redirect_uri).toBe('https://dphoto.example.com/nextjs/auth/callback');
+
+        vi.unstubAllEnvs();
+    });
 });

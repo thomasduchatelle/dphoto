@@ -11,14 +11,20 @@ const AUTH_COOKIE_OPTS: any = {
 };
 
 export async function GET(request: NextRequest) {
-    const config = await oidcConfig(getOidcConfigFromEnv());
+    const oidcConfigFromEnv = getOidcConfigFromEnv();
+    const config = await oidcConfig(oidcConfigFromEnv);
     const {origin} = request.nextUrl;
+
+    // Use the configured domain name if available, otherwise fall back to request origin
+    const baseUrl = oidcConfigFromEnv.domainName 
+        ? `https://${oidcConfigFromEnv.domainName}`
+        : origin;
 
     const codeVerifier: string = client.randomPKCECodeVerifier();
     const code_challenge: string = await client.calculatePKCECodeChallenge(codeVerifier);
 
     const parameters: Record<string, string> = {
-        redirect_uri: `${origin}${basePath}/auth/callback`,
+        redirect_uri: `${baseUrl}${basePath}/auth/callback`,
         scope: 'openid profile email',
         code_challenge,
         code_challenge_method: 'S256',

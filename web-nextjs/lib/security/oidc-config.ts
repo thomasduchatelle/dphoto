@@ -6,6 +6,7 @@ export type OpenIdConfig = {
     issuer: string;
     clientId: string;
     clientSecret: string;
+    domainName?: string;
 };
 
 export function getOidcConfigFromEnv(): OpenIdConfig {
@@ -13,6 +14,7 @@ export function getOidcConfigFromEnv(): OpenIdConfig {
         issuer: process.env.OAUTH_ISSUER_URL || '',
         clientId: process.env.OAUTH_CLIENT_ID || '',
         clientSecret: process.env.OAUTH_CLIENT_SECRET || '',
+        domainName: process.env.DPHOTO_DOMAIN_NAME,
     };
 }
 

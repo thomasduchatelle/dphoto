@@ -15,6 +15,7 @@ export default $config({
             OAUTH_ISSUER_URL: process.env.OAUTH_ISSUER_URL,
             OAUTH_CLIENT_ID: process.env.OAUTH_CLIENT_ID,
             OAUTH_CLIENT_SECRET: process.env.OAUTH_CLIENT_SECRET,
+            DPHOTO_DOMAIN_NAME: process.env.DPHOTO_DOMAIN_NAME,
         }
 
         console.log(`SST_CLOUD_FRONT_DOMAIN=${domainName}`);
