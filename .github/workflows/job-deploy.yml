@@ -9,6 +9,10 @@ on:
         description: "Suffix to add to the cache key"
         type: string
         default: "0.1"
+      ref:
+        description: "Git ref to checkout (branch, tag, or SHA)"
+        type: string
+        required: false
 
 concurrency:
   group: deploy-${{ inputs.target }}
@@ -26,6 +30,8 @@ jobs:
       name: ${{ inputs.target == 'live' && 'live' || 'dev' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.head_ref }}
 
       - name: Setup CDK and SST
         uses: ./.github/actions/install-cdk
