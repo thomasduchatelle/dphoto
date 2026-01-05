@@ -84,4 +84,23 @@ describe('authentication middleware', () => {
         expect(cookies[OAUTH_STATE_COOKIE]?.value).toBeTruthy();
         expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]?.value).toBeTruthy();
     });
+
+    it('should use X-Forwarded headers for redirect_uri when behind API Gateway', async () => {
+        const request = new NextRequest('https://internal-gateway.amazonaws.com/auth/login', {
+            method: 'GET',
+            headers: {
+                Accept: 'text/html',
+                'x-forwarded-proto': 'https',
+                'x-forwarded-host': 'my-domain.com',
+            },
+        });
+
+        const response = await GET(request);
+
+        expect(response.status).toBe(307);
+
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
+        expect(redirection.params.redirect_uri).toBe('https://my-domain.com/nextjs/auth/callback');
+    });
 });

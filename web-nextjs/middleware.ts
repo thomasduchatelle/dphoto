@@ -1,6 +1,7 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as cookie from 'cookie';
 import {ACCESS_TOKEN_COOKIE} from './lib/security/constants';
+import {getOriginalOrigin} from './lib/request-utils';
 
 interface Cookies {
     accessToken?: string;
@@ -29,7 +30,8 @@ export async function middleware(request: NextRequest) {
     const cookies = readCookies(request);
 
     if (!cookies.accessToken) {
-        return NextResponse.redirect(new URL(`${basePath}/auth/login`, request.url));
+        const origin = getOriginalOrigin(request);
+        return NextResponse.redirect(new URL(`${basePath}/auth/login`, origin));
     }
 
     return NextResponse.next();

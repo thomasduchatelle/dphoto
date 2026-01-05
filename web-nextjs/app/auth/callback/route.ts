@@ -11,6 +11,7 @@ import {
     oidcConfig,
     REFRESH_TOKEN_COOKIE
 } from '@/lib/security';
+import {getOriginalOrigin} from '@/lib/request-utils';
 
 const USER_INFO_COOKIE = 'dphoto-user-info';
 
@@ -53,10 +54,11 @@ const COOKIE_OPTS: any = {
 
 export async function GET(request: NextRequest) {
     const config = await oidcConfig(getOidcConfigFromEnv());
+    const origin = getOriginalOrigin(request);
     const url = new URL(request.url);
     const cookies = readCookies(request);
 
-    const targetUrl = new URL(`${basePath ?? '/'}`, request.url);
+    const targetUrl = new URL(`${basePath ?? '/'}`, `${origin}${url.pathname}`);
 
     try {
         const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(

@@ -1,6 +1,7 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as client from 'openid-client';
 import {basePath, getOidcConfigFromEnv, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, oidcConfig} from '@/lib/security';
+import {getOriginalOrigin} from '@/lib/request-utils';
 
 const AUTH_COOKIE_OPTS: any = {
     maxAge: 5 * 60,
@@ -12,7 +13,7 @@ const AUTH_COOKIE_OPTS: any = {
 
 export async function GET(request: NextRequest) {
     const config = await oidcConfig(getOidcConfigFromEnv());
-    const {origin} = request.nextUrl;
+    const origin = getOriginalOrigin(request);
 
     const codeVerifier: string = client.randomPKCECodeVerifier();
     const code_challenge: string = await client.calculatePKCECodeChallenge(codeVerifier);

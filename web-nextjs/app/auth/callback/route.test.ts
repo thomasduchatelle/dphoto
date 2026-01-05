@@ -76,4 +76,28 @@ describe('authentication middleware', () => {
         expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
         expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
     });
+
+    it('should redirect to original domain when using X-Forwarded headers', async () => {
+        const authCode = 'AUTH_CODE_456';
+        const tokenResponse = createTokenResponse();
+        fakeOIDCServer.setupSuccessfulTokenExchange(authCode, tokenResponse);
+
+        const request = new NextRequest(
+            `https://internal-gateway.amazonaws.com/auth/callback?code=${authCode}&state=EXPECTED_STATE`,
+            {
+                method: 'GET',
+                headers: {
+                    Accept: 'text/html',
+                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER_123`,
+                    'x-forwarded-proto': 'https',
+                    'x-forwarded-host': 'my-domain.com',
+                },
+            }
+        );
+
+        const response = await GET(request);
+
+        expect(response.status).toBe(307);
+        expect(response.headers.get('Location')).toBe('https://my-domain.com/nextjs');
+    });
 });
