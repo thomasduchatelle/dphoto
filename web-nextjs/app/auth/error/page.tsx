@@ -59,7 +59,7 @@ function getErrorInfo(error: string, errorDescription?: string): ErrorInfo {
 
     return errorMap[error] || {
         title: 'Authentication Error',
-        description: errorDescription || `An error occurred during authentication: ${error}`,
+        description: 'An unexpected error occurred during authentication. Please try logging in again.',
     };
 }
 
