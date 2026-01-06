@@ -59,3 +59,9 @@ Page path: `/auth/logout-success`
 A logout success page must be created. Use a simple layout to notify the success of the operation.
 
 A link to re-authenticate (link to `/auth/login`) should appear.
+
+---
+
+## Update the component web-nextjs/components/UserInfo/index.tsx
+
+A logout option must be available for the authenticated user to log out.
