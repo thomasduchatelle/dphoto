@@ -1,37 +1,30 @@
 import {NextRequest, NextResponse} from 'next/server';
-import * as cookie from 'cookie';
-import {ACCESS_TOKEN_COOKIE} from '@/libs/security/constants';
-import {basePath, getOriginalOrigin} from './libs/requests';
-
-interface Cookies {
-    accessToken?: string;
-}
-
-function readCookies(request: NextRequest): Cookies {
-    const cookieHeader = request.headers.get('cookie') || '';
-    const cookies = cookie.parse(cookieHeader);
-    return {
-        accessToken: cookies[ACCESS_TOKEN_COOKIE],
-    };
-}
+import {completeLogout, getValidAuthentication, initiateAuthenticationFlow} from "@/libs/security";
 
 // if basepath was not set, this would work: `export const config = { matcher: [`/(${skipProxyForPageMatching}`] }`
 export const skipProxyForPageMatching = /^(?!_next\/static|_next\/image|favicon.ico|api|auth|.*\.js$|.*\.png$|.*\.svg$|.*\.jpg$|.*\.gif$).*/i
 
 export async function proxy(request: NextRequest) {
-    const requestUrl = getOriginalOrigin(request)
-
     const isPublicPath = !skipProxyForPageMatching.test(request.nextUrl.pathname.substring(1))
+
+    if (request.nextUrl.pathname.replaceAll("^/nextjs", "") === '/auth/logout') {
+        // Cookies cannot be set from a server component
+        // https://nextjs.org/docs/app/api-reference/functions/cookies#understanding-cookie-behavior-in-server-components
+        await completeLogout()
+        return NextResponse.next()
+    }
 
     if (isPublicPath) {
         return NextResponse.next();
     }
 
-    const cookies = readCookies(request);
-
-    if (!cookies.accessToken) {
-        return NextResponse.redirect(new URL(`${basePath}/auth/login`, requestUrl));
+    // note: the access token is refreshed if required
+    const authentication = await getValidAuthentication()
+    if (authentication.status == "anonymous") {
+        const redirection = await initiateAuthenticationFlow(request.nextUrl.pathname);
+        return NextResponse.redirect(redirection.redirectTo);
     }
 
     return NextResponse.next();
 }
+

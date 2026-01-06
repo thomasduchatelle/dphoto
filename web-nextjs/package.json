@@ -18,7 +18,8 @@
     "openid-client": "^6.8.1",
     "path-to-regexp": "^8.3.0",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@opennextjs/aws": "^3.9.7",

@@ -2,17 +2,12 @@
 
 ## Overview
 
-Implement the ability to remember the originally requested URL before redirecting to login, and restore it after successful authentication.
+Implement the ability to remember the originally requested URL before redirecting to login, and restore it after successful authentication. 
 
 ## Files to Modify
 
-- `web-nextjs/middleware-authentication.tsx` - add redirect path cookie logic
-- `web/src/core/security/consts.ts` - add new cookie constant
-- `web-nextjs/middleware-authentication.test.ts` - add test cases
-
-## New Constants
-
-Add to `web/src/core/security/consts.ts`:
+- `web-nextjs/proxy.tsx` - add redirect path cookie logic
+- `web-nextjs/proxy.test.ts` - add test cases
 
 ```typescript
 export const REDIRECT_AFTER_LOGIN_COOKIE = 'dphoto-redirect-after-login';
