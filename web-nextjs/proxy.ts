@@ -49,7 +49,7 @@ async function refreshAccessToken(refreshToken: string): Promise<client.TokenEnd
         const tokens = await client.refreshTokenGrant(config, refreshToken);
         return tokens;
     } catch (error) {
-        console.error('Failed to refresh token:', error);
+        console.error('Failed to refresh token:', error instanceof Error ? error.message : 'Unknown error');
         return null;
     }
 }
@@ -83,7 +83,7 @@ export async function proxy(request: NextRequest) {
                 const response = NextResponse.next();
                 
                 // Set access token with expiry if available
-                if (newTokens.expires_in) {
+                if (newTokens.expires_in && newTokens.expires_in > 0) {
                     response.cookies.set(ACCESS_TOKEN_COOKIE, newTokens.access_token, {
                         ...COOKIE_OPTS,
                         maxAge: newTokens.expires_in,
