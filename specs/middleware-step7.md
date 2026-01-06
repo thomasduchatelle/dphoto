@@ -6,4 +6,4 @@ The files using it includes, and are not limited to:
 * `web-nextjs/app/auth/login/route.ts`
 * `web-nextjs/proxy.ts`
 
-The configuration must be cached without limit of time.
+The configuration must be cached without limit of time. Place the utilities in `web-nextjs/app/libs/security`.
