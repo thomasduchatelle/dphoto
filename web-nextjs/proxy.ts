@@ -29,7 +29,14 @@ function isTokenExpired(token: string): boolean {
     return payload.exp <= now;
 }
 
-const COOKIE_OPTS: any = {
+interface CookieOptions {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: 'lax' | 'strict' | 'none';
+    path: string;
+}
+
+const COOKIE_OPTS: CookieOptions = {
     httpOnly: true,
     secure: true,
     sameSite: 'lax',
@@ -74,10 +81,16 @@ export async function proxy(request: NextRequest) {
             if (newTokens && newTokens.access_token) {
                 // Successfully refreshed, update cookies and continue
                 const response = NextResponse.next();
-                response.cookies.set(ACCESS_TOKEN_COOKIE, newTokens.access_token, {
-                    ...COOKIE_OPTS,
-                    maxAge: newTokens.expires_in,
-                });
+                
+                // Set access token with expiry if available
+                if (newTokens.expires_in) {
+                    response.cookies.set(ACCESS_TOKEN_COOKIE, newTokens.access_token, {
+                        ...COOKIE_OPTS,
+                        maxAge: newTokens.expires_in,
+                    });
+                } else {
+                    response.cookies.set(ACCESS_TOKEN_COOKIE, newTokens.access_token, COOKIE_OPTS);
+                }
                 
                 // Update refresh token if a new one was provided
                 if (newTokens.refresh_token) {
