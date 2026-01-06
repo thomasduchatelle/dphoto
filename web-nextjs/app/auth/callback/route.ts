@@ -54,10 +54,48 @@ const COOKIE_OPTS: any = {
     path: '/',
 };
 
+function clearAuthCookies(response: NextResponse): void {
+    response.cookies.set(OAUTH_STATE_COOKIE, '', {maxAge: 0, path: '/'});
+    response.cookies.set(OAUTH_CODE_VERIFIER_COOKIE, '', {maxAge: 0, path: '/'});
+    response.cookies.set(OAUTH_NONCE_COOKIE, '', {maxAge: 0, path: '/'});
+}
+
 export async function GET(request: NextRequest) {
-    const config = await oidcConfig(getOidcConfigFromEnv());
     const requestUrl = getOriginalOrigin(request);
+    const url = new URL(request.url);
     const cookies = readCookies(request);
+
+    const errorParam = url.searchParams.get('error');
+    if (errorParam) {
+        const errorDescription = url.searchParams.get('error_description');
+        const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
+        errorUrl.searchParams.set('error', errorParam);
+        if (errorDescription) {
+            errorUrl.searchParams.set('error_description', errorDescription);
+        }
+        const response = NextResponse.redirect(errorUrl);
+        clearAuthCookies(response);
+        return response;
+    }
+
+    if (!cookies.state || !cookies.codeVerifier) {
+        const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
+        errorUrl.searchParams.set('error', 'missing-authentication-cookies');
+        const response = NextResponse.redirect(errorUrl);
+        clearAuthCookies(response);
+        return response;
+    }
+
+    const stateParam = url.searchParams.get('state');
+    if (stateParam !== cookies.state) {
+        const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
+        errorUrl.searchParams.set('error', 'state-mismatch');
+        const response = NextResponse.redirect(errorUrl);
+        clearAuthCookies(response);
+        return response;
+    }
+
+    const config = await oidcConfig(getOidcConfigFromEnv());
 
     try {
         const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
@@ -98,13 +136,16 @@ export async function GET(request: NextRequest) {
         });
         response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token ?? '', COOKIE_OPTS);
         response.cookies.set(USER_INFO_COOKIE, JSON.stringify(userInfo), COOKIE_OPTS);
-        response.cookies.set(OAUTH_STATE_COOKIE, '', {maxAge: 0, path: '/'});
-        response.cookies.set(OAUTH_CODE_VERIFIER_COOKIE, '', {maxAge: 0, path: '/'});
+        clearAuthCookies(response);
 
         return response;
 
     } catch (error) {
         console.error('OAuth callback error:', error);
-        return NextResponse.redirect(new URL(basePath + '/auth/error', requestUrl));
+        const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
+        errorUrl.searchParams.set('error', 'token-exchange-failed');
+        const response = NextResponse.redirect(errorUrl);
+        clearAuthCookies(response);
+        return response;
     }
 }

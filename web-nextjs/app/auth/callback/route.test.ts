@@ -3,10 +3,10 @@
 import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {GET} from './route';
-import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '@/libs/security';
+import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_NONCE_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '@/libs/security';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '../../../__tests__/helpers/test-helper-oidc';
-import {setCookiesOf} from '@/__tests__/helpers/test-assertions';
+import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
@@ -98,5 +98,82 @@ describe('authentication middleware', () => {
 
         expect(response.status).toBe(307);
         expect(response.headers.get('Location')).toBe('https://my-domain.com/nextjs/');
+    });
+
+    it('should redirect to the error page with the same parameters when an error occurred', async () => {
+        const request = new NextRequest(
+            'https://example.com/auth/callback?error=invalid_request&error_description=user.email%3A+Attribute+cannot+be+updated.',
+            {
+                method: 'GET',
+                headers: {
+                    Accept: 'text/html',
+                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER`,
+                },
+            }
+        );
+
+        const response = await GET(request);
+
+        expect(response.status).toBe(307);
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe('https://example.com/nextjs/auth/error');
+        expect(redirection.params).toEqual({
+            error: 'invalid_request',
+            error_description: 'user.email: Attribute cannot be updated.',
+        });
+
+        const cookies = setCookiesOf(response);
+        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[OAUTH_NONCE_COOKIE]).toMatchObject(deletedCookie);
+    });
+
+    it('should redirect to error page when the state mismatch', async () => {
+        const request = new NextRequest(
+            'https://example.com/auth/callback?code=AUTH_CODE&state=WRONG_STATE',
+            {
+                method: 'GET',
+                headers: {
+                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER`,
+                },
+            }
+        );
+
+        const response = await GET(request);
+
+        expect(response.status).toBe(307);
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe('https://example.com/nextjs/auth/error');
+        expect(redirection.params).toEqual({
+            error: 'state-mismatch',
+        });
+
+        const cookies = setCookiesOf(response);
+        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[OAUTH_NONCE_COOKIE]).toMatchObject(deletedCookie);
+    });
+
+    it('should redirect when authentication cookies are not present', async () => {
+        const request = new NextRequest(
+            'https://example.com/auth/callback?code=AUTH_CODE&state=SOME_STATE',
+            {
+                method: 'GET',
+            }
+        );
+
+        const response = await GET(request);
+
+        expect(response.status).toBe(307);
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe('https://example.com/nextjs/auth/error');
+        expect(redirection.params).toEqual({
+            error: 'missing-authentication-cookies',
+        });
+
+        const cookies = setCookiesOf(response);
+        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[OAUTH_NONCE_COOKIE]).toMatchObject(deletedCookie);
     });
 });
