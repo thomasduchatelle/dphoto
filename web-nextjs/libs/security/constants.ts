@@ -1,23 +1,11 @@
-export const ACCESS_TOKEN_COOKIE = 'dphoto-access-token';
-export const REFRESH_TOKEN_COOKIE = 'dphoto-refresh-token';
-export const OAUTH_STATE_COOKIE = 'dphoto-oauth-state';
-export const OAUTH_CODE_VERIFIER_COOKIE = 'dphoto-oauth-code-verifier';
-export const OAUTH_NONCE_COOKIE = 'dphoto-oauth-nonce';
+export const COOKIE_SESSION_ACCESS_TOKEN = 'dphoto-access-token';
+export const COOKIE_SESSION_REFRESH_TOKEN = 'dphoto-refresh-token';
+export const COOKIE_SESSION_USER_INFO = 'dphoto-user-info';
 
-export interface AuthenticatedUser {
-    name: string;
-    email: string;
-    picture?: string;
-    isOwner: boolean;
-}
+export const COOKIE_AUTH_STATE = 'dphoto-oauth-state';
+export const COOKIE_AUTH_CODE_VERIFIER = 'dphoto-oauth-code-verifier';
+export const COOKIE_AUTH_NONCE = 'dphoto-oauth-nonce';
+export const COOKIE_AUTH_REDIRECT_AFTER_LOGIN = 'dphoto-redirect-after-login';
 
-export interface AccessToken {
-    accessToken: string;
-    expiresAt: Date;
-}
 
-export interface BackendSession {
-    type: 'authenticated';
-    accessToken: AccessToken;
-    authenticatedUser: AuthenticatedUser;
-}
+

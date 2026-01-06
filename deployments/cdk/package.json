@@ -27,6 +27,6 @@
     "aws-cdk-lib": "^2",
     "constructs": "^10",
     "source-map-support": "^0.5.21",
-    "sst": "3.17.25"
+    "sst": "~3.17.25"
   }
 }

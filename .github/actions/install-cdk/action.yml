@@ -26,3 +26,12 @@ runs:
         npx sst install
         node ../../scripts/pulumi-patch.js || echo "FAILED to patch pulumi"
         npm install -g aws-cdk
+
+    # Workaround for Pulumi version conflict:
+    # GitHub runners have Pulumi 3.212.0+ pre-installed, which removed the -root flag
+    # from pulumi-language-nodejs (see https://github.com/pulumi/pulumi/pull/21065).
+    # SST 3.17.x uses Pulumi SDK 3.210.0 which still passes -root, causing a conflict.
+    # Removing the system language plugin forces SST to use its bundled compatible version.
+    - name: Fix Pulumi version conflict
+      shell: bash
+      run: sudo rm -f /usr/local/bin/pulumi-language-nodejs

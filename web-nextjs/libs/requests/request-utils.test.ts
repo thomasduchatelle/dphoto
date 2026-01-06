@@ -2,10 +2,14 @@
 
 import {describe, expect, it} from 'vitest';
 import {NextRequest} from 'next/server';
-import {getOriginalOrigin} from './request-utils';
+import {newOriginFromRequest} from "@/libs/requests/request-utils";
+
+function getRequestURL(request: NextRequest): Promise<URL> {
+    return newOriginFromRequest(request).getCurrentUrl();
+}
 
 describe('getOriginalOrigin', () => {
-    it('should extract origin from RFC 7239 Forwarded header with https', () => {
+    it('should extract origin from RFC 7239 Forwarded header with https', async () => {
         const request = new NextRequest('https://internal-api-gateway.example.com/path', {
             method: 'GET',
             headers: {
@@ -13,13 +17,13 @@ describe('getOriginalOrigin', () => {
             },
         });
 
-        const result = getOriginalOrigin(request);
+        const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
         expect(result.pathname).toBe('/nextjs/path');
     });
 
-    it('should extract origin from RFC 7239 Forwarded header with http', () => {
+    it('should extract origin from RFC 7239 Forwarded header with http', async () => {
         const request = new NextRequest('https://internal-api-gateway.example.com/path', {
             method: 'GET',
             headers: {
@@ -27,13 +31,13 @@ describe('getOriginalOrigin', () => {
             },
         });
 
-        const result = getOriginalOrigin(request);
+        const result = await getRequestURL(request);
 
         expect(result.origin).toBe('http://example.com');
         expect(result.pathname).toBe('/nextjs/path');
     });
 
-    it('should accept forwarded host with port when hostname matches', () => {
+    it('should accept forwarded host with port when hostname matches', async () => {
         const request = new NextRequest('https://internal-api-gateway.example.com/path', {
             method: 'GET',
             headers: {
@@ -41,13 +45,13 @@ describe('getOriginalOrigin', () => {
             },
         });
 
-        const result = getOriginalOrigin(request);
+        const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com:8443');
         expect(result.pathname).toBe('/nextjs/path');
     });
 
-    it('should handle quoted values in Forwarded header', () => {
+    it('should handle quoted values in Forwarded header', async () => {
         const request = new NextRequest('https://internal-api-gateway.example.com/path', {
             method: 'GET',
             headers: {
@@ -55,13 +59,13 @@ describe('getOriginalOrigin', () => {
             },
         });
 
-        const result = getOriginalOrigin(request);
+        const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
         expect(result.pathname).toBe('/nextjs/path');
     });
 
-    it('should accept quoted host with port when hostname matches', () => {
+    it('should accept quoted host with port when hostname matches', async () => {
         const request = new NextRequest('https://internal-api-gateway.example.com/path', {
             method: 'GET',
             headers: {
@@ -69,24 +73,24 @@ describe('getOriginalOrigin', () => {
             },
         });
 
-        const result = getOriginalOrigin(request);
+        const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com:8443');
         expect(result.pathname).toBe('/nextjs/path');
     });
 
-    it('should fallback to request.url when Forwarded header is not present', () => {
+    it('should fallback to request.url when Forwarded header is not present', async () => {
         const request = new NextRequest('https://example.com/path', {
             method: 'GET',
         });
 
-        const result = getOriginalOrigin(request);
+        const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
         expect(result.pathname).toBe('/nextjs/path');
     });
 
-    it('should fallback when Forwarded header is missing proto', () => {
+    it('should fallback when Forwarded header is missing proto', async () => {
         const request = new NextRequest('https://example.com/path', {
             method: 'GET',
             headers: {
@@ -94,13 +98,13 @@ describe('getOriginalOrigin', () => {
             },
         });
 
-        const result = getOriginalOrigin(request);
+        const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
         expect(result.pathname).toBe('/nextjs/path');
     });
 
-    it('should fallback when Forwarded header is missing host', () => {
+    it('should fallback when Forwarded header is missing host', async () => {
         const request = new NextRequest('https://example.com/path', {
             method: 'GET',
             headers: {
@@ -108,14 +112,14 @@ describe('getOriginalOrigin', () => {
             },
         });
 
-        const result = getOriginalOrigin(request);
+        const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
         expect(result.pathname).toBe('/nextjs/path');
     });
 
     describe('security validations', () => {
-        it('should reject forwarded host that is not a subdomain of server host', () => {
+        it('should reject forwarded host that is not a subdomain of server host', async () => {
             const request = new NextRequest('https://api-gateway.example.com/path', {
                 method: 'GET',
                 headers: {
@@ -123,13 +127,13 @@ describe('getOriginalOrigin', () => {
                 },
             });
 
-            const result = getOriginalOrigin(request);
+            const result = await getRequestURL(request);
 
             expect(result.origin).toBe('https://api-gateway.example.com');
             expect(result.pathname).toBe('/nextjs/path');
         });
 
-        it('should reject invalid protocol like ftp', () => {
+        it('should reject invalid protocol like ftp', async () => {
             const request = new NextRequest('https://api-gateway.example.com/path', {
                 method: 'GET',
                 headers: {
@@ -137,13 +141,13 @@ describe('getOriginalOrigin', () => {
                 },
             });
 
-            const result = getOriginalOrigin(request);
+            const result = await getRequestURL(request);
 
             expect(result.origin).toBe('https://api-gateway.example.com');
             expect(result.pathname).toBe('/nextjs/path');
         });
 
-        it('should reject invalid protocol like javascript', () => {
+        it('should reject invalid protocol like javascript', async () => {
             const request = new NextRequest('https://api-gateway.example.com/path', {
                 method: 'GET',
                 headers: {
@@ -151,13 +155,13 @@ describe('getOriginalOrigin', () => {
                 },
             });
 
-            const result = getOriginalOrigin(request);
+            const result = await getRequestURL(request);
 
             expect(result.origin).toBe('https://api-gateway.example.com');
             expect(result.pathname).toBe('/nextjs/path');
         });
 
-        it('should handle malformed Forwarded header gracefully', () => {
+        it('should handle malformed Forwarded header gracefully', async () => {
             const request = new NextRequest('https://example.com/path', {
                 method: 'GET',
                 headers: {
@@ -165,7 +169,7 @@ describe('getOriginalOrigin', () => {
                 },
             });
 
-            const result = getOriginalOrigin(request);
+            const result = await getRequestURL(request);
 
             expect(result.origin).toBe('https://example.com');
             expect(result.pathname).toBe('/nextjs/path');
@@ -173,32 +177,32 @@ describe('getOriginalOrigin', () => {
     });
 
     describe('basePath handling', () => {
-        it('should add basePath to pathname', () => {
+        it('should add basePath to pathname', async () => {
             const request = new NextRequest('https://example.com/albums', {
                 method: 'GET',
             });
 
-            const result = getOriginalOrigin(request);
+            const result = await getRequestURL(request);
 
             expect(result.pathname).toBe('/nextjs/albums');
         });
 
-        it('should remove trailing slash after adding basePath', () => {
+        it('should remove trailing slash after adding basePath', async () => {
             const request = new NextRequest('https://example.com/albums/', {
                 method: 'GET',
             });
 
-            const result = getOriginalOrigin(request);
+            const result = await getRequestURL(request);
 
             expect(result.pathname).toBe('/nextjs/albums');
         });
 
-        it('should handle root path correctly', () => {
+        it('should handle root path correctly', async () => {
             const request = new NextRequest('https://example.com/', {
                 method: 'GET',
             });
 
-            const result = getOriginalOrigin(request);
+            const result = await getRequestURL(request);
 
             expect(result.pathname).toBe('/nextjs');
         });
