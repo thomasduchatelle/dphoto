@@ -1,5 +1,6 @@
 import {NextRequest} from 'next/server';
 import {basePath} from "./basepath";
+import {headers} from "next/headers";
 
 /**
  * Parses the RFC 7239 Forwarded header.
@@ -43,7 +44,11 @@ function parseForwardedHeader(forwardedHeader: string): { proto: string; host: s
     return null;
 }
 
-function overloadWithForwardedUrl(serverUrl: URL, forwardedHeader: string): URL {
+function overloadWithForwardedUrl(serverUrl: URL, forwardedHeader: string | null): URL {
+    if (!forwardedHeader) {
+        return serverUrl
+    }
+
     const forwardedFrom = parseForwardedHeader(forwardedHeader);
     if (forwardedFrom
         && (forwardedFrom.proto === 'http' || forwardedFrom.proto === 'https') // only HTTP and HTTPS protocols are allowed
@@ -76,7 +81,7 @@ function isParentDomain(parentHost: string, childHost: string): boolean {
     return child.endsWith('.' + parent);
 }
 
-export function getOriginalOrigin(request: NextRequest): URL {
+function getRequestURL(request: NextRequest): URL {
     let url = new URL(request.url)
 
     const forwardedHeader = request.headers.get('forwarded');
@@ -84,7 +89,7 @@ export function getOriginalOrigin(request: NextRequest): URL {
         url = overloadWithForwardedUrl(url, forwardedHeader);
     }
 
-    if (basePath) {
+    if (basePath && !url.pathname.startsWith(basePath)) { // the proxy gets the base path in its request URL.
         url.pathname = basePath + url.pathname
 
         if (url.pathname.endsWith("/")) {
@@ -93,4 +98,47 @@ export function getOriginalOrigin(request: NextRequest): URL {
     }
 
     return url
+}
+
+export interface Origin {
+    getCurrentUrl(): Promise<URL>
+}
+
+export function newOriginFromRequest(request: NextRequest): Origin {
+    return {
+        async getCurrentUrl(): Promise<URL> {
+            return getRequestURL(request);
+        }
+    }
+}
+
+export function newOriginFromHeaders(): Origin {
+    return {
+        async getCurrentUrl(): Promise<URL> {
+            const h = await headers()
+
+            const host = h.get("host")
+            const proto = host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http" : "https"
+            return overloadWithForwardedUrl(new URL(`${proto || 'http'}://${host}`), h.get("forwarded"));
+        }
+    }
+}
+
+/**
+ * Generates a redirect URL from the original HOST and PROTO (if the request got forwarded), and which includes the basepath (if set)
+ */
+export async function redirectUrl(path: string, origin: Origin = newOriginFromHeaders()): Promise<URL> {
+    return new URL(`${basePath}${path}`, await origin.getCurrentUrl());
+}
+
+
+export async function requestUrlWithBaseBath(request: URL): Promise<URL> {
+    const h = await headers()
+    let updated = new URL(request)
+
+    if (basePath && !request.pathname.startsWith(basePath)) {
+        updated.pathname = `${basePath}${request.pathname}`;
+    }
+
+    return overloadWithForwardedUrl(updated, h.get("forwarded"));
 }

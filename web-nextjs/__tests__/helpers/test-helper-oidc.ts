@@ -43,6 +43,7 @@ export const createValidIDToken = (claims: {
     given_name?: string;
     family_name?: string;
     picture?: string;
+    nonce?: string;
     exp?: number;
     iat?: number;
 }): string => {
@@ -57,6 +58,7 @@ export const createValidIDToken = (claims: {
         given_name: claims.given_name || 'Thomas',
         picture: claims.picture || 'https://lh3.googleusercontent.com/a/ACg8ocKBKtsO86UaxMwMaQpnykZv5Qb38FLYJlMzQi3FrriBcDaxAUxP=s96-c',
         origin_jti: 'd66449ad-6296-47a5-a920-81c7f18a4edd',
+        nonce: claims.nonce || 'NONCE_VALUE',
         aud: TEST_CLIENT_ID,
         identities: [
             {

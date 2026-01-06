@@ -18,23 +18,23 @@ EXTREMELY IMPORTANT**. You must take your time, and think carefully, when accomp
 - `api/lambdas/` - in **Golang/AWS SDK** source of the REST API deployed as AWS Lambdas with an AWS API Gateway (v2 HTTP). Each operation is deployed as one
   lambda handler and is in its own folder.
     - `api/lambdas/common/` contains utilities shared by most handlers (get context from authorizer, ...)
-- `web/` - **DEPRECATED! Project will be replaced by web-nextjs** Typescript / React 19 / Waku framework Website built on top of the REST API, deployed as a
-  lambda.
-    - `web/src/core/catalog/language/` - data structures used across the web application, **very important for context**.
-    - `web/src/core/catalog/**/` - other folders are handlers for the operations available on the UI.
-    - `web/src/components/` - React components, usually pure.
-    - `web/src/pages/` - Waku page-driven navigation built from the components.
 - `web-nextjs/` - **Typescript / React 19 / NextJS framework** Website built on top of the REST API, deployed using SST.
     - this is a new project, implemented incrementally to replace `web/`.
     - **NextJS App Router** is used: file structure must respect its principles.
     - Files structure must follow the best practices from NextJS.
-- `deployments/cdk/` - AWS CDK infrastructure (TypeScript/Jest), and SST to deploy `web-nextjs`.
+- `deployments/cdk/` - AWS CDK infrastructure (TypeScript/Jest), and SST configuration to deploy `web-nextjs`.
 - `.github/` - CI definitions, and Agent instructions.
     - `.github/actions/` - customised actions used within this repository only
     - `.github/workflows/job-*.yml` - reusable sub-workflow to build, test, and deploy the application
     - `.github/workflows/workflow-*.yml` - workflows triggered by external events, they call the "job workflow", never replicate their content.
 - `internal/` - **Golang**: mocks and utilities that lower the complexity of the CLI but is not part of the domain of the application.
 - `Makefile` - comprehensive list of all the commands to build and test the application.
+- `web/` - **DEPRECATED! Project will be replaced by web-nextjs** Typescript / React 19 / Waku framework Website built on top of the REST API, deployed as a
+  lambda.
+  - `web/src/core/catalog/language/` - data structures used across the web application, **very important for context**.
+  - `web/src/core/catalog/**/` - other folders are handlers for the operations available on the UI.
+  - `web/src/components/` - React components, usually pure.
+  - `web/src/pages/` - Waku page-driven navigation built from the components.
 
 ## How to choose the context ?
 
@@ -85,6 +85,16 @@ cd api/lambdas && go test ./...
 make build-api
 ```
 
+### Typescript - `web-nextjs/`
+
+**Always run from the web folder `cd web-nextjs`, and always run `npm install` before executing other commands !**
+
+```shell
+npm run test          # run unit tests only (~5s)
+npm run test:visual   # run visual tests (~30s)
+npm run laddle        # run Laddle to take screenshots of the component on :61000
+```
+
 ### Typescript - `web/`
 
 **Always run from the web folder `cd web`, and always run `npm install` before executing other commands !**
@@ -119,4 +129,4 @@ Before requesting a code review, you must ensure:
 
 ---
 
-**Trust these instructions** - validated against repository. Search only if incomplete/incorrect.
+**Trust these instructions** - validated against the repository. Search only if missing information.
