@@ -1,11 +1,33 @@
 // @vitest-environment node
 
-import {describe, expect, it} from 'vitest';
+import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {proxy, skipProxyForPageMatching} from './proxy';
-import {ACCESS_TOKEN_COOKIE} from '@/libs/security/constants';
+import {ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE} from '@/libs/security/constants';
+import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
+import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
+import {setCookiesOf} from '@/__tests__/helpers/test-assertions';
+
+vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
+vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
+vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
 describe('authentication middleware', () => {
+    let fakeOIDCServer: FakeOIDCServer;
+
+    beforeAll(() => {
+        fakeOIDCServer = new FakeOIDCServer(TEST_ISSUER_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
+        fakeOIDCServer.start();
+    });
+
+    afterEach(() => {
+        fakeOIDCServer.reset();
+    });
+
+    afterAll(() => {
+        fakeOIDCServer.stop();
+    });
+
     it('should redirect to login page when requesting home page without access token', async () => {
         const request = new NextRequest('https://example.com/', {
             method: 'GET',
@@ -35,8 +57,9 @@ describe('authentication middleware', () => {
         expect(response.headers.get('Location')).toBe('https://my-domain.com/nextjs/auth/login');
     });
 
-    it('should allow authenticated request to proceed with backendSession', async () => {
-        const accessToken = 'VALID_ACCESS_TOKEN';
+    it('should allow authenticated request to proceed with valid non-expired token', async () => {
+        const now = Math.floor(Date.now() / 1000);
+        const accessToken = createCognitoAccessToken({exp: now + 3600}); // expires in 1 hour
 
         const request = new NextRequest('https://example.com/albums', {
             method: 'GET',
@@ -49,6 +72,85 @@ describe('authentication middleware', () => {
         const response = await proxy(request);
 
         expect(response.status).toBe(200);
+    });
+
+    it('should refresh expired access token and allow request to proceed', async () => {
+        const now = Math.floor(Date.now() / 1000);
+        const expiredAccessToken = createCognitoAccessToken({exp: now - 100}); // expired 100 seconds ago
+        const refreshToken = 'VALID_REFRESH_TOKEN';
+
+        // Setup fake OIDC server to return new tokens
+        const newTokenResponse = createTokenResponse({
+            access_token: createCognitoAccessToken({exp: now + 3600}),
+            refresh_token: 'NEW_REFRESH_TOKEN',
+        });
+        fakeOIDCServer.setupSuccessfulRefreshTokenExchange(refreshToken, newTokenResponse);
+
+        const request = new NextRequest('https://example.com/albums', {
+            method: 'GET',
+            headers: {
+                Accept: 'text/html',
+                Cookie: `${ACCESS_TOKEN_COOKIE}=${expiredAccessToken}; ${REFRESH_TOKEN_COOKIE}=${refreshToken}`,
+            },
+        });
+
+        const response = await proxy(request);
+
+        expect(response.status).toBe(200);
+
+        // Check that new tokens were set in cookies
+        const cookies = setCookiesOf(response);
+        expect(cookies[ACCESS_TOKEN_COOKIE]).toBeDefined();
+        expect(cookies[ACCESS_TOKEN_COOKIE].value).not.toBe(expiredAccessToken);
+        expect(cookies[ACCESS_TOKEN_COOKIE]).toMatchObject({
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            path: '/',
+        });
+
+        expect(cookies[REFRESH_TOKEN_COOKIE]).toBeDefined();
+        expect(cookies[REFRESH_TOKEN_COOKIE].value).toBe('NEW_REFRESH_TOKEN');
+    });
+
+    it('should redirect to login when refresh token fails', async () => {
+        const now = Math.floor(Date.now() / 1000);
+        const expiredAccessToken = createCognitoAccessToken({exp: now - 100}); // expired 100 seconds ago
+        const refreshToken = 'INVALID_REFRESH_TOKEN';
+
+        // Setup fake OIDC server to return an error
+        fakeOIDCServer.setupRefreshTokenError(refreshToken, 'invalid_grant', 'Refresh token is invalid or expired');
+
+        const request = new NextRequest('https://example.com/albums', {
+            method: 'GET',
+            headers: {
+                Accept: 'text/html',
+                Cookie: `${ACCESS_TOKEN_COOKIE}=${expiredAccessToken}; ${REFRESH_TOKEN_COOKIE}=${refreshToken}`,
+            },
+        });
+
+        const response = await proxy(request);
+
+        expect(response.status).toBe(307);
+        expect(response.headers.get('Location')).toBe('https://example.com/nextjs/auth/login');
+    });
+
+    it('should redirect to login when access token is expired and no refresh token is available', async () => {
+        const now = Math.floor(Date.now() / 1000);
+        const expiredAccessToken = createCognitoAccessToken({exp: now - 100}); // expired 100 seconds ago
+
+        const request = new NextRequest('https://example.com/albums', {
+            method: 'GET',
+            headers: {
+                Accept: 'text/html',
+                Cookie: `${ACCESS_TOKEN_COOKIE}=${expiredAccessToken}`,
+            },
+        });
+
+        const response = await proxy(request);
+
+        expect(response.status).toBe(307);
+        expect(response.headers.get('Location')).toBe('https://example.com/nextjs/auth/login');
     });
 });
 
