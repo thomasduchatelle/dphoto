@@ -45,7 +45,7 @@ describe('authentication middleware', () => {
                 method: 'GET',
                 headers: {
                     Accept: 'text/html',
-                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER_123`,
+                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER_123; ${OAUTH_NONCE_COOKIE}=NONCE_VALUE`,
                 },
             }
         );
@@ -88,7 +88,7 @@ describe('authentication middleware', () => {
                 method: 'GET',
                 headers: {
                     Accept: 'text/html',
-                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER_123`,
+                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER_123; ${OAUTH_NONCE_COOKIE}=NONCE_VALUE`,
                     'forwarded': 'by=3.248.245.105;for=83.106.145.60;host=my-domain.com;proto=https',
                 },
             }
@@ -107,7 +107,7 @@ describe('authentication middleware', () => {
                 method: 'GET',
                 headers: {
                     Accept: 'text/html',
-                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER`,
+                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER; ${OAUTH_NONCE_COOKIE}=NONCE_VALUE`,
                 },
             }
         );
@@ -134,7 +134,7 @@ describe('authentication middleware', () => {
             {
                 method: 'GET',
                 headers: {
-                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER`,
+                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER; ${OAUTH_NONCE_COOKIE}=NONCE_VALUE`,
                 },
             }
         );

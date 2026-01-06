@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         return response;
     }
 
-    if (!cookies.state || !cookies.codeVerifier) {
+    if (!cookies.state || !cookies.codeVerifier || !cookies.nonce) {
         const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
         errorUrl.searchParams.set('error', 'missing-authentication-cookies');
         const response = NextResponse.redirect(errorUrl);
