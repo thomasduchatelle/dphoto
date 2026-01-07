@@ -1,32 +1,15 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as cookie from 'cookie';
-import * as client from 'openid-client';
-import {ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE} from '@/libs/security/constants';
+import {ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, refreshSessionIfNecessary, SessionCookies} from '@/libs/security';
 import {basePath, getOriginalOrigin} from './libs/requests';
-import {decodeJWTPayload, getOidcConfigFromEnv, oidcConfig} from '@/libs/security';
 
-interface Cookies {
-    accessToken?: string;
-    refreshToken?: string;
-}
-
-function readCookies(request: NextRequest): Cookies {
+function readCookies(request: NextRequest): SessionCookies {
     const cookieHeader = request.headers.get('cookie') || '';
     const cookies = cookie.parse(cookieHeader);
     return {
         accessToken: cookies[ACCESS_TOKEN_COOKIE],
         refreshToken: cookies[REFRESH_TOKEN_COOKIE],
     };
-}
-
-function isTokenExpired(token: string): boolean {
-    const payload = decodeJWTPayload(token);
-    if (!payload || !payload.exp) {
-        return true;
-    }
-    
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp <= now;
 }
 
 interface CookieOptions {
@@ -43,17 +26,6 @@ const COOKIE_OPTS: CookieOptions = {
     path: '/',
 };
 
-async function refreshAccessToken(refreshToken: string): Promise<client.TokenEndpointResponse | null> {
-    try {
-        const config = await oidcConfig(getOidcConfigFromEnv());
-        const tokens = await client.refreshTokenGrant(config, refreshToken);
-        return tokens;
-    } catch (error) {
-        console.error('Failed to refresh token:', error instanceof Error ? error.message : 'Unknown error');
-        return null;
-    }
-}
-
 // if basepath was not set, this would work: `export const config = { matcher: [`/(${skipProxyForPageMatching}`] }`
 export const skipProxyForPageMatching = /^(?!_next\/static|_next\/image|favicon.ico|api|auth|.*\.js$|.*\.png$|.*\.svg$|.*\.jpg$|.*\.gif$).*/i
 
@@ -68,42 +40,32 @@ export async function proxy(request: NextRequest) {
 
     const cookies = readCookies(request);
 
-    if (!cookies.accessToken) {
+    // Check session and refresh if necessary
+    const sessionRefresh = await refreshSessionIfNecessary(cookies);
+
+    if (sessionRefresh.status === 'none' || sessionRefresh.status === 'expired') {
         return NextResponse.redirect(new URL(`${basePath}/auth/login`, requestUrl));
     }
 
-    // Check if access token is expired
-    if (isTokenExpired(cookies.accessToken)) {
-        // Try to refresh the token if we have a refresh token
-        if (cookies.refreshToken) {
-            const newTokens = await refreshAccessToken(cookies.refreshToken);
-            
-            if (newTokens && newTokens.access_token) {
-                // Successfully refreshed, update cookies and continue
-                const response = NextResponse.next();
-                
-                // Set access token with expiry if available
-                if (newTokens.expires_in && newTokens.expires_in > 0) {
-                    response.cookies.set(ACCESS_TOKEN_COOKIE, newTokens.access_token, {
-                        ...COOKIE_OPTS,
-                        maxAge: newTokens.expires_in,
-                    });
-                } else {
-                    response.cookies.set(ACCESS_TOKEN_COOKIE, newTokens.access_token, COOKIE_OPTS);
-                }
-                
-                // Update refresh token if a new one was provided
-                if (newTokens.refresh_token) {
-                    response.cookies.set(REFRESH_TOKEN_COOKIE, newTokens.refresh_token, COOKIE_OPTS);
-                }
-                
-                return response;
-            }
+    // Session is active
+    const response = NextResponse.next();
+
+    // Update cookies if tokens were refreshed
+    if (sessionRefresh.newAccessToken) {
+        if (sessionRefresh.newAccessToken.expiresIn > 0) {
+            response.cookies.set(ACCESS_TOKEN_COOKIE, sessionRefresh.newAccessToken.token, {
+                ...COOKIE_OPTS,
+                maxAge: sessionRefresh.newAccessToken.expiresIn,
+            });
+        } else {
+            response.cookies.set(ACCESS_TOKEN_COOKIE, sessionRefresh.newAccessToken.token, COOKIE_OPTS);
         }
-        
-        // Refresh failed or no refresh token available, redirect to login
-        return NextResponse.redirect(new URL(`${basePath}/auth/login`, requestUrl));
     }
 
-    return NextResponse.next();
+    if (sessionRefresh.newRefreshToken) {
+        response.cookies.set(REFRESH_TOKEN_COOKIE, sessionRefresh.newRefreshToken, COOKIE_OPTS);
+    }
+
+    return response;
 }
+
