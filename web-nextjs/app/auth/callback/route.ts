@@ -54,10 +54,44 @@ const COOKIE_OPTS: any = {
     path: '/',
 };
 
+function clearAuthCookies(response: NextResponse): void {
+    response.cookies.set(OAUTH_STATE_COOKIE, '', {maxAge: 0, path: '/'});
+    response.cookies.set(OAUTH_CODE_VERIFIER_COOKIE, '', {maxAge: 0, path: '/'});
+    response.cookies.set(OAUTH_NONCE_COOKIE, '', {maxAge: 0, path: '/'});
+}
+
+function redirectToErrorPage(requestUrl: string, error: string, errorDescription?: string): NextResponse {
+    const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
+    errorUrl.searchParams.set('error', error);
+    if (errorDescription) {
+        errorUrl.searchParams.set('error_description', errorDescription);
+    }
+    const response = NextResponse.redirect(errorUrl);
+    clearAuthCookies(response);
+    return response;
+}
+
 export async function GET(request: NextRequest) {
-    const config = await oidcConfig(getOidcConfigFromEnv());
     const requestUrl = getOriginalOrigin(request);
+    const url = new URL(requestUrl);
     const cookies = readCookies(request);
+
+    const errorParam = url.searchParams.get('error');
+    if (errorParam) {
+        const errorDescription = url.searchParams.get('error_description');
+        return redirectToErrorPage(requestUrl, errorParam, errorDescription ?? undefined);
+    }
+
+    if (!cookies.state || !cookies.codeVerifier || !cookies.nonce) {
+        return redirectToErrorPage(requestUrl, 'missing-authentication-cookies');
+    }
+
+    const stateParam = url.searchParams.get('state');
+    if (stateParam !== cookies.state) {
+        return redirectToErrorPage(requestUrl, 'state-mismatch');
+    }
+
+    const config = await oidcConfig(getOidcConfigFromEnv());
 
     try {
         const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
@@ -98,13 +132,12 @@ export async function GET(request: NextRequest) {
         });
         response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token ?? '', COOKIE_OPTS);
         response.cookies.set(USER_INFO_COOKIE, JSON.stringify(userInfo), COOKIE_OPTS);
-        response.cookies.set(OAUTH_STATE_COOKIE, '', {maxAge: 0, path: '/'});
-        response.cookies.set(OAUTH_CODE_VERIFIER_COOKIE, '', {maxAge: 0, path: '/'});
+        clearAuthCookies(response);
 
         return response;
 
     } catch (error) {
         console.error('OAuth callback error:', error);
-        return NextResponse.redirect(new URL(basePath + '/auth/error', requestUrl));
+        return redirectToErrorPage(requestUrl, 'token-exchange-failed');
     }
 }
