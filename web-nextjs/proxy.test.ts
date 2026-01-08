@@ -6,7 +6,7 @@ import {proxy, skipProxyForPageMatching} from './proxy';
 import {ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE} from '@/libs/security/constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
-import {setCookiesOf} from '@/__tests__/helpers/test-assertions';
+import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
@@ -95,7 +95,7 @@ describe('authentication middleware', () => {
 
         const response = await proxy(request);
 
-        expect(response.status).toBe(200);
+        expect(redirectionOf(response).url).toBe('https://example.com/nextjs/albums');
 
         // Check that new tokens were set in cookies
         const cookies = setCookiesOf(response);
@@ -133,7 +133,7 @@ describe('authentication middleware', () => {
 
         const response = await proxy(request);
 
-        expect(response.status).toBe(200);
+        expect(redirectionOf(response).url).toBe('https://example.com/nextjs/albums');
 
         // Check that new tokens were set in cookies
         const cookies = setCookiesOf(response);

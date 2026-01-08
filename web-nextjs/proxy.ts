@@ -1,6 +1,6 @@
 import {NextRequest, NextResponse} from 'next/server';
 import * as cookie from 'cookie';
-import {ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, refreshSessionIfNecessary, SessionCookies} from '@/libs/security';
+import {ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, refreshSessionIfNecessary, SessionCookies, SessionRefresh} from '@/libs/security';
 import {basePath, getOriginalOrigin} from './libs/requests';
 
 function readCookies(request: NextRequest): SessionCookies {
@@ -29,6 +29,27 @@ const COOKIE_OPTS: CookieOptions = {
 // if basepath was not set, this would work: `export const config = { matcher: [`/(${skipProxyForPageMatching}`] }`
 export const skipProxyForPageMatching = /^(?!_next\/static|_next\/image|favicon.ico|api|auth|.*\.js$|.*\.png$|.*\.svg$|.*\.jpg$|.*\.gif$).*/i
 
+function reloadWithTheCookies(requestUrl: URL, sessionRefresh: SessionRefresh) {
+    const response = NextResponse.redirect(requestUrl);
+
+    if (sessionRefresh.newAccessToken) {
+        if (sessionRefresh.newAccessToken.expiresIn > 0) {
+            response.cookies.set(ACCESS_TOKEN_COOKIE, sessionRefresh.newAccessToken.token, {
+                ...COOKIE_OPTS,
+                maxAge: sessionRefresh.newAccessToken.expiresIn,
+            });
+        } else {
+            response.cookies.set(ACCESS_TOKEN_COOKIE, sessionRefresh.newAccessToken.token, COOKIE_OPTS);
+        }
+    }
+
+    if (sessionRefresh.newRefreshToken) {
+        response.cookies.set(REFRESH_TOKEN_COOKIE, sessionRefresh.newRefreshToken, COOKIE_OPTS);
+    }
+
+    return response
+}
+
 export async function proxy(request: NextRequest) {
     const requestUrl = getOriginalOrigin(request)
 
@@ -47,25 +68,11 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL(`${basePath}/auth/login`, requestUrl));
     }
 
-    // Session is active
-    const response = NextResponse.next();
-
     // Update cookies if tokens were refreshed
-    if (sessionRefresh.newAccessToken) {
-        if (sessionRefresh.newAccessToken.expiresIn > 0) {
-            response.cookies.set(ACCESS_TOKEN_COOKIE, sessionRefresh.newAccessToken.token, {
-                ...COOKIE_OPTS,
-                maxAge: sessionRefresh.newAccessToken.expiresIn,
-            });
-        } else {
-            response.cookies.set(ACCESS_TOKEN_COOKIE, sessionRefresh.newAccessToken.token, COOKIE_OPTS);
-        }
+    if (sessionRefresh.newRefreshToken || sessionRefresh.newAccessToken) {
+        return reloadWithTheCookies(requestUrl, sessionRefresh)
     }
 
-    if (sessionRefresh.newRefreshToken) {
-        response.cookies.set(REFRESH_TOKEN_COOKIE, sessionRefresh.newRefreshToken, COOKIE_OPTS);
-    }
-
-    return response;
+    return NextResponse.next();
 }
 

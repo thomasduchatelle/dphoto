@@ -27,3 +27,4 @@ export interface BackendSession {
 export const ACTIVE_SESSION = { status: 'active' as const };
 export const ANONYMOUS_SESSION = { status: 'anonymous' as const };
 export const EXPIRED_SESSION = { status: 'expired' as const };
+export const USER_INFO_COOKIE = 'dphoto-user-info';

@@ -84,7 +84,7 @@ export function getOriginalOrigin(request: NextRequest): URL {
         url = overloadWithForwardedUrl(url, forwardedHeader);
     }
 
-    if (basePath) {
+    if (basePath && !url.pathname.startsWith(basePath)) { // the proxy gets the base path in its request URL.
         url.pathname = basePath + url.pathname
 
         if (url.pathname.endsWith("/")) {

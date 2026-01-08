@@ -9,11 +9,12 @@ import {
     OAUTH_NONCE_COOKIE,
     OAUTH_STATE_COOKIE,
     oidcConfig,
-    REFRESH_TOKEN_COOKIE
+    REFRESH_TOKEN_COOKIE,
+    USER_INFO_COOKIE
 } from '@/libs/security';
 import {basePath, getOriginalOrigin} from '@/libs/requests';
 
-const USER_INFO_COOKIE = 'dphoto-user-info';
+const SESSION_TIMEOUT = 30 * 24 * 60 * 60; // 7 days in seconds
 
 interface IDTokenPayload {
     given_name?: string;
@@ -60,7 +61,7 @@ function clearAuthCookies(response: NextResponse): void {
     response.cookies.set(OAUTH_NONCE_COOKIE, '', {maxAge: 0, path: '/'});
 }
 
-function redirectToErrorPage(requestUrl: string, error: string, errorDescription?: string): NextResponse {
+function redirectToErrorPage(requestUrl: URL, error: string, errorDescription?: string): NextResponse {
     const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
     errorUrl.searchParams.set('error', error);
     if (errorDescription) {
@@ -130,8 +131,14 @@ export async function GET(request: NextRequest) {
             ...COOKIE_OPTS,
             maxAge: tokens.expires_in,
         });
-        response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token ?? '', COOKIE_OPTS);
-        response.cookies.set(USER_INFO_COOKIE, JSON.stringify(userInfo), COOKIE_OPTS);
+        response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refresh_token ?? '', {
+            ...COOKIE_OPTS,
+            maxAge: SESSION_TIMEOUT,
+        });
+        response.cookies.set(USER_INFO_COOKIE, JSON.stringify(userInfo), {
+            ...COOKIE_OPTS,
+            maxAge: SESSION_TIMEOUT,
+        });
         clearAuthCookies(response);
 
         return response;
