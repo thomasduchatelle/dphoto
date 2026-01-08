@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import {basePath} from '@/libs/requests';
 
 export interface UserInfoProps {
     name: string;
@@ -35,7 +34,7 @@ export function UserInfo({ name, email, picture }: UserInfoProps) {
                 </span>
             </div>
             <Link
-                href={`${basePath}/auth/logout`}
+                href="/auth/logout"
                 className="ml-2 rounded-full p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
                 title="Logout"
             >
