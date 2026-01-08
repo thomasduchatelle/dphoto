@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import {basePath} from '@/libs/requests';
 
 export default function LogoutSuccessPage() {
     return (
@@ -29,7 +28,7 @@ export default function LogoutSuccessPage() {
                 </p>
                 <div className="flex justify-center">
                     <Link
-                        href={`${basePath}/auth/login`}
+                        href="/auth/login"
                         className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
                     >
                         Sign In Again
