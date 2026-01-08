@@ -60,39 +60,35 @@ function clearAuthCookies(response: NextResponse): void {
     response.cookies.set(OAUTH_NONCE_COOKIE, '', {maxAge: 0, path: '/'});
 }
 
+function redirectToErrorPage(requestUrl: string, error: string, errorDescription?: string): NextResponse {
+    const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
+    errorUrl.searchParams.set('error', error);
+    if (errorDescription) {
+        errorUrl.searchParams.set('error_description', errorDescription);
+    }
+    const response = NextResponse.redirect(errorUrl);
+    clearAuthCookies(response);
+    return response;
+}
+
 export async function GET(request: NextRequest) {
     const requestUrl = getOriginalOrigin(request);
-    const url = new URL(request.url);
+    const url = new URL(requestUrl);
     const cookies = readCookies(request);
 
     const errorParam = url.searchParams.get('error');
     if (errorParam) {
         const errorDescription = url.searchParams.get('error_description');
-        const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
-        errorUrl.searchParams.set('error', errorParam);
-        if (errorDescription) {
-            errorUrl.searchParams.set('error_description', errorDescription);
-        }
-        const response = NextResponse.redirect(errorUrl);
-        clearAuthCookies(response);
-        return response;
+        return redirectToErrorPage(requestUrl, errorParam, errorDescription ?? undefined);
     }
 
     if (!cookies.state || !cookies.codeVerifier || !cookies.nonce) {
-        const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
-        errorUrl.searchParams.set('error', 'missing-authentication-cookies');
-        const response = NextResponse.redirect(errorUrl);
-        clearAuthCookies(response);
-        return response;
+        return redirectToErrorPage(requestUrl, 'missing-authentication-cookies');
     }
 
     const stateParam = url.searchParams.get('state');
     if (stateParam !== cookies.state) {
-        const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
-        errorUrl.searchParams.set('error', 'state-mismatch');
-        const response = NextResponse.redirect(errorUrl);
-        clearAuthCookies(response);
-        return response;
+        return redirectToErrorPage(requestUrl, 'state-mismatch');
     }
 
     const config = await oidcConfig(getOidcConfigFromEnv());
@@ -142,10 +138,6 @@ export async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error('OAuth callback error:', error);
-        const errorUrl = new URL(`${basePath}/auth/error`, requestUrl);
-        errorUrl.searchParams.set('error', 'token-exchange-failed');
-        const response = NextResponse.redirect(errorUrl);
-        clearAuthCookies(response);
-        return response;
+        return redirectToErrorPage(requestUrl, 'token-exchange-failed');
     }
 }
