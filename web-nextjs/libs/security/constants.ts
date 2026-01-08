@@ -21,3 +21,8 @@ export interface BackendSession {
     accessToken: AccessToken;
     authenticatedUser: AuthenticatedUser;
 }
+
+// Session refresh status constants for testing
+export const ACTIVE_SESSION = { status: 'active' as const };
+export const ANONYMOUS_SESSION = { status: 'anonymous' as const };
+export const EXPIRED_SESSION = { status: 'expired' as const };

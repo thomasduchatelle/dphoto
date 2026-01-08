@@ -18,6 +18,7 @@ export class FakeOIDCServer {
     private server: ReturnType<typeof setupServer>;
     private issuerUrl: string;
     private tokenResponses = new Map<string, TokenResponse | TokenError>();
+    private refreshTokenResponses = new Map<string, TokenResponse | TokenError>();
     private clientId: string;
     private clientSecret: string;
 
@@ -42,6 +43,35 @@ export class FakeOIDCServer {
             http.post(`${issuerUrl}/oauth2/token`, async ({ request }) => {
                 const body = await request.text();
                 const params = new URLSearchParams(body);
+                const grantType = params.get('grant_type');
+                
+                // Handle refresh token grant
+                if (grantType === 'refresh_token') {
+                    const refreshToken = params.get('refresh_token');
+                    
+                    if (!refreshToken) {
+                        return HttpResponse.json(
+                            { error: 'invalid_request', error_description: 'Missing refresh token' },
+                            { status: 400 }
+                        );
+                    }
+                    
+                    const response = this.refreshTokenResponses.get(refreshToken);
+                    if (!response) {
+                        return HttpResponse.json(
+                            { error: 'invalid_grant', error_description: 'Invalid or expired refresh token' },
+                            { status: 400 }
+                        );
+                    }
+                    
+                    if ('error' in response) {
+                        return HttpResponse.json(response, { status: 400 });
+                    }
+                    
+                    return HttpResponse.json(response);
+                }
+                
+                // Handle authorization code grant
                 const code = params.get('code');
 
                 if (!code) {
@@ -78,6 +108,7 @@ export class FakeOIDCServer {
 
     reset(): void {
         this.tokenResponses.clear();
+        this.refreshTokenResponses.clear();
     }
 
     setupSuccessfulTokenExchange(code: string, tokens: TokenResponse): void {
@@ -86,6 +117,17 @@ export class FakeOIDCServer {
 
     setupTokenError(code: string, error: string, errorDescription?: string): void {
         this.tokenResponses.set(code, {
+            error,
+            error_description: errorDescription,
+        });
+    }
+
+    setupSuccessfulRefreshTokenExchange(refreshToken: string, tokens: TokenResponse): void {
+        this.refreshTokenResponses.set(refreshToken, tokens);
+    }
+
+    setupRefreshTokenError(refreshToken: string, error: string, errorDescription?: string): void {
+        this.refreshTokenResponses.set(refreshToken, {
             error,
             error_description: errorDescription,
         });
