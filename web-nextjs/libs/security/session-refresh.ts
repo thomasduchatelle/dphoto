@@ -7,7 +7,7 @@ export interface SessionCookies {
 }
 
 export interface SessionRefresh {
-    status: 'active' | 'expired' | 'none';
+    status: 'active' | 'expired' | 'anonymous';
     newAccessToken?: {
         token: string;
         expiresIn: number;
@@ -42,7 +42,7 @@ export async function refreshSessionIfNecessary(cookies: SessionCookies): Promis
         if (cookies.accessToken && !isTokenExpired(cookies.accessToken)) {
             return { status: 'active' };
         }
-        return { status: 'none' };
+        return { status: 'anonymous' };
     }
 
     // If we have a valid access token, no refresh needed

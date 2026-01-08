@@ -43,7 +43,7 @@ export async function proxy(request: NextRequest) {
     // Check session and refresh if necessary
     const sessionRefresh = await refreshSessionIfNecessary(cookies);
 
-    if (sessionRefresh.status === 'none' || sessionRefresh.status === 'expired') {
+    if (sessionRefresh.status === 'anonymous' || sessionRefresh.status === 'expired') {
         return NextResponse.redirect(new URL(`${basePath}/auth/login`, requestUrl));
     }
 

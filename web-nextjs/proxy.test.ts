@@ -111,6 +111,45 @@ describe('authentication middleware', () => {
         expect(cookies[REFRESH_TOKEN_COOKIE].value).toBe('NEW_REFRESH_TOKEN');
     });
 
+    it('should refresh expired access token with valid refresh token and allow request to proceed', async () => {
+        const now = Math.floor(Date.now() / 1000);
+        const expiredAccessToken = createCognitoAccessToken({exp: now - 100}); // expired 100 seconds ago
+        const refreshToken = 'VALID_REFRESH_TOKEN';
+
+        // Setup fake OIDC server to return new tokens
+        const newTokenResponse = createTokenResponse({
+            access_token: createCognitoAccessToken({exp: now + 3600}),
+            refresh_token: 'NEW_REFRESH_TOKEN',
+        });
+        fakeOIDCServer.setupSuccessfulRefreshTokenExchange(refreshToken, newTokenResponse);
+
+        const request = new NextRequest('https://example.com/albums', {
+            method: 'GET',
+            headers: {
+                Accept: 'text/html',
+                Cookie: `${ACCESS_TOKEN_COOKIE}=${expiredAccessToken}; ${REFRESH_TOKEN_COOKIE}=${refreshToken}`,
+            },
+        });
+
+        const response = await proxy(request);
+
+        expect(response.status).toBe(200);
+
+        // Check that new tokens were set in cookies
+        const cookies = setCookiesOf(response);
+        expect(cookies[ACCESS_TOKEN_COOKIE]).toBeDefined();
+        expect(cookies[ACCESS_TOKEN_COOKIE].value).not.toBe(expiredAccessToken);
+        expect(cookies[ACCESS_TOKEN_COOKIE]).toMatchObject({
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            path: '/',
+        });
+
+        expect(cookies[REFRESH_TOKEN_COOKIE]).toBeDefined();
+        expect(cookies[REFRESH_TOKEN_COOKIE].value).toBe('NEW_REFRESH_TOKEN');
+    });
+
     it('should redirect to login when refresh token fails', async () => {
         const refreshToken = 'INVALID_REFRESH_TOKEN';
 

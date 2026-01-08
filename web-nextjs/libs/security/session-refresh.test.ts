@@ -2,6 +2,7 @@
 
 import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {refreshSessionIfNecessary, SessionCookies} from './session-refresh';
+import {ACTIVE_SESSION, ANONYMOUS_SESSION, EXPIRED_SESSION} from './constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 
@@ -36,20 +37,18 @@ describe('refreshSessionIfNecessary', () => {
 
         const result = await refreshSessionIfNecessary(cookies);
 
-        expect(result.status).toBe('active');
-        expect(result.newAccessToken).toBeUndefined();
-        expect(result.newRefreshToken).toBeUndefined();
+        expect(result).toMatchObject(ACTIVE_SESSION);
     });
 
-    it('should return none status when no tokens are provided', async () => {
+    it('should return anonymous status when no tokens are provided', async () => {
         const cookies: SessionCookies = {};
 
         const result = await refreshSessionIfNecessary(cookies);
 
-        expect(result.status).toBe('none');
+        expect(result).toMatchObject(ANONYMOUS_SESSION);
     });
 
-    it('should return none status when only expired access token is provided without refresh token', async () => {
+    it('should return anonymous status when only expired access token is provided without refresh token', async () => {
         const now = Math.floor(Date.now() / 1000);
         const expiredAccessToken = createCognitoAccessToken({exp: now - 100});
 
@@ -59,7 +58,7 @@ describe('refreshSessionIfNecessary', () => {
 
         const result = await refreshSessionIfNecessary(cookies);
 
-        expect(result.status).toBe('none');
+        expect(result).toMatchObject(ANONYMOUS_SESSION);
     });
 
     it('should refresh and return active status when access token is expired but refresh token is valid', async () => {
@@ -82,11 +81,14 @@ describe('refreshSessionIfNecessary', () => {
 
         const result = await refreshSessionIfNecessary(cookies);
 
-        expect(result.status).toBe('active');
-        expect(result.newAccessToken).toBeDefined();
-        expect(result.newAccessToken?.token).toBe(newTokenResponse.access_token);
-        expect(result.newAccessToken?.expiresIn).toBe(3600);
-        expect(result.newRefreshToken).toBe('NEW_REFRESH_TOKEN');
+        expect(result).toMatchObject({
+            status: 'active',
+            newAccessToken: {
+                token: newTokenResponse.access_token,
+                expiresIn: 3600,
+            },
+            newRefreshToken: 'NEW_REFRESH_TOKEN',
+        });
     });
 
     it('should refresh and return active status when no access token is provided but refresh token is valid', async () => {
@@ -107,11 +109,14 @@ describe('refreshSessionIfNecessary', () => {
 
         const result = await refreshSessionIfNecessary(cookies);
 
-        expect(result.status).toBe('active');
-        expect(result.newAccessToken).toBeDefined();
-        expect(result.newAccessToken?.token).toBe(newTokenResponse.access_token);
-        expect(result.newAccessToken?.expiresIn).toBe(3600);
-        expect(result.newRefreshToken).toBe('NEW_REFRESH_TOKEN');
+        expect(result).toMatchObject({
+            status: 'active',
+            newAccessToken: {
+                token: newTokenResponse.access_token,
+                expiresIn: 3600,
+            },
+            newRefreshToken: 'NEW_REFRESH_TOKEN',
+        });
     });
 
     it('should return expired status when refresh token is invalid', async () => {
@@ -129,9 +134,7 @@ describe('refreshSessionIfNecessary', () => {
 
         const result = await refreshSessionIfNecessary(cookies);
 
-        expect(result.status).toBe('expired');
-        expect(result.newAccessToken).toBeUndefined();
-        expect(result.newRefreshToken).toBeUndefined();
+        expect(result).toMatchObject(EXPIRED_SESSION);
     });
 
     it('should handle token response without refresh token', async () => {
@@ -152,9 +155,13 @@ describe('refreshSessionIfNecessary', () => {
 
         const result = await refreshSessionIfNecessary(cookies);
 
-        expect(result.status).toBe('active');
-        expect(result.newAccessToken).toBeDefined();
-        expect(result.newRefreshToken).toBeUndefined();
+        expect(result).toMatchObject({
+            status: 'active',
+            newAccessToken: {
+                token: newTokenResponse.access_token,
+                expiresIn: 3600,
+            },
+        });
     });
 
     it('should handle token response without expires_in', async () => {
@@ -175,8 +182,13 @@ describe('refreshSessionIfNecessary', () => {
 
         const result = await refreshSessionIfNecessary(cookies);
 
-        expect(result.status).toBe('active');
-        expect(result.newAccessToken).toBeDefined();
-        expect(result.newAccessToken?.expiresIn).toBe(0);
+        expect(result).toMatchObject({
+            status: 'active',
+            newAccessToken: {
+                token: newTokenResponse.access_token,
+                expiresIn: 0,
+            },
+            newRefreshToken: 'NEW_REFRESH_TOKEN',
+        });
     });
 });
