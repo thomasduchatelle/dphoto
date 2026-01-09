@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import {clearAuthCookies} from '@/libs/security';
 
-export default function LogoutSuccessPage() {
+export default async function LogoutPage() {
+    await clearAuthCookies();
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
             <div className="mx-4 max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-zinc-900 dark:border dark:border-zinc-800">
