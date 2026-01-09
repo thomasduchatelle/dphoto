@@ -1,6 +1,7 @@
 import {cookies} from 'next/headers';
 import {ACCESS_TOKEN_COOKIE, BackendSession} from './constants';
 import {decodeJWTPayload, isOwnerFromJWT} from './jwt-utils';
+import {getLogoutUrl} from './logout-utils';
 
 const USER_INFO_COOKIE = 'dphoto-user-info';
 
@@ -48,5 +49,6 @@ export async function getBackendSession(): Promise<BackendSession | null> {
             picture: userInfo?.picture,
             isOwner: isOwnerFromJWT(accessToken),
         },
+        logoutUrl: await getLogoutUrl(),
     };
 }

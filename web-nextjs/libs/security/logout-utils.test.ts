@@ -65,18 +65,18 @@ describe('logout-utils', () => {
 
             await clearAuthCookies();
 
-            const cookieOptions = {
+            const deleteCookie = {
                 maxAge: 0,
                 path: '/',
             };
 
-            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-access-token', '', cookieOptions);
-            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-refresh-token', '', cookieOptions);
-            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-state', '', cookieOptions);
-            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-code-verifier', '', cookieOptions);
-            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-nonce', '', cookieOptions);
-            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-redirect-after-login', '', cookieOptions);
-            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-user-info', '', cookieOptions);
+            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-access-token', '', deleteCookie);
+            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-refresh-token', '', deleteCookie);
+            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-state', '', deleteCookie);
+            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-code-verifier', '', deleteCookie);
+            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-nonce', '', deleteCookie);
+            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-redirect-after-login', '', deleteCookie);
+            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-user-info', '', deleteCookie);
         });
     });
 });

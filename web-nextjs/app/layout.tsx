@@ -2,7 +2,6 @@ import type {Metadata} from "next";
 import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
 import {getBackendSession} from "@/libs/security/session-utils";
-import {getLogoutUrl} from "@/libs/security";
 import {UserInfo} from "@/components/UserInfo";
 
 const geistSans = Geist({
@@ -26,7 +25,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getBackendSession();
-  const logoutUrl = session ? await getLogoutUrl() : '';
 
   return (
     <html lang="en">
@@ -38,7 +36,7 @@ export default async function RootLayout({
             name={session.authenticatedUser.name}
             email={session.authenticatedUser.email}
             picture={session.authenticatedUser.picture}
-            logoutUrl={logoutUrl}
+            logoutUrl={session.logoutUrl}
           />
         )}
         {children}
