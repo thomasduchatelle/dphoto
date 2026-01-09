@@ -5,9 +5,10 @@ export interface UserInfoProps {
     name: string;
     email: string;
     picture?: string;
+    logoutUrl: string;
 }
 
-export function UserInfo({ name, email, picture }: UserInfoProps) {
+export function UserInfo({ name, email, picture, logoutUrl }: UserInfoProps) {
     return (
         <div className="fixed top-4 right-4 flex items-center gap-3 bg-white dark:bg-zinc-900 rounded-full shadow-lg px-4 py-2 border border-zinc-200 dark:border-zinc-800">
             {picture ? (
@@ -34,7 +35,7 @@ export function UserInfo({ name, email, picture }: UserInfoProps) {
                 </span>
             </div>
             <Link
-                href="/auth/logout"
+                href={logoutUrl}
                 className="ml-2 rounded-full p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
                 title="Logout"
             >

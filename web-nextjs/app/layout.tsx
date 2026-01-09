@@ -36,6 +36,7 @@ export default async function RootLayout({
             name={session.authenticatedUser.name}
             email={session.authenticatedUser.email}
             picture={session.authenticatedUser.picture}
+            logoutUrl={session.logoutUrl}
           />
         )}
         {children}

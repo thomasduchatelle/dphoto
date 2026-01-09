@@ -21,6 +21,7 @@ export interface BackendSession {
     type: 'authenticated';
     accessToken: AccessToken;
     authenticatedUser: AuthenticatedUser;
+    logoutUrl: string;
 }
 
 // Session refresh status constants for testing
