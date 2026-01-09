@@ -50,4 +50,3 @@ export async function clearAuthCookies(): Promise<void> {
     cookieStore.set(REDIRECT_AFTER_LOGIN_COOKIE, '', cookieOptions);
     cookieStore.set(USER_INFO_COOKIE, '', cookieOptions);
 }
-
