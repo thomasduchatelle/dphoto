@@ -1,5 +1,5 @@
 import {cookies} from 'next/headers';
-import {ACCESS_TOKEN_COOKIE, BackendSession} from './constants';
+import {ACCESS_TOKEN_COOKIE, BackendSession, REFRESH_TOKEN_COOKIE} from './constants';
 import {decodeJWTPayload, isOwnerFromJWT} from './jwt-utils';
 
 const USER_INFO_COOKIE = 'dphoto-user-info';
@@ -49,4 +49,11 @@ export async function getBackendSession(): Promise<BackendSession | null> {
             isOwner: isOwnerFromJWT(accessToken),
         },
     };
+}
+
+export async function clearAuthCookies(): Promise<void> {
+    const cookieStore = await cookies();
+    cookieStore.set(ACCESS_TOKEN_COOKIE, '', { maxAge: 0, path: '/' });
+    cookieStore.set(REFRESH_TOKEN_COOKIE, '', { maxAge: 0, path: '/' });
+    cookieStore.set(USER_INFO_COOKIE, '', { maxAge: 0, path: '/' });
 }

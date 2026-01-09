@@ -22,3 +22,12 @@ export async function oidcConfig({issuer, clientId, clientSecret}: OpenIdConfig)
     }
     return client.discovery(new URL(issuer), clientId, clientSecret);
 }
+
+export function getLogoutUrl(issuerUrl: string, clientId: string, logoutUri: string): string {
+    const issuer = new URL(issuerUrl);
+    const logoutPath = issuer.pathname.endsWith('/') ? 'logout' : '/logout';
+    const logoutEndpoint = new URL(issuer.pathname + logoutPath, issuerUrl);
+    logoutEndpoint.searchParams.set('client_id', clientId);
+    logoutEndpoint.searchParams.set('logout_uri', logoutUri);
+    return logoutEndpoint.toString();
+}
