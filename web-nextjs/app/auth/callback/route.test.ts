@@ -3,7 +3,7 @@
 import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {GET} from './route';
-import {ACCESS_TOKEN_COOKIE, OAUTH_CODE_VERIFIER_COOKIE, OAUTH_NONCE_COOKIE, OAUTH_STATE_COOKIE, REFRESH_TOKEN_COOKIE} from '@/libs/security';
+import {COOKIE_AUTH_CODE_VERIFIER, COOKIE_AUTH_NONCE, COOKIE_AUTH_STATE, COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN} from '@/libs/security';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '../../../__tests__/helpers/test-helper-oidc';
 import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
@@ -45,7 +45,7 @@ describe('authentication middleware', () => {
                 method: 'GET',
                 headers: {
                     Accept: 'text/html',
-                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER_123; ${OAUTH_NONCE_COOKIE}=NONCE_VALUE`,
+                    Cookie: `${COOKIE_AUTH_STATE}=EXPECTED_STATE; ${COOKIE_AUTH_CODE_VERIFIER}=CODE_VERIFIER_123; ${COOKIE_AUTH_NONCE}=NONCE_VALUE`,
                 },
             }
         );
@@ -57,15 +57,15 @@ describe('authentication middleware', () => {
 
         const cookies = setCookiesOf(response);
 
-        expect(cookies[ACCESS_TOKEN_COOKIE]).toMatchObject({
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toMatchObject({
             httpOnly: true,
             secure: true,
             sameSite: 'lax',
             path: '/',
         });
-        expect(cookies[ACCESS_TOKEN_COOKIE].value).toBeTruthy();
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN].value).toBeTruthy();
 
-        expect(cookies[REFRESH_TOKEN_COOKIE]).toMatchObject({
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN]).toMatchObject({
             value: 'REFRESH_TOKEN_VALUE',
             httpOnly: true,
             secure: true,
@@ -73,8 +73,8 @@ describe('authentication middleware', () => {
             path: '/',
         });
 
-        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
-        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_STATE]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toMatchObject(deletedCookie);
     });
 
     it('should redirect to original domain when using Forwarded header', async () => {
@@ -88,7 +88,7 @@ describe('authentication middleware', () => {
                 method: 'GET',
                 headers: {
                     Accept: 'text/html',
-                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER_123; ${OAUTH_NONCE_COOKIE}=NONCE_VALUE`,
+                    Cookie: `${COOKIE_AUTH_STATE}=EXPECTED_STATE; ${COOKIE_AUTH_CODE_VERIFIER}=CODE_VERIFIER_123; ${COOKIE_AUTH_NONCE}=NONCE_VALUE`,
                     'forwarded': 'by=3.248.245.105;for=83.106.145.60;host=my-domain.com;proto=https',
                 },
             }
@@ -107,7 +107,7 @@ describe('authentication middleware', () => {
                 method: 'GET',
                 headers: {
                     Accept: 'text/html',
-                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER; ${OAUTH_NONCE_COOKIE}=NONCE_VALUE`,
+                    Cookie: `${COOKIE_AUTH_STATE}=EXPECTED_STATE; ${COOKIE_AUTH_CODE_VERIFIER}=CODE_VERIFIER; ${COOKIE_AUTH_NONCE}=NONCE_VALUE`,
                 },
             }
         );
@@ -123,9 +123,9 @@ describe('authentication middleware', () => {
         });
 
         const cookies = setCookiesOf(response);
-        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
-        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
-        expect(cookies[OAUTH_NONCE_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_STATE]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_NONCE]).toMatchObject(deletedCookie);
     });
 
     it('should redirect to error page when the state mismatch', async () => {
@@ -134,7 +134,7 @@ describe('authentication middleware', () => {
             {
                 method: 'GET',
                 headers: {
-                    Cookie: `${OAUTH_STATE_COOKIE}=EXPECTED_STATE; ${OAUTH_CODE_VERIFIER_COOKIE}=CODE_VERIFIER; ${OAUTH_NONCE_COOKIE}=NONCE_VALUE`,
+                    Cookie: `${COOKIE_AUTH_STATE}=EXPECTED_STATE; ${COOKIE_AUTH_CODE_VERIFIER}=CODE_VERIFIER; ${COOKIE_AUTH_NONCE}=NONCE_VALUE`,
                 },
             }
         );
@@ -149,9 +149,9 @@ describe('authentication middleware', () => {
         });
 
         const cookies = setCookiesOf(response);
-        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
-        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
-        expect(cookies[OAUTH_NONCE_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_STATE]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_NONCE]).toMatchObject(deletedCookie);
     });
 
     it('should redirect when authentication cookies are not present', async () => {
@@ -172,8 +172,8 @@ describe('authentication middleware', () => {
         });
 
         const cookies = setCookiesOf(response);
-        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject(deletedCookie);
-        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject(deletedCookie);
-        expect(cookies[OAUTH_NONCE_COOKIE]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_STATE]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toMatchObject(deletedCookie);
+        expect(cookies[COOKIE_AUTH_NONCE]).toMatchObject(deletedCookie);
     });
 });

@@ -3,7 +3,7 @@
 import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {proxy, skipProxyForPageMatching} from './proxy';
-import {ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE} from '@/libs/security/constants';
+import {COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN} from '@/libs/security/constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
@@ -65,7 +65,7 @@ describe('authentication middleware', () => {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
-                Cookie: `${ACCESS_TOKEN_COOKIE}=${accessToken}`,
+                Cookie: `${COOKIE_SESSION_ACCESS_TOKEN}=${accessToken}`,
             },
         });
 
@@ -89,7 +89,7 @@ describe('authentication middleware', () => {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
-                Cookie: `${REFRESH_TOKEN_COOKIE}=${refreshToken}`,
+                Cookie: `${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}`,
             },
         });
 
@@ -99,16 +99,16 @@ describe('authentication middleware', () => {
 
         // Check that new tokens were set in cookies
         const cookies = setCookiesOf(response);
-        expect(cookies[ACCESS_TOKEN_COOKIE]).toBeDefined();
-        expect(cookies[ACCESS_TOKEN_COOKIE]).toMatchObject({
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toBeDefined();
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toMatchObject({
             httpOnly: true,
             secure: true,
             sameSite: 'lax',
             path: '/',
         });
 
-        expect(cookies[REFRESH_TOKEN_COOKIE]).toBeDefined();
-        expect(cookies[REFRESH_TOKEN_COOKIE].value).toBe('NEW_REFRESH_TOKEN');
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN]).toBeDefined();
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN].value).toBe('NEW_REFRESH_TOKEN');
     });
 
     it('should refresh expired access token with valid refresh token and allow request to proceed', async () => {
@@ -127,7 +127,7 @@ describe('authentication middleware', () => {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
-                Cookie: `${ACCESS_TOKEN_COOKIE}=${expiredAccessToken}; ${REFRESH_TOKEN_COOKIE}=${refreshToken}`,
+                Cookie: `${COOKIE_SESSION_ACCESS_TOKEN}=${expiredAccessToken}; ${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}`,
             },
         });
 
@@ -137,17 +137,17 @@ describe('authentication middleware', () => {
 
         // Check that new tokens were set in cookies
         const cookies = setCookiesOf(response);
-        expect(cookies[ACCESS_TOKEN_COOKIE]).toBeDefined();
-        expect(cookies[ACCESS_TOKEN_COOKIE].value).not.toBe(expiredAccessToken);
-        expect(cookies[ACCESS_TOKEN_COOKIE]).toMatchObject({
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toBeDefined();
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN].value).not.toBe(expiredAccessToken);
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toMatchObject({
             httpOnly: true,
             secure: true,
             sameSite: 'lax',
             path: '/',
         });
 
-        expect(cookies[REFRESH_TOKEN_COOKIE]).toBeDefined();
-        expect(cookies[REFRESH_TOKEN_COOKIE].value).toBe('NEW_REFRESH_TOKEN');
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN]).toBeDefined();
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN].value).toBe('NEW_REFRESH_TOKEN');
     });
 
     it('should redirect to login when refresh token fails', async () => {
@@ -160,7 +160,7 @@ describe('authentication middleware', () => {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
-                Cookie: `${REFRESH_TOKEN_COOKIE}=${refreshToken}`,
+                Cookie: `${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}`,
             },
         });
 

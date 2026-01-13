@@ -1,5 +1,6 @@
 import {NextRequest} from 'next/server';
 import {basePath} from "./basepath";
+import {headers} from "next/headers";
 
 /**
  * Parses the RFC 7239 Forwarded header.
@@ -43,7 +44,11 @@ function parseForwardedHeader(forwardedHeader: string): { proto: string; host: s
     return null;
 }
 
-function overloadWithForwardedUrl(serverUrl: URL, forwardedHeader: string): URL {
+function overloadWithForwardedUrl(serverUrl: URL, forwardedHeader: string | null): URL {
+    if (!forwardedHeader) {
+        return serverUrl
+    }
+
     const forwardedFrom = parseForwardedHeader(forwardedHeader);
     if (forwardedFrom
         && (forwardedFrom.proto === 'http' || forwardedFrom.proto === 'https') // only HTTP and HTTPS protocols are allowed
@@ -93,4 +98,30 @@ export function getOriginalOrigin(request: NextRequest): URL {
     }
 
     return url
+}
+
+/**
+ * Generates a redirect URL from the original HOST and PROTO (if the request got forwarded), and which includes the basepath (if set)
+ * @param path
+ */
+export async function redirectUrl(path: string): Promise<URL> {
+    const h = await headers()
+
+    const host = h.get("host")
+    const proto = host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http" : "https"
+
+    const pathWithBase = `${basePath}${path}`;
+    console.log("redirect to host:", host, " proto:", proto, " pathWithBase:", pathWithBase)
+    return overloadWithForwardedUrl(new URL(pathWithBase, `${proto || 'http'}://${host}`), h.get("forwarded"));
+}
+
+
+export function requestUrlWithBaseBath(request: URL): URL {
+    if (basePath && !request.pathname.startsWith(basePath)) {
+        const updated = new URL(request)
+        updated.pathname = `${basePath}${request.pathname}`;
+        return updated
+    }
+
+    return request;
 }

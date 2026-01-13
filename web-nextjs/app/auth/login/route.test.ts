@@ -3,7 +3,7 @@
 import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {GET} from './route';
-import {OAUTH_CODE_VERIFIER_COOKIE, OAUTH_STATE_COOKIE} from '@/libs/security/constants';
+import {COOKIE_AUTH_CODE_VERIFIER, COOKIE_AUTH_STATE} from '@/libs/security/constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
@@ -50,19 +50,19 @@ describe('authentication middleware', () => {
         expect(redirection.params.code_challenge).toBeDefined();
 
         const cookies = setCookiesOf(response);
-        expect(cookies[OAUTH_STATE_COOKIE]).toMatchObject({
+        expect(cookies[COOKIE_AUTH_STATE]).toMatchObject({
             maxAge: 300,
             sameSite: 'lax',
             path: '/',
             value: redirection.params.state,
         });
 
-        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]).toMatchObject({
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toMatchObject({
             maxAge: 300,
             sameSite: 'lax',
             path: '/',
         });
-        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE].value).toBeTruthy();
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER].value).toBeTruthy();
     });
 
     it('should redirect to authorization authority when explicitly requesting /auth/login', async () => {
@@ -81,8 +81,8 @@ describe('authentication middleware', () => {
         expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
 
         const cookies = setCookiesOf(response);
-        expect(cookies[OAUTH_STATE_COOKIE]?.value).toBeTruthy();
-        expect(cookies[OAUTH_CODE_VERIFIER_COOKIE]?.value).toBeTruthy();
+        expect(cookies[COOKIE_AUTH_STATE]?.value).toBeTruthy();
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]?.value).toBeTruthy();
     });
 
     it('should use Forwarded header for redirect_uri when behind API Gateway', async () => {

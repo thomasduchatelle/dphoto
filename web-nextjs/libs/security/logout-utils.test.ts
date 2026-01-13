@@ -1,9 +1,10 @@
 // @vitest-environment node
 
-import {afterAll, afterEach, beforeAll, describe, expect, it, vi, beforeEach} from 'vitest';
-import {clearAuthCookies, getLogoutUrl} from '@/libs/security';
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from 'vitest';
+import {getLogoutUrl} from '@/libs/security';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
+import {clearSession} from "@/libs/security/clearSession";
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
@@ -63,7 +64,7 @@ describe('logout-utils', () => {
             const {cookies} = await import('next/headers');
             const mockCookieStore = await cookies();
 
-            await clearAuthCookies();
+            await clearSession();
 
             const deleteCookie = {
                 maxAge: 0,
