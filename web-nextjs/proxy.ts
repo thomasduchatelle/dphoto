@@ -1,6 +1,6 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {redirectUrl} from './libs/requests';
-import {completeLogout, getValidAuthentication} from "@/libs/security";
+import {completeLogout, getValidAuthentication, initiateAuthenticationFlow} from "@/libs/security";
 
 // if basepath was not set, this would work: `export const config = { matcher: [`/(${skipProxyForPageMatching}`] }`
 export const skipProxyForPageMatching = /^(?!_next\/static|_next\/image|favicon.ico|api|auth|.*\.js$|.*\.png$|.*\.svg$|.*\.jpg$|.*\.gif$).*/i
@@ -22,8 +22,8 @@ export async function proxy(request: NextRequest) {
     // note: the access token is refreshed if required
     const authentication = await getValidAuthentication()
     if (authentication.status == "anonymous") {
-        const redirectTo = await redirectUrl(`/auth/login`);
-        return NextResponse.redirect(redirectTo);
+        const redirection = await initiateAuthenticationFlow(request.nextUrl.pathname);
+        return NextResponse.redirect(redirection.redirectTo);
     }
 
     return NextResponse.next();

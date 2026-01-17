@@ -3,7 +3,7 @@
 import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {proxy, skipProxyForPageMatching} from './proxy';
-import {COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN} from '@/libs/security/constants';
+import {COOKIE_AUTH_CODE_VERIFIER, COOKIE_AUTH_STATE, COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN} from '@/libs/security/constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
@@ -28,7 +28,7 @@ describe('authentication middleware', () => {
         fakeOIDCServer.stop();
     });
 
-    it('should redirect to login page when requesting home page without access token', async () => {
+    it('should redirect to Cognito authorization when requesting home page without access token', async () => {
         const request = new NextRequest('https://example.com/', {
             method: 'GET',
             headers: {
@@ -39,10 +39,33 @@ describe('authentication middleware', () => {
         const response = await proxy(request);
 
         expect(response.status).toBe(307);
-        expect(response.headers.get('Location')).toBe('https://example.com/nextjs/auth/login');
+
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
+        expect(redirection.params.client_id).toBe(TEST_CLIENT_ID);
+        expect(redirection.params.redirect_uri).toBe('https://example.com/nextjs/auth/callback');
+        expect(redirection.params.scope).toBe('openid profile email');
+        expect(redirection.params.code_challenge_method).toBe('S256');
+        expect(redirection.params.state).toBeDefined();
+        expect(redirection.params.code_challenge).toBeDefined();
+
+        const cookies = setCookiesOf(response);
+        expect(cookies[COOKIE_AUTH_STATE]).toMatchObject({
+            maxAge: 300,
+            sameSite: 'lax',
+            path: '/',
+            value: redirection.params.state,
+        });
+
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toMatchObject({
+            maxAge: 300,
+            sameSite: 'lax',
+            path: '/',
+        });
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER].value).toBeTruthy();
     });
 
-    it('should redirect to login page using Forwarded header when behind API Gateway', async () => {
+    it('should redirect to Cognito authorization using Forwarded header when behind API Gateway', async () => {
         const request = new NextRequest('https://internal-gateway.my-domain.com/', {
             method: 'GET',
             headers: {
@@ -54,7 +77,14 @@ describe('authentication middleware', () => {
         const response = await proxy(request);
 
         expect(response.status).toBe(307);
-        expect(response.headers.get('Location')).toBe('https://my-domain.com/nextjs/auth/login');
+
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
+        expect(redirection.params.redirect_uri).toBe('https://my-domain.com/nextjs/auth/callback');
+
+        const cookies = setCookiesOf(response);
+        expect(cookies[COOKIE_AUTH_STATE]?.value).toBeTruthy();
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]?.value).toBeTruthy();
     });
 
     it('should allow authenticated request to proceed with valid non-expired token', async () => {
@@ -150,7 +180,7 @@ describe('authentication middleware', () => {
         expect(cookies[COOKIE_SESSION_REFRESH_TOKEN].value).toBe('NEW_REFRESH_TOKEN');
     });
 
-    it('should redirect to login when refresh token fails', async () => {
+    it('should redirect to Cognito authorization when refresh token fails', async () => {
         const refreshToken = 'INVALID_REFRESH_TOKEN';
 
         // Setup fake OIDC server to return an error
@@ -167,10 +197,13 @@ describe('authentication middleware', () => {
         const response = await proxy(request);
 
         expect(response.status).toBe(307);
-        expect(response.headers.get('Location')).toBe('https://example.com/nextjs/auth/login');
+
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
+        expect(redirection.params.redirect_uri).toBe('https://example.com/nextjs/auth/callback');
     });
 
-    it('should redirect to login when access token is expired and no refresh token is available', async () => {
+    it('should redirect to Cognito authorization when access token is expired and no refresh token is available', async () => {
         const request = new NextRequest('https://example.com/albums', {
             method: 'GET',
             headers: {
@@ -181,7 +214,10 @@ describe('authentication middleware', () => {
         const response = await proxy(request);
 
         expect(response.status).toBe(307);
-        expect(response.headers.get('Location')).toBe('https://example.com/nextjs/auth/login');
+
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
+        expect(redirection.params.redirect_uri).toBe('https://example.com/nextjs/auth/callback');
     });
 });
 
