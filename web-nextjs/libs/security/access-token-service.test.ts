@@ -19,7 +19,7 @@ vi.mock('next/headers', () => {
                 const value = mockCookies.get(key);
                 return value ? {value} : undefined;
             }),
-            set: vi.fn((key: string, value: string) => {
+            set: vi.fn((key: string, value: string, options?: any) => {
                 mockCookies.set(key, value);
             }),
         })),

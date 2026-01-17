@@ -73,6 +73,7 @@ describe('logout-utils', () => {
 
             expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-access-token', '', deleteCookie);
             expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-refresh-token', '', deleteCookie);
+            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-user-info', '', deleteCookie);
             expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-state', '', deleteCookie);
             expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-code-verifier', '', deleteCookie);
             expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-nonce', '', deleteCookie);
