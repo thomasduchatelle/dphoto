@@ -33,6 +33,7 @@ export class FakeOIDCServer {
                     issuer: issuerUrl,
                     authorization_endpoint: `${issuerUrl}/oauth2/authorize`,
                     token_endpoint: `${issuerUrl}/oauth2/token`,
+                    end_session_endpoint: `${issuerUrl}/logout`,
                     jwks_uri: `${issuerUrl}/.well-known/jwks.json`,
                     response_types_supported: ['code'],
                     subject_types_supported: ['public'],

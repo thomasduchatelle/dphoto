@@ -4,7 +4,7 @@ import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} fr
 import {getLogoutUrl} from '@/libs/security';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
-import {clearSession} from "@/libs/security/clearSession";
+import {clearFullSession} from "@/libs/security/backend-store";
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
@@ -64,7 +64,7 @@ describe('logout-utils', () => {
             const {cookies} = await import('next/headers');
             const mockCookieStore = await cookies();
 
-            await clearSession();
+            await clearFullSession();
 
             const deleteCookie = {
                 maxAge: 0,
@@ -77,7 +77,6 @@ describe('logout-utils', () => {
             expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-code-verifier', '', deleteCookie);
             expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-oauth-nonce', '', deleteCookie);
             expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-redirect-after-login', '', deleteCookie);
-            expect(mockCookieStore.set).toHaveBeenCalledWith('dphoto-user-info', '', deleteCookie);
         });
     });
 });
