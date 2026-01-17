@@ -110,18 +110,17 @@ export async function redirectUrl(path: string): Promise<URL> {
     const host = h.get("host")
     const proto = host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http" : "https"
 
-    const pathWithBase = `${basePath}${path}`;
-    console.log("redirect to host:", host, " proto:", proto, " pathWithBase:", pathWithBase)
-    return overloadWithForwardedUrl(new URL(pathWithBase, `${proto || 'http'}://${host}`), h.get("forwarded"));
+    return overloadWithForwardedUrl(new URL(`${basePath}${path}`, `${proto || 'http'}://${host}`), h.get("forwarded"));
 }
 
 
-export function requestUrlWithBaseBath(request: URL): URL {
+export async function requestUrlWithBaseBath(request: URL): Promise<URL> {
+    const h = await headers()
+    let updated = new URL(request)
+
     if (basePath && !request.pathname.startsWith(basePath)) {
-        const updated = new URL(request)
         updated.pathname = `${basePath}${request.pathname}`;
-        return updated
     }
 
-    return request;
+    return overloadWithForwardedUrl(updated, h.get("forwarded"));
 }

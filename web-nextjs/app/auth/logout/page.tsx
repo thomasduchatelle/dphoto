@@ -30,6 +30,7 @@ export default async function LogoutPage() {
                 <div className="flex justify-center">
                     <Link
                         href="/auth/login"
+                        prefetch={false}
                         className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
                     >
                         Sign In Again

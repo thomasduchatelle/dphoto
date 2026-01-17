@@ -1,10 +1,8 @@
 import "server-only"
 
+import "./globals.css";
 import type {Metadata} from "next";
 import {Geist, Geist_Mono} from "next/font/google";
-import "./globals.css";
-import {UserInfo} from "@/components/UserInfo";
-import {getValidAuthentication} from "@/libs/security";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -26,21 +24,12 @@ export default async function RootLayout({
                                          }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const authentication = await getValidAuthentication()
 
     return (
         <html lang="en">
         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-        {authentication.status == 'authenticated' && (
-            <UserInfo
-                name={authentication.authenticatedUser.name}
-                email={authentication.authenticatedUser.email}
-                picture={authentication.authenticatedUser.picture}
-                logoutUrl={authentication.logoutUrl}
-            />
-        )}
         {children}
         </body>
         </html>

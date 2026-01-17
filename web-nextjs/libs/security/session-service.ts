@@ -96,8 +96,9 @@ export async function initiateAuthenticationFlow(path: string = "/"): Promise<Re
     const codeVerifier: string = client.randomPKCECodeVerifier();
     const code_challenge: string = await client.calculatePKCECodeChallenge(codeVerifier);
 
+    let originalUrl = (await redirectUrl("/auth/callback")).toString();
     const parameters: Record<string, string> = {
-        redirect_uri: (await redirectUrl("/auth/callback")).toString(),
+        redirect_uri: originalUrl,
         scope: 'openid profile email',
         code_challenge,
         code_challenge_method: 'S256',
@@ -146,10 +147,13 @@ export async function authenticate(requestUrl: URL): Promise<Redirection> {
 
     const config = await oidcConfig(getOidcConfigFromEnv());
 
+    let currentUrlWithBasePath = await requestUrlWithBaseBath(requestUrl);
+    console.log("authenticate > currentUrlWithBasePath:", currentUrlWithBasePath.toString());
+
     try {
         const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
             config,
-            requestUrlWithBaseBath(requestUrl), // This is the URL of this route
+            currentUrlWithBasePath, // This is the URL of this route
             {
                 pkceCodeVerifier: authenticationFlowState.codeVerifier,
                 expectedState: authenticationFlowState.state,
