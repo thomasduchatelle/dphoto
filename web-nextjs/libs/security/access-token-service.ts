@@ -31,6 +31,7 @@ async function parseCurrentAccessToken(accessToken?: string): Promise<AccessToke
 export async function getValidAccessToken(): Promise<{ accessToken: AccessToken, idToken: string } | null> {
     const session = await loadSession()
     if (!session.refreshToken || !session.idToken) {
+        await clearFullSession() // clear any partial session
         return null
     }
 
