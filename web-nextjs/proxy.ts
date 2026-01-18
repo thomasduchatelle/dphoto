@@ -1,4 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server';
+import {cookies} from 'next/headers';
 import {redirectUrl} from './libs/requests';
 import {completeLogout, getValidAuthentication, initiateAuthenticationFlow} from "@/libs/security";
 
@@ -23,7 +24,20 @@ export async function proxy(request: NextRequest) {
     const authentication = await getValidAuthentication()
     if (authentication.status == "anonymous") {
         const redirection = await initiateAuthenticationFlow(request.nextUrl.pathname);
-        return NextResponse.redirect(redirection.redirectTo);
+        const response = NextResponse.redirect(redirection.redirectTo);
+        
+        // Transfer cookies from the Next.js cookies API to the response
+        const cookieStore = await cookies();
+        const allCookies = cookieStore.getAll();
+        for (const cookie of allCookies) {
+            if (cookie.options) {
+                response.cookies.set(cookie.name, cookie.value, cookie.options);
+            } else {
+                response.cookies.set(cookie.name, cookie.value);
+            }
+        }
+        
+        return response;
     }
 
     return NextResponse.next();

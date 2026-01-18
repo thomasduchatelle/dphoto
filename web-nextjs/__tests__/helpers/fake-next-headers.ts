@@ -32,6 +32,7 @@ export interface HeadersAndCookies {
     cookies: () => Promise<{
         get: (key: string) => { value: string } | undefined;
         set: (key: string, value: string, options?: any) => void;
+        getAll: () => Array<{ name: string, value: string, options?: any }>;
     }>;
     headers: () => Promise<{
         get: (key: string) => string | null;
@@ -82,6 +83,13 @@ class FakeHeader {
                     if (this.setCookies) {
                         this.setCookies.set(key, {value, options});
                     }
+                },
+                getAll: (): Array<{ name: string, value: string, options?: any }> => {
+                    const result: Array<{ name: string, value: string, options?: any }> = [];
+                    for (const [name, {value, options}] of this.setCookies) {
+                        result.push({name, value, options});
+                    }
+                    return result;
                 },
             }),
             headers: () => Promise.resolve({

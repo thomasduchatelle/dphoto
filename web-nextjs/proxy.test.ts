@@ -3,10 +3,11 @@
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NextRequest} from 'next/server';
 import {proxy, skipProxyForPageMatching} from './proxy';
-import {COOKIE_AUTH_CODE_VERIFIER, COOKIE_AUTH_STATE, COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN} from '@/libs/security/constants';
+import {COOKIE_AUTH_CODE_VERIFIER, COOKIE_AUTH_STATE, COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN, COOKIE_SESSION_USER_INFO} from '@/libs/security/constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 import {fakeNextHeaders} from "@/__tests__/helpers/fake-next-headers";
+import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
@@ -66,14 +67,14 @@ describe('authentication middleware/proxy', () => {
 
         const cookies = setCookiesOf(response);
         expect(cookies[COOKIE_AUTH_STATE]).toMatchObject({
-            maxAge: 300,
+            maxAge: 600,
             sameSite: 'lax',
             path: '/',
             value: redirection.params.state,
         });
 
         expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toMatchObject({
-            maxAge: 300,
+            maxAge: 600,
             sameSite: 'lax',
             path: '/',
         });
@@ -81,7 +82,7 @@ describe('authentication middleware/proxy', () => {
     });
 
     it('should redirect to Cognito authorization using Forwarded header when behind API Gateway', async () => {
-        const request = new NextRequest('https://internal-gateway.my-domain.com/', {
+        const testRequest = new NextRequest('https://internal-gateway.my-domain.com/', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
