@@ -5,24 +5,18 @@ import {getValidAccessToken} from './access-token-service';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 import {COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN, COOKIE_SESSION_USER_INFO} from './constants';
+import {fakeNextHeaders} from "@/__tests__/helpers/fake-next-headers";
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
 vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
-let mockCookies: Map<string, string>;
+const fakeHeaders = fakeNextHeaders()
 
 vi.mock('next/headers', () => {
     return {
-        cookies: vi.fn(() => Promise.resolve({
-            get: vi.fn((key: string) => {
-                const value = mockCookies.get(key);
-                return value ? {value} : undefined;
-            }),
-            set: vi.fn((key: string, value: string, options?: any) => {
-                mockCookies.set(key, value);
-            }),
-        })),
+        cookies: vi.fn(() => fakeHeaders.mock().cookies()),
+        headers: vi.fn(() => fakeHeaders.mock().headers()),
     };
 });
 
@@ -35,7 +29,7 @@ describe('getValidAccessToken', () => {
     });
 
     beforeEach(() => {
-        mockCookies = new Map();
+        fakeHeaders.reset()
         vi.clearAllMocks();
     });
 
@@ -57,7 +51,7 @@ describe('getValidAccessToken', () => {
         const now = Math.floor(Date.now() / 1000);
         const validAccessToken = createCognitoAccessToken({exp: now + 3600});
 
-        mockCookies.set(COOKIE_SESSION_ACCESS_TOKEN, validAccessToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_ACCESS_TOKEN, validAccessToken);
 
         const result = await getValidAccessToken();
 
@@ -69,9 +63,9 @@ describe('getValidAccessToken', () => {
         const validAccessToken = createCognitoAccessToken({exp: now + 3600});
         const idToken = 'ID_TOKEN_VALUE';
 
-        mockCookies.set(COOKIE_SESSION_ACCESS_TOKEN, validAccessToken);
-        mockCookies.set(COOKIE_SESSION_REFRESH_TOKEN, 'SOME_REFRESH_TOKEN');
-        mockCookies.set(COOKIE_SESSION_USER_INFO, idToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_ACCESS_TOKEN, validAccessToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_REFRESH_TOKEN, 'SOME_REFRESH_TOKEN');
+        fakeHeaders.setCookie(COOKIE_SESSION_USER_INFO, idToken);
 
         const result = await getValidAccessToken();
 
@@ -93,9 +87,9 @@ describe('getValidAccessToken', () => {
         });
         fakeOIDCServer.setupSuccessfulRefreshTokenExchange(refreshToken, newTokenResponse);
 
-        mockCookies.set(COOKIE_SESSION_ACCESS_TOKEN, expiredAccessToken);
-        mockCookies.set(COOKIE_SESSION_REFRESH_TOKEN, refreshToken);
-        mockCookies.set(COOKIE_SESSION_USER_INFO, idToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_ACCESS_TOKEN, expiredAccessToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_REFRESH_TOKEN, refreshToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_USER_INFO, idToken);
 
         const result = await getValidAccessToken();
 
@@ -116,8 +110,8 @@ describe('getValidAccessToken', () => {
         });
         fakeOIDCServer.setupSuccessfulRefreshTokenExchange(refreshToken, newTokenResponse);
 
-        mockCookies.set(COOKIE_SESSION_REFRESH_TOKEN, refreshToken);
-        mockCookies.set(COOKIE_SESSION_USER_INFO, idToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_REFRESH_TOKEN, refreshToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_USER_INFO, idToken);
 
         const result = await getValidAccessToken();
 
@@ -134,9 +128,9 @@ describe('getValidAccessToken', () => {
 
         fakeOIDCServer.setupRefreshTokenError(refreshToken, 'invalid_grant', 'Refresh token is invalid or expired');
 
-        mockCookies.set(COOKIE_SESSION_ACCESS_TOKEN, expiredAccessToken);
-        mockCookies.set(COOKIE_SESSION_REFRESH_TOKEN, refreshToken);
-        mockCookies.set(COOKIE_SESSION_USER_INFO, idToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_ACCESS_TOKEN, expiredAccessToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_REFRESH_TOKEN, refreshToken);
+        fakeHeaders.setCookie(COOKIE_SESSION_USER_INFO, idToken);
 
         const result = await getValidAccessToken();
 
