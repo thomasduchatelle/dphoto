@@ -6,34 +6,37 @@ import {proxy, skipProxyForPageMatching} from './proxy';
 import {COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN, COOKIE_SESSION_USER_INFO} from '@/libs/security/constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
-import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
+import {fakeNextHeaders} from "@/__tests__/helpers/fake-next-headers";
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
 vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
-let testRequest: NextRequest;
-let mockCookies: Map<string, string>;
+const fakeHeaders = fakeNextHeaders()
 
+// vi.mock('next/headers', () => fakeHeaders.mock);
 vi.mock('next/headers', () => {
     return {
-        cookies: vi.fn(() => Promise.resolve({
-            get: vi.fn((key: string) => {
-                const value = mockCookies.get(key) || testRequest?.cookies.get(key)?.value;
-                return value ? {value} : undefined;
-            }),
-            set: vi.fn((key: string, value: string, options: any) => {
-                mockCookies.set(key, value);
-            }),
-        })),
-        headers: vi.fn(() => Promise.resolve({
-            get: vi.fn((key: string) => {
-                if (key === 'host' && testRequest) {
-                    return new URL(testRequest.url).host;
-                }
-                return testRequest?.headers.get(key) || null;
-            }),
-        })),
+        cookies: vi.fn(async () => {
+            const c = await fakeHeaders.mock().cookies()
+            return {
+                get: vi.fn((key: string) => {
+                    return c.get(key)
+                }),
+                set: vi.fn((key: string, value: string, options: any) => {
+                    return c.set(key, value)
+                }),
+            }
+        }),
+        headers: vi.fn(async () => {
+            const h = await fakeHeaders.mock().headers()
+
+            return Promise.resolve({
+                get: vi.fn((key: string) => {
+                    return h.get(key)
+                }),
+            })
+        }),
     };
 });
 
@@ -46,8 +49,8 @@ describe('authentication middleware', () => {
     });
 
     beforeEach(() => {
-        mockCookies = new Map();
         vi.clearAllMocks();
+        fakeHeaders.reset()
     });
 
     afterEach(() => {
@@ -59,12 +62,13 @@ describe('authentication middleware', () => {
     });
 
     it('should redirect to login page when requesting home page without access token', async () => {
-        testRequest = new NextRequest('https://example.com/', {
+        const testRequest = new NextRequest('https://example.com/', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
             },
         });
+        fakeHeaders.withRequest(testRequest)
 
         const response = await proxy(testRequest);
 
@@ -73,13 +77,14 @@ describe('authentication middleware', () => {
     });
 
     it('should redirect to login page using Forwarded header when behind API Gateway', async () => {
-        testRequest = new NextRequest('https://internal-gateway.my-domain.com/', {
+        const testRequest = new NextRequest('https://internal-gateway.my-domain.com/', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
                 'forwarded': 'by=3.248.245.105;for=83.106.145.60;host=my-domain.com;proto=https',
             },
         });
+        fakeHeaders.withRequest(testRequest)
 
         const response = await proxy(testRequest);
 
@@ -92,14 +97,15 @@ describe('authentication middleware', () => {
         const accessToken = createCognitoAccessToken({exp: now + 3600}); // expires in 1 hour
         const idToken = 'ID_TOKEN_VALUE';
 
-        testRequest = new NextRequest('https://example.com/albums', {
+        const testRequest = new NextRequest('https://example.com/albums', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
                 Cookie: `${COOKIE_SESSION_ACCESS_TOKEN}=${accessToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
             },
         });
-        mockCookies.set(COOKIE_SESSION_REFRESH_TOKEN, 'SOME_REFRESH_TOKEN');
+        fakeHeaders.withRequest(testRequest)
+        fakeHeaders.setCookie(COOKIE_SESSION_REFRESH_TOKEN, 'SOME_REFRESH_TOKEN');
 
         const response = await proxy(testRequest);
 
@@ -118,13 +124,14 @@ describe('authentication middleware', () => {
         });
         fakeOIDCServer.setupSuccessfulRefreshTokenExchange(refreshToken, newTokenResponse);
 
-        testRequest = new NextRequest('https://example.com/albums', {
+        const testRequest = new NextRequest('https://example.com/albums', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
                 Cookie: `${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
             },
         });
+        fakeHeaders.withRequest(testRequest)
 
         const response = await proxy(testRequest);
 
@@ -145,13 +152,14 @@ describe('authentication middleware', () => {
         });
         fakeOIDCServer.setupSuccessfulRefreshTokenExchange(refreshToken, newTokenResponse);
 
-        testRequest = new NextRequest('https://example.com/albums', {
+        const testRequest = new NextRequest('https://example.com/albums', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
                 Cookie: `${COOKIE_SESSION_ACCESS_TOKEN}=${expiredAccessToken}; ${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
             },
         });
+        fakeHeaders.withRequest(testRequest)
 
         const response = await proxy(testRequest);
 
@@ -166,13 +174,14 @@ describe('authentication middleware', () => {
         // Setup fake OIDC server to return an error
         fakeOIDCServer.setupRefreshTokenError(refreshToken, 'invalid_grant', 'Refresh token is invalid or expired');
 
-        testRequest = new NextRequest('https://example.com/albums', {
+        const testRequest = new NextRequest('https://example.com/albums', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
                 Cookie: `${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
             },
         });
+        fakeHeaders.withRequest(testRequest)
 
         const response = await proxy(testRequest);
 
@@ -181,12 +190,13 @@ describe('authentication middleware', () => {
     });
 
     it('should redirect to login when access token is expired and no refresh token is available', async () => {
-        testRequest = new NextRequest('https://example.com/albums', {
+        const testRequest = new NextRequest('https://example.com/albums', {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
             },
         });
+        fakeHeaders.withRequest(testRequest)
 
         const response = await proxy(testRequest);
 
