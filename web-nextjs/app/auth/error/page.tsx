@@ -99,6 +99,7 @@ export default async function ErrorPage({searchParams}: ErrorPageProps) {
 
                 <Link
                     href={`${basePath}/auth/login`}
+                    prefetch={false}
                     className="flex h-12 w-full items-center justify-center rounded-full bg-zinc-900 px-5 text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
                 >
                     Try Again

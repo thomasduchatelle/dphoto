@@ -118,7 +118,7 @@ export async function initiateAuthenticationFlow(path: string = "/"): Promise<Re
 }
 
 async function redirectToErrorPage(error: string, errorDescription?: string): Promise<Redirection> {
-    await clearAuthSession();
+    // await clearAuthSession();
 
     const errorUrl = await redirectUrl("/auth/error")
     errorUrl.searchParams.set('error', error);
@@ -142,6 +142,7 @@ export async function authenticate(requestUrl: URL): Promise<Redirection> {
     }
 
     if (!authenticationFlowState.state || !authenticationFlowState.codeVerifier || !authenticationFlowState.nonce) {
+        console.log("Invalid authenticationFlowState:", authenticationFlowState);
         return redirectToErrorPage('missing-authentication-cookies');
     }
 
