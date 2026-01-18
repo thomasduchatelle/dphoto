@@ -95,8 +95,12 @@ class FakeHeader {
  *
  * const fakeHeaders = fakeNextHeaders();
  *
- *
- * vi.mock('next/headers', fakeHeaders.mock);
+ * vi.mock('next/headers', () => {
+ *     return {
+ *         cookies: vi.fn(() => fakeHeaders.mock().cookies()),
+ *         headers: vi.fn(() => fakeHeaders.mock().headers()),
+ *     };
+ * });
  *
  * // In test:
  * fakeHeaders.withRequest(yourTestRequest);

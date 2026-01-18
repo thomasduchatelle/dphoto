@@ -14,29 +14,10 @@ vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
 const fakeHeaders = fakeNextHeaders()
 
-// vi.mock('next/headers', () => fakeHeaders.mock);
 vi.mock('next/headers', () => {
     return {
-        cookies: vi.fn(async () => {
-            const c = await fakeHeaders.mock().cookies()
-            return {
-                get: vi.fn((key: string) => {
-                    return c.get(key)
-                }),
-                set: vi.fn((key: string, value: string, options: any) => {
-                    return c.set(key, value)
-                }),
-            }
-        }),
-        headers: vi.fn(async () => {
-            const h = await fakeHeaders.mock().headers()
-
-            return Promise.resolve({
-                get: vi.fn((key: string) => {
-                    return h.get(key)
-                }),
-            })
-        }),
+        cookies: vi.fn(() => fakeHeaders.mock().cookies()),
+        headers: vi.fn(() => fakeHeaders.mock().headers()),
     };
 });
 
