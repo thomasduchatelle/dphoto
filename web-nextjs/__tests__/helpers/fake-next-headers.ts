@@ -67,6 +67,7 @@ class FakeHeader {
     public reset(): void {
         this.testRequest = undefined;
         this.requestCookies.clear();
+        this.setCookies.clear();
         vi.clearAllMocks();
     }
 

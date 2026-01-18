@@ -22,6 +22,7 @@ vi.mock('next/headers', () => {
 
 describe('getValidAccessToken', () => {
     let fakeOIDCServer: FakeOIDCServer;
+    const deleteCookie = {maxAge: 0, path: '/'};
 
     beforeAll(() => {
         fakeOIDCServer = new FakeOIDCServer(TEST_ISSUER_URL, TEST_CLIENT_ID, TEST_CLIENT_SECRET);
@@ -45,6 +46,10 @@ describe('getValidAccessToken', () => {
         const result = await getValidAccessToken();
 
         expect(result).toBeNull();
+
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_ACCESS_TOKEN)).toStrictEqual({value: '', options: deleteCookie});
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_REFRESH_TOKEN)).toStrictEqual({value: '', options: deleteCookie});
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_USER_INFO)).toStrictEqual({value: '', options: deleteCookie});
     });
 
     it('should return null when only access token is provided without refresh token', async () => {
@@ -56,6 +61,10 @@ describe('getValidAccessToken', () => {
         const result = await getValidAccessToken();
 
         expect(result).toBeNull();
+
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_ACCESS_TOKEN)).toStrictEqual({value: '', options: deleteCookie});
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_REFRESH_TOKEN)).toStrictEqual({value: '', options: deleteCookie});
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_USER_INFO)).toStrictEqual({value: '', options: deleteCookie});
     });
 
     it('should return valid access token when access token is valid and not expired', async () => {
@@ -72,6 +81,10 @@ describe('getValidAccessToken', () => {
         expect(result).not.toBeNull();
         expect(result?.accessToken.accessToken).toBe(validAccessToken);
         expect(result?.idToken).toBe(idToken);
+
+        // Assert no cookies were modified (no refresh occurred)
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_ACCESS_TOKEN)).toBeUndefined();
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_REFRESH_TOKEN)).toBeUndefined();
     });
 
     it('should refresh and return new access token when access token is expired but refresh token is valid', async () => {
@@ -96,6 +109,10 @@ describe('getValidAccessToken', () => {
         expect(result).not.toBeNull();
         expect(result?.accessToken.accessToken).toBe(newTokenResponse.access_token);
         expect(result?.idToken).toBe(idToken);
+
+        // Assert cookies were updated with new token values
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_ACCESS_TOKEN)?.value).toBe(newTokenResponse.access_token);
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_REFRESH_TOKEN)?.value).toBe(newTokenResponse.refresh_token);
     });
 
     it('should refresh and return new access token when no access token is provided but refresh token is valid', async () => {
@@ -118,6 +135,10 @@ describe('getValidAccessToken', () => {
         expect(result).not.toBeNull();
         expect(result?.accessToken.accessToken).toBe(newTokenResponse.access_token);
         expect(result?.idToken).toBe(idToken);
+
+        // Assert cookies were updated with new token values
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_ACCESS_TOKEN)?.value).toBe(newTokenResponse.access_token);
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_REFRESH_TOKEN)?.value).toBe(newTokenResponse.refresh_token);
     });
 
     it('should return null when refresh token is invalid', async () => {
@@ -135,5 +156,9 @@ describe('getValidAccessToken', () => {
         const result = await getValidAccessToken();
 
         expect(result).toBeNull();
+
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_ACCESS_TOKEN)).toStrictEqual({value: '', options: deleteCookie});
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_REFRESH_TOKEN)).toStrictEqual({value: '', options: deleteCookie});
+        expect(fakeHeaders.getSetCookie(COOKIE_SESSION_USER_INFO)).toStrictEqual({value: '', options: deleteCookie});
     });
 });
