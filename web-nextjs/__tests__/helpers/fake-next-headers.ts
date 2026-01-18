@@ -15,7 +15,7 @@ export interface FakeNextHeaders {
     /**
      * Get a cookie value that was set by the code under test
      */
-    getSetCookie(key: string): string | undefined;
+    getSetCookie(key: string): { value: string, options?: any } | undefined;
 
     /**
      * Reset the mock state
@@ -38,12 +38,17 @@ export interface HeadersAndCookies {
     }>;
 }
 
+export interface SetCookieValue {
+    value: string
+    options?: any
+}
+
 class FakeHeader {
 
     constructor(
         private testRequest: NextRequest | undefined = undefined,
         private readonly requestCookies: Map<string, string> = new Map(),
-        private readonly setCookies: Map<string, string> = new Map(),
+        private readonly setCookies: Map<string, SetCookieValue> = new Map(),
     ) {
     }
 
@@ -55,8 +60,8 @@ class FakeHeader {
         this.requestCookies.set(key, value);
     }
 
-    public getSetCookie(key: string): string | undefined {
-        return this.requestCookies.get(key);
+    public getSetCookie(key: string): SetCookieValue | undefined {
+        return this.setCookies.get(key);
     }
 
     public reset(): void {
@@ -73,8 +78,8 @@ class FakeHeader {
                     return value ? {value} : undefined;
                 },
                 set: (key: string, value: string, options?: any): void => {
-                    if (this.requestCookies) {
-                        this.requestCookies.set(key, value);
+                    if (this.setCookies) {
+                        this.setCookies.set(key, {value, options});
                     }
                 },
             }),
