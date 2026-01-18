@@ -52,6 +52,7 @@ export async function clearFullSession(): Promise<void> {
     const cookieStore = await cookies()
     cookieStore.set(COOKIE_SESSION_ACCESS_TOKEN, '', deleteCookieOpt);
     cookieStore.set(COOKIE_SESSION_REFRESH_TOKEN, '', deleteCookieOpt);
+    cookieStore.set(COOKIE_SESSION_USER_INFO, '', deleteCookieOpt);
 
     cookieStore.set(COOKIE_AUTH_STATE, '', deleteCookieOpt);
     cookieStore.set(COOKIE_AUTH_CODE_VERIFIER, '', deleteCookieOpt);
