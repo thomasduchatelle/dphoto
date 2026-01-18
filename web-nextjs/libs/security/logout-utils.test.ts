@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from 'vitest';
-import {getLogoutUrl} from '@/libs/security';
+import {getLogoutUrl} from './logout-utils';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 import {clearFullSession} from "@/libs/security/backend-store";

@@ -21,7 +21,7 @@ vi.mock('next/headers', () => {
     };
 });
 
-describe('authentication middleware', () => {
+describe('authentication middleware/proxy', () => {
     let fakeOIDCServer: FakeOIDCServer;
 
     beforeAll(() => {
