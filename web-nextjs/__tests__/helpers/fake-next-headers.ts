@@ -54,25 +54,65 @@ export interface FakeNextHeaders {
 /**
  * Creates a reusable state manager for Next.js headers() and cookies() mocks.
  * 
- * IMPORTANT: This must be called AFTER the imports so the vi.mock() at module level takes effect.
+ * IMPORTANT: Due to vitest's mock hoisting requirements, you CANNOT import and use this
+ * helper's vi.mock() directly. Instead, each test file must define its own vi.mock() inline.
  * 
- * Usage:
+ * This file serves as a TEMPLATE and REFERENCE for how to structure your test mocks.
+ * 
+ * For test files that need BOTH headers and cookies mocking (like proxy.test.ts):
+ * Copy the pattern from this file with module-level variables and vi.mock() call.
+ * 
+ * For test files that only need cookies mocking (like access-token-service.test.ts):
+ * Use a simplified version without the headers mock and testRequest variable.
+ * 
+ * Usage pattern (copy this structure to your test file):
  * ```typescript
- * import {fakeNextHeaders} from '@/__tests__/helpers/fake-next-headers';
+ * // At the top of your test file, before any imports of code under test:
+ * import {NextRequest} from 'next/server';
  * 
- * const fakeHeaders = fakeNextHeaders();
+ * let testRequest: NextRequest | undefined;
+ * let mockCookies: Map<string, string>;
  * 
+ * vi.mock('next/headers', () => {
+ *     return {
+ *         cookies: vi.fn(() => Promise.resolve({
+ *             get: vi.fn((key: string) => {
+ *                 const value = mockCookies?.get(key) || testRequest?.cookies.get(key)?.value;
+ *                 return value ? {value} : undefined;
+ *             }),
+ *             set: vi.fn((key: string, value: string, options?: any) => {
+ *                 if (mockCookies) {
+ *                     mockCookies.set(key, value);
+ *                 }
+ *             }),
+ *         })),
+ *         headers: vi.fn(() => Promise.resolve({
+ *             get: vi.fn((key: string) => {
+ *                 if (key === 'host' && testRequest) {
+ *                     return new URL(testRequest.url).host;
+ *                 }
+ *                 return testRequest?.headers.get(key) || null;
+ *             }),
+ *         })),
+ *     };
+ * });
+ * 
+ * // In your test setup:
  * describe("...", () => {
- *   afterEach(() => fakeHeaders.reset());
+ *   beforeEach(() => {
+ *     testRequest = undefined;
+ *     mockCookies = new Map();
+ *     vi.clearAllMocks();
+ *   });
  * 
  *   it("...", () => {
  *     const req = new NextRequest(...);
- *     fakeHeaders.withRequest(req);
- *     fakeHeaders.setCookie("cookie-name", "cookie-value");
+ *     testRequest = req;
+ *     mockCookies.set("cookie-name", "cookie-value");
  * 
  *     // ... test code ...
  * 
- *     expect(fakeHeaders.getSetCookie("cookie-name-2")).toBe("expected-value");
+ *     expect(mockCookies.get("cookie-name-2")).toBe("expected-value");
  *   });
  * });
  * ```
