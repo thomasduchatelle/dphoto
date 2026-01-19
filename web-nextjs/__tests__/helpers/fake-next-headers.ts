@@ -1,6 +1,35 @@
 import {NextRequest} from 'next/server';
 import {vi} from 'vitest';
 
+/**
+ * DEPRECATION NOTICE:
+ * This helper is deprecated and should not be used in new tests.
+ * 
+ * The current architecture uses cookies through NextResponse rather than
+ * the mocked next/headers module, so this helper cannot capture cookies
+ * set by buildRedirectResponse or similar functions.
+ * 
+ * Instead, use:
+ * 1. For middleware tests: Check cookies directly on the NextResponse using setCookiesOf() helper
+ * 2. For functions that need headers: Mock next/headers directly in your test file with
+ *    a currentTestRequest variable pattern (see proxy.test.ts for example)
+ * 
+ * Example of the recommended pattern:
+ * 
+ * ```typescript
+ * let currentTestRequest: NextRequest | null = null;
+ * 
+ * vi.mock('next/headers', () => ({
+ *   headers: vi.fn(() => Promise.resolve({
+ *     get: (key: string) => currentTestRequest?.headers.get(key) || null
+ *   }))
+ * }));
+ * 
+ * // In each test:
+ * currentTestRequest = new NextRequest(...);
+ * ```
+ */
+
 export interface FakeNextHeaders {
     /**
      * Set the current request context for the mock

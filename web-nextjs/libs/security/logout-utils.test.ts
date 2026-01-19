@@ -5,7 +5,6 @@ import {getLogoutUrl} from './logout-utils';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 import {clearFullSession} from "@/libs/security/backend-store";
-import {fakeNextHeaders} from "@/__tests__/helpers/fake-next-headers";
 import {NextRequest} from "next/server";
 import {
     COOKIE_AUTH_CODE_VERIFIER, COOKIE_AUTH_NONCE, COOKIE_AUTH_REDIRECT_AFTER_LOGIN,
@@ -19,12 +18,28 @@ vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
 vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
-const fakeHeaders = fakeNextHeaders()
+// Track current request in tests
+let currentTestRequest: NextRequest | null = null;
 
+// Mock next/headers to provide context from the current test request
 vi.mock('next/headers', () => {
     return {
-        cookies: vi.fn(() => fakeHeaders.mock().cookies()),
-        headers: vi.fn(() => fakeHeaders.mock().headers()),
+        headers: vi.fn(() => Promise.resolve({
+            get: (key: string) => {
+                if (!currentTestRequest) return null;
+                if (key === 'host') {
+                    return new URL(currentTestRequest.url).host;
+                }
+                if (key === 'forwarded') {
+                    return currentTestRequest.headers.get('forwarded');
+                }
+                return currentTestRequest.headers.get(key);
+            }
+        })),
+        cookies: vi.fn(() => Promise.resolve({
+            get: () => undefined,
+            set: () => {},
+        })),
     };
 });
 
@@ -46,17 +61,19 @@ describe('logout-utils', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        currentTestRequest = null;
     });
 
     describe('getLogoutUrl', () => {
         it('should generate Cognito logout URL with correct logout_uri parameter', async () => {
-            fakeHeaders.withRequest(new NextRequest('http://cloudfront.example.com/auth/logout', {
+            currentTestRequest = new NextRequest('http://cloudfront.example.com/auth/logout', {
                 method: 'GET',
                 headers: {
                     Accept: 'text/html',
                     'forwarded': 'by=3.248.245.105;for=83.106.145.60;host=example.com;proto=https',
                 },
-            }))
+            });
+
             const logoutUrl = await getLogoutUrl();
 
             const url = new URL(logoutUrl);
