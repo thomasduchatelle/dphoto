@@ -2,7 +2,8 @@ import "server-only"
 
 import type {Metadata} from "next";
 import {UserInfo} from "@/components/UserInfo";
-import {getValidAuthentication} from "@/libs/security";
+import {getCurrentAuthentication} from "@/libs/security";
+import {newReadCookieStoreFromComponents} from "@/libs/nextjs-cookies";
 
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export default async function RootLayout({
                                          }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const authentication = await getValidAuthentication()
+    const authentication = await getCurrentAuthentication(await newReadCookieStoreFromComponents())
 
     return (
         <>

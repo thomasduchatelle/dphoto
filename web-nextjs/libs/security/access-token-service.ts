@@ -2,21 +2,23 @@ import {decodeJWTPayload} from "./jwt-utils";
 import {clearFullSession, loadSession, storeSession} from "./backend-store";
 import {getOidcConfigFromEnv, oidcConfig} from "@/libs/security/oidc-config";
 import * as client from 'openid-client';
+import {ReadCookieStore, SetCookies} from "@/libs/nextjs-cookies";
 
 interface AccessTokenClaims {
     expiresAt: Date
     isOwner: boolean
+    aboutToExpire: boolean
 }
 
 export type AccessToken = AccessTokenClaims & {
     accessToken: string;
 }
 
-function expiresInMoreThanFiveMinutes(accessToken: AccessToken): boolean {
-    return accessToken.expiresAt.getTime() - Date.now() > 5 * 60 * 1000;
+function expiresInMoreThanFiveMinutes(expiresAt: Date): boolean {
+    return expiresAt.getTime() - Date.now() > 5 * 60 * 1000;
 }
 
-async function parseCurrentAccessToken(accessToken?: string): Promise<AccessToken | null> {
+export async function parseCurrentAccessToken(accessToken?: string): Promise<AccessToken | null> {
     const claims = readAccessTokenClaims(accessToken);
     if (!accessToken || !claims) {
         return null;
@@ -25,28 +27,30 @@ async function parseCurrentAccessToken(accessToken?: string): Promise<AccessToke
     return {
         ...claims,
         accessToken,
+        aboutToExpire: !expiresInMoreThanFiveMinutes(claims.expiresAt),
     }
 }
 
-export async function getValidAccessToken(): Promise<{ accessToken: AccessToken, idToken: string } | null> {
-    const session = await loadSession()
+export async function refreshSession(cookiesStore: ReadCookieStore): Promise<{
+    cookies: SetCookies,
+    success: boolean,
+}> {
+    const session = loadSession(cookiesStore)
     if (!session.refreshToken || !session.idToken) {
-        // await clearFullSession() // clear any partial session
-        return null
+        // Unexpected path: refreshing without refresh token shows an error in the flow.
+        return {success: false, cookies: clearFullSession()}
     }
 
-    const accessToken = await parseCurrentAccessToken(session.accessToken);
-    if (accessToken && expiresInMoreThanFiveMinutes(accessToken)) {
-        return {accessToken, idToken: session.idToken};
+    const refreshedTokens = await refreshAccessToken(session.refreshToken);
+    if (!refreshedTokens) {
+        // Unexpected path: refreshing without refresh token shows an error in the flow.
+        return {success: false, cookies: clearFullSession()}
     }
 
-    const refreshedToken = await refreshAccessToken(session.refreshToken);
-    if (!refreshedToken) {
-        await clearFullSession() // disconnected
-        return null
+    return {
+        success: true,
+        cookies: storeSession(refreshedTokens),
     }
-
-    return {accessToken: refreshedToken, idToken: session.idToken}
 }
 
 
@@ -61,36 +65,29 @@ function readAccessTokenClaims(token?: string): AccessTokenClaims | null {
     }
 
     const scopes = payload.Scopes?.split(' ') ?? []
+    let expiresAt = payload?.exp ? new Date(payload.exp * 1000) : new Date();
     return {
-        expiresAt: payload?.exp ? new Date(payload.exp * 1000) : new Date(),
+        expiresAt,
         isOwner: scopes.some((scope: string) => scope.startsWith('owner:')),
+        aboutToExpire: !expiresInMoreThanFiveMinutes(expiresAt),
     }
 }
 
-async function refreshAccessToken(refreshToken ?: string): Promise<AccessToken | null> {
+async function refreshAccessToken(refreshToken ?: string) {
     if (!refreshToken) {
         return null;
     }
 
     const newTokens = await oidcRefresh(refreshToken);
-    if (newTokens && newTokens.access_token) {
-        await storeSession({
-            accessToken: newTokens.access_token,
-            accessTokenExpiresIn: newTokens.expires_in || 3600,
-            refreshToken: newTokens.refresh_token || refreshToken,
-            idToken: newTokens.id_token || '',
-        })
-
-        const claims = readAccessTokenClaims(newTokens.access_token)
-        if (claims) {
-            return {
-                ...claims,
-                accessToken: newTokens.access_token,
-            }
-        }
+    if (!newTokens || !newTokens.access_token) {
+        return null;
     }
-
-    return null;
+    return {
+        accessToken: newTokens.access_token,
+        accessTokenExpiresIn: newTokens.expires_in || 3600,
+        refreshToken: newTokens.refresh_token || refreshToken,
+        idToken: newTokens.id_token || '',
+    };
 }
 
 async function oidcRefresh(refreshToken: string): Promise<client.TokenEndpointResponse | null> {

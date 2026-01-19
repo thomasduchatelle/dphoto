@@ -1,10 +1,11 @@
-import {getValidAccessToken} from "@/libs/security/access-token-service";
-import {clearAuthSession, clearFullSession, loadAuthSession, storeAuthSession, storeSession} from "@/libs/security/backend-store";
+import {clearAuthSession, clearFullSession, loadAuthSession, loadSession, storeAuthSession, storeSession} from "@/libs/security/backend-store";
 import {getLogoutUrl} from "@/libs/security/logout-utils";
 import {getOidcConfigFromEnv, oidcConfig} from "@/libs/security/oidc-config";
 import * as client from "openid-client";
 import {redirectUrl, requestUrlWithBaseBath} from "@/libs/requests";
 import {decodeJWTPayload} from "@/libs/security/jwt-utils";
+import {parseCurrentAccessToken} from "@/libs/security/access-token-service";
+import {CookieValue, ReadCookieStore, Redirection} from "@/libs/nextjs-cookies";
 
 export interface AuthenticatedUser {
     name: string;
@@ -19,6 +20,7 @@ export interface AuthenticatedSession {
     status: 'authenticated';
     authenticatedUser: AuthenticatedUser;
     logoutUrl: string;
+    aboutToExpire: boolean;
 }
 
 export interface AnonymousSession {
@@ -60,21 +62,25 @@ function readIdToken(idToken: string): {
     };
 }
 
-export async function getValidAuthentication(): Promise<BackendSession> {
-    const validSession = await getValidAccessToken();
-    if (!validSession || !validSession.accessToken) {
+export async function getCurrentAuthentication(cookieStore: ReadCookieStore): Promise<BackendSession> {
+    const session = loadSession(cookieStore);
+    if (!session.accessToken || !session.accessToken || !session.idToken) {
         return {status: "anonymous"}
     }
 
-    const {accessToken, idToken} = validSession;
+    const accessToken = await parseCurrentAccessToken(session.accessToken);
+    if (!accessToken) {
+        return {status: "anonymous"}
+    }
 
     return {
         status: 'authenticated',
         authenticatedUser: {
-            ...readIdToken(idToken),
+            ...readIdToken(session.idToken),
             isOwner: accessToken.isOwner,
         },
         logoutUrl: await getLogoutUrl(),
+        aboutToExpire: accessToken.aboutToExpire,
     };
 }
 
@@ -86,9 +92,7 @@ export async function completeLogout() {
     await clearFullSession()
 }
 
-export interface Redirection {
-    redirectTo: URL;
-}
+export const COOKIE_VALUE_DELETE: CookieValue = {value: '', maxAge: 0};
 
 export async function initiateAuthenticationFlow(path: string = "/"): Promise<Redirection> {
     const config = await oidcConfig(getOidcConfigFromEnv());
@@ -106,34 +110,34 @@ export async function initiateAuthenticationFlow(path: string = "/"): Promise<Re
         nonce: client.randomNonce(),
     };
 
-    await storeAuthSession({
-        nonce: parameters.nonce,
-        state: parameters.state,
-        codeVerifier: codeVerifier,
-        redirectAfterLogin: path,
-    })
-
     const redirectTo: URL = client.buildAuthorizationUrl(config, parameters);
-    return {redirectTo};
+    return {
+        redirectTo,
+        cookies: storeAuthSession({
+            nonce: parameters.nonce,
+            state: parameters.state,
+            codeVerifier: codeVerifier,
+            redirectAfterLogin: path,
+        })
+    };
 }
 
 async function redirectToErrorPage(error: string, errorDescription?: string): Promise<Redirection> {
-    // await clearAuthSession();
-
     const errorUrl = await redirectUrl("/auth/error")
     errorUrl.searchParams.set('error', error);
     if (errorDescription) {
         errorUrl.searchParams.set('error_description', errorDescription);
     }
 
-    return {redirectTo: errorUrl};
+    return {
+        redirectTo: errorUrl,
+        cookies: clearFullSession(),
+    };
 }
 
-export async function authenticate(requestUrl: URL): Promise<Redirection> {
+export async function authenticate(requestUrl: URL, cookiesStore: ReadCookieStore): Promise<Redirection> {
     const searchParams = requestUrl.searchParams;
-    const authenticationFlowState = await loadAuthSession();
-
-    await clearAuthSession()
+    const authenticationFlowState = loadAuthSession(cookiesStore);
 
     const errorParam = searchParams.get('error');
     if (errorParam) {
@@ -148,13 +152,10 @@ export async function authenticate(requestUrl: URL): Promise<Redirection> {
 
     const config = await oidcConfig(getOidcConfigFromEnv());
 
-    let currentUrlWithBasePath = await requestUrlWithBaseBath(requestUrl);
-    console.log("authenticate > currentUrlWithBasePath:", currentUrlWithBasePath.toString());
-
     try {
         const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
             config,
-            currentUrlWithBasePath, // This is the URL of this route
+            await requestUrlWithBaseBath(requestUrl), // This is the URL of this route
             {
                 pkceCodeVerifier: authenticationFlowState.codeVerifier,
                 expectedState: authenticationFlowState.state,
@@ -162,14 +163,18 @@ export async function authenticate(requestUrl: URL): Promise<Redirection> {
             }
         );
 
-        await storeSession({
-            accessToken: tokens.access_token,
-            accessTokenExpiresIn: tokens.expires_in ?? 3600,
-            refreshToken: tokens.refresh_token ?? '',
-            idToken: tokens.id_token ?? '',
-        })
-
-        return {redirectTo: (await redirectUrl(authenticationFlowState.redirectAfterLogin ?? "/"))}
+        return {
+            redirectTo: (await redirectUrl(authenticationFlowState.redirectAfterLogin ?? "/")),
+            cookies: {
+                ...clearAuthSession(),
+                ...storeSession({
+                    accessToken: tokens.access_token,
+                    accessTokenExpiresIn: tokens.expires_in ?? 3600,
+                    refreshToken: tokens.refresh_token ?? '',
+                    idToken: tokens.id_token ?? '',
+                }),
+            },
+        }
 
     } catch (error) {
         console.error('OAuth callback error:', error);

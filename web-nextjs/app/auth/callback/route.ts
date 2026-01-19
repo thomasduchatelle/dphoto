@@ -1,9 +1,11 @@
 import "server-only"
 
-import {NextRequest, NextResponse} from 'next/server';
+import {NextRequest} from 'next/server';
 import {authenticate,} from '@/libs/security';
+import {buildRedirectResponse, newReadCookieStore} from "@/libs/nextjs-cookies";
+
 
 export async function GET(request: NextRequest) {
-    const redirectTo = await authenticate(request.nextUrl)
-    return NextResponse.redirect(redirectTo.redirectTo)
+    const redirectTo = await authenticate(request.nextUrl, newReadCookieStore(request));
+    return buildRedirectResponse(redirectTo);
 }

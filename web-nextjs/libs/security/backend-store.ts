@@ -8,6 +8,8 @@ import {
     COOKIE_SESSION_REFRESH_TOKEN,
     COOKIE_SESSION_USER_INFO
 } from './constants';
+import {COOKIE_VALUE_DELETE} from "@/libs/security/session-service";
+import {ReadCookieStore, SetCookies} from "@/libs/nextjs-cookies";
 
 export interface StoredSession {
     accessToken?: string,
@@ -41,58 +43,69 @@ const tokensCookieOptions = {
     maxAge: 30 * 24 * 3600, // 30 days in seconds
 }
 
-export async function clearAuthSession(): Promise<void> {
-    const cookieStore = await cookies()
-
-    cookieStore.set(COOKIE_SESSION_ACCESS_TOKEN, '', deleteCookieOpt);
-    cookieStore.set(COOKIE_SESSION_REFRESH_TOKEN, '', deleteCookieOpt);
-}
-
-export async function clearFullSession(): Promise<void> {
-    const cookieStore = await cookies()
-    cookieStore.set(COOKIE_SESSION_ACCESS_TOKEN, '', deleteCookieOpt);
-    cookieStore.set(COOKIE_SESSION_REFRESH_TOKEN, '', deleteCookieOpt);
-    cookieStore.set(COOKIE_SESSION_USER_INFO, '', deleteCookieOpt);
-
-    cookieStore.set(COOKIE_AUTH_STATE, '', deleteCookieOpt);
-    cookieStore.set(COOKIE_AUTH_CODE_VERIFIER, '', deleteCookieOpt);
-    cookieStore.set(COOKIE_AUTH_NONCE, '', deleteCookieOpt);
-    cookieStore.set(COOKIE_AUTH_REDIRECT_AFTER_LOGIN, '', deleteCookieOpt);
-}
-
-export async function storeAuthSession(authSession: StoredAuthenticationFlow): Promise<void> {
-    const cookieStore = await cookies();
-
-    cookieStore.set(COOKIE_AUTH_CODE_VERIFIER, authSession.codeVerifier, authenticationFlowCookieOptions);
-    cookieStore.set(COOKIE_AUTH_NONCE, authSession.nonce, authenticationFlowCookieOptions);
-    cookieStore.set(COOKIE_AUTH_REDIRECT_AFTER_LOGIN, authSession.redirectAfterLogin, authenticationFlowCookieOptions);
-    cookieStore.set(COOKIE_AUTH_STATE, authSession.state, authenticationFlowCookieOptions);
-}
-
-export async function loadAuthSession(): Promise<StoredAuthenticationFlow> {
-    const cookieStore = await cookies();
+export function clearFullSession(): SetCookies {
     return {
-        codeVerifier: cookieStore.get(COOKIE_AUTH_CODE_VERIFIER)?.value || '',
-        nonce: cookieStore.get(COOKIE_AUTH_NONCE)?.value || '',
-        redirectAfterLogin: cookieStore.get(COOKIE_AUTH_REDIRECT_AFTER_LOGIN)?.value || '',
-        state: cookieStore.get(COOKIE_AUTH_STATE)?.value || '',
+        [COOKIE_SESSION_ACCESS_TOKEN]: COOKIE_VALUE_DELETE,
+        [COOKIE_SESSION_REFRESH_TOKEN]: COOKIE_VALUE_DELETE,
+        [COOKIE_SESSION_USER_INFO]: COOKIE_VALUE_DELETE,
+
+        [COOKIE_AUTH_STATE]: COOKIE_VALUE_DELETE,
+        [COOKIE_AUTH_CODE_VERIFIER]: COOKIE_VALUE_DELETE,
+        [COOKIE_AUTH_NONCE]: COOKIE_VALUE_DELETE,
+        [COOKIE_AUTH_REDIRECT_AFTER_LOGIN]: COOKIE_VALUE_DELETE,
     }
 }
 
-export async function storeSession(session: {
+export  function clearAuthSession(): SetCookies {
+    return {
+        [COOKIE_AUTH_STATE]: COOKIE_VALUE_DELETE,
+        [COOKIE_AUTH_CODE_VERIFIER]: COOKIE_VALUE_DELETE,
+        [COOKIE_AUTH_NONCE]: COOKIE_VALUE_DELETE,
+        [COOKIE_AUTH_REDIRECT_AFTER_LOGIN]: COOKIE_VALUE_DELETE,
+    }
+}
+
+export function storeAuthSession(parameters: StoredAuthenticationFlow): SetCookies {
+    return {
+        [COOKIE_AUTH_NONCE]: {value: parameters.nonce, maxAge: 600},
+        [COOKIE_AUTH_STATE]: {value: parameters.state, maxAge: 600},
+        [COOKIE_AUTH_CODE_VERIFIER]: {value: parameters.codeVerifier, maxAge: 600},
+        [COOKIE_AUTH_REDIRECT_AFTER_LOGIN]: {value: parameters.redirectAfterLogin, maxAge: 600},
+    }
+}
+
+export function loadAuthSession(cookieStore: ReadCookieStore): StoredAuthenticationFlow {
+    return {
+        codeVerifier: cookieStore.get(COOKIE_AUTH_CODE_VERIFIER) || '',
+        nonce: cookieStore.get(COOKIE_AUTH_NONCE) || '',
+        redirectAfterLogin: cookieStore.get(COOKIE_AUTH_REDIRECT_AFTER_LOGIN) || '',
+        state: cookieStore.get(COOKIE_AUTH_STATE) || '',
+    }
+}
+
+export function storeSession(session: {
     accessToken: string;
     accessTokenExpiresIn: number;
     refreshToken: string;
     idToken: string;
-}) {
-    const cookieStore = await cookies();
-
-    cookieStore.set(COOKIE_SESSION_ACCESS_TOKEN, session.accessToken, {...tokensCookieOptions, maxAge: session.accessTokenExpiresIn});
-    cookieStore.set(COOKIE_SESSION_REFRESH_TOKEN, session.refreshToken, tokensCookieOptions);
-    cookieStore.set(COOKIE_SESSION_USER_INFO, session.idToken, tokensCookieOptions);
+}): SetCookies {
+    return {
+        [COOKIE_SESSION_ACCESS_TOKEN]: {value: session.accessToken, maxAge: session.accessTokenExpiresIn},
+        [COOKIE_SESSION_REFRESH_TOKEN]: {value: session.refreshToken, maxAge: 30 * 24 * 3600},
+        [COOKIE_SESSION_USER_INFO]: {value: session.idToken, maxAge: 30 * 24 * 3600},
+    };
 }
 
-export async function loadSession(): Promise<StoredSession> {
+export function loadSession(cookieStore: ReadCookieStore): StoredSession {
+    return {
+        accessToken: cookieStore.get(COOKIE_SESSION_ACCESS_TOKEN),
+        refreshToken: cookieStore.get(COOKIE_SESSION_REFRESH_TOKEN),
+        idToken: cookieStore.get(COOKIE_SESSION_USER_INFO),
+    };
+
+}
+
+export async function loadSessionTO_DELETE(): Promise<StoredSession> {
     const cookieStore = await cookies();
     return {
         accessToken: cookieStore.get(COOKIE_SESSION_ACCESS_TOKEN)?.value,

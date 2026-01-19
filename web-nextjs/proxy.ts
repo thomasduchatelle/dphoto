@@ -1,5 +1,6 @@
 import {NextRequest, NextResponse} from 'next/server';
-import {completeLogout, getValidAuthentication, initiateAuthenticationFlow} from "@/libs/security";
+import {completeLogout, getCurrentAuthentication, initiateAuthenticationFlow, refreshSession} from "@/libs/security";
+import {buildRedirectResponse, newReadCookieStore} from "@/libs/nextjs-cookies";
 
 // if basepath was not set, this would work: `export const config = { matcher: [`/(${skipProxyForPageMatching}`] }`
 export const skipProxyForPageMatching = /^(?!_next\/static|_next\/image|favicon.ico|api|auth|.*\.js$|.*\.png$|.*\.svg$|.*\.jpg$|.*\.gif$).*/i
@@ -18,11 +19,25 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // note: the access token is refreshed if required
-    const authentication = await getValidAuthentication()
+    const authentication = await getCurrentAuthentication(newReadCookieStore(request))
+
     if (authentication.status == "anonymous") {
         const redirection = await initiateAuthenticationFlow(request.nextUrl.pathname);
-        return NextResponse.redirect(redirection.redirectTo);
+        return buildRedirectResponse(redirection);
+    }
+
+    if (authentication.aboutToExpire) {
+        const refresh = await refreshSession(newReadCookieStore(request))
+        if (!refresh.success) {
+            const redirection = await initiateAuthenticationFlow(request.nextUrl.pathname);
+            return buildRedirectResponse(redirection);
+        }
+
+        // the page redirect to itself to get the new cookies in the request, available to the server components.
+        return buildRedirectResponse({
+            ...refresh,
+            redirectTo: request.nextUrl,
+        });
     }
 
     return NextResponse.next();
