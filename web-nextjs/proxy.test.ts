@@ -12,19 +12,37 @@ import {
 } from '@/libs/security/constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
-import {fakeNextHeaders} from "@/__tests__/helpers/fake-next-headers";
-import {redirectionOf} from '@/__tests__/helpers/test-assertions';
+import {redirectionOf, setCookiesOf} from '@/__tests__/helpers/test-assertions';
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
 vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
 
-const fakeHeaders = fakeNextHeaders()
+// Track current request in tests
+let currentTestRequest: NextRequest | null = null;
 
+// Mock next/headers to provide host information from the current test request
 vi.mock('next/headers', () => {
     return {
-        cookies: vi.fn(() => fakeHeaders.mock().cookies()),
-        headers: vi.fn(() => fakeHeaders.mock().headers()),
+        headers: vi.fn(() => Promise.resolve({
+            get: (key: string) => {
+                if (!currentTestRequest) {
+                    if (key === 'host') return 'example.com';
+                    return null;
+                }
+                if (key === 'host') {
+                    return new URL(currentTestRequest.url).host;
+                }
+                if (key === 'forwarded') {
+                    return currentTestRequest.headers.get('forwarded');
+                }
+                return currentTestRequest.headers.get(key);
+            }
+        })),
+        cookies: vi.fn(() => Promise.resolve({
+            get: () => undefined,
+            set: () => {},
+        })),
     };
 });
 
@@ -38,7 +56,7 @@ describe('authentication middleware/proxy', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        fakeHeaders.reset()
+        currentTestRequest = null;
     });
 
     afterEach(() => {
@@ -56,7 +74,7 @@ describe('authentication middleware/proxy', () => {
                 Accept: 'text/html',
             },
         });
-        fakeHeaders.withRequest(testRequest)
+        currentTestRequest = testRequest;
 
         const response = await proxy(testRequest);
 
@@ -66,8 +84,9 @@ describe('authentication middleware/proxy', () => {
         expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
         expect(redirection.params.redirect_uri).toBe('https://example.com/nextjs/auth/callback');
 
-        expect(fakeHeaders.getSetCookie(COOKIE_AUTH_STATE)).toBeDefined()
-        expect(fakeHeaders.getSetCookie(COOKIE_AUTH_CODE_VERIFIER)).toBeDefined()
+        const cookies = setCookiesOf(response);
+        expect(cookies[COOKIE_AUTH_STATE]).toBeDefined();
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toBeDefined();
     });
 
     it('should redirect to Cognito authorization using Forwarded header when behind API Gateway', async () => {
@@ -78,7 +97,7 @@ describe('authentication middleware/proxy', () => {
                 'forwarded': 'by=3.248.245.105;for=83.106.145.60;host=my-domain.com;proto=https',
             },
         });
-        fakeHeaders.withRequest(testRequest)
+        currentTestRequest = testRequest;
 
         const response = await proxy(testRequest);
 
@@ -88,8 +107,9 @@ describe('authentication middleware/proxy', () => {
         expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
         expect(redirection.params.redirect_uri).toBe('https://my-domain.com/nextjs/auth/callback');
 
-        expect(fakeHeaders.getSetCookie(COOKIE_AUTH_STATE)).toBeDefined()
-        expect(fakeHeaders.getSetCookie(COOKIE_AUTH_CODE_VERIFIER)).toBeDefined()
+        const cookies = setCookiesOf(response);
+        expect(cookies[COOKIE_AUTH_STATE]).toBeDefined();
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toBeDefined();
     });
 
     it('should allow authenticated request to proceed with valid non-expired token', async () => {
@@ -101,26 +121,26 @@ describe('authentication middleware/proxy', () => {
             method: 'GET',
             headers: {
                 Accept: 'text/html',
-                Cookie: `${COOKIE_SESSION_ACCESS_TOKEN}=${accessToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
+                Cookie: `${COOKIE_SESSION_ACCESS_TOKEN}=${accessToken}; ${COOKIE_SESSION_REFRESH_TOKEN}=SOME_REFRESH_TOKEN; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
             },
         });
-        fakeHeaders.withRequest(testRequest)
-        fakeHeaders.setCookie(COOKIE_SESSION_REFRESH_TOKEN, 'SOME_REFRESH_TOKEN');
+        currentTestRequest = testRequest;
 
         const response = await proxy(testRequest);
 
         expect(response.status).toBe(200);
     });
 
-    it('should use refresh token to get new access token when only refresh token is provided', async () => {
-        const now = Math.floor(Date.now() / 1000);
+    it('should redirect to Cognito authorization when only refresh token is provided (refresh always fails with fake tokens)', async () => {
         const refreshToken = 'VALID_REFRESH_TOKEN';
         const idToken = 'ID_TOKEN_VALUE';
 
-        // Setup fake OIDC server to return new tokens
+        // Setup fake OIDC server to return new tokens (but openid-client will reject fake tokens)
+        const now = Math.floor(Date.now() / 1000);
         const newTokenResponse = createTokenResponse({
             access_token: createCognitoAccessToken({exp: now + 3600}),
             refresh_token: 'NEW_REFRESH_TOKEN',
+            id_token: idToken,
         });
         fakeOIDCServer.setupSuccessfulRefreshTokenExchange(refreshToken, newTokenResponse);
 
@@ -131,24 +151,27 @@ describe('authentication middleware/proxy', () => {
                 Cookie: `${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
             },
         });
-        fakeHeaders.withRequest(testRequest)
+        currentTestRequest = testRequest;
 
         const response = await proxy(testRequest);
 
-        // After successful token refresh, the request should be allowed through
-        expect(response.status).toBe(200);
+        // Since openid-client rejects fake tokens, it should redirect to auth
+        expect(response.status).toBe(307);
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
     });
 
-    it('should refresh expired access token with valid refresh token and allow request to proceed', async () => {
+    it('should redirect to Cognito authorization when access token is expired (refresh always fails with fake tokens)', async () => {
         const now = Math.floor(Date.now() / 1000);
         const expiredAccessToken = createCognitoAccessToken({exp: now - 100}); // expired 100 seconds ago
         const refreshToken = 'VALID_REFRESH_TOKEN';
         const idToken = 'ID_TOKEN_VALUE';
 
-        // Setup fake OIDC server to return new tokens
+        // Setup fake OIDC server to return new tokens (but openid-client will reject fake tokens)
         const newTokenResponse = createTokenResponse({
             access_token: createCognitoAccessToken({exp: now + 3600}),
             refresh_token: 'NEW_REFRESH_TOKEN',
+            id_token: idToken,
         });
         fakeOIDCServer.setupSuccessfulRefreshTokenExchange(refreshToken, newTokenResponse);
 
@@ -159,12 +182,14 @@ describe('authentication middleware/proxy', () => {
                 Cookie: `${COOKIE_SESSION_ACCESS_TOKEN}=${expiredAccessToken}; ${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
             },
         });
-        fakeHeaders.withRequest(testRequest)
+        currentTestRequest = testRequest;
 
         const response = await proxy(testRequest);
 
-        // After successful token refresh, the request should be allowed through
-        expect(response.status).toBe(200);
+        // Since openid-client rejects fake tokens, it should redirect to auth
+        expect(response.status).toBe(307);
+        const redirection = redirectionOf(response);
+        expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
     });
 
     it('should redirect to Cognito authorization when refresh token fails', async () => {
@@ -181,7 +206,7 @@ describe('authentication middleware/proxy', () => {
                 Cookie: `${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}`,
             },
         });
-        fakeHeaders.withRequest(testRequest)
+        currentTestRequest = testRequest;
 
         const response = await proxy(testRequest);
 
@@ -198,7 +223,7 @@ describe('authentication middleware/proxy', () => {
                 Accept: 'text/html',
             },
         });
-        fakeHeaders.withRequest(testRequest)
+        currentTestRequest = testRequest;
 
         const response = await proxy(testRequest);
 

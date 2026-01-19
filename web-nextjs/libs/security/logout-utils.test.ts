@@ -7,6 +7,13 @@ import {TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/h
 import {clearFullSession} from "@/libs/security/backend-store";
 import {fakeNextHeaders} from "@/__tests__/helpers/fake-next-headers";
 import {NextRequest} from "next/server";
+import {
+    COOKIE_AUTH_CODE_VERIFIER, COOKIE_AUTH_NONCE, COOKIE_AUTH_REDIRECT_AFTER_LOGIN,
+    COOKIE_AUTH_STATE,
+    COOKIE_SESSION_ACCESS_TOKEN,
+    COOKIE_SESSION_REFRESH_TOKEN,
+    COOKIE_SESSION_USER_INFO
+} from "@/libs/security/constants";
 
 vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
 vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
@@ -59,22 +66,19 @@ describe('logout-utils', () => {
         });
     });
 
-    describe('clearAuthCookies', () => {
-        it('should clear all authentication cookies', async () => {
-            await clearFullSession();
+    describe('clearFullSession', () => {
+        it('should return cookie values to clear all authentication cookies', () => {
+            const cookies = clearFullSession();
 
-            const deleteCookie = {
-                maxAge: 0,
-                path: '/',
-            };
+            const deleteCookieValue = {value: '', maxAge: 0};
 
-            expect(fakeHeaders.getSetCookie('dphoto-access-token')).toStrictEqual({value: '', options: deleteCookie});
-            expect(fakeHeaders.getSetCookie('dphoto-refresh-token')).toStrictEqual({value: '', options: deleteCookie});
-            expect(fakeHeaders.getSetCookie('dphoto-user-info')).toStrictEqual({value: '', options: deleteCookie});
-            expect(fakeHeaders.getSetCookie('dphoto-oauth-state')).toStrictEqual({value: '', options: deleteCookie});
-            expect(fakeHeaders.getSetCookie('dphoto-oauth-code-verifier')).toStrictEqual({value: '', options: deleteCookie});
-            expect(fakeHeaders.getSetCookie('dphoto-oauth-nonce')).toStrictEqual({value: '', options: deleteCookie});
-            expect(fakeHeaders.getSetCookie('dphoto-redirect-after-login')).toStrictEqual({value: '', options: deleteCookie});
+            expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toStrictEqual(deleteCookieValue);
+            expect(cookies[COOKIE_SESSION_REFRESH_TOKEN]).toStrictEqual(deleteCookieValue);
+            expect(cookies[COOKIE_SESSION_USER_INFO]).toStrictEqual(deleteCookieValue);
+            expect(cookies[COOKIE_AUTH_STATE]).toStrictEqual(deleteCookieValue);
+            expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toStrictEqual(deleteCookieValue);
+            expect(cookies[COOKIE_AUTH_NONCE]).toStrictEqual(deleteCookieValue);
+            expect(cookies[COOKIE_AUTH_REDIRECT_AFTER_LOGIN]).toStrictEqual(deleteCookieValue);
         });
     });
 });
