@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPhoto - Refined Design Direction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a1520 0%, #12242e 50%, #0f1d28 100%);
+            background-attachment: fixed;
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            right: 20%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(24, 89, 134, 0.6), transparent);
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 300;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+            color: #4a9ece;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Random Highlights Section */
+        .section-title {
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 24px;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 1px;
+            background: rgba(74, 158, 206, 0.6);
+        }
+
+        .random-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 80px;
+        }
+
+        .highlight-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .highlight-photo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(24, 89, 134, 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .highlight-photo:hover::before {
+            opacity: 1;
+        }
+
+        .highlight-photo:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(24, 89, 134, 0.4);
+        }
+
+        .highlight-photo::after {
+            content: '📷';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            opacity: 0.2;
+        }
+
+        /* Albums Grid */
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 32px;
+        }
+
+        .album-card {
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .album-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .album-photos-container {
+            background: linear-gradient(135deg, #0d1d28 0%, #162936 100%);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .album-photos {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .album-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .album-photo::after {
+            content: '🖼️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            opacity: 0.15;
+        }
+
+        .album-card:hover .album-photo {
+            opacity: 0.9;
+        }
+
+        /* Text overlay on photos */
+        .album-info-overlay {
+            background: linear-gradient(to top, rgba(10, 20, 30, 0.95) 0%, rgba(10, 20, 30, 0.7) 70%, transparent 100%);
+            padding: 24px 20px 20px;
+            position: relative;
+        }
+
+        .album-name {
+            font-size: 22px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-family: 'Georgia', serif;
+            line-height: 1.3;
+        }
+
+        .album-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.65);
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        .album-date {
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+
+        .album-count {
+            color: #4a9ece;
+            font-weight: 400;
+        }
+
+        /* Alternative: Gradient background version */
+        .section-variant {
+            margin-top: 100px;
+            padding-top: 80px;
+            border-top: 1px solid rgba(74, 158, 206, 0.2);
+        }
+
+        .variant-title {
+            font-size: 28px;
+            font-weight: 300;
+            color: #4a9ece;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .variant-description {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        /* Alternative layout: Text fully over photos */
+        .album-card-alt {
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            background: linear-gradient(135deg, #0d1d28 0%, #162936 100%);
+            overflow: hidden;
+        }
+
+        .album-card-alt:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(24, 89, 134, 0.3);
+        }
+
+        .album-photos-alt {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .album-photo-alt {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f);
+        }
+
+        .album-photo-alt::after {
+            content: '🖼️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            opacity: 0.15;
+        }
+
+        .album-info-over {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(10, 20, 30, 0.98) 0%, rgba(10, 20, 30, 0.85) 60%, transparent 100%);
+            padding: 32px 24px 24px;
+        }
+
+        .album-card-alt:hover .album-info-over {
+            background: linear-gradient(to top, rgba(24, 89, 134, 0.95) 0%, rgba(24, 89, 134, 0.75) 60%, transparent 100%);
+        }
+
+        /* Photo Viewer Example */
+        .viewer-example {
+            margin-top: 80px;
+            background: linear-gradient(135deg, #0a1520 0%, #0d1d28 100%);
+            padding: 32px;
+            position: relative;
+        }
+
+        .viewer-header {
+            padding: 20px 0;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .viewer-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(74, 158, 206, 0.4), transparent);
+        }
+
+        .viewer-title {
+            font-size: 16px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: 'Georgia', serif;
+        }
+
+        .viewer-close {
+            color: #4a9ece;
+            font-size: 13px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 300;
+        }
+
+        .viewer-close:hover {
+            color: #6ab9de;
+        }
+
+        .photo-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f, #1e3a5f);
+            position: relative;
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+        }
+
+        .photo-container::after {
+            content: '📸';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            opacity: 0.15;
+        }
+
+        .viewer-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 32px;
+            margin-top: 32px;
+        }
+
+        .nav-arrow {
+            width: 44px;
+            height: 44px;
+            background: rgba(24, 89, 134, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .nav-arrow:hover {
+            background: rgba(24, 89, 134, 0.5);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(24, 89, 134, 0.5);
+        }
+
+        .photo-position {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Courier New', monospace;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        /* Design Notes */
+        .design-notes {
+            margin-top: 80px;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(24, 89, 134, 0.15) 0%, rgba(24, 89, 134, 0.05) 100%);
+            position: relative;
+        }
+
+        .design-notes::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 40px;
+            right: 40px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(74, 158, 206, 0.5), transparent);
+        }
+
+        .design-notes h3 {
+            font-size: 24px;
+            color: #4a9ece;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .design-notes p {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.9;
+            font-weight: 300;
+            margin-bottom: 16px;
+        }
+
+        .design-notes strong {
+            color: #ffffff;
+            font-weight: 400;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            .albums-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .random-highlights {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>DPhoto / Refined</h1>
+        <p>Dark blue gradient background · No full borders · Luxury typography · 2×2 photo grid · Text overlay on album cards</p>
+    </div>
+
+    <!-- Random Highlights -->
+    <section style="margin-bottom: 60px;">
+        <h2 class="section-title">Your Memories</h2>
+        <div class="random-highlights">
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+        </div>
+    </section>
+
+    <!-- Albums Grid - Variant 1: Text below photos -->
+    <section>
+        <h2 class="section-title">Your Albums</h2>
+        <div class="albums-grid">
+            <div class="album-card">
+                <div class="album-photos-container">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info-overlay">
+                        <div class="album-name">Santa Cruz Beach Trip</div>
+                        <div class="album-meta">
+                            <span class="album-date">Jul 15 – Jul 22, 2026</span>
+                            <span class="album-count">47 photos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos-container">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info-overlay">
+                        <div class="album-name">Iceland Adventure</div>
+                        <div class="album-meta">
+                            <span class="album-date">Aug 01 – Aug 14, 2025</span>
+                            <span class="album-count">203 photos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos-container">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info-overlay">
+                        <div class="album-name">Summer Family Gathering</div>
+                        <div class="album-meta">
+                            <span class="album-date">Jun 01 – Aug 31, 2025</span>
+                            <span class="album-count">124 photos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos-container">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info-overlay">
+                        <div class="album-name">Paris Weekend</div>
+                        <div class="album-meta">
+                            <span class="album-date">Mar 12 – Mar 15, 2025</span>
+                            <span class="album-count">89 photos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos-container">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info-overlay">
+                        <div class="album-name">Christmas 2024</div>
+                        <div class="album-meta">
+                            <span class="album-date">Dec 23 – Dec 26, 2024</span>
+                            <span class="album-count">156 photos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos-container">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info-overlay">
+                        <div class="album-name">Hiking in the Alps</div>
+                        <div class="album-meta">
+                            <span class="album-date">Sep 05 – Sep 12, 2024</span>
+                            <span class="album-count">234 photos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Alternative Variant: Text fully over photos -->
+    <section class="section-variant">
+        <h2 class="variant-title">Alternative: Full Text Overlay</h2>
+        <p class="variant-description">Text positioned directly over photos with stronger gradient overlay. Hover reveals brand blue tint.</p>
+
+        <div class="albums-grid">
+            <div class="album-card-alt">
+                <div class="album-photos-alt">
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                </div>
+                <div class="album-info-over">
+                    <div class="album-name">Santa Cruz Beach Trip</div>
+                    <div class="album-meta">
+                        <span class="album-date">Jul 15 – Jul 22, 2026</span>
+                        <span class="album-count">47 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card-alt">
+                <div class="album-photos-alt">
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                </div>
+                <div class="album-info-over">
+                    <div class="album-name">Iceland Adventure</div>
+                    <div class="album-meta">
+                        <span class="album-date">Aug 01 – Aug 14, 2025</span>
+                        <span class="album-count">203 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card-alt">
+                <div class="album-photos-alt">
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                    <div class="album-photo-alt"></div>
+                </div>
+                <div class="album-info-over">
+                    <div class="album-name">Summer Family Gathering</div>
+                    <div class="album-meta">
+                        <span class="album-date">Jun 01 – Aug 31, 2025</span>
+                        <span class="album-count">124 photos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Photo Viewer Example -->
+    <section class="viewer-example">
+        <div class="viewer-header">
+            <div class="viewer-title">Santa Cruz Beach Trip · July 15, 2026</div>
+            <div class="viewer-close">ESC to close</div>
+        </div>
+        <div class="photo-container"></div>
+        <div class="viewer-nav">
+            <div class="nav-arrow">←</div>
+            <div class="photo-position">5 / 47</div>
+            <div class="nav-arrow">→</div>
+        </div>
+    </section>
+
+    <!-- Design Notes -->
+    <div class="design-notes">
+        <h3>Design Direction: Key Decisions</h3>
+        <p><strong>Background:</strong> Dark blue gradient (#12242e core) instead of pure black. Creates depth and complements brand blue #185986. Gradient adds
+            subtle visual interest without distraction.</p>
+
+        <p><strong>No Full Borders:</strong> Album cards use background color differentiation instead of borders. Cleaner, more sophisticated look. Card
+            background (#0d1d28 to #162936) contrasts with page gradient naturally.</p>
+
+        <p><strong>Photo Grid:</strong> 2×2 layout (instead of 1×4) creates more balanced, square-ish album cards. Better for responsive design and visual
+            scanning. Multiple albums visible per row on desktop.</p>
+
+        <p><strong>Typography:</strong> Georgia serif for album names (luxury feel from Option C). Courier New monospace for dates (technical feel from Option
+            A). Creates nice contrast between elegant content and technical metadata.</p>
+
+        <p><strong>Text Overlay:</strong> Two variants shown. First has text below photos with gradient overlay. Second has text fully over photos with stronger
+            darkening. Both darken images slightly to ensure readability with white text.</p>
+
+        <p><strong>Hover States:</strong> Subtle translateY(-6px) lift on hover. No border color changes needed. Alternative variant adds blue gradient overlay
+            on hover for extra feedback.</p>
+
+        <p><strong>Spacing:</strong> 32px gap between album cards. Generous but not excessive. Cards feel distinct but cohesive. Random highlights use 16px gap
+            for tighter grouping.</p>
+
+        <p><strong>Brand Blue Usage:</strong> Section title underlines, photo count text, hover effects, navigation UI. Used sparingly for accent, not
+            overwhelming. Complements the dark blue background beautifully.</p>
+    </div>
+</div>
+</body>
+</html>

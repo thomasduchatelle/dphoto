@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPhoto - Design Direction Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #185986, transparent);
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+            color: #185986;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        .mockup-section {
+            margin-bottom: 80px;
+        }
+
+        .mockup-title {
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(74, 158, 206, 0.3);
+            color: #ffffff;
+        }
+
+        .mockup-description {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 24px;
+            font-weight: 300;
+        }
+
+        .mockup-frame {
+            background: #121212;
+            border: 1px solid rgba(74, 158, 206, 0.3);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Mockup 1: Album List with Random Highlights */
+        .home-page {
+            padding: 32px;
+        }
+
+        .memories-section {
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .memories-section::before,
+        .memories-section::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 10%;
+            height: 1px;
+            background: rgba(74, 158, 206, 0.5);
+        }
+
+        .memories-section::before {
+            top: 0;
+        }
+
+        .memories-section::after {
+            bottom: -24px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+            padding-top: 12px;
+        }
+
+        .random-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .highlight-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f);
+            border: 1px solid rgba(74, 158, 206, 0.2);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .highlight-photo:hover {
+            border-color: #185986;
+            box-shadow: 0 0 20px rgba(24, 89, 134, 0.4);
+        }
+
+        .highlight-photo::after {
+            content: '📷';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            opacity: 0.3;
+        }
+
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .album-card {
+            background: #1e1e1e;
+            border: 1px solid rgba(74, 158, 206, 0.3);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .album-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: rgba(74, 158, 206, 0.5);
+        }
+
+        .album-card:hover {
+            border-color: #185986;
+            box-shadow: 0 0 30px rgba(24, 89, 134, 0.3);
+        }
+
+        .album-photos {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 20px;
+        }
+
+        .album-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #2a3a4f, #3a4a5f);
+            border: 1px solid rgba(74, 158, 206, 0.1);
+        }
+
+        .album-photo::after {
+            content: '🖼️';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 24px;
+            opacity: 0.2;
+        }
+
+        .album-info {
+            padding: 16px 20px 20px;
+            border-top: 1px solid rgba(74, 158, 206, 0.3);
+        }
+
+        .album-name {
+            font-size: 18px;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .album-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        .album-date {
+            font-family: 'Courier New', monospace;
+        }
+
+        .album-count {
+            color: #4a9ece;
+            font-weight: 400;
+        }
+
+        /* Mockup 2: Photo Viewing */
+        .photo-viewer {
+            background: #0a0a0a;
+            padding: 0;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .viewer-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(74, 158, 206, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .viewer-title {
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .viewer-close {
+            color: #185986;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 300;
+        }
+
+        .viewer-close:hover {
+            color: #4a9ece;
+        }
+
+        .viewer-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+        }
+
+        .photo-container {
+            max-width: 900px;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f, #1e3a5f);
+            border: 1px solid rgba(74, 158, 206, 0.3);
+            position: relative;
+            box-shadow: 0 0 40px rgba(24, 89, 134, 0.2);
+        }
+
+        .photo-container::after {
+            content: '📸';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 64px;
+            opacity: 0.2;
+        }
+
+        .viewer-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-arrow {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(74, 158, 206, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .nav-arrow:hover {
+            border-color: #185986;
+            box-shadow: 0 0 15px rgba(24, 89, 134, 0.5);
+            color: #4a9ece;
+        }
+
+        .photo-position {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Courier New', monospace;
+            font-weight: 300;
+        }
+
+        /* Mockup 3: Album Creation Dialog */
+        .dialog-mockup {
+            background: rgba(10, 10, 10, 0.95);
+            padding: 60px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 600px;
+        }
+
+        .dialog-box {
+            max-width: 800px;
+            width: 100%;
+            background: #1e1e1e;
+            position: relative;
+        }
+
+        .dialog-box::before,
+        .dialog-box::after {
+            content: '';
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: rgba(74, 158, 206, 0.6);
+        }
+
+        .dialog-box::before {
+            top: 0;
+        }
+
+        .dialog-box::after {
+            bottom: 0;
+        }
+
+        .dialog-content {
+            padding: 40px;
+        }
+
+        .dialog-title {
+            font-size: 22px;
+            font-weight: 400;
+            margin-bottom: 32px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .dialog-form {
+            display: grid;
+            gap: 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 300;
+        }
+
+        .form-input {
+            background: #121212;
+            border: 1px solid rgba(74, 158, 206, 0.3);
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 300;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: #185986;
+            box-shadow: 0 0 10px rgba(24, 89, 134, 0.3);
+        }
+
+        .preview-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(74, 158, 206, 0.3);
+        }
+
+        .preview-title {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 300;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .preview-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #2a3a4f, #3a4a5f);
+            border: 1px solid rgba(74, 158, 206, 0.2);
+        }
+
+        .preview-count {
+            font-size: 13px;
+            color: #4a9ece;
+            margin-top: 8px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 400;
+        }
+
+        .btn-primary {
+            background: #185986;
+            color: #ffffff;
+            border: 1px solid #185986;
+        }
+
+        .btn-primary:hover {
+            background: #206ba8;
+            box-shadow: 0 0 20px rgba(24, 89, 134, 0.5);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(74, 158, 206, 0.3);
+        }
+
+        .btn-secondary:hover {
+            border-color: #185986;
+            color: #ffffff;
+        }
+
+        /* Mockup 4: Error Message (Gaming UI) */
+        .error-mockup {
+            background: rgba(10, 10, 10, 0.95);
+            padding: 80px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        .error-message {
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .error-message::before,
+        .error-message::after {
+            content: '';
+            position: absolute;
+            left: 15%;
+            right: 15%;
+            height: 1px;
+            background: rgba(255, 82, 82, 0.6);
+        }
+
+        .error-message::before {
+            top: 0;
+        }
+
+        .error-message::after {
+            bottom: 0;
+        }
+
+        .error-title {
+            font-size: 20px;
+            color: #ff5252;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 400;
+        }
+
+        .error-text {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 32px;
+            font-weight: 300;
+        }
+
+        .error-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .albums-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .random-highlights {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .preview-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .notes {
+            background: #1a1a1a;
+            border-left: 2px solid #185986;
+            padding: 20px;
+            margin-top: 24px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            line-height: 1.8;
+        }
+
+        .notes strong {
+            color: #4a9ece;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>DPHOTO / DESIGN DIRECTION</h1>
+        <p>Modern Minimal Sci-Fi Aesthetic · Dark Theme · Thin Contrasting Lines</p>
+    </div>
+
+    <!-- Mockup 1: Home Page with Album List -->
+    <div class="mockup-section">
+        <h2 class="mockup-title">Mockup 1: Home Page with Random Highlights & Album List</h2>
+        <p class="mockup-description">
+            Landing page showing random memory highlights at top (discovery feature) followed by chronological album list.
+            Album cards show 4 random photo samples with metadata below.
+        </p>
+        <div class="mockup-frame home-page">
+            <div class="memories-section">
+                <h3 class="section-title">Your Memories</h3>
+                <div class="random-highlights">
+                    <div class="highlight-photo"></div>
+                    <div class="highlight-photo"></div>
+                    <div class="highlight-photo"></div>
+                    <div class="highlight-photo"></div>
+                    <div class="highlight-photo"></div>
+                    <div class="highlight-photo"></div>
+                </div>
+            </div>
+
+            <div class="albums-grid">
+                <div class="album-card">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info">
+                        <div class="album-name">Santa Cruz Beach Trip 2026</div>
+                        <div class="album-meta">
+                            <span class="album-date">Jul 15 - Jul 22, 2026</span>
+                            <span class="album-count">47 photos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="album-card">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info">
+                        <div class="album-name">Iceland Adventure 2025</div>
+                        <div class="album-meta">
+                            <span class="album-date">Aug 01 - Aug 14, 2025</span>
+                            <span class="album-count">203 photos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="album-card">
+                    <div class="album-photos">
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                        <div class="album-photo"></div>
+                    </div>
+                    <div class="album-info">
+                        <div class="album-name">Summer 2025</div>
+                        <div class="album-meta">
+                            <span class="album-date">Jun 01 - Aug 31, 2025</span>
+                            <span class="album-count">124 photos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="notes">
+            <strong>Key Elements:</strong> Thin horizontal lines with gaps separate "Your Memories" section. Album cards use 1px borders with subtle gaps at
+            corners.
+            Photo samples show 4 random photos (changes on refresh). Metadata uses monospace font for dates. Hover states add blue glow.
+        </div>
+    </div>
+
+    <!-- Mockup 2: Photo Viewing -->
+    <div class="mockup-section">
+        <h2 class="mockup-title">Mockup 2: Full-Screen Photo Viewing</h2>
+        <p class="mockup-description">
+            Minimal UI for photo viewing. Thin top border separates header. Navigation arrows with thin borders.
+            Photo maximizes available space against dark background.
+        </p>
+        <div class="mockup-frame photo-viewer">
+            <div class="viewer-header">
+                <div class="viewer-title">Santa Cruz Beach Trip 2026 · July 15, 2026</div>
+                <div class="viewer-close">ESC to close</div>
+            </div>
+            <div class="viewer-main">
+                <div class="photo-container"></div>
+                <div class="viewer-nav">
+                    <div class="nav-arrow">←</div>
+                    <div class="photo-position">5 / 47</div>
+                    <div class="nav-arrow">→</div>
+                </div>
+            </div>
+        </div>
+        <div class="notes">
+            <strong>Key Elements:</strong> Minimal chrome - just thin top border and navigation. Photo container has subtle border and shadow.
+            Arrow navigation uses thin-line boxes. Position counter uses monospace. ESC hint in brand blue. Photo is primary focus.
+        </div>
+    </div>
+
+    <!-- Mockup 3: Album Creation Dialog -->
+    <div class="mockup-section">
+        <h2 class="mockup-title">Mockup 3: Create Album Dialog with Live Preview</h2>
+        <p class="mockup-description">
+            Centered dialog with top/bottom thin lines (gaming UI influence). Form shows date pickers and preview of photos
+            that will be included. Preview updates in real-time as dates change.
+        </p>
+        <div class="mockup-frame dialog-mockup">
+            <div class="dialog-box">
+                <div class="dialog-content">
+                    <h3 class="dialog-title">Create New Album</h3>
+                    <div class="dialog-form">
+                        <div class="form-group">
+                            <label class="form-label">Album Name</label>
+                            <input type="text" class="form-input" placeholder="Enter album name" value="Beach Vacation">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-input" value="2026-07-15">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">End Date</label>
+                                <input type="date" class="form-input" value="2026-07-22">
+                            </div>
+                        </div>
+                        <div class="preview-section">
+                            <div class="preview-title">Photos in this date range</div>
+                            <div class="preview-grid">
+                                <div class="preview-photo"></div>
+                                <div class="preview-photo"></div>
+                                <div class="preview-photo"></div>
+                                <div class="preview-photo"></div>
+                                <div class="preview-photo"></div>
+                                <div class="preview-photo"></div>
+                            </div>
+                            <div class="preview-count">47 photos</div>
+                        </div>
+                    </div>
+                    <div class="dialog-actions">
+                        <button class="btn btn-secondary">Cancel</button>
+                        <button class="btn btn-primary">Create Album</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="notes">
+            <strong>Key Elements:</strong> Dialog uses thin horizontal lines at top/bottom with gaps (not full width).
+            No rounded corners or heavy borders. Form inputs have thin borders with blue focus glow. Preview section shows thumbnails
+            of photos that will be included. Photo count in brand blue. Buttons use minimal styling - primary has blue background, secondary is outline only.
+        </div>
+    </div>
+
+    <!-- Mockup 4: Error Message -->
+    <div class="mockup-section">
+        <h2 class="mockup-title">Mockup 4: Error Message (Gaming UI Influence)</h2>
+        <p class="mockup-description">
+            Centered error message with thin horizontal lines above/below. No full box or rounded rectangle.
+            Minimal chrome - just lines for separation. Red accent for error state.
+        </p>
+        <div class="mockup-frame error-mockup">
+            <div class="error-message">
+                <h3 class="error-title">Error: Album Not Found</h3>
+                <p class="error-text">The album you're looking for doesn't exist or you don't have permission to access it.</p>
+                <div class="error-actions">
+                    <button class="btn btn-secondary">Go Home</button>
+                    <button class="btn btn-primary">Try Again</button>
+                </div>
+            </div>
+        </div>
+        <div class="notes">
+            <strong>Key Elements:</strong> Gaming/sci-fi UI influence - thin horizontal lines with gaps provide just enough separation.
+            No box around content. Lines are red for error state. Centered layout. Uppercase title with letter-spacing.
+            Minimal but clear - no heavy UI chrome.
+        </div>
+    </div>
+
+    <div style="margin-top: 80px; padding: 40px; background: #1a1a1a; border: 1px solid rgba(74, 158, 206, 0.3);">
+        <h2 style="font-size: 24px; margin-bottom: 20px; color: #185986;">Design Direction Summary</h2>
+        <div style="font-size: 15px; color: rgba(255, 255, 255, 0.8); line-height: 1.8; font-weight: 300;">
+            <p style="margin-bottom: 16px;"><strong style="color: #4a9ece;">Visual Language:</strong> Modern minimal with sci-fi/gaming UI influences. Thin
+                contrasting lines (1-2px) create structure without heavy chrome. Lines can have gaps or incomplete edges for visual interest.</p>
+
+            <p style="margin-bottom: 16px;"><strong style="color: #4a9ece;">Color Strategy:</strong> Dark theme (#121212) makes photos the primary focus. Brand
+                blue (#185986) for all interactive elements, focus states, and primary actions. Thin accent lines use desaturated cyan/blue (#4a9ece).</p>
+
+            <p style="margin-bottom: 16px;"><strong style="color: #4a9ece;">Typography:</strong> Roboto with light/regular weights (300-400). Generous spacing
+                for readability on dark backgrounds. Monospace for dates/metadata adds futuristic feel. Uppercase section labels with letter-spacing.</p>
+
+            <p style="margin-bottom: 16px;"><strong style="color: #4a9ece;">Spacing & Layout:</strong> Generous breathing room - photos need space. 8px base
+                unit with 16-24px component spacing. Asymmetric layouts acceptable. Content floats against dark background rather than rigid grid confinement.
+            </p>
+
+            <p style="margin-bottom: 16px;"><strong style="color: #4a9ece;">Key Differentiators:</strong> Incomplete line borders (don't span full width),
+                gaming-style centered messages with just top/bottom lines, minimal chrome everywhere, subtle blue glows on hover/focus, no rounded corners on
+                anything.</p>
+
+            <p><strong style="color: #4a9ece;">Prototyping Note:</strong> This aesthetic is distinctive but unproven. Start with one component (album card or
+                error dialog) to validate it works. If thin lines feel too sparse or hard to read, dial back to more standard Material UI with subtle line
+                accents while keeping dark theme and brand color.</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

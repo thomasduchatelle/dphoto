@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPhoto - Refined Design Direction v3</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a1613 0%, #0d2420 50%, #0b1b18 100%);
+            background-attachment: fixed;
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            right: 20%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(24, 89, 134, 0.6), transparent);
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 300;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+            color: #4a9ece;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Random Highlights Section */
+        .section-title {
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 24px;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 1px;
+            background: rgba(74, 158, 206, 0.6);
+        }
+
+        .random-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 80px;
+        }
+
+        .highlight-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .highlight-photo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(24, 89, 134, 0.3), rgba(74, 158, 206, 0.2));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .highlight-photo:hover::before {
+            opacity: 1;
+        }
+
+        .highlight-photo:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(24, 89, 134, 0.5);
+        }
+
+        .highlight-photo::after {
+            content: '📷';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            opacity: 0.2;
+        }
+
+        /* Albums Grid */
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 32px;
+        }
+
+        .album-card {
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            background: linear-gradient(135deg, #143832 0%, #1a4840 100%);
+            overflow: hidden;
+        }
+
+        .album-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(24, 89, 134, 0.4);
+        }
+
+        .album-photos {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .album-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f);
+            position: relative;
+            transition: all 0.4s ease;
+        }
+
+        .album-photo::after {
+            content: '🖼️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            opacity: 0.15;
+        }
+
+        .album-card:hover .album-photo {
+            filter: brightness(0.85);
+        }
+
+        /* Text overlay on photos */
+        .album-info-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(10, 22, 19, 0.98) 0%, rgba(10, 22, 19, 0.85) 60%, transparent 100%);
+            padding: 32px 24px 24px;
+            transition: all 0.4s ease;
+        }
+
+        .album-card:hover .album-info-overlay {
+            background: linear-gradient(to top, rgba(24, 89, 134, 0.95) 0%, rgba(24, 89, 134, 0.75) 60%, transparent 100%);
+        }
+
+        .album-name {
+            font-size: 22px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-family: 'Georgia', serif;
+            line-height: 1.3;
+        }
+
+        .album-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        .album-date {
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+
+        .album-count {
+            color: #6ab9de;
+            font-weight: 400;
+        }
+
+        .album-card:hover .album-count {
+            color: #ffffff;
+        }
+
+        /* Photo Viewer Example */
+        .viewer-example {
+            margin-top: 80px;
+            background: linear-gradient(135deg, #0a1613 0%, #0b1b18 100%);
+            padding: 32px;
+            position: relative;
+        }
+
+        .viewer-header {
+            padding: 20px 0;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .viewer-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(74, 158, 206, 0.5), transparent);
+        }
+
+        .viewer-title {
+            font-size: 16px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: 'Georgia', serif;
+        }
+
+        .viewer-close {
+            color: #4a9ece;
+            font-size: 13px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 300;
+        }
+
+        .viewer-close:hover {
+            color: #6ab9de;
+        }
+
+        .photo-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f, #1e3a5f);
+            position: relative;
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.7);
+        }
+
+        .photo-container::after {
+            content: '📸';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            opacity: 0.15;
+        }
+
+        .viewer-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 32px;
+            margin-top: 32px;
+        }
+
+        .nav-arrow {
+            width: 44px;
+            height: 44px;
+            background: rgba(24, 89, 134, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .nav-arrow:hover {
+            background: rgba(24, 89, 134, 0.6);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(24, 89, 134, 0.6);
+        }
+
+        .photo-position {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Courier New', monospace;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        /* Dialog Example */
+        .dialog-example {
+            margin-top: 80px;
+            background: rgba(10, 22, 19, 0.95);
+            padding: 80px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 600px;
+        }
+
+        .dialog-box {
+            max-width: 800px;
+            width: 100%;
+            background: linear-gradient(135deg, #143832 0%, #1a4840 100%);
+            position: relative;
+            padding: 0;
+        }
+
+        .dialog-box::before,
+        .dialog-box::after {
+            content: '';
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: rgba(74, 158, 206, 0.5);
+        }
+
+        .dialog-box::before {
+            top: 0;
+        }
+
+        .dialog-box::after {
+            bottom: 0;
+        }
+
+        .dialog-content {
+            padding: 40px;
+        }
+
+        .dialog-title {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 32px;
+            text-align: center;
+            color: #ffffff;
+            font-family: 'Georgia', serif;
+        }
+
+        .dialog-form {
+            display: grid;
+            gap: 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.75);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 300;
+        }
+
+        .form-input {
+            background: rgba(10, 22, 19, 0.6);
+            border: 1px solid rgba(74, 158, 206, 0.3);
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 300;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: #185986;
+            background: rgba(10, 22, 19, 0.8);
+            box-shadow: 0 0 12px rgba(24, 89, 134, 0.4);
+        }
+
+        .preview-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(74, 158, 206, 0.3);
+        }
+
+        .preview-title {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 300;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .preview-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1e3a5f, #2a4a6f);
+            border: 1px solid rgba(74, 158, 206, 0.2);
+        }
+
+        .preview-count {
+            font-size: 13px;
+            color: #4a9ece;
+            margin-top: 8px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 400;
+        }
+
+        .btn-primary {
+            background: #185986;
+            color: #ffffff;
+            border: 1px solid #185986;
+        }
+
+        .btn-primary:hover {
+            background: #206ba8;
+            box-shadow: 0 0 24px rgba(24, 89, 134, 0.6);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(74, 158, 206, 0.4);
+        }
+
+        .btn-secondary:hover {
+            border-color: #4a9ece;
+            color: #ffffff;
+            background: rgba(74, 158, 206, 0.1);
+        }
+
+        /* Design Notes */
+        .design-notes {
+            margin-top: 80px;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(20, 56, 50, 0.4) 0%, rgba(20, 56, 50, 0.15) 100%);
+            position: relative;
+        }
+
+        .design-notes::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 40px;
+            right: 40px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(74, 158, 206, 0.5), transparent);
+        }
+
+        .design-notes h3 {
+            font-size: 24px;
+            color: #4a9ece;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .design-notes p {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.9;
+            font-weight: 300;
+            margin-bottom: 16px;
+        }
+
+        .design-notes strong {
+            color: #ffffff;
+            font-weight: 400;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            .albums-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .random-highlights {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .preview-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>DPhoto / Refined v3</h1>
+        <p>Dark teal gradient (darkened #114a41) · Lighter teal album cards · Text over photos · Blue tint hover</p>
+    </div>
+
+    <!-- Random Highlights -->
+    <section style="margin-bottom: 60px;">
+        <h2 class="section-title">Your Memories</h2>
+        <div class="random-highlights">
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+            <div class="highlight-photo"></div>
+        </div>
+    </section>
+
+    <!-- Albums Grid -->
+    <section>
+        <h2 class="section-title">Your Albums</h2>
+        <div class="albums-grid">
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">Santa Cruz Beach Trip</div>
+                    <div class="album-meta">
+                        <span class="album-date">Jul 15 – Jul 22, 2026</span>
+                        <span class="album-count">47 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">Iceland Adventure</div>
+                    <div class="album-meta">
+                        <span class="album-date">Aug 01 – Aug 14, 2025</span>
+                        <span class="album-count">203 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">Summer Family Gathering</div>
+                    <div class="album-meta">
+                        <span class="album-date">Jun 01 – Aug 31, 2025</span>
+                        <span class="album-count">124 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">Paris Weekend</div>
+                    <div class="album-meta">
+                        <span class="album-date">Mar 12 – Mar 15, 2025</span>
+                        <span class="album-count">89 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">Christmas 2024</div>
+                    <div class="album-meta">
+                        <span class="album-date">Dec 23 – Dec 26, 2024</span>
+                        <span class="album-count">156 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">Hiking in the Alps</div>
+                    <div class="album-meta">
+                        <span class="album-date">Sep 05 – Sep 12, 2024</span>
+                        <span class="album-count">234 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">New York City</div>
+                    <div class="album-meta">
+                        <span class="album-date">Nov 18 – Nov 23, 2024</span>
+                        <span class="album-count">178 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">Tokyo Spring</div>
+                    <div class="album-meta">
+                        <span class="album-date">Apr 01 – Apr 10, 2024</span>
+                        <span class="album-count">312 photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="album-card">
+                <div class="album-photos">
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                    <div class="album-photo"></div>
+                </div>
+                <div class="album-info-overlay">
+                    <div class="album-name">Family Reunion</div>
+                    <div class="album-meta">
+                        <span class="album-date">Jul 01 – Jul 04, 2024</span>
+                        <span class="album-count">93 photos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Photo Viewer Example -->
+    <section class="viewer-example">
+        <div class="viewer-header">
+            <div class="viewer-title">Santa Cruz Beach Trip · July 15, 2026</div>
+            <div class="viewer-close">ESC to close</div>
+        </div>
+        <div class="photo-container"></div>
+        <div class="viewer-nav">
+            <div class="nav-arrow">←</div>
+            <div class="photo-position">5 / 47</div>
+            <div class="nav-arrow">→</div>
+        </div>
+    </section>
+
+    <!-- Dialog Example -->
+    <section class="dialog-example">
+        <div class="dialog-box">
+            <div class="dialog-content">
+                <h3 class="dialog-title">Create New Album</h3>
+                <div class="dialog-form">
+                    <div class="form-group">
+                        <label class="form-label">Album Name</label>
+                        <input type="text" class="form-input" placeholder="Enter album name" value="Beach Vacation">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-input" value="2026-07-15">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-input" value="2026-07-22">
+                        </div>
+                    </div>
+                    <div class="preview-section">
+                        <div class="preview-title">Photos in this date range</div>
+                        <div class="preview-grid">
+                            <div class="preview-photo"></div>
+                            <div class="preview-photo"></div>
+                            <div class="preview-photo"></div>
+                            <div class="preview-photo"></div>
+                            <div class="preview-photo"></div>
+                            <div class="preview-photo"></div>
+                        </div>
+                        <div class="preview-count">47 photos</div>
+                    </div>
+                </div>
+                <div class="dialog-actions">
+                    <button class="btn btn-secondary">Cancel</button>
+                    <button class="btn btn-primary">Create Album</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Design Notes -->
+    <div class="design-notes">
+        <h3>Design Direction v3: Dark Teal Background</h3>
+
+        <p><strong>Background Gradient (Darkened Teal):</strong> Based on analogous color #114a41 but significantly darkened to keep background subtle. Creates:
+            #0a1613 → #0d2420 → #0b1b18. Very dark teal that stays close to black while adding subtle color interest. Much more restrained than v2.</p>
+
+        <p><strong>Album Cards (Lighter Teal):</strong> Cards use lighter version of same teal family: #143832 → #1a4840. Still teal-based (not grey) to
+            harmonize with background, but noticeably lighter for clear differentiation. Cards are the same hue as background, just brighter.</p>
+
+        <p><strong>Color Harmony:</strong> Background is very dark teal (~10-15% lightness), cards are medium-dark teal (~20-25% lightness). Same hue family
+            creates cohesive color system. Brand blue (#185986) used for accents and hover states provides complementary color contrast.</p>
+
+        <p><strong>Text Over Photos:</strong> Album name and metadata positioned over 2×2 photo grid. Gradient overlay uses darkest teal (rgba(10, 22, 19,
+            0.98)) for readability. On hover, transitions to brand blue tint (rgba(24, 89, 134, 0.95)).</p>
+
+        <p><strong>Why This Works:</strong> Dark teal background feels sophisticated and modern without being as harsh as pure black. Lighter teal cards clearly
+            stand out while maintaining color harmony. Brand blue accents pop beautifully against teal foundation. Overall palette feels cohesive and
+            intentional.</p>
+
+        <p><strong>Typography:</strong> Georgia serif for album names (elegant), Courier New monospace for dates (technical). Light font weights (300) work well
+            on dark backgrounds. Album count in cyan (#6ab9de) transitions to white on hover.</p>
+
+        <p><strong>Hover Interactions:</strong> Card lifts with shadow, photos darken slightly, text overlay transitions from dark teal to brand blue wash.
+            Provides clear interactive feedback while maintaining sophistication.</p>
+    </div>
+</div>
+</body>
+</html>

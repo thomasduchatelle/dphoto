@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPhoto - Design Direction Alternatives</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid rgba(74, 158, 206, 0.3);
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+            color: #185986;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .navigation {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(74, 158, 206, 0.3);
+            z-index: 100;
+        }
+
+        .nav-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: #1e1e1e;
+            border: 1px solid rgba(74, 158, 206, 0.3);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            border-color: #185986;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(24, 89, 134, 0.3);
+        }
+
+        .nav-btn.active {
+            background: #185986;
+            border-color: #185986;
+            color: #ffffff;
+        }
+
+        .direction-section {
+            margin-bottom: 100px;
+            scroll-margin-top: 100px;
+        }
+
+        .direction-header {
+            margin-bottom: 30px;
+            padding: 30px;
+            background: #1a1a1a;
+            border-left: 3px solid #185986;
+        }
+
+        .direction-title {
+            font-size: 32px;
+            font-weight: 400;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .direction-subtitle {
+            font-size: 18px;
+            color: #4a9ece;
+            margin-bottom: 16px;
+            font-weight: 300;
+        }
+
+        .direction-description {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.8;
+            font-weight: 300;
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+        }
+
+        .mockup-item {
+            background: #121212;
+            border: 1px solid rgba(74, 158, 206, 0.2);
+            overflow: hidden;
+        }
+
+        .mockup-label {
+            padding: 16px 20px;
+            background: #1a1a1a;
+            border-bottom: 1px solid rgba(74, 158, 206, 0.2);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 400;
+        }
+
+        .mockup-frame {
+            padding: 32px;
+            min-height: 500px;
+        }
+
+        /* Direction A: Sci-Fi Gaming Minimal */
+        .dir-a .album-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .dir-a .album-card {
+            background: #1e1e1e;
+            border: 1px solid rgba(74, 158, 206, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .dir-a .album-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: rgba(74, 158, 206, 0.5);
+        }
+
+        .dir-a .album-card:hover {
+            border-color: #185986;
+            box-shadow: 0 0 25px rgba(24, 89, 134, 0.3);
+        }
+
+        .dir-a .album-photos {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 20px;
+        }
+
+        .dir-a .album-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #2a3a4f, #3a4a5f);
+            border: 1px solid rgba(74, 158, 206, 0.1);
+        }
+
+        .dir-a .album-info {
+            padding: 16px 20px 20px;
+            border-top: 1px solid rgba(74, 158, 206, 0.3);
+        }
+
+        .dir-a .album-name {
+            font-size: 17px;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .dir-a .album-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Direction B: Material Elevated */
+        .dir-b .album-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .dir-b .album-card {
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .dir-b .album-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(24, 89, 134, 0.4);
+        }
+
+        .dir-b .album-photos {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0;
+        }
+
+        .dir-b .album-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #2a4a6f, #1e3a5f);
+        }
+
+        .dir-b .album-info {
+            padding: 20px;
+        }
+
+        .dir-b .album-name {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .dir-b .album-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .dir-b .chip {
+            background: rgba(24, 89, 134, 0.3);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #4a9ece;
+        }
+
+        /* Direction C: Photo Gallery Luxury */
+        .dir-c {
+            background: #000000;
+        }
+
+        .dir-c .album-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 60px;
+        }
+
+        .dir-c .album-card {
+            cursor: pointer;
+            transition: all 0.5s ease;
+        }
+
+        .dir-c .album-card:hover {
+            transform: scale(1.02);
+        }
+
+        .dir-c .album-photos {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            margin-bottom: 24px;
+        }
+
+        .dir-c .album-photo {
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+        }
+
+        .dir-c .album-info {
+            padding: 0 12px;
+        }
+
+        .dir-c .album-name {
+            font-size: 28px;
+            font-weight: 300;
+            margin-bottom: 12px;
+            color: #ffffff;
+            font-family: 'Georgia', serif;
+        }
+
+        .dir-c .album-meta {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+        }
+
+        /* Direction D: Data Dashboard */
+        .dir-d .album-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .dir-d .album-card {
+            background: #1a1a1a;
+            border: 1px solid rgba(74, 158, 206, 0.2);
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dir-d .album-card:hover {
+            border-color: #185986;
+            background: #1e1e1e;
+        }
+
+        .dir-d .album-photos {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .dir-d .album-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #2a3a4f, #3a4a5f);
+        }
+
+        .dir-d .album-data {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .dir-d .album-name {
+            font-size: 20px;
+            font-weight: 500;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .dir-d .data-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .dir-d .data-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dir-d .data-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .dir-d .data-value {
+            font-size: 18px;
+            color: #4a9ece;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .dir-d .density-bar {
+            height: 4px;
+            background: rgba(74, 158, 206, 0.2);
+            margin-top: 12px;
+            position: relative;
+        }
+
+        .dir-d .density-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 65%;
+            background: linear-gradient(90deg, #185986, #4a9ece);
+        }
+
+        /* Direction E: Minimalist Zen */
+        .dir-e {
+            background: #0a0a0a;
+        }
+
+        .dir-e .album-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 80px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .dir-e .album-card {
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .dir-e .album-card:hover .album-photo {
+            opacity: 0.8;
+        }
+
+        .dir-e .album-photos {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .dir-e .album-photo {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            transition: all 0.4s ease;
+        }
+
+        .dir-e .album-info {
+            text-align: center;
+        }
+
+        .dir-e .album-name {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+
+        .dir-e .album-meta {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 300;
+        }
+
+        /* Direction F: Retro Terminal */
+        .dir-f {
+            background: #000000;
+            font-family: 'Courier New', monospace;
+        }
+
+        .dir-f .album-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2px;
+        }
+
+        .dir-f .album-card {
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dir-f .album-card:hover {
+            background: #0f0f0f;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .dir-f .album-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .dir-f .prompt {
+            color: #00ff00;
+            font-size: 14px;
+        }
+
+        .dir-f .album-name {
+            color: #00ff00;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .dir-f .album-photos {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            padding-left: 24px;
+        }
+
+        .dir-f .album-photo {
+            aspect-ratio: 1;
+            background: #001a00;
+            border: 1px solid #00ff00;
+            position: relative;
+        }
+
+        .dir-f .album-photo::after {
+            content: '█';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff00;
+            opacity: 0.3;
+            font-size: 12px;
+        }
+
+        .dir-f .album-meta {
+            font-size: 12px;
+            color: #00aa00;
+            padding-left: 24px;
+            margin-top: 8px;
+        }
+
+        .comparison-note {
+            background: #1a1a1a;
+            border: 1px solid rgba(74, 158, 206, 0.3);
+            padding: 30px;
+            margin-top: 80px;
+            margin-bottom: 40px;
+        }
+
+        .comparison-note h3 {
+            font-size: 24px;
+            color: #185986;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .comparison-item {
+            padding: 20px;
+            background: #121212;
+            border-left: 2px solid #185986;
+        }
+
+        .comparison-item h4 {
+            font-size: 16px;
+            color: #4a9ece;
+            margin-bottom: 12px;
+            font-weight: 400;
+        }
+
+        .comparison-item ul {
+            list-style: none;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.8;
+        }
+
+        .comparison-item li::before {
+            content: '→ ';
+            color: #185986;
+        }
+
+        @media (max-width: 768px) {
+            .dir-d .album-card {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>DPHOTO / DESIGN DIRECTION EXPLORATIONS</h1>
+        <p>Six alternative visual approaches for your photo management application. Compare layouts, information density, interaction patterns, and aesthetic
+            styles to find the direction that best supports your users' needs.</p>
+    </div>
+
+    <nav class="navigation">
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="scrollToSection('dir-a')">A: Sci-Fi Gaming</button>
+            <button class="nav-btn" onclick="scrollToSection('dir-b')">B: Material Elevated</button>
+            <button class="nav-btn" onclick="scrollToSection('dir-c')">C: Gallery Luxury</button>
+            <button class="nav-btn" onclick="scrollToSection('dir-d')">D: Data Dashboard</button>
+            <button class="nav-btn" onclick="scrollToSection('dir-e')">E: Minimalist Zen</button>
+            <button class="nav-btn" onclick="scrollToSection('dir-f')">F: Retro Terminal</button>
+            <button class="nav-btn" onclick="scrollToSection('comparison')">Comparison Guide</button>
+        </div>
+    </nav>
+
+    <!-- Direction A: Sci-Fi Gaming Minimal -->
+    <section id="dir-a" class="direction-section">
+        <div class="direction-header">
+            <h2 class="direction-title">Direction A: Sci-Fi Gaming Minimal</h2>
+            <p class="direction-subtitle">Thin incomplete lines · Dark aesthetic · Futuristic feel</p>
+            <p class="direction-description">
+                <strong>Philosophy:</strong> Modern minimal with video game/sci-fi UI influences. Structure comes from thin contrasting lines (1-2px) with
+                intentional gaps, not heavy boxes or chrome. Content floats against dark background. Monospace for metadata adds technical/futuristic
+                feel.<br><br>
+                <strong>Best For:</strong> Users who appreciate distinctive aesthetic and gaming influences. Creates unique brand identity. Works well for
+                tech-savvy audience who values craft over convention.<br><br>
+                <strong>Risk:</strong> Untested aesthetic - thin lines might feel too sparse or hard to scan. May need fallback to more traditional approach if
+                usability suffers.
+            </p>
+        </div>
+        <div class="mockup-grid">
+            <div class="mockup-item">
+                <div class="mockup-label">Album List View</div>
+                <div class="mockup-frame dir-a">
+                    <div class="album-list">
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Santa Cruz Beach Trip 2026</div>
+                                <div class="album-meta">
+                                    <span>Jul 15 - Jul 22</span>
+                                    <span style="color: #4a9ece;">47 photos</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Iceland Adventure 2025</div>
+                                <div class="album-meta">
+                                    <span>Aug 01 - Aug 14</span>
+                                    <span style="color: #4a9ece;">203 photos</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Summer 2025</div>
+                                <div class="album-meta">
+                                    <span>Jun 01 - Aug 31</span>
+                                    <span style="color: #4a9ece;">124 photos</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direction B: Material Elevated -->
+    <section id="dir-b" class="direction-section">
+        <div class="direction-header">
+            <h2 class="direction-title">Direction B: Material Elevated</h2>
+            <p class="direction-subtitle">Rounded corners · Elevation shadows · Smooth animations</p>
+            <p class="direction-description">
+                <strong>Philosophy:</strong> Modern Material Design principles with elevation, cards, and depth. Rounded corners soften the aesthetic. Generous
+                shadows create hierarchy. Hover states lift cards toward user. Chips and badges for metadata. Familiar and polished.<br><br>
+                <strong>Best For:</strong> Users who expect modern web app conventions. Proven patterns reduce learning curve. Works excellently on mobile.
+                Familiar to anyone who uses Google products.<br><br>
+                <strong>Risk:</strong> Less distinctive - looks like many other modern apps. May feel generic without additional brand customization beyond
+                color.
+            </p>
+        </div>
+        <div class="mockup-grid">
+            <div class="mockup-item">
+                <div class="mockup-label">Album List View</div>
+                <div class="mockup-frame dir-b">
+                    <div class="album-list">
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Santa Cruz Beach Trip 2026</div>
+                                <div class="album-meta">
+                                    <span class="chip">Jul 15 - Jul 22, 2026</span>
+                                    <span class="chip">47 photos</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Iceland Adventure 2025</div>
+                                <div class="album-meta">
+                                    <span class="chip">Aug 01 - Aug 14, 2025</span>
+                                    <span class="chip">203 photos</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Summer 2025</div>
+                                <div class="album-meta">
+                                    <span class="chip">Jun 01 - Aug 31, 2025</span>
+                                    <span class="chip">124 photos</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direction C: Photo Gallery Luxury -->
+    <section id="dir-c" class="direction-section">
+        <div class="direction-header">
+            <h2 class="direction-title">Direction C: Photo Gallery Luxury</h2>
+            <p class="direction-subtitle">High-end portfolio · Large images · Generous spacing</p>
+            <p class="direction-description">
+                <strong>Philosophy:</strong> High-end photography portfolio aesthetic. Photos dominate - large, horizontal layouts with minimal gaps. Typography
+                uses serifs for elegance. Generous vertical spacing creates breathing room. Subtle hover states. Album names are artistic statements.<br><br>
+                <strong>Best For:</strong> Users who prioritize photo showcase over utility. Creates premium, curated feel. Ideal for photographers or
+                visual-first users. Makes collection feel like art gallery, not file system.<br><br>
+                <strong>Risk:</strong> Less information density - requires more scrolling. May feel too "precious" for casual family photos. Utility features
+                (filtering, management) less prominent.
+            </p>
+        </div>
+        <div class="mockup-grid">
+            <div class="mockup-item">
+                <div class="mockup-label">Album List View</div>
+                <div class="mockup-frame dir-c">
+                    <div class="album-list">
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Santa Cruz Beach Trip</div>
+                                <div class="album-meta">JULY 15–22, 2026 · 47 PHOTOGRAPHS</div>
+                            </div>
+                        </div>
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Iceland Adventure</div>
+                                <div class="album-meta">AUGUST 1–14, 2025 · 203 PHOTOGRAPHS</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direction D: Data Dashboard -->
+    <section id="dir-d" class="direction-section">
+        <div class="direction-header">
+            <h2 class="direction-title">Direction D: Data Dashboard</h2>
+            <p class="direction-subtitle">Information-dense · Metrics-driven · Horizontal layouts</p>
+            <p class="direction-description">
+                <strong>Philosophy:</strong> Information-dense with visible metrics and data visualization. Horizontal album cards show photos alongside rich
+                metadata (date range, count, temperature, density bars). Grid layout optimizes for scanning. Monospace numbers for technical feel. Power user
+                efficiency.<br><br>
+                <strong>Best For:</strong> Users who manage large collections and want data at a glance. Thomas (organizer persona) would appreciate density and
+                metrics. Excellent for desktop workflows with detailed album management.<br><br>
+                <strong>Risk:</strong> May feel overwhelming for casual users. Less mobile-friendly due to horizontal layouts. Information density could
+                sacrifice visual appeal and discovery delight.
+            </p>
+        </div>
+        <div class="mockup-grid">
+            <div class="mockup-item">
+                <div class="mockup-label">Album List View</div>
+                <div class="mockup-frame dir-d">
+                    <div class="album-list">
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-data">
+                                <div class="album-name">Santa Cruz Beach Trip 2026</div>
+                                <div class="data-grid">
+                                    <div class="data-item">
+                                        <span class="data-label">Photos</span>
+                                        <span class="data-value">47</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Days</span>
+                                        <span class="data-value">7</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Per Day</span>
+                                        <span class="data-value">6.7</span>
+                                    </div>
+                                </div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 8px;">Jul 15 - Jul 22, 2026</div>
+                                <div class="density-bar">
+                                    <div class="density-fill" style="width: 65%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-data">
+                                <div class="album-name">Iceland Adventure 2025</div>
+                                <div class="data-grid">
+                                    <div class="data-item">
+                                        <span class="data-label">Photos</span>
+                                        <span class="data-value">203</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Days</span>
+                                        <span class="data-value">14</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Per Day</span>
+                                        <span class="data-value">14.5</span>
+                                    </div>
+                                </div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 8px;">Aug 01 - Aug 14, 2025</div>
+                                <div class="density-bar">
+                                    <div class="density-fill" style="width: 92%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Direction E: Minimalist Zen -->
+    <section id="dir-e" class="direction-section">
+        <div class="direction-header">
+            <h2 class="direction-title">Direction E: Minimalist Zen</h2>
+            <p class="direction-subtitle">Maximum breathing room · Centered layouts · Almost no UI chrome</p>
+            <p class="direction-description">
+                <strong>Philosophy:</strong> Extreme minimalism with maximum breathing room. Single-column centered layouts. Almost no borders, lines, or UI
+                chrome. Photos speak for themselves. Generous vertical spacing (80px+). Subtle hover interactions only. Content-first, UI-invisible
+                approach.<br><br>
+                <strong>Best For:</strong> Users who want photos to be the sole focus. Creates calm, meditative browsing experience. Ideal for curated
+                collections where every album deserves attention. Apple-like restraint and confidence.<br><br>
+                <strong>Risk:</strong> Very low information density - lots of scrolling required. May feel too sparse for users managing many albums. Utility
+                features less discoverable without UI affordances.
+            </p>
+        </div>
+        <div class="mockup-grid">
+            <div class="mockup-item">
+                <div class="mockup-label">Album List View</div>
+                <div class="mockup-frame dir-e">
+                    <div class="album-list">
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Santa Cruz Beach Trip 2026</div>
+                                <div class="album-meta">47 photos · July 2026</div>
+                            </div>
+                        </div>
+                        <div class="album-card">
+                            <div class="album-photos">
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                                <div class="album-photo"></div>
+                            </div>
+                            <div class="album-info">
+                                <div class="album-name">Iceland Adventure 2025</div>
+                                <div class="album-meta">203 photos · August 2025</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </
+        </div>
+</div>
+</section>
+
+<!-- Direction F: Retro Terminal -->
+<section id="dir-f" class="direction-section">
+    <div class="direction-header">
+        <h2 class="direction-title">Direction F: Retro Terminal</h2>
+        <p class="direction-subtitle">Command-line inspired · Monospace typography · Technical aesthetic</p>
+        <p class="direction-description">
+            <strong>Philosophy:</strong> Retro terminal/command-line inspired. Green monochrome text on black. Monospace everything. Minimal borders (green
+            1px). Album listings feel like file system output. Technical, hacker-esque aesthetic. Embraces DPhoto's CLI origins and technical nature.<br><br>
+            <strong>Best For:</strong> Highly technical users who appreciate retro computing aesthetics. Creates strong brand differentiation. Aligns with
+            CLI-first architecture. Appeals to developer/hacker culture.<br><br>
+            <strong>Risk:</strong> Very niche aesthetic - polarizing. May feel inaccessible or intimidating to non-technical users (Marie persona). Readability
+            concerns with monochrome green. Not suitable for broad audience.
+        </p>
+    </div>
+    <div class="mockup-grid">
+        <div class="mockup-item">
+            <div class="mockup-label">Album List View</div>
+            <div class="mockup-frame dir-f">
+                <div class="album-list">
+                    <div class="album-card">
+                        <div class="album-header">
+                            <span class="prompt">></span>
+                            <span class="album-name">santa-cruz-beach-trip-2026</span>
+                        </div>
+                        <div class="album-photos">
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                        </div>
+                        <div class="album-meta"> 47 files | 2026-07-15 to 2026-07-22 | temp: 6.7</div>
+                    </div>
+                    <div class="album-card">
+                        <div class="album-header">
+                            <span class="prompt">></span>
+                            <span class="album-name">iceland-adventure-2025</span>
+                        </div>
+                        <div class="album-photos">
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                            <div class="album-photo"></div>
+                        </div>
+                        <div class="album-meta"> 203 files | 2025-08-01 to 2025-08-14 | temp: 14.5</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Comparison Guide -->
+<section id="comparison" class="comparison-note">
+    <h3>Design Direction Comparison Guide</h3>
+    <p style="font-size: 15px; color: rgba(255, 255, 255, 0.7); margin-bottom: 24px;">
+        Use this guide to evaluate which direction best supports DPhoto's goals: polished experience, curiosity-driven discovery, and efficient album
+        management.
+    </p>
+
+    <div class="comparison-grid">
+        <div class="comparison-item">
+            <h4>Visual Distinctiveness</h4>
+            <ul>
+                <li><strong>High:</strong> A (Sci-Fi), F (Terminal)</li>
+                <li><strong>Medium:</strong> C (Luxury), E (Zen)</li>
+                <li><strong>Low:</strong> B (Material), D (Dashboard)</li>
+            </ul>
+        </div>
+
+        <div class="comparison-item">
+            <h4>Information Density</h4>
+            <ul>
+                <li><strong>High:</strong> D (Dashboard), F (Terminal)</li>
+                <li><strong>Medium:</strong> A (Sci-Fi), B (Material)</li>
+                <li><strong>Low:</strong> C (Luxury), E (Zen)</li>
+            </ul>
+        </div>
+
+        <div class="comparison-item">
+            <h4>Mobile Friendliness</h4>
+            <ul>
+                <li><strong>High:</strong> B (Material), E (Zen)</li>
+                <li><strong>Medium:</strong> A (Sci-Fi), C (Luxury)</li>
+                <li><strong>Low:</strong> D (Dashboard), F (Terminal)</li>
+            </ul>
+        </div>
+
+        <div class="comparison-item">
+            <h4>Learning Curve</h4>
+            <ul>
+                <li><strong>Low:</strong> B (Material), C (Luxury)</li>
+                <li><strong>Medium:</strong> A (Sci-Fi), E (Zen)</li>
+                <li><strong>High:</strong> D (Dashboard), F (Terminal)</li>
+            </ul>
+        </div>
+
+        <div class="comparison-item">
+            <h4>Photo Emphasis</h4>
+            <ul>
+                <li><strong>High:</strong> C (Luxury), E (Zen)</li>
+                <li><strong>Medium:</strong> A (Sci-Fi), B (Material)</li>
+                <li><strong>Low:</strong> D (Dashboard), F (Terminal)</li>
+            </ul>
+        </div>
+
+        <div class="comparison-item">
+            <h4>Power User Features</h4>
+            <ul>
+                <li><strong>High:</strong> D (Dashboard), F (Terminal)</li>
+                <li><strong>Medium:</strong> A (Sci-Fi), B (Material)</li>
+                <li><strong>Low:</strong> C (Luxury), E (Zen)</li>
+            </ul>
+        </div>
+
+        <div class="comparison-item">
+            <h4>Best for Thomas (Organizer)</h4>
+            <ul>
+                <li><strong>Excellent:</strong> A (Sci-Fi), D (Dashboard)</li>
+                <li><strong>Good:</strong> B (Material), F (Terminal)</li>
+                <li><strong>Fair:</strong> C (Luxury), E (Zen)</li>
+            </ul>
+        </div>
+
+        <div class="comparison-item">
+            <h4>Best for Marie (Viewer)</h4>
+            <ul>
+                <li><strong>Excellent:</strong> B (Material), C (Luxury)</li>
+                <li><strong>Good:</strong> A (Sci-Fi), E (Zen)</li>
+                <li><strong>Fair:</strong> D (Dashboard), F (Terminal)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div style="margin-top: 40px; padding: 24px; background: #121212; border-left: 3px solid #185986;">
+        <h4 style="font-size: 18px; color: #4a9ece; margin-bottom: 12px;">Recommendation Process</h4>
+        <p style="font-size: 14px; color: rgba(255, 255, 255, 0.7); line-height: 1.8;">
+            <strong>1. Pick your priority:</strong> Distinctive brand identity (A, F), Broad accessibility (B, C), Power user efficiency (D), Visual focus (C,
+            E)<br>
+            <strong>2. Consider your users:</strong> Technical (A, D, F), Mixed audience (B, C), Visual-first (C, E)<br>
+            <strong>3. Combine elements:</strong> Most successful approach will blend aesthetic (A, C, E, F) with practical layout patterns (B, D)<br>
+            <strong>4. Prototype first:</strong> Whichever direction you choose, build one component to validate before committing to entire system
+        </p>
+    </div>
+</section>
+
+</div>
+
+<script>
+    function scrollToSection(id) {
+        const element = document.getElementById(id);
+        element.scrollIntoView({behavior: 'smooth', block: 'start'});
+
+        // Update active button
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+</script>
+</body>
+</html>

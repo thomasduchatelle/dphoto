@@ -1,0 +1,77 @@
+# generated: 02-01-2026 20:45
+# project: dphoto
+# tracking_system: file-system
+# story_location: /home/dush/dev/git/dphoto/specs/stories
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 02-01-2026 20:45
+project: dphoto
+tracking_system: file-system
+story_location: /home/dush/dev/git/dphoto/specs/stories
+
+development_status:
+  # Epic 1: Album List Home Page
+  epic-1: in-progress
+  1-1-project-foundation-setup: ready-for-dev
+  1-2-state-management-migration: backlog
+  1-3-basic-album-list-display: backlog
+  1-4-album-card-enhancements: backlog
+  1-5-album-filtering: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Photo Viewing & Navigation
+  epic-2: backlog
+  2-1-album-photo-grid-view: backlog
+  2-2-full-screen-photo-viewer-with-modal-interception: backlog
+  2-3-keyboard-navigation: backlog
+  2-4-touch-gestures-and-mobile-navigation: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Album Management
+  epic-3: backlog
+  3-1-create-album-with-visual-date-selection: backlog
+  3-2-edit-album-name: backlog
+  3-3-edit-album-date-range: backlog
+  3-4-delete-album: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Sharing & Access Control
+  epic-4: backlog
+  4-1-share-album-with-users: backlog
+  4-2-revoke-album-access: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Random Photo Discovery
+  epic-5: backlog
+  5-1-random-photo-highlights-ui-with-mock-data: backlog
+  5-2-backend-api-for-random-photo-discovery: backlog
+  5-3-connect-ui-to-random-photos-api: backlog
+  epic-5-retrospective: optional
