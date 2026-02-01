@@ -1,5 +1,6 @@
-import Link from 'next/link';
-import {basePath} from '@/libs/requests';
+import Link from '@/components/Link';
+import {Box, Button, Paper, Typography} from '@mui/material';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 interface ErrorPageProps {
     searchParams: Promise<{
@@ -70,41 +71,79 @@ export default async function ErrorPage({searchParams}: ErrorPageProps) {
     const errorInfo = getErrorInfo(error, errorDescription);
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-            <main className="flex w-full max-w-md flex-col items-center gap-8 rounded-lg bg-white p-8 shadow-lg dark:bg-zinc-900">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-                    <svg
-                        className="h-8 w-8 text-red-600 dark:text-red-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                    </svg>
-                </div>
-
-                <div className="text-center">
-                    <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-                        {errorInfo.title}
-                    </h1>
-                    <p className="mt-4 text-zinc-600 dark:text-zinc-400">
-                        {errorInfo.description}
-                    </p>
-                </div>
-
-                <Link
-                    href={`${basePath}/auth/login`}
-                    prefetch={false}
-                    className="flex h-12 w-full items-center justify-center rounded-full bg-zinc-900 px-5 text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        <Box
+            sx={{
+                display: 'flex',
+                minHeight: '100vh',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+        >
+            <Paper
+                component="main"
+                sx={{
+                    display: 'flex',
+                    width: '100%',
+                    maxWidth: '28rem',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 4,
+                    p: 4,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: 'flex',
+                        height: '4rem',
+                        width: '4rem',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '50%',
+                        bgcolor: 'error.dark',
+                    }}
                 >
-                    Try Again
-                </Link>
-            </main>
-        </div>
+                    <ErrorOutlineIcon
+                        sx={{
+                            fontSize: '2rem',
+                            color: 'error.light',
+                        }}
+                    />
+                </Box>
+
+                <Box sx={{textAlign: 'center'}}>
+                    <Typography
+                        variant="h4"
+                        sx={{
+                            fontWeight: 600,
+                        }}
+                    >
+                        {errorInfo.title}
+                    </Typography>
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            mt: 2,
+                            color: 'text.secondary',
+                        }}
+                    >
+                        {errorInfo.description}
+                    </Typography>
+                </Box>
+
+                    <Button
+                        href="/"
+                        component={Link}
+                        prefetch={false}
+                        variant="contained"
+                        fullWidth
+                        sx={{
+                            height: '48px',
+                            borderRadius: '24px',
+                        }}
+                    >
+                        Try Again
+                    </Button>
+            </Paper>
+        </Box>
     );
 }
