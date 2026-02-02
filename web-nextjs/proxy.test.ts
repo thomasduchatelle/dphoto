@@ -196,6 +196,49 @@ describe('authentication middleware/proxy', () => {
         const redirection = redirectionOf(response);
         expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
     });
+
+    it('should delete all session and auth cookies on logout', async () => {
+        const now = Math.floor(Date.now() / 1000);
+        const accessToken = createCognitoAccessToken({exp: now + 3600});
+        const refreshToken = 'REFRESH_TOKEN_VALUE';
+        const idToken = 'ID_TOKEN_VALUE';
+        
+        const testRequest = new NextRequest('https://example.com/auth/logout', {
+            method: 'GET',
+            headers: {
+                Accept: 'text/html',
+                Cookie: `${COOKIE_SESSION_ACCESS_TOKEN}=${accessToken}; ${COOKIE_SESSION_REFRESH_TOKEN}=${refreshToken}; ${COOKIE_SESSION_USER_INFO}=${idToken}; ${COOKIE_AUTH_STATE}=some_state; ${COOKIE_AUTH_CODE_VERIFIER}=some_verifier`,
+            },
+        });
+
+        const response = await proxy(testRequest);
+
+        expect(response.status).toBe(200);
+
+        const cookies = setCookiesOf(response);
+        
+        // Verify all session cookies are deleted (maxAge: 0)
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toBeDefined();
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN].value).toBe('');
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN].maxAge).toBe(0);
+        
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN]).toBeDefined();
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN].value).toBe('');
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN].maxAge).toBe(0);
+        
+        expect(cookies[COOKIE_SESSION_USER_INFO]).toBeDefined();
+        expect(cookies[COOKIE_SESSION_USER_INFO].value).toBe('');
+        expect(cookies[COOKIE_SESSION_USER_INFO].maxAge).toBe(0);
+        
+        // Verify all auth flow cookies are deleted (maxAge: 0)
+        expect(cookies[COOKIE_AUTH_STATE]).toBeDefined();
+        expect(cookies[COOKIE_AUTH_STATE].value).toBe('');
+        expect(cookies[COOKIE_AUTH_STATE].maxAge).toBe(0);
+        
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toBeDefined();
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER].value).toBe('');
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER].maxAge).toBe(0);
+    });
 });
 
 describe('skipProxyForPageMatching regex', () => {
