@@ -56,7 +56,9 @@ describe('authentication middleware/proxy', () => {
 
         const cookies = setCookiesOf(response);
         expect(cookies[COOKIE_AUTH_STATE]).toBeDefined();
+        expect(cookies[COOKIE_AUTH_STATE].maxAge).toBe(600);
         expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toBeDefined();
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER].maxAge).toBe(600);
     });
 
     it('should redirect to Cognito authorization using Forwarded header when behind API Gateway', async () => {
@@ -78,7 +80,9 @@ describe('authentication middleware/proxy', () => {
 
         const cookies = setCookiesOf(response);
         expect(cookies[COOKIE_AUTH_STATE]).toBeDefined();
+        expect(cookies[COOKIE_AUTH_STATE].maxAge).toBe(600);
         expect(cookies[COOKIE_AUTH_CODE_VERIFIER]).toBeDefined();
+        expect(cookies[COOKIE_AUTH_CODE_VERIFIER].maxAge).toBe(600);
     });
 
     it('should allow authenticated request to proceed with valid non-expired token', async () => {
