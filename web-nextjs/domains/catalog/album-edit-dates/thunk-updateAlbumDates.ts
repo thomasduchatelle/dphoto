@@ -2,7 +2,7 @@ import {Album, AlbumId, CatalogViewerState, getErrorMessage, isCatalogError, isE
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
 import {albumsAndMediasLoaded, CatalogFactoryArgs} from "@/domains/catalog";
 import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
-import {CatalogFactory} from "../catalog-factories";
+import {FetchCatalogAdapter} from "@/domains/catalog/adapters/api";
 import {Action} from "@/libs/daction";
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {convertToModelEndDate, convertToModelStartDate} from "../date-range/date-helper";
@@ -81,8 +81,8 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
         };
     },
 
-    factory: ({dispatch, partialState}) => {
-        const updateAlbumDatesPort: UpdateAlbumDatesPort = new CatalogFactory().restAdapter();
+    factory: ({dispatch, app, partialState}) => {
+        const updateAlbumDatesPort: UpdateAlbumDatesPort = new FetchCatalogAdapter(app.axiosInstance, app);
         return () =>
             updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, partialState);
     },
