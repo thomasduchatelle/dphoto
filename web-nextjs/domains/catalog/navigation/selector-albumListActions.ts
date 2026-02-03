@@ -1,5 +1,5 @@
 import {albumIsOwnedByCurrentUser, CatalogViewerState} from "../language";
-import {AlbumListActionsProps} from "./types-albumListActions";
+import {AlbumListActionsProps} from "../../../components/albums/AlbumsListActions";
 import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
 
 export function albumListActionsSelector(state: CatalogViewerState): AlbumListActionsProps {

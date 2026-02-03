@@ -15,7 +15,7 @@ import {
 import {CatalogViewerPageSelection} from "../navigation";
 import {EditNameDialogSelection} from "../album-edit-name";
 import {CreateDialogSelection} from "../album-create";
-import {AlbumListActionsProps} from "../navigation/types-albumListActions";
+import {AlbumListActionsProps} from "../../../components/albums/AlbumsListActions";
 
 // **IMPORTANT** - to LLM Agents
 // Use the constants defined in this file in all your tests to make them more readable, and robust to changes
