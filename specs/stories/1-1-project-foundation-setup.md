@@ -117,43 +117,43 @@ From Architecture.md, the theme should follow this structure:
 ```typescript
 palette: {
     mode: 'dark',
-        primary
+            primary
 :
-    {
-        main: '#185986', // Brand blue
-    }
+  {
+    main: '#185986', // Brand blue
+  }
 ,
     background: {
     default:
-        '#121212',
-            paper
+      '#121212',
+              paper
     :
-        '#1e1e1e',
+      '#1e1e1e',
     }
 ,
     text: {
-        primary: '#ffffff',
-            secondary
+      primary: '#ffffff',
+              secondary
     :
-        'rgba(255, 255, 255, 0.7)',
+      'rgba(255, 255, 255, 0.7)',
     }
 ,
 }
 breakpoints: {
     values: {
-        xs: 0,
-            sm
+      xs: 0,
+              sm
     :
-        600,
-            md
+      600,
+              md
     :
-        960,
-            lg
+      960,
+              lg
     :
-        1280,
-            xl
+      1280,
+              xl
     :
-        1920,
+      1920,
     }
 ,
 }

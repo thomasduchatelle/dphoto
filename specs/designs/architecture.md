@@ -133,36 +133,41 @@ Client Component
 
 **State Flow:**
 
-```typescript
+```tsx
+// web-nextjs/app/(authenticated)/page.tsx
+
 // 1. Server computes initial state
 export default async function Page() {
-  const catalogState = await computeInitialCatalogState()  // Fetch albums, apply filters
-  return <CatalogClient initialState = {catalogState}
-  />
+  const catalogState = await computeInitialCatalogState()  // Internally use the thunk and the reducer to get a loaded state, before passing it to the client component
+  return <CatalogClient initialState={catalogState}/>
 }
 
+// web-nextjs/app/(authenticated)/_components/CatalogContext.tsx
 // 2. Client hydrates state + instantiates handlers
 'use client'
 
-function CatalogClient({initialState}) {
+function CatalogContext({initialState}) {
+  // note - using a simple state is the recommended solution ; a context is accepted if required to prevent too many data waterfalling (when more than 3 components are passing through the data without modifiying it).
   const [state, dispatch] = useReducer(catalogReducer, initialState)  // Existing reducer
   const handlers = useThunks(catalogThunks, {adapter, dispatch}, state)  // Existing thunks
 
-  return <AlbumsPage state = {state}
-  handlers = {handlers}
-  />  /
-  / Pure UI component
+  return <AlbumsPageContent albums={state.visibleAlbums}
+                            onEdit={handlers.openEditDialog}
+                            onDelete={handlers.openDeleteDialog}
+  />  // Pure UI component
 }
 
+// web-nextjs/app/(authenticated)/_components/AlbumsPageContent.tsx
+
 // 3. Pure UI component (NO state management)
-function AlbumsPage({state, handlers}) {
-   return (
-           <AlbumsGrid
-                   albums = {state.albums}
-  onEdit = {handlers.openEditDialog}
-  onDelete = {handlers.openDeleteDialog}
-  />
-)
+function AlbumsPageContent({albums, onEdit, onDelete}) {
+  return (
+          <AlbumsGrid
+                  albums={albums}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+          />
+  )
 }
 ```
 
@@ -172,8 +177,7 @@ function AlbumsPage({state, handlers}) {
 * **Replace adapter:** axios → fetch (server + client compatible) ; reference implementation is `web/src/core/catalog/adapters/api/CatalogAPIAdapter.ts`
 * **Server initialization:** Compute state server-side, pass as prop
 * **Client handlers:** Instantiate thunks client-side
-* **Pure UI:** Components receive `state` and `handlers` as props - NO internal state management
-* **Fresh data:** Thunks already re-fetch after mutations + add `router.refresh()` for NextJS cache invalidation
+* **Pure UI:** Pure components receive properties they need to render (list of albums, list of users, ...) - NO internal state management
 
 **What NOT to Do:**
 
@@ -229,7 +233,7 @@ components/
 
 **DO:**
 
-- Use owner ID in album URLs: `/owners/[ownerId]/albums/[albumId]`
+- Use owner ID in album URLs: `/owners/[ownerId]/[albumId]`
 - Implement parallel route `@modal/(.)photos/[photoId]/` for modal interception
 - Create fallback route `photos/[photoId]/page.tsx` for direct access
 - Render `{children}` and `{modal}` in album layout
@@ -241,11 +245,11 @@ components/
 
 **User Flow:**
 
-1. Home `/` → Album list
-2. Click album → `/owners/123/albums/456` (photo grid)
-3. Click photo → `/owners/123/albums/456/photos/789` (modal opens, grid visible behind)
-4. ESC/close → Back to `/owners/123/albums/456`
-5. Refresh on photo URL → Full page viewer loads
+1. Home `/` → Album list with random photos
+2. Click album → `/owners/123/456` (photo grid)
+3. Click photo → `/owners/123/456/photos/789` (modal opens, grid visible behind, use modal interception)
+4. ESC/close → Back to `/owners/123/456`
+5. Refresh on photo URL → Full page viewer loads with model open
 
 **Rationale:** Owner ID distinguishes albums from different owners, parallel routes provide native modal pattern, URLs are shareable
 
@@ -253,38 +257,28 @@ components/
 
 ### 5. Image Optimization
 
-**Decision:** Next.js Image component with custom loader for backend API integration
+**Decision:** Next.js Image component with custom loader for backward compatibility with existing API
+
+The current API is:
+
+```
+GET /api/v1/owners/{owner}/medias/{mediaId}/{filename}?w={width}
+```
 
 **DO:**
 
-- Create custom loader in `libs/image-loader.ts` mapping width to backend quality:
-   - width ≤40: `blur` (ultra-low placeholder)
-   - width ≤500: `medium` (grid display)
-   - width ≤1200: `high` (full-screen viewer)
-   - width >1200: `full` (original for zoom)
+* Map the width to backend-supported width:
+  * `360`: anything under 360 pixels, used for grid display and placeholder
+  * `1440`: anything under 1440 pixels, used for small screen full screen
+  * `2400`: anything above 1440 pixels, used for other screen full screen
 - Use Next.js Image with `placeholder="blur"`, `blurDataURL`, responsive `sizes`
-- Configure image loader in `next.config.ts`
+- Configure image loader in `next.config.ts` to use the custom loader ONLY for medias (src is `/api/**`)
 
 **DON'T:**
 
 - Do client-side image processing
 - Bypass Next.js Image optimization
 - Request quality levels not aligned with backend API
-
-**Backend API Requirements:**
-```
-GET /api/v1/media/{mediaId}/image?quality={quality}&width={width}
-
-Quality Levels:
-- blur: 20-40px, <2KB (instant placeholder)
-- medium: 50-150KB, <500ms on 3G (grid display)
-- high: near-original (full-screen viewer)
-- full: original (zoom interactions)
-
-Cache Headers: Cache-Control: max-age=31536000, immutable
-```
-
-**Rationale:** Leverage Next.js automatic optimization, map to existing backend quality system, progressive blur-up loading
 
 ---
 
@@ -328,15 +322,17 @@ Cache Headers: Cache-Control: max-age=31536000, immutable
 
 **DO:**
 
-- Create `error.tsx` at each route level (root, authenticated, album, photo)
+- Create `error.tsx` at the route levels: root and authenticated
+- Add meaningful error message on the error page related to the error that caused it
 - Create `not-found.tsx` for 404 handling (album/photo not found)
 - Provide "Try Again" button calling `reset()` function
 - Provide contextual recovery actions based on error type
+- Use the UI component compliant with the UX design to compose the error pages
 
 **DON'T:**
 
 - Use React Error Boundary components
-- Create generic error handling without context
+- Create an error boundaries for every single page: generic error handling without context
 - Skip not-found.tsx files
 
 **Structure:**
@@ -345,81 +341,13 @@ app/
   error.tsx                              # Root catch-all
   (authenticated)/
     error.tsx                            # Authenticated routes
-    owners/[ownerId]/albums/[albumId]/
-      error.tsx                          # Album-specific
+    owners/[ownerId]/[albumId]/
       not-found.tsx                      # Album not found
-      photos/[photoId]/
-        error.tsx                        # Photo-specific
-        not-found.tsx                    # Photo not found
+      medias/[mediaId]/
+        not-found.tsx                    # Media (photo or video) not found
 ```
 
 **Rationale:** Built into NextJS App Router, automatic error isolation by route, simple for agents to implement
-
----
-
-### 8. Data Fetching
-
-**Decision:** Server Components for initial data, Client Components for interactions
-
-**DO:**
-
-- Fetch initial data in Server Components (page.tsx files)
-- Pass initial data as props to Client Component wrappers
-- Initialize Context state with server data via `useEffect`
-- Handle user interactions (filtering, creating, deleting) on client
-- Use `revalidate` or `cache: 'no-store'` for dynamic data
-
-**DON'T:**
-
-- Fetch all data on client with loading spinners
-- Skip Server Component benefits for initial load
-- Expose Context setters directly
-
-**Pattern:**
-```tsx
-// Server Component
-async function fetchAlbums() { ...
-}
-export default async function HomePage() {
-   const albums = await fetchAlbums()
-   return <AlbumListClient initialAlbums={albums}/>
-}
-
-// Client Component
-'use client'
-export function AlbumListClient({initialAlbums}) {
-   const {setAlbums} = useAlbums()
-   useEffect(() => {
-      setAlbums(initialAlbums)
-   }, [])
-   // Handle filtering, refreshing on client
-}
-```
-
-**Rationale:** Fast initial load, reduced client bundle, leverages NextJS App Router server/client split
-
-
-## Backend Requirements
-
-### Image API Contract
-
-**Required Endpoint:**
-```
-GET /api/v1/media/{mediaId}/image?quality={quality}&width={width}
-```
-
-**Quality Levels:**
-
-1. `blur` - 20-40px, <2KB, instant placeholder
-2. `medium` - 50-150KB, <500ms on 3G, grid display
-3. `high` - near-original quality, full-screen viewer
-4. `full` - original quality, zoom interactions
-
-**Cache Headers:** `Cache-Control: max-age=31536000, immutable`
-
-**Image Immutability:** mediaId changes if content changes
-
----
 
 ## Project Structure
 
@@ -434,7 +362,7 @@ web-nextjs/
 │   │   │   ├── AlbumCard.tsx
 │   │   │   ├── AlbumFilter.tsx
 │   │   │   └── __tests__/
-│   │   └── owners/[ownerId]/albums/[albumId]/
+│   │   └── owners/[ownerId]/[albumId]/
 │   │       ├── page.tsx                        # Album view (server state init)
 │   │       ├── _components/                    # Pure UI components
 │   │       │   ├── PhotoGrid.tsx
@@ -452,7 +380,7 @@ web-nextjs/
 │   │   ├── EditAlbumDialog.tsx
 │   │   ├── DeleteAlbumDialog.tsx
 │   │   └── SharingDialog.tsx
-│   ├── shared/                                 # Shared UI
+│   ├── feedbacks/                              # Building blocks to give user feedback: loading and error states, sucess messages, ...
 │   │   ├── ErrorMessage.tsx
 │   │   └── LoadingSkeleton.tsx
 │   └── theme/

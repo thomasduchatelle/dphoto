@@ -1,4 +1,3 @@
-import {cookies} from 'next/headers';
 import {
     COOKIE_AUTH_CODE_VERIFIER,
     COOKIE_AUTH_NONCE,
@@ -22,25 +21,6 @@ export interface StoredAuthenticationFlow {
     nonce: string;
     redirectAfterLogin: string;
     state: string;
-}
-
-const deleteCookieOpt = {maxAge: 0, path: '/'};
-
-const baseCookieOptions: any = {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax', // lax is required when the Referer is a different site (which happens during OAuth flow when user is not already authenticated on Cognito: user comes from the Social login)
-    path: '/',
-};
-
-const authenticationFlowCookieOptions = {
-    ...baseCookieOptions,
-    maxAge: 10 * 60, // 10 minutes
-}
-
-const tokensCookieOptions = {
-    ...baseCookieOptions,
-    maxAge: 30 * 24 * 3600, // 30 days in seconds
 }
 
 export function clearFullSession(): SetCookies {
@@ -101,16 +81,6 @@ export function loadSession(cookieStore: ReadCookieStore): StoredSession {
         accessToken: cookieStore.get(COOKIE_SESSION_ACCESS_TOKEN),
         refreshToken: cookieStore.get(COOKIE_SESSION_REFRESH_TOKEN),
         idToken: cookieStore.get(COOKIE_SESSION_USER_INFO),
-    };
-
-}
-
-export async function loadSessionTO_DELETE(): Promise<StoredSession> {
-    const cookieStore = await cookies();
-    return {
-        accessToken: cookieStore.get(COOKIE_SESSION_ACCESS_TOKEN)?.value,
-        refreshToken: cookieStore.get(COOKIE_SESSION_REFRESH_TOKEN)?.value,
-        idToken: cookieStore.get(COOKIE_SESSION_USER_INFO)?.value,
     };
 
 }
