@@ -10,6 +10,7 @@ export interface AccessEndpointsConstructProps {
     archiveStore: ArchiveAccessManager;
     catalogStore: CatalogAccessManager;
     googleLoginClientId: string;
+    jwtEncryptionKey: string;
 }
 
 export class AuthenticationEndpointsConstruct extends Construct {
@@ -28,6 +29,9 @@ export class AuthenticationEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.POST,
         });
         props.catalogStore.grantCatalogReadWriteAccess(authToken.lambda);
+
+        authToken.lambda.function.addEnvironment('DPHOTO_JWT_KEY_B64', props.jwtEncryptionKey)
+        authToken.lambda.function.addEnvironment('DPHOTO_JWT_ISSUER', `https://${props.environmentName}.duchatelle/dphoto`)
 
         const logout = createSingleRouteEndpoint(this, 'OAuthLogout', {
             ...endpointProps,
