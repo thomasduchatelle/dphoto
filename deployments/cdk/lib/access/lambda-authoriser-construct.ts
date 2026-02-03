@@ -8,6 +8,7 @@ export interface LambdaAuthoriserConstructProps {
     environmentName: string;
     catalogStore: CatalogAccessManager;
     issuerUrl: string;
+    jwtEncryptionKey: string;
 }
 
 export class LambdaAuthoriserConstruct extends Construct {
@@ -30,6 +31,8 @@ export class LambdaAuthoriserConstruct extends Construct {
             memorySize: 256,
             environment: {
                 COGNITO_JWKS_URL: `${props.issuerUrl}/.well-known/openid-configuration`,
+                DPHOTO_JWT_KEY_B64: props.jwtEncryptionKey,
+                DPHOTO_JWT_ISSUER: `https://${props.environmentName}.duchatelle/dphoto`,
             },
         });
 

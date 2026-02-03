@@ -12,7 +12,7 @@ import {CognitoStackExports} from "./cognito-stack";
 import {ArchiveAccessManager} from "../archive/archive-access-manager";
 import {CatalogAccessManager} from "../catalog/catalog-access-manager";
 import {ArchivistAccessManager} from "../archive/archivist-access-manager";
-import {AuthenticationEndpointsConstruct} from "../access/authentication-endpoints";
+import {AuthenticationEndpointsConstruct} from "../access/authentication-endpoints-construct";
 import {SSTIntegrationConstruct} from "../utils/sst-integration-construct";
 import {NextJsRoutingConstruct} from "../utils/nextjs-redirection-construct";
 
@@ -43,6 +43,9 @@ export class ApplicationStack extends cdk.Stack {
         cdk.Tags.of(this).add('Environment', environmentName);
         cdk.Tags.of(this).add('Stack', "DPhotoApplicationStack");
 
+        // TODO AGENTS - Remove the JWT encryption key after Cognito switch over (it won't be used).
+        const jwtEncryptionKey = Buffer.from(ApplicationStack.randomId(64)).toString('base64');
+
         const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
             environmentName,
             ...config,
@@ -66,6 +69,7 @@ export class ApplicationStack extends cdk.Stack {
             environmentName,
             catalogStore: catalogAccessManager,
             issuerUrl: oauth2ClientConfig.cognitoIssuer,
+            jwtEncryptionKey,
         });
 
         new UserEndpointsConstruct(this, 'UserEndpoints', {
@@ -102,6 +106,7 @@ export class ApplicationStack extends cdk.Stack {
             catalogStore: catalogAccessManager,
             archiveStore: archiveAccessManager,
             googleLoginClientId: config.googleLoginClientId,
+            jwtEncryptionKey,
         });
 
         new cdk.CfnOutput(this, 'PublicURL', {
@@ -122,4 +127,17 @@ export class ApplicationStack extends cdk.Stack {
             config,
         });
     }
+
+    private static randomId(length: number): string {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!£$%^&*(){}[]@~#|/.,<>?';
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() *
+                charactersLength));
+        }
+
+        return result;
+    }
+
 }
