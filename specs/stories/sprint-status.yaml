@@ -41,8 +41,8 @@ development_status:
   # Epic 1: Album List Home Page
   epic-1: in-progress
   1-1-project-foundation-setup: done
-  1-2-state-management-migration: review
-  1-3-basic-album-list-display: ready-for-dev
+  1-2-state-management-migration: done
+  1-3-basic-album-list-display: backlog
   1-4-album-card-enhancements: backlog
   1-5-album-filtering: backlog
   epic-1-retrospective: optional
