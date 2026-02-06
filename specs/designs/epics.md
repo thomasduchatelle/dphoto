@@ -675,40 +675,36 @@ So that I can confidently organize photos without guessing at dates.
 **Given** I am an authenticated user identified as an owner (FR19)
 **When** I create a new album
 **Then** a "Create Album" button is visible on the home page for owners
-**And** clicking the button opens a create album dialog/wizard using MUI Dialog component
+**And** clicking the button opens a create album dialog
 **And** the dialog uses a multi-step UX to provide ample space for photo previews
 **And** the dialog contains:
-
 - Album name text field (required) (FR21)
-- Start date picker (MUI DatePicker)
-- End date picker (MUI DatePicker)
+- Start date picker
+- End date picker
 - Optional toggle for custom folder name (FR22)
 - Custom folder name text field (shown only if toggle enabled)
 - Photo preview panel showing ~12 thumbnail samples
 - Cancel and Create buttons
-  **And** when I select or adjust start/end dates, the photo preview updates
-  **And** preview thumbnails are fetched from API based on selected date range
-  **And** thumbnails use Next.js Image with quality=medium
-  **And** date range validation ensures end date is after start date (FR41)
-  **And** album name validation ensures name is not empty (FR42)
-  **And** validation errors display inline below the relevant field
-  **And** warning is shown if date selection would orphan existing photos (FR26)
-  **And** Create button is disabled until validation passes
-  **And** clicking Create button:
-- Calls existing API endpoint to create album
-- Uses migrated catalog thunk for album creation
-    - Shows loading state on button during API call
-    - Closes dialog on success
-    - Displays success message/toast (FR28)
-    - Refreshes album list to show new album
-    - Calls router.refresh() for NextJS cache invalidation
-  **And** clicking Cancel button closes dialog without creating album
-      **And** error handling displays clear message if creation fails (FR43)
-      **And** recovery option (retry button) is provided on error (FR46)
-  **And** dialog is responsive and works on mobile, tablet, desktop
-      **And** keyboard navigation works (Tab, Enter to submit, ESC to cancel) (NFR5)
-  **And** focus management is clear and logical within dialog
-  **And** new album appears in chronological order in the album list
+**And** when I select or adjust start/end dates, the photo preview updates
+**And** preview thumbnails are fetched from API based on selected date range
+**And** thumbnails are the small version of the image, size optimised (NFR2)
+**And** date range validation ensures end date is after start date (FR41)
+**And** album name validation ensures name is not empty (FR42)
+**And** validation errors display inline below the relevant field
+**And** warning is shown if date selection would orphan existing photos (FR26)
+**And** Create button is disabled until validation passes
+**And** clicking Create button:
+  - Shows loading state on button during API call
+  - Closes dialog on success
+  - Displays success message (FR28)
+  - Refreshes album list to show new album
+**And** clicking Cancel button closes dialog without creating album
+**And** error handling displays clear message if creation fails (FR43)
+**And** recovery option (retry button) is provided on error (FR46)
+**And** dialog is responsive and works on mobile, tablet, desktop
+**And** keyboard navigation works (Tab, Enter to submit, ESC to cancel) (NFR5)
+**And** focus management is clear and logical within dialog
+**And** new album appears in chronological order in the album list
 
 ---
 
@@ -724,30 +720,26 @@ So that I can fix typos or better describe the album content.
 **When** I edit the album name
 **Then** an "Edit Name" button/icon is visible only on albums I own (FR20)
 **And** the edit option is not visible on shared albums I don't own
-**And** clicking edit opens an edit name dialog using MUI Dialog
+**And** clicking edit opens an edit name dialog
 **And** the dialog contains:
-
 - Album name text field pre-filled with current name
 - Current album metadata displayed for context
 - Cancel and Save buttons
-  **And** album name validation ensures name is not empty (FR42)
-  **And** validation error displays inline if name is cleared
-  **And** Save button is disabled if validation fails
-  **And** clicking Save button:
-- Calls existing API endpoint to update album name
-- Uses migrated catalog thunk for album edit
-- Shows loading state on button during API call
-- Closes dialog on success
-- Displays success message (FR28)
-- Updates album name in the album list immediately
-- Calls router.refresh() for NextJS cache invalidation
-  **And** clicking Cancel button closes dialog without saving changes
-  **And** error handling displays clear message if update fails (FR43)
-  **And** recovery option (retry button) is provided on error (FR46)
-  **And** dialog is responsive and works on mobile, tablet, desktop
-  **And** keyboard navigation works (Tab, Enter to submit, ESC to cancel)
-  **And** focus is set to the name field when dialog opens
-  **And** the updated name appears throughout the UI (album list, album page header)
+**And** album name validation ensures name is not empty (FR42)
+**And** validation error displays inline if name is cleared
+**And** Save button is disabled if validation fails
+**And** clicking Save button:
+  - Shows loading state on button during API call
+  - Closes dialog on success
+  - Displays success message (FR28)
+  - Updates album name in the album list immediately
+**And** clicking Cancel button closes dialog without saving changes
+**And** error handling displays clear message if update fails (FR43)
+**And** recovery option (retry button) is provided on error (FR46)
+**And** dialog is responsive and works on mobile, tablet, desktop
+**And** keyboard navigation works (Tab, Enter to submit, ESC to cancel) (NFR5)
+**And** focus is set to the name field when dialog opens
+**And** the updated name appears throughout the UI (album list, album page header)
 
 ---
 
@@ -763,39 +755,35 @@ So that I can adjust which photos are included and see the results before saving
 **When** I edit the album date range
 **Then** an "Edit Dates" button/icon is visible only on albums I own (FR20)
 **And** the edit option is not visible on shared albums I don't own
-**And** clicking edit opens an edit date range dialog using MUI Dialog
+**And** clicking edit opens an edit date range dialog
 **And** the dialog contains:
-
 - Current album name displayed for context
 - Start date picker pre-filled with current start date
 - End date picker pre-filled with current end date
 - Photo preview panel showing ~12 thumbnail samples from current range
 - Cancel and Save buttons
-  **And** when I adjust start or end dates, the photo preview updates (FR27)
-  **And** preview thumbnails re-fetch from API based on new date range
-  **And** thumbnails use Next.js Image with quality=medium
-  **And** date range validation ensures end date is after start date (FR41)
-  **And** validation error displays if end date is before or equal to start date
-  **And** warning is shown if new date range would orphan existing photos (FR26)
-  **And** orphan warning displays which photos would be affected
-  **And** Save button is disabled until validation passes
-  **And** clicking Save button:
-- Calls existing API endpoint to update album dates
-- Uses migrated catalog thunk for album edit
-- Shows loading state on button during API call
-- Triggers backend re-indexing of photos (FR27)
-- Closes dialog on success
-- Displays success message (FR28)
-- Refreshes album to show updated photo set
-- Calls router.refresh() for NextJS cache invalidation
-  **And** clicking Cancel button closes dialog without saving changes
-  **And** error handling displays clear message if update fails (FR43)
-  **And** recovery option (retry button) is provided on error (FR46)
-  **And** network failures do not cause data loss (NFR3, NFR14)
-  **And** dialog is responsive and works on mobile, tablet, desktop
-  **And** keyboard navigation works (Tab, arrow keys to adjust dates, Enter to save, ESC to cancel)
-  **And** focus management is clear within dialog
-  **And** the album page refreshes to show correct photos after save
+**And** when I adjust start or end dates, the photo preview updates (FR27)
+**And** preview thumbnails re-fetch from API based on new date range
+**And** thumbnails are the small version of the image, size optimised (NFR2)
+**And** date range validation ensures end date is after start date (FR41)
+**And** validation error displays if end date is before or equal to start date
+**And** warning is shown if new date range would orphan existing photos (FR26)
+**And** orphan warning displays which photos would be affected
+**And** Save button is disabled until validation passes
+**And** clicking Save button:
+  - Shows loading state on button during API call
+  - Triggers backend re-indexing of photos (FR27)
+  - Closes dialog on success
+  - Displays success message (FR28)
+  - Refreshes album to show updated photo set
+**And** clicking Cancel button closes dialog without saving changes
+**And** error handling displays clear message if update fails (FR43)
+**And** recovery option (retry button) is provided on error (FR46)
+**And** network failures do not cause data loss (NFR3, NFR14)
+**And** dialog is responsive and works on mobile, tablet, desktop
+**And** keyboard navigation works (Tab, arrow keys to adjust dates, Enter to save, ESC to cancel) (NFR5)
+**And** focus management is clear within dialog
+**And** the album page refreshes to show correct photos after save
 
 ---
 
@@ -811,31 +799,27 @@ So that I can remove albums I no longer need.
 **When** I delete the album
 **Then** a "Delete Album" button/icon is visible only on albums I own (FR20)
 **And** the delete option is not visible on shared albums I don't own
-**And** clicking delete opens a confirmation dialog using MUI Dialog
+**And** clicking delete opens a confirmation dialog
 **And** the confirmation dialog contains:
-
 - Warning message explaining deletion is permanent
 - Album name displayed for confirmation
 - Number of photos that will remain (not deleted, just album removed)
 - Cancel and Delete buttons
-  **And** Delete button uses warning/error color (red) to indicate destructive action
-  **And** clicking Delete button:
-- Calls existing API endpoint to delete album
-- Uses migrated catalog thunk for album deletion
-- Shows loading state on button during API call
-- Closes dialog on success
-- Displays success message (FR28)
-- Removes album from the album list immediately
-- Navigates to home page if currently viewing the deleted album
-- Calls router.refresh() for NextJS cache invalidation
-  **And** clicking Cancel button closes dialog without deleting album
-  **And** error handling displays clear message if deletion fails (FR43)
-  **And** recovery option is provided on error (FR46)
-  **And** if album is not found during deletion, appropriate error displays (FR45)
-  **And** dialog is responsive and works on mobile, tablet, desktop
-  **And** keyboard navigation works (Tab, Enter on Cancel as default, must explicitly select Delete)
-  **And** focus defaults to Cancel button (safer default for destructive action)
-  **And** the album is removed from all views after successful deletion
+**And** Delete button uses warning/error color (red) to indicate destructive action
+**And** clicking Delete button:
+  - Shows loading state on button during API call
+  - Closes dialog on success
+  - Displays success message (FR28)
+  - Removes album from the album list immediately
+  - Navigates to home page if currently viewing the deleted album
+**And** clicking Cancel button closes dialog without deleting album
+**And** error handling displays clear message if deletion fails (FR43)
+**And** recovery option is provided on error (FR46)
+**And** if album is not found during deletion, appropriate error displays (FR45)
+**And** dialog is responsive and works on mobile, tablet, desktop
+**And** keyboard navigation works (Tab, Enter on Cancel as default, must explicitly select Delete) (NFR5)
+**And** focus defaults to Cancel button (safer default for destructive action)
+**And** the album is removed from all views after successful deletion
 
 ---
 
@@ -844,52 +828,83 @@ So that I can remove albums I no longer need.
 Album owners can share albums with users via email, revoke access, view who has access with avatars and names; shared viewers see ownership information and
 clear UI distinction between owner and viewer capabilities.
 
-### Story 4.1: Share Album with Users
+### Story 4.1: Album Sharing UI Components
+
+As a developer,
+I want reusable UI components for album sharing,
+So that the sharing experience is consistent and maintainable.
+
+**UI Components to Create:**
+
+1. **AlbumSharingDialog** - Main dialog for managing album sharing
+   - Props: album name, shared users list, loading state, error message, onGrantAccess, onRevokeAccess, onClose
+   - Contains:
+     - Album name displayed for context
+     - Email address input field with validation
+     - "Grant Access" button
+     - List of currently shared users with their avatars and names
+     - Close button
+   - Email input validates format on blur (FR34)
+   - Validation error displays inline if email format is invalid
+   - Grant Access button disabled if email is invalid or empty
+   - Shared users list displays:
+     - User avatar image
+     - User name
+     - User email
+     - Remove/revoke button (X icon) next to each user
+   - Error message displayed if passed via props (FR44)
+   - Recovery option (retry button) shown when error is provided (FR46)
+   - Responsive and works on mobile, tablet, desktop
+
+2. **RevokeAccessConfirmation** - Confirmation dialog for revoking access
+   - Props: user name, user avatar, album name, loading state, onConfirm, onCancel
+   - Contains:
+     - User name and avatar being removed
+     - Album name for context
+     - Warning that user will lose access to the album
+     - Cancel and Revoke Access buttons
+   - Revoke Access button uses warning color to indicate action
+   - Responsive and works on mobile, tablet, desktop
+
+**Acceptance Criteria:**
+
+**Given** the components are implemented
+**When** they are used in the album sharing flow
+**Then** both components are created and exported
+**And** each component has clear prop interfaces
+**And** components use MUI styling system
+**And** components follow the brand color scheme (#185986)
+**And** components have visual regression tests
+**And** keyboard navigation works (Tab, Enter, ESC) (NFR5)
+**And** focus management is clear and logical
+
+---
+
+### Story 4.2: Integrate Album Sharing UI
 
 As an album owner,
-I want to share my album with specific users via their email addresses,
-So that family members can view and enjoy the photos.
+I want to access the album sharing interface from my albums,
+So that I can manage who has access to my photos.
 
 **Acceptance Criteria:**
 
 **Given** I am viewing an album I own
-**When** I share the album
+**When** I want to share the album
 **Then** a "Share" button/icon is visible only on albums I own (FR33)
 **And** the share option is not visible on shared albums I don't own
-**And** clicking share opens a sharing dialog using MUI Dialog
-**And** the dialog contains:
+**And** clicking share opens the AlbumSharingDialog component
+**And** the dialog displays the album name
+**And** the dialog shows a list of currently shared users (FR31)
+**And** I can see all users who currently have access to the album (FR31)
+**And** focus is set to email input when dialog opens
+**And** clicking close button closes the dialog
 
-- Album name displayed for context
-- Email address input field with validation
-- "Grant Access" button
-- List of currently shared users with their avatars and names
-- Close button
-  **And** the email input field validates email format on blur (FR34)
-  **And** validation error displays inline if email format is invalid
-  **And** Grant Access button is disabled if email is invalid or empty
-  **And** when I enter a valid email and click Grant Access:
-- Calls existing API endpoint to grant album access
-- Uses migrated catalog thunk for sharing operation
-- Shows loading state during API call
-- Fetches user profile information (name, picture) from API (FR35)
-- Adds user to the shared users list with avatar and name
-- Displays success message (FR28)
-- Clears email input field for next entry
-- Calls router.refresh() for NextJS cache invalidation
-  **And** the shared users list displays:
-- User avatar image
-- User name
-- User email
-- Remove/revoke button (X icon) next to each user
-  **And** shared users are loaded from API when dialog opens (FR31)
-  **And** I can see all users who currently have access to the album (FR31)
-  **And** error handling displays clear message if sharing fails (FR44)
-  **And** recovery option (retry button) is provided on error (FR46)
-  **And** network failures do not cause data loss (NFR3, NFR14)
-  **And** dialog is responsive and works on mobile, tablet, desktop
-  **And** keyboard navigation works (Tab, Enter to grant access, ESC to close)
-  **And** focus is set to email input when dialog opens
-  **And** shared user avatars appear on the album card after sharing (FR11, FR5)
+**Given** I am in the sharing dialog
+**When** I interact with the revoke button for a user
+**Then** the RevokeAccessConfirmation dialog opens
+**And** the dialog shows the user name and avatar
+**And** clicking Cancel closes the confirmation dialog
+**And** focus defaults to Cancel button (safer default)
 
 **Given** I am a shared viewer of an album
 **When** I view the album
@@ -899,44 +914,36 @@ So that family members can view and enjoy the photos.
 
 ---
 
-### Story 4.2: Revoke Album Access
+### Story 4.3: Persist Sharing and Revoke Operations
 
 As an album owner,
-I want to revoke access from users I previously shared with,
-So that I can control who continues to have access to my albums.
+I want my sharing and revoke actions to be saved,
+So that changes to album access are persistent.
 
 **Acceptance Criteria:**
 
-**Given** I have an album shared with multiple users
-**When** I revoke access from a user
-**Then** the sharing dialog shows all currently shared users (FR31)
-**And** each shared user in the list has a remove/revoke button (X icon)
-**And** clicking the revoke button opens a confirmation dialog
-**And** the confirmation dialog contains:
+**Given** I have entered a valid email and clicked Grant Access
+**When** the grant access action is triggered
+**Then** a loading state is shown during API call
+**And** user profile information (name, picture) is fetched from API (FR35)
+**And** the user is added to the shared users list with avatar and name (FR29)
+**And** a success message is displayed
+**And** email input field is cleared for next entry
+**And** shared user avatars appear on the album card after sharing (FR11, FR5)
+**And** error message is displayed if sharing fails (FR44)
+**And** retry button is shown on error (FR46)
 
-- User name and avatar being removed
-- Album name for context
-- Warning that user will lose access to the album
-- Cancel and Revoke Access buttons
-  **And** Revoke Access button uses warning color to indicate action
-  **And** clicking Revoke Access button:
-- Calls existing API endpoint to revoke album access
-- Uses migrated catalog thunk for revoke operation
-- Shows loading state during API call
-- Removes user from the shared users list on success
-- Displays success message (FR28, FR30)
-- Updates album card to remove user's avatar if no longer shared
-- Calls router.refresh() for NextJS cache invalidation
-  **And** clicking Cancel button closes confirmation without revoking
-  **And** error handling displays clear message if revoke fails (FR44)
-  **And** recovery option (retry button) is provided on error (FR46)
-  **And** the revoked user no longer sees the album in their album list
-  **And** dialog is responsive and works on mobile, tablet, desktop
-  **And** keyboard navigation works (Tab, Enter on Cancel as default, must explicitly select Revoke)
-  **And** focus defaults to Cancel button (safer default)
-  **And** the sharing dialog remains open after revoke to allow additional changes
-  **And** I can close the sharing dialog when done managing access
-  **And** album sharing indicators update across the UI after revoke
+**Given** I have confirmed revoke access in the confirmation dialog
+**When** the revoke action is triggered
+**Then** a loading state is shown during API call
+**And** the user is removed from the shared users list on success (FR30)
+**And** a success message is displayed
+**And** album card updates to remove user's avatar if no longer shared
+**And** the confirmation dialog closes
+**And** the sharing dialog remains open to allow additional changes
+**And** error message is displayed if revoke fails (FR44)
+**And** retry button is shown on error (FR46)
+**And** the revoked user no longer sees the album in their album list
 
 ---
 
@@ -960,30 +967,29 @@ So that I can discover and rediscover forgotten memories from my collection.
 **And** the mock implementation uses the random photos API endpoint `GET /api/v1/owners/[ownerId]/randomPhotos?size=8` if available
 **And** if API is not available, selects random photos from the album cards displayed below (using sample photos)
 **And** each photo is displayed
-**And** photos use quality=medium for the highlights display
+**And** photos are the small version of the image, size optimised (NFR2)
 **And** the layout is responsive:
-
 - Mobile (xs): Horizontal scroll with 2-3 photos visible
 - Tablet (sm): 4-5 photos visible
 - Desktop (md): 6-8 photos visible
-  **And** each photo is clickable and links to its source album
-  **And** clicking a photo navigates to `/albums/[ownerId]/[albumId]`
-  **And** the section has a clear heading: "Your Memories" or "Highlights"
-  **And** photos are displayed with subtle spacing and styling
-  **And** the section uses brand color #185986 for accent elements
-  **And** loading skeleton is shown while photos are being selected
-  **And** the section works on mobile, tablet, and desktop devices
-  **And** the random selection changes on page reload (different subset)
-  **And** the feature is demoable and validates the UX flow
-  **And** if no albums exist, the highlights section is hidden
-  **And** the mock implementation is clearly commented as temporary
+**And** each photo is clickable and links to its source album
+**And** clicking a photo navigates to `/albums/[ownerId]/[albumId]`
+**And** the section has a clear heading: "Your Memories" or "Highlights"
+**And** photos are displayed with subtle spacing and styling
+**And** the section uses brand color #185986 for accent elements
+**And** loading skeleton is shown while photos are being selected
+**And** the section works on mobile, tablet, and desktop devices
+**And** the random selection changes on page reload (different subset)
+**And** the feature is demoable and validates the UX flow
+**And** if no albums exist, the highlights section is hidden
+**And** the mock implementation is clearly commented as temporary
 
 ---
 
 ### Story 5.2: Backend API for Random Photo Discovery
 
-As a backend developer,
-I want to implement a REST API endpoint that returns random photos from a user's accessible albums,
+As a frontend developer,
+I want to get a random list of photos from any album from a user's accessible albums,
 So that the frontend can display diverse memory highlights without relying on mock data.
 
 **Acceptance Criteria:**
@@ -994,22 +1000,21 @@ So that the frontend can display diverse memory highlights without relying on mo
 **And** the endpoint accepts an optional query parameter `size` (default: 8, max: 20)
 **And** the endpoint returns random photos from all albums accessible to the authenticated user (owned + shared)
 **And** the response includes for each photo:
-
 - Photo/media ID
 - Album ID
 - Owner ID
 - Photo metadata (date captured, if available)
 - Image URL template or media ID for frontend image loader
-  **And** the endpoint respects user permissions (only photos from accessible albums)
-  **And** randomization algorithm ensures variety across albums (not all from one album)
-  **And** the endpoint handles edge cases:
+**And** the endpoint respects user permissions (only photos from accessible albums)
+**And** randomization algorithm ensures variety across albums (not all from one album)
+**And** the endpoint handles edge cases:
 - User has no albums (returns empty array)
 - User has fewer photos than requested (returns all available)
 - Authentication failures (returns 401)
-  **And** the endpoint follows existing API conventions and patterns
-  **And** appropriate error responses are returned with clear messages
-  **And** the endpoint is tested with unit tests
-  **And** the endpoint is deployed to the backend environment
+**And** the endpoint follows existing API conventions and patterns
+**And** appropriate error responses are returned with clear messages
+**And** the endpoint is tested with unit tests
+**And** the endpoint is deployed to the backend environment
 
 **NOTE:** This story is backend work in `api/lambdas/` (out of scope for web-nextjs frontend, but required for Epic 5 completion)
 
@@ -1026,7 +1031,6 @@ So that I can discover memories I haven't seen in a while.
 **Given** the backend random photos API is deployed and available
 **When** the home page loads
 **Then** the highlights section fetches random photos from `GET /api/v1/owners/[ownerId]/randomPhotos?size=8`
-**And** random photos data is passed to the Client Component as props
 **And** the mock implementation from Story 5.1 is completely removed
 **And** photos are displayed using the same UI layout from Story 5.1
 **And** photo URLs are constructed using mediaId from API response
