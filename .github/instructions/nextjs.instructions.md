@@ -325,3 +325,28 @@ const DeleteAlbumDialogWrapper: Story<Props> = (props: Props) => {
 export const Default = (args) => <DeleteAlbumDialogWrapper {...args} />
 Default.args = {albumId: 'episode-5', albumName: 'Empire Strike Back'}
 ```
+
+### Material UI Buttons and Link
+
+**IMPORTANT**: use the Link component from `components/Link` instead of importing directly from `next/link` when passing it as a function.
+
+Example:
+
+```tsx
+import Link from '@/components/Link';
+import {Button} from '@mui/material';
+
+<Button
+    component={Link}
+    href="/"
+    prefetch={false}
+>
+    Click me !
+</Button>
+```
+
+Otherwise, the following error will happen during the build:
+
+```
+Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server"
+```

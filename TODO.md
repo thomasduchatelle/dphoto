@@ -11,29 +11,34 @@ TODOs
    1. aiming for 2 stacks: long term data stores, and WEB overlay
    2. migration paths to be included and executed
    3. new domain to be used
-5. [ ] migrating to NextJS from native React: very light React Framework in beta/exploration
+5. [ ] migrating to NextJS from native React: mature and well supported React Framework
    1. progressive migration - decoupling behaviours from framework before re-integrating them to new framework
-   2. parallel deployment - /v2 would get to the new UI
-   3. Auth0/AWS Cognito - moving to public IDP must be considered ; suggestion is to start from scratch, then add authentication, then add the pages and
+   2. parallel deployment - /nextjs would get to the new UI
+   3. AWS Cognito - moving to public IDP must be considered ; suggestion is to start from scratch, then add authentication, then add the pages and
       features
    4. NPM - Yarn or PNPM don't look justified for this project
    5. Visual testing to rethink as the tools used seem discontinued and incompatible with new ones
-6. [ ] Upload: support a sync mechanism from Android to AWS (existing backup software), post-upload management (inbox: deletion, rotation, datetime
+6. [ ] Image loading optimisation
+   1. the time too load the images is STRONGLY REDUCED on the photo grids
+   2. Leverage NextJS capability to load progressively the large images (blur -> medium -> high quality)
+   3. Accelerate the generation of medium/large version of the images (with loading feedback on the UI ?)
+   4. Use more adapted image format (.webp ?)
+7. [ ] Upload: support a sync mechanism from Android to AWS (existing backup software), post-upload management (inbox: deletion, rotation, datetime
    sliding, ...)
    1. Mobile -> S3 Landing
    2. S3 Landing -> DPhoto backup (support deletion and modification)
-7. [ ] Back the CLI with APIs instead of direct accesses to underlying AWS services
+8. [ ] Back the CLI with APIs instead of direct accesses to underlying AWS services
    1. user concept is missing in the CLI (takes the owner as the user)
    2. move to Auth0 for authentication on both UI and CLI
-8. [ ] Create a monitoring Dashboard with some stats (drive size, cache size, missed cache, popular resolutions, ...)
-9. Other features:
+9. [ ] Create a monitoring Dashboard with some stats (drive size, cache size, missed cache, popular resolutions, ...)
+10. Other features:
    1. [ ] deletion of pictures
    2. [ ] update media timestamps to synchronise a timeline within an album with medias from several capturing devices (camera and phone)
 
 **Small tasks:**
 
 * [ ] Create a landing page for new users (no albums, no medias)
-* [ ] Update the `dphoto configure ...` command: since migration from terraform, the proposed option doesn't work
+* [X] Update the `dphoto configure ...` command: since migration from terraform, the proposed option doesn't work
 * [ ] Update the readme file and other documentation: let's add some user-friendly screenshots ! ... and some C4 modeling
 
 API latency

@@ -2,433 +2,224 @@
 
 This guide provides essential information for AI coding agents working on the DPhoto codebase.
 
-## Quick Reference
+DPhoto is an application to back up photos and videos on the cloud (AWS), and visualise through a website, or using a command line interface installed on user
+computers.
 
-### Build Commands
+This is a mono-repository containing the code of the backend, the CLI, the website, and the deployments. **Its architecture and the design of each component are
+EXTREMELY IMPORTANT**. You must take your time, and think carefully, when accomplishing a coding task.
 
-```bash
-# Root level - build everything
-make all                    # clean, test, build all projects
-make test                   # run all tests
-make build                  # build all projects
+## Project structure
 
-# Go - pkg/ and cmd/dphoto/
-make setup-go              # REQUIRED before testing (starts Docker services)
-go test ./...              # run all tests
-go test ./pkg/catalog/...  # test specific package
-go build ./cmd/dphoto      # build CLI
+- `pkg/` - core business logic is always implemented here, in **Golang**. Think of the subdomains that a tasks will affect:
+    - `pkg/acl/` - access control and permissions management.
+    - `pkg/archive/` - long term storage of the photos and videos, with compression and generation of miniatures.
+    - `pkg/catalog/` - organisation of the medias into albums and albums management.
+    - `pkg/backup/` - analyse local files to upload them into the archive and to index then into the catalog.
+    - `pkg/**adapters/` - adapters for AWS services: DynamoDB, S3, SNS/SQS. Adapters are the only place 3rd party libraries are allowed in `pkg/`, the subdomain
+      must remain pure.
+    - `DATA_MODEL.md` - documentation of the indexes and records of the single-table structure in DynamoDB. It must be kept up to date with the data model.
+- `cmd/dphoto/` - in **Golang/Cobra**, CLI source to exposes features from `pkg/`, and presentation logic for the terminal.
+- `api/lambdas/` - in **Golang/AWS SDK** source of the REST API deployed as AWS Lambdas with an AWS API Gateway (v2 HTTP). Each operation is deployed as one
+  lambda handler and is in its own folder.
+    - `api/lambdas/common/` contains utilities shared by most handlers (get context from authorizer, ...)
+    - `api/lambdas/authorizer/` contains the API Gateway authorizer logic, running before any REST request is processed
+- `web-nextjs/` - **Typescript / React / NextJS framework** Website built on top of the REST API, deployed using SST.
+    - this is a new project, implemented incrementally to replace `web/`.
+    - **NextJS App Router** is used: file structure must respect its principles.
+    - Files structure must follow the best practices from NextJS.
+- `deployments/cdk/` - AWS CDK infrastructure (TypeScript/Jest), and SST configuration to deploy `web-nextjs`.
+- `.github/` - CI definitions, and Agent instructions.
+    - `.github/actions/` - customised actions used within this repository only
+    - `.github/workflows/job-*.yml` - reusable sub-workflow to build, test, and deploy the application
+    - `.github/workflows/workflow-*.yml` - workflows triggered by external events, they call the "job workflow", never replicate their content.
+- `internal/` - **Golang**: mocks and utilities that lower the complexity of the CLI but is not part of the domain of the application.
+- `Makefile` - comprehensive list of all the commands to build and test the application.
+- `web/` - **DEPRECATED! Project will be replaced by web-nextjs** ; Typescript / React / Waku framework Website built on top of the REST API, deployed as a
+  lambda.
+    - `web/src/core/catalog/language/` - data structures used across the web application, **very important for context**.
+    - `web/src/core/catalog/**/` - other folders are handlers for the operations available on the UI.
+    - `web/src/components/` - React components, usually pure.
+    - `web/src/pages/` - Waku page-driven navigation built from the components.
 
-# Go - api/lambdas/
-cd api/lambdas && go test ./...    # test API lambdas
-make build-api                      # build all lambda handlers
+## Priorities: How to get a Pull Request accepted ?
 
-# TypeScript - web-nextjs/ (current web app)
-cd web-nextjs
-npm install                # REQUIRED before other commands
-npm run test               # run unit tests (~5s)
-npm run test:watch         # watch mode
-npm run build              # build for production
-npm run dev                # start dev server (port 3000)
+As an agent, your primary objective is to fulfil the feature and have a pull request ACCEPTED by the lead developer. To be accepted, it must be conformed with
+the priorities:
 
-# TypeScript - web/ (legacy, being replaced)
-cd web
-npm install                # REQUIRED before other commands
-npx vitest run            # run unit tests (~17s)
-npx playwright test       # run visual regression tests
-npm run build             # build for deployment
-npm run ladle             # component viewer (port 61000)
+1. **no data loss** - the medias stored are very valuable and irreplaceable, everything must be done to never lose a single one.
+2. **architecture integrity** - each sub-project defined its design principles, its testing strategy, and its coding standard. Any deviation will lead to the
+   pull request being rejected.
+3. **simplicity** - the resulting code must be simple and easy to read, even if it requires a complex and large changes to implement a feature: we prefer
+   refactoring that simplifies the codebase rather than small changes that adds on the complexity.
+4. **cost** - this is a pet-project: operating cost must remain low while not requiring any ongoing effort to operate it.
+5. **security** - any reasonable efforts and good practices must be made to avoid data leaks
 
-# TypeScript - deployments/cdk/
-cd deployments/cdk
-npm install               # REQUIRED before other commands
-npm test                  # run unit tests
-npm run synth:test        # verify CDK can build
+## Architecture: subdomain of the application
+
+DPhoto is designed around 3 core domains and 1 supporting domain, each can have its data storage, API endpoints, business logic, and presentation layer (UI or
+CLI), and/or deployment code.
+
+The domains are as follows:
+
+### Catalog
+
+Main features of the **catalog domain** is to organise the medias into albums. An album is a set of medias regrouped by the date they were captured. When albums
+are
+edited, the medias are re-indexed to be placed in the appropriate album.
+
+The logic of the domain is within the following path:
+
+* `pkg/catalog` - core business logic
+* `pkg/catalogadapters` - adapters to access AWS infrastructure
+* `pkg/catalogviews` - list of album from the point of view of a user (restricted to what he owns and has been shared with him)
+* `pkg/catalogviewsadapters` - adapters to access AWS infrastructure.
+* `api/lambdas` - adapters to expose the features of the domain with REST API (shared with other domains)
+* `web/src/core/catalog` - WEB UI components to allow user to interact with the domain
+* `cmd/dphoto/cmd` - command line interface is the secondary option to interact with the domain. It runs on the client, with direct access to DynamoDB and S3.
+* `deployments/cdk/lib/catalog` - AWS infrastructure definitions (CDK)
+
+### Archive
+
+Main feature of the **archive domain** is to store long term all the medias, and provide WEB-friendly compressed versions of the images to optimise the WEB
+interface rendering time.
+
+The logic of the domain is within the following paths:
+
+* `pkg/archive` - core business logic
+* `pkg/archiveadapters` - adapters to access AWS infrastructure
+* `api/lambdas` - adapters to expose the features of the domain with REST API and ASYNC jobs (shared with other domains)
+* `deployments/cdk/lib/archive` - AWS infrastructure definitions (CDK)
+
+There is no UI component for this domain.
+
+### Backup
+
+Main feature of the **backup domain** is to scan a folder for medias (images and videos), and if they are not already in the catalog upload them to the *
+*archive** and index them into the **catalog**.
+
+The logic of the domain is within the following paths:
+
+* `pkg/backup` - core business logic
+* `pkg/backupadapters` - adapters to access AWS infrastructure
+* `cmd/dphoto/cmd` - command line interface is the primary and only option to interact with the domain. It runs on the client with the medias the backup on the
+  local drive.
+
+There is no UI nor API for this domain.
+
+### ACL (Access Control List)
+
+ACL is a supporting domain, it's main feature is to control what a user can access:
+
+* a _user_ is a person who can authenticate on the WEB UI (there is no concept of a user on the CLI)
+* a _owner_ is a role, and also the concept to which all other resources are attached: _medias_ and _albums_.
+* _permissions_ are added to the user to allow him to access and change resources: _owner_ or _album_.
+
+The logic of the domain is within the following paths:
+
+* `pkg/acl` - core business logic.
+* `pkg/catalogviews` - optimised access to the catalog after the ACL rules have been applied.
+* `pkg/catalogviewsadapters` - adapters to access AWS infrastructure
+* `api/lambdas/authorizer` - main usage of the ACL domain to authorise each REST request
+* `deployments/cdk/lib/access` - AWS infrastructure definitions (CDK)
+
+## Tech-stack and coding standards
+
+DPhoto is contained in a mono-repository, and is built on top of the following technologies:
+
+* **Golang**: main language of the application, used for all core logic running on the backend, or on the client (CLI).
+    * Directories: `pkg/`, `cmd/dphoto/`, `api/`
+    * Coding standards: `.github/instructions/go.instructions.md`
+* **AWS**, deployed using **CDK / Typescript** and **SST / Typescript**: cloud infrastructure, prioritising on serverless technology and optimized for cost.
+    * Directories: `deployments/cdk`
+    * Coding standards: `.github/instructions/cdk.instructions.md`
+* **NextJS / Typescript (React)**
+    * Directories: `web-nextjs/`
+    * Coding standards: `.github/instructions/nextjs.instructions.md`
+* **Github Action**: build and deploy the application:
+    * Directories: `.github/`
+    * Coding standards: follow existing patter, and then good practices.
+
+**Every agent must strictly follow the code conventions for each tool and language.**
+
+## How to plan work ?
+
+As a planner, you need to break down the requirements into stories that doesn't overlap between domains or layers. One story can only affect one domain, and one
+layer (deployment, api, web, or CLI).
+
+You need to remind the developer (agent) the coding standard file he must read before implementing the change.
+
+Reading the domain model of the subdomain being worked on will give SIGNIFICANT insight of what the application is already doing and how. For example, improving
+the loading time of the images will affect the backend of the archive domain. The content of the folder `pkg/archive` is very important
+for planning. Another example, changing the order of the albums on the website will affect the frontend of the catalog domain. The content of the folder
+`web/src/core/catalog/language/` is very important for planning.
+
+## How to build and test ?
+
+### Golang - `pkg` and `cmd/dphoto/`
+
+**Always run `make setup-go` before executing the tests !**
+
+Then,
+
+```shell
+# run all tests
+go test ./...
 ```
 
-### Running Single Tests
+Warning: `pkg/acl/jwks` test fails without internet (accounts.google.com) - EXPECTED, ignore it
 
-```bash
-# Go - run specific test function
-go test -run TestCreateAlbumStateless_Create ./pkg/catalog/
+### Golang - `api/lambdas/`
 
-# Go - run with verbose output
-go test -v ./pkg/backup/
+```shell
+# Run all tests
+cd api/lambdas && go test ./...
 
-# TypeScript (web-nextjs) - run specific test file
-npm run test -- access-token-service.test.ts
-
-# TypeScript (web) - run specific test file
-npx vitest run src/core/catalog/navigation/thunk-onPageRefresh.test.ts
-
-# Playwright - run specific test
-npx playwright test --grep "timeline view"
+# Build the code
+make build-api
 ```
 
-## Project Architecture
+### Typescript - `web-nextjs/`
 
-### Directory Structure
+**Always run from the web folder `cd web-nextjs`, and always run `npm install` before executing other commands !**
 
-```
-pkg/                  - Go core business logic (Hexagonal Architecture)
-  ├── acl/           - Access control and permissions
-  ├── archive/       - Long-term storage, compression, miniatures
-  ├── catalog/       - Media organization into albums
-  └── backup/        - Analyze and load medias
-cmd/dphoto/          - Go CLI (Cobra framework)
-api/lambdas/         - Go REST API handlers (AWS Lambda)
-web-nextjs/          - TypeScript/React 19/NextJS (current)
-web/                 - TypeScript/React 19/Waku (DEPRECATED)
-deployments/cdk/     - AWS CDK infrastructure (TypeScript)
-internal/            - Go mocks and test utilities
-DATA_MODEL.md        - DynamoDB single-table structure
+```shell
+npm run test          # run unit tests only (~5s)
+npm run test:visual   # run visual tests (~30s)
+npm run laddle        # run Laddle to take screenshots of the component on :61000
 ```
 
-### Key Principles
+### Typescript - `web/`
 
-1. **No data loss** - medias are irreplaceable, never lose data
-2. **Architecture integrity** - follow established patterns strictly
-3. **Simplicity** - prefer refactoring over complexity
-4. **Cost efficiency** - minimize AWS operating costs
-5. **Security** - prevent data leaks with reasonable practices
+**Always run from the web folder `cd web`, and always run `npm install` before executing other commands !**
 
-## Go Code Style
+```shell
+npx vitest run        # run unit tests only (~17s)
+npx playwright test   # run the visual tests 
+npm run build         # build the application for deployment
 
-### Import Organization
-
-```go
-import (
-    // 1. Standard library
-    "context"
-    "fmt"
-    
-    // 2. Third-party packages
-    "github.com/pkg/errors"
-    log "github.com/sirupsen/logrus"
-    
-    // 3. Internal packages
-    "github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-)
+npm run ladle         # Component viewer on :61000, useful to take screenshots of the changes on the UI
 ```
 
-### Error Handling
+### Typescript - `deployments/cdk/`
 
-```go
-// Sentinel errors with Err suffix
-var (
-    AlbumNotFoundErr = errors.New("album hasn't been found")
-    EmptyOwnerError = errors.New("owner is mandatory and must be not empty")
-)
+**Always run from the cdk folder `cd deployments/cdk`, and always run `npm install` before executing other commands !**
 
-// Always wrap errors with context
-return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed", request)
-
-// Check errors immediately
-if err != nil {
-    return nil, err
-}
+```shell
+npm test              # run all unit tests
+npm run synth:test    # verify the CDK template can be built using stub data
 ```
 
-### Naming Conventions
+## Checklist before raising a pull-request
 
-```go
-// Interfaces - Port suffix for hexagonal architecture
-type FindAlbumsByOwnerPort interface {
-    FindAlbumsByOwner(ctx context.Context, owner Owner) ([]*Album, error)
-}
+Before requesting a code review, you must ensure:
 
-// Interfaces - Observer suffix for event handlers
-type CreateAlbumObserver interface {
-    ObserveCreateAlbum(ctx context.Context, album Album) error
-}
+1. **coding standards have been strictly followed**: changes are conformed with the architecture and designs.
+2. **the resulting code is simple and cannot be improved**: think of clean code principles with no excessive comments (NO comment paraphrasing the code!)
+3. **conform with the testing strategy**: each project must adhere to the strict testing strategy that guaranty the robustness of the tests with a low coupling
+   with the code.
+4. the code can be built and is immediately shippable to production.
+5. the tests are passing.
 
-// Constructors - New prefix, return pointer
-func NewAlbumCreate(
-    FindAlbumsByOwnerPort FindAlbumsByOwnerPort,
-    InsertAlbumPort InsertAlbumPort,
-) *CreateAlbum
+---
 
-// Value objects - type aliases with validation methods
-type Owner string
-func (o Owner) IsValid() error { /* ... */ }
-```
-
-### Type Usage
-
-```go
-// Pointer receivers for mutable structs
-func (c *CreateAlbum) Create(ctx context.Context, req CreateAlbumRequest) (*AlbumId, error)
-
-// Value receivers for immutable types
-func (a Album) IsEqual(other *Album) bool
-func (a AlbumId) String() string
-
-// Small, focused interfaces (Interface Segregation Principle)
-type InsertAlbumPort interface {
-    InsertAlbum(ctx context.Context, album Album) error
-}
-```
-
-### Testing Patterns
-
-```go
-// Table-driven tests
-func TestCreateAlbum_Create(t *testing.T) {
-    tests := []struct {
-        name    string
-        args    args
-        wantErr assert.ErrorAssertionFunc
-    }{
-        {
-            name: "it should create album successfully",
-            // ...
-        },
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            // Test implementation
-        })
-    }
-}
-
-// Test doubles with Fake suffix
-type FindAlbumsByOwnerFake map[Owner][]*Album
-
-// Helper functions with stub/expect prefix
-func stubFindAlbumsWith(albums ...*Album) FindAlbumsByOwnerPort
-func expectAlbumInserted(album Album) InsertAlbumPort
-```
-
-### Documentation
-
-```go
-// Package documentation at top
-// Package catalog provides commands to organize medias into albums.
-package catalog
-
-// Type documentation (godoc style)
-// Album is a logical grouping of medias stored together.
-type Album struct {
-    Name  string    // Name for display, not unique
-    Start time.Time // Start datetime inclusive
-}
-
-// Function documentation starts with function name
-// NewAlbumCreate creates the service to create a new album.
-func NewAlbumCreate(...) *CreateAlbum
-```
-
-## TypeScript Code Style
-
-### Import Organization (web-nextjs/)
-
-```typescript
-// 1. Server/client directive at top
-import "server-only"  // or 'use client'
-
-// 2. Next.js/React imports
-import type {Metadata} from "next";
-import {NextRequest, NextResponse} from 'next/server';
-
-// 3. Internal imports with @ alias
-import {getValidAuthentication} from "@/libs/security";
-import {UserInfo} from "@/components/UserInfo";
-
-// 4. Third-party libraries
-import * as client from 'openid-client';
-```
-
-### Type vs Interface Usage
-
-```typescript
-// Interfaces for object shapes (preferred)
-export interface UserInfoProps {
-    name: string;
-    email: string;
-    picture?: string;
-}
-
-export interface AuthenticatedUser {
-    name: string;
-    email: string;
-    isOwner: boolean;
-}
-
-// Types for unions, intersections, aliases
-export type BackendSession = AuthenticatedSession | AnonymousSession
-export type MediaId = string
-export type AccessToken = AccessTokenClaims & { accessToken: string }
-```
-
-### Naming Conventions
-
-```typescript
-// Component props: ComponentNameProps
-export interface UserInfoProps { /* ... */ }
-
-// Event handlers: onAction prefix
-interface DialogHandlers {
-    onClose: () => void;
-    onSubmit: () => Promise<void>;
-    onNameChange: (name: string) => void;
-}
-
-// Boolean props: is/has prefix
-interface ComponentProps {
-    isLoading: boolean;
-    hasError: boolean;
-}
-
-// Custom hooks: use prefix, camelCase
-export function useCatalogContext() { /* ... */ }
-```
-
-### React Component Structure
-
-```typescript
-// Functional component with destructured props
-export function UserInfo({ name, email, picture }: UserInfoProps) {
-    return <div>{/* JSX */}</div>
-}
-
-// Async server component (Next.js)
-export default async function Page({ searchParams }: PageProps) {
-    const params = await searchParams;
-    // ...
-}
-
-// Hooks usage
-const theme = useTheme();
-const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-const callback = useCallback((action: Action) => {
-    dispatch(action)
-}, [dispatch])
-```
-
-### Error Handling
-
-```typescript
-// Error mapping pattern
-function getErrorInfo(error: string): ErrorInfo {
-    const errorMap: Record<string, ErrorInfo> = {
-        'invalid_request': { title: '...', description: '...' },
-        'access_denied': { title: '...', description: '...' },
-    };
-    return errorMap[error] || { title: 'Error', description: '...' };
-}
-
-// Try-catch with null return
-export function decodeJWT(token: string): Payload | null {
-    try {
-        // decode logic
-        return decoded;
-    } catch (error) {
-        console.error('Failed to decode JWT:', error);
-        return null;
-    }
-}
-
-// Async error propagation
-try {
-    const result = await someOperation();
-    return NextResponse.json(result);
-} catch (e) {
-    console.error('Operation failed:', e);
-    return NextResponse.redirect('/error');
-}
-```
-
-### Testing Patterns
-
-```typescript
-// Vitest environment directive
-// @vitest-environment node
-
-import {describe, it, expect, beforeAll, afterAll, vi} from 'vitest';
-
-// Descriptive test names
-describe('getValidAccessToken', () => {
-    it('should return null when no tokens are provided', async () => {
-        const result = await getValidAccessToken();
-        expect(result).toBeNull();
-    });
-    
-    it('should return valid token when access token is not expired', async () => {
-        // Arrange
-        const validToken = createToken();
-        
-        // Act
-        const result = await getValidAccessToken();
-        
-        // Assert
-        expect(result).not.toBeNull();
-    });
-});
-
-// Test fakes
-class ActionObserverFake {
-    public actions: Action[] = []
-    onAction = (action: Action) => this.actions.push(action)
-}
-
-// Mock patterns
-vi.stubEnv('OAUTH_CLIENT_ID', 'test-client-id');
-vi.mock('next/headers', () => ({
-    cookies: vi.fn(() => fakeCookies),
-}));
-```
-
-### File Naming Conventions
-
-```
-app/
-  layout.tsx                # Root layout
-  page.tsx                  # Route page
-  (authenticated)/          # Route group (not in URL)
-  auth/login/route.ts       # API route handler
-
-components/
-  UserInfo/index.tsx        # Component with folder
-
-libs/
-  security/
-    access-token-service.ts      # kebab-case services
-    access-token-service.test.ts # co-located tests
-
-src/core/catalog/
-  action-albumRenamed.ts         # action- prefix
-  thunk-saveAlbumName.ts         # thunk- prefix
-  selector-albumActions.ts       # selector- prefix
-```
-
-## Commit Message Convention
-
-```
-<domain>[/<area>] [+tags] - <message>
-
-Examples:
-catalog/web +minor - add album sorting by date
-backup/cli - fix duplicate detection logic
-archive/api +update-snapshots - improve thumbnail quality
-
-Domains: catalog, archive, backup
-Areas: web, cli, proj, api
-Tags: +patch, +minor, +major, +pr, +update-snapshots
-```
-
-## Before Raising a Pull Request
-
-1. **Follow coding standards strictly** - architecture and design patterns
-2. **Simplify resulting code** - clean code, no paraphrasing comments
-3. **Adhere to testing strategy** - maintain test coverage
-4. **Ensure code builds** - run relevant build commands
-5. **Verify tests pass** - run test suite for modified areas
-
-## Common Gotchas
-
-- **Go**: Always run `make setup-go` before testing (starts Docker/localstack)
-- **Go**: Test `pkg/acl/jwks` fails without internet - this is expected
-- **Node**: Always run `npm install` in the project directory first
-- **web-nextjs**: Use `@/` path alias for imports
-- **web**: Use relative paths or `src/` prefix for imports
-- **Makefile**: Commands run from repo root, use `cd` for subdirectories
+**Trust these instructions** - validated against the repository. Search only if missing information.
