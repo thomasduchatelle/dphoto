@@ -3,7 +3,6 @@ import {AlbumsAndMediasLoaded, albumsAndMediasLoaded} from "./action-albumsAndMe
 import {MediaLoadFailed, mediaLoadFailed} from "./action-mediaLoadFailed";
 import {mediasLoaded} from "./action-mediasLoaded";
 import {NoAlbumAvailable} from "./action-noAlbumAvailable";
-import {DPhotoApplication} from "../../application";
 import {CatalogFactory} from "../catalog-factories";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {ThunkDeclaration} from "@/libs/dthunks";
@@ -95,8 +94,8 @@ export const onPageRefreshDeclaration: ThunkDeclaration<
     (albumId?: AlbumId) => Promise<void>,
     CatalogFactoryArgs
 > = {
-    factory: ({app, dispatch, partialState}) => {
-        const restAdapter = new CatalogFactory(app as DPhotoApplication).restAdapter();
+    factory: ({dispatch, partialState}) => {
+        const restAdapter = new CatalogFactory().restAdapter();
         const onPageRefreshInstance = new OnPageRefresh(
             dispatch,
             restAdapter
