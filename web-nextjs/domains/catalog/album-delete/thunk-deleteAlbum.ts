@@ -1,6 +1,5 @@
 import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
 import {CatalogFactory} from "../catalog-factories";
-import {DPhotoApplication} from "../../application";
 import {Album, AlbumId, CatalogViewerState, getErrorMessage, Media} from "../language";
 import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
@@ -50,8 +49,8 @@ export const deleteAlbumDeclaration: ThunkDeclaration<
     selector: (state: CatalogViewerState) => ({
         selectedAlbumId: getSelectedAlbumId(state)
     }),
-    factory: ({dispatch, app, partialState: {selectedAlbumId}}) => {
-        const restAdapter = new CatalogFactory(app as DPhotoApplication).restAdapter();
+    factory: ({dispatch, partialState: {selectedAlbumId}}) => {
+        const restAdapter = new CatalogFactory().restAdapter();
         return deleteAlbumThunk.bind(null, dispatch, restAdapter, selectedAlbumId);
     }
 };

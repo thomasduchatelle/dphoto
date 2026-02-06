@@ -4,7 +4,7 @@ import {albumRenamingStarted, AlbumRenamingStarted} from "./action-albumRenaming
 import {albumRenamed, AlbumRenamed} from "./action-albumRenamed";
 import {albumRenamingFailed, AlbumRenamingFailed} from "./action-albumRenamingFailed";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {FetchCatalogAdapter} from "../adapters/api/FetchCatalogAdapter";
+import {CatalogFactory} from "../catalog-factories";
 
 export interface SaveAlbumNamePort {
     renameAlbum(albumId: AlbumId, newName: string, newFolderName?: string): Promise<AlbumId>;
@@ -63,8 +63,8 @@ export const saveAlbumNameDeclaration: ThunkDeclaration<
         };
     },
 
-    factory: ({dispatch, app, partialState}) => {
-        const catalogAdapter = new FetchCatalogAdapter(app.axiosInstance, app);
+    factory: ({dispatch, partialState}) => {
+        const catalogAdapter = new CatalogFactory().restAdapter();
         return saveAlbumNameThunk.bind(null, dispatch, catalogAdapter, partialState);
     },
 };
