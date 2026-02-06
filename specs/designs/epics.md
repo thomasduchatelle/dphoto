@@ -255,41 +255,6 @@ clear UI distinction between owner and viewer capabilities.
 - Email validation
 - Error handling for sharing operations
 
-### Epic 5: Random Photo Discovery
-
-Users can discover forgotten memories through random photo highlights on the home page (5-8 photos from all accessible albums) that link directly to source
-albums and refresh on each page reload.
-
-**FRs covered:** FR8, FR9 (2 FRs)
-
-**NFRs addressed:** None specific (leverages existing performance from Epic 1)
-
-**Additional Requirements:**
-
-- Home page "Your Memories" or "Highlights" section at top
-- 5-8 random photos from all accessible albums
-- Each photo links to source album
-- Refreshes on page reload
-- API endpoint: `GET /api/v1/owners/[ownerId]/randomPhotos?size=8`
-
-### Epic 6: Album Preview
-
-Users can preview album contents before clicking to view the full album, helping them quickly identify albums of interest without full navigation.
-
-**FRs covered:** FR8 (partial - preview discovery) (1 FR)
-
-**NFRs addressed:** NFR7 (touch interactions), NFR8 (responsive layouts)
-
-**Additional Requirements:**
-
-- Preview mechanism to be explored: hover interaction, first click/tap, or dedicated preview icon
-- Preview should show sample photos from album (3-6 thumbnails)
-- Preview should be lightweight and fast
-- Interaction pattern must work on mobile, tablet, and desktop
-- Requirements will be refined during epic exploration
-
-**Note:** This epic requires design exploration to determine the optimal preview interaction pattern.
-
 ## Epic 1: Album List Home Page
 
 Users can view their album list on the home page with album cards showing metadata and density indicators, and filter albums by owner with a fully functional
@@ -527,7 +492,7 @@ So that I can focus on my own albums or view all albums including shared ones.
 
 Users can view photos within albums grouped by day, navigate smoothly with keyboard and touch controls, and zoom into details.
 
-### Story 2.1.1: Album Page URL Redirects
+### Story 2.1: Album Page URL Redirects
 
 As a user,
 I want invalid album URLs to redirect to the home page,
@@ -541,7 +506,7 @@ So that I don't see broken or incomplete pages.
 
 ---
 
-### Story 2.1.2: Album Page UI Components
+### Story 2.2: Album Page UI Components
 
 As a developer,
 I want reusable UI components for the album page,
@@ -549,52 +514,48 @@ So that the album viewing experience is consistent and maintainable.
 
 **UI Components to Create:**
 
-**Photo Display Components:**
-
-1. **PhotoThumbnail** - Displays a single photo thumbnail with optimized loading
-    - Props: photo data, size, onClick handler
-    - Uses NextJS custom image loader
-    - Responsive to screen size
-
-2. **PhotoGrid** - Grid layout container for photo thumbnails
-    - Props: photos array, column configuration
+1. **MediaGrid** - Displays medias grouped by day in a responsive grid
+    - Props: medias grouped by day (array of `{ day: Date, medias: Media[] }`)
     - Responsive columns: Mobile (2), Tablet (3), Desktop (4), Large (5)
-    - Handles empty state
+    - Photos are grouped by capture date with date headers separating each day (FR12, FR18)
+    - Date headers display in the user's locale format
+    - Does not handle empty state
+    - Uses private sub-components (not tested or exposed): PhotoThumbnail, VideoThumbnail, DayGroupGrid, etc.
 
-3. **DateGroupHeader** - Date separator header between photo groups
-    - Props: date value, locale
-    - Displays date in user's locale format
-    - Visual separator styling
-
-4. **PhotosByDateGroup** - Groups photos under a date header
-    - Props: date, photos array
-    - Combines DateGroupHeader + PhotoGrid for that date
-    - Photos ordered chronologically within group
-
-**Album Page Layout Components:**
-
-5. **AlbumPageHeader** - Top section of album page
+2. **AlbumPageHeader** - Top section of album page
     - Props: album name, metadata, back button handler
     - Shows album title and info
-    - Back button to navigate home
+    - Back button to navigate home (FR17)
 
-6. **AlbumPageLayout** - Overall page layout wrapper
-    - Props: header content, body content
-    - Consistent spacing and structure
-    - Mobile-responsive
-
-**Feedback Components:**
-
-7. **EmptyAlbumState** - Message when album has no photos
+3. **EmptyAlbumState** - Message when album has no photos
     - Props: album name
     - Clear messaging
     - Consistent with brand styling
+
+4. **PhotoViewer** - Full-screen photo viewer with navigation
+    - Props: current photo, next media, previous media
+    - Displays photo in full-screen view (FR13)
+    - Close button (X) to return to album grid
+    - Next/Previous navigation buttons
+    - Photo position indicator (e.g., "5 of 47")
+    - Photo metadata display (date captured, album name)
+    - Keyboard navigation: RIGHT ARROW (next), LEFT ARROW (previous), ESC (close) (FR14)
+    - Touch gestures: swipe left (next), swipe right (previous), tap/swipe down (close) (FR15)
+    - Pinch-to-zoom and pan support (FR16)
+    - Double-tap zoom support
+    - Navigation wraps (first ↔ last)
+    - URL updates with each navigation action
+    - Handles photo not found errors
+    - Keyboard focus management with visible indicators
+    - Keyboard shortcuts don't conflict with browser defaults (NFR6)
+    - Touch interactions responsive with immediate feedback (NFR7, NFR9)
+    - Swipe gestures have appropriate threshold to prevent accidental navigation
 
 **Acceptance Criteria:**
 
 **Given** the components are implemented
 **When** they are used in the album page
-**Then** all 7 components are created and exported
+**Then** all 4 components are created and exported
 **And** each component has clear prop interfaces
 **And** components use MUI styling system
 **And** components follow the brand color scheme (#185986)
@@ -602,7 +563,7 @@ So that the album viewing experience is consistent and maintainable.
 
 ---
 
-### Story 2.1.3: Load and Display Album Photos
+### Story 2.3: Load and Display Album Photos
 
 As a user,
 I want to see photo thumbnails when viewing an album,
@@ -613,14 +574,12 @@ So that I can browse the photos in that album.
 **Given** I navigate to `/albums/[ownerId]/[albumId]`
 **When** the page loads
 **Then** the album details and photos are fetched from the REST API
-**And** photos are displayed as thumbnails using PhotoThumbnail component
 **And** photos use NextJS custom image loader for backend integration
-**And** thumbnails are optimized for current screen size (NFR2)
-**And** photos are visible on the page in their small format
+**And** thumbnails are the small version of the image, size optimised (NFR2)
 
 ---
 
-### Story 2.1.4: Complete Album Page with Grouped Photos
+### Story 2.4: Complete Album Page with Grouped Photos
 
 As a user,
 I want to view all photos in an album grouped by the day they were captured,
@@ -630,21 +589,14 @@ So that I can browse through the album chronologically and see the story of that
 
 **Given** I am viewing an album at `/albums/[ownerId]/[albumId]`
 **When** the page displays
-**Then** photos are displayed in a responsive grid:
-- Mobile (xs): 2 columns
-- Tablet (sm): 3 columns
-- Desktop (md): 4 columns
-- Large Desktop (lg): 5 columns
-  **And** photos are grouped by capture date with date headers separating each day (FR12, FR18)
-  **And** date headers display in the user's locale format
-  **And** photos within each day are ordered chronologically
-  **And** a back button/link navigates to the album list home page (FR17)
-  **And** album name and metadata are displayed in the page header
-  **And** empty state message is displayed if album has no photos
+**Then** the MediaGrid component is used to display medias, grouped by days
+**And** a back button/link navigates to the album list home page (FR17)
+**And** album name and metadata are displayed in the page header
+**And** empty state message is displayed if album has no photos
 
 ---
 
-### Story 2.1.5: Album Loading Progress Indicator
+### Story 2.5: Album Loading Progress Indicator
 
 As a user,
 I want to see a loading indicator when clicking an album link,
@@ -662,7 +614,7 @@ So that I know the page is loading and the app hasn't frozen.
 
 ---
 
-### Story 2.2: Full-Screen Photo Viewer with Modal Interception
+### Story 2.6: Full-Screen Photo Viewer with Modal Interception
 
 As a user,
 I want to view photos in full-screen mode,
@@ -673,62 +625,29 @@ So that I can see photo details clearly and enjoy a focused viewing experience.
 **Given** I am viewing the album photo grid
 **When** I click on a photo thumbnail
 **Then** a modal opens overlaying the photo grid (grid remains visible in background)
-**And** the modal displays the photo in full-screen view (FR13)
+**And** the PhotoViewer component displays the photo in full-screen view (FR13)
 **And** the URL updates to `/albums/[ownerId]/[albumId]/photos/[photoId]`
 **And** the photo is optimized for current screen size (mobile/tablet/desktop) (NFR2)
-**And** photo metadata is displayed (date captured, album name)
-**And** a close button (X) is visible in the modal
-**And** clicking the close button returns to album grid
-**And** clicking outside the photo returns to album grid
 **And** the modal maintains the album grid scroll position after closing
 **And** refreshing on photo URL loads the photo viewer correctly
-**And** error handling displays message if photo not found
 
 ---
 
-### Story 2.3: Keyboard Navigation in Photo Viewer
+### Story 2.7: Photo Viewer Navigation and Interactions
 
 As a user,
-I want to navigate photos using keyboard shortcuts,
-So that I can efficiently browse through albums without using the mouse.
+I want to navigate photos and interact with them using keyboard and touch controls,
+So that I can efficiently browse through albums on any device.
 
 **Acceptance Criteria:**
 
-**Given** I am viewing a photo in full-screen mode
-**When** I use keyboard controls
-**Then** pressing RIGHT ARROW navigates to the next photo in sequence (FR14)
-**And** pressing LEFT ARROW navigates to the previous photo in sequence (FR14)
-**And** pressing ESC closes the photo viewer and returns to album grid (FR14)
+**Given** I am viewing a photo in the PhotoViewer
+**When** I use navigation controls
+**Then** all PhotoViewer functionality works as specified in Story 2.2 (keyboard, touch, zoom)
 **And** keyboard navigation responds without perceptible lag (NFR2, NFR5)
-**And** navigation wraps to first photo when on last photo and next is pressed
-**And** navigation wraps to last photo when on first photo and previous is pressed
-**And** photo position indicator shows current position (e.g., "5 of 47")
-**And** each keyboard action updates the URL to reflect current photo
-**And** keyboard focus is managed correctly (visible focus indicators)
-**And** keyboard shortcuts don't conflict with browser defaults (NFR6)
-
----
-
-### Story 2.4: Touch Gestures and Mobile Navigation
-
-As a mobile or tablet user,
-I want to navigate photos using natural touch gestures,
-So that I can browse albums comfortably on my device.
-
-**Acceptance Criteria:**
-
-**Given** I am viewing photos on a mobile or tablet device
-**When** I use touch gestures in full-screen photo view
-**Then** swiping LEFT navigates to the next photo (FR15)
-**And** swiping RIGHT navigates to the previous photo (FR15)
-**And** tap on the photo or swipe DOWN closes the viewer and returns to grid
-**And** pinch-to-zoom gesture zooms into photo details (FR16)
-**And** zoomed photo can be panned by dragging
-**And** double-tap zooms to fit or zooms in (standard behavior)
 **And** touch interactions feel responsive with immediate visual feedback (NFR7, NFR9)
 **And** gestures feel natural and performant (NFR9)
 **And** mobile performance doesn't degrade significantly
-**And** swipe gestures have appropriate threshold to prevent accidental navigation
 
 **Given** I am viewing the album grid on mobile
 **When** I interact with the grid
@@ -1119,3 +1038,87 @@ So that I can discover memories I haven't seen in a while.
 **And** the feature works across mobile, tablet, and desktop
 **And** photos display variety across different albums (leveraging backend randomization)
 **And** users can successfully rediscover forgotten memories through this feature
+
+---
+
+## Ideas and Future Exploration
+
+This section contains ideas and features that are not yet prioritized or fully defined. These may be explored and converted into epics in future iterations.
+
+---
+
+### Random Photo Discovery
+
+**What:** Display random photo highlights on the home page to help users rediscover forgotten memories.
+
+**Why:** Users accumulate large photo collections over time, and many beautiful or meaningful photos get forgotten. Random highlights surface these memories and
+create moments of delight when browsing the home page.
+
+**Key Features:**
+
+- 5-8 random photos displayed at top of home page
+- Photos drawn from all accessible albums (owned + shared)
+- Horizontal layout with responsive design
+- Click photo to navigate to source album
+- Refreshes on each page reload with new random selection
+- API endpoint: `GET /api/v1/owners/[ownerId]/randomPhotos?size=8`
+
+**Requirements:**
+
+- Backend API development (out of scope for web-nextjs epic)
+- Frontend UI implementation
+- Randomization algorithm that ensures variety across albums
+
+**Status:** Defined as Epic 5 with 3 stories, awaiting prioritization
+
+---
+
+### Album Preview Before Navigation
+
+**What:** Allow users to preview album contents before fully navigating to the album page.
+
+**Why:** Users want to quickly identify albums of interest without committing to full page navigation. A preview mechanism lets them "peek" at album contents
+and make informed decisions about which albums to explore.
+
+**Exploration Needed:**
+
+- **Interaction pattern:** Hover (desktop), first tap shows preview / second tap navigates (mobile), or dedicated preview icon?
+- **Preview content:** How many sample photos? (3-6 thumbnails suggested)
+- **Performance:** Must be lightweight and fast
+- **Responsive design:** Must work well on mobile, tablet, and desktop
+
+**Possible Approaches:**
+
+1. **Hover preview (desktop only):** Show preview on mouse hover
+2. **Two-tap pattern (mobile):** First tap shows preview overlay, second tap navigates
+3. **Dedicated icon:** Small preview icon on album card that triggers preview
+4. **Long-press (mobile):** Long press on album card shows preview
+
+**Status:** Requires design exploration and UX validation before implementation
+
+---
+
+### Album Timeline Navigation
+
+**What:** Add a timeline component to the AlbumPageHeader showing nearby albums with sample photos.
+
+**Why:** When viewing photos from a specific time period, users may want to explore adjacent albums from similar timeframes. A timeline provides context and
+enables seamless temporal navigation.
+
+**Key Features:**
+
+- Visual timeline integrated into AlbumPageHeader
+- Shows current album and 2-3 nearby albums (before/after)
+- Each album preview shows random sample photos
+- Click to navigate to adjacent album
+- Helps users maintain temporal context while browsing
+
+**Exploration Needed:**
+
+- Visual design of timeline component
+- Number of adjacent albums to show
+- How to handle albums with large time gaps
+- Mobile responsiveness (timeline may need to collapse or scroll)
+- Performance impact of loading preview photos
+
+**Status:** Early concept, requires design and technical exploration
