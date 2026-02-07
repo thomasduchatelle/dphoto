@@ -1,10 +1,11 @@
 import {Album, AlbumId, CatalogViewerState, getErrorMessage, isCatalogError, isEditDatesDialog, Media} from "../language";
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
-import {albumsAndMediasLoaded, CatalogDispatch} from "@/domains/catalog";
+import {albumsAndMediasLoaded} from "@/domains/catalog";
 import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
 import {Action} from "@/libs/daction";
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {convertToModelEndDate, convertToModelStartDate} from "../date-range/date-helper";
+import {CatalogDispatch} from "@/domains/catalog/common/catalog-dispatch";
 
 export const editDatesOrphanedMediasErrorCode = "OrphanedMediasErr";
 
