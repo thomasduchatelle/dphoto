@@ -4,7 +4,6 @@ import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {loadAlbumsAndMedias} from "../navigation/utils-loadAlbumsAndMedias";
-import {MasterCatalogAdapter} from "../adapters/api";
 
 
 export interface DeleteAlbumPort {
@@ -44,13 +43,12 @@ export const deleteAlbumDeclaration: ThunkDeclaration<
     CatalogViewerState,
     { selectedAlbumId: AlbumId | undefined },
     DeleteAlbumThunk,
-    CatalogDispatch
+    CatalogDispatch & { adapter: DeleteAlbumPort }
 > = {
     selector: (state: CatalogViewerState) => ({
         selectedAlbumId: getSelectedAlbumId(state)
     }),
-    factory: ({dispatch, app, partialState: {selectedAlbumId}}) => {
-        const restAdapter = (app as any).adapter as MasterCatalogAdapter;
-        return deleteAlbumThunk.bind(null, dispatch, restAdapter, selectedAlbumId);
+    factory: ({dispatch, adapter, partialState: {selectedAlbumId}}) => {
+        return deleteAlbumThunk.bind(null, dispatch, adapter, selectedAlbumId);
     }
 };

@@ -5,7 +5,6 @@ import {createAlbumStarted} from "./action-createAlbumStarted";
 import {createAlbumFailed} from "./action-createAlbumFailed";
 import {albumsLoaded} from "../navigation";
 import {convertToModelEndDate, convertToModelStartDate, validateDateRange} from "../date-range/date-helper";
-import {MasterCatalogAdapter} from "../adapters/api";
 
 interface CreateDialogData {
     albumName: string;
@@ -75,7 +74,7 @@ export const submitCreateAlbumDeclaration: ThunkDeclaration<
     CatalogViewerState,
     CreateDialogData,
     () => Promise<void>,
-    CatalogDispatch
+    CatalogDispatch & { adapter: CreateAlbumPort }
 > = {
     selector: (state: CatalogViewerState) => {
         const dialog = state.dialog;
@@ -101,8 +100,7 @@ export const submitCreateAlbumDeclaration: ThunkDeclaration<
             isCustomFolderNameEnabled: dialog.isCustomFolderNameEnabled,
         };
     },
-    factory: ({dispatch, app, partialState}) => {
-        const restAdapter = (app as any).adapter as MasterCatalogAdapter;
-        return submitCreateAlbumThunk.bind(null, dispatch, restAdapter, partialState);
+    factory: ({dispatch, adapter, partialState}) => {
+        return submitCreateAlbumThunk.bind(null, dispatch, adapter, partialState);
     },
 };

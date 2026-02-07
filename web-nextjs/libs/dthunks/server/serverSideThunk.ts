@@ -1,5 +1,6 @@
 import {ThunkDeclaration} from '../api';
-import {ServerState} from './constructThunkFromDeclaration';
+
+import {ServerState} from "@/libs/dthunks/server/serverState";
 
 /**
  * Creates a server-side thunk executor from a thunk declaration.

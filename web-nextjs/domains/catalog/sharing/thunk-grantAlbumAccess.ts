@@ -1,6 +1,5 @@
 import {AlbumId, CatalogViewerState, isShareDialog, UserDetails} from "../language";
 import {CatalogDispatch} from "../common/catalog-dispatch";
-import {FetchCatalogAdapter} from "../adapters/api/FetchCatalogAdapter";
 import {AlbumAccessGranted, albumAccessGranted} from "./action-albumAccessGranted";
 import {SharingModalErrorOccurred, sharingModalErrorOccurred} from "./action-sharingModalErrorOccurred";
 import {ThunkDeclaration} from "@/libs/dthunks";
@@ -54,11 +53,10 @@ export const grantAlbumAccessDeclaration: ThunkDeclaration<
     CatalogViewerState,
     { albumId?: AlbumId },
     (email: string) => Promise<void>,
-    CatalogDispatch
+    CatalogDispatch & { adapter: GrantAlbumAccessAPI }
 > = {
-    factory: ({dispatch, app, partialState: {albumId}}) => {
-        const sharingAPI: GrantAlbumAccessAPI = new FetchCatalogAdapter(app.axiosInstance, app);
-        return grantAlbumAccessThunk.bind(null, dispatch, sharingAPI, albumId);
+    factory: ({dispatch, adapter, partialState: {albumId}}) => {
+        return grantAlbumAccessThunk.bind(null, dispatch, adapter, albumId);
     },
     selector: ({dialog}: CatalogViewerState) => {
         return {
