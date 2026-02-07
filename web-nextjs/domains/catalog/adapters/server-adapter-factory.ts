@@ -1,6 +1,18 @@
 import {FetchCatalogAdapter} from "@/domains/catalog/adapters/api";
-import {getAccessTokenHolder} from "@/libs/security/session-service";
+import {newReadCookieStoreFromComponents} from "@/libs/nextjs-cookies";
+import {loadSession} from "@/libs/security/backend-store";
+import {basePath, newOriginFromHeaders} from "@/libs/requests";
 
 export function newServerSideRestCatalogAdapter(): FetchCatalogAdapter {
-    return new FetchCatalogAdapter(getAccessTokenHolder());
+    return new FetchCatalogAdapter(
+        async (): Promise<string | undefined> => {
+            const cookieStore = await newReadCookieStoreFromComponents();
+            const session = loadSession(cookieStore);
+            return session.accessToken;
+        },
+        async () => {
+            const url = await newOriginFromHeaders().getCurrentUrl();
+            return `${url.origin}/${basePath}/api/v1`;
+        }
+    );
 }

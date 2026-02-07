@@ -2,7 +2,6 @@ import {Album, AlbumId, CatalogError, Media, MediaType, OwnerDetails, UserDetail
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
-import {AccessTokenHolder} from "@/libs/security";
 
 interface RestAlbum {
     owner: string
@@ -39,20 +38,20 @@ export type MasterCatalogAdapter = CreateAlbumPort & GrantAlbumAccessAPI & Revok
 
 export class FetchCatalogAdapter implements MasterCatalogAdapter {
     constructor(
-        private readonly accessTokenHolder: AccessTokenHolder,
-        private readonly baseUrl: string = '/api/v1'
+        private readonly accessTokenSupplier: () => Promise<string | undefined>,
+        private readonly baseUrlSupplier: () => Promise<string> = async () => "/api/v1",
     ) {
     }
 
     public async deleteAlbum(albumId: AlbumId): Promise<void> {
         await this.fetchRequest(
-            `${this.baseUrl}/owners/${albumId.owner}/albums/${albumId.folderName}`,
+            `/owners/${albumId.owner}/albums/${albumId.folderName}`,
             {method: 'DELETE'}
         );
     }
 
     public async createAlbum(request: CreateAlbumRequest): Promise<AlbumId> {
-        return this.fetchRequest<AlbumId>(`${this.baseUrl}/albums`, {
+        return this.fetchRequest<AlbumId>(`/albums`, {
             method: 'POST',
             body: JSON.stringify({
                 name: request.name,
@@ -64,7 +63,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     }
 
     public fetchAlbums(): Promise<Album[]> {
-        return this.fetchRequest<RestAlbum[]>(`${this.baseUrl}/albums`)
+        return this.fetchRequest<RestAlbum[]>(`/albums`)
             .then(albums => {
                 return Promise.allSettled([
                     this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),
@@ -125,7 +124,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
         }
 
         const ids = [...owners.values()].join(',');
-        return this.fetchRequest<RestOwnerDetails[]>(`${this.baseUrl}/owners?ids=${encodeURIComponent(ids)}`);
+        return this.fetchRequest<RestOwnerDetails[]>(`/owners?ids=${encodeURIComponent(ids)}`);
     }
 
     private findUserDetails(emails: Set<string>): Promise<RestUserDetails[]> {
@@ -134,12 +133,12 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
         }
 
         const emailsParam = [...emails.values()].join(',');
-        return this.fetchRequest<RestUserDetails[]>(`${this.baseUrl}/users?emails=${encodeURIComponent(emailsParam)}`);
+        return this.fetchRequest<RestUserDetails[]>(`/users?emails=${encodeURIComponent(emailsParam)}`);
     }
 
     public fetchMedias(albumId: AlbumId): Promise<Media[]> {
         return this.fetchRequest<RestMedia[]>(
-            `${this.baseUrl}/owners/${albumId.owner}/albums/${albumId.folderName}/medias`
+            `/owners/${albumId.owner}/albums/${albumId.folderName}/medias`
         )
             .catch((err: Error) => {
                 if (err instanceof CatalogError && err.message.includes('404')) {
@@ -161,7 +160,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
 
     public grantAccessToAlbum(albumId: AlbumId, email: string): Promise<void> {
         return this.fetchRequest(
-            `${this.baseUrl}/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`,
+            `/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`,
             {method: 'PUT'}
         );
     }
@@ -179,14 +178,14 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
 
     public revokeSharingAlbum(albumId: AlbumId, email: string): Promise<void> {
         return this.fetchRequest(
-            `${this.baseUrl}/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`,
+            `/owners/${albumId.owner}/albums/${albumId.folderName}/shares/${email}`,
             {method: 'DELETE'}
         );
     }
 
     public async updateAlbumDates(albumId: AlbumId, startDate: Date, endDate: Date): Promise<void> {
         await this.fetchRequest(
-            `${this.baseUrl}/owners/${albumId.owner}/albums/${albumId.folderName}/dates`,
+            `/owners/${albumId.owner}/albums/${albumId.folderName}/dates`,
             {
                 method: 'PUT',
                 body: JSON.stringify({
@@ -199,7 +198,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
 
     public async renameAlbum(albumId: AlbumId, newName: string, newFolderName?: string): Promise<AlbumId> {
         return this.fetchRequest<AlbumId>(
-            `${this.baseUrl}/owners/${albumId.owner}/albums/${albumId.folderName}/name`,
+            `/owners/${albumId.owner}/albums/${albumId.folderName}/name`,
             {
                 method: 'PUT',
                 body: JSON.stringify({
@@ -211,7 +210,8 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     }
 
     private async fetchRequest<T>(url: string, options?: RequestInit): Promise<T> {
-        const accessToken = await this.accessTokenHolder.getAccessToken();
+        const baseUrl = await this.baseUrlSupplier();
+        const accessToken = await this.accessTokenSupplier();
 
         const defaultOptions: RequestInit = {
             headers: {
@@ -222,7 +222,9 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
         };
 
         try {
-            const response = await fetch(url, {...defaultOptions, ...options});
+            let fullUrl = `${baseUrl}${url}`;
+            console.log("Requesting:", fullUrl, options);
+            const response = await fetch(fullUrl, {...defaultOptions, ...options});
 
             if (!response.ok) {
                 const contentType = response.headers.get('content-type');
@@ -233,7 +235,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                     }
                 }
 
-                const defaultMessage = `'${options?.method ?? 'GET'} ${url}' failed with status ${response.status} ${response.statusText}`;
+                const defaultMessage = `'${options?.method ?? 'GET'} ${fullUrl}' failed with status ${response.status} ${response.statusText}`;
                 throw new CatalogError('', defaultMessage);
             }
 

@@ -1,11 +1,8 @@
 import {FetchCatalogAdapter} from "@/domains/catalog/adapters/api";
 
-class ClientAccessTokenHolder {
-    async getAccessToken(): Promise<string | undefined> {
-        return undefined;
-    }
-}
-
 export function newClientAdapterFactory(): FetchCatalogAdapter {
-    return new FetchCatalogAdapter(new ClientAccessTokenHolder());
+    // TODO Get the token from memory, or make a call to the server to get it / refresh it.
+    // TODO use default /api/v1 prefix as URL
+    // TODO then return the instance of FetchCatalogAdapter.
+    throw new Error("newClientAdapterFactory() hasn't been implemented yet.")
 }
