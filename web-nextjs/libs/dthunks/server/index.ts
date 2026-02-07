@@ -1,0 +1,1 @@
+export {constructThunkFromDeclaration} from './constructThunkFromDeclaration';

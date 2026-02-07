@@ -1,3 +1,5 @@
+import "server-only";
+
 import {FetchCatalogAdapter} from "@/domains/catalog/adapters/api";
 import {getAccessTokenHolder} from "@/libs/security";
 

@@ -13,6 +13,7 @@ export async function loadAlbumsAndMedias(fetchAlbumsAndMediasPort: FetchAlbumsA
             return noAlbumAvailable(undefined)
         }
     } catch (e) {
+        console.log("loadAlbumsAndMedias > loading albums failed", e)
         return noAlbumAvailable(e as Error);
     }
 
@@ -27,6 +28,7 @@ export async function loadAlbumsAndMedias(fetchAlbumsAndMediasPort: FetchAlbumsA
         });
 
     } catch (e: any) {
+        console.log("loadAlbumsAndMedias > loading medias failed", e)
         return mediaLoadFailed({
             albums: albums,
             displayedAlbumId: albumIdToLoad,

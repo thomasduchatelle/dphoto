@@ -1,11 +1,10 @@
 import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {CatalogFactory} from "../catalog-factories";
-import {DPhotoApplication} from "../../application";
 import {Album, AlbumId, CatalogViewerState, getErrorMessage, Media} from "../language";
 import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {loadAlbumsAndMedias} from "../navigation/utils-loadAlbumsAndMedias";
+import {MasterCatalogAdapter} from "../adapters/api";
 
 
 export interface DeleteAlbumPort {
@@ -51,7 +50,7 @@ export const deleteAlbumDeclaration: ThunkDeclaration<
         selectedAlbumId: getSelectedAlbumId(state)
     }),
     factory: ({dispatch, app, partialState: {selectedAlbumId}}) => {
-        const restAdapter = new CatalogFactory(app as DPhotoApplication).restAdapter();
+        const restAdapter = (app as any).adapter as MasterCatalogAdapter;
         return deleteAlbumThunk.bind(null, dispatch, restAdapter, selectedAlbumId);
     }
 };

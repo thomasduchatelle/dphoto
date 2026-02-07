@@ -1,12 +1,11 @@
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {Album, AlbumId, CatalogViewerAction, CatalogViewerState, getErrorMessage, isCatalogError, isCreateDialog} from "../language";
 import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {CatalogFactory} from "../catalog-factories";
-import {DPhotoApplication} from "../../application";
 import {createAlbumStarted} from "./action-createAlbumStarted";
 import {createAlbumFailed} from "./action-createAlbumFailed";
 import {albumsLoaded} from "../navigation";
 import {convertToModelEndDate, convertToModelStartDate, validateDateRange} from "../date-range/date-helper";
+import {MasterCatalogAdapter} from "../adapters/api";
 
 interface CreateDialogData {
     albumName: string;
@@ -103,7 +102,7 @@ export const submitCreateAlbumDeclaration: ThunkDeclaration<
         };
     },
     factory: ({dispatch, app, partialState}) => {
-        const restAdapter = new CatalogFactory(app as DPhotoApplication).restAdapter();
+        const restAdapter = (app as any).adapter as MasterCatalogAdapter;
         return submitCreateAlbumThunk.bind(null, dispatch, restAdapter, partialState);
     },
 };
