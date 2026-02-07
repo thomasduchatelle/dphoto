@@ -1,6 +1,6 @@
 import {Album, AlbumId, CatalogViewerState, getErrorMessage, isCatalogError, isEditDatesDialog, Media} from "../language";
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
-import {albumsAndMediasLoaded, CatalogFactoryArgs} from "@/domains/catalog";
+import {albumsAndMediasLoaded, CatalogDispatch} from "@/domains/catalog";
 import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
 import {FetchCatalogAdapter} from "@/domains/catalog/adapters/api";
 import {Action} from "@/libs/daction";
@@ -65,7 +65,7 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
     CatalogViewerState,
     UpdateAlbumDatesThunkArgs | undefined,
     () => Promise<void>,
-    CatalogFactoryArgs
+    CatalogDispatch
 > = {
     selector: (state: CatalogViewerState) => {
         const dialog = state.dialog;

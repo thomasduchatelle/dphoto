@@ -3,7 +3,7 @@ import {AlbumId, albumIdEquals, CatalogViewerState, getErrorMessage, isCatalogEr
 import {albumRenamingStarted, AlbumRenamingStarted} from "./action-albumRenamingStarted";
 import {albumRenamed, AlbumRenamed} from "./action-albumRenamed";
 import {albumRenamingFailed, AlbumRenamingFailed} from "./action-albumRenamingFailed";
-import {CatalogFactoryArgs} from "../common/catalog-factory-args";
+import {CatalogDispatch} from "../common/catalog-dispatch";
 import {FetchCatalogAdapter} from "../adapters/api/FetchCatalogAdapter";
 
 export interface SaveAlbumNamePort {
@@ -44,7 +44,7 @@ export const saveAlbumNameDeclaration: ThunkDeclaration<
     CatalogViewerState,
     SaveAlbumNamePreselection,
     () => Promise<void>,
-    CatalogFactoryArgs
+    CatalogDispatch
 > = {
     selector: (state: CatalogViewerState): SaveAlbumNamePreselection => {
         if (!state.dialog || state.dialog.type !== "EditNameDialog") {

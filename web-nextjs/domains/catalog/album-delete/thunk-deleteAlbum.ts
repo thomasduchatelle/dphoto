@@ -1,4 +1,4 @@
-import type {CatalogFactoryArgs} from "../common/catalog-factory-args";
+import type {CatalogDispatch} from "../common/catalog-dispatch";
 import {Album, AlbumId, CatalogViewerState, getErrorMessage, Media} from "../language";
 import {deleteAlbumStarted} from "./action-deleteAlbumStarted";
 import {albumDeleteFailed} from "./action-albumDeleteFailed";
@@ -44,7 +44,7 @@ export const deleteAlbumDeclaration: ThunkDeclaration<
     CatalogViewerState,
     { selectedAlbumId: AlbumId | undefined },
     DeleteAlbumThunk,
-    CatalogFactoryArgs
+    CatalogDispatch
 > = {
     selector: (state: CatalogViewerState) => ({
         selectedAlbumId: getSelectedAlbumId(state)

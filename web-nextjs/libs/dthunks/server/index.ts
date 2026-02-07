@@ -1,1 +1,2 @@
-export {constructThunkFromDeclaration} from './constructThunkFromDeclaration';
+export {constructThunkFromDeclaration, ServerState} from './constructThunkFromDeclaration';
+export {serverSideThunk} from './serverSideThunk';

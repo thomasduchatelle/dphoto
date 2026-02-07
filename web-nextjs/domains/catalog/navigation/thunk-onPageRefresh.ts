@@ -3,7 +3,7 @@ import {AlbumsAndMediasLoaded, albumsAndMediasLoaded} from "./action-albumsAndMe
 import {MediaLoadFailed, mediaLoadFailed} from "./action-mediaLoadFailed";
 import {mediasLoaded} from "./action-mediasLoaded";
 import {NoAlbumAvailable} from "./action-noAlbumAvailable";
-import {CatalogFactoryArgs} from "../common/catalog-factory-args";
+import {CatalogDispatch} from "../common/catalog-dispatch";
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {loadAlbumsAndMedias} from "./utils-loadAlbumsAndMedias";
 
@@ -91,7 +91,7 @@ export const onPageRefreshDeclaration: ThunkDeclaration<
     CatalogViewerState,
     OnPageRefreshArgs,
     (albumId?: AlbumId) => Promise<void>,
-    CatalogFactoryArgs<FetchAlbumsAndMediasPort>
+    CatalogDispatch & { adapter: FetchAlbumsAndMediasPort }
 > = {
     factory: ({adapter, dispatch, partialState}) => {
         const onPageRefreshInstance = new OnPageRefresh(

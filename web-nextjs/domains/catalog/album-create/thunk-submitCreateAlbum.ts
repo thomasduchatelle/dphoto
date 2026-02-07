@@ -1,6 +1,6 @@
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {Album, AlbumId, CatalogViewerAction, CatalogViewerState, getErrorMessage, isCatalogError, isCreateDialog} from "../language";
-import {CatalogFactoryArgs} from "../common/catalog-factory-args";
+import {CatalogDispatch} from "../common/catalog-dispatch";
 import {createAlbumStarted} from "./action-createAlbumStarted";
 import {createAlbumFailed} from "./action-createAlbumFailed";
 import {albumsLoaded} from "../navigation";
@@ -75,7 +75,7 @@ export const submitCreateAlbumDeclaration: ThunkDeclaration<
     CatalogViewerState,
     CreateDialogData,
     () => Promise<void>,
-    CatalogFactoryArgs
+    CatalogDispatch
 > = {
     selector: (state: CatalogViewerState) => {
         const dialog = state.dialog;

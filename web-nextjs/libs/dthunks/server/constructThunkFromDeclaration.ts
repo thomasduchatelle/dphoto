@@ -7,13 +7,13 @@ import {Action} from '@/libs/daction';
  * all dispatched actions, then reduces them against the initial state to compute the final state.
  *
  * @param declaration - The thunk declaration containing factory and selector
- * @param factoryArgs - Factory arguments (adapters, etc.) provided to the thunk
+ * @param factoryArgs - Factory arguments (adapters, etc.) provided to the thunk, excluding dispatch
  * @param serverState - The server state instance to manage dispatched actions and compute final state
  * @returns A function that executes the thunk and returns the final computed state
  */
-export function constructThunkFromDeclaration<TState, TPartialState, TArgs extends any[], TFactoryArgs>(
+export function constructThunkFromDeclaration<TState, TPartialState, TArgs extends any[], TFactoryArgs extends { dispatch: any }>(
     declaration: ThunkDeclaration<TState, TPartialState, (...args: TArgs) => Promise<void>, TFactoryArgs>,
-    factoryArgs: TFactoryArgs,
+    factoryArgs: Omit<TFactoryArgs, 'dispatch'>,
     serverState: ServerState<TState, Action<TState, any>>,
 ): (...args: TArgs) => Promise<TState> {
     const partialState = declaration.selector(serverState.currentState());
@@ -22,7 +22,7 @@ export function constructThunkFromDeclaration<TState, TPartialState, TArgs exten
         ...factoryArgs,
         dispatch: serverState.dispatch,
         partialState,
-    } as TFactoryArgs & { dispatch: typeof serverState.dispatch, partialState: TPartialState });
+    } as TFactoryArgs & { partialState: TPartialState });
 
     return async (...args: TArgs): Promise<TState> => {
         await thunkFunction(...args);
