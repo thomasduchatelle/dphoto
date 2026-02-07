@@ -1,11 +1,11 @@
 import {Album, AlbumId, CatalogViewerState, getErrorMessage, isCatalogError, isEditDatesDialog, Media} from "../language";
 import {albumDatesUpdateStarted} from "./action-albumDatesUpdateStarted";
-import {albumsAndMediasLoaded, CatalogFactoryArgs} from "@/domains/catalog";
+import {albumsAndMediasLoaded} from "@/domains/catalog";
 import {albumDatesUpdateFailed} from "./action-albumDatesUpdateFailed";
-import {FetchCatalogAdapter} from "@/domains/catalog/adapters/api";
 import {Action} from "@/libs/daction";
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {convertToModelEndDate, convertToModelStartDate} from "../date-range/date-helper";
+import {CatalogDispatch} from "@/domains/catalog/common/catalog-dispatch";
 
 export const editDatesOrphanedMediasErrorCode = "OrphanedMediasErr";
 
@@ -65,7 +65,7 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
     CatalogViewerState,
     UpdateAlbumDatesThunkArgs | undefined,
     () => Promise<void>,
-    CatalogFactoryArgs
+    CatalogDispatch & { adapter: UpdateAlbumDatesPort }
 > = {
     selector: (state: CatalogViewerState) => {
         const dialog = state.dialog;
@@ -81,9 +81,8 @@ export const updateAlbumDatesDeclaration: ThunkDeclaration<
         };
     },
 
-    factory: ({dispatch, app, partialState}) => {
-        const updateAlbumDatesPort: UpdateAlbumDatesPort = new FetchCatalogAdapter(app.axiosInstance, app);
+    factory: ({dispatch, adapter, partialState}) => {
         return () =>
-            updateAlbumDatesThunk(dispatch, updateAlbumDatesPort, partialState);
+            updateAlbumDatesThunk(dispatch, adapter, partialState);
     },
 };

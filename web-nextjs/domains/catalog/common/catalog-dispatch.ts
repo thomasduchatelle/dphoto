@@ -1,8 +1,6 @@
-import {DPhotoApplication} from "../../application";
 import {Action} from "@/libs/daction";
 import {CatalogViewerState} from "../language";
 
-export interface CatalogFactoryArgs {
-    app: DPhotoApplication;
+export interface CatalogDispatch {
     dispatch: (action: Action<CatalogViewerState, any>) => void;
 }

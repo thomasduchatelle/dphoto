@@ -3,8 +3,7 @@ import {AlbumId, albumIdEquals, CatalogViewerState, getErrorMessage, isCatalogEr
 import {albumRenamingStarted, AlbumRenamingStarted} from "./action-albumRenamingStarted";
 import {albumRenamed, AlbumRenamed} from "./action-albumRenamed";
 import {albumRenamingFailed, AlbumRenamingFailed} from "./action-albumRenamingFailed";
-import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {FetchCatalogAdapter} from "../adapters/api/FetchCatalogAdapter";
+import {CatalogDispatch} from "../common/catalog-dispatch";
 
 export interface SaveAlbumNamePort {
     renameAlbum(albumId: AlbumId, newName: string, newFolderName?: string): Promise<AlbumId>;
@@ -44,7 +43,7 @@ export const saveAlbumNameDeclaration: ThunkDeclaration<
     CatalogViewerState,
     SaveAlbumNamePreselection,
     () => Promise<void>,
-    CatalogFactoryArgs
+    CatalogDispatch & { adapter: SaveAlbumNamePort }
 > = {
     selector: (state: CatalogViewerState): SaveAlbumNamePreselection => {
         if (!state.dialog || state.dialog.type !== "EditNameDialog") {
@@ -63,8 +62,7 @@ export const saveAlbumNameDeclaration: ThunkDeclaration<
         };
     },
 
-    factory: ({dispatch, app, partialState}) => {
-        const catalogAdapter = new FetchCatalogAdapter(app.axiosInstance, app);
-        return saveAlbumNameThunk.bind(null, dispatch, catalogAdapter, partialState);
+    factory: ({dispatch, adapter, partialState}) => {
+        return saveAlbumNameThunk.bind(null, dispatch, adapter, partialState);
     },
 };

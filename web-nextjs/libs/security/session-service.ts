@@ -5,24 +5,8 @@ import * as client from "openid-client";
 import {newOriginFromRequest, redirectUrl, requestUrlWithBaseBath} from "@/libs/requests";
 import {decodeJWTPayload} from "@/libs/security/jwt-utils";
 import {parseCurrentAccessToken} from "@/libs/security/access-token-service";
-import {CookieValue, newReadCookieStore, newReadCookieStoreFromComponents, ReadCookieStore, Redirection, SetCookies} from "@/libs/nextjs-cookies";
+import {CookieValue, newReadCookieStore, ReadCookieStore, Redirection, SetCookies} from "@/libs/nextjs-cookies";
 import {NextRequest} from "next/server";
-
-export interface AccessTokenHolder {
-    getAccessToken(): Promise<string | undefined>
-}
-
-class CookieAccessTokenHolder implements AccessTokenHolder {
-    async getAccessToken(): Promise<string | undefined> {
-        const cookieStore = await newReadCookieStoreFromComponents();
-        const session = loadSession(cookieStore);
-        return session.accessToken;
-    }
-}
-
-export function getAccessTokenHolder(): AccessTokenHolder {
-    return new CookieAccessTokenHolder();
-}
 
 export interface AuthenticatedUser {
     name: string;

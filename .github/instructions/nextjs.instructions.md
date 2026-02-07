@@ -222,6 +222,27 @@ export const deleteAlbumThunk = async (
 };
 ```
 
+**Thunk Declaration Pattern**:
+
+Thunk declarations define how thunks are wired with adapters (injected), the current state (selected), and the action consumer (dispatch):
+
+```typescript
+// thunk-deleteAlbum.ts
+export const deleteAlbumDeclaration: ThunkDeclaration<
+    AppState,                                       // type of main state, argument of the selector
+    { albumId: string },                            // type of the selection
+    () => Promise<void>,                            // type of the resulting handler (the thunk, minus injected properties and contextual state)
+    AppDispatch & { adapter: DeleteAlbumPort }      // injected implementation (dispatch, and adapter)
+> = {
+    selector: (state: AppState) => ({
+        albumId: state.selectedAlbumId
+    }),
+    factory: ({dispatch, adapter, partialState: {albumId}}) => {
+        return deleteAlbumThunk.bind(null, dispatch, adapter, albumId);
+    }
+};
+```
+
 **Testing Thunks with Fakes**: Use fake implementations instead of mocks. Fakes should mimic real behavior and be reusable:
 
 ```typescript

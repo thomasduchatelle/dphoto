@@ -7,7 +7,6 @@ import {ThunkDeclaration} from "@/libs/dthunks";
 import {sharingThunks} from "./sharing";
 import {baseNameEditThunks} from "./base-name-edit";
 
-export * from "./common/catalog-factory-args";
 export type {RevokeAlbumAccessAPI} from "./sharing/thunk-revokeAlbumAccess";
 export type {GrantAlbumAccessAPI} from "./sharing/thunk-grantAlbumAccess";
 export type {DeleteAlbumThunk, DeleteAlbumPort} from "./album-delete/thunk-deleteAlbum";
