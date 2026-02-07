@@ -16,7 +16,7 @@ import {ServerState} from './constructThunkFromDeclaration';
  */
 export function serverSideThunk<TState, TPartialState, TArgs extends any[], TFactoryArgs extends { dispatch: any }>(
     declaration: ThunkDeclaration<TState, TPartialState, (...args: TArgs) => Promise<void>, TFactoryArgs>,
-    factoryArgs: () => Omit<TFactoryArgs, "dispatch">,
+    factoryArgs: Omit<TFactoryArgs, "dispatch">,
 ) {
     return async (initialState: TState, ...args: TArgs): Promise<TState> => {
         const serverState = new ServerState(initialState);
