@@ -1,8 +1,6 @@
 import {ThunkDeclaration} from "@/libs/dthunks";
 import {Album, AlbumId, CatalogViewerAction, CatalogViewerState, getErrorMessage, isCatalogError, isCreateDialog} from "../language";
-import {CatalogFactoryArgs} from "../common/catalog-factory-args";
-import {CatalogFactory} from "../catalog-factories";
-import {DPhotoApplication} from "../../application";
+import {CatalogDispatch} from "../common/catalog-dispatch";
 import {createAlbumStarted} from "./action-createAlbumStarted";
 import {createAlbumFailed} from "./action-createAlbumFailed";
 import {albumsLoaded} from "../navigation";
@@ -76,7 +74,7 @@ export const submitCreateAlbumDeclaration: ThunkDeclaration<
     CatalogViewerState,
     CreateDialogData,
     () => Promise<void>,
-    CatalogFactoryArgs
+    CatalogDispatch & { adapter: CreateAlbumPort }
 > = {
     selector: (state: CatalogViewerState) => {
         const dialog = state.dialog;
@@ -102,8 +100,7 @@ export const submitCreateAlbumDeclaration: ThunkDeclaration<
             isCustomFolderNameEnabled: dialog.isCustomFolderNameEnabled,
         };
     },
-    factory: ({dispatch, app, partialState}) => {
-        const restAdapter = new CatalogFactory(app as DPhotoApplication).restAdapter();
-        return submitCreateAlbumThunk.bind(null, dispatch, restAdapter, partialState);
+    factory: ({dispatch, adapter, partialState}) => {
+        return submitCreateAlbumThunk.bind(null, dispatch, adapter, partialState);
     },
 };

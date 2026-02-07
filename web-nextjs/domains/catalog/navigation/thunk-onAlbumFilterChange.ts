@@ -1,6 +1,6 @@
 import {Album, AlbumFilterCriterion, albumIdEquals, albumMatchCriterion, CatalogViewerState} from "../language";
 import {albumsFiltered} from "./action-albumsFiltered";
-import {CatalogFactoryArgs} from "../common/catalog-factory-args";
+import {CatalogDispatch} from "../common/catalog-dispatch";
 import {ThunkDeclaration} from "@/libs/dthunks";
 
 export interface AlbumFilterHandlerState {
@@ -22,7 +22,7 @@ export const onAlbumFilterChangeDeclaration: ThunkDeclaration<
     CatalogViewerState,
     AlbumFilterHandlerState,
     (criterion: AlbumFilterCriterion) => void,
-    CatalogFactoryArgs
+    CatalogDispatch
 > = {
     factory: ({dispatch, partialState}) => {
         return onAlbumFilterFunction.bind(null, dispatch, partialState);

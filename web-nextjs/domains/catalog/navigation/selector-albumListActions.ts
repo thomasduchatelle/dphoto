@@ -1,6 +1,13 @@
-import {albumIsOwnedByCurrentUser, CatalogViewerState} from "../language";
-import {AlbumListActionsProps} from "../../../components/albums/AlbumsListActions";
+import {AlbumFilterEntry, albumIsOwnedByCurrentUser, CatalogViewerState} from "../language";
 import {displayedAlbumSelector} from "../language/selector-displayedAlbum";
+
+export interface AlbumListActionsProps {
+    albumFilter: AlbumFilterEntry;
+    albumFilterOptions: AlbumFilterEntry[];
+    displayedAlbumIdIsOwned: boolean;
+    hasAlbumsToDelete: boolean;
+    canCreateAlbums: boolean;
+}
 
 export function albumListActionsSelector(state: CatalogViewerState): AlbumListActionsProps {
     const deleteButtonEnabled = state.allAlbums.some(album => albumIsOwnedByCurrentUser(album));
