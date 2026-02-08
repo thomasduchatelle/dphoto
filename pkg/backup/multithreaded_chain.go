@@ -37,6 +37,7 @@ func scanAndBackupCommonLauncher(config *scanConfiguration, options Options, nex
 			},
 			Next: &chain.BufferLink[*AnalysedMedia]{
 				BufferCapacity: options.BatchSize,
+				ChannelSize:    options.ChannelSize,
 				Next: &chain.MultithreadedLink[[]*AnalysedMedia, []BackingUpMediaRequest]{
 					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentCataloguerRoutines(),
 					ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]*AnalysedMedia] {

@@ -8,6 +8,7 @@ import (
 // BufferLink use a channel to collect items and release them as soon as the BufferCapacity is reached. Next is running on a single thread.
 type BufferLink[Consumed any] struct {
 	BufferCapacity int
+	ChannelSize    int // ChannelSize is the size of the internal channel. Default is 2048.
 	Next           Link[[]Consumed]
 	channel        chan Consumed
 	buffer         *buffer.Buffer[Consumed]
@@ -19,7 +20,10 @@ func (l *BufferLink[Consumed]) Consume(ctx context.Context, consumed Consumed) e
 }
 
 func (l *BufferLink[Consumed]) Starts(ctx context.Context, collector ChainableErrorCollector) error {
-	l.channel = make(chan Consumed, 255)
+	if l.ChannelSize <= 0 {
+		l.ChannelSize = 2048
+	}
+	l.channel = make(chan Consumed, l.ChannelSize)
 	l.buffer = buffer.NewBuffer(l.BufferCapacity, l.Next.Consume)
 
 	go func() {
