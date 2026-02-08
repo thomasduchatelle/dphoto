@@ -30,7 +30,7 @@ export class LambdaAuthoriserConstruct extends Construct {
             timeout: Duration.seconds(10),
             memorySize: 256,
             environment: {
-                COGNITO_JWKS_URL: `${props.issuerUrl}/.well-known/openid-configuration`,
+                COGNITO_OPENID_CONFIG_URL: `${props.issuerUrl}/.well-known/openid-configuration`,
                 DPHOTO_JWT_KEY_B64: props.jwtEncryptionKey,
                 DPHOTO_JWT_ISSUER: `https://${props.environmentName}.duchatelle/dphoto`,
             },

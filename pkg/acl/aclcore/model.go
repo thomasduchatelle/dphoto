@@ -10,10 +10,11 @@ package aclcore
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"time"
 )
 
 var TimeFunc = time.Now
@@ -96,6 +97,7 @@ func (t *OAuthTokenMethod) String() string {
 
 type OAuth2IssuerConfig struct {
 	ConfigSource     string
+	UserInfoEndpoint string
 	PublicKeysLookup func(method OAuthTokenMethod) (interface{}, error)
 }
 

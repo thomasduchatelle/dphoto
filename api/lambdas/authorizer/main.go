@@ -38,7 +38,8 @@ func Handler(request events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGa
 	}
 
 	// Decode and validate JWT token
-	claims, err := common.AccessTokenDecoder().Decode(token)
+	decoder := common.MultiIssuerAccessTokenDecoder()
+	claims, err := decoder.Decode(token)
 	if err != nil {
 		log.WithError(err).Warn("Failed to decode token")
 		return denyResponse(), nil
