@@ -4,17 +4,19 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"math/big"
 	"net/http"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 )
 
 type openIdConfiguration struct {
-	Issuer  string `json:"issuer"`
-	JwksUri string `json:"jwks_uri"`
+	Issuer           string `json:"issuer"`
+	JwksUri          string `json:"jwks_uri"`
+	UserInfoEndpoint string `json:"userinfo_endpoint"`
 }
 
 type jwksKey struct {
@@ -42,7 +44,8 @@ func readUrl(openIdConfigUrl string) (string, aclcore.OAuth2IssuerConfig, error)
 	}
 
 	return index.Issuer, aclcore.OAuth2IssuerConfig{
-		ConfigSource: openIdConfigUrl,
+		ConfigSource:     openIdConfigUrl,
+		UserInfoEndpoint: index.UserInfoEndpoint,
 		PublicKeysLookup: func(method aclcore.OAuthTokenMethod) (interface{}, error) {
 			if method.Algorithm != jwt.SigningMethodRS256.Alg() {
 				return nil, errors.Errorf("[OAuth2JwksConfigReader] %s algorithm is not supported.", method.Algorithm)

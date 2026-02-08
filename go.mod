@@ -22,7 +22,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/go-acme/lego/v4 v4.16.1
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/logrusorgru/aurora/v3 v3.0.0
 	github.com/mitchellh/mapstructure v1.5.0

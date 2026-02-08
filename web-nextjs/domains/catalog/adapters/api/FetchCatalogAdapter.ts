@@ -1,6 +1,6 @@
 import {Album, AlbumId, CatalogError, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
-import {DeleteAlbumPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
+import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
 
 interface RestAlbum {
@@ -34,7 +34,14 @@ interface RestOwnerDetails {
     users: RestUserDetails[]
 }
 
-export type MasterCatalogAdapter = CreateAlbumPort & GrantAlbumAccessAPI & RevokeAlbumAccessAPI & DeleteAlbumPort & UpdateAlbumDatesPort & SaveAlbumNamePort
+export type MasterCatalogAdapter =
+    CreateAlbumPort
+    & GrantAlbumAccessAPI
+    & RevokeAlbumAccessAPI
+    & DeleteAlbumPort
+    & UpdateAlbumDatesPort
+    & SaveAlbumNamePort
+    & FetchAlbumsAndMediasPort
 
 export class FetchCatalogAdapter implements MasterCatalogAdapter {
     constructor(
@@ -65,6 +72,8 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     public fetchAlbums(): Promise<Album[]> {
         return this.fetchRequest<RestAlbum[]>(`/albums`)
             .then(albums => {
+                console.log(`fetchAlbums > received ${albums.length} albums, JSON:`, JSON.stringify(albums, null, 2));
+
                 return Promise.allSettled([
                     this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),
                     this.findUserDetails(new Set<string>(albums.flatMap(a => Object.entries(a.sharedWith ?? {}).map(([email]) => email)))),
@@ -88,7 +97,12 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                     return {albums, owners, users}
                 })
             })
-            .then(({albums, owners, users}) => {
+            .then(result => {
+                const {albums, owners, users} = result;
+                if (albums.length === 0) {
+                    console.log('fetchAlbums > No albums available, returning empty array');
+                    return [];
+                }
                 const maxTemperature = albums.map(a => a.totalCount / numberOfDays(new Date(a.start), new Date(a.end))).reduce(function (p, v) {
                     return (p > v ? p : v);
                 })

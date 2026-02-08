@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclidentitydynamodb"
@@ -20,7 +21,7 @@ import (
 )
 
 var (
-	jwtDecoder      *aclcore.AccessTokenDecoder
+	jwtDecoder      aclcore.TokenDecoder
 	grantRepository aclscopedynamodb.GrantRepository
 	Factory         pkgfactory.Factory
 )
@@ -105,9 +106,42 @@ func NewLogout() *aclcore.Logout {
 	return &aclcore.Logout{RevokeAccessTokenAdapter: newRefreshTokenRepository()}
 }
 
-func AccessTokenDecoder() *aclcore.AccessTokenDecoder {
-	return &aclcore.AccessTokenDecoder{
+func MultiIssuerAccessTokenDecoder() aclcore.TokenDecoder {
+	// Internal decoder (existing)
+	internalDecoder := &aclcore.AccessTokenDecoder{
 		Config: appAuthConfig(),
+	}
+
+	// Cognito decoder (new)
+	cognitoOpenidConfigUrl := viper.GetString(CognitoOpenidConfigUrl)
+
+	var cognitoDecoder aclcore.TokenDecoder
+	if cognitoOpenidConfigUrl != "" {
+		// Load JWKS configuration
+		issuerConfig, err := jwks.LoadIssuerConfig(cognitoOpenidConfigUrl)
+		if err != nil {
+			log.WithError(err).Warnf("Failed to load Cognito JWKS config [%s], Cognito tokens will not be accepted", cognitoOpenidConfigUrl)
+
+		} else {
+			for issuer, config := range issuerConfig {
+				cognitoDecoder = &aclcore.CognitoTokenDecoder{
+					ExpectedIssuer: issuer,
+					IssuerConfig:   config,
+					ScopesReader:   ssoAuthenticatorPermissionReader(),
+				}
+				log.Infof("Cognito token decoder initialized for issuer: %s", issuer)
+			}
+		}
+	}
+
+	// Build multi-issuer decoder
+	decoders := []aclcore.TokenDecoder{internalDecoder}
+	if cognitoDecoder != nil {
+		decoders = append(decoders, cognitoDecoder)
+	}
+
+	return &aclcore.MultiIssuerTokenDecoder{
+		Decoders: decoders,
 	}
 }
 
@@ -128,7 +162,7 @@ func BootstrapCatalogDomain() {
 
 // BootstrapOAuthDomain only bootstraps oauth
 func BootstrapOAuthDomain() {
-	jwtDecoder = AccessTokenDecoder()
+	jwtDecoder = MultiIssuerAccessTokenDecoder()
 	grantRepository = ssoAuthenticatorPermissionReader()
 }
 
