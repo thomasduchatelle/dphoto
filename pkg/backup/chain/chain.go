@@ -2,8 +2,9 @@ package chain
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 type ChainableErrorCollector interface {
@@ -43,7 +44,7 @@ type MultithreadedLink[Consumed any, Produced any] struct {
 	NumberOfRoutines int                                         // NumberOfRoutines is the number of routines on which the ConsumerBuilder returned method will be called. Default is 1.
 	ConsumerBuilder  func(Consumer[Produced]) Consumer[Consumed] // ConsumerBuilder is the factory function to build the consumer that transforms Consumed into Produced. Use PassThrough if no transformation is needed.
 	Cancellable      bool                                        // Cancellable is true if the cancelled context should stop the routine. Default is false.
-	ChannelSize      int                                         // ChannelSize is defaulted to 255
+	ChannelSize      int                                         // ChannelSize is defaulted to 2048
 	Next             Link[Produced]                              // Next will receive the product of the ConsumerBuilder returned method. It is mandatory to have one, use EndOfTheChain to end the chain.
 	channel          chan Consumed
 }
@@ -57,7 +58,7 @@ func (l *MultithreadedLink[Consumed, Produced]) Starts(ctx context.Context, coll
 	}
 
 	if l.ChannelSize <= 0 {
-		l.ChannelSize = 255
+		l.ChannelSize = 2048
 	}
 	if l.NumberOfRoutines <= 0 {
 		l.NumberOfRoutines = 1

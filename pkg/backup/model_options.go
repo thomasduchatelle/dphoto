@@ -8,7 +8,7 @@ type Options struct {
 	ConcurrencyParameters     ConcurrencyParameters
 	BatchSize                 int    // BatchSize is the number of items to read from the database at once (used by analyser) ; default to the maximum DynamoDB can handle
 	RejectDir                 string // RejectDir is the directory where rejected files will be copied
-	ChannelSize               int    // ChannelSize is a hint of the size of the channels to use. Default is set in the `chain` package (255).
+	ChannelSize               int    // ChannelSize is a hint of the size of the channels to use. Default is set in the `chain` package (2048).
 }
 
 func ReduceOptions(requestedOptions ...Options) Options {
