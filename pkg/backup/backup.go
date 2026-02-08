@@ -88,6 +88,7 @@ func multithreadedBackupRuntime(ctxNonCancelable context.Context, options Option
 		&chain.ReBufferLink[BackingUpMediaRequest]{
 			BufferLink: chain.BufferLink[BackingUpMediaRequest]{
 				BufferCapacity: options.BatchSize,
+				ChannelSize:    options.ChannelSize,
 				Next: &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
 					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentUploaderRoutines(),
 					ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]BackingUpMediaRequest] {

@@ -20,7 +20,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/dgraph-io/badger/v4 v4.2.0
 	github.com/disintegration/imaging v1.6.2
-	github.com/dixonwille/skywalker v0.0.0-20210831172208-e262af346a55
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/go-acme/lego/v4 v4.16.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -59,7 +58,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
-	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
