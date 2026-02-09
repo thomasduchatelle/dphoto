@@ -1,7 +1,7 @@
 'use client';
 
-import {Box, Button, Paper, Typography} from '@mui/material';
-import {ErrorOutline as ErrorOutlineIcon} from '@mui/icons-material';
+import {Box, Button} from '@mui/material';
+import {ErrorDisplay} from '@/components/shared/ErrorDisplay';
 import Link from '@/components/Link';
 
 export default function AuthenticatedError({
@@ -21,42 +21,20 @@ export default function AuthenticatedError({
                 p: 2,
             }}
         >
-            <Paper
-                elevation={3}
-                sx={{
-                    p: 4,
-                    maxWidth: 500,
-                    textAlign: 'center',
-                }}
-            >
-                <ErrorOutlineIcon
-                    sx={{
-                        fontSize: 64,
-                        color: 'error.main',
-                        mb: 2,
+            <Box>
+                <ErrorDisplay
+                    error={{
+                        message: error.message || 'An unexpected error occurred while loading your albums',
+                        details: error.stack,
                     }}
+                    onRetry={reset}
                 />
-                <Typography variant="h4" gutterBottom>
-                    Something went wrong
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{mb: 3}}>
-                    {error.message || 'An unexpected error occurred while loading your albums'}
-                </Typography>
-                <Box sx={{display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap'}}>
-                    <Button
-                        variant="contained"
-                        onClick={reset}
-                        sx={{bgcolor: 'primary.main'}}
-                    >
-                        Try Again
+                <Box sx={{display: 'flex', justifyContent: 'center', mt: 2}}>
+                    <Button component={Link} href="/" variant="outlined" prefetch={false}>
+                        Return to Albums
                     </Button>
-                    <Link href="/">
-                        <Button variant="outlined">
-                            Return to Albums
-                        </Button>
-                    </Link>
                 </Box>
-            </Paper>
+            </Box>
         </Box>
     );
 }

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPhoto User Menu Component</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f4f5;
+            padding: 20px;
+        }
+
+        .user-info {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: white;
+            border-radius: 9999px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 0.5rem 1rem;
+            border: 1px solid #e4e4e7;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 9999px;
+        }
+
+        .user-avatar-fallback {
+            width: 32px;
+            height: 32px;
+            border-radius: 9999px;
+            background-color: #d4d4d8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-avatar-fallback span {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #3f3f46;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #18181b;
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+            color: #52525b;
+        }
+
+        .logout-button {
+            margin-left: 0.5rem;
+            border-radius: 9999px;
+            padding: 0.5rem;
+            color: #52525b;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .logout-button:hover {
+            background-color: #f4f4f5;
+        }
+
+        .logout-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        /* Dark mode styles */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #18181b;
+            }
+
+            .user-info {
+                background-color: #18181b;
+                border-color: #27272a;
+            }
+
+            .user-avatar-fallback {
+                background-color: #3f3f46;
+            }
+
+            .user-avatar-fallback span {
+                color: #d4d4d8;
+            }
+
+            .user-name {
+                color: #fafafa;
+            }
+
+            .user-email {
+                color: #a1a1aa;
+            }
+
+            .logout-button {
+                color: #a1a1aa;
+            }
+
+            .logout-button:hover {
+                background-color: #27272a;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- User menu with picture -->
+<div class="user-info">
+    <img
+            src="https://lh3.googleusercontent.com/a/ACg8ocK5example"
+            alt="John Doe"
+            class="user-avatar"
+    />
+    <div class="user-details">
+        <span class="user-name">John Doe</span>
+        <span class="user-email">john.doe@example.com</span>
+    </div>
+    <a
+            href="/auth/logout"
+            class="logout-button"
+            title="Logout"
+    >
+        <svg
+                class="logout-icon"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+        >
+            <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+        </svg>
+    </a>
+</div>
+
+<!-- Alternative: User menu with avatar fallback (first letter) -->
+<div class="user-info" style="top: 5rem;">
+    <div class="user-avatar-fallback">
+        <span>J</span>
+    </div>
+    <div class="user-details">
+        <span class="user-name">Jane Smith</span>
+        <span class="user-email">jane.smith@example.com</span>
+    </div>
+    <a
+            href="/auth/logout"
+            class="logout-button"
+            title="Logout"
+    >
+        <svg
+                class="logout-icon"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+        >
+            <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+        </svg>
+    </a>
+</div>
+
+<script>
+    // Optional: Add click handler for logout button
+    document.querySelectorAll('.logout-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Logout clicked');
+            alert('Logout functionality would redirect to: ' + button.getAttribute('href'));
+        });
+    });
+</script>
+</body>
+</html>

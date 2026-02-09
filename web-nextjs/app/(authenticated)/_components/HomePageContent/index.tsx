@@ -13,6 +13,7 @@ export interface HomePageContentProps {
 }
 
 export function HomePageContent({albums, isLoading, error}: HomePageContentProps) {
+
     if (isLoading) {
         return (
             <Box
@@ -81,8 +82,8 @@ export function HomePageContent({albums, isLoading, error}: HomePageContentProps
     }
 
     return (
-        <Box sx={{p: 3}}>
-            <Typography variant="h4" sx={{mb: 3}}>
+        <Box>
+            <Typography variant="h1" sx={{mb: 3}}>
                 Albums
             </Typography>
             <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>

@@ -1,9 +1,9 @@
 import "server-only"
 
 import type {Metadata} from "next";
-import {UserInfo} from "@/components/UserInfo";
 import {getCurrentAuthentication} from "@/libs/security";
 import {newReadCookieStoreFromComponents} from "@/libs/nextjs-cookies";
+import AppLayout from "@/components/AppLayout";
 
 
 export const metadata: Metadata = {
@@ -18,17 +18,13 @@ export default async function RootLayout({
 }>) {
     const authentication = await getCurrentAuthentication(await newReadCookieStoreFromComponents())
 
+    if (authentication.status !== 'authenticated') {
+        return <>{children}</>;
+    }
+
     return (
-        <>
-            {authentication.status == 'authenticated' && (
-                <UserInfo
-                    name={authentication.authenticatedUser.name}
-                    email={authentication.authenticatedUser.email}
-                    picture={authentication.authenticatedUser.picture}
-                    logoutUrl={authentication.logoutUrl}
-                />
-            )}
+        <AppLayout user={authentication.authenticatedUser} logoutUrl={authentication.logoutUrl}>
             {children}
-        </>
+        </AppLayout>
     );
 }
