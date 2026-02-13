@@ -95,8 +95,7 @@ export class ApplicationStack extends cdk.Stack {
             archiveStore: archiveAccessManager,
             catalogStore: catalogAccessManager,
             archivist: archivistAccessManager,
-            authorizer: lambdaAuthorizer.authorizer,
-            queryParamAuthorizer: lambdaAuthorizer.queryParamAuthorizer,
+            authorizer: lambdaAuthorizer.mediaAuthorizer,
         });
 
         // TODO AGENTS - Remove the construct (class definition and this instantiation) after Cognito switch over (it won't be used).

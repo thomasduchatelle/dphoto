@@ -1,11 +1,11 @@
-name: Update Snapshots on Comment
+name: Update NextJS Snapshots on Comment
 on:
   issue_comment:
     types: [created]
 
 jobs:
   check-comment:
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '+update-snapshots') }}
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '+update-snapshots') && !contains(github.event.comment.body, '+update-snapshots-waku') }}
     runs-on: ubuntu-latest
     outputs:
       pr-ref: ${{ steps.pr.outputs.ref }}
@@ -35,20 +35,20 @@ jobs:
               content: 'rocket'
             });
 
-  test-ts:
+  test-nextjs:
     needs: check-comment
-    uses: ./.github/workflows/job-test-ts.yml
+    uses: ./.github/workflows/job-test-nextjs.yml
     with:
       update-snapshots: true
       ref: ${{ needs.check-comment.outputs.pr-ref }}
 
   comment-result:
-    needs: [check-comment, test-ts]
+    needs: [ check-comment, test-nextjs ]
     if: always() && needs.check-comment.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Comment update success
-        if: needs.test-ts.result == 'success'
+        if: needs.test-nextjs.result == 'success'
         uses: actions/github-script@v7
         with:
           script: |
@@ -56,11 +56,11 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ Snapshots updated successfully!'
+              body: '✅ NextJS snapshots updated successfully!'
             });
 
       - name: Comment update failure
-        if: needs.test-ts.result != 'success'
+        if: needs.test-nextjs.result != 'success'
         uses: actions/github-script@v7
         with:
           script: |
@@ -68,5 +68,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ Snapshot update failed. Check the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.'
+              body: '❌ NextJS snapshot update failed. Check the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.'
             });

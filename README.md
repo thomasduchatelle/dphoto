@@ -130,7 +130,8 @@ With:
 * domains: catalog, archive, backup
 * area: web, cli, proj, api, ...
 * supported tags are:
-  * `+update-snapshots`: snapshots used to test visual regression will be updated
+  * `+update-snapshots`: updates visual regression snapshots for web-nextjs (primary web project)
+  * `+update-snapshots-waku`: updates visual regression snapshots for web (legacy Waku project)
   * `+patch`, `+minor`, `+major`: control the version of the software
   * `+pr`: creates a Pull Request if the pipeline is successful
 
@@ -162,3 +163,11 @@ DynamoDB is a single table documented in [README.md](DATA_MODEL.md).
 ### TODOs
 
 [TODO.md](./TODO.md)
+
+### Fix imports in IntelliJ
+
+In Settings > Language & Framework > Typescript, set the value of `Options` to:
+
+```
+--project {repository path}/web-nextjs/tsconfig.json
+```

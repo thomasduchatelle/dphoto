@@ -1,37 +1,17 @@
 'use client';
 
-import {Album} from '@/domains/catalog/language/catalog-state';
-import {Box, Button, CircularProgress, Typography} from '@mui/material';
-import Link from '@/components/Link';
+import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
+import {Box, Button, Typography} from '@mui/material';
+import {AlbumGrid} from '../AlbumGrid';
 
 export interface HomePageContentProps {
     albums: Album[];
-    isLoading: boolean;
     error?: Error;
     // TODO Pass the `onRetry` callback when the parent will also be a client component
     // onRetry: () => void;
 }
 
-export function HomePageContent({albums, isLoading, error}: HomePageContentProps) {
-
-    if (isLoading) {
-        return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '50vh',
-                    gap: 2,
-                }}
-            >
-                <CircularProgress/>
-                <Typography>Loading albums...</Typography>
-            </Box>
-        );
-    }
-
+export function HomePageContent({albums, error}: HomePageContentProps) {
     if (error) {
         return (
             <Box
@@ -82,22 +62,6 @@ export function HomePageContent({albums, isLoading, error}: HomePageContentProps
     }
 
     return (
-        <Box>
-            <Typography variant="h1" sx={{mb: 3}}>
-                Albums
-            </Typography>
-            <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>
-                {albums.map((album) => (
-                    <Box key={`${album.albumId.owner}-${album.albumId.folderName}`} sx={{marginBottom: 1}}>
-                        <Link
-                            href={`/albums/${album.albumId.owner}/${album.albumId.folderName}`}
-                            prefetch={false}
-                        >
-                            <Typography>{album.name}</Typography>
-                        </Link>
-                    </Box>
-                ))}
-            </Box>
-        </Box>
+        <AlbumGrid albums={albums} onShare={(id: AlbumId) => console.log('onShare', id)}/>
     );
 }

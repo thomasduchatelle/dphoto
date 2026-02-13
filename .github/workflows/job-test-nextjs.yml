@@ -1,6 +1,14 @@
 on:
   workflow_call:
-    inputs: { }
+    inputs:
+      update-snapshots:
+        description: "Force update snapshots mode"
+        type: boolean
+        required: true
+      ref:
+        description: "Git ref to checkout (branch, tag, or SHA)"
+        type: string
+        required: false
 
 jobs:
   test-nextjs:
@@ -22,16 +30,38 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: web-nextjs/package-lock.json
 
       - name: Install dependencies
         run: |
-          cd web-nextjs
-          npm ci
+          make setup-web-nextjs-ci
+
+      - name: Generate snapshots
+        id: generate-snapshots
+        if: ${{ inputs.update-snapshots }}
+        run: |
+          make update-snapshots-ci
+
+      - name: Publish new snapshots
+        if: ${{ inputs.update-snapshots }}
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: ui/test - update visual regression snapshots (nextjs)
+          branch: ${{ inputs.ref || github.head_ref }}
 
       - name: Run tests
         run: |
           cd web-nextjs
-          npm test
+          npm run test:ci
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-nextjs
+          path: |
+            web-nextjs/playwright-report/
+            web-nextjs/test-results/
+          retention-days: 30

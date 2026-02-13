@@ -73,7 +73,7 @@ install-cli:
 ## WEB
 #######################################
 
-.PHONY: clean-web setup-web setup-web-ci setup-web-ci-no-playwright test-web test-web-ci test-web-agent update-snapshots update-snapshots-ci build-web start ladle playwright
+.PHONY: clean-web setup-web setup-web-ci setup-web-ci-no-playwright test-web test-web-ci test-web-agent update-snapshots-waku update-snapshots-waku-ci build-web start ladle playwright
 
 clean-web:
 	cd web && rm -rf dist/ && rm -f bin/waku-lambda.zip
@@ -97,12 +97,12 @@ test-web-ci:
 test-web-agent:
 	cd web && CI=true npm run test:unit
 
-update-snapshots:
-	@echo "Update local snapshots"
+update-snapshots-waku:
+	@echo "Update local snapshots for web (waku)"
 	rm -rf web/playwright/visual-regression.spec.ts-local && cd web && npm run test:visual -- -u --reporter list
 
-update-snapshots-ci:
-	@echo "Update snapshots [should only be used on CI]"
+update-snapshots-waku-ci:
+	@echo "Update snapshots for web (waku) [should only be used on CI]"
 	rm -rf web/playwright/visual-regression.spec.ts-snapshots && cd web && npm run test:visual -- -u
 
 build-web:
@@ -122,10 +122,32 @@ playwright:
 ## WEB - NEXTJS
 #######################################
 
-.PHONY: clean-web setup-web setup-web-ci setup-web-ci-no-playwright test-web test-web-ci test-web-agent update-snapshots update-snapshots-ci build-web start ladle playwright
+.PHONY: setup-web-nextjs setup-web-nextjs-ci test-web-nextjs update-snapshots update-snapshots-ci build-web-nextjs storybook
+
+setup-web-nextjs:
+	cd web-nextjs && npm install
+	cd web-nextjs && npx playwright install
+
+setup-web-nextjs-ci:
+	cd web-nextjs && npm ci
+	cd web-nextjs && npx playwright install chromium --with-deps
+
+test-web-nextjs:
+	cd web-nextjs && npm test
+
+update-snapshots:
+	@echo "Update local snapshots for web-nextjs"
+	rm -rf web-nextjs/playwright/visual-regression.spec.ts-local && cd web-nextjs && npm run test:visual -- -u --reporter list
+
+update-snapshots-ci:
+	@echo "Update snapshots for web-nextjs [should only be used on CI]"
+	rm -rf web-nextjs/playwright/visual-regression.spec.ts-snapshots && cd web-nextjs && npm run test:visual -- -u
 
 build-web-nextjs:
 	cd web-nextjs && npm run build
+
+storybook:
+	cd web-nextjs && npm run storybook
 
 deploy-sst:
 	cd deployments/cdk && npx sst --stage next deploy --yes

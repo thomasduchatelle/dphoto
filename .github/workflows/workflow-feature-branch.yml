@@ -17,9 +17,11 @@ jobs:
   test-ts:
     uses: ./.github/workflows/job-test-ts.yml
     with:
-      update-snapshots: ${{ contains(github.event.head_commit.message, '+update-snapshots') }}
+      update-snapshots: ${{ contains(github.event.head_commit.message, '+update-snapshots-waku') }}
   test-nextjs:
     uses: ./.github/workflows/job-test-nextjs.yml
+    with:
+      update-snapshots: ${{ contains(github.event.head_commit.message, '+update-snapshots') && !contains(github.event.head_commit.message, '+update-snapshots-waku') }}
   test-cdk:
     uses: ./.github/workflows/job-test-cdk.yml
     with:

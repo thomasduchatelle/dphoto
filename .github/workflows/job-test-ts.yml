@@ -13,6 +13,7 @@ on:
 jobs:
   test-ts:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,13 +34,13 @@ jobs:
         id: generate-snapshots
         if: ${{ inputs.update-snapshots }}
         run: |
-          make update-snapshots-ci
+          make update-snapshots-waku-ci
 
       - name: Publish new snapshots
         if: ${{ inputs.update-snapshots }}
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: ui/test - update visual regression snapshots
+          commit_message: ui/test - update visual regression snapshots (waku)
           branch: ${{ inputs.ref || github.head_ref }}
 
       - name: Test and build WEB UI
@@ -53,6 +54,4 @@ jobs:
           path: |
             web/playwright-report/
             web/test-results/
-            web-waku/playwright-report/
-            web-waku/test-results/
           retention-days: 30

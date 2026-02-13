@@ -26,7 +26,6 @@ export default async function HomePage() {
     return (
         <HomePageContent
             albums={catalogState.albums}
-            isLoading={!catalogState.albumsLoaded}
             error={catalogState.error}
         />
     )

@@ -9,8 +9,11 @@
     "dev": "next dev",
     "lint": "eslint",
     "start": "next start",
-    "test": "vitest run",
+    "test": "vitest run && npm run test:visual",
+    "test:ci": "vitest run && npm run test:visual -- --reporter html",
     "test:watch": "vitest",
+    "test:visual": "npx playwright test",
+    "test:update": "npx playwright test -u",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -32,8 +35,8 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.1",
     "@opennextjs/aws": "^3.9.7",
+    "@playwright/test": "^1.58.2",
     "@storybook/addon-a11y": "^10.2.8",
-    "@storybook/addon-docs": "^10.2.8",
     "@storybook/addon-onboarding": "^10.2.8",
     "@storybook/addon-viewport": "^9.0.8",
     "@storybook/addon-vitest": "^10.2.8",
@@ -55,6 +58,7 @@
     "playwright": "^1.58.2",
     "storybook": "^10.2.8",
     "storybook-dark-mode": "^4.0.2",
+    "sync-fetch": "^0.6.0-2",
     "typescript": "^5",
     "vite": "^7.3.1",
     "vitest": "^4.0.16"

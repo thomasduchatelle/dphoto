@@ -1,8 +1,6 @@
 import {defineConfig} from 'vitest/config';
 import path from 'path';
 import {fileURLToPath} from 'node:url';
-import {storybookTest} from '@storybook/addon-vitest/vitest-plugin';
-import {playwright} from '@vitest/browser-playwright';
 
 const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,6 +10,14 @@ export default defineConfig({
         environment: 'jsdom',
         globals: true,
         setupFiles: [],
+        // Explicitly exclude Playwright visual regression tests
+        exclude: [
+            '**/node_modules/**',
+            '**/dist/**',
+            '**/playwright/**',
+            '**/.{idea,git,cache,output,temp}/**',
+            '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*'
+        ],
         // projects: [{
         //     extends: true,
         //     plugins: [

@@ -82,6 +82,7 @@ export interface Album {
     relativeTemperature: number
     ownedBy?: OwnerDetails // only present when not owned by current user TODO should be present when owned by user or his picture won't be available.
     sharedWith: Sharing[]
+    thumbnails?: string[] // up to 4 thumbnail URLs for display (test purposes)
 }
 
 export interface AlbumFilterCriterion {

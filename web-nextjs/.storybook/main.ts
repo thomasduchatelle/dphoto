@@ -13,7 +13,9 @@ const config: StorybookConfig = {
     ],
     "framework": "@storybook/nextjs-vite",
     "staticDirs": [
-        "../public"
+        "../public",
+        "../stories/assets",
+        "../../test/wiremock/__files/api",
     ]
 };
 export default config;

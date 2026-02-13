@@ -1,149 +1,370 @@
 'use client';
 
-import {Box, Card, Typography} from '@mui/material';
-import {UserAvatar} from '@/components/UserAvatar';
-import {SharedByIndicator} from '@/components/shared/SharedByIndicator';
+import {Badge, Box, IconButton, Typography} from '@mui/material';
+import ShareIcon from '@mui/icons-material/Share';
+import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
+import {SharedByIndicator} from './SharedByIndicator';
 
 export interface AlbumCardProps {
-    album: {
-        albumId: string;
-        ownerId: string;
-        name: string;
-        startDate: string;
-        endDate: string;
-        mediaCount: number;
-    };
-    owner?: {
-        name: string;
-        email: string;
-        picture?: string;
-    };
-    sharedWith?: Array<{
-        name: string;
-        email: string;
-        picture?: string;
-    }>;
-    onClick: (albumId: string, ownerId: string) => void;
+    album: Album;
+    onShare: (albumId: AlbumId) => void;
 }
 
-type Density = 'high' | 'medium' | 'low';
-
-const DENSITY_COLORS: Record<Density, string> = {
-    high: '#ff6b6b',
-    medium: '#ffd43b',
-    low: '#51cf66',
+// Helper to get temperature color based on relativeTemperature (0-1 scale)
+const getTemperatureColor = (relativeTemp: number): string => {
+    if (relativeTemp >= 0.8) return '#ff6b6b'; // Hot - red
+    if (relativeTemp >= 0.5) return '#ffa94d'; // Warm - orange
+    if (relativeTemp >= 0.3) return '#74c0fc'; // Cool - light blue
+    return '#a5d8ff'; // Cold - pale blue
 };
 
-const calculateDensity = (startDate: string, endDate: string, mediaCount: number): Density => {
-    const days = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
-    const photosPerDay = mediaCount / days;
-    if (photosPerDay > 10) return 'high';
-    if (photosPerDay >= 3) return 'medium';
-    return 'low';
-};
-
-const formatDateRange = (startDate: string, endDate: string): string => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const format = (date: Date) =>
-        date.toLocaleDateString('en-US', {
+const formatDateRange = (start: Date, end: Date): string => {
+    const formatDate = (date: Date): string => {
+        return date.toLocaleDateString('en-GB', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
-        });
-    return `${format(start)} - ${format(end)}`.toUpperCase();
+        }).toUpperCase();
+    };
+    return `${formatDate(start)} → ${formatDate(end)}`;
 };
 
-export const AlbumCard = ({album, owner, sharedWith, onClick}: AlbumCardProps) => {
-    const density = calculateDensity(album.startDate, album.endDate, album.mediaCount);
-    const densityColor = DENSITY_COLORS[density];
-
-    const handleClick = () => {
-        onClick(album.albumId, album.ownerId);
+export const AlbumCard = ({album, onShare}: AlbumCardProps) => {
+    const handleClickOnShare = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onShare(album.albumId);
     };
-
-    const handleKeyDown = (event: React.KeyboardEvent) => {
-        if (event.key === 'Enter') {
-            handleClick();
-        }
-    };
+    const temperatureColor = getTemperatureColor(album.relativeTemperature);
 
     return (
-        <Card
-            role="button"
-            tabIndex={0}
-            onClick={handleClick}
-            onKeyDown={handleKeyDown}
-            aria-label={`Album: ${album.name}, ${album.mediaCount} photos, ${formatDateRange(album.startDate, album.endDate)}`}
-            sx={{
-                bgcolor: 'background.paper',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 0,
-                p: 3,
+        <Box
+            aria-label={`Album: ${album.name}, ${album.totalCount} photos`}
+            sx={(theme) => ({
+                position: 'relative',
                 cursor: 'pointer',
-                transition: 'box-shadow 0.2s',
-                '&:hover': {
-                    boxShadow: 4,
+                transition: 'all 0.3s ease',
+                [theme.breakpoints.up('sm')]: {
+                    '&:hover': {
+                        boxShadow: '0 12px 40px rgba(24, 89, 134, 0.4)',
+                        '& .album-photo': {
+                            filter: 'brightness(0.85)',
+                        },
+                        '& .compact-bar': {
+                            opacity: 0,
+                        },
+                        '& .expanded-overlay': {
+                            opacity: 1,
+                        },
+                    },
                 },
                 '&:focus': {
-                    outline: `2px solid`,
+                    outline: '2px solid',
                     outlineColor: 'primary.main',
                     outlineOffset: 2,
                 },
-            }}
+            })}
         >
-            <Typography
-                variant="h2"
+            {/* Photo grid: 2x2 on desktop, 1x4 on mobile */}
+            <Box sx={{display: 'grid', gridTemplateColumns: {xs: 'repeat(4, 1fr)', sm: 'repeat(2, 1fr)'}, gap: 1}}>
+                {[0, 1, 2, 3].map((i) => {
+                    const thumbnail = album.thumbnails?.[i];
+                    return (
+                        <Box
+                            key={i}
+                            className="album-photo"
+                            sx={{
+                                aspectRatio: '1',
+                                background: 'linear-gradient(135deg, #1e3a5f, #2a4a6f)',
+                                transition: 'filter 0.3s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: !thumbnail ? 32 : 12,
+                                opacity: !thumbnail ? 0.15 : 1,
+                                overflow: 'hidden',
+                                position: 'relative',
+                            }}
+                        >
+                            {thumbnail ? (
+                                <img
+                                    src={thumbnail}
+                                    alt={`${album.name} thumbnail ${i + 1}`}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                    }}
+                                />
+                            ) : (
+                                '🖼️'
+                            )}
+                        </Box>
+                    );
+                })}
+            </Box>
+
+            {/* Compact bar below photos */}
+            <Box
+                className="compact-bar"
                 sx={{
-                    fontFamily: 'Georgia, serif',
-                    fontSize: 22,
-                    fontWeight: 300,
-                    mb: 1,
+                    position: 'relative',
+                    background: 'rgba(10, 21, 32, 0.95)',
+                    padding: '12px 15px 15px 5px',
+                    transition: 'opacity 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 0.5,
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: `linear-gradient(to right, ${temperatureColor}, transparent)`,
+                    },
                 }}
             >
-                {album.name}
-            </Typography>
+                <Typography
+                    sx={{
+                        fontFamily: 'Georgia, serif',
+                        fontSize: 18,
+                        fontWeight: 300,
+                        color: '#ffffff',
+                        lineHeight: 1.2,
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        mr: 2,
+                    }}
+                >
+                    {album.name}
+                </Typography>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0}}>
+                    <Typography
+                        sx={{
+                            fontFamily: 'Courier New, monospace',
+                            fontSize: 13,
+                            color: temperatureColor,
+                            fontWeight: 500,
+                        }}
+                    >
+                        {album.totalCount}
+                    </Typography>
+                    {!album.ownedBy && (
+                        <IconButton
+                            onClick={handleClickOnShare}
+                            sx={{display: {xs: 'inline-flex', sm: 'none'}, p: 0.5}}
+                        >
+                            <Badge
+                                badgeContent={album.sharedWith.length}
+                                color="primary"
+                                sx={{
+                                    '& .MuiBadge-badge': {
+                                        fontSize: 9,
+                                        height: 14,
+                                        minWidth: 14,
+                                        padding: '0 4px',
+                                        backgroundColor: temperatureColor,
+                                        color: '#ffffff',
+                                        fontWeight: 600,
+                                    },
+                                }}
+                            >
+                                <ShareIcon sx={{fontSize: 16, color: 'rgba(255, 255, 255, 0.7)'}}/>
+                            </Badge>
+                        </IconButton>
+                    )}
+                    {album.sharedWith.length > 0 && (
+                        <Badge
+                            badgeContent={album.sharedWith.length}
+                            color="primary"
+                            sx={{
+                                display: {xs: 'none', sm: 'inline-flex'},
+                                '& .MuiBadge-badge': {
+                                    fontSize: 9,
+                                    height: 14,
+                                    minWidth: 14,
+                                    padding: '0 4px',
+                                    backgroundColor: temperatureColor,
+                                    color: '#ffffff',
+                                    fontWeight: 600,
+                                },
+                            }}
+                        >
+                            <ShareIcon sx={{fontSize: 16, color: 'rgba(255, 255, 255, 0.7)'}}/>
+                        </Badge>
+                    )}
+                    {album.ownedBy && (
+                        <SharedByIndicator users={album.ownedBy.users}/>
+                    )}
+                </Box>
+                {/* Date range: only visible on mobile */}
+                <Typography
+                    sx={{
+                        display: {xs: 'block', sm: 'none'},
+                        width: '100%',
+                        fontFamily: 'Courier New, monospace',
+                        fontSize: 11,
+                        color: 'rgba(255, 255, 255, 0.65)',
+                        fontWeight: 300,
+                        letterSpacing: '0.05em',
+                    }}
+                >
+                    {formatDateRange(album.start, album.end)}
+                </Typography>
+            </Box>
 
-            <Typography
+            {/* Expanded overlay on hover */}
+            <Box
+                className="expanded-overlay"
                 sx={{
-                    fontFamily: 'Courier New, monospace',
-                    fontSize: 13,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    color: 'text.secondary',
-                    mb: 0.5,
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background:
+                        'linear-gradient(to top, rgba(24, 89, 134, 0.98) 0%, rgba(24, 89, 134, 0.75) 70%, transparent 100%)',
+                    padding: '48px 15px 15px',
+                    opacity: 0,
+                    transition: 'opacity 0.3s ease',
                 }}
             >
-                {formatDateRange(album.startDate, album.endDate)}
-            </Typography>
 
-            <Typography
-                sx={{
-                    fontFamily: 'Courier New, monospace',
-                    fontSize: 13,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    color: densityColor,
-                    mb: 2,
-                }}
-            >
-                {album.mediaCount} PHOTOS
-            </Typography>
-
-            {owner && (
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 1}}>
-                    <UserAvatar name={owner.name} picture={owner.picture} size="small"/>
-                    <Typography variant="body2" color="text.secondary">
-                        {owner.name}
+                <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1.5}}>
+                    <Typography
+                        sx={{
+                            fontFamily: 'Georgia, serif',
+                            fontSize: 22,
+                            fontWeight: 300,
+                            color: '#ffffff',
+                            lineHeight: 1.3,
+                        }}
+                    >
+                        {album.name}
+                    </Typography>
+                    <Typography
+                        sx={{
+                            fontFamily: 'Courier New, monospace',
+                            fontSize: 13,
+                            color: temperatureColor,
+                            fontWeight: 400,
+                            lineHeight: 1.3,
+                        }}
+                    >
+                        {album.totalCount} medias
                     </Typography>
                 </Box>
-            )}
 
-            {sharedWith && sharedWith.length > 0 && (
-                <Box sx={{mt: 2}}>
-                    <SharedByIndicator users={sharedWith}/>
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderTop: `1px solid ${temperatureColor}`,
+                    pt: 1,
+                    mb: 1.5,
+                }}>
+                    <Typography
+                        sx={{
+                            fontFamily: 'Courier New, monospace',
+                            fontSize: 13,
+                            color: 'rgba(255, 255, 255, 0.85)',
+                            fontWeight: 300,
+                            letterSpacing: '0.05em',
+                        }}
+                    >
+                        {formatDateRange(album.start, album.end)}
+                    </Typography>
                 </Box>
-            )}
-        </Card>
+
+                {!album.ownedBy && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexWrap: "nowrap",
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: 1,
+                            pt: 1,
+                        }}
+                    >
+                        {album.sharedWith.length > 0 && (
+                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                <Typography
+                                    sx={{
+                                        fontSize: 11,
+                                        color: 'rgba(255, 255, 255, 0.8)',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.08em',
+                                    }}
+                                >
+                                    Shared with
+                                </Typography>
+                                <SharedByIndicator users={album.sharedWith.map((s) => s.user)}/>
+                            </Box>
+                        ) || (
+                            <Typography
+                                sx={{
+                                    fontSize: 11,
+                                    color: 'rgba(255, 255, 255, 0.6)',
+                                    fontStyle: 'italic',
+                                }}
+                            >
+                                Private album
+                            </Typography>
+                        )}
+                        <IconButton
+                            onClick={handleClickOnShare}>
+                            <Badge
+                                badgeContent={album.sharedWith.length}
+                                color="primary"
+                                sx={{
+                                    '& .MuiBadge-badge': {
+                                        fontSize: 9,
+                                        height: 14,
+                                        minWidth: 14,
+                                        padding: '0 4px',
+                                        backgroundColor: temperatureColor,
+                                        color: '#ffffff',
+                                        fontWeight: 600,
+                                    },
+                                }}
+                            >
+                                <ShareIcon sx={{fontSize: 16, color: 'rgba(255, 255, 255, 0.7)'}}/>
+                            </Badge>
+                        </IconButton>
+                    </Box>
+                )}
+
+                {album.ownedBy && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 1,
+                            pt: 1,
+                            mt: album.sharedWith.length > 0 ? 1 : 0,
+                        }}
+                    >
+                        <Typography
+                            sx={{
+                                fontSize: 11,
+                                color: 'rgba(255, 255, 255, 0.8)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                            }}
+                        >
+                            Shared by
+                        </Typography>
+                        <SharedByIndicator users={album.ownedBy.users}/>
+                    </Box>
+                )}
+            </Box>
+        </Box>
     );
 };

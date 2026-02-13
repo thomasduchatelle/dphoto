@@ -14,7 +14,6 @@ export interface ArchiveEndpointsConstructProps {
     catalogStore: CatalogAccessManager;
     archivist: ArchivistAccessManager;
     authorizer?: IHttpRouteAuthorizer;
-    queryParamAuthorizer?: IHttpRouteAuthorizer;
 }
 
 export class ArchiveEndpointsConstruct extends Construct {
@@ -29,7 +28,7 @@ export class ArchiveEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.GET,
             memorySize: 1024,
             timeout: Duration.seconds(29), // maximum allowed by API gateway
-            authorizer: props.queryParamAuthorizer,
+            authorizer: props.authorizer,
         });
 
         props.catalogStore.grantCatalogReadAccess(getMedia.lambda);

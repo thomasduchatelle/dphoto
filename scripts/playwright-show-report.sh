@@ -101,6 +101,10 @@ if [[ -d "$REPORT_DIR/web/playwright-report" ]] ; then
   REPORT_DIR="$REPORT_DIR/web/playwright-report"
 fi
 
+if [[ -d "$REPORT_DIR/playwright-report" ]] ; then
+  REPORT_DIR="$REPORT_DIR/playwright-report"
+fi
+
 info "Opening report from $ZIP_FILE"
 cd "$DIR/../web"
 debug "npx playwright show-report \"$REPORT_DIR\""
