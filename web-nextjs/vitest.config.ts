@@ -12,13 +12,15 @@ export default defineConfig({
         environment: 'jsdom',
         globals: true,
         setupFiles: [],
+        exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**'],
         projects: [{
             extends: true,
             plugins: [
                 // The plugin will run tests for the stories defined in your Storybook config
                 // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
                 storybookTest({
-                    configDir: path.join(dirname, '.storybook')
+                    configDir: path.join(dirname, '.storybook'),
+                    storiesGlobs: ['**/*.stories.@(js|jsx|mjs|ts|tsx)', '!**/node_modules/**']
                 })],
             test: {
                 name: 'storybook',
