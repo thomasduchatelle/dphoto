@@ -47,7 +47,15 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     constructor(
         private readonly accessTokenSupplier: () => Promise<string | undefined>,
         private readonly baseUrlSupplier: () => Promise<string> = async () => "/api/v1",
+        private readonly basePathSupplier: () => Promise<string> = async () => "",
     ) {
+    }
+
+    private prefixRelativeUrl(url: string | undefined, prefix: string): string | undefined {
+        if (!url || !prefix) return url;
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        if (url.startsWith(prefix)) return url;
+        return `${prefix}${url}`;
     }
 
     public async deleteAlbum(albumId: AlbumId): Promise<void> {
@@ -77,10 +85,19 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                 return Promise.allSettled([
                     this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),
                     this.findUserDetails(new Set<string>(albums.flatMap(a => Object.entries(a.sharedWith ?? {}).map(([email]) => email)))),
-                ]).then(([ownersResp, usersResp]) => {
+                    Promise.allSettled(albums.map(a => this.fetchMedias({owner: a.owner, folderName: a.folderName.replace(/^\//, "")}))),
+                    this.basePathSupplier(),
+                ]).then(([ownersResp, usersResp, mediasResp, prefixResp]) => {
+                    const prefix = prefixResp.status === "fulfilled" ? prefixResp.value : '';
+
+                    const prefixUrl = (url: string | undefined) => this.prefixRelativeUrl(url, prefix);
+
                     const owners = ownersResp.status === "fulfilled" ? ownersResp.value.reduce(
                         (map, owner) => {
-                            map.set(owner.id, {name: owner.name, users: owner.users} as OwnerDetails)
+                            map.set(owner.id, {
+                                name: owner.name,
+                                users: owner.users.map(u => ({...u, picture: prefixUrl(u.picture)})),
+                            } as OwnerDetails)
                             return map
                         },
                         new Map<string, OwnerDetails>()
@@ -88,17 +105,25 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
 
                     const users = usersResp.status === "fulfilled" ? usersResp.value.reduce(
                         (map, user) => {
-                            map.set(user.email, user)
+                            map.set(user.email, {...user, picture: prefixUrl(user.picture)})
                             return map
                         },
                         new Map<string, UserDetails>()
                     ) : new Map<string, UserDetails>()
 
-                    return {albums, owners, users}
+                    const thumbnailsByIndex: string[][] = mediasResp.status === "fulfilled"
+                        ? mediasResp.value.map(result =>
+                            result.status === "fulfilled"
+                                ? result.value.slice(0, 4).map(m => `${prefixUrl(m.contentPath)}?w=257`)
+                                : []
+                        )
+                        : albums.map(() => [])
+
+                    return {albums, owners, users, thumbnailsByIndex}
                 })
             })
             .then(result => {
-                const {albums, owners, users} = result;
+                const {albums, owners, users, thumbnailsByIndex} = result;
                 if (albums.length === 0) {
                     console.log('fetchAlbums > No albums available, returning empty array');
                     return [];
@@ -107,7 +132,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                     return (p > v ? p : v);
                 })
 
-                return albums.map(album => {
+                return albums.map((album, i) => {
                     const temperature = album.totalCount / numberOfDays(new Date(album.start), new Date(album.end));
                     return {
                         albumId: {owner: album.owner, folderName: album.folderName.replace(/^\//, "")},
@@ -126,7 +151,8 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                         ownedBy: album.directlyOwned ? undefined : owners.get(album.owner) ?? {
                             name: album.owner,
                             users: [],
-                        }
+                        },
+                        thumbnails: thumbnailsByIndex[i],
                     }
                 }).sort((a, b) => b.start.getTime() - a.start.getTime());
             });

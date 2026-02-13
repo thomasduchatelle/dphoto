@@ -3,6 +3,7 @@
 import {Box} from '@mui/material';
 import {ReactNode, useEffect, useState} from 'react';
 import {AppHeader} from '@/components/AppHeader';
+import {AppBackground} from './AppBackground';
 import {AuthenticatedUser} from '@/libs/security/session-service';
 
 export interface AppLayoutProps {
@@ -25,15 +26,7 @@ export default function AppLayout({children, user, logoutUrl, basePath}: AppLayo
     }, []);
 
     return (
-        <Box
-            sx={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                background: 'linear-gradient(135deg, #001929 0%, #0a1520 25%, #12242e 50%, #0f1d28 75%, #001929 100%)',
-                backgroundAttachment: 'fixed',
-            }}
-        >
+        <AppBackground>
             <Box
                 component="header"
                 sx={{
@@ -56,6 +49,6 @@ export default function AppLayout({children, user, logoutUrl, basePath}: AppLayo
             >
                 {children}
             </Box>
-        </Box>
+        </AppBackground>
     );
 };

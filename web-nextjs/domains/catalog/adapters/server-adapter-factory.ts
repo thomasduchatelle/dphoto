@@ -14,6 +14,7 @@ export function newServerSideRestCatalogAdapter(): FetchCatalogAdapter {
             const url = await newOriginFromHeaders().getCurrentUrl();
             const prefix = process.env.NODE_ENV === 'development' ? basePath : "";
             return `${url.origin}${prefix}/api/v1`;
-        }
+        },
+        async () => process.env.NODE_ENV === 'development' ? basePath : "",
     );
 }

@@ -53,7 +53,7 @@ Components holding a logic are tested to demonstrate the Acceptance Criteria are
 3. **Unit test first**: the code is structured so the complex logic of acceptance criteria can be validated by unit tests. Use the appropriate framework:
     * actions and selectors: vitest unit tests
     * thunks: vitest unit tests
-    * UI components: Ladle (Storybook like) with the component set in each of the relevant situations (examples: "default", "loading", "with a technical
+   * UI components: Storybook with the component set in each of the relevant situations (examples: "default", "loading", "with a technical
       error", "success")
     * react hooks: vitest + testing-library
 
@@ -287,18 +287,60 @@ describe("thunk:executeOrder66Thunk", () => {
 });
 ```
 
-### UI Component testing: Ladle Stories
+### UI Component testing: Storybook Stories
 
-UI components must be tested visually, using Ladle, validating each of their relevant situations (default, saving, displaying an error, loading, ...).
+UI components must be tested visually, using Storybook, validating each of their relevant situations (default, saving, displaying an error, loading, ...).
 
-#### Example for a simple component (5 properties or fewer):
+**Key principles**:
 
-```typescript jsx
-// album-card.stories.tsx
-import {action} from "@ladle/react";
+- Define shared data in `args` (meta or story level)
+- Use `decorators` for common wrapping (layouts, backgrounds)
+- Override only what changes between stories using `args`
+- Keep stories lean and focused on one thing being tested
 
-export const Default = <AlbumCard name='Jan 2025' size='42' onClick={action('onClick')}/>
-export const Disabled = <AlbumCard name='Jan 2025' size='42' disabled/>
+#### Example for a simple component
+
+```tsx
+// AlbumCard.stories.tsx
+import type {Meta, StoryObj} from '@storybook/nextjs-vite';
+import {fn} from 'storybook/test';
+import {AlbumCard} from './index';
+import {AppBackground} from '@/components/AppLayout/AppBackground';
+
+const clairObscurAlbum: Album = {
+    name: 'Clair Obscur',
+    totalCount: 47,
+    temperature: 6.7,
+    relativeTemperature: 1,
+    thumbnails: ['/t1.jpg', '/t2.jpg'],
+}
+
+const meta = {
+    title: 'Components/AlbumCard',
+    component: AlbumCard,
+    decorators: [(Story) => <AppBackground><Story/></AppBackground>],
+    args: {
+        album: clairObscurAlbum,
+        onShare: fn(),
+    },
+} satisfies Meta<typeof AlbumCard>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {};
+
+export const Shared: Story = {
+    args: {
+        album: {...clairObscurAlbum, sharedWith: [{user: {name: 'Hulk'}}]},
+    }
+};
+
+export const ColdTemperature: Story = {
+    args: {
+        album: {...clairObscurAlbum, relativeTemperature: 0.1},
+    }
+};
 ```
 
 #### Example for complex components (more than 5 properties, or openable components like dialogs)

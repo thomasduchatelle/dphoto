@@ -19,7 +19,7 @@ export const AppHeader = ({user, logoutUrl, isScrolled = false, basePath = "/nex
             position="static"
             elevation={0}
             sx={{
-                bgcolor: isScrolled ? 'transparent' : 'transparent',
+                bgcolor: 'transparent',
                 backdropFilter: isScrolled ? 'blur(10px)' : 'none',
                 transition: 'all 0.3s ease',
                 boxShadow: isScrolled ? '0 2px 16px rgba(0, 0, 0, 0.5)' : 'none',

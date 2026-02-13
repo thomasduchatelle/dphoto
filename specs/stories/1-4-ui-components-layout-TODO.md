@@ -10,7 +10,7 @@ All 10 components from Story 1.4 have been created with their Storybook visual t
 validate them against the **final design direction** specified in:
 
 - Lead dev guidance: you will work iteratively, following the instruction of the user.
-- `specs/designs/ux-design-direction-final.html` (PRIMARY reference - edge-to-edge photos, dark blue gradient, text overlays)
+- `specs/designs/ux-design-direction-final.html` (PRIMARY reference)
 
 ### Goals
 
@@ -52,7 +52,7 @@ For each task, you must follow this steps:
     * **Timeline**
       _Lines with dots, each dot represent an album, the label is only the Month+Year. Hovering on the dot show the album card._
 
-* [ ] **AlbumGrid**: `app/(authenticated)/_components/AlbumGrid/`
+* [X] **AlbumGrid**: `app/(authenticated)/_components/AlbumGrid/`
   _Responsive grid layout for album cards. Verify column configuration (xs:1, sm:2, md:3, lg:4), 32px gap, max-width centering, and semantic HTML._
   Includes:
     * **AlbumCard**: `app/(authenticated)/_components/AlbumCard/`
@@ -60,6 +60,13 @@ For each task, you must follow this steps:
       overlay, hover effects). Check typography (22px serif, 13px monospace), density color-coding, owner/sharing status display._
     * **SharedByIndicator**: `components/shared/SharedByIndicator/` (Not testing independently)
       _Displays group of user avatars for sharing status. Verify AvatarGroup overlap, "+N" overflow handling, and tooltip functionality._
+  * [X] Link wrapping in AlbumGrid (caller provides Link, AlbumCard stays navigation-agnostic)
+  * [X] JS callback on share
+  * [ ] ~~Merge the two overlays ?~~
+  * [X] mobile version
+  * [X] Shared by on the small overlay
+  * [X] Owned by on the small overlay
+  * [X] Visual tests.
 
 * [ ] **EmptyState**: `components/shared/EmptyState/`
   _Should be renamed to be specific to albums: NoAlbum. Also extract the NoMedia. As a note for later, we could add other album cards (next/previous)_
@@ -88,6 +95,10 @@ For each task, you must follow this steps:
 
 ## 3. Learnings and Rules
 
+**DO NOT START OR STOP STORYBOOK.**
+
+You might run `npm run build` to verify there are no compile error.
+
 ### Story Principles (CRITICAL - Read Before Creating Stories)
 
 #### 1. Component Demonstration
@@ -100,19 +111,11 @@ For each task, you must follow this steps:
 #### 2. Story Naming Convention
 
 - **Default story**: Must be named `Default` (not `Desktop`, not `Primary`)
-- **Mobile story**: Must be named `DefaultMobile` (if mobile rendering differs significantly)
 - **State variants**: Name by state, e.g., `MenuOpen`, `Loading`, `Error`, `Disabled`
 
 #### 3. Viewport Configuration
 
-- **Default story**: DO NOT set viewport config - uses Storybook's default viewport. On default export (meta), use the global:
-  ```tsx
-  globals: { viewport: {} }
-  ```
-- **Mobile stories**: Use `globals.viewport` only for mobile variants:
-  ```tsx
-  globals: { viewport: { value: 'mobile2', isRotated: false } }
-  ```
+Story must NOT define a viewport, even when a specific behaviour for mobile is required. The visual tests will automatically test with different viewports.
 
 #### 4. Imports - CRITICAL
 

@@ -185,7 +185,8 @@ make build-api
 ```shell
 npm run test          # run unit tests only (~5s)
 npm run test:visual   # run visual tests (~30s)
-npm run laddle        # run Laddle to take screenshots of the component on :61000
+npm run test:update   # update visual regression snapshots locally
+npm run storybook     # run Storybook to view components on :6006
 ```
 
 ### Typescript - `web/`
@@ -195,6 +196,7 @@ npm run laddle        # run Laddle to take screenshots of the component on :6100
 ```shell
 npx vitest run        # run unit tests only (~17s)
 npx playwright test   # run the visual tests 
+npm run test:update   # update visual regression snapshots locally
 npm run build         # build the application for deployment
 
 npm run ladle         # Component viewer on :61000, useful to take screenshots of the changes on the UI

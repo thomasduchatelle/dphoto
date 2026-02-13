@@ -13,7 +13,7 @@ export interface LambdaAuthoriserConstructProps {
 
 export class LambdaAuthoriserConstruct extends Construct {
     public readonly authorizer: HttpLambdaAuthorizer;
-    public readonly queryParamAuthorizer: HttpLambdaAuthorizer;
+    public readonly mediaAuthorizer: HttpLambdaAuthorizer;
     private readonly authorizerLambda: GoLangLambdaFunction;
 
     constructor(scope: Construct, id: string, props: LambdaAuthoriserConstructProps) {
@@ -48,13 +48,14 @@ export class LambdaAuthoriserConstruct extends Construct {
             resultsCacheTtl: Duration.seconds(1800),
         });
 
-        // Create a second authorizer for endpoints that use query parameter authentication
-        // This is needed for get-media which passes the token as access_token query parameter
-        this.queryParamAuthorizer = new HttpLambdaAuthorizer('LambdaAuthorizerQueryParam', this.authorizerLambda.function, {
-            authorizerName: `dphoto-${props.environmentName}-authorizer-queryparam`,
-            identitySource: ['$request.querystring.access_token'],
+        // Create a second authorizer for get-media which must accept both the access_token query param
+        // and the dphoto-access-token cookie. No identitySource is set so the Lambda is always invoked
+        // and handles token extraction itself; caching is disabled as there is no stable cache key.
+        this.mediaAuthorizer = new HttpLambdaAuthorizer('LambdaAuthorizerMedia', this.authorizerLambda.function, {
+            authorizerName: `dphoto-${props.environmentName}-authorizer-media`,
             responseTypes: [HttpLambdaResponseType.SIMPLE],
-            resultsCacheTtl: Duration.seconds(1800),
+            resultsCacheTtl: Duration.seconds(0),
+            identitySource: [],
         });
     }
 }
