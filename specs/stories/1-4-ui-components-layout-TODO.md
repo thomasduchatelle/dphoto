@@ -88,6 +88,10 @@ For each task, you must follow this steps:
 
 ## 3. Learnings and Rules
 
+**DO NOT START OR STOP STORYBOOK.**
+
+You might run `npm run build` to verify there are no compile error.
+
 ### Story Principles (CRITICAL - Read Before Creating Stories)
 
 #### 1. Component Demonstration
