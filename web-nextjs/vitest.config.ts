@@ -12,6 +12,7 @@ export default defineConfig({
         environment: 'jsdom',
         globals: true,
         setupFiles: [],
+        exclude: ['**/node_modules/**', '**/playwright/**'],
         // projects: [{
         //     extends: true,
         //     plugins: [

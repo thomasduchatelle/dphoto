@@ -102,8 +102,8 @@ update-snapshots:
 	rm -rf web/playwright/visual-regression.spec.ts-local && cd web && npm run test:visual -- -u --reporter list
 
 update-snapshots-ci:
-	@echo "Update snapshots [should only be used on CI]"
-	rm -rf web/playwright/visual-regression.spec.ts-snapshots && cd web && npm run test:visual -- -u
+	@echo "Update snapshots for web-nextjs [should only be used on CI]"
+	rm -rf web-nextjs/playwright/visual-regression.spec.ts-snapshots && cd web-nextjs && npm run test:visual -- -u
 
 build-web:
 	cd web && npm run build:lambda
@@ -122,7 +122,11 @@ playwright:
 ## WEB - NEXTJS
 #######################################
 
-.PHONY: clean-web setup-web setup-web-ci setup-web-ci-no-playwright test-web test-web-ci test-web-agent update-snapshots update-snapshots-ci build-web start ladle playwright
+.PHONY: setup-web-nextjs-ci build-web-nextjs
+
+setup-web-nextjs-ci:
+	cd web-nextjs && npm ci
+	cd web-nextjs && npx playwright install chromium --with-deps
 
 build-web-nextjs:
 	cd web-nextjs && npm run build

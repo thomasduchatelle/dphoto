@@ -20,7 +20,8 @@ runs:
           ~/.npm
           ~/.cache/ms-playwright
           web/node_modules
-        key: ${{ runner.os }}-node-${{ inputs.playwright }}-${{ github.ref_name }}-${{ hashFiles('web/package.json') }}-${{ inputs.cache-suffix }}
+          web-nextjs/node_modules
+        key: ${{ runner.os }}-node-${{ inputs.playwright }}-${{ github.ref_name }}-${{ hashFiles('web/package.json', 'web-nextjs/package.json') }}-${{ inputs.cache-suffix }}
         restore-keys: |
           ${{ runner.os }}-node-${{ inputs.playwright }}-${{ github.ref_name }}-
           ${{ runner.os }}-node-${{ inputs.playwright }}-
@@ -36,7 +37,7 @@ runs:
     
     - name: Download deps (with Playwright)
       if: ${{ steps.npm-cache.outputs.cache-hit != 'true' && inputs.playwright == 'true' }}
-      run: make setup-web-ci
+      run: make setup-web-ci && make setup-web-nextjs-ci
       shell: bash
     
     - name: Save NPM Cache
@@ -47,4 +48,5 @@ runs:
           ~/.npm
           ~/.cache/ms-playwright
           web/node_modules
-        key: ${{ runner.os }}-node-${{ inputs.playwright }}-${{ github.ref_name }}-${{ hashFiles('web/package.json') }}-${{ inputs.cache-suffix }}
+          web-nextjs/node_modules
+        key: ${{ runner.os }}-node-${{ inputs.playwright }}-${{ github.ref_name }}-${{ hashFiles('web/package.json', 'web-nextjs/package.json') }}-${{ inputs.cache-suffix }}
