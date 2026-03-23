@@ -13,6 +13,8 @@ jobs:
       update-snapshots: false
   test-nextjs:
     uses: ./.github/workflows/job-test-nextjs.yml
+    with:
+      update-snapshots: false
   build-go:
     uses: ./.github/workflows/job-build-go.yml
     with:
