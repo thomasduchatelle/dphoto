@@ -1,6 +1,9 @@
 ---
-applyTo: "web/**"
+name: web
+description: Deprecated Waku-based web project coding standards to use before working on `web/` - use nextjs skill instead for new development.
 ---
+
+# Web (Deprecated) Coding Standards
 
 BEWARE - PROJECT `web/` AS BEEN DEPRECATED AND IS REPLACED BY `web-nextjs/`. Before making change to the `web/` project, make sure the intention was not to
 change the new `web-nextjs/` project.
