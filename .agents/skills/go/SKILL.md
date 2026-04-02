@@ -1,10 +1,11 @@
 ---
-applyTo: "pkg/**, api/lambdas/**, cmd/**, **/*.go"
+name: go
+description: Golang coding standards for DPhoto including table-driven testing patterns, REST API endpoints, and deployment as lambda with CDK. Required skill to work on the backend (`pkg/`), APIs (`api/`), and CLI (`cmd/`).
 ---
 
-# Golang Coding Standards
+# Golang Coding Standards for DPhoto
 
-## How to write a test ?
+## How to write a test
 
 Use the golang idiomatic **table-driven** testing with a slice of test cases with for each:
 
@@ -27,7 +28,7 @@ Write at the beginning of the file reusable fixture: each test should only decla
 
 ### Testing example
 
-```
+```go
 func TestCatalogAuthorizer_IsAuthorisedToViewMedia(t *testing.T) {
     userId := usermodel.UserId("user-1")
     owner := ownermodel.Owner("owner-1")
@@ -75,7 +76,7 @@ func TestCatalogAuthorizer_IsAuthorisedToViewMedia(t *testing.T) {
 }
 ```
 
-## How to expose a REST API Endpoints ?
+## How to expose a REST API Endpoints
 
 The REST API is hosted on AWS lambdas - one handler and function by operation - exposed through the AWS API Gateway (HTTP v2), and is secured by a custom lambda
 authorizer.
@@ -121,14 +122,13 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 
 	return common.NoContent()
 }
-
 ```
 
 ### 2. authorisation logic
 
 Add the authorisation rules in `api/lambdas/authorizer/main.go`. Example of configuration:
 
-```
+```go
 // list-medias
 {
     Route: Route{Pattern: "/api/v1/owners/{owner}/albums/{folderName}/medias", Method: "GET"},
@@ -177,7 +177,6 @@ func (a *CatalogAuthorizer) IsAuthorisedToListMedias(ctx context.Context, userId
 
 	return errors.Wrapf(ErrAccessDenied, "user %s is not authorised to list medias from album %s", userId.UserId, albumId)
 }
-
 ```
 
 ### 3. Deployment with CDK

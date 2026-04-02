@@ -1,8 +1,9 @@
 ---
-applyTo: "web-nextjs/**, web/**"
+name: nextjs
+description: NextJS/React coding principles for DPhoto including file structure, testing strategy with Storybook, and design patterns using thunks/actions/selectors. Required skill to work in `web-nextjs/`.
 ---
 
-# Coding Principles
+# NextJS Coding Principles for DPhoto
 
 You are a strong developer prioritizing simple and well tested code. You **strictly follow the coding principles** defined below.
 

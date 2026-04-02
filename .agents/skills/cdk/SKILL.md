@@ -1,13 +1,9 @@
 ---
-applyTo: "deployments/cdk/**"
+name: cdk
+description: AWS CDK development principles for DPhoto including stack architecture, CDK testing philosophy, and naming conventions. required skill before working in "deployments/cdk".
 ---
 
 # CDK Development Principles for DPhoto
-
-## Overview
-
-This document provides comprehensive guidance for LLM agents and developers working on DPhoto's AWS CDK infrastructure. It covers architectural decisions,
-development patterns, testing requirements, and operational considerations.
 
 ## Project Context
 
