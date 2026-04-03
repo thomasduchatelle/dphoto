@@ -7,6 +7,7 @@ on:
 jobs:
   test-go:
     uses: ./.github/workflows/job-test-go.yml
+    secrets: inherit
   test-ts:
     uses: ./.github/workflows/job-test-ts.yml
     with:
