@@ -8,6 +8,7 @@ services:
       - SERVICES=s3,dynamodb,acm,ssm,sns,sqs
       - DATA_DIR=/tmp/localstack/data
       - DEBUG=1
+      - LOCALSTACK_AUTH_TOKEN
     volumes:
       - "./.build/localstack:/var/lib/localstack"
       - '/var/run/docker.sock:/var/run/docker.sock'
