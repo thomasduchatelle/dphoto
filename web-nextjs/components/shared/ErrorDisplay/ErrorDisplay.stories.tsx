@@ -4,7 +4,7 @@ import {ErrorDisplay} from './index';
 import {Box} from '@mui/material';
 
 const meta = {
-    title: 'Shared/ErrorDisplay',
+    title: 'Layout/ErrorDisplay',
     component: ErrorDisplay,
     parameters: {
         layout: 'centered',

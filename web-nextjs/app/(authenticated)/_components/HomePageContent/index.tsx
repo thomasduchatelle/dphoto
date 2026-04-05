@@ -38,29 +38,6 @@ export function HomePageContent({albums, error}: HomePageContentProps) {
         );
     }
 
-    if (albums.length === 0) {
-        return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '50vh',
-                    gap: 2,
-                    p: 3,
-                }}
-            >
-                <Typography variant="h6">
-                    No albums found
-                </Typography>
-                <Typography color="text.secondary">
-                    Create your first album to get started.
-                </Typography>
-            </Box>
-        );
-    }
-
     return (
         <AlbumGrid albums={albums} onShare={(id: AlbumId) => console.log('onShare', id)}/>
     );

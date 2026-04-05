@@ -14,6 +14,7 @@ const meta = {
             name: 'Tony Stark',
             email: 'tony@stark-industries.com',
             picture: '/tonystark-profile.jpg',
+            isOwner: true,
         },
         logoutUrl: '/auth/logout',
         basePath: "",

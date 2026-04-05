@@ -3,7 +3,7 @@ import {PageLoadingIndicator} from './index';
 import {Box} from '@mui/material';
 
 const meta = {
-    title: 'Shared/PageLoadingIndicator',
+    title: 'Layout/PageLoadingIndicator',
     component: PageLoadingIndicator,
     parameters: {
         layout: 'centered',

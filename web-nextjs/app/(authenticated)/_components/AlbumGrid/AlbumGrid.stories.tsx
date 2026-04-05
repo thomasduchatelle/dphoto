@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
 import {fn} from 'storybook/test';
 import {AlbumGrid} from './index';
-import {Box, Typography} from '@mui/material';
+import {Box} from '@mui/material';
 import {AppBackground} from '@/components/AppLayout/AppBackground';
 import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
 
@@ -107,7 +107,7 @@ const sampleAlbums: Album[] = [
 ];
 
 const meta = {
-    title: 'Components/AlbumGrid',
+    title: 'Catalog/AlbumGrid',
     component: AlbumGrid,
     parameters: {
         layout: 'fullscreen',
@@ -116,9 +116,6 @@ const meta = {
         (Story) => (
             <AppBackground>
                 <Box sx={{p: {xs: 2, md: 6}}}>
-                    <Typography variant="h1" sx={{mb: 4}}>
-                        Your Albums
-                    </Typography>
                     <Story/>
                 </Box>
             </AppBackground>
@@ -127,6 +124,7 @@ const meta = {
     args: {
         albums: sampleAlbums,
         onShare: fn(),
+        onCreateAlbum: fn(),
     },
 } satisfies Meta<typeof AlbumGrid>;
 
@@ -134,3 +132,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const Empty: Story = {
+    args: {
+        albums: [],
+    },
+};

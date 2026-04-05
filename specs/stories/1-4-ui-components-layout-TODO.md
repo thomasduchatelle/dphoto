@@ -68,8 +68,9 @@ For each task, you must follow this steps:
   * [X] Owned by on the small overlay
   * [X] Visual tests.
 
-* [ ] **EmptyState**: `components/shared/EmptyState/`
-  _Should be renamed to be specific to albums: NoAlbum. Also extract the NoMedia. As a note for later, we could add other album cards (next/previous)_
+* [x] **EmptyState**: `components/shared/EmptyState/`
+  _Refactored into domain-specific components: `NoAlbum` (subcomponent of AlbumGrid) and `NoMedia` (for Epic 2). EmptyState is now an internal template
+  component._
 
 * [ ] **ErrorDisplay**: `components/shared/ErrorDisplay/`
   _Error message display with technical details and recovery actions. Validate collapsible details, ARIA attributes, and action button styling._
