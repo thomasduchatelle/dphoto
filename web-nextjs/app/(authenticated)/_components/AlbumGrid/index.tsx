@@ -4,13 +4,19 @@ import {Box} from '@mui/material';
 import Link from 'next/link';
 import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
 import {AlbumCard} from '../AlbumCard';
+import {NoAlbum} from './NoAlbum';
 
 export interface AlbumGridProps {
     albums: Album[];
     onShare: (albumId: AlbumId) => void;
+    onCreateAlbum?: () => void;
 }
 
-export const AlbumGrid = ({albums, onShare}: AlbumGridProps) => {
+export const AlbumGrid = ({albums, onShare, onCreateAlbum}: AlbumGridProps) => {
+    if (albums.length === 0) {
+        return <NoAlbum onCreateAlbum={onCreateAlbum}/>;
+    }
+
     return (
         <Box
             component="section"

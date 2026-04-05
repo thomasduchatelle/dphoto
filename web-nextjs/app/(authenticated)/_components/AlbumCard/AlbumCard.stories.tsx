@@ -8,7 +8,7 @@ import {AppBackground} from "../../../../components/AppLayout/AppBackground";
 const createAlbumId = (owner: string, folderName: string): AlbumId => ({owner, folderName});
 
 const meta = {
-    title: 'Components/AlbumCard',
+    title: 'Catalog/AlbumCard',
     component: AlbumCard,
     parameters: {
         layout: 'fullscreen',

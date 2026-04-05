@@ -1,8 +1,8 @@
 'use client';
 
-import {Box} from '@mui/material';
+import {Box, Button} from '@mui/material';
 import {SearchOff as SearchOffIcon} from '@mui/icons-material';
-import {EmptyState} from '@/components/shared/EmptyState';
+import {EmptyState, emptyStateButtonStyles} from '@/components/shared/EmptyState';
 
 export default function NotFound() {
     return (
@@ -19,13 +19,17 @@ export default function NotFound() {
                 icon={<SearchOffIcon/>}
                 title="Page Not Found"
                 message="The page you're looking for doesn't exist."
-                action={{
-                    label: 'Go Home',
-                    onClick: () => {
+            >
+                <Button
+                    variant="contained"
+                    onClick={() => {
                         window.location.href = '/';
-                    },
-                }}
-            />
+                    }}
+                    sx={emptyStateButtonStyles.contained}
+                >
+                    Go Home
+                </Button>
+            </EmptyState>
         </Box>
     );
 }
