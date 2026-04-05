@@ -77,8 +77,8 @@ For each task, you must follow this steps:
 * [ ] **PageLoadingIndicator**: `components/shared/PageLoadingIndicator/`
   _Discrete full-page loading with thin LinearProgress bar at top. Verify 3px height, brand blue color (#185986), and optional message display._
 
-* [ ] **NavigationLoadingIndicator**: `components/shared/NavigationLoadingIndicator/`
-  _Small top loading indicator when NextJS links are clicked. Should use https://github.com/TheSGJ/nextjs-toploader ._
+* [X] **NavigationLoadingIndicator**: `components/shared/NavigationLoadingIndicator/`
+  _Small top loading indicator when NextJS links are clicked. Uses nextjs-toploader library. Configured with brand blue color from theme. Installed globally in root layout for automatic navigation detection._
 
 ### Integration
 
