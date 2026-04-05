@@ -171,3 +171,13 @@ In Settings > Language & Framework > Typescript, set the value of `Options` to:
 ```
 --project {repository path}/web-nextjs/tsconfig.json
 ```
+
+### OpenCode GitHub MCP Server
+
+To access the GitHub MCP with OpenCode:
+
+1. Create a token at [https://github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new)
+2. Export your GitHub PAT as an environment variable:
+   ```bash
+   export GITHUB_PAT=github_pat_your_token_here
+   ```

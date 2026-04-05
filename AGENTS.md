@@ -123,6 +123,10 @@ Before requesting a code review, you must ensure:
 4. the code can be built and is immediately shippable to production.
 5. the tests are passing.
 
+## GitHub
+
+When interacting with GitHub MCP, use the remote URL: `git@github.com:thomasduchatelle/dphoto.git`.
+
 ---
 
 **Trust these instructions** - validated against the repository. Search only if missing information.
