@@ -17,7 +17,7 @@ export interface AuthenticatedUser {
 
 export type Authentication = AuthenticatedSession | AnonymousSession
 
-export interface AuthenticationStatus {
+export interface SessionStatus {
     authenticated: boolean;
     aboutToExpire: boolean;
 }
@@ -26,7 +26,6 @@ export interface AuthenticatedSession {
     status: 'authenticated';
     authenticatedUser: AuthenticatedUser;
     logoutUrl: string;
-    aboutToExpire: boolean;
 }
 
 export interface AnonymousSession {
@@ -68,9 +67,10 @@ function readIdToken(idToken: string): {
     };
 }
 
-export async function getCurrentAuthentication(cookieStore: ReadCookieStore): Promise<Authentication> {
+/** getAuthentication is used by NextJS server-side rendering to load the information about the authenticated user. */
+export async function getAuthentication(cookieStore: ReadCookieStore): Promise<Authentication> {
     const session = loadSession(cookieStore);
-    if (!session.accessToken || !session.accessToken || !session.idToken) {
+    if (!session.accessToken || !session.idToken) {
         return {status: "anonymous"}
     }
 
@@ -86,22 +86,20 @@ export async function getCurrentAuthentication(cookieStore: ReadCookieStore): Pr
             isOwner: accessToken.isOwner,
         },
         logoutUrl: await getLogoutUrl(),
-        aboutToExpire: accessToken.aboutToExpire,
     };
 }
 
-export async function getCurrentAuthenticationStatus(request: NextRequest): Promise<AuthenticationStatus> {
+/** getSessionStatus is used by the middleware/proxy to manage the session re-authentication and refresh. */
+export async function getSessionStatus(request: NextRequest): Promise<SessionStatus> {
     const session = loadSession(newReadCookieStore(request));
-    if (!session.accessToken || !session.accessToken || !session.idToken) {
-        return {authenticated: false, aboutToExpire: false}
+    if (session.accessToken) {
+        const accessToken = await parseCurrentAccessToken(session.accessToken);
+
+        return {authenticated: true, aboutToExpire: accessToken?.aboutToExpire ?? true}
     }
 
-    const accessToken = await parseCurrentAccessToken(session.accessToken);
-    if (!accessToken) {
-        return {authenticated: false, aboutToExpire: false}
-    }
 
-    return {authenticated: true, aboutToExpire: accessToken.aboutToExpire}
+    return {authenticated: !!(session.refreshToken && session.idToken), aboutToExpire: true};
 }
 
 

@@ -80,7 +80,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     public fetchAlbums(): Promise<Album[]> {
         return this.fetchRequest<RestAlbum[]>(`/albums`)
             .then(albums => {
-                console.log(`fetchAlbums > received ${albums.length} albums, JSON:`, JSON.stringify(albums, null, 2));
+                console.log(`fetchAlbums > received ${albums.length} albums.`);
 
                 return Promise.allSettled([
                     this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),

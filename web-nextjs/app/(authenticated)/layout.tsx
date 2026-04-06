@@ -1,7 +1,7 @@
 import "server-only"
 
 import type {Metadata} from "next";
-import {getCurrentAuthentication} from "@/libs/security";
+import {getAuthentication} from "@/libs/security";
 import {newReadCookieStoreFromComponents} from "@/libs/nextjs-cookies";
 import AppLayout from "@/components/AppLayout";
 
@@ -16,7 +16,7 @@ export default async function RootLayout({
                                          }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const authentication = await getCurrentAuthentication(await newReadCookieStoreFromComponents())
+    const authentication = await getAuthentication(await newReadCookieStoreFromComponents())
 
     if (authentication.status !== 'authenticated') {
         return <>{children}</>;
