@@ -1,6 +1,5 @@
 import {AlbumPageContent} from './_components/AlbumPageContent';
 import {Metadata} from 'next';
-import {newServerSideRestCatalogAdapter} from '@/domains/catalog/adapters/server-adapter-factory';
 
 interface AlbumPageParams {
     ownerId: string;
@@ -10,27 +9,10 @@ interface AlbumPageParams {
 export async function generateMetadata({params}: {
     params: Promise<AlbumPageParams>;
 }): Promise<Metadata> {
-    const {ownerId, albumId} = await params;
-
-    try {
-        const adapter = newServerSideRestCatalogAdapter();
-        const albums = await adapter.fetchAlbums();
-        const album = albums.find(
-            a => a.albumId.owner === ownerId && a.albumId.folderName === albumId
-        );
-
-        if (album) {
-            return {
-                title: `${album.name} - DPhoto`,
-                description: `View photos from ${album.name}`,
-            };
-        }
-    } catch (error) {
-        console.error('Error fetching album for metadata:', error);
-    }
+    await params;
 
     return {
-        title: 'Album - DPhoto',
+        title: 'DPhoto',
         description: 'Photo management application',
     };
 }
