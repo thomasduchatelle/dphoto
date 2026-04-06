@@ -2,47 +2,35 @@
 
 import {Box, Typography} from '@mui/material';
 import {ReactNode} from 'react';
-import {SxProps, Theme} from '@mui/system';
 
-export interface EmptyStateProps {
+export type PageMessageVariant = 'info' | 'success' | 'error';
+
+export interface PageMessageProps {
+    variant?: PageMessageVariant;
     icon: ReactNode;
     title: string;
     message: string;
     children?: ReactNode;
 }
 
-export const emptyStateButtonStyles = {
-    contained: {
-        bgcolor: '#185986',
-        color: '#ffffff',
-        px: 4,
-        py: 1.5,
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        fontSize: '14px',
-        fontWeight: 400,
-        '&:hover': {
-            bgcolor: '#206ba8',
-            boxShadow: '0 0 24px rgba(24, 89, 134, 0.6)',
-        },
+const variantColors: Record<PageMessageVariant, { border: string; icon: string }> = {
+    info: {
+        border: 'rgba(74, 158, 206, 0.5)',
+        icon: 'rgba(74, 158, 206, 0.9)',
     },
-    outlined: {
-        borderColor: 'rgba(74, 158, 206, 0.4)',
-        color: 'rgba(255, 255, 255, 0.9)',
-        px: 4,
-        py: 1.5,
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        fontSize: '14px',
-        fontWeight: 400,
-        '&:hover': {
-            borderColor: '#4a9ece',
-            bgcolor: 'rgba(74, 158, 206, 0.1)',
-        },
+    success: {
+        border: 'rgba(76, 175, 80, 0.5)',
+        icon: 'rgba(76, 175, 80, 0.9)',
     },
-} satisfies Record<string, SxProps<Theme>>;
+    error: {
+        border: 'rgba(255, 82, 82, 0.5)',
+        icon: 'rgba(255, 82, 82, 0.9)',
+    },
+};
 
-export const EmptyState = ({icon, title, message, children}: EmptyStateProps) => {
+export const PageMessage = ({variant = 'info', icon, title, message, children}: PageMessageProps) => {
+    const colors = variantColors[variant];
+
     return (
         <Box
             sx={{
@@ -67,7 +55,7 @@ export const EmptyState = ({icon, title, message, children}: EmptyStateProps) =>
                         left: '10%',
                         right: '10%',
                         height: '1px',
-                        background: 'linear-gradient(90deg, transparent, rgba(74, 158, 206, 0.5), transparent)',
+                        background: `linear-gradient(90deg, transparent, ${colors.border}, transparent)`,
                     },
                     '&::after': {
                         content: '""',
@@ -76,7 +64,35 @@ export const EmptyState = ({icon, title, message, children}: EmptyStateProps) =>
                         left: '10%',
                         right: '10%',
                         height: '1px',
-                        background: 'linear-gradient(90deg, transparent, rgba(74, 158, 206, 0.5), transparent)',
+                        background: `linear-gradient(90deg, transparent, ${colors.border}, transparent)`,
+                    },
+                    '& .MuiButton-contained': {
+                        bgcolor: '#185986',
+                        color: '#ffffff',
+                        px: 4,
+                        py: 1.5,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        fontSize: '14px',
+                        fontWeight: 400,
+                        '&:hover': {
+                            bgcolor: '#206ba8',
+                            boxShadow: '0 0 24px rgba(24, 89, 134, 0.6)',
+                        },
+                    },
+                    '& .MuiButton-outlined': {
+                        borderColor: 'rgba(74, 158, 206, 0.4)',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        px: 4,
+                        py: 1.5,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        fontSize: '14px',
+                        fontWeight: 400,
+                        '&:hover': {
+                            borderColor: '#4a9ece',
+                            bgcolor: 'rgba(74, 158, 206, 0.1)',
+                        },
                     },
                 }}
             >
@@ -91,7 +107,7 @@ export const EmptyState = ({icon, title, message, children}: EmptyStateProps) =>
                     <Box
                         sx={{
                             fontSize: 64,
-                            color: 'rgba(255, 255, 255, 0.75)',
+                            color: colors.icon,
                             mb: 3,
                             '& > svg': {
                                 fontSize: 64,
@@ -118,7 +134,7 @@ export const EmptyState = ({icon, title, message, children}: EmptyStateProps) =>
                             color: 'rgba(255, 255, 255, 0.75)',
                             fontWeight: 300,
                             mb: children ? 4 : 0,
-                            maxWidth: 400,
+                            maxWidth: 500,
                         }}
                     >
                         {message}

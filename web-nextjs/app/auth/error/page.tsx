@@ -1,6 +1,7 @@
-import Link from '@/components/Link';
-import {Box, Button, Paper, Typography} from '@mui/material';
+import {Button} from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import {PageMessage} from '@/components/PageMessage';
+import Link from '@/components/Link';
 
 interface ErrorPageProps {
     searchParams: Promise<{
@@ -71,79 +72,20 @@ export default async function ErrorPage({searchParams}: ErrorPageProps) {
     const errorInfo = getErrorInfo(error, errorDescription);
 
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                minHeight: '100vh',
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}
+        <PageMessage
+            variant="error"
+            icon={<ErrorOutlineIcon/>}
+            title={errorInfo.title}
+            message={errorInfo.description}
         >
-            <Paper
-                component="main"
-                sx={{
-                    display: 'flex',
-                    width: '100%',
-                    maxWidth: '28rem',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 4,
-                    p: 4,
-                }}
+            <Button
+                href="/"
+                component={Link}
+                prefetch={false}
+                variant="text"
             >
-                <Box
-                    sx={{
-                        display: 'flex',
-                        height: '4rem',
-                        width: '4rem',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '50%',
-                        bgcolor: 'error.dark',
-                    }}
-                >
-                    <ErrorOutlineIcon
-                        sx={{
-                            fontSize: '2rem',
-                            color: 'error.light',
-                        }}
-                    />
-                </Box>
-
-                <Box sx={{textAlign: 'center'}}>
-                    <Typography
-                        variant="h4"
-                        sx={{
-                            fontWeight: 600,
-                        }}
-                    >
-                        {errorInfo.title}
-                    </Typography>
-                    <Typography
-                        variant="body1"
-                        sx={{
-                            mt: 2,
-                            color: 'text.secondary',
-                        }}
-                    >
-                        {errorInfo.description}
-                    </Typography>
-                </Box>
-
-                    <Button
-                        href="/"
-                        component={Link}
-                        prefetch={false}
-                        variant="contained"
-                        fullWidth
-                        sx={{
-                            height: '48px',
-                            borderRadius: '24px',
-                        }}
-                    >
-                        Try Again
-                    </Button>
-            </Paper>
-        </Box>
+                Home
+            </Button>
+        </PageMessage>
     );
 }

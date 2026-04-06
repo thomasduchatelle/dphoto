@@ -1,40 +1,7 @@
 'use client';
 
-import {Box, Button} from '@mui/material';
-import {ErrorDisplay} from '@/components/shared/ErrorDisplay';
-import Link from '@/components/Link';
+import {ErrorMessage} from '@/components/ErrorMessage';
 
-export default function Error({
-                                  error,
-                                  reset,
-                              }: {
-    error: Error & { digest?: string }
-    reset: () => void
-}) {
-    return (
-        <Box
-            sx={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                p: 2,
-            }}
-        >
-            <Box>
-                <ErrorDisplay
-                    error={{
-                        message: error.message || 'An unexpected error occurred',
-                        details: error.stack,
-                    }}
-                    onRetry={reset}
-                />
-                <Box sx={{display: 'flex', justifyContent: 'center', mt: 2}}>
-                    <Button component={Link} href="/" variant="outlined" prefetch={false}>
-                        Go Home
-                    </Button>
-                </Box>
-            </Box>
-        </Box>
-    );
+export default function Error({error}: { error: Error & { digest?: string } }) {
+    return <ErrorMessage error={error}/>;
 }

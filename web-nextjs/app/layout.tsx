@@ -3,7 +3,7 @@ import "server-only"
 import type {Metadata} from "next";
 import {ThemeProvider} from "@/components/theme";
 import {AppRouterCacheProvider} from '@mui/material-nextjs/v15-appRouter';
-import {NavigationLoadingIndicator} from '@/components/shared/NavigationLoadingIndicator';
+import {NavigationLoadingIndicator} from '@/components/NavigationLoadingIndicator';
 
 export const metadata: Metadata = {
     title: "DPhoto",

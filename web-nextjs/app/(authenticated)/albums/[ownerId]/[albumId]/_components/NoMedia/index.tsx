@@ -1,12 +1,13 @@
 'use client';
+
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import {Button} from '@mui/material';
-import {EmptyState, emptyStateButtonStyles} from '@/components/shared/EmptyState';
+import {PageMessage} from '@/components/PageMessage';
 import Link from '@/components/Link';
 
 export const NoMedia = () => {
     return (
-        <EmptyState
+        <PageMessage
             icon={<AddPhotoAlternateIcon/>}
             title="No Medias"
             message="Upload medias to this album to see them displayed here."
@@ -15,11 +16,10 @@ export const NoMedia = () => {
                 component={Link}
                 href="/"
                 prefetch={false}
-                variant="outlined"
-                sx={emptyStateButtonStyles.outlined}
+                variant="text"
             >
                 Back to Albums
             </Button>
-        </EmptyState>
+        </PageMessage>
     );
 };
