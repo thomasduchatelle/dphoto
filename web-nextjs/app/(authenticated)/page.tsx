@@ -2,13 +2,13 @@ import {serverSideThunk} from '@/libs/dthunks/server';
 import {catalogThunks} from '@/domains/catalog/thunks';
 import {initialCatalogState} from '@/domains/catalog/language/initial-catalog-state';
 import {HomePageContent} from './_components/HomePageContent';
-import {getCurrentAuthentication} from '@/libs/security';
+import {getAuthentication} from '@/libs/security';
 import {newReadCookieStoreFromComponents} from '@/libs/nextjs-cookies';
 import {CurrentUserInsight} from '@/domains/catalog/language/catalog-state';
 import {newServerSideRestCatalogAdapter} from "@/domains/catalog/adapters/server-adapter-factory";
 
 export default async function HomePage() {
-    const authentication = await getCurrentAuthentication(await newReadCookieStoreFromComponents());
+    const authentication = await getAuthentication(await newReadCookieStoreFromComponents());
 
     const currentUser: CurrentUserInsight = {
         picture: authentication.status === 'authenticated' ? authentication.authenticatedUser.picture : undefined,

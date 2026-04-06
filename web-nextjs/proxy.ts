@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server';
-import {completeLogout, getCurrentAuthenticationStatus, initiateAuthenticationFlow, refreshSession} from "@/libs/security";
+import {completeLogout, getSessionStatus, initiateAuthenticationFlow, refreshSession} from "@/libs/security";
 import {appliesCookies, buildRedirectResponse, newReadCookieStore} from "@/libs/nextjs-cookies";
 
 // if basepath was not set, this would work: `export const config = { matcher: [`/(${skipProxyForPageMatching}`] }`
@@ -18,16 +18,19 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    const authentication = await getCurrentAuthenticationStatus(request)
+    const authentication = await getSessionStatus(request)
 
     if (!authentication.authenticated) {
+        console.log(`Not authenticated - initiating authentication flow: ${JSON.stringify(authentication)}`);
         const redirection = await initiateAuthenticationFlow(request);
         return buildRedirectResponse(redirection);
     }
 
     if (authentication.aboutToExpire) {
+        console.log("about to expire - refresh the session");
         const refresh = await refreshSession(newReadCookieStore(request))
         if (!refresh.success) {
+            console.log("failed to refresh the session, ");
             const redirection = await initiateAuthenticationFlow(request);
             return buildRedirectResponse(redirection);
         }

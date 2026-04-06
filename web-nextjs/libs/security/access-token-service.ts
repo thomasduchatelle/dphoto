@@ -19,8 +19,11 @@ function expiresInMoreThanFiveMinutes(expiresAt: Date): boolean {
 }
 
 export async function parseCurrentAccessToken(accessToken?: string): Promise<AccessToken | null> {
+    if (!accessToken) {
+        return null;
+    }
     const claims = readAccessTokenClaims(accessToken);
-    if (!accessToken || !claims) {
+    if(!claims) {
         return null;
     }
 
@@ -35,14 +38,18 @@ export async function refreshSession(cookiesStore: ReadCookieStore): Promise<{
     cookies: SetCookies,
     success: boolean,
 }> {
+    console.log("AccessTokenService - refreshSession")
+
     const session = loadSession(cookiesStore)
     if (!session.refreshToken || !session.idToken) {
+        console.log("AccessTokenService - cannot refresh: no refreshToken, and/or no identity token")
         // Unexpected path: refreshing without refresh token shows an error in the flow.
         return {success: false, cookies: clearFullSession()}
     }
 
     const refreshedTokens = await refreshAccessToken(session.refreshToken);
     if (!refreshedTokens) {
+        console.log("AccessTokenService - refresh failed, no access token returned")
         // Unexpected path: refreshing without refresh token shows an error in the flow.
         return {success: false, cookies: clearFullSession()}
     }
@@ -54,11 +61,7 @@ export async function refreshSession(cookiesStore: ReadCookieStore): Promise<{
 }
 
 
-function readAccessTokenClaims(token?: string): AccessTokenClaims | null {
-    if (!token) {
-        return null;
-    }
-
+function readAccessTokenClaims(token: string): AccessTokenClaims | null {
     const payload = decodeJWTPayload(token);
     if (!payload || !payload.exp) {
         return null;
