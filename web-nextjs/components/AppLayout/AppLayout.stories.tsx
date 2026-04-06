@@ -1,10 +1,10 @@
-import type {Meta, StoryObj} from '@storybook/react';
+import type {Meta, StoryObj} from '@storybook/nextjs-vite';
 import AppLayout from './index';
 import {Box, Typography} from '@mui/material';
-import {AppHeader} from '@/components/AppHeader';
+import {AppHeader} from './AppHeader';
 
 const meta = {
-    title: 'Layout/AppLayout',
+    title: 'Components/AppLayout',
     component: AppLayout,
     parameters: {
         layout: 'fullscreen',
@@ -90,13 +90,4 @@ export const Scrolled: Story = {
             </Box>
         </Box>
     ),
-};
-
-export const Mobile: Story = {
-    globals: {
-        viewport: {
-            value: 'mobile2',
-            isRotated: false,
-        },
-    },
 };

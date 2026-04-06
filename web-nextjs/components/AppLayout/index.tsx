@@ -2,7 +2,7 @@
 
 import {Box} from '@mui/material';
 import {ReactNode, useEffect, useState} from 'react';
-import {AppHeader} from '@/components/AppHeader';
+import {AppHeader} from './AppHeader';
 import {AppBackground} from './AppBackground';
 import {AuthenticatedUser} from '@/libs/security/session-service';
 

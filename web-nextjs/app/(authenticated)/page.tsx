@@ -1,11 +1,11 @@
 import {serverSideThunk} from '@/libs/dthunks/server';
 import {catalogThunks} from '@/domains/catalog/thunks';
 import {initialCatalogState} from '@/domains/catalog/language/initial-catalog-state';
-import {HomePageContent} from './_components/HomePageContent';
 import {getAuthentication} from '@/libs/security';
 import {newReadCookieStoreFromComponents} from '@/libs/nextjs-cookies';
 import {CurrentUserInsight} from '@/domains/catalog/language/catalog-state';
 import {newServerSideRestCatalogAdapter} from "@/domains/catalog/adapters/server-adapter-factory";
+import {HomeContent} from "./_components/HomeContent";
 
 export default async function HomePage() {
     const authentication = await getAuthentication(await newReadCookieStoreFromComponents());
@@ -23,10 +23,11 @@ export default async function HomePage() {
     )
     const catalogState = await onPageRefresh(initialCatalogState(currentUser), undefined);
 
+    if (catalogState.error) {
+        throw catalogState.error;
+    }
+
     return (
-        <HomePageContent
-            albums={catalogState.albums}
-            error={catalogState.error}
-        />
-    )
+        <HomeContent initialState={catalogState}/>
+    );
 }

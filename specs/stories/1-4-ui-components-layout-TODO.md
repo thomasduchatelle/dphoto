@@ -68,14 +68,13 @@ For each task, you must follow this steps:
   * [X] Owned by on the small overlay
   * [X] Visual tests.
 
-* [x] **EmptyState**: `components/shared/EmptyState/`
-  _Refactored into domain-specific components: `NoAlbum` (subcomponent of AlbumGrid) and `NoMedia` (for Epic 2). EmptyState is now an internal template
-  component._
+* [x] **PageMessage** (was EmptyState + ErrorDisplay): `components/shared/PageMessage/`
+  _Unified page-wide message template with three variants: `info`, `success`, `error`. Supports icon, title, message, and children (buttons, collapsible details). Button styles are applied via internal `sx` targeting `.MuiButton-contained` and `.MuiButton-outlined`._
+  * Variant colors: info (cyan), success (green), error (red) - affects border and icon color
+  * CollapsibleDetails subcomponent for error stack traces
+  * Used by: NoAlbum, NoMedia, not-found, error boundaries, auth pages
 
-* [ ] **ErrorDisplay**: `components/shared/ErrorDisplay/`
-  _Error message display with technical details and recovery actions. Validate collapsible details, ARIA attributes, and action button styling._
-
-* [ ] **PageLoadingIndicator**: `components/shared/PageLoadingIndicator/`
+* [X] **PageLoadingIndicator**: `components/shared/PageLoadingIndicator/`
   _Discrete full-page loading with thin LinearProgress bar at top. Verify 3px height, brand blue color (#185986), and optional message display._
 
 * [X] **NavigationLoadingIndicator**: `components/shared/NavigationLoadingIndicator/`
@@ -83,14 +82,23 @@ For each task, you must follow this steps:
 
 ### Integration
 
-* [ ] **Error boundaries**: `app/error.tsx` and `app/(authenticated)/error.tsx`
-  _Verify ErrorDisplay component integration with proper error prop passing and onRetry handlers._
+* [x] **Error boundaries**: `app/error.tsx` and `app/(authenticated)/error.tsx`
+  _Updated to use PageMessage with variant="error". Shows error message, collapsible stack trace (via CollapsibleDetails child), and action buttons._
 
-* [ ] **Not-found page**: `app/not-found.tsx`
-  _Validate EmptyState component integration with appropriate icon, message, and "Go Home" action._
+* [x] **Not-found page**: `app/not-found.tsx`
+  _Updated to use PageMessage with variant="info". Shows SearchOff icon and "Go Home" button._
 
-* [ ] **Authenticated layout**: `app/(authenticated)/layout.tsx`
-  _Confirm AppLayout wrapper integration with user data passing._
+* [x] **Auth error page**: `app/auth/error/page.tsx`
+  _Updated to use PageMessage with variant="error". Maps OAuth error codes to user-friendly titles and descriptions._
+
+* [x] **Logout success page**: `app/auth/logout/page.tsx`
+  _Updated to use PageMessage with variant="success". Shows success message and "Sign In Again" button._
+
+* [x] **HomePageContent error handling**: `app/(authenticated)/_components/HomePageContent/`
+  _Updated to throw errors instead of inline display. Error boundary now handles all error rendering._
+
+* [x] **Authenticated layout**: `app/(authenticated)/layout.tsx`
+  _Already integrated with AppLayout wrapper._
 
 ---
 
@@ -260,8 +268,34 @@ Use images and avatar that are from `test/wiremock/__files/api/static/tonystark-
 is already available.
 
 
+### PageMessage Architecture
+
+The `PageMessage` component is the unified template for all page-wide messages. It replaces both `EmptyState` and `ErrorDisplay`.
+
+**Props**:
+```typescript
+interface PageMessageProps {
+    variant?: 'info' | 'success' | 'error';  // default: 'info'
+    icon: ReactNode;
+    title: string;
+    message: string;
+    children?: ReactNode;  // action buttons, collapsible details
+}
+```
+
+**Variant Color Mapping**:
+- `info`: Cyan border/icon (`rgba(74, 158, 206, *)`)
+- `success`: Green border/icon (`rgba(76, 175, 80, *)`)
+- `error`: Red border/icon (`rgba(255, 82, 82, *)`)
+
+**Button Styling**: Applied internally via `sx` targeting:
+- `.MuiButton-contained`: Brand blue (#185986) background
+- `.MuiButton-outlined`: Cyan border, transparent background
+
+**CollapsibleDetails**: A subcomponent for error stack traces, passed as a child of PageMessage.
+
 ---
 
-**Last Updated:** 2026-02-10 (Revision 2 - Compliance fixes in progress)  
-**Status:** AppLayout group being updated for compliance  
-**Next Action:** After fixes verified, move to AlbumGrid component group
+**Last Updated:** 2026-04-06 (Revision 3 - PageMessage refactoring complete)  
+**Status:** All error/success/info page messages unified under PageMessage component  
+**Next Action:** Story 1.4 UI components complete - ready for review

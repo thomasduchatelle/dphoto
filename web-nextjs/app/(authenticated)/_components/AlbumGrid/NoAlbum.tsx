@@ -2,7 +2,7 @@
 
 import CollectionsIcon from '@mui/icons-material/Collections';
 import {Button} from '@mui/material';
-import {EmptyState, emptyStateButtonStyles} from '@/components/shared/EmptyState';
+import {PageMessage} from '@/components/PageMessage';
 
 export interface NoAlbumProps {
     onCreateAlbum?: () => void;
@@ -10,20 +10,16 @@ export interface NoAlbumProps {
 
 export const NoAlbum = ({onCreateAlbum}: NoAlbumProps) => {
     return (
-        <EmptyState
+        <PageMessage
             icon={<CollectionsIcon/>}
             title="No Albums Found"
             message="Create your first album to get started organizing your photos."
         >
             {onCreateAlbum && (
-                <Button
-                    variant="contained"
-                    onClick={onCreateAlbum}
-                    sx={emptyStateButtonStyles.contained}
-                >
+                <Button variant="contained" onClick={onCreateAlbum}>
                     Create Album
                 </Button>
             )}
-        </EmptyState>
+        </PageMessage>
     );
 };
