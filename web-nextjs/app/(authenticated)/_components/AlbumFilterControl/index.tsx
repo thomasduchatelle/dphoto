@@ -52,6 +52,7 @@ export function AlbumFilterControl({filterOptions, activeFilter, onFilterChange}
         <>
             <Button
                 variant="outlined"
+                size='large'
                 onClick={handleOpen}
                 disabled={disabled}
                 startIcon={<OwnerAvatars avatars={activeFilter.avatars}/>}
@@ -80,9 +81,11 @@ export function AlbumFilterControl({filterOptions, activeFilter, onFilterChange}
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
-                MenuListProps={{
-                    role: 'listbox',
-                    'aria-label': 'Album filter by owner',
+                slotProps={{
+                    list: {
+                        role: 'listbox',
+                        'aria-label': 'Album filter by owner',
+                    }
                 }}
             >
                 {filterOptions.map(option => (

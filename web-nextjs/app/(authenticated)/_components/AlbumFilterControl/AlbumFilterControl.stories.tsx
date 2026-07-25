@@ -43,7 +43,7 @@ const MANY_OPTIONS: AlbumFilterEntry[] = [
 ];
 
 const meta = {
-    title: 'Components/AlbumFilterControl',
+    title: 'Catalog/AlbumFilterControl',
     component: AlbumFilterControl,
     parameters: {
         layout: 'fullscreen',
