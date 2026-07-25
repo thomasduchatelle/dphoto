@@ -1,17 +1,25 @@
 'use client';
 
-import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
+import {Album, AlbumFilterEntry, AlbumId} from '@/domains/catalog/language/catalog-state';
 import {Box, Button, Typography} from '@mui/material';
 import {AlbumGrid} from '../AlbumGrid';
+import {AlbumFilterControl} from '../AlbumFilterControl';
+import {ALL_ALBUMS_FILTER_CRITERION} from '@/domains/catalog/common/utils';
+import {albumFilterAreCriterionEqual} from '@/domains/catalog/common/utils';
 
 export interface HomePageContentProps {
     albums: Album[];
+    filterOptions: AlbumFilterEntry[];
+    activeFilter: AlbumFilterEntry;
+    onFilterChange: (filter: AlbumFilterEntry) => void;
     error?: Error;
-    // TODO Pass the `onRetry` callback when the parent will also be a client component
-    // onRetry: () => void;
 }
 
-export function HomePageContent({albums, error}: HomePageContentProps) {
+function isAllAlbumsFilter(filter: AlbumFilterEntry): boolean {
+    return albumFilterAreCriterionEqual(filter.criterion, ALL_ALBUMS_FILTER_CRITERION);
+}
+
+export function HomePageContent({albums, filterOptions, activeFilter, onFilterChange, error}: HomePageContentProps) {
     if (error) {
         return (
             <Box
@@ -38,7 +46,7 @@ export function HomePageContent({albums, error}: HomePageContentProps) {
         );
     }
 
-    if (albums.length === 0) {
+    if (albums.length === 0 && isAllAlbumsFilter(activeFilter)) {
         return (
             <Box
                 sx={{
@@ -62,6 +70,21 @@ export function HomePageContent({albums, error}: HomePageContentProps) {
     }
 
     return (
-        <AlbumGrid albums={albums} onShare={(id: AlbumId) => console.log('onShare', id)}/>
+        <Box>
+            {filterOptions.length > 1 && (
+                <AlbumFilterControl
+                    filterOptions={filterOptions}
+                    activeFilter={activeFilter}
+                    onFilterChange={onFilterChange}
+                />
+            )}
+            {albums.length === 0 ? (
+                <Typography sx={{marginTop: 4, textAlign: 'center', color: 'text.secondary'}}>
+                    No albums match this filter.
+                </Typography>
+            ) : (
+                <AlbumGrid albums={albums} onShare={(id: AlbumId) => console.log('onShare', id)}/>
+            )}
+        </Box>
     );
 }

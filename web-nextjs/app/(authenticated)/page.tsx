@@ -1,7 +1,7 @@
 import {serverSideThunk} from '@/libs/dthunks/server';
 import {catalogThunks} from '@/domains/catalog/thunks';
 import {initialCatalogState} from '@/domains/catalog/language/initial-catalog-state';
-import {HomePageContent} from './_components/HomePageContent';
+import {CatalogClient} from './_components/CatalogClient';
 import {getCurrentAuthentication} from '@/libs/security';
 import {newReadCookieStoreFromComponents} from '@/libs/nextjs-cookies';
 import {CurrentUserInsight} from '@/domains/catalog/language/catalog-state';
@@ -24,9 +24,6 @@ export default async function HomePage() {
     const catalogState = await onPageRefresh(initialCatalogState(currentUser), undefined);
 
     return (
-        <HomePageContent
-            albums={catalogState.albums}
-            error={catalogState.error}
-        />
+        <CatalogClient initialState={catalogState}/>
     )
 }

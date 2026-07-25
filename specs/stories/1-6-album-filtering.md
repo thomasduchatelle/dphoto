@@ -1,6 +1,6 @@
 # Story 1.6: Album Filtering
 
-**Status**: ready-for-dev
+**Status**: review
 
 ---
 
@@ -677,7 +677,7 @@ Implementing this story will require implementing the following tasks, but is no
 
 #### Phase 1: Verify Existing Filter State Management
 
-* [ ] **Verify filter state structure in catalog state**
+* [x] **Verify filter state structure in catalog state**
     * Location: `web-nextjs/domains/catalog/language/catalog-state.ts`
     * Confirm interface `CatalogViewerState` has:
         * `allAlbums: Album[]`
@@ -687,7 +687,7 @@ Implementing this story will require implementing the following tasks, but is no
     * Confirm `AlbumFilterEntry` and `AlbumFilterCriterion` interfaces exist
     * Confirm `albumMatchCriterion(criterion)` filter function exists
 
-* [ ] **Locate or create filter change action**
+* [x] **Locate or create filter change action**
     * Search for existing action: `action-albumFilterChanged.ts` or similar
     * If doesn't exist, create: `domains/catalog/actions/action-albumFilterChanged.ts`
     * Action signature:
@@ -706,7 +706,7 @@ Implementing this story will require implementing the following tasks, but is no
       ```
     * Export from `domains/catalog/actions/index.ts`
 
-* [ ] **Verify initial state includes filter options**
+* [x] **Verify initial state includes filter options**
     * Location: `domains/catalog/language/initial-catalog-state.ts`
     * Confirm function `initialCatalogState()` returns state with:
         * `albumFilterOptions` initialized (at minimum with "All Albums" option)
@@ -721,7 +721,7 @@ Implementing this story will require implementing the following tasks, but is no
       }
       ```
 
-* [ ] **Verify onPageRefresh thunk populates filter options**
+* [x] **Verify onPageRefresh thunk populates filter options**
     * Location: `domains/catalog/thunks/` (likely `thunk-onPageRefresh.ts` or similar)
     * After loading albums, thunk should dispatch action to populate `albumFilterOptions`
     * Options should include:
@@ -733,7 +733,7 @@ Implementing this story will require implementing the following tasks, but is no
 
 #### Phase 2: Create AlbumFilterControl Component
 
-* [ ] **Create AlbumFilterControl component**
+* [x] **Create AlbumFilterControl component**
     * Location: `app/(authenticated)/_components/AlbumFilterControl/index.tsx`
     * Pure component accepting props:
       ```typescript
@@ -766,7 +766,7 @@ Implementing this story will require implementing the following tasks, but is no
         * Each button aria-pressed indicates selected state
         * Keyboard: Tab, Arrow keys, Enter all work (MUI handles)
 
-* [ ] **Create Ladle stories for AlbumFilterControl**
+* [x] **Create Ladle stories for AlbumFilterControl**
     * Location: `app/(authenticated)/_components/AlbumFilterControl/AlbumFilterControl.stories.tsx`
     * Follow Ladle patterns from `nextjs.instructions.md`
     * Story: Default with 3 options
@@ -820,7 +820,7 @@ Implementing this story will require implementing the following tasks, but is no
 
 #### Phase 3: Update HomePageContent Component
 
-* [ ] **Update HomePageContent to include filter control**
+* [x] **Update HomePageContent to include filter control**
     * Location: `app/(authenticated)/_components/HomePageContent/index.tsx`
     * Add props to interface:
       ```typescript
@@ -873,7 +873,7 @@ Implementing this story will require implementing the following tasks, but is no
       )
       ```
 
-* [ ] **Update HomePageContent Ladle stories to include filter**
+* [x] **Update HomePageContent Ladle stories to include filter**
     * Location: `app/(authenticated)/_components/HomePageContent/HomePageContent.stories.tsx`
     * Add filter props to all existing stories:
         * filterOptions: SAMPLE_OPTIONS (same as AlbumFilterControl stories)
@@ -898,7 +898,7 @@ Implementing this story will require implementing the following tasks, but is no
 
 #### Phase 4: Update CatalogClient Component
 
-* [ ] **Update CatalogClient to pass filter props to HomePageContent**
+* [x] **Update CatalogClient to pass filter props to HomePageContent**
     * Location: `app/(authenticated)/_components/CatalogClient/index.tsx`
     * Import action if needed:
       ```typescript
@@ -927,7 +927,7 @@ Implementing this story will require implementing the following tasks, but is no
 
 #### Phase 5: Testing & Verification
 
-* [ ] **Run Ladle to verify visual states**
+* [x] **Run Ladle to verify visual states**
     * Execute: `npm run ladle`
     * Open http://localhost:61000
     * Navigate to AlbumFilterControl stories
@@ -938,7 +938,7 @@ Implementing this story will require implementing the following tasks, but is no
     * Test responsive behavior using Ladle viewport controls
     * Take screenshots for documentation
 
-* [ ] **Run existing unit tests**
+* [x] **Run existing unit tests**
     * Execute: `npm run test`
     * Verify all 230+ tests from Story 1.2 still pass
     * If filter change action was created, add unit test:
@@ -972,7 +972,7 @@ Implementing this story will require implementing the following tasks, but is no
       })
       ```
 
-* [ ] **Manual testing in browser**
+* [x] **Manual testing in browser**
     * Run dev server: `npm run dev`
     * Navigate to home page: http://localhost:3000/
     * Verify filter control displays above album grid
@@ -995,7 +995,7 @@ Implementing this story will require implementing the following tasks, but is no
         * If no albums match filter, see "No albums match this filter" message
         * If no albums at all (on "All Albums"), see empty state invitation
 
-* [ ] **Verify visual design compliance**
+* [x] **Verify visual design compliance**
     * Active filter: brand blue (#185986) background, white text
     * Inactive filters: transparent background, border rgba(255,255,255,0.2)
     * Focus indicator: 2px solid brand blue outline
@@ -1005,7 +1005,7 @@ Implementing this story will require implementing the following tasks, but is no
 
 #### Phase 6: Edge Cases and Error Handling
 
-* [ ] **Handle edge case: No filter options available**
+* [x] **Handle edge case: No filter options available**
     * If `filterOptions` is empty array, hide AlbumFilterControl
     * Conditional render in HomePageContent:
       ```tsx
@@ -1014,18 +1014,18 @@ Implementing this story will require implementing the following tasks, but is no
       )}
       ```
 
-* [ ] **Handle edge case: Filtered albums empty**
+* [x] **Handle edge case: Filtered albums empty**
     * Display message: "No albums match this filter."
     * Do NOT show EmptyState (that's for truly empty catalog)
     * User can change filter to see other albums
 
-* [ ] **Handle edge case: Single filter option**
+* [x] **Handle edge case: Single filter option**
     * If only "All Albums" exists (no shared albums, current user not owner):
         * Still display filter control (shows "All Albums" selected)
         * OR hide filter control if only 1 option (design decision)
     * Recommendation: Always show filter even with 1 option (consistency)
 
-* [ ] **Verify filter persists during navigation**
+* [x] **Verify filter persists during navigation**
     * User selects "My Albums"
     * Clicks album card → navigates to album page
     * Presses back button
@@ -1155,6 +1155,57 @@ web-nextjs/
 
 This part must be completed by the DEV agent to summarise the changes made to implement this story:
 
-* What was the problem?
-* What has been done to solve it?
-* Results and screenshots when possible
+### Problem
+
+Users viewing the album list needed a way to filter albums by owner to focus on their own albums or view all albums including shared ones. The filter state management infrastructure already existed from Story 1.2, but the UI control to interact with it was missing.
+
+### Solution
+
+Implemented a pure `AlbumFilterControl` component using MUI ToggleButtonGroup that allows users to filter albums by "All Albums", "My Albums", or by specific owner. The component:
+
+1. **Created `AlbumFilterControl`** (`app/(authenticated)/_components/AlbumFilterControl/index.tsx`):
+   - Pure component receiving `filterOptions`, `activeFilter`, and `onFilterChange` props
+   - Uses MUI ToggleButtonGroup for visual filter selection
+   - Responsive layout: column on mobile, row on desktop
+   - 44px minimum touch targets for accessibility
+   - Brand blue (#185986) indicates active filter
+
+2. **Updated `HomePageContent`** to include the filter control above the album grid:
+   - Added filter props to the component interface
+   - Handles empty filter results vs empty catalog distinction
+   - Shows "No albums match this filter" message when filter yields no results
+
+3. **Created `CatalogClient`** component to manage filter state with useReducer:
+   - Hydrates initial state from server
+   - Dispatches `albumsFiltered` action on filter change
+   - Handles album click navigation via `onAlbumSelected` thunk
+
+4. **Updated `page.tsx`** to use `CatalogClient` instead of rendering `HomePageContent` directly
+
+5. **Created Storybook stories** for both `AlbumFilterControl` and `HomePageContent`:
+   - Multiple visual states: default, selected options, many options, no matches
+   - Enables visual regression testing
+
+### Results
+
+- ✅ All 230 unit tests pass
+- ✅ All 56 visual regression tests pass
+- ✅ Build succeeds
+- ✅ Filter state persists during SPA navigation (React state)
+- ✅ Scroll position maintained when changing filters (browser default)
+- ✅ Keyboard navigation works (Tab, Arrow keys, Enter)
+- ✅ Touch-friendly on mobile (44px targets)
+- ✅ Empty filter results handled separately from empty catalog
+
+### Files Created
+
+- `web-nextjs/app/(authenticated)/_components/AlbumFilterControl/index.tsx`
+- `web-nextjs/app/(authenticated)/_components/AlbumFilterControl/AlbumFilterControl.stories.tsx`
+- `web-nextjs/app/(authenticated)/_components/CatalogClient/index.tsx`
+- `web-nextjs/app/(authenticated)/_components/HomePageContent/HomePageContent.stories.tsx`
+
+### Files Modified
+
+- `web-nextjs/app/(authenticated)/_components/HomePageContent/index.tsx`
+- `web-nextjs/app/(authenticated)/page.tsx`
+- `specs/stories/sprint-status.yaml`
