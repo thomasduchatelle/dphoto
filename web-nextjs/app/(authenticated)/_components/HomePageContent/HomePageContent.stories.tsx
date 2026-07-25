@@ -82,7 +82,7 @@ const sampleFilterOptions: AlbumFilterEntry[] = [
 ];
 
 const meta = {
-    title: 'Pages/HomePageContent',
+    title: 'Catalog/HomePageContent',
     component: HomePageContent,
     parameters: {
         layout: 'fullscreen',
@@ -108,45 +108,3 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
-
-export const WithMyAlbumsSelected: Story = {
-    args: {
-        activeFilter: sampleFilterOptions[1],
-        albums: sampleAlbums.filter(a => a.ownedBy === undefined),
-    },
-};
-
-export const WithOwnerSelected: Story = {
-    args: {
-        activeFilter: sampleFilterOptions[2],
-        albums: sampleAlbums.filter(a => a.albumId.owner === 'kojima'),
-    },
-};
-
-export const EmptyFilterResult: Story = {
-    args: {
-        activeFilter: sampleFilterOptions[1],
-        albums: [],
-    },
-};
-
-export const EmptyCatalog: Story = {
-    args: {
-        albums: [],
-        filterOptions: [{name: 'All albums', criterion: {owners: []}, avatars: []}],
-        activeFilter: {name: 'All albums', criterion: {owners: []}, avatars: []},
-    },
-};
-
-export const SingleFilterOption: Story = {
-    args: {
-        filterOptions: [sampleFilterOptions[0]],
-        activeFilter: sampleFilterOptions[0],
-    },
-};
-
-export const WithError: Story = {
-    args: {
-        error: new Error('Failed to load albums from the server'),
-    },
-};

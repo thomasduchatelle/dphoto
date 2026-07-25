@@ -1,6 +1,8 @@
 'use client';
 
-import {Box, ToggleButton, ToggleButtonGroup, Typography} from '@mui/material';
+import {MouseEvent, useState} from 'react';
+import {Avatar, AvatarGroup, Button, Menu, MenuItem} from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import {AlbumFilterEntry} from '@/domains/catalog/language/catalog-state';
 
 export interface AlbumFilterControlProps {
@@ -9,75 +11,98 @@ export interface AlbumFilterControlProps {
     onFilterChange: (filter: AlbumFilterEntry) => void;
 }
 
+const OwnerAvatars = ({avatars}: { avatars: string[] }) => (
+    <AvatarGroup
+        max={4}
+        spacing="small"
+        sx={{
+            '& .MuiAvatar-root': {
+                width: 28,
+                height: 28,
+                fontSize: '0.75rem',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+            },
+        }}
+    >
+        {avatars.length === 0 && <Avatar/>}
+        {avatars.map(avatar => (
+            <Avatar key={avatar} src={avatar}/>
+        ))}
+    </AvatarGroup>
+);
+
 export function AlbumFilterControl({filterOptions, activeFilter, onFilterChange}: AlbumFilterControlProps) {
-    const handleChange = (_event: React.MouseEvent<HTMLElement>, newValue: string | null) => {
-        if (newValue === null) return;
-        const selectedFilter = filterOptions.find(option => option.name === newValue);
-        if (selectedFilter) {
-            onFilterChange(selectedFilter);
-        }
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const disabled = filterOptions.length <= 1;
+
+    const handleOpen = (event: MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleSelect = (option: AlbumFilterEntry) => {
+        setAnchorEl(null);
+        onFilterChange(option);
     };
 
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                flexDirection: {xs: 'column', sm: 'row'},
-                alignItems: {xs: 'stretch', sm: 'center'},
-                gap: 1,
-                marginBottom: 4,
-            }}
-        >
-            <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{
-                    flexShrink: 0,
-                    minWidth: 'fit-content',
-                }}
-            >
-                Filter by owner:
-            </Typography>
-            <ToggleButtonGroup
-                value={activeFilter.name}
-                exclusive
-                onChange={handleChange}
+        <>
+            <Button
+                variant="outlined"
+                onClick={handleOpen}
+                disabled={disabled}
+                startIcon={<OwnerAvatars avatars={activeFilter.avatars}/>}
+                endIcon={<ArrowDropDownIcon/>}
                 aria-label="Album filter by owner"
+                aria-haspopup="listbox"
                 sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 0.5,
-                    '& .MuiToggleButton-root': {
-                        minWidth: '120px',
-                        minHeight: '44px',
-                        textTransform: 'none',
-                        color: 'text.primary',
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                        '&.Mui-selected': {
-                            backgroundColor: 'primary.main',
-                            color: '#ffffff',
-                            '&:hover': {
-                                backgroundColor: 'primary.dark',
-                            },
-                        },
-                        '&:focus': {
-                            outline: '2px solid',
-                            outlineColor: 'primary.main',
-                            outlineOffset: '2px',
-                        },
+                    minHeight: 44,
+                    textTransform: 'none',
+                    color: 'text.primary',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    '&:hover': {
+                        borderColor: 'primary.main',
+                        backgroundColor: 'rgba(24, 89, 134, 0.1)',
+                    },
+                    '&:focus-visible': {
+                        outline: '2px solid',
+                        outlineColor: 'primary.main',
+                        outlineOffset: '2px',
                     },
                 }}
             >
+                {activeFilter.name}
+            </Button>
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                MenuListProps={{
+                    role: 'listbox',
+                    'aria-label': 'Album filter by owner',
+                }}
+            >
                 {filterOptions.map(option => (
-                    <ToggleButton
+                    <MenuItem
                         key={option.name}
-                        value={option.name}
-                        aria-pressed={option.name === activeFilter.name}
+                        selected={option.name === activeFilter.name}
+                        onClick={() => handleSelect(option)}
+                        sx={{
+                            minHeight: 44,
+                            gap: 1.5,
+                            '&.Mui-selected': {
+                                backgroundColor: 'rgba(24, 89, 134, 0.2)',
+                            },
+                        }}
                     >
+                        <OwnerAvatars avatars={option.avatars}/>
                         {option.name}
-                    </ToggleButton>
+                    </MenuItem>
                 ))}
-            </ToggleButtonGroup>
-        </Box>
+            </Menu>
+        </>
     );
 }

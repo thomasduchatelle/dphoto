@@ -4,8 +4,7 @@ import {Album, AlbumFilterEntry, AlbumId} from '@/domains/catalog/language/catal
 import {Box, Button, Typography} from '@mui/material';
 import {AlbumGrid} from '../AlbumGrid';
 import {AlbumFilterControl} from '../AlbumFilterControl';
-import {ALL_ALBUMS_FILTER_CRITERION} from '@/domains/catalog/common/utils';
-import {albumFilterAreCriterionEqual} from '@/domains/catalog/common/utils';
+import {albumFilterAreCriterionEqual, ALL_ALBUMS_FILTER_CRITERION} from '@/domains/catalog/common/utils';
 
 export interface HomePageContentProps {
     albums: Album[];
@@ -71,13 +70,13 @@ export function HomePageContent({albums, filterOptions, activeFilter, onFilterCh
 
     return (
         <Box>
-            {filterOptions.length > 1 && (
+            <Box sx={{width: '100%', maxWidth: 1920, mx: 'auto', marginBottom: 4}}>
                 <AlbumFilterControl
                     filterOptions={filterOptions}
                     activeFilter={activeFilter}
                     onFilterChange={onFilterChange}
                 />
-            )}
+            </Box>
             {albums.length === 0 ? (
                 <Typography sx={{marginTop: 4, textAlign: 'center', color: 'text.secondary'}}>
                     No albums match this filter.
