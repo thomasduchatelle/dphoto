@@ -12,7 +12,7 @@ export const NoAlbum = ({onCreateAlbum}: NoAlbumProps) => {
     return (
         <PageMessage
             icon={<CollectionsIcon/>}
-            title="No Albums Found"
+            title="No Album Found"
             message="Create your first album to get started organizing your photos."
         >
             {onCreateAlbum && (

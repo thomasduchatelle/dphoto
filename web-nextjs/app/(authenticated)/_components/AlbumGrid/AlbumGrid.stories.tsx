@@ -4,6 +4,7 @@ import {AlbumGrid} from './index';
 import {Box} from '@mui/material';
 import {AppBackground} from '@/components/AppLayout/AppBackground';
 import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
+import {AlbumFilterEntry} from "../../../../domains/catalog";
 
 const createAlbumId = (owner: string, folderName: string): AlbumId => ({owner, folderName});
 
@@ -106,6 +107,29 @@ const sampleAlbums: Album[] = [
     },
 ];
 
+const sampleFilterOptions: AlbumFilterEntry[] = [
+    {
+        name: 'All albums',
+        criterion: {owners: []},
+        avatars: ['/static/black-widow-profile.jpg', '/static/hulk-profile.webp'],
+    },
+    {
+        name: 'My albums',
+        criterion: {selfOwned: true, owners: []},
+        avatars: ['/static/black-widow-profile.jpg'],
+    },
+    {
+        name: 'Tony Stark',
+        criterion: {owners: ['tony']},
+        avatars: ['/static/tonystark-profile.jpg'],
+    },
+    {
+        name: 'Bruce Banner',
+        criterion: {owners: ['bruce']},
+        avatars: ['/static/hulk-profile.webp'],
+    },
+];
+
 const meta = {
     title: 'Catalog/AlbumGrid',
     component: AlbumGrid,
@@ -125,6 +149,9 @@ const meta = {
         albums: sampleAlbums,
         onShare: fn(),
         onCreateAlbum: fn(),
+        filterOptions: sampleFilterOptions,
+        activeFilter: sampleFilterOptions[0],
+        onFilterChange: fn(),
     },
 } satisfies Meta<typeof AlbumGrid>;
 

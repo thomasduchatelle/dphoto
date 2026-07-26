@@ -29,5 +29,5 @@ export default async function HomePage() {
 
     return (
         <HomeContent initialState={catalogState}/>
-    );
+    )
 }
