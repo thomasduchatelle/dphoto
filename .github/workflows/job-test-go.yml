@@ -14,5 +14,9 @@ jobs:
         uses: ./.github/actions/install-go
       - name: Starts localstack
         run: docker compose up -d
+      - name: Wait for S3 to be available
+        run: |
+          timeout 60 bash -c 'until curl -sf http://localhost:4566/_localstack/health | grep -q "\"s3\": \"\(available\|running\)\""; do sleep 1; done' \
+            || (docker compose logs && exit 1)
       - name: Run tests
         run: make test-go
