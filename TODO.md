@@ -73,3 +73,5 @@ Next steps:
 * FIX the actions availability above the list of albums:
     * create only enabled when the user has owner role
     * delete only enabled when at least one album is owned by the user
+* Group the albums on the home page by year: one subheader "Year 20xx", why why not some stats ("295 photos").
+* Show the albums on the left (one column, compressed) when browsing the photos.
