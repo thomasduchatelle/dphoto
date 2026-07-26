@@ -2,7 +2,7 @@
 
 import {Box} from '@mui/material';
 import Link from 'next/link';
-import {Album, AlbumFilterEntry, AlbumId} from '@/domains/catalog/language/catalog-state';
+import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId} from '@/domains/catalog/language/catalog-state';
 import {AlbumCard} from '../AlbumCard';
 import {NoAlbum} from './NoAlbum';
 import {AlbumFilterControl} from "../AlbumFilterControl";
@@ -13,7 +13,7 @@ export interface AlbumGridProps {
     onCreateAlbum?: () => void;
     filterOptions: AlbumFilterEntry[];
     activeFilter: AlbumFilterEntry;
-    onFilterChange: (filter: AlbumFilterEntry) => void;
+    onFilterChange: (filter: AlbumFilterCriterion) => void;
 }
 
 export const AlbumGrid = ({albums, onShare, onCreateAlbum, filterOptions, activeFilter, onFilterChange}: AlbumGridProps) => {

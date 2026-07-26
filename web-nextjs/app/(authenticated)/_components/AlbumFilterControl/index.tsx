@@ -3,12 +3,12 @@
 import {MouseEvent, useState} from 'react';
 import {Avatar, AvatarGroup, Button, Menu, MenuItem} from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import {AlbumFilterEntry} from '@/domains/catalog/language/catalog-state';
+import {AlbumFilterCriterion, AlbumFilterEntry} from '@/domains/catalog/language/catalog-state';
 
 export interface AlbumFilterControlProps {
     filterOptions: AlbumFilterEntry[];
     activeFilter: AlbumFilterEntry;
-    onFilterChange: (filter: AlbumFilterEntry) => void;
+    onFilterChange: (filter: AlbumFilterCriterion) => void;
 }
 
 const OwnerAvatars = ({avatars}: { avatars: string[] }) => (
@@ -45,7 +45,7 @@ export function AlbumFilterControl({filterOptions, activeFilter, onFilterChange}
 
     const handleSelect = (option: AlbumFilterEntry) => {
         setAnchorEl(null);
-        onFilterChange(option);
+        onFilterChange(option.criterion);
     };
 
     return (
