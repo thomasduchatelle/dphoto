@@ -202,6 +202,31 @@ describe('authentication middleware/proxy', () => {
     });
 });
 
+describe('authentication middleware/proxy - local auth bypass', () => {
+    afterEach(() => {
+        vi.unstubAllEnvs();
+        vi.stubEnv('OAUTH_ISSUER_URL', TEST_ISSUER_URL);
+        vi.stubEnv('OAUTH_CLIENT_ID', TEST_CLIENT_ID);
+        vi.stubEnv('OAUTH_CLIENT_SECRET', TEST_CLIENT_SECRET);
+    });
+
+    it('should let a protected page through without redirecting when running "next dev" without an OIDC issuer configured', async () => {
+        vi.stubEnv('NODE_ENV', 'development');
+        vi.stubEnv('OAUTH_ISSUER_URL', '');
+
+        const testRequest = new NextRequest('https://example.com/albums', {
+            method: 'GET',
+            headers: {
+                Accept: 'text/html',
+            },
+        });
+
+        const response = await proxy(testRequest);
+
+        expect(response.status).toBe(200);
+    });
+});
+
 describe('skipProxyForPageMatching regex', () => {
     it('should NOT match static image paths', () => {
         expect(skipProxyForPageMatching.test('images/photo.png')).toBe(false);

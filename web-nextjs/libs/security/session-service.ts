@@ -1,6 +1,6 @@
 import {clearAuthSession, clearFullSession, loadAuthSession, loadSession, storeAuthSession, storeSession} from "@/libs/security/backend-store";
 import {getLogoutUrl} from "@/libs/security/logout-utils";
-import {getOidcConfigFromEnv, oidcConfig} from "@/libs/security/oidc-config";
+import {getOidcConfigFromEnv, isLocalAuthBypassed, oidcConfig} from "@/libs/security/oidc-config";
 import * as client from "openid-client";
 import {newOriginFromRequest, redirectUrl, requestUrlWithBaseBath} from "@/libs/requests";
 import {decodeJWTPayload} from "@/libs/security/jwt-utils";
@@ -31,6 +31,13 @@ export interface AuthenticatedSession {
 export interface AnonymousSession {
     status: 'anonymous';
 }
+
+/** Impersonated user used when isLocalAuthBypassed() is true, matching the owner used in test/wiremock/mappings/catalog fixtures. */
+const LOCAL_DEV_USER: AuthenticatedUser = {
+    name: 'Tony Stark',
+    email: 'tony@stark.com',
+    isOwner: true,
+};
 
 interface IDTokenPayload {
     given_name?: string;
@@ -69,6 +76,10 @@ function readIdToken(idToken: string): {
 
 /** getAuthentication is used by NextJS server-side rendering to load the information about the authenticated user. */
 export async function getAuthentication(cookieStore: ReadCookieStore): Promise<Authentication> {
+    if (isLocalAuthBypassed()) {
+        return {status: 'authenticated', authenticatedUser: LOCAL_DEV_USER, logoutUrl: '#'};
+    }
+
     const session = loadSession(cookieStore);
     if (!session.accessToken || !session.idToken) {
         return {status: "anonymous"}
@@ -91,6 +102,10 @@ export async function getAuthentication(cookieStore: ReadCookieStore): Promise<A
 
 /** getSessionStatus is used by the middleware/proxy to manage the session re-authentication and refresh. */
 export async function getSessionStatus(request: NextRequest): Promise<SessionStatus> {
+    if (isLocalAuthBypassed()) {
+        return {authenticated: true, aboutToExpire: false};
+    }
+
     const session = loadSession(newReadCookieStore(request));
     if (session.accessToken) {
         const accessToken = await parseCurrentAccessToken(session.accessToken);

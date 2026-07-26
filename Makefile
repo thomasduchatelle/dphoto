@@ -122,7 +122,7 @@ playwright:
 ## WEB - NEXTJS
 #######################################
 
-.PHONY: setup-web-nextjs setup-web-nextjs-ci test-web-nextjs update-snapshots update-snapshots-ci build-web-nextjs storybook
+.PHONY: setup-web-nextjs setup-web-nextjs-ci test-web-nextjs update-snapshots update-snapshots-ci build-web-nextjs storybook start-web-nextjs
 
 setup-web-nextjs:
 	cd web-nextjs && npm install
@@ -134,6 +134,10 @@ setup-web-nextjs-ci:
 
 test-web-nextjs:
 	cd web-nextjs && npm test
+
+start-web-nextjs:
+	docker-compose up -d wiremock && \
+		cd web-nextjs && npm run dev
 
 update-snapshots:
 	@echo "Update local snapshots for web-nextjs"
