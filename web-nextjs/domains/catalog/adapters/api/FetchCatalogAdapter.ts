@@ -1,4 +1,4 @@
-import {Album, AlbumId, CatalogError, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
+import {Album, AlbumId, albumKey, CatalogError, computeAlbumTemperatures, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
@@ -128,20 +128,26 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                     console.log('fetchAlbums > No albums available, returning empty array');
                     return [];
                 }
-                const maxTemperature = albums.map(a => a.totalCount / numberOfDays(new Date(a.start), new Date(a.end))).reduce(function (p, v) {
-                    return (p > v ? p : v);
-                })
+
+                const albumIds = albums.map(album => ({owner: album.owner, folderName: album.folderName.replace(/^\//, "")}));
+                const temperatures = computeAlbumTemperatures(albums.map((album, i) => ({
+                    albumId: albumIds[i],
+                    start: new Date(album.start),
+                    end: new Date(album.end),
+                    totalCount: album.totalCount,
+                })));
 
                 return albums.map((album, i) => {
-                    const temperature = album.totalCount / numberOfDays(new Date(album.start), new Date(album.end));
+                    const albumId = albumIds[i];
+                    const {temperature, relativeTemperature} = temperatures.get(albumKey(albumId))!;
                     return {
-                        albumId: {owner: album.owner, folderName: album.folderName.replace(/^\//, "")},
+                        albumId,
                         name: album.name,
                         start: new Date(album.start),
                         end: new Date(album.end),
                         totalCount: album.totalCount,
-                        temperature: temperature,
-                        relativeTemperature: temperature / maxTemperature,
+                        temperature,
+                        relativeTemperature,
                         sharedWith: Object.entries(album.sharedWith ?? {}).map(([email]) => ({
                             user: users.get(email) ?? {
                                 name: email,
@@ -291,14 +297,6 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
             throw new CatalogError('', `Request failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
     }
-}
-
-function numberOfDays(start: Date, end: Date) {
-    if (!start || !end) {
-        return 1
-    }
-
-    return Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 3600 * 24)) ?? 1;
 }
 
 function convertToType(type: string): MediaType {

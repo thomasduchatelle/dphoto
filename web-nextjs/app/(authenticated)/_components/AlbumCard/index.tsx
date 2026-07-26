@@ -12,9 +12,9 @@ export interface AlbumCardProps {
 
 // Helper to get temperature color based on relativeTemperature (0-1 scale)
 const getTemperatureColor = (relativeTemp: number): string => {
-    if (relativeTemp >= 0.8) return '#ff6b6b'; // Hot - red
+    if (relativeTemp >= 0.75) return '#ff6b6b'; // Hot - red
     if (relativeTemp >= 0.5) return '#ffa94d'; // Warm - orange
-    if (relativeTemp >= 0.3) return '#74c0fc'; // Cool - light blue
+    if (relativeTemp >= 0.25) return '#74c0fc'; // Cool - light blue
     return '#a5d8ff'; // Cold - pale blue
 };
 
