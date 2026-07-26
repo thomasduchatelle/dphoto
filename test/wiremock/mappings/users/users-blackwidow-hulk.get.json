@@ -2,7 +2,7 @@
   "priority": 10,
   "request": {
     "method": "GET",
-    "url": "/api/v1/users?emails=blackwindow%40avenger.com,hulk%40avenger.com"
+    "url": "/api/v1/users?emails=blackwindow%40avenger.com%2Chulk%40avenger.com"
   },
   "response": {
     "status": 200,
