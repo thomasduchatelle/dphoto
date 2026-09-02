@@ -9,6 +9,12 @@ import (
 	"slices"
 )
 
+// uploaderChannelSize is the buffer capacity of the uploader input channel. It is set large enough to absorb all
+// analysed and catalogued media requests so that the analyse phase can complete ahead of the slow upload, allowing
+// the tracker to report a stable upload progress bar total.
+// At 24 bytes per BackingUpMediaRequest pointer, 20 000 slots ≈ 480 KB — negligible.
+const uploaderChannelSize = 20_000
+
 type BatchBackup struct {
 	CataloguerFactory CataloguerFactory
 	DetailsReaders    []DetailsReader
@@ -88,7 +94,7 @@ func multithreadedBackupRuntime(ctxNonCancelable context.Context, options Option
 		&chain.ReBufferLink[BackingUpMediaRequest]{
 			BufferLink: chain.BufferLink[BackingUpMediaRequest]{
 				BufferCapacity: options.BatchSize,
-				ChannelSize:    options.ChannelSize,
+				ChannelSize:    uploaderChannelSize,
 				Next: &chain.MultithreadedLink[[]BackingUpMediaRequest, []BackingUpMediaRequest]{
 					NumberOfRoutines: options.ConcurrencyParameters.NumberOfConcurrentUploaderRoutines(),
 					ConsumerBuilder: func(consumer chain.Consumer[[]BackingUpMediaRequest]) chain.Consumer[[]BackingUpMediaRequest] {
