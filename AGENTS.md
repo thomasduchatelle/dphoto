@@ -135,12 +135,8 @@ When interacting with GitHub MCP, use the remote URL: `git@github.com:thomasduch
 
 ### Issue tracker
 
-Issues live as local markdown files under `specs/`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+Issues live as local markdown files at `specs/<feature-slug>/issues/<NN-slug>.md`. When you implement the work described in an issue, set its `Status:` line to `done` once the change is merged. Statuses are `ready`, `done`, `wontdo`. For anything more (creating specs, breaking features into issues, archiving), load the `issue-tracker` skill.
 
 ### Domain docs
 
-Single-context layout: one `CONTEXT.md` at the repo root, ADRs under `docs/adr/`. See `docs/agents/domain.md`.
+Multi-context layout: `CONTEXT-MAP.md` at the repo root, ADRs under `docs/adr/`. See `docs/agents/domain.md`.
