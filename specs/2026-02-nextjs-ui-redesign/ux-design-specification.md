@@ -3,7 +3,7 @@ stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 workflowComplete: true
 completedDate: 2026-01-31
 inputDocuments:
-  - '/home/dush/dev/git/dphoto/specs/designs/prd.md'
+  - '/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/prd.md'
   - '/home/dush/dev/git/dphoto/specs/2026-01-ux-functionnal.md'
 ---
 
@@ -1162,7 +1162,7 @@ Start with Material UI base for proven accessibility and mobile responsiveness, 
 ### Mockup Reference
 
 Interactive HTML mockup showcasing final design direction:
-`/home/dush/dev/git/dphoto/specs/designs/ux-design-direction-final.html`
+`/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/mockups/ux-design-direction-final.html`
 
 Shows:
 
