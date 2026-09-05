@@ -3,9 +3,9 @@ stepsCompleted: [ 'step-01-validate-prerequisites', 'step-02-design-epics', 'ste
 workflowComplete: true
 completedDate: '2026-02-01'
 inputDocuments:
-  - '/home/dush/dev/git/dphoto/specs/designs/prd.md'
-  - '/home/dush/dev/git/dphoto/specs/designs/architecture.md'
-  - '/home/dush/dev/git/dphoto/specs/designs/ux-design-specification.md'
+  - '/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/prd.md'
+  - '/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/architecture.md'
+  - '/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/ux-design-specification.md'
   - '/home/dush/dev/git/dphoto/AGENTS.md'
 ---
 
@@ -115,7 +115,7 @@ into implementable stories.
 
 ### Additional Requirements
 
-Refer on @specs/designs/architecture.md for additional requirements and technical directions.
+Refer on @specs/2026-02-nextjs-ui-redesign/architecture.md for additional requirements and technical directions.
 
 ### FR Coverage Map
 

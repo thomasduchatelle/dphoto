@@ -82,7 +82,7 @@ stories. The next story (1.6 Album Filtering) will add interactive filtering con
 
 ### Architecture Reference
 
-**File**: `/home/dush/dev/git/dphoto/specs/designs/architecture.md`
+**File**: `/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/architecture.md`
 
 **Key architectural decisions:**
 
@@ -94,7 +94,7 @@ stories. The next story (1.6 Album Filtering) will add interactive filtering con
 
 ### Product Requirements
 
-**File**: `/home/dush/dev/git/dphoto/specs/designs/prd.md`
+**File**: `/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/prd.md`
 
 **Functional Requirements addressed:**
 
@@ -116,7 +116,7 @@ stories. The next story (1.6 Album Filtering) will add interactive filtering con
 
 ### UX Design Specification
 
-**File**: `/home/dush/dev/git/dphoto/specs/designs/ux-design-specification.md`
+**File**: `/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/ux-design-specification.md`
 
 **Key UX requirements:**
 
@@ -130,7 +130,7 @@ stories. The next story (1.6 Album Filtering) will add interactive filtering con
 
 ### Epic Context
 
-**File**: `/home/dush/dev/git/dphoto/specs/designs/epics.md`
+**File**: `/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/epics.md`
 
 **Epic 1: Album List Home Page**
 Users can view their album list on the home page with album cards showing metadata and density indicators, and filter albums by owner with a fully functional

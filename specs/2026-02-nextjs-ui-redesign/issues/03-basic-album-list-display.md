@@ -26,9 +26,9 @@ so that **I can see all albums I own and albums shared with me**.
 
 ### Depends on
 
-* **Story 1.1 - Project Foundation Setup** (`specs/stories/1-1-project-foundation-setup.md`): Material UI theme configured with brand color #185986, dark
+* **Story 1.1 - Project Foundation Setup** (`specs/2026-02-nextjs-ui-redesign/issues/01-project-foundation-setup.md`): Material UI theme configured with brand color #185986, dark
   theme (#121212 background, #1e1e1e surface), breakpoint system established, ThemeProvider wrapping application
-* **Story 1.2 - State Management Migration** (`specs/stories/1-2-state-management-migration.md`): Complete catalog state management migrated to
+* **Story 1.2 - State Management Migration** (`specs/2026-02-nextjs-ui-redesign/issues/02-state-management-migration.md`): Complete catalog state management migrated to
   `domains/catalog/`, FetchCatalogAdapter implementing server/client compatible API access, custom image loader configured, error boundaries created, 230 tests
   passing validating behavior preservation
 

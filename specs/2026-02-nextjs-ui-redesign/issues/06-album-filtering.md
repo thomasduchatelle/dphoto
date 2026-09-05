@@ -69,7 +69,7 @@ This establishes the pattern for future filtering features (e.g., date range fil
 
 ### Architecture Reference
 
-**File**: `/home/dush/dev/git/dphoto/specs/designs/architecture.md`
+**File**: `/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/architecture.md`
 
 **Relevant architectural decisions:**
 
@@ -96,7 +96,7 @@ albums = {selectVisibleAlbums(state)}
 
 ### Product Requirements
 
-**File**: `/home/dush/dev/git/dphoto/specs/designs/prd.md`
+**File**: `/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/prd.md`
 
 **Functional Requirements addressed:**
 
@@ -111,7 +111,7 @@ albums = {selectVisibleAlbums(state)}
 
 ### UX Design Specification
 
-**File**: `/home/dush/dev/git/dphoto/specs/designs/ux-design-specification.md`
+**File**: `/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/ux-design-specification.md`
 
 **Key UX requirements:**
 
@@ -125,7 +125,7 @@ albums = {selectVisibleAlbums(state)}
 
 ### Epic Context
 
-**File**: `/home/dush/dev/git/dphoto/specs/designs/epics.md`
+**File**: `/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/epics.md`
 
 **Epic 1: Album List Home Page** - FINAL STORY
 

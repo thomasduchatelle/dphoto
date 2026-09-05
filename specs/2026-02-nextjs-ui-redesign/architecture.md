@@ -5,8 +5,8 @@ lastStep: 8
 status: 'complete'
 completedAt: '2026-01-31'
 inputDocuments:
-  - '/home/dush/dev/git/dphoto/specs/designs/prd.md'
-  - '/home/dush/dev/git/dphoto/specs/designs/ux-design-specification.md'
+  - '/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/prd.md'
+  - '/home/dush/dev/git/dphoto/specs/2026-02-nextjs-ui-redesign/ux-design-specification.md'
   - '/home/dush/dev/git/dphoto/specs/2026-01-ux-functionnal.md'
   - '/home/dush/dev/git/dphoto/AGENTS.md'
 project_name: 'dphoto'
@@ -101,7 +101,7 @@ outOfScope: 'Backend (pkg/), Infrastructure (deployments/cdk/), API (api/lambdas
 
 ### 2. State Management
 
-**Decision:** Lift-and-shift existing state management from `web/src/core/catalog/` - Initialize state server-side, pass to pure UI components as props
+**Decision:** Lift-and-shift existing state management from `web/src/core/catalog/`. The server/client split (server computes initial state, client hydrates it, pure UI receives props) is recorded in **[ADR-0002](../../../docs/adr/0002-server-computed-initial-state-hydration.md)**.
 
 **This is a migration task. DO NOT reimplement state management.**
 
@@ -114,70 +114,12 @@ outOfScope: 'Backend (pkg/), Infrastructure (deployments/cdk/), API (api/lambdas
 - **Thunks:** Coordinated operations (API calls + state updates)
 - **Adapter:** API integration (axios → replace with fetch)
 
-**Architecture:**
-
-```
-Server Component
-   ↓ (compute initial state)
-   ↓ (pass as props)
-Client Component
-   ├─ State: useReducer(catalogReducer, serverInitialState)
-   ├─ Handlers: thunks instantiated client-side
-   └─ Pure UI Components (receive state + handlers as props)
-```
-
-**Two States:**
-
-1. **User State** - Authentication, permissions
-2. **Catalog State** - Albums, medias, selected album, filters, dialogs
-
-**State Flow:**
-
-```tsx
-// web-nextjs/app/(authenticated)/page.tsx
-
-// 1. Server computes initial state
-export default async function Page() {
-  const catalogState = await computeInitialCatalogState()  // Internally use the thunk and the reducer to get a loaded state, before passing it to the client component
-  return <CatalogClient initialState={catalogState}/>
-}
-
-// web-nextjs/app/(authenticated)/_components/CatalogContext.tsx
-// 2. Client hydrates state + instantiates handlers
-'use client'
-
-function CatalogContext({initialState}) {
-  // note - using a simple state is the recommended solution ; a context is accepted if required to prevent too many data waterfalling (when more than 3 components are passing through the data without modifiying it).
-  const [state, dispatch] = useReducer(catalogReducer, initialState)  // Existing reducer
-  const handlers = useThunks(catalogThunks, {adapter, dispatch}, state)  // Existing thunks
-
-  return <AlbumsPageContent albums={state.visibleAlbums}
-                            onEdit={handlers.openEditDialog}
-                            onDelete={handlers.openDeleteDialog}
-  />  // Pure UI component
-}
-
-// web-nextjs/app/(authenticated)/_components/AlbumsPageContent.tsx
-
-// 3. Pure UI component (NO state management)
-function AlbumsPageContent({albums, onEdit, onDelete}) {
-  return (
-          <AlbumsGrid
-                  albums={albums}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-          />
-  )
-}
-```
-
-**Key Decisions:**
+**Migration specifics (beyond ADR-0002):**
 
 * **Lift-and-shift:** Copy `web/src/core/catalog/` → `web-nextjs/domains/catalog/`
 * **Replace adapter:** axios → fetch (server + client compatible) ; reference implementation is `web/src/core/catalog/adapters/api/CatalogAPIAdapter.ts`
-* **Server initialization:** Compute state server-side, pass as prop
-* **Client handlers:** Instantiate thunks client-side
-* **Pure UI:** Pure components receive properties they need to render (list of albums, list of users, ...) - NO internal state management
+* **Two states:** User state (authentication, permissions) and Catalog state (albums, medias, selected album, filters, dialogs)
+* **Context vs props:** a simple prop pass-through is the default; a context is accepted only to prevent data waterfalling (more than 3 components passing data through unchanged)
 
 **What NOT to Do:**
 
@@ -229,29 +171,7 @@ components/
 
 ### 4. Routing Structure
 
-**Decision:** Owner-based paths with NextJS parallel routes for photo modal interception
-
-**DO:**
-
-- Use owner ID in album URLs: `/owners/[ownerId]/[albumId]`
-- Implement parallel route `@modal/(.)photos/[photoId]/` for modal interception
-- Create fallback route `photos/[photoId]/page.tsx` for direct access
-- Render `{children}` and `{modal}` in album layout
-
-**DON'T:**
-
-- Use album-only paths (need owner to distinguish shared albums)
-- Implement custom modal logic outside NextJS parallel routes
-
-**User Flow:**
-
-1. Home `/` → Album list with random photos
-2. Click album → `/owners/123/456` (photo grid)
-3. Click photo → `/owners/123/456/photos/789` (modal opens, grid visible behind, use modal interception)
-4. ESC/close → Back to `/owners/123/456`
-5. Refresh on photo URL → Full page viewer loads with model open
-
-**Rationale:** Owner ID distinguishes albums from different owners, parallel routes provide native modal pattern, URLs are shareable
+**Decision:** Owner-based album paths with NextJS parallel-route modal interception for the photo viewer. Recorded in **[ADR-0001](../../../docs/adr/0001-owner-based-routing-and-modal-interception.md)**.
 
 ---
 

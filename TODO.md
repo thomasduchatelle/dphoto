@@ -27,13 +27,14 @@ TODOs
    sliding, ...)
    1. Mobile -> S3 Landing
    2. S3 Landing -> DPhoto backup (support deletion and modification)
-8. [ ] Back the CLI with APIs instead of direct accesses to underlying AWS services
+8. [ ] support of video - compression, thumbnail, reading online.
+9. [ ] Back the CLI with APIs instead of direct accesses to underlying AWS services
    1. user concept is missing in the CLI (takes the owner as the user)
    2. move to Auth0 for authentication on both UI and CLI
-9. [ ] Create a monitoring Dashboard with some stats (drive size, cache size, missed cache, popular resolutions, ...)
-10. Other features:
-   1. [ ] deletion of pictures
-   2. [ ] update media timestamps to synchronise a timeline within an album with medias from several capturing devices (camera and phone)
+10. [ ] Create a monitoring Dashboard with some stats (drive size, cache size, missed cache, popular resolutions, ...)
+11. Other features:
+12. [ ] deletion of pictures (and never re-upload them)
+13. [ ] (re)synchronisation of several camera per albums where we can immediately see the effect of the synchronisation. Something like the tools used to synchronise the video with the sound.
 
 **Small tasks:**
 
