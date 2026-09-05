@@ -29,32 +29,24 @@ _Avoid_: Client, buyer, account
 - **Only include terms specific to this project's context.** General programming concepts (timeouts, error types, utility patterns) don't belong even if the project uses them extensively. Before adding a term, ask: is this a concept unique to this context, or a general programming concept? Only the former belongs.
 - **Group terms under subheadings** when natural clusters emerge. If all terms belong to a single cohesive area, a flat list is fine.
 
-## Single vs multi-context repos
+## Multi-context repos
 
-**Single context (most repos):** One `CONTEXT.md` at the repo root.
-
-**Multiple contexts:** A `CONTEXT-MAP.md` at the repo root lists the contexts, where they live, and how they relate to each other:
+This repo uses multiple contexts. Each context lives in `docs/{context}/CONTEXT.md`. A `CONTEXT-MAP.md` at the root lists all contexts and their relationships:
 
 ```md
 # Context Map
 
 ## Contexts
 
-- [Ordering](./src/ordering/CONTEXT.md): receives and tracks customer orders
-- [Billing](./src/billing/CONTEXT.md): generates invoices and processes payments
-- [Fulfillment](./src/fulfillment/CONTEXT.md): manages warehouse picking and shipping
+- [Catalog](./docs/catalog/CONTEXT.md): organises medias into albums
+- [Archive](./docs/archive/CONTEXT.md): stores and serves media files
+- [Backup](./docs/backup/CONTEXT.md): scans local volumes and uploads new medias
 
 ## Relationships
 
-- **Ordering → Fulfillment**: Ordering emits `OrderPlaced` events; Fulfillment consumes them to start picking
-- **Fulfillment → Billing**: Fulfillment emits `ShipmentDispatched` events; Billing consumes them to generate invoices
-- **Ordering ↔ Billing**: Shared types for `CustomerId` and `Money`
+- **Backup → Archive**: Backup uploads new media files to the Archive
+- **Backup → Catalog**: Backup indexes new medias into the Catalog
+- **Catalog ↔ Archive**: Catalog holds the index; Archive holds the files
 ```
 
-The skill infers which structure applies:
-
-- If `CONTEXT-MAP.md` exists, read it to find contexts
-- If only a root `CONTEXT.md` exists, single context
-- If neither exists, create a root `CONTEXT.md` lazily when the first term is resolved
-
-When multiple contexts exist, infer which one the current topic relates to. If unclear, ask.
+When the current topic touches a context, update `docs/{context}/CONTEXT.md`. If unclear which context applies, ask.
