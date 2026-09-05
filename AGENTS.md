@@ -130,3 +130,17 @@ When interacting with GitHub MCP, use the remote URL: `git@github.com:thomasduch
 ---
 
 **Trust these instructions** - validated against the repository. Search only if missing information.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as local markdown files under `specs/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: one `CONTEXT.md` at the repo root, ADRs under `docs/adr/`. See `docs/agents/domain.md`.
