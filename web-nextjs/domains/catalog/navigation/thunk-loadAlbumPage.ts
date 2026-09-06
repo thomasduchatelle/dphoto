@@ -10,44 +10,41 @@ export interface LoadAlbumPagePort {
     fetchMedias(albumId: AlbumId): Promise<Media[]>
 }
 
-export class LoadAlbumPage {
-    constructor(
-        private readonly dispatch: (action: AlbumsAndMediasLoaded | MediaLoadFailed | NoAlbumAvailable) => void,
-        private readonly port: LoadAlbumPagePort,
-    ) {}
+export async function loadAlbumPage(
+    dispatch: (action: AlbumsAndMediasLoaded | MediaLoadFailed | NoAlbumAvailable) => void,
+    port: LoadAlbumPagePort,
+    albumId: AlbumId,
+): Promise<void> {
+    const [albumsResp, mediasResp] = await Promise.allSettled([
+        port.fetchAlbums(),
+        port.fetchMedias(albumId),
+    ]);
 
-    loadAlbumPage = async (albumId: AlbumId): Promise<void> => {
-        const [albumsResp, mediasResp] = await Promise.allSettled([
-            this.port.fetchAlbums(),
-            this.port.fetchMedias(albumId),
-        ]);
+    if (albumsResp.status === 'rejected') {
+        return Promise.reject(albumsResp.reason);
+    }
 
-        if (albumsResp.status === 'rejected') {
-            return Promise.reject(albumsResp.reason);
-        }
+    const albums = albumsResp.value;
 
-        const albums = albumsResp.value;
+    if (!albums.some(a => albumIdEquals(a.albumId, albumId))) {
+        dispatch(noAlbumAvailable(undefined));
+        return;
+    }
 
-        if (!albums.some(a => albumIdEquals(a.albumId, albumId))) {
-            this.dispatch(noAlbumAvailable(undefined));
-            return;
-        }
-
-        if (mediasResp.status === 'rejected') {
-            this.dispatch(mediaLoadFailed({
-                albums,
-                displayedAlbumId: albumId,
-                error: new Error(`failed to load medias of ${JSON.stringify(albumId)}`, {cause: mediasResp.reason}),
-            }));
-            return;
-        }
-
-        this.dispatch(albumsAndMediasLoaded({
+    if (mediasResp.status === 'rejected') {
+        dispatch(mediaLoadFailed({
             albums,
-            medias: mediasResp.value,
-            mediasFromAlbumId: albumId,
+            displayedAlbumId: albumId,
+            error: new Error(`failed to load medias of ${JSON.stringify(albumId)}`, {cause: mediasResp.reason}),
         }));
-    };
+        return;
+    }
+
+    dispatch(albumsAndMediasLoaded({
+        albums,
+        medias: mediasResp.value,
+        mediasFromAlbumId: albumId,
+    }));
 }
 
 export const loadAlbumPageDeclaration: ThunkDeclaration<
@@ -57,5 +54,5 @@ export const loadAlbumPageDeclaration: ThunkDeclaration<
     CatalogDispatch & { adapter: LoadAlbumPagePort }
 > = {
     selector: () => ({}),
-    factory: ({dispatch, adapter}) => new LoadAlbumPage(dispatch, adapter).loadAlbumPage,
+    factory: ({dispatch, adapter}) => loadAlbumPage.bind(null, dispatch, adapter),
 };

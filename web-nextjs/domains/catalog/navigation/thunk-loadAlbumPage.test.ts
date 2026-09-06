@@ -3,7 +3,7 @@ import {Album, AlbumId, Media, MediaType} from '../language';
 import {albumsAndMediasLoaded} from './action-albumsAndMediasLoaded';
 import {mediaLoadFailed} from './action-mediaLoadFailed';
 import {noAlbumAvailable} from './action-noAlbumAvailable';
-import {LoadAlbumPage, LoadAlbumPagePort} from './thunk-loadAlbumPage';
+import {loadAlbumPage, LoadAlbumPagePort} from './thunk-loadAlbumPage';
 import {twoAlbums} from '../tests/test-helper-state';
 import {CatalogViewerAction} from '../actions';
 
@@ -59,15 +59,14 @@ class FakeAdapterWithMediaFailure implements LoadAlbumPagePort {
     }
 }
 
-describe('LoadAlbumPage', () => {
+describe('loadAlbumPage', () => {
     let dispatched: CatalogViewerAction[];
-
-    const newLoader = (port: LoadAlbumPagePort) =>
-        new LoadAlbumPage((a) => dispatched.push(a as CatalogViewerAction), port);
 
     beforeEach(() => {
         dispatched = [];
     });
+
+    const dispatch = (a: CatalogViewerAction) => dispatched.push(a);
 
     it('should dispatch albumsAndMediasLoaded when the album exists and medias load successfully', async () => {
         const port = new FakeLoadAlbumPageAdapter(
@@ -75,7 +74,7 @@ describe('LoadAlbumPage', () => {
             new Map([[`${albumId.owner}/${albumId.folderName}`, someMedias]]),
         );
 
-        await newLoader(port).loadAlbumPage(albumId);
+        await loadAlbumPage(dispatch, port, albumId);
 
         expect(dispatched).toEqual([
             albumsAndMediasLoaded({albums: twoAlbums, medias: someMedias, mediasFromAlbumId: albumId}),
@@ -86,7 +85,7 @@ describe('LoadAlbumPage', () => {
         const port = new FakeLoadAlbumPageAdapter(twoAlbums);
         const unknownId: AlbumId = {owner: 'nobody', folderName: 'ghost'};
 
-        await newLoader(port).loadAlbumPage(unknownId);
+        await loadAlbumPage(dispatch, port, unknownId);
 
         expect(dispatched).toEqual([noAlbumAvailable(undefined)]);
     });
@@ -95,7 +94,7 @@ describe('LoadAlbumPage', () => {
         const error = new Error('media fetch failed');
         const port = new FakeAdapterWithMediaFailure(twoAlbums, error);
 
-        await newLoader(port).loadAlbumPage(albumId);
+        await loadAlbumPage(dispatch, port, albumId);
 
         expect(dispatched).toEqual([
             mediaLoadFailed({
@@ -110,7 +109,7 @@ describe('LoadAlbumPage', () => {
         const error = new Error('albums fetch failed');
         const port = new FakeAdapterWithAlbumFailure(error);
 
-        await expect(newLoader(port).loadAlbumPage(albumId)).rejects.toThrow(error);
+        await expect(loadAlbumPage(dispatch, port, albumId)).rejects.toThrow(error);
         expect(dispatched).toHaveLength(0);
     });
 });
