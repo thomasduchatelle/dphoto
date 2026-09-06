@@ -11,7 +11,11 @@ export const CollapsibleDetails = ({details}: CollapsibleDetailsProps) => {
     const [showDetails, setShowDetails] = useState(false);
 
     return (
-        <Box sx={{width: '100%', maxWidth: 600, textAlign: 'left'}}>
+        <Box sx={{
+            width: {xs: 300, sm: 600},
+            margin: 'auto',
+            textAlign: 'left'
+        }}>
             <Button
                 size="small"
                 onClick={() => setShowDetails(!showDetails)}
