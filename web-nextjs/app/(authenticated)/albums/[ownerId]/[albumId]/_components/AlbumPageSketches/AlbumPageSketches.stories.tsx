@@ -1,29 +1,32 @@
 /**
  * SKETCHES — Album Page Layout Concepts
  *
- * Three independent layout ideas for the full album page.
- * These are intentional rough sketches: all data is hardcoded, components are
- * self-contained inline, and no project abstractions are reused.
- * The goal is to compare page-level compositions before committing to one.
- *
  * Layout A — Cinematic Header
- *   Full-bleed hero strip built from thumbnail slices, album title + dates centred
- *   on top of it, action buttons (Share / Edit) floating top-right of the hero.
+ *   Full-bleed hero strip, album title centred, action buttons floating top-right.
  *   Day-grouped media grid below. Sibling albums in a right sidebar on lg screens.
  *
  * Layout B — Magazine Strip
- *   Compact sticky sub-header (name + dates + actions) below the app bar.
- *   Horizontal scrollable row of sibling album cards above the grid.
- *   Mobile: swappable prev/next album bar pinned at the bottom of the viewport.
+ *   Compact sticky sub-header (name + dates + actions). Horizontal scrollable
+ *   sibling album row above the grid. Mobile: prev/next bar pinned at bottom.
  *
  * Layout C — Explorer Rail
- *   Persistent left rail (lg+) lists all sibling albums chronologically.
- *   Wide main column shows the day-grouped grid; album title lives in a slim band
- *   between the app bar and the grid.
- *   Mobile / tablet: collapsed rail replaced by a horizontal album strip at top.
+ *   Persistent left rail (lg+) lists all sibling albums. Main column: slim
+ *   album-info band → day-grouped grid. sm/md: horizontal album strip at top.
+ *
+ * Layout D — Immersive Full-Width
+ *   Edge-to-edge grid. Album name watermark above the grid. Floating action pill
+ *   bottom-right. Prev/next arrows on screen edges. Mobile bottom drawer for albums.
+ *
+ * Mobile M1 — Compact Header + FAB + Prev/Next inline
+ *   Slim header (back | title + date). FAB bottom-right expands Share/Edit.
+ *   Previous album: full-width card at the end of the page flow.
+ *   Next album: banner hidden above the app bar, slides in only on scroll-up.
+ * Mobile M2 — Mini Hero + Sticky Album Strip
+ * Mobile M3 — Grid + Expandable Bottom Sheet
  */
 
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
+import {useEffect, useRef, useState} from 'react';
 import {
     AppBar,
     Avatar,
@@ -44,6 +47,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {AppBackground} from '@/components/AppLayout/AppBackground';
 
 // ---------------------------------------------------------------------------
@@ -735,6 +740,696 @@ export const LayoutC_ExplorerRail: Story = {
 // Prev/next album arrows peek in from the left and right edges of the screen.
 // Sibling albums appear in a bottom drawer that expands on hover/tap.
 // ===========================================================================
+
+// ===========================================================================
+// MOBILE SKETCHES
+//
+// These stories are fixed to a mobile-width composition (~390 px mental model).
+// No responsive breakpoints are used — each story is a standalone mobile view.
+// Use Storybook's viewport tool to set a mobile size (e.g. iPhone 14 Pro).
+//
+// C improvements applied to all mobile sketches:
+//   · Rail albums are wider (show more thumbnails per card)
+//   · Action buttons are white-outlined, matching the Cinematic Header style
+// ===========================================================================
+
+// A wider variant of AlbumMiniCard used in the rail (desktop) refinement
+function AlbumMiniCardWide({name, start, end, count, selected = false}: {
+    name: string;
+    start: Date;
+    end: Date;
+    count: number;
+    selected?: boolean;
+}) {
+    return (
+        <Box
+            sx={{
+                border: selected ? '2px solid #4a9ece' : '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 1,
+                overflow: 'hidden',
+                cursor: 'pointer',
+                bgcolor: selected ? 'rgba(74,158,206,0.08)' : 'rgba(255,255,255,0.03)',
+                '&:hover': {bgcolor: 'rgba(74,158,206,0.12)'},
+                transition: 'all 0.2s',
+            }}
+        >
+            <Box sx={{display: 'flex', gap: '1px', height: 64, overflow: 'hidden'}}>
+                {[name + '0', name + '1', name + '2', name + '3'].map((k) => (
+                    <Box key={k} sx={{flex: 1, bgcolor: `hsl(${hue(k)}, 35%, 25%)`}}/>
+                ))}
+            </Box>
+            <Box sx={{p: 0.75}}>
+                <Typography variant="caption" sx={{fontWeight: 600, display: 'block', lineHeight: 1.3}}>
+                    {name}
+                </Typography>
+                <Typography variant="caption" sx={{color: 'rgba(255,255,255,0.45)', fontSize: '0.65rem'}}>
+                    {fmt(start)} · {count} photos
+                </Typography>
+            </Box>
+        </Box>
+    );
+}
+
+// White-outlined action buttons matching the Cinematic Header style
+function ActionButtons() {
+    return (
+        <Stack direction="row" gap={1}>
+            <Button
+                variant="outlined"
+                startIcon={<ShareIcon/>}
+                size="small"
+                sx={{
+                    borderColor: 'rgba(255,255,255,0.45)',
+                    color: 'white',
+                    '&:hover': {borderColor: 'white', bgcolor: 'rgba(255,255,255,0.08)'},
+                }}
+            >
+                Share
+            </Button>
+            <Button
+                variant="outlined"
+                startIcon={<EditIcon/>}
+                size="small"
+                sx={{
+                    borderColor: 'rgba(255,255,255,0.45)',
+                    color: 'white',
+                    '&:hover': {borderColor: 'white', bgcolor: 'rgba(255,255,255,0.08)'},
+                }}
+            >
+                Edit
+            </Button>
+        </Stack>
+    );
+}
+
+// Mobile app bar (56 px, fixed)
+function MobileFakeAppBar() {
+    return (
+        <AppBar
+            position="fixed"
+            elevation={0}
+            sx={{
+                bgcolor: 'rgba(0,25,41,0.88)',
+                backdropFilter: 'blur(10px)',
+                borderBottom: '1px solid rgba(74,158,206,0.2)',
+            }}
+        >
+            <Toolbar sx={{minHeight: 56, height: 56, px: 1.5}}>
+                <Box sx={{height: 24, width: 80, bgcolor: 'rgba(74,158,206,0.25)', borderRadius: 0.5, flexGrow: 1}}/>
+                <Avatar src="/tonystark-profile.jpg" sx={{width: 30, height: 30}}/>
+            </Toolbar>
+        </AppBar>
+    );
+}
+
+// 3-column mobile media grid
+function MobileMediaGrid() {
+    return (
+        <Box>
+            {MEDIA_DAYS.map(({day, medias}) => (
+                <Box key={day.toISOString()} sx={{mb: 3}}>
+                    <Typography
+                        sx={{
+                            mb: 1,
+                            px: 1,
+                            fontSize: '0.68rem',
+                            letterSpacing: '0.12em',
+                            textTransform: 'uppercase',
+                            color: 'rgba(255,255,255,0.5)',
+                        }}
+                    >
+                        {fmtDay(day)}
+                    </Typography>
+                    <Box sx={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px'}}>
+                        {medias.map((m) => (
+                            <Box
+                                key={m.id}
+                                sx={{
+                                    aspectRatio: '1',
+                                    bgcolor: `hsl(${hue(m.id)}, 40%, 22%)`,
+                                    position: 'relative',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                {m.isVideo && (
+                                    <PlayCircleOutlineIcon sx={{color: 'rgba(255,255,255,0.85)', fontSize: 28}}/>
+                                )}
+                            </Box>
+                        ))}
+                    </Box>
+                </Box>
+            ))}
+        </Box>
+    );
+}
+
+// ===========================================================================
+// MOBILE M1 — Compact Header + FAB + Prev/Next inline
+//
+// App bar → slim header (back | title + date, no action buttons) → 3-col grid
+// → full-width "previous album" card at the very bottom of the page content.
+//
+// Floating action button (speed-dial) pinned bottom-right: expands Share and
+// Edit on tap.
+//
+// "Next album" banner: rendered just above the app bar (translateY(-100%))
+// and slides down into view only while the user is scrolling upward and has
+// scrolled at least 80px from the top. It slides back out as soon as the user
+// scrolls down again.
+// ===========================================================================
+
+function Mobile_M1_Inner() {
+    const [fabOpen, setFabOpen] = useState(false);
+    const [nextVisible, setNextVisible] = useState(false);
+    const lastScrollY = useRef(0);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const onScroll = () => {
+            const y = el.scrollTop;
+            const goingUp = y < lastScrollY.current;
+            lastScrollY.current = y;
+            setNextVisible(goingUp && y > 80);
+        };
+        el.addEventListener('scroll', onScroll, {passive: true});
+        return () => el.removeEventListener('scroll', onScroll);
+    }, []);
+
+    const NEXT = SIBLINGS[2];
+    const PREV = SIBLINGS[0];
+
+    return (
+        // scrollRef wraps everything so scroll events are captured inside the
+        // Storybook iframe rather than on window
+        <Box
+            ref={scrollRef}
+            sx={{
+                height: '100vh',
+                overflowY: 'auto',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+            }}
+        >
+            {/* ── Fixed app bar ── */}
+            <MobileFakeAppBar/>
+
+            {/* ── "Next album" peek banner — slides in from above the app bar on scroll-up ── */}
+            <Box
+                sx={{
+                    position: 'fixed',
+                    top: 56,
+                    left: 0,
+                    right: 0,
+                    zIndex: 500,
+                    transform: nextVisible ? 'translateY(0)' : 'translateY(-100%)',
+                    transition: 'transform 0.25s ease',
+                    bgcolor: 'rgba(5,12,22,0.97)',
+                    backdropFilter: 'blur(10px)',
+                    borderBottom: '1px solid rgba(74,158,206,0.25)',
+                    px: 1.5,
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                }}
+            >
+                <Typography sx={{fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0}}>
+                    Next
+                </Typography>
+                {/* 4-thumb strip */}
+                <Box sx={{display: 'flex', gap: '2px', height: 40, flex: 1, borderRadius: '3px', overflow: 'hidden'}}>
+                    {[NEXT.name + '0', NEXT.name + '1', NEXT.name + '2', NEXT.name + '3'].map((k) => (
+                        <Box key={k} sx={{flex: 1, bgcolor: `hsl(${hue(k)}, 35%, 26%)`}}/>
+                    ))}
+                </Box>
+                <Box sx={{flexShrink: 0}}>
+                    <Typography sx={{fontWeight: 600, fontSize: '0.8rem', color: '#fff', lineHeight: 1.2}}>
+                        {NEXT.name}
+                    </Typography>
+                    <Typography sx={{fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)'}}>
+                        {NEXT.count} photos
+                    </Typography>
+                </Box>
+                <ChevronRightIcon sx={{color: 'rgba(255,255,255,0.4)', fontSize: 20, flexShrink: 0}}/>
+            </Box>
+
+            {/* ── Slim album header ── */}
+            <Box
+                sx={{
+                    mt: '56px',
+                    px: 1.5,
+                    py: 1.5,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1,
+                    borderBottom: '1px solid rgba(255,255,255,0.08)',
+                }}
+            >
+                <IconButton size="small" sx={{color: 'rgba(255,255,255,0.6)', mt: 0.25, flexShrink: 0}}>
+                    <ArrowBackIcon fontSize="small"/>
+                </IconButton>
+                <Box>
+                    <Typography sx={{fontWeight: 500, fontSize: '1rem', lineHeight: 1.25, color: '#fff'}}>
+                        {ALBUM.name}
+                    </Typography>
+                    <Typography sx={{color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem', mt: 0.25}}>
+                        {fmt(ALBUM.start)} – {fmt(ALBUM.end)} · {ALBUM.totalCount} photos
+                    </Typography>
+                </Box>
+            </Box>
+
+            {/* ── 3-col grid ── */}
+            <Box sx={{pt: 1.5, flex: 1}}>
+                <MobileMediaGrid/>
+            </Box>
+
+            {/* ── Previous album — full-width card at bottom of page flow ── */}
+            <Box
+                sx={{
+                    mx: 1.5,
+                    mb: 10,
+                    mt: 2,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    '&:hover': {borderColor: 'rgba(74,158,206,0.4)'},
+                    transition: 'border-color 0.2s',
+                }}
+            >
+                {/* Full-width 4-thumbnail strip */}
+                <Box sx={{display: 'flex', gap: '2px', height: 100}}>
+                    {[PREV.name + '0', PREV.name + '1', PREV.name + '2', PREV.name + '3'].map((k) => (
+                        <Box key={k} sx={{flex: 1, bgcolor: `hsl(${hue(k)}, 35%, 24%)`}}/>
+                    ))}
+                </Box>
+                <Box
+                    sx={{
+                        px: 1.5,
+                        py: 1.25,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        bgcolor: 'rgba(255,255,255,0.03)',
+                    }}
+                >
+                    <ChevronLeftIcon sx={{color: 'rgba(255,255,255,0.4)', fontSize: 20}}/>
+                    <Box>
+                        <Typography sx={{fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase'}}>
+                            Previous album
+                        </Typography>
+                        <Typography sx={{fontWeight: 600, fontSize: '0.95rem', color: '#fff', lineHeight: 1.2}}>
+                            {PREV.name}
+                        </Typography>
+                        <Typography sx={{fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)'}}>
+                            {fmt(PREV.start)} · {PREV.count} photos
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
+
+            {/* ── Floating action button (speed-dial) ── */}
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: 24,
+                    right: 20,
+                    zIndex: 400,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: 1,
+                }}
+            >
+                {/* Secondary actions — visible when FAB is open */}
+                {fabOpen && (
+                    <>
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                            <Box
+                                sx={{
+                                    bgcolor: 'rgba(5,15,25,0.92)',
+                                    backdropFilter: 'blur(6px)',
+                                    px: 1.5,
+                                    py: 0.5,
+                                    borderRadius: 2,
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                }}
+                            >
+                                <Typography sx={{fontSize: '0.78rem', color: '#fff'}}>Share</Typography>
+                            </Box>
+                            <IconButton
+                                sx={{
+                                    bgcolor: 'rgba(74,158,206,0.85)',
+                                    color: '#fff',
+                                    width: 44,
+                                    height: 44,
+                                    '&:hover': {bgcolor: '#4a9ece'},
+                                    boxShadow: '0 3px 12px rgba(0,0,0,0.4)',
+                                }}
+                            >
+                                <ShareIcon fontSize="small"/>
+                            </IconButton>
+                        </Box>
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                            <Box
+                                sx={{
+                                    bgcolor: 'rgba(5,15,25,0.92)',
+                                    backdropFilter: 'blur(6px)',
+                                    px: 1.5,
+                                    py: 0.5,
+                                    borderRadius: 2,
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                }}
+                            >
+                                <Typography sx={{fontSize: '0.78rem', color: '#fff'}}>Edit</Typography>
+                            </Box>
+                            <IconButton
+                                sx={{
+                                    bgcolor: 'rgba(255,255,255,0.12)',
+                                    color: '#fff',
+                                    width: 44,
+                                    height: 44,
+                                    border: '1px solid rgba(255,255,255,0.25)',
+                                    '&:hover': {bgcolor: 'rgba(255,255,255,0.2)'},
+                                    boxShadow: '0 3px 12px rgba(0,0,0,0.4)',
+                                }}
+                            >
+                                <EditIcon fontSize="small"/>
+                            </IconButton>
+                        </Box>
+                    </>
+                )}
+                {/* Main FAB */}
+                <IconButton
+                    onClick={() => setFabOpen((v) => !v)}
+                    sx={{
+                        bgcolor: '#185986',
+                        color: '#fff',
+                        width: 52,
+                        height: 52,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                        '&:hover': {bgcolor: '#1d6fa3'},
+                        transform: fabOpen ? 'rotate(45deg)' : 'none',
+                        transition: 'transform 0.2s, background-color 0.2s',
+                    }}
+                >
+                    <EditIcon/>
+                </IconButton>
+            </Box>
+        </Box>
+    );
+}
+
+export const Mobile_M1_CompactHeaderBottomNav: Story = {
+    name: 'Mobile M1 — Compact Header + FAB + Prev/Next',
+    render: () => <Mobile_M1_Inner/>,
+};
+
+// ===========================================================================
+// MOBILE M2 — Mini Hero + Sticky Album Strip
+//
+// A short (160px) hero banner: blurred colour mosaic background, album title
+// and white-outlined action buttons centred over it. Back arrow top-left.
+// Below the hero a horizontal scrollable strip of album mini-cards becomes
+// sticky once the hero scrolls off screen. Then the 3-col grid.
+// ===========================================================================
+
+export const Mobile_M2_MiniHeroStickyStrip: Story = {
+    name: 'Mobile M2 — Mini Hero + Sticky Album Strip',
+    render: () => (
+        <Box sx={{minHeight: '100vh'}}>
+            <MobileFakeAppBar/>
+
+            {/* Mini hero */}
+            <Box
+                sx={{
+                    mt: '56px',
+                    position: 'relative',
+                    height: 160,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                {/* Blurred mosaic */}
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(6, 1fr)',
+                        filter: 'blur(10px)',
+                        transform: 'scale(1.1)',
+                    }}
+                >
+                    {Array.from({length: 12}).map((_, i) => (
+                        <Box key={i} sx={{bgcolor: `hsl(${(i * 43 + 15) % 360}, 38%, 24%)`, aspectRatio: '1'}}/>
+                    ))}
+                </Box>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(to bottom, rgba(0,25,41,0.45) 0%, rgba(0,25,41,0.72) 100%)',
+                    }}
+                />
+                {/* Back */}
+                <IconButton
+                    size="small"
+                    sx={{
+                        position: 'absolute',
+                        top: 10,
+                        left: 10,
+                        color: 'white',
+                        bgcolor: 'rgba(0,0,0,0.3)',
+                    }}
+                >
+                    <ArrowBackIcon fontSize="small"/>
+                </IconButton>
+                {/* Action buttons top-right */}
+                <Stack direction="row" gap={0.75} sx={{position: 'absolute', top: 10, right: 10}}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<ShareIcon/>}
+                        size="small"
+                        sx={{
+                            borderColor: 'rgba(255,255,255,0.5)',
+                            color: 'white',
+                            fontSize: '0.72rem',
+                            py: 0.4,
+                            backdropFilter: 'blur(4px)',
+                            bgcolor: 'rgba(0,0,0,0.2)',
+                        }}
+                    >
+                        Share
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<EditIcon/>}
+                        size="small"
+                        sx={{
+                            borderColor: 'rgba(255,255,255,0.5)',
+                            color: 'white',
+                            fontSize: '0.72rem',
+                            py: 0.4,
+                            backdropFilter: 'blur(4px)',
+                            bgcolor: 'rgba(0,0,0,0.2)',
+                        }}
+                    >
+                        Edit
+                    </Button>
+                </Stack>
+                {/* Title */}
+                <Box sx={{position: 'relative', textAlign: 'center', px: 3}}>
+                    <Typography
+                        sx={{
+                            fontWeight: 300,
+                            fontSize: '1.35rem',
+                            color: '#fff',
+                            letterSpacing: '-0.01em',
+                            textShadow: '0 2px 12px rgba(0,0,0,0.6)',
+                        }}
+                    >
+                        {ALBUM.name}
+                    </Typography>
+                    <Typography sx={{color: 'rgba(255,255,255,0.65)', fontSize: '0.7rem', mt: 0.5, letterSpacing: '0.08em'}}>
+                        {fmt(ALBUM.start)} – {fmt(ALBUM.end)} · {ALBUM.totalCount} photos
+                    </Typography>
+                </Box>
+            </Box>
+
+            {/* Sticky album strip */}
+            <Box
+                sx={{
+                    position: 'sticky',
+                    top: '56px',
+                    zIndex: 100,
+                    bgcolor: 'rgba(8,18,28,0.94)',
+                    backdropFilter: 'blur(8px)',
+                    borderBottom: '1px solid rgba(74,158,206,0.15)',
+                    px: 1,
+                    py: 1,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: 'flex',
+                        gap: 1,
+                        overflowX: 'auto',
+                        '&::-webkit-scrollbar': {display: 'none'},
+                    }}
+                >
+                    <AlbumMiniCard {...ALBUM} count={ALBUM.totalCount} selected/>
+                    {SIBLINGS.map((s) => (
+                        <AlbumMiniCard key={s.name} {...s}/>
+                    ))}
+                </Box>
+            </Box>
+
+            {/* Media grid */}
+            <Box sx={{pt: 2}}>
+                <MobileMediaGrid/>
+            </Box>
+        </Box>
+    ),
+};
+
+// ===========================================================================
+// MOBILE M3 — Full-Screen Grid + Expandable Bottom Sheet
+//
+// The grid fills the whole screen below the app bar; the album title and
+// white-outlined action buttons live in a slim translucent band right below
+// the app bar (not sticky — scrolls away with the page).
+// A persistent handle/pill at the very bottom of the viewport opens a
+// bottom-sheet that slides up to reveal all sibling album mini-cards.
+// ===========================================================================
+
+export const Mobile_M3_GridWithBottomSheet: Story = {
+    name: 'Mobile M3 — Grid + Expandable Bottom Sheet',
+    decorators: [
+        (Story) => {
+            const [open, setOpen] = useState(false);
+            return <Story args={{sheetOpen: open, onToggleSheet: () => setOpen((v) => !v)}}/>;
+        },
+    ],
+    render: ({sheetOpen, onToggleSheet}: {sheetOpen: boolean; onToggleSheet: () => void}) => (
+        <Box sx={{minHeight: '100vh', pb: '52px'}}>
+            <MobileFakeAppBar/>
+
+            {/* Album info band — scrolls with page */}
+            <Box
+                sx={{
+                    mt: '56px',
+                    px: 1.5,
+                    pt: 1.5,
+                    pb: 1.25,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    borderBottom: '1px solid rgba(255,255,255,0.07)',
+                }}
+            >
+                <IconButton size="small" sx={{color: 'rgba(255,255,255,0.55)', flexShrink: 0}}>
+                    <ArrowBackIcon fontSize="small"/>
+                </IconButton>
+                <Box sx={{flex: 1, minWidth: 0}}>
+                    <Typography sx={{fontWeight: 500, fontSize: '0.95rem', color: '#fff', lineHeight: 1.2}} noWrap>
+                        {ALBUM.name}
+                    </Typography>
+                    <Typography sx={{fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)'}}>
+                        {fmt(ALBUM.start)} – {fmt(ALBUM.end)} · {ALBUM.totalCount} photos
+                    </Typography>
+                </Box>
+                <ActionButtons/>
+            </Box>
+
+            {/* 3-col grid — edge to edge */}
+            <Box sx={{pt: 1.5, px: 0}}>
+                <MobileMediaGrid/>
+            </Box>
+
+            {/* Bottom sheet handle + sheet */}
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 300,
+                }}
+            >
+                {/* Expanded sheet content */}
+                {sheetOpen && (
+                    <Box
+                        sx={{
+                            bgcolor: 'rgba(5,12,22,0.98)',
+                            backdropFilter: 'blur(12px)',
+                            borderTop: '1px solid rgba(74,158,206,0.2)',
+                            px: 1.5,
+                            pt: 1,
+                            pb: 1.5,
+                        }}
+                    >
+                        <Typography
+                            sx={{
+                                fontSize: '0.65rem',
+                                letterSpacing: '0.13em',
+                                textTransform: 'uppercase',
+                                color: 'rgba(255,255,255,0.35)',
+                                mb: 1,
+                            }}
+                        >
+                            Other albums
+                        </Typography>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: 1,
+                            }}
+                        >
+                            {SIBLINGS.map((s) => (
+                                <AlbumMiniCardWide key={s.name} {...s}/>
+                            ))}
+                        </Box>
+                    </Box>
+                )}
+
+                {/* Persistent handle pill */}
+                <Box
+                    onClick={onToggleSheet}
+                    sx={{
+                        bgcolor: 'rgba(8,18,28,0.97)',
+                        backdropFilter: 'blur(10px)',
+                        borderTop: sheetOpen ? 'none' : '1px solid rgba(74,158,206,0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 0.75,
+                        py: 1,
+                        cursor: 'pointer',
+                        '&:hover': {bgcolor: 'rgba(74,158,206,0.1)'},
+                    }}
+                >
+                    {sheetOpen
+                        ? <ExpandMoreIcon sx={{color: 'rgba(255,255,255,0.5)', fontSize: 18}}/>
+                        : <ExpandLessIcon sx={{color: 'rgba(255,255,255,0.5)', fontSize: 18}}/>
+                    }
+                    <Typography sx={{fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase'}}>
+                        {sheetOpen ? 'Close' : 'Browse albums'}
+                    </Typography>
+                </Box>
+            </Box>
+        </Box>
+    ),
+};
 
 export const LayoutD_ImmersiveFullWidth: Story = {
     name: 'D — Immersive Full-Width',
