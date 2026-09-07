@@ -1,6 +1,6 @@
 # Load album medias and render as a simple list
 
-**Status**: ready
+**Status**: done
 
 ## Description
 

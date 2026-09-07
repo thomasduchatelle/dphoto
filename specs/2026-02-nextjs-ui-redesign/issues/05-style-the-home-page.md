@@ -1,6 +1,6 @@
 # Story 1.5: Style the Home Page
 
-**Status**: ready-for-dev
+**Status**: done
 
 ---
 

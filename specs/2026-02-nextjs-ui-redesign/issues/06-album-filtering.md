@@ -1,6 +1,6 @@
 # Story 1.6: Album Filtering
 
-**Status**: review
+**Status**: done
 
 ---
 
