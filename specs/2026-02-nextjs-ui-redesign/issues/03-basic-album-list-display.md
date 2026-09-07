@@ -1,6 +1,6 @@
 # Story 1.3: Basic Album List Display
 
-**Status**: review
+**Status**: done
 
 ---
 
