@@ -33,3 +33,9 @@ Classifies a media as `IMAGE`, `VIDEO`, or `OTHER`. _Avoid_: file type, mime typ
 
 **TimeRange**:
 A half-open datetime interval `[Start, End)` used to define album boundaries and to filter medias. _Avoid_: date range, period, interval
+
+**Cover**:
+A photo featured to represent an album on the album list. An album has a set of up to four covers, and only medias of `MediaType` `IMAGE` can be a cover. _Avoid_: thumbnail, endcap, highlight, preview.
+
+**CoverOrigin**:
+How a cover came to be part of the set: `RANDOM` (picked automatically) or `CHERRY_PICKED` (chosen by the owner). Re-randomising replaces only `RANDOM` covers; backup fills only empty slots with `RANDOM` covers. _Avoid_: starred, pinned, selected.
