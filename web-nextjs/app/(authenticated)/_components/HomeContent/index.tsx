@@ -10,7 +10,7 @@ export const HomeContent = ({initialState}: { initialState: CatalogViewerState }
     const [state, dispatch] = useReducer(catalogReducer, initialState);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {onPageRefresh, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
+    const {onPageRefresh, loadAlbumPage, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
     const thunks = useThunks(dispatchOnlyThunks, {dispatch}, state);
 
     if (state.error) {
