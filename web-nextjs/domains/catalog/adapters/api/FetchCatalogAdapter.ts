@@ -176,7 +176,9 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
         return this.fetchRequest<RestUserDetails[]>(`/users?emails=${encodeURIComponent(emailsParam)}`);
     }
 
-    public fetchMedias(albumId: AlbumId): Promise<Media[]> {
+    public async fetchMedias(albumId: AlbumId): Promise<Media[]> {
+        const prefix = await this.basePathSupplier();
+
         return this.fetchRequest<RestMedia[]>(
             `/owners/${albumId.owner}/albums/${albumId.folderName}/medias`
         )
@@ -187,14 +189,18 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                 return Promise.reject<RestMedia[]>(err)
             })
             .then(data => {
-                return data.map((media): Media => ({
-                    id: media.id,
-                    source: media.source,
-                    type: convertToType(media.type),
-                    time: new Date(media.time),
-                    uiRelativePath: `/albums/${albumId.owner}/${albumId.folderName}/${media.id}/${media.filename}`,
-                    contentPath: `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}`,
-                })).sort((a, b) => b.time.getTime() - a.time.getTime())
+                return data.map((media): Media => {
+                    const contentPath = `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}`;
+                    return {
+                        id: media.id,
+                        source: media.source,
+                        type: convertToType(media.type),
+                        time: new Date(media.time),
+                        uiRelativePath: `/albums/${albumId.owner}/${albumId.folderName}/${media.id}/${media.filename}`,
+                        contentPath,
+                        thumbnailUrl: mediaUrl(contentPath, 360, prefix),
+                    };
+                }).sort((a, b) => b.time.getTime() - a.time.getTime())
             })
     }
 

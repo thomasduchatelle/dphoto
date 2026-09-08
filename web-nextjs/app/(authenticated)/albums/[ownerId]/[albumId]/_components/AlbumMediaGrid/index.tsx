@@ -8,7 +8,10 @@ export interface AlbumMediaGridProps {
 
 export function AlbumMediaGrid({medias}: AlbumMediaGridProps) {
     return (
-        <Box>
+        <Box sx={(theme) => ({
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            pt: theme.spacing(2),
+        })}>
             {medias.map(({day, medias: dayMedias}) => (
                 <Box key={day.toISOString()} sx={{mb: 4}}>
                     <Typography variant="h2" sx={{mb: 1.5, px: {xs: 1, sm: 0}}}>

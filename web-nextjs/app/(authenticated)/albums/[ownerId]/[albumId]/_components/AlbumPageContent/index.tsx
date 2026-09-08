@@ -3,7 +3,7 @@
 import {useReducer} from 'react';
 import {notFound} from 'next/navigation';
 import {Box} from '@mui/material';
-import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
+import {AlbumId, catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
 import {catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
 import {useThunks} from '@/libs/dthunks/react';
 import {ErrorMessage} from '@/components/ErrorMessage';
@@ -18,6 +18,10 @@ import {NoMedia} from '../NoMedia';
 export interface AlbumPageContentProps {
     initialState: CatalogViewerState;
 }
+
+const onShare = (albumId: AlbumId) => {
+    console.log('Share album requested', albumId);
+};
 
 export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
@@ -37,13 +41,13 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
 
     return (
         <Box sx={{display: 'flex', alignItems: 'flex-start', mx: {xs: -2, sm: -3, md: -4}, mt: {xs: -2, sm: -3, md: -4}}}>
-            <AlbumRail albums={albums} displayedAlbumId={displayedAlbum?.albumId}/>
+            <AlbumRail albums={albums} displayedAlbumId={displayedAlbum?.albumId} onShare={onShare}/>
 
             <Box sx={{flex: 1, minWidth: 0}}>
                 <AlbumHeader album={displayedAlbum}/>
 
                 {medias.length === 0 ? (
-                    <NoMedia nextAlbum={nextAlbum} previousAlbum={previousAlbum}/>
+                    <NoMedia nextAlbum={nextAlbum} previousAlbum={previousAlbum} onShare={onShare}/>
                 ) : (
                     <>
                         <AlbumMediaGrid medias={medias}/>
@@ -59,15 +63,15 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                                     borderTop: '1px solid rgba(255,255,255,0.07)',
                                 }}
                             >
-                                {nextAlbum && <NeighbourAlbumLink album={nextAlbum}/>}
-                                {previousAlbum && <NeighbourAlbumLink album={previousAlbum}/>}
+                                {nextAlbum && <NeighbourAlbumLink album={nextAlbum} onShare={onShare}/>}
+                                {previousAlbum && <NeighbourAlbumLink album={previousAlbum} onShare={onShare}/>}
                             </Box>
                         )}
                     </>
                 )}
             </Box>
 
-            <NextAlbumBanner album={nextAlbum}/>
+            <NextAlbumBanner album={nextAlbum} onShare={onShare}/>
             <AlbumActionsFab/>
         </Box>
     );

@@ -3,15 +3,16 @@
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import {Box} from '@mui/material';
 import {PageMessage} from '@/components/PageMessage';
-import {Album} from '@/domains/catalog/language';
+import {Album, AlbumId} from '@/domains/catalog/language';
 import {NeighbourAlbumLink} from '../NeighbourAlbumLink';
 
 export interface NoMediaProps {
     nextAlbum?: Album;
     previousAlbum?: Album;
+    onShare: (albumId: AlbumId) => void;
 }
 
-export const NoMedia = ({nextAlbum, previousAlbum}: NoMediaProps) => {
+export const NoMedia = ({nextAlbum, previousAlbum, onShare}: NoMediaProps) => {
     return (
         <PageMessage
             icon={<AddPhotoAlternateIcon/>}
@@ -31,12 +32,12 @@ export const NoMedia = ({nextAlbum, previousAlbum}: NoMediaProps) => {
                 >
                     {nextAlbum && (
                         <Box sx={{width: {xs: '100%', sm: 320}, flexShrink: 0}}>
-                            <NeighbourAlbumLink album={nextAlbum}/>
+                            <NeighbourAlbumLink album={nextAlbum} onShare={onShare}/>
                         </Box>
                     )}
                     {previousAlbum && (
                         <Box sx={{width: {xs: '100%', sm: 320}, flexShrink: 0}}>
-                            <NeighbourAlbumLink album={previousAlbum}/>
+                            <NeighbourAlbumLink album={previousAlbum} onShare={onShare}/>
                         </Box>
                     )}
                 </Box>

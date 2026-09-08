@@ -174,6 +174,7 @@ const someMedias = [{
     time: new Date("2025-01-05T12:42:00Z"),
     uiRelativePath: "media-1/image.jpg",
     contentPath: "/media-1.jpg",
+    thumbnailUrl: "/media-1.jpg?w=360",
     source: "",
 }];
 

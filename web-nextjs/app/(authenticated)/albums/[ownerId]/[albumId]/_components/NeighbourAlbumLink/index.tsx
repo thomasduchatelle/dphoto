@@ -3,15 +3,16 @@
 import {Box} from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Link from '@/components/Link';
-import {Album} from '@/domains/catalog/language';
+import {Album, AlbumId} from '@/domains/catalog/language';
 import {albumUrl} from '@/domains/catalog/navigation/album-url';
 import {AlbumCard} from '@/components/AlbumCard';
 
 export interface NeighbourAlbumLinkProps {
     album: Album;
+    onShare: (albumId: AlbumId) => void;
 }
 
-export function NeighbourAlbumLink({album}: NeighbourAlbumLinkProps) {
+export function NeighbourAlbumLink({album, onShare}: NeighbourAlbumLinkProps) {
     return (
         <Box
             component={Link}
@@ -26,7 +27,7 @@ export function NeighbourAlbumLink({album}: NeighbourAlbumLinkProps) {
             }}
         >
             <Box sx={{flex: 1, minWidth: 0}}>
-                <AlbumCard album={album} compact/>
+                <AlbumCard album={album} compact onShare={onShare}/>
             </Box>
             <ChevronRightIcon sx={{color: 'rgba(255,255,255,0.35)', fontSize: 22, flexShrink: 0}}/>
         </Box>

@@ -1,10 +1,13 @@
 'use client';
 
-import {Box, IconButton, Stack, Typography} from '@mui/material';
+import {Box, Button, IconButton, Stack, Typography} from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Link from '@/components/Link';
 import {Album} from '@/domains/catalog/language';
-import {ActionButtons} from './ActionButtons';
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ShareIcon from "@mui/icons-material/Share";
+import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 export interface AlbumHeaderProps {
     album: Album | undefined;
@@ -15,14 +18,13 @@ const fmt = (d: Date) => d.toLocaleDateString(undefined, {month: 'short', day: '
 export function AlbumHeader({album}: AlbumHeaderProps) {
     return (
         <Box
-            sx={{
-                px: {xs: 1.5, sm: 3, md: 5},
+            sx={(theme) => ({
+                pr: {xs: 0, lg: theme.spacing(2)},
                 py: {xs: 1.5, sm: 2.5},
                 display: 'flex',
                 alignItems: 'center',
-                gap: {xs: 1, sm: 2},
-                borderBottom: '1px solid rgba(255,255,255,0.07)',
-            }}
+                gap: {xs: 1, lg: 2},
+            })}
         >
             <IconButton
                 component={Link}
@@ -44,7 +46,10 @@ export function AlbumHeader({album}: AlbumHeaderProps) {
                 )}
             </Box>
             <Stack direction="row" gap={1} sx={{display: {xs: 'none', lg: 'flex'}, flexShrink: 0}}>
-                <ActionButtons/>
+                <Button variant="outlined" color='secondary' startIcon={<PlayArrowIcon/>} disabled>Play</Button>
+                <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} disabled>Share</Button>
+                <Button variant="outlined" color='secondary' startIcon={<DriveFileRenameOutlineIcon/>} disabled>Rename</Button>
+                <Button variant="outlined" color='secondary' startIcon={<CalendarMonthIcon/>} disabled>Dates</Button>
             </Stack>
         </Box>
     );

@@ -4,15 +4,16 @@ import {useEffect, useRef, useState} from 'react';
 import {Box} from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Link from '@/components/Link';
-import {Album} from '@/domains/catalog/language';
+import {Album, AlbumId} from '@/domains/catalog/language';
 import {albumUrl} from '@/domains/catalog/navigation/album-url';
 import {AlbumCard} from '@/components/AlbumCard';
 
 export interface NextAlbumBannerProps {
     album: Album | undefined;
+    onShare: (albumId: AlbumId) => void;
 }
 
-export function NextAlbumBanner({album}: NextAlbumBannerProps) {
+export function NextAlbumBanner({album, onShare}: NextAlbumBannerProps) {
     const [visible, setVisible] = useState(false);
     const lastScrollY = useRef(0);
 
@@ -61,7 +62,7 @@ export function NextAlbumBanner({album}: NextAlbumBannerProps) {
                 }}
             >
                 <Box sx={{flex: 1, minWidth: 0, maxWidth: 400}}>
-                    <AlbumCard album={album} compact/>
+                    <AlbumCard album={album} compact onShare={onShare}/>
                 </Box>
                 <ChevronRightIcon sx={{color: 'rgba(255,255,255,0.4)', fontSize: 20, flexShrink: 0}}/>
             </Box>
