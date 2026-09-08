@@ -70,6 +70,95 @@ export const march2025: Album = {
     sharedWith: [],
 }
 
+// use sampleAlbums when realistic albums with thumbnails are required (storybook stories) - index 0 is the newest
+export const sampleAlbums: Album[] = [
+    {
+        albumId: {owner: "sandfall", folderName: "clair-obscur"},
+        name: "Clair Obscur",
+        start: new Date(2025, 3, 24),
+        end: new Date(2025, 5, 1),
+        totalCount: 47,
+        temperature: 6.7,
+        relativeTemperature: 1,
+        sharedWith: [],
+        thumbnails: [
+            "/thumbnails/clair-obscur-1.jpg",
+            "/thumbnails/clair-obscur-2.jpg",
+            "/thumbnails/clair-obscur-3.jpg",
+            "/thumbnails/clair-obscur-4.jpg",
+        ],
+    },
+    {
+        albumId: {owner: "sony", folderName: "astro-bot"},
+        name: "Astro Bot",
+        start: new Date(2024, 8, 6),
+        end: new Date(2024, 8, 12),
+        totalCount: 23,
+        temperature: 12.1,
+        relativeTemperature: 0.72,
+        sharedWith: [{user: {name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}}],
+        thumbnails: [
+            "/thumbnails/astro-bot-01.jpg",
+            "/thumbnails/astro-bot-02.jpg",
+            "/thumbnails/astro-bot-03.jpg",
+        ],
+    },
+    {
+        albumId: {owner: "cdprojekt", folderName: "the-witcher-3"},
+        name: "The Witcher 3: Wild Hunt",
+        start: new Date(2024, 4, 30),
+        end: new Date(2024, 5, 14),
+        totalCount: 189,
+        temperature: 9.4,
+        relativeTemperature: 0.55,
+        sharedWith: [],
+        thumbnails: [
+            "/thumbnails/the-witcher-3-01.jpg",
+            "/thumbnails/the-witcher-3-02.jpg",
+            "/thumbnails/the-witcher-3-03.jpg",
+        ],
+    },
+    {
+        albumId: {owner: "kojima", folderName: "death-stranding-1"},
+        name: "Death Stranding",
+        start: new Date(2023, 10, 8),
+        end: new Date(2023, 10, 22),
+        totalCount: 312,
+        temperature: 17.5,
+        relativeTemperature: 1.0,
+        ownedBy: {name: "Kojima", users: [{name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}]},
+        sharedWith: [],
+        thumbnails: [
+            "/thumbnails/death-stranding-1-01.jpg",
+            "/thumbnails/death-stranding-1-02.jpg",
+            "/thumbnails/death-stranding-1-03.jpg",
+            "/thumbnails/death-stranding-1-04.jpg",
+        ],
+    },
+    {
+        albumId: {owner: "kojima", folderName: "death-stranding-2"},
+        name: "Death Stranding 2: On The Beach",
+        start: new Date(2025, 5, 5),
+        end: new Date(2025, 5, 30),
+        totalCount: 78,
+        temperature: 4.1,
+        relativeTemperature: 0.22,
+        sharedWith: [{user: {name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}}],
+        thumbnails: ["/thumbnails/death-stranding-2-01.jpg"],
+    },
+    {
+        albumId: {owner: "sandfall", folderName: "clair-obscur-dlc"},
+        name: "Clair Obscur DLC",
+        start: new Date(2025, 8, 10),
+        end: new Date(2025, 8, 15),
+        totalCount: 11,
+        temperature: 1.2,
+        relativeTemperature: 0.06,
+        sharedWith: [],
+        thumbnails: [],
+    },
+]
+
 export const twoAlbumsNoFilterOptions: AlbumFilterEntry = {
     criterion: {
         owners: []
@@ -85,6 +174,7 @@ const someMedias = [{
     time: new Date("2025-01-05T12:42:00Z"),
     uiRelativePath: "media-1/image.jpg",
     contentPath: "/media-1.jpg",
+    thumbnailUrl: "/media-1.jpg?w=360",
     source: "",
 }];
 
@@ -130,6 +220,8 @@ export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = 
     albumsLoaded: true,
     albums: twoAlbums,
     displayedAlbum: twoAlbums[0],
+    previousAlbum: twoAlbums[1],
+    nextAlbum: undefined,
     medias: someMediasByDays,
     mediasLoaded: true,
     albumNotFound: false,

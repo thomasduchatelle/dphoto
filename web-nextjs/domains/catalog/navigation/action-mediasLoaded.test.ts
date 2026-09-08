@@ -27,6 +27,8 @@ describe("action:mediasLoaded", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             displayedAlbum: twoAlbums[1],
+            previousAlbum: undefined,
+            nextAlbum: twoAlbums[0],
             medias: someMediasByDays,
         });
         expect(albumListActionsSelector(got)).toEqual({
