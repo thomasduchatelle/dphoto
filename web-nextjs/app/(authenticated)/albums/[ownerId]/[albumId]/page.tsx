@@ -24,13 +24,14 @@ export async function generateMetadata({params}: {
 
 export default async function AlbumPage({params}: { params: Promise<AlbumPageParams> }) {
     const {ownerId, albumId: folderName} = await params;
+    const albumId = {owner: decodeURIComponent(ownerId), folderName: decodeURIComponent(folderName)};
 
     const currentUser = await mustBeAuthenticated();
     const loadAlbumPage = serverSideThunk(
         catalogThunks.loadAlbumPage,
         {adapter: newServerSideRestCatalogAdapter()},
     );
-    const catalogState = await loadAlbumPage(initialCatalogState(currentUser), {owner: ownerId, folderName});
+    const catalogState = await loadAlbumPage(initialCatalogState(currentUser), albumId);
 
     if (catalogState.error) {
         throw catalogState.error;
