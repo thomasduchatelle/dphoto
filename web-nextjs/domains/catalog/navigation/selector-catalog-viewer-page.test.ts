@@ -3,7 +3,7 @@ import {catalogViewerPageSelector} from './selector-catalog-viewer-page';
 import {loadedStateWithTwoAlbums, march2025, twoAlbums} from '../tests/test-helper-state';
 
 describe('catalogViewerPageSelector', () => {
-    it('returns previousAlbum and nextAlbum relative to the displayed album', () => {
+    it('returns nextAlbum (newer, index-1) and previousAlbum (older, index+1) relative to the displayed album', () => {
         const state = {
             ...loadedStateWithTwoAlbums,
             allAlbums: [twoAlbums[0], twoAlbums[1], march2025],
@@ -12,8 +12,8 @@ describe('catalogViewerPageSelector', () => {
 
         const result = catalogViewerPageSelector(state);
 
-        expect(result.previousAlbum).toEqual(twoAlbums[0]);
-        expect(result.nextAlbum).toEqual(march2025);
+        expect(result.nextAlbum).toEqual(twoAlbums[0]);
+        expect(result.previousAlbum).toEqual(march2025);
     });
 
     it('returns undefined for both when the album is alone', () => {

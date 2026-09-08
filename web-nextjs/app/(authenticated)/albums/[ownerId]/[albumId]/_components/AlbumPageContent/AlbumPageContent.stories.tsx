@@ -41,8 +41,11 @@ const multiDayMedias = [
     },
 ];
 
-const threeAlbums = [...twoAlbums, march2025];
+const threeAlbums = [twoAlbums[0], twoAlbums[1], march2025];
 
+// Default: displaying twoAlbums[1] (Feb, index=1 in reverse-chron list)
+// nextAlbum = twoAlbums[0] (Jan, newer) shown at top on mobile scroll-up
+// previousAlbum = march2025 (Mar, older) shown at bottom of page
 const stateWithThreeAlbums = {
     ...loadedStateWithTwoAlbums,
     allAlbums: threeAlbums,
@@ -64,8 +67,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// Middle album: has both next (newer Jan at top) and previous (older Mar at bottom)
 export const WithMedias: Story = {};
 
+// First album (newest): no next banner, but previous (older Feb) card at bottom
 export const NextAlbum: Story = {
     args: {
         initialState: {
@@ -76,16 +81,19 @@ export const NextAlbum: Story = {
     },
 };
 
+// Last album (oldest): next banner shows on scroll-up (newer Feb), no previous card
+// Few medias so the bottom of page is visible without scrolling
 export const PreviousAlbum: Story = {
     args: {
         initialState: {
             ...stateWithThreeAlbums,
-            mediasLoadedFromAlbumId: twoAlbums[1].albumId,
+            mediasLoadedFromAlbumId: march2025.albumId,
             medias: someMediasByDays,
         },
     },
 };
 
+// Only album: no next banner, no previous card
 export const SingleAlbum: Story = {
     args: {
         initialState: {
@@ -98,9 +106,57 @@ export const SingleAlbum: Story = {
     },
 };
 
+// Empty album with both neighbours available
 export const NoMedias: Story = {
     args: {
-        initialState: {...loadedStateWithTwoAlbums, medias: [], mediasLoaded: true},
+        initialState: {
+            ...stateWithThreeAlbums,
+            mediasLoadedFromAlbumId: twoAlbums[1].albumId,
+            medias: [],
+            mediasLoaded: true,
+        },
+    },
+};
+
+// Empty album — only a next album (newer), no previous
+export const NoMediasNextOnly: Story = {
+    args: {
+        initialState: {
+            ...loadedStateWithTwoAlbums,
+            allAlbums: threeAlbums,
+            albums: threeAlbums,
+            mediasLoadedFromAlbumId: twoAlbums[0].albumId,
+            medias: [],
+            mediasLoaded: true,
+        },
+    },
+};
+
+// Empty album — only a previous album (older), no next
+export const NoMediasPreviousOnly: Story = {
+    args: {
+        initialState: {
+            ...loadedStateWithTwoAlbums,
+            allAlbums: threeAlbums,
+            albums: threeAlbums,
+            mediasLoadedFromAlbumId: march2025.albumId,
+            medias: [],
+            mediasLoaded: true,
+        },
+    },
+};
+
+// Empty album — alone, no neighbours
+export const NoMediasAlone: Story = {
+    args: {
+        initialState: {
+            ...loadedStateWithTwoAlbums,
+            allAlbums: [twoAlbums[0]],
+            albums: [twoAlbums[0]],
+            mediasLoadedFromAlbumId: twoAlbums[0].albumId,
+            medias: [],
+            mediasLoaded: true,
+        },
     },
 };
 

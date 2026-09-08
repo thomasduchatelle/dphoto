@@ -1,6 +1,5 @@
 import {Box, Typography} from '@mui/material';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
-import Image from 'next/image';
 import {Media, MediaType, MediaWithinADay} from '@/domains/catalog/language';
 
 export interface AlbumMediaGridProps {
@@ -48,12 +47,10 @@ function MediaThumbnail({media}: {media: Media}) {
                 transition: 'opacity 0.15s',
             }}
         >
-            <Image
-                src={media.contentPath}
+            <img
+                src={`${media.contentPath}?w=360`}
                 alt=""
-                fill
-                sizes="(max-width: 600px) 50vw, (max-width: 960px) 33vw, (max-width: 1280px) 25vw, 20vw"
-                style={{objectFit: 'cover'}}
+                style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}}
             />
             {media.type === MediaType.VIDEO && (
                 <Box
