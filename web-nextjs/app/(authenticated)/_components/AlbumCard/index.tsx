@@ -8,6 +8,7 @@ import {SharedByIndicator} from './SharedByIndicator';
 export interface AlbumCardProps {
     album: Album;
     onShare: (albumId: AlbumId) => void;
+    compact?: boolean;
 }
 
 // Helper to get temperature color based on relativeTemperature (0-1 scale)
@@ -29,7 +30,7 @@ const formatDateRange = (start: Date, end: Date): string => {
     return `${formatDate(start)} → ${formatDate(end)}`;
 };
 
-export const AlbumCard = ({album, onShare}: AlbumCardProps) => {
+export const AlbumCard = ({album, onShare, compact = false}: AlbumCardProps) => {
     const handleClickOnShare = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -65,8 +66,8 @@ export const AlbumCard = ({album, onShare}: AlbumCardProps) => {
                 },
             })}
         >
-            {/* Photo grid: 2x2 on desktop, 1x4 on mobile */}
-            <Box sx={{display: 'grid', gridTemplateColumns: {xs: 'repeat(4, 1fr)', sm: 'repeat(2, 1fr)'}, gap: 1}}>
+            {/* Photo grid: 2x2 on desktop, 1x4 on mobile (always 1x4 when compact) */}
+            <Box sx={{display: 'grid', gridTemplateColumns: compact ? 'repeat(4, 1fr)' : {xs: 'repeat(4, 1fr)', sm: 'repeat(2, 1fr)'}, gap: 1}}>
                 {[0, 1, 2, 3].map((i) => {
                     const thumbnail = album.thumbnails?.[i];
                     return (

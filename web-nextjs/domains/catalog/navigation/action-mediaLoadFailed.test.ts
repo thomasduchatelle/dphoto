@@ -77,6 +77,8 @@ describe("action:mediaLoadFailed", () => {
             ...selectionForLoadedStateWithTwoAlbums,
             albums: twoAlbums,
             displayedAlbum: twoAlbums[1],
+            previousAlbum: twoAlbums[0],
+            nextAlbum: undefined,
             medias: [],
             error: testError,
         });

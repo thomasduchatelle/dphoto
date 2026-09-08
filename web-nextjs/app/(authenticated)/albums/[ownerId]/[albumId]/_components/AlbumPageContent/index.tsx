@@ -1,47 +1,357 @@
 'use client';
 
-import {useReducer} from 'react';
+import {useEffect, useReducer, useRef, useState} from 'react';
 import {notFound} from 'next/navigation';
+import {Box, Button, IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon, Stack, Typography} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ShareIcon from '@mui/icons-material/Share';
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import Link from '@/components/Link';
 import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
+import {catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
 import {useThunks} from '@/libs/dthunks/react';
 import {ErrorMessage} from '@/components/ErrorMessage';
+import {AlbumCard} from '../../../../../_components/AlbumCard';
 import {NoMedia} from '../NoMedia';
-import Link from '@/components/Link';
-import {Button} from '@mui/material';
+import {AlbumMediaGrid} from '../AlbumMediaGrid';
+import {Album} from '@/domains/catalog/language';
 
-export function AlbumPageContent({initialState}: { initialState: CatalogViewerState }) {
+export interface AlbumPageContentProps {
+    initialState: CatalogViewerState;
+}
+
+const fmt = (d: Date) => d.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+
+export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {onPageRefresh, loadAlbumPage, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
     useThunks(dispatchOnlyThunks, {dispatch}, state);
 
-    if (state.error) {
-        return <ErrorMessage error={state.error} title="Failed to load the album"/>;
+    const {displayedAlbum, medias, mediasLoaded, albums, previousAlbum, nextAlbum, albumNotFound, error} = catalogViewerPageSelector(state);
+
+    const [nextBannerVisible, setNextBannerVisible] = useState(false);
+    const lastScrollY = useRef(0);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const onScroll = () => {
+            const y = el.scrollTop;
+            setNextBannerVisible(y < lastScrollY.current && y > 80);
+            lastScrollY.current = y;
+        };
+        el.addEventListener('scroll', onScroll, {passive: true});
+        return () => el.removeEventListener('scroll', onScroll);
+    }, []);
+
+    if (error) {
+        return <ErrorMessage error={error} title="Failed to load the album"/>;
     }
 
-    if (state.albumNotFound) {
+    if (albumNotFound) {
         notFound();
     }
 
-    if (!state.mediasLoaded || state.medias.length === 0) {
+    if (!mediasLoaded || medias.length === 0) {
         return <NoMedia/>;
     }
 
+    const noOp = () => {};
+
     return (
-        <div>
-            <Button component={Link} href="/" prefetch={false} variant="text">
-                Back to Albums
-            </Button>
-            <ul>
-                {state.medias.flatMap(({medias}) =>
-                    medias.map(media => (
-                        <li key={media.id}>
-                            {media.uiRelativePath} — {media.time.toISOString()}
-                        </li>
-                    ))
-                )}
-            </ul>
-        </div>
+        <Box
+            ref={scrollRef}
+            sx={{
+                height: '100vh',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+            }}
+        >
+            {/* Next-album peek banner: fixed below app bar, slides in on scroll-up */}
+            {nextAlbum && (
+                <NextAlbumBanner
+                    album={nextAlbum}
+                    visible={nextBannerVisible}
+                />
+            )}
+
+            {/* Desktop layout: left rail + main column */}
+            <Box sx={{display: 'flex', flex: 1, mt: {xs: '56px', sm: '64px'}}}>
+
+                {/* Left rail — lg+ */}
+                <Box
+                    sx={{
+                        display: {xs: 'none', lg: 'flex'},
+                        flexDirection: 'column',
+                        width: 280,
+                        flexShrink: 0,
+                        borderRight: '1px solid rgba(255,255,255,0.07)',
+                        bgcolor: 'rgba(0,10,20,0.5)',
+                        overflowY: 'auto',
+                        position: 'sticky',
+                        top: 0,
+                        maxHeight: 'calc(100vh - 64px)',
+                        p: 2,
+                        gap: 1,
+                    }}
+                >
+                    <Typography
+                        sx={{
+                            fontSize: '0.65rem',
+                            letterSpacing: '0.14em',
+                            textTransform: 'uppercase',
+                            color: 'rgba(255,255,255,0.35)',
+                            mb: 0.5,
+                        }}
+                    >
+                        Albums
+                    </Typography>
+                    {albums.map((album) => (
+                        <Box
+                            key={`${album.albumId.owner}/${album.albumId.folderName}`}
+                            component={Link}
+                            href={`/albums/${album.albumId.owner}/${album.albumId.folderName}`}
+                            prefetch={false}
+                            sx={{
+                                display: 'block',
+                                textDecoration: 'none',
+                                outline: displayedAlbum && album.albumId.owner === displayedAlbum.albumId.owner && album.albumId.folderName === displayedAlbum.albumId.folderName
+                                    ? '2px solid #4a9ece'
+                                    : 'none',
+                                borderRadius: 1,
+                                overflow: 'hidden',
+                            }}
+                        >
+                            <AlbumCard album={album} onShare={noOp} compact/>
+                        </Box>
+                    ))}
+                </Box>
+
+                {/* Main column */}
+                <Box sx={{flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column'}}>
+
+                    {/* Horizontal album strip — xs/sm/md */}
+                    <Box
+                        sx={{
+                            display: {xs: 'flex', lg: 'none'},
+                            gap: 1.5,
+                            overflowX: 'auto',
+                            px: {xs: 1, sm: 2},
+                            py: 1.5,
+                            borderBottom: '1px solid rgba(255,255,255,0.06)',
+                            '&::-webkit-scrollbar': {height: 3},
+                            '&::-webkit-scrollbar-thumb': {bgcolor: 'rgba(74,158,206,0.3)', borderRadius: 2},
+                        }}
+                    >
+                        {albums.map((album) => (
+                            <Box
+                                key={`${album.albumId.owner}/${album.albumId.folderName}`}
+                                component={Link}
+                                href={`/albums/${album.albumId.owner}/${album.albumId.folderName}`}
+                                prefetch={false}
+                                sx={{
+                                    display: 'block',
+                                    textDecoration: 'none',
+                                    flexShrink: 0,
+                                    width: 160,
+                                    outline: displayedAlbum && album.albumId.owner === displayedAlbum.albumId.owner && album.albumId.folderName === displayedAlbum.albumId.folderName
+                                        ? '2px solid #4a9ece'
+                                        : 'none',
+                                    borderRadius: 1,
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                <AlbumCard album={album} onShare={noOp} compact/>
+                            </Box>
+                        ))}
+                    </Box>
+
+                    {/* Album info band */}
+                    <Box
+                        sx={{
+                            px: {xs: 1.5, sm: 3, md: 5},
+                            py: {xs: 1.5, sm: 2.5},
+                            display: 'flex',
+                            alignItems: {xs: 'flex-start', sm: 'center'},
+                            flexDirection: {xs: 'column', sm: 'row'},
+                            gap: {xs: 1, sm: 2},
+                            borderBottom: '1px solid rgba(255,255,255,0.07)',
+                        }}
+                    >
+                        <IconButton
+                            component={Link}
+                            href="/"
+                            prefetch={false}
+                            size="small"
+                            sx={{color: 'rgba(255,255,255,0.55)', ml: {xs: -0.5, sm: 0}}}
+                        >
+                            <ArrowBackIcon fontSize="small"/>
+                        </IconButton>
+                        <Box sx={{flex: 1}}>
+                            <Typography variant="h1" sx={{mb: 0.25}}>
+                                {displayedAlbum?.name}
+                            </Typography>
+                            {displayedAlbum && (
+                                <Typography variant="body1" sx={{fontSize: '0.85rem'}}>
+                                    {fmt(displayedAlbum.start)} – {fmt(displayedAlbum.end)} · {displayedAlbum.totalCount} photos
+                                </Typography>
+                            )}
+                        </Box>
+
+                        {/* Desktop action buttons (lg+) */}
+                        <Stack
+                            direction="row"
+                            gap={1}
+                            sx={{display: {xs: 'none', lg: 'flex'}, flexShrink: 0}}
+                        >
+                            <Button
+                                variant="outlined"
+                                startIcon={<PlayArrowIcon/>}
+                                disabled
+                                sx={{borderColor: 'rgba(255,255,255,0.45)', color: 'white', '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'}}}
+                            >
+                                Play
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<ShareIcon/>}
+                                disabled
+                                sx={{borderColor: 'rgba(255,255,255,0.45)', color: 'white', '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'}}}
+                            >
+                                Share
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<DriveFileRenameOutlineIcon/>}
+                                disabled
+                                sx={{borderColor: 'rgba(255,255,255,0.45)', color: 'white', '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'}}}
+                            >
+                                Rename
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<CalendarMonthIcon/>}
+                                disabled
+                                sx={{borderColor: 'rgba(255,255,255,0.45)', color: 'white', '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'}}}
+                            >
+                                Dates
+                            </Button>
+                        </Stack>
+                    </Box>
+
+                    {/* Media grid */}
+                    <Box sx={{px: {xs: 0, sm: 1, md: 3}, py: 3, flex: 1}}>
+                        <AlbumMediaGrid medias={medias}/>
+                    </Box>
+
+                    {/* Previous album — full-width card at bottom of page */}
+                    {previousAlbum && (
+                        <Box
+                            sx={{
+                                px: {xs: 1, sm: 2, md: 4},
+                                pb: {xs: 10, lg: 4},
+                                pt: 2,
+                            }}
+                        >
+                            <Box
+                                component={Link}
+                                href={`/albums/${previousAlbum.albumId.owner}/${previousAlbum.albumId.folderName}`}
+                                prefetch={false}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    mb: 1,
+                                    textDecoration: 'none',
+                                    color: 'rgba(255,255,255,0.4)',
+                                }}
+                            >
+                                <ChevronLeftIcon sx={{fontSize: 18}}/>
+                            </Box>
+                            <Box
+                                component={Link}
+                                href={`/albums/${previousAlbum.albumId.owner}/${previousAlbum.albumId.folderName}`}
+                                prefetch={false}
+                                sx={{display: 'block', textDecoration: 'none'}}
+                            >
+                                <AlbumCard album={previousAlbum} onShare={noOp} compact/>
+                            </Box>
+                        </Box>
+                    )}
+                </Box>
+            </Box>
+
+            {/* Mobile FAB — xs/sm/md only */}
+            <SpeedDial
+                ariaLabel="Album actions"
+                sx={{
+                    display: {xs: 'flex', lg: 'none'},
+                    position: 'fixed',
+                    bottom: 24,
+                    right: 20,
+                    '& .MuiSpeedDial-fab': {
+                        bgcolor: '#185986',
+                        '&:hover': {bgcolor: '#1d6fa3'},
+                    },
+                }}
+                icon={<SpeedDialIcon openIcon={<PlayArrowIcon/>} icon={<PlayArrowIcon/>}/>}
+            >
+                <SpeedDialAction
+                    icon={<ShareIcon/>}
+                    tooltipTitle="Share"
+                    tooltipOpen
+                />
+                <SpeedDialAction
+                    icon={<DriveFileRenameOutlineIcon/>}
+                    tooltipTitle="Rename"
+                    tooltipOpen
+                />
+                <SpeedDialAction
+                    icon={<CalendarMonthIcon/>}
+                    tooltipTitle="Dates"
+                    tooltipOpen
+                />
+            </SpeedDial>
+        </Box>
+    );
+}
+
+function NextAlbumBanner({album, visible}: {album: Album; visible: boolean}) {
+    return (
+        <Box
+            component={Link}
+            href={`/albums/${album.albumId.owner}/${album.albumId.folderName}`}
+            prefetch={false}
+            sx={{
+                position: 'fixed',
+                top: {xs: 56, sm: 64},
+                left: 0,
+                right: 0,
+                zIndex: 500,
+                transform: visible ? 'translateY(0)' : 'translateY(-100%)',
+                transition: 'transform 0.25s ease',
+                bgcolor: 'rgba(5,12,22,0.97)',
+                backdropFilter: 'blur(10px)',
+                borderBottom: '1px solid rgba(74,158,206,0.25)',
+                px: 2,
+                py: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                textDecoration: 'none',
+            }}
+        >
+            <Box sx={{flex: 1, minWidth: 0, maxWidth: 320}}>
+                <AlbumCard album={album} onShare={() => {}} compact/>
+            </Box>
+            <ChevronRightIcon sx={{color: 'rgba(255,255,255,0.4)', fontSize: 20, flexShrink: 0}}/>
+        </Box>
     );
 }

@@ -130,6 +130,8 @@ export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = 
     albumsLoaded: true,
     albums: twoAlbums,
     displayedAlbum: twoAlbums[0],
+    previousAlbum: undefined,
+    nextAlbum: twoAlbums[1],
     medias: someMediasByDays,
     mediasLoaded: true,
     albumNotFound: false,
