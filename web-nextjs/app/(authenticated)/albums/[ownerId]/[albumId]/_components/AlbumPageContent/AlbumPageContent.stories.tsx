@@ -32,7 +32,7 @@ const multiDayMedias: MediaWithinADay[] = [
                 time: new Date('2025-04-25T11:00:00Z'),
                 uiRelativePath: 'm3.mp4',
                 contentPath: '/thumbnails/clair-obscur-3.jpg',
-                thumbnailUrl: '/thumbnails/clair-obscur-3.jpg',
+                thumbnailUrl: '/video-placeholder.png',
                 source: ''
             },
             {
@@ -91,7 +91,7 @@ const multiDayMedias: MediaWithinADay[] = [
                 time: new Date('2025-05-10T11:00:00Z'),
                 uiRelativePath: 'm9.mp4',
                 contentPath: '/thumbnails/the-witcher-3-03.jpg',
-                thumbnailUrl: '/thumbnails/the-witcher-3-03.jpg',
+                thumbnailUrl: '/video-placeholder.png',
                 source: ''
             },
             {

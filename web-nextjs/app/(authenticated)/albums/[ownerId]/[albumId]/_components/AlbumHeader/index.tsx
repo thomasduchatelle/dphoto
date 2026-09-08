@@ -8,12 +8,11 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ShareIcon from "@mui/icons-material/Share";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumHeaderProps {
     album: Album | undefined;
 }
-
-const fmt = (d: Date) => d.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
 
 export function AlbumHeader({album}: AlbumHeaderProps) {
     return (
@@ -41,7 +40,7 @@ export function AlbumHeader({album}: AlbumHeaderProps) {
                 </Typography>
                 {album && (
                     <Typography variant="body1" sx={{fontSize: '0.85rem'}}>
-                        {fmt(album.start)} – {fmt(album.end)} · {album.totalCount} photos
+                        {toLocaleDateWithDay(album.start)} – {toLocaleDateWithDay(album.end)} · {album.totalCount} photos
                     </Typography>
                 )}
             </Box>

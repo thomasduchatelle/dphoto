@@ -1,17 +1,12 @@
 import {Box} from '@mui/material';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import {Media, MediaType} from '@/domains/catalog/language';
-import {withBasePath} from '@/libs/requests/media-url';
 
 export interface MediaThumbnailProps {
     media: Media;
 }
 
 export function MediaThumbnail({media}: MediaThumbnailProps) {
-    const src = media.type === MediaType.VIDEO
-        ? withBasePath('/video-placeholder.png')
-        : media.thumbnailUrl;
-
     return (
         <Box
             sx={{
@@ -23,7 +18,7 @@ export function MediaThumbnail({media}: MediaThumbnailProps) {
         >
             <Box
                 component="img"
-                src={src}
+                src={media.thumbnailUrl}
                 alt=""
                 loading="lazy"
                 sx={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}}

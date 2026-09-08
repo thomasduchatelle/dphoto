@@ -2,7 +2,7 @@ import {Album, AlbumId, albumKey, CatalogError, computeAlbumTemperatures, Media,
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
-import {mediaUrl, prefixRelativeUrl} from "@/libs/requests/media-url";
+import {mediaUrl, prefixRelativeUrl, withBasePath} from "@/libs/requests/media-url";
 
 interface RestAlbum {
     owner: string
@@ -190,15 +190,18 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
             })
             .then(data => {
                 return data.map((media): Media => {
+                    const type = convertToType(media.type);
                     const contentPath = `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}`;
                     return {
                         id: media.id,
                         source: media.source,
-                        type: convertToType(media.type),
+                        type,
                         time: new Date(media.time),
                         uiRelativePath: `/albums/${albumId.owner}/${albumId.folderName}/${media.id}/${media.filename}`,
                         contentPath,
-                        thumbnailUrl: mediaUrl(contentPath, 360, prefix),
+                        thumbnailUrl: type === MediaType.VIDEO
+                            ? withBasePath('/video-placeholder.png')
+                            : mediaUrl(contentPath, 360, prefix),
                     };
                 }).sort((a, b) => b.time.getTime() - a.time.getTime())
             })

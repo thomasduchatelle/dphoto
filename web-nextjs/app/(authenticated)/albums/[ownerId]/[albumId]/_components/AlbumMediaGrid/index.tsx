@@ -1,6 +1,7 @@
 import {Box, Typography} from '@mui/material';
 import {MediaWithinADay} from '@/domains/catalog/language';
 import {MediaThumbnail} from './MediaThumbnail';
+import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumMediaGridProps {
     medias: MediaWithinADay[];
@@ -15,7 +16,7 @@ export function AlbumMediaGrid({medias}: AlbumMediaGridProps) {
             {medias.map(({day, medias: dayMedias}) => (
                 <Box key={day.toISOString()} sx={{mb: 4}}>
                     <Typography variant="h2" sx={{mb: 1.5, px: {xs: 1, sm: 0}}}>
-                        {day.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'})}
+                        {toLocaleDateWithDay(day)}
                     </Typography>
                     <Box
                         sx={{

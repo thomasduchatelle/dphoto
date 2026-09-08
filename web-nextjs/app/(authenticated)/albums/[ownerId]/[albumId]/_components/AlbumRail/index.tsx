@@ -9,10 +9,9 @@ import {AlbumCard} from '@/components/AlbumCard';
 export interface AlbumRailProps {
     albums: Album[];
     displayedAlbumId: AlbumId | undefined;
-    onShare: (albumId: AlbumId) => void;
 }
 
-export function AlbumRail({albums, displayedAlbumId, onShare}: AlbumRailProps) {
+export function AlbumRail({albums, displayedAlbumId}: AlbumRailProps) {
     return (
         <Box
             component="nav"
@@ -53,7 +52,7 @@ export function AlbumRail({albums, displayedAlbumId, onShare}: AlbumRailProps) {
                         overflow: 'hidden',
                     }}
                 >
-                    <AlbumCard album={album} compact onShare={onShare}/>
+                    <AlbumCard album={album} compact/>
                 </Box>
             ))}
         </Box>

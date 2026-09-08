@@ -8,7 +8,7 @@ import {ExpandedOverlay} from './ExpandedOverlay';
 
 export interface AlbumCardProps {
     album: Album;
-    onShare: (albumId: AlbumId) => void;
+    onShare?: (albumId: AlbumId) => void;
     compact?: boolean;
 }
 
@@ -33,11 +33,13 @@ const formatDateRange = (start: Date, end: Date): string => {
 export const AlbumCard = ({album, onShare, compact = false}: AlbumCardProps) => {
     const temperatureColor = getTemperatureColor(album.relativeTemperature);
     const dateRange = formatDateRange(album.start, album.end);
-    const onShareClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onShare(album.albumId);
-    };
+    const onShareClick = onShare
+        ? (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onShare(album.albumId);
+        }
+        : undefined;
 
     return (
         <Box
@@ -68,7 +70,7 @@ export const AlbumCard = ({album, onShare, compact = false}: AlbumCardProps) => 
             })}
         >
             <AlbumThumbnails album={album} compact={compact}/>
-            <CompactBar album={album} temperatureColor={temperatureColor} dateRange={dateRange} onShareClick={onShareClick}/>
+            <CompactBar album={album} temperatureColor={temperatureColor} dateRange={dateRange} compact={compact}/>
             {!compact && <ExpandedOverlay album={album} temperatureColor={temperatureColor} dateRange={dateRange} onShareClick={onShareClick}/>}
         </Box>
     );

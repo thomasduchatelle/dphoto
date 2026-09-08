@@ -1,6 +1,6 @@
 'use client';
 
-import {Box, IconButton, Typography} from '@mui/material';
+import {Box, Typography} from '@mui/material';
 import {Album} from '@/domains/catalog/language/catalog-state';
 import {SharedByIndicator} from './SharedByIndicator';
 import {ShareBadge} from './ShareBadge';
@@ -9,10 +9,10 @@ export interface CompactBarProps {
     album: Album;
     temperatureColor: string;
     dateRange: string;
-    onShareClick?: (e: React.MouseEvent) => void;
+    compact: boolean;
 }
 
-export const CompactBar = ({album, temperatureColor, dateRange, onShareClick}: CompactBarProps) => (
+export const CompactBar = ({album, temperatureColor, dateRange, compact}: CompactBarProps) => (
     <Box
         className="compact-bar"
         sx={{
@@ -63,20 +63,8 @@ export const CompactBar = ({album, temperatureColor, dateRange, onShareClick}: C
             >
                 {album.totalCount}
             </Typography>
-            {!album.ownedBy && onShareClick && (
-                <IconButton
-                    onClick={onShareClick}
-                    sx={{display: {xs: 'inline-flex', sm: 'none'}, p: 0.5}}
-                >
-                    <ShareBadge count={album.sharedWith.length} color={temperatureColor}/>
-                </IconButton>
-            )}
             {album.sharedWith.length > 0 && (
-                <ShareBadge
-                    count={album.sharedWith.length}
-                    color={temperatureColor}
-                    sx={{display: {xs: 'none', sm: 'inline-flex'}}}
-                />
+                <ShareBadge count={album.sharedWith.length} color={temperatureColor}/>
             )}
             {album.ownedBy && (
                 <SharedByIndicator users={album.ownedBy.users}/>
@@ -84,7 +72,7 @@ export const CompactBar = ({album, temperatureColor, dateRange, onShareClick}: C
         </Box>
         <Typography
             sx={{
-                display: {xs: 'block', sm: 'none'},
+                display: {xs: 'block', sm: compact ? 'block' : 'none'},
                 width: '100%',
                 fontFamily: 'Courier New, monospace',
                 fontSize: 11,
