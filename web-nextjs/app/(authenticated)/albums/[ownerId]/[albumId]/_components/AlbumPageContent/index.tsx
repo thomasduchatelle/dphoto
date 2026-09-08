@@ -15,8 +15,7 @@ import {catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-c
 import {useThunks} from '@/libs/dthunks/react';
 import {ErrorMessage} from '@/components/ErrorMessage';
 import {AlbumCard} from '../../../../../_components/AlbumCard';
-import {NoMedia} from '../NoMedia';
-import {AlbumMediaGrid} from '../AlbumMediaGrid';
+import {AlbumMediaGrid, NeighbourAlbumLink} from '../AlbumMediaGrid';
 import {Album} from '@/domains/catalog/language';
 
 export interface AlbumPageContentProps {
@@ -83,14 +82,14 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
             ref={scrollRef}
             sx={{height: '100vh', overflowY: 'auto', display: 'flex', flexDirection: 'column'}}
         >
-            {/* Next-album peek banner — mobile only (xs/sm/md), slides in from above on scroll-up */}
+            {/* Next-album peek banner — mobile only (xs/sm/md), slides in on scroll-up */}
             {nextAlbum && (
                 <NextAlbumBanner album={nextAlbum} visible={nextBannerVisible}/>
             )}
 
             <Box sx={{display: 'flex', flex: 1, mt: {xs: '56px', sm: '64px'}}}>
 
-                {/* Left rail — lg+ */}
+                {/* Left rail — lg+ only, scrolls with page */}
                 <AlbumRail albums={albums} displayedAlbum={displayedAlbum}/>
 
                 {/* Main column */}
@@ -102,8 +101,8 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                             px: {xs: 1.5, sm: 3, md: 5},
                             py: {xs: 1.5, sm: 2.5},
                             display: 'flex',
-                            alignItems: {xs: 'flex-start', sm: 'center'},
-                            flexDirection: {xs: 'column', sm: 'row'},
+                            alignItems: 'center',
+                            flexDirection: 'row',
                             gap: {xs: 1, sm: 2},
                             borderBottom: '1px solid rgba(255,255,255,0.07)',
                         }}
@@ -113,12 +112,12 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                             href="/"
                             prefetch={false}
                             size="small"
-                            sx={{color: 'rgba(255,255,255,0.55)', ml: {xs: -0.5, sm: 0}}}
+                            sx={{color: 'rgba(255,255,255,0.55)', flexShrink: 0}}
                         >
                             <ArrowBackIcon fontSize="small"/>
                         </IconButton>
-                        <Box sx={{flex: 1}}>
-                            <Typography variant="h1" sx={{mb: 0.25}}>
+                        <Box sx={{flex: 1, minWidth: 0}}>
+                            <Typography variant="h1" sx={{mb: 0.25}} noWrap>
                                 {displayedAlbum?.name}
                             </Typography>
                             {displayedAlbum && (
@@ -138,24 +137,14 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                         </Stack>
                     </Box>
 
-                    {/* Media grid */}
+                    {/* Media grid — next/prev navigation cards rendered inside on mobile */}
                     <Box sx={{px: {xs: 0, sm: 1, md: 3}, py: 3, flex: 1}}>
-                        <AlbumMediaGrid medias={medias}/>
+                        <AlbumMediaGrid
+                            medias={medias}
+                            nextAlbum={nextAlbum}
+                            previousAlbum={previousAlbum}
+                        />
                     </Box>
-
-                    {/* Previous album (chronologically older) — full-width card at bottom */}
-                    {previousAlbum && (
-                        <Box sx={{px: {xs: 1, sm: 2, md: 4}, pb: {xs: 10, lg: 4}, pt: 2}}>
-                            <Box
-                                component={Link}
-                                href={albumHref(previousAlbum)}
-                                prefetch={false}
-                                sx={{display: 'block', textDecoration: 'none'}}
-                            >
-                                <AlbumCard album={previousAlbum} onShare={() => {}} compact/>
-                            </Box>
-                        </Box>
-                    )}
                 </Box>
             </Box>
 
@@ -182,7 +171,7 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     );
 }
 
-function AlbumRail({albums, displayedAlbum}: {albums: Album[]; displayedAlbum: Album | undefined}) {
+export function AlbumRail({albums, displayedAlbum}: {albums: Album[]; displayedAlbum: Album | undefined}) {
     return (
         <Box
             sx={{
@@ -192,10 +181,6 @@ function AlbumRail({albums, displayedAlbum}: {albums: Album[]; displayedAlbum: A
                 flexShrink: 0,
                 borderRight: '1px solid rgba(255,255,255,0.07)',
                 bgcolor: 'rgba(0,10,20,0.5)',
-                overflowY: 'auto',
-                position: 'sticky',
-                top: 0,
-                maxHeight: 'calc(100vh - 64px)',
                 p: 2,
                 gap: 1,
             }}
@@ -235,41 +220,19 @@ function AlbumRail({albums, displayedAlbum}: {albums: Album[]; displayedAlbum: A
 function ActionButtons() {
     return (
         <>
-            <Button
-                variant="outlined"
-                startIcon={<PlayArrowIcon/>}
-                disabled
-                sx={{borderColor: 'rgba(255,255,255,0.45)', color: 'white', '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'}}}
-            >
-                Play
-            </Button>
-            <Button
-                variant="outlined"
-                startIcon={<ShareIcon/>}
-                disabled
-                sx={{borderColor: 'rgba(255,255,255,0.45)', color: 'white', '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'}}}
-            >
-                Share
-            </Button>
-            <Button
-                variant="outlined"
-                startIcon={<DriveFileRenameOutlineIcon/>}
-                disabled
-                sx={{borderColor: 'rgba(255,255,255,0.45)', color: 'white', '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'}}}
-            >
-                Rename
-            </Button>
-            <Button
-                variant="outlined"
-                startIcon={<CalendarMonthIcon/>}
-                disabled
-                sx={{borderColor: 'rgba(255,255,255,0.45)', color: 'white', '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'}}}
-            >
-                Dates
-            </Button>
+            <Button variant="outlined" startIcon={<PlayArrowIcon/>} disabled sx={disabledButtonSx}>Play</Button>
+            <Button variant="outlined" startIcon={<ShareIcon/>} disabled sx={disabledButtonSx}>Share</Button>
+            <Button variant="outlined" startIcon={<DriveFileRenameOutlineIcon/>} disabled sx={disabledButtonSx}>Rename</Button>
+            <Button variant="outlined" startIcon={<CalendarMonthIcon/>} disabled sx={disabledButtonSx}>Dates</Button>
         </>
     );
 }
+
+const disabledButtonSx = {
+    borderColor: 'rgba(255,255,255,0.45)',
+    color: 'white',
+    '&.Mui-disabled': {borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)'},
+};
 
 function NextAlbumBanner({album, visible}: {album: Album; visible: boolean}) {
     return (
@@ -290,7 +253,6 @@ function NextAlbumBanner({album, visible}: {album: Album; visible: boolean}) {
                 textDecoration: 'none',
             }}
         >
-            {/* Spacer that fills the app-bar height — keeps the card below the app bar when visible */}
             <Box sx={{height: {xs: '56px', sm: '64px'}, flexShrink: 0}}/>
             <Box
                 sx={{
@@ -321,6 +283,8 @@ interface NoMediaLayoutProps {
 }
 
 function NoMediaLayout({albums, displayedAlbum, previousAlbum, nextAlbum}: NoMediaLayoutProps) {
+    const hasNeighbours = !!(nextAlbum || previousAlbum);
+
     return (
         <Box sx={{display: 'flex', minHeight: '100vh', mt: {xs: '56px', sm: '64px'}}}>
 
@@ -333,70 +297,110 @@ function NoMediaLayout({albums, displayedAlbum, previousAlbum, nextAlbum}: NoMed
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
-                    px: {xs: 2, sm: 4, md: 6},
-                    py: 6,
-                    gap: 3,
+                    minHeight: 0,
                 }}
             >
-                <IconButton
-                    component={Link}
-                    href="/"
-                    prefetch={false}
-                    size="small"
-                    sx={{color: 'rgba(255,255,255,0.55)', alignSelf: 'flex-start', ml: -0.5}}
+                {/* Album header — same as media page */}
+                <Box
+                    sx={{
+                        px: {xs: 1.5, sm: 3, md: 5},
+                        py: {xs: 1.5, sm: 2.5},
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexDirection: 'row',
+                        gap: {xs: 1, sm: 2},
+                        borderBottom: '1px solid rgba(255,255,255,0.07)',
+                    }}
                 >
-                    <ArrowBackIcon fontSize="small"/>
-                </IconButton>
-
-                <Box sx={{textAlign: 'center', mb: 2}}>
-                    <Typography variant="h1" sx={{mb: 1}}>
-                        {displayedAlbum?.name ?? 'Album'}
-                    </Typography>
-                    {displayedAlbum && (
-                        <Typography variant="body1">
-                            {fmt(displayedAlbum.start)} – {fmt(displayedAlbum.end)}
-                        </Typography>
-                    )}
-                    <Typography variant="body1" sx={{mt: 1, fontStyle: 'italic'}}>
-                        No photos yet.
-                    </Typography>
-                </Box>
-
-                {/* Next and previous album neighbours */}
-                {(nextAlbum || previousAlbum) && (
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: nextAlbum && previousAlbum ? '1fr 1fr' : '1fr',
-                            gap: 2,
-                            width: '100%',
-                            maxWidth: 700,
-                        }}
+                    <IconButton
+                        component={Link}
+                        href="/"
+                        prefetch={false}
+                        size="small"
+                        sx={{color: 'rgba(255,255,255,0.55)', flexShrink: 0}}
                     >
-                        {nextAlbum && (
-                            <Box
-                                component={Link}
-                                href={albumHref(nextAlbum)}
-                                prefetch={false}
-                                sx={{display: 'block', textDecoration: 'none'}}
-                            >
-                                <AlbumCard album={nextAlbum} onShare={() => {}} compact/>
-                            </Box>
-                        )}
-                        {previousAlbum && (
-                            <Box
-                                component={Link}
-                                href={albumHref(previousAlbum)}
-                                prefetch={false}
-                                sx={{display: 'block', textDecoration: 'none'}}
-                            >
-                                <AlbumCard album={previousAlbum} onShare={() => {}} compact/>
-                            </Box>
+                        <ArrowBackIcon fontSize="small"/>
+                    </IconButton>
+                    <Box sx={{flex: 1, minWidth: 0}}>
+                        <Typography variant="h1" sx={{mb: 0.25}} noWrap>
+                            {displayedAlbum?.name}
+                        </Typography>
+                        {displayedAlbum && (
+                            <Typography variant="body1" sx={{fontSize: '0.85rem'}}>
+                                {fmt(displayedAlbum.start)} – {fmt(displayedAlbum.end)}
+                            </Typography>
                         )}
                     </Box>
-                )}
+                    <Stack direction="row" gap={1} sx={{display: {xs: 'none', lg: 'flex'}, flexShrink: 0}}>
+                        <ActionButtons/>
+                    </Stack>
+                </Box>
+
+                {/* Empty-album message — centred, main point of the page */}
+                <Box
+                    sx={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: hasNeighbours ? 'flex-start' : 'center',
+                        px: {xs: 2, sm: 4},
+                        py: 6,
+                        gap: 4,
+                        textAlign: 'center',
+                    }}
+                >
+                    <Box>
+                        <Typography variant="h1" sx={{mb: 1, opacity: 0.5}}>No photos yet</Typography>
+                        <Typography variant="body1">Upload medias to this album to see them here.</Typography>
+                    </Box>
+
+                    {/* Neighbour album cards */}
+                    {hasNeighbours && (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: {xs: 'column', sm: 'row'},
+                                gap: 2,
+                                width: '100%',
+                                maxWidth: 700,
+                                justifyContent: 'center',
+                            }}
+                        >
+                            {nextAlbum && (
+                                <Box sx={{width: {xs: '100%', sm: 320}, flexShrink: 0}}>
+                                    <NeighbourAlbumLink album={nextAlbum}/>
+                                </Box>
+                            )}
+                            {previousAlbum && (
+                                <Box sx={{width: {xs: '100%', sm: 320}, flexShrink: 0}}>
+                                    <NeighbourAlbumLink album={previousAlbum}/>
+                                </Box>
+                            )}
+                        </Box>
+                    )}
+                </Box>
             </Box>
+
+            {/* Mobile FAB — xs/sm/md only */}
+            <SpeedDial
+                ariaLabel="Album actions"
+                sx={{
+                    display: {xs: 'flex', lg: 'none'},
+                    position: 'fixed',
+                    bottom: 24,
+                    right: 20,
+                    '& .MuiSpeedDial-fab': {
+                        bgcolor: '#185986',
+                        '&:hover': {bgcolor: '#1d6fa3'},
+                    },
+                }}
+                icon={<SpeedDialIcon openIcon={<PlayArrowIcon/>} icon={<PlayArrowIcon/>}/>}
+            >
+                <SpeedDialAction icon={<ShareIcon/>} tooltipTitle="Share" tooltipOpen/>
+                <SpeedDialAction icon={<DriveFileRenameOutlineIcon/>} tooltipTitle="Rename" tooltipOpen/>
+                <SpeedDialAction icon={<CalendarMonthIcon/>} tooltipTitle="Dates" tooltipOpen/>
+            </SpeedDial>
         </Box>
     );
 }
