@@ -2,6 +2,7 @@ import {Album, AlbumId, albumKey, CatalogError, computeAlbumTemperatures, Media,
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
+import {mediaUrl, prefixRelativeUrl} from "@/libs/requests/media-url";
 
 interface RestAlbum {
     owner: string
@@ -51,13 +52,6 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     ) {
     }
 
-    private prefixRelativeUrl(url: string | undefined, prefix: string): string | undefined {
-        if (!url || !prefix) return url;
-        if (url.startsWith('http://') || url.startsWith('https://')) return url;
-        if (url.startsWith(prefix)) return url;
-        return `${prefix}${url}`;
-    }
-
     public async deleteAlbum(albumId: AlbumId): Promise<void> {
         await this.fetchRequest(
             `/owners/${albumId.owner}/albums/${albumId.folderName}`,
@@ -90,7 +84,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                 ]).then(([ownersResp, usersResp, mediasResp, prefixResp]) => {
                     const prefix = prefixResp.status === "fulfilled" ? prefixResp.value : '';
 
-                    const prefixUrl = (url: string | undefined) => this.prefixRelativeUrl(url, prefix);
+                    const prefixUrl = (url: string | undefined) => prefixRelativeUrl(url, prefix);
 
                     const owners = ownersResp.status === "fulfilled" ? ownersResp.value.reduce(
                         (map, owner) => {
@@ -114,7 +108,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                     const thumbnailsByIndex: string[][] = mediasResp.status === "fulfilled"
                         ? mediasResp.value.map(result =>
                             result.status === "fulfilled"
-                                ? result.value.slice(0, 4).map(m => `${prefixUrl(m.contentPath)}?w=257`)
+                                ? result.value.slice(0, 4).map(m => mediaUrl(m.contentPath, 257, prefix))
                                 : []
                         )
                         : albums.map(() => [])
@@ -268,7 +262,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
         };
 
         try {
-            let fullUrl = `${baseUrl}${url}`;
+            const fullUrl = `${baseUrl}${url}`;
             console.log("Requesting:", fullUrl, options);
             const response = await fetch(fullUrl, {...defaultOptions, ...options});
 

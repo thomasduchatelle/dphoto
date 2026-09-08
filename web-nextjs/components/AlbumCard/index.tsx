@@ -7,7 +7,7 @@ import {SharedByIndicator} from './SharedByIndicator';
 
 export interface AlbumCardProps {
     album: Album;
-    onShare: (albumId: AlbumId) => void;
+    onShare?: (albumId: AlbumId) => void;
     compact?: boolean;
 }
 
@@ -34,7 +34,7 @@ export const AlbumCard = ({album, onShare, compact = false}: AlbumCardProps) => 
     const handleClickOnShare = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        onShare(album.albumId);
+        onShare?.(album.albumId);
     };
     const temperatureColor = getTemperatureColor(album.relativeTemperature);
 
@@ -156,7 +156,7 @@ export const AlbumCard = ({album, onShare, compact = false}: AlbumCardProps) => 
                     >
                         {album.totalCount}
                     </Typography>
-                    {!album.ownedBy && (
+                    {!album.ownedBy && onShare && (
                         <IconButton
                             onClick={handleClickOnShare}
                             sx={{display: {xs: 'inline-flex', sm: 'none'}, p: 0.5}}
@@ -318,26 +318,27 @@ export const AlbumCard = ({album, onShare, compact = false}: AlbumCardProps) => 
                                 Private album
                             </Typography>
                         )}
-                        <IconButton
-                            onClick={handleClickOnShare}>
-                            <Badge
-                                badgeContent={album.sharedWith.length}
-                                color="primary"
-                                sx={{
-                                    '& .MuiBadge-badge': {
-                                        fontSize: 9,
-                                        height: 14,
-                                        minWidth: 14,
-                                        padding: '0 4px',
-                                        backgroundColor: temperatureColor,
-                                        color: '#ffffff',
-                                        fontWeight: 600,
-                                    },
-                                }}
-                            >
-                                <ShareIcon sx={{fontSize: 16, color: 'rgba(255, 255, 255, 0.7)'}}/>
-                            </Badge>
-                        </IconButton>
+                        {onShare && (
+                            <IconButton onClick={handleClickOnShare}>
+                                <Badge
+                                    badgeContent={album.sharedWith.length}
+                                    color="primary"
+                                    sx={{
+                                        '& .MuiBadge-badge': {
+                                            fontSize: 9,
+                                            height: 14,
+                                            minWidth: 14,
+                                            padding: '0 4px',
+                                            backgroundColor: temperatureColor,
+                                            color: '#ffffff',
+                                            fontWeight: 600,
+                                        },
+                                    }}
+                                >
+                                    <ShareIcon sx={{fontSize: 16, color: 'rgba(255, 255, 255, 0.7)'}}/>
+                                </Badge>
+                            </IconButton>
+                        )}
                     </Box>
                 )}
 
