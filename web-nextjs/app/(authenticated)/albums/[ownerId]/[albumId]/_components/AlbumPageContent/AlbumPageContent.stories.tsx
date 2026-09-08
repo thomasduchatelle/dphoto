@@ -148,12 +148,15 @@ const meta = {
     parameters: {layout: 'fullscreen'},
     decorators: [
         (Story: () => React.ReactNode) => (
-            <AppLayout user={{
-                name: 'Tony Stark',
-                email: 'tony@stark-industries.com',
-                picture: '/tonystark-profile.jpg',
-                isOwner: true,
-            }} logoutUrl="/auth/logout">
+            <AppLayout
+                user={{
+                    name: 'Tony Stark',
+                    email: 'tony@stark-industries.com',
+                    picture: '/tonystark-profile.jpg',
+                    isOwner: true,
+                }}
+                logoutUrl="/auth/logout"
+                basePath="">
                 <Story/>
             </AppLayout>
         ),

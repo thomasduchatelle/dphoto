@@ -25,7 +25,7 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     const {onPageRefresh, loadAlbumPage, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
     useThunks(dispatchOnlyThunks, {dispatch}, state);
 
-    const {displayedAlbum, medias, mediasLoaded, albums, previousAlbum, nextAlbum, albumNotFound, error} = catalogViewerPageSelector(state);
+    const {displayedAlbum, medias, albums, previousAlbum, nextAlbum, albumNotFound, error} = catalogViewerPageSelector(state);
 
     if (error) {
         return <ErrorMessage error={error} title="Failed to load the album"/>;
@@ -33,10 +33,6 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
 
     if (albumNotFound) {
         notFound();
-    }
-
-    if (!mediasLoaded) {
-        return null;
     }
 
     return (
