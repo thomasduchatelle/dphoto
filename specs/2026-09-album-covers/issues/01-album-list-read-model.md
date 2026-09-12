@@ -1,9 +1,13 @@
 # 01 — Album-list view becomes a complete read model
 
-Status: ready
+Status: wontdo
 Phase: 1
 Layer: catalog domain — `pkg/catalogviews` + `pkg/catalogviewsadapters/catalogviewsdynamodb`
 Depends on: —
+
+> **Superseded** by the sub-tickets `01-01` … `01-09`. Kept here for traceability;
+> the acceptance criteria below are still authoritative and are collectively fulfilled by
+> the sub-tickets.
 
 ## Description
 
@@ -19,12 +23,13 @@ See `../design.md` (Read model) for the record shape, write-path split, and read
 
 ## Acceptance criteria
 
-- The view record (`AlbumSizeRecord`) carries `AlbumName`, `AlbumStart`, `AlbumEnd`; the SK keeps its
-  `…#COUNT` suffix for backward compatibility.
-- Album create, rename, and amend-dates `SET` the display fields on every viewer's record (owner and
-  visitors), reusing the existing viewer enumeration. Media count updates keep the atomic `ADD Count {diff}`
-  and are unaffected.
-- `AlbumView.ListAlbums` is served by a single `GetAvailabilitiesByUser` query per user for both owned and
+- The view record (renamed `AlbumSummaryRecord`) carries `AlbumName`, `AlbumStart`, `AlbumEnd`; the SK is
+  reshaped to `{OWNED|VISITOR}#{OWNER}#{FOLDER_NAME}` (the `#COUNT` suffix is dropped as the row is no
+  longer count-only).
+- Album create, rename-in-place, and amend-dates propagate the display fields to every viewer's record
+  (owner and visitors), reusing the existing viewer enumeration. Media count updates keep the atomic
+  `ADD Count {diff}` and are unaffected.
+- `AlbumView.ListAlbums` is served by a single `ListSummariesForUser` query per user for both owned and
   shared albums; `FindAlbumsByOwner` and `FindAlbumsById` are removed from the read path, and the
   owned/shared providers collapse accordingly.
 - The owner's "shared with" grid remains a separate query (unchanged).
