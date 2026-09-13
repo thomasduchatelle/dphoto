@@ -160,12 +160,15 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 	}
 	newName := "Avenger 1"
 
+	type fields struct {
+		albums []*catalog.Album
+	}
 	type args struct {
 		request catalog.RenameAlbumRequest
 	}
 	tests := []struct {
 		name                 string
-		albums               []*catalog.Album
+		fields               fields
 		args                 args
 		wantAlbumName        string // expected name of existingAlbum after the call (only meaningful when it should still exist and be renamed in-place)
 		wantRenamedFrom      []catalog.AlbumId
@@ -174,7 +177,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 	}{
 		{
 			name:   "it should get an error if the new name is empty",
-			albums: []*catalog.Album{existingAlbum},
+			fields: fields{albums: []*catalog.Album{existingAlbum}},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -190,7 +193,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		},
 		{
 			name:   "it should get an error if the album doesn't exists",
-			albums: nil,
+			fields: fields{},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -205,7 +208,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		},
 		{
 			name:   "it should update the name if the album is found and folder name is unchanged",
-			albums: []*catalog.Album{existingAlbum},
+			fields: fields{albums: []*catalog.Album{existingAlbum}},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -219,7 +222,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		},
 		{
 			name:   "it should create a new album if the album is found and folder name is changed",
-			albums: []*catalog.Album{existingAlbum},
+			fields: fields{albums: []*catalog.Album{existingAlbum}},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -241,7 +244,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		},
 		{
 			name:   "it should create a new album if the album is found and folder name is forced to a certain value",
-			albums: []*catalog.Album{existingAlbum},
+			fields: fields{albums: []*catalog.Album{existingAlbum}},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -264,8 +267,8 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			albumsCopy := make([]*catalog.Album, len(tt.albums))
-			for i, a := range tt.albums {
+			albumsCopy := make([]*catalog.Album, len(tt.fields.albums))
+			for i, a := range tt.fields.albums {
 				copy := *a
 				albumsCopy[i] = &copy
 			}
@@ -285,7 +288,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 			assert.Equal(t, tt.wantRenamedFrom, observer.RenamedFrom, "renamed-from observer records")
 			assert.Equal(t, tt.wantCreationRequests, observer.CreationRequests, "creation-request observer records")
 
-			if len(tt.albums) > 0 && tt.wantAlbumName != "" {
+			if len(tt.fields.albums) > 0 && tt.wantAlbumName != "" {
 				assert.Equal(t, tt.wantAlbumName, repository.Albums[existingAlbum.AlbumId].Name, "album name in the repository")
 			}
 		})

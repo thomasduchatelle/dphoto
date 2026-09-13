@@ -264,20 +264,23 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 		End:     time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC),
 	}
 
+	type fields struct {
+		orphanMediaCount int
+	}
 	type args struct {
 		existingTimeline []*catalog.Album
 		updatedAlbum     catalog.DatesUpdate
 	}
 	tests := []struct {
-		name             string
-		orphanMediaCount int
-		args             args
-		wantRecords      []catalog.MediaTransferRecords
-		wantErr          assert.ErrorAssertionFunc
+		name        string
+		fields      fields
+		args        args
+		wantRecords []catalog.MediaTransferRecords
+		wantErr     assert.ErrorAssertionFunc
 	}{
 		{
-			name:             "it should not transfer any media because there were not other albums are present - GROWING BOTH SIDES",
-			orphanMediaCount: 1,
+			name:   "it should not transfer any media because there were not other albums are present - GROWING BOTH SIDES",
+			fields: fields{orphanMediaCount: 1},
 			args: args{
 				existingTimeline: []*catalog.Album{&mayAlbum},
 				updatedAlbum:     amendWithDatesOf(mayAlbum, aprToJunAlbum.Start, aprToJunAlbum.End),
@@ -285,8 +288,8 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:             "it should not transfer any media because there were not other albums are present - SHRINKING BOTH SIDES",
-			orphanMediaCount: 0,
+			name:   "it should not transfer any media because there were not other albums are present - SHRINKING BOTH SIDES",
+			fields: fields{orphanMediaCount: 0},
 			args: args{
 				existingTimeline: []*catalog.Album{&aprToJunAlbum},
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, mayAlbum.Start, mayAlbum.End),
@@ -294,8 +297,8 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:             "it should transfer medias IN the amended album - GROWING BOTH SIDES",
-			orphanMediaCount: 1,
+			name:   "it should transfer medias IN the amended album - GROWING BOTH SIDES",
+			fields: fields{orphanMediaCount: 1},
 			args: args{
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &mayAlbum},
 				updatedAlbum:     amendWithDatesOf(mayAlbum, aprToJunAlbum.Start, aprToJunAlbum.End),
@@ -317,8 +320,8 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:             "it should transfer medias OUT the amended album - SHRINKING BOTH SIDES",
-			orphanMediaCount: 1,
+			name:   "it should transfer medias OUT the amended album - SHRINKING BOTH SIDES",
+			fields: fields{orphanMediaCount: 1},
 			args: args{
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &aprToJunAlbum},
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, mayAlbum.Start, mayAlbum.End),
@@ -340,8 +343,8 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:             "it should transfer medias OUT the amended album - SHRINKING BEFORE with another high priority album",
-			orphanMediaCount: 1,
+			name:   "it should transfer medias OUT the amended album - SHRINKING BEFORE with another high priority album",
+			fields: fields{orphanMediaCount: 1},
 			args: args{
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &aprToJunAlbum, &mayAlbum},
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
@@ -363,8 +366,8 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:             "it should loose some segments on covered time range when growing",
-			orphanMediaCount: 1,
+			name:   "it should loose some segments on covered time range when growing",
+			fields: fields{orphanMediaCount: 1},
 			args: args{
 				existingTimeline: []*catalog.Album{&fifthJunAlbum, &junAlbum},
 				updatedAlbum:     amendWithDatesOf(fifthJunAlbum, aprToJunAlbum.Start, junAlbum.End),
@@ -381,8 +384,8 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:             "it should win some segments on covered time range when shrinking",
-			orphanMediaCount: 1,
+			name:   "it should win some segments on covered time range when shrinking",
+			fields: fields{orphanMediaCount: 1},
 			args: args{
 				existingTimeline: []*catalog.Album{&aprToJunAlbum, &junAlbum, &fullYearAlbum},
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
@@ -406,8 +409,8 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:             "it should transfer medias even when timeline has already been updated in case the changes is re-applied [scenario: win some segments on covered time range when shrinking]",
-			orphanMediaCount: 1,
+			name:   "it should transfer medias even when timeline has already been updated in case the changes is re-applied [scenario: win some segments on covered time range when shrinking]",
+			fields: fields{orphanMediaCount: 1},
 			args: args{
 				existingTimeline: []*catalog.Album{{
 					AlbumId: aprToJunAlbum.AlbumId,
@@ -436,8 +439,8 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:             "it should abort if some medias are made orphan - SHRINKING BOTH SIDES",
-			orphanMediaCount: 1,
+			name:   "it should abort if some medias are made orphan - SHRINKING BOTH SIDES",
+			fields: fields{orphanMediaCount: 1},
 			args: args{
 				existingTimeline: []*catalog.Album{&aprToJunAlbum},
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, junAlbum.Start, junAlbum.End),
@@ -450,7 +453,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repository := NewAlbumRepositoryInMemory()
-			repository.MediaCountsBySelect["ironman"] = tt.orphanMediaCount
+			repository.MediaCountsBySelect["ironman"] = tt.fields.orphanMediaCount
 			transfer := &MediaTransferInMemory{}
 			a := &catalog.AmendAlbumMediaTransfer{
 				CountMediasBySelectors: repository,

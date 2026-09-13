@@ -395,29 +395,36 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		End:   time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
 	}
 
+	type fields struct {
+		MediaTransfer *MediaTransferInMemory
+	}
 	type args struct {
-		createdAlbum   catalog.Album
-		existingAlbums []*catalog.Album
+		timeline     *catalog.TimelineAggregate
+		createdAlbum catalog.Album
 	}
 	tests := []struct {
 		name        string
+		fields      fields
 		args        args
 		wantRecords []catalog.MediaTransferRecords
 		wantErr     assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should create the album with a generated name",
+			name:   "it should create the album with a generated name",
+			fields: fields{MediaTransfer: &MediaTransferInMemory{}},
 			args: args{
+				timeline:     catalog.NewLazyTimelineAggregate(nil),
 				createdAlbum: album,
 			},
 			wantRecords: []catalog.MediaTransferRecords{nil},
 			wantErr:     assert.NoError,
 		},
 		{
-			name: "it should re-allocate medias from a lower priority album",
+			name:   "it should re-allocate medias from a lower priority album",
+			fields: fields{MediaTransfer: &MediaTransferInMemory{}},
 			args: args{
-				createdAlbum:   album,
-				existingAlbums: []*catalog.Album{lifetimeAlbum},
+				timeline:     catalog.NewLazyTimelineAggregate([]*catalog.Album{lifetimeAlbum}),
+				createdAlbum: album,
 			},
 			wantRecords: []catalog.MediaTransferRecords{{
 				album.AlbumId: {
@@ -431,10 +438,11 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should re-allocate medias from 2 lower priority albums ; selector still in one single block",
+			name:   "it should re-allocate medias from 2 lower priority albums ; selector still in one single block",
+			fields: fields{MediaTransfer: &MediaTransferInMemory{}},
 			args: args{
-				createdAlbum:   album,
-				existingAlbums: []*catalog.Album{lifetimeAlbum, remainingLifetimeAlbum},
+				timeline:     catalog.NewLazyTimelineAggregate([]*catalog.Album{lifetimeAlbum, remainingLifetimeAlbum}),
+				createdAlbum: album,
 			},
 			wantRecords: []catalog.MediaTransferRecords{{
 				album.AlbumId: {
@@ -448,10 +456,11 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should re-allocate medias from 1 lower priority albums, avoiding 1 high priority (selectors in two blocks)",
+			name:   "it should re-allocate medias from 1 lower priority albums, avoiding 1 high priority (selectors in two blocks)",
+			fields: fields{MediaTransfer: &MediaTransferInMemory{}},
 			args: args{
-				createdAlbum:   album,
-				existingAlbums: []*catalog.Album{lifetimeAlbum, highPriorityAlbum},
+				timeline:     catalog.NewLazyTimelineAggregate([]*catalog.Album{lifetimeAlbum, highPriorityAlbum}),
+				createdAlbum: album,
 			},
 			wantRecords: []catalog.MediaTransferRecords{{
 				album.AlbumId: {
@@ -472,15 +481,14 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			transfer := &MediaTransferInMemory{}
 			c := &catalog.CreateAlbumMediaTransfer{
-				MediaTransfer: transfer,
+				MediaTransfer: tt.fields.MediaTransfer,
 			}
-			err := c.ObserveCreateAlbum(context.Background(), catalog.NewLazyTimelineAggregate(tt.args.existingAlbums), tt.args.createdAlbum)
+			err := c.ObserveCreateAlbum(context.Background(), tt.args.timeline, tt.args.createdAlbum)
 			if !tt.wantErr(t, err, fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum)) {
 				return
 			}
-			assert.Equal(t, tt.wantRecords, transfer.TransferRecords)
+			assert.Equal(t, tt.wantRecords, tt.fields.MediaTransfer.TransferRecords)
 		})
 	}
 }
