@@ -2,134 +2,136 @@ package archive_test
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"io"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/thomasduchatelle/dphoto/pkg/archive"
 )
 
 const owner = "ironman"
 
 func TestStore(t *testing.T) {
 	content := io.NopCloser(bytes.NewReader([]byte("foobar")))
-
 	opener := func() (io.ReadCloser, error) {
 		return content, nil
 	}
 
-	tests := []struct {
-		name             string
-		mocksExpectation func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter)
-		request          *archive.StoreRequest
-		want             string
-		wantErr          bool
-	}{
-		{
-			name: "it should store a media online with the right names",
-			mocksExpectation: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter) {
-				repository.On("FindById", owner, "media-1").Once().Return("", archive.NotFoundError)
-				repository.On("AddLocation", owner, "media-1", owner+"/folder-1/my_choice.jpg").Once().Return(nil)
-				store.On("Upload", archive.DestructuredKey{Prefix: owner + "/folder-1/2022-06-26_15-48-42_qwertyui", Suffix: ".jpg"}, mock.Anything).Once().Return(owner+"/folder-1/my_choice.jpg", nil)
-
-				asyncJob.On("LoadImagesInCache", mock.Anything).Once().Return(func(images ...*archive.ImageToResize) error {
-					if assert.Len(t, images, 1) {
-						assert.Equal(t, owner, images[0].Owner)
-						assert.Equal(t, "media-1", images[0].MediaId)
-						assert.Equal(t, archive.CacheableWidths, images[0].Widths)
-						assert.NotNil(t, images[0].Open)
-					}
-					return nil
-				})
-			},
-			request: &archive.StoreRequest{
-				DateTime:         time.Date(2022, 6, 26, 15, 48, 42, 0, time.UTC),
-				FolderName:       "/folder-1",
-				Id:               "media-1",
-				Open:             opener,
-				OriginalFilename: "randomName.photo.JPG",
-				Owner:            owner,
-				SignatureSha256:  "qwertyuiopasdfghjklzxcvbnm",
-			},
-			want: "my_choice.jpg",
-		},
-		{
-			name: "it should not store anything is the media is already present",
-			mocksExpectation: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter) {
-				repository.On("FindById", owner, "media-1").Once().Return(owner+"/folder-1/previous_id.jpg", nil)
-			},
-			request: &archive.StoreRequest{
-				DateTime:         time.Date(2022, 6, 26, 15, 48, 42, 0, time.UTC),
-				FolderName:       "/folder-1",
-				Id:               "media-1",
-				Open:             opener,
-				OriginalFilename: "randomName.photo.JPG",
-				Owner:            owner,
-				SignatureSha256:  "qwertyuiopasdfghjklzxcvbnm",
-			},
-			want: "previous_id.jpg",
-		},
-		{
-			name: "it should not index the new location if the upload failed",
-			mocksExpectation: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter) {
-				repository.On("FindById", owner, "media-1").Once().Return("", archive.NotFoundError)
-				store.On("Upload", mock.Anything, mock.Anything).Once().Return("", errors.Errorf("TEST - simulate failure while uploading"))
-			},
-			request: &archive.StoreRequest{
-				DateTime:         time.Date(2022, 6, 26, 15, 48, 42, 0, time.UTC),
-				FolderName:       "/folder-1",
-				Id:               "media-1",
-				Open:             opener,
-				OriginalFilename: "randomName.photo.JPG",
-				Owner:            owner,
-				SignatureSha256:  "qwertyuiopasdfghjklzxcvbnm",
-			},
-			want:    "",
-			wantErr: true,
-		},
-		{
-			name: "it should store a media online without caching it if it extension is not supported",
-			mocksExpectation: func(repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, resizer *mocks2.ResizerAdapter, asyncJob *mocks2.AsyncJobAdapter) {
-				repository.On("FindById", owner, "video-1").Once().Return("", archive.NotFoundError)
-				repository.On("AddLocation", owner, "video-1", owner+"/folder-1/my_choice.mpeg").Once().Return(nil)
-				store.On("Upload", archive.DestructuredKey{Prefix: owner + "/folder-1/2022-06-26_15-48-42_qwertyui", Suffix: ".mpeg"}, mock.Anything).Once().Return(owner+"/folder-1/my_choice.mpeg", nil)
-			},
-			request: &archive.StoreRequest{
-				DateTime:         time.Date(2022, 6, 26, 15, 48, 42, 0, time.UTC),
-				FolderName:       "/folder-1",
-				Id:               "video-1",
-				Open:             opener,
-				OriginalFilename: "randomName.photo.Mpeg",
-				Owner:            owner,
-				SignatureSha256:  "qwertyuiopasdfghjklzxcvbnm",
-			},
-			want: "my_choice.mpeg",
-		},
+	baseRequest := func(id, filename string) *archive.StoreRequest {
+		return &archive.StoreRequest{
+			DateTime:         time.Date(2022, 6, 26, 15, 48, 42, 0, time.UTC),
+			FolderName:       "/folder-1",
+			Id:               id,
+			Open:             opener,
+			OriginalFilename: filename,
+			Owner:            owner,
+			SignatureSha256:  "qwertyuiopasdfghjklzxcvbnm",
+		}
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := assert.New(t)
 
-			repository := mocks2.NewARepositoryAdapter(t)
-			store := mocks2.NewStoreAdapter(t)
-			cache := mocks2.NewCacheAdapter(t)
-			resizer := mocks2.NewResizerAdapter(t)
-			asyncJob := mocks2.NewAsyncJobAdapter(t)
+	t.Run("it should store a media online with the right names", func(t *testing.T) {
+		repository := NewARepositoryInMemory()
+		store := NewStoreInMemory()
+		cache := NewCacheInMemory()
+		asyncJob := NewAsyncJobInMemory()
+		archive.ResizerPort = NewResizerInMemory()
+		archive.Init(repository, store, cache, asyncJob)
 
-			tt.mocksExpectation(repository, store, cache, resizer, asyncJob)
+		got, err := archive.Store(baseRequest("media-1", "randomName.photo.JPG"))
 
-			archive.ResizerPort = resizer
-			archive.Init(repository, store, cache, asyncJob)
+		expectedKey := owner + "/folder-1/2022-06-26_15-48-42_qwertyui.jpg"
+		if assert.NoError(t, err) {
+			assert.Equal(t, "2022-06-26_15-48-42_qwertyui.jpg", got)
 
-			got, err := archive.Store(tt.request)
-			if !tt.wantErr && a.NoError(err, tt.name) {
-				a.Equal(tt.want, got, tt.name)
-			} else if tt.wantErr {
-				a.Error(err, tt.name)
+			storedKey, err := repository.FindById(owner, "media-1")
+			if assert.NoError(t, err) {
+				assert.Equal(t, expectedKey, storedKey)
 			}
-		})
-	}
+			assert.True(t, store.Has(expectedKey))
+
+			if assert.Len(t, asyncJob.LoadedImages, 1) && assert.Len(t, asyncJob.LoadedImages[0], 1) {
+				loaded := asyncJob.LoadedImages[0][0]
+				assert.Equal(t, owner, loaded.Owner)
+				assert.Equal(t, "media-1", loaded.MediaId)
+				assert.Equal(t, archive.CacheableWidths, loaded.Widths)
+				assert.NotNil(t, loaded.Open)
+			}
+		}
+	})
+
+	t.Run("it should not store anything if the media is already present", func(t *testing.T) {
+		repository := NewARepositoryInMemory()
+		store := NewStoreInMemory()
+		cache := NewCacheInMemory()
+		asyncJob := NewAsyncJobInMemory()
+		archive.ResizerPort = NewResizerInMemory()
+		archive.Init(repository, store, cache, asyncJob)
+
+		existingKey := owner + "/folder-1/previous_id.jpg"
+		_ = repository.AddLocation(owner, "media-1", existingKey)
+
+		got, err := archive.Store(baseRequest("media-1", "randomName.photo.JPG"))
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, "previous_id.jpg", got)
+			assert.False(t, store.Has(existingKey), "no upload should have happened")
+			assert.Empty(t, asyncJob.LoadedImages)
+		}
+	})
+
+	t.Run("it should store a media online without caching it if its extension is not supported", func(t *testing.T) {
+		repository := NewARepositoryInMemory()
+		store := NewStoreInMemory()
+		cache := NewCacheInMemory()
+		asyncJob := NewAsyncJobInMemory()
+		archive.ResizerPort = NewResizerInMemory()
+		archive.Init(repository, store, cache, asyncJob)
+
+		got, err := archive.Store(baseRequest("video-1", "randomName.photo.Mpeg"))
+
+		expectedKey := owner + "/folder-1/2022-06-26_15-48-42_qwertyui.mpeg"
+		if assert.NoError(t, err) {
+			assert.Equal(t, "2022-06-26_15-48-42_qwertyui.mpeg", got)
+
+			storedKey, err := repository.FindById(owner, "video-1")
+			if assert.NoError(t, err) {
+				assert.Equal(t, expectedKey, storedKey)
+			}
+			assert.True(t, store.Has(expectedKey))
+			assert.Empty(t, asyncJob.LoadedImages, "unsupported extensions must not queue a resize")
+		}
+	})
+
+	// E2 — data-loss safety: no orphaned index entry when upload fails.
+	// Uses testify/mock inline because a Fake cannot inject an Upload failure.
+	t.Run("it should not index the new location if the upload failed", func(t *testing.T) {
+		repository := NewARepositoryInMemory()
+		failingStore := &failingUploadStore{StoreInMemory: NewStoreInMemory()}
+		failingStore.On("Upload", mock.Anything, mock.Anything).Return("", errors.Errorf("TEST - simulate failure while uploading"))
+		cache := NewCacheInMemory()
+		asyncJob := NewAsyncJobInMemory()
+		archive.ResizerPort = NewResizerInMemory()
+		archive.Init(repository, failingStore, cache, asyncJob)
+
+		_, err := archive.Store(baseRequest("media-1", "randomName.photo.JPG"))
+
+		assert.Error(t, err)
+		_, findErr := repository.FindById(owner, "media-1")
+		assert.ErrorIs(t, findErr, archive.NotFoundError, "no index entry should have been recorded")
+	})
+}
+
+// failingUploadStore embeds a real Fake but overrides Upload with a testify/mock
+// stub so we can inject an error without letting the Fake record the bytes.
+type failingUploadStore struct {
+	*StoreInMemory
+	mock.Mock
+}
+
+func (f *failingUploadStore) Upload(values archive.DestructuredKey, content io.Reader) (string, error) {
+	args := f.Called(values, content)
+	return args.String(0), args.Error(1)
 }
