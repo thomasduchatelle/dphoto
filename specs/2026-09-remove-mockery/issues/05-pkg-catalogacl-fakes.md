@@ -1,6 +1,6 @@
 # 05 — `pkg/acl/catalogacl` Fakes
 
-Status: ready
+Status: done
 Layer: `pkg/acl/catalogacl`
 Depends on: —
 
