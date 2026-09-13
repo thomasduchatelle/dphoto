@@ -34,16 +34,37 @@ func TestAuthenticate(t *testing.T) {
 		SecretJwtKey:   []byte("DPhotoJwtSecret"),
 	}
 
+	trustedIssuers := map[string]aclcore.OAuth2IssuerConfig{
+		"accounts.google.com": {
+			ConfigSource: "unitTest",
+			PublicKeysLookup: func(method aclcore.OAuthTokenMethod) (interface{}, error) {
+				if method.Algorithm == "HS512" {
+					return []byte("ExternalJWTSecret"), nil
+				}
+				return nil, errors.Errorf("key for %s not found", method)
+			},
+		},
+	}
+
 	tonyIdentity := aclcore.Identity{
 		Email:   email,
 		Name:    "Tony Stark aka Ironman",
 		Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
 	}
 
+	type fields struct {
+		ScopeRepository       *ScopeRepositoryInMemory
+		IdentityRepository    *IdentityRepositoryInMemory
+		RefreshTokenGenerator *RefreshTokenGeneratorInMemory
+	}
+	type args struct {
+		identityJWT         string
+		refreshTokenPurpose aclcore.RefreshTokenPurpose
+	}
 	tests := []struct {
 		name              string
-		seedScopes        []aclcore.Scope
-		argToken          string
+		fields            fields
+		args              args
 		assertAuth        func(*testing.T, string, aclcore.Authentication)
 		wantIdentity      aclcore.Identity
 		wantRefreshedSpec *aclcore.RefreshTokenSpec
@@ -51,11 +72,15 @@ func TestAuthenticate(t *testing.T) {
 	}{
 		{
 			name: "it should exchange a valid identity JWT into an access token",
-			seedScopes: []aclcore.Scope{
-				{Type: aclcore.ApiScope, GrantedTo: email, ResourceId: "admin"},
-				{Type: aclcore.MainOwnerScope, GrantedTo: email, ResourceOwner: owner},
+			fields: fields{
+				ScopeRepository: NewScopeRepositoryInMemory(
+					aclcore.Scope{Type: aclcore.ApiScope, GrantedTo: email, ResourceId: "admin"},
+					aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedTo: email, ResourceOwner: owner},
+				),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorInMemory(),
 			},
-			argToken: okJwtString,
+			args: args{identityJWT: okJwtString, refreshTokenPurpose: aclcore.RefreshTokenPurposeWeb},
 			assertAuth: func(t *testing.T, name string, auth aclcore.Authentication) {
 				assert.Equal(t, time.Date(1980, 1, 1, 0, 0, 12, 0, time.UTC), auth.ExpiryTime, name)
 				assert.Equal(t, int64(12), auth.ExpiresIn, name)
@@ -90,10 +115,14 @@ func TestAuthenticate(t *testing.T) {
 		},
 		{
 			name: "it should let a pure visitor authenticate",
-			seedScopes: []aclcore.Scope{
-				{Type: aclcore.AlbumVisitorScope, GrantedTo: email},
+			fields: fields{
+				ScopeRepository: NewScopeRepositoryInMemory(
+					aclcore.Scope{Type: aclcore.AlbumVisitorScope, GrantedTo: email},
+				),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorInMemory(),
 			},
-			argToken: okJwtString,
+			args: args{identityJWT: okJwtString, refreshTokenPurpose: aclcore.RefreshTokenPurposeWeb},
 			assertAuth: func(t *testing.T, name string, auth aclcore.Authentication) {
 				assert.Equal(t, time.Date(1980, 1, 1, 0, 0, 12, 0, time.UTC), auth.ExpiryTime, name)
 				assert.Equal(t, int64(12), auth.ExpiresIn, name)
@@ -126,18 +155,33 @@ func TestAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			name:            "it should not let unregistered user log in",
-			argToken:        unregisteredJwtString,
+			name: "it should not let unregistered user log in",
+			fields: fields{
+				ScopeRepository:       NewScopeRepositoryInMemory(),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorInMemory(),
+			},
+			args:            args{identityJWT: unregisteredJwtString, refreshTokenPurpose: aclcore.RefreshTokenPurposeWeb},
 			wantErrContains: "must be pre-registered",
 		},
 		{
-			name:            "it should not accept JWT from non-approved issuers",
-			argToken:        wrongISSJwtString,
+			name: "it should not accept JWT from non-approved issuers",
+			fields: fields{
+				ScopeRepository:       NewScopeRepositoryInMemory(),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorInMemory(),
+			},
+			args:            args{identityJWT: wrongISSJwtString, refreshTokenPurpose: aclcore.RefreshTokenPurposeWeb},
 			wantErrContains: "Issuer 'wrongISS' is not supported",
 		},
 		{
-			name:            "it should not accept expired JWT",
-			argToken:        expiredJwtString,
+			name: "it should not accept expired JWT",
+			fields: fields{
+				ScopeRepository:       NewScopeRepositoryInMemory(),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorInMemory(),
+			},
+			args:            args{identityJWT: expiredJwtString, refreshTokenPurpose: aclcore.RefreshTokenPurposeWeb},
 			wantErrContains: "token is expired",
 		},
 	}
@@ -146,45 +190,31 @@ func TestAuthenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 
-			scopeRepository := NewScopeRepositoryInMemory(tt.seedScopes...)
-			identityRepository := NewIdentityRepositoryInMemory()
-			refreshTokenGenerator := NewRefreshTokenGeneratorInMemory()
-
 			authenticator := aclcore.SSOAuthenticator{
 				AccessTokenGenerator: aclcore.AccessTokenGenerator{
-					PermissionsReader: scopeRepository,
+					PermissionsReader: tt.fields.ScopeRepository,
 					Config:            config,
 				},
-				RefreshTokenGenerator: refreshTokenGenerator,
-				IdentityDetailsStore:  identityRepository,
-				TrustedIdentityIssuers: map[string]aclcore.OAuth2IssuerConfig{
-					"accounts.google.com": {
-						ConfigSource: "unitTest",
-						PublicKeysLookup: func(method aclcore.OAuthTokenMethod) (interface{}, error) {
-							if method.Algorithm == "HS512" {
-								return []byte("ExternalJWTSecret"), nil
-							}
-							return nil, errors.Errorf("key for %s not found", method)
-						},
-					},
-				},
+				RefreshTokenGenerator:  tt.fields.RefreshTokenGenerator,
+				IdentityDetailsStore:   tt.fields.IdentityRepository,
+				TrustedIdentityIssuers: trustedIssuers,
 			}
 
-			gotAuth, gotIdentity, err := authenticator.AuthenticateFromExternalIDProvider(tt.argToken, aclcore.RefreshTokenPurposeWeb)
+			gotAuth, gotIdentity, err := authenticator.AuthenticateFromExternalIDProvider(tt.args.identityJWT, tt.args.refreshTokenPurpose)
 			if tt.wantErrContains != "" && a.Error(err, tt.name) {
 				a.Contains(err.Error(), tt.wantErrContains, tt.name)
-				a.Empty(refreshTokenGenerator.GeneratedFor, "no refresh token should be generated on error")
-				a.Empty(identityRepository.Identities, "no identity should be stored on error")
+				a.Empty(tt.fields.RefreshTokenGenerator.GeneratedFor, "no refresh token should be generated on error")
+				a.Empty(tt.fields.IdentityRepository.Identities, "no identity should be stored on error")
 
 			} else if tt.wantErrContains == "" && a.NoError(err, tt.name) {
 				a.Equal(tt.wantIdentity, *gotIdentity, tt.name)
 				tt.assertAuth(t, tt.name, *gotAuth)
 
-				storedIdentity, findErr := identityRepository.FindIdentity(email)
+				storedIdentity, findErr := tt.fields.IdentityRepository.FindIdentity(email)
 				if a.NoError(findErr, "identity should be stored") {
 					a.Equal(tt.wantIdentity, *storedIdentity, "stored identity")
 				}
-				a.Equal([]aclcore.RefreshTokenSpec{*tt.wantRefreshedSpec}, refreshTokenGenerator.GeneratedFor, "RefreshTokenGenerator.GeneratedFor")
+				a.Equal([]aclcore.RefreshTokenSpec{*tt.wantRefreshedSpec}, tt.fields.RefreshTokenGenerator.GeneratedFor, "RefreshTokenGenerator.GeneratedFor")
 			}
 		})
 	}

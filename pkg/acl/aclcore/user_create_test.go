@@ -21,22 +21,25 @@ func TestCreateUser_CreateUser(t *testing.T) {
 	const ironmanOwner = "ironman"
 	const tonyUserId = usermodel.UserId(tonyEmail)
 
+	type fields struct {
+		Repository *ScopeRepositoryInMemory
+	}
 	type args struct {
 		email string
 		owner string
 	}
 	tests := []struct {
 		name           string
-		initialScopes  []aclcore.Scope
+		fields         fields
 		args           args
 		wantErr        assert.ErrorAssertionFunc
 		wantUserScopes []*aclcore.Scope
 	}{
 		{
-			name:          "it should create the scope when no scope already exists",
-			initialScopes: nil,
-			args:          args{email: tonyEmail, owner: ironmanOwner},
-			wantErr:       assert.NoError,
+			name:    "it should create the scope when no scope already exists",
+			fields:  fields{Repository: NewScopeRepositoryInMemory()},
+			args:    args{email: tonyEmail, owner: ironmanOwner},
+			wantErr: assert.NoError,
 			wantUserScopes: []*aclcore.Scope{
 				{
 					Type:          aclcore.MainOwnerScope,
@@ -48,12 +51,14 @@ func TestCreateUser_CreateUser(t *testing.T) {
 		},
 		{
 			name: "it should override a scope for a different owner (and remove noise)",
-			initialScopes: []aclcore.Scope{
-				{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: tonyEmail},
-				{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: "someoneelse"},
-				{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: ironmanOwner, ResourceId: "the suit"},
-				{Type: aclcore.AlbumVisitorScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: ironmanOwner},
-				{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: "pepper@stark.com", ResourceOwner: ironmanOwner},
+			fields: fields{
+				Repository: NewScopeRepositoryInMemory(
+					aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: tonyEmail},
+					aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: "someoneelse"},
+					aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: ironmanOwner, ResourceId: "the suit"},
+					aclcore.Scope{Type: aclcore.AlbumVisitorScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: ironmanOwner},
+					aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: "pepper@stark.com", ResourceOwner: ironmanOwner},
+				),
 			},
 			args:    args{email: tonyEmail, owner: ironmanOwner},
 			wantErr: assert.NoError,
@@ -64,8 +69,10 @@ func TestCreateUser_CreateUser(t *testing.T) {
 		},
 		{
 			name: "it should skip if the scope already exists",
-			initialScopes: []aclcore.Scope{
-				{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: ironmanOwner},
+			fields: fields{
+				Repository: NewScopeRepositoryInMemory(
+					aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: ironmanOwner},
+				),
 			},
 			args:    args{email: tonyEmail, owner: ironmanOwner},
 			wantErr: assert.NoError,
@@ -74,10 +81,10 @@ func TestCreateUser_CreateUser(t *testing.T) {
 			},
 		},
 		{
-			name:          "it should default the owner to the email",
-			initialScopes: nil,
-			args:          args{email: tonyEmail},
-			wantErr:       assert.NoError,
+			name:    "it should default the owner to the email",
+			fields:  fields{Repository: NewScopeRepositoryInMemory()},
+			args:    args{email: tonyEmail},
+			wantErr: assert.NoError,
 			wantUserScopes: []*aclcore.Scope{
 				{
 					Type:          aclcore.MainOwnerScope,
@@ -88,9 +95,9 @@ func TestCreateUser_CreateUser(t *testing.T) {
 			},
 		},
 		{
-			name:          "it should return an error if the email is empty / invalid",
-			initialScopes: nil,
-			args:          args{email: "   "},
+			name:   "it should return an error if the email is empty / invalid",
+			fields: fields{Repository: NewScopeRepositoryInMemory()},
+			args:   args{email: "   "},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, usermodel.InvalidUserEmailError)
 			},
@@ -99,17 +106,16 @@ func TestCreateUser_CreateUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := NewScopeRepositoryInMemory(tt.initialScopes...)
 			c := &aclcore.CreateUser{
-				ScopesReader: repository,
-				ScopeWriter:  repository,
+				ScopesReader: tt.fields.Repository,
+				ScopeWriter:  tt.fields.Repository,
 			}
 			err := c.CreateUser(tt.args.email, tt.args.owner)
 			if !tt.wantErr(t, err, fmt.Sprintf("CreateUser(%v, %v)", tt.args.email, tt.args.owner)) {
 				return
 			}
 			if tt.wantUserScopes != nil {
-				got, listErr := repository.ListScopesByUser(context.Background(), tonyUserId)
+				got, listErr := tt.fields.Repository.ListScopesByUser(context.Background(), tonyUserId)
 				assert.NoError(t, listErr)
 				assert.ElementsMatch(t, tt.wantUserScopes, got, "user scopes after CreateUser")
 			}
