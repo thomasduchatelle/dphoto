@@ -18,6 +18,28 @@ func TestGetResizedImage(t *testing.T) {
 
 	resizedAt := func(width int) []byte { return []byte(fmt.Sprintf("resized-w=%d", width)) }
 
+	happyRepository := func() *ARepositoryInMemory {
+		r := NewARepositoryInMemory()
+		_ = r.AddLocation(owner, mediaId, storeKey)
+		return r
+	}
+	happyStore := func() *StoreInMemory {
+		s := NewStoreInMemory()
+		s.Content[storeKey] = fullContent
+		return s
+	}
+	seededCacheAt := func(key string, content []byte) *CacheInMemory {
+		c := NewCacheInMemory()
+		c.Content[key] = content
+		c.MediaType[key] = mediaType
+		return c
+	}
+
+	type fields struct {
+		repository *ARepositoryInMemory
+		store      *StoreInMemory
+		cache      *CacheInMemory
+	}
 	type args struct {
 		owner    string
 		mediaId  string
@@ -26,8 +48,8 @@ func TestGetResizedImage(t *testing.T) {
 	}
 	tests := []struct {
 		name              string
+		fields            fields
 		args              args
-		seed              func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory)
 		wantContent       []byte
 		wantType          string
 		wantErr           assert.ErrorAssertionFunc
@@ -36,12 +58,9 @@ func TestGetResizedImage(t *testing.T) {
 		wantWarmUpTouched bool
 	}{
 		{
-			name: "it should resize the image and store the results when the cache is empty",
-			args: args{owner, mediaId, 1440, 0},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				_ = repository.AddLocation(owner, mediaId, storeKey)
-				store.Content[storeKey] = fullContent
-			},
+			name:              "it should resize the image and store the results when the cache is empty",
+			fields:            fields{repository: happyRepository(), store: happyStore(), cache: NewCacheInMemory()},
+			args:              args{owner, mediaId, 1440, 0},
 			wantContent:       resizedAt(1440),
 			wantType:          mediaType,
 			wantErr:           assert.NoError,
@@ -50,23 +69,17 @@ func TestGetResizedImage(t *testing.T) {
 			wantWarmUpTouched: true,
 		},
 		{
-			name: "it should use cached image if on the right size",
-			args: args{owner, mediaId, 1440, 0},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				cache.Content["w=1440"+cacheIdSuffix] = []byte("pre-cached-1440")
-				cache.MediaType["w=1440"+cacheIdSuffix] = mediaType
-			},
+			name:        "it should use cached image if on the right size",
+			fields:      fields{repository: happyRepository(), store: happyStore(), cache: seededCacheAt("w=1440"+cacheIdSuffix, []byte("pre-cached-1440"))},
+			args:        args{owner, mediaId, 1440, 0},
 			wantContent: []byte("pre-cached-1440"),
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
 		},
 		{
-			name: "it should store a miniature image in the cache and return a smaller one",
-			args: args{owner, mediaId, 180, 0},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				_ = repository.AddLocation(owner, mediaId, storeKey)
-				store.Content[storeKey] = fullContent
-			},
+			name:              "it should store a miniature image in the cache and return a smaller one",
+			fields:            fields{repository: happyRepository(), store: happyStore(), cache: NewCacheInMemory()},
+			args:              args{owner, mediaId, 180, 0},
 			wantContent:       resizedAt(180),
 			wantType:          mediaType,
 			wantErr:           assert.NoError,
@@ -75,34 +88,25 @@ func TestGetResizedImage(t *testing.T) {
 			wantWarmUpTouched: true,
 		},
 		{
-			name: "it should get the miniature image from the cache and return a smaller one",
-			args: args{owner, mediaId, 180, 0},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				cache.Content["miniatures"+cacheIdSuffix] = []byte("pre-cached-mini")
-				cache.MediaType["miniatures"+cacheIdSuffix] = mediaType
-			},
+			name:        "it should get the miniature image from the cache and return a smaller one",
+			fields:      fields{repository: happyRepository(), store: happyStore(), cache: seededCacheAt("miniatures"+cacheIdSuffix, []byte("pre-cached-mini"))},
+			args:        args{owner, mediaId, 180, 0},
 			wantContent: resizedAt(180),
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
 		},
 		{
-			name: "it should use the appropriate cached width and resize after",
-			args: args{owner, mediaId, 1024, 0},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				cache.Content["w=1440"+cacheIdSuffix] = []byte("pre-cached-1440")
-				cache.MediaType["w=1440"+cacheIdSuffix] = mediaType
-			},
+			name:        "it should use the appropriate cached width and resize after",
+			fields:      fields{repository: happyRepository(), store: happyStore(), cache: seededCacheAt("w=1440"+cacheIdSuffix, []byte("pre-cached-1440"))},
+			args:        args{owner, mediaId, 1024, 0},
 			wantContent: resizedAt(1024),
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
 		},
 		{
-			name: "it should return an overflow error when the image is too big after having storing it",
-			args: args{owner, mediaId, archive.MediumQualityCachedWidth, 8},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				_ = repository.AddLocation(owner, mediaId, storeKey)
-				store.Content[storeKey] = fullContent
-			},
+			name:        "it should return an overflow error when the image is too big after having storing it",
+			fields:      fields{repository: happyRepository(), store: happyStore(), cache: NewCacheInMemory()},
+			args:        args{owner, mediaId, archive.MediumQualityCachedWidth, 8},
 			wantContent: nil,
 			wantType:    mediaType,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -114,12 +118,18 @@ func TestGetResizedImage(t *testing.T) {
 		},
 		{
 			name: "it should return an overflow error when the cached image is too big",
-			args: args{owner, mediaId, archive.MediumQualityCachedWidth, 41},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				key := fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix)
-				cache.Content[key] = make([]byte, 42)
-				cache.MediaType[key] = mediaType
+			fields: fields{
+				repository: happyRepository(),
+				store:      happyStore(),
+				cache: func() *CacheInMemory {
+					key := fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix)
+					c := NewCacheInMemory()
+					c.Content[key] = make([]byte, 42)
+					c.MediaType[key] = mediaType
+					return c
+				}(),
 			},
+			args:        args{owner, mediaId, archive.MediumQualityCachedWidth, 41},
 			wantContent: nil,
 			wantType:    mediaType,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -127,12 +137,9 @@ func TestGetResizedImage(t *testing.T) {
 			},
 		},
 		{
-			name: "it should return an overflow error when the resized image is too big",
-			args: args{owner, mediaId, 1024, 8},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				cache.Content["w=1440"+cacheIdSuffix] = []byte("pre-cached-1440")
-				cache.MediaType["w=1440"+cacheIdSuffix] = mediaType
-			},
+			name:        "it should return an overflow error when the resized image is too big",
+			fields:      fields{repository: happyRepository(), store: happyStore(), cache: seededCacheAt("w=1440"+cacheIdSuffix, []byte("pre-cached-1440"))},
+			args:        args{owner, mediaId, 1024, 8},
 			wantContent: nil,
 			wantType:    mediaType,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -141,19 +148,25 @@ func TestGetResizedImage(t *testing.T) {
 		},
 		{
 			name: "it should return the resized image even if the cached version is too big",
-			args: args{owner, mediaId, 1024, 16},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {
-				cache.Content["w=1440"+cacheIdSuffix] = make([]byte, 40)
-				cache.MediaType["w=1440"+cacheIdSuffix] = mediaType
+			fields: fields{
+				repository: happyRepository(),
+				store:      happyStore(),
+				cache: func() *CacheInMemory {
+					c := NewCacheInMemory()
+					c.Content["w=1440"+cacheIdSuffix] = make([]byte, 40)
+					c.MediaType["w=1440"+cacheIdSuffix] = mediaType
+					return c
+				}(),
 			},
+			args:        args{owner, mediaId, 1024, 16},
 			wantContent: resizedAt(1024),
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
 		},
 		{
-			name: "it should return not found if the image is unknown",
-			args: args{owner, mediaId, 1440, 8},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {},
+			name:        "it should return not found if the image is unknown",
+			fields:      fields{repository: NewARepositoryInMemory(), store: NewStoreInMemory(), cache: NewCacheInMemory()},
+			args:        args{owner, mediaId, 1440, 8},
 			wantContent: nil,
 			wantType:    "",
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -161,9 +174,9 @@ func TestGetResizedImage(t *testing.T) {
 			},
 		},
 		{
-			name: "it should reject width request higher than max cached resolution",
-			args: args{owner, mediaId, 151000, 16},
-			seed: func(repository *ARepositoryInMemory, store *StoreInMemory, cache *CacheInMemory) {},
+			name:   "it should reject width request higher than max cached resolution",
+			fields: fields{repository: happyRepository(), store: happyStore(), cache: NewCacheInMemory()},
+			args:   args{owner, mediaId, 151000, 16},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.Error(t, err, i)
 			},
@@ -172,13 +185,9 @@ func TestGetResizedImage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := NewARepositoryInMemory()
-			store := NewStoreInMemory()
-			cache := NewCacheInMemory()
 			asyncJob := NewAsyncJobInMemory()
-			tt.seed(repository, store, cache)
 			archive.ResizerPort = NewResizerInMemory()
-			archive.Init(repository, store, cache, asyncJob)
+			archive.Init(tt.fields.repository, tt.fields.store, tt.fields.cache, asyncJob)
 			archive.CacheableWidths = []int{archive.MediumQualityCachedWidth, 1440, archive.MiniatureCachedWidth}
 
 			gotContent, gotMediaType, err := archive.GetResizedImage(tt.args.owner, tt.args.mediaId, tt.args.width, tt.args.maxBytes)
@@ -188,7 +197,7 @@ func TestGetResizedImage(t *testing.T) {
 			assert.Equal(t, tt.wantContent, gotContent)
 			assert.Equal(t, tt.wantType, gotMediaType)
 			if tt.wantCacheHasKey != "" {
-				assert.Equal(t, tt.wantCacheContent, cache.Content[tt.wantCacheHasKey], "cached content at %s", tt.wantCacheHasKey)
+				assert.Equal(t, tt.wantCacheContent, tt.fields.cache.Content[tt.wantCacheHasKey], "cached content at %s", tt.wantCacheHasKey)
 			}
 			if tt.wantWarmUpTouched {
 				assert.NotEmpty(t, asyncJob.WarmUpCalls)

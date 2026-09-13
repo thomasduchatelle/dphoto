@@ -32,78 +32,92 @@ func TestStore(t *testing.T) {
 		}
 	}
 
-	t.Run("it should store a media online with the right names", func(t *testing.T) {
-		repository := NewARepositoryInMemory()
-		store := NewStoreInMemory()
-		cache := NewCacheInMemory()
-		asyncJob := NewAsyncJobInMemory()
-		archive.ResizerPort = NewResizerInMemory()
-		archive.Init(repository, store, cache, asyncJob)
+	repositoryWithMedia := func(id, key string) *ARepositoryInMemory {
+		r := NewARepositoryInMemory()
+		_ = r.AddLocation(owner, id, key)
+		return r
+	}
 
-		got, err := archive.Store(baseRequest("media-1", "randomName.photo.JPG"))
+	type fields struct {
+		repository *ARepositoryInMemory
+		store      *StoreInMemory
+	}
+	type args struct {
+		request *archive.StoreRequest
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		want             string
+		wantErr          assert.ErrorAssertionFunc
+		wantStoredAtKey  string
+		wantNoUpload     bool
+		wantResizeQueued bool
+	}{
+		{
+			name:             "it should store a media online with the right names",
+			fields:           fields{repository: NewARepositoryInMemory(), store: NewStoreInMemory()},
+			args:             args{request: baseRequest("media-1", "randomName.photo.JPG")},
+			want:             "2022-06-26_15-48-42_qwertyui.jpg",
+			wantErr:          assert.NoError,
+			wantStoredAtKey:  owner + "/folder-1/2022-06-26_15-48-42_qwertyui.jpg",
+			wantResizeQueued: true,
+		},
+		{
+			name:         "it should not store anything if the media is already present",
+			fields:       fields{repository: repositoryWithMedia("media-1", owner+"/folder-1/previous_id.jpg"), store: NewStoreInMemory()},
+			args:         args{request: baseRequest("media-1", "randomName.photo.JPG")},
+			want:         "previous_id.jpg",
+			wantErr:      assert.NoError,
+			wantNoUpload: true,
+		},
+		{
+			name:            "it should store a media online without caching it if its extension is not supported",
+			fields:          fields{repository: NewARepositoryInMemory(), store: NewStoreInMemory()},
+			args:            args{request: baseRequest("video-1", "randomName.photo.Mpeg")},
+			want:            "2022-06-26_15-48-42_qwertyui.mpeg",
+			wantErr:         assert.NoError,
+			wantStoredAtKey: owner + "/folder-1/2022-06-26_15-48-42_qwertyui.mpeg",
+		},
+	}
 
-		expectedKey := owner + "/folder-1/2022-06-26_15-48-42_qwertyui.jpg"
-		if assert.NoError(t, err) {
-			assert.Equal(t, "2022-06-26_15-48-42_qwertyui.jpg", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			asyncJob := NewAsyncJobInMemory()
+			archive.ResizerPort = NewResizerInMemory()
+			archive.Init(tt.fields.repository, tt.fields.store, NewCacheInMemory(), asyncJob)
 
-			storedKey, err := repository.FindById(owner, "media-1")
-			if assert.NoError(t, err) {
-				assert.Equal(t, expectedKey, storedKey)
+			got, err := archive.Store(tt.args.request)
+			if !tt.wantErr(t, err) {
+				return
 			}
-			assert.True(t, store.Has(expectedKey))
+			assert.Equal(t, tt.want, got)
 
-			if assert.Len(t, asyncJob.LoadedImages, 1) && assert.Len(t, asyncJob.LoadedImages[0], 1) {
-				loaded := asyncJob.LoadedImages[0][0]
-				assert.Equal(t, owner, loaded.Owner)
-				assert.Equal(t, "media-1", loaded.MediaId)
-				assert.Equal(t, archive.CacheableWidths, loaded.Widths)
-				assert.NotNil(t, loaded.Open)
+			if tt.wantStoredAtKey != "" {
+				storedKey, findErr := tt.fields.repository.FindById(owner, tt.args.request.Id)
+				if assert.NoError(t, findErr) {
+					assert.Equal(t, tt.wantStoredAtKey, storedKey)
+				}
+				assert.True(t, tt.fields.store.Has(tt.wantStoredAtKey))
 			}
-		}
-	})
-
-	t.Run("it should not store anything if the media is already present", func(t *testing.T) {
-		repository := NewARepositoryInMemory()
-		store := NewStoreInMemory()
-		cache := NewCacheInMemory()
-		asyncJob := NewAsyncJobInMemory()
-		archive.ResizerPort = NewResizerInMemory()
-		archive.Init(repository, store, cache, asyncJob)
-
-		existingKey := owner + "/folder-1/previous_id.jpg"
-		_ = repository.AddLocation(owner, "media-1", existingKey)
-
-		got, err := archive.Store(baseRequest("media-1", "randomName.photo.JPG"))
-
-		if assert.NoError(t, err) {
-			assert.Equal(t, "previous_id.jpg", got)
-			assert.False(t, store.Has(existingKey), "no upload should have happened")
-			assert.Empty(t, asyncJob.LoadedImages)
-		}
-	})
-
-	t.Run("it should store a media online without caching it if its extension is not supported", func(t *testing.T) {
-		repository := NewARepositoryInMemory()
-		store := NewStoreInMemory()
-		cache := NewCacheInMemory()
-		asyncJob := NewAsyncJobInMemory()
-		archive.ResizerPort = NewResizerInMemory()
-		archive.Init(repository, store, cache, asyncJob)
-
-		got, err := archive.Store(baseRequest("video-1", "randomName.photo.Mpeg"))
-
-		expectedKey := owner + "/folder-1/2022-06-26_15-48-42_qwertyui.mpeg"
-		if assert.NoError(t, err) {
-			assert.Equal(t, "2022-06-26_15-48-42_qwertyui.mpeg", got)
-
-			storedKey, err := repository.FindById(owner, "video-1")
-			if assert.NoError(t, err) {
-				assert.Equal(t, expectedKey, storedKey)
+			if tt.wantNoUpload {
+				assert.Empty(t, tt.fields.store.Content, "no upload should have happened")
+				assert.Empty(t, asyncJob.LoadedImages)
 			}
-			assert.True(t, store.Has(expectedKey))
-			assert.Empty(t, asyncJob.LoadedImages, "unsupported extensions must not queue a resize")
-		}
-	})
+			if tt.wantResizeQueued {
+				if assert.Len(t, asyncJob.LoadedImages, 1) && assert.Len(t, asyncJob.LoadedImages[0], 1) {
+					loaded := asyncJob.LoadedImages[0][0]
+					assert.Equal(t, owner, loaded.Owner)
+					assert.Equal(t, tt.args.request.Id, loaded.MediaId)
+					assert.Equal(t, archive.CacheableWidths, loaded.Widths)
+					assert.NotNil(t, loaded.Open)
+				}
+			} else {
+				assert.Empty(t, asyncJob.LoadedImages, "unsupported extensions must not queue a resize")
+			}
+		})
+	}
 
 	// E2 — data-loss safety: no orphaned index entry when upload fails.
 	// Uses testify/mock inline because a Fake cannot inject an Upload failure.

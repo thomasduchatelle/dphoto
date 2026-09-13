@@ -20,81 +20,101 @@ func TestRelocate(t *testing.T) {
 		id     string
 		newKey string
 	}
+	buildFakes := func(entries ...indexEntry) (*ARepositoryInMemory, *StoreInMemory) {
+		repository := NewARepositoryInMemory()
+		store := NewStoreInMemory()
+		for _, entry := range entries {
+			_ = repository.AddLocation(owner, entry.id, entry.location)
+			store.Content[entry.location] = []byte("content-" + entry.id)
+		}
+		return repository, store
+	}
+
+	type fields struct {
+		repository *ARepositoryInMemory
+		store      *StoreInMemory
+	}
+	type args struct {
+		owner        string
+		ids          []string
+		targetFolder string
+	}
 	tests := []struct {
 		name              string
-		ids               []string
-		targetFolder      string
-		seed              []indexEntry
+		fields            fields
+		args              args
 		wantRelocated     []relocated
 		wantOldGone       []string
 		wantUnchangedKeep []string
 	}{
 		{
-			name:         "it should relocate an image from both physical store and index",
-			ids:          []string{"id-01"},
-			targetFolder: "/newFolder",
-			seed: []indexEntry{
-				{"id-01", owner + "/deep/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"},
-			},
+			name: "it should relocate an image from both physical store and index",
+			fields: func() fields {
+				r, s := buildFakes(indexEntry{"id-01", owner + "/deep/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"})
+				return fields{repository: r, store: s}
+			}(),
+			args: args{owner: owner, ids: []string{"id-01"}, targetFolder: "/newFolder"},
 			wantRelocated: []relocated{
 				{"id-01", owner + "/newFolder/2022-06-19_15-02-10_16c6dfa0.jpg"},
 			},
 			wantOldGone: []string{owner + "/deep/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"},
 		},
 		{
-			name:         "it should not do anything if the image belongs to someone else",
-			ids:          []string{"id-01"},
-			targetFolder: "/newFolder",
-			seed: []indexEntry{
-				{"id-01", "captainamerica@avenger.marvel/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"},
-			},
+			name: "it should not do anything if the image belongs to someone else",
+			fields: func() fields {
+				r, s := buildFakes(indexEntry{"id-01", "captainamerica@avenger.marvel/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"})
+				return fields{repository: r, store: s}
+			}(),
+			args:              args{owner: owner, ids: []string{"id-01"}, targetFolder: "/newFolder"},
 			wantUnchangedKeep: []string{"captainamerica@avenger.marvel/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"},
 		},
 		{
-			name:         "it should ignore extra responses from GetLocation and ignore (log) unknown media ids",
-			ids:          []string{"id-01", "id-02"},
-			targetFolder: "/newFolder",
-			seed: []indexEntry{
-				{"id-01", owner + "/01.jpg"},
-			},
+			name: "it should ignore extra responses from GetLocation and ignore (log) unknown media ids",
+			fields: func() fields {
+				r, s := buildFakes(indexEntry{"id-01", owner + "/01.jpg"})
+				return fields{repository: r, store: s}
+			}(),
+			args: args{owner: owner, ids: []string{"id-01", "id-02"}, targetFolder: "/newFolder"},
 			wantRelocated: []relocated{
 				{"id-01", owner + "/newFolder/01.jpg"},
 			},
 			wantOldGone: []string{owner + "/01.jpg"},
 		},
 		{
-			name:         "it should clean the location from any suffix",
-			ids:          []string{"id-01"},
-			targetFolder: "/newFolder",
-			seed: []indexEntry{
-				{"id-01", owner + "/oldFolder1/2022-06-19_15-02-10_16c6dfa0_something_might_have_had_been_added_to_make_it_unique.jpg"},
-			},
+			name: "it should clean the location from any suffix",
+			fields: func() fields {
+				r, s := buildFakes(indexEntry{"id-01", owner + "/oldFolder1/2022-06-19_15-02-10_16c6dfa0_something_might_have_had_been_added_to_make_it_unique.jpg"})
+				return fields{repository: r, store: s}
+			}(),
+			args: args{owner: owner, ids: []string{"id-01"}, targetFolder: "/newFolder"},
 			wantRelocated: []relocated{
 				{"id-01", owner + "/newFolder/2022-06-19_15-02-10_16c6dfa0.jpg"},
 			},
 			wantOldGone: []string{owner + "/oldFolder1/2022-06-19_15-02-10_16c6dfa0_something_might_have_had_been_added_to_make_it_unique.jpg"},
 		},
 		{
-			name:         "it should support files now following a proper format",
-			ids:          []string{"id-01"},
-			targetFolder: "/newFolder",
-			seed: []indexEntry{
-				{"id-01", owner + "//this/is/a_really-strange^format"},
-			},
+			name: "it should support files now following a proper format",
+			fields: func() fields {
+				r, s := buildFakes(indexEntry{"id-01", owner + "//this/is/a_really-strange^format"})
+				return fields{repository: r, store: s}
+			}(),
+			args: args{owner: owner, ids: []string{"id-01"}, targetFolder: "/newFolder"},
 			wantRelocated: []relocated{
 				{"id-01", owner + "/newFolder/a_really-strange^format"},
 			},
 			wantOldGone: []string{owner + "//this/is/a_really-strange^format"},
 		},
 		{
-			name:         "it should batch finding, indexing, and s3 deletion operations",
-			ids:          []string{"id-01", "id-02", "id-03"},
-			targetFolder: "/newFolder",
-			seed: []indexEntry{
-				{"id-01", owner + "/01.jpg"},
-				{"id-02", owner + "/02.jpg"},
-				{"id-03", owner + "/03.jpg"},
-			},
+			name: "it should batch finding, indexing, and s3 deletion operations",
+			fields: func() fields {
+				r, s := buildFakes(
+					indexEntry{"id-01", owner + "/01.jpg"},
+					indexEntry{"id-02", owner + "/02.jpg"},
+					indexEntry{"id-03", owner + "/03.jpg"},
+				)
+				return fields{repository: r, store: s}
+			}(),
+			args: args{owner: owner, ids: []string{"id-01", "id-02", "id-03"}, targetFolder: "/newFolder"},
 			wantRelocated: []relocated{
 				{"id-01", owner + "/newFolder/01.jpg"},
 				{"id-02", owner + "/newFolder/02.jpg"},
@@ -106,29 +126,23 @@ func TestRelocate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := NewARepositoryInMemory()
-			store := NewStoreInMemory()
-			for _, entry := range tt.seed {
-				_ = repository.AddLocation(owner, entry.id, entry.location)
-				store.Content[entry.location] = []byte("content-" + entry.id)
-			}
-			archive.Init(repository, store, NewCacheInMemory(), NewAsyncJobInMemory())
+			archive.Init(tt.fields.repository, tt.fields.store, NewCacheInMemory(), NewAsyncJobInMemory())
 
-			err := archive.Relocate(owner, tt.ids, tt.targetFolder)
+			err := archive.Relocate(tt.args.owner, tt.args.ids, tt.args.targetFolder)
 
 			if assert.NoError(t, err) {
 				for _, r := range tt.wantRelocated {
-					got, findErr := repository.FindById(owner, r.id)
+					got, findErr := tt.fields.repository.FindById(tt.args.owner, r.id)
 					if assert.NoError(t, findErr) {
 						assert.Equal(t, r.newKey, got, "index should point to new key for %s", r.id)
 					}
-					assert.True(t, store.Has(r.newKey), "content should exist at new key %s", r.newKey)
+					assert.True(t, tt.fields.store.Has(r.newKey), "content should exist at new key %s", r.newKey)
 				}
 				for _, oldKey := range tt.wantOldGone {
-					assert.False(t, store.Has(oldKey), "content at old key %s should have been deleted", oldKey)
+					assert.False(t, tt.fields.store.Has(oldKey), "content at old key %s should have been deleted", oldKey)
 				}
 				for _, key := range tt.wantUnchangedKeep {
-					assert.True(t, store.Has(key), "content at %s should remain untouched", key)
+					assert.True(t, tt.fields.store.Has(key), "content at %s should remain untouched", key)
 				}
 			}
 		})
