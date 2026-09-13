@@ -3,17 +3,17 @@ package catalog_test
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"testing"
-	"time"
 )
 
-func TestNewRenameAlbumAcceptance(t *testing.T) {
+func TestNewRenameAlbumAcceptance_HappyPath(t *testing.T) {
 	const owner = "ironman"
 	may24 := time.Date(2024, time.May, 1, 0, 0, 0, 0, time.UTC)
 	jun24 := time.Date(2024, time.June, 1, 0, 0, 0, 0, time.UTC)
@@ -43,120 +43,105 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 		},
 	}
 
-	testError := errors.Errorf("TEST error throwing")
+	repository := NewAlbumRepositoryInMemory(existingAlbum)
+	transfer := &MediaTransferInMemory{TransferredMedias: transferredMedias}
+	observer := &TimelineMutationObserverInMemory{}
 
-	type fields struct {
-		FindAlbumById             func(t *testing.T) catalog.FindAlbumByIdPort
-		UpdateAlbumName           func(t *testing.T) catalog.UpdateAlbumNamePort
-		InsertAlbumPort           func(t *testing.T) catalog.InsertAlbumPort
-		DeleteAlbumRepositoryPort func(t *testing.T) catalog.DeleteAlbumRepositoryPort
-		TransferMedias            func(t *testing.T) catalog.TransferMediasRepositoryPort
-		FindAlbumsByOwner         func(t *testing.T) catalog.FindAlbumsByOwnerPort
-		TimelineMutationObservers func(t *testing.T) catalog.TimelineMutationObserver
+	renameAlbum := catalog.NewRenameAlbum(
+		repository,
+		repository,
+		repository,
+		repository,
+		transfer,
+		repository,
+		observer,
+	)
+
+	err := renameAlbum.RenameAlbum(context.Background(), catalog.RenameAlbumRequest{
+		CurrentId:        existingAlbum.AlbumId,
+		NewName:          newName,
+		RenameFolder:     true,
+		ForcedFolderName: "",
+	})
+	if !assert.NoError(t, err) {
+		return
 	}
-	type args struct {
-		request catalog.RenameAlbumRequest
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "it should create a new album end to end",
-			fields: fields{
-				FindAlbumById:             stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName:           expectUpdateAlbumNameNotCalled(),
-				InsertAlbumPort:           expectAlbumInserted(newAlbum),
-				DeleteAlbumRepositoryPort: expectDeleteAlbumRepositoryPortCalled(existingAlbum.AlbumId),
-				FindAlbumsByOwner: func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-					return make(FindAlbumsByOwnerFake)
-				},
-				TransferMedias: expectTransferMediasRepositoryPortCalled(catalog.MediaTransferRecords{
-					newAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
-							Start:      existingAlbum.Start,
-							End:        existingAlbum.End,
-						},
-					},
-				}, transferredMedias),
-				TimelineMutationObservers: expectTimelineMutationObserverCalled(catalog.TransferredMedias{
-					Transfers:  transferredMedias.Transfers,
-					FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
-				}),
-			},
-			args: args{
-				request: catalog.RenameAlbumRequest{
-					CurrentId:        catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/avenger")},
-					NewName:          "Avenger 1",
-					RenameFolder:     true,
-					ForcedFolderName: "",
-				},
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should interrupt the transfer if the album insertion fails",
-			fields: fields{
-				FindAlbumById:             stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName:           expectUpdateAlbumNameNotCalled(),
-				InsertAlbumPort:           stubInsertAlbumPortWithError(testError),
-				DeleteAlbumRepositoryPort: expectDeleteAlbumRepositoryPortNotCalled(),
-				TransferMedias:            expectTransferMediasPortNotCalled(),
-				FindAlbumsByOwner: func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-					return make(FindAlbumsByOwnerFake)
-				},
-				TimelineMutationObservers: expectTimelineMutationObserverNotCalled(),
-			},
-			args: args{
-				request: catalog.RenameAlbumRequest{
-					CurrentId:        catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/avenger")},
-					NewName:          "Avenger 1",
-					RenameFolder:     true,
-					ForcedFolderName: "",
-				},
-			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, testError)
+
+	assert.Equal(t, &newAlbum, repository.Albums[newAlbum.AlbumId], "new album is inserted")
+	_, oldStillExists := repository.Albums[existingAlbum.AlbumId]
+	assert.False(t, oldStillExists, "old album is removed from the repository")
+	assert.Equal(t, []catalog.MediaTransferRecords{{
+		newAlbum.AlbumId: {
+			{
+				FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
+				Start:      existingAlbum.Start,
+				End:        existingAlbum.End,
 			},
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			renameAlbum := catalog.NewRenameAlbum(
-				tt.fields.FindAlbumById(t),
-				tt.fields.UpdateAlbumName(t),
-				tt.fields.InsertAlbumPort(t),
-				tt.fields.DeleteAlbumRepositoryPort(t),
-				tt.fields.TransferMedias(t),
-				tt.fields.FindAlbumsByOwner(t),
-				tt.fields.TimelineMutationObservers(t),
-			)
-
-			err := renameAlbum.RenameAlbum(context.Background(), tt.args.request)
-			tt.wantErr(t, err, fmt.Sprintf("RenameAlbum(%v)", tt.args.request))
-		})
-	}
+	}}, transfer.TransferRecords, "medias are transferred from the old album to the new album")
+	assert.Equal(t, []catalog.TransferredMedias{{
+		Transfers:  transferredMedias.Transfers,
+		FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
+	}}, observer.Notifications, "timeline mutation observer is notified")
 }
 
-func expectTransferMediasPortNotCalled() func(t *testing.T) catalog.TransferMediasRepositoryPort {
-	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
-		return catalog.TransferMediasFunc(func(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
-			assert.Failf(t, "TransferMediasRepository should not be called", "TransferMediasFunc(%v, %v)", ctx, records)
-			return catalog.NewTransferredMedias(), nil
-		})
-	}
-}
+// E6: failure-injection test kept with inline testify/mock — rollback semantics ensuring the
+// old album is not deleted and no medias are transferred when insertion of the new album fails.
+func TestNewRenameAlbumAcceptance_shouldInterruptTransferIfAlbumInsertionFails(t *testing.T) {
+	const owner = "ironman"
+	may24 := time.Date(2024, time.May, 1, 0, 0, 0, 0, time.UTC)
+	jun24 := time.Date(2024, time.June, 1, 0, 0, 0, 0, time.UTC)
+	newName := "Avenger 1"
 
-func expectMediaTransferNotCalled() func(t *testing.T) catalog.MediaTransfer {
-	return func(t *testing.T) catalog.MediaTransfer {
-		return catalog.MediaTransferFunc(func(ctx context.Context, records catalog.MediaTransferRecords) error {
-			assert.Failf(t, "MediaTransfer should not be called", "MediaTransfer(%v, %v)", ctx, records)
-			return nil
-		})
+	existingAlbum := &catalog.Album{
+		AlbumId: catalog.AlbumId{
+			Owner:      ownermodel.Owner(owner),
+			FolderName: catalog.NewFolderName("/avenger"),
+		},
+		Name:  "Avenger",
+		Start: may24,
+		End:   jun24,
 	}
+	newAlbum := catalog.Album{
+		AlbumId: catalog.AlbumId{
+			Owner:      ownermodel.Owner(owner),
+			FolderName: catalog.NewFolderName("/2024-05_Avenger_1"),
+		},
+		Name:  newName,
+		Start: may24,
+		End:   jun24,
+	}
+
+	testError := errors.New("TEST error inserting album")
+
+	repository := NewAlbumRepositoryInMemory(existingAlbum)
+	insertAlbumPort := new(insertAlbumPortMock)
+	insertAlbumPort.On("InsertAlbum", mock.Anything, newAlbum).Return(testError).Once()
+	defer insertAlbumPort.AssertExpectations(t)
+
+	transfer := &MediaTransferInMemory{}
+	observer := &TimelineMutationObserverInMemory{}
+
+	renameAlbum := catalog.NewRenameAlbum(
+		repository,
+		repository,
+		insertAlbumPort,
+		repository,
+		transfer,
+		repository,
+		observer,
+	)
+
+	err := renameAlbum.RenameAlbum(context.Background(), catalog.RenameAlbumRequest{
+		CurrentId:        existingAlbum.AlbumId,
+		NewName:          newName,
+		RenameFolder:     true,
+		ForcedFolderName: "",
+	})
+	assert.ErrorIs(t, err, testError)
+	assert.Contains(t, repository.Albums, existingAlbum.AlbumId, "old album should still exist (not deleted)")
+	assert.Empty(t, transfer.TransferRecords, "no medias should have been transferred")
+	assert.Empty(t, observer.Notifications, "no timeline mutation observer should have been notified")
 }
 
 func TestRenameAlbum_RenameAlbum(t *testing.T) {
@@ -175,27 +160,21 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 	}
 	newName := "Avenger 1"
 
-	type fields struct {
-		FindAlbumById       func(t *testing.T) catalog.FindAlbumByIdPort
-		UpdateAlbumName     func(t *testing.T) catalog.UpdateAlbumNamePort
-		RenameAlbumObserver func(t *testing.T) catalog.RenameAlbumObserver
-	}
 	type args struct {
 		request catalog.RenameAlbumRequest
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name                 string
+		albums               []*catalog.Album
+		args                 args
+		wantAlbumName        string // expected name of existingAlbum after the call (only meaningful when it should still exist and be renamed in-place)
+		wantRenamedFrom      []catalog.AlbumId
+		wantCreationRequests []catalog.CreateAlbumRequest
+		wantErr              assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should get an error if the new name is empty",
-			fields: fields{
-				FindAlbumById:       stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName:     expectUpdateAlbumNameNotCalled(),
-				RenameAlbumObserver: expectRenameAlbumObserverNotCalled(),
-			},
+			name:   "it should get an error if the new name is empty",
+			albums: []*catalog.Album{existingAlbum},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -204,17 +183,14 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
+			wantAlbumName: existingAlbum.Name,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNameMandatoryErr)
 			},
 		},
 		{
-			name: "it should get an error if the album doesn't exists",
-			fields: fields{
-				FindAlbumById:       stubFindAlbumByIdWith(&catalog.Album{}),
-				UpdateAlbumName:     expectUpdateAlbumNameNotCalled(),
-				RenameAlbumObserver: expectRenameAlbumObserverNotCalled(),
-			},
+			name:   "it should get an error if the album doesn't exists",
+			albums: nil,
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -228,12 +204,8 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 			},
 		},
 		{
-			name: "it should update the name if the album is found and folder name is unchanged",
-			fields: fields{
-				FindAlbumById:       stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName:     expectUpdateAlbumNameCalledWith(existingAlbum.AlbumId, newName),
-				RenameAlbumObserver: expectRenameAlbumObserverNotCalled(),
-			},
+			name:   "it should update the name if the album is found and folder name is unchanged",
+			albums: []*catalog.Album{existingAlbum},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -242,21 +214,12 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
-			wantErr: assert.NoError,
+			wantAlbumName: newName,
+			wantErr:       assert.NoError,
 		},
 		{
-			name: "it should create a new album if the album is found and folder name is changed",
-			fields: fields{
-				FindAlbumById:   stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName: expectUpdateAlbumNameNotCalled(),
-				RenameAlbumObserver: expectRenameAlbumObserverCalledWith(existingAlbum.AlbumId, catalog.CreateAlbumRequest{
-					Owner:            owner,
-					Name:             newName,
-					Start:            may24,
-					End:              jun24,
-					ForcedFolderName: "",
-				}),
-			},
+			name:   "it should create a new album if the album is found and folder name is changed",
+			albums: []*catalog.Album{existingAlbum},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -265,21 +228,20 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
+			wantAlbumName:   existingAlbum.Name,
+			wantRenamedFrom: []catalog.AlbumId{existingAlbum.AlbumId},
+			wantCreationRequests: []catalog.CreateAlbumRequest{{
+				Owner:            owner,
+				Name:             newName,
+				Start:            may24,
+				End:              jun24,
+				ForcedFolderName: "",
+			}},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should create a new album if the album is found and folder name is forced to a certain value",
-			fields: fields{
-				FindAlbumById:   stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName: expectUpdateAlbumNameNotCalled(),
-				RenameAlbumObserver: expectRenameAlbumObserverCalledWith(existingAlbum.AlbumId, catalog.CreateAlbumRequest{
-					Owner:            owner,
-					Name:             newName,
-					Start:            may24,
-					End:              jun24,
-					ForcedFolderName: "Avengers vs Loki",
-				}),
-			},
+			name:   "it should create a new album if the album is found and folder name is forced to a certain value",
+			albums: []*catalog.Album{existingAlbum},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -288,72 +250,44 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "Avengers vs Loki",
 				},
 			},
+			wantAlbumName:   existingAlbum.Name,
+			wantRenamedFrom: []catalog.AlbumId{existingAlbum.AlbumId},
+			wantCreationRequests: []catalog.CreateAlbumRequest{{
+				Owner:            owner,
+				Name:             newName,
+				Start:            may24,
+				End:              jun24,
+				ForcedFolderName: "Avengers vs Loki",
+			}},
 			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			albumsCopy := make([]*catalog.Album, len(tt.albums))
+			for i, a := range tt.albums {
+				copy := *a
+				albumsCopy[i] = &copy
+			}
+			repository := NewAlbumRepositoryInMemory(albumsCopy...)
+			observer := &RenameAlbumObserverInMemory{}
+
 			r := &catalog.RenameAlbum{
-				FindAlbumById:        tt.fields.FindAlbumById(t),
-				UpdateAlbumName:      tt.fields.UpdateAlbumName(t),
-				RenameAlbumObservers: []catalog.RenameAlbumObserver{tt.fields.RenameAlbumObserver(t)},
+				FindAlbumById:        repository,
+				UpdateAlbumName:      repository,
+				RenameAlbumObservers: []catalog.RenameAlbumObserver{observer},
 			}
-			tt.wantErr(t, r.RenameAlbum(context.Background(), tt.args.request), fmt.Sprintf("RenameAlbum(%v)", tt.args.request))
-		})
-	}
-}
-
-func expectRenameAlbumObserverNotCalled() func(t *testing.T) catalog.RenameAlbumObserver {
-	return func(t *testing.T) catalog.RenameAlbumObserver {
-		return mocks.NewRenameAlbumObserver(t)
-	}
-}
-
-func expectRenameAlbumObserverCalledWith(currentId catalog.AlbumId, request catalog.CreateAlbumRequest) func(t *testing.T) catalog.RenameAlbumObserver {
-	return func(t *testing.T) catalog.RenameAlbumObserver {
-		observer := mocks.NewRenameAlbumObserver(t)
-		observer.EXPECT().OnRenameAlbum(mock.Anything, currentId, request).Return(nil).Once()
-		return observer
-	}
-}
-
-func expectUpdateAlbumNameCalledWith(albumId catalog.AlbumId, newName string) func(t *testing.T) catalog.UpdateAlbumNamePort {
-	return func(t *testing.T) catalog.UpdateAlbumNamePort {
-		port := mocks.NewUpdateAlbumNamePort(t)
-		port.EXPECT().UpdateAlbumName(mock.Anything, albumId, newName).Return(nil).Once()
-		return port
-	}
-}
-
-func expectUpdateAlbumNameNotCalled() func(t *testing.T) catalog.UpdateAlbumNamePort {
-	return func(t *testing.T) catalog.UpdateAlbumNamePort {
-		return mocks.NewUpdateAlbumNamePort(t)
-	}
-}
-
-func stubFindAlbumByIdWith(existingAlbum *catalog.Album) func(t *testing.T) catalog.FindAlbumByIdPort {
-	return func(t *testing.T) catalog.FindAlbumByIdPort {
-		return catalog.FindAlbumByIdFunc(func(ctx context.Context, id catalog.AlbumId) (*catalog.Album, error) {
-			if existingAlbum.AlbumId.IsEqual(id) {
-				return existingAlbum, nil
+			err := r.RenameAlbum(context.Background(), tt.args.request)
+			if !tt.wantErr(t, err, fmt.Sprintf("RenameAlbum(%v)", tt.args.request)) {
+				return
 			}
-			return nil, catalog.AlbumNotFoundErr
-		})
-	}
-}
 
-func expectDeleteAlbumRepositoryPortCalled(id catalog.AlbumId) func(t *testing.T) catalog.DeleteAlbumRepositoryPort {
-	return func(t *testing.T) catalog.DeleteAlbumRepositoryPort {
-		port := mocks.NewDeleteAlbumRepositoryPort(t)
-		port.EXPECT().DeleteAlbum(mock.Anything, id).Return(nil).Once()
-		return port
-	}
-}
-func expectDeleteAlbumRepositoryPortNotCalled() func(t *testing.T) catalog.DeleteAlbumRepositoryPort {
-	return func(t *testing.T) catalog.DeleteAlbumRepositoryPort {
-		return catalog.DeleteAlbumRepositoryFunc(func(ctx context.Context, id catalog.AlbumId) error {
-			t.Error("DeleteAlbumRepositoryPort should not be called")
-			return nil
+			assert.Equal(t, tt.wantRenamedFrom, observer.RenamedFrom, "renamed-from observer records")
+			assert.Equal(t, tt.wantCreationRequests, observer.CreationRequests, "creation-request observer records")
+
+			if len(tt.albums) > 0 && tt.wantAlbumName != "" {
+				assert.Equal(t, tt.wantAlbumName, repository.Albums[existingAlbum.AlbumId].Name, "album name in the repository")
+			}
 		})
 	}
 }

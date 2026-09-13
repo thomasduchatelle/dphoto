@@ -3,17 +3,17 @@ package catalog_test
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"testing"
-	"time"
 )
 
-func TestNewAlbumCreateAcceptance(t *testing.T) {
+func TestNewAlbumCreateAcceptance_HappyPath(t *testing.T) {
 	const owner = "tonystark"
 	createAlbum := catalog.Album{
 		AlbumId: catalog.AlbumId{
@@ -30,7 +30,6 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 		Start: createAlbum.Start,
 		End:   createAlbum.End,
 	}
-
 	lifetimeAlbum := &catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      owner,
@@ -45,84 +44,135 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 			createAlbum.AlbumId: {"media-1", "media-2"},
 		},
 	}
-	testErrorInsertingAlbum := errors.Errorf("TEST error insering album")
+
+	repository := NewAlbumRepositoryInMemory(lifetimeAlbum)
+	transfer := &MediaTransferInMemory{TransferredMedias: transferredMedias}
+	observer := &TimelineMutationObserverInMemory{}
+
+	albumCreate := catalog.NewAlbumCreate(repository, repository, transfer, observer)
+
+	_, err := albumCreate.Create(context.Background(), standardRequest)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	assert.Equal(t, &createAlbum, repository.Albums[createAlbum.AlbumId], "album is inserted")
+	assert.Equal(t, []catalog.MediaTransferRecords{{
+		createAlbum.AlbumId: {
+			{
+				FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+				Start:      createAlbum.Start,
+				End:        createAlbum.End,
+			},
+		},
+	}}, transfer.TransferRecords, "medias are transferred from the lifetime album")
+	assert.Equal(t, []catalog.TransferredMedias{{
+		Transfers:  transferredMedias.Transfers,
+		FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+	}}, observer.Notifications, "timeline mutation observer is notified")
+}
+
+// E3: failure-injection test kept with inline testify/mock — event-ordering guarantee that no
+// transfer/timeline events are emitted when the album insert fails.
+func TestNewAlbumCreateAcceptance_shouldNotCallTransferObserverIfAlbumInsertFails(t *testing.T) {
+	const owner = "tonystark"
+	createAlbum := catalog.Album{
+		AlbumId: catalog.AlbumId{
+			Owner:      owner,
+			FolderName: catalog.FolderName("/2024-04_Ironman_1"),
+		},
+		Name:  "Ironman 1",
+		Start: time.Date(2024, 04, 28, 8, 33, 42, 0, time.UTC),
+		End:   time.Date(2024, 05, 1, 0, 0, 0, 0, time.UTC),
+	}
+	standardRequest := catalog.CreateAlbumRequest{
+		Owner: owner,
+		Name:  createAlbum.Name,
+		Start: createAlbum.Start,
+		End:   createAlbum.End,
+	}
+	lifetimeAlbum := &catalog.Album{
+		AlbumId: catalog.AlbumId{
+			Owner:      owner,
+			FolderName: catalog.NewFolderName("/lifetime"),
+		},
+		Name:  "lifetime",
+		Start: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+		End:   time.Date(2200, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+	testErrorInsertingAlbum := errors.New("TEST error inserting album")
+
+	repository := NewAlbumRepositoryInMemory(lifetimeAlbum)
+	insertAlbumPort := new(insertAlbumPortMock)
+	insertAlbumPort.On("InsertAlbum", mock.Anything, createAlbum).Return(testErrorInsertingAlbum).Once()
+	defer insertAlbumPort.AssertExpectations(t)
+
+	transfer := &MediaTransferInMemory{}
+	observer := &TimelineMutationObserverInMemory{}
+
+	albumCreate := catalog.NewAlbumCreate(repository, insertAlbumPort, transfer, observer)
+
+	_, err := albumCreate.Create(context.Background(), standardRequest)
+	assert.ErrorIs(t, err, testErrorInsertingAlbum)
+	assert.Empty(t, transfer.TransferRecords, "no media transfer should have been attempted")
+	assert.Empty(t, observer.Notifications, "no timeline mutation observer should have been notified")
+}
+
+// E4: failure-injection test kept with inline testify/mock — ordering guarantee that the
+// existing albums are listed before the new album is inserted.
+func TestNewAlbumCreateAcceptance_shouldListExistingAlbumsBeforeCreatingTheNewOne(t *testing.T) {
+	const owner = "tonystark"
+	createAlbum := catalog.Album{
+		AlbumId: catalog.AlbumId{
+			Owner:      owner,
+			FolderName: catalog.FolderName("/2024-04_Ironman_1"),
+		},
+		Name:  "Ironman 1",
+		Start: time.Date(2024, 04, 28, 8, 33, 42, 0, time.UTC),
+		End:   time.Date(2024, 05, 1, 0, 0, 0, 0, time.UTC),
+	}
+	standardRequest := catalog.CreateAlbumRequest{
+		Owner: owner,
+		Name:  createAlbum.Name,
+		Start: createAlbum.Start,
+		End:   createAlbum.End,
+	}
 	testErrorFindingAlbums := errors.New("TEST error finding albums")
 
-	type fields struct {
-		FindAlbumsByOwnerPort    func(t *testing.T) catalog.FindAlbumsByOwnerPort
-		InsertAlbumPort          func(t *testing.T) catalog.InsertAlbumPort
-		TransferMediasPort       func(t *testing.T) catalog.TransferMediasRepositoryPort
-		TimelineMutationObserver func(t *testing.T) catalog.TimelineMutationObserver
-	}
-	type args struct {
-		request catalog.CreateAlbumRequest
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "it should create a happy path full album create process",
-			fields: fields{
-				FindAlbumsByOwnerPort: stubFindAlbumsByOwnerWith(owner, lifetimeAlbum),
-				InsertAlbumPort:       expectAlbumInserted(createAlbum),
-				TransferMediasPort:    stubTransferMediaPort(transferredMedias),
-				TimelineMutationObserver: expectTimelineMutationObserverCalled(catalog.TransferredMedias{
-					Transfers:  transferredMedias.Transfers,
-					FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
-				}),
-			},
-			args: args{
-				request: standardRequest,
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should not call transfer observer if album insert fails (verify the order)",
-			fields: fields{
-				FindAlbumsByOwnerPort:    stubFindAlbumsByOwnerWith(owner, lifetimeAlbum),
-				InsertAlbumPort:          stubInsertAlbumPortWithError(testErrorInsertingAlbum),
-				TransferMediasPort:       stubTransferMediaPort(transferredMedias),
-				TimelineMutationObserver: expectTimelineMutationObserverNotCalled(),
-			},
-			args: args{
-				request: standardRequest,
-			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, testErrorInsertingAlbum)
-			},
-		},
-		{
-			name: "it should list the existing albums before creating the new one (otherwise there are duplicates in the timeline)",
-			fields: fields{
-				FindAlbumsByOwnerPort:    stubFindAlbumsByOwnerPortWithError(testErrorFindingAlbums),
-				InsertAlbumPort:          stubInsertAlbumPortWithError(testErrorInsertingAlbum),
-				TransferMediasPort:       stubTransferMediaPort(transferredMedias),
-				TimelineMutationObserver: expectTimelineMutationObserverNotCalled(),
-			},
-			args: args{
-				request: standardRequest,
-			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, testErrorFindingAlbums)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			albumCreate := catalog.NewAlbumCreate(
-				tt.fields.FindAlbumsByOwnerPort(t),
-				tt.fields.InsertAlbumPort(t),
-				tt.fields.TransferMediasPort(t),
-				tt.fields.TimelineMutationObserver(t),
-			)
+	findAlbumsByOwner := new(findAlbumsByOwnerPortMock)
+	findAlbumsByOwner.On("FindAlbumsByOwner", mock.Anything, ownermodel.Owner(owner)).Return(([]*catalog.Album)(nil), testErrorFindingAlbums).Once()
+	defer findAlbumsByOwner.AssertExpectations(t)
 
-			_, err := albumCreate.Create(context.Background(), tt.args.request)
-			tt.wantErr(t, err)
-		})
-	}
+	repository := NewAlbumRepositoryInMemory()
+	transfer := &MediaTransferInMemory{}
+	observer := &TimelineMutationObserverInMemory{}
+
+	albumCreate := catalog.NewAlbumCreate(findAlbumsByOwner, repository, transfer, observer)
+
+	_, err := albumCreate.Create(context.Background(), standardRequest)
+	assert.ErrorIs(t, err, testErrorFindingAlbums)
+	assert.Empty(t, repository.Albums, "no album should have been inserted")
+	assert.Empty(t, transfer.TransferRecords, "no media transfer should have been attempted")
+	assert.Empty(t, observer.Notifications, "no timeline mutation observer should have been notified")
+}
+
+type insertAlbumPortMock struct {
+	mock.Mock
+}
+
+func (m *insertAlbumPortMock) InsertAlbum(ctx context.Context, album catalog.Album) error {
+	args := m.Called(ctx, album)
+	return args.Error(0)
+}
+
+type findAlbumsByOwnerPortMock struct {
+	mock.Mock
+}
+
+func (m *findAlbumsByOwnerPortMock) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
+	args := m.Called(ctx, owner)
+	albums, _ := args.Get(0).([]*catalog.Album)
+	return albums, args.Error(1)
 }
 
 func TestCreateAlbumStateless_Create(t *testing.T) {
@@ -290,7 +340,7 @@ func TestCreateAlbumStateless_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			observer := new(CreateAlbumObserverFake)
+			observer := new(CreateAlbumObserverInMemory)
 			c := &catalog.CreateAlbumStateless{
 				Observers: []catalog.CreateAlbumObserverWithTimeline{&catalog.CreateAlbumObserverWrapper{CreateAlbumObserver: observer}},
 			}
@@ -345,162 +395,92 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		End:   time.Date(2024, 4, 30, 0, 0, 0, 0, time.UTC),
 	}
 
-	type fields struct {
-		MediaTransfer func(t *testing.T) catalog.MediaTransfer
-	}
 	type args struct {
 		createdAlbum   catalog.Album
 		existingAlbums []*catalog.Album
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name        string
+		args        args
+		wantRecords []catalog.MediaTransferRecords
+		wantErr     assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should create the album with a generated name",
-			fields: fields{
-				MediaTransfer: expectMediaTransferCalled(nil),
-			},
 			args: args{
 				createdAlbum: album,
 			},
-			wantErr: assert.NoError,
+			wantRecords: []catalog.MediaTransferRecords{nil},
+			wantErr:     assert.NoError,
 		},
 		{
 			name: "it should re-allocate medias from a lower priority album",
-			fields: fields{
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					album.AlbumId: {
-						{
-							FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
-							Start:      album.Start,
-							End:        album.End,
-						},
-					},
-				}),
-			},
 			args: args{
 				createdAlbum:   album,
 				existingAlbums: []*catalog.Album{lifetimeAlbum},
 			},
+			wantRecords: []catalog.MediaTransferRecords{{
+				album.AlbumId: {
+					{
+						FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+						Start:      album.Start,
+						End:        album.End,
+					},
+				},
+			}},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "it should re-allocate medias from 2 lower priority albums ; selector still in one single block",
-			fields: fields{
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					album.AlbumId: {
-						{
-							FromAlbums: []catalog.AlbumId{remainingLifetimeAlbum.AlbumId, lifetimeAlbum.AlbumId},
-							Start:      album.Start,
-							End:        album.End,
-						},
-					},
-				}),
-			},
 			args: args{
 				createdAlbum:   album,
 				existingAlbums: []*catalog.Album{lifetimeAlbum, remainingLifetimeAlbum},
 			},
+			wantRecords: []catalog.MediaTransferRecords{{
+				album.AlbumId: {
+					{
+						FromAlbums: []catalog.AlbumId{remainingLifetimeAlbum.AlbumId, lifetimeAlbum.AlbumId},
+						Start:      album.Start,
+						End:        album.End,
+					},
+				},
+			}},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "it should re-allocate medias from 1 lower priority albums, avoiding 1 high priority (selectors in two blocks)",
-			fields: fields{
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					album.AlbumId: {
-						{
-							FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
-							Start:      album.Start,
-							End:        highPriorityAlbum.Start,
-						},
-						{
-							FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
-							Start:      highPriorityAlbum.End,
-							End:        album.End,
-						},
-					},
-				}),
-			},
 			args: args{
 				createdAlbum:   album,
 				existingAlbums: []*catalog.Album{lifetimeAlbum, highPriorityAlbum},
 			},
+			wantRecords: []catalog.MediaTransferRecords{{
+				album.AlbumId: {
+					{
+						FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+						Start:      album.Start,
+						End:        highPriorityAlbum.Start,
+					},
+					{
+						FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+						Start:      highPriorityAlbum.End,
+						End:        album.End,
+					},
+				},
+			}},
 			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			transfer := &MediaTransferInMemory{}
 			c := &catalog.CreateAlbumMediaTransfer{
-				MediaTransfer: tt.fields.MediaTransfer(t),
+				MediaTransfer: transfer,
 			}
-			tt.wantErr(t, c.ObserveCreateAlbum(context.Background(), catalog.NewLazyTimelineAggregate(tt.args.existingAlbums), tt.args.createdAlbum), fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum))
-		})
-	}
-}
-
-func expectMediaTransferCalled(records catalog.MediaTransferRecords) func(t *testing.T) catalog.MediaTransfer {
-	return func(t *testing.T) catalog.MediaTransfer {
-		transfer := mocks.NewMediaTransfer(t)
-		transfer.EXPECT().Transfer(mock.Anything, records).Return(nil).Once()
-		return transfer
-	}
-}
-
-func stubFindAlbumsByOwnerWith(expectedOwner ownermodel.Owner, albums ...*catalog.Album) func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-	return func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-		return catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
-			if owner == expectedOwner && len(albums) > 0 {
-				return albums, nil
+			err := c.ObserveCreateAlbum(context.Background(), catalog.NewLazyTimelineAggregate(tt.args.existingAlbums), tt.args.createdAlbum)
+			if !tt.wantErr(t, err, fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum)) {
+				return
 			}
-
-			return nil, nil
-		})
-	}
-}
-
-type FindAlbumsByOwnerFake map[ownermodel.Owner][]*catalog.Album
-
-func (f FindAlbumsByOwnerFake) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
-	albums, _ := f[owner]
-	return albums, nil
-}
-
-type CreateAlbumObserverFake struct {
-	CreatedAlbums []catalog.Album
-}
-
-func (c *CreateAlbumObserverFake) ObserveCreateAlbum(ctx context.Context, createdAlbum catalog.Album) error {
-	c.CreatedAlbums = append(c.CreatedAlbums, createdAlbum)
-	return nil
-}
-
-func expectAlbumInserted(album catalog.Album) func(t *testing.T) catalog.InsertAlbumPort {
-	return func(t *testing.T) catalog.InsertAlbumPort {
-		observer := mocks.NewInsertAlbumPort(t)
-		observer.EXPECT().
-			InsertAlbum(mock.Anything, album).
-			Return(nil).
-			Once()
-		return observer
-	}
-}
-
-func stubInsertAlbumPortWithError(err error) func(t *testing.T) catalog.InsertAlbumPort {
-	return func(t *testing.T) catalog.InsertAlbumPort {
-		return catalog.InsertAlbumPortFunc(func(ctx context.Context, album catalog.Album) error {
-			return err
-		})
-	}
-}
-
-func expectTimelineMutationObserverNotCalled() func(t *testing.T) catalog.TimelineMutationObserver {
-	return func(t *testing.T) catalog.TimelineMutationObserver {
-		return catalog.TimelineMutationObserverFunc(func(ctx context.Context, transfers catalog.TransferredMedias) error {
-			assert.Failf(t, "TimelineMutationObserverFunc", "should not be called", "OnTransferredMedias(%+v)", transfers)
-			return nil
+			assert.Equal(t, tt.wantRecords, transfer.TransferRecords)
 		})
 	}
 }

@@ -3,21 +3,13 @@ package catalog_test
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"slices"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
-
-func mockAdapters(t *testing.T) *mocks.RepositoryAdapter {
-	mockRepository := mocks.NewRepositoryAdapter(t)
-	catalog.Init(mockRepository)
-
-	return mockRepository
-}
 
 const (
 	layout                  = "2006-01-02T15"
@@ -54,7 +46,7 @@ func TestAlbumQueries_FindAlbum(t *testing.T) {
 		{
 			name: "it should return the album that has been found",
 			fields: fields{
-				Repository: RepositoryAdapterFake{album1},
+				Repository: NewAlbumRepositoryInMemory(album1),
 			},
 			args: args{
 				ctx:     context.TODO(),
@@ -66,7 +58,7 @@ func TestAlbumQueries_FindAlbum(t *testing.T) {
 		{
 			name: "it should return a not found error if no album has been found",
 			fields: fields{
-				Repository: RepositoryAdapterFake{},
+				Repository: NewAlbumRepositoryInMemory(),
 			},
 			args: args{
 				ctx:     context.TODO(),
@@ -91,32 +83,4 @@ func TestAlbumQueries_FindAlbum(t *testing.T) {
 			assert.Equalf(t, tt.want, got, "FindAlbum(%v, %v)", tt.args.ctx, tt.args.albumId)
 		})
 	}
-}
-
-type RepositoryAdapterFake []*catalog.Album
-
-func (r RepositoryAdapterFake) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
-	panic("implement me")
-}
-
-func (r RepositoryAdapterFake) FindAlbumByIds(ctx context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {
-	var albums []*catalog.Album
-	for _, album := range r {
-		if slices.Contains(ids, album.AlbumId) {
-			albums = append(albums, album)
-		}
-	}
-	return albums, nil
-}
-
-func (r RepositoryAdapterFake) FindMedias(ctx context.Context, request *catalog.FindMediaRequest) (medias []*catalog.MediaMeta, err error) {
-	panic("implement me")
-}
-
-func (r RepositoryAdapterFake) FindMediaCurrentAlbum(ctx context.Context, owner ownermodel.Owner, mediaId catalog.MediaId) (id *catalog.AlbumId, err error) {
-	panic("implement me")
-}
-
-func (r RepositoryAdapterFake) CountMedia(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
-	panic("implement me")
 }
