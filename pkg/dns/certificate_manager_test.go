@@ -1,83 +1,122 @@
 package dns_test
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	mocks "github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/dns"
-	"github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/dns"
+	"github.com/thomasduchatelle/dphoto/pkg/dnsdomain"
 )
 
 func TestRenewCertificate(t *testing.T) {
-	a := assert.New(t)
-
 	const (
 		domain = "dphoto.example.com"
 		email  = "dphoto@example.com"
+		arn    = "arn::132456"
 	)
+
+	cannedCertificate := dnsdomain.CompleteCertificate{
+		Certificate: []byte("cert-123"),
+		Chain:       []byte("chain-123"),
+		PrivateKey:  []byte("private-key-123"),
+	}
+
+	validExistingCertificate := dnsdomain.ExistingCertificate{
+		ID:     arn,
+		Domain: domain,
+		Expiry: time.Now().Add(dns.MinimumExpiryDelay * 2),
+	}
+
+	newHappyCertificateManager := func() *CertificateManagerInMemory {
+		certManager := NewCertificateManagerInMemory()
+		certManager.Certificates[domain] = validExistingCertificate
+		return certManager
+	}
+	newHappyCertificateAuthority := func() *CertificateAuthorityInMemory {
+		return &CertificateAuthorityInMemory{NextCertificate: &cannedCertificate}
+	}
+
+	type fields struct {
+		CertificateManager   *CertificateManagerInMemory
+		CertificateAuthority *CertificateAuthorityInMemory
+	}
+	type args struct {
+		email  string
+		domain string
+		forced bool
+	}
 	tests := []struct {
-		name     string
-		setMocks func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority)
+		name              string
+		fields            fields
+		args              args
+		wantSSMEnsuredArn string
+		wantInstalledArn  string
+		wantRequested     []CertificateRequest
+		wantErr           assert.ErrorAssertionFunc
 	}{
-		{"it should not create a new certificate if one already exists", func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority) {
-			certManager.On("FindCertificate", mock.Anything, domain).Return(&dnsdomain.ExistingCertificate{
-				ID:     "arn::132456",
-				Domain: domain,
-				Expiry: time.Now().Add(dns.MinimumExpiryDelay * 2),
-			}, nil)
-			certManager.On("EnsureSSMParameter", mock.Anything, "arn::132456").Return(nil)
-		}},
-		{"it should create a new certificate if the existing one has or is about to expire, and override it", func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority) {
-			certManager.On("FindCertificate", mock.Anything, domain).Return(&dnsdomain.ExistingCertificate{
-				ID:     "arn::132456",
-				Domain: domain,
-				Expiry: time.Now().Add(dns.MinimumExpiryDelay - time.Hour),
-			}, nil)
-
-			certManager.On("InstallCertificate", mock.Anything, "arn::132456", dnsdomain.CompleteCertificate{
-				Certificate: []byte("cert-123"),
-				Chain:       []byte("chain-123"),
-				PrivateKey:  []byte("private-key-123"),
-			}).Return(nil)
-
-			certAuthority.On("RequestCertificate", mock.Anything, email, domain).Return(&dnsdomain.CompleteCertificate{
-				Certificate: []byte("cert-123"),
-				Chain:       []byte("chain-123"),
-				PrivateKey:  []byte("private-key-123"),
-			}, nil)
-		}},
-		{"it should create a new certificate if none were there", func(certManager *mocks.CertificateManager, certAuthority *mocks.CertificateAuthority) {
-			certManager.On("FindCertificate", mock.Anything, domain).Return(nil, dnsdomain.CertificateNotFoundError)
-
-			certManager.On("InstallCertificate", mock.Anything, "", dnsdomain.CompleteCertificate{
-				Certificate: []byte("cert-123"),
-				Chain:       []byte("chain-123"),
-				PrivateKey:  []byte("private-key-123"),
-			}).Return(nil)
-
-			certAuthority.On("RequestCertificate", mock.Anything, email, domain).Return(&dnsdomain.CompleteCertificate{
-				Certificate: []byte("cert-123"),
-				Chain:       []byte("chain-123"),
-				PrivateKey:  []byte("private-key-123"),
-			}, nil)
-
-		}},
+		{
+			name: "it should not create a new certificate if one already exists",
+			fields: fields{
+				CertificateManager:   newHappyCertificateManager(),
+				CertificateAuthority: newHappyCertificateAuthority(),
+			},
+			args:              args{email: email, domain: domain, forced: false},
+			wantSSMEnsuredArn: arn,
+			wantErr:           assert.NoError,
+		},
+		{
+			name: "it should create a new certificate if the existing one has or is about to expire, and override it",
+			fields: fields{
+				CertificateManager: func() *CertificateManagerInMemory {
+					certManager := NewCertificateManagerInMemory()
+					certManager.Certificates[domain] = dnsdomain.ExistingCertificate{
+						ID:     arn,
+						Domain: domain,
+						Expiry: time.Now().Add(dns.MinimumExpiryDelay - time.Hour),
+					}
+					return certManager
+				}(),
+				CertificateAuthority: newHappyCertificateAuthority(),
+			},
+			args:             args{email: email, domain: domain, forced: false},
+			wantInstalledArn: arn,
+			wantRequested:    []CertificateRequest{{Email: email, Domain: domain}},
+			wantErr:          assert.NoError,
+		},
+		{
+			name: "it should create a new certificate if none were there",
+			fields: fields{
+				CertificateManager:   NewCertificateManagerInMemory(),
+				CertificateAuthority: newHappyCertificateAuthority(),
+			},
+			args:             args{email: email, domain: domain, forced: false},
+			wantInstalledArn: "",
+			wantRequested:    []CertificateRequest{{Email: email, Domain: domain}},
+			wantErr:          assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
-		certManager := new(mocks.CertificateManager)
-		dns.CertificateManager = certManager
-		certAuthority := new(mocks.CertificateAuthority)
-		dns.CertificateAuthority = certAuthority
+		t.Run(tt.name, func(t *testing.T) {
+			dns.CertificateManager = tt.fields.CertificateManager
+			dns.CertificateAuthority = tt.fields.CertificateAuthority
 
-		tt.setMocks(certManager, certAuthority)
+			err := dns.RenewCertificate(tt.args.email, tt.args.domain, tt.args.forced)
 
-		err := dns.RenewCertificate(email, domain, false)
-		if a.NoError(err, tt.name) {
-			certManager.AssertExpectations(t)
-			certAuthority.AssertExpectations(t)
-		}
+			if !tt.wantErr(t, err) {
+				return
+			}
+			if tt.wantSSMEnsuredArn != "" {
+				assert.True(t, tt.fields.CertificateManager.IsSSMEnsured(tt.wantSSMEnsuredArn), "expected SSM parameter to be ensured for %s", tt.wantSSMEnsuredArn)
+				assert.Empty(t, tt.fields.CertificateAuthority.RequestedFor(), "expected no certificate request to the authority")
+			} else {
+				installed, ok := tt.fields.CertificateManager.Installed(tt.wantInstalledArn)
+				if assert.True(t, ok, "expected a certificate installed for arn %q", tt.wantInstalledArn) {
+					assert.Equal(t, cannedCertificate, installed)
+				}
+				assert.Equal(t, tt.wantRequested, tt.fields.CertificateAuthority.RequestedFor())
+			}
+		})
 	}
 }
