@@ -3,17 +3,15 @@ package catalogacl_test
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/thomasduchatelle/dphoto/internal/mocks"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"testing"
-	"time"
 )
 
 func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
@@ -22,87 +20,83 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		return theDate
 	}
 
-	type args struct {
-		owner      ownermodel.Owner
-		folderName catalog.FolderName
-		userEmail  usermodel.UserId
-	}
 	const owner = ownermodel.Owner("tony@stark.com")
 	folderName := catalog.NewFolderName("/weddings")
 	albumId := catalog.AlbumId{Owner: owner, FolderName: folderName}
 	const userEmail = usermodel.UserId("pepper@stark.com")
 
+	expectedScopeId := aclcore.ScopeId{
+		Type:          aclcore.AlbumVisitorScope,
+		GrantedTo:     userEmail,
+		ResourceOwner: owner,
+		ResourceId:    folderName.String(),
+	}
+	expectedScope := aclcore.Scope{
+		Type:          aclcore.AlbumVisitorScope,
+		GrantedAt:     theDate,
+		GrantedTo:     userEmail,
+		ResourceOwner: owner,
+		ResourceId:    folderName.String(),
+	}
+
+	findAlbumPortWithWeddings := func() *FindAlbumPortInMemory {
+		return NewFindAlbumPortInMemory(&catalog.Album{AlbumId: albumId})
+	}
+
+	type fields struct {
+		ScopeRepository *ScopeRepositoryInMemory
+		FindAlbumPort   *FindAlbumPortInMemory
+		Observer        *AlbumSharedObserverFake
+	}
+	type args struct {
+		owner      ownermodel.Owner
+		folderName catalog.FolderName
+		userEmail  usermodel.UserId
+	}
 	tests := []struct {
 		name         string
-		fields       func(t *testing.T) (aclcore.ScopeWriter, catalogacl.FindAlbumPort)
+		fields       fields
 		args         args
-		wantObserved map[catalog.AlbumId][]usermodel.UserId
+		expectScopes []*aclcore.Scope
+		expectShared map[catalog.AlbumId][]usermodel.UserId
 		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should create the ACL rule when the album exists",
-			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.FindAlbumPort) {
-				catalogMock := mocks.NewFindAlbumPort(t)
-				catalogMock.EXPECT().FindAlbum(mock.Anything, albumId).Return(&catalog.Album{
-					AlbumId: albumId,
-				}, nil)
-
-				scopeWriter := mocks.NewScopeWriter(t)
-				scopeWriter.On("SaveIfNewScope", aclcore.Scope{
-					Type:          aclcore.AlbumVisitorScope,
-					GrantedAt:     theDate,
-					GrantedTo:     userEmail,
-					ResourceOwner: owner,
-					ResourceId:    folderName.String(),
-				}).Return(nil)
-
-				return scopeWriter, catalogMock
+			fields: fields{
+				ScopeRepository: NewScopeRepositoryInMemory(),
+				FindAlbumPort:   findAlbumPortWithWeddings(),
+				Observer:        &AlbumSharedObserverFake{},
 			},
-			args: args{owner, folderName, userEmail},
-			wantObserved: map[catalog.AlbumId][]usermodel.UserId{
+			args:         args{owner, folderName, userEmail},
+			expectScopes: []*aclcore.Scope{&expectedScope},
+			expectShared: map[catalog.AlbumId][]usermodel.UserId{
 				albumId: {userEmail},
 			},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "it should return an error if the album doesn't exists",
-			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.FindAlbumPort) {
-				catalogMock := mocks.NewFindAlbumPort(t)
-				catalogMock.EXPECT().FindAlbum(mock.Anything, albumId).Return(nil, catalog.AlbumNotFoundErr)
-
-				return mocks.NewScopeWriter(t), catalogMock
+			fields: fields{
+				ScopeRepository: NewScopeRepositoryInMemory(),
+				FindAlbumPort:   NewFindAlbumPortInMemory(),
+				Observer:        &AlbumSharedObserverFake{},
 			},
 			args:         args{owner, folderName, userEmail},
-			wantObserved: nil,
+			expectScopes: nil,
+			expectShared: nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i)
-			},
-		},
-		{
-			name: "it should passthroughs an other error",
-			fields: func(t *testing.T) (aclcore.ScopeWriter, catalogacl.FindAlbumPort) {
-				catalogMock := mocks.NewFindAlbumPort(t)
-				catalogMock.EXPECT().FindAlbum(mock.Anything, albumId).Return(nil, errors.New("TEST Something else"))
-
-				return mocks.NewScopeWriter(t), catalogMock
-			},
-			args:         args{owner, folderName, userEmail},
-			wantObserved: nil,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err, i) && assert.Contains(t, err.Error(), "TEST Something else", i)
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			observer := new(AlbumSharedObserverFake)
-
-			scopeWriter, catalogPort := tt.fields(t)
 			s := &catalogacl.ShareAlbumCase{
-				ScopeWriter:   scopeWriter,
-				FindAlbumPort: catalogPort,
-				Observers:     []catalogacl.AlbumSharedObserver{observer},
+				ScopeWriter:   tt.fields.ScopeRepository,
+				FindAlbumPort: tt.fields.FindAlbumPort,
+				Observers:     []catalogacl.AlbumSharedObserver{tt.fields.Observer},
 			}
 
 			err := s.ShareAlbumWith(context.TODO(), catalog.AlbumId{Owner: tt.args.owner, FolderName: tt.args.folderName}, tt.args.userEmail)
@@ -110,7 +104,10 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 				return
 			}
 
-			assert.Equalf(t, tt.wantObserved, observer.Shared, "Shared=%+v", observer.Shared)
+			storedScopes, findErr := tt.fields.ScopeRepository.FindScopesById(expectedScopeId)
+			assert.NoError(t, findErr)
+			assert.Equal(t, tt.expectScopes, storedScopes, "stored scopes")
+			assert.Equal(t, tt.expectShared, tt.fields.Observer.Shared, "Shared=%+v", tt.fields.Observer.Shared)
 		})
 	}
 }
@@ -124,7 +121,7 @@ func (a *AlbumSharedObserverFake) AlbumShared(ctx context.Context, albumId catal
 		a.Shared = make(map[catalog.AlbumId][]usermodel.UserId)
 	}
 
-	previous, _ := a.Shared[albumId]
+	previous := a.Shared[albumId]
 	a.Shared[albumId] = append(previous, userEmail)
 	return nil
 }
