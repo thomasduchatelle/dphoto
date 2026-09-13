@@ -1,6 +1,6 @@
 # 02 — `pkg/archive` Fakes
 
-Status: ready
+Status: done
 Layer: `pkg/archive`
 Depends on: —
 
