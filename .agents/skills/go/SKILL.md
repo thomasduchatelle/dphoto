@@ -7,24 +7,53 @@ description: Golang coding standards for DPhoto including table-driven testing p
 
 ## How to write a test
 
-Use the golang idiomatic **table-driven** testing with a slice of test cases with for each:
+Use the golang idiomatic **table-driven** testing with a slice of test cases. The **canonical
+structure of each case is fixed** — do not omit or rename fields on a whim:
 
-1. **name**: descriptive names starting by "it should" and summarising the trigger and the expectation. Examples:
-    * "it should GRANT access to the media owner"`
-    * "it should DENY access to a visitor with no permission"`
+1. **`name`** — mandatory, always. Descriptive names starting with "it should" and summarising the
+   trigger and the expectation. Examples:
+    * `"it should GRANT access to the media owner"`
+    * `"it should DENY access to a visitor with no permission"`
 
-2. **fields**: structure of the fields of the structure under test (ignore if a function is tested)
-    * use fake in-memory implementation rather than mocks to stub the dependencies
+2. **`fields`** — the actual fields of the structure under test. Mirror the struct literally.
+   **Ignore only if the code under test is a plain function, not a struct.**
+    * Do NOT drop `fields` because the tests happen to share the same collaborators — the fields
+      must still be declared so each case can override any one of them when it needs to.
+    * Use concrete Fake types (not the interface) when `expectX` below needs to read state back
+      through a test-only accessor.
 
-3. **args**: structure of the function parameters
+3. **`args`** — the arguments passed to the function under test. **Mandatory even if there is only
+   a single argument.** Ignore only if the function takes no argument at all.
 
-4. **want**: of the type of the first returned argument
+4. **`want`** — the first returned value (other than `error`). Ignore if the function returns only
+   an error, or if more than one non-error value is returned (use `wantX` instead). Asserted with
+   deep equals.
 
-5. **wantErr**: of the type `type ErrorAssertionFunc func(TestingT, error, ...interface{}) bool`
-    * if no error are expected: `assert.NoError`
-    * if an error is expected: an anonymous function (see the full example)
+5. **`wantX`** — use when the function returns multiple non-error values; replace `X` with the
+   parameter name (e.g. `wantAlbum`, `wantMedias`). Asserted with deep equals.
 
-Write at the beginning of the file reusable fixture: each test should only declare what is specific to the test case.
+6. **`wantErr`** — of type `assert.ErrorAssertionFunc`
+   (`func(TestingT, error, ...interface{}) bool`). Ignore if the function does not return an
+   error.
+    * If no error is expected: `assert.NoError`.
+    * If a specific error is expected: an anonymous function using `assert.ErrorIs` /
+      `assert.ErrorAs` (see the full example).
+
+7. **`expectX`** — use only when a Fake dependency must be asserted after the call, and only
+   when the assertion is genuinely meaningful for the test. Examples: `expectEventsFired []Event`,
+   `expectStoredAlbum *Album`.
+    * **Never** use `expectX` as a leaked "was-called" assertion (e.g. `expectCalled int`,
+      `expectMockCalls int`). If you find yourself counting calls, redesign the test around state.
+
+### Fake reuse across cases
+
+- Instantiate **one "happy path" version of each Fake once, before the table**, and let every
+  case reuse it by default. This keeps each case focused on what is specific to it.
+- Override a Fake in a single case **only** when that case needs to exercise a specific branch
+  (empty state, seeded record, error injection, …). In that case, build the Fake inline inside
+  the case's `fields` (or via a small helper), leaving all other cases on the shared instance.
+- Fixtures shared across cases (IDs, sample records, canned certificates, …) also live at the
+  top of the test file. Each case declares only what is specific to it.
 
 ### Testing example
 
@@ -38,6 +67,12 @@ func TestCatalogAuthorizer_IsAuthorisedToViewMedia(t *testing.T) {
         return assert.ErrorIs(t, err, aclcore.AccessForbiddenError)
     }
 
+    // Shared happy-path Fake, reused by every case unless a case overrides it in `fields`.
+    scopes := &ScopeRepositoryInMemory{}
+
+    type fields struct {
+        HasPermissionPort catalogacl.HasPermissionPort
+    }
     type args struct {
         currentUser usermodel.CurrentUser
         owner       ownermodel.Owner
@@ -45,11 +80,13 @@ func TestCatalogAuthorizer_IsAuthorisedToViewMedia(t *testing.T) {
     }
     tests := []struct {
         name    string
+        fields  fields
         args    args
         wantErr assert.ErrorAssertionFunc
     }{
         {
-            name: "it should GRANT access to the media owner",
+            name:   "it should GRANT access to the media owner",
+            fields: fields{HasPermissionPort: scopes},
             args: args{
                 currentUser: usermodel.CurrentUser{UserId: userId, Owner: &owner},
                 owner:       owner,
@@ -58,7 +95,8 @@ func TestCatalogAuthorizer_IsAuthorisedToViewMedia(t *testing.T) {
             wantErr: assert.NoError,
         },
         {
-            name: "it should DENY access to a visitor with no permission",
+            name:   "it should DENY access to a visitor with no permission",
+            fields: fields{HasPermissionPort: scopes},
             args: args{
                 currentUser: usermodel.CurrentUser{UserId: userId},
                 owner:       owner,
@@ -70,6 +108,7 @@ func TestCatalogAuthorizer_IsAuthorisedToViewMedia(t *testing.T) {
 
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
+            authorizer := &catalogacl.CatalogAuthorizer{HasPermissionPort: tt.fields.HasPermissionPort}
             tt.wantErr(t, authorizer.IsAuthorisedToViewMedia(ctx, tt.args.currentUser, tt.args.owner, tt.args.mediaId))
         })
     }
