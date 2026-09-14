@@ -13,6 +13,7 @@ const (
 	testDomain = "dphoto.example.com"
 	testEmail  = "dphoto@example.com"
 	testArn    = "arn::132456"
+	staleArn   = "arn::stale"
 )
 
 var cannedCertificate = dnsdomain.CompleteCertificate{
@@ -22,86 +23,110 @@ var cannedCertificate = dnsdomain.CompleteCertificate{
 }
 
 func TestRenewCertificate(t *testing.T) {
-	type fields struct {
-		CertificateManager   *CertificateManagerInMemory
-		CertificateAuthority *CertificateAuthorityInMemory
-	}
 	type args struct {
 		email  string
 		domain string
 		forced bool
 	}
-	installedAt := func(id string) *string { return &id }
+
+	validExpiry := time.Now().Add(dns.MinimumExpiryDelay * 2)
+	expiringExpiry := time.Now().Add(dns.MinimumExpiryDelay - time.Hour)
 
 	tests := []struct {
-		name                string
-		fields              fields
-		args                args
-		wantErr             assert.ErrorAssertionFunc
-		expectSSMEnsuredFor string
-		expectInstalledAt   *string
+		name                  string
+		certificateManager    *CertificateManagerInMemory
+		args                  args
+		wantErr               assert.ErrorAssertionFunc
+		expectDomainsContains map[string]InMemoryCertificate
+		expectSSMParameter    string
+		expectCARequests      []CertificateRequest
 	}{
 		{
-			name: "it should not create a new certificate if one already exists",
-			fields: fields{
-				CertificateManager: NewCertificateManagerInMemory(dnsdomain.ExistingCertificate{
-					ID:     testArn,
-					Domain: testDomain,
-					Expiry: time.Now().Add(dns.MinimumExpiryDelay * 2),
-				}),
-				CertificateAuthority: NewCertificateAuthorityInMemory(cannedCertificate),
+			name: "it should ensure the SSM parameter points at the existing certificate when it is still valid",
+			certificateManager: NewCertificateManagerInMemory(dnsdomain.ExistingCertificate{
+				ID:     testArn,
+				Domain: testDomain,
+				Expiry: validExpiry,
+			}),
+			args:    args{email: testEmail, domain: testDomain, forced: false},
+			wantErr: assert.NoError,
+			expectDomainsContains: map[string]InMemoryCertificate{
+				testDomain: {
+					ExistingCertificate: dnsdomain.ExistingCertificate{ID: testArn, Domain: testDomain, Expiry: validExpiry},
+				},
 			},
-			args:                args{email: testEmail, domain: testDomain, forced: false},
-			wantErr:             assert.NoError,
-			expectSSMEnsuredFor: testArn,
+			expectSSMParameter: testArn,
+			expectCARequests:   nil,
 		},
 		{
-			name: "it should create a new certificate if the existing one is about to expire, and override it",
-			fields: fields{
-				CertificateManager: NewCertificateManagerInMemory(dnsdomain.ExistingCertificate{
+			name: "it should overwrite the SSM parameter when it holds a stale ARN and the existing certificate is still valid",
+			certificateManager: func() *CertificateManagerInMemory {
+				m := NewCertificateManagerInMemory(dnsdomain.ExistingCertificate{
 					ID:     testArn,
 					Domain: testDomain,
-					Expiry: time.Now().Add(dns.MinimumExpiryDelay - time.Hour),
-				}),
-				CertificateAuthority: NewCertificateAuthorityInMemory(cannedCertificate),
+					Expiry: validExpiry,
+				})
+				m.SSMParameter = staleArn
+				return m
+			}(),
+			args:    args{email: testEmail, domain: testDomain, forced: false},
+			wantErr: assert.NoError,
+			expectDomainsContains: map[string]InMemoryCertificate{
+				testDomain: {
+					ExistingCertificate: dnsdomain.ExistingCertificate{ID: testArn, Domain: testDomain, Expiry: validExpiry},
+				},
 			},
-			args:              args{email: testEmail, domain: testDomain, forced: false},
-			wantErr:           assert.NoError,
-			expectInstalledAt: installedAt(testArn),
+			expectSSMParameter: testArn,
+			expectCARequests:   nil,
 		},
 		{
-			name: "it should create a new certificate if none were there",
-			fields: fields{
-				CertificateManager:   NewCertificateManagerInMemory(),
-				CertificateAuthority: NewCertificateAuthorityInMemory(cannedCertificate),
+			name: "it should install a new certificate and override the existing one when it is about to expire",
+			certificateManager: NewCertificateManagerInMemory(dnsdomain.ExistingCertificate{
+				ID:     testArn,
+				Domain: testDomain,
+				Expiry: expiringExpiry,
+			}),
+			args:    args{email: testEmail, domain: testDomain, forced: false},
+			wantErr: assert.NoError,
+			expectDomainsContains: map[string]InMemoryCertificate{
+				testDomain: {
+					ExistingCertificate: dnsdomain.ExistingCertificate{ID: testArn, Domain: testDomain, Expiry: expiringExpiry},
+					CompleteCertificate: &cannedCertificate,
+				},
 			},
-			args:              args{email: testEmail, domain: testDomain, forced: false},
-			wantErr:           assert.NoError,
-			expectInstalledAt: installedAt(""),
+			expectSSMParameter: testArn,
+			expectCARequests:   []CertificateRequest{{Email: testEmail, Domain: testDomain}},
+		},
+		{
+			name:               "it should install a new certificate when none exists",
+			certificateManager: NewCertificateManagerInMemory(),
+			args:               args{email: testEmail, domain: testDomain, forced: false},
+			wantErr:            assert.NoError,
+			expectDomainsContains: map[string]InMemoryCertificate{
+				"": {
+					ExistingCertificate: dnsdomain.ExistingCertificate{ID: generatedArn},
+					CompleteCertificate: &cannedCertificate,
+				},
+			},
+			expectSSMParameter: "",
+			expectCARequests:   []CertificateRequest{{Email: testEmail, Domain: testDomain}},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dns.CertificateManager = tt.fields.CertificateManager
-			dns.CertificateAuthority = tt.fields.CertificateAuthority
+			ca := NewCertificateAuthorityInMemory(cannedCertificate)
+			dns.CertificateManager = tt.certificateManager
+			dns.CertificateAuthority = ca
 
 			err := dns.RenewCertificate(tt.args.email, tt.args.domain, tt.args.forced)
 			if !tt.wantErr(t, err) {
 				return
 			}
 
-			if tt.expectSSMEnsuredFor != "" {
-				assert.True(t, tt.fields.CertificateManager.IsSSMEnsured(tt.expectSSMEnsuredFor), "expected SSM parameter ensured for %s", tt.expectSSMEnsuredFor)
-			}
-			if tt.expectInstalledAt == nil {
-				assert.Empty(t, tt.fields.CertificateManager.InstalledContent, "expected no certificate installed")
-			} else {
-				installed, ok := tt.fields.CertificateManager.Installed(*tt.expectInstalledAt)
-				if assert.True(t, ok, "expected a certificate installed at %q", *tt.expectInstalledAt) {
-					assert.Equal(t, cannedCertificate, installed)
-				}
-			}
+			assert.Equal(t, tt.expectSSMParameter, tt.certificateManager.SSMParameter, "SSM parameter value")
+			assert.Equal(t, tt.expectCARequests, ca.Requested, "certificate authority requests")
+			assert.Equal(t, tt.expectDomainsContains, tt.certificateManager.Certificates, "certificates in repository")
 		})
 	}
 }
