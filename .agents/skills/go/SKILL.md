@@ -42,11 +42,9 @@ structure of each case is fixed** — do not omit or rename fields on a whim:
     * If a specific error is expected: an anonymous function using `assert.ErrorIs` /
       `assert.ErrorAs` (see the full example).
 
-7. **`expectX`** — use only when a Fake dependency must be asserted after the call, and only
-   when the assertion is genuinely meaningful for the test. Examples: `expectEventsFired []Event`,
-   `expectStoredAlbum *Album`.
-    * **Never** use `expectX` as a leaked "was-called" assertion (e.g. `expectCalled int`,
-      `expectMockCalls int`). If you find yourself counting calls, redesign the test around state.
+7. **`expectX`** — use it to assert an event has been published, or a data has been saved, never to assert an interaction with a dependency.
+   * good examples: `expectEventsFired []Event`, `expectStoredAlbum *Album`
+   * bad examples to avoid: `expectCalled int`, `expectXBeCalledFor []AlbumId` ; the test needs to validate the outcomes, not how it did it.
 
 ### Test-file-level fixtures
 
