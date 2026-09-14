@@ -56,15 +56,14 @@ func TestGetResizedImage(t *testing.T) {
 		maxBytes int
 	}
 	tests := []struct {
-		name                   string
-		fields                 fields
-		args                   args
-		wantContent            []byte
-		wantType               string
-		wantErr                assert.ErrorAssertionFunc
-		expectCachedKey        string
-		expectCachedBytes      []byte
-		expectPendingWarmUpJob *WarmUpJob
+		name                      string
+		fields                    fields
+		args                      args
+		wantContent               []byte
+		wantType                  string
+		wantErr                   assert.ErrorAssertionFunc
+		expectCache               map[string][]byte
+		expectPublishedWarmUpJobs []WarmUpJob
 	}{
 		{
 			name: "it should resize the image and store the result when the cache is empty",
@@ -75,13 +74,16 @@ func TestGetResizedImage(t *testing.T) {
 				AsyncJob:   NewAsyncJobInMemory(),
 				Resizer:    resizerReturning(map[int][]byte{1440: resizedContent}),
 			},
-			args:                   args{resizedOwner, mediaId, 1440, 0},
-			wantContent:            resizedContent,
-			wantType:               mediaType,
-			wantErr:                assert.NoError,
-			expectCachedKey:        "w=1440" + cacheIdSuffix,
-			expectCachedBytes:      resizedContent,
-			expectPendingWarmUpJob: &WarmUpJob{Owner: resizedOwner, MissedKey: storeKey, Width: 1440},
+			args:        args{resizedOwner, mediaId, 1440, 0},
+			wantContent: resizedContent,
+			wantType:    mediaType,
+			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: resizedContent,
+			},
+			expectPublishedWarmUpJobs: []WarmUpJob{
+				{Owner: resizedOwner, MissedKey: storeKey, Width: 1440},
+			},
 		},
 		{
 			name: "it should use the cached image when it exists at the requested cacheable width",
@@ -96,6 +98,9 @@ func TestGetResizedImage(t *testing.T) {
 			wantContent: resizedContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: resizedContent,
+			},
 		},
 		{
 			name: "it should store a miniature in the cache and return a smaller image resized on the fly",
@@ -109,13 +114,16 @@ func TestGetResizedImage(t *testing.T) {
 					180:                          miniContent,
 				}),
 			},
-			args:                   args{resizedOwner, mediaId, 180, 0},
-			wantContent:            miniContent,
-			wantType:               mediaType,
-			wantErr:                assert.NoError,
-			expectCachedKey:        "miniatures" + cacheIdSuffix,
-			expectCachedBytes:      resizedContent,
-			expectPendingWarmUpJob: &WarmUpJob{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MiniatureCachedWidth},
+			args:        args{resizedOwner, mediaId, 180, 0},
+			wantContent: miniContent,
+			wantType:    mediaType,
+			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"miniatures" + cacheIdSuffix: resizedContent,
+			},
+			expectPublishedWarmUpJobs: []WarmUpJob{
+				{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MiniatureCachedWidth},
+			},
 		},
 		{
 			name: "it should get the miniature image from the cache and return a smaller one resized on the fly",
@@ -130,6 +138,9 @@ func TestGetResizedImage(t *testing.T) {
 			wantContent: miniContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"miniatures" + cacheIdSuffix: resizedContent,
+			},
 		},
 		{
 			name: "it should use the appropriate cached width and resize down after",
@@ -144,6 +155,9 @@ func TestGetResizedImage(t *testing.T) {
 			wantContent: miniContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: resizedContent,
+			},
 		},
 		{
 			name: "it should return an overflow error when the freshly cached image is too big",
@@ -158,10 +172,13 @@ func TestGetResizedImage(t *testing.T) {
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, archive.MediaOverflowError)
 			},
-			wantType:               mediaType,
-			expectCachedKey:        fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix),
-			expectCachedBytes:      resizedContent,
-			expectPendingWarmUpJob: &WarmUpJob{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MediumQualityCachedWidth},
+			wantType: mediaType,
+			expectCache: map[string][]byte{
+				fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix): resizedContent,
+			},
+			expectPublishedWarmUpJobs: []WarmUpJob{
+				{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MediumQualityCachedWidth},
+			},
 		},
 		{
 			name: "it should return an overflow error when the cached image is too big",
@@ -177,6 +194,9 @@ func TestGetResizedImage(t *testing.T) {
 				return assert.ErrorIs(t, err, archive.MediaOverflowError)
 			},
 			wantType: mediaType,
+			expectCache: map[string][]byte{
+				fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix): []byte("this-is-a-large-cached-blob"),
+			},
 		},
 		{
 			name: "it should return an overflow error when the on-the-fly resized image is too big",
@@ -192,6 +212,9 @@ func TestGetResizedImage(t *testing.T) {
 				return assert.ErrorIs(t, err, archive.MediaOverflowError)
 			},
 			wantType: mediaType,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: []byte("cached-fits"),
+			},
 		},
 		{
 			name: "it should return the resized image even if the cached version is too big for the consumer",
@@ -206,6 +229,9 @@ func TestGetResizedImage(t *testing.T) {
 			wantContent: miniContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: []byte("cached-too-big-for-consumer-but-not-returned"),
+			},
 		},
 		{
 			name: "it should return NotFoundError when the image id is unknown",
@@ -250,17 +276,15 @@ func TestGetResizedImage(t *testing.T) {
 			assert.Equal(t, tt.wantContent, gotContent)
 			assert.Equal(t, tt.wantType, gotMediaType)
 
-			if tt.expectCachedKey != "" {
-				entry, ok := tt.fields.Cache.Content[tt.expectCachedKey]
-				if assert.Truef(t, ok, "expected cache entry %s to be present", tt.expectCachedKey) {
-					assert.Equal(t, tt.expectCachedBytes, entry.Content)
+			var gotCache map[string][]byte
+			if len(tt.fields.Cache.Content) > 0 {
+				gotCache = make(map[string][]byte, len(tt.fields.Cache.Content))
+				for key, entry := range tt.fields.Cache.Content {
+					gotCache[key] = entry.Content
 				}
 			}
-			if tt.expectPendingWarmUpJob != nil {
-				assert.Equal(t, []WarmUpJob{*tt.expectPendingWarmUpJob}, tt.fields.AsyncJob.PendingWarmUpJobs)
-			} else {
-				assert.Empty(t, tt.fields.AsyncJob.PendingWarmUpJobs)
-			}
+			assert.Equal(t, tt.expectCache, gotCache)
+			assert.Equal(t, tt.expectPublishedWarmUpJobs, tt.fields.AsyncJob.PendingWarmUpJobs)
 		})
 	}
 }

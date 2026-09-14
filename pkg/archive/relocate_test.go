@@ -1,6 +1,7 @@
 package archive_test
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -21,13 +22,12 @@ func TestRelocate(t *testing.T) {
 		targetFolder string
 	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          assert.ErrorAssertionFunc
-		expectLocations  map[string]string
-		expectRemovedKey []string
-		expectPresentKey []string
+		name            string
+		fields          fields
+		args            args
+		wantErr         assert.ErrorAssertionFunc
+		expectLocations map[string]string
+		expectStoreKeys []string
 	}{
 		{
 			name: "it should relocate an image from both physical store and index",
@@ -44,8 +44,7 @@ func TestRelocate(t *testing.T) {
 			expectLocations: map[string]string{
 				"id-01": relocateOwner + "/newFolder/2022-06-19_15-02-10_16c6dfa0.jpg",
 			},
-			expectRemovedKey: []string{relocateOwner + "/deep/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"},
-			expectPresentKey: []string{relocateOwner + "/newFolder/2022-06-19_15-02-10_16c6dfa0.jpg"},
+			expectStoreKeys: []string{relocateOwner + "/newFolder/2022-06-19_15-02-10_16c6dfa0.jpg"},
 		},
 		{
 			name: "it should not do anything if the image belongs to someone else",
@@ -62,7 +61,7 @@ func TestRelocate(t *testing.T) {
 			expectLocations: map[string]string{
 				"id-01": "captainamerica@avenger.marvel/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg",
 			},
-			expectPresentKey: []string{"captainamerica@avenger.marvel/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"},
+			expectStoreKeys: []string{"captainamerica@avenger.marvel/oldFolder1/2022-06-19_15-02-10_16c6dfa0.jpg"},
 		},
 		{
 			name: "it should ignore unknown media ids and extra locations returned by the repository",
@@ -81,8 +80,7 @@ func TestRelocate(t *testing.T) {
 				"id-01": relocateOwner + "/newFolder/01.jpg",
 				"id-03": "03.jpg",
 			},
-			expectRemovedKey: []string{relocateOwner + "/01.jpg"},
-			expectPresentKey: []string{relocateOwner + "/newFolder/01.jpg"},
+			expectStoreKeys: []string{relocateOwner + "/newFolder/01.jpg"},
 		},
 		{
 			name: "it should clean the location from any extra suffix appended to make the filename unique",
@@ -99,8 +97,7 @@ func TestRelocate(t *testing.T) {
 			expectLocations: map[string]string{
 				"id-01": relocateOwner + "/newFolder/2022-06-19_15-02-10_16c6dfa0.jpg",
 			},
-			expectRemovedKey: []string{relocateOwner + "/oldFolder1/2022-06-19_15-02-10_16c6dfa0_something_might_have_had_been_added_to_make_it_unique.jpg"},
-			expectPresentKey: []string{relocateOwner + "/newFolder/2022-06-19_15-02-10_16c6dfa0.jpg"},
+			expectStoreKeys: []string{relocateOwner + "/newFolder/2022-06-19_15-02-10_16c6dfa0.jpg"},
 		},
 		{
 			name: "it should support files not following the standard filename format",
@@ -117,8 +114,7 @@ func TestRelocate(t *testing.T) {
 			expectLocations: map[string]string{
 				"id-01": relocateOwner + "/newFolder/a_really-strange^format",
 			},
-			expectRemovedKey: []string{relocateOwner + "//this/is/a_really-strange^format"},
-			expectPresentKey: []string{relocateOwner + "/newFolder/a_really-strange^format"},
+			expectStoreKeys: []string{relocateOwner + "/newFolder/a_really-strange^format"},
 		},
 		{
 			name: "it should batch finding, indexing, and store deletion operations",
@@ -141,12 +137,7 @@ func TestRelocate(t *testing.T) {
 				"id-02": relocateOwner + "/newFolder/02.jpg",
 				"id-03": relocateOwner + "/newFolder/03.jpg",
 			},
-			expectRemovedKey: []string{
-				relocateOwner + "/01.jpg",
-				relocateOwner + "/02.jpg",
-				relocateOwner + "/03.jpg",
-			},
-			expectPresentKey: []string{
+			expectStoreKeys: []string{
 				relocateOwner + "/newFolder/01.jpg",
 				relocateOwner + "/newFolder/02.jpg",
 				relocateOwner + "/newFolder/03.jpg",
@@ -171,12 +162,15 @@ func TestRelocate(t *testing.T) {
 				}
 				assert.Equalf(t, expectedKey, got, "unexpected location for id %s", id)
 			}
-			for _, key := range tt.expectRemovedKey {
-				assert.Falsef(t, tt.fields.Store.Has(key), "expected key %s to have been deleted", key)
+
+			gotKeys := make([]string, 0, len(tt.fields.Store.Content))
+			for key := range tt.fields.Store.Content {
+				gotKeys = append(gotKeys, key)
 			}
-			for _, key := range tt.expectPresentKey {
-				assert.Truef(t, tt.fields.Store.Has(key), "expected key %s to be present", key)
-			}
+			sort.Strings(gotKeys)
+			expectedKeys := append([]string(nil), tt.expectStoreKeys...)
+			sort.Strings(expectedKeys)
+			assert.Equal(t, expectedKeys, gotKeys)
 		})
 	}
 }

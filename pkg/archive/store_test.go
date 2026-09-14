@@ -36,19 +36,19 @@ func TestStore(t *testing.T) {
 	}
 
 	type fields struct {
-		Repository archive.ARepositoryAdapter
-		Store      archive.StoreAdapter
+		Repository *ARepositoryInMemory
+		Store      *StoreInMemory
 		AsyncJob   *AsyncJobInMemory
 	}
 	tests := []struct {
-		name              string
-		fields            fields
-		request           *archive.StoreRequest
-		want              string
-		wantErr           assert.ErrorAssertionFunc
-		expectStoredKey   string
-		expectStoredBytes []byte
-		expectLoadedImage *archive.ImageToResize
+		name                 string
+		fields               fields
+		request              *archive.StoreRequest
+		want                 string
+		wantErr              assert.ErrorAssertionFunc
+		expectStore          map[string][]byte
+		expectMediasForOwner map[string]string
+		expectLoadedImages   [][]*archive.ImageToResize
 	}{
 		{
 			name: "it should upload the media, index it, and queue a cache warm-up for the image",
@@ -57,15 +57,17 @@ func TestStore(t *testing.T) {
 				Store:      NewStoreInMemory(),
 				AsyncJob:   NewAsyncJobInMemory(),
 			},
-			request:           baseRequest,
-			want:              "2022-06-26_15-48-42_qwertyui.jpg",
-			wantErr:           assert.NoError,
-			expectStoredKey:   owner + "/folder-1/2022-06-26_15-48-42_qwertyui.jpg",
-			expectStoredBytes: []byte("foobar"),
-			expectLoadedImage: &archive.ImageToResize{
-				Owner:   owner,
-				MediaId: "media-1",
-				Widths:  archive.CacheableWidths,
+			request: baseRequest,
+			want:    "2022-06-26_15-48-42_qwertyui.jpg",
+			wantErr: assert.NoError,
+			expectStore: map[string][]byte{
+				owner + "/folder-1/2022-06-26_15-48-42_qwertyui.jpg": []byte("foobar"),
+			},
+			expectMediasForOwner: map[string]string{
+				"media-1": owner + "/folder-1/2022-06-26_15-48-42_qwertyui.jpg",
+			},
+			expectLoadedImages: [][]*archive.ImageToResize{
+				{{Owner: owner, MediaId: "media-1", Widths: archive.CacheableWidths}},
 			},
 		},
 		{
@@ -75,9 +77,13 @@ func TestStore(t *testing.T) {
 				Store:      NewStoreInMemory(),
 				AsyncJob:   NewAsyncJobInMemory(),
 			},
-			request: baseRequest,
-			want:    "previous_id.jpg",
-			wantErr: assert.NoError,
+			request:     baseRequest,
+			want:        "previous_id.jpg",
+			wantErr:     assert.NoError,
+			expectStore: map[string][]byte{},
+			expectMediasForOwner: map[string]string{
+				"media-1": owner + "/folder-1/previous_id.jpg",
+			},
 		},
 		{
 			name: "it should upload a non-resizable media without queuing a cache warm-up",
@@ -95,10 +101,14 @@ func TestStore(t *testing.T) {
 				Owner:            owner,
 				SignatureSha256:  "qwertyuiopasdfghjklzxcvbnm",
 			},
-			want:              "2022-06-26_15-48-42_qwertyui.mpeg",
-			wantErr:           assert.NoError,
-			expectStoredKey:   owner + "/folder-1/2022-06-26_15-48-42_qwertyui.mpeg",
-			expectStoredBytes: []byte("foobar"),
+			want:    "2022-06-26_15-48-42_qwertyui.mpeg",
+			wantErr: assert.NoError,
+			expectStore: map[string][]byte{
+				owner + "/folder-1/2022-06-26_15-48-42_qwertyui.mpeg": []byte("foobar"),
+			},
+			expectMediasForOwner: map[string]string{
+				"video-1": owner + "/folder-1/2022-06-26_15-48-42_qwertyui.mpeg",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -109,31 +119,11 @@ func TestStore(t *testing.T) {
 			if !tt.wantErr(t, err) {
 				return
 			}
+
 			assert.Equal(t, tt.want, got)
-
-			if tt.expectStoredKey != "" {
-				if store, ok := tt.fields.Store.(*StoreInMemory); assert.True(t, ok) {
-					assert.Equal(t, tt.expectStoredBytes, store.Content[tt.expectStoredKey])
-				}
-				if repository, ok := tt.fields.Repository.(*ARepositoryInMemory); assert.True(t, ok) {
-					key, err := repository.FindById(tt.request.Owner, tt.request.Id)
-					if assert.NoError(t, err) {
-						assert.Equal(t, tt.expectStoredKey, key)
-					}
-				}
-			}
-
-			if tt.expectLoadedImage != nil {
-				if assert.Len(t, tt.fields.AsyncJob.LoadedImages, 1) && assert.Len(t, tt.fields.AsyncJob.LoadedImages[0], 1) {
-					got := tt.fields.AsyncJob.LoadedImages[0][0]
-					assert.Equal(t, tt.expectLoadedImage.Owner, got.Owner)
-					assert.Equal(t, tt.expectLoadedImage.MediaId, got.MediaId)
-					assert.Equal(t, tt.expectLoadedImage.Widths, got.Widths)
-					assert.NotNil(t, got.Open)
-				}
-			} else {
-				assert.Empty(t, tt.fields.AsyncJob.LoadedImages)
-			}
+			assert.Equal(t, tt.expectStore, tt.fields.Store.Content)
+			assert.Equal(t, tt.expectMediasForOwner, tt.fields.Repository.Media[tt.request.Owner])
+			assert.Equal(t, tt.expectLoadedImages, tt.fields.AsyncJob.LoadedImages)
 		})
 	}
 }

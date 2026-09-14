@@ -187,7 +187,11 @@ func (a *AsyncJobInMemory) WarmUpCacheByFolder(owner, missedStoreKey string, wid
 
 func (a *AsyncJobInMemory) LoadImagesInCache(images ...*archive.ImageToResize) error {
 	batch := make([]*archive.ImageToResize, len(images))
-	copy(batch, images)
+	for i, image := range images {
+		copied := *image
+		copied.Open = nil
+		batch[i] = &copied
+	}
 	a.LoadedImages = append(a.LoadedImages, batch)
 	return nil
 }
