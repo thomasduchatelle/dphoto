@@ -1,26 +1,54 @@
 package archive_test
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	mocks2 "github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/archive"
-	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/archive"
 )
 
 func TestGetResizedImage(t *testing.T) {
-	const owner = "ironman@avenger.hero"
+	const resizedOwner = "ironman@avenger.hero"
 	const mediaId = "id-01"
 	const cacheIdSuffix = "/ironman@avenger.hero/id-01"
 	const mediaType = "image/jpeg"
+	const storeKey = "main-store-key-01"
 	fullContent := []byte("full-content-01")
 	resizedContent := []byte("resized-content-01")
 	miniContent := []byte("mini-content-01")
-	unreadableReader := io.NopCloser(new(failWhenRead))
 
+	repositoryWithMedia := func() *ARepositoryInMemory {
+		repository := NewARepositoryInMemory()
+		_ = repository.AddLocation(resizedOwner, mediaId, storeKey)
+		return repository
+	}
+	storeWithMedia := func() *StoreInMemory {
+		store := NewStoreInMemory()
+		store.Content[storeKey] = fullContent
+		return store
+	}
+	cacheWith := func(key string, content []byte) *CacheInMemory {
+		cache := NewCacheInMemory()
+		cache.Content[key] = CacheEntry{MediaType: mediaType, Content: content}
+		return cache
+	}
+	resizerReturning := func(byWidth map[int][]byte) *ResizerInMemory {
+		resizer := NewResizerInMemory()
+		resizer.MediaType = mediaType
+		for w, c := range byWidth {
+			resizer.ByWidth[w] = c
+		}
+		return resizer
+	}
+
+	type fields struct {
+		Repository *ARepositoryInMemory
+		Store      *StoreInMemory
+		Cache      *CacheInMemory
+		AsyncJob   *AsyncJobInMemory
+		Resizer    *ResizerInMemory
+	}
 	type args struct {
 		owner    string
 		mediaId  string
@@ -28,202 +56,217 @@ func TestGetResizedImage(t *testing.T) {
 		maxBytes int
 	}
 	tests := []struct {
-		name        string
-		args        args
-		initMocks   func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter)
-		wantContent []byte
-		wantType    string
-		wantErr     assert.ErrorAssertionFunc
+		name                      string
+		fields                    fields
+		args                      args
+		wantContent               []byte
+		wantType                  string
+		wantErr                   assert.ErrorAssertionFunc
+		expectCache               map[string][]byte
+		expectPublishedWarmUpJobs []WarmUpJob
 	}{
 		{
-			name: "it should resize the image and store the results when the cache is empty",
-			args: args{owner, mediaId, 1440, 0},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				cache.On("Get", "w=1440"+cacheIdSuffix).Once().Return(nil, 0, "", archive.NotFoundError)
-
-				fullContentReader := io.NopCloser(bytes.NewReader(fullContent))
-				repository.On("FindById", owner, mediaId).Once().Return("main-store-key-01", nil)
-				store.On("Download", "main-store-key-01").Once().Return(fullContentReader, nil)
-
-				resizer.On("ResizeImage", fullContentReader, 1440, false).Once().Return(resizedContent, mediaType, nil)
-				cache.On("Put", "w=1440"+cacheIdSuffix, mediaType, mock.Anything).Once().Return(func(id string, mediaType string, reader io.Reader) error {
-					content, err := io.ReadAll(reader)
-					if assert.NoError(t, err) {
-						assert.Equal(t, resizedContent, content)
-					}
-
-					return nil
-				})
-
-				asyncJob.On("WarmUpCacheByFolder", owner, "main-store-key-01", 1440).Once().Return(nil)
+			name: "it should resize the image and store the result when the cache is empty",
+			fields: fields{
+				Repository: repositoryWithMedia(),
+				Store:      storeWithMedia(),
+				Cache:      NewCacheInMemory(),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(map[int][]byte{1440: resizedContent}),
 			},
+			args:        args{resizedOwner, mediaId, 1440, 0},
 			wantContent: resizedContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: resizedContent,
+			},
+			expectPublishedWarmUpJobs: []WarmUpJob{
+				{Owner: resizedOwner, MissedKey: storeKey, Width: 1440},
+			},
 		},
 		{
-			name: "it should use cached image if on the right size",
-			args: args{owner, mediaId, 1440, 0},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				cache.On("Get", "w=1440"+cacheIdSuffix).Once().Return(io.NopCloser(bytes.NewReader(resizedContent)), 42, mediaType, nil)
+			name: "it should use the cached image when it exists at the requested cacheable width",
+			fields: fields{
+				Repository: NewARepositoryInMemory(),
+				Store:      NewStoreInMemory(),
+				Cache:      cacheWith("w=1440"+cacheIdSuffix, resizedContent),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(nil),
 			},
+			args:        args{resizedOwner, mediaId, 1440, 0},
 			wantContent: resizedContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: resizedContent,
+			},
 		},
 		{
-			name: "it should store a miniature image in the cache and return a smaller one",
-			args: args{owner, mediaId, 180, 0},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				cache.On("Get", "miniatures"+cacheIdSuffix).Once().Return(nil, 0, "", archive.NotFoundError)
-
-				fullContentReader := io.NopCloser(bytes.NewReader(fullContent))
-				repository.On("FindById", owner, mediaId).Once().Return("main-store-key-01", nil)
-				store.On("Download", "main-store-key-01").Once().Return(fullContentReader, nil)
-
-				resizer.On("ResizeImage", fullContentReader, archive.MiniatureCachedWidth, false).Once().Return(resizedContent, mediaType, nil)
-				cache.On("Put", "miniatures"+cacheIdSuffix, mediaType, mock.Anything).Once().Return(nil)
-
-				resizer.On("ResizeImage", mock.Anything, 180, true).Once().Return(miniContent, mediaType, func(reader io.Reader, width int, fast bool) error {
-					content, err := io.ReadAll(reader)
-					if assert.NoError(t, err) {
-						assert.Equal(t, resizedContent, content)
-					}
-
-					return nil
-				})
-
-				asyncJob.On("WarmUpCacheByFolder", owner, "main-store-key-01", archive.MiniatureCachedWidth).Once().Return(nil)
+			name: "it should store a miniature in the cache and return a smaller image resized on the fly",
+			fields: fields{
+				Repository: repositoryWithMedia(),
+				Store:      storeWithMedia(),
+				Cache:      NewCacheInMemory(),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer: resizerReturning(map[int][]byte{
+					archive.MiniatureCachedWidth: resizedContent,
+					180:                          miniContent,
+				}),
 			},
+			args:        args{resizedOwner, mediaId, 180, 0},
 			wantContent: miniContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"miniatures" + cacheIdSuffix: resizedContent,
+			},
+			expectPublishedWarmUpJobs: []WarmUpJob{
+				{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MiniatureCachedWidth},
+			},
 		},
 		{
-			name: "it should get the miniature image from the cache and return a smaller one",
-			args: args{owner, mediaId, 180, 0},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				resizedContentReader := io.NopCloser(bytes.NewReader(resizedContent))
-				cache.On("Get", "miniatures"+cacheIdSuffix).Once().Return(resizedContentReader, 42, mediaType, nil)
-
-				resizer.On("ResizeImage", resizedContentReader, 180, true).Once().Return(miniContent, mediaType, nil)
+			name: "it should get the miniature image from the cache and return a smaller one resized on the fly",
+			fields: fields{
+				Repository: NewARepositoryInMemory(),
+				Store:      NewStoreInMemory(),
+				Cache:      cacheWith("miniatures"+cacheIdSuffix, resizedContent),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(map[int][]byte{180: miniContent}),
 			},
+			args:        args{resizedOwner, mediaId, 180, 0},
 			wantContent: miniContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"miniatures" + cacheIdSuffix: resizedContent,
+			},
 		},
 		{
-			name: "it should use the appropriate cached width and resize after",
-			args: args{owner, mediaId, 1024, 0},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				resizedContentReader := io.NopCloser(bytes.NewReader(resizedContent))
-				cache.On("Get", "w=1440"+cacheIdSuffix).Once().Return(resizedContentReader, 42, mediaType, nil)
-
-				resizer.On("ResizeImage", resizedContentReader, 1024, true).Once().Return(miniContent, mediaType, nil)
+			name: "it should use the appropriate cached width and resize down after",
+			fields: fields{
+				Repository: NewARepositoryInMemory(),
+				Store:      NewStoreInMemory(),
+				Cache:      cacheWith("w=1440"+cacheIdSuffix, resizedContent),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(map[int][]byte{1024: miniContent}),
 			},
+			args:        args{resizedOwner, mediaId, 1024, 0},
 			wantContent: miniContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: resizedContent,
+			},
 		},
 		{
-			name: "it should return an overflow error when the image is too big after having storing it",
-			args: args{owner, mediaId, archive.MediumQualityCachedWidth, 8},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				cacheKey := fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix)
-				cache.On("Get", cacheKey).Once().Return(nil, 0, "", archive.NotFoundError)
-
-				fullContentReader := io.NopCloser(bytes.NewReader(fullContent))
-				repository.On("FindById", owner, mediaId).Once().Return("main-store-key-01", nil)
-				store.On("Download", "main-store-key-01").Once().Return(fullContentReader, nil)
-
-				resizer.On("ResizeImage", fullContentReader, archive.MediumQualityCachedWidth, false).Once().Return(resizedContent, mediaType, nil)
-				cache.On("Put", cacheKey, mediaType, mock.Anything).Once().Return(nil)
-
-				asyncJob.On("WarmUpCacheByFolder", owner, "main-store-key-01", archive.MediumQualityCachedWidth).Once().Return(nil)
+			name: "it should return an overflow error when the freshly cached image is too big",
+			fields: fields{
+				Repository: repositoryWithMedia(),
+				Store:      storeWithMedia(),
+				Cache:      NewCacheInMemory(),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(map[int][]byte{archive.MediumQualityCachedWidth: resizedContent}),
 			},
-			wantContent: nil,
-			wantType:    mediaType,
+			args: args{resizedOwner, mediaId, archive.MediumQualityCachedWidth, 8},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Equal(t, err, archive.MediaOverflowError, i)
+				return assert.ErrorIs(t, err, archive.MediaOverflowError)
+			},
+			wantType: mediaType,
+			expectCache: map[string][]byte{
+				fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix): resizedContent,
+			},
+			expectPublishedWarmUpJobs: []WarmUpJob{
+				{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MediumQualityCachedWidth},
 			},
 		},
 		{
 			name: "it should return an overflow error when the cached image is too big",
-			args: args{owner, mediaId, archive.MediumQualityCachedWidth, 41},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				cacheKey := fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix)
-				cache.On("Get", cacheKey).Once().Return(unreadableReader, 42, mediaType, nil)
+			fields: fields{
+				Repository: NewARepositoryInMemory(),
+				Store:      NewStoreInMemory(),
+				Cache:      cacheWith(fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix), []byte("this-is-a-large-cached-blob")),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(nil),
 			},
-			wantContent: nil,
-			wantType:    mediaType,
+			args: args{resizedOwner, mediaId, archive.MediumQualityCachedWidth, 8},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Equal(t, archive.MediaOverflowError, err, i)
+				return assert.ErrorIs(t, err, archive.MediaOverflowError)
+			},
+			wantType: mediaType,
+			expectCache: map[string][]byte{
+				fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix): []byte("this-is-a-large-cached-blob"),
 			},
 		},
 		{
-			name: "it should return an overflow error when the resized image is too big",
-			args: args{owner, mediaId, 1024, 8},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				resizedContentReader := io.NopCloser(bytes.NewReader(resizedContent))
-				cache.On("Get", "w=1440"+cacheIdSuffix).Once().Return(resizedContentReader, 40, mediaType, nil)
-
-				resizer.On("ResizeImage", resizedContentReader, 1024, true).Once().Return(miniContent, mediaType, nil)
+			name: "it should return an overflow error when the on-the-fly resized image is too big",
+			fields: fields{
+				Repository: NewARepositoryInMemory(),
+				Store:      NewStoreInMemory(),
+				Cache:      cacheWith("w=1440"+cacheIdSuffix, []byte("cached-fits")),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(map[int][]byte{1024: []byte("way-too-big-resized-payload")}),
 			},
-			wantContent: nil,
-			wantType:    mediaType,
+			args: args{resizedOwner, mediaId, 1024, 8},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Equal(t, archive.MediaOverflowError, err, i)
+				return assert.ErrorIs(t, err, archive.MediaOverflowError)
+			},
+			wantType: mediaType,
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: []byte("cached-fits"),
 			},
 		},
 		{
-			name: "it should return the resized image even if the cached version is too big",
-			args: args{owner, mediaId, 1024, 16},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				resizedContentReader := io.NopCloser(bytes.NewReader(resizedContent))
-				cache.On("Get", "w=1440"+cacheIdSuffix).Once().Return(resizedContentReader, 40, mediaType, nil)
-
-				resizer.On("ResizeImage", resizedContentReader, 1024, true).Once().Return(miniContent, mediaType, nil)
+			name: "it should return the resized image even if the cached version is too big for the consumer",
+			fields: fields{
+				Repository: NewARepositoryInMemory(),
+				Store:      NewStoreInMemory(),
+				Cache:      cacheWith("w=1440"+cacheIdSuffix, []byte("cached-too-big-for-consumer-but-not-returned")),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(map[int][]byte{1024: miniContent}),
 			},
+			args:        args{resizedOwner, mediaId, 1024, 16},
 			wantContent: miniContent,
 			wantType:    mediaType,
 			wantErr:     assert.NoError,
-		},
-		{
-			name: "it should return not found if the image is unknown",
-			args: args{owner, mediaId, 1440, 8},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-				cache.On("Get", "w=1440"+cacheIdSuffix).Once().Return(nil, 0, "", archive.NotFoundError)
-				repository.On("FindById", owner, mediaId).Once().Return("", archive.NotFoundError)
-			},
-			wantContent: nil,
-			wantType:    "",
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Equal(t, archive.NotFoundError, err, i)
+			expectCache: map[string][]byte{
+				"w=1440" + cacheIdSuffix: []byte("cached-too-big-for-consumer-but-not-returned"),
 			},
 		},
 		{
-			name: "it should reject width request higher than max cached resolution",
-			args: args{owner, mediaId, 151000, 16},
-			initMocks: func(t *testing.T, repository *mocks2.ARepositoryAdapter, store *mocks2.StoreAdapter, cache *mocks2.CacheAdapter, asyncJob *mocks2.AsyncJobAdapter, resizer *mocks2.ResizerAdapter) {
-
+			name: "it should return NotFoundError when the image id is unknown",
+			fields: fields{
+				Repository: NewARepositoryInMemory(),
+				Store:      NewStoreInMemory(),
+				Cache:      NewCacheInMemory(),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(nil),
 			},
+			args: args{resizedOwner, mediaId, 1440, 8},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err, i)
+				return assert.ErrorIs(t, err, archive.NotFoundError)
+			},
+		},
+		{
+			name: "it should reject widths higher than the maximum cacheable resolution",
+			fields: fields{
+				Repository: NewARepositoryInMemory(),
+				Store:      NewStoreInMemory(),
+				Cache:      NewCacheInMemory(),
+				AsyncJob:   NewAsyncJobInMemory(),
+				Resizer:    resizerReturning(nil),
+			},
+			args: args{resizedOwner, mediaId, 151000, 16},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.Error(t, err)
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := mocks2.NewARepositoryAdapter(t)
-			store := mocks2.NewStoreAdapter(t)
-			cache := mocks2.NewCacheAdapter(t)
-			resizer := mocks2.NewResizerAdapter(t)
-			asyncJob := mocks2.NewAsyncJobAdapter(t)
-			tt.initMocks(t, repository, store, cache, asyncJob, resizer)
-			archive.ResizerPort = resizer
-			archive.Init(repository, store, cache, asyncJob)
-
+			archive.ResizerPort = tt.fields.Resizer
+			archive.Init(tt.fields.Repository, tt.fields.Store, tt.fields.Cache, tt.fields.AsyncJob)
 			archive.CacheableWidths = []int{archive.MediumQualityCachedWidth, 1440, archive.MiniatureCachedWidth}
 
 			gotContent, gotMediaType, err := archive.GetResizedImage(tt.args.owner, tt.args.mediaId, tt.args.width, tt.args.maxBytes)
@@ -232,27 +275,30 @@ func TestGetResizedImage(t *testing.T) {
 			}
 			assert.Equal(t, tt.wantContent, gotContent)
 			assert.Equal(t, tt.wantType, gotMediaType)
+
+			var gotCache map[string][]byte
+			if len(tt.fields.Cache.Content) > 0 {
+				gotCache = make(map[string][]byte, len(tt.fields.Cache.Content))
+				for key, entry := range tt.fields.Cache.Content {
+					gotCache[key] = entry.Content
+				}
+			}
+			assert.Equal(t, tt.expectCache, gotCache)
+			assert.Equal(t, tt.expectPublishedWarmUpJobs, tt.fields.AsyncJob.PendingWarmUpJobs)
 		})
 	}
 }
 
 func TestGetResizedImageURL(t *testing.T) {
-	t.Run("it should pass-through the request to the cache", func(t *testing.T) {
-		cacheAdapter := mocks2.NewCacheAdapter(t)
-		archive.Init(mocks2.NewARepositoryAdapter(t), mocks2.NewStoreAdapter(t), cacheAdapter, mocks2.NewAsyncJobAdapter(t))
-
-		cacheAdapter.On("SignedURL", "miniatures/ironman@avenger.hero/id-01", archive.DownloadUrlValidityDuration).Once().Return("https://id-01.example.com", nil)
+	t.Run("it should return a signed URL from the cache adapter for a miniature request", func(t *testing.T) {
+		cache := NewCacheInMemory()
+		archive.Init(NewARepositoryInMemory(), NewStoreInMemory(), cache, NewAsyncJobInMemory())
+		archive.CacheableWidths = []int{archive.MediumQualityCachedWidth, 1440, archive.MiniatureCachedWidth}
 
 		gotUrl, gotErr := archive.GetResizedImageURL("ironman@avenger.hero", "id-01", 200)
+
 		if assert.NoError(t, gotErr) {
-			assert.Equal(t, "https://id-01.example.com", gotUrl)
+			assert.Equal(t, "signed://miniatures/ironman@avenger.hero/id-01", gotUrl)
 		}
 	})
-}
-
-type failWhenRead struct {
-}
-
-func (f failWhenRead) Read(p []byte) (n int, err error) {
-	panic("DO NOT READ ME")
 }
