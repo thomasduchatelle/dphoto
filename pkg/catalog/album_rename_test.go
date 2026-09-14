@@ -51,72 +51,115 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 		ForcedFolderName: "",
 	}
 
-	t.Run("it should create a new album end to end", func(t *testing.T) {
-		albumRepository := NewAlbumRepositoryInMemory(existingAlbum)
-		transferMedias := NewTransferMediasInMemory()
-		transferMedias.TransferredMedias = transferredMedias
-		timelineObserver := &TimelineMutationObserverInMemory{}
+	transferMediasWithMedias := func() *TransferMediasInMemory {
+		transfer := NewTransferMediasInMemory()
+		transfer.TransferredMedias = transferredMedias
+		return transfer
+	}
 
-		renameAlbum := catalog.NewRenameAlbum(
-			albumRepository,
-			albumRepository,
-			albumRepository,
-			albumRepository,
-			transferMedias,
-			albumRepository,
-			timelineObserver,
-		)
+	failingInsertAlbum := func() *insertAlbumPortMock {
+		m := new(insertAlbumPortMock)
+		m.On("InsertAlbum", mock.Anything, newAlbum).Return(testError).Once()
+		return m
+	}
 
-		err := renameAlbum.RenameAlbum(context.Background(), renameRequest)
-		if !assert.NoError(t, err) {
-			return
-		}
-
-		assert.NotContains(t, albumRepository.Albums, existingAlbum.AlbumId, "the old album should be deleted")
-		assert.Contains(t, albumRepository.Albums, newAlbum.AlbumId, "the new album should be created")
-		assert.Equal(t, []catalog.MediaTransferRecords{{
-			newAlbum.AlbumId: {
-				{
-					FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
-					Start:      existingAlbum.Start,
-					End:        existingAlbum.End,
-				},
+	type fields struct {
+		AlbumRepository  *AlbumRepositoryInMemory
+		InsertAlbum      catalog.InsertAlbumPort
+		TransferMedias   *TransferMediasInMemory
+		TimelineObserver *TimelineMutationObserverInMemory
+	}
+	type args struct {
+		request catalog.RenameAlbumRequest
+	}
+	tests := []struct {
+		name                string
+		fields              fields
+		args                args
+		wantOldAlbumDeleted bool
+		wantNewAlbumCreated bool
+		wantTransferRecords []catalog.MediaTransferRecords
+		wantNotifications   []catalog.TransferredMedias
+		wantErr             assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should create a new album end to end",
+			fields: fields{
+				AlbumRepository:  NewAlbumRepositoryInMemory(existingAlbum),
+				TransferMedias:   transferMediasWithMedias(),
+				TimelineObserver: &TimelineMutationObserverInMemory{},
 			},
-		}}, transferMedias.Records)
-		assert.Equal(t, []catalog.TransferredMedias{{
-			Transfers:  transferredMedias.Transfers,
-			FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
-		}}, timelineObserver.Notifications)
-	})
+			args:                args{request: renameRequest},
+			wantOldAlbumDeleted: true,
+			wantNewAlbumCreated: true,
+			wantTransferRecords: []catalog.MediaTransferRecords{{
+				newAlbum.AlbumId: {
+					{
+						FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
+						Start:      existingAlbum.Start,
+						End:        existingAlbum.End,
+					},
+				},
+			}},
+			wantNotifications: []catalog.TransferredMedias{{
+				Transfers:  transferredMedias.Transfers,
+				FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
+			}},
+			wantErr: assert.NoError,
+		},
+		{
+			// E6: uses testify/mock inline for the InsertAlbumPort to force insert to fail. Verify by
+			// state that the old album is still present, the transfer never happened, and the observer
+			// was not notified (rollback semantics).
+			name: "it should interrupt the transfer if the album insertion fails",
+			fields: fields{
+				AlbumRepository:  NewAlbumRepositoryInMemory(existingAlbum),
+				InsertAlbum:      failingInsertAlbum(),
+				TransferMedias:   transferMediasWithMedias(),
+				TimelineObserver: &TimelineMutationObserverInMemory{},
+			},
+			args: args{request: renameRequest},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, testError, i...)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			insertAlbum := catalog.InsertAlbumPort(tt.fields.AlbumRepository)
+			if tt.fields.InsertAlbum != nil {
+				insertAlbum = tt.fields.InsertAlbum
+			}
 
-	// E6: uses testify/mock inline for the InsertAlbumPort to force insert to fail. Verify by
-	// state that the old album is still present, the transfer never happened, and the observer
-	// was not notified (rollback semantics).
-	t.Run("it should interrupt the transfer if the album insertion fails", func(t *testing.T) {
-		albumRepository := NewAlbumRepositoryInMemory(existingAlbum)
-		failingInsert := new(insertAlbumPortMock)
-		failingInsert.On("InsertAlbum", mock.Anything, newAlbum).Return(testError).Once()
-		transferMedias := NewTransferMediasInMemory()
-		transferMedias.TransferredMedias = transferredMedias
-		timelineObserver := &TimelineMutationObserverInMemory{}
+			renameAlbum := catalog.NewRenameAlbum(
+				tt.fields.AlbumRepository,
+				tt.fields.AlbumRepository,
+				insertAlbum,
+				tt.fields.AlbumRepository,
+				tt.fields.TransferMedias,
+				tt.fields.AlbumRepository,
+				tt.fields.TimelineObserver,
+			)
 
-		renameAlbum := catalog.NewRenameAlbum(
-			albumRepository,
-			albumRepository,
-			failingInsert,
-			albumRepository,
-			transferMedias,
-			albumRepository,
-			timelineObserver,
-		)
+			err := renameAlbum.RenameAlbum(context.Background(), tt.args.request)
+			if !tt.wantErr(t, err, fmt.Sprintf("RenameAlbum(%v)", tt.args.request)) {
+				return
+			}
 
-		err := renameAlbum.RenameAlbum(context.Background(), renameRequest)
-		assert.ErrorIs(t, err, testError)
-		failingInsert.AssertExpectations(t)
-		assert.Contains(t, albumRepository.Albums, existingAlbum.AlbumId, "the old album must NOT be deleted when insert fails")
-		assert.Empty(t, transferMedias.Records, "medias must NOT be transferred when insert fails")
-		assert.Empty(t, timelineObserver.Notifications, "observer must NOT be notified when insert fails")
-	})
+			if tt.wantOldAlbumDeleted {
+				assert.NotContains(t, tt.fields.AlbumRepository.Albums, existingAlbum.AlbumId, "the old album should be deleted")
+			} else {
+				assert.Contains(t, tt.fields.AlbumRepository.Albums, existingAlbum.AlbumId, "the old album must NOT be deleted")
+			}
+			if tt.wantNewAlbumCreated {
+				assert.Contains(t, tt.fields.AlbumRepository.Albums, newAlbum.AlbumId, "the new album should be created")
+			} else {
+				assert.NotContains(t, tt.fields.AlbumRepository.Albums, newAlbum.AlbumId, "the new album must NOT be created")
+			}
+			assert.Equal(t, tt.wantTransferRecords, tt.fields.TransferMedias.Records)
+			assert.Equal(t, tt.wantNotifications, tt.fields.TimelineObserver.Notifications)
+		})
+	}
 }
 
 func TestRenameAlbum_RenameAlbum(t *testing.T) {

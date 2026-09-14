@@ -54,77 +54,112 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 		return transfer
 	}
 
-	t.Run("it should create a happy path full album create process", func(t *testing.T) {
-		albumRepository := NewAlbumRepositoryInMemory(lifetimeAlbum)
-		transferMedias := transferMediasWithMedias()
-		timelineObserver := &TimelineMutationObserverInMemory{}
+	failingInsertAlbum := func() *insertAlbumPortMock {
+		m := new(insertAlbumPortMock)
+		m.On("InsertAlbum", mock.Anything, createAlbum).Return(testErrorInsertingAlbum).Once()
+		return m
+	}
+	failingFindAlbumsByOwner := func() *findAlbumsByOwnerMock {
+		m := new(findAlbumsByOwnerMock)
+		m.On("FindAlbumsByOwner", mock.Anything, ownermodel.Owner(owner)).Return([]*catalog.Album(nil), testErrorFindingAlbums).Once()
+		return m
+	}
 
-		albumCreate := catalog.NewAlbumCreate(
-			albumRepository,
-			albumRepository,
-			transferMedias,
-			timelineObserver,
-		)
+	type fields struct {
+		AlbumRepository   *AlbumRepositoryInMemory
+		FindAlbumsByOwner catalog.FindAlbumsByOwnerPort
+		InsertAlbum       catalog.InsertAlbumPort
+		TransferMedias    *TransferMediasInMemory
+		TimelineObserver  *TimelineMutationObserverInMemory
+	}
+	type args struct {
+		request catalog.CreateAlbumRequest
+	}
+	tests := []struct {
+		name              string
+		fields            fields
+		args              args
+		wantAlbumInserted bool
+		wantNotifications []catalog.TransferredMedias
+		wantErr           assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should create a happy path full album create process",
+			fields: fields{
+				AlbumRepository:  NewAlbumRepositoryInMemory(lifetimeAlbum),
+				TransferMedias:   transferMediasWithMedias(),
+				TimelineObserver: &TimelineMutationObserverInMemory{},
+			},
+			args:              args{request: standardRequest},
+			wantAlbumInserted: true,
+			wantNotifications: []catalog.TransferredMedias{{
+				Transfers:  transferredMedias.Transfers,
+				FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+			}},
+			wantErr: assert.NoError,
+		},
+		{
+			// E3: uses testify/mock inline for the InsertAlbumPort to force the insert to fail and
+			// verify by state that neither the transfer nor the observer was called (order guarantee).
+			name: "it should not call transfer observer if album insert fails (verify the order)",
+			fields: fields{
+				AlbumRepository:  NewAlbumRepositoryInMemory(lifetimeAlbum),
+				InsertAlbum:      failingInsertAlbum(),
+				TransferMedias:   transferMediasWithMedias(),
+				TimelineObserver: &TimelineMutationObserverInMemory{},
+			},
+			args: args{request: standardRequest},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, testErrorInsertingAlbum, i...)
+			},
+		},
+		{
+			// E4: uses testify/mock inline for FindAlbumsByOwnerPort to force the list to fail and
+			// verify by state that no album is inserted (ordering guarantee: list before insert).
+			name: "it should list the existing albums before creating the new one (otherwise there are duplicates in the timeline)",
+			fields: fields{
+				AlbumRepository:   NewAlbumRepositoryInMemory(lifetimeAlbum),
+				FindAlbumsByOwner: failingFindAlbumsByOwner(),
+				TransferMedias:    transferMediasWithMedias(),
+				TimelineObserver:  &TimelineMutationObserverInMemory{},
+			},
+			args: args{request: standardRequest},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, testErrorFindingAlbums, i...)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			findAlbumsByOwner := catalog.FindAlbumsByOwnerPort(tt.fields.AlbumRepository)
+			if tt.fields.FindAlbumsByOwner != nil {
+				findAlbumsByOwner = tt.fields.FindAlbumsByOwner
+			}
+			insertAlbum := catalog.InsertAlbumPort(tt.fields.AlbumRepository)
+			if tt.fields.InsertAlbum != nil {
+				insertAlbum = tt.fields.InsertAlbum
+			}
 
-		_, err := albumCreate.Create(context.Background(), standardRequest)
-		if !assert.NoError(t, err) {
-			return
-		}
+			albumCreate := catalog.NewAlbumCreate(
+				findAlbumsByOwner,
+				insertAlbum,
+				tt.fields.TransferMedias,
+				tt.fields.TimelineObserver,
+			)
 
-		assert.Contains(t, albumRepository.Albums, createAlbum.AlbumId, "album should be inserted")
-		assert.Equal(t, []catalog.TransferredMedias{{
-			Transfers:  transferredMedias.Transfers,
-			FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
-		}}, timelineObserver.Notifications)
-	})
+			_, err := albumCreate.Create(context.Background(), tt.args.request)
+			if !tt.wantErr(t, err, fmt.Sprintf("Create(%v)", tt.args.request)) {
+				return
+			}
 
-	// E3: uses testify/mock inline for the InsertAlbumPort to force the insert to fail and
-	// verify by state that neither the transfer nor the observer was called (order guarantee).
-	t.Run("it should not call transfer observer if album insert fails (verify the order)", func(t *testing.T) {
-		albumRepository := NewAlbumRepositoryInMemory(lifetimeAlbum)
-		failingInsert := new(insertAlbumPortMock)
-		failingInsert.On("InsertAlbum", mock.Anything, createAlbum).Return(testErrorInsertingAlbum).Once()
-		transferMedias := transferMediasWithMedias()
-		timelineObserver := &TimelineMutationObserverInMemory{}
-
-		albumCreate := catalog.NewAlbumCreate(
-			albumRepository,
-			failingInsert,
-			transferMedias,
-			timelineObserver,
-		)
-
-		_, err := albumCreate.Create(context.Background(), standardRequest)
-		assert.ErrorIs(t, err, testErrorInsertingAlbum)
-		failingInsert.AssertExpectations(t)
-		assert.Empty(t, transferMedias.Records, "transfer must not run when insert fails")
-		assert.Empty(t, timelineObserver.Notifications, "observer must not be notified when insert fails")
-	})
-
-	// E4: uses testify/mock inline for FindAlbumsByOwnerPort to force the list to fail and
-	// verify by state that no album is inserted (ordering guarantee: list before insert).
-	t.Run("it should list the existing albums before creating the new one (otherwise there are duplicates in the timeline)", func(t *testing.T) {
-		findAlbumsByOwner := new(findAlbumsByOwnerMock)
-		findAlbumsByOwner.On("FindAlbumsByOwner", mock.Anything, ownermodel.Owner(owner)).Return([]*catalog.Album(nil), testErrorFindingAlbums).Once()
-
-		albumRepository := NewAlbumRepositoryInMemory(lifetimeAlbum)
-		transferMedias := transferMediasWithMedias()
-		timelineObserver := &TimelineMutationObserverInMemory{}
-
-		albumCreate := catalog.NewAlbumCreate(
-			findAlbumsByOwner,
-			albumRepository,
-			transferMedias,
-			timelineObserver,
-		)
-
-		_, err := albumCreate.Create(context.Background(), standardRequest)
-		assert.ErrorIs(t, err, testErrorFindingAlbums)
-		findAlbumsByOwner.AssertExpectations(t)
-		assert.NotContains(t, albumRepository.Albums, createAlbum.AlbumId, "album must not be inserted when list fails")
-		assert.Empty(t, transferMedias.Records)
-		assert.Empty(t, timelineObserver.Notifications)
-	})
+			if tt.wantAlbumInserted {
+				assert.Contains(t, tt.fields.AlbumRepository.Albums, createAlbum.AlbumId, "album should be inserted")
+			} else {
+				assert.NotContains(t, tt.fields.AlbumRepository.Albums, createAlbum.AlbumId, "album must not be inserted")
+			}
+			assert.Equal(t, tt.wantNotifications, tt.fields.TimelineObserver.Notifications)
+		})
+	}
 }
 
 // insertAlbumPortMock is a testify/mock used only inline by the failure-injection tests (E3
