@@ -69,15 +69,6 @@ go test ./...
 
 Warning: `pkg/acl/jwks` test fails without internet (accounts.google.com) - EXPECTED, ignore it
 
-**No mocks — Fakes only.** Test dependencies are per-package in-memory Fakes co-located in a
-`fakes_test.go` file. One Fake per real backing store, implementing every port that touches that
-data. Verify by state — via read methods the interface already exposes, or via a purpose-built
-test-only accessor on the Fake — never by asserting "was this method called". New tests must not
-import `mockery`-generated types or `github.com/stretchr/testify/mock`. A handful of existing tests
-still use `testify/mock` inline to inject failure behaviour that Fakes cannot naturally express
-(data-loss / rollback / ordering guarantees); do not extend that pattern without a genuine
-behavioural reason.
-
 ### Golang - `api/lambdas/`
 
 ```shell

@@ -19,10 +19,6 @@ structure of each case is fixed** — do not omit or rename fields on a whim:
    **Ignore only if the code under test is a plain function, not a struct.**
     * Do NOT drop `fields` because the tests happen to share the same collaborators — the fields
       must still be declared so each case can override any one of them when it needs to.
-    * Dependencies are always in-memory **Fakes** — never generated mocks, never
-      `github.com/stretchr/testify/mock`. One Fake per real backing store, implementing every
-      port that reads or writes that data. Fakes live in a per-package `fakes_test.go` and are
-      shared across tests of the same package (see the instantiation decision tree below).
     * Use concrete Fake types (not the interface) when `expectX` below needs to read state back
       through a test-only accessor.
     * Every `fields{...}` literal must be **readable in isolation**: a reviewer should
