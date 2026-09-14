@@ -76,12 +76,12 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 		request catalog.CreateAlbumRequest
 	}
 	tests := []struct {
-		name              string
-		fields            fields
-		args              args
-		wantAlbumInserted bool
-		wantNotifications []catalog.TransferredMedias
-		wantErr           assert.ErrorAssertionFunc
+		name                 string
+		fields               fields
+		args                 args
+		expectStoredAlbumIds []catalog.AlbumId
+		expectNotifications  []catalog.TransferredMedias
+		wantErr              assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should create a happy path full album create process",
@@ -90,9 +90,9 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 				TransferMedias:   transferMediasWithMedias(),
 				TimelineObserver: &TimelineMutationObserverInMemory{},
 			},
-			args:              args{request: standardRequest},
-			wantAlbumInserted: true,
-			wantNotifications: []catalog.TransferredMedias{{
+			args:                 args{request: standardRequest},
+			expectStoredAlbumIds: []catalog.AlbumId{lifetimeAlbum.AlbumId, createAlbum.AlbumId},
+			expectNotifications: []catalog.TransferredMedias{{
 				Transfers:  transferredMedias.Transfers,
 				FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
 			}},
@@ -108,7 +108,8 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 				TransferMedias:   transferMediasWithMedias(),
 				TimelineObserver: &TimelineMutationObserverInMemory{},
 			},
-			args: args{request: standardRequest},
+			args:                 args{request: standardRequest},
+			expectStoredAlbumIds: []catalog.AlbumId{lifetimeAlbum.AlbumId},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, testErrorInsertingAlbum, i...)
 			},
@@ -123,7 +124,8 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 				TransferMedias:    transferMediasWithMedias(),
 				TimelineObserver:  &TimelineMutationObserverInMemory{},
 			},
-			args: args{request: standardRequest},
+			args:                 args{request: standardRequest},
+			expectStoredAlbumIds: []catalog.AlbumId{lifetimeAlbum.AlbumId},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, testErrorFindingAlbums, i...)
 			},
@@ -152,12 +154,12 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 				return
 			}
 
-			if tt.wantAlbumInserted {
-				assert.Contains(t, tt.fields.AlbumRepository.Albums, createAlbum.AlbumId, "album should be inserted")
-			} else {
-				assert.NotContains(t, tt.fields.AlbumRepository.Albums, createAlbum.AlbumId, "album must not be inserted")
+			storedIds := make([]catalog.AlbumId, 0, len(tt.fields.AlbumRepository.Albums))
+			for id := range tt.fields.AlbumRepository.Albums {
+				storedIds = append(storedIds, id)
 			}
-			assert.Equal(t, tt.wantNotifications, tt.fields.TimelineObserver.Notifications)
+			assert.ElementsMatch(t, tt.expectStoredAlbumIds, storedIds, "stored albums")
+			assert.Equal(t, tt.expectNotifications, tt.fields.TimelineObserver.Notifications)
 		})
 	}
 }
@@ -210,11 +212,11 @@ func TestCreateAlbumStateless_Create(t *testing.T) {
 		request catalog.CreateAlbumRequest
 	}
 	tests := []struct {
-		name         string
-		fields       fields
-		args         args
-		wantObserved []catalog.Album
-		wantErr      assert.ErrorAssertionFunc
+		name           string
+		fields         fields
+		args           args
+		expectObserved []catalog.Album
+		wantErr        assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should NOT create the album without owner",
@@ -289,8 +291,8 @@ func TestCreateAlbumStateless_Create(t *testing.T) {
 			args: args{
 				request: standardRequest,
 			},
-			wantObserved: []catalog.Album{ironmanOneAlbum},
-			wantErr:      assert.NoError,
+			expectObserved: []catalog.Album{ironmanOneAlbum},
+			wantErr:        assert.NoError,
 		},
 		{
 			name: "it should create the album with a generated name when the folderName is just a slash '/'",
@@ -303,8 +305,8 @@ func TestCreateAlbumStateless_Create(t *testing.T) {
 					ForcedFolderName: "/",
 				},
 			},
-			wantObserved: []catalog.Album{ironmanOneAlbum},
-			wantErr:      assert.NoError,
+			expectObserved: []catalog.Album{ironmanOneAlbum},
+			wantErr:        assert.NoError,
 		},
 		{
 			name: "it should create the album with a forced name",
@@ -317,7 +319,7 @@ func TestCreateAlbumStateless_Create(t *testing.T) {
 					ForcedFolderName: "Phase_1_Avenger",
 				},
 			},
-			wantObserved: []catalog.Album{{
+			expectObserved: []catalog.Album{{
 				AlbumId: catalog.AlbumId{
 					Owner:      owner,
 					FolderName: "/Phase_1_Avenger",
@@ -360,7 +362,7 @@ func TestCreateAlbumStateless_Create(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, tt.wantObserved, observer.CreatedAlbums)
+			assert.Equal(t, tt.expectObserved, observer.CreatedAlbums)
 		})
 	}
 }
@@ -410,18 +412,18 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 		existingAlbums []*catalog.Album
 	}
 	tests := []struct {
-		name                string
-		args                args
-		wantTransferRecords []catalog.MediaTransferRecords
-		wantErr             assert.ErrorAssertionFunc
+		name                  string
+		args                  args
+		expectTransferRecords []catalog.MediaTransferRecords
+		wantErr               assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should create the album with a generated name",
 			args: args{
 				createdAlbum: album,
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{nil},
-			wantErr:             assert.NoError,
+			expectTransferRecords: []catalog.MediaTransferRecords{nil},
+			wantErr:               assert.NoError,
 		},
 		{
 			name: "it should re-allocate medias from a lower priority album",
@@ -429,7 +431,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 				createdAlbum:   album,
 				existingAlbums: []*catalog.Album{lifetimeAlbum},
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				album.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
@@ -446,7 +448,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 				createdAlbum:   album,
 				existingAlbums: []*catalog.Album{lifetimeAlbum, remainingLifetimeAlbum},
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				album.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{remainingLifetimeAlbum.AlbumId, lifetimeAlbum.AlbumId},
@@ -463,7 +465,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 				createdAlbum:   album,
 				existingAlbums: []*catalog.Album{lifetimeAlbum, highPriorityAlbum},
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				album.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{lifetimeAlbum.AlbumId},
@@ -490,7 +492,7 @@ func TestCreateAlbumMediaTransfer_ObserveCreateAlbum(t *testing.T) {
 			if !tt.wantErr(t, err, fmt.Sprintf("ObserveCreateAlbum(%v)", tt.args.createdAlbum)) {
 				return
 			}
-			assert.Equal(t, tt.wantTransferRecords, mediaTransfer.Records)
+			assert.Equal(t, tt.expectTransferRecords, mediaTransfer.Records)
 		})
 	}
 }

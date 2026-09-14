@@ -73,14 +73,13 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 		request catalog.RenameAlbumRequest
 	}
 	tests := []struct {
-		name                string
-		fields              fields
-		args                args
-		wantOldAlbumDeleted bool
-		wantNewAlbumCreated bool
-		wantTransferRecords []catalog.MediaTransferRecords
-		wantNotifications   []catalog.TransferredMedias
-		wantErr             assert.ErrorAssertionFunc
+		name                  string
+		fields                fields
+		args                  args
+		expectStoredAlbumIds  []catalog.AlbumId
+		expectTransferRecords []catalog.MediaTransferRecords
+		expectNotifications   []catalog.TransferredMedias
+		wantErr               assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should create a new album end to end",
@@ -89,10 +88,9 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				TransferMedias:   transferMediasWithMedias(),
 				TimelineObserver: &TimelineMutationObserverInMemory{},
 			},
-			args:                args{request: renameRequest},
-			wantOldAlbumDeleted: true,
-			wantNewAlbumCreated: true,
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			args:                 args{request: renameRequest},
+			expectStoredAlbumIds: []catalog.AlbumId{newAlbum.AlbumId},
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				newAlbum.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
@@ -101,7 +99,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 					},
 				},
 			}},
-			wantNotifications: []catalog.TransferredMedias{{
+			expectNotifications: []catalog.TransferredMedias{{
 				Transfers:  transferredMedias.Transfers,
 				FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
 			}},
@@ -118,7 +116,8 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				TransferMedias:   transferMediasWithMedias(),
 				TimelineObserver: &TimelineMutationObserverInMemory{},
 			},
-			args: args{request: renameRequest},
+			args:                 args{request: renameRequest},
+			expectStoredAlbumIds: []catalog.AlbumId{existingAlbum.AlbumId},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, testError, i...)
 			},
@@ -146,18 +145,13 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				return
 			}
 
-			if tt.wantOldAlbumDeleted {
-				assert.NotContains(t, tt.fields.AlbumRepository.Albums, existingAlbum.AlbumId, "the old album should be deleted")
-			} else {
-				assert.Contains(t, tt.fields.AlbumRepository.Albums, existingAlbum.AlbumId, "the old album must NOT be deleted")
+			storedIds := make([]catalog.AlbumId, 0, len(tt.fields.AlbumRepository.Albums))
+			for id := range tt.fields.AlbumRepository.Albums {
+				storedIds = append(storedIds, id)
 			}
-			if tt.wantNewAlbumCreated {
-				assert.Contains(t, tt.fields.AlbumRepository.Albums, newAlbum.AlbumId, "the new album should be created")
-			} else {
-				assert.NotContains(t, tt.fields.AlbumRepository.Albums, newAlbum.AlbumId, "the new album must NOT be created")
-			}
-			assert.Equal(t, tt.wantTransferRecords, tt.fields.TransferMedias.Records)
-			assert.Equal(t, tt.wantNotifications, tt.fields.TimelineObserver.Notifications)
+			assert.ElementsMatch(t, tt.expectStoredAlbumIds, storedIds, "stored albums")
+			assert.Equal(t, tt.expectTransferRecords, tt.fields.TransferMedias.Records)
+			assert.Equal(t, tt.expectNotifications, tt.fields.TimelineObserver.Notifications)
 		})
 	}
 }
@@ -190,12 +184,12 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		request catalog.RenameAlbumRequest
 	}
 	tests := []struct {
-		name        string
-		fields      fields
-		args        args
-		wantRenamed []RenameAlbumCall
-		wantName    string
-		wantErr     assert.ErrorAssertionFunc
+		name             string
+		fields           fields
+		args             args
+		expectRenamed    []RenameAlbumCall
+		expectAlbumNames map[catalog.AlbumId]string
+		wantErr          assert.ErrorAssertionFunc
 	}{
 		{
 			name:   "it should get an error if the new name is empty",
@@ -208,7 +202,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
-			wantName: existingAlbum.Name,
+			expectAlbumNames: map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNameMandatoryErr)
 			},
@@ -224,6 +218,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
+			expectAlbumNames: map[catalog.AlbumId]string{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr)
 			},
@@ -239,8 +234,8 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
-			wantName: newName,
-			wantErr:  assert.NoError,
+			expectAlbumNames: map[catalog.AlbumId]string{existingAlbum.AlbumId: newName},
+			wantErr:          assert.NoError,
 		},
 		{
 			name:   "it should create a new album if the album is found and folder name is changed",
@@ -253,8 +248,8 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
-			wantName: existingAlbum.Name,
-			wantRenamed: []RenameAlbumCall{{
+			expectAlbumNames: map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
+			expectRenamed: []RenameAlbumCall{{
 				Current: existingAlbum.AlbumId,
 				CreationRequest: catalog.CreateAlbumRequest{
 					Owner:            owner,
@@ -277,8 +272,8 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "Avengers vs Loki",
 				},
 			},
-			wantName: existingAlbum.Name,
-			wantRenamed: []RenameAlbumCall{{
+			expectAlbumNames: map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
+			expectRenamed: []RenameAlbumCall{{
 				Current: existingAlbum.AlbumId,
 				CreationRequest: catalog.CreateAlbumRequest{
 					Owner:            owner,
@@ -303,12 +298,13 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 			if !tt.wantErr(t, err, fmt.Sprintf("RenameAlbum(%v)", tt.args.request)) {
 				return
 			}
-			assert.Equal(t, tt.wantRenamed, observer.Renamed)
-			if tt.wantName != "" {
-				if stored, ok := tt.fields.AlbumRepository.Albums[existingAlbum.AlbumId]; ok {
-					assert.Equal(t, tt.wantName, stored.Name, "album Name in the repository")
-				}
+			assert.Equal(t, tt.expectRenamed, observer.Renamed)
+
+			names := make(map[catalog.AlbumId]string, len(tt.fields.AlbumRepository.Albums))
+			for id, album := range tt.fields.AlbumRepository.Albums {
+				names[id] = album.Name
 			}
+			assert.Equal(t, tt.expectAlbumNames, names, "album names in the repository")
 		})
 	}
 }

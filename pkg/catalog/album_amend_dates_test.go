@@ -69,14 +69,13 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 		end     time.Time
 	}
 	tests := []struct {
-		name                string
-		fields              fields
-		args                args
-		wantAlbumStart      time.Time
-		wantAlbumEnd        time.Time
-		wantTransferRecords []catalog.MediaTransferRecords
-		wantNotifications   []catalog.TransferredMedias
-		wantErr             assert.ErrorAssertionFunc
+		name                  string
+		fields                fields
+		args                  args
+		expectAlbumDates      map[catalog.AlbumId]albumDates
+		expectTransferRecords []catalog.MediaTransferRecords
+		expectNotifications   []catalog.TransferredMedias
+		wantErr               assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should amend the dates of an album, end to end, and call the observers",
@@ -90,9 +89,11 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 				start:   may24,
 				end:     jan25,
 			},
-			wantAlbumStart: may24,
-			wantAlbumEnd:   jan25,
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				avenger1Id:           {start: may24, end: jan25},
+				allYearAlbum.AlbumId: {start: allYearAlbum.Start, end: allYearAlbum.End},
+			},
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				avenger1Id: {
 					{
 						FromAlbums: []catalog.AlbumId{allYearAlbum.AlbumId},
@@ -101,7 +102,7 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 					},
 				},
 			}},
-			wantNotifications: []catalog.TransferredMedias{{
+			expectNotifications: []catalog.TransferredMedias{{
 				Transfers:  transferredMedias.Transfers,
 				FromAlbums: []catalog.AlbumId{allYearAlbum.AlbumId},
 			}},
@@ -119,8 +120,9 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 				start:   may24,
 				end:     jun24,
 			},
-			wantAlbumStart: existingAlbum.Start,
-			wantAlbumEnd:   existingAlbum.End,
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				avenger1Id: {start: existingAlbum.Start, end: existingAlbum.End},
+			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
 			},
@@ -141,12 +143,20 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, tt.wantAlbumStart, tt.fields.AlbumRepository.Albums[tt.args.albumId].Start)
-			assert.Equal(t, tt.wantAlbumEnd, tt.fields.AlbumRepository.Albums[tt.args.albumId].End)
-			assert.Equal(t, tt.wantTransferRecords, tt.fields.TransferMedias.Records)
-			assert.Equal(t, tt.wantNotifications, tt.fields.TimelineObserver.Notifications)
+			dates := make(map[catalog.AlbumId]albumDates, len(tt.fields.AlbumRepository.Albums))
+			for id, album := range tt.fields.AlbumRepository.Albums {
+				dates[id] = albumDates{start: album.Start, end: album.End}
+			}
+			assert.Equal(t, tt.expectAlbumDates, dates, "album dates in the repository")
+			assert.Equal(t, tt.expectTransferRecords, tt.fields.TransferMedias.Records)
+			assert.Equal(t, tt.expectNotifications, tt.fields.TimelineObserver.Notifications)
 		})
 	}
+}
+
+type albumDates struct {
+	start time.Time
+	end   time.Time
 }
 
 func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
@@ -171,11 +181,11 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 		end     time.Time
 	}
 	tests := []struct {
-		name         string
-		fields       fields
-		args         args
-		wantObserved []catalog.DatesUpdate
-		wantErr      assert.ErrorAssertionFunc
+		name           string
+		fields         fields
+		args           args
+		expectObserved []catalog.DatesUpdate
+		wantErr        assert.ErrorAssertionFunc
 	}{
 		{
 			name:   "it should return an error if the album is not found",
@@ -211,7 +221,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 				start:   may24,
 				end:     jul24,
 			},
-			wantObserved: []catalog.DatesUpdate{
+			expectObserved: []catalog.DatesUpdate{
 				{
 					UpdatedAlbum: catalog.Album{
 						AlbumId: avenger1Id,
@@ -240,7 +250,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 				return
 			}
 
-			assert.ElementsMatchf(t, observer.DateAmendedAlbums, tt.wantObserved, "AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end)
+			assert.ElementsMatchf(t, observer.DateAmendedAlbums, tt.expectObserved, "AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end)
 		})
 	}
 }
@@ -295,11 +305,11 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 		updatedAlbum     catalog.DatesUpdate
 	}
 	tests := []struct {
-		name                string
-		fields              fields
-		args                args
-		wantTransferRecords []catalog.MediaTransferRecords
-		wantErr             assert.ErrorAssertionFunc
+		name                  string
+		fields                fields
+		args                  args
+		expectTransferRecords []catalog.MediaTransferRecords
+		wantErr               assert.ErrorAssertionFunc
 	}{
 		{
 			name:   "it should not transfer any media because there were not other albums are present - GROWING BOTH SIDES",
@@ -326,7 +336,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &mayAlbum},
 				updatedAlbum:     amendWithDatesOf(mayAlbum, aprToJunAlbum.Start, aprToJunAlbum.End),
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				mayAlbum.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{fullYearAlbum.AlbumId},
@@ -349,7 +359,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &aprToJunAlbum},
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, mayAlbum.Start, mayAlbum.End),
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				fullYearAlbum.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
@@ -372,7 +382,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				existingTimeline: []*catalog.Album{&fullYearAlbum, &aprToJunAlbum, &mayAlbum},
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				fullYearAlbum.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
@@ -395,7 +405,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				existingTimeline: []*catalog.Album{&fifthJunAlbum, &junAlbum},
 				updatedAlbum:     amendWithDatesOf(fifthJunAlbum, aprToJunAlbum.Start, junAlbum.End),
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				junAlbum.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{fifthJunAlbum.AlbumId},
@@ -413,7 +423,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				existingTimeline: []*catalog.Album{&aprToJunAlbum, &junAlbum, &fullYearAlbum},
 				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				fullYearAlbum.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
@@ -443,7 +453,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 				}, &junAlbum, &fullYearAlbum},
 				updatedAlbum: amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
 			},
-			wantTransferRecords: []catalog.MediaTransferRecords{{
+			expectTransferRecords: []catalog.MediaTransferRecords{{
 				fullYearAlbum.AlbumId: {
 					{
 						FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
@@ -485,7 +495,7 @@ func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
 			if !tt.wantErr(t, err, fmt.Sprintf("OnAlbumDatesAmended(%v, %v, %v)", context.Background(), tt.args.existingTimeline, tt.args.updatedAlbum)) {
 				return
 			}
-			assert.Equal(t, tt.wantTransferRecords, mediaTransfer.Records)
+			assert.Equal(t, tt.expectTransferRecords, mediaTransfer.Records)
 		})
 	}
 }
