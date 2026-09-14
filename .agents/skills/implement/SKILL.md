@@ -1,24 +1,40 @@
 ---
 name: implement
-description: "Implement a piece of work based on a spec or set of tickets."
+description: "Implement a piece of work based on a spec or set of tickets. Describes the commit message pattern and the pull request template."
 ---
 
 Implement the work described by the user in the spec or tickets.
 
 ## Implementation
 
-The tests must be readable and robust against refactoring: they demonstrate the story is implemented (the acceptance criteria), they should not aim for a 100% coverage by testing the implementation.
+Load the skills related to the language your working with.
 
-Run typechecking regularly, single test files regularly, and the full test suite once at the end.
+Run single test files regularly, and the full test suite once at the end. 
 
-Progress the issue(s) you're working on as `done`.
+Before handing over your work:
 
-If working on an issue, commit your work to the current branch using the pattern: `<context>[/<layer>] - <summary> + <body>`. Never amend or force existing commits.
+1. run typechecking and linting,
+2. progress the issue(s) you're working on as `done`,
+3. commit if you are not working interactively with a user,
+4. create a pull request if explicitly requested.
+
+
+## Commit messages
+
+Use the pattern: `<context>[/<layer>] - <summary> + <body>`. Never amend or force existing commits.
 
 * **context** is `archive`, `catalog`, `ci`, ... Use `llm` when working on skills or agent documentation, and `proj` when working on the issue-tracker.
 * **layer** is added if the change only impct a single layer: `web`, `cli`, `api`, ...
-* add in the body `+next` if you consider your changes can be demoed or tested in a fully deployed environment, and +pr otherwise.
-* the rest of the body must help a reviewer to understand the change, or a future developer to understand the implementation decisions.
+* the rest is a **short** description, bullet points, of what has been changed. Explain the intention like "rename variable X", not a list of updated files.
 
-It's never too late to ask questions or confirmation of the design if it doesn't work as expected or something else make what was requested impossible to implement as asked.
+## Pull request
 
+Use the main (or first) commit headline as the pull request title.
+
+In the body, you must explain how it works, and why it works, to the reviewer, step by step. 
+
+* Start where the data comes in and follow the dataflow. 
+* Describe the responsibility of the different modules, use the interface to explain how they interact and were their boundaries lie.
+* Explain your testing strategy: what is tested at unit level, why a wider test is required, ...
+* Keep the explanation on the intentions - why was that module changed or created - do not fall in an enumeration of changes. The reviewer will read soon enough each line changed, you need to explain him what he will be looking at.
+* Refresh the reviewer of what was already present and used to deliver the requirements. A short recap is a time saver, but keep it extremely short, just enough to revive the reviewer memory.

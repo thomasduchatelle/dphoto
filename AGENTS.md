@@ -47,7 +47,7 @@ As an agent, your primary objective is to fulfil the feature and have a pull req
 the priorities:
 
 1. **no data loss** - the medias stored are very valuable and irreplaceable, everything must be done to never lose a single one.
-2. **architecture integrity** - each sub-project defined its design principles, its testing strategy, and its coding standard. Any deviation will lead to the
+2. **architecture integrity** - each subproject defined its design principles, its testing strategy, and its coding standard. Any deviation will lead to the
    pull request being rejected.
 3. **simplicity** - the resulting code must be simple and easy to read, even if it requires a complex and large changes to implement a feature: we prefer
    refactoring that simplifies the codebase rather than small changes that adds on the complexity.
@@ -90,6 +90,8 @@ npm run test:update   # update visual regression snapshots locally
 npm run storybook     # run Storybook to view components on :6006
 ```
 
+Do not run the targets `npm run test:visual`, `npm run test:update`, `npm run storybook` ; they are not appropriate for agentic development. 
+
 ### Typescript - `web/`
 
 **Always run from the web folder `cd web`, and always run `npm install` before executing other commands !**
@@ -117,7 +119,7 @@ npm run synth:test    # verify the CDK template can be built using stub data
 Before requesting a code review, you must ensure:
 
 1. **coding standards have been strictly followed**: changes are conformed with the architecture and designs.
-2. **the resulting code is simple and cannot be improved**: think of clean code principles with no excessive comments (NO comment paraphrasing the code!)
+2. **the resulting code is simple and cannot be improved**: think of clean code principles with no excessive comments (NO comment paraphrasing the code!).
 3. **conform with the testing strategy**: each project must adhere to the strict testing strategy that guaranty the robustness of the tests with a low coupling
    with the code.
 4. the code can be built and is immediately shippable to production.
@@ -127,12 +129,6 @@ Before requesting a code review, you must ensure:
 
 When interacting with GitHub MCP, use the remote URL: `git@github.com:thomasduchatelle/dphoto.git`.
 
----
-
-**Trust these instructions** - validated against the repository. Search only if missing information.
-
-## Agent skills
-
 ### Issue tracker
 
 Issues live as local markdown files at `specs/<feature-slug>/issues/<NN-slug>.md`. When you implement the work described in an issue, set its `Status:` line to `done` once the change is merged. Statuses are `ready`, `done`, `wontdo`. For anything more (creating specs, breaking features into issues, archiving), load the `issue-tracker` skill.
@@ -140,3 +136,7 @@ Issues live as local markdown files at `specs/<feature-slug>/issues/<NN-slug>.md
 ### Domain docs
 
 Multi-context layout: `CONTEXT-MAP.md` at the repo root, ADRs under `docs/adr/`. See `docs/agents/domain.md`.
+
+---
+
+**Trust these instructions** - validated against the repository. Search only if missing information.
