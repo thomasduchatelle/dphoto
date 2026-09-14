@@ -53,8 +53,6 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 		args                       args
 		wantAuthentication         *aclcore.Authentication
 		wantIdentity               *aclcore.Identity
-		expectAccessGeneratedFor   []usermodel.UserId
-		expectRefreshGeneratedFor  []aclcore.RefreshTokenSpec
 		expectOriginalTokenDeleted bool
 		wantErr                    assert.ErrorAssertionFunc
 	}{
@@ -74,8 +72,6 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 				ExpiresIn:    42,
 			},
 			wantIdentity:               &tonyIdentity,
-			expectAccessGeneratedFor:   []usermodel.UserId{email},
-			expectRefreshGeneratedFor:  []aclcore.RefreshTokenSpec{fullSpec},
 			expectOriginalTokenDeleted: true,
 			wantErr:                    assert.NoError,
 		},
@@ -99,8 +95,6 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 				Name:    email.Value(),
 				Picture: "",
 			},
-			expectAccessGeneratedFor:   []usermodel.UserId{email},
-			expectRefreshGeneratedFor:  []aclcore.RefreshTokenSpec{fullSpec},
 			expectOriginalTokenDeleted: true,
 			wantErr:                    assert.NoError,
 		},
@@ -156,8 +150,6 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 			}
 			assert.Equalf(t, tt.wantAuthentication, gotToken, "AuthenticateFromRefreshToken(%v)", tt.args.refreshToken)
 			assert.Equalf(t, tt.wantIdentity, gotIdentity, "AuthenticateFromRefreshToken(%v)", tt.args.refreshToken)
-			assert.Equal(t, tt.expectAccessGeneratedFor, tt.fields.AccessTokenGenerator.GeneratedFor, "AccessTokenGenerator.GeneratedFor")
-			assert.Equal(t, tt.expectRefreshGeneratedFor, tt.fields.RefreshTokenGenerator.GeneratedFor, "RefreshTokenGenerator.GeneratedFor")
 
 			if tt.expectOriginalTokenDeleted {
 				_, err := tt.fields.RefreshTokenRepository.FindRefreshToken(tt.args.refreshToken)

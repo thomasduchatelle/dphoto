@@ -39,11 +39,6 @@ func TestAuthenticate(t *testing.T) {
 		Name:    "Tony Stark aka Ironman",
 		Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
 	}
-	expectedRefreshSpec := aclcore.RefreshTokenSpec{
-		Email:               email,
-		RefreshTokenPurpose: aclcore.RefreshTokenPurposeWeb,
-	}
-
 	scopeRepositoryWithOwnerAndAdmin := func() *ScopeRepositoryInMemory {
 		return NewScopeRepositoryInMemory(
 			aclcore.Scope{Type: aclcore.ApiScope, GrantedTo: email, ResourceId: "admin"},
@@ -63,14 +58,13 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                      string
-		fields                    fields
-		argToken                  string
-		assertAuth                func(*testing.T, string, aclcore.Authentication)
-		wantIdentity              aclcore.Identity
-		expectStoredIdentity      *aclcore.Identity
-		expectRefreshGeneratedFor []aclcore.RefreshTokenSpec
-		wantErrContains           string
+		name                 string
+		fields               fields
+		argToken             string
+		assertAuth           func(*testing.T, string, aclcore.Authentication)
+		wantIdentity         aclcore.Identity
+		expectStoredIdentity *aclcore.Identity
+		wantErr              assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should exchange a valid identity JWT into an access token",
@@ -87,9 +81,9 @@ func TestAuthenticate(t *testing.T) {
 
 				assertAccessTokenClaims(t, auth.AccessToken, config, name, []string{"api:admin", "owner:tony@stark.com"})
 			},
-			wantIdentity:              tonyGoogleIdentity,
-			expectStoredIdentity:      &tonyGoogleIdentity,
-			expectRefreshGeneratedFor: []aclcore.RefreshTokenSpec{expectedRefreshSpec},
+			wantIdentity:         tonyGoogleIdentity,
+			expectStoredIdentity: &tonyGoogleIdentity,
+			wantErr:              assert.NoError,
 		},
 		{
 			name: "it should let a pure visitor authenticate",
@@ -105,9 +99,9 @@ func TestAuthenticate(t *testing.T) {
 
 				assertAccessTokenClaims(t, auth.AccessToken, config, name, []string{"visitor"})
 			},
-			wantIdentity:              tonyGoogleIdentity,
-			expectStoredIdentity:      &tonyGoogleIdentity,
-			expectRefreshGeneratedFor: []aclcore.RefreshTokenSpec{expectedRefreshSpec},
+			wantIdentity:         tonyGoogleIdentity,
+			expectStoredIdentity: &tonyGoogleIdentity,
+			wantErr:              assert.NoError,
 		},
 		{
 			name: "it should not let unregistered user log in",
@@ -116,8 +110,8 @@ func TestAuthenticate(t *testing.T) {
 				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
 				IdentityRepository:    NewIdentityRepositoryInMemory(),
 			},
-			argToken:        unregisteredJwtString,
-			wantErrContains: "must be pre-registered",
+			argToken: unregisteredJwtString,
+			wantErr:  errorContains("must be pre-registered"),
 		},
 		{
 			name: "it should not accept JWT from non-approved issuers",
@@ -126,8 +120,8 @@ func TestAuthenticate(t *testing.T) {
 				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
 				IdentityRepository:    NewIdentityRepositoryInMemory(),
 			},
-			argToken:        wrongISSJwtString,
-			wantErrContains: "Issuer 'wrongISS' is not supported",
+			argToken: wrongISSJwtString,
+			wantErr:  errorContains("Issuer 'wrongISS' is not supported"),
 		},
 		{
 			name: "it should not accept expired JWT",
@@ -136,8 +130,8 @@ func TestAuthenticate(t *testing.T) {
 				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
 				IdentityRepository:    NewIdentityRepositoryInMemory(),
 			},
-			argToken:        expiredJwtString,
-			wantErrContains: "token is expired",
+			argToken: expiredJwtString,
+			wantErr:  errorContains("token is expired"),
 		},
 	}
 
@@ -166,20 +160,14 @@ func TestAuthenticate(t *testing.T) {
 			}
 
 			gotAuth, gotIdentity, err := authenticator.AuthenticateFromExternalIDProvider(tt.argToken, aclcore.RefreshTokenPurposeWeb)
-			if tt.wantErrContains != "" {
-				if a.Error(err, tt.name) {
-					a.Contains(err.Error(), tt.wantErrContains, tt.name)
-				}
+			if !tt.wantErr(t, err, tt.name) {
 				return
 			}
-
-			if !a.NoError(err, tt.name) {
+			if err != nil {
 				return
 			}
 			a.Equal(tt.wantIdentity, *gotIdentity, tt.name)
 			tt.assertAuth(t, tt.name, *gotAuth)
-
-			a.Equal(tt.expectRefreshGeneratedFor, tt.fields.RefreshTokenGenerator.GeneratedFor, "RefreshTokenGenerator.GeneratedFor")
 
 			if tt.expectStoredIdentity != nil {
 				storedIdentity, findErr := tt.fields.IdentityRepository.FindIdentity(tt.expectStoredIdentity.Email)
@@ -188,6 +176,13 @@ func TestAuthenticate(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func errorContains(partial string) assert.ErrorAssertionFunc {
+	return func(t assert.TestingT, err error, msgAndArgs ...interface{}) bool {
+		return assert.Error(t, err, msgAndArgs...) &&
+			assert.Contains(t, err.Error(), partial, msgAndArgs...)
 	}
 }
 

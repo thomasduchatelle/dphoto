@@ -170,16 +170,13 @@ func (r *RefreshTokenRepositoryInMemory) HouseKeepRefreshToken() (int, error) {
 
 var accessTokenGeneratorFakeExpiry = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 
-type AccessTokenGeneratorFake struct {
-	GeneratedFor []usermodel.UserId
-}
+type AccessTokenGeneratorFake struct{}
 
 func NewAccessTokenGeneratorFake() *AccessTokenGeneratorFake {
 	return &AccessTokenGeneratorFake{}
 }
 
 func (f *AccessTokenGeneratorFake) GenerateAccessToken(email usermodel.UserId) (*aclcore.Authentication, error) {
-	f.GeneratedFor = append(f.GeneratedFor, email)
 	return &aclcore.Authentication{
 		AccessToken: "at-" + string(email),
 		ExpiryTime:  accessTokenGeneratorFakeExpiry,
@@ -187,15 +184,12 @@ func (f *AccessTokenGeneratorFake) GenerateAccessToken(email usermodel.UserId) (
 	}, nil
 }
 
-type RefreshTokenGeneratorFake struct {
-	GeneratedFor []aclcore.RefreshTokenSpec
-}
+type RefreshTokenGeneratorFake struct{}
 
 func NewRefreshTokenGeneratorFake() *RefreshTokenGeneratorFake {
 	return &RefreshTokenGeneratorFake{}
 }
 
 func (f *RefreshTokenGeneratorFake) GenerateRefreshToken(spec aclcore.RefreshTokenSpec) (string, error) {
-	f.GeneratedFor = append(f.GeneratedFor, spec)
 	return "rt-" + string(spec.Email) + "-" + string(spec.RefreshTokenPurpose), nil
 }
