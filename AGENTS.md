@@ -58,7 +58,7 @@ the priorities:
 
 ### Golang - `pkg` and `cmd/dphoto/`
 
-**Always run `make setup-go` before executing the tests !**
+**Never run `make setup-go` before executing the backend tests** unless golang tests are clearly failing due to missing AWS dependencies (DynamoDB, S3, ...).
 
 Then,
 
