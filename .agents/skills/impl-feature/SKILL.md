@@ -10,15 +10,16 @@ You are the **conductor**. Subagents write the code, one per story; you own disp
 ## The pipeline
 
 1. Read the feature: `specs/<slug>/spec.md`, `specs/<slug>/stories.md`, every `specs/<slug>/issues/NN-*.md`. Extract the dependency graph.
-2. The current git branch is the **base branch**. Every subagent PR targets it.
+2. The current git branch is the **base branch**. Every subagent PR targets it. Create it and push it if you're still on `main`.
 3. Group stories into **batches**: everything in a batch has all its blockers already merged, and runs in parallel.
 4. Dispatch one subagent per story ([recipe below](#dispatching-a-subagent)).
 5. When the batch's PRs are open, list them to the user ([handoff](#batch-handoff)) and wait.
 6. On user feedback, propagate it ([propagating feedback](#propagating-feedback)).
-7. When a batch is merged, refresh (`git fetch origin && git pull`) and launch the next batch.
-8. Resolve merge conflicts yourself if any subagent PR can't rebase cleanly.
+7. When PR(s) have been approved (or at least one of them), [wrap-up the (potentially partial) batch](#batch-wrap-up)
+8. If stories remain: loop back to (3) to find the next batch.
+9. If all stories are completed: clean-up GIT and local drive of the branches and worktree that have been merged.
 
-## Dispatching a subagent (first attempt on a story)
+## Dispatching a subagent
 
 Each subagent handles one story end-to-end: worktree → implement → test → commit → push → PR. Fill in the template below (`<...>` placeholders) and pass it as the subagent's prompt. Give it only its own issue file — never the whole spec's list of issues.
 
@@ -188,15 +189,20 @@ Use this variant **only** when the conductor needs the PR rebased on a moved bas
 
 ## Batch wrap-up
 
-Once all the stories of the batch completed:
+Once you got the approval from the user for at least one PR:
 
-1. merge each story in the current branch
+1. merge approved stories in the current branch ; **do not merge them to `main`, verify the PR before merging it**.
 2. update the issue-tracker if necessary, stories completed should be `done` ; if the feature is completed, archive it ; if a feature is not refined (next stories are missing) inform the user.
-3. rebase the work: single commit unless otherwise has been requested by the user. Do not add any command like `+next` or `+pr` in the comment.
-4. create a PR toward the `main` branch. Request the user to review and merge.
-5. then in parallel:
-    1. dispatch a subagent that will review the final PR using the `code-review` skill and any other relevant skill. The subagent will write comments straight on the PR created on step 3. Focus must be placed on the main architecture risk: is deploying the new version will break anything? and is it fulfilling the requested changes ?
-    2. switch to a new branch to not pollute this one (with the PR), and start the next batch ! (dispatch subagents for the next stories)
+3. squash and rebase: single commit unless told otherwise by the user. Use the messages of the squash commits to create a consistent explanation.
+4. create a PR toward the `main` branch.
+   1. dispatch a subagent that will review the final PR using the `code-review` skill and any other relevant skill, and publish its comments on the PR itself.
+   2. request the user to review and merge.
+5. and, in parallel while the reviewer is working:
+    1. start the next batch ! Dispatch subagents for the next stories.
+
+When you use rebase and push force, keep a reference of the previous commits in case something goes wrong, and we need to recover the changes.
+
+This step is slow, do not wait for user approval at each step: the subagents (review and next batch) must run in parallel, and the only decision point of the user will be on the PR directly.
 
 
 ## Batch handoff
