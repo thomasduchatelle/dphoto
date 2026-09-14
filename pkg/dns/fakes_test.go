@@ -51,26 +51,15 @@ func (m *CertificateManagerInMemory) Installed(arn string) (dnsdomain.CompleteCe
 	return cert, ok
 }
 
-type CertificateRequest struct {
-	Email  string
-	Domain string
-}
-
 type CertificateAuthorityInMemory struct {
 	NextCertificate dnsdomain.CompleteCertificate
-	Requested       []CertificateRequest
 }
 
 func NewCertificateAuthorityInMemory(next dnsdomain.CompleteCertificate) *CertificateAuthorityInMemory {
 	return &CertificateAuthorityInMemory{NextCertificate: next}
 }
 
-func (a *CertificateAuthorityInMemory) RequestCertificate(_ context.Context, email, domain string) (*dnsdomain.CompleteCertificate, error) {
-	a.Requested = append(a.Requested, CertificateRequest{Email: email, Domain: domain})
+func (a *CertificateAuthorityInMemory) RequestCertificate(_ context.Context, _, _ string) (*dnsdomain.CompleteCertificate, error) {
 	cert := a.NextCertificate
 	return &cert, nil
-}
-
-func (a *CertificateAuthorityInMemory) RequestedFor() []CertificateRequest {
-	return a.Requested
 }

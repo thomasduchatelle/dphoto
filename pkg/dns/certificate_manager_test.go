@@ -31,14 +31,15 @@ func TestRenewCertificate(t *testing.T) {
 		domain string
 		forced bool
 	}
+	installedAt := func(id string) *string { return &id }
+
 	tests := []struct {
 		name                string
 		fields              fields
 		args                args
 		wantErr             assert.ErrorAssertionFunc
 		expectSSMEnsuredFor string
-		expectInstalledAt   string
-		expectRequestedFor  []CertificateRequest
+		expectInstalledAt   *string
 	}{
 		{
 			name: "it should not create a new certificate if one already exists",
@@ -53,7 +54,6 @@ func TestRenewCertificate(t *testing.T) {
 			args:                args{email: testEmail, domain: testDomain, forced: false},
 			wantErr:             assert.NoError,
 			expectSSMEnsuredFor: testArn,
-			expectRequestedFor:  nil,
 		},
 		{
 			name: "it should create a new certificate if the existing one is about to expire, and override it",
@@ -65,10 +65,9 @@ func TestRenewCertificate(t *testing.T) {
 				}),
 				CertificateAuthority: NewCertificateAuthorityInMemory(cannedCertificate),
 			},
-			args:               args{email: testEmail, domain: testDomain, forced: false},
-			wantErr:            assert.NoError,
-			expectInstalledAt:  testArn,
-			expectRequestedFor: []CertificateRequest{{Email: testEmail, Domain: testDomain}},
+			args:              args{email: testEmail, domain: testDomain, forced: false},
+			wantErr:           assert.NoError,
+			expectInstalledAt: installedAt(testArn),
 		},
 		{
 			name: "it should create a new certificate if none were there",
@@ -76,10 +75,9 @@ func TestRenewCertificate(t *testing.T) {
 				CertificateManager:   NewCertificateManagerInMemory(),
 				CertificateAuthority: NewCertificateAuthorityInMemory(cannedCertificate),
 			},
-			args:               args{email: testEmail, domain: testDomain, forced: false},
-			wantErr:            assert.NoError,
-			expectInstalledAt:  "",
-			expectRequestedFor: []CertificateRequest{{Email: testEmail, Domain: testDomain}},
+			args:              args{email: testEmail, domain: testDomain, forced: false},
+			wantErr:           assert.NoError,
+			expectInstalledAt: installedAt(""),
 		},
 	}
 
@@ -96,12 +94,11 @@ func TestRenewCertificate(t *testing.T) {
 			if tt.expectSSMEnsuredFor != "" {
 				assert.True(t, tt.fields.CertificateManager.IsSSMEnsured(tt.expectSSMEnsuredFor), "expected SSM parameter ensured for %s", tt.expectSSMEnsuredFor)
 			}
-			if tt.expectRequestedFor == nil {
-				assert.Empty(t, tt.fields.CertificateAuthority.RequestedFor())
+			if tt.expectInstalledAt == nil {
+				assert.Empty(t, tt.fields.CertificateManager.InstalledContent, "expected no certificate installed")
 			} else {
-				assert.Equal(t, tt.expectRequestedFor, tt.fields.CertificateAuthority.RequestedFor())
-				installed, ok := tt.fields.CertificateManager.Installed(tt.expectInstalledAt)
-				if assert.True(t, ok, "expected a certificate installed at %q", tt.expectInstalledAt) {
+				installed, ok := tt.fields.CertificateManager.Installed(*tt.expectInstalledAt)
+				if assert.True(t, ok, "expected a certificate installed at %q", *tt.expectInstalledAt) {
 					assert.Equal(t, cannedCertificate, installed)
 				}
 			}
