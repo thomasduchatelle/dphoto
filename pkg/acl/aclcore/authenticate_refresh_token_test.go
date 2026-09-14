@@ -47,14 +47,22 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 	type args struct {
 		refreshToken string
 	}
+	refreshTokenRepositoryWithExpiredSpec := func() *RefreshTokenRepositoryInMemory {
+		repo := NewRefreshTokenRepositoryInMemory()
+		_ = repo.StoreRefreshToken(expiredRefreshToken, aclcore.RefreshTokenSpec{
+			AbsoluteExpiryTime: time.Date(2020, 12, 31, 23, 59, 59, 999, time.UTC),
+		})
+		return repo
+	}
+
 	tests := []struct {
-		name                       string
-		fields                     fields
-		args                       args
-		wantAuthentication         *aclcore.Authentication
-		wantIdentity               *aclcore.Identity
-		expectOriginalTokenDeleted bool
-		wantErr                    assert.ErrorAssertionFunc
+		name               string
+		fields             fields
+		args               args
+		wantAuthentication *aclcore.Authentication
+		wantIdentity       *aclcore.Identity
+		expectStoredTokens map[string]aclcore.RefreshTokenSpec
+		wantErr            assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should generate a new access token and refresh token with same spec",
@@ -71,9 +79,9 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 				ExpiryTime:   time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 				ExpiresIn:    42,
 			},
-			wantIdentity:               &tonyIdentity,
-			expectOriginalTokenDeleted: true,
-			wantErr:                    assert.NoError,
+			wantIdentity:       &tonyIdentity,
+			expectStoredTokens: map[string]aclcore.RefreshTokenSpec{},
+			wantErr:            assert.NoError,
 		},
 		{
 			name: "it should generates tokens with fallback identity when the identity is unknown",
@@ -95,26 +103,21 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 				Name:    email.Value(),
 				Picture: "",
 			},
-			expectOriginalTokenDeleted: true,
-			wantErr:                    assert.NoError,
+			expectStoredTokens: map[string]aclcore.RefreshTokenSpec{},
+			wantErr:            assert.NoError,
 		},
 		{
 			name: "it should not issue tokens if refresh token expired",
 			fields: fields{
-				AccessTokenGenerator:  NewAccessTokenGeneratorFake(),
-				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
-				RefreshTokenRepository: func() *RefreshTokenRepositoryInMemory {
-					repo := NewRefreshTokenRepositoryInMemory()
-					_ = repo.StoreRefreshToken(expiredRefreshToken, aclcore.RefreshTokenSpec{
-						AbsoluteExpiryTime: time.Date(2020, 12, 31, 23, 59, 59, 999, time.UTC),
-					})
-					return repo
-				}(),
-				IdentityDetailsStore: NewIdentityRepositoryInMemory(),
+				AccessTokenGenerator:   NewAccessTokenGeneratorFake(),
+				RefreshTokenGenerator:  NewRefreshTokenGeneratorFake(),
+				RefreshTokenRepository: refreshTokenRepositoryWithExpiredSpec(),
+				IdentityDetailsStore:   NewIdentityRepositoryInMemory(),
 			},
 			args:               args{refreshToken: expiredRefreshToken},
 			wantAuthentication: nil,
 			wantIdentity:       nil,
+			expectStoredTokens: map[string]aclcore.RefreshTokenSpec{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, aclcore.ExpiredRefreshTokenError)
 			},
@@ -130,6 +133,7 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 			args:               args{refreshToken: refreshToken},
 			wantAuthentication: nil,
 			wantIdentity:       nil,
+			expectStoredTokens: map[string]aclcore.RefreshTokenSpec{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, aclcore.InvalidRefreshTokenError)
 			},
@@ -145,16 +149,10 @@ func TestAccessTokenAuthenticator_AuthenticateFromAccessToken(t *testing.T) {
 				IdentityDetailsStore:   tt.fields.IdentityDetailsStore,
 			}
 			gotToken, gotIdentity, err := s.AuthenticateFromRefreshToken(tt.args.refreshToken)
-			if !tt.wantErr(t, err, fmt.Sprintf("AuthenticateFromRefreshToken(%v)", tt.args.refreshToken)) {
-				return
-			}
+			tt.wantErr(t, err, fmt.Sprintf("AuthenticateFromRefreshToken(%v)", tt.args.refreshToken))
 			assert.Equalf(t, tt.wantAuthentication, gotToken, "AuthenticateFromRefreshToken(%v)", tt.args.refreshToken)
 			assert.Equalf(t, tt.wantIdentity, gotIdentity, "AuthenticateFromRefreshToken(%v)", tt.args.refreshToken)
-
-			if tt.expectOriginalTokenDeleted {
-				_, err := tt.fields.RefreshTokenRepository.FindRefreshToken(tt.args.refreshToken)
-				assert.ErrorIs(t, err, aclcore.InvalidRefreshTokenError, "original refresh token should be deleted")
-			}
+			assert.Equalf(t, tt.expectStoredTokens, tt.fields.RefreshTokenRepository.tokens, "stored refresh tokens")
 		})
 	}
 }

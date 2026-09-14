@@ -30,18 +30,18 @@ func TestCreateUser_CreateUser(t *testing.T) {
 		owner string
 	}
 	tests := []struct {
-		name        string
-		fields      fields
-		args        args
-		expectOwner ownermodel.Owner
-		wantErr     assert.ErrorAssertionFunc
+		name         string
+		fields       fields
+		args         args
+		expectOwners []ownermodel.Owner
+		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
-			name:        "it should create the scope when no scope already exists",
-			fields:      fields{ScopeRepository: NewScopeRepositoryInMemory()},
-			args:        args{email: tonyEmail, owner: ironmanOwner},
-			expectOwner: tonyOwner,
-			wantErr:     assert.NoError,
+			name:         "it should create the scope when no scope already exists",
+			fields:       fields{ScopeRepository: NewScopeRepositoryInMemory()},
+			args:         args{email: tonyEmail, owner: ironmanOwner},
+			expectOwners: []ownermodel.Owner{tonyOwner},
+			wantErr:      assert.NoError,
 		},
 		{
 			name: "it should override a scope for a different owner (and remove noise)",
@@ -54,9 +54,9 @@ func TestCreateUser_CreateUser(t *testing.T) {
 					aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: "pepper@stark.com", ResourceOwner: tonyOwner},
 				),
 			},
-			args:        args{email: tonyEmail, owner: ironmanOwner},
-			expectOwner: tonyOwner,
-			wantErr:     assert.NoError,
+			args:         args{email: tonyEmail, owner: ironmanOwner},
+			expectOwners: []ownermodel.Owner{tonyOwner},
+			wantErr:      assert.NoError,
 		},
 		{
 			name: "it should skip if the scope already exists",
@@ -65,21 +65,22 @@ func TestCreateUser_CreateUser(t *testing.T) {
 					aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedAt: mockedDate, GrantedTo: tonyUserId, ResourceOwner: tonyOwner},
 				),
 			},
-			args:        args{email: tonyEmail, owner: ironmanOwner},
-			expectOwner: tonyOwner,
-			wantErr:     assert.NoError,
+			args:         args{email: tonyEmail, owner: ironmanOwner},
+			expectOwners: []ownermodel.Owner{tonyOwner},
+			wantErr:      assert.NoError,
 		},
 		{
-			name:        "it should default the owner to the email",
-			fields:      fields{ScopeRepository: NewScopeRepositoryInMemory()},
-			args:        args{email: tonyEmail},
-			expectOwner: ownermodel.Owner(tonyEmail),
-			wantErr:     assert.NoError,
+			name:         "it should default the owner to the email",
+			fields:       fields{ScopeRepository: NewScopeRepositoryInMemory()},
+			args:         args{email: tonyEmail},
+			expectOwners: []ownermodel.Owner{ownermodel.Owner(tonyEmail)},
+			wantErr:      assert.NoError,
 		},
 		{
-			name:   "it should return an error if the email is empty / invalid",
-			fields: fields{ScopeRepository: NewScopeRepositoryInMemory()},
-			args:   args{email: "   "},
+			name:         "it should return an error if the email is empty / invalid",
+			fields:       fields{ScopeRepository: NewScopeRepositoryInMemory()},
+			args:         args{email: "   "},
+			expectOwners: nil,
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, usermodel.InvalidUserEmailError)
 			},
@@ -95,21 +96,16 @@ func TestCreateUser_CreateUser(t *testing.T) {
 			if !tt.wantErr(t, c.CreateUser(tt.args.email, tt.args.owner), fmt.Sprintf("CreateUser(%v, %v)", tt.args.email, tt.args.owner)) {
 				return
 			}
-			if tt.expectOwner == "" {
-				return
-			}
 			scopes, err := tt.fields.ScopeRepository.ListScopesByUser(context.Background(), tonyUserId, aclcore.MainOwnerScope)
+
 			if !assert.NoError(t, err) {
 				return
 			}
-			assert.Equal(t, []*aclcore.Scope{
-				{
-					Type:          aclcore.MainOwnerScope,
-					GrantedAt:     mockedDate,
-					GrantedTo:     tonyUserId,
-					ResourceOwner: tt.expectOwner,
-				},
-			}, scopes, "MainOwnerScope for %s", tonyUserId)
+			var gotOwners []ownermodel.Owner
+			for _, scope := range scopes {
+				gotOwners = append(gotOwners, scope.ResourceOwner)
+			}
+			assert.Equal(t, tt.expectOwners, gotOwners, "MainOwnerScope owners for %s", tonyUserId)
 		})
 	}
 }
