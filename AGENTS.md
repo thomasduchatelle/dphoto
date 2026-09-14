@@ -32,7 +32,7 @@ EXTREMELY IMPORTANT**.
     - `.github/actions/` - customised actions used within this repository only
     - `.github/workflows/job-*.yml` - reusable sub-workflow to build, test, and deploy the application
     - `.github/workflows/workflow-*.yml` - workflows triggered by external events, they call the "job workflow", never replicate their content.
-- `internal/` - **Golang**: mocks and utilities that lower the complexity of the CLI but is not part of the domain of the application.
+- `internal/` - **Golang**: utilities that lower the complexity of the CLI but is not part of the domain of the application.
 - `Makefile` - comprehensive list of all the commands to build and test the application.
 - `web/` - **DEPRECATED! Project will be replaced by web-nextjs** ; Typescript / React / Waku framework Website built on top of the REST API, deployed as a
   lambda.
@@ -68,6 +68,15 @@ go test ./...
 ```
 
 Warning: `pkg/acl/jwks` test fails without internet (accounts.google.com) - EXPECTED, ignore it
+
+**No mocks — Fakes only.** Test dependencies are per-package in-memory Fakes co-located in a
+`fakes_test.go` file. One Fake per real backing store, implementing every port that touches that
+data. Verify by state — via read methods the interface already exposes, or via a purpose-built
+test-only accessor on the Fake — never by asserting "was this method called". New tests must not
+import `mockery`-generated types or `github.com/stretchr/testify/mock`. A handful of existing tests
+still use `testify/mock` inline to inject failure behaviour that Fakes cannot naturally express
+(data-loss / rollback / ordering guarantees); do not extend that pattern without a genuine
+behavioural reason.
 
 ### Golang - `api/lambdas/`
 
