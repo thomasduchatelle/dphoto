@@ -42,14 +42,9 @@ structure of each case is fixed** — do not omit or rename fields on a whim:
     * If a specific error is expected: an anonymous function using `assert.ErrorIs` /
       `assert.ErrorAs` (see the full example).
 
-7. **`expectX`** — use it to assert the state of a fake dependency: an event has been published, or a data has been saved. **Never to assert an interaction with a dependency.**
-   * prefer complete state validation: `expectEventsFired []Event`, `expectStoredAlbums []*Album`.
-   * use projection if a part of the state is not relevant for the test (already present and not modified for example): `expectStoredAlbumIds []AlbumId`, `expectAlbumDates map[AlbumId]{startDate time.Time ; endDate time.Time}`.
-   * never assert if a function has been called or not (bad examples: `expectCalled int`) ; verify the state of the fake instead.
-   * never assert an action has been executed (bad example: `expectAlbumDeleted bool`, `expectHasBeenSaved bool`) ; verify a projection of the state instead.
-   * never assert if a function has been called with a specific argument (bad example: `expectXBeCalledFor AlbumId`).
-
-**Reminder: `want*` must only be used for argument returned by the function under test. `expect*` must be used to validate the state of a fake.**
+7. **`expectX`** — use it to assert an event has been published, or a data has been saved, never to assert an interaction with a dependency.
+   * good examples: `expectEventsFired []Event`, `expectStoredAlbum *Album`
+   * bad examples to avoid: `expectCalled int`, `expectXBeCalledFor []AlbumId` ; the test needs to validate the outcomes, not how it did it.
 
 ### Test-file-level fixtures
 
