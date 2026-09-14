@@ -165,15 +165,15 @@ func (c *CacheInMemory) WalkCacheByPrefix(prefix string, observer func(string)) 
 	return nil
 }
 
-type WarmUpCall struct {
+type WarmUpJob struct {
 	Owner     string
 	MissedKey string
 	Width     int
 }
 
 type AsyncJobInMemory struct {
-	LoadedImages [][]*archive.ImageToResize
-	WarmUpCalls  []WarmUpCall
+	LoadedImages      [][]*archive.ImageToResize
+	PendingWarmUpJobs []WarmUpJob
 }
 
 func NewAsyncJobInMemory() *AsyncJobInMemory {
@@ -181,7 +181,7 @@ func NewAsyncJobInMemory() *AsyncJobInMemory {
 }
 
 func (a *AsyncJobInMemory) WarmUpCacheByFolder(owner, missedStoreKey string, width int) error {
-	a.WarmUpCalls = append(a.WarmUpCalls, WarmUpCall{Owner: owner, MissedKey: missedStoreKey, Width: width})
+	a.PendingWarmUpJobs = append(a.PendingWarmUpJobs, WarmUpJob{Owner: owner, MissedKey: missedStoreKey, Width: width})
 	return nil
 }
 

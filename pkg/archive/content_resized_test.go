@@ -56,15 +56,15 @@ func TestGetResizedImage(t *testing.T) {
 		maxBytes int
 	}
 	tests := []struct {
-		name              string
-		fields            fields
-		args              args
-		wantContent       []byte
-		wantType          string
-		wantErr           assert.ErrorAssertionFunc
-		expectCachedKey   string
-		expectCachedBytes []byte
-		expectWarmUpCall  *WarmUpCall
+		name                   string
+		fields                 fields
+		args                   args
+		wantContent            []byte
+		wantType               string
+		wantErr                assert.ErrorAssertionFunc
+		expectCachedKey        string
+		expectCachedBytes      []byte
+		expectPendingWarmUpJob *WarmUpJob
 	}{
 		{
 			name: "it should resize the image and store the result when the cache is empty",
@@ -75,13 +75,13 @@ func TestGetResizedImage(t *testing.T) {
 				AsyncJob:   NewAsyncJobInMemory(),
 				Resizer:    resizerReturning(map[int][]byte{1440: resizedContent}),
 			},
-			args:              args{resizedOwner, mediaId, 1440, 0},
-			wantContent:       resizedContent,
-			wantType:          mediaType,
-			wantErr:           assert.NoError,
-			expectCachedKey:   "w=1440" + cacheIdSuffix,
-			expectCachedBytes: resizedContent,
-			expectWarmUpCall:  &WarmUpCall{Owner: resizedOwner, MissedKey: storeKey, Width: 1440},
+			args:                   args{resizedOwner, mediaId, 1440, 0},
+			wantContent:            resizedContent,
+			wantType:               mediaType,
+			wantErr:                assert.NoError,
+			expectCachedKey:        "w=1440" + cacheIdSuffix,
+			expectCachedBytes:      resizedContent,
+			expectPendingWarmUpJob: &WarmUpJob{Owner: resizedOwner, MissedKey: storeKey, Width: 1440},
 		},
 		{
 			name: "it should use the cached image when it exists at the requested cacheable width",
@@ -109,13 +109,13 @@ func TestGetResizedImage(t *testing.T) {
 					180:                          miniContent,
 				}),
 			},
-			args:              args{resizedOwner, mediaId, 180, 0},
-			wantContent:       miniContent,
-			wantType:          mediaType,
-			wantErr:           assert.NoError,
-			expectCachedKey:   "miniatures" + cacheIdSuffix,
-			expectCachedBytes: resizedContent,
-			expectWarmUpCall:  &WarmUpCall{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MiniatureCachedWidth},
+			args:                   args{resizedOwner, mediaId, 180, 0},
+			wantContent:            miniContent,
+			wantType:               mediaType,
+			wantErr:                assert.NoError,
+			expectCachedKey:        "miniatures" + cacheIdSuffix,
+			expectCachedBytes:      resizedContent,
+			expectPendingWarmUpJob: &WarmUpJob{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MiniatureCachedWidth},
 		},
 		{
 			name: "it should get the miniature image from the cache and return a smaller one resized on the fly",
@@ -158,10 +158,10 @@ func TestGetResizedImage(t *testing.T) {
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, archive.MediaOverflowError)
 			},
-			wantType:          mediaType,
-			expectCachedKey:   fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix),
-			expectCachedBytes: resizedContent,
-			expectWarmUpCall:  &WarmUpCall{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MediumQualityCachedWidth},
+			wantType:               mediaType,
+			expectCachedKey:        fmt.Sprintf("w=%d%s", archive.MediumQualityCachedWidth, cacheIdSuffix),
+			expectCachedBytes:      resizedContent,
+			expectPendingWarmUpJob: &WarmUpJob{Owner: resizedOwner, MissedKey: storeKey, Width: archive.MediumQualityCachedWidth},
 		},
 		{
 			name: "it should return an overflow error when the cached image is too big",
@@ -256,10 +256,10 @@ func TestGetResizedImage(t *testing.T) {
 					assert.Equal(t, tt.expectCachedBytes, entry.Content)
 				}
 			}
-			if tt.expectWarmUpCall != nil {
-				assert.Equal(t, []WarmUpCall{*tt.expectWarmUpCall}, tt.fields.AsyncJob.WarmUpCalls)
+			if tt.expectPendingWarmUpJob != nil {
+				assert.Equal(t, []WarmUpJob{*tt.expectPendingWarmUpJob}, tt.fields.AsyncJob.PendingWarmUpJobs)
 			} else {
-				assert.Empty(t, tt.fields.AsyncJob.WarmUpCalls)
+				assert.Empty(t, tt.fields.AsyncJob.PendingWarmUpJobs)
 			}
 		})
 	}
