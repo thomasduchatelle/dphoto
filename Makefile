@@ -205,13 +205,7 @@ down:
 ## UTILS
 #######################################
 
-.PHONY: mocks clearlocal dcdown dcup
-
-mocks:
-	rm -rf internal/mocks
-	mockery --all --dir pkg -r --with-expecter --output internal/mocks
-	mockery --all --dir cmd -r --with-expecter --output internal/mocks
-	git add internal/mocks
+.PHONY: clearlocal dcdown dcup
 
 clearlocal:
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 s3 rm --recursive "s3://dphoto-local" | cat || echo "skipping"

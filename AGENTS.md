@@ -32,7 +32,7 @@ EXTREMELY IMPORTANT**.
     - `.github/actions/` - customised actions used within this repository only
     - `.github/workflows/job-*.yml` - reusable sub-workflow to build, test, and deploy the application
     - `.github/workflows/workflow-*.yml` - workflows triggered by external events, they call the "job workflow", never replicate their content.
-- `internal/` - **Golang**: mocks and utilities that lower the complexity of the CLI but is not part of the domain of the application.
+- `internal/` - **Golang**: utilities that lower the complexity of the CLI but is not part of the domain of the application.
 - `Makefile` - comprehensive list of all the commands to build and test the application.
 - `web/` - **DEPRECATED! Project will be replaced by web-nextjs** ; Typescript / React / Waku framework Website built on top of the REST API, deployed as a
   lambda.

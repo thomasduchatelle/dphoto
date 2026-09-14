@@ -1,6 +1,6 @@
 # 06 — Cleanup: delete `internal/mocks/`, `Makefile mocks:`, dead test; update docs
 
-Status: ready
+Status: done
 Layer: repo-wide
 Depends on: 01, 02, 03, 04, 05 (all must be merged)
 
