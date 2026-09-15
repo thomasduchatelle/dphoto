@@ -30,6 +30,7 @@ func AlbumView(ctx context.Context) *catalogviews.AlbumView {
 		aclAdapter,
 		albumQueries,
 		albumQueries,
+		aclAdapter,
 	)
 }
 

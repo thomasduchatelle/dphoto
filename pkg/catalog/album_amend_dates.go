@@ -32,24 +32,30 @@ func NewAmendAlbumDates(
 	countMediasBySelectors CountMediasBySelectorsPort,
 	amendAlbumDateRepository AmendAlbumDateRepositoryPort,
 	transferMedias TransferMediasRepositoryPort,
+	albumDatesAmendedObservers []AlbumDatesAmendedObserver,
 	timelineMutationObservers ...TimelineMutationObserver,
 ) *AmendAlbumDates {
+
+	observers := []AlbumDatesAmendedObserverWithTimeline{
+		&AmendAlbumMediaTransfer{
+			CountMediasBySelectors: countMediasBySelectors,
+			MediaTransfer: &MediaTransferExecutor{
+				TransferMediasRepository:  transferMedias,
+				TimelineMutationObservers: timelineMutationObservers,
+			},
+		},
+		&AlbumDatesAmendedObserverWrapper{AlbumDatesAmendedObserver: &AmendAlbumDatesExecutor{
+			AmendAlbumDateRepository: amendAlbumDateRepository,
+		}},
+	}
+	for _, observer := range albumDatesAmendedObservers {
+		observers = append(observers, &AlbumDatesAmendedObserverWrapper{AlbumDatesAmendedObserver: observer})
+	}
 
 	return &AmendAlbumDates{
 		FindAlbumsByOwnerPort: findAlbumsByOwner,
 		AmendAlbumDatesWithTimeline: &AmendAlbumDatesStateless{
-			Observers: []AlbumDatesAmendedObserverWithTimeline{
-				&AmendAlbumMediaTransfer{
-					CountMediasBySelectors: countMediasBySelectors,
-					MediaTransfer: &MediaTransferExecutor{
-						TransferMediasRepository:  transferMedias,
-						TimelineMutationObservers: timelineMutationObservers,
-					},
-				},
-				&AlbumDatesAmendedObserverWrapper{AlbumDatesAmendedObserver: &AmendAlbumDatesExecutor{
-					AmendAlbumDateRepository: amendAlbumDateRepository,
-				}},
-			},
+			Observers: observers,
 		},
 	}
 }

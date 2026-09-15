@@ -4,40 +4,44 @@ import (
 	"context"
 	"slices"
 
+	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 // NewAlbumView constructs the AlbumView read model.
 //
-// The four collaborators are kept as fields so that the event methods, filled in by
-// subsequent tickets (01-03..01-07), can be implemented without further signature churn on the
-// constructor:
+// Collaborators kept as fields so subsequent event methods can be filled in without churn:
 //   - Repository is the read+write projection carrying every viewer row.
 //   - GetAlbumSharingGridPort decorates owned rows with the current sharing grid on read.
 //   - MediaCounterPort re-reads canonical counts for count-mutation events.
-//   - FindAlbumsByIdsPort loads canonical album records for events that need display fields.
+//   - FindAlbumsByIdsPort loads canonical album records; used by AlbumRenamedInPlace to
+//     preserve Start/End (the observer signature only carries the new name).
+//   - ListUserWhoCanAccessAlbumPort fans display-field updates out to every viewer row.
 func NewAlbumView(
 	repository AlbumSummaryRepository,
 	getAlbumSharingGridPort GetAlbumSharingGridPort,
 	mediaCounterPort MediaCounterPort,
 	findAlbumsByIdsPort FindAlbumsByIdsPort,
+	listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort,
 ) *AlbumView {
 	return &AlbumView{
-		Repository:              repository,
-		GetAlbumSharingGridPort: getAlbumSharingGridPort,
-		MediaCounterPort:        mediaCounterPort,
-		FindAlbumsByIdsPort:     findAlbumsByIdsPort,
+		Repository:                    repository,
+		GetAlbumSharingGridPort:       getAlbumSharingGridPort,
+		MediaCounterPort:              mediaCounterPort,
+		FindAlbumsByIdsPort:           findAlbumsByIdsPort,
+		ListUserWhoCanAccessAlbumPort: listUserWhoCanAccessAlbumPort,
 	}
 }
 
 // AlbumView is the album-list read model: it serves ListAlbums from the projection and
 // keeps the projection in sync by observing catalog domain events.
 type AlbumView struct {
-	Repository              AlbumSummaryRepository
-	GetAlbumSharingGridPort GetAlbumSharingGridPort
-	MediaCounterPort        MediaCounterPort
-	FindAlbumsByIdsPort     FindAlbumsByIdsPort
+	Repository                    AlbumSummaryRepository
+	GetAlbumSharingGridPort       GetAlbumSharingGridPort
+	MediaCounterPort              MediaCounterPort
+	FindAlbumsByIdsPort           FindAlbumsByIdsPort
+	ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 }
 
 // ListAlbums returns the albums visible by the user (owned + shared) served from the
@@ -94,14 +98,37 @@ func (v *AlbumView) AlbumCreated(ctx context.Context, album catalog.Album) error
 	return nil
 }
 
-// AlbumRenamedInPlace is filled in by ticket 01-05.
+// AlbumRenamedInPlace refreshes AlbumName on every viewer row for the given album while
+// leaving Start/End at their current canonical values. The rename observer signature only
+// carries the new name, so the current album is loaded via FindAlbumsByIdsPort to source
+// Start/End (SetDisplayFields SETs the three attributes together on the DynamoDB adapter).
 func (v *AlbumView) AlbumRenamedInPlace(ctx context.Context, albumId catalog.AlbumId, newName string) error {
-	return nil
+	albums, err := v.FindAlbumsByIdsPort.FindAlbumsById(ctx, []catalog.AlbumId{albumId})
+	if err != nil {
+		return err
+	}
+	if len(albums) == 0 {
+		return errors.Wrapf(catalog.AlbumNotFoundErr, "AlbumRenamedInPlace(%s)", albumId)
+	}
+
+	users, err := v.ListUserWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, albumId)
+	if err != nil {
+		return err
+	}
+
+	return v.Repository.SetDisplayFields(ctx, albumId, users[albumId], newName, albums[0].Start, albums[0].End)
 }
 
-// AlbumDatesAmended is filled in by ticket 01-05.
+// AlbumDatesAmended writes the new Start/End (and preserves the current Name, carried by
+// DatesUpdate.UpdatedAlbum) onto every viewer row for the amended album.
 func (v *AlbumView) AlbumDatesAmended(ctx context.Context, update catalog.DatesUpdate) error {
-	return nil
+	albumId := update.UpdatedAlbum.AlbumId
+	users, err := v.ListUserWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, albumId)
+	if err != nil {
+		return err
+	}
+
+	return v.Repository.SetDisplayFields(ctx, albumId, users[albumId], update.UpdatedAlbum.Name, update.UpdatedAlbum.Start, update.UpdatedAlbum.End)
 }
 
 // AlbumDeleted is filled in by ticket 01-06.

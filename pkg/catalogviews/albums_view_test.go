@@ -211,11 +211,177 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 				tt.fields.GetAlbumSharingGridPort,
 				MediaCounterPortFake(nil),
 				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				&ListUserWhoCanAccessAlbumPortFake{},
 			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)
 			if tt.wantErr(t, err) {
 				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestAlbumView_AlbumRenamedInPlace(t *testing.T) {
+	tonyOwner := ownermodel.Owner("tony")
+	ownerUserId := usermodel.UserId("tony@stark.com")
+	visitorUserId := usermodel.UserId("pepper@stark.com")
+	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
+	albumId := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("avenger")}
+
+	currentAlbum := &catalog.Album{AlbumId: albumId, Name: "Old Name", Start: jan24, End: feb24}
+
+	seededRepository := func() *AlbumSummaryInMemoryRepository {
+		return &AlbumSummaryInMemoryRepository{
+			Summaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 5},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 5},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+		}
+	}
+
+	type fields struct {
+		Repository                    *AlbumSummaryInMemoryRepository
+		FindAlbumsByIdsPort           FindAlbumsByIdsPort
+		ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
+	}
+	type args struct {
+		albumId catalog.AlbumId
+		newName string
+	}
+	tests := []struct {
+		name              string
+		fields            fields
+		args              args
+		expectRepository  []UserAlbumSummary
+		wantErr           assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should update the name on all viewer rows",
+			fields: fields{
+				Repository:                    seededRepository(),
+				FindAlbumsByIdsPort:           FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return []*catalog.Album{currentAlbum}, nil }),
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{albumId: {OwnerAvailability(ownerUserId), VisitorAvailability(visitorUserId)}}),
+			},
+			args: args{albumId: albumId, newName: "New Name"},
+			expectRepository: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "New Name", Start: jan24, End: feb24, MediaCount: 5},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "New Name", Start: jan24, End: feb24, MediaCount: 5},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			albumView := NewAlbumView(
+				tt.fields.Repository,
+				GetAlbumSharingGridFunc(func(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) { return nil, nil }),
+				MediaCounterPortFake(nil),
+				tt.fields.FindAlbumsByIdsPort,
+				tt.fields.ListUserWhoCanAccessAlbumPort,
+			)
+
+			err := albumView.AlbumRenamedInPlace(context.Background(), tt.args.albumId, tt.args.newName)
+			if tt.wantErr(t, err) {
+				assert.ElementsMatch(t, tt.expectRepository, tt.fields.Repository.Summaries)
+			}
+		})
+	}
+}
+
+func TestAlbumView_AlbumDatesAmended(t *testing.T) {
+	tonyOwner := ownermodel.Owner("tony")
+	ownerUserId := usermodel.UserId("tony@stark.com")
+	visitorUserId := usermodel.UserId("pepper@stark.com")
+	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
+	mar24 := time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC)
+	apr24 := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
+	albumId := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("avenger")}
+
+	seededRepository := func() *AlbumSummaryInMemoryRepository {
+		return &AlbumSummaryInMemoryRepository{
+			Summaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Avenger", Start: jan24, End: feb24, MediaCount: 3},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Avenger", Start: jan24, End: feb24, MediaCount: 3},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+		}
+	}
+
+	type fields struct {
+		Repository                    *AlbumSummaryInMemoryRepository
+		ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
+	}
+	type args struct {
+		update catalog.DatesUpdate
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		expectRepository []UserAlbumSummary
+		wantErr          assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should update start and end on all viewer rows",
+			fields: fields{
+				Repository:                    seededRepository(),
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{albumId: {OwnerAvailability(ownerUserId), VisitorAvailability(visitorUserId)}}),
+			},
+			args: args{
+				update: catalog.DatesUpdate{
+					UpdatedAlbum:  catalog.Album{AlbumId: albumId, Name: "Avenger", Start: mar24, End: apr24},
+					PreviousStart: jan24,
+					PreviousEnd:   feb24,
+				},
+			},
+			expectRepository: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Avenger", Start: mar24, End: apr24, MediaCount: 3},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Avenger", Start: mar24, End: apr24, MediaCount: 3},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			albumView := NewAlbumView(
+				tt.fields.Repository,
+				GetAlbumSharingGridFunc(func(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) { return nil, nil }),
+				MediaCounterPortFake(nil),
+				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				tt.fields.ListUserWhoCanAccessAlbumPort,
+			)
+
+			err := albumView.AlbumDatesAmended(context.Background(), tt.args.update)
+			if tt.wantErr(t, err) {
+				assert.ElementsMatch(t, tt.expectRepository, tt.fields.Repository.Summaries)
 			}
 		})
 	}
