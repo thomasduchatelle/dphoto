@@ -1,6 +1,6 @@
 # 01-02 — New AlbumView shell and single-query ListAlbums
 
-Status: ready
+Status: done
 Phase: 1
 Layer: catalog domain — `pkg/catalogviews`
 Depends on: 01-01
