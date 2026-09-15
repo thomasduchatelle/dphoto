@@ -146,7 +146,7 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 				findAlbumsByOwner,
 				insertAlbum,
 				tt.fields.TransferMedias,
-				tt.fields.TimelineObserver,
+				[]catalog.TimelineMutationObserver{tt.fields.TimelineObserver},
 			)
 
 			_, err := albumCreate.Create(context.Background(), tt.args.request)

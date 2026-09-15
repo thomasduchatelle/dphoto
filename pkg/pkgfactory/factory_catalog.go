@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchiveasync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
@@ -84,8 +85,11 @@ func (s *SimpleCatalogFactory) CreateAlbumCase(ctx context.Context) *catalog.Cre
 		repository,
 		repository,
 		repository,
-		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
-		CommandHandlerAlbumSize(ctx),
+		[]catalog.TimelineMutationObserver{
+			s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
+			CommandHandlerAlbumSize(ctx),
+		},
+		&catalogviews.AlbumViewCreateAlbumObserver{AlbumView: AlbumView(ctx)},
 	)
 }
 
