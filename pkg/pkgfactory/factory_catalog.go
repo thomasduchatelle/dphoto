@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchiveasync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
@@ -104,6 +105,7 @@ func (s *SimpleCatalogFactory) CreateAlbumDeleteCase(ctx context.Context) *catal
 func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
 	// TODO ACL Sharing and other resources should be transferred as well when renaming (recreating) an album
 	repository := CatalogRepository(ctx)
+	albumView := AlbumView(ctx)
 	return catalog.NewRenameAlbum(
 		repository,
 		repository,
@@ -111,6 +113,7 @@ func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.Ren
 		repository,
 		repository,
 		repository,
+		[]catalog.RenameAlbumObserver{&catalogviews.AlbumViewRenameObserver{AlbumView: albumView}},
 		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
 		CommandHandlerAlbumSize(ctx),
 	)
@@ -118,11 +121,13 @@ func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.Ren
 
 func (s *SimpleCatalogFactory) AmendAlbumDatesCase(ctx context.Context) *catalog.AmendAlbumDates {
 	repository := CatalogRepository(ctx)
+	albumView := AlbumView(ctx)
 	return catalog.NewAmendAlbumDates(
 		repository,
 		repository,
 		repository,
 		repository,
+		[]catalog.AlbumDatesAmendedObserver{&catalogviews.AlbumViewAmendDatesObserver{AlbumView: albumView}},
 		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
 		CommandHandlerAlbumSize(ctx),
 	)

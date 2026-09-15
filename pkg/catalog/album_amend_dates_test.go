@@ -135,6 +135,7 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 				tt.fields.AlbumRepository,
 				tt.fields.AlbumRepository,
 				tt.fields.TransferMedias,
+				nil,
 				tt.fields.TimelineObserver,
 			)
 

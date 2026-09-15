@@ -13,7 +13,9 @@ type RenameAlbumRequest struct {
 	ForcedFolderName string // ForcedFolderName set to non-empty will create a new album with the requested FolderName (RenameFolder is ignored)
 }
 
-// NewRenameAlbum creates the service to rename an album
+// NewRenameAlbum creates the service to rename an album. In-place renames (name only, folder
+// unchanged) fan out through renameAlbumObservers; folder-changing renames fall through to the
+// create+delete replacer wired as a ReplaceAlbumObserver.
 func NewRenameAlbum(
 	FindAlbumById FindAlbumByIdPort,
 	UpdateAlbumName UpdateAlbumNamePort,
@@ -21,13 +23,15 @@ func NewRenameAlbum(
 	DeleteAlbumRepositoryPort DeleteAlbumRepositoryPort,
 	TransferMedias TransferMediasRepositoryPort,
 	FindAlbumsByOwner FindAlbumsByOwnerPort,
+	renameAlbumObservers []RenameAlbumObserver,
 	TimelineMutationObservers ...TimelineMutationObserver,
 ) *RenameAlbum {
 
 	return &RenameAlbum{
-		FindAlbumById:   FindAlbumById,
-		UpdateAlbumName: UpdateAlbumName,
-		RenameAlbumObservers: []RenameAlbumObserver{
+		FindAlbumById:        FindAlbumById,
+		UpdateAlbumName:      UpdateAlbumName,
+		RenameAlbumObservers: renameAlbumObservers,
+		ReplaceAlbumObservers: []ReplaceAlbumObserver{
 			&RenameAlbumReplacer{
 				CreateAlbum: CreateAlbum{
 					FindAlbumsByOwnerPort: FindAlbumsByOwner,
@@ -61,8 +65,18 @@ func (r RenameAlbumRequest) IsValid() error {
 	return nil
 }
 
+// RenameAlbumObserver observes an in-place rename (name only, folder unchanged). It fires
+// AFTER UpdateAlbumName has succeeded, so downstream projections can be refreshed with the new
+// name. Observers of folder-changing renames must implement ReplaceAlbumObserver instead.
 type RenameAlbumObserver interface {
-	OnRenameAlbum(ctx context.Context, current AlbumId, creationRequest CreateAlbumRequest) error
+	OnAlbumRenamed(ctx context.Context, albumId AlbumId, newName string) error
+}
+
+// ReplaceAlbumObserver observes the folder-changing branch of RenameAlbum: the old album is
+// replaced by a freshly created one and its medias are transferred. RenameAlbumReplacer is the
+// production implementation; it wires create+transfer+delete under the hood.
+type ReplaceAlbumObserver interface {
+	OnReplaceAlbum(ctx context.Context, current AlbumId, creationRequest CreateAlbumRequest) error
 }
 
 type FindAlbumByIdPort interface {
@@ -80,9 +94,10 @@ type UpdateAlbumNamePort interface {
 }
 
 type RenameAlbum struct {
-	FindAlbumById        FindAlbumByIdPort
-	UpdateAlbumName      UpdateAlbumNamePort
-	RenameAlbumObservers []RenameAlbumObserver
+	FindAlbumById         FindAlbumByIdPort
+	UpdateAlbumName       UpdateAlbumNamePort
+	RenameAlbumObservers  []RenameAlbumObserver
+	ReplaceAlbumObservers []ReplaceAlbumObserver
 }
 
 func (r *RenameAlbum) RenameAlbum(ctx context.Context, request RenameAlbumRequest) error {
@@ -95,7 +110,16 @@ func (r *RenameAlbum) RenameAlbum(ctx context.Context, request RenameAlbumReques
 	}
 
 	if !request.RenameFolder && request.ForcedFolderName == "" {
-		return r.UpdateAlbumName.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
+		if err = r.UpdateAlbumName.UpdateAlbumName(ctx, request.CurrentId, request.NewName); err != nil {
+			return err
+		}
+		for _, observer := range r.RenameAlbumObservers {
+			if err = observer.OnAlbumRenamed(ctx, request.CurrentId, request.NewName); err != nil {
+				return err
+			}
+		}
+		log.WithField("AlbumId", request.CurrentId).Infof("Album renamed in place: %s", request.NewName)
+		return nil
 	}
 
 	createRequest := CreateAlbumRequest{
@@ -106,8 +130,8 @@ func (r *RenameAlbum) RenameAlbum(ctx context.Context, request RenameAlbumReques
 		ForcedFolderName: request.ForcedFolderName,
 	}
 
-	for _, observer := range r.RenameAlbumObservers {
-		if err = observer.OnRenameAlbum(ctx, request.CurrentId, createRequest); err != nil {
+	for _, observer := range r.ReplaceAlbumObservers {
+		if err = observer.OnReplaceAlbum(ctx, request.CurrentId, createRequest); err != nil {
 			return err
 		}
 	}
@@ -122,7 +146,7 @@ type RenameAlbumReplacer struct {
 	DeleteAlbumRepositoryPort DeleteAlbumRepositoryPort
 }
 
-func (r *RenameAlbumReplacer) OnRenameAlbum(ctx context.Context, current AlbumId, creationRequest CreateAlbumRequest) error {
+func (r *RenameAlbumReplacer) OnReplaceAlbum(ctx context.Context, current AlbumId, creationRequest CreateAlbumRequest) error {
 	newAlbumId, err := r.CreateAlbum.Create(ctx, creationRequest)
 	if err != nil {
 		return err

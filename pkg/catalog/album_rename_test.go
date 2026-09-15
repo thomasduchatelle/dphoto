@@ -137,6 +137,7 @@ func TestNewRenameAlbumAcceptance(t *testing.T) {
 				tt.fields.AlbumRepository,
 				tt.fields.TransferMedias,
 				tt.fields.AlbumRepository,
+				nil,
 				tt.fields.TimelineObserver,
 			)
 
@@ -187,7 +188,8 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		name             string
 		fields           fields
 		args             args
-		expectRenamed    []RenameAlbumCall
+		expectRenamed    []AlbumRenamedCall
+		expectReplaced   []ReplaceAlbumCall
 		expectAlbumNames map[catalog.AlbumId]string
 		wantErr          assert.ErrorAssertionFunc
 	}{
@@ -235,6 +237,22 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 				},
 			},
 			expectAlbumNames: map[catalog.AlbumId]string{existingAlbum.AlbumId: newName},
+			expectRenamed:    []AlbumRenamedCall{{AlbumId: existingAlbum.AlbumId, NewName: newName}},
+			wantErr:          assert.NoError,
+		},
+		{
+			name:   "it should call the rename observer when updating the name in place",
+			fields: fields{AlbumRepository: albumRepositoryWithAvenger()},
+			args: args{
+				request: catalog.RenameAlbumRequest{
+					CurrentId:        existingAlbum.AlbumId,
+					NewName:          newName,
+					RenameFolder:     false,
+					ForcedFolderName: "",
+				},
+			},
+			expectAlbumNames: map[catalog.AlbumId]string{existingAlbum.AlbumId: newName},
+			expectRenamed:    []AlbumRenamedCall{{AlbumId: existingAlbum.AlbumId, NewName: newName}},
 			wantErr:          assert.NoError,
 		},
 		{
@@ -249,7 +267,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 				},
 			},
 			expectAlbumNames: map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
-			expectRenamed: []RenameAlbumCall{{
+			expectReplaced: []ReplaceAlbumCall{{
 				Current: existingAlbum.AlbumId,
 				CreationRequest: catalog.CreateAlbumRequest{
 					Owner:            owner,
@@ -273,7 +291,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 				},
 			},
 			expectAlbumNames: map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
-			expectRenamed: []RenameAlbumCall{{
+			expectReplaced: []ReplaceAlbumCall{{
 				Current: existingAlbum.AlbumId,
 				CreationRequest: catalog.CreateAlbumRequest{
 					Owner:            owner,
@@ -288,17 +306,20 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			observer := &RenameAlbumObserverInMemory{}
+			renameObserver := &RenameAlbumObserverInMemory{}
+			replaceObserver := &ReplaceAlbumObserverInMemory{}
 			r := &catalog.RenameAlbum{
-				FindAlbumById:        tt.fields.AlbumRepository,
-				UpdateAlbumName:      tt.fields.AlbumRepository,
-				RenameAlbumObservers: []catalog.RenameAlbumObserver{observer},
+				FindAlbumById:         tt.fields.AlbumRepository,
+				UpdateAlbumName:       tt.fields.AlbumRepository,
+				RenameAlbumObservers:  []catalog.RenameAlbumObserver{renameObserver},
+				ReplaceAlbumObservers: []catalog.ReplaceAlbumObserver{replaceObserver},
 			}
 			err := r.RenameAlbum(context.Background(), tt.args.request)
 			if !tt.wantErr(t, err, fmt.Sprintf("RenameAlbum(%v)", tt.args.request)) {
 				return
 			}
-			assert.Equal(t, tt.expectRenamed, observer.Renamed)
+			assert.Equal(t, tt.expectRenamed, renameObserver.Renamed)
+			assert.Equal(t, tt.expectReplaced, replaceObserver.Replaced)
 
 			names := make(map[catalog.AlbumId]string, len(tt.fields.AlbumRepository.Albums))
 			for id, album := range tt.fields.AlbumRepository.Albums {

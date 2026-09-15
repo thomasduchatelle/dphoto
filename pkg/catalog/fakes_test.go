@@ -174,20 +174,37 @@ func (d *DeleteAlbumObserverInMemory) OnDeleteAlbum(_ context.Context, deletedAl
 	return nil
 }
 
-// RenameAlbumCall represents one call to OnRenameAlbum.
-type RenameAlbumCall struct {
+// ReplaceAlbumCall represents one call to OnReplaceAlbum.
+type ReplaceAlbumCall struct {
 	Current         catalog.AlbumId
 	CreationRequest catalog.CreateAlbumRequest
 }
 
-// RenameAlbumObserverInMemory implements catalog.RenameAlbumObserver: it captures every rename
-// notified to the observer.
-type RenameAlbumObserverInMemory struct {
-	Renamed []RenameAlbumCall
+// ReplaceAlbumObserverInMemory implements catalog.ReplaceAlbumObserver: it captures every
+// folder-changing rename notified to the observer.
+type ReplaceAlbumObserverInMemory struct {
+	Replaced []ReplaceAlbumCall
 }
 
-func (r *RenameAlbumObserverInMemory) OnRenameAlbum(_ context.Context, current catalog.AlbumId, creationRequest catalog.CreateAlbumRequest) error {
-	r.Renamed = append(r.Renamed, RenameAlbumCall{Current: current, CreationRequest: creationRequest})
+func (r *ReplaceAlbumObserverInMemory) OnReplaceAlbum(_ context.Context, current catalog.AlbumId, creationRequest catalog.CreateAlbumRequest) error {
+	r.Replaced = append(r.Replaced, ReplaceAlbumCall{Current: current, CreationRequest: creationRequest})
+	return nil
+}
+
+// AlbumRenamedCall represents one call to OnAlbumRenamed.
+type AlbumRenamedCall struct {
+	AlbumId catalog.AlbumId
+	NewName string
+}
+
+// RenameAlbumObserverInMemory implements catalog.RenameAlbumObserver: it captures every
+// in-place rename notified to the observer.
+type RenameAlbumObserverInMemory struct {
+	Renamed []AlbumRenamedCall
+}
+
+func (r *RenameAlbumObserverInMemory) OnAlbumRenamed(_ context.Context, albumId catalog.AlbumId, newName string) error {
+	r.Renamed = append(r.Renamed, AlbumRenamedCall{AlbumId: albumId, NewName: newName})
 	return nil
 }
 
