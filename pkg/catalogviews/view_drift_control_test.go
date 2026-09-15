@@ -30,9 +30,9 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 	tests := []struct {
 		name      string
 		fields    fields
-		current   []UserAlbumSize
+		current   []UserAlbumSummary
 		args      args
-		wantSizes []UserAlbumSize
+		wantSummaries []UserAlbumSummary
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
@@ -61,17 +61,17 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 					album2: 2,
 				},
 			},
-			current: []UserAlbumSize{
-				{AlbumSize: AlbumSize{AlbumId: album1, MediaCount: 9}, Availability: OwnerAvailability(userId1)},
-				{AlbumSize: AlbumSize{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId1)},
-				{AlbumSize: AlbumSize{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId2)},
-				{AlbumSize: AlbumSize{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId3)},
+			current: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 9}, Availability: OwnerAvailability(userId1)},
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId1)},
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId2)},
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId3)},
 			},
-			wantSizes: []UserAlbumSize{
-				{AlbumSize: AlbumSize{AlbumId: album1, MediaCount: 1}, Availability: OwnerAvailability(userId1)},   // drift = wrong count
-				{AlbumSize: AlbumSize{AlbumId: album1, MediaCount: 1}, Availability: VisitorAvailability(userId2)}, // drift = missing
-				{AlbumSize: AlbumSize{AlbumId: album2, MediaCount: 2}, Availability: OwnerAvailability(userId1)},   // drift = wrong availability type
-				{AlbumSize: AlbumSize{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId3)}, // no drift
+			wantSummaries: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1}, Availability: OwnerAvailability(userId1)},   // drift = wrong count
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1}, Availability: VisitorAvailability(userId2)}, // drift = missing
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: OwnerAvailability(userId1)},   // drift = wrong availability type
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId3)}, // no drift
 			},
 			args: args{
 				owner: owner1,
@@ -92,8 +92,8 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 					album1: 1,
 				},
 			},
-			current:   nil,
-			wantSizes: nil,
+			current:       nil,
+			wantSummaries: nil,
 			args: args{
 				owner: owner1,
 				dry:   true,
@@ -104,7 +104,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repository := &AlbumSizeInMemoryRepository{Sizes: tt.current}
+			repository := &AlbumSummaryInMemoryRepository{Summaries: tt.current}
 
 			reconciler := NewDriftReconciler(
 				tt.fields.findAlbumByOwnerPort,
@@ -116,27 +116,27 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 
 			err := reconciler.Reconcile(context.Background(), tt.args.owner)
 			if tt.wantErr(t, err, fmt.Sprintf("Reconcile(%v, %v)", tt.args.owner, tt.args.dry)) {
-				assert.ElementsMatch(t, tt.wantSizes, repository.Sizes, "Reconcile(%v, %v) ; A=Expected ; B=Got", tt.args.owner, tt.args.dry)
+				assert.ElementsMatch(t, tt.wantSummaries, repository.Summaries, "Reconcile(%v, %v) ; A=Expected ; B=Got", tt.args.owner, tt.args.dry)
 			}
 		})
 	}
 }
 
-func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
+func TestDriftDetector_PutSummaries(t *testing.T) {
 	userId1 := usermodel.UserId("user1")
 	userId2 := usermodel.UserId("user2")
 	albumId1 := catalog.AlbumId{Owner: "owner1", FolderName: "/folder-1"}
 	albumId2 := catalog.AlbumId{Owner: "owner2", FolderName: "/folder-2"}
-	user1Album1Owner := UserAlbumSize{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1}, Availability: OwnerAvailability(userId1)}
-	user2Album1Visitor := UserAlbumSize{AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1}, Availability: VisitorAvailability(userId2)}
-	user2Album2Owner := UserAlbumSize{AlbumSize: AlbumSize{AlbumId: albumId2, MediaCount: 2}, Availability: OwnerAvailability(userId2)}
+	user1Album1Owner := UserAlbumSummary{AlbumSummary: AlbumSummary{AlbumId: albumId1, MediaCount: 1}, Availability: OwnerAvailability(userId1)}
+	user2Album1Visitor := UserAlbumSummary{AlbumSummary: AlbumSummary{AlbumId: albumId1, MediaCount: 1}, Availability: VisitorAvailability(userId2)}
+	user2Album2Owner := UserAlbumSummary{AlbumSummary: AlbumSummary{AlbumId: albumId2, MediaCount: 2}, Availability: OwnerAvailability(userId2)}
 
 	type fields struct {
-		GetCurrentAlbumSizesPort GetCurrentAlbumSizesPort
+		GetCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort
 	}
 	type args struct {
 		ctx       context.Context
-		albumSize []MultiUserAlbumSize
+		albumSize []AlbumSummaryForUsers
 	}
 	tests := []struct {
 		name       string
@@ -148,7 +148,7 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should not detect any drift if everything is empty",
 			fields: fields{
-				GetCurrentAlbumSizesPort: nil,
+				GetCurrentAlbumSummariesPort: nil,
 			},
 			args: args{
 				ctx:       context.Background(),
@@ -160,14 +160,14 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should not detect any drift if current match the expected",
 			fields: fields{
-				GetCurrentAlbumSizesPort: &AlbumSizeInMemoryRepository{
-					Sizes: []UserAlbumSize{user1Album1Owner},
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{user1Album1Owner},
 				},
 			},
 			args: args{
 				ctx: context.Background(),
-				albumSize: []MultiUserAlbumSize{
-					user1Album1Owner.ToMultiUser(),
+				albumSize: []AlbumSummaryForUsers{
+					user1Album1Owner.ToSummaryForUsers(),
 				},
 			},
 			wantDrifts: nil,
@@ -176,12 +176,12 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should detect missing album size as owner",
 			fields: fields{
-				GetCurrentAlbumSizesPort: &AlbumSizeInMemoryRepository{},
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{},
 			},
 			args: args{
 				ctx: context.Background(),
-				albumSize: []MultiUserAlbumSize{
-					user1Album1Owner.ToMultiUser(),
+				albumSize: []AlbumSummaryForUsers{
+					user1Album1Owner.ToSummaryForUsers(),
 				},
 			},
 			wantDrifts: []Drift{
@@ -192,12 +192,12 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should detect missing album size as visitor",
 			fields: fields{
-				GetCurrentAlbumSizesPort: &AlbumSizeInMemoryRepository{},
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{},
 			},
 			args: args{
 				ctx: context.Background(),
-				albumSize: []MultiUserAlbumSize{
-					user2Album1Visitor.ToMultiUser(),
+				albumSize: []AlbumSummaryForUsers{
+					user2Album1Visitor.ToSummaryForUsers(),
 				},
 			},
 			wantDrifts: []Drift{
@@ -208,17 +208,17 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should detect missing album size when albums is shared to multiple users",
 			fields: fields{
-				GetCurrentAlbumSizesPort: &AlbumSizeInMemoryRepository{
-					Sizes: []UserAlbumSize{
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
 						user1Album1Owner,
 					},
 				},
 			},
 			args: args{
 				ctx: context.Background(),
-				albumSize: []MultiUserAlbumSize{
+				albumSize: []AlbumSummaryForUsers{
 					{
-						AlbumSize: AlbumSize{AlbumId: albumId1, MediaCount: 1},
+						AlbumSummary: AlbumSummary{AlbumId: albumId1, MediaCount: 1},
 						Users:     []Availability{OwnerAvailability(userId1), VisitorAvailability(userId2)},
 					},
 				},
@@ -231,16 +231,16 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should detect different album size",
 			fields: fields{
-				GetCurrentAlbumSizesPort: &AlbumSizeInMemoryRepository{
-					Sizes: []UserAlbumSize{
-						{AlbumSize: AlbumSize{AlbumId: user1Album1Owner.AlbumSize.AlbumId, MediaCount: 9}, Availability: user1Album1Owner.Availability},
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{AlbumSummary: AlbumSummary{AlbumId: user1Album1Owner.AlbumSummary.AlbumId, MediaCount: 9}, Availability: user1Album1Owner.Availability},
 					},
 				},
 			},
 			args: args{
 				ctx: context.Background(),
-				albumSize: []MultiUserAlbumSize{
-					user1Album1Owner.ToMultiUser(),
+				albumSize: []AlbumSummaryForUsers{
+					user1Album1Owner.ToSummaryForUsers(),
 				},
 			},
 			wantDrifts: []Drift{
@@ -251,8 +251,8 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should detect a size that is still present but shouldn't be.",
 			fields: fields{
-				GetCurrentAlbumSizesPort: &AlbumSizeInMemoryRepository{
-					Sizes: []UserAlbumSize{
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
 						user1Album1Owner,
 						user2Album1Visitor,
 						user2Album2Owner,
@@ -261,9 +261,9 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				albumSize: []MultiUserAlbumSize{
-					user1Album1Owner.ToMultiUser(),
-					user2Album2Owner.ToMultiUser(), // user2 is not synced if not explicitly in the expected list
+				albumSize: []AlbumSummaryForUsers{
+					user1Album1Owner.ToSummaryForUsers(),
+					user2Album2Owner.ToSummaryForUsers(), // user2 is not synced if not explicitly in the expected list
 				},
 			},
 			wantDrifts: []Drift{
@@ -274,16 +274,16 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		{
 			name: "it should detect when a user is not at the right level of availability",
 			fields: fields{
-				GetCurrentAlbumSizesPort: &AlbumSizeInMemoryRepository{
-					Sizes: []UserAlbumSize{
-						{AlbumSize: user1Album1Owner.AlbumSize, Availability: VisitorAvailability(userId1)},
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{AlbumSummary: user1Album1Owner.AlbumSummary, Availability: VisitorAvailability(userId1)},
 					},
 				},
 			},
 			args: args{
 				ctx: context.Background(),
-				albumSize: []MultiUserAlbumSize{
-					user1Album1Owner.ToMultiUser(),
+				albumSize: []AlbumSummaryForUsers{
+					user1Album1Owner.ToSummaryForUsers(),
 				},
 			},
 			wantDrifts: []Drift{
@@ -298,13 +298,13 @@ func TestDriftMeasurer_InsertAlbumSize(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			observer := new(DriftObserverFake)
 			d := &DriftDetector{
-				GetCurrentAlbumSizesPort: tt.fields.GetCurrentAlbumSizesPort,
-				DriftObservers:           []DriftObserver{new(LoggerDriftObserver), observer},
+				GetCurrentAlbumSummariesPort: tt.fields.GetCurrentAlbumSummariesPort,
+				DriftObservers:               []DriftObserver{new(LoggerDriftObserver), observer},
 			}
 
-			err := d.InsertAlbumSize(tt.args.ctx, tt.args.albumSize)
-			if tt.wantErr(t, err, fmt.Sprintf("InsertAlbumSize(%v, %v)", tt.args.ctx, tt.args.albumSize)) {
-				assert.Equal(t, tt.wantDrifts, observer.Drifts, fmt.Sprintf("InsertAlbumSize(%v, %v)", tt.args.ctx, tt.args.albumSize))
+			err := d.PutSummaries(tt.args.ctx, tt.args.albumSize)
+			if tt.wantErr(t, err, fmt.Sprintf("PutSummaries(%v, %v)", tt.args.ctx, tt.args.albumSize)) {
+				assert.Equal(t, tt.wantDrifts, observer.Drifts, fmt.Sprintf("PutSummaries(%v, %v)", tt.args.ctx, tt.args.albumSize))
 			}
 		})
 	}

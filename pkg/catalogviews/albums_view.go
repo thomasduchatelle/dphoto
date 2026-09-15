@@ -11,11 +11,11 @@ func NewAlbumView(
 	GetAlbumSharingGridPort GetAlbumSharingGridPort,
 	FindAlbumsByIdsPort FindAlbumsByIdsPort,
 	SharedWithUserPort SharedWithUserPort,
-	GetAvailabilitiesByUserPort GetAvailabilitiesByUserPort,
+	ListSummariesForUserPort ListSummariesForUserPort,
 ) *AlbumView {
 	return &AlbumView{Providers: []ListAlbumsProvider{
 		&MediaCounterInjector{
-			GetAvailabilitiesByUserPort: GetAvailabilitiesByUserPort,
+			ListSummariesForUserPort: ListSummariesForUserPort,
 			ProviderFactories: []ProviderFactory{
 				ProviderFactoryFunc(func(ctx context.Context, mediaCounterPort MediaCounterPort) ListAlbumsProvider {
 					return &OwnedAlbumListProvider{

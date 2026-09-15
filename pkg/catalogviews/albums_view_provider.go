@@ -6,8 +6,8 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
-type GetAvailabilitiesByUserPort interface {
-	GetAvailabilitiesByUser(ctx context.Context, userId usermodel.UserId) ([]UserAlbumSize, error)
+type ListSummariesForUserPort interface {
+	ListSummariesForUser(ctx context.Context, userId usermodel.UserId) ([]UserAlbumSummary, error)
 }
 
 type ProviderFactory interface {
@@ -22,24 +22,24 @@ func (f ProviderFactoryFunc) NewProvider(ctx context.Context, mediaCounterPort M
 
 // MediaCounterInjector is covering the function while the view only contains some of the data (the counts)
 type MediaCounterInjector struct {
-	GetAvailabilitiesByUserPort GetAvailabilitiesByUserPort
-	ProviderFactories           []ProviderFactory
+	ListSummariesForUserPort ListSummariesForUserPort
+	ProviderFactories        []ProviderFactory
 }
 
 func (o *MediaCounterInjector) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
-	userAlbumSizes, err := o.GetAvailabilitiesByUserPort.GetAvailabilitiesByUser(ctx, user.UserId)
+	userSummaries, err := o.ListSummariesForUserPort.ListSummariesForUser(ctx, user.UserId)
 	if err != nil {
 		return nil, err
 	}
 
-	view := make([]AlbumSize, len(userAlbumSizes))
-	for i, userAlbumSize := range userAlbumSizes {
-		view[i] = userAlbumSize.AlbumSize
+	view := make([]AlbumSummary, len(userSummaries))
+	for i, userSummary := range userSummaries {
+		view[i] = userSummary.AlbumSummary
 	}
 
 	var visibleAlbums []*VisibleAlbum
 	for _, factory := range o.ProviderFactories {
-		provider := factory.NewProvider(ctx, &MediaCounterFromView{AlbumSizes: view})
+		provider := factory.NewProvider(ctx, &MediaCounterFromView{Summaries: view})
 		albums, err := provider.ListAlbums(ctx, user, filter)
 		if err != nil {
 			return nil, err
@@ -52,15 +52,15 @@ func (o *MediaCounterInjector) ListAlbums(ctx context.Context, user usermodel.Cu
 }
 
 type MediaCounterFromView struct {
-	AlbumSizes []AlbumSize
+	Summaries []AlbumSummary
 }
 
 func (m *MediaCounterFromView) CountMedia(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
 	counts := make(map[catalog.AlbumId]int)
 	for _, albumId := range album {
-		for _, size := range m.AlbumSizes {
-			if size.AlbumId.IsEqual(albumId) {
-				counts[albumId] = size.MediaCount
+		for _, summary := range m.Summaries {
+			if summary.AlbumId.IsEqual(albumId) {
+				counts[albumId] = summary.MediaCount
 				break
 			}
 		}
