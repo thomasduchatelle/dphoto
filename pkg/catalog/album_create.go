@@ -28,22 +28,27 @@ func NewAlbumCreate(
 	FindAlbumsByOwnerPort FindAlbumsByOwnerPort,
 	InsertAlbumPort InsertAlbumPort,
 	TransferMediasPort TransferMediasRepositoryPort,
-	TimelineMutationObservers ...TimelineMutationObserver,
+	TimelineMutationObservers []TimelineMutationObserver,
+	CreateAlbumObservers ...CreateAlbumObserver,
 ) *CreateAlbum {
+	observers := []CreateAlbumObserverWithTimeline{
+		&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
+			InsertAlbumPort: InsertAlbumPort,
+		}},
+		&CreateAlbumMediaTransfer{
+			MediaTransfer: &MediaTransferExecutor{
+				TransferMediasRepository:  TransferMediasPort,
+				TimelineMutationObservers: TimelineMutationObservers,
+			},
+		},
+	}
+	for _, observer := range CreateAlbumObservers {
+		observers = append(observers, &CreateAlbumObserverWrapper{CreateAlbumObserver: observer})
+	}
 	return &CreateAlbum{
 		FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
 		CreateAlbumWithTimeline: &CreateAlbumStateless{
-			Observers: []CreateAlbumObserverWithTimeline{
-				&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
-					InsertAlbumPort: InsertAlbumPort,
-				}},
-				&CreateAlbumMediaTransfer{
-					MediaTransfer: &MediaTransferExecutor{
-						TransferMediasRepository:  TransferMediasPort,
-						TimelineMutationObservers: TimelineMutationObservers,
-					},
-				},
-			},
+			Observers: observers,
 		},
 	}
 }

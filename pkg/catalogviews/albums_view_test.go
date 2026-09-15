@@ -211,12 +211,111 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 				tt.fields.GetAlbumSharingGridPort,
 				MediaCounterPortFake(nil),
 				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				stubListUserWhoCanAccessAlbumPort(nil),
 			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)
 			if tt.wantErr(t, err) {
 				assert.Equal(t, tt.want, got)
 			}
+		})
+	}
+}
+
+func TestAlbumView_AlbumCreated(t *testing.T) {
+	tonyOwner := ownermodel.Owner("tony")
+	tonyUser := usermodel.UserId("tony@stark.com")
+	tonyCurrentUser := usermodel.CurrentUser{UserId: tonyUser, Owner: &tonyOwner}
+	albumId := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("album-1")}
+	start := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
+	album := catalog.Album{AlbumId: albumId, Name: "Album One", Start: start, End: end}
+
+	ownerAccessPort := stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+		albumId: {OwnerAvailability(tonyUser)},
+	})
+	emptySharingGrid := GetAlbumSharingGridFunc(func(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) {
+		return nil, nil
+	})
+
+	type fields struct {
+		Repository                     *AlbumSummaryInMemoryRepository
+		ListUsersWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
+	}
+	type args struct {
+		album catalog.Album
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		wantVisible []*VisibleAlbum
+		wantErr     assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should make the album visible to the owner",
+			fields: fields{
+				Repository:                     &AlbumSummaryInMemoryRepository{},
+				ListUsersWhoCanAccessAlbumPort: ownerAccessPort,
+			},
+			args: args{album: album},
+			wantVisible: []*VisibleAlbum{
+				{
+					Album:              catalog.Album{AlbumId: albumId, Name: "Album One", Start: start, End: end},
+					MediaCount:         0,
+					OwnedByCurrentUser: true,
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			// AlbumCreated uses SetDisplayFields, whose per-row semantics preserve Count. If a row
+			// is already present for the album (drift, replay, or an out-of-order event), the
+			// display fields are refreshed but the existing MediaCount is kept intact — the event
+			// is safe to re-observe and does not shadow a valid count with a zero. Picking
+			// PutSummaries here would have zeroed the count instead.
+			name: "it should not shadow an existing row",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{
+							AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Stale name", MediaCount: 5},
+							Availability: OwnerAvailability(tonyUser),
+						},
+					},
+				},
+				ListUsersWhoCanAccessAlbumPort: ownerAccessPort,
+			},
+			args: args{album: album},
+			wantVisible: []*VisibleAlbum{
+				{
+					Album:              catalog.Album{AlbumId: albumId, Name: "Album One", Start: start, End: end},
+					MediaCount:         5,
+					OwnedByCurrentUser: true,
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			albumView := NewAlbumView(
+				tt.fields.Repository,
+				emptySharingGrid,
+				MediaCounterPortFake(nil),
+				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				tt.fields.ListUsersWhoCanAccessAlbumPort,
+			)
+
+			err := albumView.AlbumCreated(context.Background(), tt.args.album)
+			if !tt.wantErr(t, err) {
+				return
+			}
+
+			got, err := albumView.ListAlbums(context.Background(), tonyCurrentUser, ListAlbumsFilter{})
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantVisible, got)
 		})
 	}
 }

@@ -10,34 +10,39 @@ import (
 
 // NewAlbumView constructs the AlbumView read model.
 //
-// The four collaborators are kept as fields so that the event methods, filled in by
+// The five collaborators are kept as fields so that the event methods, filled in by
 // subsequent tickets (01-03..01-07), can be implemented without further signature churn on the
 // constructor:
 //   - Repository is the read+write projection carrying every viewer row.
 //   - GetAlbumSharingGridPort decorates owned rows with the current sharing grid on read.
 //   - MediaCounterPort re-reads canonical counts for count-mutation events.
 //   - FindAlbumsByIdsPort loads canonical album records for events that need display fields.
+//   - ListUsersWhoCanAccessAlbumPort enumerates the viewers (owner + visitors) of an album,
+//     used to fan display-field writes out to every viewer row.
 func NewAlbumView(
 	repository AlbumSummaryRepository,
 	getAlbumSharingGridPort GetAlbumSharingGridPort,
 	mediaCounterPort MediaCounterPort,
 	findAlbumsByIdsPort FindAlbumsByIdsPort,
+	listUsersWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort,
 ) *AlbumView {
 	return &AlbumView{
-		Repository:              repository,
-		GetAlbumSharingGridPort: getAlbumSharingGridPort,
-		MediaCounterPort:        mediaCounterPort,
-		FindAlbumsByIdsPort:     findAlbumsByIdsPort,
+		Repository:                     repository,
+		GetAlbumSharingGridPort:        getAlbumSharingGridPort,
+		MediaCounterPort:               mediaCounterPort,
+		FindAlbumsByIdsPort:            findAlbumsByIdsPort,
+		ListUsersWhoCanAccessAlbumPort: listUsersWhoCanAccessAlbumPort,
 	}
 }
 
 // AlbumView is the album-list read model: it serves ListAlbums from the projection and
 // keeps the projection in sync by observing catalog domain events.
 type AlbumView struct {
-	Repository              AlbumSummaryRepository
-	GetAlbumSharingGridPort GetAlbumSharingGridPort
-	MediaCounterPort        MediaCounterPort
-	FindAlbumsByIdsPort     FindAlbumsByIdsPort
+	Repository                     AlbumSummaryRepository
+	GetAlbumSharingGridPort        GetAlbumSharingGridPort
+	MediaCounterPort               MediaCounterPort
+	FindAlbumsByIdsPort            FindAlbumsByIdsPort
+	ListUsersWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 }
 
 // ListAlbums returns the albums visible by the user (owned + shared) served from the
@@ -89,9 +94,28 @@ func (v *AlbumView) ListAlbums(ctx context.Context, user usermodel.CurrentUser, 
 	return albums, nil
 }
 
-// AlbumCreated is filled in by ticket 01-03.
+// AlbumCreated writes a summary row for every viewer of the newly-created album (the owner,
+// plus any pre-existing visitors — none expected at creation today).
+//
+// It relies on SetDisplayFields, whose per-row semantics are "upsert display fields, do not
+// touch Count": on a fresh album that means writing a full row with Name/Start/End and
+// MediaCount=0 ; on the pathological case where a row is already present (drift / replay), the
+// display fields are refreshed but the existing Count is preserved rather than being clobbered
+// by a Count=0 overwrite. PutSummaries would have zeroed the count in that case; the split
+// primitives introduced in 01-01 exist precisely so create/rename/amend events can compose
+// safely with the count path.
 func (v *AlbumView) AlbumCreated(ctx context.Context, album catalog.Album) error {
-	return nil
+	availabilities, err := v.ListUsersWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, album.AlbumId)
+	if err != nil {
+		return err
+	}
+
+	users := availabilities[album.AlbumId]
+	if len(users) == 0 {
+		return nil
+	}
+
+	return v.Repository.SetDisplayFields(ctx, album.AlbumId, users, album.Name, album.Start, album.End)
 }
 
 // AlbumRenamedInPlace is filled in by ticket 01-05.
