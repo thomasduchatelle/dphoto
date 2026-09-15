@@ -41,11 +41,11 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 	}
 
 	type fields struct {
-		FindAlbumByOwnerPort        FindAlbumByOwnerPort
-		GetAlbumSharingGridPort     GetAlbumSharingGridPort
-		FindAlbumsByIdsPort         FindAlbumsByIdsPort
-		SharedWithUserPort          SharedWithUserPort
-		GetAvailabilitiesByUserPort GetAvailabilitiesByUserPort
+		FindAlbumByOwnerPort     FindAlbumByOwnerPort
+		GetAlbumSharingGridPort  GetAlbumSharingGridPort
+		FindAlbumsByIdsPort      FindAlbumsByIdsPort
+		SharedWithUserPort       SharedWithUserPort
+		ListSummariesForUserPort ListSummariesForUserPort
 	}
 	type args struct {
 		user   usermodel.CurrentUser
@@ -65,11 +65,11 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				GetAlbumSharingGridPort: stubGetAlbumSharingGridPort(ownedAlbum1.AlbumId, userId2),
 				FindAlbumsByIdsPort:     stubFindAlbumsByIdsPort(sharedAlbum3),
 				SharedWithUserPort:      stubSharedWithUserPort(sharedAlbum3),
-				GetAvailabilitiesByUserPort: &AlbumSizeInMemoryRepository{
-					Sizes: []UserAlbumSize{
-						{AlbumSize: AlbumSize{AlbumId: ownedAlbum1.AlbumId, MediaCount: 1}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
-						{AlbumSize: AlbumSize{AlbumId: ownedAlbum2.AlbumId, MediaCount: 2}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
-						{AlbumSize: AlbumSize{AlbumId: sharedAlbum3.AlbumId, MediaCount: 3}, Availability: VisitorAvailability(ironmanCurrentUser.UserId)},
+				ListSummariesForUserPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{AlbumSummary: AlbumSummary{AlbumId: ownedAlbum1.AlbumId, MediaCount: 1}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
+						{AlbumSummary: AlbumSummary{AlbumId: ownedAlbum2.AlbumId, MediaCount: 2}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
+						{AlbumSummary: AlbumSummary{AlbumId: sharedAlbum3.AlbumId, MediaCount: 3}, Availability: VisitorAvailability(ironmanCurrentUser.UserId)},
 					},
 				},
 			},
@@ -103,11 +103,11 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				GetAlbumSharingGridPort: stubGetAlbumSharingGridPort(ownedAlbum1.AlbumId, userId2),
 				FindAlbumsByIdsPort:     stubFindAlbumsByIdsPort(sharedAlbum3),
 				SharedWithUserPort:      stubSharedWithUserPort(sharedAlbum3),
-				GetAvailabilitiesByUserPort: &AlbumSizeInMemoryRepository{
-					Sizes: []UserAlbumSize{
-						{AlbumSize: AlbumSize{AlbumId: ownedAlbum1.AlbumId, MediaCount: 1}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
-						{AlbumSize: AlbumSize{AlbumId: ownedAlbum2.AlbumId, MediaCount: 2}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
-						{AlbumSize: AlbumSize{AlbumId: sharedAlbum3.AlbumId, MediaCount: 3}, Availability: VisitorAvailability(ironmanCurrentUser.UserId)},
+				ListSummariesForUserPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{AlbumSummary: AlbumSummary{AlbumId: ownedAlbum1.AlbumId, MediaCount: 1}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
+						{AlbumSummary: AlbumSummary{AlbumId: ownedAlbum2.AlbumId, MediaCount: 2}, Availability: OwnerAvailability(ironmanCurrentUser.UserId)},
+						{AlbumSummary: AlbumSummary{AlbumId: sharedAlbum3.AlbumId, MediaCount: 3}, Availability: VisitorAvailability(ironmanCurrentUser.UserId)},
 					},
 				},
 			},
@@ -139,7 +139,7 @@ func TestNewAlbumViewAcceptance(t *testing.T) {
 				tt.fields.GetAlbumSharingGridPort,
 				tt.fields.FindAlbumsByIdsPort,
 				tt.fields.SharedWithUserPort,
-				tt.fields.GetAvailabilitiesByUserPort,
+				tt.fields.ListSummariesForUserPort,
 			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)

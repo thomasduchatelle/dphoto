@@ -5,13 +5,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type LoggingInsertAlbumSizeObserver struct {
+type LoggingPutSummariesObserver struct {
 }
 
-func (l *LoggingInsertAlbumSizeObserver) InsertAlbumSize(ctx context.Context, albumSizes []MultiUserAlbumSize) error {
-	log.Infof("Updating album sizes for %d albums", len(albumSizes))
-	for _, albumSize := range albumSizes {
-		log.Infof("Album size: %s", albumSize)
+func (l *LoggingPutSummariesObserver) PutSummaries(ctx context.Context, summaries []AlbumSummaryForUsers) error {
+	log.Infof("Updating album summaries for %d albums", len(summaries))
+	for _, summary := range summaries {
+		log.Infof("Album summary: %s", summary)
 	}
 	return nil
 }

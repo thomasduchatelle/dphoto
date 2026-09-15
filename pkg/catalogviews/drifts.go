@@ -15,8 +15,8 @@ type Drift struct {
 }
 
 type MissingOrInvalidDrift struct {
-	AvailableAlbumSize UserAlbumSize
-	Missing            bool
+	AvailableAlbumSummary UserAlbumSummary
+	Missing               bool
 }
 
 type NotExpectedDrift struct {
@@ -24,19 +24,19 @@ type NotExpectedDrift struct {
 	AlbumId      catalog.AlbumId
 }
 
-func NewOverrideDrift(size UserAlbumSize) Drift {
+func NewOverrideDrift(summary UserAlbumSummary) Drift {
 	return Drift{
 		Expected: &MissingOrInvalidDrift{
-			AvailableAlbumSize: size,
+			AvailableAlbumSummary: summary,
 		},
 	}
 }
 
-func NewMissingDrift(size UserAlbumSize) Drift {
+func NewMissingDrift(summary UserAlbumSummary) Drift {
 	return Drift{
 		Expected: &MissingOrInvalidDrift{
-			AvailableAlbumSize: size,
-			Missing:            true,
+			AvailableAlbumSummary: summary,
+			Missing:               true,
 		},
 	}
 }

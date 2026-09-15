@@ -1,6 +1,6 @@
 # 01-01 — AlbumSummary repository (DynamoDB + in-memory)
 
-Status: ready
+Status: done
 Phase: 1
 Layer: catalog domain — `pkg/catalogviews` (model + in-memory fake) + `pkg/catalogviewsadapters/catalogviewsdynamodb`
 Depends on: —
