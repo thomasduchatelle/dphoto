@@ -26,11 +26,10 @@ func AlbumView(ctx context.Context) *catalogviews.AlbumView {
 	aclAdapter := CatalogToACLAdapter(ctx)
 
 	return catalogviews.NewAlbumView(
-		albumQueries,
-		aclAdapter,
-		albumQueries,
-		aclAdapter,
 		albumViewRepository,
+		aclAdapter,
+		albumQueries,
+		albumQueries,
 	)
 }
 
