@@ -24,6 +24,12 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 	folderName := catalog.NewFolderName("/weddings")
 	albumId := catalog.AlbumId{Owner: owner, FolderName: folderName}
 	const userEmail = usermodel.UserId("pepper@stark.com")
+	weddingsAlbum := catalog.Album{
+		AlbumId: albumId,
+		Name:    "Weddings",
+		Start:   time.Date(2022, 6, 1, 0, 0, 0, 0, time.UTC),
+		End:     time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC),
+	}
 
 	expectedScopeId := aclcore.ScopeId{
 		Type:          aclcore.AlbumVisitorScope,
@@ -40,7 +46,7 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 	}
 
 	findAlbumPortWithWeddings := func() *FindAlbumPortInMemory {
-		return NewFindAlbumPortInMemory(&catalog.Album{AlbumId: albumId})
+		return NewFindAlbumPortInMemory(&weddingsAlbum)
 	}
 
 	type fields struct {
@@ -58,11 +64,11 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 		fields       fields
 		args         args
 		expectScopes []*aclcore.Scope
-		expectShared map[catalog.AlbumId][]usermodel.UserId
+		expectShared map[usermodel.UserId][]catalog.Album
 		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should create the ACL rule when the album exists",
+			name: "it should create the ACL rule and notify observers with the full album when the album exists",
 			fields: fields{
 				ScopeRepository: NewScopeRepositoryInMemory(),
 				FindAlbumPort:   findAlbumPortWithWeddings(),
@@ -70,8 +76,8 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 			},
 			args:         args{owner, folderName, userEmail},
 			expectScopes: []*aclcore.Scope{&expectedScope},
-			expectShared: map[catalog.AlbumId][]usermodel.UserId{
-				albumId: {userEmail},
+			expectShared: map[usermodel.UserId][]catalog.Album{
+				userEmail: {weddingsAlbum},
 			},
 			wantErr: assert.NoError,
 		},
@@ -113,15 +119,14 @@ func TestShareAlbumCase_ShareAlbumWith(t *testing.T) {
 }
 
 type AlbumSharedObserverFake struct {
-	Shared map[catalog.AlbumId][]usermodel.UserId
+	Shared map[usermodel.UserId][]catalog.Album
 }
 
-func (a *AlbumSharedObserverFake) AlbumShared(ctx context.Context, albumId catalog.AlbumId, userEmail usermodel.UserId) error {
+func (a *AlbumSharedObserverFake) AlbumShared(ctx context.Context, album catalog.Album, userEmail usermodel.UserId) error {
 	if a.Shared == nil {
-		a.Shared = make(map[catalog.AlbumId][]usermodel.UserId)
+		a.Shared = make(map[usermodel.UserId][]catalog.Album)
 	}
 
-	previous := a.Shared[albumId]
-	a.Shared[albumId] = append(previous, userEmail)
+	a.Shared[userEmail] = append(a.Shared[userEmail], album)
 	return nil
 }

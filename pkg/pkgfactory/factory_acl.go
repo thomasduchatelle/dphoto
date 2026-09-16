@@ -5,6 +5,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclscopedynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
@@ -27,7 +28,7 @@ func AclCatalogShare(ctx context.Context) *catalogacl.ShareAlbumCase {
 		ScopeWriter:   AclRepository(ctx),
 		FindAlbumPort: AlbumQueries(ctx),
 		Observers: []catalogacl.AlbumSharedObserver{
-			CommandHandlerAlbumSize(ctx),
+			&catalogviews.AlbumViewAlbumSharedObserver{AlbumView: AlbumView(ctx)},
 		},
 	}
 }
@@ -36,7 +37,7 @@ func AclCatalogUnShare(ctx context.Context) *catalogacl.UnShareAlbumCase {
 	return &catalogacl.UnShareAlbumCase{
 		RevokeScopeRepository: AclRepository(ctx),
 		Observers: []catalogacl.AlbumUnSharedObserver{
-			CommandHandlerAlbumSize(ctx),
+			&catalogviews.AlbumViewAlbumUnSharedObserver{AlbumView: AlbumView(ctx)},
 		},
 	}
 }
