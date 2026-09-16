@@ -41,23 +41,27 @@ func NewDeleteAlbum(
 	CountMediasBySelectors CountMediasBySelectorsPort,
 	TransferMediasPort TransferMediasRepositoryPort,
 	DeleteAlbumRepository DeleteAlbumRepositoryPort,
-	TimelineMutationObservers ...TimelineMutationObserver,
+	TimelineMutationObservers []TimelineMutationObserver,
+	DeleteAlbumObservers ...DeleteAlbumObserver,
 ) *DeleteAlbum {
+
+	observers := []DeleteAlbumObserver{
+		&DeleteAlbumMediaTransfer{
+			MediaTransferExecutor: MediaTransferExecutor{
+				TransferMediasRepository:  TransferMediasPort,
+				TimelineMutationObservers: TimelineMutationObservers,
+			},
+		},
+		&DeleteAlbumMetadata{
+			DeleteAlbumRepository: DeleteAlbumRepository,
+		},
+	}
+	observers = append(observers, DeleteAlbumObservers...)
 
 	return &DeleteAlbum{
 		FindAlbumsByOwner:      FindAlbumsByOwner,
 		CountMediasBySelectors: CountMediasBySelectors,
-		Observers: []DeleteAlbumObserver{
-			&DeleteAlbumMediaTransfer{
-				MediaTransferExecutor: MediaTransferExecutor{
-					TransferMediasRepository:  TransferMediasPort,
-					TimelineMutationObservers: TimelineMutationObservers,
-				},
-			},
-			&DeleteAlbumMetadata{
-				DeleteAlbumRepository: DeleteAlbumRepository,
-			},
-		},
+		Observers:              observers,
 	}
 }
 

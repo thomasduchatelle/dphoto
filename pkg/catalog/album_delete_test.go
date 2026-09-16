@@ -195,7 +195,7 @@ func TestNewDeleteAlbum(t *testing.T) {
 		albumRepository,
 		transferMedias,
 		albumRepository,
-		timelineObserver,
+		[]catalog.TimelineMutationObserver{timelineObserver},
 	)
 
 	err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
