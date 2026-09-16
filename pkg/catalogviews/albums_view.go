@@ -104,9 +104,10 @@ func (v *AlbumView) AlbumDatesAmended(ctx context.Context, update catalog.DatesU
 	return nil
 }
 
-// AlbumDeleted is filled in by ticket 01-06.
+// AlbumDeleted wipes every viewer row of the given album from the projection, so a deleted
+// album stops appearing in ListAlbums for owner and visitors alike.
 func (v *AlbumView) AlbumDeleted(ctx context.Context, albumId catalog.AlbumId) error {
-	return nil
+	return v.Repository.DeleteAllRowsForAlbum(ctx, albumId)
 }
 
 // AlbumShared is filled in by ticket 01-07.
@@ -127,4 +128,14 @@ func (v *AlbumView) MediasInserted(ctx context.Context, medias map[catalog.Album
 // MediasTransferred is filled in by ticket 01-04.
 func (v *AlbumView) MediasTransferred(ctx context.Context, transfers catalog.TransferredMedias) error {
 	return nil
+}
+
+// AlbumViewDeleteAlbumObserver adapts AlbumView.AlbumDeleted into the catalog.DeleteAlbumObserver
+// interface, so a delete flow can wipe every viewer row alongside the metadata deletion.
+type AlbumViewDeleteAlbumObserver struct {
+	AlbumView *AlbumView
+}
+
+func (o *AlbumViewDeleteAlbumObserver) OnDeleteAlbum(ctx context.Context, deletedAlbum catalog.AlbumId, _ catalog.MediaTransferRecords) error {
+	return o.AlbumView.AlbumDeleted(ctx, deletedAlbum)
 }

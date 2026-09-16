@@ -220,3 +220,92 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 		})
 	}
 }
+
+func TestAlbumView_AlbumDeleted(t *testing.T) {
+	tonyOwner := ownermodel.Owner("tony")
+	ownerUserId := usermodel.UserId("ironman@avenger.hero")
+	visitor1UserId := usermodel.UserId("pepper@stark.com")
+	visitor2UserId := usermodel.UserId("wanda@avenger.hero")
+	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
+	mar24 := time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC)
+	deletedAlbumId := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("deleted")}
+	otherAlbumId := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("kept")}
+
+	ownerRow := UserAlbumSummary{
+		AlbumSummary: AlbumSummary{AlbumId: deletedAlbumId, Name: "Deleted", Start: jan24, End: feb24, MediaCount: 3},
+		Availability: OwnerAvailability(ownerUserId),
+	}
+	visitor1Row := UserAlbumSummary{
+		AlbumSummary: AlbumSummary{AlbumId: deletedAlbumId, Name: "Deleted", Start: jan24, End: feb24, MediaCount: 3},
+		Availability: VisitorAvailability(visitor1UserId),
+	}
+	visitor2Row := UserAlbumSummary{
+		AlbumSummary: AlbumSummary{AlbumId: deletedAlbumId, Name: "Deleted", Start: jan24, End: feb24, MediaCount: 3},
+		Availability: VisitorAvailability(visitor2UserId),
+	}
+	keptOwnerRow := UserAlbumSummary{
+		AlbumSummary: AlbumSummary{AlbumId: otherAlbumId, Name: "Kept", Start: feb24, End: mar24, MediaCount: 5},
+		Availability: OwnerAvailability(ownerUserId),
+	}
+
+	type fields struct {
+		Repository *AlbumSummaryInMemoryRepository
+	}
+	type args struct {
+		albumId catalog.AlbumId
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		expectSummaries  []UserAlbumSummary
+		wantErr          assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should remove the owner row",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{ownerRow}},
+			},
+			args:            args{albumId: deletedAlbumId},
+			expectSummaries: []UserAlbumSummary{},
+			wantErr:         assert.NoError,
+		},
+		{
+			name: "it should remove all visitor rows",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{ownerRow, visitor1Row, visitor2Row}},
+			},
+			args:            args{albumId: deletedAlbumId},
+			expectSummaries: []UserAlbumSummary{},
+			wantErr:         assert.NoError,
+		},
+		{
+			name: "it should leave other albums untouched",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{ownerRow, keptOwnerRow}},
+			},
+			args:            args{albumId: deletedAlbumId},
+			expectSummaries: []UserAlbumSummary{keptOwnerRow},
+			wantErr:         assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			albumView := NewAlbumView(
+				tt.fields.Repository,
+				GetAlbumSharingGridFunc(func(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) {
+					return nil, nil
+				}),
+				MediaCounterPortFake(nil),
+				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+			)
+
+			err := albumView.AlbumDeleted(context.Background(), tt.args.albumId)
+			if tt.wantErr(t, err) {
+				assert.Equal(t, tt.expectSummaries, tt.fields.Repository.Summaries)
+			}
+		})
+	}
+}
