@@ -41,6 +41,7 @@ func CommandHandlerAlbumSize(ctx context.Context) *catalogviews.CommandHandlerAl
 	return &catalogviews.CommandHandlerAlbumSize{
 		MediaCounterPort:              albumQueries,
 		ListUserWhoCanAccessAlbumPort: adapter,
+		FindAlbumsByIdsPort:           albumQueries,
 		ViewWriteRepository:           albumViewRepository,
 	}
 }
@@ -57,6 +58,7 @@ func OwnerDriftReconciler(ctx context.Context, dry bool, options ...catalogviews
 		albumQueries,
 		repository,
 		CatalogToACLAdapter(ctx),
+		albumQueries,
 		albumQueries,
 		drifts...,
 	)
