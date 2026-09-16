@@ -1,6 +1,6 @@
 # 01-07 — Events: AlbumShared & AlbumUnshared
 
-Status: ready
+Status: done
 Phase: 1
 Layer: catalog domain — `pkg/catalogviews` + `pkg/acl/catalogacl` + `pkg/pkgfactory`
 Depends on: 01-01, 01-02
