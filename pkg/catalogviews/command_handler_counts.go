@@ -111,6 +111,7 @@ type ListUserWhoCanAccessAlbumPort interface {
 type CommandHandlerAlbumSize struct {
 	MediaCounterPort              MediaCounterPort
 	ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
+	FindAlbumsByIdsPort           FindAlbumsByIdsPort
 	ViewWriteRepository           AlbumSummaryRepository
 }
 
@@ -126,6 +127,7 @@ func (c *CommandHandlerAlbumSize) OnTransferredMedias(ctx context.Context, trans
 	reCounter := &AlbumReCounter{
 		ListUserWhoCanAccessAlbumPort: c.ListUserWhoCanAccessAlbumPort,
 		MediaCounterPort:              c.MediaCounterPort,
+		FindAlbumsByIdsPort:           c.FindAlbumsByIdsPort,
 	}
 	return reCounter.ReCountMedias(ctx, albumIds, new(LoggingPutSummariesObserver), c.ViewWriteRepository)
 }
@@ -184,6 +186,7 @@ func (c *CommandHandlerAlbumSize) AlbumUnShared(ctx context.Context, albumId cat
 type AlbumReCounter struct {
 	ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 	MediaCounterPort              MediaCounterPort
+	FindAlbumsByIdsPort           FindAlbumsByIdsPort
 }
 
 func (c *AlbumReCounter) ReCountMedias(ctx context.Context, albumIds []catalog.AlbumId, observers ...PutSummariesPort) error {
@@ -201,17 +204,33 @@ func (c *AlbumReCounter) ReCountMedias(ctx context.Context, albumIds []catalog.A
 		return err
 	}
 
+	albums, err := c.FindAlbumsByIdsPort.FindAlbumsById(ctx, albumIds)
+	if err != nil {
+		return err
+	}
+	albumsById := make(map[catalog.AlbumId]*catalog.Album, len(albums))
+	for _, album := range albums {
+		albumsById[album.AlbumId] = album
+	}
+
 	var summaries []AlbumSummaryForUsers
 	for _, albumId := range albumIds {
 		availableTo, _ := availabilities[albumId]
 		count, _ := counts[albumId]
 
+		summary := AlbumSummary{
+			AlbumId:    albumId,
+			MediaCount: count,
+		}
+		if album, ok := albumsById[albumId]; ok {
+			summary.Name = album.Name
+			summary.Start = album.Start
+			summary.End = album.End
+		}
+
 		summaries = append(summaries, AlbumSummaryForUsers{
-			AlbumSummary: AlbumSummary{
-				AlbumId:    albumId,
-				MediaCount: count,
-			},
-			Users: availableTo,
+			AlbumSummary: summary,
+			Users:        availableTo,
 		})
 	}
 

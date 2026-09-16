@@ -49,6 +49,7 @@ func NewDriftReconciler(
 	getCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort,
 	listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort,
 	mediaCounterPort MediaCounterPort,
+	findAlbumsByIdsPort FindAlbumsByIdsPort,
 	DriftObservers ...DriftOption,
 ) *OwnerDriftReconciler {
 	observers := []DriftObserver{
@@ -67,6 +68,7 @@ func NewDriftReconciler(
 		AlbumReCounter: AlbumReCounter{
 			ListUserWhoCanAccessAlbumPort: listUserWhoCanAccessAlbumPort,
 			MediaCounterPort:              mediaCounterPort,
+			FindAlbumsByIdsPort:           findAlbumsByIdsPort,
 		},
 		DriftDetector: &DriftDetector{
 			GetCurrentAlbumSummariesPort: getCurrentAlbumSummariesPort,
@@ -149,7 +151,7 @@ func (d *DriftDetector) PutSummaries(ctx context.Context, summaries []AlbumSumma
 					NewNotExpectedDrift(currentSummary.Availability, currentSummary.AlbumSummary.AlbumId),
 					NewMissingDrift(expectedSummary),
 				)
-			} else if currentSummary.AlbumSummary.MediaCount != expectedSummary.AlbumSummary.MediaCount {
+			} else if summariesDiffer(currentSummary.AlbumSummary, expectedSummary.AlbumSummary) {
 				drifts = append(drifts, NewOverrideDrift(expectedSummary))
 			}
 		}
@@ -171,6 +173,13 @@ func (d *DriftDetector) PutSummaries(ctx context.Context, summaries []AlbumSumma
 	}
 
 	return nil
+}
+
+func summariesDiffer(current, expected AlbumSummary) bool {
+	return current.MediaCount != expected.MediaCount ||
+		current.Name != expected.Name ||
+		!current.Start.Equal(expected.Start) ||
+		!current.End.Equal(expected.End)
 }
 
 type LoggerDriftObserver struct{}

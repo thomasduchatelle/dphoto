@@ -127,6 +127,7 @@ func TestCommandHandlerAlbumSize_OnTransferredMedias(t *testing.T) {
 			c := &CommandHandlerAlbumSize{
 				MediaCounterPort:              tt.fields.MediaCounterPort,
 				ListUserWhoCanAccessAlbumPort: tt.fields.ListUserWhoCanAccessAlbumPort,
+				FindAlbumsByIdsPort:           stubFindAlbumsByIdsPort(),
 				ViewWriteRepository:           repository,
 			}
 			err := c.OnTransferredMedias(context.Background(), tt.args.transfers)
