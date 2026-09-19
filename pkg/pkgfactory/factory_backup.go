@@ -21,21 +21,17 @@ func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 
 	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.Report, error) {
 		batch := &backup.BatchBackup{
-			CataloguerFactory: &AlbumCreatorCataloguerFactory{
-				archiveAdapterForCatalog: factory.SimpleCatalogFactory.ArchiveAdapterForCatalog,
-			},
-			DetailsReaders:  analysers.ListDetailReaders(),
-			InsertMediaPort: NewInsertMediaAdapter(ctx),
-			ArchivePort:     backuparchive.New(),
+			CataloguerFactory: &AlbumCreatorCataloguerFactory{},
+			DetailsReaders:    analysers.ListDetailReaders(),
+			InsertMediaPort:   NewInsertMediaAdapter(ctx),
+			ArchivePort:       backuparchive.New(),
 		}
 
 		return batch.Backup(ctx, owner, volume, backupDefaultOptionsForAWS(optionsSlice)...)
 	}
 }
 
-type AlbumCreatorCataloguerFactory struct {
-	archiveAdapterForCatalog ArchiveAdapterForCatalog
-}
+type AlbumCreatorCataloguerFactory struct{}
 
 func (f *AlbumCreatorCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
 	queries := AlbumQueries(ctx)
@@ -43,10 +39,7 @@ func (f *AlbumCreatorCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Con
 	referencer, err := catalog.NewAlbumAutoPopulateReferencer(
 		owner,
 		queries,
-		writeRepo,
-		&catalog.TransferMediasFromRepository{TransferMediasRepository: writeRepo},
-		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: f.archiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
-		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		factory.SimpleCatalogFactory.CreateAlbumCase(ctx),
 	)
 
 	return &backupcatalog.CatalogReferencerAdapter{
