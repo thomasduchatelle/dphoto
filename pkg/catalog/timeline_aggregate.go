@@ -1,9 +1,11 @@
 package catalog
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"slices"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type TimelineAggregate struct {
@@ -108,6 +110,98 @@ func extractAlbumIds(albums []Album) []AlbumId {
 	}
 
 	return ids
+}
+
+type RenameAlbumRequest struct {
+	CurrentId        AlbumId
+	NewName          string
+	RenameFolder     bool   // RenameFolder set to TRUE will create a new album with a FolderName generated from the NewName
+	ForcedFolderName string // ForcedFolderName set to non-empty will create a new album with the requested FolderName (RenameFolder is ignored)
+}
+
+func (r RenameAlbumRequest) String() string {
+	return fmt.Sprintf("%s -> %s", r.CurrentId.String(), r.NewName)
+}
+
+// AlbumRenamed carries the outcome of a folder-name-changing rename: the existing album to
+// remove, the new album to insert, and the media transfer that moves the existing album's
+// medias into the new one.
+type AlbumRenamed struct {
+	ExistingAlbum Album
+	RenamedAlbum  Album
+	MediaTransfer MediaTransferRecords
+}
+
+// RenameAlbum removes the existing album from the aggregate and inserts a new one carrying
+// the new folder name / display name. It returns everything the application service needs to
+// persist the rename and move the medias:
+//   - AlbumNotFoundErr if currentId is unknown to the aggregate.
+//   - AlbumFolderNameAlreadyTakenErr if the target folder name is used by another album.
+//
+// The rename is expected to change the folder name; the caller is responsible for handling the
+// name-only case (a simple UpdateAlbumName on the same row) before reaching this method.
+func (t *TimelineAggregate) RenameAlbum(request RenameAlbumRequest) (*AlbumRenamed, error) {
+	if t.timeline == nil {
+		return nil, errors.Errorf("TimelineAggregate.RenameAlbum must be called from NewInitialisedTimelineAggregate (t.timeline is nil)")
+	}
+	if request.NewName == "" {
+		return nil, AlbumNameMandatoryErr
+	}
+
+	existing, err := t.findAlbumById(request.CurrentId)
+	if err != nil {
+		return nil, err
+	}
+
+	folderName := generateFolderName(request.NewName, existing.Start)
+	if request.ForcedFolderName != "" && request.ForcedFolderName != "/" {
+		folderName = NewFolderName(request.ForcedFolderName)
+	}
+	newAlbumId := AlbumId{Owner: request.CurrentId.Owner, FolderName: folderName}
+
+	nameIsAlreadyTakenByAnother := slices.ContainsFunc(t.albums, func(album *Album) bool {
+		return album.AlbumId.IsEqual(newAlbumId) && !album.AlbumId.IsEqual(request.CurrentId)
+	})
+	if nameIsAlreadyTakenByAnother {
+		return nil, errors.Wrapf(AlbumFolderNameAlreadyTakenErr, "%s album id already exists", newAlbumId)
+	}
+
+	renamed := Album{
+		AlbumId: newAlbumId,
+		Name:    request.NewName,
+		Start:   existing.Start,
+		End:     existing.End,
+	}
+
+	for i, alb := range t.albums {
+		if alb.AlbumId.IsEqual(existing.AlbumId) {
+			t.albums[i] = &renamed
+			break
+		}
+	}
+
+	return &AlbumRenamed{
+		ExistingAlbum: existing,
+		RenamedAlbum:  renamed,
+		MediaTransfer: MediaTransferRecords{
+			newAlbumId: []MediaSelector{{
+				FromAlbums: []AlbumId{existing.AlbumId},
+				Start:      existing.Start,
+				End:        existing.End,
+			}},
+		},
+	}, nil
+}
+
+func (t *TimelineAggregate) findAlbumById(albumId AlbumId) (Album, error) {
+	index := slices.IndexFunc(t.albums, func(album *Album) bool {
+		return album.AlbumId.IsEqual(albumId)
+	})
+	if index == -1 {
+		return Album{}, errors.Wrapf(AlbumNotFoundErr, "album %s not found", albumId)
+	}
+	existing := *t.albums[index]
+	return existing, nil
 }
 
 func (t *TimelineAggregate) RemoveAlbum(deletedAlbumId AlbumId) (MediaTransferRecords, []MediaSelector, error) {

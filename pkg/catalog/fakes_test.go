@@ -175,20 +175,14 @@ func (d *DeleteAlbumObserverInMemory) OnDeleteAlbum(_ context.Context, deletedAl
 	return nil
 }
 
-// RenameAlbumCall represents one call to OnRenameAlbum.
-type RenameAlbumCall struct {
-	Current         catalog.AlbumId
-	CreationRequest catalog.CreateAlbumRequest
+// AlbumRenamedObserverInMemory implements catalog.AlbumRenamedObserver: it captures every
+// AlbumRenamed event notified to the observer.
+type AlbumRenamedObserverInMemory struct {
+	Events []catalog.AlbumRenamed
 }
 
-// RenameAlbumObserverInMemory implements catalog.RenameAlbumObserver: it captures every rename
-// notified to the observer.
-type RenameAlbumObserverInMemory struct {
-	Renamed []RenameAlbumCall
-}
-
-func (r *RenameAlbumObserverInMemory) OnRenameAlbum(_ context.Context, current catalog.AlbumId, creationRequest catalog.CreateAlbumRequest) error {
-	r.Renamed = append(r.Renamed, RenameAlbumCall{Current: current, CreationRequest: creationRequest})
+func (r *AlbumRenamedObserverInMemory) OnAlbumRenamed(_ context.Context, event catalog.AlbumRenamed) error {
+	r.Events = append(r.Events, event)
 	return nil
 }
 

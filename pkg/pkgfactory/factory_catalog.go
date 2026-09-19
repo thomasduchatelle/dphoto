@@ -104,15 +104,16 @@ func (s *SimpleCatalogFactory) CreateAlbumDeleteCase(ctx context.Context) *catal
 func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
 	// TODO ACL Sharing and other resources should be transferred as well when renaming (recreating) an album
 	repository := CatalogRepository(ctx)
+	transferMedias := &catalog.MediaTransferExecutor{
+		TransferMediasRepository: repository,
+		TimelineMutationObservers: []catalog.TimelineMutationObserver{
+			s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
+			CommandHandlerAlbumSize(ctx),
+		},
+	}
 	return catalog.NewRenameAlbum(
 		repository,
-		repository,
-		repository,
-		repository,
-		repository,
-		repository,
-		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
-		CommandHandlerAlbumSize(ctx),
+		transferMedias,
 	)
 }
 
