@@ -74,17 +74,12 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*
 
 	timeline := NewLazyTimelineAggregate(albums)
 
-	album, err := timeline.CreateNewAlbum(request)
+	album, records, err := timeline.CreateNewAlbum(request)
 	if err != nil {
 		return nil, err
 	}
 
 	if err = c.InsertAlbumPort.InsertAlbum(ctx, album); err != nil {
-		return nil, err
-	}
-
-	records, err := timeline.AddNew(album)
-	if err != nil {
 		return nil, err
 	}
 
@@ -123,68 +118,35 @@ func (a *AlbumCreatedAsTimelineMutation) OnAlbumCreated(ctx context.Context, eve
 	return a.TimelineMutationObserver.OnTransferredMedias(ctx, event.TransferredMedias)
 }
 
-// The following types are kept alive solely so album_referencer.go still compiles. They
-// will be removed once the referencer is refactored to build albums inline like CreateAlbum.
+// CreateAlbumWithTimeline and CreateAlbumStateless are kept alive solely so album_referencer.go
+// still compiles. They will be removed once the referencer is refactored to build albums inline
+// like CreateAlbum.
 // TODO remove once album_referencer is refactored
-
-type CreateAlbumObserver interface {
-	ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error
-}
-
-type CreateAlbumObserverWithTimeline interface {
-	ObserveCreateAlbum(ctx context.Context, timeline *TimelineAggregate, createdAlbum Album) error
-}
-
-type CreateAlbumObserverWrapper struct {
-	CreateAlbumObserver
-}
-
-func (c *CreateAlbumObserverWrapper) ObserveCreateAlbum(ctx context.Context, _ *TimelineAggregate, createdAlbum Album) error {
-	return c.CreateAlbumObserver.ObserveCreateAlbum(ctx, createdAlbum)
-}
 
 type CreateAlbumWithTimeline interface {
 	Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error)
 }
 
 type CreateAlbumStateless struct {
-	Observers []CreateAlbumObserverWithTimeline
+	InsertAlbumPort InsertAlbumPort
+	MediaTransfer   MediaTransfer
 }
 
 func (c *CreateAlbumStateless) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
-	album, err := timeline.CreateNewAlbum(request)
+	album, records, err := timeline.CreateNewAlbum(request)
 	if err != nil {
 		return nil, err
 	}
 
-	for index, observer := range c.Observers {
-		if err = observer.ObserveCreateAlbum(ctx, timeline, album); err != nil {
-			return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed at observer %d/%d", request, index, len(c.Observers))
-		}
+	if err = c.InsertAlbumPort.InsertAlbum(ctx, album); err != nil {
+		return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed to insert the album", request)
+	}
+
+	if err = c.MediaTransfer.Transfer(ctx, records); err != nil {
+		return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed to transfer medias", request)
 	}
 
 	log.WithField("Owner", request.Owner).Infof("Album %s created", album)
 
 	return &album.AlbumId, nil
-}
-
-type CreateAlbumExecutor struct {
-	InsertAlbumPort InsertAlbumPort
-}
-
-func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
-	return c.InsertAlbumPort.InsertAlbum(ctx, createdAlbum)
-}
-
-type CreateAlbumMediaTransfer struct {
-	MediaTransfer MediaTransfer
-}
-
-func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, timeline *TimelineAggregate, createdAlbum Album) error {
-	records, err := timeline.AddNew(createdAlbum)
-	if err != nil {
-		return err
-	}
-
-	return c.MediaTransfer.Transfer(ctx, records)
 }

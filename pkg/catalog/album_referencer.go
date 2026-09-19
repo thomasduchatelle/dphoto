@@ -33,16 +33,10 @@ func NewAlbumAutoPopulateReferencer(
 		new(TimelineLookupStrategy),
 		&AlbumAutoCreateLookupStrategy{
 			Delegate: &CreateAlbumStateless{
-				Observers: []CreateAlbumObserverWithTimeline{
-					&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
-						InsertAlbumPort: insertAlbumPort,
-					}},
-					&CreateAlbumMediaTransfer{
-						MediaTransfer: &MediaTransferExecutor{
-							TransferMediasRepository:  transferMediasPort,
-							TimelineMutationObservers: timelineMutationObservers,
-						},
-					},
+				InsertAlbumPort: insertAlbumPort,
+				MediaTransfer: &MediaTransferExecutor{
+					TransferMediasRepository:  transferMediasPort,
+					TimelineMutationObservers: timelineMutationObservers,
 				},
 			},
 		},
