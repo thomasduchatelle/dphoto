@@ -34,6 +34,22 @@ func stubOwnerUserIdPort(owner ownermodel.Owner, userId usermodel.UserId) OwnerU
 	}
 }
 
+func stubFindAlbumsByIds(albums ...*catalog.Album) FindAlbumsByIdsFunc {
+	byId := make(map[catalog.AlbumId]*catalog.Album, len(albums))
+	for _, album := range albums {
+		byId[album.AlbumId] = album
+	}
+	return func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) {
+		var result []*catalog.Album
+		for _, id := range ids {
+			if album, ok := byId[id]; ok {
+				result = append(result, album)
+			}
+		}
+		return result, nil
+	}
+}
+
 type ListUserWhoCanAccessAlbumPortFake struct {
 	Values map[catalog.AlbumId][]Availability
 }

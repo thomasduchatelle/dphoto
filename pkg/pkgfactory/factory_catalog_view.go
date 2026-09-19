@@ -51,6 +51,7 @@ func OwnerDriftReconciler(ctx context.Context, dry bool, options ...catalogviews
 		repository,
 		CatalogToACLAdapter(ctx),
 		albumQueries,
+		albumQueries,
 		drifts...,
 	)
 }
