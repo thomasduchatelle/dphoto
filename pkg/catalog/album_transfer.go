@@ -70,16 +70,6 @@ func (m MediaSelector) String() string {
 	return fmt.Sprintf("{from:%s} %s -> %s", strings.Join(from, ","), m.Start.Format(time.DateTime), m.End.Format(time.DateTime))
 }
 
-type MediaTransfer interface {
-	Transfer(ctx context.Context, records MediaTransferRecords) error
-}
-
-type MediaTransferFunc func(ctx context.Context, records MediaTransferRecords) error
-
-func (f MediaTransferFunc) Transfer(ctx context.Context, records MediaTransferRecords) error {
-	return f(ctx, records)
-}
-
 // TransferMediasRepositoryPort moves the medias matched by records to their new album and
 // returns, per destination album, the list of MediaIds that were actually moved.
 type TransferMediasRepositoryPort interface {
@@ -130,27 +120,4 @@ func (t *TransferMediasFromRepository) TransferMedias(ctx context.Context, recor
 	return result, nil
 }
 
-// MediaTransferExecutor is a legacy adapter kept while use cases are refactored one by
-// one: it delegates the actual transfer to TransferMediasFromRepository and fans the
-// result out to the TimelineMutationObservers. It implements the fire-and-forget
-// MediaTransfer interface used by the yet-to-be-migrated use cases.
-type MediaTransferExecutor struct {
-	TransferMediasRepository  TransferMediasRepositoryPort
-	TimelineMutationObservers []TimelineMutationObserver
-}
 
-func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTransferRecords) error {
-	service := &TransferMediasFromRepository{TransferMediasRepository: d.TransferMediasRepository}
-	transfers, err := service.TransferMedias(ctx, records)
-	if err != nil || transfers.IsEmpty() {
-		return err
-	}
-
-	for _, observer := range d.TimelineMutationObservers {
-		if err = observer.OnTransferredMedias(ctx, transfers); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}

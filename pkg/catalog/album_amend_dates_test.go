@@ -106,6 +106,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 
 	type fields struct {
 		AlbumRepository catalog.AmendAlbumDateRepositoryPort
+		TransferErr     error
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -179,7 +180,27 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 			},
 		},
 		{
-			name:   "it should not attempt the transfer nor fire the event when persisting the new dates fails",
+			name:   "it should not persist the new dates nor fire the event when the media transfer fails (persistence happens after the transfer)",
+			fields: fields{
+				AlbumRepository: repositoryWithOneMediaPerSelector(existingAlbum, allYearAlbum),
+				TransferErr:     testError,
+			},
+			args: args{
+				albumId: avenger1Id,
+				start:   may24,
+				end:     jan25,
+			},
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				avenger1Id: {start: may24, end: jul24},
+				allYearId:  {start: jan24, end: jan25},
+			},
+			expectTransferRecords: []catalog.MediaTransferRecords{extendedRecords},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, testError, i...)
+			},
+		},
+		{
+			name:   "it should not fire the event when persisting the new dates fails after a successful media transfer",
 			fields: fields{AlbumRepository: failingAmendDates(repositoryWithOneMediaPerSelector(existingAlbum, allYearAlbum), testError)},
 			args: args{
 				albumId: avenger1Id,
@@ -190,6 +211,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 				avenger1Id: {start: may24, end: jul24},
 				allYearId:  {start: jan24, end: jan25},
 			},
+			expectTransferRecords: []catalog.MediaTransferRecords{extendedRecords},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, testError, i...)
 			},
@@ -211,7 +233,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			transferService := &TransferMediasServiceFake{}
+			transferService := &TransferMediasServiceFake{Err: tt.fields.TransferErr}
 			observer := &AlbumDatesAmendedObserverInMemory{}
 
 			repository := underlyingAmendRepository(tt.fields.AlbumRepository)

@@ -111,46 +111,6 @@ func (r *AlbumRepositoryInMemory) CountMediasBySelectors(_ context.Context, owne
 	return count, nil
 }
 
-// TransferMediasInMemory implements catalog.TransferMediasRepositoryPort: it captures every
-// records passed to TransferMediasFromRecords and returns the pre-set Transferred map.
-type TransferMediasInMemory struct {
-	Records     []catalog.MediaTransferRecords
-	Transferred map[catalog.AlbumId][]catalog.MediaId
-}
-
-func NewTransferMediasInMemory() *TransferMediasInMemory {
-	return &TransferMediasInMemory{
-		Transferred: make(map[catalog.AlbumId][]catalog.MediaId),
-	}
-}
-
-func (t *TransferMediasInMemory) TransferMediasFromRecords(_ context.Context, records catalog.MediaTransferRecords) (map[catalog.AlbumId][]catalog.MediaId, error) {
-	t.Records = append(t.Records, records)
-	return t.Transferred, nil
-}
-
-// MediaTransferInMemory implements catalog.MediaTransfer: it captures every records passed to
-// Transfer.
-type MediaTransferInMemory struct {
-	Records []catalog.MediaTransferRecords
-}
-
-func (m *MediaTransferInMemory) Transfer(_ context.Context, records catalog.MediaTransferRecords) error {
-	m.Records = append(m.Records, records)
-	return nil
-}
-
-// TimelineMutationObserverInMemory implements catalog.TimelineMutationObserver: it captures
-// every transfer notified to the observer.
-type TimelineMutationObserverInMemory struct {
-	Notifications []catalog.TransferredMedias
-}
-
-func (o *TimelineMutationObserverInMemory) OnTransferredMedias(_ context.Context, transfers catalog.TransferredMedias) error {
-	o.Notifications = append(o.Notifications, transfers)
-	return nil
-}
-
 // AlbumCreatedObserverInMemory implements catalog.AlbumCreatedObserver: it captures every
 // AlbumCreated event notified to the observer.
 type AlbumCreatedObserverInMemory struct {
@@ -209,10 +169,15 @@ func (a *AlbumDatesAmendedObserverInMemory) OnAlbumDatesAmended(_ context.Contex
 // themselves destinations), matching the production behaviour.
 type TransferMediasServiceFake struct {
 	Records []catalog.MediaTransferRecords
+	Err     error // when non-nil, TransferMedias captures the records and returns this error
 }
 
 func (f *TransferMediasServiceFake) TransferMedias(_ context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
 	f.Records = append(f.Records, records)
+
+	if f.Err != nil {
+		return catalog.TransferredMedias{}, f.Err
+	}
 
 	transfers := make(map[catalog.AlbumId][]catalog.MediaId)
 	for destination, selectors := range records {

@@ -100,16 +100,16 @@ func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, 
 		}
 	}
 
-	if err = a.AmendAlbumDateRepositoryPort.AmendDates(ctx, update.DatesUpdate.UpdatedAlbum.AlbumId, update.DatesUpdate.UpdatedAlbum.Start, update.DatesUpdate.UpdatedAlbum.End); err != nil {
-		return err
-	}
-
 	transferred := NewTransferredMedias()
 	if len(update.MediaTransfer) > 0 {
 		transferred, err = a.TransferMediasService.TransferMedias(ctx, update.MediaTransfer)
 		if err != nil {
 			return err
 		}
+	}
+
+	if err = a.AmendAlbumDateRepositoryPort.AmendDates(ctx, update.DatesUpdate.UpdatedAlbum.AlbumId, update.DatesUpdate.UpdatedAlbum.Start, update.DatesUpdate.UpdatedAlbum.End); err != nil {
+		return err
 	}
 
 	log.WithField("Owner", albumId.Owner).Infof("Album %s dates updates to %s -> %s", albumId, update.DatesUpdate.UpdatedAlbum.Start.Format(time.DateTime), update.DatesUpdate.UpdatedAlbum.End.Format(time.DateTime))

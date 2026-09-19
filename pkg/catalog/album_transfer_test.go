@@ -131,86 +131,6 @@ func TestTransferMediasFromRepository_TransferMedias(t *testing.T) {
 	}
 }
 
-func TestMediaTransferExecutor_Transfer(t *testing.T) {
-	avenger1Id := AlbumId{Owner: "ironman", FolderName: NewFolderName("/avengers-1")}
-	ironman1Id := AlbumId{Owner: "ironman", FolderName: NewFolderName("/ironman-1")}
-	records := MediaTransferRecords{
-		avenger1Id: {
-			{
-				FromAlbums: []AlbumId{ironman1Id},
-				Start:      time.Time{},
-				End:        time.Time{},
-			},
-		},
-	}
-	transfersToAvenger1 := map[AlbumId][]MediaId{
-		avenger1Id: {"media-1", "media-2"},
-	}
-
-	type fields struct {
-		TransferMedias TransferMediasRepositoryPort
-	}
-	type args struct {
-		records MediaTransferRecords
-	}
-	tests := []struct {
-		name         string
-		fields       fields
-		args         args
-		wantObserved []TransferredMedias
-		wantErr      assert.ErrorAssertionFunc
-	}{
-		{
-			name: "it should accept an empty records",
-			fields: fields{
-				TransferMedias: &TransferMediasRepositoryPortFake{
-					Transferred: map[AlbumId][]MediaId{},
-				},
-			},
-			args:    args{records: nil},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should notify observers that medias should be transferred",
-			fields: fields{
-				TransferMedias: &TransferMediasRepositoryPortFake{
-					Transferred: transfersToAvenger1,
-				},
-			},
-			args: args{records: records},
-			wantObserved: []TransferredMedias{{
-				Transfers:  transfersToAvenger1,
-				FromAlbums: []AlbumId{ironman1Id},
-			}},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should not notify observers when no medias should be transferred",
-			fields: fields{
-				TransferMedias: &TransferMediasRepositoryPortFake{
-					Transferred: map[AlbumId][]MediaId{avenger1Id: {}, ironman1Id: nil},
-				},
-			},
-			args:    args{records: records},
-			wantErr: assert.NoError,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			observer := new(TimelineMutationObserverFake)
-			d := &MediaTransferExecutor{
-				TransferMediasRepository:  tt.fields.TransferMedias,
-				TimelineMutationObservers: []TimelineMutationObserver{observer},
-			}
-
-			err := d.Transfer(context.Background(), tt.args.records)
-			if tt.wantErr(t, err, fmt.Sprintf("Transfer(%v)", tt.args.records)) {
-				assert.Equal(t, tt.wantObserved, observer.Observed)
-			}
-		})
-	}
-}
-
 // TransferMediasRepositoryPortFake implements TransferMediasRepositoryPort: it captures the
 // records passed in and returns the intersection of the requested destinations with the
 // pre-set Transferred map (and only the origins that also appear in that map).
@@ -230,13 +150,4 @@ func (t *TransferMediasRepositoryPortFake) TransferMediasFromRecords(_ context.C
 	}
 
 	return transfer, nil
-}
-
-type TimelineMutationObserverFake struct {
-	Observed []TransferredMedias
-}
-
-func (t *TimelineMutationObserverFake) OnTransferredMedias(_ context.Context, transfers TransferredMedias) error {
-	t.Observed = append(t.Observed, transfers)
-	return nil
 }
