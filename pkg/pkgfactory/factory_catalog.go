@@ -94,10 +94,10 @@ func (s *SimpleCatalogFactory) CreateAlbumDeleteCase(ctx context.Context) *catal
 	return catalog.NewDeleteAlbum(
 		repository,
 		repository,
+		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		repository,
-		repository,
-		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
-		CommandHandlerAlbumSize(ctx),
+		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
+		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
 	)
 }
 

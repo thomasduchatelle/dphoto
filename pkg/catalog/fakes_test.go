@@ -162,16 +162,14 @@ func (c *CreateAlbumObserverInMemory) ObserveCreateAlbum(_ context.Context, crea
 	return nil
 }
 
-// DeleteAlbumObserverInMemory implements catalog.DeleteAlbumObserver: it captures every album
-// deleted through the observer.
-type DeleteAlbumObserverInMemory struct {
-	Deleted   []catalog.AlbumId
-	Transfers []catalog.MediaTransferRecords
+// AlbumDeletedObserverInMemory implements catalog.AlbumDeletedObserver: it captures every
+// AlbumDeleted event notified to the observer.
+type AlbumDeletedObserverInMemory struct {
+	Events []catalog.AlbumDeleted
 }
 
-func (d *DeleteAlbumObserverInMemory) OnDeleteAlbum(_ context.Context, deletedAlbum catalog.AlbumId, transfers catalog.MediaTransferRecords) error {
-	d.Deleted = append(d.Deleted, deletedAlbum)
-	d.Transfers = append(d.Transfers, transfers)
+func (d *AlbumDeletedObserverInMemory) OnAlbumDeleted(_ context.Context, event catalog.AlbumDeleted) error {
+	d.Events = append(d.Events, event)
 	return nil
 }
 
