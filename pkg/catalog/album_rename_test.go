@@ -53,6 +53,17 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		}
 	}
 
+	transferredFromAvengerTo := func(newId catalog.AlbumId) catalog.TransferredMedias {
+		var ids []catalog.MediaId
+		for day := may24; day.Before(jun24); day = day.AddDate(0, 0, 1) {
+			ids = append(ids, fakeMediaId(existingAlbum.AlbumId, day))
+		}
+		return catalog.TransferredMedias{
+			Transfers:  map[catalog.AlbumId][]catalog.MediaId{newId: ids},
+			FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
+		}
+	}
+
 	renamedEvent := func(newId catalog.AlbumId) catalog.AlbumRenamed {
 		return catalog.AlbumRenamed{
 			ExistingAlbum: *existingAlbum,
@@ -62,7 +73,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 				Start:   may24,
 				End:     jun24,
 			},
-			MediaTransfer: transferFromAvengerTo(newId),
+			TransferredMedias: transferredFromAvengerTo(newId),
 		}
 	}
 

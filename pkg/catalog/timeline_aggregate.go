@@ -123,10 +123,10 @@ func (r RenameAlbumRequest) String() string {
 	return fmt.Sprintf("%s -> %s", r.CurrentId.String(), r.NewName)
 }
 
-// AlbumRenamed carries the outcome of a folder-name-changing rename: the existing album to
-// remove, the new album to insert, and the media transfer that moves the existing album's
-// medias into the new one.
-type AlbumRenamed struct {
+// AlbumNameUpdated carries the outcome of a folder-name-changing rename as computed by the
+// TimelineAggregate: the existing album to remove, the new album to insert, and the media
+// transfer that moves the existing album's medias into the new one.
+type AlbumNameUpdated struct {
 	ExistingAlbum Album
 	RenamedAlbum  Album
 	MediaTransfer MediaTransferRecords
@@ -140,7 +140,7 @@ type AlbumRenamed struct {
 //
 // The rename is expected to change the folder name; the caller is responsible for handling the
 // name-only case (a simple UpdateAlbumName on the same row) before reaching this method.
-func (t *TimelineAggregate) RenameAlbum(request RenameAlbumRequest) (*AlbumRenamed, error) {
+func (t *TimelineAggregate) RenameAlbum(request RenameAlbumRequest) (*AlbumNameUpdated, error) {
 	if t.timeline == nil {
 		return nil, errors.Errorf("TimelineAggregate.RenameAlbum must be called from NewInitialisedTimelineAggregate (t.timeline is nil)")
 	}
@@ -180,7 +180,7 @@ func (t *TimelineAggregate) RenameAlbum(request RenameAlbumRequest) (*AlbumRenam
 		}
 	}
 
-	return &AlbumRenamed{
+	return &AlbumNameUpdated{
 		ExistingAlbum: existing,
 		RenamedAlbum:  renamed,
 		MediaTransfer: MediaTransferRecords{

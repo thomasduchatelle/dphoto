@@ -130,32 +130,27 @@ func (t *TransferMediasFromRepository) TransferMedias(ctx context.Context, recor
 	return result, nil
 }
 
-// MediaTransferExecutor delegates the actual transfer to TransferMediasFromRepository and
-// fans the result out to the TimelineMutationObservers. It implements both the legacy
-// MediaTransfer interface (fire-and-forget) and the new TransferMediasService interface
-// (returns the TransferredMedias) so use cases can migrate one by one.
+// MediaTransferExecutor is a legacy adapter kept while use cases are refactored one by
+// one: it delegates the actual transfer to TransferMediasFromRepository and fans the
+// result out to the TimelineMutationObservers. It implements the fire-and-forget
+// MediaTransfer interface used by the yet-to-be-migrated use cases.
 type MediaTransferExecutor struct {
 	TransferMediasRepository  TransferMediasRepositoryPort
 	TimelineMutationObservers []TimelineMutationObserver
 }
 
-func (d *MediaTransferExecutor) TransferMedias(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error) {
+func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTransferRecords) error {
 	service := &TransferMediasFromRepository{TransferMediasRepository: d.TransferMediasRepository}
 	transfers, err := service.TransferMedias(ctx, records)
 	if err != nil || transfers.IsEmpty() {
-		return transfers, err
+		return err
 	}
 
 	for _, observer := range d.TimelineMutationObservers {
 		if err = observer.OnTransferredMedias(ctx, transfers); err != nil {
-			return transfers, err
+			return err
 		}
 	}
 
-	return transfers, nil
-}
-
-func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTransferRecords) error {
-	_, err := d.TransferMedias(ctx, records)
-	return err
+	return nil
 }
