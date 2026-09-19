@@ -184,19 +184,14 @@ func (r *AlbumRenamedObserverInMemory) OnAlbumRenamed(_ context.Context, event c
 	return nil
 }
 
-// AlbumDatesAmendedObserverInMemory implements both catalog.AlbumDatesAmendedObserverWithTimeline
-// and catalog.AlbumDatesAmendedObserver: it captures every amended-dates event.
+// AlbumDatesAmendedObserverInMemory implements catalog.AlbumDatesAmendedObserver: it
+// captures every AlbumDatesAmended event notified to the observer.
 type AlbumDatesAmendedObserverInMemory struct {
-	DateAmendedAlbums []catalog.DatesUpdate
+	Events []catalog.AlbumDatesAmended
 }
 
-func (a *AlbumDatesAmendedObserverInMemory) OnAlbumDatesAmendedWithTimeline(_ context.Context, _ *catalog.TimelineAggregate, amendedAlbum catalog.DatesUpdate) error {
-	a.DateAmendedAlbums = append(a.DateAmendedAlbums, amendedAlbum)
-	return nil
-}
-
-func (a *AlbumDatesAmendedObserverInMemory) OnAlbumDatesAmended(_ context.Context, amendedAlbum catalog.DatesUpdate) error {
-	a.DateAmendedAlbums = append(a.DateAmendedAlbums, amendedAlbum)
+func (a *AlbumDatesAmendedObserverInMemory) OnAlbumDatesAmended(_ context.Context, event catalog.AlbumDatesAmended) error {
+	a.Events = append(a.Events, event)
 	return nil
 }
 
