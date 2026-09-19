@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchiveasync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
@@ -118,6 +119,7 @@ func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.Ren
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		&catalog.AlbumRenamedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		&catalog.AlbumRenamedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		&catalogviews.AlbumViewRenameObserver{AlbumView: AlbumView(ctx)},
 	)
 }
 
@@ -129,5 +131,6 @@ func (s *SimpleCatalogFactory) AmendAlbumDatesCase(ctx context.Context) *catalog
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		&catalogviews.AlbumViewAmendDatesObserver{AlbumView: AlbumView(ctx)},
 	)
 }

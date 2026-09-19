@@ -1,6 +1,6 @@
 # 01-05 — Events: AlbumRenamed & AlbumDatesAmended
 
-Status: ready
+Status: done
 Phase: 1
 Layer: catalog domain — `pkg/catalogviews` + `pkg/pkgfactory`
 Depends on: 01-01, 01-02
