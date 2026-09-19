@@ -118,8 +118,8 @@ func (s *SimpleCatalogFactory) AmendAlbumDatesCase(ctx context.Context) *catalog
 		repository,
 		repository,
 		repository,
-		repository,
-		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
-		CommandHandlerAlbumSize(ctx),
+		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
+		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
 	)
 }
