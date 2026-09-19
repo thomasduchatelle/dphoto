@@ -10,34 +10,39 @@ import (
 
 // NewAlbumView constructs the AlbumView read model.
 //
-// The four collaborators are kept as fields so that the event methods, filled in by
-// subsequent tickets (01-03..01-07), can be implemented without further signature churn on the
+// The collaborators are kept as fields so that the event methods, filled in by subsequent
+// tickets (01-03..01-07), can be implemented without further signature churn on the
 // constructor:
 //   - Repository is the read+write projection carrying every viewer row.
 //   - GetAlbumSharingGridPort decorates owned rows with the current sharing grid on read.
 //   - MediaCounterPort re-reads canonical counts for count-mutation events.
 //   - FindAlbumsByIdsPort loads canonical album records for events that need display fields.
+//   - ListUserWhoCanAccessAlbumPort resolves the set of viewer rows to touch on count-only
+//     updates driven by domain events (e.g. transfer-destination recount on AlbumDeleted).
 func NewAlbumView(
 	repository AlbumSummaryRepository,
 	getAlbumSharingGridPort GetAlbumSharingGridPort,
 	mediaCounterPort MediaCounterPort,
 	findAlbumsByIdsPort FindAlbumsByIdsPort,
+	listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort,
 ) *AlbumView {
 	return &AlbumView{
-		Repository:              repository,
-		GetAlbumSharingGridPort: getAlbumSharingGridPort,
-		MediaCounterPort:        mediaCounterPort,
-		FindAlbumsByIdsPort:     findAlbumsByIdsPort,
+		Repository:                    repository,
+		GetAlbumSharingGridPort:       getAlbumSharingGridPort,
+		MediaCounterPort:              mediaCounterPort,
+		FindAlbumsByIdsPort:           findAlbumsByIdsPort,
+		ListUserWhoCanAccessAlbumPort: listUserWhoCanAccessAlbumPort,
 	}
 }
 
 // AlbumView is the album-list read model: it serves ListAlbums from the projection and
 // keeps the projection in sync by observing catalog domain events.
 type AlbumView struct {
-	Repository              AlbumSummaryRepository
-	GetAlbumSharingGridPort GetAlbumSharingGridPort
-	MediaCounterPort        MediaCounterPort
-	FindAlbumsByIdsPort     FindAlbumsByIdsPort
+	Repository                    AlbumSummaryRepository
+	GetAlbumSharingGridPort       GetAlbumSharingGridPort
+	MediaCounterPort              MediaCounterPort
+	FindAlbumsByIdsPort           FindAlbumsByIdsPort
+	ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 }
 
 // ListAlbums returns the albums visible by the user (owned + shared) served from the
@@ -104,9 +109,44 @@ func (v *AlbumView) AlbumDatesAmended(ctx context.Context, update catalog.DatesU
 	return nil
 }
 
-// AlbumDeleted is filled in by ticket 01-06.
-func (v *AlbumView) AlbumDeleted(ctx context.Context, albumId catalog.AlbumId) error {
-	return nil
+// AlbumDeleted wipes every viewer row for the deleted album and, when the deletion moved
+// medias into surrounding albums, refreshes the count of those destination rows from the
+// canonical MediaCounterPort. Display fields on the destination rows are left untouched
+// (SET Count = :c only).
+func (v *AlbumView) AlbumDeleted(ctx context.Context, event catalog.AlbumDeleted) error {
+	if err := v.Repository.DeleteAllRowsForAlbum(ctx, event.DeletedAlbumId); err != nil {
+		return err
+	}
+
+	if event.TransferredMedias.IsEmpty() {
+		return nil
+	}
+
+	var destinationIds []catalog.AlbumId
+	for albumId := range event.TransferredMedias.Transfers {
+		destinationIds = append(destinationIds, albumId)
+	}
+
+	availabilities, err := v.ListUserWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, destinationIds...)
+	if err != nil {
+		return err
+	}
+
+	counts, err := v.MediaCounterPort.CountMedia(ctx, destinationIds...)
+	if err != nil {
+		return err
+	}
+
+	updates := make([]AlbumMediaCountForUsers, 0, len(destinationIds))
+	for _, albumId := range destinationIds {
+		updates = append(updates, AlbumMediaCountForUsers{
+			AlbumId:    albumId,
+			Users:      availabilities[albumId],
+			MediaCount: counts[albumId],
+		})
+	}
+
+	return v.Repository.SetCounts(ctx, updates)
 }
 
 // AlbumShared is filled in by ticket 01-07.

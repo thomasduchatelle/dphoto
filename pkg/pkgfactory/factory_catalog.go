@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchiveasync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
@@ -107,6 +108,7 @@ func (s *SimpleCatalogFactory) CreateAlbumDeleteCase(ctx context.Context) *catal
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		&catalogviews.AlbumViewDeleteAlbumObserver{AlbumView: AlbumView(ctx)},
 	)
 }
 

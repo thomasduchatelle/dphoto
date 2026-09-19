@@ -224,5 +224,3 @@ func (c *AlbumReCounter) ReCountMedias(ctx context.Context, albumIds []catalog.A
 
 	return nil
 }
-
-// TODO Everything about the album should be deleted if the album is deleted
