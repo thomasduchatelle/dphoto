@@ -76,12 +76,12 @@ func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, 
 
 	timeline := NewLazyTimelineAggregate(albums)
 
-	amendedAlbum, err := timeline.ValidateAmendDates(albumId, start, end)
+	update, err := timeline.AmendDates(albumId, start, end)
 	if err != nil {
 		return err
 	}
 
-	if amendedAlbum.DatesNotChanged() {
+	if update.DatesUpdate.DatesNotChanged() {
 		log.WithFields(log.Fields{
 			"AlbumId": albumId,
 			"Start":   start,
@@ -90,37 +90,32 @@ func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, 
 		return nil
 	}
 
-	records, orphaned, err := timeline.AmendDates(*amendedAlbum)
-	if err != nil {
-		return err
-	}
-
-	if len(orphaned) > 0 {
-		count, err := a.CountMediasBySelectorsPort.CountMediasBySelectors(ctx, amendedAlbum.UpdatedAlbum.Owner, orphaned)
+	if len(update.Orphaned) > 0 {
+		count, err := a.CountMediasBySelectorsPort.CountMediasBySelectors(ctx, update.DatesUpdate.UpdatedAlbum.Owner, update.Orphaned)
 		if err != nil {
 			return err
 		}
 		if count > 0 {
-			return errors.Wrapf(OrphanedMediasErr, "%d medias from %s cannot be reallocated to a different album", count, amendedAlbum.UpdatedAlbum.AlbumId)
+			return errors.Wrapf(OrphanedMediasErr, "%d medias from %s cannot be reallocated to a different album", count, update.DatesUpdate.UpdatedAlbum.AlbumId)
 		}
 	}
 
-	if err = a.AmendAlbumDateRepositoryPort.AmendDates(ctx, amendedAlbum.UpdatedAlbum.AlbumId, amendedAlbum.UpdatedAlbum.Start, amendedAlbum.UpdatedAlbum.End); err != nil {
+	if err = a.AmendAlbumDateRepositoryPort.AmendDates(ctx, update.DatesUpdate.UpdatedAlbum.AlbumId, update.DatesUpdate.UpdatedAlbum.Start, update.DatesUpdate.UpdatedAlbum.End); err != nil {
 		return err
 	}
 
 	transferred := NewTransferredMedias()
-	if len(records) > 0 {
-		transferred, err = a.TransferMediasService.TransferMedias(ctx, records)
+	if len(update.MediaTransfer) > 0 {
+		transferred, err = a.TransferMediasService.TransferMedias(ctx, update.MediaTransfer)
 		if err != nil {
 			return err
 		}
 	}
 
-	log.WithField("Owner", albumId.Owner).Infof("Album %s dates updates to %s -> %s", albumId, amendedAlbum.UpdatedAlbum.Start.Format(time.DateTime), amendedAlbum.UpdatedAlbum.End.Format(time.DateTime))
+	log.WithField("Owner", albumId.Owner).Infof("Album %s dates updates to %s -> %s", albumId, update.DatesUpdate.UpdatedAlbum.Start.Format(time.DateTime), update.DatesUpdate.UpdatedAlbum.End.Format(time.DateTime))
 
 	event := AlbumDatesAmended{
-		DatesUpdate:       *amendedAlbum,
+		DatesUpdate:       update.DatesUpdate,
 		TransferredMedias: transferred,
 	}
 	for _, observer := range a.AlbumDatesAmendedObservers {
