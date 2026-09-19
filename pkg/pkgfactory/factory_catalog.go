@@ -83,9 +83,9 @@ func (s *SimpleCatalogFactory) CreateAlbumCase(ctx context.Context) *catalog.Cre
 	return catalog.NewAlbumCreate(
 		repository,
 		repository,
-		repository,
-		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
-		CommandHandlerAlbumSize(ctx),
+		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
+		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
 	)
 }
 
@@ -94,10 +94,10 @@ func (s *SimpleCatalogFactory) CreateAlbumDeleteCase(ctx context.Context) *catal
 	return catalog.NewDeleteAlbum(
 		repository,
 		repository,
+		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		repository,
-		repository,
-		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
-		CommandHandlerAlbumSize(ctx),
+		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
+		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
 	)
 }
 
@@ -106,13 +106,9 @@ func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.Ren
 	repository := CatalogRepository(ctx)
 	return catalog.NewRenameAlbum(
 		repository,
-		repository,
-		repository,
-		repository,
-		repository,
-		repository,
-		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
-		CommandHandlerAlbumSize(ctx),
+		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		&catalog.AlbumRenamedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
+		&catalog.AlbumRenamedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
 	)
 }
 
@@ -122,8 +118,8 @@ func (s *SimpleCatalogFactory) AmendAlbumDatesCase(ctx context.Context) *catalog
 		repository,
 		repository,
 		repository,
-		repository,
-		s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx),
-		CommandHandlerAlbumSize(ctx),
+		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
+		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
 	)
 }
