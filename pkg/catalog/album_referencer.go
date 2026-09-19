@@ -3,11 +3,13 @@ package catalog
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 var (
@@ -23,8 +25,8 @@ func NewAlbumAutoPopulateReferencer(
 	owner ownermodel.Owner,
 	findAlbumsByOwner FindAlbumsByOwnerPort,
 	insertAlbumPort InsertAlbumPort,
-	transferMediasPort TransferMediasRepositoryPort,
-	timelineMutationObservers ...TimelineMutationObserver,
+	transferMediasService TransferMediasService,
+	albumCreatedObservers ...AlbumCreatedObserver,
 ) (*ThreadSafeAlbumReferencer, error) {
 	return initiateStatefulAlbumReferencer(
 		context.Background(),
@@ -32,13 +34,9 @@ func NewAlbumAutoPopulateReferencer(
 		owner,
 		new(TimelineLookupStrategy),
 		&AlbumAutoCreateLookupStrategy{
-			Delegate: &CreateAlbumStateless{
-				InsertAlbumPort: insertAlbumPort,
-				MediaTransfer: &MediaTransferExecutor{
-					TransferMediasRepository:  transferMediasPort,
-					TimelineMutationObservers: timelineMutationObservers,
-				},
-			},
+			InsertAlbumPort:       insertAlbumPort,
+			TransferMediasService: transferMediasService,
+			AlbumCreatedObservers: albumCreatedObservers,
 		},
 	)
 }
@@ -124,8 +122,14 @@ func (t TimelineLookupStrategy) LookupAlbum(ctx context.Context, owner ownermode
 	return AlbumReference{}, NoAlbumLookedUpError
 }
 
+// AlbumAutoCreateLookupStrategy creates a quarterly album covering mediaTime, persists it,
+// transfers overlapping medias to it, and fires an AlbumCreated event. It mirrors the flow
+// of CreateAlbum.Create but reuses the cached TimelineAggregate carried by
+// StatefulAlbumReferencer instead of re-loading the albums from the repository.
 type AlbumAutoCreateLookupStrategy struct {
-	Delegate CreateAlbumWithTimeline
+	InsertAlbumPort       InsertAlbumPort
+	TransferMediasService TransferMediasService
+	AlbumCreatedObservers []AlbumCreatedObserver
 }
 
 func (a *AlbumAutoCreateLookupStrategy) LookupAlbum(ctx context.Context, owner ownermodel.Owner, timeline *TimelineAggregate, mediaTime time.Time) (AlbumReference, error) {
@@ -140,11 +144,36 @@ func (a *AlbumAutoCreateLookupStrategy) LookupAlbum(ctx context.Context, owner o
 		ForcedFolderName: fmt.Sprintf("/%d-Q%d", year, quarter+1),
 	}
 
-	albumId, err := a.Delegate.Create(ctx, timeline, createRequest)
+	album, records, err := timeline.CreateNewAlbum(createRequest)
+	if err != nil {
+		return AlbumReference{}, err
+	}
+
+	if err = a.InsertAlbumPort.InsertAlbum(ctx, album); err != nil {
+		return AlbumReference{}, err
+	}
+
+	transferred, err := a.TransferMediasService.TransferMedias(ctx, records)
+	if err != nil {
+		return AlbumReference{}, err
+	}
+
+	log.WithField("Owner", createRequest.Owner).Infof("Album %s created", album)
+
+	event := AlbumCreated{
+		CreatedAlbum:      album,
+		TransferredMedias: transferred,
+	}
+	for _, observer := range a.AlbumCreatedObservers {
+		if err = observer.OnAlbumCreated(ctx, event); err != nil {
+			return AlbumReference{}, err
+		}
+	}
+
 	return AlbumReference{
-		AlbumId:          albumId,
+		AlbumId:          &album.AlbumId,
 		AlbumJustCreated: true,
-	}, err
+	}, nil
 }
 
 type DryRunLookupStrategy struct{}

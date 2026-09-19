@@ -118,35 +118,4 @@ func (a *AlbumCreatedAsTimelineMutation) OnAlbumCreated(ctx context.Context, eve
 	return a.TimelineMutationObserver.OnTransferredMedias(ctx, event.TransferredMedias)
 }
 
-// CreateAlbumWithTimeline and CreateAlbumStateless are kept alive solely so album_referencer.go
-// still compiles. They will be removed once the referencer is refactored to build albums inline
-// like CreateAlbum.
-// TODO remove once album_referencer is refactored
 
-type CreateAlbumWithTimeline interface {
-	Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error)
-}
-
-type CreateAlbumStateless struct {
-	InsertAlbumPort InsertAlbumPort
-	MediaTransfer   MediaTransfer
-}
-
-func (c *CreateAlbumStateless) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
-	album, records, err := timeline.CreateNewAlbum(request)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = c.InsertAlbumPort.InsertAlbum(ctx, album); err != nil {
-		return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed to insert the album", request)
-	}
-
-	if err = c.MediaTransfer.Transfer(ctx, records); err != nil {
-		return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed to transfer medias", request)
-	}
-
-	log.WithField("Owner", request.Owner).Infof("Album %s created", album)
-
-	return &album.AlbumId, nil
-}
