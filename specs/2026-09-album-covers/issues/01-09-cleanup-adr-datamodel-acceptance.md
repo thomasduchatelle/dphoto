@@ -19,7 +19,11 @@ tests to assert `ListAlbums` end-to-end.
     `providers.go` file if it still exists) is removed.
   - Factory `pkg/pkgfactory/factory_catalog_view.go::CommandHandlerAlbumSize` is deleted; all its
     call sites in `factory_catalog.go`, `factory_backup.go`, `factory_acl.go` now reference the
-    per-event adapters delivered by `01-03` … `01-07`.
+    per-event adapters delivered by `01-03` … `01-07`. The `AlbumCreatedAsTimelineMutation` /
+    `AlbumDeletedAsTimelineMutation` / `AlbumRenamedAsTimelineMutation` /
+    `AlbumDatesAmendedAsTimelineMutation` adapters used to bridge the old
+    `TimelineMutationObserver` into the new per-use-case events become dead once the count logic
+    has moved into the AlbumView per-use-case handlers — remove them too.
 - **DATA_MODEL.md**: the two `USER#{EMAIL}#ALBUMS_VIEW / …#COUNT` rows are updated:
   - SK column: `OWNED#{OWNER}#{FOLDER_NAME}` / `VISITOR#{OWNER}#{FOLDER_NAME}` (no `#COUNT`).
   - Description column: "(view) album summary for an album owned by the user: count + display

@@ -7,42 +7,57 @@ Depends on: 01-01, 01-02
 
 ## Description
 
-Fill in `AlbumView.AlbumCreated` so that creating an album writes a full summary row for the owner
-(the only viewer at creation time), and wire it into `catalog.CreateAlbum` through an adapter that
-implements `catalog.CreateAlbumObserver`.
+Fill in the `AlbumView` handler for the `catalog.AlbumCreated` event so that creating an album
+writes a full summary row for the owner (the only viewer at creation time), and updates the counts
+on any albums whose medias were transferred into the new one at creation time.
 
-The old `CommandHandlerAlbumSize` observer stays wired for now but no longer needs to be the one
-handling this event — the create-time write of the summary row moves to `AlbumView.AlbumCreated`.
+The `catalog.AlbumCreated` event carries both `CreatedAlbum` and `TransferredMedias`, so the same
+handler owns both the "create the new row" step and the "recount the source albums" step. This
+keeps the projection consistent within one observer call and removes the need for a separate
+`MediasTransferred` shell method on `AlbumView`.
+
+The old `CommandHandlerAlbumSize` observer stays wired for now — it is retired in `01-09`.
 
 ## Acceptance criteria
 
-- `AlbumView.AlbumCreated(ctx, album catalog.Album) error` writes a full summary row for the owner
-  via `Repository.PutSummaries` (or `SetDisplayFields` upsert, whichever composes best with the
-  existing `01-01` primitives): `Name/Start/End` populated from `album`, `Count=0`, `Availability =
-  OwnerAvailability(user of the owner)`. If the album has visitors at creation time (edge case, none
-  expected today), a row is written for each.
+- `AlbumView` exposes `AlbumCreated(ctx, event catalog.AlbumCreated) error` (replacing the
+  01-02 stub `AlbumCreated(ctx, catalog.Album)`; adjust the shell signature accordingly). The
+  method:
+  - Writes a full summary row for the owner via `Repository.PutSummaries` (or `SetDisplayFields`
+    upsert — implementation choice, whichever composes best with the 01-01 primitives).
+    `Name/Start/End` come from `event.CreatedAlbum`, `Count=0`, `Availability =
+    OwnerAvailability(user of the owner)`. If the album already has visitors at creation time
+    (edge case, none expected today), a row is written for each.
+  - If `event.TransferredMedias` is non-empty, recount the affected source albums (from
+    `event.TransferredMedias.FromAlbums`) via `MediaCounterPort.CountMedia` and persist the new
+    counts via `Repository.SetCounts` — SET Count = :c, display fields untouched. The destination
+    album's count reflects the medias just inserted; since the row is being freshly created here,
+    the count is set via the `PutSummaries` above (compute it from `event.TransferredMedias` or
+    ask the port — implementation choice).
 - The owner's `usermodel.UserId` is derived from the album's owner via
-  `ListUsersWhoCanAccessAlbumPort` (kept as a `AlbumView` port), so the code stays honest about the
-  owner→user mapping.
+  `ListUsersWhoCanAccessAlbumPort` (kept as a port on `AlbumView`).
 - New adapter `AlbumViewCreateAlbumObserver` in `pkg/catalogviews` (or a dedicated `adapters.go`)
-  implementing `catalog.CreateAlbumObserver` by forwarding to `AlbumView.AlbumCreated`.
-- Factory `SimpleCatalogFactory.CreateAlbumCase` wires the new adapter alongside (or replacing) the
-  current `CommandHandlerAlbumSize` observer.
-- `AlbumView` test (against the in-memory `AlbumSummaryRepository` fake):
-  `TestAlbumView_AlbumCreated/it_should_make_the_album_visible_to_the_owner` — call
-  `AlbumCreated`, then `ListAlbums`, assert the album is returned with all display fields and
-  `MediaCount=0`.
-- Extra `AlbumView` test:
-  `TestAlbumView_AlbumCreated/it_should_not_shadow_an_existing_row` — pre-seed a row with
-  `Count=5`; create again is idempotent and does not zero the count (or, if the implementation
-  uses `PutSummaries` and does overwrite, this expectation is inverted with a comment justifying it).
-- Removed from `CommandHandlerAlbumSize`: nothing yet (it stops being the source of truth for this
-  event but stays wired until `01-09`).
+  implementing `catalog.AlbumCreatedObserver` (`OnAlbumCreated(ctx, event)`) by forwarding to
+  `AlbumView.AlbumCreated`.
+- Factory `SimpleCatalogFactory.CreateAlbumCase` wires the new adapter alongside the current
+  `CommandHandlerAlbumSize`-based observers (`CommandHandlerAlbumSize` is retired in `01-09`).
+- `AlbumView` tests (against the in-memory `AlbumSummaryRepository` fake):
+  - `TestAlbumView_AlbumCreated/it_should_make_the_album_visible_to_the_owner` — dispatch
+    `AlbumCreated` with an empty `TransferredMedias`, then `ListAlbums`, assert the album is
+    returned with all display fields and `MediaCount=0`.
+  - `TestAlbumView_AlbumCreated/it_should_not_shadow_an_existing_row` — pre-seed a row with
+    `Count=5`; dispatch again with empty `TransferredMedias`; expectation depends on the
+    primitive chosen (idempotent-preserving-count if `SetDisplayFields`, overwritten if
+    `PutSummaries` — either is acceptable, documented in the PR).
+  - `TestAlbumView_AlbumCreated/it_should_recount_transferred_source_albums` — pre-seed a
+    source album row with `Count=10`; dispatch `AlbumCreated` with a `TransferredMedias`
+    moving 3 medias out of that source; assert the source count reflects `MediaCounterPort`
+    and its display fields are untouched.
 
 ## Out of scope
 
 - Rename / amend-dates / delete / share / unshare (each in their own ticket).
-- Count events (`01-04`).
+- Direct `MediasInserted` events (`01-04`).
 - Drift changes (`01-08`).
 - Deletion of `CommandHandlerAlbumSize` (`01-09`).
 

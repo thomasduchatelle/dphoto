@@ -1,56 +1,50 @@
-# 01-04 — Events: MediasInserted & MediasTransferred
+# 01-04 — Event: MediasInserted
 
 Status: ready
 Phase: 1
 Layer: catalog domain — `pkg/catalogviews` + `pkg/pkgfactory`
-Depends on: 01-01, 01-02, 01-03
+Depends on: 01-01, 01-02
 
 ## Description
 
-Fill in the two count-management event methods and wire them into the catalog / backup flows
-through adapters. Both methods must operate on `Count` alone so that they never clobber the
-display fields set by `01-03` and the tickets that follow.
+Fill in the count-management path for direct media inserts (i.e. medias appended to an existing
+album, not moved by a use-case such as create-with-transfer or amend-dates). The method operates
+on `Count` alone so it never clobbers the display fields set by the other tickets.
 
-- `MediasInserted` is the atomic per-insert diff (currently `CommandHandlerAlbumSize.OnMediasInserted`).
-- `MediasTransferred` is the recount fired when medias move between albums as a side-effect of
-  create-with-transfer / rename-with-folder-change / amend-dates / delete (currently
-  `CommandHandlerAlbumSize.OnTransferredMedias`).
+The transfer-driven count updates that were originally in this ticket's scope have moved into the
+per-use-case handlers (`01-03` for create, `01-05` for rename & amend-dates, `01-06` for delete)
+because each `catalog.Album*` event now carries the `TransferredMedias` field. The
+`AlbumView.MediasTransferred` shell stub from `01-02` is therefore removed.
 
 ## Acceptance criteria
 
-- `AlbumView.MediasInserted(ctx, medias map[catalog.AlbumId][]catalog.MediaId) error` looks up viewers
-  via `ListUsersWhoCanAccessAlbumPort` and calls `Repository.IncrementCounts` — atomic `ADD Count :d`,
-  no other attribute touched. `d = len(medias[albumId])`.
-- `AlbumView.MediasTransferred(ctx, transfers catalog.TransferredMedias) error`:
-  - Collects the touched albums (destinations from `transfers.Transfers` + sources from
-    `transfers.FromAlbums`).
-  - Re-queries the canonical count via `MediaCounterPort.CountMedia`.
-  - Writes the new counts via `Repository.SetCounts` (SET Count = :c), **not** via `PutSummaries`,
-    so display fields survive the operation.
-  - On an album whose row does not yet exist (source album gone empty and never had a row), the
-    `SetCounts` upsert may leave a row with empty display fields. Acceptable in this ticket because
-    the album is either being deleted (handled by `01-06`) or already had display fields written by
-    `01-03`.
-- Two adapters in `pkg/catalogviews` (or `adapters.go`):
-  - `AlbumViewMediasInsertedObserver` — matches the port that `catalog.InsertMedias` calls today
-    (currently `CommandHandlerAlbumSize.OnMediasInserted`).
-  - `AlbumViewTimelineMutationObserver` — implements `catalog.TimelineMutationObserver` by forwarding
-    to `AlbumView.MediasTransferred`.
-- Factories wire both adapters alongside (or replacing) the existing `CommandHandlerAlbumSize`
-  observer in: `InsertMediasCase`, `CreateAlbumCase`, `CreateAlbumDeleteCase`, `RenameAlbumCase`,
-  `AmendAlbumDatesCase`, and the backup factory.
+- `AlbumView` exposes `MediasInserted(ctx, event catalog.MediasInsertedEvent) error` — signature
+  aligned to `catalog.InsertMediasObserver` (use whatever event type / arguments that observer
+  currently defines; e.g. `map[catalog.AlbumId][]catalog.MediaId` if that's still the shape).
+  Implementation:
+  - For each `albumId` in the event, look up viewers via `ListUsersWhoCanAccessAlbumPort` and
+    build an `AlbumMediaCountDiff{AvailabilityType, AlbumId, Diff: len(medias)}` per viewer.
+  - Call `Repository.IncrementCounts(diffs)` — atomic `ADD Count :d`, no other attribute touched.
+- New adapter `AlbumViewMediasInsertedObserver` in `pkg/catalogviews` implementing
+  `catalog.InsertMediasObserver` (`OnMediasInserted`), forwarding to `AlbumView.MediasInserted`.
+- Factory `SimpleCatalogFactory.InsertMediasCase` (and any other factory that wires the current
+  `CommandHandlerAlbumSize.OnMediasInserted`) is updated to pass the new adapter alongside the
+  existing `CommandHandlerAlbumSize` observer.
+- Delete the stub `AlbumView.MediasTransferred` shell method left over from `01-02`. Any factory
+  wiring that referenced it is cleaned up. The transfer-driven recount is handled per-use-case
+  by the tickets `01-03`, `01-05`, `01-06`.
 - `AlbumView` tests (in-memory fake):
-  - `TestAlbumView_MediasInserted/it_should_increment_the_count_for_all_viewers` — pre-seed rows for
-    owner + visitor, insert 3 medias, assert both `Count` bumped by 3, display fields intact.
-  - `TestAlbumView_MediasTransferred/it_should_recount_the_source_and_destination_albums` — seed
-    two albums with different counts, transfer, assert counts reflect `MediaCounterPort`, display
-    fields untouched.
-  - `TestAlbumView_MediasTransferred/it_should_not_clobber_display_fields` — seed with
-    `Name/Start/End`, run transfer, assert display fields still present.
+  - `TestAlbumView_MediasInserted/it_should_increment_the_count_for_all_viewers` — pre-seed rows
+    for owner + visitor with `Count=1` and display fields; insert 3 medias; assert both rows show
+    `Count=4` and display fields intact.
+  - `TestAlbumView_MediasInserted/it_should_do_nothing_when_the_event_is_empty` — dispatch with
+    an empty map; assert repository was not called (or called with an empty diff list — either
+    is acceptable, PR body documents the choice).
 
 ## Out of scope
 
-- Rename / amend-dates / delete / share (their own tickets).
+- Create / rename / amend-dates / delete / share (their own tickets, each handling its own
+  transfer counts).
 - Anything about videos vs images (the count is over all medias, unchanged from today).
 - Drift (`01-08`).
 

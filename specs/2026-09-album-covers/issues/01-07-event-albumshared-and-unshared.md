@@ -51,6 +51,12 @@ looks it up before notifying observers, so this is free.
 - Deletion of `CommandHandlerAlbumSize.AlbumShared`/`AlbumUnShared` (they become dead once this
   ticket is wired; final removal happens in `01-09`).
 
+## Note on the current base
+
+The base branch's use-case refactor did not touch `catalogacl.AlbumSharedObserver`, so its
+signature is still `AlbumShared(ctx, albumId, userEmail)` and this ticket's interface change is
+still required.
+
 ## References
 
 - `../spec.md`, `../design.md`
