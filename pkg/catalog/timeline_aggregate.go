@@ -13,7 +13,7 @@ type TimelineAggregate struct {
 	albums   []*Album
 }
 
-// NewLazyTimelineAggregate creates a new TimelineAggregate without timeline pre-computation. The timeline will be computed at the first AddNew call.
+// NewLazyTimelineAggregate creates a new TimelineAggregate without timeline pre-computation. The timeline will be computed at the first CreateNewAlbum call.
 func NewLazyTimelineAggregate(albums []*Album) *TimelineAggregate {
 	return &TimelineAggregate{
 		albums: albums,
@@ -28,20 +28,15 @@ func NewInitialisedTimelineAggregate(albums []*Album) (*TimelineAggregate, error
 	}, err
 }
 
-func (t *TimelineAggregate) CreateNewAlbum(request CreateAlbumRequest) (Album, error) {
+// CreateNewAlbum validates the request, appends the new album to the aggregate, rebuilds the
+// timeline, and returns both the created Album and the MediaTransferRecords for medias that
+// overlapping albums should hand over to it. Returns AlbumFolderNameAlreadyTakenErr if the
+// computed folder name collides with an existing album.
+func (t *TimelineAggregate) CreateNewAlbum(request CreateAlbumRequest) (Album, MediaTransferRecords, error) {
 	if err := request.IsValid(); err != nil {
-		return Album{}, errors.Wrapf(err, "CreateNewAlbum(%s) failed", request)
+		return Album{}, nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed", request)
 	}
 
-	album, err := t.convert(request)
-	if err != nil {
-		return Album{}, err
-	}
-
-	return *album, nil
-}
-
-func (t *TimelineAggregate) convert(request CreateAlbumRequest) (*Album, error) {
 	folderName := generateFolderName(request.Name, request.Start)
 	if request.ForcedFolderName != "" && request.ForcedFolderName != "/" {
 		folderName = NewFolderName(request.ForcedFolderName)
@@ -56,47 +51,43 @@ func (t *TimelineAggregate) convert(request CreateAlbumRequest) (*Album, error) 
 		return album.AlbumId.IsEqual(albumId)
 	})
 	if nameIsAlreadyTaken {
-		return nil, errors.Wrapf(AlbumFolderNameAlreadyTakenErr, "%s album id already exists", albumId)
+		return Album{}, nil, errors.Wrapf(AlbumFolderNameAlreadyTakenErr, "%s album id already exists", albumId)
 	}
 
-	return &Album{
+	album := Album{
 		AlbumId: albumId,
 		Name:    request.Name,
 		Start:   request.Start,
 		End:     request.End,
-	}, nil
-}
-
-func (t *TimelineAggregate) AddNew(addedAlbum Album) (MediaTransferRecords, error) {
-	t.albums = append(t.albums, &addedAlbum)
+	}
+	t.albums = append(t.albums, &album)
 
 	var err error
 	t.timeline, err = NewTimeline(t.albums)
 	if err != nil {
-		return nil, err
+		return Album{}, nil, err
 	}
 
 	records := make(MediaTransferRecords)
-	for _, seg := range t.timeline.FindForAlbum(addedAlbum.AlbumId) {
+	for _, seg := range t.timeline.FindForAlbum(album.AlbumId) {
 		if len(seg.Albums) > 1 {
 			selector := MediaSelector{
 				FromAlbums: extractAlbumIds(seg.Albums[1:]),
 				Start:      seg.Start,
 				End:        seg.End,
 			}
-			if selectors, found := records[addedAlbum.AlbumId]; found {
-				records[addedAlbum.AlbumId] = append(selectors, selector)
+			if selectors, found := records[album.AlbumId]; found {
+				records[album.AlbumId] = append(selectors, selector)
 			} else {
-				records[addedAlbum.AlbumId] = []MediaSelector{selector}
+				records[album.AlbumId] = []MediaSelector{selector}
 			}
 		}
 	}
 
 	if len(records) == 0 {
-		return nil, nil
+		return album, nil, nil
 	}
-
-	return records, nil
+	return album, records, nil
 }
 
 func extractAlbumIds(albums []Album) []AlbumId {
