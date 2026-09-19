@@ -7,6 +7,7 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchiveasync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
+	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
@@ -74,6 +75,7 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 	return catalog.NewInsertMedias(
 		repository,
 		CommandHandlerAlbumSize(ctx),
+		&catalogviews.AlbumViewMediasInsertedObserver{AlbumView: AlbumView(ctx)},
 	)
 }
 

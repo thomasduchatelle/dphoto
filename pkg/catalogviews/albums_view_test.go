@@ -15,6 +15,112 @@ import (
 // a split that no longer exists: ListAlbums is served from a single ListSummariesForUser
 // query. The five TestAlbumView_ListAlbums scenarios below replace it.
 
+func TestAlbumView_MediasInserted(t *testing.T) {
+	tonyOwner := ownermodel.Owner("tony")
+	ownerUserId := usermodel.UserId("ironman@avenger.hero")
+	visitorUserId := usermodel.UserId("pepper@stark.com")
+	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
+	albumId := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("album-1")}
+
+	seededRepository := func() *AlbumSummaryInMemoryRepository {
+		return &AlbumSummaryInMemoryRepository{
+			Summaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Album One", Start: jan24, End: feb24, MediaCount: 1},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Album One", Start: jan24, End: feb24, MediaCount: 1},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+		}
+	}
+
+	type fields struct {
+		Repository                    *AlbumSummaryInMemoryRepository
+		ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
+	}
+	type args struct {
+		medias map[catalog.AlbumId][]catalog.MediaId
+	}
+	tests := []struct {
+		name              string
+		fields            fields
+		args              args
+		expectedSummaries []UserAlbumSummary
+		wantErr           assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should increment the count for all viewers",
+			fields: fields{
+				Repository: seededRepository(),
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					albumId: {OwnerAvailability(ownerUserId), VisitorAvailability(visitorUserId)},
+				}),
+			},
+			args: args{
+				medias: map[catalog.AlbumId][]catalog.MediaId{
+					albumId: {"media-a", "media-b", "media-c"},
+				},
+			},
+			expectedSummaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Album One", Start: jan24, End: feb24, MediaCount: 4},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Album One", Start: jan24, End: feb24, MediaCount: 4},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should do nothing when the event is empty",
+			fields: fields{
+				Repository:                    seededRepository(),
+				ListUserWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(nil),
+			},
+			args: args{
+				medias: map[catalog.AlbumId][]catalog.MediaId{},
+			},
+			expectedSummaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Album One", Start: jan24, End: feb24, MediaCount: 1},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId, Name: "Album One", Start: jan24, End: feb24, MediaCount: 1},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			albumView := NewAlbumView(
+				tt.fields.Repository,
+				GetAlbumSharingGridFunc(func(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) {
+					return nil, nil
+				}),
+				MediaCounterPortFake(nil),
+				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				tt.fields.ListUserWhoCanAccessAlbumPort,
+			)
+
+			err := albumView.MediasInserted(context.Background(), tt.args.medias)
+			if !tt.wantErr(t, err) {
+				return
+			}
+			assert.ElementsMatch(t, tt.expectedSummaries, tt.fields.Repository.Summaries)
+		})
+	}
+}
+
 func TestAlbumView_ListAlbums(t *testing.T) {
 	tonyOwner := ownermodel.Owner("tony")
 	pepperOwner := ownermodel.Owner("pepper")
@@ -211,6 +317,7 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 				tt.fields.GetAlbumSharingGridPort,
 				MediaCounterPortFake(nil),
 				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				stubListUserWhoCanAccessAlbumPort(nil),
 			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)
