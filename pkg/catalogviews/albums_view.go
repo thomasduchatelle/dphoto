@@ -109,14 +109,32 @@ func (v *AlbumView) AlbumDeleted(ctx context.Context, albumId catalog.AlbumId) e
 	return nil
 }
 
-// AlbumShared is filled in by ticket 01-07.
+// AlbumShared writes the visitor's full projection row so their next ListAlbums renders the card
+// without any extra lookup: display fields come from the album already fetched by the share
+// use-case, and the current count is read from the canonical media store.
 func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId usermodel.UserId) error {
-	return nil
+	counts, err := v.MediaCounterPort.CountMedia(ctx, album.AlbumId)
+	if err != nil {
+		return err
+	}
+
+	return v.Repository.PutSummaries(ctx, []AlbumSummaryForUsers{
+		{
+			AlbumSummary: AlbumSummary{
+				AlbumId:    album.AlbumId,
+				MediaCount: counts[album.AlbumId],
+				Name:       album.Name,
+				Start:      album.Start,
+				End:        album.End,
+			},
+			Users: []Availability{VisitorAvailability(userId)},
+		},
+	})
 }
 
-// AlbumUnshared is filled in by ticket 01-07.
+// AlbumUnshared removes the visitor's row for the album, leaving every other viewer row untouched.
 func (v *AlbumView) AlbumUnshared(ctx context.Context, albumId catalog.AlbumId, userId usermodel.UserId) error {
-	return nil
+	return v.Repository.DeleteRow(ctx, VisitorAvailability(userId), albumId)
 }
 
 // MediasInserted is filled in by ticket 01-04.
