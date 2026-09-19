@@ -54,7 +54,7 @@ func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
 	}
 	transferMediasReturning := func(transferred catalog.TransferredMedias) *TransferMediasInMemory {
 		transfer := NewTransferMediasInMemory()
-		transfer.TransferredMedias = transferred
+		transfer.Transferred = transferred.Transfers
 		return transfer
 	}
 

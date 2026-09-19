@@ -50,7 +50,7 @@ func TestNewAlbumCreateAcceptance(t *testing.T) {
 
 	transferMediasWithMedias := func() *TransferMediasInMemory {
 		transfer := NewTransferMediasInMemory()
-		transfer.TransferredMedias = transferredMedias
+		transfer.Transferred = transferredMedias.Transfers
 		return transfer
 	}
 

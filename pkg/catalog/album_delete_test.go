@@ -73,9 +73,9 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		wantErr       assert.ErrorAssertionFunc
 	}{
 		{
-			name:   "it should delete album if all segments can be transferred to 1 other album",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingAllYearAlbum, &toDeleteAlbum)},
-			args:   args{albumId: toDeleteAlbumId},
+			name:        "it should delete album if all segments can be transferred to 1 other album",
+			fields:      fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingAllYearAlbum, &toDeleteAlbum)},
+			args:        args{albumId: toDeleteAlbumId},
 			wantDeleted: []catalog.AlbumId{toDeleteAlbumId},
 			wantTransfers: []catalog.MediaTransferRecords{{
 				existingAllYearAlbum.AlbumId: {
@@ -89,9 +89,9 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:   "it should delete album if all segments can be transferred to several other albums",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingQ1Album, &existingQ2Album, &toDeleteAlbum)},
-			args:   args{albumId: toDeleteAlbumId},
+			name:        "it should delete album if all segments can be transferred to several other albums",
+			fields:      fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingQ1Album, &existingQ2Album, &toDeleteAlbum)},
+			args:        args{albumId: toDeleteAlbumId},
 			wantDeleted: []catalog.AlbumId{toDeleteAlbumId},
 			wantTransfers: []catalog.MediaTransferRecords{{
 				existingQ1Album.AlbumId: {
@@ -112,9 +112,9 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:   "it should delete album even if the segments are not covered by other albums as long as there is no medias to become orphaned",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingQ1Album, &toDeleteAlbum)},
-			args:   args{albumId: toDeleteAlbumId},
+			name:        "it should delete album even if the segments are not covered by other albums as long as there is no medias to become orphaned",
+			fields:      fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingQ1Album, &toDeleteAlbum)},
+			args:        args{albumId: toDeleteAlbumId},
 			wantDeleted: []catalog.AlbumId{toDeleteAlbumId},
 			wantTransfers: []catalog.MediaTransferRecords{{
 				existingQ1Album.AlbumId: {
@@ -187,7 +187,7 @@ func TestNewDeleteAlbum(t *testing.T) {
 
 	albumRepository := NewAlbumRepositoryInMemory(&existingAllYearAlbum, &toDeleteAlbum)
 	transferMedias := NewTransferMediasInMemory()
-	transferMedias.TransferredMedias = transferredMedias
+	transferMedias.Transferred = transferredMedias.Transfers
 	timelineObserver := &TimelineMutationObserverInMemory{}
 
 	deleteAlbum := catalog.NewDeleteAlbum(

@@ -2,6 +2,7 @@ package catalog_test
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"time"
 
@@ -111,21 +112,21 @@ func (r *AlbumRepositoryInMemory) CountMediasBySelectors(_ context.Context, owne
 }
 
 // TransferMediasInMemory implements catalog.TransferMediasRepositoryPort: it captures every
-// records passed to TransferMediasFromRecords and returns the pre-set TransferredMedias.
+// records passed to TransferMediasFromRecords and returns the pre-set Transferred map.
 type TransferMediasInMemory struct {
-	Records           []catalog.MediaTransferRecords
-	TransferredMedias catalog.TransferredMedias
+	Records     []catalog.MediaTransferRecords
+	Transferred map[catalog.AlbumId][]catalog.MediaId
 }
 
 func NewTransferMediasInMemory() *TransferMediasInMemory {
 	return &TransferMediasInMemory{
-		TransferredMedias: catalog.NewTransferredMedias(),
+		Transferred: make(map[catalog.AlbumId][]catalog.MediaId),
 	}
 }
 
-func (t *TransferMediasInMemory) TransferMediasFromRecords(_ context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
+func (t *TransferMediasInMemory) TransferMediasFromRecords(_ context.Context, records catalog.MediaTransferRecords) (map[catalog.AlbumId][]catalog.MediaId, error) {
 	t.Records = append(t.Records, records)
-	return t.TransferredMedias, nil
+	return t.Transferred, nil
 }
 
 // MediaTransferInMemory implements catalog.MediaTransfer: it captures every records passed to
@@ -205,4 +206,72 @@ func (a *AlbumDatesAmendedObserverInMemory) OnAlbumDatesAmendedWithTimeline(_ co
 func (a *AlbumDatesAmendedObserverInMemory) OnAlbumDatesAmended(_ context.Context, amendedAlbum catalog.DatesUpdate) error {
 	a.DateAmendedAlbums = append(a.DateAmendedAlbums, amendedAlbum)
 	return nil
+}
+
+// TransferMediasServiceFake implements catalog.TransferMediasService: for each destination
+// album in the records, it fabricates one MediaId per (source album, day in the selector
+// range) so tests can rely on a deterministic, non-empty result without wiring a real
+// repository. It also captures every Records passed to TransferMedias.
+//
+// The generated MediaId format is:
+//
+//	fake-media-<owner>-<sourceFolder>-<yyyy-mm-dd>
+//
+// where <sourceFolder> is the source album's FolderName with leading '/' removed. FromAlbums
+// on the returned TransferredMedias is derived from the input records (origins that are not
+// themselves destinations), matching the production behaviour.
+type TransferMediasServiceFake struct {
+	Records []catalog.MediaTransferRecords
+}
+
+func (f *TransferMediasServiceFake) TransferMedias(_ context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
+	f.Records = append(f.Records, records)
+
+	transfers := make(map[catalog.AlbumId][]catalog.MediaId)
+	for destination, selectors := range records {
+		var ids []catalog.MediaId
+		for _, selector := range selectors {
+			for _, source := range selector.FromAlbums {
+				for day := truncateToDay(selector.Start); day.Before(selector.End); day = day.AddDate(0, 0, 1) {
+					ids = append(ids, fakeMediaId(source, day))
+				}
+			}
+		}
+		if len(ids) > 0 {
+			transfers[destination] = ids
+		}
+	}
+
+	result := catalog.TransferredMedias{Transfers: transfers}
+	if result.IsEmpty() {
+		return result, nil
+	}
+
+	for _, selectors := range records {
+		for _, selector := range selectors {
+			for _, source := range selector.FromAlbums {
+				if _, isDestination := result.Transfers[source]; isDestination {
+					continue
+				}
+				if slices.Contains(result.FromAlbums, source) {
+					continue
+				}
+				result.FromAlbums = append(result.FromAlbums, source)
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func truncateToDay(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+}
+
+func fakeMediaId(source catalog.AlbumId, day time.Time) catalog.MediaId {
+	folder := string(source.FolderName)
+	if len(folder) > 0 && folder[0] == '/' {
+		folder = folder[1:]
+	}
+	return catalog.MediaId(fmt.Sprintf("fake-media-%s-%s-%s", source.Owner, folder, day.Format("2006-01-02")))
 }

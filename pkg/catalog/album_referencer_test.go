@@ -123,7 +123,7 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 				owner:             owner,
 				findAlbumsByOwner: FindAlbumsByOwnerPortFake{owner: []*Album{&album23}},
 				transferMediasPort: &TransferMediasRepositoryPortFake{
-					TransferredMedias: transferredMediasFrom23,
+					Transferred: transferredMediasFrom23.Transfers,
 				},
 			},
 			exec: []exec{
