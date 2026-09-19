@@ -211,11 +211,146 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 				tt.fields.GetAlbumSharingGridPort,
 				MediaCounterPortFake(nil),
 				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				stubListUserWhoCanAccessAlbumPort(nil),
 			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)
 			if tt.wantErr(t, err) {
 				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestAlbumView_AlbumCreated(t *testing.T) {
+	tonyOwner := ownermodel.Owner("tony")
+	tonyUserId := usermodel.UserId("tony@stark.com")
+	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
+	mar24 := time.Date(2024, time.March, 1, 0, 0, 0, 0, time.UTC)
+
+	newAlbumId := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("album-new")}
+	sourceAlbumId := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("album-source")}
+	newAlbum := catalog.Album{AlbumId: newAlbumId, Name: "New Album", Start: feb24, End: mar24}
+
+	type fields struct {
+		Repository                     *AlbumSummaryInMemoryRepository
+		MediaCounterPort               MediaCounterPort
+		ListUsersWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
+	}
+	tests := []struct {
+		name            string
+		fields          fields
+		event           catalog.AlbumCreated
+		expectSummaries []UserAlbumSummary
+		wantErr         assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should make the album visible to the owner",
+			fields: fields{
+				Repository:       &AlbumSummaryInMemoryRepository{},
+				MediaCounterPort: MediaCounterPortFake(nil),
+				ListUsersWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					newAlbumId: {OwnerAvailability(tonyUserId)},
+				}),
+			},
+			event: catalog.AlbumCreated{
+				CreatedAlbum:      newAlbum,
+				TransferredMedias: catalog.NewTransferredMedias(),
+			},
+			expectSummaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: newAlbumId, Name: "New Album", Start: feb24, End: mar24, MediaCount: 0},
+					Availability: OwnerAvailability(tonyUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should not shadow an existing row (PutSummaries overwrites Count with the transfer-derived value)",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{
+							AlbumSummary: AlbumSummary{AlbumId: newAlbumId, Name: "Stale Name", Start: jan24, End: feb24, MediaCount: 5},
+							Availability: OwnerAvailability(tonyUserId),
+						},
+					},
+				},
+				MediaCounterPort: MediaCounterPortFake(nil),
+				ListUsersWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					newAlbumId: {OwnerAvailability(tonyUserId)},
+				}),
+			},
+			event: catalog.AlbumCreated{
+				CreatedAlbum:      newAlbum,
+				TransferredMedias: catalog.NewTransferredMedias(),
+			},
+			expectSummaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: newAlbumId, Name: "New Album", Start: feb24, End: mar24, MediaCount: 0},
+					Availability: OwnerAvailability(tonyUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should recount transferred source albums and leave their display fields untouched",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{
+							AlbumSummary: AlbumSummary{AlbumId: sourceAlbumId, Name: "Source Album", Start: jan24, End: feb24, MediaCount: 10},
+							Availability: OwnerAvailability(tonyUserId),
+						},
+					},
+				},
+				MediaCounterPort: MediaCounterPortFake(map[catalog.AlbumId]int{
+					sourceAlbumId: 7,
+				}),
+				ListUsersWhoCanAccessAlbumPort: stubListUserWhoCanAccessAlbumPort(map[catalog.AlbumId][]Availability{
+					newAlbumId:    {OwnerAvailability(tonyUserId)},
+					sourceAlbumId: {OwnerAvailability(tonyUserId)},
+				}),
+			},
+			event: catalog.AlbumCreated{
+				CreatedAlbum: newAlbum,
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers: map[catalog.AlbumId][]catalog.MediaId{
+						newAlbumId: {"media-1", "media-2", "media-3"},
+					},
+					FromAlbums: []catalog.AlbumId{sourceAlbumId},
+				},
+			},
+			expectSummaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: sourceAlbumId, Name: "Source Album", Start: jan24, End: feb24, MediaCount: 7},
+					Availability: OwnerAvailability(tonyUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: newAlbumId, Name: "New Album", Start: feb24, End: mar24, MediaCount: 3},
+					Availability: OwnerAvailability(tonyUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			albumView := NewAlbumView(
+				tt.fields.Repository,
+				GetAlbumSharingGridFunc(func(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) {
+					return nil, nil
+				}),
+				tt.fields.MediaCounterPort,
+				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				tt.fields.ListUsersWhoCanAccessAlbumPort,
+			)
+
+			err := albumView.AlbumCreated(context.Background(), tt.event)
+			if tt.wantErr(t, err) {
+				assert.ElementsMatch(t, tt.expectSummaries, tt.fields.Repository.Summaries)
 			}
 		})
 	}
