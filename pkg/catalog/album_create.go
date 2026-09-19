@@ -51,9 +51,11 @@ func NewAlbumCreate(
 ) *CreateAlbum {
 	return &CreateAlbum{
 		FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
-		InsertAlbumPort:       InsertAlbumPort,
-		TransferMediasService: TransferMedias,
-		AlbumCreatedObservers: AlbumCreatedObservers,
+		BulkCreateAlbum: &BulkCreateAlbum{
+			InsertAlbumPort:       InsertAlbumPort,
+			TransferMediasService: TransferMedias,
+			AlbumCreatedObservers: AlbumCreatedObservers,
+		},
 	}
 }
 
@@ -61,9 +63,7 @@ func NewAlbumCreate(
 // overlapping medias into it. On success, an AlbumCreated event is fired to every observer.
 type CreateAlbum struct {
 	FindAlbumsByOwnerPort FindAlbumsByOwnerPort
-	InsertAlbumPort       InsertAlbumPort
-	TransferMediasService TransferMediasService
-	AlbumCreatedObservers []AlbumCreatedObserver
+	BulkCreateAlbum       *BulkCreateAlbum
 }
 
 func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
@@ -73,6 +73,28 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*
 	}
 
 	timeline := NewLazyTimelineAggregate(albums)
+
+	return c.BulkCreateAlbum.Create(ctx, timeline, request)
+}
+
+type AlbumCreatedAsTimelineMutation struct {
+	TimelineMutationObserver TimelineMutationObserver
+}
+
+func (a *AlbumCreatedAsTimelineMutation) OnAlbumCreated(ctx context.Context, event AlbumCreated) error {
+	if event.TransferredMedias.IsEmpty() {
+		return nil
+	}
+	return a.TimelineMutationObserver.OnTransferredMedias(ctx, event.TransferredMedias)
+}
+
+type BulkCreateAlbum struct {
+	InsertAlbumPort       InsertAlbumPort
+	TransferMediasService TransferMediasService
+	AlbumCreatedObservers []AlbumCreatedObserver
+}
+
+func (c *BulkCreateAlbum) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
 
 	album, records, err := timeline.CreateNewAlbum(request)
 	if err != nil {
@@ -102,20 +124,3 @@ func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*
 
 	return &album.AlbumId, nil
 }
-
-// AlbumCreatedAsTimelineMutation adapts an AlbumCreatedObserver notification into a
-// TimelineMutationObserver call, forwarding only the TransferredMedias carried by the event.
-// This bridges the AlbumCreated event to the observers that still listen on the legacy
-// TimelineMutationObserver interface (archive relocator, view counters, ...).
-type AlbumCreatedAsTimelineMutation struct {
-	TimelineMutationObserver TimelineMutationObserver
-}
-
-func (a *AlbumCreatedAsTimelineMutation) OnAlbumCreated(ctx context.Context, event AlbumCreated) error {
-	if event.TransferredMedias.IsEmpty() {
-		return nil
-	}
-	return a.TimelineMutationObserver.OnTransferredMedias(ctx, event.TransferredMedias)
-}
-
-

@@ -146,12 +146,7 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 			}},
 		},
 		{
-			// The referencer's cached TimelineAggregate is not updated after an auto-create
-			// (CreateAlbum re-loads the owner's albums on every call), so the second media
-			// in the same quarter re-enters the auto-create strategy, which fails because
-			// the folder /2024-Q1 already exists in the reloaded timeline. A follow-up
-			// TimelineRepository refactor will restore the cached-timeline behaviour.
-			name:   "it should fail with AlbumFolderNameAlreadyTakenErr when a second media in the same quarter re-triggers auto-create",
+			name:   "it should reuse the auto-created album for a second media in the same quarter via the cached timeline",
 			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory()},
 			exec: []exec{
 				{
@@ -161,10 +156,8 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 				},
 				{
 					mediaTime: feb24,
-					want:      catalog.AlbumReference{},
-					wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-						return assert.ErrorIs(t, err, catalog.AlbumFolderNameAlreadyTakenErr, i)
-					},
+					want:      catalog.AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: false},
+					wantErr:   assert.NoError,
 				},
 			},
 			expectAlbumIds:        []catalog.AlbumId{q1Album.AlbumId},
@@ -181,17 +174,12 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 			transferService := &TransferMediasServiceFake{}
 			observer := &AlbumCreatedObserverInMemory{}
 
-			createAlbum := &catalog.CreateAlbum{
-				FindAlbumsByOwnerPort: tt.fields.AlbumRepository,
-				InsertAlbumPort:       tt.fields.AlbumRepository,
-				TransferMediasService: transferService,
-				AlbumCreatedObservers: []catalog.AlbumCreatedObserver{observer},
-			}
-
 			referencer, err := catalog.NewAlbumAutoPopulateReferencer(
 				owner,
 				tt.fields.AlbumRepository,
-				createAlbum,
+				tt.fields.AlbumRepository,
+				transferService,
+				observer,
 			)
 			if !assert.NoError(t, err) {
 				return

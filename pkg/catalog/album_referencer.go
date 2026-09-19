@@ -20,10 +20,13 @@ type AlbumReference struct {
 	AlbumJustCreated bool     // AlbumJustCreated is true if the album was created during the reference process (depending on the implementation capability).
 }
 
+// NewAlbumAutoPopulateReferencer find reference of the albums that will receive the new medias, or creates a new one.
 func NewAlbumAutoPopulateReferencer(
 	owner ownermodel.Owner,
 	findAlbumsByOwner FindAlbumsByOwnerPort,
-	createAlbum *CreateAlbum,
+	InsertAlbumPort InsertAlbumPort,
+	TransferMediasService TransferMediasService,
+	AlbumCreatedObservers ...AlbumCreatedObserver,
 ) (*ThreadSafeAlbumReferencer, error) {
 	return initiateStatefulAlbumReferencer(
 		context.Background(),
@@ -31,11 +34,16 @@ func NewAlbumAutoPopulateReferencer(
 		owner,
 		new(TimelineLookupStrategy),
 		&AlbumAutoCreateLookupStrategy{
-			CreateAlbum: createAlbum,
+			BulkCreateAlbum: &BulkCreateAlbum{
+				InsertAlbumPort:       InsertAlbumPort,
+				TransferMediasService: TransferMediasService,
+				AlbumCreatedObservers: AlbumCreatedObservers,
+			},
 		},
 	)
 }
 
+// NewAlbumDryRunReferencer find a reference of the album that wil receive the new media, or informs that a new album will be created (dry run).
 func NewAlbumDryRunReferencer(
 	owner ownermodel.Owner,
 	findAlbumsByOwner FindAlbumsByOwnerPort,
@@ -121,10 +129,10 @@ func (t TimelineLookupStrategy) LookupAlbum(ctx context.Context, owner ownermode
 // album covering mediaTime. The cached TimelineAggregate carried by StatefulAlbumReferencer
 // is ignored: CreateAlbum.Create re-loads the owner's albums to build its own timeline.
 type AlbumAutoCreateLookupStrategy struct {
-	CreateAlbum *CreateAlbum
+	BulkCreateAlbum *BulkCreateAlbum
 }
 
-func (a *AlbumAutoCreateLookupStrategy) LookupAlbum(ctx context.Context, owner ownermodel.Owner, _ *TimelineAggregate, mediaTime time.Time) (AlbumReference, error) {
+func (a *AlbumAutoCreateLookupStrategy) LookupAlbum(ctx context.Context, owner ownermodel.Owner, timeline *TimelineAggregate, mediaTime time.Time) (AlbumReference, error) {
 	year := mediaTime.Year()
 	quarter := (mediaTime.Month() - 1) / 3
 
@@ -136,7 +144,7 @@ func (a *AlbumAutoCreateLookupStrategy) LookupAlbum(ctx context.Context, owner o
 		ForcedFolderName: fmt.Sprintf("/%d-Q%d", year, quarter+1),
 	}
 
-	albumId, err := a.CreateAlbum.Create(ctx, createRequest)
+	albumId, err := a.BulkCreateAlbum.Create(ctx, timeline, createRequest)
 	if err != nil {
 		return AlbumReference{}, err
 	}
