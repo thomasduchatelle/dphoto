@@ -105,7 +105,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	}
 
 	type fields struct {
-		AlbumRepository catalog.AmendAlbumDateRepositoryPort
+		AlbumRepository catalog.TimelineRepository
 		TransferErr     error
 	}
 	type args struct {
@@ -238,9 +238,8 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 
 			repository := underlyingAmendRepository(tt.fields.AlbumRepository)
 			amendAlbumDates := catalog.NewAmendAlbumDates(
-				repository,
-				repository,
 				tt.fields.AlbumRepository,
+				repository,
 				transferService,
 				observer,
 			)
@@ -261,7 +260,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	}
 }
 
-func failingAmendDates(memory *AlbumRepositoryInMemory, err error) catalog.AmendAlbumDateRepositoryPort {
+func failingAmendDates(memory *AlbumRepositoryInMemory, err error) catalog.TimelineRepository {
 	return &failingAmendDatesInterceptor{
 		AlbumRepositoryInMemory: memory,
 		err:                     err,
@@ -277,7 +276,7 @@ func (i *failingAmendDatesInterceptor) AmendDates(_ context.Context, _ catalog.A
 	return i.err
 }
 
-func underlyingAmendRepository(port catalog.AmendAlbumDateRepositoryPort) *AlbumRepositoryInMemory {
+func underlyingAmendRepository(port catalog.TimelineRepository) *AlbumRepositoryInMemory {
 	if repository, ok := port.(*AlbumRepositoryInMemory); ok {
 		return repository
 	}

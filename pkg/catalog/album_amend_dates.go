@@ -18,10 +18,6 @@ func (a *DatesUpdate) DatesNotChanged() bool {
 	return a.UpdatedAlbum.Start.Equal(a.PreviousStart) && a.UpdatedAlbum.End.Equal(a.PreviousEnd)
 }
 
-type AmendAlbumDateRepositoryPort interface {
-	AmendDates(ctx context.Context, album AlbumId, start, end time.Time) error
-}
-
 // AlbumDatesAmended is fired after an album's dates have been persisted and the medias
 // affected by the change have been transferred to their new albums.
 type AlbumDatesAmended struct {
@@ -41,18 +37,16 @@ func (f AlbumDatesAmendedObserverFunc) OnAlbumDatesAmended(ctx context.Context, 
 
 // NewAmendAlbumDates creates the service to amend the dates of an album.
 func NewAmendAlbumDates(
-	findAlbumsByOwner FindAlbumsByOwnerPort,
+	timelineRepository TimelineRepository,
 	countMediasBySelectors CountMediasBySelectorsPort,
-	amendAlbumDateRepository AmendAlbumDateRepositoryPort,
 	transferMedias TransferMediasService,
 	observers ...AlbumDatesAmendedObserver,
 ) *AmendAlbumDates {
 	return &AmendAlbumDates{
-		FindAlbumsByOwnerPort:        findAlbumsByOwner,
-		CountMediasBySelectorsPort:   countMediasBySelectors,
-		AmendAlbumDateRepositoryPort: amendAlbumDateRepository,
-		TransferMediasService:        transferMedias,
-		AlbumDatesAmendedObservers:   observers,
+		TimelineRepository:         timelineRepository,
+		CountMediasBySelectorsPort: countMediasBySelectors,
+		TransferMediasService:      transferMedias,
+		AlbumDatesAmendedObservers: observers,
 	}
 }
 
@@ -61,20 +55,17 @@ func NewAmendAlbumDates(
 // would be left orphan (no album covers them anymore) the operation is aborted and
 // OrphanedMediasErr is returned before any change is persisted.
 type AmendAlbumDates struct {
-	FindAlbumsByOwnerPort        FindAlbumsByOwnerPort
-	CountMediasBySelectorsPort   CountMediasBySelectorsPort
-	AmendAlbumDateRepositoryPort AmendAlbumDateRepositoryPort
-	TransferMediasService        TransferMediasService
-	AlbumDatesAmendedObservers   []AlbumDatesAmendedObserver
+	TimelineRepository         TimelineRepository
+	CountMediasBySelectorsPort CountMediasBySelectorsPort
+	TransferMediasService      TransferMediasService
+	AlbumDatesAmendedObservers []AlbumDatesAmendedObserver
 }
 
 func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, start, end time.Time) error {
-	albums, err := a.FindAlbumsByOwnerPort.FindAlbumsByOwner(ctx, albumId.Owner)
+	timeline, err := a.TimelineRepository.LoadTimeline(ctx, albumId.Owner)
 	if err != nil {
 		return err
 	}
-
-	timeline := NewLazyTimelineAggregate(albums)
 
 	update, err := timeline.AmendDates(albumId, start, end)
 	if err != nil {
@@ -108,7 +99,7 @@ func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, 
 		}
 	}
 
-	if err = a.AmendAlbumDateRepositoryPort.AmendDates(ctx, update.DatesUpdate.UpdatedAlbum.AlbumId, update.DatesUpdate.UpdatedAlbum.Start, update.DatesUpdate.UpdatedAlbum.End); err != nil {
+	if err = a.TimelineRepository.AmendDates(ctx, update.DatesUpdate.UpdatedAlbum.AlbumId, update.DatesUpdate.UpdatedAlbum.Start, update.DatesUpdate.UpdatedAlbum.End); err != nil {
 		return err
 	}
 

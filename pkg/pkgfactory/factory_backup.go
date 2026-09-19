@@ -34,12 +34,10 @@ func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 type AlbumCreatorCataloguerFactory struct{}
 
 func (f *AlbumCreatorCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
-	queries := AlbumQueries(ctx)
 	writeRepo := CatalogRepository(ctx)
 	referencer, err := catalog.NewAlbumAutoPopulateReferencer(
 		owner,
-		queries,
-		writeRepo,
+		TimelineRepository(ctx),
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: writeRepo},
 		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: factory.SimpleCatalogFactory.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
@@ -57,11 +55,10 @@ func (f *AlbumCreatorCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Con
 type DryRunCataloguerFactory struct{}
 
 func (f *DryRunCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Context, owner ownermodel.Owner) (backup.Cataloguer, error) {
-	queries := AlbumQueries(ctx)
 	writeRepo := CatalogRepository(ctx)
 	referencer, err := catalog.NewAlbumDryRunReferencer(
 		owner,
-		queries,
+		TimelineRepository(ctx),
 	)
 
 	return &backupcatalog.CatalogReferencerAdapter{

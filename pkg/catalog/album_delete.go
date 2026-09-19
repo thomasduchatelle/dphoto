@@ -23,16 +23,6 @@ func (f CountMediasBySelectorsFunc) CountMediasBySelectors(ctx context.Context, 
 	return f(ctx, owner, selectors)
 }
 
-type DeleteAlbumRepositoryPort interface {
-	DeleteAlbum(ctx context.Context, albumId AlbumId) error
-}
-
-type DeleteAlbumRepositoryFunc func(ctx context.Context, albumId AlbumId) error
-
-func (f DeleteAlbumRepositoryFunc) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
-	return f(ctx, albumId)
-}
-
 // AlbumDeleted is fired after an album has been deleted and its medias transferred to
 // the surrounding albums: it carries the id of the album that has been removed and the
 // medias that were actually moved to another album.
@@ -54,18 +44,16 @@ func (f AlbumDeletedObserverFunc) OnAlbumDeleted(ctx context.Context, event Albu
 // NewDeleteAlbum creates the service to delete an album, transferring its medias to the
 // surrounding albums when possible.
 func NewDeleteAlbum(
-	FindAlbumsByOwner FindAlbumsByOwnerPort,
+	TimelineRepository TimelineRepository,
 	CountMediasBySelectors CountMediasBySelectorsPort,
 	TransferMedias TransferMediasService,
-	DeleteAlbumRepository DeleteAlbumRepositoryPort,
 	AlbumDeletedObservers ...AlbumDeletedObserver,
 ) *DeleteAlbum {
 	return &DeleteAlbum{
-		FindAlbumsByOwner:         FindAlbumsByOwner,
-		CountMediasBySelectors:    CountMediasBySelectors,
-		TransferMediasService:     TransferMedias,
-		DeleteAlbumRepositoryPort: DeleteAlbumRepository,
-		AlbumDeletedObservers:     AlbumDeletedObservers,
+		TimelineRepository:     TimelineRepository,
+		CountMediasBySelectors: CountMediasBySelectors,
+		TransferMediasService:  TransferMedias,
+		AlbumDeletedObservers:  AlbumDeletedObservers,
 	}
 }
 
@@ -73,20 +61,19 @@ func NewDeleteAlbum(
 // to the surrounding albums (as computed by the TimelineAggregate), and an AlbumDeleted
 // event is fired once the row has been removed.
 type DeleteAlbum struct {
-	FindAlbumsByOwner         FindAlbumsByOwnerPort
-	CountMediasBySelectors    CountMediasBySelectorsPort
-	TransferMediasService     TransferMediasService
-	DeleteAlbumRepositoryPort DeleteAlbumRepositoryPort
-	AlbumDeletedObservers     []AlbumDeletedObserver
+	TimelineRepository     TimelineRepository
+	CountMediasBySelectors CountMediasBySelectorsPort
+	TransferMediasService  TransferMediasService
+	AlbumDeletedObservers  []AlbumDeletedObserver
 }
 
 func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
-	albums, err := d.FindAlbumsByOwner.FindAlbumsByOwner(ctx, albumId.Owner)
+	timeline, err := d.TimelineRepository.LoadTimeline(ctx, albumId.Owner)
 	if err != nil {
 		return err
 	}
 
-	records, orphaned, err := NewLazyTimelineAggregate(albums).RemoveAlbum(albumId)
+	records, orphaned, err := timeline.RemoveAlbum(albumId)
 	if err != nil {
 		return err
 	}
@@ -106,7 +93,7 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 		return err
 	}
 
-	if err = d.DeleteAlbumRepositoryPort.DeleteAlbum(ctx, albumId); err != nil {
+	if err = d.TimelineRepository.DeleteAlbum(ctx, albumId); err != nil {
 		return err
 	}
 

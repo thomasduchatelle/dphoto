@@ -6,13 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type FindAndRenameAlbumPort interface {
-	FindAlbumsByOwnerPort
-	InsertAlbumPort
-	DeleteAlbumRepositoryPort
-	UpdateAlbumName(ctx context.Context, albumId AlbumId, newName string) error
-}
-
 // AlbumRenamed is fired after a folder-name-changing rename has been persisted: it carries
 // the album that was replaced, the newly created album, and the medias that were actually
 // moved from the former to the latter.
@@ -34,14 +27,14 @@ func (f AlbumRenamedObserverFunc) OnAlbumRenamed(ctx context.Context, event Albu
 
 // NewRenameAlbum creates the service to rename an album.
 func NewRenameAlbum(
-	FindAndRenameAlbumPort FindAndRenameAlbumPort,
+	TimelineRepository TimelineRepository,
 	TransferMedias TransferMediasService,
 	AlbumRenamedObservers ...AlbumRenamedObserver,
 ) *RenameAlbum {
 	return &RenameAlbum{
-		FindAndRenameAlbumPort: FindAndRenameAlbumPort,
-		TransferMediasService:  TransferMedias,
-		AlbumRenamedObservers:  AlbumRenamedObservers,
+		TimelineRepository:    TimelineRepository,
+		TransferMediasService: TransferMedias,
+		AlbumRenamedObservers: AlbumRenamedObservers,
 	}
 }
 
@@ -50,26 +43,21 @@ func NewRenameAlbum(
 // Otherwise, the album is replaced: a new row is inserted under the new folder name, medias
 // are transferred, the old row is deleted, and an AlbumRenamed event is fired.
 type RenameAlbum struct {
-	FindAndRenameAlbumPort FindAndRenameAlbumPort
-	TransferMediasService  TransferMediasService
-	AlbumRenamedObservers  []AlbumRenamedObserver
+	TimelineRepository    TimelineRepository
+	TransferMediasService TransferMediasService
+	AlbumRenamedObservers []AlbumRenamedObserver
 }
 
 func (r *RenameAlbum) RenameAlbum(ctx context.Context, request RenameAlbumRequest) error {
 	if request.NewName != "" && !request.RenameFolder && request.ForcedFolderName == "" {
-		return r.FindAndRenameAlbumPort.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
+		return r.TimelineRepository.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
 	}
 
 	return r.replaceAlbum(ctx, request)
 }
 
 func (r *RenameAlbum) replaceAlbum(ctx context.Context, request RenameAlbumRequest) error {
-	albums, err := r.FindAndRenameAlbumPort.FindAlbumsByOwner(ctx, request.CurrentId.Owner)
-	if err != nil {
-		return err
-	}
-
-	timeline, err := NewInitialisedTimelineAggregate(albums)
+	timeline, err := r.TimelineRepository.LoadTimeline(ctx, request.CurrentId.Owner)
 	if err != nil {
 		return err
 	}
@@ -79,7 +67,7 @@ func (r *RenameAlbum) replaceAlbum(ctx context.Context, request RenameAlbumReque
 		return err
 	}
 
-	if err = r.FindAndRenameAlbumPort.InsertAlbum(ctx, nameUpdate.RenamedAlbum); err != nil {
+	if err = r.TimelineRepository.InsertAlbum(ctx, nameUpdate.RenamedAlbum); err != nil {
 		return err
 	}
 
@@ -88,7 +76,7 @@ func (r *RenameAlbum) replaceAlbum(ctx context.Context, request RenameAlbumReque
 		return err
 	}
 
-	if err = r.FindAndRenameAlbumPort.DeleteAlbum(ctx, nameUpdate.ExistingAlbum.AlbumId); err != nil {
+	if err = r.TimelineRepository.DeleteAlbum(ctx, nameUpdate.ExistingAlbum.AlbumId); err != nil {
 		return err
 	}
 

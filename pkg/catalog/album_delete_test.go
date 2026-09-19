@@ -207,7 +207,6 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 				tt.fields.AlbumRepository,
 				tt.fields.AlbumRepository,
 				transferService,
-				tt.fields.AlbumRepository,
 				observer,
 			)
 
@@ -232,10 +231,9 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		observer := &AlbumDeletedObserverInMemory{}
 
 		deleteAlbum := catalog.NewDeleteAlbum(
-			repository,
+			&failingDeleteAlbumInterceptor{AlbumRepositoryInMemory: repository, err: testError},
 			repository,
 			transferService,
-			catalog.DeleteAlbumRepositoryFunc(func(_ context.Context, _ catalog.AlbumId) error { return testError }),
 			observer,
 		)
 
@@ -245,4 +243,13 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		assert.Len(t, transferService.Records, 1, "the transfer should have happened before the deletion attempt")
 		assert.Empty(t, observer.Events, "no AlbumDeleted event should be fired when the repository fails")
 	})
+}
+
+type failingDeleteAlbumInterceptor struct {
+	*AlbumRepositoryInMemory
+	err error
+}
+
+func (i *failingDeleteAlbumInterceptor) DeleteAlbum(_ context.Context, _ catalog.AlbumId) error {
+	return i.err
 }

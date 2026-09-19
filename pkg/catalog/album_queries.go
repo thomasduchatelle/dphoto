@@ -3,6 +3,9 @@ package catalog
 
 import (
 	"context"
+	"time"
+
+	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
@@ -23,6 +26,33 @@ type RepositoryAdapter interface {
 	FindAlbumByIds(ctx context.Context, ids ...AlbumId) ([]*Album, error)
 
 	CountMedia(ctx context.Context, album ...AlbumId) (map[AlbumId]int, error)
+}
+
+// TimelinePersistencePort is the persistence surface a TimelineRepositoryAdapter needs
+// from the outside world. It is satisfied by the DynamoDB Repository as well as by the
+// in-memory fake used in tests.
+type TimelinePersistencePort interface {
+	FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
+	InsertAlbum(ctx context.Context, album Album) error
+	DeleteAlbum(ctx context.Context, albumId AlbumId) error
+	UpdateAlbumName(ctx context.Context, albumId AlbumId, newName string) error
+	AmendDates(ctx context.Context, albumId AlbumId, start, end time.Time) error
+}
+
+// TimelineRepositoryAdapter wraps a persistence adapter (typically the DynamoDB one) to
+// satisfy the TimelineRepository port used by the album use cases. LoadTimeline reads the
+// owner's albums and builds a TimelineAggregate eagerly; the write methods are inherited
+// from the embedded adapter.
+type TimelineRepositoryAdapter struct {
+	TimelinePersistencePort
+}
+
+func (t *TimelineRepositoryAdapter) LoadTimeline(ctx context.Context, owner ownermodel.Owner) (*TimelineAggregate, error) {
+	albums, err := t.TimelinePersistencePort.FindAlbumsByOwner(ctx, owner)
+	if err != nil {
+		return nil, errors.Wrapf(err, "LoadTimeline(%s) failed", owner)
+	}
+	return NewTimelineAggregate(albums)
 }
 
 type AlbumQueries struct {

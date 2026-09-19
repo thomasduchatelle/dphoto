@@ -14,16 +14,6 @@ var (
 	AlbumFolderNameAlreadyTakenErr   = errors.New("Album folder name is already taken")
 )
 
-type InsertAlbumPort interface {
-	InsertAlbum(ctx context.Context, album Album) error
-}
-
-type InsertAlbumPortFunc func(ctx context.Context, album Album) error
-
-func (f InsertAlbumPortFunc) InsertAlbum(ctx context.Context, album Album) error {
-	return f(ctx, album)
-}
-
 // AlbumCreated is fired after a new album has been persisted and its overlapping medias
 // have been transferred: it carries the newly created album and the medias that were
 // actually moved into it (if any).
@@ -44,15 +34,14 @@ func (f AlbumCreatedObserverFunc) OnAlbumCreated(ctx context.Context, event Albu
 
 // NewAlbumCreate creates the service to create a new album, including the transfer of medias.
 func NewAlbumCreate(
-	FindAlbumsByOwnerPort FindAlbumsByOwnerPort,
-	InsertAlbumPort InsertAlbumPort,
+	TimelineRepository TimelineRepository,
 	TransferMedias TransferMediasService,
 	AlbumCreatedObservers ...AlbumCreatedObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
-		FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
+		TimelineRepository: TimelineRepository,
 		BulkCreateAlbum: &BulkCreateAlbum{
-			InsertAlbumPort:       InsertAlbumPort,
+			TimelineRepository:    TimelineRepository,
 			TransferMediasService: TransferMedias,
 			AlbumCreatedObservers: AlbumCreatedObservers,
 		},
@@ -62,17 +51,15 @@ func NewAlbumCreate(
 // CreateAlbum inserts a new album and, if it overlaps with existing albums, transfers the
 // overlapping medias into it. On success, an AlbumCreated event is fired to every observer.
 type CreateAlbum struct {
-	FindAlbumsByOwnerPort FindAlbumsByOwnerPort
-	BulkCreateAlbum       *BulkCreateAlbum
+	TimelineRepository TimelineRepository
+	BulkCreateAlbum    *BulkCreateAlbum
 }
 
 func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
-	albums, err := c.FindAlbumsByOwnerPort.FindAlbumsByOwner(ctx, request.Owner)
+	timeline, err := c.TimelineRepository.LoadTimeline(ctx, request.Owner)
 	if err != nil {
 		return nil, err
 	}
-
-	timeline := NewLazyTimelineAggregate(albums)
 
 	return c.BulkCreateAlbum.Create(ctx, timeline, request)
 }
@@ -89,7 +76,7 @@ func (a *AlbumCreatedAsTimelineMutation) OnAlbumCreated(ctx context.Context, eve
 }
 
 type BulkCreateAlbum struct {
-	InsertAlbumPort       InsertAlbumPort
+	TimelineRepository    TimelineRepository
 	TransferMediasService TransferMediasService
 	AlbumCreatedObservers []AlbumCreatedObserver
 }
@@ -101,7 +88,7 @@ func (c *BulkCreateAlbum) Create(ctx context.Context, timeline *TimelineAggregat
 		return nil, err
 	}
 
-	if err = c.InsertAlbumPort.InsertAlbum(ctx, album); err != nil {
+	if err = c.TimelineRepository.InsertAlbum(ctx, album); err != nil {
 		return nil, err
 	}
 

@@ -78,7 +78,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 	}
 
 	type fields struct {
-		AlbumRepository catalog.FindAndRenameAlbumPort
+		AlbumRepository catalog.TimelineRepository
 	}
 	type args struct {
 		request catalog.RenameAlbumRequest
@@ -219,7 +219,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 	}
 }
 
-func failingInsertAlbum(memory *AlbumRepositoryInMemory, err error) catalog.FindAndRenameAlbumPort {
+func failingInsertAlbum(memory *AlbumRepositoryInMemory, err error) catalog.TimelineRepository {
 	return &failingInsertAlbumInterceptor{
 		AlbumRepositoryInMemory: memory,
 		err:                     err,
@@ -235,7 +235,7 @@ func (i *failingInsertAlbumInterceptor) InsertAlbum(_ context.Context, _ catalog
 	return i.err
 }
 
-func underlyingRepository(port catalog.FindAndRenameAlbumPort) *AlbumRepositoryInMemory {
+func underlyingRepository(port catalog.TimelineRepository) *AlbumRepositoryInMemory {
 	if repository, ok := port.(*AlbumRepositoryInMemory); ok {
 		return repository
 	}
