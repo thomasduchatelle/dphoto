@@ -151,14 +151,14 @@ func (o *TimelineMutationObserverInMemory) OnTransferredMedias(_ context.Context
 	return nil
 }
 
-// CreateAlbumObserverInMemory implements catalog.CreateAlbumObserver: it captures every album
-// created through the observer.
-type CreateAlbumObserverInMemory struct {
-	CreatedAlbums []catalog.Album
+// AlbumCreatedObserverInMemory implements catalog.AlbumCreatedObserver: it captures every
+// AlbumCreated event notified to the observer.
+type AlbumCreatedObserverInMemory struct {
+	Events []catalog.AlbumCreated
 }
 
-func (c *CreateAlbumObserverInMemory) ObserveCreateAlbum(_ context.Context, createdAlbum catalog.Album) error {
-	c.CreatedAlbums = append(c.CreatedAlbums, createdAlbum)
+func (c *AlbumCreatedObserverInMemory) OnAlbumCreated(_ context.Context, event catalog.AlbumCreated) error {
+	c.Events = append(c.Events, event)
 	return nil
 }
 
