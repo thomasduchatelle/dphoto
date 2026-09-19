@@ -13,19 +13,19 @@ type TimelineAggregate struct {
 	albums   []*Album
 }
 
-// NewLazyTimelineAggregate creates a new TimelineAggregate without timeline pre-computation. The timeline will be computed at the first CreateNewAlbum call.
-func NewLazyTimelineAggregate(albums []*Album) *TimelineAggregate {
-	return &TimelineAggregate{
-		albums: albums,
-	}
-}
-
-func NewInitialisedTimelineAggregate(albums []*Album) (*TimelineAggregate, error) {
+// NewTimelineAggregate builds a TimelineAggregate eagerly: the timeline is computed
+// upfront so any inconsistency in the persisted albums (like a duplicated AlbumId) is
+// surfaced immediately. Every mutating method on the aggregate keeps this invariant by
+// rebuilding the timeline from the updated in-memory album list.
+func NewTimelineAggregate(albums []*Album) (*TimelineAggregate, error) {
 	timeline, err := NewTimeline(albums)
+	if err != nil {
+		return nil, err
+	}
 	return &TimelineAggregate{
 		albums:   albums,
 		timeline: timeline,
-	}, err
+	}, nil
 }
 
 // CreateNewAlbum validates the request, appends the new album to the aggregate, rebuilds the
@@ -132,9 +132,6 @@ type AlbumNameUpdated struct {
 // The rename is expected to change the folder name; the caller is responsible for handling the
 // name-only case (a simple UpdateAlbumName on the same row) before reaching this method.
 func (t *TimelineAggregate) RenameAlbum(request RenameAlbumRequest) (*AlbumNameUpdated, error) {
-	if t.timeline == nil {
-		return nil, errors.Errorf("TimelineAggregate.RenameAlbum must be called from NewInitialisedTimelineAggregate (t.timeline is nil)")
-	}
 	if request.NewName == "" {
 		return nil, AlbumNameMandatoryErr
 	}
@@ -282,12 +279,10 @@ func (t *TimelineAggregate) AmendDates(albumId AlbumId, start, end time.Time) (*
 		return &AlbumDatesUpdated{DatesUpdate: datesUpdate}, nil
 	}
 
-	originalTimeline, err := t.getTimeline()
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create timeline during AmendDates(%s, %s, %s)", albumId, start, end)
-	}
+	originalTimeline := t.timeline
 
 	t.albums[index] = &updatedAlbum
+	var err error
 	t.timeline, err = NewTimeline(t.albums)
 	if err != nil {
 		return nil, err
@@ -371,22 +366,7 @@ func (t *TimelineAggregate) isLeadByAlbum(albumId AlbumId, seg PrioritySegment) 
 	return len(seg.Albums) > 0 && seg.Albums[0].AlbumId.IsEqual(albumId)
 }
 
-func (t *TimelineAggregate) FindAt(date time.Time) (*Album, bool, error) {
-	_, err := t.getTimeline()
-	if err != nil {
-		return nil, false, errors.Wrapf(err, "failed to create timeline during FindAt(%s)", date)
-	}
-
-	albumId, found := t.timeline.FindAt(date)
-	return albumId, found, nil
-}
-
-// getTimeline returns the timeline, creating it if it doesn't exist yet (lazy initialisation)
-func (t *TimelineAggregate) getTimeline() (*Timeline, error) {
-	var err error
-	if t.timeline == nil {
-		t.timeline, err = NewTimeline(t.albums)
-	}
-
-	return t.timeline, err
+func (t *TimelineAggregate) FindAt(date time.Time) (*Album, bool) {
+	album, found := t.timeline.FindAt(date)
+	return album, found
 }

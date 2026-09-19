@@ -12,13 +12,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
-// findAndCreateAlbumPort bundles the two ports CreateAlbum needs so a single fake can be
-// swapped in per test case, and so interceptors can override either method.
-type findAndCreateAlbumPort interface {
-	catalog.FindAlbumsByOwnerPort
-	catalog.InsertAlbumPort
-}
-
 func TestCreateAlbum_Create(t *testing.T) {
 	const owner = "tonystark"
 	apr28 := time.Date(2024, 4, 28, 0, 0, 0, 0, time.UTC)
@@ -77,7 +70,7 @@ func TestCreateAlbum_Create(t *testing.T) {
 	}
 
 	type fields struct {
-		AlbumRepository findAndCreateAlbumPort
+		AlbumRepository catalog.TimelineRepository
 	}
 	type args struct {
 		request catalog.CreateAlbumRequest
@@ -150,7 +143,7 @@ func TestCreateAlbum_Create(t *testing.T) {
 		},
 		{
 			name:                 "it should not insert any album, transfer any media, or fire any event if the list of existing albums cannot be read",
-			fields:               fields{AlbumRepository: failingFindAlbumsByOwner(repositoryWithLifetime(), testError)},
+			fields:               fields{AlbumRepository: failingLoadTimeline(repositoryWithLifetime(), testError)},
 			args:                 args{request: standardRequest},
 			expectStoredAlbumIds: []catalog.AlbumId{lifetimeAlbum.AlbumId},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -174,7 +167,6 @@ func TestCreateAlbum_Create(t *testing.T) {
 
 			createAlbum := catalog.NewAlbumCreate(
 				tt.fields.AlbumRepository,
-				tt.fields.AlbumRepository,
 				transferService,
 				observer,
 			)
@@ -196,7 +188,7 @@ func TestCreateAlbum_Create(t *testing.T) {
 	}
 }
 
-func failingInsertAlbumForCreate(memory *AlbumRepositoryInMemory, err error) findAndCreateAlbumPort {
+func failingInsertAlbumForCreate(memory *AlbumRepositoryInMemory, err error) catalog.TimelineRepository {
 	return &failingInsertAlbumForCreateInterceptor{
 		AlbumRepositoryInMemory: memory,
 		err:                     err,
@@ -212,29 +204,29 @@ func (i *failingInsertAlbumForCreateInterceptor) InsertAlbum(_ context.Context, 
 	return i.err
 }
 
-func failingFindAlbumsByOwner(memory *AlbumRepositoryInMemory, err error) findAndCreateAlbumPort {
-	return &failingFindAlbumsByOwnerInterceptor{
+func failingLoadTimeline(memory *AlbumRepositoryInMemory, err error) catalog.TimelineRepository {
+	return &failingLoadTimelineInterceptor{
 		AlbumRepositoryInMemory: memory,
 		err:                     err,
 	}
 }
 
-type failingFindAlbumsByOwnerInterceptor struct {
+type failingLoadTimelineInterceptor struct {
 	*AlbumRepositoryInMemory
 	err error
 }
 
-func (i *failingFindAlbumsByOwnerInterceptor) FindAlbumsByOwner(_ context.Context, _ ownermodel.Owner) ([]*catalog.Album, error) {
+func (i *failingLoadTimelineInterceptor) LoadTimeline(_ context.Context, _ ownermodel.Owner) (*catalog.TimelineAggregate, error) {
 	return nil, i.err
 }
 
-func underlyingCreateRepository(port findAndCreateAlbumPort) *AlbumRepositoryInMemory {
+func underlyingCreateRepository(port catalog.TimelineRepository) *AlbumRepositoryInMemory {
 	switch v := port.(type) {
 	case *AlbumRepositoryInMemory:
 		return v
 	case *failingInsertAlbumForCreateInterceptor:
 		return v.AlbumRepositoryInMemory
-	case *failingFindAlbumsByOwnerInterceptor:
+	case *failingLoadTimelineInterceptor:
 		return v.AlbumRepositoryInMemory
 	}
 	return nil

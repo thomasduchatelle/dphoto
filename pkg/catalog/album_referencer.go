@@ -23,19 +23,18 @@ type AlbumReference struct {
 // NewAlbumAutoPopulateReferencer find reference of the albums that will receive the new medias, or creates a new one.
 func NewAlbumAutoPopulateReferencer(
 	owner ownermodel.Owner,
-	findAlbumsByOwner FindAlbumsByOwnerPort,
-	InsertAlbumPort InsertAlbumPort,
+	timelineRepository TimelineRepository,
 	TransferMediasService TransferMediasService,
 	AlbumCreatedObservers ...AlbumCreatedObserver,
 ) (*ThreadSafeAlbumReferencer, error) {
 	return initiateStatefulAlbumReferencer(
 		context.Background(),
-		findAlbumsByOwner,
+		timelineRepository,
 		owner,
 		new(TimelineLookupStrategy),
 		&AlbumAutoCreateLookupStrategy{
 			BulkCreateAlbum: &BulkCreateAlbum{
-				InsertAlbumPort:       InsertAlbumPort,
+				TimelineRepository:    timelineRepository,
 				TransferMediasService: TransferMediasService,
 				AlbumCreatedObservers: AlbumCreatedObservers,
 			},
@@ -46,12 +45,12 @@ func NewAlbumAutoPopulateReferencer(
 // NewAlbumDryRunReferencer find a reference of the album that wil receive the new media, or informs that a new album will be created (dry run).
 func NewAlbumDryRunReferencer(
 	owner ownermodel.Owner,
-	findAlbumsByOwner FindAlbumsByOwnerPort,
+	timelineRepository TimelineRepository,
 ) (*ThreadSafeAlbumReferencer, error) {
 
 	return initiateStatefulAlbumReferencer(
 		context.Background(),
-		findAlbumsByOwner,
+		timelineRepository,
 		owner,
 		new(TimelineLookupStrategy),
 		new(DryRunLookupStrategy),
@@ -60,17 +59,15 @@ func NewAlbumDryRunReferencer(
 
 func initiateStatefulAlbumReferencer(
 	ctx context.Context,
-	findAlbumsByOwner FindAlbumsByOwnerPort,
+	timelineRepository TimelineRepository,
 	owner ownermodel.Owner,
 	strategies ...AlbumLookupStrategy,
 ) (*ThreadSafeAlbumReferencer, error) {
 
-	albums, err := findAlbumsByOwner.FindAlbumsByOwner(ctx, owner)
+	timeline, err := timelineRepository.LoadTimeline(ctx, owner)
 	if err != nil {
-		return nil, errors.Wrapf(err, "NewAlbumAutoPopulateReferencer(...) failed")
+		return nil, errors.Wrapf(err, "initiateStatefulAlbumReferencer(%s) failed", owner)
 	}
-
-	timeline, err := NewInitialisedTimelineAggregate(albums)
 
 	return &ThreadSafeAlbumReferencer{
 		Delegate: &StatefulAlbumReferencer{
@@ -78,7 +75,7 @@ func initiateStatefulAlbumReferencer(
 			TimelineAggregate: timeline,
 			LookupStrategies:  strategies,
 		},
-	}, errors.Wrapf(err, "initiateStatefulAlbumReferencer(...) failed")
+	}, nil
 }
 
 type AlbumLookupStrategy interface {
@@ -111,10 +108,7 @@ func (a *StatefulAlbumReferencer) FindReference(ctx context.Context, mediaTime t
 type TimelineLookupStrategy struct{}
 
 func (t TimelineLookupStrategy) LookupAlbum(ctx context.Context, owner ownermodel.Owner, timeline *TimelineAggregate, mediaTime time.Time) (AlbumReference, error) {
-	album, exists, err := timeline.FindAt(mediaTime)
-	if err != nil {
-		return AlbumReference{}, err
-	}
+	album, exists := timeline.FindAt(mediaTime)
 	if exists {
 		return AlbumReference{
 			AlbumId:          &album.AlbumId,
@@ -125,9 +119,10 @@ func (t TimelineLookupStrategy) LookupAlbum(ctx context.Context, owner ownermode
 	return AlbumReference{}, NoAlbumLookedUpError
 }
 
-// AlbumAutoCreateLookupStrategy delegates to the CreateAlbum use case to create a quarterly
-// album covering mediaTime. The cached TimelineAggregate carried by StatefulAlbumReferencer
-// is ignored: CreateAlbum.Create re-loads the owner's albums to build its own timeline.
+// AlbumAutoCreateLookupStrategy delegates to the BulkCreateAlbum use case to create a
+// quarterly album covering mediaTime, reusing the timeline held by
+// StatefulAlbumReferencer so subsequent lookups see the newly created album without a
+// second load from the repository.
 type AlbumAutoCreateLookupStrategy struct {
 	BulkCreateAlbum *BulkCreateAlbum
 }

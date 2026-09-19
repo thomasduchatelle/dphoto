@@ -177,7 +177,6 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 			referencer, err := catalog.NewAlbumAutoPopulateReferencer(
 				owner,
 				tt.fields.AlbumRepository,
-				tt.fields.AlbumRepository,
 				transferService,
 				observer,
 			)
@@ -349,8 +348,12 @@ func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
 
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
+			timeline, err := catalog.NewTimelineAggregate(tt.args.albums)
+			if !assert.NoError(t1, err) {
+				return
+			}
 			strategy := catalog.TimelineLookupStrategy{}
-			got, err := strategy.LookupAlbum(context.Background(), tt.args.owner, catalog.NewLazyTimelineAggregate(tt.args.albums), tt.args.mediaTime)
+			got, err := strategy.LookupAlbum(context.Background(), tt.args.owner, timeline, tt.args.mediaTime)
 			if !tt.wantErr(t1, err, fmt.Sprintf("LookupAlbum(%v, %v, %v)", tt.args.owner, tt.args.albums, tt.args.mediaTime)) {
 				return
 			}

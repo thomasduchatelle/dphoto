@@ -41,6 +41,14 @@ func (r *AlbumRepositoryInMemory) FindAlbumsByOwner(_ context.Context, owner own
 	return albums, nil
 }
 
+func (r *AlbumRepositoryInMemory) LoadTimeline(ctx context.Context, owner ownermodel.Owner) (*catalog.TimelineAggregate, error) {
+	albums, err := r.FindAlbumsByOwner(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
+	return catalog.NewTimelineAggregate(albums)
+}
+
 func (r *AlbumRepositoryInMemory) FindAlbumByIds(_ context.Context, ids ...catalog.AlbumId) ([]*catalog.Album, error) {
 	var albums []*catalog.Album
 	for _, album := range r.Albums {
