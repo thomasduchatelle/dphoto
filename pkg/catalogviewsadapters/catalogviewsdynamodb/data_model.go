@@ -18,10 +18,6 @@ const (
 	AvailabilityTypeVisitor = "VISITOR"
 )
 
-// AlbumSummaryRecord is the on-disk projection: identity + display fields + count. Display fields
-// (AlbumName/AlbumStart/AlbumEnd) and Count are written by disjoint code paths and never clobber
-// each other. Display attributes are marshalled with `omitempty` so a row that only carries a
-// Count doesn't grow empty string attributes just because the writer had no display info to set.
 type AlbumSummaryRecord struct {
 	appdynamodb.TablePk
 	AlbumOwner       string
@@ -32,10 +28,15 @@ type AlbumSummaryRecord struct {
 	AlbumName        string `dynamodbav:",omitempty"`
 	AlbumStart       string `dynamodbav:",omitempty"`
 	AlbumEnd         string `dynamodbav:",omitempty"`
+	AlbumViewIndexPK string
 }
 
 func albumsViewPK(user usermodel.UserId) string {
 	return fmt.Sprintf("USER#%s#ALBUMS_VIEW", user.Value())
+}
+
+func albumViewByAlbumIndexPK(albumId catalog.AlbumId) string {
+	return fmt.Sprintf("ALBUM#%s#%s#ALBUMS_VIEW", albumId.Owner.Value(), albumId.FolderName.String())
 }
 
 func albumSummaryKey(user catalogviews.Availability, albumId catalog.AlbumId) appdynamodb.TablePk {
@@ -71,6 +72,7 @@ func marshalAlbumSummary(summary catalogviews.AlbumSummaryForUsers) ([]map[strin
 			AlbumName:        summary.Name,
 			AlbumStart:       marshalTime(summary.Start),
 			AlbumEnd:         marshalTime(summary.End),
+			AlbumViewIndexPK: albumViewByAlbumIndexPK(summary.AlbumId),
 		})
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to marshal album summary record: %+v", summary)

@@ -46,3 +46,13 @@ type MediaCounterFunc func(ctx context.Context, album ...catalog.AlbumId) (map[c
 func (f MediaCounterFunc) CountMedia(ctx context.Context, album ...catalog.AlbumId) (map[catalog.AlbumId]int, error) {
 	return f(ctx, album...)
 }
+
+type OwnerUserIdPort interface {
+	GetOwnerUserId(ctx context.Context, owner ownermodel.Owner) (usermodel.UserId, error)
+}
+
+type OwnerUserIdFunc func(ctx context.Context, owner ownermodel.Owner) (usermodel.UserId, error)
+
+func (f OwnerUserIdFunc) GetOwnerUserId(ctx context.Context, owner ownermodel.Owner) (usermodel.UserId, error) {
+	return f(ctx, owner)
+}

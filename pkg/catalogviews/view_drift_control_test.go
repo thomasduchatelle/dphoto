@@ -3,11 +3,12 @@ package catalogviews
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"testing"
 )
 
 func TestNewDriftReconcilerAcceptance(t *testing.T) {
@@ -28,12 +29,12 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 		dry   bool
 	}
 	tests := []struct {
-		name      string
-		fields    fields
-		current   []UserAlbumSummary
-		args      args
+		name          string
+		fields        fields
+		current       []UserAlbumSummary
+		args          args
 		wantSummaries []UserAlbumSummary
-		wantErr   assert.ErrorAssertionFunc
+		wantErr       assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should not fail when no album is found for the owner",
@@ -219,7 +220,7 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 				albumSize: []AlbumSummaryForUsers{
 					{
 						AlbumSummary: AlbumSummary{AlbumId: albumId1, MediaCount: 1},
-						Users:     []Availability{OwnerAvailability(userId1), VisitorAvailability(userId2)},
+						Users:        []Availability{OwnerAvailability(userId1), VisitorAvailability(userId2)},
 					},
 				},
 			},
@@ -263,7 +264,7 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 				ctx: context.Background(),
 				albumSize: []AlbumSummaryForUsers{
 					user1Album1Owner.ToSummaryForUsers(),
-					user2Album2Owner.ToSummaryForUsers(), // user2 is not synced if not explicitly in the expected list
+					user2Album2Owner.ToSummaryForUsers(),
 				},
 			},
 			wantDrifts: []Drift{

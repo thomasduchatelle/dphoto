@@ -20,128 +20,171 @@ type AlbumViewRepository struct {
 	TableName string
 }
 
-// IncrementCounts applies `ADD Count :d` on each viewer row. It does NOT touch display fields:
-// the update expression only mentions Count and the identity attributes needed to bootstrap a
-// missing row (owner/folder/user/availability) so an existing row's AlbumName/AlbumStart/AlbumEnd
-// survive untouched.
-func (a *AlbumViewRepository) IncrementCounts(ctx context.Context, updates []catalogviews.AlbumMediaCountDiff) error {
-	var inputs []*dynamodb.UpdateItemInput
-
+func (a *AlbumViewRepository) IncrementCountForAllViewers(ctx context.Context, updates []catalogviews.AlbumCountDiff) error {
 	for _, update := range updates {
-		for _, user := range update.Users {
+		items, err := a.queryByAlbumIndex(ctx, update.AlbumId)
+		if err != nil {
+			return errors.Wrapf(err, "failed to list rows for album %v", update.AlbumId)
+		}
+
+		for _, item := range items {
 			expr, err := expression.NewBuilder().
-				WithUpdate(expression.
-					Add(expression.Name("Count"), expression.Value(update.MediaCountDiff)).
-					Set(expression.Name("UserId"), expression.Value(user.UserId.Value())).
-					Set(expression.Name("AvailabilityType"), expression.Value(marshalAvailabilityType(user))).
-					Set(expression.Name("AlbumOwner"), expression.Value(update.AlbumId.Owner)).
-					Set(expression.Name("AlbumFolderName"), expression.Value(update.AlbumId.FolderName.String())),
-				).
+				WithUpdate(expression.Add(expression.Name("Count"), expression.Value(update.MediaCountDiff))).
 				Build()
 			if err != nil {
-				return errors.Wrapf(err, "failed to build expression for AlbumMediaCountDiff %+v", update)
+				return errors.Wrapf(err, "failed to build expression for AlbumCountDiff %+v", update)
 			}
 
-			inputs = append(inputs, &dynamodb.UpdateItemInput{
-				TableName:                 &a.TableName,
-				Key:                       albumSummaryKey(user, update.AlbumId).ToAttributes(),
+			_, err = a.Client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+				TableName: &a.TableName,
+				Key: map[string]types.AttributeValue{
+					"PK": item["PK"],
+					"SK": item["SK"],
+				},
 				ExpressionAttributeNames:  expr.Names(),
 				ExpressionAttributeValues: expr.Values(),
 				UpdateExpression:          expr.Update(),
 			})
-		}
-	}
-
-	for _, input := range inputs {
-		_, err := a.Client.UpdateItem(ctx, input)
-		if err != nil {
-			return errors.Wrapf(err, "failed to increment count for album %v", input.Key)
+			if err != nil {
+				return errors.Wrapf(err, "failed to increment count for album %v", update.AlbumId)
+			}
 		}
 	}
 
 	return nil
 }
 
-// SetCounts applies `SET Count = :c` on each viewer row. It does NOT touch display fields.
-func (a *AlbumViewRepository) SetCounts(ctx context.Context, updates []catalogviews.AlbumMediaCountForUsers) error {
-	var inputs []*dynamodb.UpdateItemInput
-
+func (a *AlbumViewRepository) SetCountForAllViewers(ctx context.Context, updates []catalogviews.AlbumCount) error {
 	for _, update := range updates {
-		for _, user := range update.Users {
+		items, err := a.queryByAlbumIndex(ctx, update.AlbumId)
+		if err != nil {
+			return errors.Wrapf(err, "failed to list rows for album %v", update.AlbumId)
+		}
+
+		for _, item := range items {
 			expr, err := expression.NewBuilder().
-				WithUpdate(expression.
-					Set(expression.Name("Count"), expression.Value(update.MediaCount)).
-					Set(expression.Name("UserId"), expression.Value(user.UserId.Value())).
-					Set(expression.Name("AvailabilityType"), expression.Value(marshalAvailabilityType(user))).
-					Set(expression.Name("AlbumOwner"), expression.Value(update.AlbumId.Owner)).
-					Set(expression.Name("AlbumFolderName"), expression.Value(update.AlbumId.FolderName.String())),
-				).
+				WithUpdate(expression.Set(expression.Name("Count"), expression.Value(update.MediaCount))).
 				Build()
 			if err != nil {
-				return errors.Wrapf(err, "failed to build expression for AlbumMediaCountForUsers %+v", update)
+				return errors.Wrapf(err, "failed to build expression for AlbumCount %+v", update)
 			}
 
-			inputs = append(inputs, &dynamodb.UpdateItemInput{
-				TableName:                 &a.TableName,
-				Key:                       albumSummaryKey(user, update.AlbumId).ToAttributes(),
+			_, err = a.Client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+				TableName: &a.TableName,
+				Key: map[string]types.AttributeValue{
+					"PK": item["PK"],
+					"SK": item["SK"],
+				},
 				ExpressionAttributeNames:  expr.Names(),
 				ExpressionAttributeValues: expr.Values(),
 				UpdateExpression:          expr.Update(),
 			})
-		}
-	}
-
-	for _, input := range inputs {
-		_, err := a.Client.UpdateItem(ctx, input)
-		if err != nil {
-			return errors.Wrapf(err, "failed to set count for album %v", input.Key)
+			if err != nil {
+				return errors.Wrapf(err, "failed to set count for album %v", update.AlbumId)
+			}
 		}
 	}
 
 	return nil
 }
 
-// SetDisplayFields updates AlbumName/AlbumStart/AlbumEnd on the viewer rows. It does NOT touch
-// Count.
-func (a *AlbumViewRepository) SetDisplayFields(ctx context.Context, albumId catalog.AlbumId, users []catalogviews.Availability, name string, start, end time.Time) error {
-	var inputs []*dynamodb.UpdateItemInput
+func (a *AlbumViewRepository) SetDisplayFieldsForAllViewers(ctx context.Context, albumId catalog.AlbumId, name string, start, end time.Time) error {
+	items, err := a.queryByAlbumIndex(ctx, albumId)
+	if err != nil {
+		return errors.Wrapf(err, "failed to list rows for album %v", albumId)
+	}
 
-	for _, user := range users {
+	for _, item := range items {
 		expr, err := expression.NewBuilder().
 			WithUpdate(expression.
 				Set(expression.Name("AlbumName"), expression.Value(name)).
 				Set(expression.Name("AlbumStart"), expression.Value(marshalTime(start))).
-				Set(expression.Name("AlbumEnd"), expression.Value(marshalTime(end))).
-				Set(expression.Name("UserId"), expression.Value(user.UserId.Value())).
-				Set(expression.Name("AvailabilityType"), expression.Value(marshalAvailabilityType(user))).
-				Set(expression.Name("AlbumOwner"), expression.Value(albumId.Owner)).
-				Set(expression.Name("AlbumFolderName"), expression.Value(albumId.FolderName.String())),
+				Set(expression.Name("AlbumEnd"), expression.Value(marshalTime(end))),
 			).
 			Build()
 		if err != nil {
-			return errors.Wrapf(err, "failed to build expression for SetDisplayFields %+v/%+v", albumId, user)
+			return errors.Wrapf(err, "failed to build expression for SetDisplayFieldsForAllViewers %+v", albumId)
 		}
 
-		inputs = append(inputs, &dynamodb.UpdateItemInput{
-			TableName:                 &a.TableName,
-			Key:                       albumSummaryKey(user, albumId).ToAttributes(),
+		_, err = a.Client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName: &a.TableName,
+			Key: map[string]types.AttributeValue{
+				"PK": item["PK"],
+				"SK": item["SK"],
+			},
 			ExpressionAttributeNames:  expr.Names(),
 			ExpressionAttributeValues: expr.Values(),
 			UpdateExpression:          expr.Update(),
 		})
-	}
-
-	for _, input := range inputs {
-		_, err := a.Client.UpdateItem(ctx, input)
 		if err != nil {
-			return errors.Wrapf(err, "failed to update display fields for album %v", input.Key)
+			return errors.Wrapf(err, "failed to update display fields for album %v", albumId)
 		}
 	}
 
 	return nil
 }
 
-// PutSummaries is a full-row upsert (Put). It writes all attributes including Count.
+func (a *AlbumViewRepository) RenameAlbum(ctx context.Context, existingId, renamedId catalog.AlbumId, newName string) error {
+	items, err := a.queryByAlbumIndex(ctx, existingId)
+	if err != nil {
+		return errors.Wrapf(err, "failed to list rows for album %v", existingId)
+	}
+	if len(items) == 0 {
+		return nil
+	}
+
+	var ownerRow *catalogviews.UserAlbumSummary
+	viewers := make([]catalogviews.Availability, 0, len(items))
+	for _, item := range items {
+		summary, err := unmarshalAlbumSummary(item)
+		if err != nil {
+			return err
+		}
+		viewers = append(viewers, summary.Availability)
+		if summary.Availability.AsOwner {
+			ownerRow = summary
+		}
+	}
+	if ownerRow == nil {
+		return errors.Errorf("no owner row for album %v: cannot RenameAlbum without a source of truth", existingId)
+	}
+
+	renamedSummary := catalogviews.AlbumSummary{
+		AlbumId:    renamedId,
+		Name:       newName,
+		Start:      ownerRow.AlbumSummary.Start,
+		End:        ownerRow.AlbumSummary.End,
+		MediaCount: ownerRow.AlbumSummary.MediaCount,
+	}
+
+	var writes []types.WriteRequest
+	for _, item := range items {
+		writes = append(writes, types.WriteRequest{
+			DeleteRequest: &types.DeleteRequest{
+				Key: map[string]types.AttributeValue{
+					"PK": item["PK"],
+					"SK": item["SK"],
+				},
+			},
+		})
+	}
+
+	newItems, err := marshalAlbumSummary(catalogviews.AlbumSummaryForUsers{
+		AlbumSummary: renamedSummary,
+		Users:        viewers,
+	})
+	if err != nil {
+		return err
+	}
+	for _, item := range newItems {
+		writes = append(writes, types.WriteRequest{
+			PutRequest: &types.PutRequest{Item: item},
+		})
+	}
+
+	return dynamoutils.BufferedWriteItems(ctx, a.Client, writes, a.TableName, dynamoutils.DynamoWriteBatchSize)
+}
+
 func (a *AlbumViewRepository) PutSummaries(ctx context.Context, summaries []catalogviews.AlbumSummaryForUsers) error {
 	var items []types.WriteRequest
 
@@ -180,47 +223,56 @@ func (a *AlbumViewRepository) DeleteRow(ctx context.Context, availability catalo
 	return errors.Wrapf(err, "failed to delete row for album %v and user %v", albumId, availability)
 }
 
-// DeleteAllRowsForAlbum scans the projection to find every viewer row for the album and deletes
-// each one. Cost is bounded by the number of viewers of the album.
 func (a *AlbumViewRepository) DeleteAllRowsForAlbum(ctx context.Context, albumId catalog.AlbumId) error {
-	expr, err := expression.NewBuilder().
-		WithFilter(expression.
-			Name("AlbumOwner").Equal(expression.Value(albumId.Owner.Value())).
-			And(expression.Name("AlbumFolderName").Equal(expression.Value(albumId.FolderName.String())))).
-		Build()
+	pages, err := a.queryByAlbumIndex(ctx, albumId)
 	if err != nil {
-		return errors.Wrapf(err, "failed to build expression for DeleteAllRowsForAlbum %v", albumId)
+		return errors.Wrapf(err, "failed to list rows for album %v", albumId)
 	}
 
-	paginator := dynamodb.NewScanPaginator(a.Client, &dynamodb.ScanInput{
-		TableName:                 &a.TableName,
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-	})
-
 	var deletes []types.WriteRequest
-	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(ctx)
-		if err != nil {
-			return errors.Wrapf(err, "failed to scan rows for album %v", albumId)
-		}
-		for _, item := range page.Items {
-			deletes = append(deletes, types.WriteRequest{
-				DeleteRequest: &types.DeleteRequest{
-					Key: map[string]types.AttributeValue{
-						"PK": item["PK"],
-						"SK": item["SK"],
-					},
+	for _, item := range pages {
+		deletes = append(deletes, types.WriteRequest{
+			DeleteRequest: &types.DeleteRequest{
+				Key: map[string]types.AttributeValue{
+					"PK": item["PK"],
+					"SK": item["SK"],
 				},
-			})
-		}
+			},
+		})
 	}
 
 	if len(deletes) == 0 {
 		return nil
 	}
 	return dynamoutils.BufferedWriteItems(ctx, a.Client, deletes, a.TableName, dynamoutils.DynamoWriteBatchSize)
+}
+
+func (a *AlbumViewRepository) queryByAlbumIndex(ctx context.Context, albumId catalog.AlbumId) ([]map[string]types.AttributeValue, error) {
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(expression.Key("AlbumViewIndexPK").Equal(expression.Value(albumViewByAlbumIndexPK(albumId)))).
+		Build()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to build expression for AlbumViewByAlbumIndex query %v", albumId)
+	}
+
+	indexName := "AlbumViewByAlbumIndex"
+	paginator := dynamodb.NewQueryPaginator(a.Client, &dynamodb.QueryInput{
+		TableName:                 &a.TableName,
+		IndexName:                 &indexName,
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+	})
+
+	var items []map[string]types.AttributeValue
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, page.Items...)
+	}
+	return items, nil
 }
 
 func (a *AlbumViewRepository) ListSummariesForUser(ctx context.Context, userId usermodel.UserId) ([]catalogviews.UserAlbumSummary, error) {
@@ -264,7 +316,6 @@ func (a *AlbumViewRepository) ListSummariesForUserAndOwners(ctx context.Context,
 
 	var filtered []catalogviews.UserAlbumSummary
 	for _, summary := range summaries {
-		// legacy entries cleanup: 'summary.Availability.UserId' wasn't set before 2024-06-30 and will be ignored during a drift reconciliation
 		if slices.Contains(owner, summary.AlbumSummary.AlbumId.Owner) && summary.Availability.UserId != "" {
 			filtered = append(filtered, summary)
 		}

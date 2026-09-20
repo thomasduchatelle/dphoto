@@ -8,41 +8,30 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
-// NewAlbumView constructs the AlbumView read model.
-//
-// The four collaborators are kept as fields so that the event methods, filled in by
-// subsequent tickets (01-03..01-07), can be implemented without further signature churn on the
-// constructor:
-//   - Repository is the read+write projection carrying every viewer row.
-//   - GetAlbumSharingGridPort decorates owned rows with the current sharing grid on read.
-//   - MediaCounterPort re-reads canonical counts for count-mutation events.
-//   - FindAlbumsByIdsPort loads canonical album records for events that need display fields.
 func NewAlbumView(
 	repository AlbumSummaryRepository,
 	getAlbumSharingGridPort GetAlbumSharingGridPort,
 	mediaCounterPort MediaCounterPort,
 	findAlbumsByIdsPort FindAlbumsByIdsPort,
+	ownerUserIdPort OwnerUserIdPort,
 ) *AlbumView {
 	return &AlbumView{
 		Repository:              repository,
 		GetAlbumSharingGridPort: getAlbumSharingGridPort,
 		MediaCounterPort:        mediaCounterPort,
 		FindAlbumsByIdsPort:     findAlbumsByIdsPort,
+		OwnerUserIdPort:         ownerUserIdPort,
 	}
 }
 
-// AlbumView is the album-list read model: it serves ListAlbums from the projection and
-// keeps the projection in sync by observing catalog domain events.
 type AlbumView struct {
 	Repository              AlbumSummaryRepository
 	GetAlbumSharingGridPort GetAlbumSharingGridPort
 	MediaCounterPort        MediaCounterPort
 	FindAlbumsByIdsPort     FindAlbumsByIdsPort
+	OwnerUserIdPort         OwnerUserIdPort
 }
 
-// ListAlbums returns the albums visible by the user (owned + shared) served from the
-// projection alone: one ListSummariesForUser query, plus (when the user has an owner) one
-// GetAlbumSharingGrid query to decorate owned rows with their visitors.
 func (v *AlbumView) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
 	summaries, err := v.Repository.ListSummariesForUser(ctx, user.UserId)
 	if err != nil {
@@ -89,42 +78,137 @@ func (v *AlbumView) ListAlbums(ctx context.Context, user usermodel.CurrentUser, 
 	return albums, nil
 }
 
-// AlbumCreated is filled in by ticket 01-03.
-func (v *AlbumView) AlbumCreated(ctx context.Context, album catalog.Album) error {
-	return nil
+func (v *AlbumView) OnAlbumCreated(ctx context.Context, event catalog.AlbumCreated) error {
+	album := event.CreatedAlbum
+
+	ownerUserId, err := v.OwnerUserIdPort.GetOwnerUserId(ctx, album.AlbumId.Owner)
+	if err != nil {
+		return err
+	}
+
+	err = v.Repository.PutSummaries(ctx, []AlbumSummaryForUsers{
+		{
+			AlbumSummary: AlbumSummary{
+				AlbumId:    album.AlbumId,
+				Name:       album.Name,
+				Start:      album.Start,
+				End:        album.End,
+				MediaCount: len(event.TransferredMedias.Transfers[album.AlbumId]),
+			},
+			Users: []Availability{OwnerAvailability(ownerUserId)},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return v.recountAlbums(ctx, event.TransferredMedias.FromAlbums)
 }
 
-// AlbumRenamedInPlace is filled in by ticket 01-05.
-func (v *AlbumView) AlbumRenamedInPlace(ctx context.Context, albumId catalog.AlbumId, newName string) error {
-	return nil
+func (v *AlbumView) OnAlbumRenamed(ctx context.Context, event catalog.AlbumRenamed) error {
+	renamed := event.RenamedAlbum
+
+	if event.ExistingAlbum.AlbumId.IsEqual(renamed.AlbumId) {
+		return v.Repository.SetDisplayFieldsForAllViewers(ctx, renamed.AlbumId, renamed.Name, renamed.Start, renamed.End)
+	}
+
+	return v.Repository.RenameAlbum(ctx, event.ExistingAlbum.AlbumId, renamed.AlbumId, renamed.Name)
 }
 
-// AlbumDatesAmended is filled in by ticket 01-05.
-func (v *AlbumView) AlbumDatesAmended(ctx context.Context, update catalog.DatesUpdate) error {
-	return nil
+func (v *AlbumView) OnAlbumDatesAmended(ctx context.Context, event catalog.AlbumDatesAmended) error {
+	amended := event.DatesUpdate.UpdatedAlbum
+
+	if err := v.Repository.SetDisplayFieldsForAllViewers(ctx, amended.AlbumId, amended.Name, amended.Start, amended.End); err != nil {
+		return err
+	}
+
+	var affected []catalog.AlbumId
+	for albumId := range event.TransferredMedias.Transfers {
+		if !albumId.IsEqual(amended.AlbumId) && !slices.ContainsFunc(affected, albumId.IsEqual) {
+			affected = append(affected, albumId)
+		}
+	}
+	for _, albumId := range event.TransferredMedias.FromAlbums {
+		if !albumId.IsEqual(amended.AlbumId) && !slices.ContainsFunc(affected, albumId.IsEqual) {
+			affected = append(affected, albumId)
+		}
+	}
+	return v.recountAlbums(ctx, affected)
 }
 
-// AlbumDeleted is filled in by ticket 01-06.
-func (v *AlbumView) AlbumDeleted(ctx context.Context, albumId catalog.AlbumId) error {
-	return nil
+func (v *AlbumView) OnAlbumDeleted(ctx context.Context, event catalog.AlbumDeleted) error {
+	if err := v.Repository.DeleteAllRowsForAlbum(ctx, event.DeletedAlbumId); err != nil {
+		return err
+	}
+
+	if event.TransferredMedias.IsEmpty() {
+		return nil
+	}
+
+	destinationIds := make([]catalog.AlbumId, 0, len(event.TransferredMedias.Transfers))
+	for albumId := range event.TransferredMedias.Transfers {
+		destinationIds = append(destinationIds, albumId)
+	}
+
+	return v.recountAlbums(ctx, destinationIds)
 }
 
-// AlbumShared is filled in by ticket 01-07.
 func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId usermodel.UserId) error {
-	return nil
+	counts, err := v.MediaCounterPort.CountMedia(ctx, album.AlbumId)
+	if err != nil {
+		return err
+	}
+
+	return v.Repository.PutSummaries(ctx, []AlbumSummaryForUsers{
+		{
+			AlbumSummary: AlbumSummary{
+				AlbumId:    album.AlbumId,
+				MediaCount: counts[album.AlbumId],
+				Name:       album.Name,
+				Start:      album.Start,
+				End:        album.End,
+			},
+			Users: []Availability{VisitorAvailability(userId)},
+		},
+	})
 }
 
-// AlbumUnshared is filled in by ticket 01-07.
-func (v *AlbumView) AlbumUnshared(ctx context.Context, albumId catalog.AlbumId, userId usermodel.UserId) error {
-	return nil
+func (v *AlbumView) AlbumUnShared(ctx context.Context, albumId catalog.AlbumId, userId usermodel.UserId) error {
+	return v.Repository.DeleteRow(ctx, VisitorAvailability(userId), albumId)
 }
 
-// MediasInserted is filled in by ticket 01-04.
-func (v *AlbumView) MediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
-	return nil
+func (v *AlbumView) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
+	if len(medias) == 0 {
+		return nil
+	}
+
+	diffs := make([]AlbumCountDiff, 0, len(medias))
+	for albumId, mediaIds := range medias {
+		diffs = append(diffs, AlbumCountDiff{
+			AlbumId:        albumId,
+			MediaCountDiff: len(mediaIds),
+		})
+	}
+
+	return v.Repository.IncrementCountForAllViewers(ctx, diffs)
 }
 
-// MediasTransferred is filled in by ticket 01-04.
-func (v *AlbumView) MediasTransferred(ctx context.Context, transfers catalog.TransferredMedias) error {
-	return nil
+func (v *AlbumView) recountAlbums(ctx context.Context, albumIds []catalog.AlbumId) error {
+	if len(albumIds) == 0 {
+		return nil
+	}
+
+	counts, err := v.MediaCounterPort.CountMedia(ctx, albumIds...)
+	if err != nil {
+		return err
+	}
+
+	updates := make([]AlbumCount, 0, len(albumIds))
+	for _, albumId := range albumIds {
+		updates = append(updates, AlbumCount{
+			AlbumId:    albumId,
+			MediaCount: counts[albumId],
+		})
+	}
+	return v.Repository.SetCountForAllViewers(ctx, updates)
 }

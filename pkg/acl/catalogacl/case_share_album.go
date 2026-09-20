@@ -13,7 +13,7 @@ type FindAlbumPort interface {
 }
 
 type AlbumSharedObserver interface {
-	AlbumShared(ctx context.Context, albumId catalog.AlbumId, userEmail usermodel.UserId) error
+	AlbumShared(ctx context.Context, album catalog.Album, userEmail usermodel.UserId) error
 }
 
 type ShareAlbumCase struct {
@@ -23,7 +23,7 @@ type ShareAlbumCase struct {
 }
 
 func (s *ShareAlbumCase) ShareAlbumWith(ctx context.Context, albumId catalog.AlbumId, userEmail usermodel.UserId) error {
-	_, err := s.FindAlbumPort.FindAlbum(ctx, albumId)
+	album, err := s.FindAlbumPort.FindAlbum(ctx, albumId)
 	if err != nil {
 		return errors.Wrapf(err, "album %s cannot be shared to %s", albumId, userEmail) // it can be a catalog.AlbumNotFoundErr
 	}
@@ -40,7 +40,7 @@ func (s *ShareAlbumCase) ShareAlbumWith(ctx context.Context, albumId catalog.Alb
 	}
 
 	for _, observer := range s.Observers {
-		err = observer.AlbumShared(ctx, albumId, userEmail)
+		err = observer.AlbumShared(ctx, *album, userEmail)
 		if err != nil {
 			return err
 		}
