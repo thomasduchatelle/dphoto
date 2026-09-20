@@ -868,10 +868,10 @@ func TestAlbumViewRepository_RenameAlbum(t *testing.T) {
 				albumSummaryItemBuilder(userId1, OwnerAvailability, newId).
 					withCount(4).
 					withDisplayFields("New Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumSummaryItemBuilder(userId1, OwnerAvailability, otherId).withCount(99).build(),
 				albumSummaryItemBuilder(userId2, VisitorAvailability, newId).
 					withCount(4).
 					withDisplayFields("New Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
-				albumSummaryItemBuilder(userId1, OwnerAvailability, otherId).withCount(99).build(),
 			},
 			wantErr: assert.NoError,
 		},
