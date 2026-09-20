@@ -124,12 +124,12 @@ func (v *AlbumView) OnAlbumDatesAmended(ctx context.Context, event catalog.Album
 
 	var affected []catalog.AlbumId
 	for albumId := range event.TransferredMedias.Transfers {
-		if !albumId.IsEqual(amended.AlbumId) && !slices.Contains(affected, albumId) {
+		if !albumId.IsEqual(amended.AlbumId) && !slices.ContainsFunc(affected, albumId.IsEqual) {
 			affected = append(affected, albumId)
 		}
 	}
 	for _, albumId := range event.TransferredMedias.FromAlbums {
-		if !albumId.IsEqual(amended.AlbumId) && !slices.Contains(affected, albumId) {
+		if !albumId.IsEqual(amended.AlbumId) && !slices.ContainsFunc(affected, albumId.IsEqual) {
 			affected = append(affected, albumId)
 		}
 	}
