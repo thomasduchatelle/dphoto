@@ -2,15 +2,15 @@ package catalogviews
 
 import (
 	"context"
+	"slices"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"slices"
-	"time"
 )
 
-// UserAlbumSummary is the read-projection: a summary as seen from a specific user's row.
 type UserAlbumSummary struct {
 	AlbumSummary AlbumSummary
 	Availability Availability
@@ -56,7 +56,7 @@ func (r *AlbumSummaryInMemoryRepository) PutSummaries(ctx context.Context, summa
 			userSummary := UserAlbumSummary{AlbumSummary: summary.AlbumSummary, Availability: user}
 
 			index := slices.IndexFunc(r.Summaries, func(current UserAlbumSummary) bool {
-				return current.AlbumSummary.AlbumId == summary.AlbumId && current.Availability.UserId == user.UserId
+				return current.AlbumSummary.AlbumId.IsEqual(summary.AlbumId) && current.Availability.UserId == user.UserId
 			})
 			if index >= 0 {
 				r.Summaries[index] = userSummary
@@ -69,75 +69,80 @@ func (r *AlbumSummaryInMemoryRepository) PutSummaries(ctx context.Context, summa
 	return nil
 }
 
-func (r *AlbumSummaryInMemoryRepository) SetDisplayFields(ctx context.Context, albumId catalog.AlbumId, users []Availability, name string, start, end time.Time) error {
-	for _, user := range users {
-		index := slices.IndexFunc(r.Summaries, func(current UserAlbumSummary) bool {
-			return current.AlbumSummary.AlbumId == albumId && current.Availability.UserId == user.UserId
+func (r *AlbumSummaryInMemoryRepository) SetDisplayFieldsForAllViewers(ctx context.Context, albumId catalog.AlbumId, name string, start, end time.Time) error {
+	for i := range r.Summaries {
+		if r.Summaries[i].AlbumSummary.AlbumId.IsEqual(albumId) {
+			r.Summaries[i].AlbumSummary.Name = name
+			r.Summaries[i].AlbumSummary.Start = start
+			r.Summaries[i].AlbumSummary.End = end
+		}
+	}
+	return nil
+}
+
+func (r *AlbumSummaryInMemoryRepository) IncrementCountForAllViewers(ctx context.Context, updates []AlbumCountDiff) error {
+	if updates == nil {
+		return errors.Errorf("IncrementCountForAllViewers(nil): updates should not be nil")
+	}
+
+	for _, update := range updates {
+		for i := range r.Summaries {
+			if r.Summaries[i].AlbumSummary.AlbumId.IsEqual(update.AlbumId) {
+				r.Summaries[i].AlbumSummary.MediaCount = r.Summaries[i].AlbumSummary.MediaCount + update.MediaCountDiff
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *AlbumSummaryInMemoryRepository) SetCountForAllViewers(ctx context.Context, updates []AlbumCount) error {
+	if updates == nil {
+		return errors.Errorf("SetCountForAllViewers(nil): updates should not be nil")
+	}
+
+	for _, update := range updates {
+		for i := range r.Summaries {
+			if r.Summaries[i].AlbumSummary.AlbumId.IsEqual(update.AlbumId) {
+				r.Summaries[i].AlbumSummary.MediaCount = update.MediaCount
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *AlbumSummaryInMemoryRepository) RenameAlbum(ctx context.Context, existingId, renamedId catalog.AlbumId, newName string) error {
+	ownerIndex := slices.IndexFunc(r.Summaries, func(current UserAlbumSummary) bool {
+		return current.AlbumSummary.AlbumId.IsEqual(existingId) && current.Availability.AsOwner
+	})
+	if ownerIndex < 0 {
+		return nil
+	}
+	source := r.Summaries[ownerIndex].AlbumSummary
+
+	var viewers []Availability
+	for _, summary := range r.Summaries {
+		if summary.AlbumSummary.AlbumId.IsEqual(existingId) {
+			viewers = append(viewers, summary.Availability)
+		}
+	}
+
+	r.Summaries = slices.DeleteFunc(r.Summaries, func(current UserAlbumSummary) bool {
+		return current.AlbumSummary.AlbumId.IsEqual(existingId)
+	})
+
+	for _, viewer := range viewers {
+		r.Summaries = append(r.Summaries, UserAlbumSummary{
+			AlbumSummary: AlbumSummary{
+				AlbumId:    renamedId,
+				Name:       newName,
+				Start:      source.Start,
+				End:        source.End,
+				MediaCount: source.MediaCount,
+			},
+			Availability: viewer,
 		})
-		if index >= 0 {
-			r.Summaries[index].AlbumSummary.Name = name
-			r.Summaries[index].AlbumSummary.Start = start
-			r.Summaries[index].AlbumSummary.End = end
-		} else {
-			r.Summaries = append(r.Summaries, UserAlbumSummary{
-				AlbumSummary: AlbumSummary{AlbumId: albumId, Name: name, Start: start, End: end},
-				Availability: user,
-			})
-		}
-	}
-
-	return nil
-}
-
-func (r *AlbumSummaryInMemoryRepository) IncrementCounts(ctx context.Context, updates []AlbumMediaCountDiff) error {
-	if updates == nil {
-		return errors.Errorf("IncrementCounts(nil): updates should not be nil")
-	}
-
-	for _, update := range updates {
-		for _, user := range update.Users {
-			index := slices.IndexFunc(r.Summaries, func(current UserAlbumSummary) bool {
-				return current.AlbumSummary.AlbumId == update.AlbumId && current.Availability.UserId == user.UserId
-			})
-			if index >= 0 {
-				if r.Summaries[index].Availability != user {
-					return errors.Errorf("availability cannot be updated during a IncrementCounts (%s != %s)", r.Summaries[index].Availability, user)
-				}
-				r.Summaries[index].AlbumSummary.MediaCount = r.Summaries[index].AlbumSummary.MediaCount + update.MediaCountDiff
-			} else {
-				r.Summaries = append(r.Summaries, UserAlbumSummary{
-					AlbumSummary: AlbumSummary{AlbumId: update.AlbumId, MediaCount: update.MediaCountDiff},
-					Availability: user,
-				})
-			}
-		}
-	}
-
-	return nil
-}
-
-func (r *AlbumSummaryInMemoryRepository) SetCounts(ctx context.Context, updates []AlbumMediaCountForUsers) error {
-	if updates == nil {
-		return errors.Errorf("SetCounts(nil): updates should not be nil")
-	}
-
-	for _, update := range updates {
-		for _, user := range update.Users {
-			index := slices.IndexFunc(r.Summaries, func(current UserAlbumSummary) bool {
-				return current.AlbumSummary.AlbumId == update.AlbumId && current.Availability.UserId == user.UserId
-			})
-			if index >= 0 {
-				if r.Summaries[index].Availability != user {
-					return errors.Errorf("availability cannot be updated during a SetCounts (%s != %s)", r.Summaries[index].Availability, user)
-				}
-				r.Summaries[index].AlbumSummary.MediaCount = update.MediaCount
-			} else {
-				r.Summaries = append(r.Summaries, UserAlbumSummary{
-					AlbumSummary: AlbumSummary{AlbumId: update.AlbumId, MediaCount: update.MediaCount},
-					Availability: user,
-				})
-			}
-		}
 	}
 
 	return nil
@@ -145,7 +150,7 @@ func (r *AlbumSummaryInMemoryRepository) SetCounts(ctx context.Context, updates 
 
 func (r *AlbumSummaryInMemoryRepository) DeleteRow(ctx context.Context, availability Availability, albumId catalog.AlbumId) error {
 	index := slices.IndexFunc(r.Summaries, func(current UserAlbumSummary) bool {
-		return current.AlbumSummary.AlbumId == albumId && current.Availability == availability
+		return current.AlbumSummary.AlbumId.IsEqual(albumId) && current.Availability == availability
 	})
 	if index >= 0 {
 		r.Summaries = append(r.Summaries[:index], r.Summaries[index+1:]...)
@@ -156,7 +161,7 @@ func (r *AlbumSummaryInMemoryRepository) DeleteRow(ctx context.Context, availabi
 
 func (r *AlbumSummaryInMemoryRepository) DeleteAllRowsForAlbum(ctx context.Context, albumId catalog.AlbumId) error {
 	r.Summaries = slices.DeleteFunc(r.Summaries, func(current UserAlbumSummary) bool {
-		return current.AlbumSummary.AlbumId == albumId
+		return current.AlbumSummary.AlbumId.IsEqual(albumId)
 	})
 	return nil
 }

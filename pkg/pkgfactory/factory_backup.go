@@ -40,7 +40,7 @@ func (f *AlbumCreatorCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Con
 		TimelineRepository(ctx),
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: writeRepo},
 		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: factory.SimpleCatalogFactory.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
-		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		AlbumView(ctx),
 	)
 
 	return &backupcatalog.CatalogReferencerAdapter{

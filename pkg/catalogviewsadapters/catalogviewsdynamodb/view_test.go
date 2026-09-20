@@ -196,9 +196,6 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 	}
 }
 
-// albumSummaryItemBuilder builds an AlbumSummaryRecord as a DynamoDB item. The builder pattern
-// makes each test case declare exactly the attributes it seeds or expects, without repeating the
-// full row shape at every call site.
 type summaryItemBuilder struct {
 	item map[string]types.AttributeValue
 }
@@ -212,6 +209,7 @@ func albumSummaryItemBuilder(user usermodel.UserId, accessType string, albumId c
 			"AlbumFolderName":  &types.AttributeValueMemberS{Value: albumId.FolderName.String()},
 			"AvailabilityType": &types.AttributeValueMemberS{Value: accessType},
 			"UserId":           &types.AttributeValueMemberS{Value: user.Value()},
+			"AlbumViewIndexPK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ALBUM#%s#%s#ALBUMS_VIEW", albumId.Owner.Value(), albumId.FolderName.String())},
 		},
 	}
 }
@@ -429,21 +427,19 @@ func TestAlbumViewRepository_ListSummariesForUser(t *testing.T) {
 	}
 }
 
-func TestAlbumViewRepository_IncrementCounts(t *testing.T) {
+func TestAlbumViewRepository_IncrementCountForAllViewers(t *testing.T) {
 	ctx := context.Background()
 	dyn := dynamotestutils.NewTestContext(ctx, t)
 
 	userId1 := usermodel.NewUserId("user-1")
 	userId2 := usermodel.NewUserId("user-2")
 	owner1 := ownermodel.Owner("owner1")
-	owner2 := ownermodel.Owner("owner2")
 	albumId1 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album-1")}
 	albumId2 := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("/album-2")}
-	albumId3 := catalog.AlbumId{Owner: owner2, FolderName: catalog.NewFolderName("/album-3")}
 
 	type args struct {
 		ctx     context.Context
-		updates []catalogviews.AlbumMediaCountDiff
+		updates []catalogviews.AlbumCountDiff
 	}
 	tests := []struct {
 		name      string
@@ -463,40 +459,32 @@ func TestAlbumViewRepository_IncrementCounts(t *testing.T) {
 			wantErr:   assert.NoError,
 		},
 		{
-			name: "it should update the count for the owner",
+			name: "it should do nothing when no viewer row exists for the album",
 			args: args{
 				ctx: ctx,
-				updates: []catalogviews.AlbumMediaCountDiff{
-					{
-						AlbumId:        albumId1,
-						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
-						MediaCountDiff: 2,
-					},
+				updates: []catalogviews.AlbumCountDiff{
+					{AlbumId: albumId1, MediaCountDiff: 2},
+				},
+			},
+			before:    nil,
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should increment the count on every viewer row of the album",
+			args: args{
+				ctx: ctx,
+				updates: []catalogviews.AlbumCountDiff{
+					{AlbumId: albumId1, MediaCountDiff: 2},
 				},
 			},
 			before: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(42).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(42).build(),
 			},
 			wantAfter: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(44).build(),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should create the row if it doesn't exist yet",
-			args: args{
-				ctx: ctx,
-				updates: []catalogviews.AlbumMediaCountDiff{
-					{
-						AlbumId:        albumId1,
-						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
-						MediaCountDiff: 2,
-					},
-				},
-			},
-			before: nil,
-			wantAfter: []map[string]types.AttributeValue{
-				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(2).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(44).build(),
 			},
 			wantErr: assert.NoError,
 		},
@@ -504,12 +492,8 @@ func TestAlbumViewRepository_IncrementCounts(t *testing.T) {
 			name: "it should NOT clobber the display fields on an existing row",
 			args: args{
 				ctx: ctx,
-				updates: []catalogviews.AlbumMediaCountDiff{
-					{
-						AlbumId:        albumId1,
-						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
-						MediaCountDiff: 3,
-					},
+				updates: []catalogviews.AlbumCountDiff{
+					{AlbumId: albumId1, MediaCountDiff: 3},
 				},
 			},
 			before: []map[string]types.AttributeValue{
@@ -527,25 +511,12 @@ func TestAlbumViewRepository_IncrementCounts(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should support a mix of albums and users that exists and don't",
+			name: "it should increment each album independently",
 			args: args{
 				ctx: ctx,
-				updates: []catalogviews.AlbumMediaCountDiff{
-					{
-						AlbumId:        albumId1,
-						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1), catalogviews.VisitorAvailability(userId2)},
-						MediaCountDiff: 2,
-					},
-					{
-						AlbumId:        albumId2,
-						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
-						MediaCountDiff: 3,
-					},
-					{
-						AlbumId:        albumId3,
-						Users:          []catalogviews.Availability{catalogviews.OwnerAvailability(userId2), catalogviews.VisitorAvailability(userId1)},
-						MediaCountDiff: 5,
-					},
+				updates: []catalogviews.AlbumCountDiff{
+					{AlbumId: albumId1, MediaCountDiff: 2},
+					{AlbumId: albumId2, MediaCountDiff: 3},
 				},
 			},
 			before: []map[string]types.AttributeValue{
@@ -556,8 +527,6 @@ func TestAlbumViewRepository_IncrementCounts(t *testing.T) {
 			wantAfter: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(4).build(),
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId2).withCount(6).build(),
-				albumSummaryItemBuilder(userId1, VisitorAvailability, albumId3).withCount(5).build(),
-				albumSummaryItemBuilder(userId2, OwnerAvailability, albumId3).withCount(5).build(),
 				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(4).build(),
 			},
 			wantErr: assert.NoError,
@@ -577,24 +546,25 @@ func TestAlbumViewRepository_IncrementCounts(t *testing.T) {
 				Client:    dyn.Client,
 				TableName: dyn.Table,
 			}
-			err = a.IncrementCounts(tt.args.ctx, tt.args.updates)
-			if tt.wantErr(t, err, fmt.Sprintf("IncrementCounts(%v, %v)", tt.args.ctx, tt.args.updates)) {
+			err = a.IncrementCountForAllViewers(tt.args.ctx, tt.args.updates)
+			if tt.wantErr(t, err, fmt.Sprintf("IncrementCountForAllViewers(%v, %v)", tt.args.ctx, tt.args.updates)) {
 				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
 			}
 		})
 	}
 }
 
-func TestAlbumViewRepository_SetCounts(t *testing.T) {
+func TestAlbumViewRepository_SetCountForAllViewers(t *testing.T) {
 	ctx := context.Background()
 	dyn := dynamotestutils.NewTestContext(ctx, t)
 
 	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
 	albumId1 := catalog.AlbumId{Owner: "owner1", FolderName: catalog.NewFolderName("/album-1")}
 
 	type args struct {
 		ctx     context.Context
-		updates []catalogviews.AlbumMediaCountForUsers
+		updates []catalogviews.AlbumCount
 	}
 	tests := []struct {
 		name      string
@@ -604,36 +574,36 @@ func TestAlbumViewRepository_SetCounts(t *testing.T) {
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should set the count to the absolute value on an existing row",
+			name: "it should do nothing when no viewer row exists for the album",
 			args: args{
-				ctx: ctx,
-				updates: []catalogviews.AlbumMediaCountForUsers{
-					{
-						AlbumId:    albumId1,
-						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
-						MediaCount: 7,
-					},
-				},
+				ctx:     ctx,
+				updates: []catalogviews.AlbumCount{{AlbumId: albumId1, MediaCount: 7}},
+			},
+			before:    nil,
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should set the count on every viewer row of the album",
+			args: args{
+				ctx:     ctx,
+				updates: []catalogviews.AlbumCount{{AlbumId: albumId1, MediaCount: 7}},
 			},
 			before: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(42).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(42).build(),
 			},
 			wantAfter: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(7).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(7).build(),
 			},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "it should NOT clobber the display fields on an existing row",
 			args: args{
-				ctx: ctx,
-				updates: []catalogviews.AlbumMediaCountForUsers{
-					{
-						AlbumId:    albumId1,
-						Users:      []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
-						MediaCount: 7,
-					},
-				},
+				ctx:     ctx,
+				updates: []catalogviews.AlbumCount{{AlbumId: albumId1, MediaCount: 7}},
 			},
 			before: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).
@@ -664,15 +634,15 @@ func TestAlbumViewRepository_SetCounts(t *testing.T) {
 				Client:    dyn.Client,
 				TableName: dyn.Table,
 			}
-			err = a.SetCounts(tt.args.ctx, tt.args.updates)
-			if tt.wantErr(t, err, fmt.Sprintf("SetCounts(%v, %v)", tt.args.ctx, tt.args.updates)) {
+			err = a.SetCountForAllViewers(tt.args.ctx, tt.args.updates)
+			if tt.wantErr(t, err, fmt.Sprintf("SetCountForAllViewers(%v, %v)", tt.args.ctx, tt.args.updates)) {
 				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
 			}
 		})
 	}
 }
 
-func TestAlbumViewRepository_SetDisplayFields(t *testing.T) {
+func TestAlbumViewRepository_SetDisplayFieldsForAllViewers(t *testing.T) {
 	ctx := context.Background()
 	dyn := dynamotestutils.NewTestContext(ctx, t)
 
@@ -683,7 +653,6 @@ func TestAlbumViewRepository_SetDisplayFields(t *testing.T) {
 	type args struct {
 		ctx     context.Context
 		albumId catalog.AlbumId
-		users   []catalogviews.Availability
 		name    string
 		start   time.Time
 		end     time.Time
@@ -696,11 +665,23 @@ func TestAlbumViewRepository_SetDisplayFields(t *testing.T) {
 		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should set the display fields on the existing rows of the owner and visitors",
+			name: "it should do nothing when no viewer row exists for the album",
 			args: args{
 				ctx:     ctx,
 				albumId: albumId1,
-				users:   []catalogviews.Availability{catalogviews.OwnerAvailability(userId1), catalogviews.VisitorAvailability(userId2)},
+				name:    "January 2024",
+				start:   displayFieldsAlbum1Start,
+				end:     displayFieldsAlbum1End,
+			},
+			before:    nil,
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should set the display fields on every viewer row of the album",
+			args: args{
+				ctx:     ctx,
+				albumId: albumId1,
 				name:    "January 2024",
 				start:   displayFieldsAlbum1Start,
 				end:     displayFieldsAlbum1End,
@@ -722,7 +703,6 @@ func TestAlbumViewRepository_SetDisplayFields(t *testing.T) {
 			args: args{
 				ctx:     ctx,
 				albumId: albumId1,
-				users:   []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
 				name:    "January 2024",
 				start:   displayFieldsAlbum1Start,
 				end:     displayFieldsAlbum1End,
@@ -732,23 +712,6 @@ func TestAlbumViewRepository_SetDisplayFields(t *testing.T) {
 			},
 			wantAfter: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(42).
-					withDisplayFields("January 2024", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should bootstrap a missing row with a zero Count",
-			args: args{
-				ctx:     ctx,
-				albumId: albumId1,
-				users:   []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
-				name:    "January 2024",
-				start:   displayFieldsAlbum1Start,
-				end:     displayFieldsAlbum1End,
-			},
-			before: nil,
-			wantAfter: []map[string]types.AttributeValue{
-				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).
 					withDisplayFields("January 2024", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
 			},
 			wantErr: assert.NoError,
@@ -768,8 +731,8 @@ func TestAlbumViewRepository_SetDisplayFields(t *testing.T) {
 				Client:    dyn.Client,
 				TableName: dyn.Table,
 			}
-			err = a.SetDisplayFields(tt.args.ctx, tt.args.albumId, tt.args.users, tt.args.name, tt.args.start, tt.args.end)
-			if tt.wantErr(t, err, fmt.Sprintf("SetDisplayFields(%v, %v)", tt.args.ctx, tt.args.albumId)) {
+			err = a.SetDisplayFieldsForAllViewers(tt.args.ctx, tt.args.albumId, tt.args.name, tt.args.start, tt.args.end)
+			if tt.wantErr(t, err, fmt.Sprintf("SetDisplayFieldsForAllViewers(%v, %v)", tt.args.ctx, tt.args.albumId)) {
 				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
 			}
 		})
@@ -846,6 +809,90 @@ func TestAlbumViewRepository_DeleteAllRowsForAlbum(t *testing.T) {
 			err = a.DeleteAllRowsForAlbum(tt.args.ctx, tt.args.albumId)
 			if tt.wantErr(t, err, fmt.Sprintf("DeleteAllRowsForAlbum(%v, %v)", tt.args.ctx, tt.args.albumId)) {
 				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
+			}
+		})
+	}
+}
+
+func TestAlbumViewRepository_RenameAlbum(t *testing.T) {
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+
+	owner1 := ownermodel.Owner("owner1")
+	oldId := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("old-folder")}
+	newId := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("new-folder")}
+	otherId := catalog.AlbumId{Owner: owner1, FolderName: catalog.NewFolderName("other")}
+	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
+
+	type args struct {
+		existingId catalog.AlbumId
+		renamedId  catalog.AlbumId
+		newName    string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		before    []map[string]types.AttributeValue
+		wantAfter []map[string]types.AttributeValue
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should do nothing when no row exists for the existing album",
+			args: args{
+				existingId: oldId,
+				renamedId:  newId,
+				newName:    "New Name",
+			},
+			before:    nil,
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should delete the old rows and recreate them under the renamed id, inheriting count and dates from the owner projection",
+			args: args{
+				existingId: oldId,
+				renamedId:  newId,
+				newName:    "New Name",
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, oldId).
+					withCount(4).
+					withDisplayFields("Old Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, oldId).
+					withCount(4).
+					withDisplayFields("Old Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumSummaryItemBuilder(userId1, OwnerAvailability, otherId).withCount(99).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, newId).
+					withCount(4).
+					withDisplayFields("New Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, newId).
+					withCount(4).
+					withDisplayFields("New Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumSummaryItemBuilder(userId1, OwnerAvailability, otherId).withCount(99).build(),
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(ctx, tt.before)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			a := &AlbumViewRepository{
+				Client:    dyn.Client,
+				TableName: dyn.Table,
+			}
+			err = a.RenameAlbum(ctx, tt.args.existingId, tt.args.renamedId, tt.args.newName)
+			if tt.wantErr(t, err, fmt.Sprintf("RenameAlbum(%v, %v, %v)", tt.args.existingId, tt.args.renamedId, tt.args.newName)) {
+				dyn.MustBool(dyn.EqualContent(ctx, tt.wantAfter))
 			}
 		})
 	}

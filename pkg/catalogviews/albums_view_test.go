@@ -11,10 +11,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
-// The removed TestNewAlbumViewAcceptance covered the owned+shared provider aggregation,
-// a split that no longer exists: ListAlbums is served from a single ListSummariesForUser
-// query. The five TestAlbumView_ListAlbums scenarios below replace it.
-
 func TestAlbumView_ListAlbums(t *testing.T) {
 	tonyOwner := ownermodel.Owner("tony")
 	pepperOwner := ownermodel.Owner("pepper")
@@ -211,6 +207,7 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 				tt.fields.GetAlbumSharingGridPort,
 				MediaCounterPortFake(nil),
 				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
+				stubOwnerUserIdPort("", ""),
 			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)

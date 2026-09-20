@@ -23,9 +23,10 @@ Schema
 
 [create_update_table.go](pkg/awssupport/appdynamodb/create_update_table.go)
 
-| Name                   | PK name / SK name              | PK                           | SK                                          | Description                             |
-|------------------------|--------------------------------|------------------------------|---------------------------------------------|-----------------------------------------|
-| AlbumIndex             | AlbumIndexPK / AlbumIndexSK    | {OWNER}#{FOLDER_NAME}        | #METADATA                                   | Catalog - Find medias by albums         |
-| ReverseLocationIndex   | LocationKeyPrefix / LocationId | {S3 KEY (WITHOUT FILE NAME)} | {MEDIA ID}                                  | Archive - Warmup cache                  |
-| ReverseGrantIndex      | ResourceOwner / SK             | {OWNER}                      | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | ACL - list to whom resources are shared |
-| RefreshTokenExpiration | SK / AbsoluteExpiryTime        | #REFRESH_SPEC                | {DATETIME}                                  | OAuth - housekeeping old refresh token  |
+| Name                   | PK name / SK name              | PK                                      | SK                                          | Description                                                                                      |
+|------------------------|--------------------------------|-----------------------------------------|---------------------------------------------|--------------------------------------------------------------------------------------------------|
+| AlbumIndex             | AlbumIndexPK / AlbumIndexSK    | {OWNER}#{FOLDER_NAME}                   | #METADATA                                   | Catalog - Find medias by albums                                                                  |
+| ReverseLocationIndex   | LocationKeyPrefix / LocationId | {S3 KEY (WITHOUT FILE NAME)}            | {MEDIA ID}                                  | Archive - Warmup cache                                                                           |
+| ReverseGrantIndex      | ResourceOwner / SK             | {OWNER}                                 | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | ACL - list to whom resources are shared                                                          |
+| RefreshTokenExpiration | SK / AbsoluteExpiryTime        | #REFRESH_SPEC                           | {DATETIME}                                  | OAuth - housekeeping old refresh token                                                           |
+| AlbumViewByAlbumIndex  | AlbumViewIndexPK / SK          | ALBUM#{OWNER}#{FOLDER_NAME}#ALBUMS_VIEW | {AVAILABILITY_TYPE}#{OWNER}#{FOLDER_NAME}   | View - list every viewer row of an album (drives event-driven updates without an ACL round-trip) |
