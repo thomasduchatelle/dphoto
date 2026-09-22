@@ -25,6 +25,21 @@ func stubFindAlbumByOwnerPort(albums ...*catalog.Album) FindAlbumByOwnerFunc {
 	}
 }
 
+func stubFindAlbumsByIdsPort(albums ...*catalog.Album) FindAlbumsByIdsFunc {
+	return func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) {
+		var result []*catalog.Album
+		for _, album := range albums {
+			for _, id := range ids {
+				if album.AlbumId.IsEqual(id) {
+					result = append(result, album)
+					break
+				}
+			}
+		}
+		return result, nil
+	}
+}
+
 func stubOwnerUserIdPort(owner ownermodel.Owner, userId usermodel.UserId) OwnerUserIdFunc {
 	return func(ctx context.Context, o ownermodel.Owner) (usermodel.UserId, error) {
 		if o == owner {

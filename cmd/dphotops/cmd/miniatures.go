@@ -2,22 +2,33 @@ package cmd
 
 import (
 	"context"
+	"os"
+	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"github.com/thomasduchatelle/dphoto/internal/printer"
 	"github.com/thomasduchatelle/dphoto/pkg/archive"
 	"github.com/thomasduchatelle/dphoto/pkg/backup"
 	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/analysers"
+	"github.com/thomasduchatelle/dphoto/pkg/backupadapters/filesystemvolume"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"os"
-
-	"github.com/spf13/cobra"
 )
 
+var miniaturesArgs = struct {
+	owner string
+}{}
+
 var miniaturesCmd = &cobra.Command{
-	Use:   "miniatures",
+	Use:   "miniatures [folder]",
 	Short: "Generate miniatures for images found in a local directory",
-	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if miniaturesArgs.owner == "" {
+			printer.ErrorText("--owner is mandatory")
+			os.Exit(1)
+		}
+
 		ctx := context.Background()
 		factory.InitArchive(ctx)
 
@@ -54,7 +65,7 @@ var miniaturesCmd = &cobra.Command{
 				}
 
 				images = append(images, &archive.ImageToResize{
-					Owner:   Owner,
+					Owner:   miniaturesArgs.owner,
 					MediaId: string(mediaId),
 					Widths:  []int{archive.MiniatureCachedWidth},
 					Open:    media.ReadMedia,
@@ -70,6 +81,13 @@ var miniaturesCmd = &cobra.Command{
 	},
 }
 
+func newSmartVolume(volumePath string) (backup.SourceVolume, error) {
+	if strings.HasPrefix(volumePath, "s3://") {
+		return nil, errors.New("s3:// volumes are not supported by dphotops miniatures")
+	}
+	return filesystemvolume.New(volumePath), nil
+}
+
 func findMediaIDFromSignature(analysedMedia *backup.AnalysedMedia) (catalog.MediaId, error) {
 	signature := catalog.MediaSignature{
 		SignatureSha256: analysedMedia.Sha256Hash,
@@ -80,5 +98,6 @@ func findMediaIDFromSignature(analysedMedia *backup.AnalysedMedia) (catalog.Medi
 }
 
 func init() {
-	opsCmd.AddCommand(miniaturesCmd)
+	rootCmd.AddCommand(miniaturesCmd)
+	miniaturesCmd.Flags().StringVar(&miniaturesArgs.owner, "owner", "", "owner (email) that will own the generated miniatures - mandatory")
 }

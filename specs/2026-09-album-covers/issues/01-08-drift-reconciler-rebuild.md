@@ -1,6 +1,6 @@
 # 01-08 — Drift reconciler rebuilds display fields
 
-Status: ready
+Status: done
 Phase: 1
 Layer: catalog domain — `pkg/catalogviews` + `pkg/pkgfactory`
 Depends on: 01-01, 01-02
@@ -18,7 +18,14 @@ The reconciliation flow is unchanged in shape (`OwnerDriftReconciler.Reconcile` 
 fields, so the drift detector compares them and the synchronizer writes them.
 
 The post-deploy operational step for this feature is: run the CLI's owner-drift reconciliation for
-every owner once, in non-dry mode.
+every owner once, in non-dry mode:
+
+```shell
+dphotops drift --apply
+```
+
+`dphotops drift` runs in dry mode by default (logs drift, does not write); pass `--apply` to
+persist the corrections. It iterates over every owner discovered via `ScopeRepository.ListOwners`.
 
 ## Acceptance criteria
 

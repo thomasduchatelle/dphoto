@@ -94,6 +94,47 @@ func (r *Repository) ListScopesByOwners(ctx context.Context, owners []ownermodel
 	return scopes, stream.Error()
 }
 
+func (r *Repository) ListOwners(ctx context.Context) ([]ownermodel.Owner, error) {
+	prefix := fmt.Sprintf("%s%s", scopePrefix, aclcore.MainOwnerScope)
+
+	expr, err := expression.NewBuilder().WithFilter(
+		expression.Name("SK").BeginsWith(prefix),
+	).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[ownermodel.Owner]struct{})
+	var owners []ownermodel.Owner
+
+	paginator := dynamodb.NewScanPaginator(r.client, &dynamodb.ScanInput{
+		TableName:                 &r.table,
+		IndexName:                 aws.String("ReverseGrantIndex"),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range page.Items {
+			scope, err := UnmarshalScope(item)
+			if err != nil {
+				return nil, err
+			}
+			if _, present := seen[scope.ResourceOwner]; !present {
+				seen[scope.ResourceOwner] = struct{}{}
+				owners = append(owners, scope.ResourceOwner)
+			}
+		}
+	}
+
+	return owners, nil
+}
+
 func (r *Repository) FindScopesById(ids ...aclcore.ScopeId) ([]*aclcore.Scope, error) {
 	ctx := context.TODO()
 	return r.FindScopesByIdCtx(ctx, ids...)

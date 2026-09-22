@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
@@ -19,8 +21,19 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 	userId2 := usermodel.UserId("user2")
 	userId3 := usermodel.UserId("user3")
 
+	album1Start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	album1End := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
+	album2Start := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
+	album2End := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)
+
+	canonicalAlbum1 := &catalog.Album{AlbumId: album1, Name: "Album One", Start: album1Start, End: album1End}
+	canonicalAlbum2 := &catalog.Album{AlbumId: album2, Name: "Album Two", Start: album2Start, End: album2End}
+	album1Summary := AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Album One", Start: album1Start, End: album1End}
+	album2Summary := AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}
+
 	type fields struct {
 		findAlbumByOwnerPort          FindAlbumByOwnerPort
+		findAlbumsByIdsPort           FindAlbumsByIdsPort
 		listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 		mediaCounterPort              MediaCounterPort
 	}
@@ -40,6 +53,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			name: "it should not fail when no album is found for the owner",
 			fields: fields{
 				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(),
+				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(),
 			},
 			args: args{
 				owner: owner1,
@@ -50,7 +64,8 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 		{
 			name: "it should reconcile the 3 different types of drifts",
 			fields: fields{
-				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(&catalog.Album{AlbumId: album1}, &catalog.Album{AlbumId: album2}),
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1, canonicalAlbum2),
+				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(canonicalAlbum1, canonicalAlbum2),
 				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
 					Values: map[catalog.AlbumId][]Availability{
 						album1: {OwnerAvailability(userId1), VisitorAvailability(userId2)},
@@ -63,16 +78,16 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 				},
 			},
 			current: []UserAlbumSummary{
-				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 9}, Availability: OwnerAvailability(userId1)},
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId1)},
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId2)},
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId3)},
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 9, Name: "Album One", Start: album1Start, End: album1End}, Availability: OwnerAvailability(userId1)},
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}, Availability: VisitorAvailability(userId1)},
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}, Availability: VisitorAvailability(userId2)},
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}, Availability: VisitorAvailability(userId3)},
 			},
 			wantSummaries: []UserAlbumSummary{
-				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1}, Availability: OwnerAvailability(userId1)},   // drift = wrong count
-				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1}, Availability: VisitorAvailability(userId2)}, // drift = missing
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: OwnerAvailability(userId1)},   // drift = wrong availability type
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId3)}, // no drift
+				{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)},   // drift = wrong count
+				{AlbumSummary: album1Summary, Availability: VisitorAvailability(userId2)}, // drift = missing
+				{AlbumSummary: album2Summary, Availability: OwnerAvailability(userId1)},   // drift = wrong availability type
+				{AlbumSummary: album2Summary, Availability: VisitorAvailability(userId3)}, // no drift
 			},
 			args: args{
 				owner: owner1,
@@ -83,7 +98,8 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 		{
 			name: "it should not do anything on dry mode",
 			fields: fields{
-				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(&catalog.Album{AlbumId: album1}),
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
+				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(canonicalAlbum1),
 				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
 					Values: map[catalog.AlbumId][]Availability{
 						album1: {OwnerAvailability(userId1)},
@@ -101,6 +117,58 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should rebuild display fields from the canonical album",
+			fields: fields{
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
+				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(canonicalAlbum1),
+				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
+					Values: map[catalog.AlbumId][]Availability{
+						album1: {OwnerAvailability(userId1)},
+					},
+				},
+				mediaCounterPort: &MediaCounterPortFake{
+					album1: 1,
+				},
+			},
+			current: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Stale Name", Start: album1End, End: album1Start}, Availability: OwnerAvailability(userId1)},
+			},
+			wantSummaries: []UserAlbumSummary{
+				{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)},
+			},
+			args: args{
+				owner: owner1,
+				dry:   false,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should backfill missing display fields on a legacy row",
+			fields: fields{
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
+				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(canonicalAlbum1),
+				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
+					Values: map[catalog.AlbumId][]Availability{
+						album1: {OwnerAvailability(userId1)},
+					},
+				},
+				mediaCounterPort: &MediaCounterPortFake{
+					album1: 1,
+				},
+			},
+			current: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1}, Availability: OwnerAvailability(userId1)},
+			},
+			wantSummaries: []UserAlbumSummary{
+				{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)},
+			},
+			args: args{
+				owner: owner1,
+				dry:   false,
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -109,6 +177,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 
 			reconciler := NewDriftReconciler(
 				tt.fields.findAlbumByOwnerPort,
+				tt.fields.findAlbumsByIdsPort,
 				repository,
 				tt.fields.listUserWhoCanAccessAlbumPort,
 				tt.fields.mediaCounterPort,
@@ -246,6 +315,53 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 			},
 			wantDrifts: []Drift{
 				NewOverrideDrift(user1Album1Owner),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should detect drift when display fields differ",
+			fields: fields{
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{
+							AlbumSummary: AlbumSummary{
+								AlbumId:    albumId1,
+								MediaCount: 1,
+								Name:       "Stale Name",
+								Start:      time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+								End:        time.Date(2020, 2, 1, 0, 0, 0, 0, time.UTC),
+							},
+							Availability: user1Album1Owner.Availability,
+						},
+					},
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				albumSize: []AlbumSummaryForUsers{
+					{
+						AlbumSummary: AlbumSummary{
+							AlbumId:    albumId1,
+							MediaCount: 1,
+							Name:       "Canonical Name",
+							Start:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+							End:        time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+						},
+						Users: []Availability{user1Album1Owner.Availability},
+					},
+				},
+			},
+			wantDrifts: []Drift{
+				NewOverrideDrift(UserAlbumSummary{
+					AlbumSummary: AlbumSummary{
+						AlbumId:    albumId1,
+						MediaCount: 1,
+						Name:       "Canonical Name",
+						Start:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+						End:        time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+					},
+					Availability: user1Album1Owner.Availability,
+				}),
 			},
 			wantErr: assert.NoError,
 		},

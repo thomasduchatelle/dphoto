@@ -48,6 +48,7 @@ func OwnerDriftReconciler(ctx context.Context, dry bool, options ...catalogviews
 
 	return catalogviews.NewDriftReconciler(
 		albumQueries,
+		albumQueries,
 		repository,
 		CatalogToACLAdapter(ctx),
 		albumQueries,

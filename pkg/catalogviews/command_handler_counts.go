@@ -93,6 +93,7 @@ type ListUserWhoCanAccessAlbumPort interface {
 }
 
 type AlbumReCounter struct {
+	FindAlbumsByIdsPort           FindAlbumsByIdsPort
 	ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 	MediaCounterPort              MediaCounterPort
 }
@@ -112,17 +113,32 @@ func (c *AlbumReCounter) ReCountMedias(ctx context.Context, albumIds []catalog.A
 		return err
 	}
 
+	albums, err := c.FindAlbumsByIdsPort.FindAlbumsById(ctx, albumIds)
+	if err != nil {
+		return err
+	}
+
+	albumsById := make(map[catalog.AlbumId]*catalog.Album, len(albums))
+	for _, album := range albums {
+		albumsById[album.AlbumId] = album
+	}
+
 	var summaries []AlbumSummaryForUsers
 	for _, albumId := range albumIds {
-		availableTo, _ := availabilities[albumId]
-		count, _ := counts[albumId]
+		album, present := albumsById[albumId]
+		if !present {
+			continue
+		}
 
 		summaries = append(summaries, AlbumSummaryForUsers{
 			AlbumSummary: AlbumSummary{
 				AlbumId:    albumId,
-				MediaCount: count,
+				MediaCount: counts[albumId],
+				Name:       album.Name,
+				Start:      album.Start,
+				End:        album.End,
 			},
-			Users: availableTo,
+			Users: availabilities[albumId],
 		})
 	}
 

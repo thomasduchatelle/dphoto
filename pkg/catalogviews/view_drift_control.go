@@ -46,6 +46,7 @@ func (o *DriftOption) Observer() DriftObserver {
 // NewDriftReconciler creates a new DriftReconciler in DRY mode ; use the option DriftOptionSynchronizer to reconcile.
 func NewDriftReconciler(
 	findAlbumByOwnerPort FindAlbumByOwnerPort,
+	findAlbumsByIdsPort FindAlbumsByIdsPort,
 	getCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort,
 	listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort,
 	mediaCounterPort MediaCounterPort,
@@ -65,6 +66,7 @@ func NewDriftReconciler(
 		FindAlbumByOwnerPort:         findAlbumByOwnerPort,
 		GetCurrentAlbumSummariesPort: getCurrentAlbumSummariesPort,
 		AlbumReCounter: AlbumReCounter{
+			FindAlbumsByIdsPort:           findAlbumsByIdsPort,
 			ListUserWhoCanAccessAlbumPort: listUserWhoCanAccessAlbumPort,
 			MediaCounterPort:              mediaCounterPort,
 		},
@@ -149,7 +151,7 @@ func (d *DriftDetector) PutSummaries(ctx context.Context, summaries []AlbumSumma
 					NewNotExpectedDrift(currentSummary.Availability, currentSummary.AlbumSummary.AlbumId),
 					NewMissingDrift(expectedSummary),
 				)
-			} else if currentSummary.AlbumSummary.MediaCount != expectedSummary.AlbumSummary.MediaCount {
+			} else if hasSummaryDrift(currentSummary.AlbumSummary, expectedSummary.AlbumSummary) {
 				drifts = append(drifts, NewOverrideDrift(expectedSummary))
 			}
 		}
@@ -171,6 +173,13 @@ func (d *DriftDetector) PutSummaries(ctx context.Context, summaries []AlbumSumma
 	}
 
 	return nil
+}
+
+func hasSummaryDrift(a, b AlbumSummary) bool {
+	return a.MediaCount != b.MediaCount ||
+		a.Name != b.Name ||
+		!a.Start.Equal(b.Start) ||
+		!a.End.Equal(b.End)
 }
 
 type LoggerDriftObserver struct{}

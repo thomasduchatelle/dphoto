@@ -62,9 +62,12 @@ build-go:
 	go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))"  -o ./ ./cmd/...
 
 build-cli:
-	env GOARCH=amd64 GOOS=linux  CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-linux  ./cmd/dphoto
-	env GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-darwin ./cmd/dphoto
-	env GOARCH=arm64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-arm64-darwin ./cmd/dphoto
+	env GOARCH=amd64 GOOS=linux  CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-linux    ./cmd/dphoto
+	env GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-darwin   ./cmd/dphoto
+	env GOARCH=arm64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-arm64-darwin   ./cmd/dphoto
+	env GOARCH=amd64 GOOS=linux  CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphotops-amd64-linux  ./cmd/dphotops
+	env GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphotops-amd64-darwin ./cmd/dphotops
+	env GOARCH=arm64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphotops-arm64-darwin ./cmd/dphotops
 
 install-cli:
 	go install ./cmd/...
