@@ -207,6 +207,8 @@ down:
 
 .PHONY: clearlocal dcdown dcup
 
+DC := docker-compose$(if $(ZSCALER_PEM), -f docker-compose.yml -f docker-compose.zscaler.yml,)
+
 clearlocal:
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 s3 rm --recursive "s3://dphoto-local" | cat || echo "skipping"
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 dynamodb delete-table --table dphoto-local | cat || echo "skipping"
@@ -214,10 +216,10 @@ clearlocal:
 dcdown:
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 s3 rm --recursive "s3://dphoto-local" | cat || echo "skipping"
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 dynamodb delete-table --table dphoto-local | cat || echo "skipping"
-	docker-compose down -v || echo "skipping"
+	$(DC) down -v || echo "skipping"
 	rm -rf .build/localstack
 
 dcup:
-	docker-compose up -d
+	$(DC) up -d
 	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 s3 mb s3://dphoto-local | cat
 	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 sns create-topic --name dphoto-local-archive-jobs | cat
