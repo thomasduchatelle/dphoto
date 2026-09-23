@@ -7,18 +7,17 @@ import (
 )
 
 // AlbumSummaryReprojector rebuilds AlbumSummaryForUsers projections from canonical albums,
-// combining media counts (queried per call) and viewer availabilities (queried per call).
-// The albums are supplied by the caller so it can decide the scope (per-owner, per-album, ...)
-// without a second round-trip.
+// combining media counts and viewer availabilities queried per call. The albums are supplied by
+// the caller so it can decide the scope (per-owner, per-album, ...) without a second round-trip.
 type AlbumSummaryReprojector struct {
 	ListUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 	MediaCounterPort              MediaCounterPort
 }
 
-// Reproject emits one AlbumSummaryForUsers per album and hands the batch to every sink.
-func (r *AlbumSummaryReprojector) Reproject(ctx context.Context, albums []*catalog.Album, sinks ...PutSummariesPort) error {
+// Reproject returns the expected AlbumSummaryForUsers for every album.
+func (r *AlbumSummaryReprojector) Reproject(ctx context.Context, albums []*catalog.Album) ([]AlbumSummaryForUsers, error) {
 	if len(albums) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	albumIds := make([]catalog.AlbumId, len(albums))
@@ -28,12 +27,12 @@ func (r *AlbumSummaryReprojector) Reproject(ctx context.Context, albums []*catal
 
 	availabilities, err := r.ListUserWhoCanAccessAlbumPort.ListUsersWhoCanAccessAlbum(ctx, albumIds...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	counts, err := r.MediaCounterPort.CountMedia(ctx, albumIds...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	summaries := make([]AlbumSummaryForUsers, 0, len(albums))
@@ -50,11 +49,5 @@ func (r *AlbumSummaryReprojector) Reproject(ctx context.Context, albums []*catal
 		})
 	}
 
-	for _, sink := range sinks {
-		if err := sink.PutSummaries(ctx, summaries); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return summaries, nil
 }
