@@ -160,8 +160,8 @@ func initForLocalstack(ctx context.Context) error {
 }
 
 func createRandomUser(ctx context.Context) (ownermodel.Owner, error) {
-	timestamp := time.Now().Format("20060102150405")
-	owner := ownermodel.Owner(fmt.Sprintf("acceptance+%s@example.com", timestamp))
+	timestamp := time.Now().UnixNano()
+	owner := ownermodel.Owner(fmt.Sprintf("acceptance+%d@example.com", timestamp))
 
 	repository := pkgfactory.AclRepository(ctx)
 	createUser := &aclcore.CreateUser{

@@ -15,8 +15,8 @@ Schema
 | {OWNER}#MEDIA#{id}       | LOCATION#                                   | Media location if the archive                            | archivedynamo        |
 | USER#{EMAIL}             | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | Scopes allowed for a user (ownership, shared, ...)       | aclscopedynamodb     |
 | USER#{EMAIL}             | IDENTITY#                                   | Details about the user (name, picture, ...)              | aclidentitydynamodb  |
-| USER#{EMAIL}#ALBUMS_VIEW | OWNED#{OWNER}#{FOLDER_NAME}#COUNT           | (view) number of medias in an album owned by the user    | catalogviewsdynamodb |
-| USER#{EMAIL}#ALBUMS_VIEW | VISITOR#{OWNER}#{FOLDER_NAME}#COUNT         | (view) number of medias in an album shared with the user | catalogviewsdynamodb |
+| USER#{EMAIL}#ALBUMS_VIEW | OWNED#{OWNER}#{FOLDER_NAME}                 | (view) album summary for an album owned by the user: count + display fields (name/start/end)    | catalogviewsdynamodb |
+| USER#{EMAIL}#ALBUMS_VIEW | VISITOR#{OWNER}#{FOLDER_NAME}               | (view) album summary for an album shared with the user: count + display fields (name/start/end) | catalogviewsdynamodb |
 | REFRESH#{TOKEN}          | #REFRESH_SPEC                               | Refresh token                                            | aclrefreshdynamodb   |
 
 ### Global indexes

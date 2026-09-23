@@ -75,6 +75,13 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 	)
 }
 
+// Catalog exposes the catalog use-case factory built during pkgfactory bootstrap.
+// It is the same instance the API lambdas reach through common.Factory, made available so
+// tests and tooling can trigger album mutations without duplicating the wiring.
+func Catalog() CatalogFactory {
+	return factory.SimpleCatalogFactory
+}
+
 func CatalogMediaQueries(ctx context.Context) *catalog.MediaQueries {
 	return singletons.MustSingleton(func() (*catalog.MediaQueries, error) {
 		return &catalog.MediaQueries{

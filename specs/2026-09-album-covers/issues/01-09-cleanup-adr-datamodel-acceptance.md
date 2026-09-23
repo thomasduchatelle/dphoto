@@ -1,6 +1,6 @@
 # 01-09 — Cleanup, ADR, DATA_MODEL, acceptance tests
 
-Status: ready
+Status: done
 Phase: 1
 Layer: catalog domain — `pkg/catalogviews` + `pkg/pkgfactory` + `docs/adr` + `DATA_MODEL.md` + pkg acceptance suite
 Depends on: 01-03, 01-04, 01-05, 01-06, 01-07, 01-08
