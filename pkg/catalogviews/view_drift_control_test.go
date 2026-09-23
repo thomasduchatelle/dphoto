@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
@@ -18,6 +20,19 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 	userId1 := usermodel.UserId("user1")
 	userId2 := usermodel.UserId("user2")
 	userId3 := usermodel.UserId("user3")
+
+	album1Start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	album1End := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
+	album2Start := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
+	album2End := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)
+
+	canonicalAlbum1 := &catalog.Album{AlbumId: album1, Name: "Album One", Start: album1Start, End: album1End}
+	canonicalAlbum2 := &catalog.Album{AlbumId: album2, Name: "Album Two", Start: album2Start, End: album2End}
+	album1Summary := AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Album One", Start: album1Start, End: album1End}
+	album2Summary := AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}
+
+	staleAlbum2Visitor1 := UserAlbumSummary{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}, Availability: VisitorAvailability(userId1)}
+	staleAlbum2Visitor2 := UserAlbumSummary{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}, Availability: VisitorAvailability(userId2)}
 
 	type fields struct {
 		findAlbumByOwnerPort          FindAlbumByOwnerPort
@@ -34,6 +49,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 		current       []UserAlbumSummary
 		args          args
 		wantSummaries []UserAlbumSummary
+		wantDrifts    []Drift
 		wantErr       assert.ErrorAssertionFunc
 	}{
 		{
@@ -45,12 +61,13 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 				owner: owner1,
 				dry:   false,
 			},
-			wantErr: assert.NoError,
+			wantDrifts: nil,
+			wantErr:    assert.NoError,
 		},
 		{
 			name: "it should reconcile the 3 different types of drifts",
 			fields: fields{
-				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(&catalog.Album{AlbumId: album1}, &catalog.Album{AlbumId: album2}),
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1, canonicalAlbum2),
 				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
 					Values: map[catalog.AlbumId][]Availability{
 						album1: {OwnerAvailability(userId1), VisitorAvailability(userId2)},
@@ -63,16 +80,23 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 				},
 			},
 			current: []UserAlbumSummary{
-				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 9}, Availability: OwnerAvailability(userId1)},
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId1)},
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId2)},
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId3)},
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 9, Name: "Album One", Start: album1Start, End: album1End}, Availability: OwnerAvailability(userId1)},
+				staleAlbum2Visitor1,
+				staleAlbum2Visitor2,
+				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}, Availability: VisitorAvailability(userId3)},
 			},
 			wantSummaries: []UserAlbumSummary{
-				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1}, Availability: OwnerAvailability(userId1)},   // drift = wrong count
-				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1}, Availability: VisitorAvailability(userId2)}, // drift = missing
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: OwnerAvailability(userId1)},   // drift = wrong availability type
-				{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2}, Availability: VisitorAvailability(userId3)}, // no drift
+				{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)},   // fixed count
+				{AlbumSummary: album1Summary, Availability: VisitorAvailability(userId2)}, // missing added
+				{AlbumSummary: album2Summary, Availability: OwnerAvailability(userId1)},   // swapped from visitor
+				{AlbumSummary: album2Summary, Availability: VisitorAvailability(userId3)}, // untouched
+			},
+			wantDrifts: []Drift{
+				NewOverrideDrift(UserAlbumSummary{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)}),
+				NewDeletedDrift(staleAlbum2Visitor1),
+				NewMissingDrift(UserAlbumSummary{AlbumSummary: album2Summary, Availability: OwnerAvailability(userId1)}),
+				NewDeletedDrift(staleAlbum2Visitor2),
+				NewMissingDrift(UserAlbumSummary{AlbumSummary: album1Summary, Availability: VisitorAvailability(userId2)}),
 			},
 			args: args{
 				owner: owner1,
@@ -83,7 +107,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 		{
 			name: "it should not do anything on dry mode",
 			fields: fields{
-				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(&catalog.Album{AlbumId: album1}),
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
 				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
 					Values: map[catalog.AlbumId][]Availability{
 						album1: {OwnerAvailability(userId1)},
@@ -95,9 +119,68 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			},
 			current:       nil,
 			wantSummaries: nil,
+			wantDrifts: []Drift{
+				NewMissingDrift(UserAlbumSummary{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)}),
+			},
 			args: args{
 				owner: owner1,
 				dry:   true,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should rebuild display fields from the canonical album",
+			fields: fields{
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
+				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
+					Values: map[catalog.AlbumId][]Availability{
+						album1: {OwnerAvailability(userId1)},
+					},
+				},
+				mediaCounterPort: &MediaCounterPortFake{
+					album1: 1,
+				},
+			},
+			current: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Stale Name", Start: album1End, End: album1Start}, Availability: OwnerAvailability(userId1)},
+			},
+			wantSummaries: []UserAlbumSummary{
+				{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)},
+			},
+			wantDrifts: []Drift{
+				NewOverrideDrift(UserAlbumSummary{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)}),
+			},
+			args: args{
+				owner: owner1,
+				dry:   false,
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should backfill missing display fields on a legacy row",
+			fields: fields{
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
+				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
+					Values: map[catalog.AlbumId][]Availability{
+						album1: {OwnerAvailability(userId1)},
+					},
+				},
+				mediaCounterPort: &MediaCounterPortFake{
+					album1: 1,
+				},
+			},
+			current: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1}, Availability: OwnerAvailability(userId1)},
+			},
+			wantSummaries: []UserAlbumSummary{
+				{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)},
+			},
+			wantDrifts: []Drift{
+				NewOverrideDrift(UserAlbumSummary{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)}),
+			},
+			args: args{
+				owner: owner1,
+				dry:   false,
 			},
 			wantErr: assert.NoError,
 		},
@@ -115,15 +198,16 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 				DriftOptionDryMode(tt.args.dry, repository),
 			)
 
-			err := reconciler.Reconcile(context.Background(), tt.args.owner)
+			drifts, err := reconciler.Reconcile(context.Background(), tt.args.owner)
 			if tt.wantErr(t, err, fmt.Sprintf("Reconcile(%v, %v)", tt.args.owner, tt.args.dry)) {
 				assert.ElementsMatch(t, tt.wantSummaries, repository.Summaries, "Reconcile(%v, %v) ; A=Expected ; B=Got", tt.args.owner, tt.args.dry)
+				assert.ElementsMatch(t, tt.wantDrifts, drifts, "Reconcile(%v, %v) drifts ; A=Expected ; B=Got", tt.args.owner, tt.args.dry)
 			}
 		})
 	}
 }
 
-func TestDriftDetector_PutSummaries(t *testing.T) {
+func TestDriftDetector_Detect(t *testing.T) {
 	userId1 := usermodel.UserId("user1")
 	userId2 := usermodel.UserId("user2")
 	albumId1 := catalog.AlbumId{Owner: "owner1", FolderName: "/folder-1"}
@@ -135,14 +219,10 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 	type fields struct {
 		GetCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort
 	}
-	type args struct {
-		ctx       context.Context
-		albumSize []AlbumSummaryForUsers
-	}
 	tests := []struct {
 		name       string
 		fields     fields
-		args       args
+		expected   []AlbumSummaryForUsers
 		wantDrifts []Drift
 		wantErr    assert.ErrorAssertionFunc
 	}{
@@ -151,10 +231,7 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 			fields: fields{
 				GetCurrentAlbumSummariesPort: nil,
 			},
-			args: args{
-				ctx:       context.Background(),
-				albumSize: nil,
-			},
+			expected:   nil,
 			wantDrifts: nil,
 			wantErr:    assert.NoError,
 		},
@@ -165,25 +242,19 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 					Summaries: []UserAlbumSummary{user1Album1Owner},
 				},
 			},
-			args: args{
-				ctx: context.Background(),
-				albumSize: []AlbumSummaryForUsers{
-					user1Album1Owner.ToSummaryForUsers(),
-				},
+			expected: []AlbumSummaryForUsers{
+				user1Album1Owner.ToSummaryForUsers(),
 			},
 			wantDrifts: nil,
 			wantErr:    assert.NoError,
 		},
 		{
-			name: "it should detect missing album size as owner",
+			name: "it should detect a missing row for the album owner",
 			fields: fields{
 				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{},
 			},
-			args: args{
-				ctx: context.Background(),
-				albumSize: []AlbumSummaryForUsers{
-					user1Album1Owner.ToSummaryForUsers(),
-				},
+			expected: []AlbumSummaryForUsers{
+				user1Album1Owner.ToSummaryForUsers(),
 			},
 			wantDrifts: []Drift{
 				NewMissingDrift(user1Album1Owner),
@@ -191,14 +262,29 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should detect missing album size as visitor",
+			name: "it should detect a missing row for a visitor",
 			fields: fields{
 				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{},
 			},
-			args: args{
-				ctx: context.Background(),
-				albumSize: []AlbumSummaryForUsers{
-					user2Album1Visitor.ToSummaryForUsers(),
+			expected: []AlbumSummaryForUsers{
+				user2Album1Visitor.ToSummaryForUsers(),
+			},
+			wantDrifts: []Drift{
+				NewMissingDrift(user2Album1Visitor),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should detect a missing visitor row when the owner is already up to date",
+			fields: fields{
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{user1Album1Owner},
+				},
+			},
+			expected: []AlbumSummaryForUsers{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumId1, MediaCount: 1},
+					Users:        []Availability{OwnerAvailability(userId1), VisitorAvailability(userId2)},
 				},
 			},
 			wantDrifts: []Drift{
@@ -207,42 +293,16 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should detect missing album size when albums is shared to multiple users",
+			name: "it should detect a stale count on an existing row",
 			fields: fields{
 				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
 					Summaries: []UserAlbumSummary{
-						user1Album1Owner,
+						{AlbumSummary: AlbumSummary{AlbumId: albumId1, MediaCount: 9}, Availability: OwnerAvailability(userId1)},
 					},
 				},
 			},
-			args: args{
-				ctx: context.Background(),
-				albumSize: []AlbumSummaryForUsers{
-					{
-						AlbumSummary: AlbumSummary{AlbumId: albumId1, MediaCount: 1},
-						Users:        []Availability{OwnerAvailability(userId1), VisitorAvailability(userId2)},
-					},
-				},
-			},
-			wantDrifts: []Drift{
-				NewMissingDrift(user2Album1Visitor),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should detect different album size",
-			fields: fields{
-				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
-					Summaries: []UserAlbumSummary{
-						{AlbumSummary: AlbumSummary{AlbumId: user1Album1Owner.AlbumSummary.AlbumId, MediaCount: 9}, Availability: user1Album1Owner.Availability},
-					},
-				},
-			},
-			args: args{
-				ctx: context.Background(),
-				albumSize: []AlbumSummaryForUsers{
-					user1Album1Owner.ToSummaryForUsers(),
-				},
+			expected: []AlbumSummaryForUsers{
+				user1Album1Owner.ToSummaryForUsers(),
 			},
 			wantDrifts: []Drift{
 				NewOverrideDrift(user1Album1Owner),
@@ -250,7 +310,51 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should detect a size that is still present but shouldn't be.",
+			name: "it should detect stale display fields on an existing row",
+			fields: fields{
+				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{
+							AlbumSummary: AlbumSummary{
+								AlbumId:    albumId1,
+								MediaCount: 1,
+								Name:       "Stale Name",
+								Start:      time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+								End:        time.Date(2020, 2, 1, 0, 0, 0, 0, time.UTC),
+							},
+							Availability: OwnerAvailability(userId1),
+						},
+					},
+				},
+			},
+			expected: []AlbumSummaryForUsers{
+				{
+					AlbumSummary: AlbumSummary{
+						AlbumId:    albumId1,
+						MediaCount: 1,
+						Name:       "Canonical Name",
+						Start:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+						End:        time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+					},
+					Users: []Availability{OwnerAvailability(userId1)},
+				},
+			},
+			wantDrifts: []Drift{
+				NewOverrideDrift(UserAlbumSummary{
+					AlbumSummary: AlbumSummary{
+						AlbumId:    albumId1,
+						MediaCount: 1,
+						Name:       "Canonical Name",
+						Start:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+						End:        time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+					},
+					Availability: OwnerAvailability(userId1),
+				}),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should flag an orphan row for deletion",
 			fields: fields{
 				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
 					Summaries: []UserAlbumSummary{
@@ -260,20 +364,17 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 					},
 				},
 			},
-			args: args{
-				ctx: context.Background(),
-				albumSize: []AlbumSummaryForUsers{
-					user1Album1Owner.ToSummaryForUsers(),
-					user2Album2Owner.ToSummaryForUsers(),
-				},
+			expected: []AlbumSummaryForUsers{
+				user1Album1Owner.ToSummaryForUsers(),
+				user2Album2Owner.ToSummaryForUsers(),
 			},
 			wantDrifts: []Drift{
-				NewNotExpectedDrift(VisitorAvailability(userId2), albumId1),
+				NewDeletedDrift(user2Album1Visitor),
 			},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should detect when a user is not at the right level of availability",
+			name: "it should flag an availability swap as delete + missing",
 			fields: fields{
 				GetCurrentAlbumSummariesPort: &AlbumSummaryInMemoryRepository{
 					Summaries: []UserAlbumSummary{
@@ -281,14 +382,11 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 					},
 				},
 			},
-			args: args{
-				ctx: context.Background(),
-				albumSize: []AlbumSummaryForUsers{
-					user1Album1Owner.ToSummaryForUsers(),
-				},
+			expected: []AlbumSummaryForUsers{
+				user1Album1Owner.ToSummaryForUsers(),
 			},
 			wantDrifts: []Drift{
-				NewNotExpectedDrift(VisitorAvailability(userId1), albumId1),
+				NewDeletedDrift(UserAlbumSummary{AlbumSummary: user1Album1Owner.AlbumSummary, Availability: VisitorAvailability(userId1)}),
 				NewMissingDrift(user1Album1Owner),
 			},
 			wantErr: assert.NoError,
@@ -297,25 +395,12 @@ func TestDriftDetector_PutSummaries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			observer := new(DriftObserverFake)
-			d := &DriftDetector{
-				GetCurrentAlbumSummariesPort: tt.fields.GetCurrentAlbumSummariesPort,
-				DriftObservers:               []DriftObserver{new(LoggerDriftObserver), observer},
-			}
+			d := &DriftDetector{GetCurrentAlbumSummariesPort: tt.fields.GetCurrentAlbumSummariesPort}
 
-			err := d.PutSummaries(tt.args.ctx, tt.args.albumSize)
-			if tt.wantErr(t, err, fmt.Sprintf("PutSummaries(%v, %v)", tt.args.ctx, tt.args.albumSize)) {
-				assert.Equal(t, tt.wantDrifts, observer.Drifts, fmt.Sprintf("PutSummaries(%v, %v)", tt.args.ctx, tt.args.albumSize))
+			got, err := d.Detect(context.Background(), tt.expected)
+			if tt.wantErr(t, err, fmt.Sprintf("Detect(%v)", tt.expected)) {
+				assert.ElementsMatch(t, tt.wantDrifts, got, "Detect(%v)", tt.expected)
 			}
 		})
 	}
-}
-
-type DriftObserverFake struct {
-	Drifts []Drift
-}
-
-func (d *DriftObserverFake) OnDetectedDrifts(ctx context.Context, drifts []Drift) error {
-	d.Drifts = append(d.Drifts, drifts...)
-	return nil
 }

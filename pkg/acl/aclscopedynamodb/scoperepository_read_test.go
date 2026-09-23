@@ -271,6 +271,61 @@ func Test_repository_ListOwnerScopes(t *testing.T) {
 	}
 }
 
+func Test_repository_ListOwners(t *testing.T) {
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+	r := Must(New(dyn.Client, dyn.Table)).(*Repository)
+
+	_, err := r.client.BatchWriteItem(dyn.Ctx, &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
+			r.table: {
+				{
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#ironman@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#owner:main#ironman@stark.com#"),
+						"Type":          dynamoutils.AttributeValueMemberS("owner:main"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2006-01-01T15:04:05.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS(ironmanEmail),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS(ironmanEmail),
+					}},
+				},
+				{
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#pepperpotts@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#owner:main#pepperpotts@stark.com#"),
+						"Type":          dynamoutils.AttributeValueMemberS("owner:main"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2006-01-05T15:04:05.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS(pepperEmail),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS(pepperEmail),
+					}},
+				},
+				{
+					PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+						"PK":            dynamoutils.AttributeValueMemberS("USER#ironman@stark.com"),
+						"SK":            dynamoutils.AttributeValueMemberS("SCOPE#album:visitor#pepperpotts@stark.com#wedding"),
+						"Type":          dynamoutils.AttributeValueMemberS("album:visitor"),
+						"GrantedAt":     dynamoutils.AttributeValueMemberS("2006-01-02T15:04:05.000000000Z"),
+						"GrantedTo":     dynamoutils.AttributeValueMemberS(ironmanEmail),
+						"ResourceOwner": dynamoutils.AttributeValueMemberS(pepperEmail),
+						"ResourceId":    dynamoutils.AttributeValueMemberS("wedding"),
+						"ResourceName":  dynamoutils.AttributeValueMemberS("Wedding Before EndGame"),
+					}},
+				},
+			},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	t.Run("it should return each unique owner having a main-owner scope", func(t *testing.T) {
+		got, err := r.ListOwners(context.Background())
+		if assert.NoError(t, err) {
+			sort.Slice(got, func(i, j int) bool { return got[i] < got[j] })
+			assert.Equal(t, []ownermodel.Owner{ironmanEmail, pepperEmail}, got)
+		}
+	})
+}
+
 func Test_repository_FindScopesById(t *testing.T) {
 	tests := []struct {
 		name     string
