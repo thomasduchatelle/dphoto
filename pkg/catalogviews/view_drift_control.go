@@ -46,16 +46,15 @@ func (o *DriftOption) Observer() DriftObserver {
 // NewDriftReconciler creates a new DriftReconciler in DRY mode ; use the option DriftOptionSynchronizer to reconcile.
 func NewDriftReconciler(
 	findAlbumByOwnerPort FindAlbumByOwnerPort,
-	findAlbumsByIdsPort FindAlbumsByIdsPort,
 	getCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort,
 	listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort,
 	mediaCounterPort MediaCounterPort,
-	DriftObservers ...DriftOption,
+	driftOptions ...DriftOption,
 ) *OwnerDriftReconciler {
 	observers := []DriftObserver{
 		new(LoggerDriftObserver),
 	}
-	for _, option := range DriftObservers {
+	for _, option := range driftOptions {
 		observer := option.Observer()
 		if observer != nil {
 			observers = append(observers, observer)
@@ -63,10 +62,8 @@ func NewDriftReconciler(
 	}
 
 	return &OwnerDriftReconciler{
-		FindAlbumByOwnerPort:         findAlbumByOwnerPort,
-		GetCurrentAlbumSummariesPort: getCurrentAlbumSummariesPort,
-		AlbumReCounter: AlbumReCounter{
-			FindAlbumsByIdsPort:           findAlbumsByIdsPort,
+		FindAlbumByOwnerPort: findAlbumByOwnerPort,
+		AlbumSummaryReprojector: AlbumSummaryReprojector{
 			ListUserWhoCanAccessAlbumPort: listUserWhoCanAccessAlbumPort,
 			MediaCounterPort:              mediaCounterPort,
 		},
@@ -78,25 +75,19 @@ func NewDriftReconciler(
 }
 
 type OwnerDriftReconciler struct {
-	FindAlbumByOwnerPort         FindAlbumByOwnerPort
-	GetCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort
-	AlbumReCounter               AlbumReCounter
-	DriftDetector                *DriftDetector
+	FindAlbumByOwnerPort    FindAlbumByOwnerPort
+	AlbumSummaryReprojector AlbumSummaryReprojector
+	DriftDetector           *DriftDetector
 }
 
-// Reconcile is re-computing counts for each album
+// Reconcile rebuilds the album-list projection for the owner and passes it to the drift detector.
 func (d *OwnerDriftReconciler) Reconcile(ctx context.Context, owner ownermodel.Owner) error {
 	albums, err := d.FindAlbumByOwnerPort.FindAlbumsByOwner(ctx, owner)
 	if err != nil {
 		return err
 	}
 
-	albumIds := make([]catalog.AlbumId, len(albums))
-	for i, albumId := range albums {
-		albumIds[i] = albumId.AlbumId
-	}
-
-	return d.AlbumReCounter.ReCountMedias(ctx, albumIds, d.DriftDetector)
+	return d.AlbumSummaryReprojector.Reproject(ctx, albums, d.DriftDetector)
 }
 
 type GetCurrentAlbumSummariesPort interface {
@@ -187,7 +178,7 @@ type LoggerDriftObserver struct{}
 func (l LoggerDriftObserver) OnDetectedDrifts(ctx context.Context, drifts []Drift) error {
 	for _, drift := range drifts {
 		if drift.Expected != nil {
-			summary := drift.Expected.AvailableAlbumSummary
+			summary := drift.Expected.ExpectedSummary
 			availability := summary.Availability.String()
 
 			if drift.Expected.Missing {
@@ -218,7 +209,7 @@ func (d *DriftSynchronizerObserver) OnDetectedDrifts(ctx context.Context, drifts
 	for _, drift := range drifts {
 		switch {
 		case drift.Expected != nil:
-			err := d.DriftSynchronizerPort.PutSummaries(ctx, []AlbumSummaryForUsers{drift.Expected.AvailableAlbumSummary.ToSummaryForUsers()})
+			err := d.DriftSynchronizerPort.PutSummaries(ctx, []AlbumSummaryForUsers{drift.Expected.ExpectedSummary.ToSummaryForUsers()})
 			if err != nil {
 				return err
 			}

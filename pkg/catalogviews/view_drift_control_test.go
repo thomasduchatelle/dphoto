@@ -33,7 +33,6 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 
 	type fields struct {
 		findAlbumByOwnerPort          FindAlbumByOwnerPort
-		findAlbumsByIdsPort           FindAlbumsByIdsPort
 		listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 		mediaCounterPort              MediaCounterPort
 	}
@@ -53,7 +52,6 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			name: "it should not fail when no album is found for the owner",
 			fields: fields{
 				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(),
-				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(),
 			},
 			args: args{
 				owner: owner1,
@@ -65,7 +63,6 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			name: "it should reconcile the 3 different types of drifts",
 			fields: fields{
 				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1, canonicalAlbum2),
-				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(canonicalAlbum1, canonicalAlbum2),
 				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
 					Values: map[catalog.AlbumId][]Availability{
 						album1: {OwnerAvailability(userId1), VisitorAvailability(userId2)},
@@ -99,7 +96,6 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			name: "it should not do anything on dry mode",
 			fields: fields{
 				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
-				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(canonicalAlbum1),
 				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
 					Values: map[catalog.AlbumId][]Availability{
 						album1: {OwnerAvailability(userId1)},
@@ -121,7 +117,6 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			name: "it should rebuild display fields from the canonical album",
 			fields: fields{
 				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
-				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(canonicalAlbum1),
 				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
 					Values: map[catalog.AlbumId][]Availability{
 						album1: {OwnerAvailability(userId1)},
@@ -147,7 +142,6 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			name: "it should backfill missing display fields on a legacy row",
 			fields: fields{
 				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
-				findAlbumsByIdsPort:  stubFindAlbumsByIdsPort(canonicalAlbum1),
 				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
 					Values: map[catalog.AlbumId][]Availability{
 						album1: {OwnerAvailability(userId1)},
@@ -177,7 +171,6 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 
 			reconciler := NewDriftReconciler(
 				tt.fields.findAlbumByOwnerPort,
-				tt.fields.findAlbumsByIdsPort,
 				repository,
 				tt.fields.listUserWhoCanAccessAlbumPort,
 				tt.fields.mediaCounterPort,

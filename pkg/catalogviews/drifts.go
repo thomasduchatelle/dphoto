@@ -15,8 +15,8 @@ type Drift struct {
 }
 
 type MissingOrInvalidDrift struct {
-	AvailableAlbumSummary UserAlbumSummary
-	Missing               bool
+	ExpectedSummary UserAlbumSummary
+	Missing         bool
 }
 
 type NotExpectedDrift struct {
@@ -27,7 +27,7 @@ type NotExpectedDrift struct {
 func NewOverrideDrift(summary UserAlbumSummary) Drift {
 	return Drift{
 		Expected: &MissingOrInvalidDrift{
-			AvailableAlbumSummary: summary,
+			ExpectedSummary: summary,
 		},
 	}
 }
@@ -35,8 +35,8 @@ func NewOverrideDrift(summary UserAlbumSummary) Drift {
 func NewMissingDrift(summary UserAlbumSummary) Drift {
 	return Drift{
 		Expected: &MissingOrInvalidDrift{
-			AvailableAlbumSummary: summary,
-			Missing:               true,
+			ExpectedSummary: summary,
+			Missing:         true,
 		},
 	}
 }
