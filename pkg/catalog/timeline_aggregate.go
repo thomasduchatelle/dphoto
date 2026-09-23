@@ -181,14 +181,6 @@ func (t *TimelineAggregate) RenameAlbum(request RenameAlbumRequest) (*AlbumNameU
 	}, nil
 }
 
-// FindAlbum returns a copy of the album carrying the given id, or AlbumNotFoundErr if the
-// aggregate does not contain it. It is exposed so use cases that do not mutate the aggregate
-// can still read from the same canonical source (e.g. an in-place rename that just needs the
-// album's dates and current name to build an AlbumRenamed event).
-func (t *TimelineAggregate) FindAlbum(albumId AlbumId) (Album, error) {
-	return t.findAlbumById(albumId)
-}
-
 func (t *TimelineAggregate) findAlbumById(albumId AlbumId) (Album, error) {
 	index := slices.IndexFunc(t.albums, func(album *Album) bool {
 		return album.AlbumId.IsEqual(albumId)

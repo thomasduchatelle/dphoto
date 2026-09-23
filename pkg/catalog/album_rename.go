@@ -57,22 +57,13 @@ func (r *RenameAlbum) RenameAlbum(ctx context.Context, request RenameAlbumReques
 }
 
 func (r *RenameAlbum) renameInPlace(ctx context.Context, request RenameAlbumRequest) error {
-	timeline, err := r.TimelineRepository.LoadTimeline(ctx, request.CurrentId.Owner)
+	renamed, err := r.TimelineRepository.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
 	if err != nil {
 		return err
 	}
 
-	existing, err := timeline.FindAlbum(request.CurrentId)
-	if err != nil {
-		return err
-	}
-
-	if err = r.TimelineRepository.UpdateAlbumName(ctx, request.CurrentId, request.NewName); err != nil {
-		return err
-	}
-
-	renamed := existing
-	renamed.Name = request.NewName
+	existing := renamed
+	existing.Name = ""
 
 	event := AlbumRenamed{
 		ExistingAlbum: existing,

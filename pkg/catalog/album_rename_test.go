@@ -154,7 +154,11 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 			expectAlbumsByIds: map[catalog.AlbumId]string{existingAlbum.AlbumId: newName},
 			expectRenamedEvents: []catalog.AlbumRenamed{
 				{
-					ExistingAlbum: *existingAlbum,
+					ExistingAlbum: catalog.Album{
+						AlbumId: existingAlbum.AlbumId,
+						Start:   existingAlbum.Start,
+						End:     existingAlbum.End,
+					},
 					RenamedAlbum: catalog.Album{
 						AlbumId: existingAlbum.AlbumId,
 						Name:    newName,

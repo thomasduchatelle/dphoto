@@ -89,13 +89,13 @@ func (r *AlbumRepositoryInMemory) DeleteAlbum(_ context.Context, albumId catalog
 	return nil
 }
 
-func (r *AlbumRepositoryInMemory) UpdateAlbumName(_ context.Context, albumId catalog.AlbumId, newName string) error {
+func (r *AlbumRepositoryInMemory) UpdateAlbumName(_ context.Context, albumId catalog.AlbumId, newName string) (catalog.Album, error) {
 	album, ok := r.Albums[albumId]
 	if !ok {
-		return catalog.AlbumNotFoundErr
+		return catalog.Album{}, catalog.AlbumNotFoundErr
 	}
 	album.Name = newName
-	return nil
+	return *album, nil
 }
 
 func (r *AlbumRepositoryInMemory) AmendDates(_ context.Context, albumId catalog.AlbumId, start, end time.Time) error {
