@@ -2,25 +2,20 @@
 
 This guide provides essential information for AI coding agents working on the DPhoto codebase.
 
-DPhoto is an application to back up photos and videos on the cloud (AWS), and visualise through a website, or using a command line interface installed on user
-computers.
+DPhoto is an application to back up photos and videos on the cloud (AWS), and visualise through a website, or using a command line interface installed on user computers.
 
-This is a mono-repository containing the code of the backend, the CLI, the website, and the deployments. **Its architecture and the design of each component are
-EXTREMELY IMPORTANT**.
+This is a mono-repository containing the code of the backend, the CLI, the website, and the deployments. **Its architecture and the design of each component are EXTREMELY IMPORTANT**.
 
 ## Project structure
 
 - `pkg/` - core business logic is always implemented here, in **Golang**. Think of the subdomains that a tasks will affect:
-    - `pkg/acl/` - access control and permissions management.
-    - `pkg/archive/` - long term storage of the photos and videos, with compression and generation of miniatures.
-    - `pkg/catalog/` - organisation of the medias into albums and albums management.
-    - `pkg/backup/` - analyse local files to upload them into the archive and to index then into the catalog.
-    - `pkg/**adapters/` - adapters for AWS services: DynamoDB, S3, SNS/SQS. Adapters are the only place 3rd party libraries are allowed in `pkg/`, the subdomain
-      must remain pure.
-    - `DATA_MODEL.md` - documentation of the indexes and records of the single-table structure in DynamoDB. It must be kept up to date with the data model.
+    - `pkg/acl/` - access control and permissions management. [ACL](./docs/acl/CONTEXT.md):
+    - `pkg/archive/` - long term storage of the photos and videos, with compression and generation of miniatures. [Archive](./docs/archive/CONTEXT.md)
+    - `pkg/catalog/` - organisation of the medias into albums and albums management. [Catalog](./docs/catalog/CONTEXT.md)
+    - `pkg/backup/` - analyse local files to upload them into the archive and to index then into the catalog. [Backup](./docs/backup/CONTEXT.md)
+    - `pkg/**adapters/` - adapters for AWS services: DynamoDB, S3, SNS/SQS. Adapters are the only place 3rd party libraries are allowed in `pkg/`, the subdomain must remain pure.
 - `cmd/dphoto/` - in **Golang/Cobra**, CLI source to exposes features from `pkg/`, and presentation logic for the terminal.
-- `api/lambdas/` - in **Golang/AWS SDK** source of the REST API deployed as AWS Lambdas with an AWS API Gateway (v2 HTTP). Each operation is deployed as one
-  lambda handler and is in its own folder.
+- `api/lambdas/` - in **Golang/AWS SDK** source of the REST API deployed as AWS Lambdas with an AWS API Gateway (v2 HTTP). Each operation is deployed as one lambda handler and is in its own folder.
     - `api/lambdas/common/` contains utilities shared by most handlers (get context from authorizer, ...)
     - `api/lambdas/authorizer/` contains the API Gateway authorizer logic, running before any REST request is processed
 - `web-nextjs/` - **Typescript / React / NextJS framework** Website built on top of the REST API, deployed using SST.
@@ -33,26 +28,27 @@ EXTREMELY IMPORTANT**.
     - `.github/workflows/job-*.yml` - reusable sub-workflow to build, test, and deploy the application
     - `.github/workflows/workflow-*.yml` - workflows triggered by external events, they call the "job workflow", never replicate their content.
 - `internal/` - **Golang**: utilities that lower the complexity of the CLI but is not part of the domain of the application.
-- `Makefile` - comprehensive list of all the commands to build and test the application.
-- `web/` - **DEPRECATED! Project will be replaced by web-nextjs** ; Typescript / React / Waku framework Website built on top of the REST API, deployed as a
-  lambda.
+- `web/` - **DEPRECATED! Project will be replaced by web-nextjs** ; Typescript / React / Waku framework Website built on top of the REST API, deployed as a lambda.
     - `web/src/core/catalog/language/` - data structures used across the web application, **very important for context**.
     - `web/src/core/catalog/**/` - other folders are handlers for the operations available on the UI.
     - `web/src/components/` - React components, usually pure.
     - `web/src/pages/` - Waku page-driven navigation built from the components.
+- `DATA_MODEL.md` - documentation of the indexes and records of the single-table structure in DynamoDB. It must be kept up to date with the data model.
+- `docs/adr/` - the Architecture Decision Record
+- `docs/{acl,archive,backup,catalog}/CONTEXT.md` - Use this glossary's vocabulary of each context when communicating with the user.
+- `Makefile` - comprehensive list of all the commands to build and test the application.
 
 ## Priorities: How to get a Pull Request accepted ?
 
-As an agent, your primary objective is to fulfil the feature and have a pull request ACCEPTED by the lead developer. To be accepted, it must be conformed with
-the priorities:
+As an agent, your primary objective is to fulfil the feature and have a pull request ACCEPTED by the lead developer. To be accepted, it must be conformed with the priorities:
 
 1. **no data loss** - the medias stored are very valuable and irreplaceable, everything must be done to never lose a single one.
-2. **architecture integrity** - each subproject defined its design principles, its testing strategy, and its coding standard. Any deviation will lead to the
-   pull request being rejected.
-3. **simplicity** - the resulting code must be simple and easy to read, even if it requires a complex and large changes to implement a feature: we prefer
-   refactoring that simplifies the codebase rather than small changes that adds on the complexity.
+2. **architecture integrity** - each subproject defined its design principles, its testing strategy, and its coding standard. Any deviation will lead to the pull request being rejected.
+3. **simplicity** - the resulting code must be simple and easy to read, even if it requires a complex and large changes to implement a feature: we prefer refactoring that simplifies the codebase rather than small changes that adds on the complexity.
 4. **cost** - this is a pet-project: operating cost must remain low while not requiring any ongoing effort to operate it.
 5. **security** - any reasonable efforts and good practices must be made to avoid data leaks
+
+**Prioritise a simplification of the flow over minimising the changes.** If you see a good opportunity to simplify the application, propose it during design/planning, or implement it autonomously, even if it requires deeper refactoring.
 
 ## How to build and test ?
 
@@ -85,12 +81,9 @@ make build-api
 
 ```shell
 npm run test          # run unit tests only (~5s)
-npm run test:visual   # run visual tests (~30s)
-npm run test:update   # update visual regression snapshots locally
-npm run storybook     # run Storybook to view components on :6006
 ```
 
-Do not run the targets `npm run test:visual`, `npm run test:update`, `npm run storybook` ; they are not appropriate for agentic development. 
+Do not run the targets `npm run test:visual`, `npm run test:update`, `npm run storybook` ; they are not appropriate for agentic development.
 
 ### Typescript - `web/`
 
@@ -98,11 +91,7 @@ Do not run the targets `npm run test:visual`, `npm run test:update`, `npm run st
 
 ```shell
 npx vitest run        # run unit tests only (~17s)
-npx playwright test   # run the visual tests 
-npm run test:update   # update visual regression snapshots locally
 npm run build         # build the application for deployment
-
-npm run ladle         # Component viewer on :61000, useful to take screenshots of the changes on the UI
 ```
 
 ### Typescript - `deployments/cdk/`
@@ -114,28 +103,15 @@ npm test              # run all unit tests
 npm run synth:test    # verify the CDK template can be built using stub data
 ```
 
-## Checklist before raising a pull-request
-
-Before requesting a code review, you must ensure:
-
-1. **coding standards have been strictly followed**: changes are conformed with the architecture and designs.
-2. **the resulting code is simple and cannot be improved**: think of clean code principles with no excessive comments (NO comment paraphrasing the code!).
-3. **conform with the testing strategy**: each project must adhere to the strict testing strategy that guaranty the robustness of the tests with a low coupling
-   with the code.
-4. the code can be built and is immediately shippable to production.
-5. the tests are passing.
-
 ## GitHub
 
 When interacting with GitHub MCP, use the remote URL: `git@github.com:thomasduchatelle/dphoto.git`.
 
+When pushing the code, always add the target remote branch: `git push origin HEAD:refs/heads/<branch-name>`.
+
 ### Issue tracker
 
-Issues live as local markdown files at `specs/<feature-slug>/issues/<NN-slug>.md`. When you implement the work described in an issue, set its `Status:` line to `done` once the change is merged. Statuses are `ready`, `done`, `wontdo`. For anything more (creating specs, breaking features into issues, archiving), load the `issue-tracker` skill.
-
-### Domain docs
-
-Multi-context layout: `CONTEXT-MAP.md` at the repo root, ADRs under `docs/adr/`. See `docs/agents/domain.md`.
+Issues live as local Markdown files at `specs/<feature-slug>/issues/<NN-slug>.md`. When you implement the work described in an issue, set its `Status:` line to `done` once the change is merged. Statuses are `ready`, `done`, `wontdo`. For anything more (creating specs, breaking features into issues, archiving), load the `issue-tracker` skill.
 
 ---
 

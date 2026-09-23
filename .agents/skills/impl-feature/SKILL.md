@@ -25,7 +25,9 @@ Each subagent handles one story end-to-end: worktree → implement → test → 
 
 ### Prompt template
 
-> You are implementing one story of the `<feature-slug>` feature for the DPhoto repo.
+Give the path to the story to implement (don't read and paraphrase it, just the path). Use the template:
+
+> You are implementing the story of the `<feature-slug>` autonomously, take the best decisions to deliver the requirements following the code style from the skills. Document these decisions in the PR.
 >
 > ## Read
 >
@@ -48,17 +50,7 @@ Each subagent handles one story end-to-end: worktree → implement → test → 
 >
 > ## Task
 >
-> Implement the issue. Follow the design principles from the skills you loaded — no shortcuts on test structure (fakes, and testing strategy) and architecture.
->
-> ## Verification
->
-> Before committing, from the worktree root:
->
-> ```
-> <exact test command, e.g. go test ./pkg/<pkg>/...>
-> ```
->
-> Must be green. Also verify: `<any story-specific check, e.g. "no test file imports internal/mocks">`.
+> Implement the issue and verify the stability of your branch.
 >
 > ## Commit and push
 >
@@ -72,11 +64,7 @@ Each subagent handles one story end-to-end: worktree → implement → test → 
 >
 > Do not use `git push -u`, do not use bare `git push`, do not use `--force` or `--force-with-lease` (force-push is not allowed on a first attempt — the conductor will tell you if it becomes needed).
 >
-> ## PR
->
-> Create the PR with `gh`, base `<base-branch>`, head `<branch-name>`.
-> Title with the name of the story and the headline of the change.
-> Body must help to reviewer to understand the change: explain how it works (data flow, main interfaces), the intention of some changes (renamed class, ...), and why would the reviewer trust the test (if existing test have been changed: why no regression will be caused anyway, if new tests, how they covers the acceptance criteria). Also reference `specs/<feature-slug>/issues/<issue-file>.md` in the body.
+> Then create the PR.
 >
 > ## Final output
 >
@@ -84,9 +72,9 @@ Each subagent handles one story end-to-end: worktree → implement → test → 
 
 ## Propagating feedback
 
-Reviewer comments on one PR often reveal a pattern that hides in the sibling PRs. Steps:
+The user comments on one PR often reveal a pattern that have occurred in other sibling PRs. Steps:
 
-1. Classify the nature of the request: local changes (skills, stories, ...) or standard review on the PRs. It can be both.
+1. Classify the nature of the request: local changes (skills, stories, ...) or standard review on one or several of the PRs. It can be both.
 2. **Local changes**:
     1. update the local branch (new commit) with the requested changes
     2. then dispatch subagents to update all the PRs (same process as standard reviews) ; this is the only case where a rebase and forced push is allowed.
@@ -121,34 +109,17 @@ Default template for a reviewer comment or user-requested tweak on a single PR. 
 >
 > `<verbatim reviewer request, or a distilled version. Include the specific files/lines flagged. For each thread you want resolved, include its numeric comment ID and thread ID (PRRT_...).>`
 >
-> ## Task
->
-> Apply the changes. Follow the design principles from the skills you loaded — no shortcuts on test structure (fakes, and testing strategy) and architecture.
->
 > For each reviewer thread listed above:
 >
 > - If you can apply the change as requested, do so, then reply on the thread confirming the fix and **resolve the thread**.
 > - If the change would make the code worse (violates a documented principle, requires much more complex or deeper changes, breaks another test, introduces a regression) or you believe the reviewer missed something, **push back**: reply on the thread with a short explanation and a counter-proposal. **Do not resolve the thread** — leave it for the conductor to handle. Do not silently ignore the request.
 >
-> ## Verification
->
-> Before committing, from the worktree root:
->
-> ```
-> <exact test command, e.g. go test ./pkg/<pkg>/...>
-> ```
->
-> Must be green. Also verify: `<any story-specific check>`.
->
 > ## Commit and push
 >
-> Add one follow-up commit describing the fix, message per the `implement` skill. Push:
->
-> ```
-> git push origin HEAD:refs/heads/<branch-name>
-> ```
->
-> Do not use `git push -u`, do not use bare `git push`.
+> Once completed:
+> 1. commit using `implement` skill
+> 2. push using the command `git push origin HEAD:refs/heads/<branch-name>`
+> 3. update the PR description only if your changes invalidated it.
 >
 > ## Final output
 >
@@ -186,25 +157,6 @@ Use this variant **only** when the conductor needs the PR rebased on a moved bas
 >
 > Do not use `git push -u`, do not use bare `git push`, do not use `--force` (without `-with-lease`).
 
-
-## Batch wrap-up
-
-Once you got the approval from the user for at least one PR:
-
-1. merge approved stories in the current branch ; **do not merge them to `main`, verify the PR before merging it**.
-2. update the issue-tracker if necessary, stories completed should be `done` ; if the feature is completed, archive it ; if a feature is not refined (next stories are missing) inform the user.
-3. squash and rebase: single commit unless told otherwise by the user. Use the messages of the squash commits to create a consistent explanation.
-4. create a PR toward the `main` branch.
-   1. dispatch a subagent that will review the final PR using the `code-review` skill and any other relevant skill, and publish its comments on the PR itself.
-   2. request the user to review and merge.
-5. and, in parallel while the reviewer is working:
-    1. start the next batch ! Dispatch subagents for the next stories.
-
-When you use rebase and push force, keep a reference of the previous commits in case something goes wrong, and we need to recover the changes.
-
-This step is slow, do not wait for user approval at each step: the subagents (review and next batch) must run in parallel, and the only decision point of the user will be on the PR directly.
-
-
 ## Batch handoff
 
 When every PR in the batch is open (or re-pushed), stop. Post a table to the user:
@@ -215,3 +167,27 @@ When every PR in the batch is open (or re-pushed), stop. Post a table to the use
 
 Flag anything unusual: force-pushes you authorised, deleted tests, review threads left unresolved. Wait for the user's next instruction — fixes to make, or the go-ahead to merge and launch the next batch.
 
+
+## Next batch
+
+Once you got the approval from the user for at least one PR:
+
+1. merge approved stories in the current branch ; **do not merge them to `main`, verify the PR before merging it**.
+2. update the issue-tracker if necessary, stories completed should be `done` ; if the feature is completed, archive it ; if a feature is not refined (next stories are missing) inform the user.
+3. start the next batch ! Dispatch subagents for the next stories.
+
+When you use rebase and push force, keep a reference of the previous commits in case something goes wrong, and we need to recover the changes.
+
+Perform all 3 steps, then ask the user to review the new PRs.
+
+## Wrap up
+
+The wrap up can be invoked by the user before all stories are completed.
+
+1. squash and rebase: single commit unless told otherwise by the user. Use the messages of the squash commits to create a consistent explanation.
+2. create a PR toward the `main` branch.
+   1. dispatch a subagent to review the final PR using the `code-review` skill (and any other relevant skill), the agent will write comments against the PR.
+   2. request the user to review and merge.
+3. then, immediately start the _next batch_.
+
+Perform all 3 steps, then ask the user to review the new PRs. Dispatch the reviewer agent and the developer agents all at the same time, in parallel, not sequentially.
