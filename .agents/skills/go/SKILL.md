@@ -5,6 +5,15 @@ description: Golang coding standards and testing style using table-driven testin
 
 # Golang Coding Standards for DPhoto
 
+## Comments in the code
+
+**Do not add comments in the code.** If you need to update a comment, delete it instead. If a comment is already there and doesn't need to be updated, leave it.
+
+Only exceptions:
+
+* referencing the ADR that the code is implementing ;
+* or giving a important context without which a developer could misunderstand the intention of the code, and which cannot be inferred from the code or current domain.
+
 ## How to write a test
 
 Use the golang idiomatic **table-driven** testing with a slice of test cases. The **canonical

@@ -1,11 +1,13 @@
 ---
-name: plan
-description: "Present an clear implementation plan to the user covering persistence, service, UI, and API layers."
+name: design
+description: "Present an clear design to the user before implementation, covering persistence, service, UI, and API layers."
 ---
 
-The planning phase is an interactive session with the user to settle the design decisions to take before implementing the requirements. **Take advantage of the planning to ask clarification questions.**
+The design phase is an interactive session with the user to settle the design decisions to take before implementing the requirements. **Take advantage of the planning to ask clarification questions.**
 
-Use the following communication tools to present your recommended approach.
+Only mention the important decisions, complex to revert (requiring data migration, synchronised update of several contexts, ...) ; do not list the files to be modified.
+
+Use the following communication tools to present your recommended approach, don't mention the ones that are not relevant.
 
 ## Data model
 
