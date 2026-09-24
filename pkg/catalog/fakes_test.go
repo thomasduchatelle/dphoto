@@ -120,6 +120,72 @@ func (r *AlbumRepositoryInMemory) CountMediasBySelectors(_ context.Context, owne
 	return count, nil
 }
 
+// CoverRepositorySeed is used to pre-populate a CoverRepositoryInMemory.
+type CoverRepositorySeed struct {
+	AlbumId catalog.AlbumId
+	Covers  []catalog.Cover
+}
+
+// CoverRepositoryInMemory implements catalog.CoverRepository backed by a map keyed by
+// AlbumId. Cases can seed the fake with existing covers via the constructor.
+type CoverRepositoryInMemory struct {
+	Covers map[catalog.AlbumId][]catalog.Cover
+}
+
+func NewCoverRepositoryInMemory(seeds ...CoverRepositorySeed) *CoverRepositoryInMemory {
+	store := &CoverRepositoryInMemory{
+		Covers: make(map[catalog.AlbumId][]catalog.Cover),
+	}
+	for _, seed := range seeds {
+		store.Covers[seed.AlbumId] = append([]catalog.Cover(nil), seed.Covers...)
+	}
+	return store
+}
+
+func (c *CoverRepositoryInMemory) FindCoversByAlbum(_ context.Context, albumId catalog.AlbumId) ([]catalog.Cover, error) {
+	covers, ok := c.Covers[albumId]
+	if !ok {
+		return nil, nil
+	}
+	return append([]catalog.Cover(nil), covers...), nil
+}
+
+func (c *CoverRepositoryInMemory) SaveCovers(_ context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+	if len(covers) > catalog.MaxCoversPerAlbum {
+		return catalog.TooManyCoversErr
+	}
+	if len(covers) == 0 {
+		delete(c.Covers, albumId)
+		return nil
+	}
+	c.Covers[albumId] = append([]catalog.Cover(nil), covers...)
+	return nil
+}
+
+// MediaReadRepositoryInMemory implements catalog.MediaReadRepository backed by a per-album
+// slice of medias.
+type MediaReadRepositoryInMemory struct {
+	Medias map[catalog.AlbumId][]*catalog.MediaMeta
+}
+
+func (m *MediaReadRepositoryInMemory) FindMedias(_ context.Context, request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
+	var medias []*catalog.MediaMeta
+	for albumId, list := range m.Medias {
+		if albumId.Owner != request.Owner {
+			continue
+		}
+		if _, ok := request.AlbumFolderNames[albumId.FolderName]; !ok {
+			continue
+		}
+		medias = append(medias, list...)
+	}
+	return medias, nil
+}
+
+func (m *MediaReadRepositoryInMemory) FindMediaCurrentAlbum(_ context.Context, _ ownermodel.Owner, _ catalog.MediaId) (*catalog.AlbumId, error) {
+	panic("FindMediaCurrentAlbum not implemented on MediaReadRepositoryInMemory")
+}
+
 // AlbumCreatedObserverInMemory implements catalog.AlbumCreatedObserver: it captures every
 // AlbumCreated event notified to the observer.
 type AlbumCreatedObserverInMemory struct {
