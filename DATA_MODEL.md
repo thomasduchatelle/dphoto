@@ -11,6 +11,7 @@ Schema
 | PK                       | SK                                          | Description                                              | Module               |
 |--------------------------|---------------------------------------------|----------------------------------------------------------|----------------------|
 | {OWNER}#ALBUM            | ALBUM#{FOLDER_NAME}                         | Album metadata                                           | catalogdynamo        |
+| {OWNER}#ALBUM            | ALBUM#{FOLDER_NAME}#COVERS                  | Album covers (whole ordered set, up to 4) as one item    | catalogdynamo        |
 | {OWNER}#MEDIA#{id}       | #METADATA                                   | Media metadata                                           | catalogdynamo        | 
 | {OWNER}#MEDIA#{id}       | LOCATION#                                   | Media location if the archive                            | archivedynamo        |
 | USER#{EMAIL}             | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | Scopes allowed for a user (ownership, shared, ...)       | aclscopedynamodb     |
