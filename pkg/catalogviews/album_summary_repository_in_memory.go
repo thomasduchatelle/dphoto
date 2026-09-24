@@ -21,7 +21,7 @@ func (s UserAlbumSummary) ToSummaryForUsers() AlbumSummaryForUsers {
 }
 
 type AlbumSummaryInMemoryRepository struct {
-	Summaries               []UserAlbumSummary
+	Summaries                 []UserAlbumSummary
 	LegacyRowsCleanedForUsers []usermodel.UserId
 }
 

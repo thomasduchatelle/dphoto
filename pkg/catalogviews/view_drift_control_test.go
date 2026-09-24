@@ -44,14 +44,14 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 		dry   bool
 	}
 	tests := []struct {
-		name                       string
-		fields                     fields
-		current                    []UserAlbumSummary
-		args                       args
-		wantSummaries              []UserAlbumSummary
-		wantDrifts                 []Drift
+		name                        string
+		fields                      fields
+		current                     []UserAlbumSummary
+		args                        args
+		wantSummaries               []UserAlbumSummary
+		wantDrifts                  []Drift
 		expectLegacyCleanupForUsers []usermodel.UserId
-		wantErr                    assert.ErrorAssertionFunc
+		wantErr                     assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should not fail when no album is found for the owner",
