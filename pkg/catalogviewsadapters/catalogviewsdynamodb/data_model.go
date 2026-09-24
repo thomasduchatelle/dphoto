@@ -86,15 +86,28 @@ func marshalAlbumSummary(summary catalogviews.AlbumSummaryForUsers) ([]map[strin
 
 func unmarshalAlbumSummary(item map[string]types.AttributeValue) (*catalogviews.UserAlbumSummary, error) {
 	record := &AlbumSummaryRecord{}
-	err := attributevalue.UnmarshalMap(item, record)
-
-	availability := catalogviews.OwnerAvailability(usermodel.UserId(record.UserId))
-	if record.AvailabilityType == AvailabilityTypeVisitor {
-		availability = catalogviews.VisitorAvailability(usermodel.UserId(record.UserId))
+	if err := attributevalue.UnmarshalMap(item, record); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal album summary record: %+v", item)
 	}
 
-	start, _ := unmarshalTime(record.AlbumStart)
-	end, _ := unmarshalTime(record.AlbumEnd)
+	var availability catalogviews.Availability
+	switch record.AvailabilityType {
+	case AvailabilityTypeOwner:
+		availability = catalogviews.OwnerAvailability(usermodel.UserId(record.UserId))
+	case AvailabilityTypeVisitor:
+		availability = catalogviews.VisitorAvailability(usermodel.UserId(record.UserId))
+	default:
+		return nil, errors.Errorf("unknown AvailabilityType %q on album summary record: %+v", record.AvailabilityType, item)
+	}
+
+	start, err := unmarshalTime(record.AlbumStart)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal AlbumStart on album summary record: %+v", item)
+	}
+	end, err := unmarshalTime(record.AlbumEnd)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal AlbumEnd on album summary record: %+v", item)
+	}
 
 	return &catalogviews.UserAlbumSummary{
 		AlbumSummary: catalogviews.AlbumSummary{
@@ -108,7 +121,7 @@ func unmarshalAlbumSummary(item map[string]types.AttributeValue) (*catalogviews.
 			End:        end,
 		},
 		Availability: availability,
-	}, errors.Wrapf(err, "failed to unmarshal album summary record: %+v", item)
+	}, nil
 }
 
 func marshalTime(t time.Time) string {

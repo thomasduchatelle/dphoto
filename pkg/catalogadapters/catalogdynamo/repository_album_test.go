@@ -369,15 +369,16 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 		newName string
 	}
 	tests := []struct {
-		name      string
-		args      args
-		before    []map[string]types.AttributeValue
-		after     []map[string]types.AttributeValue
-		wantAlbum catalog.Album
-		wantErr   assert.ErrorAssertionFunc
+		name         string
+		args         args
+		before       []map[string]types.AttributeValue
+		after        []map[string]types.AttributeValue
+		wantPrevious catalog.Album
+		wantRenamed  catalog.Album
+		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should update the name of an album that exists and return the renamed album",
+			name: "it should update the name of an album that exists and return the previous and renamed albums",
 			args: args{
 				albumId: albumId1,
 				newName: "New Name",
@@ -388,7 +389,13 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 			after: []map[string]types.AttributeValue{
 				albumEntryWithDates("New Name"),
 			},
-			wantAlbum: catalog.Album{
+			wantPrevious: catalog.Album{
+				AlbumId: albumId1,
+				Name:    "Old Name",
+				Start:   start,
+				End:     end,
+			},
+			wantRenamed: catalog.Album{
 				AlbumId: albumId1,
 				Name:    "New Name",
 				Start:   start,
@@ -423,9 +430,10 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 				table:  dyn.Table,
 			}
 
-			got, err := r.UpdateAlbumName(context.Background(), tt.args.albumId, tt.args.newName)
+			gotPrevious, gotRenamed, err := r.UpdateAlbumName(context.Background(), tt.args.albumId, tt.args.newName)
 			if tt.wantErr(t, err, fmt.Sprintf("UpdateAlbumName(%v, %v, %v)", context.Background(), tt.args.albumId, tt.args.newName)) {
-				assert.Equal(t, tt.wantAlbum, got, "UpdateAlbumName returned album")
+				assert.Equal(t, tt.wantPrevious, gotPrevious, "UpdateAlbumName returned previous album")
+				assert.Equal(t, tt.wantRenamed, gotRenamed, "UpdateAlbumName returned renamed album")
 				_, err := dyn.EqualContent(dyn.Ctx, tt.after)
 				assert.NoError(t, err, "AssertDbContent")
 			}

@@ -171,6 +171,24 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should delete a legacy #COUNT-suffixed row when writing the new row for the same user/album",
+			args: args{
+				summaries: []catalogviews.AlbumSummaryForUsers{
+					{
+						AlbumSummary: catalogviews.AlbumSummary{AlbumId: albumId1, MediaCount: 42},
+						Users:        []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+					},
+				},
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withLegacyCountSuffix().withCount(24).build(),
+			},
+			after: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(42).build(),
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -216,6 +234,13 @@ func albumSummaryItemBuilder(user usermodel.UserId, accessType string, albumId c
 
 func (b *summaryItemBuilder) withCount(count int) *summaryItemBuilder {
 	b.item["Count"] = &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", count)}
+	return b
+}
+
+func (b *summaryItemBuilder) withLegacyCountSuffix() *summaryItemBuilder {
+	sk := b.item["SK"].(*types.AttributeValueMemberS).Value
+	b.item["SK"] = &types.AttributeValueMemberS{Value: sk + "#COUNT"}
+	delete(b.item, "AlbumViewIndexPK")
 	return b
 }
 
@@ -323,6 +348,19 @@ func TestAlbumViewRepository_DeleteRow(t *testing.T) {
 			},
 			before: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, visitorType, albumId1).withCount(42).build(),
+			},
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should also delete the legacy #COUNT-suffixed row",
+			args: args{
+				ctx:          context.Background(),
+				availability: catalogviews.VisitorAvailability(userId1),
+				albumId:      albumId1,
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, visitorType, albumId1).withLegacyCountSuffix().withCount(42).build(),
 			},
 			wantAfter: nil,
 			wantErr:   assert.NoError,

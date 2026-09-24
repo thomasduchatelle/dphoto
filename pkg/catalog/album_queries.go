@@ -35,7 +35,7 @@ type TimelinePersistencePort interface {
 	FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
 	InsertAlbum(ctx context.Context, album Album) error
 	DeleteAlbum(ctx context.Context, albumId AlbumId) error
-	UpdateAlbumName(ctx context.Context, albumId AlbumId, newName string) (Album, error)
+	UpdateAlbumName(ctx context.Context, albumId AlbumId, newName string) (Album, Album, error)
 	AmendDates(ctx context.Context, albumId AlbumId, start, end time.Time) error
 }
 

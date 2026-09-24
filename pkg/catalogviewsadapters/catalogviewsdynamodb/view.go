@@ -2,22 +2,35 @@ package catalogviewsdynamodb
 
 import (
 	"context"
+	"slices"
+	"time"
+
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/appdynamodb"
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"slices"
-	"time"
 )
+
+const legacyCountSuffix = "#COUNT"
 
 type AlbumViewRepository struct {
 	Client    *dynamodb.Client
 	TableName string
+}
+
+func legacyDeleteRequest(record map[string]types.AttributeValue) types.WriteRequest {
+	pk := record["PK"].(*types.AttributeValueMemberS).Value
+	sk := record["SK"].(*types.AttributeValueMemberS).Value
+	legacyKey := appdynamodb.TablePk{PK: pk, SK: sk + legacyCountSuffix}
+	return types.WriteRequest{
+		DeleteRequest: &types.DeleteRequest{Key: legacyKey.ToAttributes()},
+	}
 }
 
 func (a *AlbumViewRepository) IncrementCountForAllViewers(ctx context.Context, updates []catalogviews.AlbumCountDiff) error {
@@ -200,6 +213,7 @@ func (a *AlbumViewRepository) PutSummaries(ctx context.Context, summaries []cata
 					Item: record,
 				},
 			})
+			items = append(items, legacyDeleteRequest(record))
 		}
 	}
 
@@ -214,12 +228,14 @@ func (a *AlbumViewRepository) PutSummaries(ctx context.Context, summaries []cata
 
 func (a *AlbumViewRepository) DeleteRow(ctx context.Context, availability catalogviews.Availability, albumId catalog.AlbumId) error {
 	key := albumSummaryKey(availability, albumId)
+	legacyKey := appdynamodb.TablePk{PK: key.PK, SK: key.SK + legacyCountSuffix}
 
-	_, err := a.Client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
-		TableName: &a.TableName,
-		Key:       key.ToAttributes(),
-	})
+	writes := []types.WriteRequest{
+		{DeleteRequest: &types.DeleteRequest{Key: key.ToAttributes()}},
+		{DeleteRequest: &types.DeleteRequest{Key: legacyKey.ToAttributes()}},
+	}
 
+	err := dynamoutils.BufferedWriteItems(ctx, a.Client, writes, a.TableName, dynamoutils.DynamoWriteBatchSize)
 	return errors.Wrapf(err, "failed to delete row for album %v and user %v", albumId, availability)
 }
 
@@ -313,13 +329,16 @@ func (a *AlbumViewRepository) ListSummariesForUser(ctx context.Context, userId u
 
 func (a *AlbumViewRepository) ListSummariesForUserAndOwners(ctx context.Context, userId usermodel.UserId, owner ...ownermodel.Owner) ([]catalogviews.UserAlbumSummary, error) {
 	summaries, err := a.ListSummariesForUser(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
 
 	var filtered []catalogviews.UserAlbumSummary
 	for _, summary := range summaries {
-		if slices.Contains(owner, summary.AlbumSummary.AlbumId.Owner) && summary.Availability.UserId != "" {
+		if slices.Contains(owner, summary.AlbumSummary.AlbumId.Owner) {
 			filtered = append(filtered, summary)
 		}
 	}
 
-	return filtered, err
+	return filtered, nil
 }
