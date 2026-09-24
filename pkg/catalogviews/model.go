@@ -100,6 +100,10 @@ type DeleteRowPort interface {
 	DeleteRow(ctx context.Context, availability Availability, albumId catalog.AlbumId) error
 }
 
+type DeleteLegacyRowsForUserPort interface {
+	DeleteLegacyRowsForUser(ctx context.Context, userId usermodel.UserId) error
+}
+
 type ListUserWhoCanAccessAlbumPort interface {
 	ListUsersWhoCanAccessAlbum(ctx context.Context, albumId ...catalog.AlbumId) (map[catalog.AlbumId][]Availability, error)
 }

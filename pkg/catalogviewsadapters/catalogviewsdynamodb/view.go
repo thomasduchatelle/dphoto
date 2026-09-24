@@ -5,6 +5,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -294,6 +295,7 @@ func (a *AlbumViewRepository) queryByAlbumIndex(ctx context.Context, albumId cat
 func (a *AlbumViewRepository) ListSummariesForUser(ctx context.Context, userId usermodel.UserId) ([]catalogviews.UserAlbumSummary, error) {
 	expr, err := expression.NewBuilder().
 		WithKeyCondition(expression.Key("PK").Equal(expression.Value(albumsViewPK(userId)))).
+		WithFilter(expression.Name("AvailabilityType").AttributeExists()).
 		Build()
 
 	if err != nil {
@@ -305,6 +307,7 @@ func (a *AlbumViewRepository) ListSummariesForUser(ctx context.Context, userId u
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
 	})
 
 	var summaries []catalogviews.UserAlbumSummary
@@ -325,6 +328,48 @@ func (a *AlbumViewRepository) ListSummariesForUser(ctx context.Context, userId u
 	}
 
 	return summaries, nil
+}
+
+func (a *AlbumViewRepository) DeleteLegacyRowsForUser(ctx context.Context, userId usermodel.UserId) error {
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(expression.Key("PK").Equal(expression.Value(albumsViewPK(userId)))).
+		WithFilter(expression.Name("AvailabilityType").AttributeNotExists()).
+		Build()
+	if err != nil {
+		return errors.Wrapf(err, "failed to build expression for user %v", userId)
+	}
+
+	paginator := dynamodb.NewQueryPaginator(a.Client, &dynamodb.QueryInput{
+		TableName:                 &a.TableName,
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      aws.String("PK, SK"),
+	})
+
+	var deletes []types.WriteRequest
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return errors.Wrapf(err, "failed to list legacy rows for user %v", userId)
+		}
+		for _, item := range page.Items {
+			deletes = append(deletes, types.WriteRequest{
+				DeleteRequest: &types.DeleteRequest{
+					Key: map[string]types.AttributeValue{
+						"PK": item["PK"],
+						"SK": item["SK"],
+					},
+				},
+			})
+		}
+	}
+
+	if len(deletes) == 0 {
+		return nil
+	}
+	return dynamoutils.BufferedWriteItems(ctx, a.Client, deletes, a.TableName, dynamoutils.DynamoWriteBatchSize)
 }
 
 func (a *AlbumViewRepository) ListSummariesForUserAndOwners(ctx context.Context, userId usermodel.UserId, owner ...ownermodel.Owner) ([]catalogviews.UserAlbumSummary, error) {

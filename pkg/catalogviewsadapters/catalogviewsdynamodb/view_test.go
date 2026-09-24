@@ -241,6 +241,8 @@ func (b *summaryItemBuilder) withLegacyCountSuffix() *summaryItemBuilder {
 	sk := b.item["SK"].(*types.AttributeValueMemberS).Value
 	b.item["SK"] = &types.AttributeValueMemberS{Value: sk + "#COUNT"}
 	delete(b.item, "AlbumViewIndexPK")
+	delete(b.item, "AvailabilityType")
+	delete(b.item, "UserId")
 	return b
 }
 
@@ -442,6 +444,20 @@ func TestAlbumViewRepository_ListSummariesForUser(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should skip legacy #COUNT-suffixed rows (which lack AvailabilityType) so the strict unmarshal never sees them",
+			args: args{
+				user: userId1,
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withLegacyCountSuffix().withCount(24).build(),
+				albumSummaryItemBuilder(userId1, "OWNED", albumId2).withCount(42).build(),
+			},
+			want: []catalogviews.UserAlbumSummary{
+				{Availability: catalogviews.OwnerAvailability(userId1), AlbumSummary: catalogviews.AlbumSummary{AlbumId: albumId2, MediaCount: 42}},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -461,6 +477,80 @@ func TestAlbumViewRepository_ListSummariesForUser(t *testing.T) {
 				return
 			}
 			assert.Equalf(t, tt.want, got, "ListSummariesForUser(%v, %v)", ctx, tt.args.user)
+		})
+	}
+}
+
+func TestAlbumViewRepository_DeleteLegacyRowsForUser(t *testing.T) {
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
+	albumId1 := catalog.AlbumId{Owner: "owner1", FolderName: catalog.NewFolderName("/album-1")}
+	albumId2 := catalog.AlbumId{Owner: "owner1", FolderName: catalog.NewFolderName("/album-2")}
+
+	type args struct {
+		userId usermodel.UserId
+	}
+	tests := []struct {
+		name      string
+		args      args
+		before    []map[string]types.AttributeValue
+		wantAfter []map[string]types.AttributeValue
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name:      "it should do nothing when the user has no rows at all",
+			args:      args{userId: userId1},
+			before:    nil,
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should leave new-schema rows untouched",
+			args: args{userId: userId1},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(42).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(42).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should delete every legacy #COUNT-suffixed row for that user and keep new-schema rows and other users",
+			args: args{userId: userId1},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withLegacyCountSuffix().withCount(1).build(),
+				albumSummaryItemBuilder(userId1, "VISITOR", albumId2).withLegacyCountSuffix().withCount(2).build(),
+				albumSummaryItemBuilder(userId1, "OWNED", albumId2).withCount(42).build(),
+				albumSummaryItemBuilder(userId2, "OWNED", albumId1).withLegacyCountSuffix().withCount(9).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId2).withCount(42).build(),
+				albumSummaryItemBuilder(userId2, "OWNED", albumId1).withLegacyCountSuffix().withCount(9).build(),
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn := dyn.Subtest(t)
+
+			if !assert.NoError(t, dyn.WithDbContent(ctx, tt.before)) {
+				return
+			}
+
+			a := &AlbumViewRepository{
+				Client:    dyn.Client,
+				TableName: dyn.Table,
+			}
+			err := a.DeleteLegacyRowsForUser(ctx, tt.args.userId)
+			if tt.wantErr(t, err, fmt.Sprintf("DeleteLegacyRowsForUser(%v)", tt.args.userId)) {
+				_, err := dyn.EqualContent(ctx, tt.wantAfter)
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

@@ -21,7 +21,8 @@ func (s UserAlbumSummary) ToSummaryForUsers() AlbumSummaryForUsers {
 }
 
 type AlbumSummaryInMemoryRepository struct {
-	Summaries []UserAlbumSummary
+	Summaries               []UserAlbumSummary
+	LegacyRowsCleanedForUsers []usermodel.UserId
 }
 
 func (r *AlbumSummaryInMemoryRepository) ListSummariesForUser(ctx context.Context, userId usermodel.UserId) ([]UserAlbumSummary, error) {
@@ -163,5 +164,10 @@ func (r *AlbumSummaryInMemoryRepository) DeleteAllRowsForAlbum(ctx context.Conte
 	r.Summaries = slices.DeleteFunc(r.Summaries, func(current UserAlbumSummary) bool {
 		return current.AlbumSummary.AlbumId.IsEqual(albumId)
 	})
+	return nil
+}
+
+func (r *AlbumSummaryInMemoryRepository) DeleteLegacyRowsForUser(_ context.Context, userId usermodel.UserId) error {
+	r.LegacyRowsCleanedForUsers = append(r.LegacyRowsCleanedForUsers, userId)
 	return nil
 }

@@ -44,13 +44,14 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 		dry   bool
 	}
 	tests := []struct {
-		name          string
-		fields        fields
-		current       []UserAlbumSummary
-		args          args
-		wantSummaries []UserAlbumSummary
-		wantDrifts    []Drift
-		wantErr       assert.ErrorAssertionFunc
+		name                       string
+		fields                     fields
+		current                    []UserAlbumSummary
+		args                       args
+		wantSummaries              []UserAlbumSummary
+		wantDrifts                 []Drift
+		expectLegacyCleanupForUsers []usermodel.UserId
+		wantErr                    assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should not fail when no album is found for the owner",
@@ -98,6 +99,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 				NewDeletedDrift(staleAlbum2Visitor2),
 				NewMissingDrift(UserAlbumSummary{AlbumSummary: album1Summary, Availability: VisitorAvailability(userId2)}),
 			},
+			expectLegacyCleanupForUsers: []usermodel.UserId{userId1, userId2, userId3},
 			args: args{
 				owner: owner1,
 				dry:   false,
@@ -150,6 +152,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			wantDrifts: []Drift{
 				NewOverrideDrift(UserAlbumSummary{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)}),
 			},
+			expectLegacyCleanupForUsers: []usermodel.UserId{userId1},
 			args: args{
 				owner: owner1,
 				dry:   false,
@@ -178,6 +181,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			wantDrifts: []Drift{
 				NewOverrideDrift(UserAlbumSummary{AlbumSummary: album1Summary, Availability: OwnerAvailability(userId1)}),
 			},
+			expectLegacyCleanupForUsers: []usermodel.UserId{userId1},
 			args: args{
 				owner: owner1,
 				dry:   false,
@@ -202,6 +206,7 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			if tt.wantErr(t, err, fmt.Sprintf("Reconcile(%v, %v)", tt.args.owner, tt.args.dry)) {
 				assert.ElementsMatch(t, tt.wantSummaries, repository.Summaries, "Reconcile(%v, %v) ; A=Expected ; B=Got", tt.args.owner, tt.args.dry)
 				assert.ElementsMatch(t, tt.wantDrifts, drifts, "Reconcile(%v, %v) drifts ; A=Expected ; B=Got", tt.args.owner, tt.args.dry)
+				assert.ElementsMatch(t, tt.expectLegacyCleanupForUsers, repository.LegacyRowsCleanedForUsers, "Reconcile(%v, %v) legacy cleanup ; A=Expected ; B=Got", tt.args.owner, tt.args.dry)
 			}
 		})
 	}
@@ -397,7 +402,7 @@ func TestDriftDetector_Detect(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			d := &DriftDetector{GetCurrentAlbumSummariesPort: tt.fields.GetCurrentAlbumSummariesPort}
 
-			got, err := d.Detect(context.Background(), tt.expected)
+			got, _, err := d.Detect(context.Background(), tt.expected)
 			if tt.wantErr(t, err, fmt.Sprintf("Detect(%v)", tt.expected)) {
 				assert.ElementsMatch(t, tt.wantDrifts, got, "Detect(%v)", tt.expected)
 			}

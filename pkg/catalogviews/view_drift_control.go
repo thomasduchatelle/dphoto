@@ -93,7 +93,7 @@ func (d *OwnerDriftReconciler) Reconcile(ctx context.Context, owner ownermodel.O
 		return nil, err
 	}
 
-	drifts, err := d.DriftDetector.Detect(ctx, expected)
+	drifts, users, err := d.DriftDetector.Detect(ctx, expected)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,23 @@ func (d *OwnerDriftReconciler) Reconcile(ctx context.Context, owner ownermodel.O
 		}
 	}
 
+	for _, observer := range d.DriftObservers {
+		cleaner, ok := observer.(LegacyRowsCleaner)
+		if !ok {
+			continue
+		}
+		for _, userId := range users {
+			if err := cleaner.OnReconciledUser(ctx, userId); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return drifts, nil
+}
+
+type LegacyRowsCleaner interface {
+	OnReconciledUser(ctx context.Context, userId usermodel.UserId) error
 }
 
 type GetCurrentAlbumSummariesPort interface {
@@ -119,9 +135,7 @@ type DriftDetector struct {
 	GetCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort
 }
 
-// Detect computes the drifts between the expected summaries (rebuilt from canonical data) and the
-// current projection.
-func (d *DriftDetector) Detect(ctx context.Context, summaries []AlbumSummaryForUsers) ([]Drift, error) {
+func (d *DriftDetector) Detect(ctx context.Context, summaries []AlbumSummaryForUsers) ([]Drift, []usermodel.UserId, error) {
 	expected := make(map[usermodel.UserId]map[catalog.AlbumId]UserAlbumSummary)
 	var owners []ownermodel.Owner
 
@@ -143,14 +157,16 @@ func (d *DriftDetector) Detect(ctx context.Context, summaries []AlbumSummaryForU
 	}
 
 	var drifts []Drift
+	users := make([]usermodel.UserId, 0, len(expected))
 	for userId, expectedForUser := range expected {
+		users = append(users, userId)
 		current, err := d.GetCurrentAlbumSummariesPort.ListSummariesForUserAndOwners(ctx, userId, owners...)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		drifts = append(drifts, detectDriftsForUser(expectedForUser, current)...)
 	}
-	return drifts, nil
+	return drifts, users, nil
 }
 
 func detectDriftsForUser(expected map[catalog.AlbumId]UserAlbumSummary, current []UserAlbumSummary) []Drift {
@@ -205,6 +221,7 @@ func (l LoggerDriftObserver) OnDetectedDrifts(_ context.Context, drifts []Drift)
 type DriftSynchronizerPort interface {
 	PutSummariesPort
 	DeleteRowPort
+	DeleteLegacyRowsForUserPort
 }
 
 type DriftSynchronizerObserver struct {
@@ -225,4 +242,8 @@ func (d *DriftSynchronizerObserver) OnDetectedDrifts(ctx context.Context, drifts
 		}
 	}
 	return nil
+}
+
+func (d *DriftSynchronizerObserver) OnReconciledUser(ctx context.Context, userId usermodel.UserId) error {
+	return d.DriftSynchronizerPort.DeleteLegacyRowsForUser(ctx, userId)
 }
