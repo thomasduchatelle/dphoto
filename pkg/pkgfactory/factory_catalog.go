@@ -2,6 +2,7 @@ package pkgfactory
 
 import (
 	"context"
+
 	"github.com/thomasduchatelle/dphoto/pkg/awssupport/awsfactory"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchiveasync"
@@ -58,9 +59,6 @@ func AlbumQueries(ctx context.Context) *catalog.AlbumQueries {
 	})
 }
 
-// TimelineRepository returns the catalog.TimelineRepository shared by every album-mutating
-// use case: it loads a TimelineAggregate for an owner and persists the album-level writes
-// (insert, delete, rename, amend-dates) through the DynamoDB adapter.
 func TimelineRepository(ctx context.Context) *catalog.TimelineRepositoryAdapter {
 	return singletons.MustSingleton(func() (*catalog.TimelineRepositoryAdapter, error) {
 		return &catalog.TimelineRepositoryAdapter{
@@ -73,8 +71,15 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 	repository := CatalogRepository(ctx)
 	return catalog.NewInsertMedias(
 		repository,
-		CommandHandlerAlbumSize(ctx),
+		AlbumView(ctx),
 	)
+}
+
+// Catalog exposes the catalog use-case factory built during pkgfactory bootstrap.
+// It is the same instance the API lambdas reach through common.Factory, made available so
+// tests and tooling can trigger album mutations without duplicating the wiring.
+func Catalog() CatalogFactory {
+	return factory.SimpleCatalogFactory
 }
 
 func CatalogMediaQueries(ctx context.Context) *catalog.MediaQueries {
@@ -95,7 +100,7 @@ func (s *SimpleCatalogFactory) CreateAlbumCase(ctx context.Context) *catalog.Cre
 		TimelineRepository(ctx),
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
-		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		AlbumView(ctx),
 	)
 }
 
@@ -106,18 +111,17 @@ func (s *SimpleCatalogFactory) CreateAlbumDeleteCase(ctx context.Context) *catal
 		repository,
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
-		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		AlbumView(ctx),
 	)
 }
 
 func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.RenameAlbum {
-	// TODO ACL Sharing and other resources should be transferred as well when renaming (recreating) an album
 	repository := CatalogRepository(ctx)
 	return catalog.NewRenameAlbum(
 		TimelineRepository(ctx),
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		&catalog.AlbumRenamedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
-		&catalog.AlbumRenamedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		AlbumView(ctx),
 	)
 }
 
@@ -128,6 +132,6 @@ func (s *SimpleCatalogFactory) AmendAlbumDatesCase(ctx context.Context) *catalog
 		repository,
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
 		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
-		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: CommandHandlerAlbumSize(ctx)},
+		AlbumView(ctx),
 	)
 }

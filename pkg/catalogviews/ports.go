@@ -17,6 +17,16 @@ func (f FindAlbumByOwnerFunc) FindAlbumsByOwner(ctx context.Context, owner owner
 	return f(ctx, owner)
 }
 
+type FindAlbumsByIdsPort interface {
+	FindAlbumsById(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error)
+}
+
+type FindAlbumsByIdsFunc func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error)
+
+func (f FindAlbumsByIdsFunc) FindAlbumsById(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) {
+	return f(ctx, ids)
+}
+
 type GetAlbumSharingGridPort interface {
 	GetAlbumSharingGrid(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error)
 }
@@ -37,45 +47,12 @@ func (f MediaCounterFunc) CountMedia(ctx context.Context, album ...catalog.Album
 	return f(ctx, album...)
 }
 
-type OwnedAlbumListProvider struct {
-	FindAlbumByOwnerPort    FindAlbumByOwnerPort
-	GetAlbumSharingGridPort GetAlbumSharingGridPort
-	MediaCounterPort        MediaCounterPort
+type OwnerUserIdPort interface {
+	GetOwnerUserId(ctx context.Context, owner ownermodel.Owner) (usermodel.UserId, error)
 }
 
-func (o *OwnedAlbumListProvider) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
-	if user.Owner == nil {
-		return nil, nil
-	}
+type OwnerUserIdFunc func(ctx context.Context, owner ownermodel.Owner) (usermodel.UserId, error)
 
-	ownedAlbums, err := o.FindAlbumByOwnerPort.FindAlbumsByOwner(ctx, *user.Owner)
-	if err != nil {
-		return nil, err
-	}
-
-	albumIds := make([]catalog.AlbumId, len(ownedAlbums))
-	for i, album := range ownedAlbums {
-		albumIds[i] = album.AlbumId
-	}
-
-	mediaCount, err := o.MediaCounterPort.CountMedia(ctx, albumIds...)
-	if err != nil {
-		return nil, err
-	}
-
-	sharing, err := o.GetAlbumSharingGridPort.GetAlbumSharingGrid(ctx, *user.Owner)
-
-	var view []*VisibleAlbum
-	for _, album := range ownedAlbums {
-		count, _ := mediaCount[album.AlbumId]
-		sharedTo, _ := sharing[album.AlbumId]
-		view = append(view, &VisibleAlbum{
-			Album:              *album,
-			MediaCount:         count,
-			Visitors:           sharedTo,
-			OwnedByCurrentUser: true,
-		})
-	}
-
-	return view, err
+func (f OwnerUserIdFunc) GetOwnerUserId(ctx context.Context, owner ownermodel.Owner) (usermodel.UserId, error) {
+	return f(ctx, owner)
 }

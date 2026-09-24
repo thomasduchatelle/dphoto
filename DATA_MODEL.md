@@ -15,17 +15,18 @@ Schema
 | {OWNER}#MEDIA#{id}       | LOCATION#                                   | Media location if the archive                            | archivedynamo        |
 | USER#{EMAIL}             | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | Scopes allowed for a user (ownership, shared, ...)       | aclscopedynamodb     |
 | USER#{EMAIL}             | IDENTITY#                                   | Details about the user (name, picture, ...)              | aclidentitydynamodb  |
-| USER#{EMAIL}#ALBUMS_VIEW | OWNED#{OWNER}#{FOLDER_NAME}#COUNT           | (view) number of medias in an album owned by the user    | catalogviewsdynamodb |
-| USER#{EMAIL}#ALBUMS_VIEW | VISITOR#{OWNER}#{FOLDER_NAME}#COUNT         | (view) number of medias in an album shared with the user | catalogviewsdynamodb |
+| USER#{EMAIL}#ALBUMS_VIEW | OWNED#{OWNER}#{FOLDER_NAME}                 | (view) album summary for an album owned by the user: count + display fields (name/start/end)    | catalogviewsdynamodb |
+| USER#{EMAIL}#ALBUMS_VIEW | VISITOR#{OWNER}#{FOLDER_NAME}               | (view) album summary for an album shared with the user: count + display fields (name/start/end) | catalogviewsdynamodb |
 | REFRESH#{TOKEN}          | #REFRESH_SPEC                               | Refresh token                                            | aclrefreshdynamodb   |
 
 ### Global indexes
 
 [create_update_table.go](pkg/awssupport/appdynamodb/create_update_table.go)
 
-| Name                   | PK name / SK name              | PK                           | SK                                          | Description                             |
-|------------------------|--------------------------------|------------------------------|---------------------------------------------|-----------------------------------------|
-| AlbumIndex             | AlbumIndexPK / AlbumIndexSK    | {OWNER}#{FOLDER_NAME}        | #METADATA                                   | Catalog - Find medias by albums         |
-| ReverseLocationIndex   | LocationKeyPrefix / LocationId | {S3 KEY (WITHOUT FILE NAME)} | {MEDIA ID}                                  | Archive - Warmup cache                  |
-| ReverseGrantIndex      | ResourceOwner / SK             | {OWNER}                      | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | ACL - list to whom resources are shared |
-| RefreshTokenExpiration | SK / AbsoluteExpiryTime        | #REFRESH_SPEC                | {DATETIME}                                  | OAuth - housekeeping old refresh token  |
+| Name                   | PK name / SK name              | PK                                      | SK                                          | Description                                                                                      |
+|------------------------|--------------------------------|-----------------------------------------|---------------------------------------------|--------------------------------------------------------------------------------------------------|
+| AlbumIndex             | AlbumIndexPK / AlbumIndexSK    | {OWNER}#{FOLDER_NAME}                   | #METADATA                                   | Catalog - Find medias by albums                                                                  |
+| ReverseLocationIndex   | LocationKeyPrefix / LocationId | {S3 KEY (WITHOUT FILE NAME)}            | {MEDIA ID}                                  | Archive - Warmup cache                                                                           |
+| ReverseGrantIndex      | ResourceOwner / SK             | {OWNER}                                 | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | ACL - list to whom resources are shared                                                          |
+| RefreshTokenExpiration | SK / AbsoluteExpiryTime        | #REFRESH_SPEC                           | {DATETIME}                                  | OAuth - housekeeping old refresh token                                                           |
+| AlbumViewByAlbumIndex  | AlbumViewIndexPK / SK          | ALBUM#{OWNER}#{FOLDER_NAME}#ALBUMS_VIEW | {AVAILABILITY_TYPE}#{OWNER}#{FOLDER_NAME}   | View - list every viewer row of an album (drives event-driven updates without an ACL round-trip) |

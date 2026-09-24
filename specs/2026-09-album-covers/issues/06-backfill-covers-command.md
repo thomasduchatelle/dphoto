@@ -2,14 +2,14 @@
 
 Status: ready
 Phase: 2
-Layer: CLI — `cmd/dphoto` (or a revived `tools/dphotoops`)
+Layer: CLI — `cmd/dphotops`
 Depends on: 02
 
 ## Description
 
 A one-off, administrator-run command that gives existing albums covers, since backup only completes albums
-that receive new medias. Decide the exact entry point (a new `dphoto` subcommand vs reviving
-`tools/dphotoops`) during implementation.
+that receive new medias. Add a subcommand under `cmd/dphotops` (the admin binary that reuses `dphoto`'s
+config).
 
 See `../design.md` (Completion operation) and `spec.md` (Backfill existing albums).
 

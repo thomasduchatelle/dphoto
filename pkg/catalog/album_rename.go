@@ -6,9 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// AlbumRenamed is fired after a folder-name-changing rename has been persisted: it carries
-// the album that was replaced, the newly created album, and the medias that were actually
-// moved from the former to the latter.
 type AlbumRenamed struct {
 	ExistingAlbum     Album
 	RenamedAlbum      Album
@@ -38,10 +35,6 @@ func NewRenameAlbum(
 	}
 }
 
-// RenameAlbum applies a rename request. When only the display name changes (RenameFolder is
-// false and no ForcedFolderName is provided), it is an in-place update of the album row.
-// Otherwise, the album is replaced: a new row is inserted under the new folder name, medias
-// are transferred, the old row is deleted, and an AlbumRenamed event is fired.
 type RenameAlbum struct {
 	TimelineRepository    TimelineRepository
 	TransferMediasService TransferMediasService
@@ -50,10 +43,28 @@ type RenameAlbum struct {
 
 func (r *RenameAlbum) RenameAlbum(ctx context.Context, request RenameAlbumRequest) error {
 	if request.NewName != "" && !request.RenameFolder && request.ForcedFolderName == "" {
-		return r.TimelineRepository.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
+		return r.renameInPlace(ctx, request)
 	}
 
 	return r.replaceAlbum(ctx, request)
+}
+
+func (r *RenameAlbum) renameInPlace(ctx context.Context, request RenameAlbumRequest) error {
+	previous, renamed, err := r.TimelineRepository.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
+	if err != nil {
+		return err
+	}
+
+	event := AlbumRenamed{
+		ExistingAlbum: previous,
+		RenamedAlbum:  renamed,
+	}
+	for _, observer := range r.AlbumRenamedObservers {
+		if err = observer.OnAlbumRenamed(ctx, event); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *RenameAlbum) replaceAlbum(ctx context.Context, request RenameAlbumRequest) error {
