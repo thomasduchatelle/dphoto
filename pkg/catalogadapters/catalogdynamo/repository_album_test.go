@@ -349,6 +349,19 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 		Owner:      "ironman",
 		FolderName: catalog.NewFolderName("/album-1"),
 	}
+	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
+	album1PK := &types.AttributeValueMemberS{Value: "ironman#ALBUM"}
+	album1SK := &types.AttributeValueMemberS{Value: "ALBUM#/album-1"}
+	albumEntryWithDates := func(name string) map[string]types.AttributeValue {
+		entry := albumEntry(albumId1, name)
+		entry["PK"] = album1PK
+		entry["SK"] = album1SK
+		entry["AlbumStart"] = &types.AttributeValueMemberS{Value: "2024-01-01T00:00:00Z"}
+		entry["AlbumEnd"] = &types.AttributeValueMemberS{Value: "2024-06-01T00:00:00Z"}
+		return entry
+	}
+
 	dyn := dynamotestutils.NewTestContext(context.Background(), t)
 
 	type args struct {
@@ -356,23 +369,30 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 		newName string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		before  []map[string]types.AttributeValue
-		after   []map[string]types.AttributeValue
-		wantErr assert.ErrorAssertionFunc
+		name      string
+		args      args
+		before    []map[string]types.AttributeValue
+		after     []map[string]types.AttributeValue
+		wantAlbum catalog.Album
+		wantErr   assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should update the name of an album that exists",
+			name: "it should update the name of an album that exists and return the renamed album",
 			args: args{
 				albumId: albumId1,
 				newName: "New Name",
 			},
 			before: []map[string]types.AttributeValue{
-				albumEntry(albumId1, "Old Name"),
+				albumEntryWithDates("Old Name"),
 			},
 			after: []map[string]types.AttributeValue{
-				albumEntry(albumId1, "New Name"),
+				albumEntryWithDates("New Name"),
+			},
+			wantAlbum: catalog.Album{
+				AlbumId: albumId1,
+				Name:    "New Name",
+				Start:   start,
+				End:     end,
 			},
 			wantErr: assert.NoError,
 		},
@@ -403,8 +423,9 @@ func TestRepository_UpdateAlbumName(t *testing.T) {
 				table:  dyn.Table,
 			}
 
-			err = r.UpdateAlbumName(context.Background(), tt.args.albumId, tt.args.newName)
+			got, err := r.UpdateAlbumName(context.Background(), tt.args.albumId, tt.args.newName)
 			if tt.wantErr(t, err, fmt.Sprintf("UpdateAlbumName(%v, %v, %v)", context.Background(), tt.args.albumId, tt.args.newName)) {
+				assert.Equal(t, tt.wantAlbum, got, "UpdateAlbumName returned album")
 				_, err := dyn.EqualContent(dyn.Ctx, tt.after)
 				assert.NoError(t, err, "AssertDbContent")
 			}

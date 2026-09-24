@@ -5,45 +5,37 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/acl/catalogacl"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviewsadapters/catalogviewsdynamodb"
+	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
 func AlbumViewRepository(ctx context.Context) *catalogviewsdynamodb.AlbumViewRepository {
-	return &catalogviewsdynamodb.AlbumViewRepository{
-		Client:    AWSFactory(ctx).GetDynamoDBClient(),
-		TableName: AWSNames.DynamoDBName(),
-	}
+	return singletons.MustSingleton(func() (*catalogviewsdynamodb.AlbumViewRepository, error) {
+		return &catalogviewsdynamodb.AlbumViewRepository{
+			Client:    AWSFactory(ctx).GetDynamoDBClient(),
+			TableName: AWSNames.DynamoDBName(),
+		}, nil
+	})
 }
 
 func CatalogToACLAdapter(ctx context.Context) *catalogacl.ReverseReader {
-	return &catalogacl.ReverseReader{
-		ScopeRepository: AclQueries(ctx),
-	}
+	return singletons.MustSingleton(func() (*catalogacl.ReverseReader, error) {
+		return &catalogacl.ReverseReader{
+			ScopeRepository: AclQueries(ctx),
+		}, nil
+	})
 }
 
 func AlbumView(ctx context.Context) *catalogviews.AlbumView {
-	albumQueries := AlbumQueries(ctx)
-	albumViewRepository := AlbumViewRepository(ctx)
-	aclAdapter := CatalogToACLAdapter(ctx)
-
-	return catalogviews.NewAlbumView(
-		albumQueries,
-		aclAdapter,
-		albumQueries,
-		aclAdapter,
-		albumViewRepository,
-	)
-}
-
-func CommandHandlerAlbumSize(ctx context.Context) *catalogviews.CommandHandlerAlbumSize {
-	albumQueries := AlbumQueries(ctx)
-	albumViewRepository := AlbumViewRepository(ctx)
-	adapter := CatalogToACLAdapter(ctx)
-
-	return &catalogviews.CommandHandlerAlbumSize{
-		MediaCounterPort:              albumQueries,
-		ListUserWhoCanAccessAlbumPort: adapter,
-		ViewWriteRepository:           albumViewRepository,
-	}
+	return singletons.MustSingleton(func() (*catalogviews.AlbumView, error) {
+		albumQueries := AlbumQueries(ctx)
+		return catalogviews.NewAlbumView(
+			AlbumViewRepository(ctx),
+			CatalogToACLAdapter(ctx),
+			albumQueries,
+			albumQueries,
+			CatalogToACLAdapter(ctx),
+		), nil
+	})
 }
 
 func OwnerDriftReconciler(ctx context.Context, dry bool, options ...catalogviews.DriftOption) *catalogviews.OwnerDriftReconciler {

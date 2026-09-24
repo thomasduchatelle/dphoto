@@ -141,7 +141,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 			},
 		},
 		{
-			name:   "it should update the name in place if the folder name is unchanged (no transfer, no event fired)",
+			name:   "it should update the name in place and fire the AlbumRenamed event (folder unchanged, no transfer)",
 			fields: fields{AlbumRepository: repositoryWithAvenger()},
 			args: args{
 				request: catalog.RenameAlbumRequest{
@@ -152,7 +152,22 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 				},
 			},
 			expectAlbumsByIds: map[catalog.AlbumId]string{existingAlbum.AlbumId: newName},
-			wantErr:           assert.NoError,
+			expectRenamedEvents: []catalog.AlbumRenamed{
+				{
+					ExistingAlbum: catalog.Album{
+						AlbumId: existingAlbum.AlbumId,
+						Start:   existingAlbum.Start,
+						End:     existingAlbum.End,
+					},
+					RenamedAlbum: catalog.Album{
+						AlbumId: existingAlbum.AlbumId,
+						Name:    newName,
+						Start:   existingAlbum.Start,
+						End:     existingAlbum.End,
+					},
+				},
+			},
+			wantErr: assert.NoError,
 		},
 		{
 			name:                  "it should replace the album with a new folder name generated from the new name, transferring medias and firing the AlbumRenamed event",

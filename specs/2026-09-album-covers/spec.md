@@ -127,8 +127,8 @@ The feature ships in ordered phases. Each issue names its phase and treats later
   untouched (cheap even if backup works image by image).
 - **Q5 Authorization**: only users who can edit the album (owner-level). Visitors read-only. _(recommended,
   assumed accepted — confirm if wrong.)_
-- **Q6 Backfill invocation**: a CLI entry point — either a new `dphoto` command or reviving
-  `tools/dphotoops`. Exact form decided during implementation of the story.
+- **Q6 Backfill invocation**: a CLI entry point in `cmd/dphotops` (admin binary reusing the same
+  config as `dphoto`). Exact form decided during implementation of the story.
 - **Q7 UI placement**: the UI is being rewritten in parallel; do not read the current UI. Assume the
   **re-randomise** action on the album page (grid of all pictures) and **pick/unpick** on the media page
   (fullscreen media).

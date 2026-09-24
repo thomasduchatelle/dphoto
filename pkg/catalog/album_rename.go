@@ -50,10 +50,31 @@ type RenameAlbum struct {
 
 func (r *RenameAlbum) RenameAlbum(ctx context.Context, request RenameAlbumRequest) error {
 	if request.NewName != "" && !request.RenameFolder && request.ForcedFolderName == "" {
-		return r.TimelineRepository.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
+		return r.renameInPlace(ctx, request)
 	}
 
 	return r.replaceAlbum(ctx, request)
+}
+
+func (r *RenameAlbum) renameInPlace(ctx context.Context, request RenameAlbumRequest) error {
+	renamed, err := r.TimelineRepository.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
+	if err != nil {
+		return err
+	}
+
+	existing := renamed
+	existing.Name = ""
+
+	event := AlbumRenamed{
+		ExistingAlbum: existing,
+		RenamedAlbum:  renamed,
+	}
+	for _, observer := range r.AlbumRenamedObservers {
+		if err = observer.OnAlbumRenamed(ctx, event); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *RenameAlbum) replaceAlbum(ctx context.Context, request RenameAlbumRequest) error {

@@ -2,12 +2,13 @@ package catalogviews
 
 import (
 	"context"
-	"github.com/pkg/errors"
+	"slices"
+
 	log "github.com/sirupsen/logrus"
+
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"slices"
 )
 
 type DriftOption struct {
@@ -46,159 +47,164 @@ func (o *DriftOption) Observer() DriftObserver {
 // NewDriftReconciler creates a new DriftReconciler in DRY mode ; use the option DriftOptionSynchronizer to reconcile.
 func NewDriftReconciler(
 	findAlbumByOwnerPort FindAlbumByOwnerPort,
-	getCurrentAlbumSizesPort GetCurrentAlbumSizesPort,
+	getCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort,
 	listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort,
 	mediaCounterPort MediaCounterPort,
-	DriftObservers ...DriftOption,
+	driftOptions ...DriftOption,
 ) *OwnerDriftReconciler {
-	observers := []DriftObserver{
-		new(LoggerDriftObserver),
-	}
-	for _, option := range DriftObservers {
-		observer := option.Observer()
-		if observer != nil {
+	observers := []DriftObserver{new(LoggerDriftObserver)}
+	for _, option := range driftOptions {
+		if observer := option.Observer(); observer != nil {
 			observers = append(observers, observer)
 		}
 	}
 
 	return &OwnerDriftReconciler{
-		FindAlbumByOwnerPort:     findAlbumByOwnerPort,
-		GetCurrentAlbumSizesPort: getCurrentAlbumSizesPort,
-		AlbumReCounter: AlbumReCounter{
+		FindAlbumByOwnerPort: findAlbumByOwnerPort,
+		AlbumSummaryReprojector: AlbumSummaryReprojector{
 			ListUserWhoCanAccessAlbumPort: listUserWhoCanAccessAlbumPort,
 			MediaCounterPort:              mediaCounterPort,
 		},
 		DriftDetector: &DriftDetector{
-			GetCurrentAlbumSizesPort: getCurrentAlbumSizesPort,
-			DriftObservers:           observers,
+			GetCurrentAlbumSummariesPort: getCurrentAlbumSummariesPort,
 		},
+		DriftObservers: observers,
 	}
 }
 
 type OwnerDriftReconciler struct {
-	FindAlbumByOwnerPort     FindAlbumByOwnerPort
-	GetCurrentAlbumSizesPort GetCurrentAlbumSizesPort
-	AlbumReCounter           AlbumReCounter
-	DriftDetector            *DriftDetector
+	FindAlbumByOwnerPort    FindAlbumByOwnerPort
+	AlbumSummaryReprojector AlbumSummaryReprojector
+	DriftDetector           *DriftDetector
+	DriftObservers          []DriftObserver
 }
 
-// Reconcile is re-computing counts for each album
-func (d *OwnerDriftReconciler) Reconcile(ctx context.Context, owner ownermodel.Owner) error {
+// Reconcile rebuilds the album-list projection for the owner, detects drifts against the current
+// projection, hands them to every observer (logger, synchronizer, ...) and returns them so callers
+// can render their own reports.
+func (d *OwnerDriftReconciler) Reconcile(ctx context.Context, owner ownermodel.Owner) ([]Drift, error) {
 	albums, err := d.FindAlbumByOwnerPort.FindAlbumsByOwner(ctx, owner)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	albumIds := make([]catalog.AlbumId, len(albums))
-	for i, albumId := range albums {
-		albumIds[i] = albumId.AlbumId
+	expected, err := d.AlbumSummaryReprojector.Reproject(ctx, albums)
+	if err != nil {
+		return nil, err
 	}
 
-	return d.AlbumReCounter.ReCountMedias(ctx, albumIds, d.DriftDetector)
+	drifts, err := d.DriftDetector.Detect(ctx, expected)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(drifts) > 0 {
+		for _, observer := range d.DriftObservers {
+			if err := observer.OnDetectedDrifts(ctx, drifts); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return drifts, nil
 }
 
-type GetCurrentAlbumSizesPort interface {
-	GetAlbumSizes(ctx context.Context, userId usermodel.UserId, owner ...ownermodel.Owner) ([]UserAlbumSize, error)
+type GetCurrentAlbumSummariesPort interface {
+	ListSummariesForUserAndOwners(ctx context.Context, userId usermodel.UserId, owner ...ownermodel.Owner) ([]UserAlbumSummary, error)
 }
 
+// DriftDetector compares an expected projection against the current stored projection and returns
+// the per-album drifts.
 type DriftDetector struct {
-	GetCurrentAlbumSizesPort GetCurrentAlbumSizesPort
-	DriftObservers           []DriftObserver
+	GetCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort
 }
 
-func (d *DriftDetector) InsertAlbumSize(ctx context.Context, sizes []MultiUserAlbumSize) error {
-	expected := make(map[usermodel.UserId]map[catalog.AlbumId]UserAlbumSize)
+// Detect computes the drifts between the expected summaries (rebuilt from canonical data) and the
+// current projection.
+func (d *DriftDetector) Detect(ctx context.Context, summaries []AlbumSummaryForUsers) ([]Drift, error) {
+	expected := make(map[usermodel.UserId]map[catalog.AlbumId]UserAlbumSummary)
 	var owners []ownermodel.Owner
 
-	for _, size := range sizes {
-		for _, user := range size.Users {
-			userSizes, ok := expected[user.UserId]
+	for _, summary := range summaries {
+		for _, user := range summary.Users {
+			userSummaries, ok := expected[user.UserId]
 			if !ok {
-				userSizes = make(map[catalog.AlbumId]UserAlbumSize)
+				userSummaries = make(map[catalog.AlbumId]UserAlbumSummary)
+				expected[user.UserId] = userSummaries
 			}
-
-			userSizes[size.AlbumId] = UserAlbumSize{
-				AlbumSize:    size.AlbumSize,
+			userSummaries[summary.AlbumId] = UserAlbumSummary{
+				AlbumSummary: summary.AlbumSummary,
 				Availability: user,
 			}
-			expected[user.UserId] = userSizes
-
-			if !slices.Contains(owners, size.AlbumId.Owner) {
-				owners = append(owners, size.AlbumId.Owner)
+			if !slices.Contains(owners, summary.AlbumId.Owner) {
+				owners = append(owners, summary.AlbumId.Owner)
 			}
 		}
 	}
 
 	var drifts []Drift
 	for userId, expectedForUser := range expected {
-		currentAvailabilities, err := d.GetCurrentAlbumSizesPort.GetAlbumSizes(ctx, userId, owners...)
+		current, err := d.GetCurrentAlbumSummariesPort.ListSummariesForUserAndOwners(ctx, userId, owners...)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		drifts = append(drifts, detectDriftsForUser(expectedForUser, current)...)
+	}
+	return drifts, nil
+}
 
-		processed := make(map[catalog.AlbumId]any)
-		for _, currentSize := range currentAvailabilities {
-			processed[currentSize.AlbumSize.AlbumId] = nil
+func detectDriftsForUser(expected map[catalog.AlbumId]UserAlbumSummary, current []UserAlbumSummary) []Drift {
+	var drifts []Drift
+	processed := make(map[catalog.AlbumId]struct{})
 
-			if expectedSize, present := expectedForUser[currentSize.AlbumSize.AlbumId]; !present {
-				drifts = append(drifts, NewNotExpectedDrift(currentSize.Availability, currentSize.AlbumSize.AlbumId))
+	for _, currentSummary := range current {
+		processed[currentSummary.AlbumSummary.AlbumId] = struct{}{}
 
-			} else if currentSize.Availability != expectedSize.Availability {
-				drifts = append(
-					drifts,
-					NewNotExpectedDrift(currentSize.Availability, currentSize.AlbumSize.AlbumId),
-					NewMissingDrift(expectedSize),
-				)
-			} else if currentSize.AlbumSize.MediaCount != expectedSize.AlbumSize.MediaCount {
-				drifts = append(drifts, NewOverrideDrift(expectedSize))
-			}
-		}
-
-		for albumId, expectedSize := range expectedForUser {
-			if _, present := processed[albumId]; !present {
-				drifts = append(drifts, NewMissingDrift(expectedSize))
-			}
+		expectedSummary, present := expected[currentSummary.AlbumSummary.AlbumId]
+		switch {
+		case !present:
+			drifts = append(drifts, NewDeletedDrift(currentSummary))
+		case currentSummary.Availability != expectedSummary.Availability:
+			drifts = append(drifts, NewDeletedDrift(currentSummary), NewMissingDrift(expectedSummary))
+		case hasSummaryDrift(currentSummary.AlbumSummary, expectedSummary.AlbumSummary):
+			drifts = append(drifts, NewOverrideDrift(expectedSummary))
 		}
 	}
 
-	if len(drifts) > 0 {
-		for _, observer := range d.DriftObservers {
-			err := observer.OnDetectedDrifts(ctx, drifts)
-			if err != nil {
-				return err
-			}
+	for albumId, expectedSummary := range expected {
+		if _, present := processed[albumId]; !present {
+			drifts = append(drifts, NewMissingDrift(expectedSummary))
 		}
 	}
 
-	return nil
+	return drifts
+}
+
+func hasSummaryDrift(a, b AlbumSummary) bool {
+	return a.MediaCount != b.MediaCount ||
+		a.Name != b.Name ||
+		!a.Start.Equal(b.Start) ||
+		!a.End.Equal(b.End)
 }
 
 type LoggerDriftObserver struct{}
 
-func (l LoggerDriftObserver) OnDetectedDrifts(ctx context.Context, drifts []Drift) error {
+func (l LoggerDriftObserver) OnDetectedDrifts(_ context.Context, drifts []Drift) error {
 	for _, drift := range drifts {
-		if drift.Expected != nil {
-			size := drift.Expected.AvailableAlbumSize
-			availability := size.Availability.String()
-
-			if drift.Expected.Missing {
-				log.Infof("drift: %-20s | %-30s | %-10s | %-5d", availability, size.AlbumSize.AlbumId, "MISSING", size.AlbumSize.MediaCount)
-			} else {
-				log.Infof("drift: %-20s | %-30s | %-10s | %-5d", availability, size.AlbumSize.AlbumId, "OVERRIDE", size.AlbumSize.MediaCount)
-
-			}
-
-		} else if drift.NotExpected != nil {
-			log.Infof("drift: %-20s | %-30s | %-10s", drift.NotExpected.Availability, drift.NotExpected.AlbumId, "UNEXPECTED")
+		switch drift.Reason {
+		case DriftReasonMissing, DriftReasonOverridden:
+			summary := drift.Expected
+			log.Infof("drift: %-20s | %-30s | %-10s | %-5d", summary.Availability, drift.AlbumId, drift.Reason, summary.AlbumSummary.MediaCount)
+		case DriftReasonDeleted:
+			log.Infof("drift: %-20s | %-30s | %-10s", drift.NotExpected.Availability, drift.AlbumId, drift.Reason)
 		}
-
 	}
 	return nil
 }
 
 type DriftSynchronizerPort interface {
-	InsertAlbumSizePort
-	DeleteAlbumSizePort
+	PutSummariesPort
+	DeleteRowPort
 }
 
 type DriftSynchronizerObserver struct {
@@ -207,23 +213,16 @@ type DriftSynchronizerObserver struct {
 
 func (d *DriftSynchronizerObserver) OnDetectedDrifts(ctx context.Context, drifts []Drift) error {
 	for _, drift := range drifts {
-		switch {
-		case drift.Expected != nil:
-			err := d.DriftSynchronizerPort.InsertAlbumSize(ctx, []MultiUserAlbumSize{drift.Expected.AvailableAlbumSize.ToMultiUser()})
-			if err != nil {
+		switch drift.Reason {
+		case DriftReasonMissing, DriftReasonOverridden:
+			if err := d.DriftSynchronizerPort.PutSummaries(ctx, []AlbumSummaryForUsers{drift.Expected.ToSummaryForUsers()}); err != nil {
 				return err
 			}
-
-		case drift.NotExpected != nil:
-			err := d.DriftSynchronizerPort.DeleteAlbumSize(ctx, drift.NotExpected.Availability, drift.NotExpected.AlbumId)
-			if err != nil {
+		case DriftReasonDeleted:
+			if err := d.DriftSynchronizerPort.DeleteRow(ctx, drift.NotExpected.Availability, drift.AlbumId); err != nil {
 				return err
 			}
-
-		default:
-			return errors.Errorf("Drift not supported: %+v", drift)
 		}
 	}
-
 	return nil
 }

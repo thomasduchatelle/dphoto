@@ -27,7 +27,7 @@ func AclCatalogShare(ctx context.Context) *catalogacl.ShareAlbumCase {
 		ScopeWriter:   AclRepository(ctx),
 		FindAlbumPort: AlbumQueries(ctx),
 		Observers: []catalogacl.AlbumSharedObserver{
-			CommandHandlerAlbumSize(ctx),
+			AlbumView(ctx),
 		},
 	}
 }
@@ -36,7 +36,7 @@ func AclCatalogUnShare(ctx context.Context) *catalogacl.UnShareAlbumCase {
 	return &catalogacl.UnShareAlbumCase{
 		RevokeScopeRepository: AclRepository(ctx),
 		Observers: []catalogacl.AlbumUnSharedObserver{
-			CommandHandlerAlbumSize(ctx),
+			AlbumView(ctx),
 		},
 	}
 }
