@@ -1,7 +1,7 @@
 import {FetchCatalogAdapter} from "@/domains/catalog/adapters/api";
 import {newReadCookieStoreFromComponents} from "@/libs/nextjs-cookies";
 import {loadSession} from "@/libs/security/backend-store";
-import {basePath, newOriginFromHeaders} from "@/libs/requests";
+import {newOriginFromHeaders, runtimeApiPrefix} from "@/libs/requests";
 
 export function newServerSideRestCatalogAdapter(): FetchCatalogAdapter {
     return new FetchCatalogAdapter(
@@ -12,9 +12,8 @@ export function newServerSideRestCatalogAdapter(): FetchCatalogAdapter {
         },
         async () => {
             const url = await newOriginFromHeaders().getCurrentUrl();
-            const prefix = process.env.NODE_ENV === 'development' ? basePath : "";
-            return `${url.origin}${prefix}/api/v1`;
+            return `${url.origin}${runtimeApiPrefix}/api/v1`;
         },
-        async () => process.env.NODE_ENV === 'development' ? basePath : "",
+        async () => runtimeApiPrefix,
     );
 }
