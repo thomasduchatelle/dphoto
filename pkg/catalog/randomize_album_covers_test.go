@@ -168,10 +168,14 @@ type coverServicePortFake struct {
 	err error
 }
 
-func (f coverServicePortFake) Randomise(_ context.Context, _ bool, _ ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
+func (f coverServicePortFake) ForcedRandomise(_ context.Context, _ ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
 	return nil, f.err
 }
 
-func (f coverServicePortFake) StableRefresh(_ context.Context, _ catalog.TransferredMedias) (map[catalog.AlbumId][]catalog.Cover, error) {
+func (f coverServicePortFake) StableRandomise(_ context.Context, _ ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
+	return nil, f.err
+}
+
+func (f coverServicePortFake) ApplyTransfer(_ context.Context, _ catalog.TransferredMedias, _ ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
 	return nil, f.err
 }

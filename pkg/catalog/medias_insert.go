@@ -65,7 +65,7 @@ func (i *InsertMedias) Insert(ctx context.Context, owner ownermodel.Owner, media
 	for albumId := range insertedMedias {
 		affectedAlbums = append(affectedAlbums, albumId)
 	}
-	coversPerAlbum, err := i.CoverService.Randomise(ctx, false, affectedAlbums...)
+	coversPerAlbum, err := i.CoverService.ForcedRandomise(ctx, affectedAlbums...)
 	if err != nil {
 		return errors.Wrapf(err, "InsertMedias failed to randomise covers of %v", affectedAlbums)
 	}

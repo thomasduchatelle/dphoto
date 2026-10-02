@@ -39,7 +39,7 @@ func TestCoverService_Randomise(t *testing.T) {
 		MediaReadRepository *CatalogInMemory
 	}
 	type args struct {
-		stable   bool
+		forced   bool
 		albumIds []catalog.AlbumId
 	}
 	tests := []struct {
@@ -56,7 +56,7 @@ func TestCoverService_Randomise(t *testing.T) {
 				CoverRepository:     NewCoverRepositoryInMemory(),
 				MediaReadRepository: NewCatalogInMemory(),
 			},
-			args:              args{albumIds: nil},
+			args:              args{forced: true, albumIds: nil},
 			wantChanged:       nil,
 			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{},
 			wantErr:           assert.NoError,
@@ -69,7 +69,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(avengersId, image1, image2, image3, image4),
 				),
 			},
-			args: args{albumIds: []catalog.AlbumId{avengersId}},
+			args: args{forced: true, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
 					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
@@ -98,7 +98,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(avengersId, image1, image2, image3, image4),
 				),
 			},
-			args: args{albumIds: []catalog.AlbumId{avengersId}},
+			args: args{forced: true, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
 					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
@@ -128,7 +128,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(avengersId, image1, image2, image3),
 				),
 			},
-			args: args{albumIds: []catalog.AlbumId{avengersId}},
+			args: args{forced: true, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
 					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginCherryPicked},
@@ -155,7 +155,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(avengersId, image1, image2),
 				),
 			},
-			args: args{albumIds: []catalog.AlbumId{avengersId}},
+			args: args{forced: true, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
 					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
@@ -178,7 +178,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(avengersId, video1, other1, image1, image2),
 				),
 			},
-			args: args{albumIds: []catalog.AlbumId{avengersId}},
+			args: args{forced: true, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
 					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
@@ -206,7 +206,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(avengersId, image1, image2, image3, image4, image5),
 				),
 			},
-			args:        args{albumIds: []catalog.AlbumId{avengersId}},
+			args:        args{forced: true, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: nil,
 			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
@@ -229,7 +229,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(stealthId, image5),
 				),
 			},
-			args: args{albumIds: []catalog.AlbumId{avengersId, stealthId}},
+			args: args{forced: true, albumIds: []catalog.AlbumId{avengersId, stealthId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
 					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
@@ -258,7 +258,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(avengersId, image1, image2, image3, image4, image5),
 				),
 			},
-			args: args{stable: true, albumIds: []catalog.AlbumId{avengersId}},
+			args: args{forced: false, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
 					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
@@ -288,7 +288,7 @@ func TestCoverService_Randomise(t *testing.T) {
 					withMedias(avengersId, image1),
 				),
 			},
-			args: args{stable: true, albumIds: []catalog.AlbumId{avengersId}},
+			args: args{forced: false, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
 				avengersId: {
 					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
@@ -310,8 +310,19 @@ func TestCoverService_Randomise(t *testing.T) {
 				Randomiser:          deterministicRandomiser,
 			}
 
-			got, err := service.Randomise(context.Background(), tt.args.stable, tt.args.albumIds...)
-			if !tt.wantErr(t, err, fmt.Sprintf("Randomise(stable=%v, %v)", tt.args.stable, tt.args.albumIds)) {
+			var (
+				got     map[catalog.AlbumId][]catalog.Cover
+				err     error
+				callStr string
+			)
+			if tt.args.forced {
+				got, err = service.ForcedRandomise(context.Background(), tt.args.albumIds...)
+				callStr = fmt.Sprintf("ForcedRandomise(%v)", tt.args.albumIds)
+			} else {
+				got, err = service.StableRandomise(context.Background(), tt.args.albumIds...)
+				callStr = fmt.Sprintf("StableRandomise(%v)", tt.args.albumIds)
+			}
+			if !tt.wantErr(t, err, callStr) {
 				return
 			}
 			assert.Equal(t, tt.wantChanged, got, "returned changed map")
@@ -320,13 +331,14 @@ func TestCoverService_Randomise(t *testing.T) {
 	}
 }
 
-func TestCoverService_StableRefresh(t *testing.T) {
+func TestCoverService_ApplyTransfer(t *testing.T) {
 	type fields struct {
 		CoverRepository     *CoverRepositoryInMemory
 		MediaReadRepository *CatalogInMemory
 	}
 	type args struct {
-		transferred catalog.TransferredMedias
+		transferred     catalog.TransferredMedias
+		deletedAlbumIds []catalog.AlbumId
 	}
 	tests := []struct {
 		name              string
@@ -555,6 +567,57 @@ func TestCoverService_StableRefresh(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
+			name: "it should erase the canonical cover record of every deleted album, even when no media was transferred out of it",
+			fields: fields{
+				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId,
+					catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginCherryPicked},
+				)),
+				MediaReadRepository: NewCatalogInMemory(),
+			},
+			args: args{
+				transferred:     catalog.NewTransferredMedias(),
+				deletedAlbumIds: []catalog.AlbumId{avengersId},
+			},
+			wantChanged: map[catalog.AlbumId][]catalog.Cover{
+				avengersId: nil,
+			},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{},
+			wantErr:           assert.NoError,
+		},
+		{
+			name: "it should erase the canonical cover record of a deleted album even when other albums were affected by the transfer",
+			fields: fields{
+				CoverRepository: NewCoverRepositoryInMemory(
+					coversFor(avengersId, catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom}),
+					coversFor(stealthId, catalog.Cover{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom}),
+				),
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(stealthId, image2, image3),
+				),
+			},
+			args: args{
+				transferred: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{stealthId: {"media-1"}},
+					FromAlbums: []catalog.AlbumId{avengersId},
+				},
+				deletedAlbumIds: []catalog.AlbumId{avengersId},
+			},
+			wantChanged: map[catalog.AlbumId][]catalog.Cover{
+				stealthId: {
+					{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "media-3", Filename: "photo-3.jpg", Origin: catalog.CoverOriginRandom},
+				},
+				avengersId: nil,
+			},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
+				stealthId: {
+					{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "media-3", Filename: "photo-3.jpg", Origin: catalog.CoverOriginRandom},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
 			name: "it should fill empty slots on a destination album with no existing covers",
 			fields: fields{
 				CoverRepository: NewCoverRepositoryInMemory(),
@@ -592,8 +655,8 @@ func TestCoverService_StableRefresh(t *testing.T) {
 				Randomiser:          deterministicRandomiser,
 			}
 
-			got, err := service.StableRefresh(context.Background(), tt.args.transferred)
-			if !tt.wantErr(t, err, fmt.Sprintf("StableRefresh(%v)", tt.args.transferred)) {
+			got, err := service.ApplyTransfer(context.Background(), tt.args.transferred, tt.args.deletedAlbumIds...)
+			if !tt.wantErr(t, err, fmt.Sprintf("ApplyTransfer(%v, %v)", tt.args.transferred, tt.args.deletedAlbumIds)) {
 				return
 			}
 			assert.Equal(t, tt.wantChanged, got, "returned changed map")

@@ -33,7 +33,7 @@ func (b *BackfillCovers) BackfillForOwner(ctx context.Context, owner ownermodel.
 		albumIds[i] = album.AlbumId
 	}
 
-	changed, err := b.CoverService.Randomise(ctx, true, albumIds...)
+	changed, err := b.CoverService.StableRandomise(ctx, albumIds...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to randomise albums of owner %s", owner)
 	}
