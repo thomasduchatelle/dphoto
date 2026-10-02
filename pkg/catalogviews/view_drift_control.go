@@ -50,6 +50,7 @@ func NewDriftReconciler(
 	getCurrentAlbumSummariesPort GetCurrentAlbumSummariesPort,
 	listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort,
 	mediaCounterPort MediaCounterPort,
+	findCoversByAlbumPort FindCoversByAlbumPort,
 	driftOptions ...DriftOption,
 ) *OwnerDriftReconciler {
 	observers := []DriftObserver{new(LoggerDriftObserver)}
@@ -64,6 +65,7 @@ func NewDriftReconciler(
 		AlbumSummaryReprojector: AlbumSummaryReprojector{
 			ListUserWhoCanAccessAlbumPort: listUserWhoCanAccessAlbumPort,
 			MediaCounterPort:              mediaCounterPort,
+			FindCoversByAlbumPort:         findCoversByAlbumPort,
 		},
 		DriftDetector: &DriftDetector{
 			GetCurrentAlbumSummariesPort: getCurrentAlbumSummariesPort,
@@ -200,7 +202,20 @@ func hasSummaryDrift(a, b AlbumSummary) bool {
 	return a.MediaCount != b.MediaCount ||
 		a.Name != b.Name ||
 		!a.Start.Equal(b.Start) ||
-		!a.End.Equal(b.End)
+		!a.End.Equal(b.End) ||
+		!coversEqual(a.Covers, b.Covers)
+}
+
+func coversEqual(a, b []catalog.Cover) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 type LoggerDriftObserver struct{}

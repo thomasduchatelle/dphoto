@@ -30,6 +30,12 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 	ownedAlbum1Id := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("album-1")}
 	ownedAlbum2Id := catalog.AlbumId{Owner: tonyOwner, FolderName: catalog.NewFolderName("album-2")}
 	sharedAlbum3Id := catalog.AlbumId{Owner: pepperOwner, FolderName: catalog.NewFolderName("album-3")}
+	coversForAlbum2 := []catalog.Cover{
+		{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+		{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+		{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
+		{MediaId: "media-4", Filename: "d.jpg", Origin: catalog.CoverOriginRandom},
+	}
 
 	ownerSummariesRepository := func() *AlbumSummaryInMemoryRepository {
 		return &AlbumSummaryInMemoryRepository{
@@ -158,6 +164,39 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 			},
 			args:    args{user: visitorOnlyUser, filter: noFilter},
 			want:    nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should surface covers from the view record (0 covers and 4 covers)",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{
+							AlbumSummary: AlbumSummary{AlbumId: ownedAlbum1Id, Name: "Album One", Start: jan24, End: feb24, MediaCount: 1},
+							Availability: OwnerAvailability(ironmanCurrentUser.UserId),
+						},
+						{
+							AlbumSummary: AlbumSummary{AlbumId: ownedAlbum2Id, Name: "Album Two", Start: feb24, End: mar24, MediaCount: 2, Covers: coversForAlbum2},
+							Availability: OwnerAvailability(ironmanCurrentUser.UserId),
+						},
+					},
+				},
+				GetAlbumSharingGridPort: emptySharingGrid,
+			},
+			args: args{user: ironmanCurrentUser, filter: noFilter},
+			want: []*VisibleAlbum{
+				{
+					Album:              catalog.Album{AlbumId: ownedAlbum2Id, Name: "Album Two", Start: feb24, End: mar24},
+					MediaCount:         2,
+					OwnedByCurrentUser: true,
+					Covers:             coversForAlbum2,
+				},
+				{
+					Album:              catalog.Album{AlbumId: ownedAlbum1Id, Name: "Album One", Start: jan24, End: feb24},
+					MediaCount:         1,
+					OwnedByCurrentUser: true,
+				},
+			},
 			wantErr: assert.NoError,
 		},
 		{

@@ -102,6 +102,43 @@ func (a *AlbumViewRepository) SetCountForAllViewers(ctx context.Context, updates
 	return nil
 }
 
+func (a *AlbumViewRepository) SetCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+	items, err := a.queryByAlbumIndex(ctx, albumId)
+	if err != nil {
+		return errors.Wrapf(err, "failed to list rows for album %v", albumId)
+	}
+
+	records := marshalCovers(covers)
+	for _, item := range items {
+		var update expression.UpdateBuilder
+		if len(records) == 0 {
+			update = expression.Remove(expression.Name("Covers"))
+		} else {
+			update = expression.Set(expression.Name("Covers"), expression.Value(records))
+		}
+		expr, err := expression.NewBuilder().WithUpdate(update).Build()
+		if err != nil {
+			return errors.Wrapf(err, "failed to build expression for SetCoversForAllViewers %+v", albumId)
+		}
+
+		_, err = a.Client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName: &a.TableName,
+			Key: map[string]types.AttributeValue{
+				"PK": item["PK"],
+				"SK": item["SK"],
+			},
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			UpdateExpression:          expr.Update(),
+		})
+		if err != nil {
+			return errors.Wrapf(err, "failed to update covers for album %v", albumId)
+		}
+	}
+
+	return nil
+}
+
 func (a *AlbumViewRepository) SetDisplayFieldsForAllViewers(ctx context.Context, albumId catalog.AlbumId, name string, start, end time.Time) error {
 	items, err := a.queryByAlbumIndex(ctx, albumId)
 	if err != nil {

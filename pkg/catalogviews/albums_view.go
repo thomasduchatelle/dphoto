@@ -61,6 +61,7 @@ func (v *AlbumView) ListAlbums(ctx context.Context, user usermodel.CurrentUser, 
 			},
 			MediaCount:         summary.AlbumSummary.MediaCount,
 			OwnedByCurrentUser: summary.Availability.AsOwner,
+			Covers:             summary.AlbumSummary.Covers,
 		}
 		if summary.Availability.AsOwner {
 			visible.Visitors = sharingGrid[summary.AlbumSummary.AlbumId]
@@ -175,6 +176,13 @@ func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId
 
 func (v *AlbumView) AlbumUnShared(ctx context.Context, albumId catalog.AlbumId, userId usermodel.UserId) error {
 	return v.Repository.DeleteRow(ctx, VisitorAvailability(userId), albumId)
+}
+
+// OnAlbumCoversChanged re-denormalises the cover set of an album into every viewer's row.
+// Mirrors the fan-out of count and display-field updates: catalog operations that change the
+// canonical covers call this to keep the view consistent.
+func (v *AlbumView) OnAlbumCoversChanged(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+	return v.Repository.SetCoversForAllViewers(ctx, albumId, covers)
 }
 
 func (v *AlbumView) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
