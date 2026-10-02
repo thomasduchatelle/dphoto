@@ -25,10 +25,47 @@ type AlbumSummaryRecord struct {
 	AvailabilityType string
 	UserId           string
 	Count            int
-	AlbumName        string `dynamodbav:",omitempty"`
-	AlbumStart       string `dynamodbav:",omitempty"`
-	AlbumEnd         string `dynamodbav:",omitempty"`
+	AlbumName        string        `dynamodbav:",omitempty"`
+	AlbumStart       string        `dynamodbav:",omitempty"`
+	AlbumEnd         string        `dynamodbav:",omitempty"`
+	Covers           []CoverRecord `dynamodbav:",omitempty"`
 	AlbumViewIndexPK string
+}
+
+type CoverRecord struct {
+	MediaId  string
+	Filename string
+	Origin   string
+}
+
+func marshalCovers(covers []catalog.Cover) []CoverRecord {
+	if len(covers) == 0 {
+		return nil
+	}
+	records := make([]CoverRecord, len(covers))
+	for i, cover := range covers {
+		records[i] = CoverRecord{
+			MediaId:  cover.MediaId.Value(),
+			Filename: cover.Filename,
+			Origin:   string(cover.Origin),
+		}
+	}
+	return records
+}
+
+func unmarshalCovers(records []CoverRecord) []catalog.Cover {
+	if len(records) == 0 {
+		return nil
+	}
+	covers := make([]catalog.Cover, len(records))
+	for i, record := range records {
+		covers[i] = catalog.Cover{
+			MediaId:  catalog.MediaId(record.MediaId),
+			Filename: record.Filename,
+			Origin:   catalog.CoverOrigin(record.Origin),
+		}
+	}
+	return covers
 }
 
 func albumsViewPK(user usermodel.UserId) string {
@@ -72,6 +109,7 @@ func marshalAlbumSummary(summary catalogviews.AlbumSummaryForUsers) ([]map[strin
 			AlbumName:        summary.Name,
 			AlbumStart:       marshalTime(summary.Start),
 			AlbumEnd:         marshalTime(summary.End),
+			Covers:           marshalCovers(summary.Covers),
 			AlbumViewIndexPK: albumViewByAlbumIndexPK(summary.AlbumId),
 		})
 		if err != nil {
@@ -119,6 +157,7 @@ func unmarshalAlbumSummary(item map[string]types.AttributeValue) (*catalogviews.
 			Name:       record.AlbumName,
 			Start:      start,
 			End:        end,
+			Covers:     unmarshalCovers(record.Covers),
 		},
 		Availability: availability,
 	}, nil

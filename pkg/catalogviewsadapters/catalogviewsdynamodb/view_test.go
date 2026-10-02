@@ -172,6 +172,36 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
+			name: "it should save the summary with 4 covers when the album has a full set",
+			args: args{
+				summaries: []catalogviews.AlbumSummaryForUsers{
+					{
+						AlbumSummary: catalogviews.AlbumSummary{
+							AlbumId:    albumId1,
+							MediaCount: 42,
+							Covers: []catalog.Cover{
+								{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+								{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+								{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
+								{MediaId: "media-4", Filename: "d.jpg", Origin: catalog.CoverOriginRandom},
+							},
+						},
+						Users: []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+					},
+				},
+			},
+			before: nil,
+			after: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(42).withCovers(
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-4", Filename: "d.jpg", Origin: catalog.CoverOriginRandom},
+				).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
 			name: "it should delete a legacy #COUNT-suffixed row when writing the new row for the same user/album",
 			args: args{
 				summaries: []catalogviews.AlbumSummaryForUsers{
@@ -250,6 +280,19 @@ func (b *summaryItemBuilder) withDisplayFields(name string, start, end time.Time
 	b.item["AlbumName"] = &types.AttributeValueMemberS{Value: name}
 	b.item["AlbumStart"] = &types.AttributeValueMemberS{Value: start.UTC().Format(time.RFC3339)}
 	b.item["AlbumEnd"] = &types.AttributeValueMemberS{Value: end.UTC().Format(time.RFC3339)}
+	return b
+}
+
+func (b *summaryItemBuilder) withCovers(covers ...catalog.Cover) *summaryItemBuilder {
+	entries := make([]types.AttributeValue, len(covers))
+	for i, cover := range covers {
+		entries[i] = &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
+			"MediaId":  &types.AttributeValueMemberS{Value: cover.MediaId.Value()},
+			"Filename": &types.AttributeValueMemberS{Value: cover.Filename},
+			"Origin":   &types.AttributeValueMemberS{Value: string(cover.Origin)},
+		}}
+	}
+	b.item["Covers"] = &types.AttributeValueMemberL{Value: entries}
 	return b
 }
 
@@ -441,6 +484,36 @@ func TestAlbumViewRepository_ListSummariesForUser(t *testing.T) {
 			want: []catalogviews.UserAlbumSummary{
 				{Availability: catalogviews.OwnerAvailability(userId1), AlbumSummary: catalogviews.AlbumSummary{AlbumId: albumId1, MediaCount: 42}},
 				{Availability: catalogviews.VisitorAvailability(userId1), AlbumSummary: catalogviews.AlbumSummary{AlbumId: albumId2, MediaCount: 10, Name: "February 2024", Start: displayFieldsAlbum1Start, End: displayFieldsAlbum1End}},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should unmarshal the full cover set when the row carries 4 covers",
+			args: args{
+				user: userId1,
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(10).withCovers(
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-4", Filename: "d.jpg", Origin: catalog.CoverOriginRandom},
+				).build(),
+			},
+			want: []catalogviews.UserAlbumSummary{
+				{
+					Availability: catalogviews.OwnerAvailability(userId1),
+					AlbumSummary: catalogviews.AlbumSummary{
+						AlbumId:    albumId1,
+						MediaCount: 10,
+						Covers: []catalog.Cover{
+							{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+							{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+							{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
+							{MediaId: "media-4", Filename: "d.jpg", Origin: catalog.CoverOriginRandom},
+						},
+					},
+				},
 			},
 			wantErr: assert.NoError,
 		},
@@ -861,6 +934,120 @@ func TestAlbumViewRepository_SetDisplayFieldsForAllViewers(t *testing.T) {
 			}
 			err = a.SetDisplayFieldsForAllViewers(tt.args.ctx, tt.args.albumId, tt.args.name, tt.args.start, tt.args.end)
 			if tt.wantErr(t, err, fmt.Sprintf("SetDisplayFieldsForAllViewers(%v, %v)", tt.args.ctx, tt.args.albumId)) {
+				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
+			}
+		})
+	}
+}
+
+func TestAlbumViewRepository_SetCoversForAllViewers(t *testing.T) {
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+
+	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
+	albumId1 := catalog.AlbumId{Owner: "owner1", FolderName: catalog.NewFolderName("/album-1")}
+	fullSet := []catalog.Cover{
+		{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+		{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+		{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
+		{MediaId: "media-4", Filename: "d.jpg", Origin: catalog.CoverOriginRandom},
+	}
+
+	type args struct {
+		ctx     context.Context
+		albumId catalog.AlbumId
+		covers  []catalog.Cover
+	}
+	tests := []struct {
+		name      string
+		args      args
+		before    []map[string]types.AttributeValue
+		wantAfter []map[string]types.AttributeValue
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name: "it should do nothing when no viewer row exists for the album",
+			args: args{
+				ctx:     ctx,
+				albumId: albumId1,
+				covers:  fullSet,
+			},
+			before:    nil,
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should fan out the full cover set to every viewer row of the album",
+			args: args{
+				ctx:     ctx,
+				albumId: albumId1,
+				covers:  fullSet,
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(11).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).withCovers(fullSet...).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(11).withCovers(fullSet...).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should clear the covers attribute when the new set is empty",
+			args: args{
+				ctx:     ctx,
+				albumId: albumId1,
+				covers:  nil,
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).withCovers(fullSet...).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should NOT clobber the count or display fields on an existing row",
+			args: args{
+				ctx:     ctx,
+				albumId: albumId1,
+				covers:  fullSet,
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).
+					withCount(42).
+					withDisplayFields("January 2024", displayFieldsAlbum1Start, displayFieldsAlbum1End).
+					build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).
+					withCount(42).
+					withDisplayFields("January 2024", displayFieldsAlbum1Start, displayFieldsAlbum1End).
+					withCovers(fullSet...).
+					build(),
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(ctx, tt.before)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			a := &AlbumViewRepository{
+				Client:    dyn.Client,
+				TableName: dyn.Table,
+			}
+			err = a.SetCoversForAllViewers(tt.args.ctx, tt.args.albumId, tt.args.covers)
+			if tt.wantErr(t, err, fmt.Sprintf("SetCoversForAllViewers(%v, %v)", tt.args.ctx, tt.args.albumId)) {
 				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
 			}
 		})

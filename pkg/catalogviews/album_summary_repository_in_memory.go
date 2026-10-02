@@ -81,6 +81,15 @@ func (r *AlbumSummaryInMemoryRepository) SetDisplayFieldsForAllViewers(ctx conte
 	return nil
 }
 
+func (r *AlbumSummaryInMemoryRepository) SetCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+	for i := range r.Summaries {
+		if r.Summaries[i].AlbumSummary.AlbumId.IsEqual(albumId) {
+			r.Summaries[i].AlbumSummary.Covers = covers
+		}
+	}
+	return nil
+}
+
 func (r *AlbumSummaryInMemoryRepository) IncrementCountForAllViewers(ctx context.Context, updates []AlbumCountDiff) error {
 	if updates == nil {
 		return errors.Errorf("IncrementCountForAllViewers(nil): updates should not be nil")
@@ -141,6 +150,7 @@ func (r *AlbumSummaryInMemoryRepository) RenameAlbum(ctx context.Context, existi
 				Start:      source.Start,
 				End:        source.End,
 				MediaCount: source.MediaCount,
+				Covers:     source.Covers,
 			},
 			Availability: viewer,
 		})

@@ -15,6 +15,7 @@ type VisibleAlbum struct {
 	MediaCount         int                // MediaCount is the number of medias on the album
 	Visitors           []usermodel.UserId // Visitors are the users that can see the album ; only visible to the owner of the album
 	OwnedByCurrentUser bool               // OwnedByCurrentUser is set to true when the user is an owner of the album
+	Covers             []catalog.Cover    // Covers are the 0 to 4 featured medias of the album, denormalised from the canonical cover set
 }
 
 type ListAlbumsFilter struct {
@@ -48,13 +49,14 @@ func (a Availability) String() string {
 }
 
 // AlbumSummary is the per-album projection carried by the album-list view: identity, display
-// fields and the media count.
+// fields, the media count and the cover set.
 type AlbumSummary struct {
 	AlbumId    catalog.AlbumId
 	MediaCount int
 	Name       string
 	Start      time.Time
 	End        time.Time
+	Covers     []catalog.Cover
 }
 
 // AlbumSummaryForUsers is a full projection to be written for a set of users (owner + visitors).
@@ -85,6 +87,7 @@ type AlbumSummaryRepository interface {
 	ListSummariesForUser(ctx context.Context, userId usermodel.UserId) ([]UserAlbumSummary, error)
 	PutSummaries(ctx context.Context, summaries []AlbumSummaryForUsers) error
 	SetDisplayFieldsForAllViewers(ctx context.Context, albumId catalog.AlbumId, name string, start, end time.Time) error
+	SetCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error
 	IncrementCountForAllViewers(ctx context.Context, updates []AlbumCountDiff) error
 	SetCountForAllViewers(ctx context.Context, updates []AlbumCount) error
 	RenameAlbum(ctx context.Context, existingId, renamedId catalog.AlbumId, newName string) error
