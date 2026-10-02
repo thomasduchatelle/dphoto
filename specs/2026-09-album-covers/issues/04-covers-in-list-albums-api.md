@@ -1,6 +1,6 @@
 # 04 — Expose covers on `GET /albums`
 
-Status: ready
+Status: done
 Phase: 2
 Layer: api — `api/lambdas/list-albums`
 Depends on: 03
