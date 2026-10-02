@@ -33,6 +33,7 @@ describe("action:sharingModalOpened", () => {
                 temperature: 0,
                 relativeTemperature: 0,
                 sharedWith: [{user: userA}, {user: userB}, {user: userC}],
+                covers: [],
             }
         ];
         // userA: 2 albums, userB: 2 albums, userC: 1 album, herselfUser: 1 album

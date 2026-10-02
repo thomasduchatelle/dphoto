@@ -14,7 +14,8 @@ function makeAlbum(id: string): Album {
         totalCount: 0,
         temperature: 0,
         relativeTemperature: 0,
-        sharedWith: []
+        sharedWith: [],
+        covers: [],
     };
 }
 

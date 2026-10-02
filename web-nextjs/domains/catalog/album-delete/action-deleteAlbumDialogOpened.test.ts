@@ -18,6 +18,7 @@ const albumSpring: Album = {
     temperature: 1,
     relativeTemperature: 1,
     sharedWith: [],
+    covers: [],
 };
 
 const albumSummer: Album = {
@@ -29,6 +30,7 @@ const albumSummer: Album = {
     temperature: 1,
     relativeTemperature: 1,
     sharedWith: [],
+    covers: [],
     ownedBy: ownerDetails, // Not deletable
 };
 
@@ -41,6 +43,7 @@ const albumWinter: Album = {
     temperature: 1,
     relativeTemperature: 1,
     sharedWith: [],
+    covers: [],
 };
 
 const allAlbums = [albumSpring, albumSummer, albumWinter];

@@ -1,4 +1,4 @@
-import {Album, AlbumId, albumKey, CatalogError, computeAlbumTemperatures, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
+import {Album, AlbumCover, AlbumId, albumKey, CatalogError, computeAlbumTemperatures, CoverOrigin, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
@@ -12,6 +12,13 @@ interface RestAlbum {
     totalCount: number
     sharedWith?: Record<string, string>
     directlyOwned?: boolean
+    covers?: RestAlbumCover[]
+}
+
+interface RestAlbumCover {
+    mediaId: string
+    filename: string
+    origin: string
 }
 
 interface RestMedia {
@@ -85,9 +92,8 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                 return Promise.allSettled([
                     this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),
                     this.findUserDetails(new Set<string>(albums.flatMap(a => Object.entries(a.sharedWith ?? {}).map(([email]) => email)))),
-                    Promise.allSettled(albums.map(a => this.fetchMedias({owner: a.owner, folderName: a.folderName.replace(/^\//, "")}))),
                     this.basePathSupplier(),
-                ]).then(([ownersResp, usersResp, mediasResp, prefixResp]) => {
+                ]).then(([ownersResp, usersResp, prefixResp]) => {
                     const prefix = prefixResp.status === "fulfilled" ? prefixResp.value : '';
 
                     const prefixUrl = (url: string | undefined) => this.prefixRelativeUrl(url, prefix);
@@ -111,19 +117,11 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                         new Map<string, UserDetails>()
                     ) : new Map<string, UserDetails>()
 
-                    const thumbnailsByIndex: string[][] = mediasResp.status === "fulfilled"
-                        ? mediasResp.value.map(result =>
-                            result.status === "fulfilled"
-                                ? result.value.slice(0, 4).map(m => `${prefixUrl(m.contentPath)}?w=257`)
-                                : []
-                        )
-                        : albums.map(() => [])
-
-                    return {albums, owners, users, thumbnailsByIndex}
+                    return {albums, owners, users}
                 })
             })
             .then(result => {
-                const {albums, owners, users, thumbnailsByIndex} = result;
+                const {albums, owners, users} = result;
                 if (albums.length === 0) {
                     console.log('fetchAlbums > No albums available, returning empty array');
                     return [];
@@ -158,7 +156,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                             name: album.owner,
                             users: [],
                         },
-                        thumbnails: thumbnailsByIndex[i],
+                        covers: convertCoversFromREST(album.covers),
                     }
                 }).sort((a, b) => b.start.getTime() - a.start.getTime());
             });
@@ -297,6 +295,17 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
             throw new CatalogError('', `Request failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
     }
+}
+
+function convertCoversFromREST(covers: RestAlbumCover[] | undefined): AlbumCover[] {
+    if (!covers) {
+        return []
+    }
+    return covers.map(c => ({
+        mediaId: c.mediaId,
+        filename: c.filename,
+        origin: c.origin === 'CHERRY_PICKED' ? 'CHERRY_PICKED' : 'RANDOM' as CoverOrigin,
+    }))
 }
 
 function convertToType(type: string): MediaType {

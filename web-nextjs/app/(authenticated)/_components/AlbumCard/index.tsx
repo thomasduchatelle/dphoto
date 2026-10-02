@@ -2,8 +2,13 @@
 
 import {Badge, Box, IconButton, Typography} from '@mui/material';
 import ShareIcon from '@mui/icons-material/Share';
-import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
+import {Album, AlbumCover, AlbumId, Owner} from '@/domains/catalog/language/catalog-state';
 import {SharedByIndicator} from './SharedByIndicator';
+
+const apiBasePath = process.env.NODE_ENV === 'development' ? '/nextjs' : '';
+
+const buildCoverUrl = (owner: Owner, cover: AlbumCover): string =>
+    `${apiBasePath}/api/v1/owners/${owner}/medias/${cover.mediaId}/${cover.filename}?w=257`;
 
 export interface AlbumCardProps {
     album: Album;
@@ -68,7 +73,7 @@ export const AlbumCard = ({album, onShare}: AlbumCardProps) => {
             {/* Photo grid: 2x2 on desktop, 1x4 on mobile */}
             <Box sx={{display: 'grid', gridTemplateColumns: {xs: 'repeat(4, 1fr)', sm: 'repeat(2, 1fr)'}, gap: 1}}>
                 {[0, 1, 2, 3].map((i) => {
-                    const thumbnail = album.thumbnails?.[i];
+                    const cover = album.covers[i];
                     return (
                         <Box
                             key={i}
@@ -80,16 +85,16 @@ export const AlbumCard = ({album, onShare}: AlbumCardProps) => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: !thumbnail ? 32 : 12,
-                                opacity: !thumbnail ? 0.15 : 1,
+                                fontSize: !cover ? 32 : 12,
+                                opacity: !cover ? 0.15 : 1,
                                 overflow: 'hidden',
                                 position: 'relative',
                             }}
                         >
-                            {thumbnail ? (
+                            {cover ? (
                                 <img
-                                    src={thumbnail}
-                                    alt={`${album.name} thumbnail ${i + 1}`}
+                                    src={buildCoverUrl(album.albumId.owner, cover)}
+                                    alt={`${album.name} cover ${i + 1}`}
                                     style={{
                                         width: '100%',
                                         height: '100%',
