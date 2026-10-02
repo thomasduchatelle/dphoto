@@ -32,12 +32,36 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const cover = (mediaId: string, filename: string): AlbumCover => ({
+const sampleImages = [
+    '/v1/owners/tony@stark.com/medias/001/subnautica_1.jpeg',
+    '/v1/owners/tony@stark.com/medias/002/subnautica_2.jpeg',
+    '/v1/owners/tony@stark.com/medias/003/subnautica_3.jpeg',
+    '/v1/owners/tony@stark.com/medias/004/subnautica_4.jpeg',
+    '/v1/owners/tony@stark.com/medias/005/subnautica_5.jpeg',
+    '/v1/owners/tony@stark.com/medias/006/subnautica_6.jpeg',
+    '/v1/owners/tony@stark.com/medias/007/subnautica_7.jpeg',
+    '/v1/owners/tony@stark.com/medias/009/subnautica_9.jpeg',
+    '/v1/owners/tony@stark.com/medias/010/subnautica_10.jpeg',
+    '/v1/owners/tony@stark.com/medias/011/subnautica_11.jpeg',
+    '/v1/owners/tony@stark.com/medias/012/subnautica_12.jpeg',
+    '/v1/owners/tony@stark.com/medias/014/subnautica_14.jpeg',
+];
+
+const cover = (mediaId: string, filename: string, contentPath?: string): AlbumCover => ({
     mediaId,
     filename,
     origin: 'RANDOM',
-    contentPath: `/api/v1/owners/sandfall/medias/${mediaId}/${filename}?w=257`,
+    contentPath: contentPath ?? sampleImages[Math.abs(hashCode(mediaId)) % sampleImages.length],
 });
+
+const hashCode = (s: string): number => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+        h = (h << 5) - h + s.charCodeAt(i);
+        h |= 0;
+    }
+    return h;
+};
 
 const clairObscurAlbum: Album = {
     albumId: createAlbumId('sandfall', 'clair-obscur'),
@@ -138,10 +162,10 @@ export const WithErroredCovers: Story = {
         album: {
             ...clairObscurAlbum,
             covers: [
-                cover('missing1', 'cannot-be-found.jpg'),
+                cover('missing1', 'cannot-be-found.jpg', '/v1/owners/sandfall/medias/missing1/cannot-be-found.jpg'),
                 cover('m-ds2', 'death-stranding-2-01.jpg'),
                 cover('m-astro', 'astro-bot-01.jpg'),
-                cover('missing2', 'cannot-be-found.jpg'),
+                cover('missing2', 'cannot-be-found.jpg', '/v1/owners/sandfall/medias/missing2/cannot-be-found.jpg'),
             ],
         }
     }

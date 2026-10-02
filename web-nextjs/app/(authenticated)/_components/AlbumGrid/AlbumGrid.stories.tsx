@@ -8,7 +8,36 @@ import {AlbumFilterEntry} from "../../../../domains/catalog";
 
 const createAlbumId = (owner: string, folderName: string): AlbumId => ({owner, folderName});
 
-const cover = (mediaId: string, filename: string): AlbumCover => ({mediaId, filename, origin: 'RANDOM'});
+const sampleImages = [
+    '/v1/owners/tony@stark.com/medias/001/subnautica_1.jpeg',
+    '/v1/owners/tony@stark.com/medias/002/subnautica_2.jpeg',
+    '/v1/owners/tony@stark.com/medias/003/subnautica_3.jpeg',
+    '/v1/owners/tony@stark.com/medias/004/subnautica_4.jpeg',
+    '/v1/owners/tony@stark.com/medias/005/subnautica_5.jpeg',
+    '/v1/owners/tony@stark.com/medias/006/subnautica_6.jpeg',
+    '/v1/owners/tony@stark.com/medias/007/subnautica_7.jpeg',
+    '/v1/owners/tony@stark.com/medias/009/subnautica_9.jpeg',
+    '/v1/owners/tony@stark.com/medias/010/subnautica_10.jpeg',
+    '/v1/owners/tony@stark.com/medias/011/subnautica_11.jpeg',
+    '/v1/owners/tony@stark.com/medias/012/subnautica_12.jpeg',
+    '/v1/owners/tony@stark.com/medias/014/subnautica_14.jpeg',
+];
+
+const hashCode = (s: string): number => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+        h = (h << 5) - h + s.charCodeAt(i);
+        h |= 0;
+    }
+    return h;
+};
+
+const cover = (mediaId: string, filename: string): AlbumCover => ({
+    mediaId,
+    filename,
+    origin: 'RANDOM',
+    contentPath: sampleImages[Math.abs(hashCode(mediaId)) % sampleImages.length],
+});
 
 const sampleAlbums: Album[] = [
     {
