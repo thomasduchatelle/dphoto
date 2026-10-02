@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from '@storybook/nextjs-vite';
 import {fn} from 'storybook/test';
 import {AlbumCard} from './index';
 import {Box} from '@mui/material';
-import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
+import {Album, AlbumCover, AlbumId} from '@/domains/catalog/language/catalog-state';
 import {AppBackground} from "../../../../components/AppLayout/AppBackground";
 
 const createAlbumId = (owner: string, folderName: string): AlbumId => ({owner, folderName});
@@ -32,6 +32,37 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const sampleImages = [
+    '/v1/owners/tony@stark.com/medias/001/subnautica_1.jpeg',
+    '/v1/owners/tony@stark.com/medias/002/subnautica_2.jpeg',
+    '/v1/owners/tony@stark.com/medias/003/subnautica_3.jpeg',
+    '/v1/owners/tony@stark.com/medias/004/subnautica_4.jpeg',
+    '/v1/owners/tony@stark.com/medias/005/subnautica_5.jpeg',
+    '/v1/owners/tony@stark.com/medias/006/subnautica_6.jpeg',
+    '/v1/owners/tony@stark.com/medias/007/subnautica_7.jpeg',
+    '/v1/owners/tony@stark.com/medias/009/subnautica_9.jpeg',
+    '/v1/owners/tony@stark.com/medias/010/subnautica_10.jpeg',
+    '/v1/owners/tony@stark.com/medias/011/subnautica_11.jpeg',
+    '/v1/owners/tony@stark.com/medias/012/subnautica_12.jpeg',
+    '/v1/owners/tony@stark.com/medias/014/subnautica_14.jpeg',
+];
+
+const cover = (mediaId: string, filename: string, contentPath?: string): AlbumCover => ({
+    mediaId,
+    filename,
+    origin: 'RANDOM',
+    contentPath: contentPath ?? sampleImages[Math.abs(hashCode(mediaId)) % sampleImages.length],
+});
+
+const hashCode = (s: string): number => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+        h = (h << 5) - h + s.charCodeAt(i);
+        h |= 0;
+    }
+    return h;
+};
+
 const clairObscurAlbum: Album = {
     albumId: createAlbumId('sandfall', 'clair-obscur'),
     name: 'Clair Obscur',
@@ -41,11 +72,11 @@ const clairObscurAlbum: Album = {
     temperature: 6.7,
     relativeTemperature: 1,
     sharedWith: [],
-    thumbnails: [
-        '/thumbnails/clair-obscur-1.jpg',
-        '/thumbnails/clair-obscur-2.jpg',
-        '/thumbnails/clair-obscur-3.jpg',
-        '/thumbnails/clair-obscur-4.jpg',
+    covers: [
+        cover('m1', 'clair-obscur-1.jpg'),
+        cover('m2', 'clair-obscur-2.jpg'),
+        cover('m3', 'clair-obscur-3.jpg'),
+        cover('m4', 'clair-obscur-4.jpg'),
     ],
 };
 
@@ -83,58 +114,58 @@ export const MidTemperature: Story = {
     }
 };
 
-export const WithoutThumbnail: Story = {
+export const WithoutCovers: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: [],
+            covers: [],
         }
     }
 }
 
-export const WithOneThumbnail: Story = {
+export const WithOneCover: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: ['/thumbnails/clair-obscur-7.jpg'],
+            covers: [cover('m7', 'clair-obscur-7.jpg')],
         }
     }
 }
 
-export const WithTwoThumbnails: Story = {
+export const WithTwoCovers: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: [
-                '/thumbnails/clair-obscur-7.jpg',
-                '/thumbnails/clair-obscur-8.jpg',
+            covers: [
+                cover('m7', 'clair-obscur-7.jpg'),
+                cover('m8', 'clair-obscur-8.jpg'),
             ],
         }
     }
 }
 
-export const WithThreeThumbnails: Story = {
+export const WithThreeCovers: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: [
-                '/thumbnails/clair-obscur-7.jpg',
-                '/thumbnails/clair-obscur-8.jpg',
-                '/thumbnails/clair-obscur-6.jpg',
+            covers: [
+                cover('m7', 'clair-obscur-7.jpg'),
+                cover('m8', 'clair-obscur-8.jpg'),
+                cover('m6', 'clair-obscur-6.jpg'),
             ],
         }
     }
 }
 
-export const WithErroredThumbnails: Story = {
+export const WithErroredCovers: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: [
-                '/thumbnails/cannot-be-found.jpg',
-                '/thumbnails/death-stranding-2-01.jpg',
-                '/thumbnails/astro-bot-01.jpg',
-                '/thumbnails/cannot-be-found.jpg',
+            covers: [
+                cover('missing1', 'cannot-be-found.jpg', '/v1/owners/sandfall/medias/missing1/cannot-be-found.jpg'),
+                cover('m-ds2', 'death-stranding-2-01.jpg'),
+                cover('m-astro', 'astro-bot-01.jpg'),
+                cover('missing2', 'cannot-be-found.jpg', '/v1/owners/sandfall/medias/missing2/cannot-be-found.jpg'),
             ],
         }
     }

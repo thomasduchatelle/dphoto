@@ -44,6 +44,7 @@ export const twoAlbums: Album[] = [
                 user: herselfUser,
             }
         ],
+        covers: [],
     },
     {
         albumId: {owner: herselfOwner, folderName: "feb-25"},
@@ -55,6 +56,7 @@ export const twoAlbums: Album[] = [
         relativeTemperature: 1,
         ownedBy: {name: "Herself", users: [herselfUser]},
         sharedWith: [],
+        covers: [],
     },
 ]
 
@@ -68,6 +70,7 @@ export const march2025: Album = {
     temperature: 0,
     relativeTemperature: 0,
     sharedWith: [],
+    covers: [],
 }
 
 export const twoAlbumsNoFilterOptions: AlbumFilterEntry = {
