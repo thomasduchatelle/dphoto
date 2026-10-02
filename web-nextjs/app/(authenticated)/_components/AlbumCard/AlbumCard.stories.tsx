@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from '@storybook/nextjs-vite';
 import {fn} from 'storybook/test';
 import {AlbumCard} from './index';
 import {Box} from '@mui/material';
-import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
+import {Album, AlbumCover, AlbumId} from '@/domains/catalog/language/catalog-state';
 import {AppBackground} from "../../../../components/AppLayout/AppBackground";
 
 const createAlbumId = (owner: string, folderName: string): AlbumId => ({owner, folderName});
@@ -32,6 +32,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const cover = (mediaId: string, contentPath: string): AlbumCover => ({
+    mediaId,
+    filename: contentPath.split(/(\\|\/)/g).pop(),
+    origin: 'RANDOM',
+    contentPath: contentPath,
+});
+
 const clairObscurAlbum: Album = {
     albumId: createAlbumId('sandfall', 'clair-obscur'),
     name: 'Clair Obscur',
@@ -41,11 +48,11 @@ const clairObscurAlbum: Album = {
     temperature: 6.7,
     relativeTemperature: 1,
     sharedWith: [],
-    thumbnails: [
-        '/thumbnails/clair-obscur-1.jpg',
-        '/thumbnails/clair-obscur-2.jpg',
-        '/thumbnails/clair-obscur-3.jpg',
-        '/thumbnails/clair-obscur-4.jpg',
+    covers: [
+        cover('m1', '/thumbnails/clair-obscur-1.jpg'),
+        cover('m2', '/thumbnails/clair-obscur-2.jpg'),
+        cover('m3', '/thumbnails/clair-obscur-3.jpg'),
+        cover('m4', '/thumbnails/clair-obscur-4.jpg'),
     ],
 };
 
@@ -87,7 +94,7 @@ export const WithoutThumbnail: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: [],
+            covers: [],
         }
     }
 }
@@ -96,7 +103,7 @@ export const WithOneThumbnail: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: ['/thumbnails/clair-obscur-7.jpg'],
+            covers: [cover('m7', '/thumbnails/clair-obscur-7.jpg')],
         }
     }
 }
@@ -105,9 +112,9 @@ export const WithTwoThumbnails: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: [
-                '/thumbnails/clair-obscur-7.jpg',
-                '/thumbnails/clair-obscur-8.jpg',
+            covers: [
+                cover('m7', '/thumbnails/clair-obscur-7.jpg'),
+                cover('m8', '/thumbnails/clair-obscur-8.jpg'),
             ],
         }
     }
@@ -117,10 +124,10 @@ export const WithThreeThumbnails: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: [
-                '/thumbnails/clair-obscur-7.jpg',
-                '/thumbnails/clair-obscur-8.jpg',
-                '/thumbnails/clair-obscur-6.jpg',
+            covers: [
+                cover('m7', '/thumbnails/clair-obscur-7.jpg'),
+                cover('m8', '/thumbnails/clair-obscur-8.jpg'),
+                cover('m6', '/thumbnails/clair-obscur-6.jpg'),
             ],
         }
     }
@@ -130,11 +137,11 @@ export const WithErroredThumbnails: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            thumbnails: [
-                '/thumbnails/cannot-be-found.jpg',
-                '/thumbnails/death-stranding-2-01.jpg',
-                '/thumbnails/astro-bot-01.jpg',
-                '/thumbnails/cannot-be-found.jpg',
+            covers: [
+                cover('missing1', '/thumbnails/cannot-be-found.jpg'),
+                cover('m-ds2', '/thumbnails/death-stranding-2-01.jpg'),
+                cover('m-astro', '/thumbnails/astro-bot-01.jpg'),
+                cover('missing2', '/thumbnails/cannot-be-found.jpg'),
             ],
         }
     }
