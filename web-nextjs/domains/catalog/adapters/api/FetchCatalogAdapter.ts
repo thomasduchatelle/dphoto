@@ -156,7 +156,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                             name: album.owner,
                             users: [],
                         },
-                        covers: convertCoversFromREST(album.covers),
+                        covers: convertCoversFromREST(albumId.owner, album.covers),
                     }
                 }).sort((a, b) => b.start.getTime() - a.start.getTime());
             });
@@ -297,7 +297,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     }
 }
 
-function convertCoversFromREST(covers: RestAlbumCover[] | undefined): AlbumCover[] {
+function convertCoversFromREST(owner: string, covers: RestAlbumCover[] | undefined): AlbumCover[] {
     if (!covers) {
         return []
     }
@@ -305,6 +305,7 @@ function convertCoversFromREST(covers: RestAlbumCover[] | undefined): AlbumCover
         mediaId: c.mediaId,
         filename: c.filename,
         origin: c.origin === 'CHERRY_PICKED' ? 'CHERRY_PICKED' : 'RANDOM' as CoverOrigin,
+        contentPath: `/api/v1/owners/${owner}/medias/${c.mediaId}/${c.filename}?w=257`,
     }))
 }
 

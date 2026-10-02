@@ -78,6 +78,7 @@ export interface AlbumCover {
     mediaId: MediaId
     filename: string
     origin: CoverOrigin
+    contentPath: string
 }
 
 export interface Album {

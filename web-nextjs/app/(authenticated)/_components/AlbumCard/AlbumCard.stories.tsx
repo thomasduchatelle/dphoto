@@ -32,7 +32,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const cover = (mediaId: string, filename: string): AlbumCover => ({mediaId, filename, origin: 'RANDOM'});
+const cover = (mediaId: string, filename: string): AlbumCover => ({
+    mediaId,
+    filename,
+    origin: 'RANDOM',
+    contentPath: `/api/v1/owners/sandfall/medias/${mediaId}/${filename}?w=257`,
+});
 
 const clairObscurAlbum: Album = {
     albumId: createAlbumId('sandfall', 'clair-obscur'),
