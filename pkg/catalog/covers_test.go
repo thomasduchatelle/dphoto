@@ -2,11 +2,13 @@ package catalog_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 func TestCompleteCovers_CompleteCoversFromCandidates(t *testing.T) {
@@ -209,4 +211,133 @@ func TestCompleteCovers_CompleteCovers_queriesTheAlbumThenCompletes(t *testing.T
 
 func coversFor(albumId catalog.AlbumId, covers ...catalog.Cover) CoverRepositorySeed {
 	return CoverRepositorySeed{AlbumId: albumId, Covers: covers}
+}
+
+// findAlbumByOwnerPortFake lets tests return a canned list of albums or an error for a
+// specific owner, in a fully deterministic order.
+type findAlbumByOwnerPortFake struct {
+	AlbumsByOwner map[ownermodel.Owner][]*catalog.Album
+	Err           error
+}
+
+func (f *findAlbumByOwnerPortFake) FindAlbumsByOwner(_ context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
+	if f.Err != nil {
+		return nil, f.Err
+	}
+	return f.AlbumsByOwner[owner], nil
+}
+
+// completeCoversPortFake records each albumId CompleteCovers is called with, and lets a case
+// pre-register per-album errors to simulate partial failures.
+type completeCoversPortFake struct {
+	Completed []catalog.AlbumId
+	Errors    map[catalog.AlbumId]error
+}
+
+func (c *completeCoversPortFake) CompleteCovers(_ context.Context, albumId catalog.AlbumId) error {
+	c.Completed = append(c.Completed, albumId)
+	if err, ok := c.Errors[albumId]; ok {
+		return err
+	}
+	return nil
+}
+
+func TestBackfillCovers_BackfillForOwner(t *testing.T) {
+	owner := ownermodel.Owner("ironman")
+	avengersId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/avengers")}
+	stealthId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/stealth")}
+	avengers := &catalog.Album{AlbumId: avengersId, Name: "Avengers"}
+	stealth := &catalog.Album{AlbumId: stealthId, Name: "Stealth"}
+
+	listFailure := errors.New("list exploded")
+	completeFailure := errors.New("complete exploded")
+
+	ownerWithTwoAlbums := func() *findAlbumByOwnerPortFake {
+		return &findAlbumByOwnerPortFake{AlbumsByOwner: map[ownermodel.Owner][]*catalog.Album{
+			owner: {avengers, stealth},
+		}}
+	}
+
+	type fields struct {
+		FindAlbumByOwnerPort *findAlbumByOwnerPortFake
+		CompleteCoversPort   *completeCoversPortFake
+	}
+	type args struct {
+		owner ownermodel.Owner
+	}
+	tests := []struct {
+		name               string
+		fields             fields
+		args               args
+		wantReport         catalog.BackfillReport
+		wantErr            assert.ErrorAssertionFunc
+		expectCompletedIds []catalog.AlbumId
+	}{
+		{
+			name: "it should complete every album of the owner",
+			fields: fields{
+				FindAlbumByOwnerPort: ownerWithTwoAlbums(),
+				CompleteCoversPort:   &completeCoversPortFake{},
+			},
+			args:               args{owner: owner},
+			wantReport:         catalog.BackfillReport{Albums: 2},
+			wantErr:            assert.NoError,
+			expectCompletedIds: []catalog.AlbumId{avengersId, stealthId},
+		},
+		{
+			name: "it should return an empty report when the owner has no album",
+			fields: fields{
+				FindAlbumByOwnerPort: &findAlbumByOwnerPortFake{},
+				CompleteCoversPort:   &completeCoversPortFake{},
+			},
+			args:               args{owner: owner},
+			wantReport:         catalog.BackfillReport{Albums: 0},
+			wantErr:            assert.NoError,
+			expectCompletedIds: nil,
+		},
+		{
+			name: "it should continue after a per-album failure and record it in the report",
+			fields: fields{
+				FindAlbumByOwnerPort: ownerWithTwoAlbums(),
+				CompleteCoversPort: &completeCoversPortFake{
+					Errors: map[catalog.AlbumId]error{avengersId: completeFailure},
+				},
+			},
+			args: args{owner: owner},
+			wantReport: catalog.BackfillReport{
+				Albums:   2,
+				Failures: []catalog.BackfillFailure{{AlbumId: avengersId, Err: completeFailure}},
+			},
+			wantErr:            assert.NoError,
+			expectCompletedIds: []catalog.AlbumId{avengersId, stealthId},
+		},
+		{
+			name: "it should return an error when listing the owner's albums fails",
+			fields: fields{
+				FindAlbumByOwnerPort: &findAlbumByOwnerPortFake{Err: listFailure},
+				CompleteCoversPort:   &completeCoversPortFake{},
+			},
+			args:       args{owner: owner},
+			wantReport: catalog.BackfillReport{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, listFailure)
+			},
+			expectCompletedIds: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			backfill := &catalog.BackfillCovers{
+				FindAlbumByOwnerPort: tt.fields.FindAlbumByOwnerPort,
+				CompleteCoversPort:   tt.fields.CompleteCoversPort,
+			}
+
+			report, err := backfill.BackfillForOwner(context.Background(), tt.args.owner)
+			if !tt.wantErr(t, err, fmt.Sprintf("BackfillForOwner(%s)", tt.args.owner)) {
+				return
+			}
+			assert.Equal(t, tt.wantReport, report, "backfill report")
+			assert.Equal(t, tt.expectCompletedIds, tt.fields.CompleteCoversPort.Completed, "albums completed")
+		})
+	}
 }

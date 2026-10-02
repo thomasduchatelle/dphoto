@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 // CoverRepository persists an album's cover set as a single record.
@@ -116,4 +117,46 @@ func (c *CompleteCovers) CompleteCoversFromCandidates(ctx context.Context, album
 	}
 
 	return c.CoverRepository.SaveCovers(ctx, albumId, completed)
+}
+
+type FindAlbumByOwnerPort interface {
+	FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
+}
+
+type CompleteCoversPort interface {
+	CompleteCovers(ctx context.Context, albumId AlbumId) error
+}
+
+// BackfillCovers completes empty cover sets for every album of an owner. Used by the
+// administrative CLI to seed existing albums that pre-date the covers feature (backup only
+// completes albums that receive new medias). A failure on a single album is reported and
+// the sweep continues, as CompleteCovers is idempotent and safe to re-run.
+type BackfillCovers struct {
+	FindAlbumByOwnerPort FindAlbumByOwnerPort
+	CompleteCoversPort   CompleteCoversPort
+}
+
+type BackfillReport struct {
+	Albums   int
+	Failures []BackfillFailure
+}
+
+type BackfillFailure struct {
+	AlbumId AlbumId
+	Err     error
+}
+
+func (b *BackfillCovers) BackfillForOwner(ctx context.Context, owner ownermodel.Owner) (BackfillReport, error) {
+	albums, err := b.FindAlbumByOwnerPort.FindAlbumsByOwner(ctx, owner)
+	if err != nil {
+		return BackfillReport{}, errors.Wrapf(err, "BackfillCovers(%s) failed to list albums", owner)
+	}
+
+	report := BackfillReport{Albums: len(albums)}
+	for _, album := range albums {
+		if err := b.CompleteCoversPort.CompleteCovers(ctx, album.AlbumId); err != nil {
+			report.Failures = append(report.Failures, BackfillFailure{AlbumId: album.AlbumId, Err: err})
+		}
+	}
+	return report, nil
 }
