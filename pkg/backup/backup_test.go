@@ -63,6 +63,7 @@ func TestBackupAcceptance(t *testing.T) {
 		cataloguerFactory CataloguerFactory
 		insertMedia       InsertMediaPort
 		detailsReaders    DetailsReader
+		completeCovers    *CompleteCoversPortFake
 	}
 	type args struct {
 		owner        ownermodel.Owner
@@ -77,9 +78,10 @@ func TestBackupAcceptance(t *testing.T) {
 		wantEvents              map[trackEvent]eventSummary // wantEvents won't be checked if nil
 		wantErr                 assert.ErrorAssertionFunc
 		wantRejectFolderContent []string
+		expectCoverRequests     map[ownermodel.Owner]map[string][]CoverCandidate
 	}{
 		{
-			name: "it should upload a media going through the happy path",
+			name: "it should upload a media going through the happy path and complete the covers of touched albums",
 			fields: fields{
 				detailsReaders: new(DetailsReaderAdapterStub),
 				archive: &AssertArchiveFake{
@@ -106,6 +108,7 @@ func TestBackupAcceptance(t *testing.T) {
 						},
 					},
 				},
+				completeCovers: NewCompleteCoversPortFake(),
 			},
 			args: args{
 				owner: owner,
@@ -123,6 +126,13 @@ func TestBackupAcceptance(t *testing.T) {
 				trackScanComplete: {SumCount: 1, SumSize: 10},
 				trackCatalogued:   {SumCount: 1, SumSize: 10},
 				trackUploaded:     {SumCount: 1, SumSize: 10, Albums: []string{"/album1"}},
+			},
+			expectCoverRequests: map[ownermodel.Owner]map[string][]CoverCandidate{
+				owner: {
+					doesNotExistReference1.AlbumFolderNameValue: {
+						{MediaId: doesNotExistReference1.MediaIdValue, Filename: fakeArchiveFileName(analysedMedias[0])},
+					},
+				},
 			},
 			wantErr: assert.NoError,
 		},
@@ -368,6 +378,9 @@ func TestBackupAcceptance(t *testing.T) {
 				InsertMediaPort:   tt.fields.insertMedia,
 				ArchivePort:       tt.fields.archive,
 			}
+			if tt.fields.completeCovers != nil {
+				backup.CompleteCoversPort = tt.fields.completeCovers
+			}
 
 			got, err := backup.Backup(context.Background(), tt.args.owner, tt.args.volume, options...)
 
@@ -378,6 +391,9 @@ func TestBackupAcceptance(t *testing.T) {
 			assert.ElementsMatch(t, tt.wantRejectFolderContent, readAndClearFolder(t, rejectFolder))
 			if tt.wantEvents != nil {
 				assert.Equal(t, tt.wantEvents, eventCatcher.Captured)
+			}
+			if tt.expectCoverRequests != nil && assert.NotNil(t, tt.fields.completeCovers, "completeCovers fake must be set when expectCoverRequests is set") {
+				assert.Equal(t, tt.expectCoverRequests, tt.fields.completeCovers.CandidatesByAlbum)
 			}
 
 			if toBeSatisfied, ok := tt.fields.cataloguerFactory.(ToBeSatisfied); ok {

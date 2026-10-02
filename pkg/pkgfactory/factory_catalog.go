@@ -90,6 +90,12 @@ func CatalogMediaQueries(ctx context.Context) *catalog.MediaQueries {
 	})
 }
 
+func CompleteCoversCase(ctx context.Context) *catalog.CompleteCovers {
+	return singletons.MustSingleton(func() (*catalog.CompleteCovers, error) {
+		return catalog.NewCompleteCovers(CatalogRepository(ctx), CatalogRepository(ctx)), nil
+	})
+}
+
 type SimpleCatalogFactory struct {
 	ArchiveAdapterForCatalog ArchiveAdapterForCatalog
 }

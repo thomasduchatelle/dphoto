@@ -11,6 +11,15 @@ type InsertMediaPort interface {
 	IndexMedias(ctx context.Context, owner ownermodel.Owner, requests []*CatalogMediaRequest) error
 }
 
+type CoverCandidate struct {
+	MediaId  string
+	Filename string
+}
+
+type CompleteCoversPort interface {
+	CompleteCoversFromCandidates(ctx context.Context, owner ownermodel.Owner, albumFolderName string, candidates []CoverCandidate) error
+}
+
 type TimelinePort interface {
 	FindOrCreateAlbum(mediaTime time.Time) (folderName string, created bool, err error)
 	FindAlbum(dateTime time.Time) (folderName string, exists bool, err error)

@@ -21,10 +21,11 @@ func NewMultiFilesBackup(ctx context.Context) MultiFilesBackup {
 
 	return func(ctx context.Context, owner ownermodel.Owner, volume backup.SourceVolume, optionsSlice ...backup.Options) (backup.Report, error) {
 		batch := &backup.BatchBackup{
-			CataloguerFactory: &AlbumCreatorCataloguerFactory{},
-			DetailsReaders:    analysers.ListDetailReaders(),
-			InsertMediaPort:   NewInsertMediaAdapter(ctx),
-			ArchivePort:       backuparchive.New(),
+			CataloguerFactory:  &AlbumCreatorCataloguerFactory{},
+			DetailsReaders:     analysers.ListDetailReaders(),
+			InsertMediaPort:    NewInsertMediaAdapter(ctx),
+			ArchivePort:        backuparchive.New(),
+			CompleteCoversPort: NewBackupCompleteCoversAdapter(ctx),
 		}
 
 		return batch.Backup(ctx, owner, volume, backupDefaultOptionsForAWS(optionsSlice)...)
@@ -73,6 +74,12 @@ func (f *DryRunCataloguerFactory) NewOwnerScopedCataloguer(ctx context.Context, 
 func NewInsertMediaAdapter(ctx context.Context) backup.InsertMediaPort {
 	return &backupcatalog.InsertMediaAdapter{
 		CatalogInsertMedia: InsertMediasCase(ctx),
+	}
+}
+
+func NewBackupCompleteCoversAdapter(ctx context.Context) backup.CompleteCoversPort {
+	return &backupcatalog.CompleteCoversAdapter{
+		CatalogCompleteCovers: CompleteCoversCase(ctx),
 	}
 }
 

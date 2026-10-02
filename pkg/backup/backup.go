@@ -16,10 +16,11 @@ import (
 const uploaderChannelSize = 20_000
 
 type BatchBackup struct {
-	CataloguerFactory CataloguerFactory
-	DetailsReaders    []DetailsReader
-	InsertMediaPort   InsertMediaPort
-	ArchivePort       ArchiveMediaPort
+	CataloguerFactory  CataloguerFactory
+	DetailsReaders     []DetailsReader
+	InsertMediaPort    InsertMediaPort
+	ArchivePort        ArchiveMediaPort
+	CompleteCoversPort CompleteCoversPort
 }
 
 // Backup is analysing each media and is backing it up if not already in the catalog.
@@ -55,10 +56,11 @@ func (b *BatchBackup) prepareVolumeBackup(ctx context.Context, options Options, 
 			Wrappers:                 []chain.CloserFunc{tracker.NoMoreEvents},
 		},
 		Uploader: &uploader{
-			Owner:             owner,
-			InsertMediaPort:   b.InsertMediaPort,
-			ArchivePort:       b.ArchivePort,
-			UploaderObservers: []uploaderObserver{tracker, report},
+			Owner:              owner,
+			InsertMediaPort:    b.InsertMediaPort,
+			ArchivePort:        b.ArchivePort,
+			CompleteCoversPort: b.CompleteCoversPort,
+			UploaderObservers:  []uploaderObserver{tracker, report},
 		},
 	}
 	if !options.SkipRejects && options.RejectDir == "" {

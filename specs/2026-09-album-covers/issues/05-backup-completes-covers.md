@@ -1,6 +1,6 @@
 # 05 — Backup completes covers for touched albums
 
-Status: ready
+Status: done
 Phase: 2
 Layer: backup domain — `pkg/backup` + `cmd/dphoto`
 Depends on: 02
