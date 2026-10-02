@@ -52,6 +52,8 @@ describe("action:albumsAndMediasLoaded", () => {
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[0]],
             displayedAlbum: twoAlbums[0],
+            previousAlbum: undefined,
+            nextAlbum: undefined,
             medias: someMediasByDays,
         });
         expect(albumListActionsSelector(got)).toEqual({
@@ -125,6 +127,8 @@ describe("action:albumsAndMediasLoaded", () => {
             ...selectionForLoadedStateWithTwoAlbums,
             albums: twoAlbums,
             displayedAlbum: twoAlbums[1],
+            previousAlbum: undefined,
+            nextAlbum: twoAlbums[0],
             medias: someMediasByDays,
         });
         expect(albumListActionsSelector(got)).toEqual({
@@ -159,6 +163,8 @@ describe("action:albumsAndMediasLoaded", () => {
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[1]],
             displayedAlbum: twoAlbums[1],
+            previousAlbum: undefined,
+            nextAlbum: undefined,
             medias: someMediasByDays,
         });
         expect(albumListActionsSelector(got)).toEqual({

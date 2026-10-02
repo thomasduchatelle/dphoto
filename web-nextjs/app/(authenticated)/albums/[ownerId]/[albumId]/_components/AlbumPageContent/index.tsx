@@ -2,46 +2,73 @@
 
 import {useReducer} from 'react';
 import {notFound} from 'next/navigation';
+import {Box} from '@mui/material';
 import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
+import {catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
 import {useThunks} from '@/libs/dthunks/react';
 import {ErrorMessage} from '@/components/ErrorMessage';
+import {AlbumHeader} from '../AlbumHeader';
+import {AlbumRail} from '../AlbumRail';
+import {AlbumMediaGrid} from '../AlbumMediaGrid';
+import {NeighbourAlbumLink} from '../NeighbourAlbumLink';
+import {NextAlbumBanner} from '../NextAlbumBanner';
+import {AlbumActionsFab} from '../AlbumActionsFab';
 import {NoMedia} from '../NoMedia';
-import Link from '@/components/Link';
-import {Button} from '@mui/material';
 
-export function AlbumPageContent({initialState}: { initialState: CatalogViewerState }) {
+export interface AlbumPageContentProps {
+    initialState: CatalogViewerState;
+}
+
+export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {onPageRefresh, loadAlbumPage, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
     useThunks(dispatchOnlyThunks, {dispatch}, state);
 
-    if (state.error) {
-        return <ErrorMessage error={state.error} title="Failed to load the album"/>;
+    const {displayedAlbum, medias, albums, previousAlbum, nextAlbum, albumNotFound, error} = catalogViewerPageSelector(state);
+
+    if (error) {
+        return <ErrorMessage error={error} title="Failed to load the album"/>;
     }
 
-    if (state.albumNotFound) {
+    if (albumNotFound) {
         notFound();
     }
 
-    if (!state.mediasLoaded || state.medias.length === 0) {
-        return <NoMedia/>;
-    }
-
     return (
-        <div>
-            <Button component={Link} href="/" prefetch={false} variant="text">
-                Back to Albums
-            </Button>
-            <ul>
-                {state.medias.flatMap(({medias}) =>
-                    medias.map(media => (
-                        <li key={media.id}>
-                            {media.uiRelativePath} — {media.time.toISOString()}
-                        </li>
-                    ))
+        <Box sx={{display: 'flex', alignItems: 'flex-start', mx: {xs: -2, sm: -3, md: -4}, mt: {xs: -2, sm: -3, md: -4}}}>
+            <AlbumRail albums={albums} displayedAlbumId={displayedAlbum?.albumId}/>
+
+            <Box sx={{flex: 1, minWidth: 0}}>
+                <AlbumHeader album={displayedAlbum}/>
+
+                {medias.length === 0 ? (
+                    <NoMedia nextAlbum={nextAlbum} previousAlbum={previousAlbum}/>
+                ) : (
+                    <>
+                        <AlbumMediaGrid medias={medias}/>
+                        {(nextAlbum || previousAlbum) && (
+                            <Box
+                                sx={{
+                                    display: {xs: 'flex', lg: 'none'},
+                                    flexDirection: 'column',
+                                    gap: 1.5,
+                                    px: 1.5,
+                                    pt: 2,
+                                    pb: 10,
+                                    borderTop: '1px solid rgba(255,255,255,0.07)',
+                                }}
+                            >
+                                {nextAlbum && <NeighbourAlbumLink album={nextAlbum}/>}
+                                {previousAlbum && <NeighbourAlbumLink album={previousAlbum}/>}
+                            </Box>
+                        )}
+                    </>
                 )}
-            </ul>
-        </div>
+            </Box>
+
+            <NextAlbumBanner album={nextAlbum}/>
+            <AlbumActionsFab/>
+        </Box>
     );
 }

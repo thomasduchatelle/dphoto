@@ -3,7 +3,7 @@ import {fn} from 'storybook/test';
 import {AlbumCard} from './index';
 import {Box} from '@mui/material';
 import {Album, AlbumId} from '@/domains/catalog/language/catalog-state';
-import {AppBackground} from "../../../../components/AppLayout/AppBackground";
+import {AppBackground} from '../AppLayout/AppBackground';
 
 const createAlbumId = (owner: string, folderName: string): AlbumId => ({owner, folderName});
 

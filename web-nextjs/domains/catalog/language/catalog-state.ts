@@ -42,6 +42,7 @@ export interface Media {
     time: Date
     uiRelativePath: string // uiRelativePath is the WEB UI internal link (from the album)
     contentPath: string
+    thumbnailUrl: string // thumbnailUrl is the display-ready URL of the media thumbnail
     source: string
 }
 
