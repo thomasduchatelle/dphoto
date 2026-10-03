@@ -5,8 +5,11 @@ Cross-issue technical direction. Issues link here rather than repeat it. The "wh
 ## Read model (Phase 1 — done)
 
 Captured in ADR-0004. The per-user album-list view record (`AlbumSummary`) carries identity, display
-fields (`Name`, `Start`, `End`), `Count`, and `Covers`. Writes are split so count updates and
-display-field updates never clobber each other. Reads are served by a single Query per user.
+fields (`Name`, `Start`, `End`) and `Count`. Writes are split so count updates and display-field
+updates never clobber each other. Reads are served by a single Query per user.
+
+Covers are stored as a **sibling row in the same partition** rather than as a field on the summary —
+see §View projection below.
 
 ## Cover canonical record
 
@@ -21,117 +24,82 @@ The whole cover set of an album is a **single** DynamoDB item:
 
 Documented in `DATA_MODEL.md`.
 
-## Randomize operation
+## Cover-maintenance pattern
 
-A single operation drives every automatic cover refresh. **Renames and supersedes `CompleteCovers`.**
+Covers are a **derived read model**: they are kept in sync reactively, after the fact. The catalog use
+cases (create, delete, rename, amend-dates, insert-medias) do not know covers exist and their event
+payloads do not carry covers.
 
-Semantics:
+A single primitive, `CoverMaintenance.Reconcile(albumId, added, removed)`, applies the invariant:
 
-1. Load the current cover set from the canonical record.
-2. **Drop every `RANDOM` cover**; keep every `CHERRY_PICKED` cover.
-3. Compute `slotsToFill = 4 − len(kept)`.
-4. From the supplied eligible candidates (`MediaType IMAGE`, not already a kept cover), pick
-   `slotsToFill` uniformly at random (or all of them if fewer are available) and tag them `RANDOM`.
-5. Write the resulting set back and return it.
+1. Load the current canonical cover set.
+2. Drop every `RANDOM` cover; keep every `CHERRY_PICKED` cover.
+3. Strip any kept cover whose `MediaId` is in `removed`.
+4. Fill empty slots up to 4, drawing uniformly at random from `added` first (eligible = `IMAGE`, not
+   already a cover); if `added` is insufficient, fall back to querying the album's remaining `IMAGE`
+   medias.
+5. Persist the resulting set.
+6. If the set actually changed, notify every `CoversChangedObserver` with the new covers (empty slice
+   means "no covers").
 
-Two entry shapes (same semantics, different candidate source):
+One **per-event observer** per catalog operation extracts `added` / `removed` from the lifecycle event
+and calls `Reconcile`. These observers are the sole bridge between catalog mutations and cover
+maintenance. They live in `pkg/catalog/cover_lifecycle.go` next to `CoverMaintenance`.
 
-- `RandomizeCoversFromCandidates(ctx, albumId, candidates) ([]Cover, error)` — fills from a supplied set
-  of medias, no extra query. Used by catalog handlers for `MediasInserted`, `AlbumCreated`,
-  `AlbumDatesAmended` — the use case passes the medias it just inserted/transferred.
-- `RandomizeCovers(ctx, albumId) ([]Cover, error)` — queries the album's `IMAGE` medias then randomises.
-  Used by the admin backfill and by the Phase 3 owner-triggered re-randomise.
+### Per-operation reconciliation inputs
 
-Returning the resulting `[]Cover` is essential: the caller attaches it to the lifecycle event so the view
-denormalises in the same pass.
+| Event                 | Per affected album                                                                                                 |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------|
+| `MediasInserted`      | `added = inserted medias for this album`, `removed = ∅`                                                            |
+| `AlbumCreated`        | New album: `added = TransferredMedias.Transfers[newId]`, `removed = ∅`. Sources: `added = ∅`, `removed = moved-out`|
+| `AlbumDatesAmended`   | Destinations: `added = moved-in`, `removed = ∅`. Sources: `added = ∅`, `removed = moved-out`                       |
+| `AlbumDeleted`        | Deleted album: canonical record **deleted**, `OnCoversChanged(albumId, nil)` fired. Destinations: `added = moved-in`|
+| `AlbumRenamed` (folder-change) | Canonical record **moved** from old SK to new SK; `OnCoversChanged(oldId, nil)` + `OnCoversChanged(newId, migrated)` fired |
+| `AlbumRenamed` (in-place)      | No-op                                                                                                      |
 
-### Idempotence note
+## View projection
 
-Because `RANDOM` covers are always dropped and redrawn, calling `Randomize` on a set made exclusively of
-`CHERRY_PICKED` covers is a no-op. Calling it on a full set with at least one `RANDOM` cover **does**
-change the covers (fresh draw). The admin backfill is therefore not strictly idempotent in the
-"byte-for-byte identical output" sense; it is **safe to re-run** (`CHERRY_PICKED` always preserved,
-count always `≤ 4`), which is what matters operationally.
+The `ListAlbums` read path serves everything from a single Query on the user's partition
+(`USER#{EMAIL}#ALBUMS_VIEW`). To keep that invariant while making covers a sibling concern, each album
+has **two SK rows per viewer**:
 
-## Event-payload matrix
+- `ALBUM#{owner}#{folder}` — identity, display fields (`Name`, `Start`, `End`), `MediaCount`.
+- `ALBUM#{owner}#{folder}#COVERS` — the ordered list of up to 4 covers.
 
-Covers propagate through existing lifecycle events. Each event carries `Covers` iff its outcome can
-change them. There is **no** standalone `CoversChanged` event, and no standalone `OnAlbumCoversChanged`
-method on `AlbumView` (the one shipped in issue 03 is removed in Phase 2 cleanup).
+The DynamoDB adapter's `ListSummariesForUser` returns rows merged per album; a missing cover row means
+"no covers". Albums with no summary row are skipped (orphan cover rows are discarded defensively).
 
-| Event                 | Carries `Covers`? | Why                                                                              |
-|-----------------------|-------------------|----------------------------------------------------------------------------------|
-| `AlbumCreated`        | yes               | `TransferredMedias` may bring images in → `Randomize` fills empty slots.         |
-| `MediasInserted`      | yes (per album)   | Inserts may fill empty slots → `Randomize` with the just-inserted images.        |
-| `AlbumDatesAmended`   | yes (per album)   | Transfers in/out: stale covers stripped, empties re-filled on destinations.      |
-| `AlbumRenamed`        | no                | Covers survive untouched; the handler migrates the canonical record's SK.        |
-| `AlbumDeleted`        | no                | Covers are wiped; the handler deletes the canonical record.                      |
-| `AlbumShared`         | yes               | New visitor row needs the current covers written in one shot.                    |
+### Why two rows, not one field
 
-### Who computes the covers inside the use case
+- Cover writes never touch the main summary row → no attribute-footprint discipline, no clobber risk,
+  no need for atomic `ADD Count :d SET Covers = :c` updates.
+- Cover maintenance stays independent from count / display-field maintenance; the view's event
+  handlers for `MediasInserted`, `AlbumCreated`, `AlbumDatesAmended`, `AlbumRenamed` stop touching
+  covers entirely.
+- Share: writing the visitor's cover row is one `PutItem`, decoupled from the main summary row's
+  write.
+- Still one Query at read time — the user partition remains the single read source.
 
-Each catalog use case that may change covers takes a new port:
+### Cover projection observer
 
-```go
-type RandomizeCoversPort interface {
-    RandomizeCoversFromCandidates(ctx, albumId, candidates []*MediaMeta) ([]Cover, error)
-}
-```
+A single observer in `pkg/catalogviews` listens on `CoversChangedObserver` and, for each notification,
+fans out to every viewer who can access the album, writing (or deleting, if the new set is empty) the
+`#COVERS` SK row per viewer. The fan-out uses the existing `ListUsersWhoCanAccessAlbumPort`.
 
-Wiring (via `pkg/pkgfactory`) injects the existing `RandomizeCovers` struct. The use case calls the port
-after it has inserted/transferred the medias, then emits the lifecycle event with the resulting `Covers`
-attached. `AlbumShared` is slightly different: it reads the current covers via
-`FindCoversByAlbum` (the album's canonical set never changes on share) and attaches them.
+The `AlbumView`'s existing per-event handlers (`OnMediasInserted`, `OnAlbumCreated`,
+`OnAlbumDatesAmended`, `OnAlbumRenamed`, `OnAlbumDeleted`, `AlbumShared`, `AlbumUnShared`) are
+**unchanged** by this feature. Covers propagate through their own observer chain, not through them.
+`AlbumShared` and `AlbumUnShared` do write/delete the visitor's `#COVERS` SK row — see the sharing
+story.
 
-### Handling transfers-out
+### Drift
 
-When medias move out of an album (`AlbumDatesAmended`, `AlbumRenamed` folder-change), the source
-album's cover set may contain covers whose `MediaId` is no longer in the album. The use case must:
-
-1. Load the source album's current covers.
-2. Strip any cover whose `MediaId` is in the "moved out" set.
-3. Attach the pruned set to the event (so the view denormalises). No re-randomisation here — empties
-   stay empty until the next time medias land in the album or until the admin backfill.
-
-The destination album is handled as a transfer-in: `Randomize` with the moved-in medias as candidates.
-
-## Cover projection in the view
-
-`AlbumSummary` carries `Covers`. The repository exposes `SetCoversForAllViewers(ctx, albumId, covers)`
-for the standalone case, but Phase 2 moves it inside the per-event handlers:
-
-- `OnAlbumCreated` writes a full row (name/start/end/count/covers) via `PutSummaries`.
-- `OnMediasInserted` combines the count increment with a cover update: a single call per-viewer path
-  that `SET`s `Covers` **in addition to** `ADD Count :d` — attribute footprints stay disjoint from
-  display fields (no clobbering).
-- `OnAlbumDatesAmended` already writes display fields; it also writes `Covers` for each affected album.
-- `OnAlbumRenamed` folder-change: delete old rows + write new rows with the preserved covers.
-- `OnAlbumRenamed` in-place: no cover change, no cover write.
-- `OnAlbumDeleted`: `DeleteAllRowsForAlbum` as today.
-- `OnAlbumShared`: `PutSummaries` for the visitor row with covers included (no second call).
-- `OnAlbumUnshared`: `DeleteRow` as today.
-
-The standalone `AlbumView.OnAlbumCoversChanged` method is deleted. Drift reconciliation already writes
-full rows via `PutSummaries` (`Covers` included) — unchanged.
-
-### Writing covers alongside counts
-
-`AlbumSummaryRepository` gains a repository method (or the existing one gains a `Covers` argument) that
-performs a single `UpdateItem` with `ADD Count :d SET Covers = :c`. Both attributes are updated
-atomically per row; display fields stay untouched.
-
-Chosen shape — new method:
-```go
-IncrementCountAndSetCoversForAllViewers(ctx, []AlbumCountAndCoversDiff) error
-```
-with `AlbumCountAndCoversDiff{AvailabilityType, AlbumId, Diff int, Covers []Cover}`. Covers is set
-unconditionally (so empty-after-strip is a valid write). Existing `IncrementCountForAllViewers` stays
-for the (now rare) case where the use case has no covers to propagate (shouldn't happen in production
-Phase 2 — see below).
+Drift reconciliation already rebuilds view rows from the canonical catalog. It gains the
+`#COVERS` SK row in its rebuild path. No new behaviour otherwise.
 
 ## REST contract
 
-### Phase 2 (done in issue 04)
+### Phase 2
 
 `GET /api/v1/albums` — each album in the response has `covers[]` (0–4 entries):
 
@@ -153,7 +121,8 @@ Phase 2 — see below).
 - Authorisation: owner-edit permission on the album (same rule as rename / amend-dates).
 - Body: empty.
 - Response: `200 OK` with the new covers list (so the UI can refresh without re-querying the album list).
-- Side effect: emits an event carrying the new covers → view updates via the standard path.
+- Side effect: `CoverMaintenance.Reconcile` runs with `added = ∅`, `removed = ∅` (triggers the fallback
+  query path, which redraws every `RANDOM` cover).
 
 ### Phase 4+ (deferred)
 

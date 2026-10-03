@@ -5,43 +5,44 @@ by one agent. See `spec.md` (what) and `design.md` (cross-issue technical direct
 
 ## Phase 2 — Covers propagated, lifecycle-maintained, displayed
 
+Covers are kept in sync with each album's medias through a cover-maintenance primitive and one
+observer per catalog lifecycle event. The album-list view projects covers as a sibling row in the
+user's partition so `ListAlbums` stays a single Query.
+
 - **07 — Render album covers on the album list** _(web-nextjs)_
   - Album card shows real covers (0–4) via the image loader. Replaces the placeholder `thumbnails`
     field. Storybook / visual tests for 0, partial, full.
-- **09 — Covers on `MediasInserted` + Randomize primitive upgrade** _(pkg/catalog + pkg/catalogadapters + pkg/catalogviews + pkg/pkgfactory + cmd/dphotops)_
-  - Upgrade the cover-completion primitive: rename `CompleteCovers` → `RandomizeCovers`, drop every
-    `RANDOM`, keep `CHERRY_PICKED`, fill empties up to 4; return the resulting `[]Cover`.
-  - Media-insert use case calls the primitive per affected album; the `MediasInserted` event carries
-    the resulting covers per album.
-  - `AlbumView.OnMediasInserted` denormalises covers alongside the count update in a single per-row
-    write (new atomic repository method `ADD Count :d SET Covers = :c`).
-  - `pkg/backup` and `cmd/dphoto` are **not** touched.
-- **10 — Covers on `AlbumCreated` and `AlbumDatesAmended`** _(pkg/catalog + pkg/catalogviews)_
-  - Both events gain `Covers map[AlbumId][]Cover` covering the amended album and every
-    source/destination touched by `TransferredMedias`.
-  - Destinations: `Randomize` with the moved-in medias. Sources: strip stale covers whose media
-    moved out (no re-randomisation).
-  - `AlbumView` handlers denormalise via `PutSummaries` (create) or `SetCoversForAllViewers`
-    (amend-dates) — no atomic ADD+SET needed.
-- **11 — Covers on `AlbumShared`** _(pkg/acl/catalogacl + pkg/catalogviews)_
-  - `ShareAlbumCase` reads the current covers and passes them to `AlbumSharedObserver`; the view
-    adapter writes a complete visitor row in one `PutSummaries` call.
-- **12 — Canonical cover record lifecycle (delete + folder-rename migration)** _(pkg/catalog + pkg/catalogadapters + pkg/catalogviews)_
-  - `AlbumDeleted` → delete the canonical `#COVERS` record.
-  - `AlbumRenamed` folder-change → move the canonical record to the new SK; AlbumView's folder-rename
-    path preserves covers on the new rows. In-place rename is a no-op.
-
-### Dead-code cleanup
-
-`AlbumView.OnAlbumCoversChanged` is dead once 09, 10, 11 have all landed. The last of the three to
-merge grep-checks the method has no production caller and deletes it in the same PR. No separate
-ticket.
+- **09 — Cover reconciliation primitive + split view projection + MediasInserted** _(pkg/catalog + pkg/catalogviews + pkg/catalogviewsadapters/catalogviewsdynamodb + pkg/pkgfactory + cmd/dphotops)_
+  - Introduces `CoverMaintenance.Reconcile(added, removed)` with the "drop RANDOM, keep CHERRY_PICKED,
+    strip removed, refill up to 4" invariant, and the `CoversChangedObserver` signal fired on actual
+    change.
+  - Splits the view: covers move out of `AlbumSummary` into a sibling `#COVERS` SK row in the same
+    user partition; one Query still serves `ListAlbums`.
+  - Ships the `MediasInserted` cover observer and the view-side cover projection observer that
+    fans out `CoversChanged` to every viewer's `#COVERS` row.
+  - Admin backfill (`BackfillCovers` + `dphotops covers backfill`) retargets to the new primitive.
+- **10 — AlbumCreated cover maintenance** _(pkg/catalog + pkg/pkgfactory)_
+  - Reconciliation observer for `AlbumCreated`: fills the new album's covers from transferred-in
+    medias; strips covers of pre-existing source albums whose medias were moved out, refilling from
+    survivors.
+- **11 — AlbumDatesAmended cover maintenance** _(pkg/catalog + pkg/pkgfactory)_
+  - Reconciliation observer for `AlbumDatesAmended`: destinations get empties filled from moved-in
+    medias; sources get stale covers stripped and refilled from survivors.
+- **12 — AlbumDeleted cover maintenance** _(pkg/catalog + pkg/catalogadapters/catalogdynamo + pkg/pkgfactory)_
+  - Canonical `#COVERS` record is deleted; destinations that absorbed medias get their covers
+    reconciled.
+- **16 — AlbumRenamed cover retention** _(pkg/catalog + pkg/catalogadapters/catalogdynamo + pkg/pkgfactory)_
+  - Folder-change: the canonical `#COVERS` record is moved to the new SK, covers survive on every
+    viewer's row. In-place rename: no cover change.
+- **17 — AlbumShared / AlbumUnshared cover propagation** _(pkg/acl/catalogacl + pkg/catalogviews + pkg/pkgfactory)_
+  - On share, the visitor's `#COVERS` SK row is written from the owner's current covers so the next
+    `ListAlbums` returns the album with its covers in one Query. On unshare, the row is deleted.
 
 ## Phase 3 — Owner-triggered re-randomise
 
-- **13 — Randomize use case (owner-triggered)** _(pkg/catalog + pkg/catalogviews + pkg/pkgfactory)_
-  - A `RandomizeAlbumCovers` use case that calls `Randomize(albumId)` and emits a dedicated
-    `AlbumCoversRandomised` event; `AlbumView` consumes it to update every viewer row.
+- **13 — Randomize use case (owner-triggered)** _(pkg/catalog + pkg/pkgfactory)_
+  - A `RandomizeAlbumCovers` use case that calls `CoverMaintenance.Reconcile(albumId, nil, nil)` —
+    the fallback-query path redraws every `RANDOM` cover.
 - **14 — `POST …/covers/refresh` endpoint** _(api/lambdas + deployments/cdk)_
   - New lambda, owner-edit permission, returns the new covers in the response body.
 - **15 — Re-randomise UI on the album page** _(web-nextjs)_
@@ -55,38 +56,32 @@ endpoint will replace the per-media approach from the earlier draft.
 ## Dependency graph
 
 ```
-Phase 2 — four parallel tracks:
+Phase 2:
 
-   ┌──────────────────────────────────────────────────────────┐
-   │  09 ──► 10                                                │  catalog event propagation
-   │     └─► 11                                                │  (10 and 11 parallel after 09)
-   └──────────────────────────────────────────────────────────┘
+   07  (web rendering — independent, already in flight)
 
-   ┌──────────────────────────────────────────────────────────┐
-   │  12                                                        │  canonical record lifecycle
-   └──────────────────────────────────────────────────────────┘  (independent)
+   09  (primitive + split view projection + MediasInserted)
+      ├─► 10  (AlbumCreated)
+      ├─► 11  (AlbumDatesAmended)
+      ├─► 12  (AlbumDeleted)
+      ├─► 16  (AlbumRenamed)
+      └─► 17  (AlbumShared / AlbumUnshared)
 
-   ┌──────────────────────────────────────────────────────────┐
-   │  07                                                        │  web rendering
-   └──────────────────────────────────────────────────────────┘  (independent, already in flight)
-
-Phase 3 — one sequence (after Phase 2 is green):
+Phase 3 (after Phase 2 is green):
 
    13 ──► 14 ──► 15
 ```
 
 ### What can start when
 
-- **Immediately, in parallel** — four agents, no in-flight dependency between them:
-  - **07** (web rendering — already in flight; depends on 04 which is `done`)
-  - **09** (MediasInserted + Randomize primitive upgrade)
-  - **11** (AlbumShared — only reads covers, doesn't need the upgraded primitive)
-  - **12** (canonical record lifecycle)
-- **After 09 lands** (upgraded `RandomizeCoversPort`):
-  - **10** starts (needs the primitive that returns `[]Cover` to attach to events).
-- **Phase 3**:
-  - **13 → 14 → 15** is a strict sequence (each needs the previous layer).
+- **Immediately, in parallel**:
+  - **07** (web rendering — depends on 04 which is `done`).
+  - **09** (primitive + split view projection + MediasInserted observer).
+- **After 09 lands** — five parallel tracks, each a small cover observer plus its wiring; distinct
+  files, no shared surface beyond mechanical additions to `pkgfactory/factory_catalog.go`:
+  - **10** (AlbumCreated), **11** (AlbumDatesAmended), **12** (AlbumDeleted), **16** (AlbumRenamed),
+    **17** (AlbumShared / AlbumUnshared).
+- **Phase 3**: **13 → 14 → 15** is a strict sequence (each needs the previous layer).
 
-Numbering gaps: **08** was folded into 09 (so the primitive upgrade ships with its first consumer
-rather than as a schema-only PR). Issue numbers 05 (`wontdo`) and 08 (unused) are left as gaps to
-avoid renumbering in-flight branches.
+Numbering gaps: **05** (`wontdo`) and **08** (unused) are left as gaps to avoid renumbering in-flight
+branches. **16** and **17** were added for the per-operation split under the new pattern.
