@@ -12,6 +12,18 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
 
+type backfillCoversViewUpdater struct {
+	ctx context.Context
+}
+
+func (b backfillCoversViewUpdater) UpdateCovers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+	repo := pkgfactory.AlbumViewRepository(b.ctx)
+	if len(covers) == 0 {
+		return repo.DeleteCoversForAllViewers(ctx, albumId)
+	}
+	return repo.PutCoversForAllViewers(ctx, albumId, covers)
+}
+
 var coversCmd = &cobra.Command{
 	Use:   "covers",
 	Short: "Album covers administration",
@@ -38,8 +50,9 @@ dropped and re-picked on every pass).`,
 		printer.Info("Backfilling covers across %d owner(s)", len(owners))
 
 		backfill := &catalog.BackfillCovers{
-			FindAlbumByOwnerPort: pkgfactory.AlbumQueries(ctx),
-			ReconcileCoversPort:  pkgfactory.CoverMaintenanceCase(ctx),
+			FindAlbumByOwnerPort:      pkgfactory.AlbumQueries(ctx),
+			RefreshCoversPort:         pkgfactory.CoverMaintenanceCase(ctx),
+			BackfillCoversViewUpdater: backfillCoversViewUpdater{ctx: ctx},
 		}
 
 		var failedOwners int

@@ -71,8 +71,8 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 	repository := CatalogRepository(ctx)
 	return catalog.NewInsertMedias(
 		repository,
+		CoverMaintenanceCase(ctx),
 		AlbumView(ctx),
-		&catalog.MediasInsertedCoverObserver{ReconcileCoversPort: CoverMaintenanceCase(ctx)},
 	)
 }
 
@@ -94,11 +94,7 @@ func CatalogMediaQueries(ctx context.Context) *catalog.MediaQueries {
 func CoverMaintenanceCase(ctx context.Context) *catalog.CoverMaintenance {
 	return singletons.MustSingleton(func() (*catalog.CoverMaintenance, error) {
 		repository := CatalogRepository(ctx)
-		return catalog.NewCoverMaintenance(
-			repository,
-			repository,
-			CoverProjection(ctx),
-		), nil
+		return catalog.NewCoverMaintenance(repository, repository), nil
 	})
 }
 

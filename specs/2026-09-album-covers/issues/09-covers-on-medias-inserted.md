@@ -1,85 +1,73 @@
-# 09 — Cover reconciliation primitive + split view projection + MediasInserted
+# 09 — Covers on MediasInserted + split view projection + Refresh/Stabilise service
 
-Status: done
+Status: ready
 Phase: 2
 Layer: `pkg/catalog` + `pkg/catalogviews` + `pkg/catalogviewsadapters/catalogviewsdynamodb` + `pkg/pkgfactory` + `cmd/dphotops`
 Depends on: —
 
 ## Description
 
-Ship the cover-maintenance pattern end-to-end, plus its first consumer (`MediasInserted`). After this
-story:
+Deliver the cover-maintenance service and the view-side storage split together with the first
+consumer (`MediasInserted`). After this story:
 
-- A single primitive, `CoverMaintenance.Reconcile`, applies the full cover invariant and emits a
-  `CoversChanged` signal when the set actually changes.
-- The album-list view holds covers as a sibling row (`#COVERS` SK) in the user's partition, kept in
-  sync by a single projection observer listening to `CoversChanged`.
-- Inserting medias into an album causes its covers to be reconciled from the newly-inserted images,
-  with the result visible on every viewer's next `ListAlbums`.
-- The admin backfill (`dphotops covers backfill`) uses the new primitive and keeps its semantics
+- Inserting medias into an album results in covers being drawn uniformly at random from the album's
+  full image set, with `CHERRY_PICKED` covers preserved and existing `RANDOM` covers redrawn.
+- The album-list view surfaces the covers of every album for every viewer, served from a single
+  Query.
+- The admin backfill (`dphotops covers backfill`) uses the same primitive and keeps its semantics
   (safe to re-run, `CHERRY_PICKED` always preserved).
 
-See `../design.md` → Cover-maintenance pattern, View projection, per-operation reconciliation inputs.
+See `../design.md` → Cover-maintenance service, View projection, per-operation strategy.
 
 ## Acceptance criteria
 
-### Reconciliation primitive
+### Cover reconciliation strategies
 
-- A primitive owned by the catalog takes `(albumId, added []*MediaMeta, removed []MediaId)` and
-  applies the invariant below in one call:
-  - Every `RANDOM` cover is dropped; every `CHERRY_PICKED` cover is kept.
-  - Any kept cover whose `MediaId` is in `removed` is stripped.
-  - Empty slots are filled up to 4 by picking uniformly at random from eligible candidates
-    (`MediaType IMAGE`, not already a kept cover): first from `added`, then — only if `added` is
-    insufficient to fill the slots — from the album's remaining `IMAGE` medias queried on demand.
-  - The resulting set is persisted to the canonical `#COVERS` record.
-- The primitive emits a `CoversChanged` notification carrying the new set **only when the set
-  differs** from the one loaded at step 1. No notification is emitted when the reconciliation is a
-  no-op (e.g. full `CHERRY_PICKED` set, no `removed` match, no empty slot to fill).
-- Called with `added = nil` and `removed = nil`, the primitive still applies the full invariant (it
-  triggers the fallback query to refill empty slots).
-- Admin backfill (`BackfillCovers` + `dphotops covers backfill`) uses the primitive. Its CLI help
-  text reflects the new semantics: re-running the backfill may **change** existing `RANDOM` covers
-  (fresh draw); `CHERRY_PICKED` covers are preserved; the operation is safe to re-run on any album.
+- The catalog exposes two reconciliation strategies, both operating on the canonical `#COVERS`
+  record of a single album:
+  - **Refresh**: every `RANDOM` cover is dropped, every `CHERRY_PICKED` cover is kept, any kept
+    cover whose `MediaId` is in the "removed" set is stripped, then empty slots are filled up to 4
+    by picking uniformly at random from the album's full `IMAGE` set.
+  - **Stabilise**: every existing cover is kept (both origins) except those in the "removed" set,
+    then empty slots are filled up to 4 by picking uniformly at random from the album's full
+    `IMAGE` set.
+- Both strategies cap the resulting set at 4, select only `MediaType IMAGE` candidates, and never
+  pick a media that is already a cover.
+- A reconciliation that leaves the cover set unchanged does not rewrite the canonical record and
+  does not surface the album to downstream consumers.
 
-### MediasInserted cover maintenance
+### MediasInserted cover update
 
-- Inserting medias into one or more albums reconciles each affected album's covers using the
-  just-inserted images as `added` (no `removed`).
-- The `MediasInserted` event payload is **not changed**. The media-insert use case does not call
-  the primitive directly; the observer wiring attaches to the existing event bus.
-- `AlbumView.OnMediasInserted` is **not changed**: it continues to update counts only. Covers
-  propagate independently through the view's cover-projection observer.
+- Inserting medias into one or more albums reconciles each affected album's covers with the
+  **Refresh** strategy before the `MediasInserted` event is fired. The resulting cover sets travel
+  on the event payload.
+- Inserting 3 `IMAGE` medias into an album with no covers results in `ListAlbums` returning that
+  album with 3 `RANDOM` covers for the owner and every viewer.
+- Inserting medias into an album whose cover set is already full of `CHERRY_PICKED` leaves the
+  canonical record and the viewer rows unchanged.
+- Inserting medias into an album whose cover set has 2 `CHERRY_PICKED` and 1 `RANDOM` cover ends
+  with the 2 `CHERRY_PICKED` preserved and up to 2 fresh `RANDOM` entries drawn from the album's
+  full image set.
+- An insertion that does not change the cover set of an album (e.g. only videos, or already-full
+  `CHERRY_PICKED` set) does not result in a cover-row write for that album.
 
 ### Split view projection
 
-- The album-list view no longer stores covers on `AlbumSummary`. Instead, each album has two SK
-  rows per viewer in the user's `USER#{EMAIL}#ALBUMS_VIEW` partition: one for identity + display
-  fields + count, one for the cover list.
-- `ListAlbums` is still served by a **single Query** on the user's partition. The DynamoDB adapter
-  merges the two SK families per album before returning. A missing cover row for a known album
-  means "no covers" (empty list). An orphan cover row (no matching summary row) is discarded.
-- A single observer in `pkg/catalogviews` reacts to `CoversChanged` by writing (or deleting, if the
-  new set is empty) the `#COVERS` SK row for every viewer who can access the album.
-- `AlbumSummary.Covers` and `AlbumView.OnAlbumCoversChanged` are removed. The repository method
-  `SetCoversForAllViewers` is removed. The in-memory fake and DynamoDB adapter both implement the
-  new cover-row storage.
-- Drift reconciliation includes the `#COVERS` SK row in its rebuild path so rebuilt viewer rows
-  carry the current covers.
+- The album-list view holds covers in a sibling row rather than as a field on the summary. Each
+  album has two SK rows per viewer in the user's `USER#{EMAIL}#ALBUMS_VIEW` partition: one for
+  identity + display fields + count, one for the cover list.
+- `ListAlbums` is still served by a **single Query** on the user's partition. A missing cover row
+  for a known album means "no covers" (empty list). An orphan cover row (no matching summary row)
+  is discarded.
+- Cover writes never touch the main summary row (no clobbering of count or display fields).
 
-### End-to-end behaviour
+### Admin backfill
 
-- Inserting 3 `IMAGE` medias into an album with no covers results, after the operation returns, in a
-  canonical `#COVERS` record with 3 `RANDOM` entries and in `ListAlbums` returning the album with
-  those 3 covers for the owner and every viewer.
-- Inserting medias into an album whose cover set is already full of `CHERRY_PICKED` leaves the
-  canonical record, the viewer rows, and the `ListAlbums` output unchanged.
-- Inserting medias into an album whose cover set has 2 `CHERRY_PICKED` and 1 `RANDOM` cover ends
-  with 2 `CHERRY_PICKED` preserved and up to 2 fresh `RANDOM` entries drawn from eligible candidates
-  (preferring the inserted medias).
-- Running `dphotops covers backfill` on an owner with a mix of empty, partially-covered, and
-  fully-`CHERRY_PICKED` albums leaves every album with a legal cover set (≤ 4, `CHERRY_PICKED`
-  preserved, `RANDOM` possibly redrawn).
+- `dphotops covers backfill` applies the **Refresh** strategy to every album of every owner.
+  Running it on a mix of empty, partially-covered, and fully-`CHERRY_PICKED` albums leaves every
+  album with a legal cover set (≤ 4, `CHERRY_PICKED` preserved, `RANDOM` possibly redrawn).
+- The CLI help text documents that re-running the backfill MAY redraw existing `RANDOM` covers
+  (fresh draw) and that `CHERRY_PICKED` covers are always preserved.
 
 ### Documentation
 
@@ -88,14 +76,12 @@ See `../design.md` → Cover-maintenance pattern, View projection, per-operation
 
 ## Out of scope
 
-- Reconciliation on `AlbumCreated`, `AlbumDatesAmended`, `AlbumDeleted`, `AlbumRenamed`,
-  `AlbumShared`, `AlbumUnshared` — issues 10, 11, 12, 16, 17.
-- Any change to catalog use-case code or event payloads (reconciliation hooks in reactively via the
-  observer pattern).
+- Covers on `AlbumCreated`, `AlbumDatesAmended`, `AlbumDeleted`, `AlbumRenamed`, `AlbumShared` —
+  issues 10, 11, 12, 16, 17.
 - Owner-triggered re-randomise — Phase 3.
 
 ## References
 
 - `../spec.md` (Automatic cover maintenance → medias added).
-- `../design.md` (Cover-maintenance pattern; View projection).
+- `../design.md` (Cover-maintenance service; View projection).
 - Load skills: `go`, `architecture`.

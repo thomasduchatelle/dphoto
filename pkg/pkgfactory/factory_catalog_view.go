@@ -38,14 +38,6 @@ func AlbumView(ctx context.Context) *catalogviews.AlbumView {
 	})
 }
 
-func CoverProjection(ctx context.Context) *catalogviews.CoverProjection {
-	return singletons.MustSingleton(func() (*catalogviews.CoverProjection, error) {
-		return &catalogviews.CoverProjection{
-			Repository: AlbumViewRepository(ctx),
-		}, nil
-	})
-}
-
 func OwnerDriftReconciler(ctx context.Context, dry bool, options ...catalogviews.DriftOption) *catalogviews.OwnerDriftReconciler {
 	albumQueries := AlbumQueries(ctx)
 	repository := AlbumViewRepository(ctx)

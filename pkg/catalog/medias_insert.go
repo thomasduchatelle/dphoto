@@ -2,27 +2,46 @@ package catalog
 
 import (
 	"context"
+
+	"github.com/pkg/errors"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 func NewInsertMedias(
 	InsertMediasRepository InsertMediasRepositoryPort,
+	RefreshCoversPort RefreshCoversPort,
 	InsertMediasObservers ...InsertMediasObserver,
 ) *InsertMedias {
 
 	return &InsertMedias{
 		InsertMediasRepository: InsertMediasRepository,
+		RefreshCoversPort:      RefreshCoversPort,
 		InsertMediasObservers:  InsertMediasObservers,
 	}
 }
 
-type InsertMediasObserver interface {
-	OnMediasInserted(context.Context, map[AlbumId][]MediaId) error
+// MediasInserted is the lifecycle event fired after medias have been persisted. It
+// carries the inserted MediaIds per album and the resulting cover sets of the albums
+// whose covers were updated (albums whose cover set did not change are omitted).
+type MediasInserted struct {
+	Inserted map[AlbumId][]MediaId
+	Covers   map[AlbumId][]Cover
 }
 
-// InsertMedias is a use case to pre-generate ids and store media metadata
+type InsertMediasObserver interface {
+	OnMediasInserted(ctx context.Context, event MediasInserted) error
+}
+
+type InsertMediasObserverFunc func(ctx context.Context, event MediasInserted) error
+
+func (f InsertMediasObserverFunc) OnMediasInserted(ctx context.Context, event MediasInserted) error {
+	return f(ctx, event)
+}
+
+// InsertMedias is a use case to pre-generate ids and store media metadata.
 type InsertMedias struct {
 	InsertMediasRepository InsertMediasRepositoryPort
+	RefreshCoversPort      RefreshCoversPort
 	InsertMediasObservers  []InsertMediasObserver
 }
 
@@ -32,24 +51,33 @@ type InsertMediasRepositoryPort interface {
 }
 
 func (i *InsertMedias) Insert(ctx context.Context, owner ownermodel.Owner, medias []CreateMediaRequest) error {
-	err := i.InsertMediasRepository.InsertMedias(ctx, owner, medias)
-	if err != nil {
+	if err := i.InsertMediasRepository.InsertMedias(ctx, owner, medias); err != nil {
 		return err
 	}
 
 	insertedMedias := make(map[AlbumId][]MediaId)
 	for _, media := range medias {
 		albumId := AlbumId{Owner: owner, FolderName: media.FolderName}
-		if list, exists := insertedMedias[albumId]; exists {
-			insertedMedias[albumId] = append(list, media.Id)
-		} else {
-			insertedMedias[albumId] = []MediaId{media.Id}
+		insertedMedias[albumId] = append(insertedMedias[albumId], media.Id)
+	}
+
+	coversPerAlbum := make(map[AlbumId][]Cover)
+	for albumId := range insertedMedias {
+		covers, changed, err := i.RefreshCoversPort.Refresh(ctx, albumId, nil)
+		if err != nil {
+			return errors.Wrapf(err, "InsertMedias failed to refresh covers of %s", albumId)
+		}
+		if changed {
+			coversPerAlbum[albumId] = covers
 		}
 	}
 
+	event := MediasInserted{
+		Inserted: insertedMedias,
+		Covers:   coversPerAlbum,
+	}
 	for _, observer := range i.InsertMediasObservers {
-		err = observer.OnMediasInserted(ctx, insertedMedias)
-		if err != nil {
+		if err := observer.OnMediasInserted(ctx, event); err != nil {
 			return err
 		}
 	}

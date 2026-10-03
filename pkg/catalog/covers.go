@@ -14,19 +14,6 @@ type CoverRepository interface {
 	SaveCovers(ctx context.Context, albumId AlbumId, covers []Cover) error
 }
 
-// CoversChangedObserver is notified when the cover set of an album has changed.
-// Empty slice means "no covers". Observers are called only when the set actually
-// differs from the previous one.
-type CoversChangedObserver interface {
-	OnCoversChanged(ctx context.Context, albumId AlbumId, covers []Cover) error
-}
-
-type CoversChangedObserverFunc func(ctx context.Context, albumId AlbumId, covers []Cover) error
-
-func (f CoversChangedObserverFunc) OnCoversChanged(ctx context.Context, albumId AlbumId, covers []Cover) error {
-	return f(ctx, albumId, covers)
-}
-
 // Randomiser picks n indices in [0, upperBound) uniformly at random, without replacement.
 // The default implementation uses math/rand; tests substitute a deterministic one.
 type Randomiser interface {
@@ -52,41 +39,49 @@ var DefaultRandomiser Randomiser = RandomiserFunc(func(upperBound, n int) []int 
 	return rand.Perm(upperBound)[:n]
 })
 
-// CoverMaintenance applies the cover invariant on an album: it keeps CHERRY_PICKED
-// covers, drops every RANDOM cover, strips any kept cover whose MediaId is in the
-// `removed` set, and fills the empty slots up to MaxCoversPerAlbum from the supplied
-// `added` candidates (falling back to a query against the album's medias when the
-// `added` set does not provide enough eligible images).
+// CoverMaintenance reconciles the cover set of an album, picking randomly from the
+// album's full image set. It offers two strategies:
 //
-// When the resulting set differs from the one loaded from the repository, every
-// registered CoversChangedObserver is notified.
+//   - Refresh: drop every RANDOM cover, keep every CHERRY_PICKED cover, strip any kept
+//     cover whose MediaId is in `removed`, fill empty slots up to 4. Use when the cover
+//     set should reflect what is newest or most interesting (media insertion, admin
+//     backfill, owner-triggered re-randomise).
+//   - Stabilise: keep every existing cover (both origins) except those in `removed`,
+//     fill empty slots up to 4. Use when stability is preferred over freshness (album
+//     creation with transferred medias, dates amended, album deleted neighbours).
+//
+// Both strategies cap the resulting set at MaxCoversPerAlbum, select only MediaType
+// IMAGE candidates, and never re-pick a media that is already a cover. Both methods
+// return the resulting set and a `changed` boolean set to true when the cover set
+// actually differs from the one loaded from the canonical record.
 type CoverMaintenance struct {
 	CoverRepository     CoverRepository
 	MediaReadRepository MediaReadRepository
 	Randomiser          Randomiser
-	Observers           []CoversChangedObserver
 }
 
-func NewCoverMaintenance(coverRepository CoverRepository, mediaReadRepository MediaReadRepository, observers ...CoversChangedObserver) *CoverMaintenance {
+func NewCoverMaintenance(coverRepository CoverRepository, mediaReadRepository MediaReadRepository) *CoverMaintenance {
 	return &CoverMaintenance{
 		CoverRepository:     coverRepository,
 		MediaReadRepository: mediaReadRepository,
 		Randomiser:          DefaultRandomiser,
-		Observers:           observers,
 	}
 }
 
-// Reconcile applies the cover invariant on an album.
-//
-// `added` are candidates to fill the empty slots (typically medias just transferred
-// into the album). `removed` is the set of MediaIds that must no longer appear as
-// covers (typically medias just transferred out of the album). Both are optional:
-// an empty `added` triggers the fallback query when slots need to be filled; an
-// empty `removed` leaves kept covers untouched.
-func (c *CoverMaintenance) Reconcile(ctx context.Context, albumId AlbumId, added []*MediaMeta, removed []MediaId) error {
+// Refresh applies the Refresh strategy: see CoverMaintenance.
+func (c *CoverMaintenance) Refresh(ctx context.Context, albumId AlbumId, removed []MediaId) ([]Cover, bool, error) {
+	return c.reconcile(ctx, albumId, removed, true)
+}
+
+// Stabilise applies the Stabilise strategy: see CoverMaintenance.
+func (c *CoverMaintenance) Stabilise(ctx context.Context, albumId AlbumId, removed []MediaId) ([]Cover, bool, error) {
+	return c.reconcile(ctx, albumId, removed, false)
+}
+
+func (c *CoverMaintenance) reconcile(ctx context.Context, albumId AlbumId, removed []MediaId, dropRandom bool) ([]Cover, bool, error) {
 	existing, err := c.CoverRepository.FindCoversByAlbum(ctx, albumId)
 	if err != nil {
-		return errors.Wrapf(err, "Reconcile(%s) failed to load current covers", albumId)
+		return nil, false, errors.Wrapf(err, "cover reconciliation of %s failed to load current covers", albumId)
 	}
 
 	removedSet := make(map[MediaId]bool, len(removed))
@@ -96,7 +91,7 @@ func (c *CoverMaintenance) Reconcile(ctx context.Context, albumId AlbumId, added
 
 	var kept []Cover
 	for _, cover := range existing {
-		if cover.Origin == CoverOriginRandom {
+		if dropRandom && cover.Origin == CoverOriginRandom {
 			continue
 		}
 		if removedSet[cover.MediaId] {
@@ -106,74 +101,50 @@ func (c *CoverMaintenance) Reconcile(ctx context.Context, albumId AlbumId, added
 	}
 
 	slotsToFill := MaxCoversPerAlbum - len(kept)
-	alreadyCovered := make(map[MediaId]bool, len(kept))
-	for _, cover := range kept {
-		alreadyCovered[cover.MediaId] = true
-	}
-
 	result := kept
 	if slotsToFill > 0 {
-		picked := c.pickFromCandidates(added, alreadyCovered, slotsToFill)
-		for _, media := range picked {
-			alreadyCovered[media.Id] = true
-			result = append(result, Cover{MediaId: media.Id, Filename: media.Filename, Origin: CoverOriginRandom})
+		alreadyCovered := make(map[MediaId]bool, len(kept))
+		for _, cover := range kept {
+			alreadyCovered[cover.MediaId] = true
 		}
 
-		if remaining := slotsToFill - len(picked); remaining > 0 {
-			fallback, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
-			if err != nil {
-				return errors.Wrapf(err, "Reconcile(%s) failed to list medias for the fallback query", albumId)
+		medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
+		if err != nil {
+			return nil, false, errors.Wrapf(err, "cover reconciliation of %s failed to list medias", albumId)
+		}
+
+		var eligible []*MediaMeta
+		for _, candidate := range medias {
+			if candidate == nil || candidate.Type != MediaTypeImage {
+				continue
 			}
-			extra := c.pickFromCandidates(fallback, alreadyCovered, remaining)
-			for _, media := range extra {
-				alreadyCovered[media.Id] = true
+			if alreadyCovered[candidate.Id] {
+				continue
+			}
+			eligible = append(eligible, candidate)
+		}
+
+		if len(eligible) > 0 {
+			picks := slotsToFill
+			if picks > len(eligible) {
+				picks = len(eligible)
+			}
+			indices := c.Randomiser.SampleIndices(len(eligible), picks)
+			for _, idx := range indices {
+				media := eligible[idx]
 				result = append(result, Cover{MediaId: media.Id, Filename: media.Filename, Origin: CoverOriginRandom})
 			}
 		}
 	}
 
 	if coversEqual(existing, result) {
-		return nil
+		return existing, false, nil
 	}
 
 	if err := c.CoverRepository.SaveCovers(ctx, albumId, result); err != nil {
-		return errors.Wrapf(err, "Reconcile(%s) failed to save covers", albumId)
+		return nil, false, errors.Wrapf(err, "cover reconciliation of %s failed to save covers", albumId)
 	}
-
-	for _, observer := range c.Observers {
-		if err := observer.OnCoversChanged(ctx, albumId, result); err != nil {
-			return errors.Wrapf(err, "Reconcile(%s) failed to notify observer", albumId)
-		}
-	}
-	return nil
-}
-
-func (c *CoverMaintenance) pickFromCandidates(candidates []*MediaMeta, alreadyCovered map[MediaId]bool, slotsToFill int) []*MediaMeta {
-	var eligible []*MediaMeta
-	for _, candidate := range candidates {
-		if candidate == nil || candidate.Type != MediaTypeImage {
-			continue
-		}
-		if alreadyCovered[candidate.Id] {
-			continue
-		}
-		eligible = append(eligible, candidate)
-	}
-	if len(eligible) == 0 {
-		return nil
-	}
-
-	picks := slotsToFill
-	if picks > len(eligible) {
-		picks = len(eligible)
-	}
-
-	indices := c.Randomiser.SampleIndices(len(eligible), picks)
-	picked := make([]*MediaMeta, 0, len(indices))
-	for _, idx := range indices {
-		picked = append(picked, eligible[idx])
-	}
-	return picked
+	return result, true, nil
 }
 
 func coversEqual(a, b []Cover) bool {
@@ -192,21 +163,43 @@ type FindAlbumByOwnerPort interface {
 	FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
 }
 
-// ReconcileCoversPort is the slice of CoverMaintenance exposed to callers that only
-// need to trigger a reconciliation (per-event cover observers, admin backfill,
-// Phase 3 owner-triggered re-randomise).
-type ReconcileCoversPort interface {
-	Reconcile(ctx context.Context, albumId AlbumId, added []*MediaMeta, removed []MediaId) error
+// RefreshCoversPort is the slice of CoverMaintenance exposed to callers that only
+// trigger a Refresh (admin backfill, Phase 3 owner-triggered re-randomise, and the
+// InsertMedias use case).
+type RefreshCoversPort interface {
+	Refresh(ctx context.Context, albumId AlbumId, removed []MediaId) ([]Cover, bool, error)
 }
 
-// BackfillCovers reconciles the cover set of every album of an owner. Used by the
-// administrative CLI to seed existing albums that pre-date the covers feature. A
-// failure on a single album is reported and the sweep continues: Reconcile preserves
-// CHERRY_PICKED covers and caps the set at MaxCoversPerAlbum, so re-running the
-// backfill is safe.
+// StabiliseCoversPort is the slice of CoverMaintenance exposed to callers that only
+// trigger a Stabilise (AlbumCreated, AlbumDatesAmended, AlbumDeleted use cases).
+type StabiliseCoversPort interface {
+	Stabilise(ctx context.Context, albumId AlbumId, removed []MediaId) ([]Cover, bool, error)
+}
+
+// BackfillCoversViewUpdater propagates the new covers of a single album to the
+// album-list view. BackfillCovers calls it after every Refresh that actually
+// changed the cover set.
+type BackfillCoversViewUpdater interface {
+	UpdateCovers(ctx context.Context, albumId AlbumId, covers []Cover) error
+}
+
+type BackfillCoversViewUpdaterFunc func(ctx context.Context, albumId AlbumId, covers []Cover) error
+
+func (f BackfillCoversViewUpdaterFunc) UpdateCovers(ctx context.Context, albumId AlbumId, covers []Cover) error {
+	return f(ctx, albumId, covers)
+}
+
+// BackfillCovers reconciles the cover set of every album of an owner and
+// propagates the resulting set to the album-list view. Used by the
+// administrative CLI to seed existing albums that pre-date the covers feature.
+// A failure on a single album is reported and the sweep continues: Refresh
+// preserves CHERRY_PICKED covers and caps the set at MaxCoversPerAlbum, so
+// re-running the backfill is safe (though RANDOM covers may be redrawn on each
+// pass).
 type BackfillCovers struct {
-	FindAlbumByOwnerPort FindAlbumByOwnerPort
-	ReconcileCoversPort  ReconcileCoversPort
+	FindAlbumByOwnerPort      FindAlbumByOwnerPort
+	RefreshCoversPort         RefreshCoversPort
+	BackfillCoversViewUpdater BackfillCoversViewUpdater
 }
 
 type BackfillReport struct {
@@ -227,7 +220,15 @@ func (b *BackfillCovers) BackfillForOwner(ctx context.Context, owner ownermodel.
 
 	report := BackfillReport{Albums: len(albums)}
 	for _, album := range albums {
-		if err := b.ReconcileCoversPort.Reconcile(ctx, album.AlbumId, nil, nil); err != nil {
+		covers, changed, err := b.RefreshCoversPort.Refresh(ctx, album.AlbumId, nil)
+		if err != nil {
+			report.Failures = append(report.Failures, BackfillFailure{AlbumId: album.AlbumId, Err: err})
+			continue
+		}
+		if !changed {
+			continue
+		}
+		if err := b.BackfillCoversViewUpdater.UpdateCovers(ctx, album.AlbumId, covers); err != nil {
 			report.Failures = append(report.Failures, BackfillFailure{AlbumId: album.AlbumId, Err: err})
 		}
 	}
