@@ -39,38 +39,54 @@ See the catalog language for the terms **Cover** and **CoverOrigin** (`docs/cata
 Opening the album list shows each album card with its up-to-four covers, returned in the same response as
 the album list (no per-album request).
 
-### Cherry-pick a cover
-From a media, the owner marks it as a cover for its album.
-- If a slot is free (fewer than 4 covers), the media is added as a `CHERRY_PICKED` cover.
-- If all 4 slots are full but at least one is `RANDOM`, a `RANDOM` cover is evicted to make room (no prompt).
-- If all 4 covers are `CHERRY_PICKED`, the action is refused with an error asking the owner to remove one
-  cover first.
-
-### Remove a cover
-The owner unpicks a cover; the slot is left **empty** (no automatic refill). Empty slots are filled later by
-re-randomising or by backup adding new medias.
-
-### Re-randomise covers
+### Re-randomise covers (Phase 3)
 The owner triggers a re-randomisation for an album. All `RANDOM` covers are replaced by a fresh random
 selection of eligible images; `CHERRY_PICKED` covers are preserved. Empty (previously unpicked) slots are
 filled up to 4.
 
-### Backup fills missing covers
-When backup indexes new medias into an album, any empty cover slots are filled with `RANDOM` covers drawn
-from the album's eligible images. Existing covers (random or cherry-picked) are left untouched.
+### Automatic cover maintenance (invisible to the user)
+Covers stay in sync with the album's medias without any user action. Whenever an album's media set changes,
+the catalog decides whether covers must be refreshed:
+
+- **Medias added to an album** (via `MediasInserted`, `AlbumCreated` with transferred medias, or
+  `AlbumDatesAmended` with transferred medias): if the album has empty cover slots, the catalog fills them
+  with `RANDOM` covers drawn from the newly-inserted images. `CHERRY_PICKED` and existing `RANDOM` covers
+  are preserved; already-full sets are untouched.
+- **Medias moved out of an album** (via `AlbumDatesAmended` or `AlbumRenamed` with transferred medias): any
+  cover whose media is no longer in the album is stripped; empty slots created this way are left empty
+  (they'll be refilled next time medias are added or by a re-randomise).
+- **Album deleted**: the canonical cover record is deleted.
+- **Album renamed (folder changes)**: the canonical cover record moves with the album; covers survive.
+- **Album shared**: the new visitor's view row is written with the current cover set, so the visitor's
+  next album-list request shows the album with its covers.
 
 ### Backfill existing albums
 A one-off operation randomly picks covers for every album of every owner that has empty slots, so existing
 albums get covers without waiting for new medias.
 
+### Cherry-pick / unpick (Phase 4+ — out of scope here)
+The owner picks or unpicks an individual media as a cover. Deferred.
+
 ## Scope
 
-- Catalog: model covers, persist them, and the logic to pick/replace/re-randomise/backfill.
-- Catalogviews: covers denormalised into the per-user album-list view for read-optimised retrieval.
-- API: `list-albums` returns covers per album; endpoints to cherry-pick, remove, and re-randomise.
-- Backup: fill empty cover slots when indexing new medias.
-- Web (`web-nextjs`): render real covers on album cards; UI to cherry-pick, remove, re-randomise.
-- A backfill entry point for all albums of all owners.
+**Phase 2 — Covers populated, propagated, displayed (read-only)**:
+
+- Catalog: cover model, persistence, and the `Randomize` operation (keeps `CHERRY_PICKED`, replaces
+  `RANDOM`, fills empties up to 4).
+- Catalog use cases emit covers on the events whose outcome can change them (`AlbumCreated`,
+  `MediasInserted`, `AlbumDatesAmended`). Lifecycle maintenance for `AlbumDeleted`, `AlbumRenamed`, and
+  `AlbumShared` is handled by the catalog without touching the backup domain.
+- Catalogviews: covers denormalised into the per-user album-list view, driven by the lifecycle events
+  above.
+- API: `list-albums` returns covers per album.
+- Web (`web-nextjs`): render real covers on album cards.
+- Admin backfill via `dphotops covers backfill` for existing albums.
+
+**Phase 3 — Owner-triggered re-randomise**:
+
+- Catalog operation that re-randomises the covers of one album.
+- REST endpoint, owner-edit permission.
+- UI control on the album page.
 
 ## Out of scope
 
@@ -79,72 +95,60 @@ albums get covers without waiting for new medias.
 - Ordering/arrangement UI beyond the natural cover order.
 - Per-user or per-viewer cover preferences.
 - Changes to the image resize/format pipeline (owned by image-delivery-optimisation).
-
-## Open questions
-
-_None open._
+- Cherry-pick / unpick / `SetCovers` (Phase 4+).
+- **Any change to the backup domain** — backup must stay untouched; covers are a catalog concern,
+  driven by catalog events.
 
 ## Decisions
 
-- **Complete read model** — the album-list view record is promoted to a complete album projection
-  (`{albumId, name, start, end, count, covers[]}`). This is done as a **refactoring story that lands before
-  covers** (covers then ride on the reshaped view rather than a record we'd immediately rework). Warrants an
-  ADR. See the "list-albums review" comment for rationale.
-- **Sharing grid stays out** — the owner's "shared with" badges remain a separate query; denormalising them
-  crosses into ACL and is out of scope.
-- **Covers live in a single record** — the whole cover set of an album is one DynamoDB item
-  (`PK = {OWNER}#ALBUM`, `SK = ALBUM#{FOLDER_NAME}#COVERS`), not one item per cover. Covers are never
-  accessed individually; every write reads the set, enforces the max of 4, and rewrites it. This supersedes
-  the per-cover key floated in grilling round 1 (Q1).
+- **Complete read model** _(Phase 1, done)_ — the album-list view record was promoted to a complete album
+  projection (`{albumId, name, start, end, count, covers[]}`). See ADR-0004.
+- **Covers live in a single canonical record** — the whole cover set of an album is one DynamoDB item
+  (`PK = {OWNER}#ALBUM`, `SK = ALBUM#{FOLDER_NAME}#COVERS`), not one item per cover. Every write reads
+  the set, enforces the max of 4, and rewrites it.
+- **Covers propagate on existing lifecycle events — no dedicated `CoversChanged` event.** Each catalog
+  event carries `Covers` when its outcome can change them (`AlbumCreated`, `MediasInserted`,
+  `AlbumDatesAmended`, `AlbumShared`). Events that cannot change them do not carry them
+  (`AlbumRenamed` keeps the same covers in a migrated record; `AlbumDeleted` wipes them).
+- **`Randomize` is the single completion primitive.** It replaces `RANDOM` covers, preserves
+  `CHERRY_PICKED`, and fills empties up to 4. It is the operation called whenever covers may need to be
+  refreshed — media insertion, dates amendment with transfer-in, administrative backfill, and (Phase 3)
+  the owner-triggered re-randomise.
+- **Drift reconciliation is exceptional.** `dphotops drift --apply` is a bug-recovery tool, not a
+  propagation path. Normal operation keeps the view consistent through events; drift exists to repair
+  divergence after an incident.
+- **Backup domain stays untouched.** When medias land in an album, the catalog decides whether covers
+  need to change based on the `MediasInserted` event (which it already owns). The backup project does
+  not depend on the covers logic.
+- **Sharing grid stays out** — the owner's "shared with" badges remain a separate query; denormalising
+  them crosses into ACL and is out of scope.
 
 ## Phasing
 
 The feature ships in ordered phases. Each issue names its phase and treats later phases as out of scope.
 
-1. **Phase 1 — Foundation**: the album-list view becomes a complete read model (refactor, no user-facing
-   change).
-2. **Phase 2 — Covers populated & displayed (read-only)**: cover model & persistence, random completion of
-   empty slots, denormalisation into the view, `GET /albums` returns covers, backup completes touched
-   albums, admin backfill, and the album list renders covers. No user editing yet.
-3. **Phase 3 — Re-randomise**: replace `RANDOM` covers on demand — backend, API, UI.
-4. **Phase 4 — Manually pick**: cherry-pick a media as a cover — backend, API, UI.
-5. **Phase 5 — Unpick**: remove a cover, leaving the slot empty — backend, API, UI.
+1. **Phase 1 — Foundation** _(done)_: the album-list view is a complete read model.
+2. **Phase 2 — Covers populated, propagated, displayed (read-only)**: cover model & persistence, the
+   `Randomize` operation, catalog events carry covers so the view stays in sync, lifecycle maintenance
+   (`AlbumDeleted`, `AlbumRenamed`, `AlbumShared`), `GET /albums` returns covers, admin backfill, album
+   list renders covers. **No user editing yet.**
+3. **Phase 3 — Owner-triggered re-randomise**: operation, API endpoint, UI control.
+4. **Phase 4+ — Cherry-pick / unpick / `SetCovers`** _(deferred, not specified)_.
+
+## Open questions
+
+_None open._
 
 ## Comments
 
 ### Grilling — round 1 (2026-09-06)
 
-- **Q1 Source of truth**: canonical covers stored as their own items under the album partition —
-  `PK = {OWNER}#ALBUM`, `SK = ALBUM#{FOLDER_NAME}#COVER#{mediaId}`. Denormalised into the per-user view
-  records for read.
-- **Q2 Cover contents & order**: order does not matter (preference: capture date ascending, but any order is
-  fine). Cover stores `mediaId` + `filename` + `origin`; no dimensions/URL.
-- **Q3 When covers are selected**: three operations — (a) an initialisation/backfill **batch function** (to
-  be written), (b) on **backup**: any album touched by an addition gets its covers re-checked and completed,
-  (c) on demand from the user: pick, unpick, re-randomise.
-- **Q4 Backup fill source**: cheap option accepted. At the **end of a backup batch**, only albums that
-  received a new addition are checked; if their cover set is not full it is completed. Full sets are left
-  untouched (cheap even if backup works image by image).
-- **Q5 Authorization**: only users who can edit the album (owner-level). Visitors read-only. _(recommended,
-  assumed accepted — confirm if wrong.)_
-- **Q6 Backfill invocation**: a CLI entry point in `cmd/dphotops` (admin binary reusing the same
-  config as `dphoto`). Exact form decided during implementation of the story.
-- **Q7 UI placement**: the UI is being rewritten in parallel; do not read the current UI. Assume the
-  **re-randomise** action on the album page (grid of all pictures) and **pick/unpick** on the media page
-  (fullscreen media).
+- **Q2 Cover contents & order**: order does not matter (preference: capture date ascending). Cover
+  stores `mediaId` + `filename` + `origin`; no dimensions/URL.
+- **Q5 Authorization**: only users who can edit the album (owner-level). Visitors read-only.
+- **Q6 Backfill invocation**: CLI entry point `dphotops covers backfill`.
+- **Q7 UI placement**: Phase 3 action **re-randomise** on the album page.
 
-### list-albums read path review (2026-09-06)
+### list-albums read path review (2026-09-06, Phase 1 done)
 
-Current `GET /albums` makes ~5 DynamoDB round-trips, and it is **not** a true 1+P: shared album metadata is
-fetched with a single `BatchGetItem`, and media counts come in-memory from the view. The redundancy: the
-per-user view record stores **only the count**, so album display fields (Name/Start/End) are re-fetched
-through two divergent paths (owned = Query on `{OWNER}#ALBUM`, shared = BatchGet by ids) and merged. The
-owned/shared provider split exists only because those fields are absent from the view.
-
-Proposed direction (candidate ADR): promote the album-list view record to a **complete read model**
-`{albumId, name, start, end, count, covers[]}`. Reads then collapse to 1 Query (`GetAvailabilitiesByUser`,
-owned + shared) + 1 Query for the owner's sharing grid. Album create/rename/amend-dates must then propagate
-display fields to viewer view records (reusing the existing count-propagation + drift-rebuild path).
-Denormalising the sharing grid is out of scope (crosses into ACL).
-</content>
-</invoke>
+Captured in ADR-0004. Kept here for traceability.

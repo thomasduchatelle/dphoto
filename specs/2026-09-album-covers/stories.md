@@ -1,56 +1,92 @@
 # Stories — Album covers
 
-Draft of every issue, grouped by phase. Phases ship in order; each issue names its phase and treats later
-phases as out of scope. Phase 1–2 issues are written out under `issues/`; phases 3–5 are drafted here.
+Forward-looking backlog, grouped by phase. Each issue is a vertical slice that can be owned end-to-end
+by one agent. See `spec.md` (what) and `design.md` (cross-issue technical direction).
 
-See `spec.md` (what) and `design.md` (cross-issue technical direction).
+## Phase 2 — Covers propagated, lifecycle-maintained, displayed
 
-## Phase 1 — Foundation
-
-- **01 — Album-list view becomes a complete read model** _(catalogviews + adapter; ADR)_
-  - Extend the view record with Name/Start/End; write them on album create/rename/amend-dates.
-  - Collapse the read to a single per-user Query; drop the owned/shared metadata re-fetch.
-  - Drift-rebuild covers the new fields. `GET /albums` output unchanged.
-
-## Phase 2 — Covers populated & displayed (read-only)
-
-- **02 — Cover model & single-record persistence + random completion** _(pkg/catalog + catalogdynamo)_
-  - `Cover`/`CoverOrigin`, single `…#COVERS` record per album (max 4), completion operation with uniform
-    random IMAGE selection (candidate and query variants).
-- **03 — Covers in the album-list read model** _(catalogviews)_
-  - `Covers` in the projection; re-denormalise on change; drift-rebuild from canonical.
-- **04 — Expose covers on `GET /albums`** _(api)_
-  - `covers[]` on `AlbumDTO`.
-- **05 — Backup completes covers for touched albums** _(pkg/backup + cmd)_
-  - End-of-batch completion from the just-inserted images; full sets untouched.
-- **06 — Backfill covers for all owners/albums** _(CLI / tools)_
-  - One-off idempotent completion sweep across every album.
 - **07 — Render album covers on the album list** _(web-nextjs)_
-  - Album card shows real covers (0–4) via the image loader.
+  - Album card shows real covers (0–4) via the image loader. Replaces the placeholder `thumbnails`
+    field. Storybook / visual tests for 0, partial, full.
+- **09 — Covers on `MediasInserted` + Randomize primitive upgrade** _(pkg/catalog + pkg/catalogadapters + pkg/catalogviews + pkg/pkgfactory + cmd/dphotops)_
+  - Upgrade the cover-completion primitive: rename `CompleteCovers` → `RandomizeCovers`, drop every
+    `RANDOM`, keep `CHERRY_PICKED`, fill empties up to 4; return the resulting `[]Cover`.
+  - Media-insert use case calls the primitive per affected album; the `MediasInserted` event carries
+    the resulting covers per album.
+  - `AlbumView.OnMediasInserted` denormalises covers alongside the count update in a single per-row
+    write (new atomic repository method `ADD Count :d SET Covers = :c`).
+  - `pkg/backup` and `cmd/dphoto` are **not** touched.
+- **10 — Covers on `AlbumCreated` and `AlbumDatesAmended`** _(pkg/catalog + pkg/catalogviews)_
+  - Both events gain `Covers map[AlbumId][]Cover` covering the amended album and every
+    source/destination touched by `TransferredMedias`.
+  - Destinations: `Randomize` with the moved-in medias. Sources: strip stale covers whose media
+    moved out (no re-randomisation).
+  - `AlbumView` handlers denormalise via `PutSummaries` (create) or `SetCoversForAllViewers`
+    (amend-dates) — no atomic ADD+SET needed.
+- **11 — Covers on `AlbumShared`** _(pkg/acl/catalogacl + pkg/catalogviews)_
+  - `ShareAlbumCase` reads the current covers and passes them to `AlbumSharedObserver`; the view
+    adapter writes a complete visitor row in one `PutSummaries` call.
+- **12 — Canonical cover record lifecycle (delete + folder-rename migration)** _(pkg/catalog + pkg/catalogadapters + pkg/catalogviews)_
+  - `AlbumDeleted` → delete the canonical `#COVERS` record.
+  - `AlbumRenamed` folder-change → move the canonical record to the new SK; AlbumView's folder-rename
+    path preserves covers on the new rows. In-place rename is a no-op.
 
-## Phase 3 — Re-randomise
+### Dead-code cleanup
 
-- **08 — Re-randomise operation** _(pkg/catalog)_
-  - Replace all `RANDOM` covers with a fresh random pick, keep `CHERRY_PICKED`, then complete empties.
-- **09 — Re-randomise endpoint** _(api)_
-  - `POST …/covers/refresh`, owner-edit permission; re-denormalises to the view.
-- **10 — Re-randomise action on the album page** _(web-nextjs)_
-  - Control on the album page (grid of all pictures) triggering the endpoint and refreshing covers.
+`AlbumView.OnAlbumCoversChanged` is dead once 09, 10, 11 have all landed. The last of the three to
+merge grep-checks the method has no production caller and deletes it in the same PR. No separate
+ticket.
 
-## Phase 4 — Manually pick
+## Phase 3 — Owner-triggered re-randomise
 
-- **11 — Pick operation** _(pkg/catalog)_
-  - Add a `CHERRY_PICKED` cover; evict a `RANDOM` when full; refuse when all 4 are `CHERRY_PICKED`.
-- **12 — Pick endpoint** _(api)_
-  - `PUT …/covers/{mediaId}`, owner-edit permission; surfaces the refusal error.
-- **13 — Pick on the fullscreen media page** _(web-nextjs)_
-  - "Set as cover" on the fullscreen media; snackbar on refusal.
+- **13 — Randomize use case (owner-triggered)** _(pkg/catalog + pkg/catalogviews + pkg/pkgfactory)_
+  - A `RandomizeAlbumCovers` use case that calls `Randomize(albumId)` and emits a dedicated
+    `AlbumCoversRandomised` event; `AlbumView` consumes it to update every viewer row.
+- **14 — `POST …/covers/refresh` endpoint** _(api/lambdas + deployments/cdk)_
+  - New lambda, owner-edit permission, returns the new covers in the response body.
+- **15 — Re-randomise UI on the album page** _(web-nextjs)_
+  - Owner-only action on the album page; calls the endpoint and refreshes the displayed covers.
 
-## Phase 5 — Unpick
+## Phase 4+ — Cherry-pick / unpick / `SetCovers` (deferred)
 
-- **14 — Unpick operation** _(pkg/catalog)_
-  - Remove a cover, leave the slot empty (no auto-refill).
-- **15 — Unpick endpoint** _(api)_
-  - `DELETE …/covers/{mediaId}`, owner-edit permission.
-- **16 — Unpick on the fullscreen media page** _(web-nextjs)_
-  - "Unset as cover" on the fullscreen media.
+Out of scope for this feature. A future `PUT /api/v1/owners/{owner}/albums/{folderName}/covers`
+endpoint will replace the per-media approach from the earlier draft.
+
+## Dependency graph
+
+```
+Phase 2 — four parallel tracks:
+
+   ┌──────────────────────────────────────────────────────────┐
+   │  09 ──► 10                                                │  catalog event propagation
+   │     └─► 11                                                │  (10 and 11 parallel after 09)
+   └──────────────────────────────────────────────────────────┘
+
+   ┌──────────────────────────────────────────────────────────┐
+   │  12                                                        │  canonical record lifecycle
+   └──────────────────────────────────────────────────────────┘  (independent)
+
+   ┌──────────────────────────────────────────────────────────┐
+   │  07                                                        │  web rendering
+   └──────────────────────────────────────────────────────────┘  (independent, already in flight)
+
+Phase 3 — one sequence (after Phase 2 is green):
+
+   13 ──► 14 ──► 15
+```
+
+### What can start when
+
+- **Immediately, in parallel** — four agents, no in-flight dependency between them:
+  - **07** (web rendering — already in flight; depends on 04 which is `done`)
+  - **09** (MediasInserted + Randomize primitive upgrade)
+  - **11** (AlbumShared — only reads covers, doesn't need the upgraded primitive)
+  - **12** (canonical record lifecycle)
+- **After 09 lands** (upgraded `RandomizeCoversPort`):
+  - **10** starts (needs the primitive that returns `[]Cover` to attach to events).
+- **Phase 3**:
+  - **13 → 14 → 15** is a strict sequence (each needs the previous layer).
+
+Numbering gaps: **08** was folded into 09 (so the primitive upgrade ships with its first consumer
+rather than as a schema-only PR). Issue numbers 05 (`wontdo`) and 08 (unused) are left as gaps to
+avoid renumbering in-flight branches.
