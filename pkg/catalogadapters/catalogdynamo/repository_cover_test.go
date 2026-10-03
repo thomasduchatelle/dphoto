@@ -72,6 +72,81 @@ func TestRepository_FindCoversByAlbum(t *testing.T) {
 	}
 }
 
+func TestRepository_FindCoversByAlbums(t *testing.T) {
+	avengersId := catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/avengers-1")}
+	stealthId := catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/stealth")}
+	otherId := catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/other")}
+
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+
+	type args struct {
+		albumIds []catalog.AlbumId
+	}
+	tests := []struct {
+		name    string
+		args    args
+		before  []map[string]types.AttributeValue
+		want    map[catalog.AlbumId][]catalog.Cover
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "it should return a nil map when no albumId is requested",
+			args:    args{albumIds: nil},
+			before:  nil,
+			want:    nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "it should return an empty map when none of the requested albums has a cover record",
+			args:    args{albumIds: []catalog.AlbumId{avengersId, stealthId}},
+			before:  nil,
+			want:    map[catalog.AlbumId][]catalog.Cover{},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return the covers of every requested album that has a record and skip the others",
+			args: args{albumIds: []catalog.AlbumId{avengersId, stealthId, otherId}},
+			before: []map[string]types.AttributeValue{
+				coverEntry(avengersId,
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+				),
+				coverEntry(stealthId,
+					catalog.Cover{MediaId: "media-9", Filename: "z.jpg", Origin: catalog.CoverOriginRandom},
+				),
+			},
+			want: map[catalog.AlbumId][]catalog.Cover{
+				avengersId: {
+					{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginCherryPicked},
+					{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+				},
+				stealthId: {
+					{MediaId: "media-9", Filename: "z.jpg", Origin: catalog.CoverOriginRandom},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(dyn.Ctx, tt.before)
+			if !assert.NoError(t, err, "WithDbContent") {
+				return
+			}
+
+			r := &Repository{client: dyn.Client, table: dyn.Table}
+
+			got, err := r.FindCoversByAlbums(context.Background(), tt.args.albumIds...)
+			if !tt.wantErr(t, err, fmt.Sprintf("FindCoversByAlbums(%v)", tt.args.albumIds)) {
+				return
+			}
+			assert.Equal(t, tt.want, got, "FindCoversByAlbums(%v)", tt.args.albumIds)
+		})
+	}
+}
+
 func TestRepository_SaveCovers(t *testing.T) {
 	albumId := catalog.AlbumId{
 		Owner:      "ironman",

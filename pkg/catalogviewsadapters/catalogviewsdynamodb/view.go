@@ -3,6 +3,7 @@ package catalogviewsdynamodb
 import (
 	"context"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -36,7 +37,7 @@ func legacyDeleteRequest(record map[string]types.AttributeValue) types.WriteRequ
 
 func (a *AlbumViewRepository) IncrementCountForAllViewers(ctx context.Context, updates []catalogviews.AlbumCountDiff) error {
 	for _, update := range updates {
-		items, err := a.queryByAlbumIndex(ctx, update.AlbumId)
+		items, err := a.querySummariesByAlbumIndex(ctx, update.AlbumId)
 		if err != nil {
 			return errors.Wrapf(err, "failed to list rows for album %v", update.AlbumId)
 		}
@@ -70,7 +71,7 @@ func (a *AlbumViewRepository) IncrementCountForAllViewers(ctx context.Context, u
 
 func (a *AlbumViewRepository) SetCountForAllViewers(ctx context.Context, updates []catalogviews.AlbumCount) error {
 	for _, update := range updates {
-		items, err := a.queryByAlbumIndex(ctx, update.AlbumId)
+		items, err := a.querySummariesByAlbumIndex(ctx, update.AlbumId)
 		if err != nil {
 			return errors.Wrapf(err, "failed to list rows for album %v", update.AlbumId)
 		}
@@ -102,45 +103,60 @@ func (a *AlbumViewRepository) SetCountForAllViewers(ctx context.Context, updates
 	return nil
 }
 
-func (a *AlbumViewRepository) SetCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
-	items, err := a.queryByAlbumIndex(ctx, albumId)
+// PutCoversForAllViewers upserts the covers row for every viewer who already has a
+// summary row for the album. The covers row lives at a sibling SK (`...#COVERS`) in
+// the viewer's partition so cover writes never touch the main summary row.
+func (a *AlbumViewRepository) PutCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+	summaries, err := a.querySummariesByAlbumIndex(ctx, albumId)
 	if err != nil {
 		return errors.Wrapf(err, "failed to list rows for album %v", albumId)
 	}
-
-	records := marshalCovers(covers)
-	for _, item := range items {
-		var update expression.UpdateBuilder
-		if len(records) == 0 {
-			update = expression.Remove(expression.Name("Covers"))
-		} else {
-			update = expression.Set(expression.Name("Covers"), expression.Value(records))
-		}
-		expr, err := expression.NewBuilder().WithUpdate(update).Build()
-		if err != nil {
-			return errors.Wrapf(err, "failed to build expression for SetCoversForAllViewers %+v", albumId)
-		}
-
-		_, err = a.Client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
-			TableName: &a.TableName,
-			Key: map[string]types.AttributeValue{
-				"PK": item["PK"],
-				"SK": item["SK"],
-			},
-			ExpressionAttributeNames:  expr.Names(),
-			ExpressionAttributeValues: expr.Values(),
-			UpdateExpression:          expr.Update(),
-		})
-		if err != nil {
-			return errors.Wrapf(err, "failed to update covers for album %v", albumId)
-		}
+	if len(summaries) == 0 {
+		return nil
 	}
 
-	return nil
+	var writes []types.WriteRequest
+	for _, item := range summaries {
+		availability, err := availabilityFromItem(item)
+		if err != nil {
+			return err
+		}
+		record, err := marshalAlbumCovers(availability, albumId, covers)
+		if err != nil {
+			return err
+		}
+		writes = append(writes, types.WriteRequest{PutRequest: &types.PutRequest{Item: record}})
+	}
+
+	return dynamoutils.BufferedWriteItems(ctx, a.Client, writes, a.TableName, dynamoutils.DynamoWriteBatchSize)
+}
+
+// DeleteCoversForAllViewers removes the covers row of every viewer for the album.
+// Summary rows are untouched; a next ListSummariesForUser returns the album with an
+// empty cover set.
+func (a *AlbumViewRepository) DeleteCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId) error {
+	items, err := a.queryCoversByAlbumIndex(ctx, albumId)
+	if err != nil {
+		return errors.Wrapf(err, "failed to list cover rows for album %v", albumId)
+	}
+	if len(items) == 0 {
+		return nil
+	}
+
+	writes := make([]types.WriteRequest, 0, len(items))
+	for _, item := range items {
+		writes = append(writes, types.WriteRequest{
+			DeleteRequest: &types.DeleteRequest{Key: map[string]types.AttributeValue{
+				"PK": item["PK"],
+				"SK": item["SK"],
+			}},
+		})
+	}
+	return dynamoutils.BufferedWriteItems(ctx, a.Client, writes, a.TableName, dynamoutils.DynamoWriteBatchSize)
 }
 
 func (a *AlbumViewRepository) SetDisplayFieldsForAllViewers(ctx context.Context, albumId catalog.AlbumId, name string, start, end time.Time) error {
-	items, err := a.queryByAlbumIndex(ctx, albumId)
+	items, err := a.querySummariesByAlbumIndex(ctx, albumId)
 	if err != nil {
 		return errors.Wrapf(err, "failed to list rows for album %v", albumId)
 	}
@@ -176,24 +192,35 @@ func (a *AlbumViewRepository) SetDisplayFieldsForAllViewers(ctx context.Context,
 }
 
 func (a *AlbumViewRepository) RenameAlbum(ctx context.Context, existingId, renamedId catalog.AlbumId, newName string) error {
-	items, err := a.queryByAlbumIndex(ctx, existingId)
+	allItems, err := a.queryAllByAlbumIndex(ctx, existingId)
 	if err != nil {
 		return errors.Wrapf(err, "failed to list rows for album %v", existingId)
 	}
-	if len(items) == 0 {
+	if len(allItems) == 0 {
 		return nil
 	}
 
 	var ownerRow *catalogviews.UserAlbumSummary
-	viewers := make([]catalogviews.Availability, 0, len(items))
-	for _, item := range items {
-		summary, err := unmarshalAlbumSummary(item)
-		if err != nil {
-			return err
-		}
-		viewers = append(viewers, summary.Availability)
-		if summary.Availability.AsOwner {
-			ownerRow = summary
+	viewers := make([]catalogviews.Availability, 0)
+	coversPerViewer := make(map[string][]catalog.Cover)
+	for _, item := range allItems {
+		recordType := recordTypeOf(item)
+		switch recordType {
+		case RecordTypeSummary:
+			summary, err := unmarshalAlbumSummary(item)
+			if err != nil {
+				return err
+			}
+			viewers = append(viewers, summary.Availability)
+			if summary.Availability.AsOwner {
+				ownerRow = summary
+			}
+		case RecordTypeCovers:
+			_, availability, covers, err := unmarshalAlbumCovers(item)
+			if err != nil {
+				return err
+			}
+			coversPerViewer[availability.String()] = covers
 		}
 	}
 	if ownerRow == nil {
@@ -209,7 +236,7 @@ func (a *AlbumViewRepository) RenameAlbum(ctx context.Context, existingId, renam
 	}
 
 	var writes []types.WriteRequest
-	for _, item := range items {
+	for _, item := range allItems {
 		writes = append(writes, types.WriteRequest{
 			DeleteRequest: &types.DeleteRequest{
 				Key: map[string]types.AttributeValue{
@@ -230,6 +257,20 @@ func (a *AlbumViewRepository) RenameAlbum(ctx context.Context, existingId, renam
 	for _, item := range newItems {
 		writes = append(writes, types.WriteRequest{
 			PutRequest: &types.PutRequest{Item: item},
+		})
+	}
+
+	for _, viewer := range viewers {
+		covers, ok := coversPerViewer[viewer.String()]
+		if !ok || len(covers) == 0 {
+			continue
+		}
+		coverItem, err := marshalAlbumCovers(viewer, renamedId, covers)
+		if err != nil {
+			return err
+		}
+		writes = append(writes, types.WriteRequest{
+			PutRequest: &types.PutRequest{Item: coverItem},
 		})
 	}
 
@@ -266,10 +307,12 @@ func (a *AlbumViewRepository) PutSummaries(ctx context.Context, summaries []cata
 
 func (a *AlbumViewRepository) DeleteRow(ctx context.Context, availability catalogviews.Availability, albumId catalog.AlbumId) error {
 	key := albumSummaryKey(availability, albumId)
+	coversKey := albumCoversKey(availability, albumId)
 	legacyKey := appdynamodb.TablePk{PK: key.PK, SK: key.SK + legacyCountSuffix}
 
 	writes := []types.WriteRequest{
 		{DeleteRequest: &types.DeleteRequest{Key: key.ToAttributes()}},
+		{DeleteRequest: &types.DeleteRequest{Key: coversKey.ToAttributes()}},
 		{DeleteRequest: &types.DeleteRequest{Key: legacyKey.ToAttributes()}},
 	}
 
@@ -278,7 +321,7 @@ func (a *AlbumViewRepository) DeleteRow(ctx context.Context, availability catalo
 }
 
 func (a *AlbumViewRepository) DeleteAllRowsForAlbum(ctx context.Context, albumId catalog.AlbumId) error {
-	pages, err := a.queryByAlbumIndex(ctx, albumId)
+	pages, err := a.queryAllByAlbumIndex(ctx, albumId)
 	if err != nil {
 		return errors.Wrapf(err, "failed to list rows for album %v", albumId)
 	}
@@ -301,22 +344,56 @@ func (a *AlbumViewRepository) DeleteAllRowsForAlbum(ctx context.Context, albumId
 	return dynamoutils.BufferedWriteItems(ctx, a.Client, deletes, a.TableName, dynamoutils.DynamoWriteBatchSize)
 }
 
-func (a *AlbumViewRepository) queryByAlbumIndex(ctx context.Context, albumId catalog.AlbumId) ([]map[string]types.AttributeValue, error) {
-	expr, err := expression.NewBuilder().
-		WithKeyCondition(expression.Key("AlbumViewIndexPK").Equal(expression.Value(albumViewByAlbumIndexPK(albumId)))).
-		Build()
+func (a *AlbumViewRepository) querySummariesByAlbumIndex(ctx context.Context, albumId catalog.AlbumId) ([]map[string]types.AttributeValue, error) {
+	return a.queryByAlbumIndex(ctx, albumId, &RecordTypeSummaryFilter)
+}
+
+func (a *AlbumViewRepository) queryCoversByAlbumIndex(ctx context.Context, albumId catalog.AlbumId) ([]map[string]types.AttributeValue, error) {
+	return a.queryByAlbumIndex(ctx, albumId, &RecordTypeCoversFilter)
+}
+
+func (a *AlbumViewRepository) queryAllByAlbumIndex(ctx context.Context, albumId catalog.AlbumId) ([]map[string]types.AttributeValue, error) {
+	return a.queryByAlbumIndex(ctx, albumId, nil)
+}
+
+var (
+	RecordTypeSummaryFilter = RecordTypeSummary
+	RecordTypeCoversFilter  = RecordTypeCovers
+)
+
+func (a *AlbumViewRepository) queryByAlbumIndex(ctx context.Context, albumId catalog.AlbumId, filterRecordType *string) ([]map[string]types.AttributeValue, error) {
+	builder := expression.NewBuilder().
+		WithKeyCondition(expression.Key("AlbumViewIndexPK").Equal(expression.Value(albumViewByAlbumIndexPK(albumId))))
+
+	if filterRecordType != nil {
+		if *filterRecordType == RecordTypeSummary {
+			builder = builder.WithFilter(
+				expression.Name("RecordType").Equal(expression.Value(RecordTypeSummary)).
+					Or(expression.Name("RecordType").AttributeNotExists()),
+			)
+		} else {
+			builder = builder.WithFilter(expression.Name("RecordType").Equal(expression.Value(*filterRecordType)))
+		}
+	}
+
+	expr, err := builder.Build()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to build expression for AlbumViewByAlbumIndex query %v", albumId)
 	}
 
 	indexName := "AlbumViewByAlbumIndex"
-	paginator := dynamodb.NewQueryPaginator(a.Client, &dynamodb.QueryInput{
+	queryInput := &dynamodb.QueryInput{
 		TableName:                 &a.TableName,
 		IndexName:                 &indexName,
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
-	})
+	}
+	if expr.Filter() != nil {
+		queryInput.FilterExpression = expr.Filter()
+	}
+
+	paginator := dynamodb.NewQueryPaginator(a.Client, queryInput)
 
 	var items []map[string]types.AttributeValue
 	for paginator.HasMorePages() {
@@ -347,7 +424,17 @@ func (a *AlbumViewRepository) ListSummariesForUser(ctx context.Context, userId u
 		FilterExpression:          expr.Filter(),
 	})
 
-	var summaries []catalogviews.UserAlbumSummary
+	type albumKey struct {
+		albumId      catalog.AlbumId
+		availability catalogviews.Availability
+	}
+	summariesByKey := make(map[string]*catalogviews.UserAlbumSummary)
+	coversByKey := make(map[string][]catalog.Cover)
+	var order []string
+	toKey := func(k albumKey) string {
+		return k.availability.String() + "|" + k.albumId.String()
+	}
+
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
@@ -355,13 +442,38 @@ func (a *AlbumViewRepository) ListSummariesForUser(ctx context.Context, userId u
 		}
 
 		for _, item := range page.Items {
-			summary, err := unmarshalAlbumSummary(item)
-			if err != nil {
-				return nil, err
+			switch recordTypeOf(item) {
+			case RecordTypeCovers:
+				albumId, availability, covers, err := unmarshalAlbumCovers(item)
+				if err != nil {
+					return nil, err
+				}
+				key := toKey(albumKey{albumId: albumId, availability: availability})
+				coversByKey[key] = covers
+			default:
+				summary, err := unmarshalAlbumSummary(item)
+				if err != nil {
+					return nil, err
+				}
+				key := toKey(albumKey{albumId: summary.AlbumSummary.AlbumId, availability: summary.Availability})
+				if _, exists := summariesByKey[key]; !exists {
+					order = append(order, key)
+				}
+				summariesByKey[key] = summary
 			}
-
-			summaries = append(summaries, *summary)
 		}
+	}
+
+	if len(order) == 0 {
+		return nil, nil
+	}
+	summaries := make([]catalogviews.UserAlbumSummary, 0, len(order))
+	for _, key := range order {
+		summary := summariesByKey[key]
+		if covers, ok := coversByKey[key]; ok {
+			summary.AlbumSummary.Covers = covers
+		}
+		summaries = append(summaries, *summary)
 	}
 
 	return summaries, nil
@@ -423,4 +535,29 @@ func (a *AlbumViewRepository) ListSummariesForUserAndOwners(ctx context.Context,
 	}
 
 	return filtered, nil
+}
+
+func recordTypeOf(item map[string]types.AttributeValue) string {
+	if attr, ok := item["RecordType"]; ok {
+		if s, ok := attr.(*types.AttributeValueMemberS); ok {
+			return s.Value
+		}
+	}
+	sk, ok := item["SK"].(*types.AttributeValueMemberS)
+	if ok && strings.HasSuffix(sk.Value, coversSKSuffix) {
+		return RecordTypeCovers
+	}
+	return RecordTypeSummary
+}
+
+func availabilityFromItem(item map[string]types.AttributeValue) (catalogviews.Availability, error) {
+	availability, ok := item["AvailabilityType"].(*types.AttributeValueMemberS)
+	if !ok {
+		return catalogviews.Availability{}, errors.Errorf("missing AvailabilityType on row: %+v", item)
+	}
+	userId, ok := item["UserId"].(*types.AttributeValueMemberS)
+	if !ok {
+		return catalogviews.Availability{}, errors.Errorf("missing UserId on row: %+v", item)
+	}
+	return unmarshalAvailability(availability.Value, userId.Value, item)
 }

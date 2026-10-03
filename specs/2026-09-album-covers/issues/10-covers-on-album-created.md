@@ -1,47 +1,42 @@
-# 10 — AlbumCreated cover maintenance
+# 10 — Covers on AlbumCreated
 
 Status: ready
 Phase: 2
-Layer: `pkg/catalog` + `pkg/pkgfactory`
-Depends on: 09 (reconciliation primitive, split view projection)
+Layer: `pkg/catalog` + `pkg/catalogviews` + `pkg/pkgfactory`
+Depends on: 09 (cover-maintenance service, split view projection)
 
 ## Description
 
-When an album is created, its covers must be initialised from the medias transferred into it, and any
-pre-existing album that lost medias to the new one must have its covers reconciled too (stale covers
-stripped, empties refilled from survivors).
+When an album is created, its covers must be initialised from the medias transferred into it (if
+any), and any pre-existing album that lost medias to the new one must have its covers reconciled
+too — stripped of covers whose media was moved out, refilled from the remaining medias so stable
+covers persist whenever possible.
 
-Shipped as a cover observer on the `AlbumCreated` lifecycle event. The create-album use case is not
-modified; it continues to emit the event as it does today.
-
-See `../design.md` → Cover-maintenance pattern; per-operation reconciliation inputs (`AlbumCreated`).
+See `../design.md` → per-operation strategy (`AlbumCreated`).
 
 ## Acceptance criteria
 
 - Creating an album with no transferred-in medias results in no cover record for that album and no
   cover row on any viewer's `ListAlbums` entry.
-- Creating an album that overlaps and absorbs medias from pre-existing albums results in:
-  - The new album having up to 4 `RANDOM` covers drawn from the transferred-in medias (fewer than 4
-    if fewer eligible `IMAGE` medias were transferred).
+- Creating an album that absorbs medias from pre-existing albums results in:
+  - The new album having up to 4 `RANDOM` covers drawn from the album's full image set (which, for
+    a freshly created album, equals the transferred-in medias).
   - Each source album whose cover referenced a transferred-out media having that cover stripped and
-    its slot refilled from its remaining `IMAGE` medias (fallback query). `CHERRY_PICKED` covers on
-    source albums are preserved.
-  - Source albums whose covers were untouched by the transfer having no cover-record write.
-- All of the above is visible on every viewer's next `ListAlbums` (owner and any visitor who already
-  had access to the source albums).
-- The `AlbumCreated` event payload is not changed. The create-album use case is not modified.
-- Observer wiring: the cover observer is registered on the `AlbumCreated` event alongside the
-  existing view observer; order between the two is not load-bearing (covers propagate through their
-  own chain).
+    its slot refilled from the album's remaining images (**Stabilise** semantics). Source covers
+    that were not affected by the transfer stay in place.
+  - `CHERRY_PICKED` covers on source albums are preserved.
+  - Source albums whose cover set was unaffected (no transferred-out media was a cover) do not get
+    a cover-row rewrite.
+- All of the above is visible on every viewer's next `ListAlbums` (owner and any visitor who
+  already had access to the source albums).
 
 ## Out of scope
 
-- `MediasInserted`, `AlbumDatesAmended`, `AlbumDeleted`, `AlbumRenamed`, `AlbumShared` — issues 09,
-  11, 12, 16, 17.
-- Any change to `AlbumView.OnAlbumCreated`.
+- `MediasInserted`, `AlbumDatesAmended`, `AlbumDeleted`, `AlbumRenamed`, `AlbumShared` — issues
+  09, 11, 12, 16, 17.
 
 ## References
 
 - `../spec.md` (Automatic cover maintenance → medias added, medias moved out).
-- `../design.md` (per-operation reconciliation inputs — `AlbumCreated`).
+- `../design.md` (per-operation strategy — `AlbumCreated`).
 - Load skills: `go`, `architecture`.

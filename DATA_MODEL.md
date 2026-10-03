@@ -16,8 +16,10 @@ Schema
 | {OWNER}#MEDIA#{id}       | LOCATION#                                   | Media location if the archive                            | archivedynamo        |
 | USER#{EMAIL}             | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | Scopes allowed for a user (ownership, shared, ...)       | aclscopedynamodb     |
 | USER#{EMAIL}             | IDENTITY#                                   | Details about the user (name, picture, ...)              | aclidentitydynamodb  |
-| USER#{EMAIL}#ALBUMS_VIEW | OWNED#{OWNER}#{FOLDER_NAME}                 | (view) album summary for an album owned by the user: count + display fields (name/start/end) + covers (0-4)    | catalogviewsdynamodb |
-| USER#{EMAIL}#ALBUMS_VIEW | VISITOR#{OWNER}#{FOLDER_NAME}               | (view) album summary for an album shared with the user: count + display fields (name/start/end) + covers (0-4) | catalogviewsdynamodb |
+| USER#{EMAIL}#ALBUMS_VIEW | OWNED#{OWNER}#{FOLDER_NAME}                 | (view) album summary for an album owned by the user: count + display fields (name/start/end)                   | catalogviewsdynamodb |
+| USER#{EMAIL}#ALBUMS_VIEW | OWNED#{OWNER}#{FOLDER_NAME}#COVERS          | (view) covers (0-4) of an album owned by the user, sibling of the summary row                                  | catalogviewsdynamodb |
+| USER#{EMAIL}#ALBUMS_VIEW | VISITOR#{OWNER}#{FOLDER_NAME}               | (view) album summary for an album shared with the user: count + display fields (name/start/end)                | catalogviewsdynamodb |
+| USER#{EMAIL}#ALBUMS_VIEW | VISITOR#{OWNER}#{FOLDER_NAME}#COVERS        | (view) covers (0-4) of an album shared with the user, sibling of the summary row                               | catalogviewsdynamodb |
 | REFRESH#{TOKEN}          | #REFRESH_SPEC                               | Refresh token                                            | aclrefreshdynamodb   |
 
 ### Global indexes
