@@ -150,6 +150,16 @@ func (c *CoverRepositoryInMemory) FindCoversByAlbum(_ context.Context, albumId c
 	return append([]catalog.Cover(nil), covers...), nil
 }
 
+func (c *CoverRepositoryInMemory) FindCoversByAlbums(_ context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
+	result := make(map[catalog.AlbumId][]catalog.Cover, len(albumIds))
+	for _, albumId := range albumIds {
+		if covers, ok := c.Covers[albumId]; ok {
+			result[albumId] = append([]catalog.Cover(nil), covers...)
+		}
+	}
+	return result, nil
+}
+
 func (c *CoverRepositoryInMemory) SaveCovers(_ context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
 	if len(covers) > catalog.MaxCoversPerAlbum {
 		return catalog.TooManyCoversErr

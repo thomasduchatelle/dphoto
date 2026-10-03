@@ -9,13 +9,13 @@ import (
 
 func NewInsertMedias(
 	InsertMediasRepository InsertMediasRepositoryPort,
-	RefreshCoversPort RefreshCoversPort,
+	RandomiseCoversPort RandomiseCoversPort,
 	InsertMediasObservers ...InsertMediasObserver,
 ) *InsertMedias {
 
 	return &InsertMedias{
 		InsertMediasRepository: InsertMediasRepository,
-		RefreshCoversPort:      RefreshCoversPort,
+		RandomiseCoversPort:    RandomiseCoversPort,
 		InsertMediasObservers:  InsertMediasObservers,
 	}
 }
@@ -41,7 +41,7 @@ func (f InsertMediasObserverFunc) OnMediasInserted(ctx context.Context, event Me
 // InsertMedias is a use case to pre-generate ids and store media metadata.
 type InsertMedias struct {
 	InsertMediasRepository InsertMediasRepositoryPort
-	RefreshCoversPort      RefreshCoversPort
+	RandomiseCoversPort    RandomiseCoversPort
 	InsertMediasObservers  []InsertMediasObserver
 }
 
@@ -61,15 +61,13 @@ func (i *InsertMedias) Insert(ctx context.Context, owner ownermodel.Owner, media
 		insertedMedias[albumId] = append(insertedMedias[albumId], media.Id)
 	}
 
-	coversPerAlbum := make(map[AlbumId][]Cover)
+	affectedAlbums := make([]AlbumId, 0, len(insertedMedias))
 	for albumId := range insertedMedias {
-		covers, changed, err := i.RefreshCoversPort.Refresh(ctx, albumId, nil)
-		if err != nil {
-			return errors.Wrapf(err, "InsertMedias failed to refresh covers of %s", albumId)
-		}
-		if changed {
-			coversPerAlbum[albumId] = covers
-		}
+		affectedAlbums = append(affectedAlbums, albumId)
+	}
+	coversPerAlbum, err := i.RandomiseCoversPort.Randomise(ctx, affectedAlbums...)
+	if err != nil {
+		return errors.Wrapf(err, "InsertMedias failed to randomise covers of %v", affectedAlbums)
 	}
 
 	event := MediasInserted{

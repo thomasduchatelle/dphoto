@@ -51,7 +51,7 @@ dropped and re-picked on every pass).`,
 
 		backfill := &catalog.BackfillCovers{
 			FindAlbumByOwnerPort:      pkgfactory.AlbumQueries(ctx),
-			RefreshCoversPort:         pkgfactory.CoverMaintenanceCase(ctx),
+			RandomiseCoversPort:       pkgfactory.CoverServiceCase(ctx),
 			BackfillCoversViewUpdater: backfillCoversViewUpdater{ctx: ctx},
 		}
 
