@@ -19,12 +19,14 @@ var coversCmd = &cobra.Command{
 
 var coversBackfillCmd = &cobra.Command{
 	Use:   "backfill",
-	Short: "Fill empty cover slots on every album of every owner",
-	Long: `Iterate every album of every owner and complete empty cover sets with random
+	Short: "Reconcile cover sets on every album of every owner",
+	Long: `Iterate every album of every owner and apply the cover invariant: drop every
+RANDOM cover, keep every CHERRY_PICKED cover, and fill empty slots up to 4 with
 RANDOM covers drawn from each album's eligible images.
 
-Idempotent: albums already carrying a full set of covers are left untouched, and
-CHERRY_PICKED covers are never altered. Safe to re-run.`,
+Safe to re-run: CHERRY_PICKED covers are always preserved and the cover set is
+capped at 4. Note that re-running MAY redraw existing RANDOM covers (they are
+dropped and re-picked on every pass).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
@@ -37,7 +39,7 @@ CHERRY_PICKED covers are never altered. Safe to re-run.`,
 
 		backfill := &catalog.BackfillCovers{
 			FindAlbumByOwnerPort: pkgfactory.AlbumQueries(ctx),
-			CompleteCoversPort:   pkgfactory.CompleteCoversCase(ctx),
+			ReconcileCoversPort:  pkgfactory.CoverMaintenanceCase(ctx),
 		}
 
 		var failedOwners int

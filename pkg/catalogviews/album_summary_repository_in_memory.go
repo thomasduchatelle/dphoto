@@ -54,15 +54,16 @@ func (r *AlbumSummaryInMemoryRepository) PutSummaries(ctx context.Context, summa
 
 	for _, summary := range summaries {
 		for _, user := range summary.Users {
-			userSummary := UserAlbumSummary{AlbumSummary: summary.AlbumSummary, Availability: user}
-
 			index := slices.IndexFunc(r.Summaries, func(current UserAlbumSummary) bool {
 				return current.AlbumSummary.AlbumId.IsEqual(summary.AlbumId) && current.Availability.UserId == user.UserId
 			})
+			newSummary := summary.AlbumSummary
+			newSummary.Covers = nil
 			if index >= 0 {
-				r.Summaries[index] = userSummary
+				newSummary.Covers = r.Summaries[index].AlbumSummary.Covers
+				r.Summaries[index] = UserAlbumSummary{AlbumSummary: newSummary, Availability: user}
 			} else {
-				r.Summaries = append(r.Summaries, userSummary)
+				r.Summaries = append(r.Summaries, UserAlbumSummary{AlbumSummary: newSummary, Availability: user})
 			}
 		}
 	}
@@ -81,10 +82,19 @@ func (r *AlbumSummaryInMemoryRepository) SetDisplayFieldsForAllViewers(ctx conte
 	return nil
 }
 
-func (r *AlbumSummaryInMemoryRepository) SetCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+func (r *AlbumSummaryInMemoryRepository) PutCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
 	for i := range r.Summaries {
 		if r.Summaries[i].AlbumSummary.AlbumId.IsEqual(albumId) {
-			r.Summaries[i].AlbumSummary.Covers = covers
+			r.Summaries[i].AlbumSummary.Covers = append([]catalog.Cover(nil), covers...)
+		}
+	}
+	return nil
+}
+
+func (r *AlbumSummaryInMemoryRepository) DeleteCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId) error {
+	for i := range r.Summaries {
+		if r.Summaries[i].AlbumSummary.AlbumId.IsEqual(albumId) {
+			r.Summaries[i].AlbumSummary.Covers = nil
 		}
 	}
 	return nil
@@ -131,10 +141,17 @@ func (r *AlbumSummaryInMemoryRepository) RenameAlbum(ctx context.Context, existi
 	}
 	source := r.Summaries[ownerIndex].AlbumSummary
 
-	var viewers []Availability
+	type viewerRow struct {
+		availability Availability
+		covers       []catalog.Cover
+	}
+	var viewers []viewerRow
 	for _, summary := range r.Summaries {
 		if summary.AlbumSummary.AlbumId.IsEqual(existingId) {
-			viewers = append(viewers, summary.Availability)
+			viewers = append(viewers, viewerRow{
+				availability: summary.Availability,
+				covers:       append([]catalog.Cover(nil), summary.AlbumSummary.Covers...),
+			})
 		}
 	}
 
@@ -150,9 +167,9 @@ func (r *AlbumSummaryInMemoryRepository) RenameAlbum(ctx context.Context, existi
 				Start:      source.Start,
 				End:        source.End,
 				MediaCount: source.MediaCount,
-				Covers:     source.Covers,
+				Covers:     viewer.covers,
 			},
-			Availability: viewer,
+			Availability: viewer.availability,
 		})
 	}
 

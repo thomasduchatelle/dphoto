@@ -1,6 +1,6 @@
 # 09 — Cover reconciliation primitive + split view projection + MediasInserted
 
-Status: ready
+Status: done
 Phase: 2
 Layer: `pkg/catalog` + `pkg/catalogviews` + `pkg/catalogviewsadapters/catalogviewsdynamodb` + `pkg/pkgfactory` + `cmd/dphotops`
 Depends on: —

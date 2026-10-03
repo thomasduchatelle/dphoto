@@ -178,13 +178,6 @@ func (v *AlbumView) AlbumUnShared(ctx context.Context, albumId catalog.AlbumId, 
 	return v.Repository.DeleteRow(ctx, VisitorAvailability(userId), albumId)
 }
 
-// OnAlbumCoversChanged re-denormalises the cover set of an album into every viewer's row.
-// Mirrors the fan-out of count and display-field updates: catalog operations that change the
-// canonical covers call this to keep the view consistent.
-func (v *AlbumView) OnAlbumCoversChanged(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
-	return v.Repository.SetCoversForAllViewers(ctx, albumId, covers)
-}
-
 func (v *AlbumView) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
 	if len(medias) == 0 {
 		return nil
