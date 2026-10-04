@@ -8,35 +8,11 @@ import {AlbumFilterEntry} from "../../../../domains/catalog";
 
 const createAlbumId = (owner: string, folderName: string): AlbumId => ({owner, folderName});
 
-const sampleImages = [
-    '/v1/owners/tony@stark.com/medias/001/subnautica_1.jpeg',
-    '/v1/owners/tony@stark.com/medias/002/subnautica_2.jpeg',
-    '/v1/owners/tony@stark.com/medias/003/subnautica_3.jpeg',
-    '/v1/owners/tony@stark.com/medias/004/subnautica_4.jpeg',
-    '/v1/owners/tony@stark.com/medias/005/subnautica_5.jpeg',
-    '/v1/owners/tony@stark.com/medias/006/subnautica_6.jpeg',
-    '/v1/owners/tony@stark.com/medias/007/subnautica_7.jpeg',
-    '/v1/owners/tony@stark.com/medias/009/subnautica_9.jpeg',
-    '/v1/owners/tony@stark.com/medias/010/subnautica_10.jpeg',
-    '/v1/owners/tony@stark.com/medias/011/subnautica_11.jpeg',
-    '/v1/owners/tony@stark.com/medias/012/subnautica_12.jpeg',
-    '/v1/owners/tony@stark.com/medias/014/subnautica_14.jpeg',
-];
-
-const hashCode = (s: string): number => {
-    let h = 0;
-    for (let i = 0; i < s.length; i++) {
-        h = (h << 5) - h + s.charCodeAt(i);
-        h |= 0;
-    }
-    return h;
-};
-
-const cover = (mediaId: string, filename: string): AlbumCover => ({
+const cover = (mediaId: string, contentPath: string): AlbumCover => ({
     mediaId,
-    filename,
+    filename: contentPath,
     origin: 'RANDOM',
-    contentPath: sampleImages[Math.abs(hashCode(mediaId)) % sampleImages.length],
+    contentPath,
 });
 
 const sampleAlbums: Album[] = [
@@ -50,10 +26,10 @@ const sampleAlbums: Album[] = [
         relativeTemperature: 1,
         sharedWith: [],
         covers: [
-            cover('co-1', 'clair-obscur-1.jpg'),
-            cover('co-2', 'clair-obscur-2.jpg'),
-            cover('co-3', 'clair-obscur-3.jpg'),
-            cover('co-4', 'clair-obscur-4.jpg'),
+            cover('co-1', '/thumbnails/clair-obscur-1.jpg'),
+            cover('co-2', '/thumbnails/clair-obscur-2.jpg'),
+            cover('co-3', '/thumbnails/clair-obscur-3.jpg'),
+            cover('co-4', '/thumbnails/clair-obscur-4.jpg'),
         ],
     },
     {
@@ -68,9 +44,9 @@ const sampleAlbums: Album[] = [
             {user: {name: 'Tony Stark', email: 'ironman@avenger.com', picture: '/static/tonystark-profile.jpg'}},
         ],
         covers: [
-            cover('ab-1', 'astro-bot-01.jpg'),
-            cover('ab-2', 'astro-bot-02.jpg'),
-            cover('ab-3', 'astro-bot-03.jpg'),
+            cover('ab-1', '/thumbnails/astro-bot-01.jpg'),
+            cover('ab-2', '/thumbnails/astro-bot-02.jpg'),
+            cover('ab-3', '/thumbnails/astro-bot-03.jpg'),
         ],
     },
     {
@@ -83,9 +59,9 @@ const sampleAlbums: Album[] = [
         relativeTemperature: 0.55,
         sharedWith: [],
         covers: [
-            cover('tw-1', 'the-witcher-3-01.jpg'),
-            cover('tw-2', 'the-witcher-3-02.jpg'),
-            cover('tw-3', 'the-witcher-3-03.jpg'),
+            cover('tw-1', '/thumbnails/the-witcher-3-01.jpg'),
+            cover('tw-2', '/thumbnails/the-witcher-3-02.jpg'),
+            cover('tw-3', '/thumbnails/the-witcher-3-03.jpg'),
         ],
     },
     {
@@ -104,10 +80,10 @@ const sampleAlbums: Album[] = [
         },
         sharedWith: [],
         covers: [
-            cover('ds1-1', 'death-stranding-1-01.jpg'),
-            cover('ds1-2', 'death-stranding-1-02.jpg'),
-            cover('ds1-3', 'death-stranding-1-03.jpg'),
-            cover('ds1-4', 'death-stranding-1-04.jpg'),
+            cover('ds1-1', '/thumbnails/death-stranding-1-01.jpg'),
+            cover('ds1-2', '/thumbnails/death-stranding-1-02.jpg'),
+            cover('ds1-3', '/thumbnails/death-stranding-1-03.jpg'),
+            cover('ds1-4', '/thumbnails/death-stranding-1-04.jpg'),
         ],
     },
     {
@@ -122,7 +98,7 @@ const sampleAlbums: Album[] = [
             {user: {name: 'Tony Stark', email: 'ironman@avenger.com', picture: '/static/tonystark-profile.jpg'}},
         ],
         covers: [
-            cover('ds2-1', 'death-stranding-2-01.jpg'),
+            cover('ds2-1', '/thumbnails/death-stranding-2-01.jpg'),
         ],
     },
     {

@@ -32,36 +32,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const sampleImages = [
-    '/v1/owners/tony@stark.com/medias/001/subnautica_1.jpeg',
-    '/v1/owners/tony@stark.com/medias/002/subnautica_2.jpeg',
-    '/v1/owners/tony@stark.com/medias/003/subnautica_3.jpeg',
-    '/v1/owners/tony@stark.com/medias/004/subnautica_4.jpeg',
-    '/v1/owners/tony@stark.com/medias/005/subnautica_5.jpeg',
-    '/v1/owners/tony@stark.com/medias/006/subnautica_6.jpeg',
-    '/v1/owners/tony@stark.com/medias/007/subnautica_7.jpeg',
-    '/v1/owners/tony@stark.com/medias/009/subnautica_9.jpeg',
-    '/v1/owners/tony@stark.com/medias/010/subnautica_10.jpeg',
-    '/v1/owners/tony@stark.com/medias/011/subnautica_11.jpeg',
-    '/v1/owners/tony@stark.com/medias/012/subnautica_12.jpeg',
-    '/v1/owners/tony@stark.com/medias/014/subnautica_14.jpeg',
-];
-
-const cover = (mediaId: string, filename: string, contentPath?: string): AlbumCover => ({
+const cover = (mediaId: string, contentPath: string): AlbumCover => ({
     mediaId,
-    filename,
+    filename: contentPath.split(/(\\|\/)/g).pop(),
     origin: 'RANDOM',
-    contentPath: contentPath ?? sampleImages[Math.abs(hashCode(mediaId)) % sampleImages.length],
+    contentPath: contentPath,
 });
-
-const hashCode = (s: string): number => {
-    let h = 0;
-    for (let i = 0; i < s.length; i++) {
-        h = (h << 5) - h + s.charCodeAt(i);
-        h |= 0;
-    }
-    return h;
-};
 
 const clairObscurAlbum: Album = {
     albumId: createAlbumId('sandfall', 'clair-obscur'),
@@ -73,10 +49,10 @@ const clairObscurAlbum: Album = {
     relativeTemperature: 1,
     sharedWith: [],
     covers: [
-        cover('m1', 'clair-obscur-1.jpg'),
-        cover('m2', 'clair-obscur-2.jpg'),
-        cover('m3', 'clair-obscur-3.jpg'),
-        cover('m4', 'clair-obscur-4.jpg'),
+        cover('m1', '/thumbnails/clair-obscur-1.jpg'),
+        cover('m2', '/thumbnails/clair-obscur-2.jpg'),
+        cover('m3', '/thumbnails/clair-obscur-3.jpg'),
+        cover('m4', '/thumbnails/clair-obscur-4.jpg'),
     ],
 };
 
@@ -127,7 +103,7 @@ export const WithOneCover: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
-            covers: [cover('m7', 'clair-obscur-7.jpg')],
+            covers: [cover('m7', '/thumbnails/clair-obscur-7.jpg')],
         }
     }
 }
@@ -137,8 +113,8 @@ export const WithTwoCovers: Story = {
         album: {
             ...clairObscurAlbum,
             covers: [
-                cover('m7', 'clair-obscur-7.jpg'),
-                cover('m8', 'clair-obscur-8.jpg'),
+                cover('m7', '/thumbnails/clair-obscur-7.jpg'),
+                cover('m8', '/thumbnails/clair-obscur-8.jpg'),
             ],
         }
     }
@@ -149,9 +125,9 @@ export const WithThreeCovers: Story = {
         album: {
             ...clairObscurAlbum,
             covers: [
-                cover('m7', 'clair-obscur-7.jpg'),
-                cover('m8', 'clair-obscur-8.jpg'),
-                cover('m6', 'clair-obscur-6.jpg'),
+                cover('m7', '/thumbnails/clair-obscur-7.jpg'),
+                cover('m8', '/thumbnails/clair-obscur-8.jpg'),
+                cover('m6', '/thumbnails/clair-obscur-6.jpg'),
             ],
         }
     }
@@ -162,10 +138,10 @@ export const WithErroredCovers: Story = {
         album: {
             ...clairObscurAlbum,
             covers: [
-                cover('missing1', 'cannot-be-found.jpg', '/v1/owners/sandfall/medias/missing1/cannot-be-found.jpg'),
-                cover('m-ds2', 'death-stranding-2-01.jpg'),
-                cover('m-astro', 'astro-bot-01.jpg'),
-                cover('missing2', 'cannot-be-found.jpg', '/v1/owners/sandfall/medias/missing2/cannot-be-found.jpg'),
+                cover('missing1', '/thumbnails/cannot-be-found.jpg'),
+                cover('m-ds2', '/thumbnails/death-stranding-2-01.jpg'),
+                cover('m-astro', '/thumbnails/astro-bot-01.jpg'),
+                cover('missing2', '/thumbnails/cannot-be-found.jpg'),
             ],
         }
     }
