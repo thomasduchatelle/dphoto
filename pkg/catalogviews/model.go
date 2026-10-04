@@ -62,8 +62,10 @@ type AlbumSummary struct {
 }
 
 // AlbumSummaryForUsers is a full projection to be written for a set of users (owner + visitors).
-// Covers written through this type are ignored on write: covers travel through
-// PutCoversForAllViewers instead so that cover updates never touch the main summary row.
+// When Covers is non-empty, PutSummaries writes the sibling cover row for the listed users in
+// the same call so a newly-created viewer row carries its covers without a second fan-out.
+// Cross-viewer cover updates (cover changes, backfills) still travel through
+// PutCoversForAllViewers so they stay independent from count / display-field writes.
 type AlbumSummaryForUsers struct {
 	AlbumSummary
 	Users []Availability

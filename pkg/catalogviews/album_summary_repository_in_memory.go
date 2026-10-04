@@ -58,9 +58,10 @@ func (r *AlbumSummaryInMemoryRepository) PutSummaries(ctx context.Context, summa
 				return current.AlbumSummary.AlbumId.IsEqual(summary.AlbumId) && current.Availability.UserId == user.UserId
 			})
 			newSummary := summary.AlbumSummary
-			newSummary.Covers = nil
-			if index >= 0 {
+			if len(newSummary.Covers) == 0 && index >= 0 {
 				newSummary.Covers = r.Summaries[index].AlbumSummary.Covers
+			}
+			if index >= 0 {
 				r.Summaries[index] = UserAlbumSummary{AlbumSummary: newSummary, Availability: user}
 			} else {
 				r.Summaries = append(r.Summaries, UserAlbumSummary{AlbumSummary: newSummary, Availability: user})
