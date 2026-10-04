@@ -59,6 +59,14 @@ func NewCoverService(coverRepository CoverRepository, mediaReadRepository MediaR
 	}
 }
 
+// Randomise refreshes the cover set of every requested album by stripping covers whose
+// media is no longer in the album and filling the empty slots at random from the album's
+// full image set. When `stable` is false, every RANDOM cover is also dropped (and
+// re-picked) so that newly-added medias get a chance to appear as a cover. When `stable`
+// is true, every cover whose media is still in the album is kept untouched.
+// CHERRY_PICKED covers whose media is still in the album are always kept regardless of
+// `stable`. The returned map carries one entry per album whose cover set actually
+// changed; unchanged albums are omitted. Returns a nil map when nothing changed.
 func (c *CoverService) Randomise(ctx context.Context, stable bool, albumIds ...AlbumId) (map[AlbumId][]Cover, error) {
 	if len(albumIds) == 0 {
 		return nil, nil
@@ -71,34 +79,49 @@ func (c *CoverService) Randomise(ctx context.Context, stable bool, albumIds ...A
 
 	var changed map[AlbumId][]Cover
 	for _, albumId := range albumIds {
-		covers, _ := coversByAlbumId[albumId]
+		original := coversByAlbumId[albumId]
 
 		medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
 		if err != nil {
-			return nil, errors.Wrapf(err, "StableRefresh failed to list medias for %s", albumId)
+			return nil, errors.Wrapf(err, "Randomise failed to list medias for %s", albumId)
 		}
 
-		covers = slices.DeleteFunc(covers, func(cover Cover) bool {
-			return (stable || cover.Origin != CoverOriginCherryPicked) || !slices.ContainsFunc(medias, func(meta *MediaMeta) bool {
+		kept := slices.DeleteFunc(slices.Clone(original), func(cover Cover) bool {
+			stillInAlbum := slices.ContainsFunc(medias, func(meta *MediaMeta) bool {
 				return meta.Id == cover.MediaId
 			})
+			if !stillInAlbum {
+				return true
+			}
+			return !stable && cover.Origin == CoverOriginRandom
 		})
 
-		var updated bool
-		covers, updated = c.fillCoversWithMedias(covers, medias)
-		if updated { // TODO bug found, missing test: 'it should strip the covers of medias that are not in the album, even if no other covers are added'
-			if changed == nil {
-				changed = make(map[AlbumId][]Cover)
-			}
-			changed[albumId] = covers
-			err = c.CoverRepository.SaveCovers(ctx, albumId, covers)
-			if err != nil {
-				return nil, errors.Wrapf(err, "Randomise failed to save covers for %s", albumId)
-			}
+		filled, _ := c.fillCoversWithMedias(kept, medias)
+		if coversEqual(original, filled) {
+			continue
+		}
+		if changed == nil {
+			changed = make(map[AlbumId][]Cover)
+		}
+		changed[albumId] = filled
+		if err := c.CoverRepository.SaveCovers(ctx, albumId, filled); err != nil {
+			return nil, errors.Wrapf(err, "Randomise failed to save covers for %s", albumId)
 		}
 	}
 
 	return changed, nil
+}
+
+func coversEqual(a, b []Cover) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 type affectedAlbum struct {

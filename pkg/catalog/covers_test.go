@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 var deterministicRandomiser = catalog.RandomiserFunc(func(upperBound, n int) []int {
@@ -40,6 +39,7 @@ func TestCoverService_Randomise(t *testing.T) {
 		MediaReadRepository *MediaReadRepositoryInMemory
 	}
 	type args struct {
+		stable   bool
 		albumIds []catalog.AlbumId
 	}
 	tests := []struct {
@@ -249,6 +249,60 @@ func TestCoverService_Randomise(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should preserve existing RANDOM covers when stable=true",
+			fields: fields{
+				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId,
+					catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
+				)),
+				MediaReadRepository: &MediaReadRepositoryInMemory{
+					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1, image2, image3, image4, image5}},
+				},
+			},
+			args: args{stable: true, albumIds: []catalog.AlbumId{avengersId}},
+			wantChanged: map[catalog.AlbumId][]catalog.Cover{
+				avengersId: {
+					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "media-3", Filename: "photo-3.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "media-4", Filename: "photo-4.jpg", Origin: catalog.CoverOriginRandom},
+				},
+			},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
+				avengersId: {
+					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "media-3", Filename: "photo-3.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "media-4", Filename: "photo-4.jpg", Origin: catalog.CoverOriginRandom},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should strip the covers of medias that are not in the album, even if no other covers are added",
+			fields: fields{
+				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId,
+					catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "orphan", Filename: "gone.jpg", Origin: catalog.CoverOriginRandom},
+				)),
+				MediaReadRepository: &MediaReadRepositoryInMemory{
+					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1}},
+				},
+			},
+			args: args{stable: true, albumIds: []catalog.AlbumId{avengersId}},
+			wantChanged: map[catalog.AlbumId][]catalog.Cover{
+				avengersId: {
+					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
+				},
+			},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
+				avengersId: {
+					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
+				},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -258,8 +312,8 @@ func TestCoverService_Randomise(t *testing.T) {
 				Randomiser:          deterministicRandomiser,
 			}
 
-			got, err := service.Randomise(context.Background(), false, tt.args.albumIds...)
-			if !tt.wantErr(t, err, fmt.Sprintf("Randomise(%v)", tt.args.albumIds)) {
+			got, err := service.Randomise(context.Background(), tt.args.stable, tt.args.albumIds...)
+			if !tt.wantErr(t, err, fmt.Sprintf("Randomise(stable=%v, %v)", tt.args.stable, tt.args.albumIds)) {
 				return
 			}
 			assert.Equal(t, tt.wantChanged, got, "returned changed map")
@@ -564,62 +618,4 @@ func TestCoverService_StableRefresh(t *testing.T) {
 
 func coversFor(albumId catalog.AlbumId, covers ...catalog.Cover) CoverRepositorySeed {
 	return CoverRepositorySeed{AlbumId: albumId, Covers: covers}
-}
-
-// findAlbumByOwnerPortFake lets tests return a canned list of albums or an error for a
-// specific owner, in a fully deterministic order.
-type findAlbumByOwnerPortFake struct {
-	AlbumsByOwner map[ownermodel.Owner][]*catalog.Album
-	Err           error
-}
-
-func (f *findAlbumByOwnerPortFake) FindAlbumsByOwner(_ context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
-	if f.Err != nil {
-		return nil, f.Err
-	}
-	return f.AlbumsByOwner[owner], nil
-}
-
-// randomiseCoversPortFake records every albumId Randomise is called with, and lets a
-// case pre-register per-album errors or per-album canned cover sets to simulate
-// partial failures and no-ops.
-type randomiseCoversPortFake struct {
-	Calls   []catalog.AlbumId
-	Errors  map[catalog.AlbumId]error
-	Changed map[catalog.AlbumId][]catalog.Cover
-}
-
-func (r *randomiseCoversPortFake) Randomise(_ context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
-	for _, albumId := range albumIds {
-		r.Calls = append(r.Calls, albumId)
-		if err, ok := r.Errors[albumId]; ok {
-			return nil, err
-		}
-	}
-	result := make(map[catalog.AlbumId][]catalog.Cover)
-	for _, albumId := range albumIds {
-		if covers, ok := r.Changed[albumId]; ok {
-			result[albumId] = covers
-		}
-	}
-	if len(result) == 0 {
-		return nil, nil
-	}
-	return result, nil
-}
-
-type backfillCoversViewUpdaterFake struct {
-	Updates map[catalog.AlbumId][]catalog.Cover
-	Errors  map[catalog.AlbumId]error
-}
-
-func (b *backfillCoversViewUpdaterFake) UpdateCovers(_ context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
-	if err, ok := b.Errors[albumId]; ok {
-		return err
-	}
-	if b.Updates == nil {
-		b.Updates = make(map[catalog.AlbumId][]catalog.Cover)
-	}
-	b.Updates[albumId] = covers
-	return nil
 }

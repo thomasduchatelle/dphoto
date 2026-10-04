@@ -39,9 +39,8 @@ func (b *BackfillCovers) BackfillForOwner(ctx context.Context, owner ownermodel.
 	}
 
 	for _, observer := range b.Observers {
-		err = observer.OnCoverBackfilled(ctx, changed)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to execute observer %s", observer)
+		if err := observer.OnCoverBackfilled(ctx, changed); err != nil {
+			return nil, errors.Wrapf(err, "failed to notify CoverBackfillObserver %T", observer)
 		}
 	}
 

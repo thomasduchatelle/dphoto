@@ -199,6 +199,13 @@ func (v *AlbumView) OnMediasInserted(ctx context.Context, event catalog.MediasIn
 	return v.applyCoverUpdates(ctx, event.Covers)
 }
 
+// OnCoverBackfilled denormalises the cover sets produced by an admin backfill into every
+// viewer's cover row. The backfill is the only path that writes covers outside of a
+// lifecycle event, so it needs its own observer hook.
+func (v *AlbumView) OnCoverBackfilled(ctx context.Context, coversByAlbumId map[catalog.AlbumId][]catalog.Cover) error {
+	return v.applyCoverUpdates(ctx, coversByAlbumId)
+}
+
 func (v *AlbumView) applyCoverUpdates(ctx context.Context, covers map[catalog.AlbumId][]catalog.Cover) error {
 	for albumId, albumCovers := range covers {
 		if len(albumCovers) == 0 {
