@@ -103,9 +103,10 @@ func (c *CoverService) Randomise(ctx context.Context, albumIds ...AlbumId) (map[
 }
 
 type affectedAlbum struct {
-	albumId AlbumId
-	removed map[MediaId]interface{}
-	added   bool
+	albumId     AlbumId
+	removed     map[MediaId]interface{}
+	added       bool
+	addedMedias []MediaId
 }
 
 func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
@@ -115,9 +116,11 @@ func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
 	for _, sourceAlbumId := range transferred.FromAlbums {
 		added := false
 		medias := make(map[MediaId]interface{})
+		var transferredMedias []MediaId
 		for targetAlbumId, addedMedias := range transferred.Transfers {
 			if sourceAlbumId == targetAlbumId {
 				added = true
+				transferredMedias = addedMedias
 				strikeThroughAlbums[targetAlbumId] = nil
 			} else {
 				for _, media := range addedMedias {
@@ -127,18 +130,20 @@ func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
 		}
 
 		affected = append(affected, affectedAlbum{
-			albumId: sourceAlbumId,
-			removed: medias,
-			added:   added,
+			albumId:     sourceAlbumId,
+			removed:     medias,
+			added:       added,
+			addedMedias: transferredMedias,
 		})
 	}
 
-	for targetAlbumId := range transferred.Transfers {
+	for targetAlbumId, addedMedias := range transferred.Transfers {
 		if _, present := strikeThroughAlbums[targetAlbumId]; !present {
 			affected = append(affected, affectedAlbum{
-				albumId: targetAlbumId,
-				removed: nil,
-				added:   true,
+				albumId:     targetAlbumId,
+				removed:     nil,
+				added:       true,
+				addedMedias: addedMedias,
 			})
 		}
 	}
@@ -185,59 +190,19 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 
 	updatedCovers := make(map[AlbumId][]Cover)
 	for _, album := range albums {
-		// Strip moved away
 		covers, _ := coversByAlbum[album.albumId]
-		size := len(covers)
 
-		covers = slices.DeleteFunc(covers, func(cover Cover) bool {
-			_, removed := album.removed[cover.MediaId]
-			return removed
-		})
-		hasBeenFiltered := size != len(covers)
+		// Strip moved away
+		covers, hasBeenFiltered := filterOutRemovedMedias(covers, album)
 
 		// Force add cherry-picked
-		hasBeenAltered := false
-		addedMedias, hasAddedMedias := transferred.Transfers[album.albumId]
-		if hasAddedMedias {
-			for _, addedMedia := range addedMedias {
-				if sourceCover, picked := pickedMedias[addedMedia]; picked {
-					if len(covers) < MaxCoversPerAlbum {
-						hasBeenAltered = true
-						covers = append(covers, sourceCover)
-					} else {
-						for i, cover := range covers {
-							if cover.Origin != CoverOriginCherryPicked {
-								hasBeenAltered = true
-								covers[i] = sourceCover
-								break
-							}
-						}
-					}
-				}
-			}
-		}
+		hasBeenAltered, covers := c.forceAlreadyCherryPickedCovers(covers, album, transferred, pickedMedias)
 
 		hasBeenFilled := false
-		if len(covers) < MaxCoversPerAlbum && (hasBeenFiltered || album.added) {
-			// Refill the covers if there is a chance the albums has more medias (i.e. if it wasn't full and no medias got added, no point trying to find new ones)
-			medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(album.albumId.Owner).WithAlbum(album.albumId.FolderName))
+		if hasBeenFiltered || len(album.addedMedias) > 0 {
+			covers, hasBeenFilled, err = c.fillCovers(ctx, covers, album)
 			if err != nil {
-				return nil, errors.Wrapf(err, "StableRefresh failed to list medias for %s", album.albumId)
-			}
-
-			medias = slices.DeleteFunc(medias, func(meta *MediaMeta) bool {
-				return meta.Type != MediaTypeImage || slices.ContainsFunc(covers, func(cover Cover) bool {
-					return cover.MediaId == meta.Id
-				})
-			})
-
-			for _, indice := range c.Randomiser.SampleIndices(len(medias), MaxCoversPerAlbum-len(covers)) {
-				hasBeenFilled = true
-				covers = append(covers, Cover{
-					MediaId:  medias[indice].Id,
-					Filename: medias[indice].Filename,
-					Origin:   CoverOriginRandom,
-				})
+				return nil, err
 			}
 		}
 
@@ -253,34 +218,63 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 	return updatedCovers, nil
 }
 
-func collectAffectedAlbums(transferred TransferredMedias) []AlbumId {
-	var affected []AlbumId
-	for destId := range transferred.Transfers {
-		if !containsAlbumId(affected, destId) {
-			affected = append(affected, destId)
+func (c *CoverService) fillCovers(ctx context.Context, covers []Cover, album affectedAlbum) ([]Cover, bool, error) {
+	hasBeenFilled := false
+	if len(covers) < MaxCoversPerAlbum {
+		// Refill the covers if there is a chance the albums has more medias (i.e. if it wasn't full and no medias got added, no point trying to find new ones)
+		medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(album.albumId.Owner).WithAlbum(album.albumId.FolderName))
+		if err != nil {
+			return nil, false, errors.Wrapf(err, "StableRefresh failed to list medias for %s", album.albumId)
+		}
+
+		medias = slices.DeleteFunc(medias, func(meta *MediaMeta) bool {
+			return meta.Type != MediaTypeImage || slices.ContainsFunc(covers, func(cover Cover) bool {
+				return cover.MediaId == meta.Id
+			})
+		})
+
+		for _, indice := range c.Randomiser.SampleIndices(len(medias), MaxCoversPerAlbum-len(covers)) {
+			hasBeenFilled = true
+			covers = append(covers, Cover{
+				MediaId:  medias[indice].Id,
+				Filename: medias[indice].Filename,
+				Origin:   CoverOriginRandom,
+			})
 		}
 	}
-	for _, sourceId := range transferred.FromAlbums {
-		if !containsAlbumId(affected, sourceId) {
-			affected = append(affected, sourceId)
-		}
-	}
-	return affected
+	return covers, hasBeenFilled, nil
 }
 
-func containsAlbumId(ids []AlbumId, target AlbumId) bool {
-	return slices.ContainsFunc(ids, target.IsEqual)
-}
-
-func destinationOf(mediaId MediaId, transfers map[AlbumId][]MediaId) (AlbumId, bool) {
-	for destId, mediaIds := range transfers {
-		for _, id := range mediaIds {
-			if id == mediaId {
-				return destId, true
+func (c *CoverService) forceAlreadyCherryPickedCovers(covers []Cover, album affectedAlbum, _ TransferredMedias, pickedMedias map[MediaId]Cover) (bool, []Cover) {
+	hasBeenAltered := false
+	for _, addedMedia := range album.addedMedias {
+		if sourceCover, picked := pickedMedias[addedMedia]; picked {
+			if len(covers) < MaxCoversPerAlbum {
+				hasBeenAltered = true
+				covers = append(covers, sourceCover)
+			} else {
+				for i, cover := range covers {
+					if cover.Origin != CoverOriginCherryPicked {
+						hasBeenAltered = true
+						covers[i] = sourceCover
+						break
+					}
+				}
 			}
 		}
 	}
-	return AlbumId{}, false
+	return hasBeenAltered, covers
+}
+
+func filterOutRemovedMedias(covers []Cover, album affectedAlbum) ([]Cover, bool) {
+	size := len(covers)
+
+	covers = slices.DeleteFunc(covers, func(cover Cover) bool {
+		_, removed := album.removed[cover.MediaId]
+		return removed
+	})
+	hasBeenFiltered := size != len(covers)
+	return covers, hasBeenFiltered
 }
 
 func keepCherryPickedStillInAlbum(covers []Cover, inAlbum map[MediaId]bool) []Cover {
@@ -295,50 +289,6 @@ func keepCherryPickedStillInAlbum(covers []Cover, inAlbum map[MediaId]bool) []Co
 		kept = append(kept, cover)
 	}
 	return kept
-}
-
-func stripMovedAway(covers []Cover, movedAway map[MediaId]bool) []Cover {
-	if len(covers) == 0 {
-		return nil
-	}
-	kept := make([]Cover, 0, len(covers))
-	for _, cover := range covers {
-		if movedAway[cover.MediaId] {
-			continue
-		}
-		kept = append(kept, cover)
-	}
-	return kept
-}
-
-// inheritCherryPicked adds every incoming CHERRY_PICKED cover to the kept set,
-// displacing the oldest RANDOM cover when the set is already full. When no RANDOM
-// cover can be displaced (the set is full of CHERRY_PICKED), the incoming cover is
-// silently dropped. Incoming covers already in the kept set (same MediaId) are
-// skipped to avoid duplicates.
-func inheritCherryPicked(kept, incoming []Cover) []Cover {
-	for _, cover := range incoming {
-		if containsMediaId(kept, cover.MediaId) {
-			continue
-		}
-		if len(kept) < MaxCoversPerAlbum {
-			kept = append(kept, cover)
-			continue
-		}
-		displaceAt := slices.IndexFunc(kept, func(c Cover) bool {
-			return c.Origin == CoverOriginRandom
-		})
-		if displaceAt < 0 {
-			continue
-		}
-		kept = append(kept[:displaceAt], kept[displaceAt+1:]...)
-		kept = append(kept, cover)
-	}
-	return kept
-}
-
-func containsMediaId(covers []Cover, mediaId MediaId) bool {
-	return slices.ContainsFunc(covers, func(c Cover) bool { return c.MediaId == mediaId })
 }
 
 // fillRandomSlots fills the empty slots of `kept` (up to MaxCoversPerAlbum) by
