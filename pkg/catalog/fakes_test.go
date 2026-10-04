@@ -173,7 +173,8 @@ func (c *CoverRepositoryInMemory) SaveCovers(_ context.Context, albumId catalog.
 }
 
 // MediaReadRepositoryInMemory implements catalog.MediaReadRepository backed by a per-album
-// slice of medias.
+// slice of medias. It also implements catalog.InsertMediasRepositoryPort so a single fake
+// can back both the write and the read side of the medias in a test.
 type MediaReadRepositoryInMemory struct {
 	Medias map[catalog.AlbumId][]*catalog.MediaMeta
 }
@@ -190,6 +191,23 @@ func (m *MediaReadRepositoryInMemory) FindMedias(_ context.Context, request *cat
 		medias = append(medias, list...)
 	}
 	return medias, nil
+}
+
+func (m *MediaReadRepositoryInMemory) InsertMedias(_ context.Context, owner ownermodel.Owner, medias []catalog.CreateMediaRequest) error {
+	if m.Medias == nil {
+		m.Medias = make(map[catalog.AlbumId][]*catalog.MediaMeta)
+	}
+	for _, media := range medias {
+		albumId := catalog.AlbumId{Owner: owner, FolderName: media.FolderName}
+		m.Medias[albumId] = append(m.Medias[albumId], &catalog.MediaMeta{
+			Id:        media.Id,
+			Signature: media.Signature,
+			Filename:  media.Filename,
+			Type:      media.Type,
+			Details:   media.Details,
+		})
+	}
+	return nil
 }
 
 func (m *MediaReadRepositoryInMemory) FindMediaCurrentAlbum(_ context.Context, _ ownermodel.Owner, _ catalog.MediaId) (*catalog.AlbumId, error) {
