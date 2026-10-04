@@ -2,6 +2,7 @@ package catalogviews
 
 import (
 	"context"
+	"maps"
 	"slices"
 
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
@@ -142,16 +143,13 @@ func (v *AlbumView) OnAlbumDeleted(ctx context.Context, event catalog.AlbumDelet
 		return err
 	}
 
-	if event.TransferredMedias.IsEmpty() {
-		return nil
+	if !event.TransferredMedias.IsEmpty() {
+		if err := v.recountAlbums(ctx, slices.Collect(maps.Keys(event.TransferredMedias.Transfers))); err != nil {
+			return err
+		}
 	}
 
-	destinationIds := make([]catalog.AlbumId, 0, len(event.TransferredMedias.Transfers))
-	for albumId := range event.TransferredMedias.Transfers {
-		destinationIds = append(destinationIds, albumId)
-	}
-
-	return v.recountAlbums(ctx, destinationIds)
+	return v.applyCoverUpdates(ctx, event.Covers)
 }
 
 func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId usermodel.UserId) error {

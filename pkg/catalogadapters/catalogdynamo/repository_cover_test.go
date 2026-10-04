@@ -217,6 +217,13 @@ func TestRepository_SaveCovers(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
+			name:    "it should be a no-op when saving an empty cover set on an album with no cover record (idempotent delete)",
+			args:    args{albumId: albumId, covers: nil},
+			before:  nil,
+			after:   nil,
+			wantErr: assert.NoError,
+		},
+		{
 			name: "it should reject saving more than 4 covers",
 			args: args{
 				albumId: albumId,

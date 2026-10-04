@@ -564,6 +564,40 @@ func TestAlbumView_AlbumDeleted(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should denormalise covers of destination albums onto every viewer row",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{
+					deletedRow(OwnerAvailability(ownerUserId)),
+					destinationRow,
+					{
+						AlbumSummary: AlbumSummary{AlbumId: albumGamma, Name: "Gamma", Start: feb24, End: mar24, MediaCount: 2},
+						Availability: VisitorAvailability(visitorUserId),
+					},
+				}},
+				MediaCounterPort: MediaCounterPortFake{albumGamma: 5},
+			},
+			event: catalog.AlbumDeleted{
+				DeletedAlbumId: albumAlpha,
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers: map[catalog.AlbumId][]catalog.MediaId{albumGamma: {"m1", "m2", "m3"}},
+				},
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					albumGamma: {{MediaId: "m1", Filename: "m1.jpg", Origin: catalog.CoverOriginRandom}},
+				},
+			},
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumGamma, Name: "Gamma", Start: feb24, End: mar24, MediaCount: 5, Covers: []catalog.Cover{{MediaId: "m1", Filename: "m1.jpg", Origin: catalog.CoverOriginRandom}}},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumGamma, Name: "Gamma", Start: feb24, End: mar24, MediaCount: 5, Covers: []catalog.Cover{{MediaId: "m1", Filename: "m1.jpg", Origin: catalog.CoverOriginRandom}}},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {

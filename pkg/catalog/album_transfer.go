@@ -23,6 +23,24 @@ func (t TransferredMedias) IsEmpty() bool {
 	return count == 0
 }
 
+// Without returns a copy of the TransferredMedias with the given album removed from
+// both Transfers (destination keys) and FromAlbums (source list). Used when an album
+// has been deleted and must no longer appear to downstream consumers of the event.
+func (t TransferredMedias) Without(albumId AlbumId) TransferredMedias {
+	result := TransferredMedias{Transfers: make(map[AlbumId][]MediaId, len(t.Transfers))}
+	for destination, medias := range t.Transfers {
+		if !destination.IsEqual(albumId) {
+			result.Transfers[destination] = medias
+		}
+	}
+	for _, source := range t.FromAlbums {
+		if !source.IsEqual(albumId) {
+			result.FromAlbums = append(result.FromAlbums, source)
+		}
+	}
+	return result
+}
+
 func NewTransferredMedias() TransferredMedias {
 	return TransferredMedias{
 		Transfers: make(map[AlbumId][]MediaId),
