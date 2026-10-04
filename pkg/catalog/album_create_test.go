@@ -75,18 +75,9 @@ func TestCreateAlbum_Create(t *testing.T) {
 		return medias
 	}
 
-	coversForCreatedAlbum := func() []catalog.Cover {
-		medias := mediasInCreatedAlbumAfterTransfer()
-		covers := make([]catalog.Cover, 0, len(medias))
-		for _, media := range medias {
-			covers = append(covers, catalog.Cover{
-				MediaId:  media.Id,
-				Filename: media.Filename,
-				Origin:   catalog.CoverOriginRandom,
-			})
-		}
-		return covers
-	}
+	m1 := fakeMediaId(lifetimeAlbum.AlbumId, apr28)
+	m2 := fakeMediaId(lifetimeAlbum.AlbumId, apr28.AddDate(0, 0, 1))
+	m3 := fakeMediaId(lifetimeAlbum.AlbumId, apr28.AddDate(0, 0, 2))
 
 	testError := errors.New("TEST error")
 
@@ -174,41 +165,23 @@ func TestCreateAlbum_Create(t *testing.T) {
 			wantErr:           assert.NoError,
 		},
 		{
-			name: "it should insert the album, transfer medias from the overlapping album, stabilise covers, and fire the AlbumCreated event",
-			fields: fields{
-				AlbumRepository: repositoryWithLifetime(),
-				CoverRepository: NewCoverRepositoryInMemory(),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						createdAlbum.AlbumId: mediasInCreatedAlbumAfterTransfer(),
-					},
-				},
-			},
-			args:                  args{request: standardRequest},
-			expectStoredAlbumIds:  []catalog.AlbumId{lifetimeAlbum.AlbumId, createdAlbum.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{transferFromLifetime},
-			expectCreatedEvents: []catalog.AlbumCreated{{
-				CreatedAlbum:      createdAlbum,
-				TransferredMedias: transferredFromLifetime(),
-				Covers:            map[catalog.AlbumId][]catalog.Cover{createdAlbum.AlbumId: coversForCreatedAlbum()},
-			}},
-			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{createdAlbum.AlbumId: coversForCreatedAlbum()},
-			wantErr:           assert.NoError,
-		},
-		{
-			name: "it should strip the source album's covers of medias that moved into the new album, refill from the remaining medias, and carry both albums on the event",
+			name: "it should wire the CoverService into BulkCreateAlbum: inherit the source's CHERRY_PICKED cover into the new album, fill the rest from the transferred medias, and refill the source's stripped slot from its remaining medias",
 			fields: fields{
 				AlbumRepository: repositoryWithLifetime(),
 				CoverRepository: NewCoverRepositoryInMemory(coversFor(lifetimeAlbum.AlbumId,
-					catalog.Cover{MediaId: fakeMediaId(lifetimeAlbum.AlbumId, apr28), Filename: string(fakeMediaId(lifetimeAlbum.AlbumId, apr28)) + ".jpg", Origin: catalog.CoverOriginRandom},
-					catalog.Cover{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: m1, Filename: string(m1) + ".jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "lifetime-survivor-a", Filename: "survivor-a.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "lifetime-survivor-b", Filename: "survivor-b.jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "lifetime-survivor-c", Filename: "survivor-c.jpg", Origin: catalog.CoverOriginRandom},
 				)),
 				MediaReadRepository: &MediaReadRepositoryInMemory{
 					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
 						createdAlbum.AlbumId: mediasInCreatedAlbumAfterTransfer(),
 						lifetimeAlbum.AlbumId: {
-							{Id: "lifetime-survivor", Filename: "survivor.jpg", Type: catalog.MediaTypeImage},
-							{Id: "lifetime-extra", Filename: "extra.jpg", Type: catalog.MediaTypeImage},
+							{Id: "lifetime-survivor-a", Filename: "survivor-a.jpg", Type: catalog.MediaTypeImage},
+							{Id: "lifetime-survivor-b", Filename: "survivor-b.jpg", Type: catalog.MediaTypeImage},
+							{Id: "lifetime-survivor-c", Filename: "survivor-c.jpg", Type: catalog.MediaTypeImage},
+							{Id: "lifetime-backfill", Filename: "backfill.jpg", Type: catalog.MediaTypeImage},
 						},
 					},
 				},
@@ -220,90 +193,30 @@ func TestCreateAlbum_Create(t *testing.T) {
 				CreatedAlbum:      createdAlbum,
 				TransferredMedias: transferredFromLifetime(),
 				Covers: map[catalog.AlbumId][]catalog.Cover{
-					createdAlbum.AlbumId: coversForCreatedAlbum(),
+					createdAlbum.AlbumId: {
+						{MediaId: m1, Filename: string(m1) + ".jpg", Origin: catalog.CoverOriginCherryPicked},
+						{MediaId: m2, Filename: string(m2) + ".jpg", Origin: catalog.CoverOriginRandom},
+						{MediaId: m3, Filename: string(m3) + ".jpg", Origin: catalog.CoverOriginRandom},
+					},
 					lifetimeAlbum.AlbumId: {
-						{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
-						{MediaId: "lifetime-extra", Filename: "extra.jpg", Origin: catalog.CoverOriginRandom},
+						{MediaId: "lifetime-survivor-a", Filename: "survivor-a.jpg", Origin: catalog.CoverOriginRandom},
+						{MediaId: "lifetime-survivor-b", Filename: "survivor-b.jpg", Origin: catalog.CoverOriginRandom},
+						{MediaId: "lifetime-survivor-c", Filename: "survivor-c.jpg", Origin: catalog.CoverOriginRandom},
+						{MediaId: "lifetime-backfill", Filename: "backfill.jpg", Origin: catalog.CoverOriginRandom},
 					},
 				},
 			}},
 			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
-				createdAlbum.AlbumId: coversForCreatedAlbum(),
+				createdAlbum.AlbumId: {
+					{MediaId: m1, Filename: string(m1) + ".jpg", Origin: catalog.CoverOriginCherryPicked},
+					{MediaId: m2, Filename: string(m2) + ".jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: m3, Filename: string(m3) + ".jpg", Origin: catalog.CoverOriginRandom},
+				},
 				lifetimeAlbum.AlbumId: {
-					{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
-					{MediaId: "lifetime-extra", Filename: "extra.jpg", Origin: catalog.CoverOriginRandom},
-				},
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should leave an untouched source album's covers in place and omit it from the event",
-			fields: fields{
-				AlbumRepository: repositoryWithLifetime(),
-				CoverRepository: NewCoverRepositoryInMemory(coversFor(lifetimeAlbum.AlbumId,
-					catalog.Cover{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
-				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						createdAlbum.AlbumId: mediasInCreatedAlbumAfterTransfer(),
-						lifetimeAlbum.AlbumId: {
-							{Id: "lifetime-survivor", Filename: "survivor.jpg", Type: catalog.MediaTypeImage},
-						},
-					},
-				},
-			},
-			args:                  args{request: standardRequest},
-			expectStoredAlbumIds:  []catalog.AlbumId{lifetimeAlbum.AlbumId, createdAlbum.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{transferFromLifetime},
-			expectCreatedEvents: []catalog.AlbumCreated{{
-				CreatedAlbum:      createdAlbum,
-				TransferredMedias: transferredFromLifetime(),
-				Covers: map[catalog.AlbumId][]catalog.Cover{
-					createdAlbum.AlbumId: coversForCreatedAlbum(),
-				},
-			}},
-			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
-				createdAlbum.AlbumId: coversForCreatedAlbum(),
-				lifetimeAlbum.AlbumId: {
-					{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
-				},
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should preserve CHERRY_PICKED covers on the source album when their media stays",
-			fields: fields{
-				AlbumRepository: repositoryWithLifetime(),
-				CoverRepository: NewCoverRepositoryInMemory(coversFor(lifetimeAlbum.AlbumId,
-					catalog.Cover{MediaId: "lifetime-pinned", Filename: "pinned.jpg", Origin: catalog.CoverOriginCherryPicked},
-					catalog.Cover{MediaId: fakeMediaId(lifetimeAlbum.AlbumId, apr28), Filename: string(fakeMediaId(lifetimeAlbum.AlbumId, apr28)) + ".jpg", Origin: catalog.CoverOriginRandom},
-				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						createdAlbum.AlbumId: mediasInCreatedAlbumAfterTransfer(),
-						lifetimeAlbum.AlbumId: {
-							{Id: "lifetime-pinned", Filename: "pinned.jpg", Type: catalog.MediaTypeImage},
-						},
-					},
-				},
-			},
-			args:                  args{request: standardRequest},
-			expectStoredAlbumIds:  []catalog.AlbumId{lifetimeAlbum.AlbumId, createdAlbum.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{transferFromLifetime},
-			expectCreatedEvents: []catalog.AlbumCreated{{
-				CreatedAlbum:      createdAlbum,
-				TransferredMedias: transferredFromLifetime(),
-				Covers: map[catalog.AlbumId][]catalog.Cover{
-					createdAlbum.AlbumId: coversForCreatedAlbum(),
-					lifetimeAlbum.AlbumId: {
-						{MediaId: "lifetime-pinned", Filename: "pinned.jpg", Origin: catalog.CoverOriginCherryPicked},
-					},
-				},
-			}},
-			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
-				createdAlbum.AlbumId: coversForCreatedAlbum(),
-				lifetimeAlbum.AlbumId: {
-					{MediaId: "lifetime-pinned", Filename: "pinned.jpg", Origin: catalog.CoverOriginCherryPicked},
+					{MediaId: "lifetime-survivor-a", Filename: "survivor-a.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "lifetime-survivor-b", Filename: "survivor-b.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "lifetime-survivor-c", Filename: "survivor-c.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "lifetime-backfill", Filename: "backfill.jpg", Origin: catalog.CoverOriginRandom},
 				},
 			},
 			wantErr: assert.NoError,
