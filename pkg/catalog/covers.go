@@ -6,8 +6,12 @@ import (
 	"slices"
 
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
+
+type CoverServicePort interface {
+	Randomise(ctx context.Context, stable bool, albumIds ...AlbumId) (map[AlbumId][]Cover, error)
+	StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error)
+}
 
 // CoverRepository persists an album's cover set as a single record.
 type CoverRepository interface {
@@ -55,12 +59,7 @@ func NewCoverService(coverRepository CoverRepository, mediaReadRepository MediaR
 	}
 }
 
-// Randomise regenerates every cover that is not CHERRY_PICKED, drops any CHERRY_PICKED
-// cover whose media is no longer in the album, then fills up to MaxCoversPerAlbum by
-// drawing uniformly at random from the album's full image set. The returned map carries
-// one entry per album whose cover set actually changed; unchanged albums are omitted.
-// Returns a nil map when no album changed.
-func (c *CoverService) Randomise(ctx context.Context, albumIds ...AlbumId) (map[AlbumId][]Cover, error) {
+func (c *CoverService) Randomise(ctx context.Context, stable bool, albumIds ...AlbumId) (map[AlbumId][]Cover, error) {
 	if len(albumIds) == 0 {
 		return nil, nil
 	}
@@ -80,14 +79,14 @@ func (c *CoverService) Randomise(ctx context.Context, albumIds ...AlbumId) (map[
 		}
 
 		covers = slices.DeleteFunc(covers, func(cover Cover) bool {
-			return cover.Origin != CoverOriginCherryPicked || !slices.ContainsFunc(medias, func(meta *MediaMeta) bool {
+			return (stable || cover.Origin != CoverOriginCherryPicked) || !slices.ContainsFunc(medias, func(meta *MediaMeta) bool {
 				return meta.Id == cover.MediaId
 			})
 		})
 
 		var updated bool
 		covers, updated = c.fillCoversWithMedias(covers, medias)
-		if updated {
+		if updated { // TODO bug found, missing test: 'it should strip the covers of medias that are not in the album, even if no other covers are added'
 			if changed == nil {
 				changed = make(map[AlbumId][]Cover)
 			}
@@ -193,7 +192,7 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		covers, _ := coversByAlbum[album.albumId]
 
 		// Strip moved away
-		covers, hasBeenFiltered := filterOutRemovedMedias(covers, album)
+		covers, hasBeenFiltered := c.filterOutRemovedMedias(covers, album)
 
 		// Force add cherry-picked
 		hasBeenAltered, covers := c.forceAlreadyCherryPickedCovers(covers, album, transferred, pickedMedias)
@@ -216,6 +215,38 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 	}
 
 	return updatedCovers, nil
+}
+
+func (c *CoverService) filterOutRemovedMedias(covers []Cover, album affectedAlbum) ([]Cover, bool) {
+	size := len(covers)
+
+	covers = slices.DeleteFunc(covers, func(cover Cover) bool {
+		_, removed := album.removed[cover.MediaId]
+		return removed
+	})
+	hasBeenFiltered := size != len(covers)
+	return covers, hasBeenFiltered
+}
+
+func (c *CoverService) forceAlreadyCherryPickedCovers(covers []Cover, album affectedAlbum, _ TransferredMedias, pickedMedias map[MediaId]Cover) (bool, []Cover) {
+	hasBeenAltered := false
+	for _, addedMedia := range album.addedMedias {
+		if sourceCover, picked := pickedMedias[addedMedia]; picked {
+			if len(covers) < MaxCoversPerAlbum {
+				hasBeenAltered = true
+				covers = append(covers, sourceCover)
+			} else {
+				for i, cover := range covers {
+					if cover.Origin != CoverOriginCherryPicked {
+						hasBeenAltered = true
+						covers[i] = sourceCover
+						break
+					}
+				}
+			}
+		}
+	}
+	return hasBeenAltered, covers
 }
 
 func (c *CoverService) fillCovers(ctx context.Context, covers []Cover, albumId AlbumId) ([]Cover, bool, error) {
@@ -249,114 +280,4 @@ func (c *CoverService) fillCoversWithMedias(covers []Cover, medias []*MediaMeta)
 		})
 	}
 	return covers, hasBeenFilled
-}
-
-func (c *CoverService) forceAlreadyCherryPickedCovers(covers []Cover, album affectedAlbum, _ TransferredMedias, pickedMedias map[MediaId]Cover) (bool, []Cover) {
-	hasBeenAltered := false
-	for _, addedMedia := range album.addedMedias {
-		if sourceCover, picked := pickedMedias[addedMedia]; picked {
-			if len(covers) < MaxCoversPerAlbum {
-				hasBeenAltered = true
-				covers = append(covers, sourceCover)
-			} else {
-				for i, cover := range covers {
-					if cover.Origin != CoverOriginCherryPicked {
-						hasBeenAltered = true
-						covers[i] = sourceCover
-						break
-					}
-				}
-			}
-		}
-	}
-	return hasBeenAltered, covers
-}
-
-func filterOutRemovedMedias(covers []Cover, album affectedAlbum) ([]Cover, bool) {
-	size := len(covers)
-
-	covers = slices.DeleteFunc(covers, func(cover Cover) bool {
-		_, removed := album.removed[cover.MediaId]
-		return removed
-	})
-	hasBeenFiltered := size != len(covers)
-	return covers, hasBeenFiltered
-}
-
-type FindAlbumByOwnerPort interface {
-	FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
-}
-
-// RandomiseCoversPort is the slice of CoverService exposed to callers that need to
-// regenerate the cover set of one or more albums (admin backfill, Phase 3
-// owner-triggered re-randomise, and the InsertMedias use case).
-type RandomiseCoversPort interface {
-	Randomise(ctx context.Context, albumIds ...AlbumId) (map[AlbumId][]Cover, error)
-}
-
-// StableRefreshCoversPort is the slice of CoverService exposed to callers that need
-// to patch cover sets after a media transfer (AlbumCreated, AlbumDatesAmended,
-// AlbumDeleted use cases).
-type StableRefreshCoversPort interface {
-	StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error)
-}
-
-// BackfillCoversViewUpdater propagates the new covers of a single album to the
-// album-list view. BackfillCovers calls it after every Randomise that actually
-// changed the cover set.
-type BackfillCoversViewUpdater interface {
-	UpdateCovers(ctx context.Context, albumId AlbumId, covers []Cover) error
-}
-
-type BackfillCoversViewUpdaterFunc func(ctx context.Context, albumId AlbumId, covers []Cover) error
-
-func (f BackfillCoversViewUpdaterFunc) UpdateCovers(ctx context.Context, albumId AlbumId, covers []Cover) error {
-	return f(ctx, albumId, covers)
-}
-
-// BackfillCovers reconciles the cover set of every album of an owner and
-// propagates the resulting set to the album-list view. Used by the
-// administrative CLI to seed existing albums that pre-date the covers feature.
-// A failure on a single album is reported and the sweep continues: Randomise
-// preserves CHERRY_PICKED covers whose media is still in the album and caps the
-// set at MaxCoversPerAlbum, so re-running the backfill is safe (though RANDOM
-// covers may be redrawn on each pass).
-type BackfillCovers struct {
-	FindAlbumByOwnerPort      FindAlbumByOwnerPort
-	RandomiseCoversPort       RandomiseCoversPort
-	BackfillCoversViewUpdater BackfillCoversViewUpdater
-}
-
-type BackfillReport struct {
-	Albums   int
-	Failures []BackfillFailure
-}
-
-type BackfillFailure struct {
-	AlbumId AlbumId
-	Err     error
-}
-
-func (b *BackfillCovers) BackfillForOwner(ctx context.Context, owner ownermodel.Owner) (BackfillReport, error) {
-	albums, err := b.FindAlbumByOwnerPort.FindAlbumsByOwner(ctx, owner)
-	if err != nil {
-		return BackfillReport{}, errors.Wrapf(err, "BackfillCovers(%s) failed to list albums", owner)
-	}
-
-	report := BackfillReport{Albums: len(albums)}
-	for _, album := range albums {
-		changed, err := b.RandomiseCoversPort.Randomise(ctx, album.AlbumId)
-		if err != nil {
-			report.Failures = append(report.Failures, BackfillFailure{AlbumId: album.AlbumId, Err: err})
-			continue
-		}
-		covers, ok := changed[album.AlbumId]
-		if !ok {
-			continue
-		}
-		if err := b.BackfillCoversViewUpdater.UpdateCovers(ctx, album.AlbumId, covers); err != nil {
-			report.Failures = append(report.Failures, BackfillFailure{AlbumId: album.AlbumId, Err: err})
-		}
-	}
-	return report, nil
 }
