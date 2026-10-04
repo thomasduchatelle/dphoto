@@ -26,11 +26,13 @@ func (f AlbumRenamedObserverFunc) OnAlbumRenamed(ctx context.Context, event Albu
 func NewRenameAlbum(
 	TimelineRepository TimelineRepository,
 	TransferMedias TransferMediasService,
+	CoverRepository CoverRepository,
 	AlbumRenamedObservers ...AlbumRenamedObserver,
 ) *RenameAlbum {
 	return &RenameAlbum{
 		TimelineRepository:    TimelineRepository,
 		TransferMediasService: TransferMedias,
+		CoverRepository:       CoverRepository,
 		AlbumRenamedObservers: AlbumRenamedObservers,
 	}
 }
@@ -38,6 +40,7 @@ func NewRenameAlbum(
 type RenameAlbum struct {
 	TimelineRepository    TimelineRepository
 	TransferMediasService TransferMediasService
+	CoverRepository       CoverRepository
 	AlbumRenamedObservers []AlbumRenamedObserver
 }
 
@@ -88,6 +91,10 @@ func (r *RenameAlbum) replaceAlbum(ctx context.Context, request RenameAlbumReque
 	}
 
 	if err = r.TimelineRepository.DeleteAlbum(ctx, nameUpdate.ExistingAlbum.AlbumId); err != nil {
+		return err
+	}
+
+	if err = r.CoverRepository.MoveCovers(ctx, nameUpdate.ExistingAlbum.AlbumId, nameUpdate.RenamedAlbum.AlbumId); err != nil {
 		return err
 	}
 

@@ -255,15 +255,18 @@ func TestAlbumView_MediasInserted(t *testing.T) {
 }
 
 func TestAlbumView_AlbumRenamed(t *testing.T) {
+	cherryCover := catalog.Cover{MediaId: "media-cherry", Filename: "cherry.jpg", Origin: catalog.CoverOriginCherryPicked}
+	randomCover := catalog.Cover{MediaId: "media-random", Filename: "random.jpg", Origin: catalog.CoverOriginRandom}
+
 	seededOwnerAndVisitorOnOld := func() *AlbumSummaryInMemoryRepository {
 		return &AlbumSummaryInMemoryRepository{
 			Summaries: []UserAlbumSummary{
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: VisitorAvailability(visitorUserId),
 				},
 			},
@@ -273,11 +276,11 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 		return &AlbumSummaryInMemoryRepository{
 			Summaries: []UserAlbumSummary{
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: VisitorAvailability(visitorUserId),
 				},
 				{
@@ -300,7 +303,7 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 		wantErr         assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should update the name on all viewer rows when folder unchanged",
+			name: "it should update the name on all viewer rows and leave the covers untouched when folder unchanged",
 			fields: fields{
 				Repository:       seededOwnerAndVisitorOnOld(),
 				MediaCounterPort: MediaCounterPortFake(nil),
@@ -312,18 +315,18 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 			},
 			expectSummaries: []UserAlbumSummary{
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: VisitorAvailability(visitorUserId),
 				},
 			},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should replace the rows on all viewers when folder changes, inheriting count and dates from the owner projection",
+			name: "it should replace the rows on all viewers when folder changes, carrying the original covers to the new identity verbatim",
 			fields: fields{
 				Repository:       seededOldAndSource(),
 				MediaCounterPort: MediaCounterPortFake{},
@@ -342,11 +345,11 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumNew, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumNew, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumNew, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumNew, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: VisitorAvailability(visitorUserId),
 				},
 			},

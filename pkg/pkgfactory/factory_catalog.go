@@ -128,6 +128,7 @@ func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.Ren
 	return catalog.NewRenameAlbum(
 		TimelineRepository(ctx),
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		repository,
 		&catalog.AlbumRenamedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		AlbumView(ctx),
 	)
