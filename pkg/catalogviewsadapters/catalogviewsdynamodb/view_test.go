@@ -172,7 +172,7 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should save the summary with 4 covers when the album has a full set",
+			name: "it should ignore the Covers field on the summary: covers travel through PutCoversForAllViewers, not through PutSummaries",
 			args: args{
 				summaries: []catalogviews.AlbumSummaryForUsers{
 					{
@@ -181,9 +181,6 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 							MediaCount: 42,
 							Covers: []catalog.Cover{
 								{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
-								{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
-								{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
-								{MediaId: "media-4", Filename: "d.jpg", Origin: catalog.CoverOriginRandom},
 							},
 						},
 						Users: []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
@@ -192,12 +189,7 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 			},
 			before: nil,
 			after: []map[string]types.AttributeValue{
-				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(42).withCovers(
-					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
-					catalog.Cover{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
-					catalog.Cover{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
-					catalog.Cover{MediaId: "media-4", Filename: "d.jpg", Origin: catalog.CoverOriginRandom},
-				).build(),
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(42).build(),
 			},
 			wantErr: assert.NoError,
 		},
@@ -257,6 +249,7 @@ func albumSummaryItemBuilder(user usermodel.UserId, accessType string, albumId c
 			"AlbumFolderName":  &types.AttributeValueMemberS{Value: albumId.FolderName.String()},
 			"AvailabilityType": &types.AttributeValueMemberS{Value: accessType},
 			"UserId":           &types.AttributeValueMemberS{Value: user.Value()},
+			"RecordType":       &types.AttributeValueMemberS{Value: RecordTypeSummary},
 			"AlbumViewIndexPK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ALBUM#%s#%s#ALBUMS_VIEW", albumId.Owner.Value(), albumId.FolderName.String())},
 		},
 	}
@@ -273,6 +266,7 @@ func (b *summaryItemBuilder) withLegacyCountSuffix() *summaryItemBuilder {
 	delete(b.item, "AlbumViewIndexPK")
 	delete(b.item, "AvailabilityType")
 	delete(b.item, "UserId")
+	delete(b.item, "RecordType")
 	return b
 }
 
@@ -283,7 +277,15 @@ func (b *summaryItemBuilder) withDisplayFields(name string, start, end time.Time
 	return b
 }
 
-func (b *summaryItemBuilder) withCovers(covers ...catalog.Cover) *summaryItemBuilder {
+func (b *summaryItemBuilder) build() map[string]types.AttributeValue {
+	return b.item
+}
+
+type coversItemBuilder struct {
+	item map[string]types.AttributeValue
+}
+
+func albumCoversItemBuilder(user usermodel.UserId, accessType string, albumId catalog.AlbumId, covers ...catalog.Cover) *coversItemBuilder {
 	entries := make([]types.AttributeValue, len(covers))
 	for i, cover := range covers {
 		entries[i] = &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{
@@ -292,11 +294,23 @@ func (b *summaryItemBuilder) withCovers(covers ...catalog.Cover) *summaryItemBui
 			"Origin":   &types.AttributeValueMemberS{Value: string(cover.Origin)},
 		}}
 	}
-	b.item["Covers"] = &types.AttributeValueMemberL{Value: entries}
-	return b
+	item := map[string]types.AttributeValue{
+		"PK":               &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s#ALBUMS_VIEW", user)},
+		"SK":               &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#%s#%s#COVERS", accessType, albumId.Owner.Value(), albumId.FolderName.String())},
+		"AlbumOwner":       &types.AttributeValueMemberS{Value: albumId.Owner.Value()},
+		"AlbumFolderName":  &types.AttributeValueMemberS{Value: albumId.FolderName.String()},
+		"AvailabilityType": &types.AttributeValueMemberS{Value: accessType},
+		"UserId":           &types.AttributeValueMemberS{Value: user.Value()},
+		"RecordType":       &types.AttributeValueMemberS{Value: RecordTypeCovers},
+		"AlbumViewIndexPK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ALBUM#%s#%s#ALBUMS_VIEW", albumId.Owner.Value(), albumId.FolderName.String())},
+	}
+	if len(entries) > 0 {
+		item["Covers"] = &types.AttributeValueMemberL{Value: entries}
+	}
+	return &coversItemBuilder{item: item}
 }
 
-func (b *summaryItemBuilder) build() map[string]types.AttributeValue {
+func (b *coversItemBuilder) build() map[string]types.AttributeValue {
 	return b.item
 }
 
@@ -488,12 +502,13 @@ func TestAlbumViewRepository_ListSummariesForUser(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should unmarshal the full cover set when the row carries 4 covers",
+			name: "it should merge the summary row with its sibling #COVERS row when both are present",
 			args: args{
 				user: userId1,
 			},
 			before: []map[string]types.AttributeValue{
-				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(10).withCovers(
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(10).build(),
+				albumCoversItemBuilder(userId1, "OWNED", albumId1,
 					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
 					catalog.Cover{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
 					catalog.Cover{MediaId: "media-3", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked},
@@ -514,6 +529,17 @@ func TestAlbumViewRepository_ListSummariesForUser(t *testing.T) {
 						},
 					},
 				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return a summary without covers when no #COVERS row exists",
+			args: args{user: userId1},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(5).build(),
+			},
+			want: []catalogviews.UserAlbumSummary{
+				{Availability: catalogviews.OwnerAvailability(userId1), AlbumSummary: catalogviews.AlbumSummary{AlbumId: albumId1, MediaCount: 5}},
 			},
 			wantErr: assert.NoError,
 		},
@@ -940,7 +966,7 @@ func TestAlbumViewRepository_SetDisplayFieldsForAllViewers(t *testing.T) {
 	}
 }
 
-func TestAlbumViewRepository_SetCoversForAllViewers(t *testing.T) {
+func TestAlbumViewRepository_PutCoversForAllViewers(t *testing.T) {
 	ctx := context.Background()
 	dyn := dynamotestutils.NewTestContext(ctx, t)
 
@@ -978,7 +1004,7 @@ func TestAlbumViewRepository_SetCoversForAllViewers(t *testing.T) {
 			wantErr:   assert.NoError,
 		},
 		{
-			name: "it should fan out the full cover set to every viewer row of the album",
+			name: "it should fan out the full cover set to every viewer row of the album as a sibling #COVERS row",
 			args: args{
 				ctx:     ctx,
 				albumId: albumId1,
@@ -989,28 +1015,15 @@ func TestAlbumViewRepository_SetCoversForAllViewers(t *testing.T) {
 				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(11).build(),
 			},
 			wantAfter: []map[string]types.AttributeValue{
-				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).withCovers(fullSet...).build(),
-				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(11).withCovers(fullSet...).build(),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should clear the covers attribute when the new set is empty",
-			args: args{
-				ctx:     ctx,
-				albumId: albumId1,
-				covers:  nil,
-			},
-			before: []map[string]types.AttributeValue{
-				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).withCovers(fullSet...).build(),
-			},
-			wantAfter: []map[string]types.AttributeValue{
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, albumId1, fullSet...).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(11).build(),
+				albumCoversItemBuilder(userId2, VisitorAvailability, albumId1, fullSet...).build(),
 			},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should NOT clobber the count or display fields on an existing row",
+			name: "it should NOT clobber the count or display fields on an existing summary row",
 			args: args{
 				ctx:     ctx,
 				albumId: albumId1,
@@ -1026,8 +1039,25 @@ func TestAlbumViewRepository_SetCoversForAllViewers(t *testing.T) {
 				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).
 					withCount(42).
 					withDisplayFields("January 2024", displayFieldsAlbum1Start, displayFieldsAlbum1End).
-					withCovers(fullSet...).
 					build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, albumId1, fullSet...).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should overwrite an existing #COVERS row with the new cover set",
+			args: args{
+				ctx:     ctx,
+				albumId: albumId1,
+				covers:  fullSet,
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(42).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, albumId1, catalog.Cover{MediaId: "stale", Filename: "stale.jpg", Origin: catalog.CoverOriginRandom}).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(42).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, albumId1, fullSet...).build(),
 			},
 			wantErr: assert.NoError,
 		},
@@ -1046,8 +1076,92 @@ func TestAlbumViewRepository_SetCoversForAllViewers(t *testing.T) {
 				Client:    dyn.Client,
 				TableName: dyn.Table,
 			}
-			err = a.SetCoversForAllViewers(tt.args.ctx, tt.args.albumId, tt.args.covers)
-			if tt.wantErr(t, err, fmt.Sprintf("SetCoversForAllViewers(%v, %v)", tt.args.ctx, tt.args.albumId)) {
+			err = a.PutCoversForAllViewers(tt.args.ctx, tt.args.albumId, tt.args.covers)
+			if tt.wantErr(t, err, fmt.Sprintf("PutCoversForAllViewers(%v, %v)", tt.args.ctx, tt.args.albumId)) {
+				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
+			}
+		})
+	}
+}
+
+func TestAlbumViewRepository_DeleteCoversForAllViewers(t *testing.T) {
+	ctx := context.Background()
+	dyn := dynamotestutils.NewTestContext(ctx, t)
+
+	userId1 := usermodel.NewUserId("user-1")
+	userId2 := usermodel.NewUserId("user-2")
+	albumId1 := catalog.AlbumId{Owner: "owner1", FolderName: catalog.NewFolderName("/album-1")}
+	albumId2 := catalog.AlbumId{Owner: "owner1", FolderName: catalog.NewFolderName("/album-2")}
+	fullSet := []catalog.Cover{
+		{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+	}
+
+	type args struct {
+		ctx     context.Context
+		albumId catalog.AlbumId
+	}
+	tests := []struct {
+		name      string
+		args      args
+		before    []map[string]types.AttributeValue
+		wantAfter []map[string]types.AttributeValue
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name:      "it should do nothing when no cover row exists for the album",
+			args:      args{ctx: ctx, albumId: albumId1},
+			before:    nil,
+			wantAfter: nil,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "it should delete every #COVERS row of the album for all viewers",
+			args: args{ctx: ctx, albumId: albumId1},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, albumId1, fullSet...).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(11).build(),
+				albumCoversItemBuilder(userId2, VisitorAvailability, albumId1, fullSet...).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, albumId1).withCount(11).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should leave the cover row of another album untouched",
+			args: args{ctx: ctx, albumId: albumId1},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, albumId1, fullSet...).build(),
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId2).withCount(5).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, albumId2, fullSet...).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId1).withCount(11).build(),
+				albumSummaryItemBuilder(userId1, OwnerAvailability, albumId2).withCount(5).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, albumId2, fullSet...).build(),
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(ctx, tt.before)
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			a := &AlbumViewRepository{
+				Client:    dyn.Client,
+				TableName: dyn.Table,
+			}
+			err = a.DeleteCoversForAllViewers(tt.args.ctx, tt.args.albumId)
+			if tt.wantErr(t, err, fmt.Sprintf("DeleteCoversForAllViewers(%v, %v)", tt.args.ctx, tt.args.albumId)) {
 				dyn.MustBool(dyn.EqualContent(tt.args.ctx, tt.wantAfter))
 			}
 		})

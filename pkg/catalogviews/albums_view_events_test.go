@@ -143,6 +143,10 @@ func TestAlbumView_AlbumCreated(t *testing.T) {
 }
 
 func TestAlbumView_MediasInserted(t *testing.T) {
+	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
+	coverB := catalog.Cover{MediaId: "media-b", Filename: "b.jpg", Origin: catalog.CoverOriginRandom}
+	coverC := catalog.Cover{MediaId: "media-c", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked}
+
 	seededOwnerAndVisitorRepo := func() *AlbumSummaryInMemoryRepository {
 		return &AlbumSummaryInMemoryRepository{
 			Summaries: []UserAlbumSummary{
@@ -157,6 +161,13 @@ func TestAlbumView_MediasInserted(t *testing.T) {
 			},
 		}
 	}
+	seededOwnerAndVisitorWithCovers := func() *AlbumSummaryInMemoryRepository {
+		repo := seededOwnerAndVisitorRepo()
+		for i := range repo.Summaries {
+			repo.Summaries[i].AlbumSummary.Covers = []catalog.Cover{coverA}
+		}
+		return repo
+	}
 
 	type fields struct {
 		Repository *AlbumSummaryInMemoryRepository
@@ -164,14 +175,16 @@ func TestAlbumView_MediasInserted(t *testing.T) {
 	tests := []struct {
 		name            string
 		fields          fields
-		medias          map[catalog.AlbumId][]catalog.MediaId
+		event           catalog.MediasInserted
 		expectSummaries []UserAlbumSummary
 		wantErr         assert.ErrorAssertionFunc
 	}{
 		{
 			name:   "it should increment the count on every viewer row",
 			fields: fields{Repository: seededOwnerAndVisitorRepo()},
-			medias: map[catalog.AlbumId][]catalog.MediaId{albumAlpha: {"a", "b", "c"}},
+			event: catalog.MediasInserted{
+				Inserted: map[catalog.AlbumId][]catalog.MediaId{albumAlpha: {"a", "b", "c"}},
+			},
 			expectSummaries: []UserAlbumSummary{
 				{
 					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 4},
@@ -185,9 +198,37 @@ func TestAlbumView_MediasInserted(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name:   "it should be a no-op when the event is empty",
+			name:            "it should be a no-op when the event is empty",
+			fields:          fields{Repository: seededOwnerAndVisitorRepo()},
+			event:           catalog.MediasInserted{},
+			expectSummaries: seededOwnerAndVisitorRepo().Summaries,
+			wantErr:         assert.NoError,
+		},
+		{
+			name:   "it should write the covers of every album carried by the event alongside the count update",
 			fields: fields{Repository: seededOwnerAndVisitorRepo()},
-			medias: map[catalog.AlbumId][]catalog.MediaId{},
+			event: catalog.MediasInserted{
+				Inserted: map[catalog.AlbumId][]catalog.MediaId{albumAlpha: {"a", "b"}},
+				Covers:   map[catalog.AlbumId][]catalog.Cover{albumAlpha: {coverA, coverB, coverC}},
+			},
+			expectSummaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3, Covers: []catalog.Cover{coverA, coverB, coverC}},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3, Covers: []catalog.Cover{coverA, coverB, coverC}},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:   "it should clear the covers when the event carries an empty cover list for an album",
+			fields: fields{Repository: seededOwnerAndVisitorWithCovers()},
+			event: catalog.MediasInserted{
+				Covers: map[catalog.AlbumId][]catalog.Cover{albumAlpha: {}},
+			},
 			expectSummaries: []UserAlbumSummary{
 				{
 					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 1},
@@ -205,7 +246,7 @@ func TestAlbumView_MediasInserted(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			view := newAlbumViewForEventTest(tt.fields.Repository, MediaCounterPortFake(nil))
-			err := view.OnMediasInserted(context.Background(), tt.medias)
+			err := view.OnMediasInserted(context.Background(), tt.event)
 			if tt.wantErr(t, err) {
 				assert.ElementsMatch(t, tt.expectSummaries, tt.fields.Repository.Summaries)
 			}
@@ -579,98 +620,6 @@ func TestAlbumView_AlbumShared(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			view := newAlbumViewForEventTest(tt.fields.Repository, tt.fields.MediaCounterPort)
 			err := view.AlbumShared(context.Background(), tt.album, tt.userId)
-			if tt.wantErr(t, err) {
-				assert.ElementsMatch(t, tt.expectRepo, tt.fields.Repository.Summaries)
-			}
-		})
-	}
-}
-
-func TestAlbumView_OnAlbumCoversChanged(t *testing.T) {
-	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
-	coverB := catalog.Cover{MediaId: "media-b", Filename: "b.jpg", Origin: catalog.CoverOriginRandom}
-	coverC := catalog.Cover{MediaId: "media-c", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked}
-	coverD := catalog.Cover{MediaId: "media-d", Filename: "d.jpg", Origin: catalog.CoverOriginRandom}
-	full := []catalog.Cover{coverA, coverB, coverC, coverD}
-
-	seededOwnerAndVisitor := func() *AlbumSummaryInMemoryRepository {
-		return &AlbumSummaryInMemoryRepository{
-			Summaries: []UserAlbumSummary{
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3},
-					Availability: OwnerAvailability(ownerUserId),
-				},
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3},
-					Availability: VisitorAvailability(visitorUserId),
-				},
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumBeta, Name: "Beta", Start: feb24, End: mar24, MediaCount: 5},
-					Availability: OwnerAvailability(ownerUserId),
-				},
-			},
-		}
-	}
-
-	type fields struct {
-		Repository *AlbumSummaryInMemoryRepository
-	}
-	tests := []struct {
-		name       string
-		fields     fields
-		albumId    catalog.AlbumId
-		covers     []catalog.Cover
-		expectRepo []UserAlbumSummary
-		wantErr    assert.ErrorAssertionFunc
-	}{
-		{
-			name:    "it should fan out a full cover set to every viewer row of the album",
-			fields:  fields{Repository: seededOwnerAndVisitor()},
-			albumId: albumAlpha,
-			covers:  full,
-			expectRepo: []UserAlbumSummary{
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3, Covers: full},
-					Availability: OwnerAvailability(ownerUserId),
-				},
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3, Covers: full},
-					Availability: VisitorAvailability(visitorUserId),
-				},
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumBeta, Name: "Beta", Start: feb24, End: mar24, MediaCount: 5},
-					Availability: OwnerAvailability(ownerUserId),
-				},
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name:    "it should clear the covers when the new set is empty",
-			fields:  fields{Repository: seededOwnerAndVisitor()},
-			albumId: albumAlpha,
-			covers:  nil,
-			expectRepo: []UserAlbumSummary{
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3},
-					Availability: OwnerAvailability(ownerUserId),
-				},
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3},
-					Availability: VisitorAvailability(visitorUserId),
-				},
-				{
-					AlbumSummary: AlbumSummary{AlbumId: albumBeta, Name: "Beta", Start: feb24, End: mar24, MediaCount: 5},
-					Availability: OwnerAvailability(ownerUserId),
-				},
-			},
-			wantErr: assert.NoError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			view := newAlbumViewForEventTest(tt.fields.Repository, MediaCounterPortFake(nil))
-			err := view.OnAlbumCoversChanged(context.Background(), tt.albumId, tt.covers)
 			if tt.wantErr(t, err) {
 				assert.ElementsMatch(t, tt.expectRepo, tt.fields.Repository.Summaries)
 			}

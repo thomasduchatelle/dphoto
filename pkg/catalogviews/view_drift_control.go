@@ -235,6 +235,8 @@ func (l LoggerDriftObserver) OnDetectedDrifts(_ context.Context, drifts []Drift)
 
 type DriftSynchronizerPort interface {
 	PutSummariesPort
+	PutCoversForAllViewersPort
+	DeleteCoversForAllViewersPort
 	DeleteRowPort
 	DeleteLegacyRowsForUserPort
 }
@@ -244,10 +246,18 @@ type DriftSynchronizerObserver struct {
 }
 
 func (d *DriftSynchronizerObserver) OnDetectedDrifts(ctx context.Context, drifts []Drift) error {
+	coversWritten := make(map[catalog.AlbumId]bool)
 	for _, drift := range drifts {
 		switch drift.Reason {
 		case DriftReasonMissing, DriftReasonOverridden:
 			if err := d.DriftSynchronizerPort.PutSummaries(ctx, []AlbumSummaryForUsers{drift.Expected.ToSummaryForUsers()}); err != nil {
+				return err
+			}
+			if coversWritten[drift.AlbumId] {
+				continue
+			}
+			coversWritten[drift.AlbumId] = true
+			if err := d.rebuildCovers(ctx, drift.AlbumId, drift.Expected.AlbumSummary.Covers); err != nil {
 				return err
 			}
 		case DriftReasonDeleted:
@@ -257,6 +267,13 @@ func (d *DriftSynchronizerObserver) OnDetectedDrifts(ctx context.Context, drifts
 		}
 	}
 	return nil
+}
+
+func (d *DriftSynchronizerObserver) rebuildCovers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+	if len(covers) == 0 {
+		return d.DriftSynchronizerPort.DeleteCoversForAllViewers(ctx, albumId)
+	}
+	return d.DriftSynchronizerPort.PutCoversForAllViewers(ctx, albumId, covers)
 }
 
 func (d *DriftSynchronizerObserver) OnReconciledUser(ctx context.Context, userId usermodel.UserId) error {

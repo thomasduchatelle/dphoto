@@ -48,8 +48,10 @@ func (a Availability) String() string {
 	return fmt.Sprintf("%s:%s", availabilityType, a.UserId.Value())
 }
 
-// AlbumSummary is the per-album projection carried by the album-list view: identity, display
-// fields, the media count and the cover set.
+// AlbumSummary is the per-album projection carried by the main album-list row: identity,
+// display fields and the media count. The cover set lives on a sibling row (see
+// AlbumCoversForUsers); the adapter merges both rows per album in Covers when a view is
+// read.
 type AlbumSummary struct {
 	AlbumId    catalog.AlbumId
 	MediaCount int
@@ -60,6 +62,8 @@ type AlbumSummary struct {
 }
 
 // AlbumSummaryForUsers is a full projection to be written for a set of users (owner + visitors).
+// Covers written through this type are ignored on write: covers travel through
+// PutCoversForAllViewers instead so that cover updates never touch the main summary row.
 type AlbumSummaryForUsers struct {
 	AlbumSummary
 	Users []Availability
@@ -87,7 +91,8 @@ type AlbumSummaryRepository interface {
 	ListSummariesForUser(ctx context.Context, userId usermodel.UserId) ([]UserAlbumSummary, error)
 	PutSummaries(ctx context.Context, summaries []AlbumSummaryForUsers) error
 	SetDisplayFieldsForAllViewers(ctx context.Context, albumId catalog.AlbumId, name string, start, end time.Time) error
-	SetCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error
+	PutCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error
+	DeleteCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId) error
 	IncrementCountForAllViewers(ctx context.Context, updates []AlbumCountDiff) error
 	SetCountForAllViewers(ctx context.Context, updates []AlbumCount) error
 	RenameAlbum(ctx context.Context, existingId, renamedId catalog.AlbumId, newName string) error
@@ -97,6 +102,14 @@ type AlbumSummaryRepository interface {
 
 type PutSummariesPort interface {
 	PutSummaries(ctx context.Context, summaries []AlbumSummaryForUsers) error
+}
+
+type PutCoversForAllViewersPort interface {
+	PutCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error
+}
+
+type DeleteCoversForAllViewersPort interface {
+	DeleteCoversForAllViewers(ctx context.Context, albumId catalog.AlbumId) error
 }
 
 type DeleteRowPort interface {

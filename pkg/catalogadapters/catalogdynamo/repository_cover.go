@@ -5,8 +5,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pkg/errors"
+	"github.com/thomasduchatelle/dphoto/pkg/awssupport/dynamoutils"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 func (r *Repository) FindCoversByAlbum(ctx context.Context, albumId catalog.AlbumId) ([]catalog.Cover, error) {
@@ -27,6 +30,51 @@ func (r *Repository) FindCoversByAlbum(ctx context.Context, albumId catalog.Albu
 	}
 
 	return unmarshalCovers(output.Item)
+}
+
+// FindCoversByAlbums batches a BatchGetItem over the canonical cover record of each
+// album. Missing covers are omitted from the result map (an album with no cover record
+// is simply not present in the output).
+func (r *Repository) FindCoversByAlbums(ctx context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
+	if len(albumIds) == 0 {
+		return nil, nil
+	}
+
+	keys := make([]map[string]types.AttributeValue, 0, len(albumIds))
+	for _, id := range albumIds {
+		key, err := attributevalue.MarshalMap(CoverPrimaryKey(id.Owner, id.FolderName))
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to marshal cover key for album %s", id)
+		}
+		keys = append(keys, key)
+	}
+
+	result := make(map[catalog.AlbumId][]catalog.Cover)
+	stream := dynamoutils.NewGetStream(ctx, dynamoutils.NewGetBatchItem(r.client, r.table, ""), keys, dynamoutils.DynamoReadBatchSize)
+	for stream.HasNext() {
+		item := stream.Next()
+		covers, err := unmarshalCovers(item)
+		if err != nil {
+			return nil, err
+		}
+		albumId, err := unmarshalCoverAlbumId(item)
+		if err != nil {
+			return nil, err
+		}
+		result[albumId] = covers
+	}
+	return result, stream.Error()
+}
+
+func unmarshalCoverAlbumId(item map[string]types.AttributeValue) (catalog.AlbumId, error) {
+	var record CoverRecord
+	if err := attributevalue.UnmarshalMap(item, &record); err != nil {
+		return catalog.AlbumId{}, errors.Wrapf(err, "failed to unmarshal cover record for AlbumId: %+v", item)
+	}
+	return catalog.AlbumId{
+		Owner:      ownermodel.Owner(record.AlbumOwner),
+		FolderName: catalog.NewFolderName(record.AlbumFolderName),
+	}, nil
 }
 
 func (r *Repository) SaveCovers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {

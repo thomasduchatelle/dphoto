@@ -3,23 +3,21 @@ package catalog
 import (
 	"context"
 	"math/rand"
+	"slices"
 
 	"github.com/pkg/errors"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
+
+type CoverServicePort interface {
+	Randomise(ctx context.Context, stable bool, albumIds ...AlbumId) (map[AlbumId][]Cover, error)
+	StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error)
+}
 
 // CoverRepository persists an album's cover set as a single record.
 type CoverRepository interface {
 	FindCoversByAlbum(ctx context.Context, albumId AlbumId) ([]Cover, error)
+	FindCoversByAlbums(ctx context.Context, albumIds ...AlbumId) (map[AlbumId][]Cover, error)
 	SaveCovers(ctx context.Context, albumId AlbumId, covers []Cover) error
-}
-
-// CompleteCovers fills the empty slots of an album's cover set by drawing at random from
-// its eligible medias (MediaType IMAGE, not already a cover). See CompleteCoversService.
-type CompleteCovers struct {
-	CoverRepository     CoverRepository
-	MediaReadRepository MediaReadRepository
-	Randomiser          Randomiser
 }
 
 // Randomiser picks n indices in [0, upperBound) uniformly at random, without replacement.
@@ -47,116 +45,262 @@ var DefaultRandomiser Randomiser = RandomiserFunc(func(upperBound, n int) []int 
 	return rand.Perm(upperBound)[:n]
 })
 
-func NewCompleteCovers(coverRepository CoverRepository, mediaReadRepository MediaReadRepository) *CompleteCovers {
-	return &CompleteCovers{
+type CoverService struct {
+	CoverRepository     CoverRepository
+	MediaReadRepository MediaReadRepository
+	Randomiser          Randomiser
+}
+
+func NewCoverService(coverRepository CoverRepository, mediaReadRepository MediaReadRepository) *CoverService {
+	return &CoverService{
 		CoverRepository:     coverRepository,
 		MediaReadRepository: mediaReadRepository,
 		Randomiser:          DefaultRandomiser,
 	}
 }
 
-// CompleteCovers queries the album's medias and fills any empty cover slot with
-// uniform-random RANDOM covers. No-op when the set is already full.
-func (c *CompleteCovers) CompleteCovers(ctx context.Context, albumId AlbumId) error {
-	medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
-	if err != nil {
-		return errors.Wrapf(err, "CompleteCovers(%s) failed to list medias", albumId)
+// Randomise refreshes the cover set of every requested album by stripping covers whose
+// media is no longer in the album and filling the empty slots at random from the album's
+// full image set. When `stable` is false, every RANDOM cover is also dropped (and
+// re-picked) so that newly-added medias get a chance to appear as a cover. When `stable`
+// is true, every cover whose media is still in the album is kept untouched.
+// CHERRY_PICKED covers whose media is still in the album are always kept regardless of
+// `stable`. The returned map carries one entry per album whose cover set actually
+// changed; unchanged albums are omitted. Returns a nil map when nothing changed.
+func (c *CoverService) Randomise(ctx context.Context, stable bool, albumIds ...AlbumId) (map[AlbumId][]Cover, error) {
+	if len(albumIds) == 0 {
+		return nil, nil
 	}
-	return c.CompleteCoversFromCandidates(ctx, albumId, medias)
+
+	coversByAlbumId, err := c.CoverRepository.FindCoversByAlbums(ctx, albumIds...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Randomise failed to load covers for albums %v", albumIds)
+	}
+
+	var changed map[AlbumId][]Cover
+	for _, albumId := range albumIds {
+		original := coversByAlbumId[albumId]
+
+		medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
+		if err != nil {
+			return nil, errors.Wrapf(err, "Randomise failed to list medias for %s", albumId)
+		}
+
+		kept := slices.DeleteFunc(slices.Clone(original), func(cover Cover) bool {
+			stillInAlbum := slices.ContainsFunc(medias, func(meta *MediaMeta) bool {
+				return meta.Id == cover.MediaId
+			})
+			if !stillInAlbum {
+				return true
+			}
+			return !stable && cover.Origin == CoverOriginRandom
+		})
+
+		filled, _ := c.fillCoversWithMedias(kept, medias)
+		if coversEqual(original, filled) {
+			continue
+		}
+		if changed == nil {
+			changed = make(map[AlbumId][]Cover)
+		}
+		changed[albumId] = filled
+		if err := c.CoverRepository.SaveCovers(ctx, albumId, filled); err != nil {
+			return nil, errors.Wrapf(err, "Randomise failed to save covers for %s", albumId)
+		}
+	}
+
+	return changed, nil
 }
 
-// CompleteCoversFromCandidates fills the empty slots of the album's cover set with
-// RANDOM covers drawn uniformly at random from the supplied candidates. Only candidates
-// of MediaType IMAGE that are not already covers are eligible. No-op when the set is
-// already full, or when no eligible candidate is available.
-func (c *CompleteCovers) CompleteCoversFromCandidates(ctx context.Context, albumId AlbumId, candidates []*MediaMeta) error {
-	existing, err := c.CoverRepository.FindCoversByAlbum(ctx, albumId)
-	if err != nil {
-		return errors.Wrapf(err, "CompleteCovers(%s) failed to load current covers", albumId)
+func coversEqual(a, b []Cover) bool {
+	if len(a) != len(b) {
+		return false
 	}
-
-	slotsToFill := MaxCoversPerAlbum - len(existing)
-	if slotsToFill <= 0 {
-		return nil
-	}
-
-	alreadyCovered := make(map[MediaId]bool, len(existing))
-	for _, cover := range existing {
-		alreadyCovered[cover.MediaId] = true
-	}
-
-	var eligible []*MediaMeta
-	for _, candidate := range candidates {
-		if candidate == nil || candidate.Type != MediaTypeImage {
-			continue
+	for i := range a {
+		if a[i] != b[i] {
+			return false
 		}
-		if alreadyCovered[candidate.Id] {
-			continue
+	}
+	return true
+}
+
+type affectedAlbum struct {
+	albumId     AlbumId
+	removed     map[MediaId]interface{}
+	added       bool
+	addedMedias []MediaId
+}
+
+func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
+	var affected []affectedAlbum
+
+	strikeThroughAlbums := make(map[AlbumId]interface{})
+	for _, sourceAlbumId := range transferred.FromAlbums {
+		added := false
+		medias := make(map[MediaId]interface{})
+		var transferredMedias []MediaId
+		for targetAlbumId, addedMedias := range transferred.Transfers {
+			if sourceAlbumId == targetAlbumId {
+				added = true
+				transferredMedias = addedMedias
+				strikeThroughAlbums[targetAlbumId] = nil
+			} else {
+				for _, media := range addedMedias {
+					medias[media] = nil
+				}
+			}
 		}
-		eligible = append(eligible, candidate)
-	}
 
-	if len(eligible) == 0 {
-		return nil
-	}
-
-	picks := slotsToFill
-	if picks > len(eligible) {
-		picks = len(eligible)
-	}
-
-	indices := c.Randomiser.SampleIndices(len(eligible), picks)
-	completed := append([]Cover(nil), existing...)
-	for _, idx := range indices {
-		media := eligible[idx]
-		completed = append(completed, Cover{
-			MediaId:  media.Id,
-			Filename: media.Filename,
-			Origin:   CoverOriginRandom,
+		affected = append(affected, affectedAlbum{
+			albumId:     sourceAlbumId,
+			removed:     medias,
+			added:       added,
+			addedMedias: transferredMedias,
 		})
 	}
 
-	return c.CoverRepository.SaveCovers(ctx, albumId, completed)
-}
-
-type FindAlbumByOwnerPort interface {
-	FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error)
-}
-
-type CompleteCoversPort interface {
-	CompleteCovers(ctx context.Context, albumId AlbumId) error
-}
-
-// BackfillCovers completes empty cover sets for every album of an owner. Used by the
-// administrative CLI to seed existing albums that pre-date the covers feature (backup only
-// completes albums that receive new medias). A failure on a single album is reported and
-// the sweep continues, as CompleteCovers is idempotent and safe to re-run.
-type BackfillCovers struct {
-	FindAlbumByOwnerPort FindAlbumByOwnerPort
-	CompleteCoversPort   CompleteCoversPort
-}
-
-type BackfillReport struct {
-	Albums   int
-	Failures []BackfillFailure
-}
-
-type BackfillFailure struct {
-	AlbumId AlbumId
-	Err     error
-}
-
-func (b *BackfillCovers) BackfillForOwner(ctx context.Context, owner ownermodel.Owner) (BackfillReport, error) {
-	albums, err := b.FindAlbumByOwnerPort.FindAlbumsByOwner(ctx, owner)
-	if err != nil {
-		return BackfillReport{}, errors.Wrapf(err, "BackfillCovers(%s) failed to list albums", owner)
-	}
-
-	report := BackfillReport{Albums: len(albums)}
-	for _, album := range albums {
-		if err := b.CompleteCoversPort.CompleteCovers(ctx, album.AlbumId); err != nil {
-			report.Failures = append(report.Failures, BackfillFailure{AlbumId: album.AlbumId, Err: err})
+	for targetAlbumId, addedMedias := range transferred.Transfers {
+		if _, present := strikeThroughAlbums[targetAlbumId]; !present {
+			affected = append(affected, affectedAlbum{
+				albumId:     targetAlbumId,
+				removed:     nil,
+				added:       true,
+				addedMedias: addedMedias,
+			})
 		}
 	}
-	return report, nil
+
+	return affected
+}
+
+// StableRefresh processes every album affected by `transferred`:
+//
+//   - For each source album, covers whose media has moved away are stripped.
+//   - CHERRY_PICKED covers that moved to a destination album are inherited by the
+//     destination (as CHERRY_PICKED), displacing the oldest RANDOM cover when needed.
+//     Destinations already full of CHERRY_PICKED covers silently ignore the incoming
+//     one.
+//   - Every affected album has its empty slots backfilled from its full image set.
+//
+// Returns one entry per album whose cover set actually changed. Unchanged albums are
+// omitted. Returns a nil map when no album changed.
+func (c *CoverService) StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error) {
+	if transferred.IsEmpty() {
+		return nil, nil
+	}
+
+	albums := affectedAlbums(transferred)
+
+	affected := make([]AlbumId, len(albums), len(albums))
+	for i, album := range albums {
+		affected[i] = album.albumId
+	}
+
+	coversByAlbum, err := c.CoverRepository.FindCoversByAlbums(ctx, affected...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "StableRefresh failed to load covers for albums %v", affected)
+	}
+
+	pickedMedias := make(map[MediaId]Cover)
+	for _, covers := range coversByAlbum {
+		for _, cover := range covers {
+			if cover.Origin == CoverOriginCherryPicked {
+				pickedMedias[cover.MediaId] = cover
+			}
+		}
+	}
+
+	updatedCovers := make(map[AlbumId][]Cover)
+	for _, album := range albums {
+		covers, _ := coversByAlbum[album.albumId]
+
+		// Strip moved away
+		covers, hasBeenFiltered := c.filterOutRemovedMedias(covers, album)
+
+		// Force add cherry-picked
+		hasBeenAltered, covers := c.forceAlreadyCherryPickedCovers(covers, album, transferred, pickedMedias)
+
+		hasBeenFilled := false
+		if hasBeenFiltered || len(album.addedMedias) > 0 {
+			covers, hasBeenFilled, err = c.fillCovers(ctx, covers, album.albumId)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if hasBeenFiltered || hasBeenAltered || hasBeenFilled {
+			updatedCovers[album.albumId] = covers
+			err = c.CoverRepository.SaveCovers(ctx, album.albumId, covers)
+			if err != nil {
+				return nil, errors.Wrapf(err, "StableRefresh failed to store new covers for %s", album.albumId)
+			}
+		}
+	}
+
+	return updatedCovers, nil
+}
+
+func (c *CoverService) filterOutRemovedMedias(covers []Cover, album affectedAlbum) ([]Cover, bool) {
+	size := len(covers)
+
+	covers = slices.DeleteFunc(covers, func(cover Cover) bool {
+		_, removed := album.removed[cover.MediaId]
+		return removed
+	})
+	hasBeenFiltered := size != len(covers)
+	return covers, hasBeenFiltered
+}
+
+func (c *CoverService) forceAlreadyCherryPickedCovers(covers []Cover, album affectedAlbum, _ TransferredMedias, pickedMedias map[MediaId]Cover) (bool, []Cover) {
+	hasBeenAltered := false
+	for _, addedMedia := range album.addedMedias {
+		if sourceCover, picked := pickedMedias[addedMedia]; picked {
+			if len(covers) < MaxCoversPerAlbum {
+				hasBeenAltered = true
+				covers = append(covers, sourceCover)
+			} else {
+				for i, cover := range covers {
+					if cover.Origin != CoverOriginCherryPicked {
+						hasBeenAltered = true
+						covers[i] = sourceCover
+						break
+					}
+				}
+			}
+		}
+	}
+	return hasBeenAltered, covers
+}
+
+func (c *CoverService) fillCovers(ctx context.Context, covers []Cover, albumId AlbumId) ([]Cover, bool, error) {
+	hasBeenFilled := false
+	if len(covers) < MaxCoversPerAlbum {
+		// Refill the covers if there is a chance the albums has more medias (i.e. if it wasn't full and no medias got added, no point trying to find new ones)
+		medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
+		if err != nil {
+			return nil, false, errors.Wrapf(err, "StableRefresh failed to list medias for %s", albumId)
+		}
+
+		covers, hasBeenFilled = c.fillCoversWithMedias(covers, medias)
+	}
+	return covers, hasBeenFilled, nil
+}
+
+func (c *CoverService) fillCoversWithMedias(covers []Cover, medias []*MediaMeta) ([]Cover, bool) {
+	medias = slices.DeleteFunc(medias, func(meta *MediaMeta) bool {
+		return meta.Type != MediaTypeImage || slices.ContainsFunc(covers, func(cover Cover) bool {
+			return cover.MediaId == meta.Id
+		})
+	})
+
+	hasBeenFilled := false
+	for _, indice := range c.Randomiser.SampleIndices(len(medias), MaxCoversPerAlbum-len(covers)) {
+		hasBeenFilled = true
+		covers = append(covers, Cover{
+			MediaId:  medias[indice].Id,
+			Filename: medias[indice].Filename,
+			Origin:   CoverOriginRandom,
+		})
+	}
+	return covers, hasBeenFilled
 }

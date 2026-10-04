@@ -12,15 +12,16 @@ user's partition so `ListAlbums` stays a single Query.
 - **07 — Render album covers on the album list** _(web-nextjs)_
   - Album card shows real covers (0–4) via the image loader. Replaces the placeholder `thumbnails`
     field. Storybook / visual tests for 0, partial, full.
-- **09 — Cover reconciliation primitive + split view projection + MediasInserted** _(pkg/catalog + pkg/catalogviews + pkg/catalogviewsadapters/catalogviewsdynamodb + pkg/pkgfactory + cmd/dphotops)_
-  - Introduces `CoverMaintenance.Reconcile(added, removed)` with the "drop RANDOM, keep CHERRY_PICKED,
-    strip removed, refill up to 4" invariant, and the `CoversChangedObserver` signal fired on actual
-    change.
+- **09 — Covers on MediasInserted + split view projection + Refresh/Stabilise service** _(pkg/catalog + pkg/catalogviews + pkg/catalogviewsadapters/catalogviewsdynamodb + pkg/pkgfactory + cmd/dphotops)_
+  - Introduces the `CoverMaintenance` service with two strategies: **Refresh** (drop RANDOM, keep
+    CHERRY_PICKED, strip removed, refill from the album's full image set) and **Stabilise** (keep
+    every existing cover except removed, refill from the album's full image set).
   - Splits the view: covers move out of `AlbumSummary` into a sibling `#COVERS` SK row in the same
     user partition; one Query still serves `ListAlbums`.
-  - Ships the `MediasInserted` cover observer and the view-side cover projection observer that
-    fans out `CoversChanged` to every viewer's `#COVERS` row.
-  - Admin backfill (`BackfillCovers` + `dphotops covers backfill`) retargets to the new primitive.
+  - `InsertMedias` calls Refresh inline per affected album and attaches the resulting covers to the
+    `MediasInserted` event payload. `AlbumView.OnMediasInserted` writes count and covers in one call.
+  - Admin backfill (`BackfillCovers` + `dphotops covers backfill`) runs Refresh and fans the result
+    to the view.
 - **10 — AlbumCreated cover maintenance** _(pkg/catalog + pkg/pkgfactory)_
   - Reconciliation observer for `AlbumCreated`: fills the new album's covers from transferred-in
     medias; strips covers of pre-existing source albums whose medias were moved out, refilling from

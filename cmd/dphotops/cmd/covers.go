@@ -19,12 +19,13 @@ var coversCmd = &cobra.Command{
 
 var coversBackfillCmd = &cobra.Command{
 	Use:   "backfill",
-	Short: "Fill empty cover slots on every album of every owner",
-	Long: `Iterate every album of every owner and complete empty cover sets with random
-RANDOM covers drawn from each album's eligible images.
+	Short: "Reconcile cover sets on every album of every owner",
+	Long: `Iterate every album of every owner and reconcile its cover set from the album's
+eligible images: covers whose media is no longer in the album are stripped and
+empty slots are filled randomly, up to 4. Existing RANDOM and CHERRY_PICKED
+covers are preserved whenever possible.
 
-Idempotent: albums already carrying a full set of covers are left untouched, and
-CHERRY_PICKED covers are never altered. Safe to re-run.`,
+Safe to re-run: the cover set is always capped at 4 and valid covers are kept.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
@@ -37,29 +38,21 @@ CHERRY_PICKED covers are never altered. Safe to re-run.`,
 
 		backfill := &catalog.BackfillCovers{
 			FindAlbumByOwnerPort: pkgfactory.AlbumQueries(ctx),
-			CompleteCoversPort:   pkgfactory.CompleteCoversCase(ctx),
+			CoverService:         pkgfactory.CoverServiceCase(ctx),
+			Observers:            []catalog.CoverBackfillObserver{pkgfactory.AlbumView(ctx)},
 		}
 
 		var failedOwners int
 		for _, owner := range owners {
 			start := time.Now()
-			report, err := backfill.BackfillForOwner(ctx, owner)
+			changed, err := backfill.BackfillForOwner(ctx, owner)
 			if err != nil {
 				log.WithError(err).Errorf("covers backfill: %s FAILED after %s", owner, time.Since(start))
 				printer.ErrorText("owner %s: %s", owner, err.Error())
 				failedOwners++
 				continue
 			}
-			for _, failure := range report.Failures {
-				log.WithError(failure.Err).Errorf("covers backfill: album %s FAILED", failure.AlbumId)
-				printer.ErrorText("  album %s: %s", failure.AlbumId, failure.Err.Error())
-			}
-			if len(report.Failures) > 0 {
-				printer.ErrorText("owner %s: %d album(s) failed out of %d (%s)", owner, len(report.Failures), report.Albums, time.Since(start))
-				failedOwners++
-				continue
-			}
-			printer.Success("owner %s backfilled in %s (%d album(s))", owner, time.Since(start), report.Albums)
+			printer.Success("owner %s backfilled in %s (%d album(s) updated)", owner, time.Since(start), len(changed))
 		}
 
 		if failedOwners > 0 {

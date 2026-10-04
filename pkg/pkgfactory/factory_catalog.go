@@ -71,6 +71,7 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 	repository := CatalogRepository(ctx)
 	return catalog.NewInsertMedias(
 		repository,
+		CoverServiceCase(ctx),
 		AlbumView(ctx),
 	)
 }
@@ -90,10 +91,10 @@ func CatalogMediaQueries(ctx context.Context) *catalog.MediaQueries {
 	})
 }
 
-func CompleteCoversCase(ctx context.Context) *catalog.CompleteCovers {
-	return singletons.MustSingleton(func() (*catalog.CompleteCovers, error) {
+func CoverServiceCase(ctx context.Context) *catalog.CoverService {
+	return singletons.MustSingleton(func() (*catalog.CoverService, error) {
 		repository := CatalogRepository(ctx)
-		return catalog.NewCompleteCovers(repository, repository), nil
+		return catalog.NewCoverService(repository, repository), nil
 	})
 }
 
