@@ -77,8 +77,18 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		}
 	}
 
+	cherryPickedCover := catalog.Cover{MediaId: "media-cherry", Filename: "cherry.jpg", Origin: catalog.CoverOriginCherryPicked}
+	randomCover := catalog.Cover{MediaId: "media-random", Filename: "random.jpg", Origin: catalog.CoverOriginRandom}
+	coversOnAvenger := func() *CoverRepositoryInMemory {
+		return NewCoverRepositoryInMemory(CoverRepositorySeed{
+			AlbumId: existingAlbum.AlbumId,
+			Covers:  []catalog.Cover{cherryPickedCover, randomCover},
+		})
+	}
+
 	type fields struct {
 		AlbumRepository catalog.TimelineRepository
+		CoverRepository *CoverRepositoryInMemory
 	}
 	type args struct {
 		request catalog.RenameAlbumRequest
@@ -90,11 +100,12 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		expectAlbumsByIds     map[catalog.AlbumId]string
 		expectTransferRecords []catalog.MediaTransferRecords
 		expectRenamedEvents   []catalog.AlbumRenamed
+		expectCoversByAlbum   map[catalog.AlbumId][]catalog.Cover
 		wantErr               assert.ErrorAssertionFunc
 	}{
 		{
 			name:   "it should get an error if the new name is empty",
-			fields: fields{AlbumRepository: repositoryWithAvenger()},
+			fields: fields{AlbumRepository: repositoryWithAvenger(), CoverRepository: coversOnAvenger()},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -103,14 +114,15 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
-			expectAlbumsByIds: map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
+			expectAlbumsByIds:   map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{existingAlbum.AlbumId: {cherryPickedCover, randomCover}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNameMandatoryErr)
 			},
 		},
 		{
 			name:   "it should get an error if the album doesn't exists (name-only path)",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory()},
+			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(), CoverRepository: NewCoverRepositoryInMemory()},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -119,14 +131,15 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
-			expectAlbumsByIds: map[catalog.AlbumId]string{},
+			expectAlbumsByIds:   map[catalog.AlbumId]string{},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr)
 			},
 		},
 		{
 			name:   "it should get an error if the album doesn't exists (replace path)",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory()},
+			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(), CoverRepository: NewCoverRepositoryInMemory()},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -135,14 +148,15 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					ForcedFolderName: "",
 				},
 			},
-			expectAlbumsByIds: map[catalog.AlbumId]string{},
+			expectAlbumsByIds:   map[catalog.AlbumId]string{},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr)
 			},
 		},
 		{
 			name:   "it should update the name in place and fire the AlbumRenamed event (folder unchanged, no transfer)",
-			fields: fields{AlbumRepository: repositoryWithAvenger()},
+			fields: fields{AlbumRepository: repositoryWithAvenger(), CoverRepository: coversOnAvenger()},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -163,20 +177,22 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 					},
 				},
 			},
-			wantErr: assert.NoError,
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{existingAlbum.AlbumId: {cherryPickedCover, randomCover}},
+			wantErr:             assert.NoError,
 		},
 		{
 			name:                  "it should replace the album with a new folder name generated from the new name, transferring medias and firing the AlbumRenamed event",
-			fields:                fields{AlbumRepository: repositoryWithAvenger()},
+			fields:                fields{AlbumRepository: repositoryWithAvenger(), CoverRepository: coversOnAvenger()},
 			args:                  args{request: renameFolderRequest},
 			expectAlbumsByIds:     map[catalog.AlbumId]string{generatedRenamedId: newName},
 			expectTransferRecords: []catalog.MediaTransferRecords{transferFromAvengerTo(generatedRenamedId)},
 			expectRenamedEvents:   []catalog.AlbumRenamed{renamedEvent(generatedRenamedId)},
+			expectCoversByAlbum:   map[catalog.AlbumId][]catalog.Cover{generatedRenamedId: {cherryPickedCover, randomCover}},
 			wantErr:               assert.NoError,
 		},
 		{
 			name:   "it should replace the album with a forced folder name, transferring medias and firing the AlbumRenamed event",
-			fields: fields{AlbumRepository: repositoryWithAvenger()},
+			fields: fields{AlbumRepository: repositoryWithAvenger(), CoverRepository: coversOnAvenger()},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
@@ -188,15 +204,27 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 			expectAlbumsByIds:     map[catalog.AlbumId]string{forcedRenamedId: newName},
 			expectTransferRecords: []catalog.MediaTransferRecords{transferFromAvengerTo(forcedRenamedId)},
 			expectRenamedEvents:   []catalog.AlbumRenamed{renamedEvent(forcedRenamedId)},
+			expectCoversByAlbum:   map[catalog.AlbumId][]catalog.Cover{forcedRenamedId: {cherryPickedCover, randomCover}},
+			wantErr:               assert.NoError,
+		},
+		{
+			name:                  "it should migrate no covers when the renamed album had none, leaving both identities empty",
+			fields:                fields{AlbumRepository: repositoryWithAvenger(), CoverRepository: NewCoverRepositoryInMemory()},
+			args:                  args{request: renameFolderRequest},
+			expectAlbumsByIds:     map[catalog.AlbumId]string{generatedRenamedId: newName},
+			expectTransferRecords: []catalog.MediaTransferRecords{transferFromAvengerTo(generatedRenamedId)},
+			expectRenamedEvents:   []catalog.AlbumRenamed{renamedEvent(generatedRenamedId)},
+			expectCoversByAlbum:   map[catalog.AlbumId][]catalog.Cover{},
 			wantErr:               assert.NoError,
 		},
 		{
 			name:                  "it should interrupt the transfer and skip firing the event if the album insertion fails",
-			fields:                fields{AlbumRepository: failingInsertAlbum(repositoryWithAvenger(), testError)},
+			fields:                fields{AlbumRepository: failingInsertAlbum(repositoryWithAvenger(), testError), CoverRepository: coversOnAvenger()},
 			args:                  args{request: renameFolderRequest},
 			expectAlbumsByIds:     map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
 			expectTransferRecords: nil,
 			expectRenamedEvents:   nil,
+			expectCoversByAlbum:   map[catalog.AlbumId][]catalog.Cover{existingAlbum.AlbumId: {cherryPickedCover, randomCover}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, testError, i...)
 			},
@@ -210,6 +238,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 			renameAlbum := catalog.NewRenameAlbum(
 				tt.fields.AlbumRepository,
 				transferService,
+				tt.fields.CoverRepository,
 				observer,
 			)
 
@@ -226,6 +255,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 			assert.Equal(t, tt.expectAlbumsByIds, names, "album names in the repository")
 			assert.Equal(t, tt.expectTransferRecords, transferService.Records, "records passed to TransferMedias")
 			assert.Equal(t, tt.expectRenamedEvents, observer.Events, "AlbumRenamed events fired")
+			assert.Equal(t, tt.expectCoversByAlbum, tt.fields.CoverRepository.Covers, "covers in the repository")
 		})
 	}
 }

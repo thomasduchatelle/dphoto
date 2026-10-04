@@ -77,6 +77,38 @@ func unmarshalCoverAlbumId(item map[string]types.AttributeValue) (catalog.AlbumI
 	}, nil
 }
 
+// MoveCovers relocates the canonical cover record of an album from one AlbumId to another.
+// It preserves the ordered cover set verbatim (no reconciliation, no redraw) and is a no-op
+// when the source album has no cover record. When from and to resolve to the same key, the
+// record is left untouched.
+func (r *Repository) MoveCovers(ctx context.Context, from, to catalog.AlbumId) error {
+	if from.IsEqual(to) {
+		return nil
+	}
+
+	covers, err := r.FindCoversByAlbum(ctx, from)
+	if err != nil {
+		return errors.Wrapf(err, "MoveCovers failed to load covers of %s", from)
+	}
+	if len(covers) == 0 {
+		return nil
+	}
+
+	if err := r.SaveCovers(ctx, to, covers); err != nil {
+		return errors.Wrapf(err, "MoveCovers failed to save covers to %s", to)
+	}
+
+	fromKey, err := attributevalue.MarshalMap(CoverPrimaryKey(from.Owner, from.FolderName))
+	if err != nil {
+		return errors.Wrapf(err, "MoveCovers failed to marshal source key %s", from)
+	}
+	_, err = r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		Key:       fromKey,
+		TableName: &r.table,
+	})
+	return errors.Wrapf(err, "MoveCovers failed to delete covers of %s", from)
+}
+
 func (r *Repository) SaveCovers(ctx context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
 	if len(covers) > catalog.MaxCoversPerAlbum {
 		return errors.Wrapf(catalog.TooManyCoversErr, "cannot save %d covers on album %s", len(covers), albumId)

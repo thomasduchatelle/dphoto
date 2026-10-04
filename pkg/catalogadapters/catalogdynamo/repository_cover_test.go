@@ -256,6 +256,106 @@ func TestRepository_SaveCovers(t *testing.T) {
 	}
 }
 
+func TestRepository_MoveCovers(t *testing.T) {
+	fromId := catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/avengers-1")}
+	toId := catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/avengers-renamed")}
+	otherId := catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/stealth")}
+
+	dyn := dynamotestutils.NewTestContext(context.Background(), t)
+
+	type args struct {
+		from catalog.AlbumId
+		to   catalog.AlbumId
+	}
+	tests := []struct {
+		name    string
+		args    args
+		before  []map[string]types.AttributeValue
+		after   []map[string]types.AttributeValue
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "it should be a no-op when the source album has no cover record",
+			args:    args{from: fromId, to: toId},
+			before:  nil,
+			after:   nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should move the cover record from the source to the destination preserving the cover list verbatim",
+			args: args{from: fromId, to: toId},
+			before: []map[string]types.AttributeValue{
+				coverEntry(fromId,
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+				),
+			},
+			after: []map[string]types.AttributeValue{
+				coverEntry(toId,
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-2", Filename: "b.jpg", Origin: catalog.CoverOriginRandom},
+				),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should leave other album cover records untouched when moving one album's record",
+			args: args{from: fromId, to: toId},
+			before: []map[string]types.AttributeValue{
+				coverEntry(fromId,
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+				),
+				coverEntry(otherId,
+					catalog.Cover{MediaId: "media-9", Filename: "z.jpg", Origin: catalog.CoverOriginRandom},
+				),
+			},
+			after: []map[string]types.AttributeValue{
+				coverEntry(toId,
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+				),
+				coverEntry(otherId,
+					catalog.Cover{MediaId: "media-9", Filename: "z.jpg", Origin: catalog.CoverOriginRandom},
+				),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should be a no-op when from and to are the same album",
+			args: args{from: fromId, to: fromId},
+			before: []map[string]types.AttributeValue{
+				coverEntry(fromId,
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+				),
+			},
+			after: []map[string]types.AttributeValue{
+				coverEntry(fromId,
+					catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
+				),
+			},
+			wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dyn = dyn.Subtest(t)
+
+			err := dyn.WithDbContent(dyn.Ctx, tt.before)
+			if !assert.NoError(t, err, "WithDbContent") {
+				return
+			}
+
+			r := &Repository{client: dyn.Client, table: dyn.Table}
+
+			err = r.MoveCovers(context.Background(), tt.args.from, tt.args.to)
+			if !tt.wantErr(t, err, fmt.Sprintf("MoveCovers(%v, %v)", tt.args.from, tt.args.to)) {
+				return
+			}
+			_, err = dyn.EqualContent(dyn.Ctx, tt.after)
+			assert.NoError(t, err, "AssertDbContent")
+		})
+	}
+}
+
 func coverEntry(albumId catalog.AlbumId, covers ...catalog.Cover) map[string]types.AttributeValue {
 	items := make([]types.AttributeValue, 0, len(covers))
 	for _, cover := range covers {

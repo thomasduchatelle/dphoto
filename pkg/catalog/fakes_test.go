@@ -172,6 +172,19 @@ func (c *CoverRepositoryInMemory) SaveCovers(_ context.Context, albumId catalog.
 	return nil
 }
 
+func (c *CoverRepositoryInMemory) MoveCovers(_ context.Context, from, to catalog.AlbumId) error {
+	if from.IsEqual(to) {
+		return nil
+	}
+	covers, ok := c.Covers[from]
+	if !ok {
+		return nil
+	}
+	c.Covers[to] = append([]catalog.Cover(nil), covers...)
+	delete(c.Covers, from)
+	return nil
+}
+
 // MediaReadRepositoryInMemory implements catalog.MediaReadRepository backed by a per-album
 // slice of medias. It also implements catalog.InsertMediasRepositoryPort so a single fake
 // can back both the write and the read side of the medias in a test.

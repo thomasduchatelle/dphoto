@@ -18,6 +18,7 @@ type CoverRepository interface {
 	FindCoversByAlbum(ctx context.Context, albumId AlbumId) ([]Cover, error)
 	FindCoversByAlbums(ctx context.Context, albumIds ...AlbumId) (map[AlbumId][]Cover, error)
 	SaveCovers(ctx context.Context, albumId AlbumId, covers []Cover) error
+	MoveCovers(ctx context.Context, from, to AlbumId) error
 }
 
 // Randomiser picks n indices in [0, upperBound) uniformly at random, without replacement.
