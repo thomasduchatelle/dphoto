@@ -102,6 +102,50 @@ func (c *CoverService) Randomise(ctx context.Context, albumIds ...AlbumId) (map[
 	return changed, nil
 }
 
+type affectedAlbum struct {
+	albumId AlbumId
+	removed map[MediaId]interface{}
+	added   bool
+}
+
+func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
+	var affected []affectedAlbum
+
+	strikeThroughAlbums := make(map[AlbumId]interface{})
+	for _, sourceAlbumId := range transferred.FromAlbums {
+		added := false
+		medias := make(map[MediaId]interface{})
+		for targetAlbumId, addedMedias := range transferred.Transfers {
+			if sourceAlbumId == targetAlbumId {
+				added = true
+				strikeThroughAlbums[targetAlbumId] = nil
+			} else {
+				for _, media := range addedMedias {
+					medias[media] = nil
+				}
+			}
+		}
+
+		affected = append(affected, affectedAlbum{
+			albumId: sourceAlbumId,
+			removed: medias,
+			added:   added,
+		})
+	}
+
+	for targetAlbumId := range transferred.Transfers {
+		if _, present := strikeThroughAlbums[targetAlbumId]; !present {
+			affected = append(affected, affectedAlbum{
+				albumId: targetAlbumId,
+				removed: nil,
+				added:   true,
+			})
+		}
+	}
+
+	return affected
+}
+
 // StableRefresh processes every album affected by `transferred`:
 //
 //   - For each source album, covers whose media has moved away are stripped.
@@ -118,67 +162,95 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		return nil, nil
 	}
 
-	affected := collectAffectedAlbums(transferred)
-	if len(affected) == 0 {
-		return nil, nil
+	albums := affectedAlbums(transferred)
+
+	affected := make([]AlbumId, len(albums), len(albums))
+	for i, album := range albums {
+		affected[i] = album.albumId
 	}
 
-	existing, err := c.CoverRepository.FindCoversByAlbums(ctx, affected...)
+	coversByAlbum, err := c.CoverRepository.FindCoversByAlbums(ctx, affected...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "StableRefresh failed to load covers for albums %v", affected)
 	}
 
-	// Resolve which CHERRY_PICKED covers were moved to a destination so they can be
-	// inherited there. Scanning every source album's covers once is enough.
-	cherryPickedByDestination := make(map[AlbumId][]Cover)
-	for sourceId, sourceCovers := range existing {
-		for _, cover := range sourceCovers {
-			if cover.Origin != CoverOriginCherryPicked {
-				continue
-			}
-			if destId, ok := destinationOf(cover.MediaId, transferred.Transfers); ok && !destId.IsEqual(sourceId) {
-				cherryPickedByDestination[destId] = append(cherryPickedByDestination[destId], cover)
+	pickedMedias := make(map[MediaId]Cover)
+	for _, covers := range coversByAlbum {
+		for _, cover := range covers {
+			if cover.Origin == CoverOriginCherryPicked {
+				pickedMedias[cover.MediaId] = cover
 			}
 		}
 	}
 
-	movedOutOfAlbum := make(map[AlbumId]map[MediaId]bool, len(affected))
-	for _, albumId := range affected {
-		set := make(map[MediaId]bool)
-		for destId, mediaIds := range transferred.Transfers {
-			if destId.IsEqual(albumId) {
-				continue
-			}
-			for _, mediaId := range mediaIds {
-				set[mediaId] = true
+	updatedCovers := make(map[AlbumId][]Cover)
+	for _, album := range albums {
+		// Strip moved away
+		covers, _ := coversByAlbum[album.albumId]
+		size := len(covers)
+
+		covers = slices.DeleteFunc(covers, func(cover Cover) bool {
+			_, removed := album.removed[cover.MediaId]
+			return removed
+		})
+		hasBeenFiltered := size != len(covers)
+
+		// Force add cherry-picked
+		hasBeenAltered := false
+		addedMedias, hasAddedMedias := transferred.Transfers[album.albumId]
+		if hasAddedMedias {
+			for _, addedMedia := range addedMedias {
+				if sourceCover, picked := pickedMedias[addedMedia]; picked {
+					if len(covers) < MaxCoversPerAlbum {
+						hasBeenAltered = true
+						covers = append(covers, sourceCover)
+					} else {
+						for i, cover := range covers {
+							if cover.Origin != CoverOriginCherryPicked {
+								hasBeenAltered = true
+								covers[i] = sourceCover
+								break
+							}
+						}
+					}
+				}
 			}
 		}
-		movedOutOfAlbum[albumId] = set
+
+		hasBeenFilled := false
+		if len(covers) < MaxCoversPerAlbum && (hasBeenFiltered || album.added) {
+			// Refill the covers if there is a chance the albums has more medias (i.e. if it wasn't full and no medias got added, no point trying to find new ones)
+			medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(album.albumId.Owner).WithAlbum(album.albumId.FolderName))
+			if err != nil {
+				return nil, errors.Wrapf(err, "StableRefresh failed to list medias for %s", album.albumId)
+			}
+
+			medias = slices.DeleteFunc(medias, func(meta *MediaMeta) bool {
+				return meta.Type != MediaTypeImage || slices.ContainsFunc(covers, func(cover Cover) bool {
+					return cover.MediaId == meta.Id
+				})
+			})
+
+			for _, indice := range c.Randomiser.SampleIndices(len(medias), MaxCoversPerAlbum-len(covers)) {
+				hasBeenFilled = true
+				covers = append(covers, Cover{
+					MediaId:  medias[indice].Id,
+					Filename: medias[indice].Filename,
+					Origin:   CoverOriginRandom,
+				})
+			}
+		}
+
+		if hasBeenFiltered || hasBeenAltered || hasBeenFilled {
+			updatedCovers[album.albumId] = covers
+			err = c.CoverRepository.SaveCovers(ctx, album.albumId, covers)
+			if err != nil {
+				return nil, errors.Wrapf(err, "StableRefresh failed to store new covers for %s", album.albumId)
+			}
+		}
 	}
 
-	var changed map[AlbumId][]Cover
-	for _, albumId := range affected {
-		medias, err := c.MediaReadRepository.FindMedias(ctx, NewFindMediaRequest(albumId.Owner).WithAlbum(albumId.FolderName))
-		if err != nil {
-			return nil, errors.Wrapf(err, "StableRefresh failed to list medias for %s", albumId)
-		}
-
-		kept := stripMovedAway(existing[albumId], movedOutOfAlbum[albumId])
-		kept = inheritCherryPicked(kept, cherryPickedByDestination[albumId])
-		result := fillRandomSlots(kept, medias, c.Randomiser)
-
-		if coversEqual(existing[albumId], result) {
-			continue
-		}
-		if err := c.CoverRepository.SaveCovers(ctx, albumId, result); err != nil {
-			return nil, errors.Wrapf(err, "StableRefresh failed to save covers for %s", albumId)
-		}
-		if changed == nil {
-			changed = make(map[AlbumId][]Cover)
-		}
-		changed[albumId] = result
-	}
-	return changed, nil
+	return updatedCovers, nil
 }
 
 func collectAffectedAlbums(transferred TransferredMedias) []AlbumId {

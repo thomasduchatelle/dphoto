@@ -447,10 +447,10 @@ func TestCoverService_StableRefresh(t *testing.T) {
 					{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
 				},
 				stealthId: {
+					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginCherryPicked},
 					{MediaId: "media-11", Filename: "stealth-11.jpg", Origin: catalog.CoverOriginCherryPicked},
 					{MediaId: "media-12", Filename: "stealth-12.jpg", Origin: catalog.CoverOriginRandom},
 					{MediaId: "media-13", Filename: "stealth-13.jpg", Origin: catalog.CoverOriginCherryPicked},
-					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginCherryPicked},
 				},
 			},
 			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
@@ -458,10 +458,10 @@ func TestCoverService_StableRefresh(t *testing.T) {
 					{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
 				},
 				stealthId: {
+					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginCherryPicked},
 					{MediaId: "media-11", Filename: "stealth-11.jpg", Origin: catalog.CoverOriginCherryPicked},
 					{MediaId: "media-12", Filename: "stealth-12.jpg", Origin: catalog.CoverOriginRandom},
 					{MediaId: "media-13", Filename: "stealth-13.jpg", Origin: catalog.CoverOriginCherryPicked},
-					{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginCherryPicked},
 				},
 			},
 			wantErr: assert.NoError,
