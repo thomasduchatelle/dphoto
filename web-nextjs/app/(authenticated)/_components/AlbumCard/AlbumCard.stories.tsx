@@ -90,7 +90,7 @@ export const MidTemperature: Story = {
     }
 };
 
-export const WithoutCovers: Story = {
+export const WithoutThumbnail: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
@@ -99,7 +99,7 @@ export const WithoutCovers: Story = {
     }
 }
 
-export const WithOneCover: Story = {
+export const WithOneThumbnail: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
@@ -108,7 +108,7 @@ export const WithOneCover: Story = {
     }
 }
 
-export const WithTwoCovers: Story = {
+export const WithTwoThumbnails: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
@@ -120,7 +120,7 @@ export const WithTwoCovers: Story = {
     }
 }
 
-export const WithThreeCovers: Story = {
+export const WithThreeThumbnails: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
@@ -133,7 +133,7 @@ export const WithThreeCovers: Story = {
     }
 }
 
-export const WithErroredCovers: Story = {
+export const WithErroredThumbnails: Story = {
     args: {
         album: {
             ...clairObscurAlbum,
