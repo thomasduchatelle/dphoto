@@ -62,6 +62,32 @@ func TestCreateAlbum_Create(t *testing.T) {
 		}
 	}
 
+	mediasInCreatedAlbumAfterTransfer := func() []*catalog.MediaMeta {
+		var medias []*catalog.MediaMeta
+		for day := apr28; day.Before(may01); day = day.AddDate(0, 0, 1) {
+			id := fakeMediaId(lifetimeAlbum.AlbumId, day)
+			medias = append(medias, &catalog.MediaMeta{
+				Id:       id,
+				Filename: string(id) + ".jpg",
+				Type:     catalog.MediaTypeImage,
+			})
+		}
+		return medias
+	}
+
+	coversForCreatedAlbum := func() []catalog.Cover {
+		medias := mediasInCreatedAlbumAfterTransfer()
+		covers := make([]catalog.Cover, 0, len(medias))
+		for _, media := range medias {
+			covers = append(covers, catalog.Cover{
+				MediaId:  media.Id,
+				Filename: media.Filename,
+				Origin:   catalog.CoverOriginRandom,
+			})
+		}
+		return covers
+	}
+
 	testError := errors.New("TEST error")
 
 	repositoryWithLifetime := func() *AlbumRepositoryInMemory {
@@ -70,7 +96,9 @@ func TestCreateAlbum_Create(t *testing.T) {
 	}
 
 	type fields struct {
-		AlbumRepository catalog.TimelineRepository
+		AlbumRepository     catalog.TimelineRepository
+		CoverRepository     *CoverRepositoryInMemory
+		MediaReadRepository *MediaReadRepositoryInMemory
 	}
 	type args struct {
 		request catalog.CreateAlbumRequest
@@ -82,11 +110,16 @@ func TestCreateAlbum_Create(t *testing.T) {
 		expectStoredAlbumIds  []catalog.AlbumId
 		expectTransferRecords []catalog.MediaTransferRecords
 		expectCreatedEvents   []catalog.AlbumCreated
+		expectSavedCovers     map[catalog.AlbumId][]catalog.Cover
 		wantErr               assert.ErrorAssertionFunc
 	}{
 		{
-			name:   "it should reject an invalid request (empty name) without touching the repository",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory()},
+			name: "it should reject an invalid request (empty name) without touching the repository",
+			fields: fields{
+				AlbumRepository:     NewAlbumRepositoryInMemory(),
+				CoverRepository:     NewCoverRepositoryInMemory(),
+				MediaReadRepository: &MediaReadRepositoryInMemory{},
+			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner: ownermodel.Owner(owner),
@@ -96,13 +129,18 @@ func TestCreateAlbum_Create(t *testing.T) {
 				},
 			},
 			expectStoredAlbumIds: []catalog.AlbumId{},
+			expectSavedCovers:    map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNameMandatoryErr, i...)
 			},
 		},
 		{
-			name:   "it should reject a request whose forced folder name is already taken",
-			fields: fields{AlbumRepository: repositoryWithLifetime()},
+			name: "it should reject a request whose forced folder name is already taken",
+			fields: fields{
+				AlbumRepository:     repositoryWithLifetime(),
+				CoverRepository:     NewCoverRepositoryInMemory(),
+				MediaReadRepository: &MediaReadRepositoryInMemory{},
+			},
 			args: args{
 				request: catalog.CreateAlbumRequest{
 					Owner:            ownermodel.Owner(owner),
@@ -113,13 +151,18 @@ func TestCreateAlbum_Create(t *testing.T) {
 				},
 			},
 			expectStoredAlbumIds: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+			expectSavedCovers:    map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumFolderNameAlreadyTakenErr, i...)
 			},
 		},
 		{
-			name:                  "it should insert the album without transferring any media when no other album overlaps",
-			fields:                fields{AlbumRepository: NewAlbumRepositoryInMemory()},
+			name: "it should insert the album without transferring any media when no other album overlaps, and not touch covers",
+			fields: fields{
+				AlbumRepository:     NewAlbumRepositoryInMemory(),
+				CoverRepository:     NewCoverRepositoryInMemory(),
+				MediaReadRepository: &MediaReadRepositoryInMemory{},
+			},
 			args:                  args{request: standardRequest},
 			expectStoredAlbumIds:  []catalog.AlbumId{createdAlbum.AlbumId},
 			expectTransferRecords: []catalog.MediaTransferRecords{nil},
@@ -127,34 +170,168 @@ func TestCreateAlbum_Create(t *testing.T) {
 				CreatedAlbum:      createdAlbum,
 				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
 			}},
-			wantErr: assert.NoError,
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{},
+			wantErr:           assert.NoError,
 		},
 		{
-			name:                  "it should insert the album, transfer medias from the overlapping album, and fire the AlbumCreated event",
-			fields:                fields{AlbumRepository: repositoryWithLifetime()},
+			name: "it should insert the album, transfer medias from the overlapping album, stabilise covers, and fire the AlbumCreated event",
+			fields: fields{
+				AlbumRepository: repositoryWithLifetime(),
+				CoverRepository: NewCoverRepositoryInMemory(),
+				MediaReadRepository: &MediaReadRepositoryInMemory{
+					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
+						createdAlbum.AlbumId: mediasInCreatedAlbumAfterTransfer(),
+					},
+				},
+			},
 			args:                  args{request: standardRequest},
 			expectStoredAlbumIds:  []catalog.AlbumId{lifetimeAlbum.AlbumId, createdAlbum.AlbumId},
 			expectTransferRecords: []catalog.MediaTransferRecords{transferFromLifetime},
 			expectCreatedEvents: []catalog.AlbumCreated{{
 				CreatedAlbum:      createdAlbum,
 				TransferredMedias: transferredFromLifetime(),
+				Covers:            map[catalog.AlbumId][]catalog.Cover{createdAlbum.AlbumId: coversForCreatedAlbum()},
 			}},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{createdAlbum.AlbumId: coversForCreatedAlbum()},
+			wantErr:           assert.NoError,
+		},
+		{
+			name: "it should strip the source album's covers of medias that moved into the new album, refill from the remaining medias, and carry both albums on the event",
+			fields: fields{
+				AlbumRepository: repositoryWithLifetime(),
+				CoverRepository: NewCoverRepositoryInMemory(coversFor(lifetimeAlbum.AlbumId,
+					catalog.Cover{MediaId: fakeMediaId(lifetimeAlbum.AlbumId, apr28), Filename: string(fakeMediaId(lifetimeAlbum.AlbumId, apr28)) + ".jpg", Origin: catalog.CoverOriginRandom},
+					catalog.Cover{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
+				)),
+				MediaReadRepository: &MediaReadRepositoryInMemory{
+					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
+						createdAlbum.AlbumId: mediasInCreatedAlbumAfterTransfer(),
+						lifetimeAlbum.AlbumId: {
+							{Id: "lifetime-survivor", Filename: "survivor.jpg", Type: catalog.MediaTypeImage},
+							{Id: "lifetime-extra", Filename: "extra.jpg", Type: catalog.MediaTypeImage},
+						},
+					},
+				},
+			},
+			args:                  args{request: standardRequest},
+			expectStoredAlbumIds:  []catalog.AlbumId{lifetimeAlbum.AlbumId, createdAlbum.AlbumId},
+			expectTransferRecords: []catalog.MediaTransferRecords{transferFromLifetime},
+			expectCreatedEvents: []catalog.AlbumCreated{{
+				CreatedAlbum:      createdAlbum,
+				TransferredMedias: transferredFromLifetime(),
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					createdAlbum.AlbumId: coversForCreatedAlbum(),
+					lifetimeAlbum.AlbumId: {
+						{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
+						{MediaId: "lifetime-extra", Filename: "extra.jpg", Origin: catalog.CoverOriginRandom},
+					},
+				},
+			}},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
+				createdAlbum.AlbumId: coversForCreatedAlbum(),
+				lifetimeAlbum.AlbumId: {
+					{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
+					{MediaId: "lifetime-extra", Filename: "extra.jpg", Origin: catalog.CoverOriginRandom},
+				},
+			},
 			wantErr: assert.NoError,
 		},
 		{
-			name:                 "it should not insert any album, transfer any media, or fire any event if the list of existing albums cannot be read",
-			fields:               fields{AlbumRepository: failingLoadTimeline(repositoryWithLifetime(), testError)},
+			name: "it should leave an untouched source album's covers in place and omit it from the event",
+			fields: fields{
+				AlbumRepository: repositoryWithLifetime(),
+				CoverRepository: NewCoverRepositoryInMemory(coversFor(lifetimeAlbum.AlbumId,
+					catalog.Cover{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
+				)),
+				MediaReadRepository: &MediaReadRepositoryInMemory{
+					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
+						createdAlbum.AlbumId: mediasInCreatedAlbumAfterTransfer(),
+						lifetimeAlbum.AlbumId: {
+							{Id: "lifetime-survivor", Filename: "survivor.jpg", Type: catalog.MediaTypeImage},
+						},
+					},
+				},
+			},
+			args:                  args{request: standardRequest},
+			expectStoredAlbumIds:  []catalog.AlbumId{lifetimeAlbum.AlbumId, createdAlbum.AlbumId},
+			expectTransferRecords: []catalog.MediaTransferRecords{transferFromLifetime},
+			expectCreatedEvents: []catalog.AlbumCreated{{
+				CreatedAlbum:      createdAlbum,
+				TransferredMedias: transferredFromLifetime(),
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					createdAlbum.AlbumId: coversForCreatedAlbum(),
+				},
+			}},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
+				createdAlbum.AlbumId: coversForCreatedAlbum(),
+				lifetimeAlbum.AlbumId: {
+					{MediaId: "lifetime-survivor", Filename: "survivor.jpg", Origin: catalog.CoverOriginRandom},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should preserve CHERRY_PICKED covers on the source album when their media stays",
+			fields: fields{
+				AlbumRepository: repositoryWithLifetime(),
+				CoverRepository: NewCoverRepositoryInMemory(coversFor(lifetimeAlbum.AlbumId,
+					catalog.Cover{MediaId: "lifetime-pinned", Filename: "pinned.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: fakeMediaId(lifetimeAlbum.AlbumId, apr28), Filename: string(fakeMediaId(lifetimeAlbum.AlbumId, apr28)) + ".jpg", Origin: catalog.CoverOriginRandom},
+				)),
+				MediaReadRepository: &MediaReadRepositoryInMemory{
+					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
+						createdAlbum.AlbumId: mediasInCreatedAlbumAfterTransfer(),
+						lifetimeAlbum.AlbumId: {
+							{Id: "lifetime-pinned", Filename: "pinned.jpg", Type: catalog.MediaTypeImage},
+						},
+					},
+				},
+			},
+			args:                  args{request: standardRequest},
+			expectStoredAlbumIds:  []catalog.AlbumId{lifetimeAlbum.AlbumId, createdAlbum.AlbumId},
+			expectTransferRecords: []catalog.MediaTransferRecords{transferFromLifetime},
+			expectCreatedEvents: []catalog.AlbumCreated{{
+				CreatedAlbum:      createdAlbum,
+				TransferredMedias: transferredFromLifetime(),
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					createdAlbum.AlbumId: coversForCreatedAlbum(),
+					lifetimeAlbum.AlbumId: {
+						{MediaId: "lifetime-pinned", Filename: "pinned.jpg", Origin: catalog.CoverOriginCherryPicked},
+					},
+				},
+			}},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
+				createdAlbum.AlbumId: coversForCreatedAlbum(),
+				lifetimeAlbum.AlbumId: {
+					{MediaId: "lifetime-pinned", Filename: "pinned.jpg", Origin: catalog.CoverOriginCherryPicked},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should not insert any album, transfer any media, or fire any event if the list of existing albums cannot be read",
+			fields: fields{
+				AlbumRepository:     failingLoadTimeline(repositoryWithLifetime(), testError),
+				CoverRepository:     NewCoverRepositoryInMemory(),
+				MediaReadRepository: &MediaReadRepositoryInMemory{},
+			},
 			args:                 args{request: standardRequest},
 			expectStoredAlbumIds: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+			expectSavedCovers:    map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, testError, i...)
 			},
 		},
 		{
-			name:                 "it should not transfer any media or fire any event if the album insertion fails",
-			fields:               fields{AlbumRepository: failingInsertAlbumForCreate(repositoryWithLifetime(), testError)},
+			name: "it should not transfer any media or fire any event if the album insertion fails",
+			fields: fields{
+				AlbumRepository:     failingInsertAlbumForCreate(repositoryWithLifetime(), testError),
+				CoverRepository:     NewCoverRepositoryInMemory(),
+				MediaReadRepository: &MediaReadRepositoryInMemory{},
+			},
 			args:                 args{request: standardRequest},
 			expectStoredAlbumIds: []catalog.AlbumId{lifetimeAlbum.AlbumId},
+			expectSavedCovers:    map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, testError, i...)
 			},
@@ -164,10 +341,16 @@ func TestCreateAlbum_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			transferService := &TransferMediasServiceFake{}
 			observer := &AlbumCreatedObserverInMemory{}
+			coverService := &catalog.CoverService{
+				CoverRepository:     tt.fields.CoverRepository,
+				MediaReadRepository: tt.fields.MediaReadRepository,
+				Randomiser:          deterministicRandomiser,
+			}
 
 			createAlbum := catalog.NewAlbumCreate(
 				tt.fields.AlbumRepository,
 				transferService,
+				coverService,
 				observer,
 			)
 
@@ -184,6 +367,7 @@ func TestCreateAlbum_Create(t *testing.T) {
 			assert.ElementsMatch(t, tt.expectStoredAlbumIds, storedIds, "stored albums")
 			assert.Equal(t, tt.expectTransferRecords, transferService.Records, "records passed to TransferMedias")
 			assert.Equal(t, tt.expectCreatedEvents, observer.Events, "AlbumCreated events fired")
+			assert.Equal(t, tt.expectSavedCovers, tt.fields.CoverRepository.Covers, "covers persisted")
 		})
 	}
 }

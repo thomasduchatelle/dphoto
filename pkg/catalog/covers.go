@@ -210,7 +210,7 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		}
 	}
 
-	updatedCovers := make(map[AlbumId][]Cover)
+	var updatedCovers map[AlbumId][]Cover
 	for _, album := range albums {
 		covers, _ := coversByAlbum[album.albumId]
 
@@ -229,6 +229,9 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		}
 
 		if hasBeenFiltered || hasBeenAltered || hasBeenFilled {
+			if updatedCovers == nil {
+				updatedCovers = make(map[AlbumId][]Cover)
+			}
 			updatedCovers[album.albumId] = covers
 			err = c.CoverRepository.SaveCovers(ctx, album.albumId, covers)
 			if err != nil {

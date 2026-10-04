@@ -107,6 +107,7 @@ func (s *SimpleCatalogFactory) CreateAlbumCase(ctx context.Context) *catalog.Cre
 	return catalog.NewAlbumCreate(
 		TimelineRepository(ctx),
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		CoverServiceCase(ctx),
 		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		AlbumView(ctx),
 	)

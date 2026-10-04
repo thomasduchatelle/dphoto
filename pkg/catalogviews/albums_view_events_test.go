@@ -43,6 +43,10 @@ func newAlbumViewForEventTest(repo AlbumSummaryRepository, counter MediaCounterP
 }
 
 func TestAlbumView_AlbumCreated(t *testing.T) {
+	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
+	coverB := catalog.Cover{MediaId: "media-b", Filename: "b.jpg", Origin: catalog.CoverOriginCherryPicked}
+	staleCover := catalog.Cover{MediaId: "stale", Filename: "stale.jpg", Origin: catalog.CoverOriginRandom}
+
 	type fields struct {
 		Repository       *AlbumSummaryInMemoryRepository
 		MediaCounterPort MediaCounterPort
@@ -124,6 +128,50 @@ func TestAlbumView_AlbumCreated(t *testing.T) {
 				},
 				{
 					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should propagate the covers of the new album and of every source album carried by the event to every viewer",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{
+					Summaries: []UserAlbumSummary{
+						{
+							AlbumSummary: AlbumSummary{AlbumId: albumBeta, Name: "Beta", Start: feb24, End: mar24, MediaCount: 10, Covers: []catalog.Cover{staleCover}},
+							Availability: OwnerAvailability(ownerUserId),
+						},
+						{
+							AlbumSummary: AlbumSummary{AlbumId: albumBeta, Name: "Beta", Start: feb24, End: mar24, MediaCount: 10, Covers: []catalog.Cover{staleCover}},
+							Availability: VisitorAvailability(visitorUserId),
+						},
+					},
+				},
+				MediaCounterPort: MediaCounterPortFake{albumBeta: 7},
+			},
+			event: catalog.AlbumCreated{
+				CreatedAlbum: catalog.Album{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24},
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{albumAlpha: {"media-a", "m2"}},
+					FromAlbums: []catalog.AlbumId{albumBeta},
+				},
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					albumAlpha: {coverA, coverB},
+					albumBeta:  {},
+				},
+			},
+			expectSummaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumBeta, Name: "Beta", Start: feb24, End: mar24, MediaCount: 7},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumBeta, Name: "Beta", Start: feb24, End: mar24, MediaCount: 7},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 2, Covers: []catalog.Cover{coverA, coverB}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 			},
