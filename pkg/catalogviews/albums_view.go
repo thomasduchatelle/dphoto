@@ -134,7 +134,11 @@ func (v *AlbumView) OnAlbumDatesAmended(ctx context.Context, event catalog.Album
 			affected = append(affected, albumId)
 		}
 	}
-	return v.recountAlbums(ctx, affected)
+	if err := v.recountAlbums(ctx, affected); err != nil {
+		return err
+	}
+
+	return v.applyCoverUpdates(ctx, event.Covers)
 }
 
 func (v *AlbumView) OnAlbumDeleted(ctx context.Context, event catalog.AlbumDeleted) error {

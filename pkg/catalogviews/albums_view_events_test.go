@@ -366,6 +366,10 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 }
 
 func TestAlbumView_AlbumDatesAmended(t *testing.T) {
+	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
+	coverB := catalog.Cover{MediaId: "media-b", Filename: "b.jpg", Origin: catalog.CoverOriginRandom}
+	coverPreexisting := catalog.Cover{MediaId: "media-pre", Filename: "pre.jpg", Origin: catalog.CoverOriginCherryPicked}
+
 	seededOwnerAndVisitor := func() *AlbumSummaryInMemoryRepository {
 		return &AlbumSummaryInMemoryRepository{
 			Summaries: []UserAlbumSummary{
@@ -393,6 +397,13 @@ func TestAlbumView_AlbumDatesAmended(t *testing.T) {
 				},
 			},
 		}
+	}
+	seededOwnerAndVisitorWithCovers := func() *AlbumSummaryInMemoryRepository {
+		repo := seededOwnerAndVisitor()
+		for i := range repo.Summaries {
+			repo.Summaries[i].AlbumSummary.Covers = []catalog.Cover{coverPreexisting}
+		}
+		return repo
 	}
 
 	type fields struct {
@@ -457,6 +468,60 @@ func TestAlbumView_AlbumDatesAmended(t *testing.T) {
 				{
 					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: apr24, MediaCount: 0},
 					Availability: OwnerAvailability(ownerUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should write covers for every album carried by the event alongside the dates update",
+			fields: fields{
+				Repository:       seededOwnerAndVisitor(),
+				MediaCounterPort: MediaCounterPortFake(nil),
+			},
+			event: catalog.AlbumDatesAmended{
+				DatesUpdate: catalog.DatesUpdate{
+					UpdatedAlbum:  catalog.Album{AlbumId: albumAlpha, Name: "Alpha", Start: feb24, End: mar24},
+					PreviousStart: jan24,
+					PreviousEnd:   feb24,
+				},
+				TransferredMedias: catalog.NewTransferredMedias(),
+				Covers:            map[catalog.AlbumId][]catalog.Cover{albumAlpha: {coverA, coverB}},
+			},
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: feb24, End: mar24, MediaCount: 3, Covers: []catalog.Cover{coverA, coverB}},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: feb24, End: mar24, MediaCount: 3, Covers: []catalog.Cover{coverA, coverB}},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should clear covers for an album whose event entry is explicitly empty",
+			fields: fields{
+				Repository:       seededOwnerAndVisitorWithCovers(),
+				MediaCounterPort: MediaCounterPortFake(nil),
+			},
+			event: catalog.AlbumDatesAmended{
+				DatesUpdate: catalog.DatesUpdate{
+					UpdatedAlbum:  catalog.Album{AlbumId: albumAlpha, Name: "Alpha", Start: feb24, End: mar24},
+					PreviousStart: jan24,
+					PreviousEnd:   feb24,
+				},
+				TransferredMedias: catalog.NewTransferredMedias(),
+				Covers:            map[catalog.AlbumId][]catalog.Cover{albumAlpha: {}},
+			},
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: feb24, End: mar24, MediaCount: 3},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: feb24, End: mar24, MediaCount: 3},
+					Availability: VisitorAvailability(visitorUserId),
 				},
 			},
 			wantErr: assert.NoError,

@@ -258,6 +258,40 @@ func (a *AlbumDatesAmendedObserverInMemory) OnAlbumDatesAmended(_ context.Contex
 	return nil
 }
 
+// CoverServiceFake implements catalog.CoverServicePort by capturing every call and
+// returning a canned result. Tests set StableRefreshReturn (keyed by a stable signature
+// of the TransferredMedias) to control the covers map returned to the use case; when no
+// return value is configured, the fake returns a nil map.
+type CoverServiceFake struct {
+	StableRefreshCalls  []catalog.TransferredMedias
+	StableRefreshReturn map[catalog.AlbumId][]catalog.Cover
+	StableRefreshErr    error
+	RandomiseCalls      []coverRandomiseCall
+	RandomiseReturn     map[catalog.AlbumId][]catalog.Cover
+	RandomiseErr        error
+}
+
+type coverRandomiseCall struct {
+	Stable   bool
+	AlbumIds []catalog.AlbumId
+}
+
+func (c *CoverServiceFake) StableRefresh(_ context.Context, transferred catalog.TransferredMedias) (map[catalog.AlbumId][]catalog.Cover, error) {
+	c.StableRefreshCalls = append(c.StableRefreshCalls, transferred)
+	if c.StableRefreshErr != nil {
+		return nil, c.StableRefreshErr
+	}
+	return c.StableRefreshReturn, nil
+}
+
+func (c *CoverServiceFake) Randomise(_ context.Context, stable bool, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
+	c.RandomiseCalls = append(c.RandomiseCalls, coverRandomiseCall{Stable: stable, AlbumIds: albumIds})
+	if c.RandomiseErr != nil {
+		return nil, c.RandomiseErr
+	}
+	return c.RandomiseReturn, nil
+}
+
 // TransferMediasServiceFake implements catalog.TransferMediasService: for each destination
 // album in the records, it fabricates one MediaId per (source album, day in the selector
 // range) so tests can rely on a deterministic, non-empty result without wiring a real

@@ -68,16 +68,22 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 		}
 		return ids
 	}
+	extendedTransferred := catalog.TransferredMedias{
+		Transfers:  map[catalog.AlbumId][]catalog.MediaId{avenger1Id: extendedTransferredIds()},
+		FromAlbums: []catalog.AlbumId{allYearId},
+	}
+	extendedCovers := map[catalog.AlbumId][]catalog.Cover{
+		avenger1Id: {{MediaId: "cover-1", Filename: "cover-1.jpg", Origin: catalog.CoverOriginRandom}},
+		allYearId:  {{MediaId: "cover-2", Filename: "cover-2.jpg", Origin: catalog.CoverOriginRandom}},
+	}
 	extendedEvent := catalog.AlbumDatesAmended{
 		DatesUpdate: catalog.DatesUpdate{
 			UpdatedAlbum:  extendedAvenger,
 			PreviousStart: may24,
 			PreviousEnd:   jul24,
 		},
-		TransferredMedias: catalog.TransferredMedias{
-			Transfers:  map[catalog.AlbumId][]catalog.MediaId{avenger1Id: extendedTransferredIds()},
-			FromAlbums: []catalog.AlbumId{allYearId},
-		},
+		TransferredMedias: extendedTransferred,
+		Covers:            extendedCovers,
 	}
 	extendedRecords := catalog.MediaTransferRecords{
 		avenger1Id: []catalog.MediaSelector{
@@ -105,8 +111,10 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	}
 
 	type fields struct {
-		AlbumRepository catalog.TimelineRepository
-		TransferErr     error
+		AlbumRepository    catalog.TimelineRepository
+		TransferErr        error
+		CoverServiceReturn map[catalog.AlbumId][]catalog.Cover
+		CoverServiceErr    error
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -114,17 +122,21 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 		end     time.Time
 	}
 	tests := []struct {
-		name                  string
-		fields                fields
-		args                  args
-		expectAlbumDates      map[catalog.AlbumId]albumDates
-		expectTransferRecords []catalog.MediaTransferRecords
-		expectAmendedEvents   []catalog.AlbumDatesAmended
-		wantErr               assert.ErrorAssertionFunc
+		name                     string
+		fields                   fields
+		args                     args
+		expectAlbumDates         map[catalog.AlbumId]albumDates
+		expectTransferRecords    []catalog.MediaTransferRecords
+		expectAmendedEvents      []catalog.AlbumDatesAmended
+		expectStableRefreshCalls []catalog.TransferredMedias
+		wantErr                  assert.ErrorAssertionFunc
 	}{
 		{
-			name:   "it should amend the dates end to end, transfer medias, and fire the AlbumDatesAmended event",
-			fields: fields{AlbumRepository: repositoryWithOneMediaPerSelector(existingAlbum, allYearAlbum)},
+			name: "it should amend the dates end to end, transfer medias, reconcile covers, and fire the AlbumDatesAmended event",
+			fields: fields{
+				AlbumRepository:    repositoryWithOneMediaPerSelector(existingAlbum, allYearAlbum),
+				CoverServiceReturn: extendedCovers,
+			},
 			args: args{
 				albumId: avenger1Id,
 				start:   may24,
@@ -134,9 +146,31 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 				avenger1Id: {start: may24, end: jan25},
 				allYearId:  {start: jan24, end: jan25},
 			},
-			expectTransferRecords: []catalog.MediaTransferRecords{extendedRecords},
-			expectAmendedEvents:   []catalog.AlbumDatesAmended{extendedEvent},
-			wantErr:               assert.NoError,
+			expectTransferRecords:    []catalog.MediaTransferRecords{extendedRecords},
+			expectAmendedEvents:      []catalog.AlbumDatesAmended{extendedEvent},
+			expectStableRefreshCalls: []catalog.TransferredMedias{extendedTransferred},
+			wantErr:                  assert.NoError,
+		},
+		{
+			name: "it should return the error and not fire the event when the cover reconciliation fails",
+			fields: fields{
+				AlbumRepository: repositoryWithOneMediaPerSelector(existingAlbum, allYearAlbum),
+				CoverServiceErr: testError,
+			},
+			args: args{
+				albumId: avenger1Id,
+				start:   may24,
+				end:     jan25,
+			},
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				avenger1Id: {start: may24, end: jan25},
+				allYearId:  {start: jan24, end: jan25},
+			},
+			expectTransferRecords:    []catalog.MediaTransferRecords{extendedRecords},
+			expectStableRefreshCalls: []catalog.TransferredMedias{extendedTransferred},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, testError, i...)
+			},
 		},
 		{
 			name:   "it should return without firing any event when the dates have not changed",
@@ -217,7 +251,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 			},
 		},
 		{
-			name:   "it should amend the dates and fire the event with empty TransferredMedias when no records need transferring",
+			name:   "it should amend the dates and fire the event with empty TransferredMedias and no cover updates when no records need transferring",
 			fields: fields{AlbumRepository: repositoryWithOneMediaPerSelector(existingAlbum)},
 			args: args{
 				albumId: avenger1Id,
@@ -227,20 +261,26 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 			expectAlbumDates: map[catalog.AlbumId]albumDates{
 				avenger1Id: {start: apr24, end: jan25},
 			},
-			expectAmendedEvents: []catalog.AlbumDatesAmended{grownAloneEvent},
-			wantErr:             assert.NoError,
+			expectAmendedEvents:      []catalog.AlbumDatesAmended{grownAloneEvent},
+			expectStableRefreshCalls: []catalog.TransferredMedias{catalog.NewTransferredMedias()},
+			wantErr:                  assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			transferService := &TransferMediasServiceFake{Err: tt.fields.TransferErr}
 			observer := &AlbumDatesAmendedObserverInMemory{}
+			coverService := &CoverServiceFake{
+				StableRefreshReturn: tt.fields.CoverServiceReturn,
+				StableRefreshErr:    tt.fields.CoverServiceErr,
+			}
 
 			repository := underlyingAmendRepository(tt.fields.AlbumRepository)
 			amendAlbumDates := catalog.NewAmendAlbumDates(
 				tt.fields.AlbumRepository,
 				repository,
 				transferService,
+				coverService,
 				observer,
 			)
 
@@ -256,6 +296,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 			assert.Equal(t, tt.expectAlbumDates, dates, "album dates in the repository")
 			assert.Equal(t, tt.expectTransferRecords, transferService.Records, "records passed to TransferMedias")
 			assert.Equal(t, tt.expectAmendedEvents, observer.Events, "AlbumDatesAmended events fired")
+			assert.Equal(t, tt.expectStableRefreshCalls, coverService.StableRefreshCalls, "StableRefresh calls")
 		})
 	}
 }
