@@ -14,6 +14,7 @@ func NewAlbumView(
 	mediaCounterPort MediaCounterPort,
 	findAlbumsByIdsPort FindAlbumsByIdsPort,
 	ownerUserIdPort OwnerUserIdPort,
+	findCoversByAlbumPort FindCoversByAlbumPort,
 ) *AlbumView {
 	return &AlbumView{
 		Repository:              repository,
@@ -21,6 +22,7 @@ func NewAlbumView(
 		MediaCounterPort:        mediaCounterPort,
 		FindAlbumsByIdsPort:     findAlbumsByIdsPort,
 		OwnerUserIdPort:         ownerUserIdPort,
+		FindCoversByAlbumPort:   findCoversByAlbumPort,
 	}
 }
 
@@ -30,6 +32,7 @@ type AlbumView struct {
 	MediaCounterPort        MediaCounterPort
 	FindAlbumsByIdsPort     FindAlbumsByIdsPort
 	OwnerUserIdPort         OwnerUserIdPort
+	FindCoversByAlbumPort   FindCoversByAlbumPort
 }
 
 func (v *AlbumView) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
@@ -160,7 +163,7 @@ func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId
 		return err
 	}
 
-	return v.Repository.PutSummaries(ctx, []AlbumSummaryForUsers{
+	err = v.Repository.PutSummaries(ctx, []AlbumSummaryForUsers{
 		{
 			AlbumSummary: AlbumSummary{
 				AlbumId:    album.AlbumId,
@@ -172,6 +175,18 @@ func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId
 			Users: []Availability{VisitorAvailability(userId)},
 		},
 	})
+	if err != nil {
+		return err
+	}
+
+	covers, err := v.FindCoversByAlbumPort.FindCoversByAlbum(ctx, album.AlbumId)
+	if err != nil {
+		return err
+	}
+	if len(covers) == 0 {
+		return nil
+	}
+	return v.Repository.PutCoversForAllViewers(ctx, album.AlbumId, covers)
 }
 
 func (v *AlbumView) AlbumUnShared(ctx context.Context, albumId catalog.AlbumId, userId usermodel.UserId) error {

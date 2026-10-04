@@ -1,6 +1,6 @@
 # 17 — Covers on AlbumShared / AlbumUnshared
 
-Status: ready
+Status: done
 Phase: 2
 Layer: `pkg/acl/catalogacl` + `pkg/catalogviews` + `pkg/pkgfactory`
 Depends on: 09 (split view projection)
