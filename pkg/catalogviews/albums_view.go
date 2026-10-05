@@ -231,6 +231,10 @@ func (v *AlbumView) OnCoverBackfilled(ctx context.Context, coversByAlbumId map[c
 	return v.applyCoverUpdates(ctx, coversByAlbumId)
 }
 
+func (v *AlbumView) OnAlbumCoversRandomised(ctx context.Context, event catalog.AlbumCoversRandomised) error {
+	return v.applyCoverUpdates(ctx, map[catalog.AlbumId][]catalog.Cover{event.AlbumId: event.Covers})
+}
+
 func (v *AlbumView) applyCoverUpdates(ctx context.Context, covers map[catalog.AlbumId][]catalog.Cover) error {
 	for albumId, albumCovers := range covers {
 		if len(albumCovers) == 0 {

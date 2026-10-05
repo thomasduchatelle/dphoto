@@ -868,6 +868,81 @@ func TestAlbumView_AlbumShared(t *testing.T) {
 	}
 }
 
+func TestAlbumView_AlbumCoversRandomised(t *testing.T) {
+	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
+	coverB := catalog.Cover{MediaId: "media-b", Filename: "b.jpg", Origin: catalog.CoverOriginCherryPicked}
+	stale := catalog.Cover{MediaId: "stale", Filename: "stale.jpg", Origin: catalog.CoverOriginRandom}
+
+	seededOwnerAndVisitorWithCovers := func() *AlbumSummaryInMemoryRepository {
+		return &AlbumSummaryInMemoryRepository{
+			Summaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3, Covers: []catalog.Cover{stale}},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3, Covers: []catalog.Cover{stale}},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+		}
+	}
+
+	type fields struct {
+		Repository *AlbumSummaryInMemoryRepository
+	}
+	tests := []struct {
+		name       string
+		fields     fields
+		event      catalog.AlbumCoversRandomised
+		expectRepo []UserAlbumSummary
+		wantErr    assert.ErrorAssertionFunc
+	}{
+		{
+			name:   "it should update covers on every viewer row and leave count and display fields untouched",
+			fields: fields{Repository: seededOwnerAndVisitorWithCovers()},
+			event:  catalog.AlbumCoversRandomised{AlbumId: albumAlpha, Covers: []catalog.Cover{coverA, coverB}},
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3, Covers: []catalog.Cover{coverA, coverB}},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3, Covers: []catalog.Cover{coverA, coverB}},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name:   "it should clear the cover rows when the event carries an empty cover list",
+			fields: fields{Repository: seededOwnerAndVisitorWithCovers()},
+			event:  catalog.AlbumCoversRandomised{AlbumId: albumAlpha, Covers: nil},
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 3},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view := newAlbumViewForEventTest(tt.fields.Repository, MediaCounterPortFake(nil))
+			err := view.OnAlbumCoversRandomised(context.Background(), tt.event)
+			if tt.wantErr(t, err) {
+				assert.ElementsMatch(t, tt.expectRepo, tt.fields.Repository.Summaries)
+			}
+		})
+	}
+}
+
 func TestAlbumView_AlbumUnShared(t *testing.T) {
 	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
 

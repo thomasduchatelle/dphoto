@@ -98,6 +98,14 @@ func CoverServiceCase(ctx context.Context) *catalog.CoverService {
 	})
 }
 
+func RandomizeAlbumCoversCase(ctx context.Context) *catalog.RandomizeAlbumCovers {
+	return catalog.NewRandomizeAlbumCovers(
+		CoverServiceCase(ctx),
+		CatalogRepository(ctx),
+		AlbumView(ctx),
+	)
+}
+
 type SimpleCatalogFactory struct {
 	ArchiveAdapterForCatalog ArchiveAdapterForCatalog
 }
