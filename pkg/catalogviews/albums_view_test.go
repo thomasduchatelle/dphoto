@@ -247,6 +247,7 @@ func TestAlbumView_ListAlbums(t *testing.T) {
 				MediaCounterPortFake(nil),
 				FindAlbumsByIdsFunc(func(ctx context.Context, ids []catalog.AlbumId) ([]*catalog.Album, error) { return nil, nil }),
 				stubOwnerUserIdPort("", ""),
+				FindCoversByAlbumPortFake(nil),
 			)
 
 			got, err := albumView.ListAlbums(context.Background(), tt.args.user, tt.args.filter)

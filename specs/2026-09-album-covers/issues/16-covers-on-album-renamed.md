@@ -1,6 +1,6 @@
 # 16 — Covers on AlbumRenamed
 
-Status: ready
+Status: done
 Phase: 2
 Layer: `pkg/catalog` + `pkg/catalogadapters/catalogdynamo` + `pkg/catalogviews` + `pkg/pkgfactory`
 Depends on: 09 (cover-maintenance service, split view projection)

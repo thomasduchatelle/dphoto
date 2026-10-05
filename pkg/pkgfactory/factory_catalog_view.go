@@ -34,6 +34,7 @@ func AlbumView(ctx context.Context) *catalogviews.AlbumView {
 			albumQueries,
 			albumQueries,
 			CatalogToACLAdapter(ctx),
+			CatalogRepository(ctx),
 		), nil
 	})
 }

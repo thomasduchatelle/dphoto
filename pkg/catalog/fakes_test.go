@@ -172,9 +172,26 @@ func (c *CoverRepositoryInMemory) SaveCovers(_ context.Context, albumId catalog.
 	return nil
 }
 
+func (c *CoverRepositoryInMemory) MoveCovers(_ context.Context, from, to catalog.AlbumId) error {
+	if from.IsEqual(to) {
+		return nil
+	}
+	covers, ok := c.Covers[from]
+	if !ok {
+		return nil
+	}
+	c.Covers[to] = append([]catalog.Cover(nil), covers...)
+	delete(c.Covers, from)
+	return nil
+}
+
 // MediaReadRepositoryInMemory implements catalog.MediaReadRepository backed by a per-album
-// slice of medias. It also implements catalog.InsertMediasRepositoryPort so a single fake
-// can back both the write and the read side of the medias in a test.
+// slice of medias. It also implements catalog.InsertMediasRepositoryPort,
+// catalog.TransferMediasRepositoryPort, and catalog.CountMediasBySelectorsPort so a
+// single fake acts as the single source of truth for every media-related port in a test.
+//
+// A media's Details.DateTime is the field matched against MediaSelector time ranges by
+// both TransferMediasFromRecords and CountMediasBySelectors.
 type MediaReadRepositoryInMemory struct {
 	Medias map[catalog.AlbumId][]*catalog.MediaMeta
 }
@@ -212,6 +229,53 @@ func (m *MediaReadRepositoryInMemory) InsertMedias(_ context.Context, owner owne
 
 func (m *MediaReadRepositoryInMemory) FindMediaCurrentAlbum(_ context.Context, _ ownermodel.Owner, _ catalog.MediaId) (*catalog.AlbumId, error) {
 	panic("FindMediaCurrentAlbum not implemented on MediaReadRepositoryInMemory")
+}
+
+func (m *MediaReadRepositoryInMemory) TransferMediasFromRecords(_ context.Context, records catalog.MediaTransferRecords) (map[catalog.AlbumId][]catalog.MediaId, error) {
+	if m.Medias == nil {
+		return map[catalog.AlbumId][]catalog.MediaId{}, nil
+	}
+
+	transfers := make(map[catalog.AlbumId][]catalog.MediaId)
+	for destination, selectors := range records {
+		for _, selector := range selectors {
+			for _, source := range selector.FromAlbums {
+				remaining := m.Medias[source][:0]
+				for _, media := range m.Medias[source] {
+					if selectorMatches(selector, media) {
+						transfers[destination] = append(transfers[destination], media.Id)
+						m.Medias[destination] = append(m.Medias[destination], media)
+					} else {
+						remaining = append(remaining, media)
+					}
+				}
+				m.Medias[source] = remaining
+			}
+		}
+	}
+	return transfers, nil
+}
+
+func (m *MediaReadRepositoryInMemory) CountMediasBySelectors(_ context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
+	count := 0
+	for _, selector := range selectors {
+		for _, source := range selector.FromAlbums {
+			if source.Owner != owner {
+				continue
+			}
+			for _, media := range m.Medias[source] {
+				if selectorMatches(selector, media) {
+					count++
+				}
+			}
+		}
+	}
+	return count, nil
+}
+
+func selectorMatches(selector catalog.MediaSelector, media *catalog.MediaMeta) bool {
+	date := media.Details.DateTime
+	return !date.Before(selector.Start) && date.Before(selector.End)
 }
 
 // AlbumCreatedObserverInMemory implements catalog.AlbumCreatedObserver: it captures every

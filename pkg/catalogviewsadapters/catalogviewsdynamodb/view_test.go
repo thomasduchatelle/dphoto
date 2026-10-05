@@ -172,7 +172,7 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should ignore the Covers field on the summary: covers travel through PutCoversForAllViewers, not through PutSummaries",
+			name: "it should write the sibling covers row for every user when the summary carries Covers",
 			args: args{
 				summaries: []catalogviews.AlbumSummaryForUsers{
 					{
@@ -183,7 +183,26 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 								{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
 							},
 						},
-						Users: []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+						Users: []catalogviews.Availability{catalogviews.OwnerAvailability(userId1), catalogviews.VisitorAvailability(userId2)},
+					},
+				},
+			},
+			before: nil,
+			after: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(42).build(),
+				albumCoversItemBuilder(userId1, "OWNED", albumId1, catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}).build(),
+				albumSummaryItemBuilder(userId2, "VISITOR", albumId1).withCount(42).build(),
+				albumCoversItemBuilder(userId2, "VISITOR", albumId1, catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should not write a covers row when the summary carries no Covers",
+			args: args{
+				summaries: []catalogviews.AlbumSummaryForUsers{
+					{
+						AlbumSummary: catalogviews.AlbumSummary{AlbumId: albumId1, MediaCount: 42},
+						Users:        []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
 					},
 				},
 			},
@@ -1301,6 +1320,47 @@ func TestAlbumViewRepository_RenameAlbum(t *testing.T) {
 				albumSummaryItemBuilder(userId2, VisitorAvailability, newId).
 					withCount(4).
 					withDisplayFields("New Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should migrate the covers rows alongside the summaries so the renamed album keeps its ordered cover list for every viewer",
+			args: args{
+				existingId: oldId,
+				renamedId:  newId,
+				newName:    "New Name",
+			},
+			before: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, oldId).
+					withCount(4).
+					withDisplayFields("Old Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, oldId).
+					withCount(4).
+					withDisplayFields("Old Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, oldId,
+					catalog.Cover{MediaId: "media-cherry", Filename: "cherry.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-random", Filename: "random.jpg", Origin: catalog.CoverOriginRandom},
+				).build(),
+				albumCoversItemBuilder(userId2, VisitorAvailability, oldId,
+					catalog.Cover{MediaId: "media-cherry", Filename: "cherry.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-random", Filename: "random.jpg", Origin: catalog.CoverOriginRandom},
+				).build(),
+			},
+			wantAfter: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, OwnerAvailability, newId).
+					withCount(4).
+					withDisplayFields("New Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumCoversItemBuilder(userId1, OwnerAvailability, newId,
+					catalog.Cover{MediaId: "media-cherry", Filename: "cherry.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-random", Filename: "random.jpg", Origin: catalog.CoverOriginRandom},
+				).build(),
+				albumSummaryItemBuilder(userId2, VisitorAvailability, newId).
+					withCount(4).
+					withDisplayFields("New Name", displayFieldsAlbum1Start, displayFieldsAlbum1End).build(),
+				albumCoversItemBuilder(userId2, VisitorAvailability, newId,
+					catalog.Cover{MediaId: "media-cherry", Filename: "cherry.jpg", Origin: catalog.CoverOriginCherryPicked},
+					catalog.Cover{MediaId: "media-random", Filename: "random.jpg", Origin: catalog.CoverOriginRandom},
+				).build(),
 			},
 			wantErr: assert.NoError,
 		},

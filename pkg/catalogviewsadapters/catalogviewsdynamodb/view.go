@@ -294,6 +294,19 @@ func (a *AlbumViewRepository) PutSummaries(ctx context.Context, summaries []cata
 			})
 			items = append(items, legacyDeleteRequest(record))
 		}
+
+		if len(summary.Covers) == 0 {
+			continue
+		}
+		for _, user := range summary.Users {
+			coverItem, err := marshalAlbumCovers(user, summary.AlbumId, summary.Covers)
+			if err != nil {
+				return err
+			}
+			items = append(items, types.WriteRequest{
+				PutRequest: &types.PutRequest{Item: coverItem},
+			})
+		}
 	}
 
 	if len(items) > 0 {

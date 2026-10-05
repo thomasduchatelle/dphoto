@@ -28,7 +28,11 @@ var (
 	ownerUserIdPort = stubOwnerUserIdPort(tonyOwner, ownerUserId)
 )
 
-func newAlbumViewForEventTest(repo AlbumSummaryRepository, counter MediaCounterPort) *AlbumView {
+func newAlbumViewForEventTest(repo AlbumSummaryRepository, counter MediaCounterPort, covers ...FindCoversByAlbumPort) *AlbumView {
+	findCovers := FindCoversByAlbumPort(FindCoversByAlbumPortFake(nil))
+	if len(covers) > 0 {
+		findCovers = covers[0]
+	}
 	return NewAlbumView(
 		repo,
 		GetAlbumSharingGridFunc(func(ctx context.Context, owner ownermodel.Owner) (map[catalog.AlbumId][]usermodel.UserId, error) {
@@ -39,6 +43,7 @@ func newAlbumViewForEventTest(repo AlbumSummaryRepository, counter MediaCounterP
 			return nil, nil
 		}),
 		ownerUserIdPort,
+		findCovers,
 	)
 }
 
@@ -303,15 +308,18 @@ func TestAlbumView_MediasInserted(t *testing.T) {
 }
 
 func TestAlbumView_AlbumRenamed(t *testing.T) {
+	cherryCover := catalog.Cover{MediaId: "media-cherry", Filename: "cherry.jpg", Origin: catalog.CoverOriginCherryPicked}
+	randomCover := catalog.Cover{MediaId: "media-random", Filename: "random.jpg", Origin: catalog.CoverOriginRandom}
+
 	seededOwnerAndVisitorOnOld := func() *AlbumSummaryInMemoryRepository {
 		return &AlbumSummaryInMemoryRepository{
 			Summaries: []UserAlbumSummary{
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: VisitorAvailability(visitorUserId),
 				},
 			},
@@ -321,11 +329,11 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 		return &AlbumSummaryInMemoryRepository{
 			Summaries: []UserAlbumSummary{
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "Old Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: VisitorAvailability(visitorUserId),
 				},
 				{
@@ -348,7 +356,7 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 		wantErr         assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should update the name on all viewer rows when folder unchanged",
+			name: "it should update the name on all viewer rows and leave the covers untouched when folder unchanged",
 			fields: fields{
 				Repository:       seededOwnerAndVisitorOnOld(),
 				MediaCounterPort: MediaCounterPortFake(nil),
@@ -360,18 +368,18 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 			},
 			expectSummaries: []UserAlbumSummary{
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumOld, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: VisitorAvailability(visitorUserId),
 				},
 			},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should replace the rows on all viewers when folder changes, inheriting count and dates from the owner projection",
+			name: "it should replace the rows on all viewers when folder changes, carrying the original covers to the new identity verbatim",
 			fields: fields{
 				Repository:       seededOldAndSource(),
 				MediaCounterPort: MediaCounterPortFake{},
@@ -390,11 +398,11 @@ func TestAlbumView_AlbumRenamed(t *testing.T) {
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumNew, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumNew, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 				{
-					AlbumSummary: AlbumSummary{AlbumId: albumNew, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4},
+					AlbumSummary: AlbumSummary{AlbumId: albumNew, Name: "New Name", Start: jan24, End: feb24, MediaCount: 4, Covers: []catalog.Cover{cherryCover, randomCover}},
 					Availability: VisitorAvailability(visitorUserId),
 				},
 			},
@@ -609,6 +617,40 @@ func TestAlbumView_AlbumDeleted(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should write the destination album covers carried by the event onto every viewer row",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{
+					deletedRow(OwnerAvailability(ownerUserId)),
+					destinationRow,
+				}},
+				MediaCounterPort: MediaCounterPortFake{albumGamma: 5},
+			},
+			event: catalog.AlbumDeleted{
+				DeletedAlbumId: albumAlpha,
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers: map[catalog.AlbumId][]catalog.MediaId{albumGamma: {"m1"}},
+				},
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					albumAlpha: nil,
+					albumGamma: {{MediaId: "m1", Filename: "m1.jpg", Origin: catalog.CoverOriginCherryPicked}},
+				},
+			},
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{
+						AlbumId:    albumGamma,
+						Name:       "Gamma",
+						Start:      feb24,
+						End:        mar24,
+						MediaCount: 5,
+						Covers:     []catalog.Cover{{MediaId: "m1", Filename: "m1.jpg", Origin: catalog.CoverOriginCherryPicked}},
+					},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
@@ -624,10 +666,13 @@ func TestAlbumView_AlbumDeleted(t *testing.T) {
 
 func TestAlbumView_AlbumShared(t *testing.T) {
 	weddingsAlbum := catalog.Album{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24}
+	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
+	coverB := catalog.Cover{MediaId: "media-b", Filename: "b.jpg", Origin: catalog.CoverOriginCherryPicked}
 
 	type fields struct {
-		Repository       *AlbumSummaryInMemoryRepository
-		MediaCounterPort MediaCounterPort
+		Repository            *AlbumSummaryInMemoryRepository
+		MediaCounterPort      MediaCounterPort
+		FindCoversByAlbumPort FindCoversByAlbumPort
 	}
 	tests := []struct {
 		name       string
@@ -646,7 +691,8 @@ func TestAlbumView_AlbumShared(t *testing.T) {
 						Availability: OwnerAvailability(ownerUserId),
 					},
 				}},
-				MediaCounterPort: MediaCounterPortFake{albumAlpha: 7},
+				MediaCounterPort:      MediaCounterPortFake{albumAlpha: 7},
+				FindCoversByAlbumPort: FindCoversByAlbumPortFake(nil),
 			},
 			album:  weddingsAlbum,
 			userId: visitorUserId,
@@ -662,11 +708,93 @@ func TestAlbumView_AlbumShared(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should copy the owner's current covers onto the visitor row",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{
+					{
+						AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA, coverB}},
+						Availability: OwnerAvailability(ownerUserId),
+					},
+				}},
+				MediaCounterPort:      MediaCounterPortFake{albumAlpha: 7},
+				FindCoversByAlbumPort: FindCoversByAlbumPortFake{albumAlpha: {coverA, coverB}},
+			},
+			album:  weddingsAlbum,
+			userId: visitorUserId,
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA, coverB}},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA, coverB}},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should leave the visitor row without covers when the owner has none",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{
+					{
+						AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7},
+						Availability: OwnerAvailability(ownerUserId),
+					},
+				}},
+				MediaCounterPort:      MediaCounterPortFake{albumAlpha: 7},
+				FindCoversByAlbumPort: FindCoversByAlbumPortFake{},
+			},
+			album:  weddingsAlbum,
+			userId: visitorUserId,
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should be idempotent when the visitor was already shared with the same covers",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{
+					{
+						AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA, coverB}},
+						Availability: OwnerAvailability(ownerUserId),
+					},
+					{
+						AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA, coverB}},
+						Availability: VisitorAvailability(visitorUserId),
+					},
+				}},
+				MediaCounterPort:      MediaCounterPortFake{albumAlpha: 7},
+				FindCoversByAlbumPort: FindCoversByAlbumPortFake{albumAlpha: {coverA, coverB}},
+			},
+			album:  weddingsAlbum,
+			userId: visitorUserId,
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA, coverB}},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA, coverB}},
+					Availability: VisitorAvailability(visitorUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			view := newAlbumViewForEventTest(tt.fields.Repository, tt.fields.MediaCounterPort)
+			view := newAlbumViewForEventTest(tt.fields.Repository, tt.fields.MediaCounterPort, tt.fields.FindCoversByAlbumPort)
 			err := view.AlbumShared(context.Background(), tt.album, tt.userId)
 			if tt.wantErr(t, err) {
 				assert.ElementsMatch(t, tt.expectRepo, tt.fields.Repository.Summaries)
@@ -676,6 +804,8 @@ func TestAlbumView_AlbumShared(t *testing.T) {
 }
 
 func TestAlbumView_AlbumUnShared(t *testing.T) {
+	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
+
 	type fields struct {
 		Repository *AlbumSummaryInMemoryRepository
 	}
@@ -706,6 +836,30 @@ func TestAlbumView_AlbumUnShared(t *testing.T) {
 			expectRepo: []UserAlbumSummary{
 				{
 					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should remove the visitor row along with its covers while leaving the owner covers intact",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{
+					{
+						AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA}},
+						Availability: OwnerAvailability(ownerUserId),
+					},
+					{
+						AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA}},
+						Availability: VisitorAvailability(visitorUserId),
+					},
+				}},
+			},
+			albumId: albumAlpha,
+			userId:  visitorUserId,
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: albumAlpha, Name: "Alpha", Start: jan24, End: feb24, MediaCount: 7, Covers: []catalog.Cover{coverA}},
 					Availability: OwnerAvailability(ownerUserId),
 				},
 			},

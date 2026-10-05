@@ -14,6 +14,7 @@ func NewAlbumView(
 	mediaCounterPort MediaCounterPort,
 	findAlbumsByIdsPort FindAlbumsByIdsPort,
 	ownerUserIdPort OwnerUserIdPort,
+	findCoversByAlbumPort FindCoversByAlbumPort,
 ) *AlbumView {
 	return &AlbumView{
 		Repository:              repository,
@@ -21,6 +22,7 @@ func NewAlbumView(
 		MediaCounterPort:        mediaCounterPort,
 		FindAlbumsByIdsPort:     findAlbumsByIdsPort,
 		OwnerUserIdPort:         ownerUserIdPort,
+		FindCoversByAlbumPort:   findCoversByAlbumPort,
 	}
 }
 
@@ -30,6 +32,7 @@ type AlbumView struct {
 	MediaCounterPort        MediaCounterPort
 	FindAlbumsByIdsPort     FindAlbumsByIdsPort
 	OwnerUserIdPort         OwnerUserIdPort
+	FindCoversByAlbumPort   FindCoversByAlbumPort
 }
 
 func (v *AlbumView) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
@@ -146,20 +149,33 @@ func (v *AlbumView) OnAlbumDeleted(ctx context.Context, event catalog.AlbumDelet
 		return err
 	}
 
-	if event.TransferredMedias.IsEmpty() {
-		return nil
+	if !event.TransferredMedias.IsEmpty() {
+		destinationIds := make([]catalog.AlbumId, 0, len(event.TransferredMedias.Transfers))
+		for albumId := range event.TransferredMedias.Transfers {
+			destinationIds = append(destinationIds, albumId)
+		}
+		if err := v.recountAlbums(ctx, destinationIds); err != nil {
+			return err
+		}
 	}
 
-	destinationIds := make([]catalog.AlbumId, 0, len(event.TransferredMedias.Transfers))
-	for albumId := range event.TransferredMedias.Transfers {
-		destinationIds = append(destinationIds, albumId)
+	destinationCovers := make(map[catalog.AlbumId][]catalog.Cover, len(event.Covers))
+	for albumId, covers := range event.Covers {
+		if albumId.IsEqual(event.DeletedAlbumId) {
+			continue
+		}
+		destinationCovers[albumId] = covers
 	}
-
-	return v.recountAlbums(ctx, destinationIds)
+	return v.applyCoverUpdates(ctx, destinationCovers)
 }
 
 func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId usermodel.UserId) error {
 	counts, err := v.MediaCounterPort.CountMedia(ctx, album.AlbumId)
+	if err != nil {
+		return err
+	}
+
+	covers, err := v.FindCoversByAlbumPort.FindCoversByAlbum(ctx, album.AlbumId)
 	if err != nil {
 		return err
 	}
@@ -172,6 +188,7 @@ func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId
 				Name:       album.Name,
 				Start:      album.Start,
 				End:        album.End,
+				Covers:     covers,
 			},
 			Users: []Availability{VisitorAvailability(userId)},
 		},

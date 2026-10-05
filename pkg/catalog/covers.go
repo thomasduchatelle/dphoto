@@ -18,6 +18,7 @@ type CoverRepository interface {
 	FindCoversByAlbum(ctx context.Context, albumId AlbumId) ([]Cover, error)
 	FindCoversByAlbums(ctx context.Context, albumIds ...AlbumId) (map[AlbumId][]Cover, error)
 	SaveCovers(ctx context.Context, albumId AlbumId, covers []Cover) error
+	MoveCovers(ctx context.Context, from, to AlbumId) error
 }
 
 // Randomiser picks n indices in [0, upperBound) uniformly at random, without replacement.
@@ -185,9 +186,9 @@ func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
 // Returns one entry per album whose cover set actually changed. Unchanged albums are
 // omitted. Returns a nil map when no album changed.
 func (c *CoverService) StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error) {
-	if transferred.IsEmpty() {
-		return nil, nil
-	}
+	//if transferred.IsEmpty() {
+	//	return nil, nil
+	//}
 
 	albums := affectedAlbums(transferred)
 
@@ -251,6 +252,10 @@ func (c *CoverService) filterOutRemovedMedias(covers []Cover, album affectedAlbu
 		return removed
 	})
 	hasBeenFiltered := size != len(covers)
+
+	if len(covers) == 0 {
+		covers = nil
+	}
 	return covers, hasBeenFiltered
 }
 

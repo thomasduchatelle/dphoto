@@ -11,7 +11,7 @@ Schema
 | PK                       | SK                                          | Description                                              | Module               |
 |--------------------------|---------------------------------------------|----------------------------------------------------------|----------------------|
 | {OWNER}#ALBUM            | ALBUM#{FOLDER_NAME}                         | Album metadata                                           | catalogdynamo        |
-| {OWNER}#ALBUM            | ALBUM#{FOLDER_NAME}#COVERS                  | Album covers (whole ordered set, up to 4) as one item    | catalogdynamo        |
+| {OWNER}#ALBUM            | ALBUM#{FOLDER_NAME}#COVERS                  | Album covers (whole ordered set, up to 4) as one item. Moves to the new SK on folder-change rename; unchanged on in-place rename; deleted when the album is deleted. | catalogdynamo        |
 | {OWNER}#MEDIA#{id}       | #METADATA                                   | Media metadata                                           | catalogdynamo        | 
 | {OWNER}#MEDIA#{id}       | LOCATION#                                   | Media location if the archive                            | archivedynamo        |
 | USER#{EMAIL}             | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | Scopes allowed for a user (ownership, shared, ...)       | aclscopedynamodb     |
