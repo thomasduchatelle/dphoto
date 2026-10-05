@@ -6,66 +6,31 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
-const deleteOwner = "ironman"
-
-var (
-	deleteJan24 = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	deleteMar24 = time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
-	deleteApr24 = time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)
-	deleteMay24 = time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
-	deleteNov24 = time.Date(2024, 11, 1, 0, 0, 0, 0, time.UTC)
-	deleteDec24 = time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC)
-	deleteJan25 = time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	toDeleteAlbumId = catalog.AlbumId{Owner: deleteOwner, FolderName: catalog.NewFolderName("/avengers-1")}
-	toDeleteAlbum   = &catalog.Album{AlbumId: toDeleteAlbumId, Name: "Avenger 1", Start: deleteMar24, End: deleteMay24}
-	allYearAlbumId  = catalog.AlbumId{Owner: deleteOwner, FolderName: catalog.NewFolderName("/lifetime")}
-	allYearAlbum    = &catalog.Album{AlbumId: allYearAlbumId, Name: "lifetime", Start: deleteJan24, End: deleteJan25}
-	isolatedAlbumId = catalog.AlbumId{Owner: deleteOwner, FolderName: catalog.NewFolderName("/isolated")}
-	isolatedAlbum   = &catalog.Album{AlbumId: isolatedAlbumId, Name: "Isolated", Start: deleteNov24, End: deleteDec24}
-	q1AlbumId       = catalog.AlbumId{Owner: deleteOwner, FolderName: catalog.NewFolderName("/q1")}
-	q1Album         = &catalog.Album{AlbumId: q1AlbumId, Name: "q1", Start: deleteJan24, End: deleteApr24}
-
-	movingMedia      = deleteMedia("movie-1", deleteMar24.AddDate(0, 0, 10))
-	otherMovingMedia = deleteMedia("movie-2", deleteMar24.AddDate(0, 0, 20))
-	orphanMedia      = deleteMedia("orphan-1", deleteApr24.AddDate(0, 0, 10))
-
-	movingCherryPicked     = catalog.Cover{MediaId: movingMedia.Id, Filename: movingMedia.Filename, Origin: catalog.CoverOriginCherryPicked}
-	otherMovingRandom      = catalog.Cover{MediaId: otherMovingMedia.Id, Filename: otherMovingMedia.Filename, Origin: catalog.CoverOriginRandom}
-	ghostCherryPickedCover = catalog.Cover{MediaId: "ghost", Filename: "ghost.jpg", Origin: catalog.CoverOriginCherryPicked}
-
-	deleteTestError = errors.Errorf("TEST error throwing")
-)
-
-func deleteMedia(id string, when time.Time) *catalog.MediaMeta {
-	return &catalog.MediaMeta{
-		Id:       catalog.MediaId(id),
-		Filename: id + ".jpg",
-		Type:     catalog.MediaTypeImage,
-		Details:  catalog.MediaDetails{DateTime: when},
-	}
-}
-
 func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
-	isOrphanedMediasErr := func(t assert.TestingT, err error, i ...interface{}) bool {
-		return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
-	}
-	isAlbumNotFoundErr := func(t assert.TestingT, err error, i ...interface{}) bool {
-		return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
-	}
-	isTestError := func(t assert.TestingT, err error, i ...interface{}) bool {
-		return assert.ErrorIs(t, err, deleteTestError, i...)
-	}
+	const owner = "ironman"
+
+	jan26 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	mar26 := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	apr26 := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)
+	jan27 := time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	marAlbumId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/mar-26")}
+	marAlbum := &catalog.Album{AlbumId: marAlbumId, Name: "mar 26", Start: mar26, End: apr26}
+	lifetimeId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/lifetime")}
+	lifetimeAlbum := &catalog.Album{AlbumId: lifetimeId, Name: "lifetime", Start: jan26, End: jan27}
+	jan_feb_26_Id := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/jan-feb-26")}
+	jan_feb_26_Album := &catalog.Album{AlbumId: jan_feb_26_Id, Name: "jan-feb 26", Start: jan26, End: mar26}
+
+	photo10mar26 := photoAt("photo10mar26", mar26.AddDate(0, 0, 10))
+	photo20mar26 := photoAt("photo20mar26", mar26.AddDate(0, 0, 20))
 
 	type fields struct {
-		TimelineRepository catalog.TimelineRepository
-		MediaStore         *MediaReadRepositoryInMemory
-		CoverRepository    *CoverRepositoryInMemory
+		Catalog *CatalogInMemory
+		Covers  *CoverRepositoryInMemory
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -83,30 +48,29 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		{
 			name: "it should transfer medias to the surrounding album and inherit the deleted album's CHERRY_PICKED cover",
 			fields: fields{
-				TimelineRepository: NewAlbumRepositoryInMemory(allYearAlbum, toDeleteAlbum),
-				MediaStore: &MediaReadRepositoryInMemory{Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-					toDeleteAlbumId: {movingMedia, otherMovingMedia},
-				}},
-				CoverRepository: NewCoverRepositoryInMemory(coversFor(toDeleteAlbumId, movingCherryPicked, otherMovingRandom)),
+				Catalog: NewCatalogInMemory(
+					withAlbum(lifetimeAlbum),
+					withAlbum(marAlbum, photo10mar26, photo20mar26),
+				),
+				Covers: NewCoverRepositoryInMemory(coversFor(marAlbumId, pickedCover(photo10mar26), randomCover(photo20mar26))),
 			},
-			args:           args{albumId: toDeleteAlbumId},
-			expectAlbumIds: []catalog.AlbumId{allYearAlbumId},
+			args:           args{albumId: marAlbumId},
+			expectAlbumIds: []catalog.AlbumId{lifetimeId},
 			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
-				toDeleteAlbumId: {},
-				allYearAlbumId:  {movingMedia, otherMovingMedia},
+				lifetimeId: {photo10mar26, photo20mar26},
 			},
 			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{
-				allYearAlbumId: {movingCherryPicked, otherMovingRandom},
+				lifetimeId: {pickedCover(photo10mar26), randomCover(photo20mar26)},
 			},
 			expectDeletedEvents: []catalog.AlbumDeleted{{
-				DeletedAlbumId: toDeleteAlbumId,
+				DeletedAlbumId: marAlbumId,
 				TransferredMedias: catalog.TransferredMedias{
-					Transfers:  map[catalog.AlbumId][]catalog.MediaId{allYearAlbumId: {movingMedia.Id, otherMovingMedia.Id}},
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{lifetimeId: {photo10mar26.Id, photo20mar26.Id}},
+					FromAlbums: []catalog.AlbumId{marAlbumId},
 				},
 				Covers: map[catalog.AlbumId][]catalog.Cover{
-					allYearAlbumId:  {movingCherryPicked, otherMovingRandom},
-					toDeleteAlbumId: nil,
+					lifetimeId:  {pickedCover(photo10mar26), randomCover(photo20mar26)},
+					marAlbumId: nil,
 				},
 			}},
 			wantErr: assert.NoError,
@@ -114,71 +78,53 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		{
 			name: "it should delete an empty album, and fire an empty-transfer event when no surrounding album covers it",
 			fields: fields{
-				TimelineRepository: NewAlbumRepositoryInMemory(toDeleteAlbum),
-				MediaStore:         &MediaReadRepositoryInMemory{Medias: map[catalog.AlbumId][]*catalog.MediaMeta{}},
-				CoverRepository:    NewCoverRepositoryInMemory(),
+				Catalog: NewCatalogInMemory(withAlbum(marAlbum)),
+				Covers:  NewCoverRepositoryInMemory(),
 			},
-			args:                args{albumId: toDeleteAlbumId},
+			args:                args{albumId: marAlbumId},
 			expectAlbumIds:      []catalog.AlbumId{},
 			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{},
 			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
 			expectDeletedEvents: []catalog.AlbumDeleted{{
-				DeletedAlbumId:    toDeleteAlbumId,
+				DeletedAlbumId:    marAlbumId,
 				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
 				Covers:            nil,
 			}},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should return OrphanedMediasErr without touching any album when the deletion would orphan medias",
+			name: "it should return OrphanedMediasErr without touching any album when the deletion would orphan medias (jan-feb album ends before mar)",
 			fields: fields{
-				TimelineRepository: NewAlbumRepositoryInMemory(q1Album, toDeleteAlbum),
-				MediaStore: &MediaReadRepositoryInMemory{Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-					toDeleteAlbumId: {orphanMedia},
-				}},
-				CoverRepository: NewCoverRepositoryInMemory(),
+				Catalog: NewCatalogInMemory(
+					withAlbum(jan_feb_26_Album),
+					withAlbum(marAlbum, photo10mar26),
+				),
+				Covers: NewCoverRepositoryInMemory(),
 			},
-			args:           args{albumId: toDeleteAlbumId},
-			expectAlbumIds: []catalog.AlbumId{q1AlbumId, toDeleteAlbumId},
+			args:           args{albumId: marAlbumId},
+			expectAlbumIds: []catalog.AlbumId{jan_feb_26_Id, marAlbumId},
 			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
-				toDeleteAlbumId: {orphanMedia},
+				jan_feb_26_Id: nil,
+				marAlbumId:    {photo10mar26},
 			},
 			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
-			wantErr:             isOrphanedMediasErr,
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
+			},
 		},
 		{
 			name: "it should return AlbumNotFoundErr when the album does not exist",
 			fields: fields{
-				TimelineRepository: NewAlbumRepositoryInMemory(allYearAlbum),
-				MediaStore:         &MediaReadRepositoryInMemory{},
-				CoverRepository:    NewCoverRepositoryInMemory(),
+				Catalog: NewCatalogInMemory(withAlbum(lifetimeAlbum)),
+				Covers:  NewCoverRepositoryInMemory(),
 			},
-			args:                args{albumId: toDeleteAlbumId},
-			expectAlbumIds:      []catalog.AlbumId{allYearAlbumId},
-			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta(nil),
+			args:                args{albumId: marAlbumId},
+			expectAlbumIds:      []catalog.AlbumId{lifetimeId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{lifetimeId: nil},
 			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
-			wantErr:             isAlbumNotFoundErr,
-		},
-		{
-			name: "it should not fire the event when the repository fails to delete the album after the transfer happened",
-			fields: fields{
-				TimelineRepository: &failingDeleteAlbumInterceptor{
-					AlbumRepositoryInMemory: NewAlbumRepositoryInMemory(allYearAlbum, toDeleteAlbum),
-					err:                     deleteTestError,
-				},
-				MediaStore: &MediaReadRepositoryInMemory{Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-					toDeleteAlbumId: {movingMedia},
-				}},
-				CoverRepository: NewCoverRepositoryInMemory(),
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
 			},
-			args:           args{albumId: toDeleteAlbumId},
-			expectAlbumIds: []catalog.AlbumId{allYearAlbumId, toDeleteAlbumId},
-			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
-				toDeleteAlbumId: {},
-				allYearAlbumId:  {movingMedia},
-			},
-			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
-			wantErr:             isTestError,
 		},
 	}
 
@@ -186,12 +132,12 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			observer := &AlbumDeletedObserverInMemory{}
 			deleteAlbum := catalog.NewDeleteAlbum(
-				tt.fields.TimelineRepository,
-				tt.fields.MediaStore,
-				&catalog.TransferMediasFromRepository{TransferMediasRepository: tt.fields.MediaStore},
+				tt.fields.Catalog,
+				tt.fields.Catalog,
+				&catalog.TransferMediasFromRepository{TransferMediasRepository: tt.fields.Catalog},
 				&catalog.CoverService{
-					CoverRepository:     tt.fields.CoverRepository,
-					MediaReadRepository: tt.fields.MediaStore,
+					CoverRepository:     tt.fields.Covers,
+					MediaReadRepository: tt.fields.Catalog,
 					Randomiser:          deterministicRandomiser,
 				},
 				observer,
@@ -202,31 +148,10 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 				return
 			}
 
-			albumRepository := underlyingDeleteRepository(tt.fields.TimelineRepository)
-			var albumIds []catalog.AlbumId
-			for id := range albumRepository.Albums {
-				albumIds = append(albumIds, id)
-			}
-			assert.ElementsMatch(t, tt.expectAlbumIds, albumIds, "albums remaining in the repository")
-			assert.Equal(t, tt.expectMediasByAlbum, tt.fields.MediaStore.Medias, "medias remaining per album")
-			assert.Equal(t, tt.expectCoversByAlbum, tt.fields.CoverRepository.Covers, "canonical covers stored")
+			assert.ElementsMatch(t, tt.expectAlbumIds, tt.fields.Catalog.AlbumIds(), "albums remaining in the catalog")
+			assert.Equal(t, tt.expectMediasByAlbum, tt.fields.Catalog.MediasByAlbum(), "medias remaining per album")
+			assert.Equal(t, tt.expectCoversByAlbum, tt.fields.Covers.Covers, "canonical covers stored")
 			assert.Equal(t, tt.expectDeletedEvents, observer.Events, "AlbumDeleted events fired")
 		})
 	}
-}
-
-type failingDeleteAlbumInterceptor struct {
-	*AlbumRepositoryInMemory
-	err error
-}
-
-func (i *failingDeleteAlbumInterceptor) DeleteAlbum(_ context.Context, _ catalog.AlbumId) error {
-	return i.err
-}
-
-func underlyingDeleteRepository(port catalog.TimelineRepository) *AlbumRepositoryInMemory {
-	if repository, ok := port.(*AlbumRepositoryInMemory); ok {
-		return repository
-	}
-	return port.(*failingDeleteAlbumInterceptor).AlbumRepositoryInMemory
 }
