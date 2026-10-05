@@ -1,6 +1,6 @@
 # 13 — Owner-triggered randomize operation
 
-Status: ready
+Status: done
 Phase: 3
 Layer: catalog domain — `pkg/catalog` + `pkg/catalogviews` + `pkg/pkgfactory`
 Depends on: 09
