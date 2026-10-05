@@ -11,7 +11,6 @@ import (
 type CoverServicePort interface {
 	Randomise(ctx context.Context, stable bool, albumIds ...AlbumId) (map[AlbumId][]Cover, error)
 	StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error)
-	DeleteCovers(ctx context.Context, albumId AlbumId) error
 }
 
 // CoverRepository persists an album's cover set as a single record.
@@ -187,9 +186,9 @@ func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
 // Returns one entry per album whose cover set actually changed. Unchanged albums are
 // omitted. Returns a nil map when no album changed.
 func (c *CoverService) StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error) {
-	if transferred.IsEmpty() {
-		return nil, nil
-	}
+	//if transferred.IsEmpty() {
+	//	return nil, nil
+	//}
 
 	albums := affectedAlbums(transferred)
 
@@ -212,7 +211,7 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		}
 	}
 
-	updatedCovers := make(map[AlbumId][]Cover)
+	var updatedCovers map[AlbumId][]Cover
 	for _, album := range albums {
 		covers, _ := coversByAlbum[album.albumId]
 
@@ -231,8 +230,8 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		}
 
 		if hasBeenFiltered || hasBeenAltered || hasBeenFilled {
-			if len(covers) == 0 {
-				covers = nil
+			if len(updatedCovers) == 0 {
+				updatedCovers = make(map[AlbumId][]Cover)
 			}
 			updatedCovers[album.albumId] = covers
 			err = c.CoverRepository.SaveCovers(ctx, album.albumId, covers)
@@ -242,9 +241,6 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		}
 	}
 
-	if len(updatedCovers) == 0 {
-		return nil, nil
-	}
 	return updatedCovers, nil
 }
 
@@ -256,6 +252,10 @@ func (c *CoverService) filterOutRemovedMedias(covers []Cover, album affectedAlbu
 		return removed
 	})
 	hasBeenFiltered := size != len(covers)
+
+	if len(covers) == 0 {
+		covers = nil
+	}
 	return covers, hasBeenFiltered
 }
 
@@ -292,12 +292,6 @@ func (c *CoverService) fillCovers(ctx context.Context, covers []Cover, albumId A
 		covers, hasBeenFilled = c.fillCoversWithMedias(covers, medias)
 	}
 	return covers, hasBeenFilled, nil
-}
-
-// DeleteCovers removes the canonical cover record of the given album. The operation is
-// idempotent: no error is returned when the record is already absent.
-func (c *CoverService) DeleteCovers(ctx context.Context, albumId AlbumId) error {
-	return c.CoverRepository.SaveCovers(ctx, albumId, nil)
 }
 
 func (c *CoverService) fillCoversWithMedias(covers []Cover, medias []*MediaMeta) ([]Cover, bool) {
