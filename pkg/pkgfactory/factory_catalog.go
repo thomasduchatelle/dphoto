@@ -118,6 +118,7 @@ func (s *SimpleCatalogFactory) CreateAlbumDeleteCase(ctx context.Context) *catal
 		TimelineRepository(ctx),
 		repository,
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		CoverServiceCase(ctx),
 		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		AlbumView(ctx),
 	)

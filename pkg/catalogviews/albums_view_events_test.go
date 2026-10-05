@@ -564,6 +564,40 @@ func TestAlbumView_AlbumDeleted(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should write the destination album covers carried by the event onto every viewer row",
+			fields: fields{
+				Repository: &AlbumSummaryInMemoryRepository{Summaries: []UserAlbumSummary{
+					deletedRow(OwnerAvailability(ownerUserId)),
+					destinationRow,
+				}},
+				MediaCounterPort: MediaCounterPortFake{albumGamma: 5},
+			},
+			event: catalog.AlbumDeleted{
+				DeletedAlbumId: albumAlpha,
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers: map[catalog.AlbumId][]catalog.MediaId{albumGamma: {"m1"}},
+				},
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					albumAlpha: nil,
+					albumGamma: {{MediaId: "m1", Filename: "m1.jpg", Origin: catalog.CoverOriginCherryPicked}},
+				},
+			},
+			expectRepo: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{
+						AlbumId:    albumGamma,
+						Name:       "Gamma",
+						Start:      feb24,
+						End:        mar24,
+						MediaCount: 5,
+						Covers:     []catalog.Cover{{MediaId: "m1", Filename: "m1.jpg", Origin: catalog.CoverOriginCherryPicked}},
+					},
+					Availability: OwnerAvailability(ownerUserId),
+				},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 
 	for _, tt := range tests {

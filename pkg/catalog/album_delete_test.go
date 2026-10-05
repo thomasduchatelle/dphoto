@@ -2,246 +2,214 @@ package catalog_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
 func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 	const owner = "ironman"
-	jan24 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	mar24 := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
 	apr24 := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)
 	may24 := time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
-	jul24 := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
+	jan24 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	jan25 := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	nov24 := time.Date(2024, 11, 1, 0, 0, 0, 0, time.UTC)
 	dec24 := time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC)
-	jan25 := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	toDeleteAlbumId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/avengers-1")}
-	toDeleteAlbum := catalog.Album{
-		AlbumId: toDeleteAlbumId,
-		Name:    "Avenger 1",
-		Start:   mar24,
-		End:     may24,
-	}
+	toDeleteAlbum := &catalog.Album{AlbumId: toDeleteAlbumId, Name: "Avenger 1", Start: mar24, End: may24}
+	allYearAlbumId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/lifetime")}
+	allYearAlbum := &catalog.Album{AlbumId: allYearAlbumId, Name: "lifetime", Start: jan24, End: jan25}
 	isolatedAlbumId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/isolated")}
-	isolatedAlbum := catalog.Album{
-		AlbumId: isolatedAlbumId,
-		Name:    "Isolated",
-		Start:   nov24,
-		End:     dec24,
-	}
-	existingAllYearAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/lifetime")},
-		Name:    "lifetime",
-		Start:   jan24,
-		End:     jan25,
-	}
-	existingQ1Album := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/q1")},
-		Name:    "q1",
-		Start:   jan24,
-		End:     apr24,
-	}
-	existingQ2Album := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/q2")},
-		Name:    "q2",
-		Start:   apr24,
-		End:     jul24,
-	}
+	isolatedAlbum := &catalog.Album{AlbumId: isolatedAlbumId, Name: "Isolated", Start: nov24, End: dec24}
 
-	orphanSelector := catalog.MediaSelector{
-		FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-		Start:      apr24,
-		End:        may24,
-	}
-	countOneMediaForOrphanSelector := func(_ ownermodel.Owner, selector catalog.MediaSelector) int {
-		if selector.Start.Equal(orphanSelector.Start) && selector.End.Equal(orphanSelector.End) {
-			return 1
-		}
-		return 0
-	}
 	testError := errors.Errorf("TEST error throwing")
 
-	mediaIdsFromToDelete := func(start, end time.Time) []catalog.MediaId {
-		var ids []catalog.MediaId
-		for day := start; day.Before(end); day = day.AddDate(0, 0, 1) {
-			ids = append(ids, fakeMediaId(toDeleteAlbumId, day))
+	mediaAt := func(id string, albumId catalog.AlbumId, when time.Time) *catalog.MediaMeta {
+		return &catalog.MediaMeta{
+			Id:       catalog.MediaId(id),
+			Filename: id + ".jpg",
+			Type:     catalog.MediaTypeImage,
+			Details:  catalog.MediaDetails{DateTime: when},
 		}
-		return ids
 	}
 
-	type fields struct {
-		AlbumRepository *AlbumRepositoryInMemory
-	}
-	type args struct {
-		albumId catalog.AlbumId
-	}
-	tests := []struct {
-		name                  string
-		fields                fields
-		args                  args
-		expectStoredAlbumIds  []catalog.AlbumId
-		expectTransferRecords []catalog.MediaTransferRecords
-		expectDeletedEvents   []catalog.AlbumDeleted
-		wantErr               assert.ErrorAssertionFunc
-	}{
-		{
-			name:                 "it should delete the album and transfer every media to the single surrounding album",
-			fields:               fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingAllYearAlbum, &toDeleteAlbum)},
-			args:                 args{albumId: toDeleteAlbumId},
-			expectStoredAlbumIds: []catalog.AlbumId{existingAllYearAlbum.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{{
-				existingAllYearAlbum.AlbumId: {{
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-					Start:      mar24,
-					End:        may24,
-				}},
-			}},
-			expectDeletedEvents: []catalog.AlbumDeleted{{
-				DeletedAlbumId: toDeleteAlbumId,
-				TransferredMedias: catalog.TransferredMedias{
-					Transfers:  map[catalog.AlbumId][]catalog.MediaId{existingAllYearAlbum.AlbumId: mediaIdsFromToDelete(mar24, may24)},
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-				},
-			}},
-			wantErr: assert.NoError,
-		},
-		{
-			name:                 "it should delete the album and split medias between several surrounding albums",
-			fields:               fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingQ1Album, &existingQ2Album, &toDeleteAlbum)},
-			args:                 args{albumId: toDeleteAlbumId},
-			expectStoredAlbumIds: []catalog.AlbumId{existingQ1Album.AlbumId, existingQ2Album.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{{
-				existingQ1Album.AlbumId: {{
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-					Start:      mar24,
-					End:        apr24,
-				}},
-				existingQ2Album.AlbumId: {{
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-					Start:      apr24,
-					End:        may24,
-				}},
-			}},
-			expectDeletedEvents: []catalog.AlbumDeleted{{
-				DeletedAlbumId: toDeleteAlbumId,
-				TransferredMedias: catalog.TransferredMedias{
-					Transfers: map[catalog.AlbumId][]catalog.MediaId{
-						existingQ1Album.AlbumId: mediaIdsFromToDelete(mar24, apr24),
-						existingQ2Album.AlbumId: mediaIdsFromToDelete(apr24, may24),
-					},
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-				},
-			}},
-			wantErr: assert.NoError,
-		},
-		{
-			name:                 "it should delete the album even when part of its range is uncovered as long as no media would be orphaned",
-			fields:               fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingQ1Album, &toDeleteAlbum)},
-			args:                 args{albumId: toDeleteAlbumId},
-			expectStoredAlbumIds: []catalog.AlbumId{existingQ1Album.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{{
-				existingQ1Album.AlbumId: {{
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-					Start:      mar24,
-					End:        apr24,
-				}},
-			}},
-			expectDeletedEvents: []catalog.AlbumDeleted{{
-				DeletedAlbumId: toDeleteAlbumId,
-				TransferredMedias: catalog.TransferredMedias{
-					Transfers:  map[catalog.AlbumId][]catalog.MediaId{existingQ1Album.AlbumId: mediaIdsFromToDelete(mar24, apr24)},
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-				},
-			}},
-			wantErr: assert.NoError,
-		},
-		{
-			name:                  "it should delete the album and fire the event with an empty TransferredMedias when no surrounding album covers it",
-			fields:                fields{AlbumRepository: NewAlbumRepositoryInMemory(&isolatedAlbum, &toDeleteAlbum)},
-			args:                  args{albumId: toDeleteAlbumId},
-			expectStoredAlbumIds:  []catalog.AlbumId{isolatedAlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{{}},
-			expectDeletedEvents: []catalog.AlbumDeleted{{
-				DeletedAlbumId:    toDeleteAlbumId,
-				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
-			}},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should return OrphanedMediasErr and change nothing if the deletion would orphan medias",
-			fields: fields{AlbumRepository: func() *AlbumRepositoryInMemory {
-				repo := NewAlbumRepositoryInMemory(&existingQ1Album, &toDeleteAlbum)
-				repo.MediasBySelector = countOneMediaForOrphanSelector
-				return repo
-			}()},
-			args:                 args{albumId: toDeleteAlbumId},
-			expectStoredAlbumIds: []catalog.AlbumId{existingQ1Album.AlbumId, toDeleteAlbumId},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
+	movingMedia := mediaAt("movie-1", toDeleteAlbumId, mar24.AddDate(0, 0, 10))
+	otherMovingMedia := mediaAt("movie-2", toDeleteAlbumId, mar24.AddDate(0, 0, 20))
+
+	t.Run("it should transfer medias to the surrounding album and inherit the deleted album's CHERRY_PICKED cover", func(t *testing.T) {
+		albumRepository := NewAlbumRepositoryInMemory(allYearAlbum, toDeleteAlbum)
+		mediaStore := &MediaReadRepositoryInMemory{
+			Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
+				toDeleteAlbumId: {movingMedia, otherMovingMedia},
 			},
-		},
-		{
-			name:                 "it should return AlbumNotFoundErr when the album does not exist",
-			fields:               fields{AlbumRepository: NewAlbumRepositoryInMemory(&existingAllYearAlbum)},
-			args:                 args{albumId: toDeleteAlbumId},
-			expectStoredAlbumIds: []catalog.AlbumId{existingAllYearAlbum.AlbumId},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			transferService := &TransferMediasServiceFake{}
-			observer := &AlbumDeletedObserverInMemory{}
-
-			deleteAlbum := catalog.NewDeleteAlbum(
-				tt.fields.AlbumRepository,
-				tt.fields.AlbumRepository,
-				transferService,
-				observer,
-			)
-
-			err := deleteAlbum.DeleteAlbum(context.Background(), tt.args.albumId)
-			if !tt.wantErr(t, err, fmt.Sprintf("DeleteAlbum(%v)", tt.args.albumId)) {
-				return
-			}
-
-			var storedIds []catalog.AlbumId
-			for id := range tt.fields.AlbumRepository.Albums {
-				storedIds = append(storedIds, id)
-			}
-			assert.ElementsMatch(t, tt.expectStoredAlbumIds, storedIds, "albums remaining in the repository")
-			assert.Equal(t, tt.expectTransferRecords, transferService.Records, "records passed to TransferMedias")
-			assert.Equal(t, tt.expectDeletedEvents, observer.Events, "AlbumDeleted events fired")
-		})
-	}
-
-	t.Run("it should skip firing the event when the repository fails to delete the album (transfer already happened, no rollback)", func(t *testing.T) {
-		repository := NewAlbumRepositoryInMemory(&existingAllYearAlbum, &toDeleteAlbum)
-		transferService := &TransferMediasServiceFake{}
+		}
+		coverRepository := NewCoverRepositoryInMemory(coversFor(toDeleteAlbumId,
+			catalog.Cover{MediaId: movingMedia.Id, Filename: movingMedia.Filename, Origin: catalog.CoverOriginCherryPicked},
+			catalog.Cover{MediaId: otherMovingMedia.Id, Filename: otherMovingMedia.Filename, Origin: catalog.CoverOriginRandom},
+		))
 		observer := &AlbumDeletedObserverInMemory{}
 
 		deleteAlbum := catalog.NewDeleteAlbum(
-			&failingDeleteAlbumInterceptor{AlbumRepositoryInMemory: repository, err: testError},
-			repository,
-			transferService,
+			albumRepository,
+			mediaStore,
+			&catalog.TransferMediasFromRepository{TransferMediasRepository: mediaStore},
+			&catalog.CoverService{
+				CoverRepository:     coverRepository,
+				MediaReadRepository: mediaStore,
+				Randomiser:          deterministicRandomiser,
+			},
+			observer,
+		)
+
+		err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		assert.NotContains(t, albumRepository.Albums, toDeleteAlbumId, "deleted album is gone from the repository")
+		assert.ElementsMatch(t, []*catalog.MediaMeta{movingMedia, otherMovingMedia}, mediaStore.Medias[allYearAlbumId], "medias have been transferred to the surrounding album")
+		assert.Empty(t, mediaStore.Medias[toDeleteAlbumId], "no medias left on the deleted album")
+
+		assert.NotContains(t, coverRepository.Covers, toDeleteAlbumId, "deleted album's canonical cover record is removed")
+		assert.Equal(t, []catalog.Cover{
+			{MediaId: movingMedia.Id, Filename: movingMedia.Filename, Origin: catalog.CoverOriginCherryPicked},
+			{MediaId: otherMovingMedia.Id, Filename: otherMovingMedia.Filename, Origin: catalog.CoverOriginRandom},
+		}, coverRepository.Covers[allYearAlbumId], "destination inherits CHERRY_PICKED cover and fills remaining slots")
+
+		if assert.Len(t, observer.Events, 1) {
+			event := observer.Events[0]
+			assert.Equal(t, toDeleteAlbumId, event.DeletedAlbumId)
+			assert.ElementsMatch(t, []catalog.MediaId{movingMedia.Id, otherMovingMedia.Id}, event.TransferredMedias.Transfers[allYearAlbumId])
+			assert.Equal(t, []catalog.AlbumId{toDeleteAlbumId}, event.TransferredMedias.FromAlbums)
+			assert.Contains(t, event.Covers, toDeleteAlbumId, "deleted album is in the Covers map")
+			assert.Nil(t, event.Covers[toDeleteAlbumId], "deleted album covers are nil (sentinel for 'delete')")
+			assert.NotNil(t, event.Covers[allYearAlbumId], "destination has new covers")
+		}
+	})
+
+	t.Run("it should delete the canonical cover record and fire an empty-transfer event when no surrounding album covers it", func(t *testing.T) {
+		albumRepository := NewAlbumRepositoryInMemory(isolatedAlbum, toDeleteAlbum)
+		mediaStore := &MediaReadRepositoryInMemory{Medias: map[catalog.AlbumId][]*catalog.MediaMeta{}}
+		coverRepository := NewCoverRepositoryInMemory(coversFor(toDeleteAlbumId,
+			catalog.Cover{MediaId: "ghost", Filename: "ghost.jpg", Origin: catalog.CoverOriginCherryPicked},
+		))
+		observer := &AlbumDeletedObserverInMemory{}
+
+		deleteAlbum := catalog.NewDeleteAlbum(
+			albumRepository,
+			mediaStore,
+			&catalog.TransferMediasFromRepository{TransferMediasRepository: mediaStore},
+			&catalog.CoverService{
+				CoverRepository:     coverRepository,
+				MediaReadRepository: mediaStore,
+				Randomiser:          deterministicRandomiser,
+			},
+			observer,
+		)
+
+		err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		assert.NotContains(t, albumRepository.Albums, toDeleteAlbumId, "deleted album is gone")
+		assert.Contains(t, albumRepository.Albums, isolatedAlbumId, "isolated album is left untouched")
+		assert.NotContains(t, coverRepository.Covers, toDeleteAlbumId, "deleted album's canonical cover record is removed")
+
+		if assert.Len(t, observer.Events, 1) {
+			event := observer.Events[0]
+			assert.Equal(t, toDeleteAlbumId, event.DeletedAlbumId)
+			assert.True(t, event.TransferredMedias.IsEmpty(), "no media was transferred")
+			assert.Equal(t, map[catalog.AlbumId][]catalog.Cover{toDeleteAlbumId: nil}, event.Covers, "deleted album is the only entry in Covers, mapped to nil")
+		}
+	})
+
+	t.Run("it should return OrphanedMediasErr without touching any album when the deletion would orphan medias", func(t *testing.T) {
+		q1AlbumId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/q1")}
+		q1Album := &catalog.Album{AlbumId: q1AlbumId, Name: "q1", Start: jan24, End: apr24}
+		albumRepository := NewAlbumRepositoryInMemory(q1Album, toDeleteAlbum)
+		mediaStore := &MediaReadRepositoryInMemory{
+			Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
+				toDeleteAlbumId: {mediaAt("orphan-1", toDeleteAlbumId, apr24.AddDate(0, 0, 10))},
+			},
+		}
+		coverRepository := NewCoverRepositoryInMemory()
+		observer := &AlbumDeletedObserverInMemory{}
+
+		deleteAlbum := catalog.NewDeleteAlbum(
+			albumRepository,
+			mediaStore,
+			&catalog.TransferMediasFromRepository{TransferMediasRepository: mediaStore},
+			&catalog.CoverService{
+				CoverRepository:     coverRepository,
+				MediaReadRepository: mediaStore,
+				Randomiser:          deterministicRandomiser,
+			},
+			observer,
+		)
+
+		err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
+		assert.ErrorIs(t, err, catalog.OrphanedMediasErr)
+		assert.Contains(t, albumRepository.Albums, toDeleteAlbumId, "no album was removed")
+		assert.NotEmpty(t, mediaStore.Medias[toDeleteAlbumId], "no media was moved")
+		assert.Empty(t, observer.Events, "no event was fired")
+	})
+
+	t.Run("it should return AlbumNotFoundErr when the album does not exist", func(t *testing.T) {
+		albumRepository := NewAlbumRepositoryInMemory(allYearAlbum)
+		mediaStore := &MediaReadRepositoryInMemory{}
+		coverRepository := NewCoverRepositoryInMemory()
+		observer := &AlbumDeletedObserverInMemory{}
+
+		deleteAlbum := catalog.NewDeleteAlbum(
+			albumRepository,
+			mediaStore,
+			&catalog.TransferMediasFromRepository{TransferMediasRepository: mediaStore},
+			&catalog.CoverService{
+				CoverRepository:     coverRepository,
+				MediaReadRepository: mediaStore,
+				Randomiser:          deterministicRandomiser,
+			},
+			observer,
+		)
+
+		err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
+		assert.ErrorIs(t, err, catalog.AlbumNotFoundErr)
+		assert.Empty(t, observer.Events)
+	})
+
+	t.Run("it should skip firing the event when the repository fails to delete the album after the transfer happened", func(t *testing.T) {
+		albumRepository := NewAlbumRepositoryInMemory(allYearAlbum, toDeleteAlbum)
+		mediaStore := &MediaReadRepositoryInMemory{
+			Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
+				toDeleteAlbumId: {movingMedia},
+			},
+		}
+		coverRepository := NewCoverRepositoryInMemory()
+		observer := &AlbumDeletedObserverInMemory{}
+
+		deleteAlbum := catalog.NewDeleteAlbum(
+			&failingDeleteAlbumInterceptor{AlbumRepositoryInMemory: albumRepository, err: testError},
+			mediaStore,
+			&catalog.TransferMediasFromRepository{TransferMediasRepository: mediaStore},
+			&catalog.CoverService{
+				CoverRepository:     coverRepository,
+				MediaReadRepository: mediaStore,
+				Randomiser:          deterministicRandomiser,
+			},
 			observer,
 		)
 
 		err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
 		assert.ErrorIs(t, err, testError)
-		assert.Contains(t, repository.Albums, toDeleteAlbumId, "album should still be in the fake repository since the failing port is a different implementation")
-		assert.Len(t, transferService.Records, 1, "the transfer should have happened before the deletion attempt")
-		assert.Empty(t, observer.Events, "no AlbumDeleted event should be fired when the repository fails")
+		assert.Contains(t, albumRepository.Albums, toDeleteAlbumId, "album should still be in the fake repository since the failing port is a different implementation")
+		assert.ElementsMatch(t, []*catalog.MediaMeta{movingMedia}, mediaStore.Medias[allYearAlbumId], "media transfer happened before the deletion attempt")
+		assert.Empty(t, observer.Events, "no event was fired")
 	})
 }
 
