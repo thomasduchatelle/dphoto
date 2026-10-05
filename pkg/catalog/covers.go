@@ -11,7 +11,6 @@ import (
 type CoverServicePort interface {
 	Randomise(ctx context.Context, stable bool, albumIds ...AlbumId) (map[AlbumId][]Cover, error)
 	StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error)
-	DropAndStableRefreshDestinations(ctx context.Context, deletedAlbumId AlbumId, transferred TransferredMedias) (map[AlbumId][]Cover, error)
 }
 
 // CoverRepository persists an album's cover set as a single record.
@@ -187,10 +186,6 @@ func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
 // Returns one entry per album whose cover set actually changed. Unchanged albums are
 // omitted. Returns a nil map when no album changed.
 func (c *CoverService) StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error) {
-	return c.stableRefresh(ctx, transferred, nil)
-}
-
-func (c *CoverService) stableRefresh(ctx context.Context, transferred TransferredMedias, extraPickedMedias map[MediaId]Cover) (map[AlbumId][]Cover, error) {
 	if transferred.IsEmpty() {
 		return nil, nil
 	}
@@ -215,9 +210,6 @@ func (c *CoverService) stableRefresh(ctx context.Context, transferred Transferre
 			}
 		}
 	}
-	for mediaId, cover := range extraPickedMedias {
-		pickedMedias[mediaId] = cover
-	}
 
 	updatedCovers := make(map[AlbumId][]Cover)
 	for _, album := range albums {
@@ -235,6 +227,10 @@ func (c *CoverService) stableRefresh(ctx context.Context, transferred Transferre
 			if err != nil {
 				return nil, err
 			}
+		}
+
+		if len(covers) == 0 {
+			covers = nil
 		}
 
 		if hasBeenFiltered || hasBeenAltered || hasBeenFilled {
@@ -312,37 +308,4 @@ func (c *CoverService) fillCoversWithMedias(covers []Cover, medias []*MediaMeta)
 		})
 	}
 	return covers, hasBeenFilled
-}
-
-// DropAndStableRefreshDestinations removes the canonical cover record of a deleted album
-// and runs StableRefresh so the destinations that absorbed its medias get their empty
-// slots filled while the deleted album's CHERRY_PICKED covers are inherited where
-// relevant. The deleted album's own cover record is deleted (idempotent: SaveCovers with
-// an empty set issues a DynamoDB DeleteItem which is a no-op when the item is absent).
-// `transferred` must have already been scrubbed of the deleted album.
-func (c *CoverService) DropAndStableRefreshDestinations(ctx context.Context, deletedAlbumId AlbumId, transferred TransferredMedias) (map[AlbumId][]Cover, error) {
-	deletedCovers, err := c.CoverRepository.FindCoversByAlbum(ctx, deletedAlbumId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "DropAndStableRefreshDestinations failed to load covers for %s", deletedAlbumId)
-	}
-
-	if err := c.CoverRepository.SaveCovers(ctx, deletedAlbumId, nil); err != nil {
-		return nil, errors.Wrapf(err, "DropAndStableRefreshDestinations failed to delete covers for %s", deletedAlbumId)
-	}
-
-	extraPicked := make(map[MediaId]Cover)
-	for _, cover := range deletedCovers {
-		if cover.Origin == CoverOriginCherryPicked {
-			extraPicked[cover.MediaId] = cover
-		}
-	}
-
-	changed, err := c.stableRefresh(ctx, transferred, extraPicked)
-	if err != nil {
-		return nil, err
-	}
-	if len(changed) == 0 {
-		return nil, nil
-	}
-	return changed, nil
 }

@@ -597,6 +597,45 @@ func TestCoverService_StableRefresh(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "it should delete the covers of the album without any media left (delete use case)",
+			fields: fields{
+				CoverRepository: NewCoverRepositoryInMemory(
+					coversFor(avengersId,
+						catalog.Cover{MediaId: image1.Id, Filename: image1.Filename, Origin: catalog.CoverOriginCherryPicked},
+						catalog.Cover{MediaId: image2.Id, Filename: image2.Filename, Origin: catalog.CoverOriginRandom},
+					),
+					coversFor(stealthId,
+						catalog.Cover{MediaId: image3.Id, Filename: image3.Filename, Origin: catalog.CoverOriginRandom},
+					),
+				),
+				MediaReadRepository: &MediaReadRepositoryInMemory{
+					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
+						stealthId: {image1, image2, image3},
+					},
+				},
+			},
+			args: args{transferred: catalog.TransferredMedias{
+				Transfers:  map[catalog.AlbumId][]catalog.MediaId{stealthId: {image1.Id, image2.Id}},
+				FromAlbums: []catalog.AlbumId{avengersId},
+			}},
+			wantChanged: map[catalog.AlbumId][]catalog.Cover{
+				avengersId: nil,
+				stealthId: {
+					{MediaId: image3.Id, Filename: image3.Filename, Origin: catalog.CoverOriginRandom},
+					{MediaId: image1.Id, Filename: image1.Filename, Origin: catalog.CoverOriginCherryPicked},
+					{MediaId: image2.Id, Filename: image2.Filename, Origin: catalog.CoverOriginRandom},
+				},
+			},
+			expectSavedCovers: map[catalog.AlbumId][]catalog.Cover{
+				stealthId: {
+					{MediaId: image3.Id, Filename: image3.Filename, Origin: catalog.CoverOriginRandom},
+					{MediaId: image1.Id, Filename: image1.Filename, Origin: catalog.CoverOriginCherryPicked},
+					{MediaId: image2.Id, Filename: image2.Filename, Origin: catalog.CoverOriginRandom},
+				},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

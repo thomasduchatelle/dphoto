@@ -105,9 +105,12 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 
 	log.WithField("Owner", albumId.Owner).Infof("Album %s deleted", albumId)
 
-	transferred = transferred.Without(albumId)
+	transferred, err = transferred.WithoutDeletedAlbum(albumId)
+	if err != nil {
+		return err
+	}
 
-	covers, err := d.CoverService.DropAndStableRefreshDestinations(ctx, albumId, transferred)
+	covers, err := d.CoverService.StableRefresh(ctx, transferred)
 	if err != nil {
 		return err
 	}

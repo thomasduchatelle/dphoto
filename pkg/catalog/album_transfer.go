@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // TransferredMedias is a list of all medias that has be transferred to a different album in the state.
@@ -23,22 +25,23 @@ func (t TransferredMedias) IsEmpty() bool {
 	return count == 0
 }
 
-// Without returns a copy of the TransferredMedias with the given album removed from
-// both Transfers (destination keys) and FromAlbums (source list). Used when an album
-// has been deleted and must no longer appear to downstream consumers of the event.
-func (t TransferredMedias) Without(albumId AlbumId) TransferredMedias {
-	result := TransferredMedias{Transfers: make(map[AlbumId][]MediaId, len(t.Transfers))}
-	for destination, medias := range t.Transfers {
-		if !destination.IsEqual(albumId) {
-			result.Transfers[destination] = medias
-		}
+// WithoutDeletedAlbum removes the AlbumId from the sources to not confuse downstream listeners: the album has been deleted.
+func (t TransferredMedias) WithoutDeletedAlbum(albumId AlbumId) (TransferredMedias, error) {
+	if medias, isTarget := t.Transfers[albumId]; isTarget {
+		return t, errors.Errorf("%s cannot be removed from the transferred media as it received %+v medias", albumId, medias)
 	}
-	for _, source := range t.FromAlbums {
-		if !source.IsEqual(albumId) {
-			result.FromAlbums = append(result.FromAlbums, source)
-		}
+
+	result := TransferredMedias{
+		Transfers:  t.Transfers,
+		FromAlbums: make([]AlbumId, 0, len(t.FromAlbums)),
 	}
-	return result
+
+	copy(result.FromAlbums, t.FromAlbums)
+	result.FromAlbums = slices.DeleteFunc(result.FromAlbums, func(transfer AlbumId) bool {
+		return albumId.IsEqual(transfer)
+	})
+
+	return result, nil
 }
 
 func NewTransferredMedias() TransferredMedias {
@@ -137,5 +140,3 @@ func (t *TransferMediasFromRepository) TransferMedias(ctx context.Context, recor
 
 	return result, nil
 }
-
-
