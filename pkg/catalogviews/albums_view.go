@@ -142,16 +142,24 @@ func (v *AlbumView) OnAlbumDeleted(ctx context.Context, event catalog.AlbumDelet
 		return err
 	}
 
-	if event.TransferredMedias.IsEmpty() {
-		return nil
+	if !event.TransferredMedias.IsEmpty() {
+		destinationIds := make([]catalog.AlbumId, 0, len(event.TransferredMedias.Transfers))
+		for albumId := range event.TransferredMedias.Transfers {
+			destinationIds = append(destinationIds, albumId)
+		}
+		if err := v.recountAlbums(ctx, destinationIds); err != nil {
+			return err
+		}
 	}
 
-	destinationIds := make([]catalog.AlbumId, 0, len(event.TransferredMedias.Transfers))
-	for albumId := range event.TransferredMedias.Transfers {
-		destinationIds = append(destinationIds, albumId)
+	destinationCovers := make(map[catalog.AlbumId][]catalog.Cover, len(event.Covers))
+	for albumId, covers := range event.Covers {
+		if albumId.IsEqual(event.DeletedAlbumId) {
+			continue
+		}
+		destinationCovers[albumId] = covers
 	}
-
-	return v.recountAlbums(ctx, destinationIds)
+	return v.applyCoverUpdates(ctx, destinationCovers)
 }
 
 func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId usermodel.UserId) error {

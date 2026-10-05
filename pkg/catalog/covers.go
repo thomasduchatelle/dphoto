@@ -186,9 +186,9 @@ func affectedAlbums(transferred TransferredMedias) []affectedAlbum {
 // Returns one entry per album whose cover set actually changed. Unchanged albums are
 // omitted. Returns a nil map when no album changed.
 func (c *CoverService) StableRefresh(ctx context.Context, transferred TransferredMedias) (map[AlbumId][]Cover, error) {
-	if transferred.IsEmpty() {
-		return nil, nil
-	}
+	//if transferred.IsEmpty() {
+	//	return nil, nil
+	//}
 
 	albums := affectedAlbums(transferred)
 
@@ -211,7 +211,7 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		}
 	}
 
-	updatedCovers := make(map[AlbumId][]Cover)
+	var updatedCovers map[AlbumId][]Cover
 	for _, album := range albums {
 		covers, _ := coversByAlbum[album.albumId]
 
@@ -230,6 +230,9 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		}
 
 		if hasBeenFiltered || hasBeenAltered || hasBeenFilled {
+			if len(updatedCovers) == 0 {
+				updatedCovers = make(map[AlbumId][]Cover)
+			}
 			updatedCovers[album.albumId] = covers
 			err = c.CoverRepository.SaveCovers(ctx, album.albumId, covers)
 			if err != nil {
@@ -249,6 +252,10 @@ func (c *CoverService) filterOutRemovedMedias(covers []Cover, album affectedAlbu
 		return removed
 	})
 	hasBeenFiltered := size != len(covers)
+
+	if len(covers) == 0 {
+		covers = nil
+	}
 	return covers, hasBeenFiltered
 }
 
