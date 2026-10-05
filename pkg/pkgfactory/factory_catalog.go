@@ -8,7 +8,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchiveasync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogarchivesync"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogadapters/catalogdynamo"
-	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/singletons"
 )
 
@@ -103,7 +102,7 @@ func RandomizeAlbumCoversCase(ctx context.Context) *catalog.RandomizeAlbumCovers
 	return catalog.NewRandomizeAlbumCovers(
 		CoverServiceCase(ctx),
 		CatalogRepository(ctx),
-		&catalogviews.AlbumViewCoversRandomisedObserver{AlbumView: AlbumView(ctx)},
+		AlbumView(ctx),
 	)
 }
 

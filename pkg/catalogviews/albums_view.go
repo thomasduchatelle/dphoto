@@ -235,18 +235,6 @@ func (v *AlbumView) OnAlbumCoversRandomised(ctx context.Context, event catalog.A
 	return v.applyCoverUpdates(ctx, map[catalog.AlbumId][]catalog.Cover{event.AlbumId: event.Covers})
 }
 
-// AlbumViewCoversRandomisedObserver adapts the AlbumView to the catalog's
-// AlbumCoversRandomisedObserver interface, so the owner-triggered randomise use case
-// can propagate the new covers through the view projection using the standard
-// observer wiring.
-type AlbumViewCoversRandomisedObserver struct {
-	AlbumView *AlbumView
-}
-
-func (a *AlbumViewCoversRandomisedObserver) OnAlbumCoversRandomised(ctx context.Context, event catalog.AlbumCoversRandomised) error {
-	return a.AlbumView.OnAlbumCoversRandomised(ctx, event)
-}
-
 func (v *AlbumView) applyCoverUpdates(ctx context.Context, covers map[catalog.AlbumId][]catalog.Cover) error {
 	for albumId, albumCovers := range covers {
 		if len(albumCovers) == 0 {
