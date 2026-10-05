@@ -172,7 +172,7 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should ignore the Covers field on the summary: covers travel through PutCoversForAllViewers, not through PutSummaries",
+			name: "it should write the sibling covers row for every user when the summary carries Covers",
 			args: args{
 				summaries: []catalogviews.AlbumSummaryForUsers{
 					{
@@ -183,7 +183,26 @@ func TestAlbumViewRepository_PutSummaries(t *testing.T) {
 								{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom},
 							},
 						},
-						Users: []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
+						Users: []catalogviews.Availability{catalogviews.OwnerAvailability(userId1), catalogviews.VisitorAvailability(userId2)},
+					},
+				},
+			},
+			before: nil,
+			after: []map[string]types.AttributeValue{
+				albumSummaryItemBuilder(userId1, "OWNED", albumId1).withCount(42).build(),
+				albumCoversItemBuilder(userId1, "OWNED", albumId1, catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}).build(),
+				albumSummaryItemBuilder(userId2, "VISITOR", albumId1).withCount(42).build(),
+				albumCoversItemBuilder(userId2, "VISITOR", albumId1, catalog.Cover{MediaId: "media-1", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}).build(),
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should not write a covers row when the summary carries no Covers",
+			args: args{
+				summaries: []catalogviews.AlbumSummaryForUsers{
+					{
+						AlbumSummary: catalogviews.AlbumSummary{AlbumId: albumId1, MediaCount: 42},
+						Users:        []catalogviews.Availability{catalogviews.OwnerAvailability(userId1)},
 					},
 				},
 			},
