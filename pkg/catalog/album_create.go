@@ -15,11 +15,14 @@ var (
 )
 
 // AlbumCreated is fired after a new album has been persisted and its overlapping medias
-// have been transferred: it carries the newly created album and the medias that were
-// actually moved into it (if any).
+// have been transferred: it carries the newly created album, the medias that were
+// actually moved into it (if any), and the cover sets of every album whose covers were
+// updated by the creation. Albums whose cover set did not change are omitted from
+// Covers; a missing album means "no cover update required".
 type AlbumCreated struct {
 	CreatedAlbum      Album
 	TransferredMedias TransferredMedias
+	Covers            map[AlbumId][]Cover
 }
 
 type AlbumCreatedObserver interface {
@@ -36,6 +39,7 @@ func (f AlbumCreatedObserverFunc) OnAlbumCreated(ctx context.Context, event Albu
 func NewAlbumCreate(
 	TimelineRepository TimelineRepository,
 	TransferMedias TransferMediasService,
+	CoverService CoverServicePort,
 	AlbumCreatedObservers ...AlbumCreatedObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
@@ -43,6 +47,7 @@ func NewAlbumCreate(
 		BulkCreateAlbum: &BulkCreateAlbum{
 			TimelineRepository:    TimelineRepository,
 			TransferMediasService: TransferMedias,
+			CoverService:          CoverService,
 			AlbumCreatedObservers: AlbumCreatedObservers,
 		},
 	}
@@ -78,6 +83,7 @@ func (a *AlbumCreatedAsTimelineMutation) OnAlbumCreated(ctx context.Context, eve
 type BulkCreateAlbum struct {
 	TimelineRepository    TimelineRepository
 	TransferMediasService TransferMediasService
+	CoverService          CoverServicePort
 	AlbumCreatedObservers []AlbumCreatedObserver
 }
 
@@ -97,11 +103,17 @@ func (c *BulkCreateAlbum) Create(ctx context.Context, timeline *TimelineAggregat
 		return nil, err
 	}
 
+	covers, err := c.CoverService.StableRefresh(ctx, transferred)
+	if err != nil {
+		return nil, errors.Wrapf(err, "CreateAlbum failed to stabilise covers for %s", album.AlbumId)
+	}
+
 	log.WithField("Owner", request.Owner).Infof("Album %s created", album)
 
 	event := AlbumCreated{
 		CreatedAlbum:      album,
 		TransferredMedias: transferred,
+		Covers:            covers,
 	}
 	for _, observer := range c.AlbumCreatedObservers {
 		if err = observer.OnAlbumCreated(ctx, event); err != nil {

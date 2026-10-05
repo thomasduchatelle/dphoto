@@ -1,6 +1,6 @@
 # 10 — Covers on AlbumCreated
 
-Status: ready
+Status: done
 Phase: 2
 Layer: `pkg/catalog` + `pkg/catalogviews` + `pkg/pkgfactory`
 Depends on: 09 (cover-maintenance service, split view projection)

@@ -230,7 +230,7 @@ func (c *CoverService) StableRefresh(ctx context.Context, transferred Transferre
 		}
 
 		if hasBeenFiltered || hasBeenAltered || hasBeenFilled {
-			if len(updatedCovers) == 0 {
+			if updatedCovers == nil {
 				updatedCovers = make(map[AlbumId][]Cover)
 			}
 			updatedCovers[album.albumId] = covers

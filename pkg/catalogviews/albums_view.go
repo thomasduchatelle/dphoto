@@ -106,7 +106,11 @@ func (v *AlbumView) OnAlbumCreated(ctx context.Context, event catalog.AlbumCreat
 		return err
 	}
 
-	return v.recountAlbums(ctx, event.TransferredMedias.FromAlbums)
+	if err := v.recountAlbums(ctx, event.TransferredMedias.FromAlbums); err != nil {
+		return err
+	}
+
+	return v.applyCoverUpdates(ctx, event.Covers)
 }
 
 func (v *AlbumView) OnAlbumRenamed(ctx context.Context, event catalog.AlbumRenamed) error {

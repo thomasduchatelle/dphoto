@@ -173,11 +173,17 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			transferService := &TransferMediasServiceFake{}
 			observer := &AlbumCreatedObserverInMemory{}
+			coverService := &catalog.CoverService{
+				CoverRepository:     NewCoverRepositoryInMemory(),
+				MediaReadRepository: &MediaReadRepositoryInMemory{},
+				Randomiser:          deterministicRandomiser,
+			}
 
 			referencer, err := catalog.NewAlbumAutoPopulateReferencer(
 				owner,
 				tt.fields.AlbumRepository,
 				transferService,
+				coverService,
 				observer,
 			)
 			if !assert.NoError(t, err) {
