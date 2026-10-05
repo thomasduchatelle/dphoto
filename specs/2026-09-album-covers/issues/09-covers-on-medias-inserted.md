@@ -1,6 +1,6 @@
 # 09 — Covers on MediasInserted + split view projection + Refresh/Stabilise service
 
-Status: ready
+Status: done
 Phase: 2
 Layer: `pkg/catalog` + `pkg/catalogviews` + `pkg/catalogviewsadapters/catalogviewsdynamodb` + `pkg/pkgfactory` + `cmd/dphotops`
 Depends on: —
