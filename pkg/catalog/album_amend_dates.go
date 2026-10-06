@@ -19,10 +19,13 @@ func (a *DatesUpdate) DatesNotChanged() bool {
 }
 
 // AlbumDatesAmended is fired after an album's dates have been persisted and the medias
-// affected by the change have been transferred to their new albums.
+// affected by the change have been transferred to their new albums. Covers carries the
+// resulting cover sets of every album whose covers were updated as a consequence of the
+// transfer; albums whose cover set did not change are omitted.
 type AlbumDatesAmended struct {
 	DatesUpdate       DatesUpdate
 	TransferredMedias TransferredMedias
+	Covers            map[AlbumId][]Cover
 }
 
 type AlbumDatesAmendedObserver interface {
@@ -40,12 +43,14 @@ func NewAmendAlbumDates(
 	timelineRepository TimelineRepository,
 	countMediasBySelectors CountMediasBySelectorsPort,
 	transferMedias TransferMediasService,
+	coverService CoverServicePort,
 	observers ...AlbumDatesAmendedObserver,
 ) *AmendAlbumDates {
 	return &AmendAlbumDates{
 		TimelineRepository:         timelineRepository,
 		CountMediasBySelectorsPort: countMediasBySelectors,
 		TransferMediasService:      transferMedias,
+		CoverService:               coverService,
 		AlbumDatesAmendedObservers: observers,
 	}
 }
@@ -58,6 +63,7 @@ type AmendAlbumDates struct {
 	TimelineRepository         TimelineRepository
 	CountMediasBySelectorsPort CountMediasBySelectorsPort
 	TransferMediasService      TransferMediasService
+	CoverService               CoverServicePort
 	AlbumDatesAmendedObservers []AlbumDatesAmendedObserver
 }
 
@@ -105,9 +111,15 @@ func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, 
 
 	log.WithField("Owner", albumId.Owner).Infof("Album %s dates updates to %s -> %s", albumId, update.DatesUpdate.UpdatedAlbum.Start.Format(time.DateTime), update.DatesUpdate.UpdatedAlbum.End.Format(time.DateTime))
 
+	covers, err := a.CoverService.ApplyTransfer(ctx, transferred)
+	if err != nil {
+		return err
+	}
+
 	event := AlbumDatesAmended{
 		DatesUpdate:       update.DatesUpdate,
 		TransferredMedias: transferred,
+		Covers:            covers,
 	}
 	for _, observer := range a.AlbumDatesAmendedObservers {
 		if err = observer.OnAlbumDatesAmended(ctx, event); err != nil {

@@ -13,61 +13,35 @@ import (
 
 func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 	const owner = ownermodel.Owner("owner-1")
+	jan26 := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb26 := time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC)
+	apr26 := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC)
+	oct25 := time.Date(2025, time.October, 1, 0, 0, 0, 0, time.UTC)
 	jan23 := time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)
-	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
-	apr24 := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
 
-	album23 := &catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      owner,
-			FolderName: catalog.NewFolderName("/2023"),
-		},
-		Name:  "2023",
-		Start: jan23,
-		End:   feb24,
+	q1_26Album := catalog.Album{
+		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/2026-Q1")},
+		Name:    "Q1 2026",
+		Start:   jan26,
+		End:     apr26,
 	}
-	q1Album := catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      owner,
-			FolderName: catalog.NewFolderName("/2024-Q1"),
-		},
-		Name:  "Q1 2024",
-		Start: jan24,
-		End:   apr24,
+	q4_25Album := &catalog.Album{
+		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/2025-Q4")},
+		Name:    "Q4 2025",
+		Start:   oct25,
+		End:     jan26,
 	}
-	q4album := &catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      owner,
-			FolderName: catalog.NewFolderName("/2023-Q4"),
-		},
-		Name:  "Q4 2023",
-		Start: time.Date(2023, time.October, 1, 0, 0, 0, 0, time.UTC),
-		End:   time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
+	wideAlbum := &catalog.Album{
+		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/wide")},
+		Name:    "wide",
+		Start:   jan23,
+		End:     feb26,
 	}
 
-	recordsFrom23 := catalog.MediaTransferRecords{
-		q1Album.AlbumId: {
-			{
-				FromAlbums: []catalog.AlbumId{album23.AlbumId},
-				Start:      jan24,
-				End:        apr24,
-			},
-		},
-	}
-	transferredFrom23 := func() catalog.TransferredMedias {
-		var ids []catalog.MediaId
-		for day := jan24; day.Before(apr24); day = day.AddDate(0, 0, 1) {
-			ids = append(ids, fakeMediaId(album23.AlbumId, day))
-		}
-		return catalog.TransferredMedias{
-			Transfers:  map[catalog.AlbumId][]catalog.MediaId{q1Album.AlbumId: ids},
-			FromAlbums: []catalog.AlbumId{album23.AlbumId},
-		}
-	}
+	photo5feb26 := photoAt("photo5feb26", feb26.AddDate(0, 0, 5))
 
 	type fields struct {
-		AlbumRepository *AlbumRepositoryInMemory
+		Catalog *CatalogInMemory
 	}
 	type exec struct {
 		mediaTime time.Time
@@ -75,95 +49,91 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 		wantErr   assert.ErrorAssertionFunc
 	}
 	tests := []struct {
-		name                  string
-		fields                fields
-		exec                  []exec
-		expectAlbumIds        []catalog.AlbumId
-		expectTransferRecords []catalog.MediaTransferRecords
-		expectCreatedEvents   []catalog.AlbumCreated
+		name                string
+		fields              fields
+		exec                []exec
+		expectAlbumIds      []catalog.AlbumId
+		expectMediasByAlbum map[catalog.AlbumId][]*catalog.MediaMeta
+		expectCreatedEvents []catalog.AlbumCreated
 	}{
 		{
 			name:   "it should look up an existing album by media time without creating anything",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(&q1Album)},
+			fields: fields{Catalog: NewCatalogInMemory(withAlbum(&q1_26Album))},
 			exec: []exec{
 				{
-					mediaTime: feb24,
-					want:      catalog.AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: false},
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: false},
 					wantErr:   assert.NoError,
 				},
 			},
-			expectAlbumIds: []catalog.AlbumId{q1Album.AlbumId},
-		},
-		{
-			name:   "it should create a new quarterly album when no album covers the media time (no overlap, no transfer)",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory()},
-			exec: []exec{
-				{
-					mediaTime: feb24,
-					want:      catalog.AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: true},
-					wantErr:   assert.NoError,
-				},
-			},
-			expectAlbumIds:        []catalog.AlbumId{q1Album.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{nil},
-			expectCreatedEvents: []catalog.AlbumCreated{{
-				CreatedAlbum:      q1Album,
-				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
-			}},
+			expectAlbumIds:      []catalog.AlbumId{q1_26Album.AlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{q1_26Album.AlbumId: nil},
 		},
 		{
 			name:   "it should create a new quarterly album with no transfer when an adjacent album does not overlap",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(q4album)},
+			fields: fields{Catalog: NewCatalogInMemory(withAlbum(q4_25Album))},
 			exec: []exec{
 				{
-					mediaTime: feb24,
-					want:      catalog.AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: true},
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: true},
 					wantErr:   assert.NoError,
 				},
 			},
-			expectAlbumIds:        []catalog.AlbumId{q4album.AlbumId, q1Album.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{nil},
+			expectAlbumIds: []catalog.AlbumId{q4_25Album.AlbumId, q1_26Album.AlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				q4_25Album.AlbumId: nil,
+				q1_26Album.AlbumId: nil,
+			},
 			expectCreatedEvents: []catalog.AlbumCreated{{
-				CreatedAlbum:      q1Album,
+				CreatedAlbum:      q1_26Album,
 				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
 			}},
 		},
 		{
-			name:   "it should create a new quarterly album AND transfer medias when the new album overlaps an existing one",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(album23)},
+			name:   "it should create a new quarterly album AND transfer overlapping medias when the new album overlaps an existing one",
+			fields: fields{Catalog: NewCatalogInMemory(withAlbum(wideAlbum, photo5feb26))},
 			exec: []exec{
 				{
-					mediaTime: feb24,
-					want:      catalog.AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: true},
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: true},
 					wantErr:   assert.NoError,
 				},
 			},
-			expectAlbumIds:        []catalog.AlbumId{album23.AlbumId, q1Album.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{recordsFrom23},
+			expectAlbumIds: []catalog.AlbumId{wideAlbum.AlbumId, q1_26Album.AlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				wideAlbum.AlbumId:  nil,
+				q1_26Album.AlbumId: {photo5feb26},
+			},
 			expectCreatedEvents: []catalog.AlbumCreated{{
-				CreatedAlbum:      q1Album,
-				TransferredMedias: transferredFrom23(),
+				CreatedAlbum: q1_26Album,
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{q1_26Album.AlbumId: {photo5feb26.Id}},
+					FromAlbums: []catalog.AlbumId{wideAlbum.AlbumId},
+				},
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					q1_26Album.AlbumId: {randomCover(photo5feb26)},
+				},
 			}},
 		},
 		{
 			name:   "it should reuse the auto-created album for a second media in the same quarter via the cached timeline",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory()},
+			fields: fields{Catalog: NewCatalogInMemory()},
 			exec: []exec{
 				{
-					mediaTime: feb24,
-					want:      catalog.AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: true},
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: true},
 					wantErr:   assert.NoError,
 				},
 				{
-					mediaTime: feb24,
-					want:      catalog.AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: false},
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: false},
 					wantErr:   assert.NoError,
 				},
 			},
-			expectAlbumIds:        []catalog.AlbumId{q1Album.AlbumId},
-			expectTransferRecords: []catalog.MediaTransferRecords{nil},
+			expectAlbumIds:      []catalog.AlbumId{q1_26Album.AlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{q1_26Album.AlbumId: nil},
 			expectCreatedEvents: []catalog.AlbumCreated{{
-				CreatedAlbum:      q1Album,
+				CreatedAlbum:      q1_26Album,
 				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
 			}},
 		},
@@ -171,13 +141,18 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			transferService := &TransferMediasServiceFake{}
 			observer := &AlbumCreatedObserverInMemory{}
+			coverService := &catalog.CoverService{
+				CoverRepository:     NewCoverRepositoryInMemory(),
+				MediaReadRepository: tt.fields.Catalog,
+				Randomiser:          deterministicRandomiser,
+			}
 
 			referencer, err := catalog.NewAlbumAutoPopulateReferencer(
 				owner,
-				tt.fields.AlbumRepository,
-				transferService,
+				tt.fields.Catalog,
+				&catalog.TransferMediasFromRepository{TransferMediasRepository: tt.fields.Catalog},
+				coverService,
 				observer,
 			)
 			if !assert.NoError(t, err) {
@@ -192,12 +167,8 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 				assert.Equal(t, ex.want, got, "FindReference(%v)", ex.mediaTime)
 			}
 
-			storedIds := make([]catalog.AlbumId, 0, len(tt.fields.AlbumRepository.Albums))
-			for id := range tt.fields.AlbumRepository.Albums {
-				storedIds = append(storedIds, id)
-			}
-			assert.ElementsMatch(t, tt.expectAlbumIds, storedIds, "albums in the repository")
-			assert.Equal(t, tt.expectTransferRecords, transferService.Records, "records passed to TransferMedias")
+			assert.ElementsMatch(t, tt.expectAlbumIds, tt.fields.Catalog.AlbumIds(), "albums in the catalog")
+			assert.Equal(t, tt.expectMediasByAlbum, tt.fields.Catalog.MediasByAlbum(), "medias per album")
 			assert.Equal(t, tt.expectCreatedEvents, observer.Events, "AlbumCreated events fired")
 		})
 	}
@@ -205,21 +176,21 @@ func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
 
 func TestNewAlbumDryRunReferencer(t *testing.T) {
 	const owner = ownermodel.Owner("owner-1")
-	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-	jan25 := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
-	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
-	album24 := &catalog.Album{
+	jan26 := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	jan27 := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb26 := time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC)
+	album26 := &catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      owner,
-			FolderName: catalog.NewFolderName("/2024"),
+			FolderName: catalog.NewFolderName("/2026"),
 		},
-		Name:  "2024",
-		Start: jan24,
-		End:   jan25,
+		Name:  "2026",
+		Start: jan26,
+		End:   jan27,
 	}
 
 	type fields struct {
-		AlbumRepository *AlbumRepositoryInMemory
+		Catalog *CatalogInMemory
 	}
 	type args struct {
 		mediaTime time.Time
@@ -233,18 +204,18 @@ func TestNewAlbumDryRunReferencer(t *testing.T) {
 	}{
 		{
 			name:   "it should return a reference for an album that has been found",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory(album24)},
-			args:   args{mediaTime: feb24},
+			fields: fields{Catalog: NewCatalogInMemory(withAlbum(album26))},
+			args:   args{mediaTime: feb26},
 			want: catalog.AlbumReference{
-				AlbumId:          &album24.AlbumId,
+				AlbumId:          &album26.AlbumId,
 				AlbumJustCreated: false,
 			},
 			wantErr: assert.NoError,
 		},
 		{
 			name:   "it should makeup a reference when the album has not been found",
-			fields: fields{AlbumRepository: NewAlbumRepositoryInMemory()},
-			args:   args{mediaTime: jan24},
+			fields: fields{Catalog: NewCatalogInMemory()},
+			args:   args{mediaTime: jan26},
 			want: catalog.AlbumReference{
 				AlbumId:          &catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/new-album")},
 				AlbumJustCreated: true,
@@ -255,7 +226,7 @@ func TestNewAlbumDryRunReferencer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			referencer, err := catalog.NewAlbumDryRunReferencer(owner, tt.fields.AlbumRepository)
+			referencer, err := catalog.NewAlbumDryRunReferencer(owner, tt.fields.Catalog)
 			if !assert.NoError(t, err) {
 				return
 			}
@@ -270,26 +241,26 @@ func TestNewAlbumDryRunReferencer(t *testing.T) {
 
 func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
 	const owner = ownermodel.Owner("owner-1")
-	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
-	apr24 := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
+	jan26 := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb26 := time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC)
+	apr26 := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC)
 	q1Album := catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      owner,
-			FolderName: catalog.NewFolderName("/2024-Q1"),
+			FolderName: catalog.NewFolderName("/2026-Q1"),
 		},
-		Name:  "Q1 2024",
-		Start: jan24,
-		End:   apr24,
+		Name:  "Q1 2026",
+		Start: jan26,
+		End:   apr26,
 	}
 	febAprAlbum := catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      owner,
-			FolderName: catalog.NewFolderName("/2024-Feb-Apr"),
+			FolderName: catalog.NewFolderName("/2026-Feb-Apr"),
 		},
-		Name:  "Feb-Apr 2024",
-		Start: feb24,
-		End:   apr24,
+		Name:  "Feb-Apr 2026",
+		Start: feb26,
+		End:   apr26,
 	}
 
 	type args struct {
@@ -308,7 +279,7 @@ func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
 			args: args{
 				owner:     owner,
 				albums:    []*catalog.Album{&q1Album},
-				mediaTime: feb24,
+				mediaTime: feb26,
 			},
 			want: catalog.AlbumReference{
 				AlbumId:          &q1Album.AlbumId,
@@ -321,7 +292,7 @@ func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
 			args: args{
 				owner:     owner,
 				albums:    nil,
-				mediaTime: feb24,
+				mediaTime: feb26,
 			},
 			want: catalog.AlbumReference{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -336,7 +307,7 @@ func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
 					&febAprAlbum,
 					&q1Album,
 				},
-				mediaTime: feb24,
+				mediaTime: feb26,
 			},
 			want: catalog.AlbumReference{
 				AlbumId:          &febAprAlbum.AlbumId,

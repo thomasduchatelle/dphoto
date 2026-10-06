@@ -56,3 +56,13 @@ type OwnerUserIdFunc func(ctx context.Context, owner ownermodel.Owner) (usermode
 func (f OwnerUserIdFunc) GetOwnerUserId(ctx context.Context, owner ownermodel.Owner) (usermodel.UserId, error) {
 	return f(ctx, owner)
 }
+
+type FindCoversByAlbumPort interface {
+	FindCoversByAlbum(ctx context.Context, albumId catalog.AlbumId) ([]catalog.Cover, error)
+}
+
+type FindCoversByAlbumFunc func(ctx context.Context, albumId catalog.AlbumId) ([]catalog.Cover, error)
+
+func (f FindCoversByAlbumFunc) FindCoversByAlbum(ctx context.Context, albumId catalog.AlbumId) ([]catalog.Cover, error) {
+	return f(ctx, albumId)
+}

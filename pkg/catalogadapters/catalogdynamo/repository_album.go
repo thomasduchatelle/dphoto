@@ -16,10 +16,13 @@ import (
 )
 
 func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
-	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
-		expression.Key("PK").Equal(expression.Value(fmt.Sprintf("%s#ALBUM", owner))),
-		expression.Key("SK").BeginsWith("ALBUM#"),
-	)).Build()
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(expression.KeyAnd(
+			expression.Key("PK").Equal(expression.Value(fmt.Sprintf("%s#ALBUM", owner))),
+			expression.Key("SK").BeginsWith("ALBUM#"),
+		)).
+		WithFilter(expression.Name("AlbumName").AttributeExists()).
+		Build()
 	if err != nil {
 		return nil, err
 	}
@@ -28,6 +31,7 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Own
 		ExpressionAttributeValues: expr.Values(),
 		ExpressionAttributeNames:  expr.Names(),
 		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
 		TableName:                 &r.table,
 	}
 	data, err := r.client.Query(ctx, query)

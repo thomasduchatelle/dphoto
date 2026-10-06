@@ -25,6 +25,7 @@ func NewAlbumAutoPopulateReferencer(
 	owner ownermodel.Owner,
 	timelineRepository TimelineRepository,
 	TransferMediasService TransferMediasService,
+	CoverService CoverServicePort,
 	AlbumCreatedObservers ...AlbumCreatedObserver,
 ) (*ThreadSafeAlbumReferencer, error) {
 	return initiateStatefulAlbumReferencer(
@@ -36,6 +37,7 @@ func NewAlbumAutoPopulateReferencer(
 			BulkCreateAlbum: &BulkCreateAlbum{
 				TimelineRepository:    timelineRepository,
 				TransferMediasService: TransferMediasService,
+				CoverService:          CoverService,
 				AlbumCreatedObservers: AlbumCreatedObservers,
 			},
 		},

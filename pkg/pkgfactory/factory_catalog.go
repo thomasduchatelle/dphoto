@@ -71,6 +71,7 @@ func InsertMediasCase(ctx context.Context) *catalog.InsertMedias {
 	repository := CatalogRepository(ctx)
 	return catalog.NewInsertMedias(
 		repository,
+		CoverServiceCase(ctx),
 		AlbumView(ctx),
 	)
 }
@@ -90,6 +91,21 @@ func CatalogMediaQueries(ctx context.Context) *catalog.MediaQueries {
 	})
 }
 
+func CoverServiceCase(ctx context.Context) *catalog.CoverService {
+	return singletons.MustSingleton(func() (*catalog.CoverService, error) {
+		repository := CatalogRepository(ctx)
+		return catalog.NewCoverService(repository, repository), nil
+	})
+}
+
+func RandomizeAlbumCoversCase(ctx context.Context) *catalog.RandomizeAlbumCovers {
+	return catalog.NewRandomizeAlbumCovers(
+		CoverServiceCase(ctx),
+		CatalogRepository(ctx),
+		AlbumView(ctx),
+	)
+}
+
 type SimpleCatalogFactory struct {
 	ArchiveAdapterForCatalog ArchiveAdapterForCatalog
 }
@@ -99,6 +115,7 @@ func (s *SimpleCatalogFactory) CreateAlbumCase(ctx context.Context) *catalog.Cre
 	return catalog.NewAlbumCreate(
 		TimelineRepository(ctx),
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		CoverServiceCase(ctx),
 		&catalog.AlbumCreatedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		AlbumView(ctx),
 	)
@@ -110,6 +127,7 @@ func (s *SimpleCatalogFactory) CreateAlbumDeleteCase(ctx context.Context) *catal
 		TimelineRepository(ctx),
 		repository,
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		CoverServiceCase(ctx),
 		&catalog.AlbumDeletedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		AlbumView(ctx),
 	)
@@ -120,6 +138,7 @@ func (s *SimpleCatalogFactory) RenameAlbumCase(ctx context.Context) *catalog.Ren
 	return catalog.NewRenameAlbum(
 		TimelineRepository(ctx),
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		repository,
 		&catalog.AlbumRenamedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		AlbumView(ctx),
 	)
@@ -131,6 +150,7 @@ func (s *SimpleCatalogFactory) AmendAlbumDatesCase(ctx context.Context) *catalog
 		TimelineRepository(ctx),
 		repository,
 		&catalog.TransferMediasFromRepository{TransferMediasRepository: repository},
+		CoverServiceCase(ctx),
 		&catalog.AlbumDatesAmendedAsTimelineMutation{TimelineMutationObserver: s.ArchiveAdapterForCatalog.ArchiveTimelineMutationObserver(ctx)},
 		AlbumView(ctx),
 	)
