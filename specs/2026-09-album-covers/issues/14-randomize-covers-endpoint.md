@@ -1,6 +1,6 @@
 # 14 — `POST …/covers/refresh` endpoint
 
-Status: ready
+Status: done
 Phase: 3
 Layer: api — `api/lambdas/randomize-album-covers` (new lambda)
 Depends on: 13

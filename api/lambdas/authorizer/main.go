@@ -146,6 +146,14 @@ var supportedRoutes = []AuthorizedRoute{
 			return authoriser.CanRenameAlbum(ctx, user, albumId)
 		},
 	},
+	{
+		Route: Route{Pattern: "/api/v1/owners/{owner}/albums/{folderName}/covers/refresh", Method: "POST"},
+		Authorize: func(ctx context.Context, authoriser *catalogacl.CatalogAuthorizer, user usermodel.CurrentUser, pathParams map[string]string) error {
+			// randomize-album-covers
+			albumId := catalog.NewAlbumIdFromStrings(pathParams["owner"], pathParams["folderName"])
+			return authoriser.CanAmendAlbumDates(ctx, user, albumId)
+		},
+	},
 
 	// Archive endpoints
 	{
