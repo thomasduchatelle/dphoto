@@ -34,10 +34,16 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 	staleAlbum2Visitor1 := UserAlbumSummary{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}, Availability: VisitorAvailability(userId1)}
 	staleAlbum2Visitor2 := UserAlbumSummary{AlbumSummary: AlbumSummary{AlbumId: album2, MediaCount: 2, Name: "Album Two", Start: album2Start, End: album2End}, Availability: VisitorAvailability(userId2)}
 
+	coverA := catalog.Cover{MediaId: "media-a", Filename: "a.jpg", Origin: catalog.CoverOriginRandom}
+	coverB := catalog.Cover{MediaId: "media-b", Filename: "b.jpg", Origin: catalog.CoverOriginRandom}
+	coverC := catalog.Cover{MediaId: "media-c", Filename: "c.jpg", Origin: catalog.CoverOriginCherryPicked}
+	coverD := catalog.Cover{MediaId: "media-d", Filename: "d.jpg", Origin: catalog.CoverOriginRandom}
+
 	type fields struct {
 		findAlbumByOwnerPort          FindAlbumByOwnerPort
 		listUserWhoCanAccessAlbumPort ListUserWhoCanAccessAlbumPort
 		mediaCounterPort              MediaCounterPort
+		findCoversByAlbumPort         FindCoversByAlbumPort
 	}
 	type args struct {
 		owner ownermodel.Owner
@@ -160,6 +166,62 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
+			name: "it should rebuild covers from the canonical cover set when the album has 4 covers",
+			fields: fields{
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
+				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
+					Values: map[catalog.AlbumId][]Availability{
+						album1: {OwnerAvailability(userId1)},
+					},
+				},
+				mediaCounterPort: &MediaCounterPortFake{album1: 1},
+				findCoversByAlbumPort: FindCoversByAlbumPortFake{
+					album1: {coverA, coverB, coverC, coverD},
+				},
+			},
+			current: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Album One", Start: album1Start, End: album1End}, Availability: OwnerAvailability(userId1)},
+			},
+			wantSummaries: []UserAlbumSummary{
+				{
+					AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Album One", Start: album1Start, End: album1End, Covers: []catalog.Cover{coverA, coverB, coverC, coverD}},
+					Availability: OwnerAvailability(userId1),
+				},
+			},
+			wantDrifts: []Drift{
+				NewOverrideDrift(UserAlbumSummary{
+					AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Album One", Start: album1Start, End: album1End, Covers: []catalog.Cover{coverA, coverB, coverC, coverD}},
+					Availability: OwnerAvailability(userId1),
+				}),
+			},
+			expectLegacyCleanupForUsers: []usermodel.UserId{userId1},
+			args:                        args{owner: owner1, dry: false},
+			wantErr:                     assert.NoError,
+		},
+		{
+			name: "it should not drift when the current row already matches the canonical empty cover set",
+			fields: fields{
+				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
+				listUserWhoCanAccessAlbumPort: &ListUserWhoCanAccessAlbumPortFake{
+					Values: map[catalog.AlbumId][]Availability{
+						album1: {OwnerAvailability(userId1)},
+					},
+				},
+				mediaCounterPort:      &MediaCounterPortFake{album1: 1},
+				findCoversByAlbumPort: FindCoversByAlbumPortFake{},
+			},
+			current: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Album One", Start: album1Start, End: album1End}, Availability: OwnerAvailability(userId1)},
+			},
+			wantSummaries: []UserAlbumSummary{
+				{AlbumSummary: AlbumSummary{AlbumId: album1, MediaCount: 1, Name: "Album One", Start: album1Start, End: album1End}, Availability: OwnerAvailability(userId1)},
+			},
+			wantDrifts:                  nil,
+			expectLegacyCleanupForUsers: []usermodel.UserId{userId1},
+			args:                        args{owner: owner1, dry: false},
+			wantErr:                     assert.NoError,
+		},
+		{
 			name: "it should backfill missing display fields on a legacy row",
 			fields: fields{
 				findAlbumByOwnerPort: stubFindAlbumByOwnerPort(canonicalAlbum1),
@@ -194,11 +256,16 @@ func TestNewDriftReconcilerAcceptance(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repository := &AlbumSummaryInMemoryRepository{Summaries: tt.current}
 
+			findCovers := tt.fields.findCoversByAlbumPort
+			if findCovers == nil {
+				findCovers = FindCoversByAlbumPortFake(nil)
+			}
 			reconciler := NewDriftReconciler(
 				tt.fields.findAlbumByOwnerPort,
 				repository,
 				tt.fields.listUserWhoCanAccessAlbumPort,
 				tt.fields.mediaCounterPort,
+				findCovers,
 				DriftOptionDryMode(tt.args.dry, repository),
 			)
 

@@ -1,6 +1,6 @@
 # 03 — Covers in the album-list read model
 
-Status: ready
+Status: done
 Phase: 2
 Layer: catalog domain — `pkg/catalogviews` + `pkg/catalogviewsadapters/catalogviewsdynamodb`
 Depends on: 01, 02

@@ -14,6 +14,7 @@ func NewAlbumView(
 	mediaCounterPort MediaCounterPort,
 	findAlbumsByIdsPort FindAlbumsByIdsPort,
 	ownerUserIdPort OwnerUserIdPort,
+	findCoversByAlbumPort FindCoversByAlbumPort,
 ) *AlbumView {
 	return &AlbumView{
 		Repository:              repository,
@@ -21,6 +22,7 @@ func NewAlbumView(
 		MediaCounterPort:        mediaCounterPort,
 		FindAlbumsByIdsPort:     findAlbumsByIdsPort,
 		OwnerUserIdPort:         ownerUserIdPort,
+		FindCoversByAlbumPort:   findCoversByAlbumPort,
 	}
 }
 
@@ -30,6 +32,7 @@ type AlbumView struct {
 	MediaCounterPort        MediaCounterPort
 	FindAlbumsByIdsPort     FindAlbumsByIdsPort
 	OwnerUserIdPort         OwnerUserIdPort
+	FindCoversByAlbumPort   FindCoversByAlbumPort
 }
 
 func (v *AlbumView) ListAlbums(ctx context.Context, user usermodel.CurrentUser, filter ListAlbumsFilter) ([]*VisibleAlbum, error) {
@@ -61,6 +64,7 @@ func (v *AlbumView) ListAlbums(ctx context.Context, user usermodel.CurrentUser, 
 			},
 			MediaCount:         summary.AlbumSummary.MediaCount,
 			OwnedByCurrentUser: summary.Availability.AsOwner,
+			Covers:             summary.AlbumSummary.Covers,
 		}
 		if summary.Availability.AsOwner {
 			visible.Visitors = sharingGrid[summary.AlbumSummary.AlbumId]
@@ -102,7 +106,11 @@ func (v *AlbumView) OnAlbumCreated(ctx context.Context, event catalog.AlbumCreat
 		return err
 	}
 
-	return v.recountAlbums(ctx, event.TransferredMedias.FromAlbums)
+	if err := v.recountAlbums(ctx, event.TransferredMedias.FromAlbums); err != nil {
+		return err
+	}
+
+	return v.applyCoverUpdates(ctx, event.Covers)
 }
 
 func (v *AlbumView) OnAlbumRenamed(ctx context.Context, event catalog.AlbumRenamed) error {
@@ -133,7 +141,11 @@ func (v *AlbumView) OnAlbumDatesAmended(ctx context.Context, event catalog.Album
 			affected = append(affected, albumId)
 		}
 	}
-	return v.recountAlbums(ctx, affected)
+	if err := v.recountAlbums(ctx, affected); err != nil {
+		return err
+	}
+
+	return v.applyCoverUpdates(ctx, event.Covers)
 }
 
 func (v *AlbumView) OnAlbumDeleted(ctx context.Context, event catalog.AlbumDeleted) error {
@@ -141,20 +153,33 @@ func (v *AlbumView) OnAlbumDeleted(ctx context.Context, event catalog.AlbumDelet
 		return err
 	}
 
-	if event.TransferredMedias.IsEmpty() {
-		return nil
+	if !event.TransferredMedias.IsEmpty() {
+		destinationIds := make([]catalog.AlbumId, 0, len(event.TransferredMedias.Transfers))
+		for albumId := range event.TransferredMedias.Transfers {
+			destinationIds = append(destinationIds, albumId)
+		}
+		if err := v.recountAlbums(ctx, destinationIds); err != nil {
+			return err
+		}
 	}
 
-	destinationIds := make([]catalog.AlbumId, 0, len(event.TransferredMedias.Transfers))
-	for albumId := range event.TransferredMedias.Transfers {
-		destinationIds = append(destinationIds, albumId)
+	destinationCovers := make(map[catalog.AlbumId][]catalog.Cover, len(event.Covers))
+	for albumId, covers := range event.Covers {
+		if albumId.IsEqual(event.DeletedAlbumId) {
+			continue
+		}
+		destinationCovers[albumId] = covers
 	}
-
-	return v.recountAlbums(ctx, destinationIds)
+	return v.applyCoverUpdates(ctx, destinationCovers)
 }
 
 func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId usermodel.UserId) error {
 	counts, err := v.MediaCounterPort.CountMedia(ctx, album.AlbumId)
+	if err != nil {
+		return err
+	}
+
+	covers, err := v.FindCoversByAlbumPort.FindCoversByAlbum(ctx, album.AlbumId)
 	if err != nil {
 		return err
 	}
@@ -167,6 +192,7 @@ func (v *AlbumView) AlbumShared(ctx context.Context, album catalog.Album, userId
 				Name:       album.Name,
 				Start:      album.Start,
 				End:        album.End,
+				Covers:     covers,
 			},
 			Users: []Availability{VisitorAvailability(userId)},
 		},
@@ -177,20 +203,51 @@ func (v *AlbumView) AlbumUnShared(ctx context.Context, albumId catalog.AlbumId, 
 	return v.Repository.DeleteRow(ctx, VisitorAvailability(userId), albumId)
 }
 
-func (v *AlbumView) OnMediasInserted(ctx context.Context, medias map[catalog.AlbumId][]catalog.MediaId) error {
-	if len(medias) == 0 {
+func (v *AlbumView) OnMediasInserted(ctx context.Context, event catalog.MediasInserted) error {
+	if len(event.Inserted) == 0 && len(event.Covers) == 0 {
 		return nil
 	}
 
-	diffs := make([]AlbumCountDiff, 0, len(medias))
-	for albumId, mediaIds := range medias {
-		diffs = append(diffs, AlbumCountDiff{
-			AlbumId:        albumId,
-			MediaCountDiff: len(mediaIds),
-		})
+	if len(event.Inserted) > 0 {
+		diffs := make([]AlbumCountDiff, 0, len(event.Inserted))
+		for albumId, mediaIds := range event.Inserted {
+			diffs = append(diffs, AlbumCountDiff{
+				AlbumId:        albumId,
+				MediaCountDiff: len(mediaIds),
+			})
+		}
+		if err := v.Repository.IncrementCountForAllViewers(ctx, diffs); err != nil {
+			return err
+		}
 	}
 
-	return v.Repository.IncrementCountForAllViewers(ctx, diffs)
+	return v.applyCoverUpdates(ctx, event.Covers)
+}
+
+// OnCoverBackfilled denormalises the cover sets produced by an admin backfill into every
+// viewer's cover row. The backfill is the only path that writes covers outside of a
+// lifecycle event, so it needs its own observer hook.
+func (v *AlbumView) OnCoverBackfilled(ctx context.Context, coversByAlbumId map[catalog.AlbumId][]catalog.Cover) error {
+	return v.applyCoverUpdates(ctx, coversByAlbumId)
+}
+
+func (v *AlbumView) OnAlbumCoversRandomised(ctx context.Context, event catalog.AlbumCoversRandomised) error {
+	return v.applyCoverUpdates(ctx, map[catalog.AlbumId][]catalog.Cover{event.AlbumId: event.Covers})
+}
+
+func (v *AlbumView) applyCoverUpdates(ctx context.Context, covers map[catalog.AlbumId][]catalog.Cover) error {
+	for albumId, albumCovers := range covers {
+		if len(albumCovers) == 0 {
+			if err := v.Repository.DeleteCoversForAllViewers(ctx, albumId); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := v.Repository.PutCoversForAllViewers(ctx, albumId, albumCovers); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (v *AlbumView) recountAlbums(ctx context.Context, albumIds []catalog.AlbumId) error {

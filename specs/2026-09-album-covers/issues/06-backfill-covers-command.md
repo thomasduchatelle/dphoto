@@ -1,6 +1,6 @@
 # 06 — Backfill covers for all owners/albums
 
-Status: ready
+Status: done
 Phase: 2
 Layer: CLI — `cmd/dphotops`
 Depends on: 02

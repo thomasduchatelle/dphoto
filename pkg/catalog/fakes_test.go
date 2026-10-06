@@ -120,6 +120,164 @@ func (r *AlbumRepositoryInMemory) CountMediasBySelectors(_ context.Context, owne
 	return count, nil
 }
 
+// CoverRepositorySeed is used to pre-populate a CoverRepositoryInMemory.
+type CoverRepositorySeed struct {
+	AlbumId catalog.AlbumId
+	Covers  []catalog.Cover
+}
+
+// CoverRepositoryInMemory implements catalog.CoverRepository backed by a map keyed by
+// AlbumId. Cases can seed the fake with existing covers via the constructor.
+type CoverRepositoryInMemory struct {
+	Covers map[catalog.AlbumId][]catalog.Cover
+}
+
+func NewCoverRepositoryInMemory(seeds ...CoverRepositorySeed) *CoverRepositoryInMemory {
+	store := &CoverRepositoryInMemory{
+		Covers: make(map[catalog.AlbumId][]catalog.Cover),
+	}
+	for _, seed := range seeds {
+		store.Covers[seed.AlbumId] = append([]catalog.Cover(nil), seed.Covers...)
+	}
+	return store
+}
+
+func (c *CoverRepositoryInMemory) FindCoversByAlbum(_ context.Context, albumId catalog.AlbumId) ([]catalog.Cover, error) {
+	covers, ok := c.Covers[albumId]
+	if !ok {
+		return nil, nil
+	}
+	return append([]catalog.Cover(nil), covers...), nil
+}
+
+func (c *CoverRepositoryInMemory) FindCoversByAlbums(_ context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalog.Cover, error) {
+	result := make(map[catalog.AlbumId][]catalog.Cover, len(albumIds))
+	for _, albumId := range albumIds {
+		if covers, ok := c.Covers[albumId]; ok {
+			result[albumId] = append([]catalog.Cover(nil), covers...)
+		}
+	}
+	return result, nil
+}
+
+func (c *CoverRepositoryInMemory) SaveCovers(_ context.Context, albumId catalog.AlbumId, covers []catalog.Cover) error {
+	if len(covers) > catalog.MaxCoversPerAlbum {
+		return catalog.TooManyCoversErr
+	}
+	if len(covers) == 0 {
+		delete(c.Covers, albumId)
+		return nil
+	}
+	c.Covers[albumId] = append([]catalog.Cover(nil), covers...)
+	return nil
+}
+
+func (c *CoverRepositoryInMemory) MoveCovers(_ context.Context, from, to catalog.AlbumId) error {
+	if from.IsEqual(to) {
+		return nil
+	}
+	covers, ok := c.Covers[from]
+	if !ok {
+		return nil
+	}
+	c.Covers[to] = append([]catalog.Cover(nil), covers...)
+	delete(c.Covers, from)
+	return nil
+}
+
+// MediaReadRepositoryInMemory implements catalog.MediaReadRepository backed by a per-album
+// slice of medias. It also implements catalog.InsertMediasRepositoryPort,
+// catalog.TransferMediasRepositoryPort, and catalog.CountMediasBySelectorsPort so a
+// single fake acts as the single source of truth for every media-related port in a test.
+//
+// A media's Details.DateTime is the field matched against MediaSelector time ranges by
+// both TransferMediasFromRecords and CountMediasBySelectors.
+type MediaReadRepositoryInMemory struct {
+	Medias map[catalog.AlbumId][]*catalog.MediaMeta
+}
+
+func (m *MediaReadRepositoryInMemory) FindMedias(_ context.Context, request *catalog.FindMediaRequest) ([]*catalog.MediaMeta, error) {
+	var medias []*catalog.MediaMeta
+	for albumId, list := range m.Medias {
+		if albumId.Owner != request.Owner {
+			continue
+		}
+		if _, ok := request.AlbumFolderNames[albumId.FolderName]; !ok {
+			continue
+		}
+		medias = append(medias, list...)
+	}
+	return medias, nil
+}
+
+func (m *MediaReadRepositoryInMemory) InsertMedias(_ context.Context, owner ownermodel.Owner, medias []catalog.CreateMediaRequest) error {
+	if m.Medias == nil {
+		m.Medias = make(map[catalog.AlbumId][]*catalog.MediaMeta)
+	}
+	for _, media := range medias {
+		albumId := catalog.AlbumId{Owner: owner, FolderName: media.FolderName}
+		m.Medias[albumId] = append(m.Medias[albumId], &catalog.MediaMeta{
+			Id:        media.Id,
+			Signature: media.Signature,
+			Filename:  media.Filename,
+			Type:      media.Type,
+			Details:   media.Details,
+		})
+	}
+	return nil
+}
+
+func (m *MediaReadRepositoryInMemory) FindMediaCurrentAlbum(_ context.Context, _ ownermodel.Owner, _ catalog.MediaId) (*catalog.AlbumId, error) {
+	panic("FindMediaCurrentAlbum not implemented on MediaReadRepositoryInMemory")
+}
+
+func (m *MediaReadRepositoryInMemory) TransferMediasFromRecords(_ context.Context, records catalog.MediaTransferRecords) (map[catalog.AlbumId][]catalog.MediaId, error) {
+	if m.Medias == nil {
+		return map[catalog.AlbumId][]catalog.MediaId{}, nil
+	}
+
+	transfers := make(map[catalog.AlbumId][]catalog.MediaId)
+	for destination, selectors := range records {
+		for _, selector := range selectors {
+			for _, source := range selector.FromAlbums {
+				remaining := m.Medias[source][:0]
+				for _, media := range m.Medias[source] {
+					if selectorMatches(selector, media) {
+						transfers[destination] = append(transfers[destination], media.Id)
+						m.Medias[destination] = append(m.Medias[destination], media)
+					} else {
+						remaining = append(remaining, media)
+					}
+				}
+				m.Medias[source] = remaining
+			}
+		}
+	}
+	return transfers, nil
+}
+
+func (m *MediaReadRepositoryInMemory) CountMediasBySelectors(_ context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
+	count := 0
+	for _, selector := range selectors {
+		for _, source := range selector.FromAlbums {
+			if source.Owner != owner {
+				continue
+			}
+			for _, media := range m.Medias[source] {
+				if selectorMatches(selector, media) {
+					count++
+				}
+			}
+		}
+	}
+	return count, nil
+}
+
+func selectorMatches(selector catalog.MediaSelector, media *catalog.MediaMeta) bool {
+	date := media.Details.DateTime
+	return !date.Before(selector.Start) && date.Before(selector.End)
+}
+
 // AlbumCreatedObserverInMemory implements catalog.AlbumCreatedObserver: it captures every
 // AlbumCreated event notified to the observer.
 type AlbumCreatedObserverInMemory struct {

@@ -1,6 +1,6 @@
 # 02 — Cover model & single-record persistence + random completion
 
-Status: ready
+Status: done
 Phase: 2
 Layer: catalog domain — `pkg/catalog` + `pkg/catalogadapters/catalogdynamo`
 Depends on: —
