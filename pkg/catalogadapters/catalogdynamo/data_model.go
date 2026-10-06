@@ -34,6 +34,21 @@ type AlbumRecord struct {
 	AlbumEnd        time.Time
 }
 
+// CoverRecord persists the whole ordered cover set of an album as a single DynamoDB
+// item. See ADR / DATA_MODEL.md.
+type CoverRecord struct {
+	appdynamodb.TablePk
+	AlbumOwner      string
+	AlbumFolderName string
+	Covers          []CoverRecordItem
+}
+
+type CoverRecordItem struct {
+	MediaId  string
+	Filename string
+	Origin   string
+}
+
 type MediaRecord struct {
 	appdynamodb.TablePk
 	AlbumIndexKey
@@ -50,6 +65,13 @@ func AlbumPrimaryKey(owner ownermodel.Owner, folderName catalog.FolderName) appd
 	return appdynamodb.TablePk{
 		PK: fmt.Sprintf("%s#ALBUM", owner),
 		SK: fmt.Sprintf("ALBUM#%s", folderName),
+	}
+}
+
+func CoverPrimaryKey(owner ownermodel.Owner, folderName catalog.FolderName) appdynamodb.TablePk {
+	return appdynamodb.TablePk{
+		PK: fmt.Sprintf("%s#ALBUM", owner),
+		SK: fmt.Sprintf("ALBUM#%s#COVERS", folderName),
 	}
 }
 
@@ -110,6 +132,45 @@ func unmarshalAlbum(attributes map[string]types.AttributeValue) (*catalog.Album,
 		Start: data.AlbumStart,
 		End:   data.AlbumEnd,
 	}, nil
+}
+
+func marshalCovers(albumId catalog.AlbumId, covers []catalog.Cover) (map[string]types.AttributeValue, error) {
+	if err := albumId.IsValid(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	items := make([]CoverRecordItem, 0, len(covers))
+	for _, cover := range covers {
+		items = append(items, CoverRecordItem{
+			MediaId:  string(cover.MediaId),
+			Filename: cover.Filename,
+			Origin:   string(cover.Origin),
+		})
+	}
+
+	return attributevalue.MarshalMap(&CoverRecord{
+		TablePk:         CoverPrimaryKey(albumId.Owner, albumId.FolderName),
+		AlbumOwner:      albumId.Owner.String(),
+		AlbumFolderName: albumId.FolderName.String(),
+		Covers:          items,
+	})
+}
+
+func unmarshalCovers(attributes map[string]types.AttributeValue) ([]catalog.Cover, error) {
+	var data CoverRecord
+	if err := attributevalue.UnmarshalMap(attributes, &data); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal cover attributes %+v", attributes)
+	}
+
+	covers := make([]catalog.Cover, 0, len(data.Covers))
+	for _, item := range data.Covers {
+		covers = append(covers, catalog.Cover{
+			MediaId:  catalog.MediaId(item.MediaId),
+			Filename: item.Filename,
+			Origin:   catalog.CoverOrigin(item.Origin),
+		})
+	}
+	return covers, nil
 }
 
 // marshalMedia return both Media metadata attributes and location attributes

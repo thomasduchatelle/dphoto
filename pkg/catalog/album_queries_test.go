@@ -44,7 +44,7 @@ func TestAlbumQueries_FindAlbum(t *testing.T) {
 	}{
 		{
 			name:   "it should return the album that has been found",
-			fields: fields{Repository: NewAlbumRepositoryInMemory(album1)},
+			fields: fields{Repository: NewCatalogInMemory(withAlbum(album1))},
 			args: args{
 				ctx:     context.TODO(),
 				albumId: albumId1,
@@ -54,7 +54,7 @@ func TestAlbumQueries_FindAlbum(t *testing.T) {
 		},
 		{
 			name:   "it should return a not found error if no album has been found",
-			fields: fields{Repository: NewAlbumRepositoryInMemory()},
+			fields: fields{Repository: NewCatalogInMemory()},
 			args: args{
 				ctx:     context.TODO(),
 				albumId: albumId1,

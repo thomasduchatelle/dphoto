@@ -24,11 +24,14 @@ func (f CountMediasBySelectorsFunc) CountMediasBySelectors(ctx context.Context, 
 }
 
 // AlbumDeleted is fired after an album has been deleted and its medias transferred to
-// the surrounding albums: it carries the id of the album that has been removed and the
-// medias that were actually moved to another album.
+// the surrounding albums: it carries the id of the album that has been removed, the
+// medias that were actually moved to another album, and the per-album cover sets that
+// changed as a side-effect (deleted album maps to nil, destinations map to their new
+// cover list). Albums whose cover set did not change are omitted from Covers.
 type AlbumDeleted struct {
 	DeletedAlbumId    AlbumId
 	TransferredMedias TransferredMedias
+	Covers            map[AlbumId][]Cover
 }
 
 type AlbumDeletedObserver interface {
@@ -47,12 +50,14 @@ func NewDeleteAlbum(
 	TimelineRepository TimelineRepository,
 	CountMediasBySelectors CountMediasBySelectorsPort,
 	TransferMedias TransferMediasService,
+	CoverService CoverServicePort,
 	AlbumDeletedObservers ...AlbumDeletedObserver,
 ) *DeleteAlbum {
 	return &DeleteAlbum{
 		TimelineRepository:     TimelineRepository,
 		CountMediasBySelectors: CountMediasBySelectors,
 		TransferMediasService:  TransferMedias,
+		CoverService:           CoverService,
 		AlbumDeletedObservers:  AlbumDeletedObservers,
 	}
 }
@@ -64,6 +69,7 @@ type DeleteAlbum struct {
 	TimelineRepository     TimelineRepository
 	CountMediasBySelectors CountMediasBySelectorsPort
 	TransferMediasService  TransferMediasService
+	CoverService           CoverServicePort
 	AlbumDeletedObservers  []AlbumDeletedObserver
 }
 
@@ -99,9 +105,15 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 
 	log.WithField("Owner", albumId.Owner).Infof("Album %s deleted", albumId)
 
+	covers, err := d.CoverService.ApplyTransfer(ctx, transferred, albumId)
+	if err != nil {
+		return err
+	}
+
 	event := AlbumDeleted{
 		DeletedAlbumId:    albumId,
 		TransferredMedias: transferred,
+		Covers:            covers,
 	}
 	for _, observer := range d.AlbumDeletedObservers {
 		if err = observer.OnAlbumDeleted(ctx, event); err != nil {

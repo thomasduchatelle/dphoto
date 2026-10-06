@@ -49,3 +49,9 @@ func (l *ListUserWhoCanAccessAlbumPortFake) ListUsersWhoCanAccessAlbum(ctx conte
 	}
 	return result, nil
 }
+
+type FindCoversByAlbumPortFake map[catalog.AlbumId][]catalog.Cover
+
+func (f FindCoversByAlbumPortFake) FindCoversByAlbum(ctx context.Context, albumId catalog.AlbumId) ([]catalog.Cover, error) {
+	return f[albumId], nil
+}

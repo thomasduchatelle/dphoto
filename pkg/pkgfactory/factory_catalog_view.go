@@ -34,6 +34,7 @@ func AlbumView(ctx context.Context) *catalogviews.AlbumView {
 			albumQueries,
 			albumQueries,
 			CatalogToACLAdapter(ctx),
+			CatalogRepository(ctx),
 		), nil
 	})
 }
@@ -51,6 +52,7 @@ func OwnerDriftReconciler(ctx context.Context, dry bool, options ...catalogviews
 		repository,
 		CatalogToACLAdapter(ctx),
 		albumQueries,
+		CatalogRepository(ctx),
 		drifts...,
 	)
 }
