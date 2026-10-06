@@ -27,6 +27,7 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 		End:   jun26,
 	}
 	generatedRenamedId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/2026-05_Avenger_1")}
+	forcedRenamedId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("Avengers_vs_Loki")}
 
 	photo5may26 := photoAt("photo5may26", may26.AddDate(0, 0, 5))
 	photo15may26 := photoAt("photo15may26", may26.AddDate(0, 0, 15))
@@ -148,6 +149,38 @@ func TestRenameAlbum_RenameAlbum(t *testing.T) {
 				},
 			}},
 			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{generatedRenamedId: {pickedCover(photo5may26), randomCover(photo15may26)}},
+			wantErr:             assert.NoError,
+		},
+		{
+			name: "it should replace the album with a forced folder name, moving medias and covers to the forced identity",
+			fields: fields{
+				Catalog: NewCatalogInMemory(withAlbum(existingAlbum, photo5may26, photo15may26)),
+				Covers:  coversOnMay26(),
+			},
+			args: args{
+				request: catalog.RenameAlbumRequest{
+					CurrentId:        existingAlbum.AlbumId,
+					NewName:          newName,
+					RenameFolder:     false,
+					ForcedFolderName: "Avengers_vs_Loki",
+				},
+			},
+			expectAlbumsByIds:   map[catalog.AlbumId]string{forcedRenamedId: newName},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{forcedRenamedId: {photo5may26, photo15may26}},
+			expectRenamedEvents: []catalog.AlbumRenamed{{
+				ExistingAlbum: *existingAlbum,
+				RenamedAlbum: catalog.Album{
+					AlbumId: forcedRenamedId,
+					Name:    newName,
+					Start:   may26,
+					End:     jun26,
+				},
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{forcedRenamedId: {photo5may26.Id, photo15may26.Id}},
+					FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
+				},
+			}},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{forcedRenamedId: {pickedCover(photo5may26), randomCover(photo15may26)}},
 			wantErr:             assert.NoError,
 		},
 	}
