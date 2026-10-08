@@ -14,23 +14,20 @@ func TestBackfillCovers_BackfillForOwner(t *testing.T) {
 	avengersAlbum := &catalog.Album{AlbumId: avengersId, Name: "Avengers"}
 	stealthAlbum := &catalog.Album{AlbumId: stealthId, Name: "Stealth"}
 
-	albumRepository := NewAlbumRepositoryInMemory(avengersAlbum, stealthAlbum)
+	catalogRepository := NewCatalogInMemory(
+		withAlbum(avengersAlbum, image1, image2),
+		withAlbum(stealthAlbum, image5),
+	)
 	coverRepository := NewCoverRepositoryInMemory(coversFor(stealthId,
 		catalog.Cover{MediaId: "media-5", Filename: "photo-5.jpg", Origin: catalog.CoverOriginRandom},
 	))
-	mediaRepository := &MediaReadRepositoryInMemory{
-		Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-			avengersId: {image1, image2},
-			stealthId:  {image5},
-		},
-	}
 	observer := &coverBackfillObserverFake{}
 
 	backfill := &catalog.BackfillCovers{
-		FindAlbumByOwnerPort: albumRepository,
+		FindAlbumByOwnerPort: catalogRepository,
 		CoverService: &catalog.CoverService{
 			CoverRepository:     coverRepository,
-			MediaReadRepository: mediaRepository,
+			MediaReadRepository: catalogRepository,
 			Randomiser:          deterministicRandomiser,
 		},
 		Observers: []catalog.CoverBackfillObserver{observer},
