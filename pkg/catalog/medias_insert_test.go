@@ -21,15 +21,15 @@ func TestInsertMedias_Insert(t *testing.T) {
 		}
 	}
 
-	mediaRepository := &MediaReadRepositoryInMemory{}
+	catalogRepository := NewCatalogInMemory(withAlbum(&catalog.Album{AlbumId: avengersId, Name: "Avengers"}))
 	coverRepository := NewCoverRepositoryInMemory()
 	observer := &insertMediasObserverFake{}
 
 	insert := catalog.NewInsertMedias(
-		mediaRepository,
+		catalogRepository,
 		&catalog.CoverService{
 			CoverRepository:     coverRepository,
-			MediaReadRepository: mediaRepository,
+			MediaReadRepository: catalogRepository,
 			Randomiser:          deterministicRandomiser,
 		},
 		observer,
