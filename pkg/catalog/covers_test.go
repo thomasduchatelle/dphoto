@@ -36,7 +36,7 @@ var (
 func TestCoverService_Randomise(t *testing.T) {
 	type fields struct {
 		CoverRepository     *CoverRepositoryInMemory
-		MediaReadRepository *MediaReadRepositoryInMemory
+		MediaReadRepository *CatalogInMemory
 	}
 	type args struct {
 		stable   bool
@@ -54,7 +54,7 @@ func TestCoverService_Randomise(t *testing.T) {
 			name: "it should return a nil map when no album is requested",
 			fields: fields{
 				CoverRepository:     NewCoverRepositoryInMemory(),
-				MediaReadRepository: &MediaReadRepositoryInMemory{},
+				MediaReadRepository: NewCatalogInMemory(),
 			},
 			args:              args{albumIds: nil},
 			wantChanged:       nil,
@@ -65,9 +65,9 @@ func TestCoverService_Randomise(t *testing.T) {
 			name: "it should fill empty slots from the album's full image set",
 			fields: fields{
 				CoverRepository: NewCoverRepositoryInMemory(),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1, image2, image3, image4}},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1, image2, image3, image4),
+				),
 			},
 			args: args{albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
@@ -94,9 +94,9 @@ func TestCoverService_Randomise(t *testing.T) {
 				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId,
 					catalog.Cover{MediaId: "media-98", Filename: "stale.jpg", Origin: catalog.CoverOriginRandom},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1, image2, image3, image4}},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1, image2, image3, image4),
+				),
 			},
 			args: args{albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
@@ -124,9 +124,9 @@ func TestCoverService_Randomise(t *testing.T) {
 					catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginCherryPicked},
 					catalog.Cover{MediaId: "media-98", Filename: "random-existing.jpg", Origin: catalog.CoverOriginRandom},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1, image2, image3}},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1, image2, image3),
+				),
 			},
 			args: args{albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
@@ -151,9 +151,9 @@ func TestCoverService_Randomise(t *testing.T) {
 				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId,
 					catalog.Cover{MediaId: "orphan", Filename: "gone.jpg", Origin: catalog.CoverOriginCherryPicked},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1, image2}},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1, image2),
+				),
 			},
 			args: args{albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
@@ -174,9 +174,9 @@ func TestCoverService_Randomise(t *testing.T) {
 			name: "it should skip videos and OTHER medias when drawing from the album",
 			fields: fields{
 				CoverRepository: NewCoverRepositoryInMemory(),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {video1, other1, image1, image2}},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, video1, other1, image1, image2),
+				),
 			},
 			args: args{albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
@@ -202,9 +202,9 @@ func TestCoverService_Randomise(t *testing.T) {
 					catalog.Cover{MediaId: "media-3", Filename: "photo-3.jpg", Origin: catalog.CoverOriginCherryPicked},
 					catalog.Cover{MediaId: "media-4", Filename: "photo-4.jpg", Origin: catalog.CoverOriginCherryPicked},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1, image2, image3, image4, image5}},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1, image2, image3, image4, image5),
+				),
 			},
 			args:        args{albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: nil,
@@ -224,12 +224,10 @@ func TestCoverService_Randomise(t *testing.T) {
 				CoverRepository: NewCoverRepositoryInMemory(coversFor(stealthId,
 					catalog.Cover{MediaId: "media-5", Filename: "photo-5.jpg", Origin: catalog.CoverOriginCherryPicked},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						avengersId: {image1, image2},
-						stealthId:  {image5},
-					},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1, image2),
+					withMedias(stealthId, image5),
+				),
 			},
 			args: args{albumIds: []catalog.AlbumId{avengersId, stealthId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
@@ -256,9 +254,9 @@ func TestCoverService_Randomise(t *testing.T) {
 					catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
 					catalog.Cover{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1, image2, image3, image4, image5}},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1, image2, image3, image4, image5),
+				),
 			},
 			args: args{stable: true, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
@@ -286,9 +284,9 @@ func TestCoverService_Randomise(t *testing.T) {
 					catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
 					catalog.Cover{MediaId: "orphan", Filename: "gone.jpg", Origin: catalog.CoverOriginRandom},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1}},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1),
+				),
 			},
 			args: args{stable: true, albumIds: []catalog.AlbumId{avengersId}},
 			wantChanged: map[catalog.AlbumId][]catalog.Cover{
@@ -325,7 +323,7 @@ func TestCoverService_Randomise(t *testing.T) {
 func TestCoverService_StableRefresh(t *testing.T) {
 	type fields struct {
 		CoverRepository     *CoverRepositoryInMemory
-		MediaReadRepository *MediaReadRepositoryInMemory
+		MediaReadRepository *CatalogInMemory
 	}
 	type args struct {
 		transferred catalog.TransferredMedias
@@ -342,7 +340,7 @@ func TestCoverService_StableRefresh(t *testing.T) {
 			name: "it should return a nil map when the transfer is empty",
 			fields: fields{
 				CoverRepository:     NewCoverRepositoryInMemory(),
-				MediaReadRepository: &MediaReadRepositoryInMemory{},
+				MediaReadRepository: NewCatalogInMemory(),
 			},
 			args:              args{transferred: catalog.NewTransferredMedias()},
 			wantChanged:       nil,
@@ -358,12 +356,10 @@ func TestCoverService_StableRefresh(t *testing.T) {
 					catalog.Cover{MediaId: "media-3", Filename: "photo-3.jpg", Origin: catalog.CoverOriginRandom},
 					catalog.Cover{MediaId: "media-4", Filename: "photo-4.jpg", Origin: catalog.CoverOriginRandom},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						avengersId: {image1, image2, image3, image4, image5},
-						stealthId:  {image6},
-					},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image1, image2, image3, image4, image5),
+					withMedias(stealthId, image6),
+				),
 			},
 			args: args{transferred: catalog.TransferredMedias{
 				Transfers:  map[catalog.AlbumId][]catalog.MediaId{stealthId: {"media-99"}},
@@ -394,12 +390,10 @@ func TestCoverService_StableRefresh(t *testing.T) {
 					catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginRandom},
 					catalog.Cover{MediaId: "media-2", Filename: "photo-2.jpg", Origin: catalog.CoverOriginRandom},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						avengersId: {image2, image3, image4},
-						stealthId:  {image1},
-					},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image2, image3, image4),
+					withMedias(stealthId, image1),
+				),
 			},
 			args: args{transferred: catalog.TransferredMedias{
 				Transfers:  map[catalog.AlbumId][]catalog.MediaId{stealthId: {"media-1"}},
@@ -433,12 +427,10 @@ func TestCoverService_StableRefresh(t *testing.T) {
 				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId,
 					catalog.Cover{MediaId: "media-1", Filename: "photo-1.jpg", Origin: catalog.CoverOriginCherryPicked},
 				)),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						avengersId: {image2, image3},
-						stealthId:  {image1, image4},
-					},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image2, image3),
+					withMedias(stealthId, image1, image4),
+				),
 			},
 			args: args{transferred: catalog.TransferredMedias{
 				Transfers:  map[catalog.AlbumId][]catalog.MediaId{stealthId: {"media-1"}},
@@ -478,18 +470,16 @@ func TestCoverService_StableRefresh(t *testing.T) {
 						catalog.Cover{MediaId: "media-13", Filename: "stealth-13.jpg", Origin: catalog.CoverOriginCherryPicked},
 					),
 				),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						avengersId: {image2},
-						stealthId: {
-							image1,
-							{Id: "media-10", Filename: "stealth-10.jpg", Type: catalog.MediaTypeImage},
-							{Id: "media-11", Filename: "stealth-11.jpg", Type: catalog.MediaTypeImage},
-							{Id: "media-12", Filename: "stealth-12.jpg", Type: catalog.MediaTypeImage},
-							{Id: "media-13", Filename: "stealth-13.jpg", Type: catalog.MediaTypeImage},
-						},
-					},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image2),
+					withMedias(stealthId,
+						image1,
+						&catalog.MediaMeta{Id: "media-10", Filename: "stealth-10.jpg", Type: catalog.MediaTypeImage},
+						&catalog.MediaMeta{Id: "media-11", Filename: "stealth-11.jpg", Type: catalog.MediaTypeImage},
+						&catalog.MediaMeta{Id: "media-12", Filename: "stealth-12.jpg", Type: catalog.MediaTypeImage},
+						&catalog.MediaMeta{Id: "media-13", Filename: "stealth-13.jpg", Type: catalog.MediaTypeImage},
+					),
+				),
 			},
 			args: args{transferred: catalog.TransferredMedias{
 				Transfers:  map[catalog.AlbumId][]catalog.MediaId{stealthId: {"media-1"}},
@@ -531,18 +521,16 @@ func TestCoverService_StableRefresh(t *testing.T) {
 						catalog.Cover{MediaId: "media-13", Filename: "stealth-13.jpg", Origin: catalog.CoverOriginCherryPicked},
 					),
 				),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						avengersId: {image2},
-						stealthId: {
-							image1,
-							{Id: "media-10", Filename: "stealth-10.jpg", Type: catalog.MediaTypeImage},
-							{Id: "media-11", Filename: "stealth-11.jpg", Type: catalog.MediaTypeImage},
-							{Id: "media-12", Filename: "stealth-12.jpg", Type: catalog.MediaTypeImage},
-							{Id: "media-13", Filename: "stealth-13.jpg", Type: catalog.MediaTypeImage},
-						},
-					},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(avengersId, image2),
+					withMedias(stealthId,
+						image1,
+						&catalog.MediaMeta{Id: "media-10", Filename: "stealth-10.jpg", Type: catalog.MediaTypeImage},
+						&catalog.MediaMeta{Id: "media-11", Filename: "stealth-11.jpg", Type: catalog.MediaTypeImage},
+						&catalog.MediaMeta{Id: "media-12", Filename: "stealth-12.jpg", Type: catalog.MediaTypeImage},
+						&catalog.MediaMeta{Id: "media-13", Filename: "stealth-13.jpg", Type: catalog.MediaTypeImage},
+					),
+				),
 			},
 			args: args{transferred: catalog.TransferredMedias{
 				Transfers:  map[catalog.AlbumId][]catalog.MediaId{stealthId: {"media-1"}},
@@ -570,11 +558,9 @@ func TestCoverService_StableRefresh(t *testing.T) {
 			name: "it should fill empty slots on a destination album with no existing covers",
 			fields: fields{
 				CoverRepository: NewCoverRepositoryInMemory(),
-				MediaReadRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{
-						stealthId: {image1, image2, image3, image4, image5},
-					},
-				},
+				MediaReadRepository: NewCatalogInMemory(
+					withMedias(stealthId, image1, image2, image3, image4, image5),
+				),
 			},
 			args: args{transferred: catalog.TransferredMedias{
 				Transfers: map[catalog.AlbumId][]catalog.MediaId{stealthId: {"media-1", "media-2"}},
