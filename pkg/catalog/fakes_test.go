@@ -271,6 +271,20 @@ func selectorMatches(selector catalog.MediaSelector, media *catalog.MediaMeta) b
 	return !date.Before(selector.Start) && date.Before(selector.End)
 }
 
+// catalogTransferMediasFailing delegates every TransferMediasRepositoryPort call to the
+// embedded CatalogInMemory except TransferMediasFromRecords, which returns Err. It lets
+// use-case tests prove that an in-flight transfer failure leaves the catalog in a
+// recoverable state: source medias are not moved, destination album is not touched, and
+// downstream steps (delete, dates persistence, event-fire, ...) never execute.
+type catalogTransferMediasFailing struct {
+	*CatalogInMemory
+	Err error
+}
+
+func (c *catalogTransferMediasFailing) TransferMediasFromRecords(_ context.Context, _ catalog.MediaTransferRecords) (map[catalog.AlbumId][]catalog.MediaId, error) {
+	return nil, c.Err
+}
+
 // CoverRepositorySeed is used to pre-populate a CoverRepositoryInMemory.
 type CoverRepositorySeed struct {
 	AlbumId catalog.AlbumId

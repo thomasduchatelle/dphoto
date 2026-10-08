@@ -11,20 +11,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
-// catalogAmendDatesFailing delegates every TimelineRepository call to the embedded
-// CatalogInMemory except AmendDates, which returns Err. It lets the amend-dates test
-// prove that a failure to persist the new dates after a successful media transfer
-// leaves the medias in their destination album (so the user can recover by retrying
-// or by moving the date again) and does not fire the AlbumDatesAmended event.
-type catalogAmendDatesFailing struct {
-	*CatalogInMemory
-	Err error
-}
-
-func (c *catalogAmendDatesFailing) AmendDates(_ context.Context, _ catalog.AlbumId, _, _ time.Time) error {
-	return c.Err
-}
-
 type albumDates struct {
 	start time.Time
 	end   time.Time
@@ -49,16 +35,16 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	photo3may26 := photoAt("photo3may26", may03)
 	photo4may26 := photoAt("photo4may26", may04)
 
-	persistErr := errors.New("TEST persist dates failure")
+	transferErr := errors.New("TEST transfer medias failure")
 
-	// TimelineRepo is an optional per-case override: when nil the test uses
-	// tt.fields.Catalog (the real TimelineRepository); when set it is passed to
-	// NewAmendAlbumDates in its place so a failing wrapper can short-circuit a specific
-	// step (e.g. AmendDates after a successful transfer).
+	// TransferPort is an optional per-case override: when nil the test uses
+	// tt.fields.Catalog (the real TransferMediasFromRepository path); when set it is
+	// wrapped by TransferMediasFromRepository so a failing wrapper can short-circuit
+	// the transfer step before the new dates are persisted.
 	type fields struct {
 		Catalog      *CatalogInMemory
 		Covers       *CoverRepositoryInMemory
-		TimelineRepo catalog.TimelineRepository
+		TransferPort catalog.TransferMediasRepositoryPort
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -161,7 +147,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 			},
 		},
 		{
-			name: "it should keep the transferred medias and leave the source dates untouched when persisting the new dates fails after a successful transfer (recoverable by retry)",
+			name: "it should leave the album dates unchanged when the media transfer fails: no media is moved, nothing is persisted, so a retry can safely re-run the whole operation",
 			fields: func() fields {
 				backing := NewCatalogInMemory(
 					withAlbum(allYearAlbum),
@@ -170,7 +156,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 				return fields{
 					Catalog:      backing,
 					Covers:       NewCoverRepositoryInMemory(),
-					TimelineRepo: &catalogAmendDatesFailing{CatalogInMemory: backing, Err: persistErr},
+					TransferPort: &catalogTransferMediasFailing{CatalogInMemory: backing, Err: transferErr},
 				}
 			}(),
 			args: args{albumId: may26Id, start: may01, end: may04},
@@ -179,20 +165,20 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 				allYearId: {start: jan26, end: jan27},
 			},
 			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
-				may26Id:   nil,
-				allYearId: {photo4may26},
+				may26Id:   {photo4may26},
+				allYearId: nil,
 			},
 			expectStoredCovers: map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, persistErr, i...)
+				return assert.ErrorIs(t, err, transferErr, i...)
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			timelineRepo := tt.fields.TimelineRepo
-			if timelineRepo == nil {
-				timelineRepo = tt.fields.Catalog
+			transferPort := tt.fields.TransferPort
+			if transferPort == nil {
+				transferPort = tt.fields.Catalog
 			}
 			observer := &AlbumDatesAmendedObserverInMemory{}
 			coverService := &catalog.CoverService{
@@ -202,9 +188,9 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 			}
 
 			amendAlbumDates := catalog.NewAmendAlbumDates(
-				timelineRepo,
 				tt.fields.Catalog,
-				&catalog.TransferMediasFromRepository{TransferMediasRepository: tt.fields.Catalog},
+				tt.fields.Catalog,
+				&catalog.TransferMediasFromRepository{TransferMediasRepository: transferPort},
 				coverService,
 				observer,
 			)

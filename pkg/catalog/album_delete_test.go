@@ -11,20 +11,6 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
-// catalogTransferMediasFailing delegates every TransferMediasRepositoryPort call to the
-// embedded CatalogInMemory except TransferMediasFromRecords, which returns Err. It lets
-// tests prove that an in-flight transfer failure leaves the catalog in a recoverable
-// state (source medias not moved, destination album not touched, downstream steps like
-// DeleteAlbum / event-fire never execute).
-type catalogTransferMediasFailing struct {
-	*CatalogInMemory
-	Err error
-}
-
-func (c *catalogTransferMediasFailing) TransferMediasFromRecords(_ context.Context, _ catalog.MediaTransferRecords) (map[catalog.AlbumId][]catalog.MediaId, error) {
-	return nil, c.Err
-}
-
 func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 	const owner = "ironman"
 
