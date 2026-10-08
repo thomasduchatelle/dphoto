@@ -49,9 +49,16 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	photo3may26 := photoAt("photo3may26", may03)
 	photo4may26 := photoAt("photo4may26", may04)
 
+	persistErr := errors.New("TEST persist dates failure")
+
+	// TimelineRepo is an optional per-case override: when nil the test uses
+	// tt.fields.Catalog (the real TimelineRepository); when set it is passed to
+	// NewAmendAlbumDates in its place so a failing wrapper can short-circuit a specific
+	// step (e.g. AmendDates after a successful transfer).
 	type fields struct {
-		Catalog *CatalogInMemory
-		Covers  *CoverRepositoryInMemory
+		Catalog      *CatalogInMemory
+		Covers       *CoverRepositoryInMemory
+		TimelineRepo catalog.TimelineRepository
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -153,9 +160,40 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
 			},
 		},
+		{
+			name: "it should keep the transferred medias and leave the source dates untouched when persisting the new dates fails after a successful transfer (recoverable by retry)",
+			fields: func() fields {
+				backing := NewCatalogInMemory(
+					withAlbum(allYearAlbum),
+					withAlbum(may26Album, photo4may26),
+				)
+				return fields{
+					Catalog:      backing,
+					Covers:       NewCoverRepositoryInMemory(),
+					TimelineRepo: &catalogAmendDatesFailing{CatalogInMemory: backing, Err: persistErr},
+				}
+			}(),
+			args: args{albumId: may26Id, start: may01, end: may04},
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				may26Id:   {start: may01, end: may05},
+				allYearId: {start: jan26, end: jan27},
+			},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				may26Id:   nil,
+				allYearId: {photo4may26},
+			},
+			expectStoredCovers: map[catalog.AlbumId][]catalog.Cover{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, persistErr, i...)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			timelineRepo := tt.fields.TimelineRepo
+			if timelineRepo == nil {
+				timelineRepo = tt.fields.Catalog
+			}
 			observer := &AlbumDatesAmendedObserverInMemory{}
 			coverService := &catalog.CoverService{
 				CoverRepository:     tt.fields.Covers,
@@ -164,7 +202,7 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 			}
 
 			amendAlbumDates := catalog.NewAmendAlbumDates(
-				tt.fields.Catalog,
+				timelineRepo,
 				tt.fields.Catalog,
 				&catalog.TransferMediasFromRepository{TransferMediasRepository: tt.fields.Catalog},
 				coverService,
@@ -188,66 +226,4 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	}
 }
 
-// TestAmendAlbumDates_AmendAlbumDates_persistFailsAfterTransfer verifies the recovery
-// contract when persisting the new dates fails after the medias have already been
-// transferred: the transfer is kept (the destination album now holds the medias and
-// the source album is empty, so a retry of AmendAlbumDates will see nothing left to
-// transfer and will only need to persist the new dates), and the AlbumDatesAmended
-// event is not fired.
-func TestAmendAlbumDates_AmendAlbumDates_persistFailsAfterTransfer(t *testing.T) {
-	const owner = "ironman"
 
-	jan26 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	may01 := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
-	may04 := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
-	may05 := time.Date(2026, 5, 5, 0, 0, 0, 0, time.UTC)
-	jan27 := time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	may26Id := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/may-26")}
-	may26Album := &catalog.Album{AlbumId: may26Id, Name: "may 26", Start: may01, End: may05}
-	allYearId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/2026")}
-	allYearAlbum := &catalog.Album{AlbumId: allYearId, Name: "2026", Start: jan26, End: jan27}
-
-	photo4may26 := photoAt("photo4may26", may04)
-
-	persistErr := errors.New("TEST persist dates failure")
-	backing := NewCatalogInMemory(
-		withAlbum(allYearAlbum),
-		withAlbum(may26Album, photo4may26),
-	)
-	failing := &catalogAmendDatesFailing{CatalogInMemory: backing, Err: persistErr}
-	covers := NewCoverRepositoryInMemory()
-	observer := &AlbumDatesAmendedObserverInMemory{}
-
-	amendAlbumDates := catalog.NewAmendAlbumDates(
-		failing,
-		backing,
-		&catalog.TransferMediasFromRepository{TransferMediasRepository: backing},
-		&catalog.CoverService{
-			CoverRepository:     covers,
-			MediaReadRepository: backing,
-			Randomiser:          deterministicRandomiser,
-		},
-		observer,
-	)
-
-	err := amendAlbumDates.AmendAlbumDates(context.Background(), may26Id, may01, may04)
-
-	assert.ErrorIs(t, err, persistErr, "AmendAlbumDates should propagate the persist error")
-	assert.Equal(t, map[catalog.AlbumId]albumDates{
-		may26Id:   {start: may01, end: may05},
-		allYearId: {start: jan26, end: jan27},
-	}, func() map[catalog.AlbumId]albumDates {
-		dates := make(map[catalog.AlbumId]albumDates)
-		for id, album := range backing.AlbumsByIds() {
-			dates[id] = albumDates{start: album.Start, end: album.End}
-		}
-		return dates
-	}(), "the source album must keep its original dates so a retry can re-apply them")
-	assert.Equal(t, map[catalog.AlbumId][]*catalog.MediaMeta{
-		may26Id:   nil,
-		allYearId: {photo4may26},
-	}, backing.MediasByAlbum(), "the media must have been transferred to its destination album before the failure")
-	assert.Empty(t, observer.Events, "AlbumDatesAmended must not fire when persistence fails")
-	assert.Empty(t, covers.Covers, "no covers are reconciled when persistence fails")
-}

@@ -6,9 +6,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
+
+// catalogTransferMediasFailing delegates every TransferMediasRepositoryPort call to the
+// embedded CatalogInMemory except TransferMediasFromRecords, which returns Err. It lets
+// tests prove that an in-flight transfer failure leaves the catalog in a recoverable
+// state (source medias not moved, destination album not touched, downstream steps like
+// DeleteAlbum / event-fire never execute).
+type catalogTransferMediasFailing struct {
+	*CatalogInMemory
+	Err error
+}
+
+func (c *catalogTransferMediasFailing) TransferMediasFromRecords(_ context.Context, _ catalog.MediaTransferRecords) (map[catalog.AlbumId][]catalog.MediaId, error) {
+	return nil, c.Err
+}
 
 func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 	const owner = "ironman"
@@ -28,9 +43,16 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 	photo10mar26 := photoAt("photo10mar26", mar26.AddDate(0, 0, 10))
 	photo20mar26 := photoAt("photo20mar26", mar26.AddDate(0, 0, 20))
 
+	transferErr := errors.New("TEST transfer medias failure")
+
+	// transferPort is an optional per-case override: when nil the test uses
+	// tt.fields.Catalog (the real TransferMediasFromRepository path); when set it is
+	// wrapped by TransferMediasFromRepository so a failing wrapper can short-circuit
+	// the transfer step.
 	type fields struct {
-		Catalog *CatalogInMemory
-		Covers  *CoverRepositoryInMemory
+		Catalog      *CatalogInMemory
+		Covers       *CoverRepositoryInMemory
+		TransferPort catalog.TransferMediasRepositoryPort
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -126,15 +148,45 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
 			},
 		},
+		{
+			name: "it should not delete the album when the media transfer fails: medias stay in the source so a retry can re-run the transfer",
+			fields: func() fields {
+				backing := NewCatalogInMemory(
+					withAlbum(lifetimeAlbum),
+					withAlbum(marAlbum, photo10mar26, photo20mar26),
+				)
+				return fields{
+					Catalog:      backing,
+					Covers:       NewCoverRepositoryInMemory(coversFor(marAlbumId, pickedCover(photo10mar26), randomCover(photo20mar26))),
+					TransferPort: &catalogTransferMediasFailing{CatalogInMemory: backing, Err: transferErr},
+				}
+			}(),
+			args:           args{albumId: marAlbumId},
+			expectAlbumIds: []catalog.AlbumId{lifetimeId, marAlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				lifetimeId: nil,
+				marAlbumId: {photo10mar26, photo20mar26},
+			},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{
+				marAlbumId: {pickedCover(photo10mar26), randomCover(photo20mar26)},
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, transferErr, i...)
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			transferPort := tt.fields.TransferPort
+			if transferPort == nil {
+				transferPort = tt.fields.Catalog
+			}
 			observer := &AlbumDeletedObserverInMemory{}
 			deleteAlbum := catalog.NewDeleteAlbum(
 				tt.fields.Catalog,
 				tt.fields.Catalog,
-				&catalog.TransferMediasFromRepository{TransferMediasRepository: tt.fields.Catalog},
+				&catalog.TransferMediasFromRepository{TransferMediasRepository: transferPort},
 				&catalog.CoverService{
 					CoverRepository:     tt.fields.Covers,
 					MediaReadRepository: tt.fields.Catalog,
