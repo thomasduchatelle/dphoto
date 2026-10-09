@@ -28,7 +28,7 @@ func TestRandomizeAlbumCovers_Randomize(t *testing.T) {
 
 	type fields struct {
 		CoverRepository *CoverRepositoryInMemory
-		MediaRepository *MediaReadRepositoryInMemory
+		MediaRepository *CatalogInMemory
 		Randomiser      catalog.Randomiser
 	}
 	tests := []struct {
@@ -44,10 +44,8 @@ func TestRandomizeAlbumCovers_Randomize(t *testing.T) {
 			name: "it should drop RANDOM covers, keep CHERRY_PICKED, fill empties, persist the new set, and emit the event",
 			fields: fields{
 				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId, cherryPicked, stale)),
-				MediaRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1, image2, image3, image4}},
-				},
-				Randomiser: deterministicRandomiser,
+				MediaRepository: NewCatalogInMemory(withMedias(avengersId, image1, image2, image3, image4)),
+				Randomiser:      deterministicRandomiser,
 			},
 			args: avengersId,
 			wantCovers: []catalog.Cover{
@@ -81,10 +79,8 @@ func TestRandomizeAlbumCovers_Randomize(t *testing.T) {
 			name: "it should return the current covers without firing the event when the redraw produced the same set",
 			fields: fields{
 				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId, cherryPicked)),
-				MediaRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image1}},
-				},
-				Randomiser: deterministicRandomiser,
+				MediaRepository: NewCatalogInMemory(withMedias(avengersId, image1)),
+				Randomiser:      deterministicRandomiser,
 			},
 			args:              avengersId,
 			wantCovers:        []catalog.Cover{cherryPicked},
@@ -96,10 +92,8 @@ func TestRandomizeAlbumCovers_Randomize(t *testing.T) {
 			name: "it should return the new covers from the event when the set changed",
 			fields: fields{
 				CoverRepository: NewCoverRepositoryInMemory(coversFor(avengersId, stale)),
-				MediaRepository: &MediaReadRepositoryInMemory{
-					Medias: map[catalog.AlbumId][]*catalog.MediaMeta{avengersId: {image3, image4}},
-				},
-				Randomiser: randomiserWithOffset(0),
+				MediaRepository: NewCatalogInMemory(withMedias(avengersId, image3, image4)),
+				Randomiser:      randomiserWithOffset(0),
 			},
 			args: avengersId,
 			wantCovers: []catalog.Cover{
