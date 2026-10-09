@@ -14,8 +14,8 @@ specs/
 ├── <feature-slug>/           # one directory per feature; dated prefix, e.g. 2026-02-<slug>
 │   ├── spec.md               # MANDATORY: the feature spec (the "what")
 │   ├── design.md             # recommended: upfront technical direction (see below)
-│   ├── stories.md            # recommended: draft of all issues before splitting them out
-│   └── issues/               # one file per issue: NN-<slug>.md, numbered from 01
+│   ├── stories.md            # optional: draft of all issues to converse with the user before splitting them out
+│   └── issues/               # one file per issue: NN-<slug>.md, numbered from 01 ; exceptionally, subtasks can be used with are NN.MM-<slug>.md
 └── archived/                 # finished features and superseded material
 ```
 
@@ -30,11 +30,12 @@ specs/
 
 Each issue carries a `Status:` line near the top. Only three values:
 
-| Status   | Meaning                               |
-|----------|---------------------------------------|
-| `ready`  | Specified and ready to be implemented |
-| `done`   | Implemented and merged                |
-| `wontdo` | Will not be actioned                  |
+| Status        | Meaning                                         |
+|---------------|-------------------------------------------------|
+| `ready`       | Specified and ready to be implemented           |
+| `in-progress` | The work has been started on a different branch |
+| `done`        | Implemented on the current branch               |
+| `wontdo`      | Will not be actioned                            |
 
 There is no separate status or sprint file — the issue file is the source of truth. Comments and history append at the bottom under a `## Comments` heading.
 
@@ -42,7 +43,7 @@ There is no separate status or sprint file — the issue file is the source of t
 
 1. **Publish a spec** — create `specs/<feature-slug>/` with `spec.md` (add `design.md` when upfront technical direction is needed).
 2. **Draft the issues** — capture them in `stories.md`, iterate with the user, then write one `issues/NN-<slug>.md` per agreed story (numbered from `01`). Don't pre-generate half-baked issues.
-3. **Work an issue** — the implementing agent sets `Status: done` when the work is merged (`wontdo` if dropped).
+3. **Work an issue** — the implementing agent sets `Status: done` when the work is done (`wontdo` if dropped).
 4. **Close the feature** — when all its issues are `done`, move `specs/<feature-slug>/` to `specs/archived/<feature-slug>/`.
 
 ## Rules
