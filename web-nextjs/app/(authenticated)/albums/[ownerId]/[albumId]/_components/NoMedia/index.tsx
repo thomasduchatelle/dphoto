@@ -29,14 +29,14 @@ export const NoMedia = ({nextAlbum, previousAlbum}: NoMediaProps) => {
                         justifyContent: 'center',
                     }}
                 >
-                    {nextAlbum && (
-                        <Box sx={{width: {xs: '100%', sm: 320}, flexShrink: 0}}>
-                            <NeighbourAlbumLink album={nextAlbum}/>
-                        </Box>
-                    )}
                     {previousAlbum && (
                         <Box sx={{width: {xs: '100%', sm: 320}, flexShrink: 0}}>
-                            <NeighbourAlbumLink album={previousAlbum}/>
+                            <NeighbourAlbumLink album={previousAlbum} direction="previous"/>
+                        </Box>
+                    )}
+                    {nextAlbum && (
+                        <Box sx={{width: {xs: '100%', sm: 320}, flexShrink: 0}}>
+                            <NeighbourAlbumLink album={nextAlbum} direction="next"/>
                         </Box>
                     )}
                 </Box>

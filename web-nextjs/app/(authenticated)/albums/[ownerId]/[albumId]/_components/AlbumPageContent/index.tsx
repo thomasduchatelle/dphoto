@@ -59,8 +59,8 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                                     borderTop: '1px solid rgba(255,255,255,0.07)',
                                 }}
                             >
-                                {nextAlbum && <NeighbourAlbumLink album={nextAlbum}/>}
-                                {previousAlbum && <NeighbourAlbumLink album={previousAlbum}/>}
+                                {previousAlbum && <NeighbourAlbumLink album={previousAlbum} direction="previous"/>}
+                                {nextAlbum && <NeighbourAlbumLink album={nextAlbum} direction="next"/>}
                             </Box>
                         )}
                     </>
