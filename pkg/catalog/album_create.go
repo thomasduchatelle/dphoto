@@ -103,9 +103,9 @@ func (c *BulkCreateAlbum) Create(ctx context.Context, timeline *TimelineAggregat
 		return nil, err
 	}
 
-	covers, err := c.CoverService.StableRefresh(ctx, transferred)
+	covers, err := c.CoverService.ApplyTransfer(ctx, transferred)
 	if err != nil {
-		return nil, errors.Wrapf(err, "CreateAlbum failed to stabilise covers for %s", album.AlbumId)
+		return nil, errors.Wrapf(err, "CreateAlbum failed to apply cover transfer for %s", album.AlbumId)
 	}
 
 	log.WithField("Owner", request.Owner).Infof("Album %s created", album)

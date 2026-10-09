@@ -111,7 +111,7 @@ func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, 
 
 	log.WithField("Owner", albumId.Owner).Infof("Album %s dates updates to %s -> %s", albumId, update.DatesUpdate.UpdatedAlbum.Start.Format(time.DateTime), update.DatesUpdate.UpdatedAlbum.End.Format(time.DateTime))
 
-	covers, err := a.CoverService.StableRefresh(ctx, transferred)
+	covers, err := a.CoverService.ApplyTransfer(ctx, transferred)
 	if err != nil {
 		return err
 	}

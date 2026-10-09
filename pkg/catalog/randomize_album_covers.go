@@ -50,7 +50,7 @@ type RandomizeAlbumCovers struct {
 }
 
 func (r *RandomizeAlbumCovers) Randomize(ctx context.Context, albumId AlbumId) ([]Cover, error) {
-	changed, err := r.CoverService.Randomise(ctx, false, albumId)
+	changed, err := r.CoverService.ForcedRandomise(ctx, albumId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "RandomizeAlbumCovers failed to randomise %s", albumId)
 	}

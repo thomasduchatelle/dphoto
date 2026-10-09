@@ -96,7 +96,24 @@ func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
 			expectDeletedEvents: []catalog.AlbumDeleted{{
 				DeletedAlbumId:    marAlbumId,
 				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
-				Covers:            nil,
+				Covers:            map[catalog.AlbumId][]catalog.Cover{marAlbumId: nil},
+			}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should erase the canonical cover record even when the deleted album had no medias to transfer",
+			fields: fields{
+				Catalog: NewCatalogInMemory(withAlbum(marAlbum)),
+				Covers:  NewCoverRepositoryInMemory(coversFor(marAlbumId, pickedCover(photo10mar26))),
+			},
+			args:                args{albumId: marAlbumId},
+			expectAlbumIds:      []catalog.AlbumId{},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
+			expectDeletedEvents: []catalog.AlbumDeleted{{
+				DeletedAlbumId:    marAlbumId,
+				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
+				Covers:            map[catalog.AlbumId][]catalog.Cover{marAlbumId: nil},
 			}},
 			wantErr: assert.NoError,
 		},

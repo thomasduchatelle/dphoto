@@ -105,8 +105,7 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 
 	log.WithField("Owner", albumId.Owner).Infof("Album %s deleted", albumId)
 
-	// note: if the album didn't have medias, its would not have covers either...
-	covers, err := d.CoverService.StableRefresh(ctx, transferred)
+	covers, err := d.CoverService.ApplyTransfer(ctx, transferred, albumId)
 	if err != nil {
 		return err
 	}
