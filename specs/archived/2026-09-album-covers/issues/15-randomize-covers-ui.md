@@ -1,6 +1,6 @@
 # 15 — Re-randomise covers UI on the album page
 
-Status: ready
+Status: wontdo
 Phase: 3
 Layer: web — `web-nextjs`
 Depends on: 07, 14
