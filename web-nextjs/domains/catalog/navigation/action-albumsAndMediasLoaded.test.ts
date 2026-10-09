@@ -74,7 +74,8 @@ describe("action:albumsAndMediasLoaded", () => {
             totalCount: 0,
             temperature: 0,
             relativeTemperature: 0,
-            sharedWith: []
+            sharedWith: [],
+            covers: [],
         };
 
         const action = albumsAndMediasLoaded({

@@ -68,7 +68,7 @@ export const AlbumCard = ({album, onShare}: AlbumCardProps) => {
             {/* Photo grid: 2x2 on desktop, 1x4 on mobile */}
             <Box sx={{display: 'grid', gridTemplateColumns: {xs: 'repeat(4, 1fr)', sm: 'repeat(2, 1fr)'}, gap: 1}}>
                 {[0, 1, 2, 3].map((i) => {
-                    const thumbnail = album.thumbnails?.[i];
+                    const cover = album.covers[i];
                     return (
                         <Box
                             key={i}
@@ -80,16 +80,16 @@ export const AlbumCard = ({album, onShare}: AlbumCardProps) => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: !thumbnail ? 32 : 12,
-                                opacity: !thumbnail ? 0.15 : 1,
+                                fontSize: !cover ? 32 : 12,
+                                opacity: !cover ? 0.15 : 1,
                                 overflow: 'hidden',
                                 position: 'relative',
                             }}
                         >
-                            {thumbnail ? (
+                            {cover ? (
                                 <img
-                                    src={thumbnail}
-                                    alt={`${album.name} thumbnail ${i + 1}`}
+                                    src={cover.contentPath}
+                                    alt={`${album.name} cover ${i + 1}`}
                                     style={{
                                         width: '100%',
                                         height: '100%',
