@@ -11,7 +11,7 @@ import {AlbumHeader} from '../AlbumHeader';
 import {AlbumRail} from '../AlbumRail';
 import {AlbumMediaGrid} from '../AlbumMediaGrid';
 import {NeighbourAlbumLink} from '../NeighbourAlbumLink';
-import {NextAlbumBanner} from '../NextAlbumBanner';
+import {PreviousAlbumBanner} from '../PreviousAlbumBanner';
 import {AlbumActionsFab} from '../AlbumActionsFab';
 import {NoMedia} from '../NoMedia';
 
@@ -47,27 +47,24 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                 ) : (
                     <>
                         <AlbumMediaGrid medias={medias}/>
-                        {(nextAlbum || previousAlbum) && (
+                        {nextAlbum && (
                             <Box
                                 sx={{
-                                    display: {xs: 'flex', lg: 'none'},
-                                    flexDirection: 'column',
-                                    gap: 1.5,
+                                    display: {xs: 'block', lg: 'none'},
                                     px: 1.5,
                                     pt: 2,
                                     pb: 10,
                                     borderTop: '1px solid rgba(255,255,255,0.07)',
                                 }}
                             >
-                                {previousAlbum && <NeighbourAlbumLink album={previousAlbum} direction="previous"/>}
-                                {nextAlbum && <NeighbourAlbumLink album={nextAlbum} direction="next"/>}
+                                <NeighbourAlbumLink album={nextAlbum} direction="next"/>
                             </Box>
                         )}
                     </>
                 )}
             </Box>
 
-            <NextAlbumBanner album={nextAlbum}/>
+            <PreviousAlbumBanner album={previousAlbum}/>
             <AlbumActionsFab/>
         </Box>
     );

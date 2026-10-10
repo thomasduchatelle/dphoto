@@ -185,7 +185,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const NextAlbum: Story = {
+export const PreviousAlbum: Story = {
     args: {
         initialState: {
             ...baseState,
@@ -194,7 +194,7 @@ export const NextAlbum: Story = {
     },
 };
 
-export const PreviousAlbum: Story = {
+export const NextAlbum: Story = {
     args: {
         initialState: {
             ...baseState,
@@ -203,7 +203,17 @@ export const PreviousAlbum: Story = {
                 ...d,
                 medias: d.medias.map(m => ({...m, contentPath: '/thumbnails/the-witcher-3-01.jpg', thumbnailUrl: '/thumbnails/the-witcher-3-01.jpg'})),
             })),
+            albums: [baseState.albums[0], baseState.albums[1], baseState.albums[2]],
         },
+    },
+};
+
+export const ScrolledUp: Story = {
+    play: async () => {
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        window.scrollTo(0, maxScroll);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        window.scrollTo(0, Math.max(81, Math.ceil(maxScroll / 2)));
     },
 };
 
@@ -232,7 +242,7 @@ export const NoMediasNextOnly: Story = {
     args: {
         initialState: {
             ...baseState,
-            mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
+            mediasLoadedFromAlbumId: sampleAlbums[sampleAlbums.length - 1].albumId,
             medias: [],
         },
     },
@@ -242,7 +252,7 @@ export const NoMediasPreviousOnly: Story = {
     args: {
         initialState: {
             ...baseState,
-            mediasLoadedFromAlbumId: sampleAlbums[sampleAlbums.length - 1].albumId,
+            mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
             medias: [],
         },
     },
