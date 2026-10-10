@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vitest';
 import {Album, AlbumId, Media, MediaType} from '../language';
 import {albumsAndMediasLoaded} from './action-albumsAndMediasLoaded';
 import {mediaLoadFailed} from './action-mediaLoadFailed';
@@ -16,6 +16,7 @@ const someMedias: Media[] = [
         time: new Date('2025-01-05T12:42:00Z'),
         uiRelativePath: 'media-1/image.jpg',
         contentPath: '/media-1.jpg',
+        thumbnailUrl: '/media-1.jpg?w=360',
         source: '',
     },
 ];
