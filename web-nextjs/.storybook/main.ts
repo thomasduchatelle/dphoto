@@ -16,6 +16,8 @@ const config: StorybookConfig = {
         "../public",
         "../stories/assets",
         "../../test/wiremock/__files/api",
+        {"from": "../public", "to": "/nextjs"},
+        {"from": "../stories/assets", "to": "/nextjs"},
     ]
 };
 export default config;

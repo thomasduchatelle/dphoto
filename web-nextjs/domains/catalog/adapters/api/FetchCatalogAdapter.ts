@@ -2,6 +2,7 @@ import {Album, AlbumCover, AlbumId, albumKey, CatalogError, computeAlbumTemperat
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
+import {mediaUrl, prefixRelativeUrl, withBasePath} from "@/libs/requests/media-url";
 
 interface RestAlbum {
     owner: string
@@ -58,13 +59,6 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     ) {
     }
 
-    private prefixRelativeUrl(url: string | undefined, prefix: string): string | undefined {
-        if (!url || !prefix) return url;
-        if (url.startsWith('http://') || url.startsWith('https://')) return url;
-        if (url.startsWith(prefix)) return url;
-        return `${prefix}${url}`;
-    }
-
     public async deleteAlbum(albumId: AlbumId): Promise<void> {
         await this.fetchRequest(
             `/owners/${albumId.owner}/albums/${albumId.folderName}`,
@@ -96,7 +90,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                 ]).then(([ownersResp, usersResp, prefixResp]) => {
                     const prefix = prefixResp.status === "fulfilled" ? prefixResp.value : '';
 
-                    const prefixUrl = (url: string | undefined) => this.prefixRelativeUrl(url, prefix);
+                    const prefixUrl = (url: string | undefined) => prefixRelativeUrl(url, prefix);
 
                     const owners = ownersResp.status === "fulfilled" ? ownersResp.value.reduce(
                         (map, owner) => {
@@ -180,7 +174,9 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
         return this.fetchRequest<RestUserDetails[]>(`/users?emails=${encodeURIComponent(emailsParam)}`);
     }
 
-    public fetchMedias(albumId: AlbumId): Promise<Media[]> {
+    public async fetchMedias(albumId: AlbumId): Promise<Media[]> {
+        const prefix = await this.basePathSupplier();
+
         return this.fetchRequest<RestMedia[]>(
             `/owners/${albumId.owner}/albums/${albumId.folderName}/medias`
         )
@@ -191,14 +187,21 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                 return Promise.reject<RestMedia[]>(err)
             })
             .then(data => {
-                return data.map((media): Media => ({
-                    id: media.id,
-                    source: media.source,
-                    type: convertToType(media.type),
-                    time: new Date(media.time),
-                    uiRelativePath: `/albums/${albumId.owner}/${albumId.folderName}/${media.id}/${media.filename}`,
-                    contentPath: `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}`,
-                })).sort((a, b) => b.time.getTime() - a.time.getTime())
+                return data.map((media): Media => {
+                    const type = convertToType(media.type);
+                    const contentPath = `/api/v1/owners/${albumId.owner}/medias/${media.id}/${media.filename}`;
+                    return {
+                        id: media.id,
+                        source: media.source,
+                        type,
+                        time: new Date(media.time),
+                        uiRelativePath: `/albums/${albumId.owner}/${albumId.folderName}/${media.id}/${media.filename}`,
+                        contentPath,
+                        thumbnailUrl: type === MediaType.VIDEO
+                            ? withBasePath('/video-placeholder.png')
+                            : mediaUrl(contentPath, 360, prefix),
+                    };
+                }).sort((a, b) => b.time.getTime() - a.time.getTime())
             })
     }
 
@@ -266,7 +269,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
         };
 
         try {
-            let fullUrl = `${baseUrl}${url}`;
+            const fullUrl = `${baseUrl}${url}`;
             console.log("Requesting:", fullUrl, options);
             const response = await fetch(fullUrl, {...defaultOptions, ...options});
 

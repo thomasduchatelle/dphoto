@@ -3,7 +3,8 @@
 import {Box} from '@mui/material';
 import Link from 'next/link';
 import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId} from '@/domains/catalog/language/catalog-state';
-import {AlbumCard} from '../AlbumCard';
+import {albumUrl} from '@/domains/catalog/navigation/album-url';
+import {AlbumCard} from '@/components/AlbumCard';
 import {NoAlbum} from './NoAlbum';
 import {AlbumFilterControl} from "../AlbumFilterControl";
 
@@ -49,7 +50,7 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, filterOptions, active
                 {albums.map(album => (
                     <Link
                         key={`${album.albumId.owner}-${album.albumId.folderName}`}
-                        href={`/albums/${album.albumId.owner}/${album.albumId.folderName}`}
+                        href={albumUrl(album.albumId)}
                         prefetch={false}
                         style={{textDecoration: 'none', display: 'block', minWidth: 0}}
                     >
