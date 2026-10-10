@@ -1,5 +1,4 @@
 import {Metadata} from 'next';
-import {notFound} from 'next/navigation';
 import {serverSideThunk} from '@/libs/dthunks/server';
 import {catalogThunks} from '@/domains/catalog/thunks';
 import {initialCatalogState} from '@/domains/catalog/language/initial-catalog-state';
@@ -35,10 +34,6 @@ export default async function AlbumPage({params}: { params: Promise<AlbumPagePar
 
     if (catalogState.error) {
         throw catalogState.error;
-    }
-
-    if (catalogState.albumNotFound) {
-        notFound();
     }
 
     return <AlbumPageContent initialState={catalogState}/>;
