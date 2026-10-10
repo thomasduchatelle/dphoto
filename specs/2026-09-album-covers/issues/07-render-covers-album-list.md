@@ -1,6 +1,6 @@
 # 07 — Render album covers on the album list
 
-Status: ready
+Status: done
 Phase: 2
 Layer: web — `web-nextjs`
 Depends on: 04

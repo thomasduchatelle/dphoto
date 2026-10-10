@@ -5,7 +5,7 @@ import {CatalogViewerAction} from "../actions";
 
 describe('onAlbumFilterChange', () => {
 
-    const albumOtherProps = {totalCount: 0, relativeTemperature: 0, temperature: 0, sharedWith: []}
+    const albumOtherProps = {totalCount: 0, relativeTemperature: 0, temperature: 0, sharedWith: [], covers: []}
     const selfOwnedAlbum: Album = {
         albumId: {owner: 'mine', folderName: 'album1'},
         name: 'Jan 25',

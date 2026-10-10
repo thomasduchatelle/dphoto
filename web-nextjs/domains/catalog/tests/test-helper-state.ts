@@ -1,5 +1,6 @@
 import {
     Album,
+    AlbumCover,
     AlbumFilterEntry,
     CatalogViewerState,
     CreateDialog,
@@ -12,6 +13,13 @@ import {
     MediaWithinADay,
     UserDetails
 } from "../language";
+
+const cover = (mediaId: string, contentPath: string): AlbumCover => ({
+    mediaId,
+    filename: contentPath,
+    origin: 'RANDOM',
+    contentPath,
+});
 import {AlbumListActionsProps, CatalogViewerPageSelection} from "../navigation";
 import {EditNameDialogSelection} from "../album-edit-name";
 import {CreateDialogSelection} from "../album-create";
@@ -44,6 +52,7 @@ export const twoAlbums: Album[] = [
                 user: herselfUser,
             }
         ],
+        covers: [],
     },
     {
         albumId: {owner: herselfOwner, folderName: "feb-25"},
@@ -55,6 +64,7 @@ export const twoAlbums: Album[] = [
         relativeTemperature: 1,
         ownedBy: {name: "Herself", users: [herselfUser]},
         sharedWith: [],
+        covers: [],
     },
 ]
 
@@ -68,9 +78,10 @@ export const march2025: Album = {
     temperature: 0,
     relativeTemperature: 0,
     sharedWith: [],
+    covers: [],
 }
 
-// use sampleAlbums when realistic albums with thumbnails are required (storybook stories) - index 0 is the newest
+// use sampleAlbums when realistic albums with covers are required (storybook stories) - index 0 is the newest
 export const sampleAlbums: Album[] = [
     {
         albumId: {owner: "sandfall", folderName: "clair-obscur"},
@@ -81,11 +92,11 @@ export const sampleAlbums: Album[] = [
         temperature: 6.7,
         relativeTemperature: 1,
         sharedWith: [],
-        thumbnails: [
-            "/thumbnails/clair-obscur-1.jpg",
-            "/thumbnails/clair-obscur-2.jpg",
-            "/thumbnails/clair-obscur-3.jpg",
-            "/thumbnails/clair-obscur-4.jpg",
+        covers: [
+            cover("co-1", "/thumbnails/clair-obscur-1.jpg"),
+            cover("co-2", "/thumbnails/clair-obscur-2.jpg"),
+            cover("co-3", "/thumbnails/clair-obscur-3.jpg"),
+            cover("co-4", "/thumbnails/clair-obscur-4.jpg"),
         ],
     },
     {
@@ -97,10 +108,10 @@ export const sampleAlbums: Album[] = [
         temperature: 12.1,
         relativeTemperature: 0.72,
         sharedWith: [{user: {name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}}],
-        thumbnails: [
-            "/thumbnails/astro-bot-01.jpg",
-            "/thumbnails/astro-bot-02.jpg",
-            "/thumbnails/astro-bot-03.jpg",
+        covers: [
+            cover("ab-1", "/thumbnails/astro-bot-01.jpg"),
+            cover("ab-2", "/thumbnails/astro-bot-02.jpg"),
+            cover("ab-3", "/thumbnails/astro-bot-03.jpg"),
         ],
     },
     {
@@ -112,10 +123,10 @@ export const sampleAlbums: Album[] = [
         temperature: 9.4,
         relativeTemperature: 0.55,
         sharedWith: [],
-        thumbnails: [
-            "/thumbnails/the-witcher-3-01.jpg",
-            "/thumbnails/the-witcher-3-02.jpg",
-            "/thumbnails/the-witcher-3-03.jpg",
+        covers: [
+            cover("tw-1", "/thumbnails/the-witcher-3-01.jpg"),
+            cover("tw-2", "/thumbnails/the-witcher-3-02.jpg"),
+            cover("tw-3", "/thumbnails/the-witcher-3-03.jpg"),
         ],
     },
     {
@@ -128,11 +139,11 @@ export const sampleAlbums: Album[] = [
         relativeTemperature: 1.0,
         ownedBy: {name: "Kojima", users: [{name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}]},
         sharedWith: [],
-        thumbnails: [
-            "/thumbnails/death-stranding-1-01.jpg",
-            "/thumbnails/death-stranding-1-02.jpg",
-            "/thumbnails/death-stranding-1-03.jpg",
-            "/thumbnails/death-stranding-1-04.jpg",
+        covers: [
+            cover("ds1-1", "/thumbnails/death-stranding-1-01.jpg"),
+            cover("ds1-2", "/thumbnails/death-stranding-1-02.jpg"),
+            cover("ds1-3", "/thumbnails/death-stranding-1-03.jpg"),
+            cover("ds1-4", "/thumbnails/death-stranding-1-04.jpg"),
         ],
     },
     {
@@ -144,7 +155,7 @@ export const sampleAlbums: Album[] = [
         temperature: 4.1,
         relativeTemperature: 0.22,
         sharedWith: [{user: {name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}}],
-        thumbnails: ["/thumbnails/death-stranding-2-01.jpg"],
+        covers: [cover("ds2-1", "/thumbnails/death-stranding-2-01.jpg")],
     },
     {
         albumId: {owner: "sandfall", folderName: "clair-obscur-dlc"},
@@ -155,7 +166,7 @@ export const sampleAlbums: Album[] = [
         temperature: 1.2,
         relativeTemperature: 0.06,
         sharedWith: [],
-        thumbnails: [],
+        covers: [],
     },
 ]
 

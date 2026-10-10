@@ -16,6 +16,7 @@ const twoAlbums: Album[] = [
         temperature: 0.25,
         relativeTemperature: 1,
         sharedWith: [],
+        covers: [],
     },
     {
         albumId: {owner: "owner2", folderName: "feb-25"},
@@ -26,6 +27,7 @@ const twoAlbums: Album[] = [
         temperature: 0.25,
         relativeTemperature: 1,
         sharedWith: [],
+        covers: [],
     },
 ]
 

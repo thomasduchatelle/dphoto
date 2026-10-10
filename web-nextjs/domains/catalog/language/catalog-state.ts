@@ -73,6 +73,15 @@ export interface UserDetails {
     picture?: string
 }
 
+export type CoverOrigin = 'RANDOM' | 'CHERRY_PICKED'
+
+export interface AlbumCover {
+    mediaId: MediaId
+    filename: string
+    origin: CoverOrigin
+    contentPath: string
+}
+
 export interface Album {
     albumId: AlbumId
     name: string
@@ -83,7 +92,7 @@ export interface Album {
     relativeTemperature: number
     ownedBy?: OwnerDetails // only present when not owned by current user TODO should be present when owned by user or his picture won't be available.
     sharedWith: Sharing[]
-    thumbnails?: string[] // up to 4 thumbnail URLs for display (test purposes)
+    covers: AlbumCover[]
 }
 
 export interface AlbumFilterCriterion {
