@@ -16,16 +16,9 @@ services:
 
   wiremock:
     profiles: ["bg"]
-    image: amazoncorretto:17-alpine
-    command:
-      - sh
-      - -c
-      # no --track: fswatch doesn't work on mounted volumes :(
-      - |
-        apk add --no-cache bash curl && \
-        ./scripts/wiremock.sh --debug
-    working_dir: /src
+    image: wiremock/wiremock:3.13.2-2
+    command: ["--verbose"]
     ports:
       - "8080:8080"
     volumes:
-      - "./:/src"
+      - "./test/wiremock:/home/wiremock"
