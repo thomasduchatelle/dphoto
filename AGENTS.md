@@ -80,10 +80,10 @@ make build-api
 **Always run from the web folder `cd web-nextjs`, and always run `npm install` before executing other commands !**
 
 ```shell
-npm run test          # run unit tests only (~5s)
+npx vitest run        # run unit tests only (~5s)
 ```
 
-Do not run the targets `npm run test:visual`, `npm run test:update`, `npm run storybook` ; they are not appropriate for agentic development.
+Do not run the targets `npm run test`, `npm run test:ci`, `npm run test:visual`, `npm run test:update`, `npm run storybook` ; `npm run test` and `npm run test:ci` chain `test:visual` (Playwright) and the rest are not appropriate for agentic development.
 
 ### Typescript - `web/`
 
