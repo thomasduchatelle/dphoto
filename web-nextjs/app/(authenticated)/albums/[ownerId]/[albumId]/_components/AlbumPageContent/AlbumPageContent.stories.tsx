@@ -162,6 +162,7 @@ const baseSelection = catalogViewerPageSelector(baseState);
 
 const actionArgs = {
     isOwner: true,
+    onPlay: fn(),
     onRename: fn(),
     onEditDates: fn(),
     onDelete: fn(),

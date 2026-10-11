@@ -248,7 +248,7 @@ func TestGetResizedImage(t *testing.T) {
 			},
 		},
 		{
-			name: "it should reject widths higher than the maximum cacheable resolution",
+			name: "it should reject widths higher than the maximum cacheable resolution with an UnsupportedWidthError",
 			fields: fields{
 				Repository: NewARepositoryInMemory(),
 				Store:      NewStoreInMemory(),
@@ -258,7 +258,7 @@ func TestGetResizedImage(t *testing.T) {
 			},
 			args: args{resizedOwner, mediaId, 151000, 16},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+				return assert.ErrorIs(t, err, archive.UnsupportedWidthError)
 			},
 		},
 	}

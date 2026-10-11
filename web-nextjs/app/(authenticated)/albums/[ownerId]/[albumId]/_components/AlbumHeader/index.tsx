@@ -14,12 +14,13 @@ import {toLocaleDateWithDay} from "@/libs/dates";
 export interface AlbumHeaderProps {
     album: Album | undefined;
     isOwner: boolean;
+    playHref: string | undefined;
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
 }
 
-export function AlbumHeader({album, isOwner, onRename, onEditDates, onDelete}: AlbumHeaderProps) {
+export function AlbumHeader({album, isOwner, playHref, onRename, onEditDates, onDelete}: AlbumHeaderProps) {
     return (
         <Box
             sx={(theme) => ({
@@ -50,7 +51,17 @@ export function AlbumHeader({album, isOwner, onRename, onEditDates, onDelete}: A
                 )}
             </Box>
             <Stack direction="row" gap={1} alignItems="center" sx={{display: {xs: 'none', lg: 'flex'}, flexShrink: 0}}>
-                <Button variant="outlined" color='secondary' startIcon={<PlayArrowIcon/>} disabled>Play</Button>
+                <Button
+                    variant="outlined"
+                    color='secondary'
+                    startIcon={<PlayArrowIcon/>}
+                    component={Link}
+                    href={playHref ?? ''}
+                    prefetch={false}
+                    disabled={!playHref}
+                >
+                    Play
+                </Button>
                 {isOwner && (
                     <>
                         <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} disabled>Share</Button>

@@ -26,6 +26,7 @@ describe("action:mediaLoadFailed", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             medias: [],
+            firstMediaHref: undefined,
             error: testError,
         });
         expect(albumListActionsSelector(got)).toEqual({
@@ -46,6 +47,7 @@ describe("action:mediaLoadFailed", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             medias: [],
+            firstMediaHref: undefined,
             error: testError,
             albumsLoaded: true,
             mediasLoaded: true,
@@ -80,6 +82,7 @@ describe("action:mediaLoadFailed", () => {
             previousAlbum: undefined,
             nextAlbum: twoAlbums[0],
             medias: [],
+            firstMediaHref: undefined,
             error: testError,
         });
         expect(albumListActionsSelector(got)).toEqual({

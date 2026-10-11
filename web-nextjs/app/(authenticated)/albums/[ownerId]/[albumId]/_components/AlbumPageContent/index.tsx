@@ -1,7 +1,7 @@
 'use client';
 
 import {useMemo, useReducer} from 'react';
-import {notFound} from 'next/navigation';
+import {notFound, useRouter} from 'next/navigation';
 import {Box} from '@mui/material';
 import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
 import {CatalogViewerPageSelection, catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
@@ -29,6 +29,7 @@ export interface AlbumPageContentProps {
 
 export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
+    const router = useRouter();
 
     const adapter = useMemo(() => newClientAdapterFactory(), []);
     const thunks = useSessionAwareThunks(catalogThunks, {dispatch, adapter}, state);
@@ -39,11 +40,14 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
         notFound();
     }
 
+    const firstMediaHref = selection.firstMediaHref;
+
     return (
         <>
             <AlbumPageContentView
                 {...selection}
                 isOwner={displayedAlbumSelector(state).displayedAlbumIdIsOwned}
+                onPlay={firstMediaHref ? () => router.push(firstMediaHref) : undefined}
                 onRename={thunks.openEditNameDialog}
                 onEditDates={thunks.openEditDatesDialog}
                 onDelete={thunks.openDeleteAlbumDialog}
@@ -77,6 +81,7 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
 
 export interface AlbumPageContentViewProps extends CatalogViewerPageSelection {
     isOwner: boolean;
+    onPlay: (() => void) | undefined;
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
@@ -86,10 +91,12 @@ export function AlbumPageContentView({
                                          albums,
                                          displayedAlbum,
                                          medias,
+                                         firstMediaHref,
                                          previousAlbum,
                                          nextAlbum,
                                          error,
                                          isOwner,
+                                         onPlay,
                                          onRename,
                                          onEditDates,
                                          onDelete,
@@ -106,16 +113,17 @@ export function AlbumPageContentView({
                 <AlbumHeader
                     album={displayedAlbum}
                     isOwner={isOwner}
+                    playHref={firstMediaHref}
                     onRename={onRename}
                     onEditDates={onEditDates}
                     onDelete={onDelete}
                 />
 
-                {medias.length === 0 ? (
+                {medias.length === 0 || !displayedAlbum ? (
                     <NoMedia nextAlbum={nextAlbum} previousAlbum={previousAlbum}/>
                 ) : (
                     <>
-                        <AlbumMediaGrid medias={medias}/>
+                        <AlbumMediaGrid albumId={displayedAlbum.albumId} medias={medias}/>
                         {nextAlbum && (
                             <Box
                                 sx={{
@@ -136,6 +144,7 @@ export function AlbumPageContentView({
             <PreviousAlbumBanner album={previousAlbum}/>
             <AlbumActionsFab
                 isOwner={isOwner}
+                onPlay={onPlay}
                 onRename={onRename}
                 onEditDates={onEditDates}
                 onDelete={onDelete}

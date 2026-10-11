@@ -44,8 +44,10 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 	}
 
 	content, contentType, err := archive.GetResizedImage(owner.Value(), mediaId.Value(), width, responseMaxContent)
-	if errors.Is(err, archive.NotFoundError) {
-		return common.NotFound(nil)
+	if errors.Is(err, archive.NotFoundError) || errors.Is(err, archive.UnsupportedWidthError) {
+		return common.NotFound(map[string]string{
+			"cause": err.Error(),
+		})
 	}
 	if errors.Is(err, archive.MediaOverflowError) {
 		log.WithField("Owner", owner).Infof("Media %s/%s with width=%d is over max allowed payload. Redirecting.", owner, mediaId, width)

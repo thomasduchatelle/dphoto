@@ -30,6 +30,7 @@ describe("action:mediasLoaded", () => {
             previousAlbum: undefined,
             nextAlbum: twoAlbums[0],
             medias: someMediasByDays,
+            firstMediaHref: "/albums/herself/feb-25/photos/media-1",
         });
         expect(albumListActionsSelector(got)).toEqual({
             ...albumListActionsPropsForLoadedState,

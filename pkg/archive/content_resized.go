@@ -100,7 +100,7 @@ func findCacheableSize(width int) (int, error) {
 	}
 
 	if width > CacheableWidths[i] {
-		return 0, errors.Errorf("width %d is not supported ; maximum size is %d", width, CacheableWidths[0])
+		return 0, errors.Wrapf(UnsupportedWidthError, "width %d is not supported ; maximum size is %d", width, CacheableWidths[0])
 	}
 	return CacheableWidths[i], nil
 }

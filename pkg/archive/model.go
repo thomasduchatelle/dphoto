@@ -12,8 +12,9 @@ const (
 )
 
 var (
-	NotFoundError      = errors.New("media is not present in the archive")
-	MediaOverflowError = errors.New("media at the requested width is bigger that what the consumer can support")
+	NotFoundError         = errors.New("media is not present in the archive")
+	MediaOverflowError    = errors.New("media at the requested width is bigger that what the consumer can support")
+	UnsupportedWidthError = errors.New("the requested width is greater than the maximum cacheable resolution")
 	CacheableWidths    = []int{MediumQualityCachedWidth, MiniatureCachedWidth} // CacheableWidths are the only resolution cached, array must be sorted DESC.
 
 	supportedExtensionsForResizing = map[string]interface{}{
