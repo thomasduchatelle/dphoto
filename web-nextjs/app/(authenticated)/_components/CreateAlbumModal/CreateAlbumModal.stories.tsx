@@ -70,6 +70,14 @@ export const SubmissionError: Story = {
     },
 };
 
+export const NameAlreadyExists: Story = {
+    args: {
+        albumName: 'Clair Obscur',
+        nameError: 'Name must be unique',
+        canSubmit: false,
+    },
+};
+
 export const Loading: Story = {
     args: {
         albumName: 'Clair Obscur',
