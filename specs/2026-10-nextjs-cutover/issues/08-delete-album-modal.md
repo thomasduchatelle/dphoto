@@ -1,50 +1,68 @@
-# Delete album modal
+# Delete album modal (component + stories)
 
 **Status**: ready
-**Depends on**: `01-header-action-scaffold.md` — needs the Delete button that 01 adds, the stub modal placeholder, and the open/close thunks that 01 creates for the delete slice.
+**Depends on**: none — the component is unwired, delivered with Storybook only; wiring happens in story 01.
 
 ## Description
 
-Replace the delete stub modal on the album page with a working confirmation dialog: an owner can delete the
-album they are viewing.
+Deliver a `DeleteAlbumModal` React component with Storybook stories, matching the layout and behaviour of
+`web/src/components/albums/DeleteAlbumDialog/DeleteAlbumDialog.tsx` and driven by the props shape returned
+by the already-migrated `deleteDialogSelector`.
 
-The domain layer is already migrated: see `web-nextjs/domains/catalog/album-delete/`. This story is UI
-wiring and a confirmation dialog.
+The component is **not** mounted into the album page by this story. The follow-up wiring story (01) is
+responsible for mounting it in `AlbumPageContent` and connecting the handlers to the real thunks.
+
+## Props contract
+
+Props = `DeleteDialogFrag & DeleteAlbumModalHandlers`.
+
+- `DeleteDialogFrag` is imported verbatim from
+  `web-nextjs/domains/catalog/album-delete/selector-deleteDialogSelector.ts`. Current shape at time of
+  writing:
+  `{ albums: Album[]; initialSelectedAlbumId?: AlbumId; isOpen: boolean; isLoading: boolean; error?: string }`.
+  Follow the selector export — do not duplicate the type.
+- `DeleteAlbumModalHandlers` is a new interface declared next to the component, with one callback per
+  thunk the dialog triggers:
+  - `onClose(): void` — paired with `closeDeleteAlbumDialog`.
+  - `onDelete(albumId: AlbumId): void` — paired with `deleteAlbum`.
+
+Place the component at
+`web-nextjs/app/(authenticated)/albums/[ownerId]/[albumId]/_components/DeleteAlbumModal/`.
 
 ## Context
 
-- The Delete button is added and wired to the open-modal thunk by story 01. This story replaces the stub
-  modal component with the real confirmation dialog.
-- Thunks and state slices to use (all under `domains/catalog/album-delete/`):
-  - Open / close modal thunks.
-  - Delete thunk that calls the backend endpoint.
-  - Error action/state slice that surfaces backend errors into the dialog.
-- Reference the old implementation for behaviour parity:
-  `web/src/components/delete-album-dialog/` and `web/src/core/catalog/album-delete/`.
-- Deletion in the DPhoto backend removes the album, not its medias — the medias remain in the catalog and
-  can be re-indexed under another album. The confirmation message must say this clearly to match the
-  current `web/` wording and avoid alarming users.
-- The dialog must be visually destructive: Delete button uses `color="error"` or equivalent; focus defaults
-  to Cancel.
+- Reference layout and behaviour: `web/src/components/albums/DeleteAlbumDialog/DeleteAlbumDialog.tsx` (full
+  file, 184 lines). Keep the same structure and two-step UX: a Select of the deletable albums (pre-selected
+  from `initialSelectedAlbumId`), then a confirmation step with the formatted album label. Linear progress
+  bar on top for loading. `error` renders as an inline alert.
+- Destructive styling: the Delete / Confirm buttons use `color="error"` + `variant="contained"`. Cancel is
+  the default focus.
+- The confirmation step is internal to the component (local `useState` for `confirmMode` and
+  `selectedAlbumIndex`) — do **not** push this state into the domain layer. The `web/` implementation does
+  the same thing.
+- `formatAlbumLabel` can be copied verbatim from the `web/` implementation, including its dependency on
+  `toLocaleDateWithDay`. Check whether `web-nextjs` already has a date-utility; if not, inline the small
+  helper in the modal folder.
+- Follow the `ui-components` and `nextjs` skills: Storybook for visual testing, no unit test files for
+  pure UI, props must be a straight line from the selector output.
 
 ## Acceptance Criteria
 
-- Clicking Delete in `AlbumHeader` (or `AlbumActionsFab`) opens the confirmation dialog.
-- The dialog contains:
-  - Warning that the album will be removed (medias remain in the catalog).
-  - Album name for context.
-  - Cancel and Delete buttons; Delete uses destructive styling; focus defaults to Cancel.
-- Clicking Delete:
-  - Shows a loading state on Delete.
-  - On success: closes the dialog, navigates the user to the home page, and the album disappears from the
-    album list.
-  - On failure: shows the error inline inside the dialog with a retry; the album remains.
-- Clicking Cancel closes the dialog without deleting; pressing ESC does the same.
-- Pressing Enter inside the dialog triggers Cancel (safer default), not Delete.
-- Dialog is responsive on mobile / tablet / desktop.
-- Storybook stories cover: default, loading, submission error.
+- `DeleteAlbumModal` component accepts `DeleteDialogFrag & DeleteAlbumModalHandlers`.
+- When `isOpen` is true, the dialog renders with the album Select pre-populated from `albums` and the
+  selection initialized from `initialSelectedAlbumId`.
+- Clicking Delete transitions to the confirmation step, showing the formatted label of the selected album;
+  Confirm calls `onDelete(selectedAlbum.albumId)`.
+- Cancel closes the dialog; ESC does the same.
+- Loading state (`isLoading`) shows the top progress bar and disables Cancel + the primary action.
+- `error` renders as an `Alert severity="error"` at the top of the content; the album stays visible for
+  retry.
+- The component is a `'use client'` React component, no server-only code.
+- Storybook stories cover: default (selection step), confirmation step, loading, submission error.
+- The dialog is responsive and keyboard-accessible.
 
 ## Out of scope
 
-- Any "undo" / soft-delete mechanism — the backend does not support it and parity does not require it.
-- Deleting medias alongside the album — explicitly not what delete-album does.
+- Mounting the modal in `AlbumPageContent` — story 01.
+- Any change to the Delete button in `AlbumHeader` / `AlbumActionsFab` — story 01.
+- Any "undo" / soft-delete UX — the backend does not support it.
