@@ -1,7 +1,9 @@
 import {Album, AlbumId, Media, MediaId, MediaType} from "../language";
 import {mediasLoaded} from "./action-mediasLoaded";
 import {albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
+import {albumsLoaded} from "./action-albumsLoaded";
 import {mediaLoadFailed} from "./action-mediaLoadFailed";
+import {noAlbumAvailable} from "./action-noAlbumAvailable";
 import {FetchAlbumsAndMediasPort, OnPageRefresh, OnPageRefreshArgs} from "./thunk-onPageRefresh";
 import {CatalogViewerAction} from "../actions";
 
@@ -104,17 +106,24 @@ describe("CatalogLoader", () => {
         expect(dispatch.actions).toHaveLength(0)
     })
 
-    it("should load albums and medias of the first album when the state is not loaded and there is no album selected", async () => {
+    it("should load albums only (no medias) when the state is not loaded and there is no album selected", async () => {
         const loader = newThunk(dispatch)
         await loader.onPageRefresh(stateNotLoaded)
 
         expect(dispatch.actions).toEqual([
-            albumsAndMediasLoaded({
+            albumsLoaded({
                 albums: twoAlbums,
-                medias: medias,
-                mediasFromAlbumId: twoAlbums[0].albumId,
-                redirectTo: twoAlbums[0].albumId,
             }),
+        ])
+    })
+
+    it("should dispatch noAlbumAvailable when the albums fail to load on the home page", async () => {
+        const error = new Error("TEST simulate albums failing to load");
+        const loader = new OnPageRefresh(dispatch.onAction, new AlbumAndMediaRepositoryFakeWithAlbumFailure(error))
+        await loader.onPageRefresh(stateNotLoaded)
+
+        expect(dispatch.actions).toEqual([
+            noAlbumAvailable(error),
         ])
     })
 
@@ -125,16 +134,14 @@ describe("CatalogLoader", () => {
         expect(dispatch.actions).toHaveLength(0)
     })
 
-    it("should dispatch a mediaLoadFailedAction when failing to load the medias of the selected album", async () => {
+    it("should load albums only and not touch medias on the home page even if media loading would fail", async () => {
         const error = new Error("TEST simulate medias failing to load");
         const loader = newLoaderFailingGettingMedias(dispatch, error)
         await loader.onPageRefresh(stateNotLoaded)
 
         expect(dispatch.actions).toEqual([
-            mediaLoadFailed({
+            albumsLoaded({
                 albums: twoAlbums,
-                displayedAlbumId: twoAlbums[0].albumId,
-                error: new Error(`failed to load medias of ${twoAlbums[0].albumId}`, error),
             }),
         ])
     })

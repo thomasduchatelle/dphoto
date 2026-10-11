@@ -20,7 +20,7 @@ import {Close} from "@mui/icons-material";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {CreateDialogSelection} from "@/domains/catalog/album-create";
-import {DateRangePicker} from "./DateRangePicker";
+import {DateRangePicker} from "@/components/DateRangePicker";
 import {FolderNameInput} from "./FolderNameInput";
 
 export interface CreateAlbumModalHandlers {

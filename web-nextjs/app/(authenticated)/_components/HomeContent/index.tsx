@@ -2,8 +2,10 @@
 
 import {AlbumGrid} from "../AlbumGrid";
 import {CreateAlbumModal} from "../CreateAlbumModal";
+import {DeleteAlbumModal} from "@/components/DeleteAlbumModal";
 import {catalogReducer, catalogThunks, CatalogViewerState} from "@/domains/catalog";
 import {createDialogSelector} from "@/domains/catalog/album-create";
+import {deleteDialogSelector} from "@/domains/catalog/album-delete/selector-deleteDialogSelector";
 import {newClientAdapterFactory} from "@/domains/catalog/adapters/client-adapter-factory";
 import {useMemo, useReducer} from "react";
 import {useSessionAwareThunks} from "@/libs/security/client";
@@ -17,6 +19,7 @@ export const HomeContent = ({initialState}: { initialState: CatalogViewerState }
     const thunks = useSessionAwareThunks(catalogThunks, {dispatch, adapter}, state);
 
     const createDialog = createDialogSelector(state);
+    const deleteDialog = deleteDialogSelector(state);
     const canCreateAlbum = state.currentUser.isOwner;
 
     if (state.error) {
@@ -34,6 +37,7 @@ export const HomeContent = ({initialState}: { initialState: CatalogViewerState }
                 onFilterChange={thunks.onAlbumFilterChange}
                 onShare={thunks.openSharingModal}
                 onCreateAlbum={canCreateAlbum ? thunks.openCreateDialog : undefined}
+                onDeleteAlbum={canCreateAlbum ? thunks.openDeleteAlbumDialog : undefined}
             />
             <CreateAlbumModal
                 {...createDialog}
@@ -46,6 +50,11 @@ export const HomeContent = ({initialState}: { initialState: CatalogViewerState }
                 onEndsAtEndOfTheDayChange={thunks.updateCreateDialogEndsAtEndOfTheDay}
                 onStartDateChange={thunks.updateCreateDialogStartDate}
                 onEndDateChange={thunks.updateCreateDialogEndDate}
+            />
+            <DeleteAlbumModal
+                {...deleteDialog}
+                onClose={thunks.closeDeleteAlbumDialog}
+                onDelete={thunks.deleteAlbum}
             />
         </>
     );

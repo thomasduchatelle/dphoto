@@ -1,56 +1,66 @@
-# Share album modal
+# Share album modal (component + stories)
 
 **Status**: ready
-**Depends on**: `01-header-action-scaffold.md` — needs the enabled Share button and the stub modal placeholder to replace.
+**Depends on**: none — the component is unwired, delivered with Storybook only; wiring happens in story 01.
 
 ## Description
 
-Replace the share stub modal on the album page with a working sharing dialog: an owner can view who has
-access to the album, grant access by email, and revoke access with a confirmation step.
+Deliver a `ShareAlbumModal` React component with Storybook stories, matching the layout and behaviour of
+`web/src/components/albums/ShareDialog/index.tsx` and driven by the props shape returned by the already-
+migrated `sharingDialogSelector`.
 
-The domain layer is already migrated: see `web-nextjs/domains/catalog/sharing/`. This story is UI wiring and
-a dialog component.
+The component is **not** mounted into the album page by this story. The follow-up wiring story (01) is
+responsible for mounting it in `AlbumPageContent` and connecting the handlers to the real thunks.
+
+## Props contract
+
+Props = `SharingDialogFrag & ShareAlbumModalHandlers`.
+
+- `SharingDialogFrag` is imported verbatim from
+  `web-nextjs/domains/catalog/sharing/selector-sharingDialogSelector.ts`. Current shape at time of writing:
+  `{ open: boolean; sharedWith: Sharing[]; suggestions: UserDetails[]; error?: ShareError }`. If the
+  selector type evolves, follow it — the dialog consumes whatever the selector exports.
+- `ShareAlbumModalHandlers` is a new interface declared next to the component, with one callback per thunk
+  the dialog triggers:
+  - `onClose(): void` — paired with `closeSharingModal`.
+  - `onGrant(email: string): Promise<void>` — paired with `grantAlbumAccess`.
+  - `onRevoke(email: string): Promise<void>` — paired with `revokeAlbumAccess`.
+
+Place the component at
+`web-nextjs/app/(authenticated)/albums/[ownerId]/[albumId]/_components/ShareAlbumModal/`.
 
 ## Context
 
-- The share button is enabled and wired to `openSharingModal` by story 01. This story replaces the stub
-  modal component with the real dialog.
-- Thunks and state slices to use (all under `domains/catalog/sharing/`):
-  - `openSharingModal`, `closeSharingModal`
-  - `grantAlbumAccess` (consumes an email)
-  - `revokeAlbumAccess` (consumes a user)
-  - `SharingModalErrorOccurred` already surfaces API errors into the state — render them in the dialog.
-- Reference the old implementation for behaviour parity: `web/src/components/sharing-dialog/` and
-  `web/src/core/catalog/sharing/`.
-- Dialog contents:
-  - Album name as the dialog title / subtitle for context.
-  - Current access list: avatar, name, email, and a Revoke icon per entry.
-  - Email input + Grant button.
-  - Error area driven by `SharingModalErrorOccurred` state, with a retry affordance.
-  - Close button.
-- Email validation on blur: inline error if the format is invalid; Grant is disabled until the input is a
-  valid, non-empty email.
-- Revoking triggers an inline confirmation (dialog or inline popover) — the dialog must not immediately
-  revoke on a single click.
+- Reference layout and behaviour: `web/src/components/albums/ShareDialog/index.tsx` (full file, 230 lines).
+  Keep the same structure, labels, chip-based access list, email-input with send icon, suggestions row,
+  revoke-with-check animation, destructive styling for errors. The CSS file
+  `ShareDialogChipsAnimation.css` can be copied over if the animation is kept.
+- Album name as the dialog title / subtitle for context. Pass it as a prop if the selector exposes it; if
+  not, leave the title generic ("Sharing album to ...") like the `web/` version — do **not** reach into the
+  catalog state inside the component.
+- Email validation on blur: inline error if the format is invalid; the send button is disabled until the
+  input is a valid, non-empty email.
+- Revoking triggers a confirmation — mirror the `web/` UX (chip "delete" icon with success flash on grant,
+  error flash on failure). Do not immediately revoke on a single click without any feedback.
+- Follow the `ui-components` and `nextjs` skills: Storybook for visual testing, no unit test files for pure
+  UI, props must be a straight line from the selector output.
 
 ## Acceptance Criteria
 
-- Clicking Share in `AlbumHeader` (or `AlbumActionsFab`) opens the sharing dialog, pre-populated with the
-  current access list.
-- Granting access with a valid email adds the user to the list (avatar + name once the profile is loaded),
-  clears the email input, and the album card on the home page updates to show the new avatar on next render.
-- Granting access with an invalid email shows an inline validation error and does not call the API.
-- Grant failure (e.g. unknown email) shows the error inline and leaves the input populated for retry.
-- Clicking the Revoke icon on a user opens a confirmation step (user name + album name + warning + Cancel /
-  Revoke). Cancel is the default focus; Revoke uses destructive styling.
-- Confirming revoke removes the user from the list on success and surfaces errors inline on failure.
-- Share and Revoke are **not visible** to non-owners (enforced by story 01 at the button level — this story
-  just has to assume the dialog is only mounted for owners).
-- Dialog is keyboard-accessible and responsive on mobile / tablet / desktop.
-- Storybook stories cover: empty access list, with several users, email validation error, grant error,
-  revoke confirmation open, revoke error.
+- `ShareAlbumModal` component accepts `SharingDialogFrag & ShareAlbumModalHandlers`.
+- When `open` is true, the dialog renders with the current access list (chips with avatar + name + email).
+- Email input validates format on blur; invalid input disables the Grant action.
+- Grant failure (error with matching email) shows the error inline on the input / suggestion chip and leaves
+  the input populated for retry.
+- Revoke triggers an inline confirmation / animated feedback cycle before actually revoking; errors are
+  surfaced inline.
+- The component is a `'use client'` React component, no server-only code.
+- Storybook stories cover: closed, empty access list, with several users, suggestions visible, email
+  validation error, grant error, revoke error.
+- The dialog is responsive (full-screen on mobile per MUI `useMediaQuery` pattern) and keyboard-accessible.
 
 ## Out of scope
 
-- Any change to viewer-side UI (how non-owners see the album) — already handled.
-- Showing when the album was shared, or audit history — not a parity feature.
+- Mounting the modal in `AlbumPageContent` — story 01.
+- Any change to the Share button in `AlbumHeader` / `AlbumActionsFab` — story 01.
+- Any change to the sharing thunks or state — the domain layer is already migrated.
