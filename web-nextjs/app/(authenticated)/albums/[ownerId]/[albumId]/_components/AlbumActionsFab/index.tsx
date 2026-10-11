@@ -11,12 +11,13 @@ import DeleteIcon from '@mui/icons-material/Delete';
 export interface AlbumActionsFabProps {
     isOwner: boolean;
     onPlay: (() => void) | undefined;
+    onShare: () => void;
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
 }
 
-export function AlbumActionsFab({isOwner, onPlay, onRename, onEditDates, onDelete}: AlbumActionsFabProps) {
+export function AlbumActionsFab({isOwner, onPlay, onShare, onRename, onEditDates, onDelete}: AlbumActionsFabProps) {
     return (
         <SpeedDial
             ariaLabel="Album actions"
@@ -42,7 +43,7 @@ export function AlbumActionsFab({isOwner, onPlay, onRename, onEditDates, onDelet
                 />
             )}
             {isOwner ? [
-                <SpeedDialAction key="share" icon={<ShareIcon/>} tooltipTitle="Share" tooltipOpen FabProps={{disabled: true}}/>,
+                <SpeedDialAction key="share" icon={<ShareIcon/>} tooltipTitle="Share" tooltipOpen onClick={onShare}/>,
                 <SpeedDialAction key="rename" icon={<DriveFileRenameOutlineIcon/>} tooltipTitle="Rename" tooltipOpen onClick={onRename}/>,
                 <SpeedDialAction key="dates" icon={<CalendarMonthIcon/>} tooltipTitle="Dates" tooltipOpen onClick={onEditDates}/>,
                 <SpeedDialAction key="delete" icon={<DeleteIcon/>} tooltipTitle="Delete" tooltipOpen onClick={onDelete}/>,
