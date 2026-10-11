@@ -1,13 +1,13 @@
 # Cutover: delete `web/` and drop the `/nextjs` basepath
 
 **Status**: ready
-**Depends on**: `01` through `08` — must only be picked up once every other issue in this feature is `done` and Thomas has validated `web-nextjs` as his primary interface.
+**Depends on**: `01` through `09` — must only be picked up once every other issue in this feature is `done` and Thomas has validated `web-nextjs` as his primary interface.
 
 ## Description
 
 Mechanical closure of the feature: retire the deprecated Waku-based `web/` project, drop the `/nextjs`
 basepath from `web-nextjs`, and update the deployment so `web-nextjs` serves at `/`. Only pick this up when
-issues 01–08 are all `done` and Thomas has validated `web-nextjs` as the primary interface.
+issues 01–09 are all `done` and Thomas has validated `web-nextjs` as the primary interface.
 
 ## Context
 

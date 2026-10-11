@@ -14,9 +14,9 @@ issues 02–09 can all be picked up in parallel; issue 10 is the final merge/dep
                             └── 08 modal-delete-album
 
 (independent)   04 create-album-modal
+(independent)   09 client-token-refresh    (soft-blocks 05–08; discovered during 04)
 
-(after all)     09 (reserved)               not used
-                10 cutover
+(after all)     10 cutover
 ```
 
 Issues 02 and 03 are sequential (03 depends on 02). All five modals (04–08) are independent of each other and
@@ -80,10 +80,12 @@ Owner-only, from `AlbumHeader`. Confirmation dialog with destructive styling, Ca
 `album-delete` thunks. On success, user is navigated back to the home page and the album disappears from the
 list.
 
-### 09 — (reserved, unused)
+### 09 — Client-side access-token refresh
 
-Skipped on purpose; this file numbers from 01 to 08 for parity work and `10-cutover` for the final step.
-Keeping the gap avoids renumbering if an extra parity story is discovered during implementation.
+Discovered during review of story 04: client adapters rely on the httpOnly cookie being auto-attached and
+have no refresh path, so a tab left open past the access-token TTL fails the next write with a 401. Adds a
+`POST /auth/refresh` route handler reusing `refreshSession`, and a shared `fetch` wrapper that
+retries-on-401 once. Soft-blocks 05–08 so write-stories don't inherit the stale-tab assumption.
 
 ### 10 — Cutover: delete `web/` and drop the basepath
 
