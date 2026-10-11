@@ -28,4 +28,16 @@ describe('catalogViewerPageSelector', () => {
         expect(result.previousAlbum).toBeUndefined();
         expect(result.nextAlbum).toBeUndefined();
     });
+
+    it('returns the photo URL of the first media as firstMediaHref', () => {
+        const result = catalogViewerPageSelector(loadedStateWithTwoAlbums);
+
+        expect(result.firstMediaHref).toEqual('/albums/myself/jan-25/photos/media-1');
+    });
+
+    it('returns undefined firstMediaHref when the album has no media', () => {
+        const result = catalogViewerPageSelector({...loadedStateWithTwoAlbums, medias: []});
+
+        expect(result.firstMediaHref).toBeUndefined();
+    });
 });
