@@ -1,13 +1,14 @@
 import {Box, Typography} from '@mui/material';
-import {MediaWithinADay} from '@/domains/catalog/language';
+import {AlbumId, MediaWithinADay} from '@/domains/catalog/language';
 import {MediaThumbnail} from './MediaThumbnail';
 import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumMediaGridProps {
+    albumId: AlbumId;
     medias: MediaWithinADay[];
 }
 
-export function AlbumMediaGrid({medias}: AlbumMediaGridProps) {
+export function AlbumMediaGrid({albumId, medias}: AlbumMediaGridProps) {
     return (
         <Box sx={(theme) => ({
             borderTop: '1px solid rgba(255,255,255,0.07)',
@@ -26,7 +27,7 @@ export function AlbumMediaGrid({medias}: AlbumMediaGridProps) {
                         }}
                     >
                         {dayMedias.map((media) => (
-                            <MediaThumbnail key={media.id} media={media}/>
+                            <MediaThumbnail key={media.id} albumId={albumId} media={media}/>
                         ))}
                     </Box>
                 </Box>
