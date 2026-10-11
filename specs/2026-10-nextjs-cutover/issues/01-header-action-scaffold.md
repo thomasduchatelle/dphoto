@@ -1,6 +1,6 @@
 # Wire album-header modals into the album page
 
-**Status**: ready
+**Status**: done
 **Depends on**: `05-share-album-modal.md`, `06-rename-album-modal.md`, `07-edit-dates-modal.md`,
 `08-delete-album-modal.md` — this story mounts the modal components those stories deliver.
 

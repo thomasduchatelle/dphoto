@@ -15,12 +15,13 @@ export interface AlbumHeaderProps {
     album: Album | undefined;
     isOwner: boolean;
     playHref: string | undefined;
+    onShare: () => void;
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
 }
 
-export function AlbumHeader({album, isOwner, playHref, onRename, onEditDates, onDelete}: AlbumHeaderProps) {
+export function AlbumHeader({album, isOwner, playHref, onShare, onRename, onEditDates, onDelete}: AlbumHeaderProps) {
     return (
         <Box
             sx={(theme) => ({
@@ -64,7 +65,7 @@ export function AlbumHeader({album, isOwner, playHref, onRename, onEditDates, on
                 </Button>
                 {isOwner && (
                     <>
-                        <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} disabled>Share</Button>
+                        <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} onClick={onShare}>Share</Button>
                         <Button variant="outlined" color='secondary' startIcon={<DriveFileRenameOutlineIcon/>} onClick={onRename}>Rename</Button>
                         <Button variant="outlined" color='secondary' startIcon={<CalendarMonthIcon/>} onClick={onEditDates}>Dates</Button>
                         <Tooltip title="Delete album">

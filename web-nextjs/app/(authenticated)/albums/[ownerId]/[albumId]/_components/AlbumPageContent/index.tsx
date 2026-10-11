@@ -9,6 +9,7 @@ import {displayedAlbumSelector} from '@/domains/catalog/language/selector-displa
 import {deleteDialogSelector} from '@/domains/catalog/album-delete/selector-deleteDialogSelector';
 import {editDatesDialogSelector} from '@/domains/catalog/album-edit-dates/selector-editDatesDialogSelector';
 import {editNameDialogSelector} from '@/domains/catalog/album-edit-name/selector-editNameDialogSelector';
+import {sharingDialogSelector} from '@/domains/catalog/sharing/selector-sharingDialogSelector';
 import {newClientAdapterFactory} from '@/domains/catalog/adapters/client-adapter-factory';
 import {useSessionAwareThunks} from '@/libs/security/client';
 import {ErrorMessage} from '@/components/ErrorMessage';
@@ -22,6 +23,7 @@ import {NoMedia} from '../NoMedia';
 import {DeleteAlbumModal} from '@/components/DeleteAlbumModal';
 import {EditDatesModal} from '../EditDatesModal';
 import {EditNameDialog} from '../EditNameDialog';
+import {ShareAlbumModal} from '@/components/ShareAlbumModal';
 
 export interface AlbumPageContentProps {
     initialState: CatalogViewerState;
@@ -41,6 +43,7 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     }
 
     const firstMediaHref = selection.firstMediaHref;
+    const displayedAlbumId = selection.displayedAlbum?.albumId;
 
     return (
         <>
@@ -48,11 +51,18 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                 {...selection}
                 isOwner={displayedAlbumSelector(state).displayedAlbumIdIsOwned}
                 onPlay={firstMediaHref ? () => router.push(firstMediaHref) : undefined}
+                onShare={() => displayedAlbumId && thunks.openSharingModal(displayedAlbumId)}
                 onRename={thunks.openEditNameDialog}
                 onEditDates={thunks.openEditDatesDialog}
                 onDelete={thunks.openDeleteAlbumDialog}
             />
 
+            <ShareAlbumModal
+                {...sharingDialogSelector(state)}
+                onClose={thunks.closeSharingModal}
+                onGrant={thunks.grantAlbumAccess}
+                onRevoke={thunks.revokeAlbumAccess}
+            />
             <DeleteAlbumModal
                 {...deleteDialogSelector(state)}
                 onClose={thunks.closeDeleteAlbumDialog}
@@ -82,6 +92,7 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
 export interface AlbumPageContentViewProps extends CatalogViewerPageSelection {
     isOwner: boolean;
     onPlay: (() => void) | undefined;
+    onShare: () => void;
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
@@ -97,6 +108,7 @@ export function AlbumPageContentView({
                                          error,
                                          isOwner,
                                          onPlay,
+                                         onShare,
                                          onRename,
                                          onEditDates,
                                          onDelete,
@@ -114,6 +126,7 @@ export function AlbumPageContentView({
                     album={displayedAlbum}
                     isOwner={isOwner}
                     playHref={firstMediaHref}
+                    onShare={onShare}
                     onRename={onRename}
                     onEditDates={onEditDates}
                     onDelete={onDelete}
@@ -145,6 +158,7 @@ export function AlbumPageContentView({
             <AlbumActionsFab
                 isOwner={isOwner}
                 onPlay={onPlay}
+                onShare={onShare}
                 onRename={onRename}
                 onEditDates={onEditDates}
                 onDelete={onDelete}

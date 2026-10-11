@@ -3,9 +3,11 @@
 import {AlbumGrid} from "../AlbumGrid";
 import {CreateAlbumModal} from "../CreateAlbumModal";
 import {DeleteAlbumModal} from "@/components/DeleteAlbumModal";
+import {ShareAlbumModal} from "@/components/ShareAlbumModal";
 import {catalogReducer, catalogThunks, CatalogViewerState} from "@/domains/catalog";
 import {createDialogSelector} from "@/domains/catalog/album-create";
 import {deleteDialogSelector} from "@/domains/catalog/album-delete/selector-deleteDialogSelector";
+import {sharingDialogSelector} from "@/domains/catalog/sharing/selector-sharingDialogSelector";
 import {newClientAdapterFactory} from "@/domains/catalog/adapters/client-adapter-factory";
 import {useMemo, useReducer} from "react";
 import {useSessionAwareThunks} from "@/libs/security/client";
@@ -20,6 +22,7 @@ export const HomeContent = ({initialState}: { initialState: CatalogViewerState }
 
     const createDialog = createDialogSelector(state);
     const deleteDialog = deleteDialogSelector(state);
+    const sharingDialog = sharingDialogSelector(state);
     const canCreateAlbum = state.currentUser.isOwner;
 
     if (state.error) {
@@ -55,6 +58,12 @@ export const HomeContent = ({initialState}: { initialState: CatalogViewerState }
                 {...deleteDialog}
                 onClose={thunks.closeDeleteAlbumDialog}
                 onDelete={thunks.deleteAlbum}
+            />
+            <ShareAlbumModal
+                {...sharingDialog}
+                onClose={thunks.closeSharingModal}
+                onGrant={thunks.grantAlbumAccess}
+                onRevoke={thunks.revokeAlbumAccess}
             />
         </>
     );
