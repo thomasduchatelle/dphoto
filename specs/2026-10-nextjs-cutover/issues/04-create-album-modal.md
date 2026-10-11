@@ -1,6 +1,6 @@
 # Create album modal
 
-**Status**: ready
+**Status**: done
 **Depends on**: none — lives on the album list page, independent of the album-header scaffolding (01) and the viewer (02/03).
 
 ## Description
