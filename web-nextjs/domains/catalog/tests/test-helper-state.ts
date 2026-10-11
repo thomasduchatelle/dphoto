@@ -1,5 +1,6 @@
 import {
     Album,
+    AlbumCover,
     AlbumFilterEntry,
     CatalogViewerState,
     CreateDialog,
@@ -12,6 +13,13 @@ import {
     MediaWithinADay,
     UserDetails
 } from "../language";
+
+const cover = (mediaId: string, contentPath: string): AlbumCover => ({
+    mediaId,
+    filename: contentPath,
+    origin: 'RANDOM',
+    contentPath,
+});
 import {AlbumListActionsProps, CatalogViewerPageSelection} from "../navigation";
 import {EditNameDialogSelection} from "../album-edit-name";
 import {CreateDialogSelection} from "../album-create";
@@ -73,6 +81,95 @@ export const march2025: Album = {
     covers: [],
 }
 
+// use sampleAlbums when realistic albums with covers are required (storybook stories) - index 0 is the newest
+export const sampleAlbums: Album[] = [
+    {
+        albumId: {owner: "sandfall", folderName: "clair-obscur"},
+        name: "Clair Obscur",
+        start: new Date(2025, 3, 24),
+        end: new Date(2025, 5, 1),
+        totalCount: 47,
+        temperature: 6.7,
+        relativeTemperature: 1,
+        sharedWith: [],
+        covers: [
+            cover("co-1", "/thumbnails/clair-obscur-1.jpg"),
+            cover("co-2", "/thumbnails/clair-obscur-2.jpg"),
+            cover("co-3", "/thumbnails/clair-obscur-3.jpg"),
+            cover("co-4", "/thumbnails/clair-obscur-4.jpg"),
+        ],
+    },
+    {
+        albumId: {owner: "sony", folderName: "astro-bot"},
+        name: "Astro Bot",
+        start: new Date(2024, 8, 6),
+        end: new Date(2024, 8, 12),
+        totalCount: 23,
+        temperature: 12.1,
+        relativeTemperature: 0.72,
+        sharedWith: [{user: {name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}}],
+        covers: [
+            cover("ab-1", "/thumbnails/astro-bot-01.jpg"),
+            cover("ab-2", "/thumbnails/astro-bot-02.jpg"),
+            cover("ab-3", "/thumbnails/astro-bot-03.jpg"),
+        ],
+    },
+    {
+        albumId: {owner: "cdprojekt", folderName: "the-witcher-3"},
+        name: "The Witcher 3: Wild Hunt",
+        start: new Date(2024, 4, 30),
+        end: new Date(2024, 5, 14),
+        totalCount: 189,
+        temperature: 9.4,
+        relativeTemperature: 0.55,
+        sharedWith: [],
+        covers: [
+            cover("tw-1", "/thumbnails/the-witcher-3-01.jpg"),
+            cover("tw-2", "/thumbnails/the-witcher-3-02.jpg"),
+            cover("tw-3", "/thumbnails/the-witcher-3-03.jpg"),
+        ],
+    },
+    {
+        albumId: {owner: "kojima", folderName: "death-stranding-1"},
+        name: "Death Stranding",
+        start: new Date(2023, 10, 8),
+        end: new Date(2023, 10, 22),
+        totalCount: 312,
+        temperature: 17.5,
+        relativeTemperature: 1.0,
+        ownedBy: {name: "Kojima", users: [{name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}]},
+        sharedWith: [],
+        covers: [
+            cover("ds1-1", "/thumbnails/death-stranding-1-01.jpg"),
+            cover("ds1-2", "/thumbnails/death-stranding-1-02.jpg"),
+            cover("ds1-3", "/thumbnails/death-stranding-1-03.jpg"),
+            cover("ds1-4", "/thumbnails/death-stranding-1-04.jpg"),
+        ],
+    },
+    {
+        albumId: {owner: "kojima", folderName: "death-stranding-2"},
+        name: "Death Stranding 2: On The Beach",
+        start: new Date(2025, 5, 5),
+        end: new Date(2025, 5, 30),
+        totalCount: 78,
+        temperature: 4.1,
+        relativeTemperature: 0.22,
+        sharedWith: [{user: {name: "Tony Stark", email: "ironman@avenger.com", picture: "/tonystark-profile.jpg"}}],
+        covers: [cover("ds2-1", "/thumbnails/death-stranding-2-01.jpg")],
+    },
+    {
+        albumId: {owner: "sandfall", folderName: "clair-obscur-dlc"},
+        name: "Clair Obscur DLC",
+        start: new Date(2025, 8, 10),
+        end: new Date(2025, 8, 15),
+        totalCount: 11,
+        temperature: 1.2,
+        relativeTemperature: 0.06,
+        sharedWith: [],
+        covers: [],
+    },
+]
+
 export const twoAlbumsNoFilterOptions: AlbumFilterEntry = {
     criterion: {
         owners: []
@@ -88,6 +185,7 @@ const someMedias = [{
     time: new Date("2025-01-05T12:42:00Z"),
     uiRelativePath: "media-1/image.jpg",
     contentPath: "/media-1.jpg",
+    thumbnailUrl: "/media-1.jpg?w=360",
     source: "",
 }];
 
@@ -133,6 +231,8 @@ export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = 
     albumsLoaded: true,
     albums: twoAlbums,
     displayedAlbum: twoAlbums[0],
+    previousAlbum: twoAlbums[1],
+    nextAlbum: undefined,
     medias: someMediasByDays,
     mediasLoaded: true,
     albumNotFound: false,

@@ -1,12 +1,11 @@
 import {Album, AlbumId, albumIdEquals, CatalogViewerState, Media} from '../language';
-import {albumsAndMediasLoaded, AlbumsAndMediasLoaded} from './action-albumsAndMediasLoaded';
-import {mediaLoadFailed, MediaLoadFailed} from './action-mediaLoadFailed';
-import {noAlbumAvailable, NoAlbumAvailable} from './action-noAlbumAvailable';
+import {albumsAndMediasLoaded, AlbumsAndMediasLoaded, mediaLoadFailed, MediaLoadFailed, noAlbumAvailable, NoAlbumAvailable} from '@/domains/catalog';
 import {CatalogDispatch} from '../common/catalog-dispatch';
 import {ThunkDeclaration} from '@/libs/dthunks';
 
 export interface LoadAlbumPagePort {
     fetchAlbums(): Promise<Album[]>
+
     fetchMedias(albumId: AlbumId): Promise<Media[]>
 }
 
