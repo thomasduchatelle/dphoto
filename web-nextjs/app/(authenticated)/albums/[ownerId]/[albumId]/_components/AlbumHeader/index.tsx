@@ -8,13 +8,19 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ShareIcon from "@mui/icons-material/Share";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumHeaderProps {
     album: Album | undefined;
+    isOwner: boolean;
+    onShare: () => void;
+    onRename: () => void;
+    onEditDates: () => void;
+    onDelete: () => void;
 }
 
-export function AlbumHeader({album}: AlbumHeaderProps) {
+export function AlbumHeader({album, isOwner, onShare, onRename, onEditDates, onDelete}: AlbumHeaderProps) {
     return (
         <Box
             sx={(theme) => ({
@@ -46,9 +52,14 @@ export function AlbumHeader({album}: AlbumHeaderProps) {
             </Box>
             <Stack direction="row" gap={1} sx={{display: {xs: 'none', lg: 'flex'}, flexShrink: 0}}>
                 <Button variant="outlined" color='secondary' startIcon={<PlayArrowIcon/>} disabled>Play</Button>
-                <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} disabled>Share</Button>
-                <Button variant="outlined" color='secondary' startIcon={<DriveFileRenameOutlineIcon/>} disabled>Rename</Button>
-                <Button variant="outlined" color='secondary' startIcon={<CalendarMonthIcon/>} disabled>Dates</Button>
+                {isOwner && (
+                    <>
+                        <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} onClick={onShare}>Share</Button>
+                        <Button variant="outlined" color='secondary' startIcon={<DriveFileRenameOutlineIcon/>} onClick={onRename}>Rename</Button>
+                        <Button variant="outlined" color='secondary' startIcon={<CalendarMonthIcon/>} onClick={onEditDates}>Dates</Button>
+                        <Button variant="outlined" color='error' startIcon={<DeleteIcon/>} onClick={onDelete}>Delete</Button>
+                    </>
+                )}
             </Stack>
         </Box>
     );

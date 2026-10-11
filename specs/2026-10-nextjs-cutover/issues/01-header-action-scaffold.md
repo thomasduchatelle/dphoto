@@ -1,6 +1,6 @@
 # Enable owner-action buttons on the album page with stub modals
 
-**Status**: ready
+**Status**: done
 **Depends on**: none
 
 ## Description
