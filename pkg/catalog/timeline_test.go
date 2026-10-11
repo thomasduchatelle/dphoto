@@ -1,10 +1,11 @@
 package catalog
 
 import (
-	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const layout = "2006-01-02T15"
@@ -283,99 +284,6 @@ func TestFindAt_FindAllAt(t *testing.T) {
 
 			a.Equal(tt.want.allNames, albums, tt.name)
 		}
-	}
-}
-
-func TestFindAt_FindBetween(t *testing.T) {
-	type Args struct {
-		start string
-		end   string
-	}
-	type Want struct {
-		start    string
-		end      string
-		allNames []string
-	}
-	tests := []struct {
-		name       string
-		args       Args
-		want       []Want
-		wantMissed []Want
-	}{
-		{
-			name:       "it should return no segment outside timeline boundaries",
-			args:       Args{"2019-01-01T00", "2019-01-01T00"},
-			wantMissed: []Want{{start: "2019-01-01T00", end: "2019-01-01T00"}},
-		},
-		{
-			name:       "it should return a segment with dates updated to match the request",
-			args:       Args{"2020-01-01T00", "2020-09-01T00"},
-			want:       []Want{{"2020-07-01T00", "2020-09-01T00", []string{"/2020-Q3"}}},
-			wantMissed: []Want{{start: "2020-01-01T00", end: "2020-07-01T00"}},
-		},
-		{
-			name: "it should return segments within the request",
-			args: Args{"2020-12-31T00", "2021-01-02T00"},
-			want: []Want{
-				{"2020-12-31T00", "2020-12-31T18", []string{"/Christmas_Holidays", "/2020-Q4"}},
-				{"2020-12-31T18", "2021-01-01T18", []string{"/New_Year", "/Christmas_Holidays", "/2021-Q1", "/2020-Q4"}},
-				{"2021-01-01T18", "2021-01-02T00", []string{"/Christmas_Holidays", "/2021-Q1"}},
-			},
-		},
-		{
-			name: "it should return segments within the request",
-			args: Args{"2020-12-18T00", "2020-12-26T00"},
-			want: []Want{
-				{"2020-12-18T00", "2020-12-24T00", []string{"/Christmas_First_Week", "/Christmas_Holidays", "/2020-Q4"}},
-				{"2020-12-24T00", "2020-12-26T00", []string{"/Christmas_Day", "/Christmas_First_Week", "/Christmas_Holidays", "/2020-Q4"}},
-			},
-		},
-		{
-			name: "it should notice the gap between mars and may, and the missing dates at the end of the request",
-			args: Args{"2021-03-23T00", "2021-06-26T00"},
-			want: []Want{
-				{"2021-03-23T00", "2021-04-01T00", []string{"/2021-Q1"}},
-				{"2021-05-01T00", "2021-06-01T00", []string{"/2021-May"}},
-			},
-			wantMissed: []Want{
-				{"2021-04-01T00", "2021-05-01T00", nil},
-				{"2021-06-01T00", "2021-06-26T00", nil},
-			},
-		},
-	}
-
-	timeline, err := NewTimeline(AlbumCollection())
-	if !assert.NoError(t, err) {
-		assert.FailNow(t, err.Error())
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			segments, missed := timeline.FindBetween(MustParse(layout, tt.args.start), MustParse(layout, tt.args.end))
-			var got []Want
-			var gotMissed []Want
-			for _, seg := range segments {
-				var names []string
-				for _, a := range seg.Albums {
-					names = append(names, a.FolderName.String())
-				}
-
-				got = append(got, Want{
-					start:    seg.Start.Format(layout),
-					end:      seg.End.Format(layout),
-					allNames: names,
-				})
-			}
-			for _, seg := range missed {
-				gotMissed = append(gotMissed, Want{
-					start: seg.Start.Format(layout),
-					end:   seg.End.Format(layout),
-				})
-			}
-
-			assert.Equal(t, tt.want, got, tt.name)
-			assert.Equal(t, tt.wantMissed, gotMissed, tt.name)
-		})
 	}
 }
 

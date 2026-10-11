@@ -62,9 +62,12 @@ build-go:
 	go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))"  -o ./ ./cmd/...
 
 build-cli:
-	env GOARCH=amd64 GOOS=linux  CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-linux  ./cmd/dphoto
-	env GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-darwin ./cmd/dphoto
-	env GOARCH=arm64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-arm64-darwin ./cmd/dphoto
+	env GOARCH=amd64 GOOS=linux  CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-linux    ./cmd/dphoto
+	env GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-amd64-darwin   ./cmd/dphoto
+	env GOARCH=arm64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphoto-arm64-darwin   ./cmd/dphoto
+	env GOARCH=amd64 GOOS=linux  CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphotops-amd64-linux  ./cmd/dphotops
+	env GOARCH=amd64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphotops-amd64-darwin ./cmd/dphotops
+	env GOARCH=arm64 GOOS=darwin CGO_ENABLED=0 go build -ldflags="-s -w $(call unquote,$(BUILD_LD_FLAGS))" -o ./bin-cli/dphotops-arm64-darwin ./cmd/dphotops
 
 install-cli:
 	go install ./cmd/...
@@ -205,13 +208,9 @@ down:
 ## UTILS
 #######################################
 
-.PHONY: mocks clearlocal dcdown dcup
+.PHONY: clearlocal dcdown dcup
 
-mocks:
-	rm -rf internal/mocks
-	mockery --all --dir pkg -r --with-expecter --output internal/mocks
-	mockery --all --dir cmd -r --with-expecter --output internal/mocks
-	git add internal/mocks
+DC := docker-compose$(if $(ZSCALER_PEM), -f docker-compose.yml -f docker-compose.zscaler.yml,)
 
 clearlocal:
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 s3 rm --recursive "s3://dphoto-local" | cat || echo "skipping"
@@ -220,10 +219,10 @@ clearlocal:
 dcdown:
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 s3 rm --recursive "s3://dphoto-local" | cat || echo "skipping"
 	AWS_ACCESS_KEY_ID="localstack" AWS_SECRET_ACCESS_KEY="localstack" aws --endpoint "http://localhost:4566" --region us-east-1 dynamodb delete-table --table dphoto-local | cat || echo "skipping"
-	docker-compose down -v || echo "skipping"
+	$(DC) down -v || echo "skipping"
 	rm -rf .build/localstack
 
 dcup:
-	docker-compose up -d
+	$(DC) up -d
 	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 s3 mb s3://dphoto-local | cat
 	AWS_ACCESS_KEY_ID=localstack AWS_SECRET_ACCESS_KEY=localstack aws --endpoint http://localhost:4566 --region us-east-1 sns create-topic --name dphoto-local-archive-jobs | cat

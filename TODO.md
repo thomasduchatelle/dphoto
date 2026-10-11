@@ -49,7 +49,7 @@ Next steps:
 
 * ~~generalise the use of the AWSFactory, and create a Factory for each use case~~
 * ~~re-implement repository to use event streaming on catalog (especially albums)~~
-* ~~adds commands in `dphoto-ops` to operate the DB (create indexes, migrate the data, ...)~~
+* ~~adds commands in `dphotops` to operate the DB (create indexes, migrate the data, ...)~~
 * create new index for Medias to be found by date (without the albums)
 
 ### Catalog View

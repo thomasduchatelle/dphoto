@@ -2,9 +2,10 @@ package catalog
 
 import (
 	"context"
+	"time"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 type DatesUpdate struct {
@@ -17,87 +18,67 @@ func (a *DatesUpdate) DatesNotChanged() bool {
 	return a.UpdatedAlbum.Start.Equal(a.PreviousStart) && a.UpdatedAlbum.End.Equal(a.PreviousEnd)
 }
 
+// AlbumDatesAmended is fired after an album's dates have been persisted and the medias
+// affected by the change have been transferred to their new albums. Covers carries the
+// resulting cover sets of every album whose covers were updated as a consequence of the
+// transfer; albums whose cover set did not change are omitted.
+type AlbumDatesAmended struct {
+	DatesUpdate       DatesUpdate
+	TransferredMedias TransferredMedias
+	Covers            map[AlbumId][]Cover
+}
+
 type AlbumDatesAmendedObserver interface {
-	OnAlbumDatesAmended(ctx context.Context, amendedAlbum DatesUpdate) error
+	OnAlbumDatesAmended(ctx context.Context, event AlbumDatesAmended) error
 }
 
-type AlbumDatesAmendedObserverFunc func(ctx context.Context, amendedAlbum DatesUpdate) error
+type AlbumDatesAmendedObserverFunc func(ctx context.Context, event AlbumDatesAmended) error
 
-func (f AlbumDatesAmendedObserverFunc) OnAlbumDatesAmended(ctx context.Context, amendedAlbum DatesUpdate) error {
-	return f(ctx, amendedAlbum)
+func (f AlbumDatesAmendedObserverFunc) OnAlbumDatesAmended(ctx context.Context, event AlbumDatesAmended) error {
+	return f(ctx, event)
 }
 
+// NewAmendAlbumDates creates the service to amend the dates of an album.
 func NewAmendAlbumDates(
-	findAlbumsByOwner FindAlbumsByOwnerPort,
+	timelineRepository TimelineRepository,
 	countMediasBySelectors CountMediasBySelectorsPort,
-	amendAlbumDateRepository AmendAlbumDateRepositoryPort,
-	transferMedias TransferMediasRepositoryPort,
-	timelineMutationObservers ...TimelineMutationObserver,
+	transferMedias TransferMediasService,
+	coverService CoverServicePort,
+	observers ...AlbumDatesAmendedObserver,
 ) *AmendAlbumDates {
-
 	return &AmendAlbumDates{
-		FindAlbumsByOwnerPort: findAlbumsByOwner,
-		AmendAlbumDatesWithTimeline: &AmendAlbumDatesStateless{
-			Observers: []AlbumDatesAmendedObserverWithTimeline{
-				&AmendAlbumMediaTransfer{
-					CountMediasBySelectors: countMediasBySelectors,
-					MediaTransfer: &MediaTransferExecutor{
-						TransferMediasRepository:  transferMedias,
-						TimelineMutationObservers: timelineMutationObservers,
-					},
-				},
-				&AlbumDatesAmendedObserverWrapper{AlbumDatesAmendedObserver: &AmendAlbumDatesExecutor{
-					AmendAlbumDateRepository: amendAlbumDateRepository,
-				}},
-			},
-		},
+		TimelineRepository:         timelineRepository,
+		CountMediasBySelectorsPort: countMediasBySelectors,
+		TransferMediasService:      transferMedias,
+		CoverService:               coverService,
+		AlbumDatesAmendedObservers: observers,
 	}
 }
 
-type AmendAlbumDatesWithTimeline interface {
-	AmendAlbumDates(ctx context.Context, timeline *TimelineAggregate, albumId AlbumId, start, end time.Time) error
-}
-
-type AlbumDatesAmendedObserverWithTimeline interface {
-	OnAlbumDatesAmendedWithTimeline(ctx context.Context, timeline *TimelineAggregate, amendedAlbum DatesUpdate) error
-}
-
-type AlbumDatesAmendedObserverWrapper struct {
-	AlbumDatesAmendedObserver
-}
-
-func (a *AlbumDatesAmendedObserverWrapper) OnAlbumDatesAmendedWithTimeline(ctx context.Context, _ *TimelineAggregate, amendedAlbum DatesUpdate) error {
-	return a.AlbumDatesAmendedObserver.OnAlbumDatesAmended(ctx, amendedAlbum)
-}
-
-// AmendAlbumDates is building the TimelineAggregate and passing it to methods requiring it.
+// AmendAlbumDates changes the start/end dates of an album, transfers medias affected by the
+// date change to their new album, then fires an AlbumDatesAmended event. When some medias
+// would be left orphan (no album covers them anymore) the operation is aborted and
+// OrphanedMediasErr is returned before any change is persisted.
 type AmendAlbumDates struct {
-	FindAlbumsByOwnerPort       FindAlbumsByOwnerPort
-	AmendAlbumDatesWithTimeline AmendAlbumDatesWithTimeline
+	TimelineRepository         TimelineRepository
+	CountMediasBySelectorsPort CountMediasBySelectorsPort
+	TransferMediasService      TransferMediasService
+	CoverService               CoverServicePort
+	AlbumDatesAmendedObservers []AlbumDatesAmendedObserver
 }
 
 func (a *AmendAlbumDates) AmendAlbumDates(ctx context.Context, albumId AlbumId, start, end time.Time) error {
-	albums, err := a.FindAlbumsByOwnerPort.FindAlbumsByOwner(ctx, albumId.Owner)
+	timeline, err := a.TimelineRepository.LoadTimeline(ctx, albumId.Owner)
 	if err != nil {
 		return err
 	}
 
-	timeline := NewLazyTimelineAggregate(albums)
-
-	return a.AmendAlbumDatesWithTimeline.AmendAlbumDates(ctx, timeline, albumId, start, end)
-}
-
-type AmendAlbumDatesStateless struct {
-	Observers []AlbumDatesAmendedObserverWithTimeline
-}
-
-func (a *AmendAlbumDatesStateless) AmendAlbumDates(ctx context.Context, timeline *TimelineAggregate, albumId AlbumId, start, end time.Time) error {
-	amendedAlbum, err := timeline.ValidateAmendDates(albumId, start, end)
+	update, err := timeline.AmendDates(albumId, start, end)
 	if err != nil {
 		return err
 	}
 
-	if amendedAlbum.DatesNotChanged() {
+	if update.DatesUpdate.DatesNotChanged() {
 		log.WithFields(log.Fields{
 			"AlbumId": albumId,
 			"Start":   start,
@@ -106,58 +87,59 @@ func (a *AmendAlbumDatesStateless) AmendAlbumDates(ctx context.Context, timeline
 		return nil
 	}
 
-	for _, observer := range a.Observers {
-		err = observer.OnAlbumDatesAmendedWithTimeline(ctx, timeline, *amendedAlbum)
-		if err != nil {
-			return err
-		}
-
-	}
-
-	log.WithField("Owner", albumId.Owner).Infof("Album %s dates updates to %s -> %s", albumId, amendedAlbum.UpdatedAlbum.Start.Format(time.DateTime), amendedAlbum.UpdatedAlbum.End.Format(time.DateTime))
-
-	return nil
-}
-
-type AmendAlbumMediaTransfer struct {
-	CountMediasBySelectors CountMediasBySelectorsPort
-	MediaTransfer          MediaTransfer
-}
-
-func (a *AmendAlbumMediaTransfer) OnAlbumDatesAmendedWithTimeline(ctx context.Context, timeline *TimelineAggregate, updatedAlbum DatesUpdate) error {
-	records, orphaned, err := timeline.AmendDates(updatedAlbum)
-	if err != nil {
-		return err
-	}
-
-	if len(orphaned) > 0 {
-		count, err := a.CountMediasBySelectors.CountMediasBySelectors(ctx, updatedAlbum.UpdatedAlbum.Owner, orphaned)
+	if len(update.Orphaned) > 0 {
+		count, err := a.CountMediasBySelectorsPort.CountMediasBySelectors(ctx, update.DatesUpdate.UpdatedAlbum.Owner, update.Orphaned)
 		if err != nil {
 			return err
 		}
 		if count > 0 {
-			return errors.Wrapf(OrphanedMediasErr, "%d medias from %s cannot be reallocated to a different album", count, updatedAlbum.UpdatedAlbum.AlbumId)
+			return errors.Wrapf(OrphanedMediasErr, "%d medias from %s cannot be reallocated to a different album", count, update.DatesUpdate.UpdatedAlbum.AlbumId)
 		}
 	}
 
-	if len(records) > 0 {
-		err = a.MediaTransfer.Transfer(ctx, records)
+	transferred := NewTransferredMedias()
+	if len(update.MediaTransfer) > 0 {
+		transferred, err = a.TransferMediasService.TransferMedias(ctx, update.MediaTransfer)
 		if err != nil {
 			return err
 		}
 	}
 
+	if err = a.TimelineRepository.AmendDates(ctx, update.DatesUpdate.UpdatedAlbum.AlbumId, update.DatesUpdate.UpdatedAlbum.Start, update.DatesUpdate.UpdatedAlbum.End); err != nil {
+		return err
+	}
+
+	log.WithField("Owner", albumId.Owner).Infof("Album %s dates updates to %s -> %s", albumId, update.DatesUpdate.UpdatedAlbum.Start.Format(time.DateTime), update.DatesUpdate.UpdatedAlbum.End.Format(time.DateTime))
+
+	covers, err := a.CoverService.ApplyTransfer(ctx, transferred)
+	if err != nil {
+		return err
+	}
+
+	event := AlbumDatesAmended{
+		DatesUpdate:       update.DatesUpdate,
+		TransferredMedias: transferred,
+		Covers:            covers,
+	}
+	for _, observer := range a.AlbumDatesAmendedObservers {
+		if err = observer.OnAlbumDatesAmended(ctx, event); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-type AmendAlbumDateRepositoryPort interface {
-	AmendDates(ctx context.Context, album AlbumId, start, end time.Time) error
+// AlbumDatesAmendedAsTimelineMutation adapts an AlbumDatesAmendedObserver notification into
+// a TimelineMutationObserver call, forwarding only the TransferredMedias carried by the
+// event. This bridges the AlbumDatesAmended event to the observers that still listen on the
+// legacy TimelineMutationObserver interface (archive relocator, view counters, ...).
+type AlbumDatesAmendedAsTimelineMutation struct {
+	TimelineMutationObserver TimelineMutationObserver
 }
 
-type AmendAlbumDatesExecutor struct {
-	AmendAlbumDateRepository AmendAlbumDateRepositoryPort
-}
-
-func (a *AmendAlbumDatesExecutor) OnAlbumDatesAmended(ctx context.Context, update DatesUpdate) error {
-	return a.AmendAlbumDateRepository.AmendDates(ctx, update.UpdatedAlbum.AlbumId, update.UpdatedAlbum.Start, update.UpdatedAlbum.End)
+func (a *AlbumDatesAmendedAsTimelineMutation) OnAlbumDatesAmended(ctx context.Context, event AlbumDatesAmended) error {
+	if event.TransferredMedias.IsEmpty() {
+		return nil
+	}
+	return a.TimelineMutationObserver.OnTransferredMedias(ctx, event.TransferredMedias)
 }

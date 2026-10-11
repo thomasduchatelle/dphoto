@@ -39,6 +39,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const cover = (mediaId: string, contentPath: string): AlbumCover => ({
+    mediaId,
+    filename: contentPath.split(/(\\|\/)/g).pop(),
+    origin: 'RANDOM',
+    contentPath: contentPath,
+});
+
 const clairObscurAlbum: Album = {
     albumId: createAlbumId('sandfall', 'clair-obscur'),
     name: 'Clair Obscur',

@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/thomasduchatelle/dphoto/api/lambdas/common"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/pkgfactory"
 )
@@ -20,6 +21,13 @@ type AlbumDTO struct {
 	TotalCount    int               `json:"totalCount"`
 	SharedWith    map[string]string `json:"sharedWith,omitempty"`
 	DirectlyOwned bool              `json:"directlyOwned"`
+	Covers        []CoverDTO        `json:"covers"`
+}
+
+type CoverDTO struct {
+	MediaId  string `json:"mediaId"`
+	Filename string `json:"filename"`
+	Origin   string `json:"origin"`
 }
 
 func Handler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (common.Response, error) {
@@ -57,9 +65,22 @@ func Handler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (commo
 			TotalCount:    a.MediaCount,
 			SharedWith:    sharedWith,
 			DirectlyOwned: a.OwnedByCurrentUser,
+			Covers:        convertCoversForREST(a.Covers),
 		}
 	}
 	return common.Ok(restAlbums)
+}
+
+func convertCoversForREST(covers []catalog.Cover) []CoverDTO {
+	dto := make([]CoverDTO, len(covers))
+	for i, c := range covers {
+		dto[i] = CoverDTO{
+			MediaId:  c.MediaId.Value(),
+			Filename: c.Filename,
+			Origin:   string(c.Origin),
+		}
+	}
+	return dto
 }
 
 func main() {

@@ -2,145 +2,128 @@ package catalog
 
 import (
 	"context"
-	"fmt"
+
 	log "github.com/sirupsen/logrus"
 )
 
-type RenameAlbumRequest struct {
-	CurrentId        AlbumId
-	NewName          string
-	RenameFolder     bool   // RenameFolder set to TRUE will create a new album with a FolderName generated from the NewName
-	ForcedFolderName string // ForcedFolderName set to non-empty will create a new album with the requested FolderName (RenameFolder is ignored)
+type AlbumRenamed struct {
+	ExistingAlbum     Album
+	RenamedAlbum      Album
+	TransferredMedias TransferredMedias
 }
 
-// NewRenameAlbum creates the service to rename an album
+type AlbumRenamedObserver interface {
+	OnAlbumRenamed(ctx context.Context, event AlbumRenamed) error
+}
+
+type AlbumRenamedObserverFunc func(ctx context.Context, event AlbumRenamed) error
+
+func (f AlbumRenamedObserverFunc) OnAlbumRenamed(ctx context.Context, event AlbumRenamed) error {
+	return f(ctx, event)
+}
+
+// NewRenameAlbum creates the service to rename an album.
 func NewRenameAlbum(
-	FindAlbumById FindAlbumByIdPort,
-	UpdateAlbumName UpdateAlbumNamePort,
-	InsertAlbumPort InsertAlbumPort,
-	DeleteAlbumRepositoryPort DeleteAlbumRepositoryPort,
-	TransferMedias TransferMediasRepositoryPort,
-	FindAlbumsByOwner FindAlbumsByOwnerPort,
-	TimelineMutationObservers ...TimelineMutationObserver,
+	TimelineRepository TimelineRepository,
+	TransferMedias TransferMediasService,
+	CoverRepository CoverRepository,
+	AlbumRenamedObservers ...AlbumRenamedObserver,
 ) *RenameAlbum {
-
 	return &RenameAlbum{
-		FindAlbumById:   FindAlbumById,
-		UpdateAlbumName: UpdateAlbumName,
-		RenameAlbumObservers: []RenameAlbumObserver{
-			&RenameAlbumReplacer{
-				CreateAlbum: CreateAlbum{
-					FindAlbumsByOwnerPort: FindAlbumsByOwner,
-					CreateAlbumWithTimeline: &CreateAlbumStateless{
-						Observers: []CreateAlbumObserverWithTimeline{
-							&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
-								InsertAlbumPort: InsertAlbumPort,
-							}},
-						},
-					},
-				},
-				MediaTransfer: &MediaTransferExecutor{
-					TransferMediasRepository:  TransferMedias,
-					TimelineMutationObservers: TimelineMutationObservers,
-				},
-				DeleteAlbumRepositoryPort: DeleteAlbumRepositoryPort,
-			},
-		},
+		TimelineRepository:    TimelineRepository,
+		TransferMediasService: TransferMedias,
+		CoverRepository:       CoverRepository,
+		AlbumRenamedObservers: AlbumRenamedObservers,
 	}
-}
-
-func (r RenameAlbumRequest) String() string {
-	return fmt.Sprintf("%s -> %s", r.CurrentId.String(), r.NewName)
-}
-
-func (r RenameAlbumRequest) IsValid() error {
-	if r.NewName == "" {
-		return AlbumNameMandatoryErr
-	}
-
-	return nil
-}
-
-type RenameAlbumObserver interface {
-	OnRenameAlbum(ctx context.Context, current AlbumId, creationRequest CreateAlbumRequest) error
-}
-
-type FindAlbumByIdPort interface {
-	FindAlbumById(ctx context.Context, id AlbumId) (*Album, error)
-}
-
-type FindAlbumByIdFunc func(ctx context.Context, id AlbumId) (*Album, error)
-
-func (f FindAlbumByIdFunc) FindAlbumById(ctx context.Context, id AlbumId) (*Album, error) {
-	return f(ctx, id)
-}
-
-type UpdateAlbumNamePort interface {
-	UpdateAlbumName(ctx context.Context, albumId AlbumId, newName string) error
 }
 
 type RenameAlbum struct {
-	FindAlbumById        FindAlbumByIdPort
-	UpdateAlbumName      UpdateAlbumNamePort
-	RenameAlbumObservers []RenameAlbumObserver
+	TimelineRepository    TimelineRepository
+	TransferMediasService TransferMediasService
+	CoverRepository       CoverRepository
+	AlbumRenamedObservers []AlbumRenamedObserver
 }
 
 func (r *RenameAlbum) RenameAlbum(ctx context.Context, request RenameAlbumRequest) error {
-	if err := request.IsValid(); err != nil {
-		return err
+	if request.NewName != "" && !request.RenameFolder && request.ForcedFolderName == "" {
+		return r.renameInPlace(ctx, request)
 	}
-	existing, err := r.FindAlbumById.FindAlbumById(ctx, request.CurrentId)
+
+	return r.replaceAlbum(ctx, request)
+}
+
+func (r *RenameAlbum) renameInPlace(ctx context.Context, request RenameAlbumRequest) error {
+	previous, renamed, err := r.TimelineRepository.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
 	if err != nil {
 		return err
 	}
 
-	if !request.RenameFolder && request.ForcedFolderName == "" {
-		return r.UpdateAlbumName.UpdateAlbumName(ctx, request.CurrentId, request.NewName)
+	event := AlbumRenamed{
+		ExistingAlbum: previous,
+		RenamedAlbum:  renamed,
 	}
-
-	createRequest := CreateAlbumRequest{
-		Owner:            request.CurrentId.Owner,
-		Name:             request.NewName,
-		Start:            existing.Start,
-		End:              existing.End,
-		ForcedFolderName: request.ForcedFolderName,
-	}
-
-	for _, observer := range r.RenameAlbumObservers {
-		if err = observer.OnRenameAlbum(ctx, request.CurrentId, createRequest); err != nil {
+	for _, observer := range r.AlbumRenamedObservers {
+		if err = observer.OnAlbumRenamed(ctx, event); err != nil {
 			return err
 		}
 	}
-
-	log.WithField("AlbumId", request.CurrentId).Infof("Album renamed: %s", request.NewName)
 	return nil
 }
 
-type RenameAlbumReplacer struct {
-	CreateAlbum               CreateAlbum
-	MediaTransfer             MediaTransfer
-	DeleteAlbumRepositoryPort DeleteAlbumRepositoryPort
+func (r *RenameAlbum) replaceAlbum(ctx context.Context, request RenameAlbumRequest) error {
+	timeline, err := r.TimelineRepository.LoadTimeline(ctx, request.CurrentId.Owner)
+	if err != nil {
+		return err
+	}
+
+	nameUpdate, err := timeline.RenameAlbum(request)
+	if err != nil {
+		return err
+	}
+
+	if err = r.TimelineRepository.InsertAlbum(ctx, nameUpdate.RenamedAlbum); err != nil {
+		return err
+	}
+
+	transferred, err := r.TransferMediasService.TransferMedias(ctx, nameUpdate.MediaTransfer)
+	if err != nil {
+		return err
+	}
+
+	if err = r.TimelineRepository.DeleteAlbum(ctx, nameUpdate.ExistingAlbum.AlbumId); err != nil {
+		return err
+	}
+
+	if err = r.CoverRepository.MoveCovers(ctx, nameUpdate.ExistingAlbum.AlbumId, nameUpdate.RenamedAlbum.AlbumId); err != nil {
+		return err
+	}
+
+	log.WithField("AlbumId", request.CurrentId).Infof("Album renamed: %s", request.NewName)
+
+	event := AlbumRenamed{
+		ExistingAlbum:     nameUpdate.ExistingAlbum,
+		RenamedAlbum:      nameUpdate.RenamedAlbum,
+		TransferredMedias: transferred,
+	}
+	for _, observer := range r.AlbumRenamedObservers {
+		if err = observer.OnAlbumRenamed(ctx, event); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (r *RenameAlbumReplacer) OnRenameAlbum(ctx context.Context, current AlbumId, creationRequest CreateAlbumRequest) error {
-	newAlbumId, err := r.CreateAlbum.Create(ctx, creationRequest)
-	if err != nil {
-		return err
-	}
+// AlbumRenamedAsTimelineMutation adapts an AlbumRenamedObserver notification into a
+// TimelineMutationObserver call, forwarding only the TransferredMedias carried by the event.
+// This bridges the AlbumRenamed event to the observers that still listen on the legacy
+// TimelineMutationObserver interface (archive relocator, view counters, ...).
+type AlbumRenamedAsTimelineMutation struct {
+	TimelineMutationObserver TimelineMutationObserver
+}
 
-	records := MediaTransferRecords{
-		*newAlbumId: []MediaSelector{
-			{
-				FromAlbums: []AlbumId{current},
-				Start:      creationRequest.Start,
-				End:        creationRequest.End,
-			},
-		},
+func (a *AlbumRenamedAsTimelineMutation) OnAlbumRenamed(ctx context.Context, event AlbumRenamed) error {
+	if event.TransferredMedias.IsEmpty() {
+		return nil
 	}
-	err = r.MediaTransfer.Transfer(ctx, records)
-	if err != nil {
-		return err
-	}
-
-	return r.DeleteAlbumRepositoryPort.DeleteAlbum(ctx, current)
+	return a.TimelineMutationObserver.OnTransferredMedias(ctx, event.TransferredMedias)
 }

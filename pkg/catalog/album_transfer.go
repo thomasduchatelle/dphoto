@@ -70,53 +70,54 @@ func (m MediaSelector) String() string {
 	return fmt.Sprintf("{from:%s} %s -> %s", strings.Join(from, ","), m.Start.Format(time.DateTime), m.End.Format(time.DateTime))
 }
 
-type MediaTransfer interface {
-	Transfer(ctx context.Context, records MediaTransferRecords) error
-}
-
-type MediaTransferFunc func(ctx context.Context, records MediaTransferRecords) error
-
-func (f MediaTransferFunc) Transfer(ctx context.Context, records MediaTransferRecords) error {
-	return f(ctx, records)
-}
-
+// TransferMediasRepositoryPort moves the medias matched by records to their new album and
+// returns, per destination album, the list of MediaIds that were actually moved.
 type TransferMediasRepositoryPort interface {
-	TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
+	TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (map[AlbumId][]MediaId, error)
 }
 
-type TransferMediasFunc func(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
+type TransferMediasFunc func(ctx context.Context, records MediaTransferRecords) (map[AlbumId][]MediaId, error)
 
-func (f TransferMediasFunc) TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error) {
+func (f TransferMediasFunc) TransferMediasFromRecords(ctx context.Context, records MediaTransferRecords) (map[AlbumId][]MediaId, error) {
 	return f(ctx, records)
 }
 
-type MediaTransferExecutor struct {
-	TransferMediasRepository  TransferMediasRepositoryPort
-	TimelineMutationObservers []TimelineMutationObserver
+// TransferMediasService is the internal domain service that moves medias between albums.
+// It returns the destinations that were actually written along with the list of source
+// albums the caller intended to pick medias from (derived from the input records).
+type TransferMediasService interface {
+	TransferMedias(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error)
 }
 
-func (d *MediaTransferExecutor) Transfer(ctx context.Context, records MediaTransferRecords) error {
-	transfers, err := d.TransferMediasRepository.TransferMediasFromRecords(ctx, records)
-	if err != nil || transfers.IsEmpty() {
-		return err
+// TransferMediasFromRepository is the default TransferMediasService implementation: it
+// delegates the actual move to the repository port and derives the FromAlbums list from
+// the input records.
+type TransferMediasFromRepository struct {
+	TransferMediasRepository TransferMediasRepositoryPort
+}
+
+func (t *TransferMediasFromRepository) TransferMedias(ctx context.Context, records MediaTransferRecords) (TransferredMedias, error) {
+	transfers, err := t.TransferMediasRepository.TransferMediasFromRecords(ctx, records)
+	if err != nil {
+		return TransferredMedias{}, err
+	}
+
+	result := TransferredMedias{Transfers: transfers}
+	if result.IsEmpty() {
+		return result, nil
 	}
 
 	for _, selectors := range records {
 		for _, selector := range selectors {
 			for _, origin := range selector.FromAlbums {
-				if _, isADestination := transfers.Transfers[origin]; !isADestination && !slices.Contains(transfers.FromAlbums, origin) {
-					transfers.FromAlbums = append(transfers.FromAlbums, origin)
+				if _, isADestination := result.Transfers[origin]; !isADestination && !slices.Contains(result.FromAlbums, origin) {
+					result.FromAlbums = append(result.FromAlbums, origin)
 				}
 			}
 		}
 	}
 
-	for _, observer := range d.TimelineMutationObservers {
-		err = observer.OnTransferredMedias(ctx, transfers)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return result, nil
 }
+
+

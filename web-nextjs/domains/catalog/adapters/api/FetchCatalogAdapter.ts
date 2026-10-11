@@ -312,6 +312,7 @@ function convertCoversFromREST(owner: string, covers: RestAlbumCover[] | undefin
     }))
 }
 
+
 function convertToType(type: string): MediaType {
     if (!type) {
         return MediaType.OTHER

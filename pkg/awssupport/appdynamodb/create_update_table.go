@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	tableVersion = "2.1" // tableVersion should be bumped manually when schema is updated
+	tableVersion = "2.2"
 )
 
 // TODO /!\ NOTICE OF EVICTION /!\
@@ -46,6 +46,7 @@ func CreateTableIfNecessary(ctx context.Context, table string, client *dynamodb.
 			{AttributeName: aws.String("LocationKeyPrefix"), AttributeType: types.ScalarAttributeTypeS},
 			{AttributeName: aws.String("ResourceOwner"), AttributeType: types.ScalarAttributeTypeS},
 			{AttributeName: aws.String("AbsoluteExpiryTime"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("AlbumViewIndexPK"), AttributeType: types.ScalarAttributeTypeS},
 		},
 		KeySchema: []types.KeySchemaElement{
 			{AttributeName: aws.String("PK"), KeyType: types.KeyTypeHash},
@@ -87,6 +88,15 @@ func CreateTableIfNecessary(ctx context.Context, table string, client *dynamodb.
 					{AttributeName: aws.String("AbsoluteExpiryTime"), KeyType: types.KeyTypeRange},
 				},
 				Projection:            &types.Projection{ProjectionType: types.ProjectionTypeInclude, NonKeyAttributes: []string{"PK"}},
+				ProvisionedThroughput: secondaryIndexProvisionedThroughput,
+			},
+			{
+				IndexName: aws.String("AlbumViewByAlbumIndex"),
+				KeySchema: []types.KeySchemaElement{
+					{AttributeName: aws.String("AlbumViewIndexPK"), KeyType: types.KeyTypeHash},
+					{AttributeName: aws.String("SK"), KeyType: types.KeyTypeRange},
+				},
+				Projection:            &types.Projection{ProjectionType: types.ProjectionTypeAll},
 				ProvisionedThroughput: secondaryIndexProvisionedThroughput,
 			},
 		},

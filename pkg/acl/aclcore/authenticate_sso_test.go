@@ -1,18 +1,17 @@
 package aclcore_test
 
 import (
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
-	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
+	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
 )
 
 func TestAuthenticate(t *testing.T) {
@@ -23,7 +22,6 @@ func TestAuthenticate(t *testing.T) {
 
 	const email = usermodel.UserId("tony@stark.com")
 	const owner = ownermodel.Owner("tony@stark.com")
-	const refreshToken = "1234567890qwertyuiop"
 
 	okJwtString := "eyJhbGciOiJIUzUxMiIsImtpZCI6IjAzZTg0YWVkNGVmNDQzMTAxNGU4NjE3NTY3ODY0YzRlZmFhYWVkZTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImVtYWlsIjoidG9ueUBzdGFyay5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IlFBWldTWEVEQ1JGViIsIm5hbWUiOiJUb255IFN0YXJrIGFrYSBJcm9ubWFuIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hLS90b255c3RhcmstcGljdHVyZSIsImdpdmVuX25hbWUiOiJUb255IiwiZmFtaWx5X25hbWUiOiJTdGFyayIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjozMTU1MzI3MDAsImV4cCI6MzE1NTMyODk5LCJqdGkiOiIzZGU3OTk4NjEzYTFhNGZiOGRhM2RlNzk5ODYxM2ExYTRmYjhkYSJ9.m4fmV7k63JhFwT_ZNtAg6O5xvJZQvGt3yx_Xrr5Yjln4PeXF70jcp31A3qDwIA5ah2X9ZmjZWRbU3_Xbm3LTlg"
 	unregisteredJwtString := "eyJhbGciOiJIUzUxMiIsImtpZCI6IjAzZTg0YWVkNGVmNDQzMTAxNGU4NjE3NTY3ODY0YzRlZmFhYWVkZTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoicXdlcnR5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImVtYWlsIjoicGV0ZXJAc3RhcmsuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJRQVpXU1hFRENSRlYiLCJuYW1lIjoiVG9ueSBTdGFyayBha2EgSXJvbm1hbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS0vdG9ueXN0YXJrLXBpY3R1cmUiLCJnaXZlbl9uYW1lIjoiVG9ueSIsImZhbWlseV9uYW1lIjoiU3RhcmsiLCJsb2NhbGUiOiJlbi1HQiIsImlhdCI6MzE1NTMyNzAwLCJleHAiOjMxNTUzMjg5OSwianRpIjoiM2RlNzk5ODYxM2ExYTRmYjhkYTNkZTc5OTg2MTNhMWE0ZmI4ZGEifQ.0-6HL6oW7MyCyXq-yXtYTXThvk90AIAQaJ9MkARiE4I6ixXF-UQnCQtl29jBA-xrwFet6D9NCFmBR95KUNOI4w"
@@ -36,161 +34,104 @@ func TestAuthenticate(t *testing.T) {
 		SecretJwtKey:   []byte("DPhotoJwtSecret"),
 	}
 
+	tonyGoogleIdentity := aclcore.Identity{
+		Email:   email,
+		Name:    "Tony Stark aka Ironman",
+		Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
+	}
+	scopeRepositoryWithOwnerAndAdmin := func() *ScopeRepositoryInMemory {
+		return NewScopeRepositoryInMemory(
+			aclcore.Scope{Type: aclcore.ApiScope, GrantedTo: email, ResourceId: "admin"},
+			aclcore.Scope{Type: aclcore.MainOwnerScope, GrantedTo: email, ResourceOwner: owner},
+		)
+	}
+	scopeRepositoryWithVisitor := func() *ScopeRepositoryInMemory {
+		return NewScopeRepositoryInMemory(
+			aclcore.Scope{Type: aclcore.AlbumVisitorScope, GrantedTo: email},
+		)
+	}
+
 	type fields struct {
-		ScopesReader          func(t *testing.T) aclcore.ScopesReader
-		RefreshTokenGenerator func(t *testing.T) aclcore.IRefreshTokenGenerator
-		IdentityDetailsStore  func(t *testing.T) aclcore.IdentityDetailsStore
+		ScopeRepository       *ScopeRepositoryInMemory
+		RefreshTokenGenerator *RefreshTokenGeneratorFake
+		IdentityRepository    *IdentityRepositoryInMemory
 	}
 
 	tests := []struct {
-		name            string
-		fields          fields
-		argToken        string
-		assertAuth      func(*testing.T, string, aclcore.Authentication)
-		wantIdentity    aclcore.Identity
-		wantErrContains string
+		name                 string
+		fields               fields
+		argToken             string
+		assertAuth           func(*testing.T, string, aclcore.Authentication)
+		wantIdentity         aclcore.Identity
+		expectStoredIdentity *aclcore.Identity
+		wantErr              assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should exchange a valid identity JWT into an access token",
 			fields: fields{
-				ScopesReader: func(t *testing.T) aclcore.ScopesReader {
-					reader := mocks.NewScopesReader(t)
-					reader.EXPECT().ListScopesByUser(mock.Anything, email, aclcore.ApiScope, aclcore.MainOwnerScope).Return([]*aclcore.Scope{
-						{
-							Type:       aclcore.ApiScope,
-							ResourceId: "admin",
-						},
-						{
-							Type:          aclcore.MainOwnerScope,
-							ResourceOwner: owner,
-						},
-					}, nil)
-					return reader
-				},
-				RefreshTokenGenerator: refreshTokenGenerator(email, refreshToken),
-				IdentityDetailsStore: identityDetailsStore(aclcore.Identity{
-					Email:   email,
-					Name:    "Tony Stark aka Ironman",
-					Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
-				}),
+				ScopeRepository:       scopeRepositoryWithOwnerAndAdmin(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
 			},
 			argToken: okJwtString,
 			assertAuth: func(t *testing.T, name string, auth aclcore.Authentication) {
 				assert.Equal(t, time.Date(1980, 1, 1, 0, 0, 12, 0, time.UTC), auth.ExpiryTime, name)
 				assert.Equal(t, int64(12), auth.ExpiresIn, name)
-				assert.Equal(t, refreshToken, auth.RefreshToken, name)
+				assert.Equal(t, "rt-"+string(email)+"-"+string(aclcore.RefreshTokenPurposeWeb), auth.RefreshToken, name)
 
-				type decodedClaims struct {
-					Scopes string
-					jwt.RegisteredClaims
-				}
-
-				token, err := jwt.ParseWithClaims(auth.AccessToken, &decodedClaims{}, func(token *jwt.Token) (interface{}, error) {
-					return config.SecretJwtKey, nil
-				})
-				if assert.NoError(t, err, name) {
-					claims := token.Claims.(*decodedClaims)
-					assert.Equal(t, config.Issuer, claims.Issuer, name)
-					assert.Equal(t, jwt.ClaimStrings{config.Issuer}, claims.Audience, name)
-					assert.Equal(t, email.Value(), claims.Subject, name)
-
-					scopes := strings.Split(claims.Scopes, " ")
-					sort.Slice(scopes, func(i, j int) bool {
-						return scopes[i] < scopes[j]
-					})
-					assert.Equal(t, []string{"api:admin", "owner:tony@stark.com"}, scopes)
-				}
+				assertAccessTokenClaims(t, auth.AccessToken, config, name, []string{"api:admin", "owner:tony@stark.com"})
 			},
-			wantIdentity: aclcore.Identity{
-				Email:   email,
-				Name:    "Tony Stark aka Ironman",
-				Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
-			},
+			wantIdentity:         tonyGoogleIdentity,
+			expectStoredIdentity: &tonyGoogleIdentity,
+			wantErr:              assert.NoError,
 		},
 		{
 			name: "it should let a pure visitor authenticate",
 			fields: fields{
-				ScopesReader: func(t *testing.T) aclcore.ScopesReader {
-					reader := mocks.NewScopesReader(t)
-					reader.On("ListScopesByUser", mock.Anything, mock.Anything, aclcore.ApiScope, aclcore.MainOwnerScope).Return(nil, nil)
-					reader.On("ListScopesByUser", mock.Anything, mock.Anything, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope).Return([]*aclcore.Scope{
-						{},
-					}, nil)
-					return reader
-				},
-				RefreshTokenGenerator: refreshTokenGenerator(email, refreshToken),
-				IdentityDetailsStore: identityDetailsStore(aclcore.Identity{
-					Email:   email,
-					Name:    "Tony Stark aka Ironman",
-					Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
-				}),
+				ScopeRepository:       scopeRepositoryWithVisitor(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
 			},
 			argToken: okJwtString,
 			assertAuth: func(t *testing.T, name string, auth aclcore.Authentication) {
 				assert.Equal(t, time.Date(1980, 1, 1, 0, 0, 12, 0, time.UTC), auth.ExpiryTime, name)
 				assert.Equal(t, int64(12), auth.ExpiresIn, name)
 
-				type decodedClaims struct {
-					Scopes string
-					jwt.RegisteredClaims
-				}
-
-				token, err := jwt.ParseWithClaims(auth.AccessToken, &decodedClaims{}, func(token *jwt.Token) (interface{}, error) {
-					return config.SecretJwtKey, nil
-				})
-				if assert.NoError(t, err, name) {
-					claims := token.Claims.(*decodedClaims)
-					assert.Equal(t, config.Issuer, claims.Issuer, name)
-					assert.Equal(t, jwt.ClaimStrings{config.Issuer}, claims.Audience, name)
-					assert.Equal(t, email.Value(), claims.Subject, name)
-
-					scopes := strings.Split(claims.Scopes, " ")
-					sort.Slice(scopes, func(i, j int) bool {
-						return scopes[i] < scopes[j]
-					})
-					assert.Equal(t, []string{"visitor"}, scopes)
-				}
+				assertAccessTokenClaims(t, auth.AccessToken, config, name, []string{"visitor"})
 			},
-			wantIdentity: aclcore.Identity{
-				Email:   email,
-				Name:    "Tony Stark aka Ironman",
-				Picture: "https://lh3.googleusercontent.com/a-/tonystark-picture",
-			},
+			wantIdentity:         tonyGoogleIdentity,
+			expectStoredIdentity: &tonyGoogleIdentity,
+			wantErr:              assert.NoError,
 		},
 		{
 			name: "it should not let unregistered user log in",
 			fields: fields{
-				ScopesReader: func(t *testing.T) aclcore.ScopesReader {
-					reader := mocks.NewScopesReader(t)
-					reader.On("ListScopesByUser", mock.Anything, mock.Anything, aclcore.ApiScope, aclcore.MainOwnerScope).Return(nil, nil)
-					reader.On("ListScopesByUser", mock.Anything, mock.Anything, aclcore.AlbumVisitorScope, aclcore.MediaVisitorScope).Return(nil, nil)
-					return reader
-				},
-				RefreshTokenGenerator: refreshTokenGeneratorNotCalled(),
-				IdentityDetailsStore:  identityDetailsStoreNotCalled(),
+				ScopeRepository:       NewScopeRepositoryInMemory(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
 			},
-			argToken:        unregisteredJwtString,
-			wantErrContains: "must be pre-registered",
+			argToken: unregisteredJwtString,
+			wantErr:  errorContains("must be pre-registered"),
 		},
 		{
 			name: "it should not accept JWT from non-approved issuers",
 			fields: fields{
-				ScopesReader:          scopeReaderNotCalled(),
-				RefreshTokenGenerator: refreshTokenGeneratorNotCalled(),
-				IdentityDetailsStore:  identityDetailsStoreNotCalled(),
+				ScopeRepository:       NewScopeRepositoryInMemory(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
 			},
-			argToken:        wrongISSJwtString,
-			wantErrContains: "Issuer 'wrongISS' is not supported",
+			argToken: wrongISSJwtString,
+			wantErr:  errorContains("Issuer 'wrongISS' is not supported"),
 		},
 		{
 			name: "it should not accept expired JWT",
 			fields: fields{
-				ScopesReader:          scopeReaderNotCalled(),
-				RefreshTokenGenerator: refreshTokenGeneratorNotCalled(),
-				IdentityDetailsStore:  identityDetailsStoreNotCalled(),
+				ScopeRepository:       NewScopeRepositoryInMemory(),
+				RefreshTokenGenerator: NewRefreshTokenGeneratorFake(),
+				IdentityRepository:    NewIdentityRepositoryInMemory(),
 			},
-			argToken:        expiredJwtString,
-			wantErrContains: "token is expired",
+			argToken: expiredJwtString,
+			wantErr:  errorContains("token is expired"),
 		},
 	}
 
@@ -200,11 +141,11 @@ func TestAuthenticate(t *testing.T) {
 
 			authenticator := aclcore.SSOAuthenticator{
 				AccessTokenGenerator: aclcore.AccessTokenGenerator{
-					PermissionsReader: tt.fields.ScopesReader(t),
+					PermissionsReader: tt.fields.ScopeRepository,
 					Config:            config,
 				},
-				RefreshTokenGenerator: tt.fields.RefreshTokenGenerator(t),
-				IdentityDetailsStore:  tt.fields.IdentityDetailsStore(t),
+				RefreshTokenGenerator: tt.fields.RefreshTokenGenerator,
+				IdentityDetailsStore:  tt.fields.IdentityRepository,
 				TrustedIdentityIssuers: map[string]aclcore.OAuth2IssuerConfig{
 					"accounts.google.com": {
 						ConfigSource: "unitTest",
@@ -219,50 +160,52 @@ func TestAuthenticate(t *testing.T) {
 			}
 
 			gotAuth, gotIdentity, err := authenticator.AuthenticateFromExternalIDProvider(tt.argToken, aclcore.RefreshTokenPurposeWeb)
-			if tt.wantErrContains != "" && a.Error(err, tt.name) {
-				a.Contains(err.Error(), tt.wantErrContains, tt.name)
+			if !tt.wantErr(t, err, tt.name) {
+				return
+			}
+			if err != nil {
+				return
+			}
+			a.Equal(tt.wantIdentity, *gotIdentity, tt.name)
+			tt.assertAuth(t, tt.name, *gotAuth)
 
-			} else if tt.wantErrContains == "" && a.NoError(err, tt.name) {
-				a.Equal(tt.wantIdentity, *gotIdentity, tt.name)
-				tt.assertAuth(t, tt.name, *gotAuth)
+			if tt.expectStoredIdentity != nil {
+				storedIdentity, findErr := tt.fields.IdentityRepository.FindIdentity(tt.expectStoredIdentity.Email)
+				if a.NoError(findErr, "FindIdentity(%v)", tt.expectStoredIdentity.Email) {
+					a.Equal(*tt.expectStoredIdentity, *storedIdentity, "stored identity")
+				}
 			}
 		})
 	}
 }
 
-func scopeReaderNotCalled() func(t *testing.T) aclcore.ScopesReader {
-	return func(t *testing.T) aclcore.ScopesReader {
-		return mocks.NewScopesReader(t)
+func errorContains(partial string) assert.ErrorAssertionFunc {
+	return func(t assert.TestingT, err error, msgAndArgs ...interface{}) bool {
+		return assert.Error(t, err, msgAndArgs...) &&
+			assert.Contains(t, err.Error(), partial, msgAndArgs...)
 	}
 }
 
-func refreshTokenGenerator(email usermodel.UserId, refreshToken string) func(t *testing.T) aclcore.IRefreshTokenGenerator {
-	return func(t *testing.T) aclcore.IRefreshTokenGenerator {
-		generator := mocks.NewIRefreshTokenGenerator(t)
-		generator.On("GenerateRefreshToken", aclcore.RefreshTokenSpec{
-			Email:               email,
-			RefreshTokenPurpose: aclcore.RefreshTokenPurposeWeb,
-		}).Return(refreshToken, nil)
-		return generator
+func assertAccessTokenClaims(t *testing.T, accessToken string, config aclcore.OAuthConfig, name string, expectedScopes []string) {
+	type decodedClaims struct {
+		Scopes string
+		jwt.RegisteredClaims
 	}
-}
 
-func identityDetailsStore(identity aclcore.Identity) func(t *testing.T) aclcore.IdentityDetailsStore {
-	return func(t *testing.T) aclcore.IdentityDetailsStore {
-		store := mocks.NewIdentityDetailsStore(t)
-		store.On("StoreIdentity", identity).Return(nil)
-		return store
+	token, err := jwt.ParseWithClaims(accessToken, &decodedClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return config.SecretJwtKey, nil
+	})
+	if !assert.NoError(t, err, name) {
+		return
 	}
-}
+	claims := token.Claims.(*decodedClaims)
+	assert.Equal(t, config.Issuer, claims.Issuer, name)
+	assert.Equal(t, jwt.ClaimStrings{config.Issuer}, claims.Audience, name)
+	assert.Equal(t, "tony@stark.com", claims.Subject, name)
 
-func refreshTokenGeneratorNotCalled() func(t *testing.T) aclcore.IRefreshTokenGenerator {
-	return func(t *testing.T) aclcore.IRefreshTokenGenerator {
-		return mocks.NewIRefreshTokenGenerator(t)
-	}
-}
-
-func identityDetailsStoreNotCalled() func(t *testing.T) aclcore.IdentityDetailsStore {
-	return func(t *testing.T) aclcore.IdentityDetailsStore {
-		return mocks.NewIdentityDetailsStore(t)
-	}
+	scopes := strings.Split(claims.Scopes, " ")
+	sort.Slice(scopes, func(i, j int) bool {
+		return scopes[i] < scopes[j]
+	})
+	assert.Equal(t, expectedScopes, scopes, name)
 }

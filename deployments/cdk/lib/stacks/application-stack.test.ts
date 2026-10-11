@@ -85,6 +85,9 @@ describe('DPhotoApplicationStack', () => {
         const amendNameFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/name', 'PUT');
         expect(amendDateFunction).toBeDefined();
 
+        const randomizeCoversFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/covers/refresh', 'POST');
+        expect(randomizeCoversFunction).toBeDefined();
+
         const oauthTokenEndpoint = findLambdaByRoute(template, '/oauth/token', 'POST');
         expect(oauthTokenEndpoint).toBeDefined();
 
@@ -101,6 +104,7 @@ describe('DPhotoApplicationStack', () => {
             functionName(shareAlbumFunction),
             functionName(amendDateFunction),
             functionName(amendNameFunction),
+            functionName(randomizeCoversFunction),
             functionName(oauthTokenEndpoint),
             functionName(oauthLogoutEndpoint),
         )).toBe('');

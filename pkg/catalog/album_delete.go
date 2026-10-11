@@ -2,8 +2,10 @@ package catalog
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
@@ -21,60 +23,63 @@ func (f CountMediasBySelectorsFunc) CountMediasBySelectors(ctx context.Context, 
 	return f(ctx, owner, selectors)
 }
 
-type DeleteAlbumRepositoryPort interface {
-	DeleteAlbum(ctx context.Context, albumId AlbumId) error
+// AlbumDeleted is fired after an album has been deleted and its medias transferred to
+// the surrounding albums: it carries the id of the album that has been removed, the
+// medias that were actually moved to another album, and the per-album cover sets that
+// changed as a side-effect (deleted album maps to nil, destinations map to their new
+// cover list). Albums whose cover set did not change are omitted from Covers.
+type AlbumDeleted struct {
+	DeletedAlbumId    AlbumId
+	TransferredMedias TransferredMedias
+	Covers            map[AlbumId][]Cover
 }
 
-type DeleteAlbumRepositoryFunc func(ctx context.Context, albumId AlbumId) error
-
-func (f DeleteAlbumRepositoryFunc) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
-	return f(ctx, albumId)
+type AlbumDeletedObserver interface {
+	OnAlbumDeleted(ctx context.Context, event AlbumDeleted) error
 }
 
-type DeleteAlbumObserver interface {
-	OnDeleteAlbum(ctx context.Context, deletedAlbum AlbumId, transfers MediaTransferRecords) error
+type AlbumDeletedObserverFunc func(ctx context.Context, event AlbumDeleted) error
+
+func (f AlbumDeletedObserverFunc) OnAlbumDeleted(ctx context.Context, event AlbumDeleted) error {
+	return f(ctx, event)
 }
 
-// NewDeleteAlbum creates a new DeleteAlbum service.
+// NewDeleteAlbum creates the service to delete an album, transferring its medias to the
+// surrounding albums when possible.
 func NewDeleteAlbum(
-	FindAlbumsByOwner FindAlbumsByOwnerPort,
+	TimelineRepository TimelineRepository,
 	CountMediasBySelectors CountMediasBySelectorsPort,
-	TransferMediasPort TransferMediasRepositoryPort,
-	DeleteAlbumRepository DeleteAlbumRepositoryPort,
-	TimelineMutationObservers ...TimelineMutationObserver,
+	TransferMedias TransferMediasService,
+	CoverService CoverServicePort,
+	AlbumDeletedObservers ...AlbumDeletedObserver,
 ) *DeleteAlbum {
-
 	return &DeleteAlbum{
-		FindAlbumsByOwner:      FindAlbumsByOwner,
+		TimelineRepository:     TimelineRepository,
 		CountMediasBySelectors: CountMediasBySelectors,
-		Observers: []DeleteAlbumObserver{
-			&DeleteAlbumMediaTransfer{
-				MediaTransferExecutor: MediaTransferExecutor{
-					TransferMediasRepository:  TransferMediasPort,
-					TimelineMutationObservers: TimelineMutationObservers,
-				},
-			},
-			&DeleteAlbumMetadata{
-				DeleteAlbumRepository: DeleteAlbumRepository,
-			},
-		},
+		TransferMediasService:  TransferMedias,
+		CoverService:           CoverService,
+		AlbumDeletedObservers:  AlbumDeletedObservers,
 	}
 }
 
+// DeleteAlbum removes an album from the catalog: any media it currently holds is moved
+// to the surrounding albums (as computed by the TimelineAggregate), and an AlbumDeleted
+// event is fired once the row has been removed.
 type DeleteAlbum struct {
-	FindAlbumsByOwner      FindAlbumsByOwnerPort
+	TimelineRepository     TimelineRepository
 	CountMediasBySelectors CountMediasBySelectorsPort
-	Observers              []DeleteAlbumObserver
+	TransferMediasService  TransferMediasService
+	CoverService           CoverServicePort
+	AlbumDeletedObservers  []AlbumDeletedObserver
 }
 
-// DeleteAlbum delete an album, medias it contains are dispatched to other albums.
 func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
-	albums, err := d.FindAlbumsByOwner.FindAlbumsByOwner(ctx, albumId.Owner)
+	timeline, err := d.TimelineRepository.LoadTimeline(ctx, albumId.Owner)
 	if err != nil {
 		return err
 	}
 
-	transfers, orphaned, err := NewLazyTimelineAggregate(albums).RemoveAlbum(albumId)
+	records, orphaned, err := timeline.RemoveAlbum(albumId)
 	if err != nil {
 		return err
 	}
@@ -89,30 +94,46 @@ func (d *DeleteAlbum) DeleteAlbum(ctx context.Context, albumId AlbumId) error {
 		}
 	}
 
-	for _, observer := range d.Observers {
-		err := observer.OnDeleteAlbum(ctx, albumId, transfers)
-		if err != nil {
-			return err
-		}
+	transferred, err := d.TransferMediasService.TransferMedias(ctx, records)
+	if err != nil {
+		return err
+	}
+
+	if err = d.TimelineRepository.DeleteAlbum(ctx, albumId); err != nil {
+		return err
 	}
 
 	log.WithField("Owner", albumId.Owner).Infof("Album %s deleted", albumId)
 
+	covers, err := d.CoverService.ApplyTransfer(ctx, transferred, albumId)
+	if err != nil {
+		return err
+	}
+
+	event := AlbumDeleted{
+		DeletedAlbumId:    albumId,
+		TransferredMedias: transferred,
+		Covers:            covers,
+	}
+	for _, observer := range d.AlbumDeletedObservers {
+		if err = observer.OnAlbumDeleted(ctx, event); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-type DeleteAlbumMediaTransfer struct {
-	MediaTransferExecutor
+// AlbumDeletedAsTimelineMutation adapts an AlbumDeletedObserver notification into a
+// TimelineMutationObserver call, forwarding only the TransferredMedias carried by the
+// event. This bridges the AlbumDeleted event to the observers that still listen on the
+// legacy TimelineMutationObserver interface (archive relocator, view counters, ...).
+type AlbumDeletedAsTimelineMutation struct {
+	TimelineMutationObserver TimelineMutationObserver
 }
 
-func (d *DeleteAlbumMediaTransfer) OnDeleteAlbum(ctx context.Context, deletedAlbum AlbumId, records MediaTransferRecords) error {
-	return d.MediaTransferExecutor.Transfer(ctx, records)
-}
-
-type DeleteAlbumMetadata struct {
-	DeleteAlbumRepository DeleteAlbumRepositoryPort
-}
-
-func (d *DeleteAlbumMetadata) OnDeleteAlbum(ctx context.Context, deletedAlbum AlbumId, transfers MediaTransferRecords) error {
-	return d.DeleteAlbumRepository.DeleteAlbum(ctx, deletedAlbum)
+func (a *AlbumDeletedAsTimelineMutation) OnAlbumDeleted(ctx context.Context, event AlbumDeleted) error {
+	if event.TransferredMedias.IsEmpty() {
+		return nil
+	}
+	return a.TimelineMutationObserver.OnTransferredMedias(ctx, event.TransferredMedias)
 }

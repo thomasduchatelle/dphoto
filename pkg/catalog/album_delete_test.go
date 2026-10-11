@@ -3,324 +3,210 @@ package catalog_test
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
 func TestDeleteAlbum_DeleteAlbum(t *testing.T) {
-	jan24 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	mar24 := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
-	apr24 := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)
-	may24 := time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
-	jul24 := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
-	jan25 := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-
 	const owner = "ironman"
-	toDeleteAlbumId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/avengers-1")}
-	toDeleteAlbum := catalog.Album{
-		AlbumId: toDeleteAlbumId,
-		Name:    "Avenger 1",
-		Start:   mar24,
-		End:     may24,
-	}
-	existingAllYearAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/lifetime")},
-		Name:    "lifetime",
-		Start:   jan24,
-		End:     jan25,
-	}
-	existingQ1Album := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/q1")},
-		Name:    "q1",
-		Start:   jan24,
-		End:     apr24,
-	}
-	existingQ2Album := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/q2")},
-		Name:    "q2",
-		Start:   apr24,
-		End:     jul24,
-	}
-	anExpectedError := errors.Errorf("TEST error")
 
+	jan26 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	mar26 := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	apr26 := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)
+	jan27 := time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	marAlbumId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/mar-26")}
+	marAlbum := &catalog.Album{AlbumId: marAlbumId, Name: "mar 26", Start: mar26, End: apr26}
+	lifetimeId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/lifetime")}
+	lifetimeAlbum := &catalog.Album{AlbumId: lifetimeId, Name: "lifetime", Start: jan26, End: jan27}
+	jan_feb_26_Id := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/jan-feb-26")}
+	jan_feb_26_Album := &catalog.Album{AlbumId: jan_feb_26_Id, Name: "jan-feb 26", Start: jan26, End: mar26}
+
+	photo10mar26 := photoAt("photo10mar26", mar26.AddDate(0, 0, 10))
+	photo20mar26 := photoAt("photo20mar26", mar26.AddDate(0, 0, 20))
+
+	transferErr := errors.New("TEST transfer medias failure")
+
+	// transferPort is an optional per-case override: when nil the test uses
+	// tt.fields.Catalog (the real TransferMediasFromRepository path); when set it is
+	// wrapped by TransferMediasFromRepository so a failing wrapper can short-circuit
+	// the transfer step.
 	type fields struct {
-		FindAlbumsByOwner         func(t *testing.T) catalog.FindAlbumsByOwnerPort
-		CountMediasBySelectors    func(t *testing.T) catalog.CountMediasBySelectorsPort
-		AlbumCanBeDeletedObserver func(t *testing.T) catalog.DeleteAlbumObserver
+		Catalog      *CatalogInMemory
+		Covers       *CoverRepositoryInMemory
+		TransferPort catalog.TransferMediasRepositoryPort
 	}
 	type args struct {
 		albumId catalog.AlbumId
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name                string
+		fields              fields
+		args                args
+		expectAlbumIds      []catalog.AlbumId
+		expectMediasByAlbum map[catalog.AlbumId][]*catalog.MediaMeta
+		expectCoversByAlbum map[catalog.AlbumId][]catalog.Cover
+		expectDeletedEvents []catalog.AlbumDeleted
+		wantErr             assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should delete album if all segments can be transferred to 1 other album",
+			name: "it should transfer medias to the surrounding album and inherit the deleted album's CHERRY_PICKED cover",
 			fields: fields{
-				FindAlbumsByOwner:      stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &existingAllYearAlbum, &toDeleteAlbum),
-				CountMediasBySelectors: expectCountMediasBySelectorsPortNotCalled(),
-				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId, catalog.MediaTransferRecords{
-					existingAllYearAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-							Start:      toDeleteAlbum.Start,
-							End:        toDeleteAlbum.End,
-						},
-					},
-				}),
+				Catalog: NewCatalogInMemory(
+					withAlbum(lifetimeAlbum),
+					withAlbum(marAlbum, photo10mar26, photo20mar26),
+				),
+				Covers: NewCoverRepositoryInMemory(coversFor(marAlbumId, pickedCover(photo10mar26), randomCover(photo20mar26))),
 			},
-			args: args{
-				albumId: toDeleteAlbumId,
+			args:           args{albumId: marAlbumId},
+			expectAlbumIds: []catalog.AlbumId{lifetimeId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				lifetimeId: {photo10mar26, photo20mar26},
 			},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{
+				lifetimeId: {pickedCover(photo10mar26), randomCover(photo20mar26)},
+			},
+			expectDeletedEvents: []catalog.AlbumDeleted{{
+				DeletedAlbumId: marAlbumId,
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{lifetimeId: {photo10mar26.Id, photo20mar26.Id}},
+					FromAlbums: []catalog.AlbumId{marAlbumId},
+				},
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					lifetimeId:  {pickedCover(photo10mar26), randomCover(photo20mar26)},
+					marAlbumId: nil,
+				},
+			}},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should delete album if all segments can be transferred to several other albums",
+			name: "it should delete an empty album, and fire an empty-transfer event when no surrounding album covers it",
 			fields: fields{
-				FindAlbumsByOwner:      stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &existingQ1Album, &existingQ2Album, &toDeleteAlbum),
-				CountMediasBySelectors: expectCountMediasBySelectorsPortNotCalled(),
-				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId, catalog.MediaTransferRecords{
-					existingQ1Album.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-							Start:      toDeleteAlbum.Start,
-							End:        existingQ1Album.End,
-						},
-					},
-					existingQ2Album.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-							Start:      existingQ2Album.Start,
-							End:        toDeleteAlbum.End,
-						},
-					},
-				}),
+				Catalog: NewCatalogInMemory(withAlbum(marAlbum)),
+				Covers:  NewCoverRepositoryInMemory(),
 			},
-			args: args{
-				albumId: toDeleteAlbumId,
-			},
+			args:                args{albumId: marAlbumId},
+			expectAlbumIds:      []catalog.AlbumId{},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
+			expectDeletedEvents: []catalog.AlbumDeleted{{
+				DeletedAlbumId:    marAlbumId,
+				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
+				Covers:            map[catalog.AlbumId][]catalog.Cover{marAlbumId: nil},
+			}},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should delete album even if the segments are not covered by other albums as long as there is no medias to become orphaned",
+			name: "it should erase the canonical cover record even when the deleted album had no medias to transfer",
 			fields: fields{
-				FindAlbumsByOwner: stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &existingQ1Album, &toDeleteAlbum),
-				CountMediasBySelectors: expectCountMediasBySelectorsPortCalled(0, owner, catalog.MediaSelector{
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-					Start:      apr24,
-					End:        may24,
-				}),
-				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId, catalog.MediaTransferRecords{
-					existingQ1Album.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-							Start:      toDeleteAlbum.Start,
-							End:        existingQ1Album.End,
-						},
-					},
-				}),
+				Catalog: NewCatalogInMemory(withAlbum(marAlbum)),
+				Covers:  NewCoverRepositoryInMemory(coversFor(marAlbumId, pickedCover(photo10mar26))),
 			},
-			args: args{
-				albumId: toDeleteAlbumId,
-			},
+			args:                args{albumId: marAlbumId},
+			expectAlbumIds:      []catalog.AlbumId{},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
+			expectDeletedEvents: []catalog.AlbumDeleted{{
+				DeletedAlbumId:    marAlbumId,
+				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
+				Covers:            map[catalog.AlbumId][]catalog.Cover{marAlbumId: nil},
+			}},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should raise an error if medias are about to be orphaned",
+			name: "it should return OrphanedMediasErr without touching any album when the deletion would orphan medias (jan-feb album ends before mar)",
 			fields: fields{
-				FindAlbumsByOwner: stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &existingQ1Album, &toDeleteAlbum),
-				CountMediasBySelectors: expectCountMediasBySelectorsPortCalled(1, owner, catalog.MediaSelector{
-					FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-					Start:      apr24,
-					End:        may24,
-				}),
-				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObserverNotCalled(),
+				Catalog: NewCatalogInMemory(
+					withAlbum(jan_feb_26_Album),
+					withAlbum(marAlbum, photo10mar26),
+				),
+				Covers: NewCoverRepositoryInMemory(),
 			},
-			args: args{
-				albumId: toDeleteAlbumId,
+			args:           args{albumId: marAlbumId},
+			expectAlbumIds: []catalog.AlbumId{jan_feb_26_Id, marAlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				jan_feb_26_Id: nil,
+				marAlbumId:    {photo10mar26},
 			},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
 			},
 		},
 		{
-			name: "it should fails if listing albums raises an error",
+			name: "it should return AlbumNotFoundErr when the album does not exist",
 			fields: fields{
-				FindAlbumsByOwner:         stubFindAlbumsByOwnerPortWithError(anExpectedError),
-				CountMediasBySelectors:    expectCountMediasBySelectorsPortNotCalled(),
-				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObserverNotCalled(),
+				Catalog: NewCatalogInMemory(withAlbum(lifetimeAlbum)),
+				Covers:  NewCoverRepositoryInMemory(),
 			},
-			args: args{
-				albumId: toDeleteAlbumId,
-			},
+			args:                args{albumId: marAlbumId},
+			expectAlbumIds:      []catalog.AlbumId{lifetimeId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{lifetimeId: nil},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, anExpectedError, i...)
+				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
 			},
 		},
 		{
-			name: "it should fails if listing albums raises an error",
-			fields: fields{
-				FindAlbumsByOwner:         stubFindAlbumsByOwnerWith(toDeleteAlbum.Owner, &toDeleteAlbum),
-				CountMediasBySelectors:    stubCountMediasBySelectorsPortWithError(anExpectedError),
-				AlbumCanBeDeletedObserver: expectAlbumCanBeDeletedObserverNotCalled(),
+			name: "it should not delete the album when the media transfer fails: medias stay in the source so a retry can re-run the transfer",
+			fields: func() fields {
+				backing := NewCatalogInMemory(
+					withAlbum(lifetimeAlbum),
+					withAlbum(marAlbum, photo10mar26, photo20mar26),
+				)
+				return fields{
+					Catalog:      backing,
+					Covers:       NewCoverRepositoryInMemory(coversFor(marAlbumId, pickedCover(photo10mar26), randomCover(photo20mar26))),
+					TransferPort: &catalogTransferMediasFailing{CatalogInMemory: backing, Err: transferErr},
+				}
+			}(),
+			args:           args{albumId: marAlbumId},
+			expectAlbumIds: []catalog.AlbumId{lifetimeId, marAlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				lifetimeId: nil,
+				marAlbumId: {photo10mar26, photo20mar26},
 			},
-			args: args{
-				albumId: toDeleteAlbumId,
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{
+				marAlbumId: {pickedCover(photo10mar26), randomCover(photo20mar26)},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, anExpectedError, i...)
+				return assert.ErrorIs(t, err, transferErr, i...)
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var observers []catalog.DeleteAlbumObserver
-			if tt.fields.AlbumCanBeDeletedObserver != nil {
-				observers = append(observers, tt.fields.AlbumCanBeDeletedObserver(t))
+			transferPort := tt.fields.TransferPort
+			if transferPort == nil {
+				transferPort = tt.fields.Catalog
 			}
-			d := &catalog.DeleteAlbum{
-				FindAlbumsByOwner:      tt.fields.FindAlbumsByOwner(t),
-				CountMediasBySelectors: tt.fields.CountMediasBySelectors(t),
-				Observers:              observers,
+			observer := &AlbumDeletedObserverInMemory{}
+			deleteAlbum := catalog.NewDeleteAlbum(
+				tt.fields.Catalog,
+				tt.fields.Catalog,
+				&catalog.TransferMediasFromRepository{TransferMediasRepository: transferPort},
+				&catalog.CoverService{
+					CoverRepository:     tt.fields.Covers,
+					MediaReadRepository: tt.fields.Catalog,
+					Randomiser:          deterministicRandomiser,
+				},
+				observer,
+			)
+
+			err := deleteAlbum.DeleteAlbum(context.Background(), tt.args.albumId)
+			if !tt.wantErr(t, err, fmt.Sprintf("DeleteAlbum(%v)", tt.args.albumId)) {
+				return
 			}
-			err := d.DeleteAlbum(context.Background(), tt.args.albumId)
-			tt.wantErr(t, err, fmt.Sprintf("DeleteAlbum(%v)", tt.args.albumId))
-		})
-	}
-}
 
-func expectAlbumCanBeDeletedObserverNotCalled() func(t *testing.T) catalog.DeleteAlbumObserver {
-	return func(t *testing.T) catalog.DeleteAlbumObserver {
-		return mocks.NewDeleteAlbumObserver(t)
-	}
-}
-
-func expectAlbumCanBeDeletedObservedCalled(toDeleteAlbumId catalog.AlbumId, records catalog.MediaTransferRecords) func(t *testing.T) catalog.DeleteAlbumObserver {
-	return func(t *testing.T) catalog.DeleteAlbumObserver {
-		observer := mocks.NewDeleteAlbumObserver(t)
-		observer.EXPECT().OnDeleteAlbum(mock.Anything, toDeleteAlbumId, records).Return(nil).Once()
-		return observer
-	}
-}
-
-func stubFindAlbumsByOwnerPortWithError(err error) func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-	return func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-		return catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
-			return nil, err
-		})
-	}
-}
-
-func expectCountMediasBySelectorsPortNotCalled() func(t *testing.T) catalog.CountMediasBySelectorsPort {
-	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
-		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
-			assert.Failf(t, "unexpected call", "CountMediasBySelectors(%+v)", selectors)
-			return 0, nil
-		})
-	}
-}
-
-func expectCountMediasBySelectorsPortCalled(count int, expectedOwner ownermodel.Owner, expectedSelectors ...catalog.MediaSelector) func(t *testing.T) catalog.CountMediasBySelectorsPort {
-	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
-		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
-			assert.Equalf(t, expectedOwner, owner, "unexpected call CountMediasBySelectors(%v, %+v)", owner, selectors)
-			assert.Equalf(t, expectedSelectors, selectors, "unexpected call CountMediasBySelectors(%v, %+v)", owner, selectors)
-
-			return count, nil
-		})
-	}
-}
-
-func stubCountMediasBySelectorsPortWithError(err error) func(t *testing.T) catalog.CountMediasBySelectorsPort {
-	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
-		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
-			return 0, err
-		})
-	}
-}
-
-func stubCountMediasBySelectorsPort(count int) func(t *testing.T) catalog.CountMediasBySelectorsPort {
-	return func(t *testing.T) catalog.CountMediasBySelectorsPort {
-		return catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
-			return count, nil
-		})
-	}
-}
-
-type ExternalTimelineMutationObserver struct {
-	Transfers catalog.TransferredMedias
-}
-
-func (e *ExternalTimelineMutationObserver) OnTransferredMedias(ctx context.Context, transfers catalog.TransferredMedias) error {
-	e.Transfers = transfers
-	return nil
-}
-
-func TestNewDeleteAlbum(t *testing.T) {
-	jan24 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	mar24 := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
-	may24 := time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
-	jan25 := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	const owner = "ironman"
-	toDeleteAlbumId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/avengers-1")}
-	toDeleteAlbum := catalog.Album{
-		AlbumId: toDeleteAlbumId,
-		Name:    "Avenger 1",
-		Start:   mar24,
-		End:     may24,
-	}
-	existingAllYearAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/lifetime")},
-		Name:    "lifetime",
-		Start:   jan24,
-		End:     jan25,
-	}
-
-	externalObserver := new(ExternalTimelineMutationObserver)
-
-	transferredMedias := catalog.TransferredMedias{
-		Transfers: map[catalog.AlbumId][]catalog.MediaId{
-			existingAllYearAlbum.AlbumId: {"media-1", "media-2"},
-		},
-	}
-
-	deleteAlbum := catalog.NewDeleteAlbum(
-		catalog.FindAlbumsByOwnerFunc(func(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
-			return []*catalog.Album{&existingAllYearAlbum, &toDeleteAlbum}, nil
-		}),
-		catalog.CountMediasBySelectorsFunc(func(ctx context.Context, owner ownermodel.Owner, selectors []catalog.MediaSelector) (int, error) {
-			return 0, nil
-		}),
-		stubTransferMediaPort(transferredMedias)(t),
-		catalog.DeleteAlbumRepositoryFunc(func(ctx context.Context, albumId catalog.AlbumId) error {
-			return nil
-		}),
-		externalObserver,
-	)
-
-	err := deleteAlbum.DeleteAlbum(context.Background(), toDeleteAlbumId)
-	if assert.NoError(t, err) {
-		assert.Equal(t, externalObserver.Transfers, catalog.TransferredMedias{
-			Transfers:  transferredMedias.Transfers,
-			FromAlbums: []catalog.AlbumId{toDeleteAlbumId},
-		})
-	}
-}
-
-func stubTransferMediaPort(transferredMedias catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasRepositoryPort {
-	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
-		return catalog.TransferMediasFunc(func(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
-			return transferredMedias, nil
+			assert.ElementsMatch(t, tt.expectAlbumIds, tt.fields.Catalog.AlbumIds(), "albums remaining in the catalog")
+			assert.Equal(t, tt.expectMediasByAlbum, tt.fields.Catalog.MediasByAlbum(), "medias remaining per album")
+			assert.Equal(t, tt.expectCoversByAlbum, tt.fields.Covers.Covers, "canonical covers stored")
+			assert.Equal(t, tt.expectDeletedEvents, observer.Events, "AlbumDeleted events fired")
 		})
 	}
 }

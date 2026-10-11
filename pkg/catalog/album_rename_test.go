@@ -3,357 +3,210 @@ package catalog_test
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/catalog"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
-
-func TestNewRenameAlbumAcceptance(t *testing.T) {
-	const owner = "ironman"
-	may24 := time.Date(2024, time.May, 1, 0, 0, 0, 0, time.UTC)
-	jun24 := time.Date(2024, time.June, 1, 0, 0, 0, 0, time.UTC)
-	newName := "Avenger 1"
-
-	existingAlbum := &catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      ownermodel.Owner(owner),
-			FolderName: catalog.NewFolderName("/avenger"),
-		},
-		Name:  "Avenger",
-		Start: may24,
-		End:   jun24,
-	}
-	newAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{
-			Owner:      ownermodel.Owner(owner),
-			FolderName: catalog.NewFolderName("/2024-05_Avenger_1"),
-		},
-		Name:  newName,
-		Start: may24,
-		End:   jun24,
-	}
-	transferredMedias := catalog.TransferredMedias{
-		Transfers: map[catalog.AlbumId][]catalog.MediaId{
-			newAlbum.AlbumId: {"media-1", "media-2"},
-		},
-	}
-
-	testError := errors.Errorf("TEST error throwing")
-
-	type fields struct {
-		FindAlbumById             func(t *testing.T) catalog.FindAlbumByIdPort
-		UpdateAlbumName           func(t *testing.T) catalog.UpdateAlbumNamePort
-		InsertAlbumPort           func(t *testing.T) catalog.InsertAlbumPort
-		DeleteAlbumRepositoryPort func(t *testing.T) catalog.DeleteAlbumRepositoryPort
-		TransferMedias            func(t *testing.T) catalog.TransferMediasRepositoryPort
-		FindAlbumsByOwner         func(t *testing.T) catalog.FindAlbumsByOwnerPort
-		TimelineMutationObservers func(t *testing.T) catalog.TimelineMutationObserver
-	}
-	type args struct {
-		request catalog.RenameAlbumRequest
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "it should create a new album end to end",
-			fields: fields{
-				FindAlbumById:             stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName:           expectUpdateAlbumNameNotCalled(),
-				InsertAlbumPort:           expectAlbumInserted(newAlbum),
-				DeleteAlbumRepositoryPort: expectDeleteAlbumRepositoryPortCalled(existingAlbum.AlbumId),
-				FindAlbumsByOwner: func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-					return make(FindAlbumsByOwnerFake)
-				},
-				TransferMedias: expectTransferMediasRepositoryPortCalled(catalog.MediaTransferRecords{
-					newAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
-							Start:      existingAlbum.Start,
-							End:        existingAlbum.End,
-						},
-					},
-				}, transferredMedias),
-				TimelineMutationObservers: expectTimelineMutationObserverCalled(catalog.TransferredMedias{
-					Transfers:  transferredMedias.Transfers,
-					FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
-				}),
-			},
-			args: args{
-				request: catalog.RenameAlbumRequest{
-					CurrentId:        catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/avenger")},
-					NewName:          "Avenger 1",
-					RenameFolder:     true,
-					ForcedFolderName: "",
-				},
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should interrupt the transfer if the album insertion fails",
-			fields: fields{
-				FindAlbumById:             stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName:           expectUpdateAlbumNameNotCalled(),
-				InsertAlbumPort:           stubInsertAlbumPortWithError(testError),
-				DeleteAlbumRepositoryPort: expectDeleteAlbumRepositoryPortNotCalled(),
-				TransferMedias:            expectTransferMediasPortNotCalled(),
-				FindAlbumsByOwner: func(t *testing.T) catalog.FindAlbumsByOwnerPort {
-					return make(FindAlbumsByOwnerFake)
-				},
-				TimelineMutationObservers: expectTimelineMutationObserverNotCalled(),
-			},
-			args: args{
-				request: catalog.RenameAlbumRequest{
-					CurrentId:        catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/avenger")},
-					NewName:          "Avenger 1",
-					RenameFolder:     true,
-					ForcedFolderName: "",
-				},
-			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, testError)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			renameAlbum := catalog.NewRenameAlbum(
-				tt.fields.FindAlbumById(t),
-				tt.fields.UpdateAlbumName(t),
-				tt.fields.InsertAlbumPort(t),
-				tt.fields.DeleteAlbumRepositoryPort(t),
-				tt.fields.TransferMedias(t),
-				tt.fields.FindAlbumsByOwner(t),
-				tt.fields.TimelineMutationObservers(t),
-			)
-
-			err := renameAlbum.RenameAlbum(context.Background(), tt.args.request)
-			tt.wantErr(t, err, fmt.Sprintf("RenameAlbum(%v)", tt.args.request))
-		})
-	}
-}
-
-func expectTransferMediasPortNotCalled() func(t *testing.T) catalog.TransferMediasRepositoryPort {
-	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
-		return catalog.TransferMediasFunc(func(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
-			assert.Failf(t, "TransferMediasRepository should not be called", "TransferMediasFunc(%v, %v)", ctx, records)
-			return catalog.NewTransferredMedias(), nil
-		})
-	}
-}
-
-func expectMediaTransferNotCalled() func(t *testing.T) catalog.MediaTransfer {
-	return func(t *testing.T) catalog.MediaTransfer {
-		return catalog.MediaTransferFunc(func(ctx context.Context, records catalog.MediaTransferRecords) error {
-			assert.Failf(t, "MediaTransfer should not be called", "MediaTransfer(%v, %v)", ctx, records)
-			return nil
-		})
-	}
-}
 
 func TestRenameAlbum_RenameAlbum(t *testing.T) {
 	const owner = "ironman"
-	may24 := time.Date(2024, time.May, 1, 0, 0, 0, 0, time.UTC)
-	jun24 := time.Date(2024, time.June, 1, 0, 0, 0, 0, time.UTC)
+	may26 := time.Date(2026, time.May, 1, 0, 0, 0, 0, time.UTC)
+	jun26 := time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC)
+	newName := "Avenger 1"
 
 	existingAlbum := &catalog.Album{
 		AlbumId: catalog.AlbumId{
 			Owner:      ownermodel.Owner(owner),
-			FolderName: catalog.NewFolderName("/avenger"),
+			FolderName: catalog.NewFolderName("/may-26"),
 		},
-		Name:  "Avenger",
-		Start: may24,
-		End:   jun24,
+		Name:  "may 26",
+		Start: may26,
+		End:   jun26,
 	}
-	newName := "Avenger 1"
+	generatedRenamedId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/2026-05_Avenger_1")}
+	forcedRenamedId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("Avengers_vs_Loki")}
+
+	photo5may26 := photoAt("photo5may26", may26.AddDate(0, 0, 5))
+	photo15may26 := photoAt("photo15may26", may26.AddDate(0, 0, 15))
+
+	coversOnMay26 := func() *CoverRepositoryInMemory {
+		return NewCoverRepositoryInMemory(coversFor(existingAlbum.AlbumId, pickedCover(photo5may26), randomCover(photo15may26)))
+	}
 
 	type fields struct {
-		FindAlbumById       func(t *testing.T) catalog.FindAlbumByIdPort
-		UpdateAlbumName     func(t *testing.T) catalog.UpdateAlbumNamePort
-		RenameAlbumObserver func(t *testing.T) catalog.RenameAlbumObserver
+		Catalog *CatalogInMemory
+		Covers  *CoverRepositoryInMemory
 	}
 	type args struct {
 		request catalog.RenameAlbumRequest
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name                string
+		fields              fields
+		args                args
+		expectAlbumsByIds   map[catalog.AlbumId]string
+		expectMediasByAlbum map[catalog.AlbumId][]*catalog.MediaMeta
+		expectRenamedEvents []catalog.AlbumRenamed
+		expectCoversByAlbum map[catalog.AlbumId][]catalog.Cover
+		wantErr             assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should get an error if the new name is empty",
 			fields: fields{
-				FindAlbumById:       stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName:     expectUpdateAlbumNameNotCalled(),
-				RenameAlbumObserver: expectRenameAlbumObserverNotCalled(),
+				Catalog: NewCatalogInMemory(withAlbum(existingAlbum, photo5may26)),
+				Covers:  coversOnMay26(),
 			},
 			args: args{
 				request: catalog.RenameAlbumRequest{
-					CurrentId:        existingAlbum.AlbumId,
-					NewName:          "",
-					RenameFolder:     false,
-					ForcedFolderName: "",
+					CurrentId:    existingAlbum.AlbumId,
+					NewName:      "",
+					RenameFolder: false,
 				},
 			},
+			expectAlbumsByIds:   map[catalog.AlbumId]string{existingAlbum.AlbumId: existingAlbum.Name},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{existingAlbum.AlbumId: {photo5may26}},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{existingAlbum.AlbumId: {pickedCover(photo5may26), randomCover(photo15may26)}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNameMandatoryErr)
 			},
 		},
 		{
-			name: "it should get an error if the album doesn't exists",
+			name: "it should get an error if the album doesn't exist",
 			fields: fields{
-				FindAlbumById:       stubFindAlbumByIdWith(&catalog.Album{}),
-				UpdateAlbumName:     expectUpdateAlbumNameNotCalled(),
-				RenameAlbumObserver: expectRenameAlbumObserverNotCalled(),
+				Catalog: NewCatalogInMemory(),
+				Covers:  NewCoverRepositoryInMemory(),
 			},
 			args: args{
 				request: catalog.RenameAlbumRequest{
-					CurrentId:        existingAlbum.AlbumId,
-					NewName:          newName,
-					RenameFolder:     false,
-					ForcedFolderName: "",
+					CurrentId:    existingAlbum.AlbumId,
+					NewName:      newName,
+					RenameFolder: true,
 				},
 			},
+			expectAlbumsByIds:   map[catalog.AlbumId]string{},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr)
 			},
 		},
 		{
-			name: "it should update the name if the album is found and folder name is unchanged",
+			name: "it should update the name in place (folder unchanged, no transfer, covers untouched)",
 			fields: fields{
-				FindAlbumById:       stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName:     expectUpdateAlbumNameCalledWith(existingAlbum.AlbumId, newName),
-				RenameAlbumObserver: expectRenameAlbumObserverNotCalled(),
+				Catalog: NewCatalogInMemory(withAlbum(existingAlbum, photo5may26, photo15may26)),
+				Covers:  coversOnMay26(),
+			},
+			args: args{
+				request: catalog.RenameAlbumRequest{
+					CurrentId:    existingAlbum.AlbumId,
+					NewName:      newName,
+					RenameFolder: false,
+				},
+			},
+			expectAlbumsByIds:   map[catalog.AlbumId]string{existingAlbum.AlbumId: newName},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{existingAlbum.AlbumId: {photo5may26, photo15may26}},
+			expectRenamedEvents: []catalog.AlbumRenamed{{
+				ExistingAlbum: *existingAlbum,
+				RenamedAlbum: catalog.Album{
+					AlbumId: existingAlbum.AlbumId,
+					Name:    newName,
+					Start:   existingAlbum.Start,
+					End:     existingAlbum.End,
+				},
+			}},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{existingAlbum.AlbumId: {pickedCover(photo5may26), randomCover(photo15may26)}},
+			wantErr:             assert.NoError,
+		},
+		{
+			name: "it should replace the album with a new folder name generated from the new name, moving medias and covers to the new identity",
+			fields: fields{
+				Catalog: NewCatalogInMemory(withAlbum(existingAlbum, photo5may26, photo15may26)),
+				Covers:  coversOnMay26(),
+			},
+			args: args{
+				request: catalog.RenameAlbumRequest{
+					CurrentId:    existingAlbum.AlbumId,
+					NewName:      newName,
+					RenameFolder: true,
+				},
+			},
+			expectAlbumsByIds:   map[catalog.AlbumId]string{generatedRenamedId: newName},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{generatedRenamedId: {photo5may26, photo15may26}},
+			expectRenamedEvents: []catalog.AlbumRenamed{{
+				ExistingAlbum: *existingAlbum,
+				RenamedAlbum: catalog.Album{
+					AlbumId: generatedRenamedId,
+					Name:    newName,
+					Start:   may26,
+					End:     jun26,
+				},
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{generatedRenamedId: {photo5may26.Id, photo15may26.Id}},
+					FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
+				},
+			}},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{generatedRenamedId: {pickedCover(photo5may26), randomCover(photo15may26)}},
+			wantErr:             assert.NoError,
+		},
+		{
+			name: "it should replace the album with a forced folder name, moving medias and covers to the forced identity",
+			fields: fields{
+				Catalog: NewCatalogInMemory(withAlbum(existingAlbum, photo5may26, photo15may26)),
+				Covers:  coversOnMay26(),
 			},
 			args: args{
 				request: catalog.RenameAlbumRequest{
 					CurrentId:        existingAlbum.AlbumId,
 					NewName:          newName,
 					RenameFolder:     false,
-					ForcedFolderName: "",
+					ForcedFolderName: "Avengers_vs_Loki",
 				},
 			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should create a new album if the album is found and folder name is changed",
-			fields: fields{
-				FindAlbumById:   stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName: expectUpdateAlbumNameNotCalled(),
-				RenameAlbumObserver: expectRenameAlbumObserverCalledWith(existingAlbum.AlbumId, catalog.CreateAlbumRequest{
-					Owner:            owner,
-					Name:             newName,
-					Start:            may24,
-					End:              jun24,
-					ForcedFolderName: "",
-				}),
-			},
-			args: args{
-				request: catalog.RenameAlbumRequest{
-					CurrentId:        existingAlbum.AlbumId,
-					NewName:          newName,
-					RenameFolder:     true,
-					ForcedFolderName: "",
+			expectAlbumsByIds:   map[catalog.AlbumId]string{forcedRenamedId: newName},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{forcedRenamedId: {photo5may26, photo15may26}},
+			expectRenamedEvents: []catalog.AlbumRenamed{{
+				ExistingAlbum: *existingAlbum,
+				RenamedAlbum: catalog.Album{
+					AlbumId: forcedRenamedId,
+					Name:    newName,
+					Start:   may26,
+					End:     jun26,
 				},
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should create a new album if the album is found and folder name is forced to a certain value",
-			fields: fields{
-				FindAlbumById:   stubFindAlbumByIdWith(existingAlbum),
-				UpdateAlbumName: expectUpdateAlbumNameNotCalled(),
-				RenameAlbumObserver: expectRenameAlbumObserverCalledWith(existingAlbum.AlbumId, catalog.CreateAlbumRequest{
-					Owner:            owner,
-					Name:             newName,
-					Start:            may24,
-					End:              jun24,
-					ForcedFolderName: "Avengers vs Loki",
-				}),
-			},
-			args: args{
-				request: catalog.RenameAlbumRequest{
-					CurrentId:        existingAlbum.AlbumId,
-					NewName:          newName,
-					RenameFolder:     false,
-					ForcedFolderName: "Avengers vs Loki",
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{forcedRenamedId: {photo5may26.Id, photo15may26.Id}},
+					FromAlbums: []catalog.AlbumId{existingAlbum.AlbumId},
 				},
-			},
-			wantErr: assert.NoError,
+			}},
+			expectCoversByAlbum: map[catalog.AlbumId][]catalog.Cover{forcedRenamedId: {pickedCover(photo5may26), randomCover(photo15may26)}},
+			wantErr:             assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &catalog.RenameAlbum{
-				FindAlbumById:        tt.fields.FindAlbumById(t),
-				UpdateAlbumName:      tt.fields.UpdateAlbumName(t),
-				RenameAlbumObservers: []catalog.RenameAlbumObserver{tt.fields.RenameAlbumObserver(t)},
+			observer := &AlbumRenamedObserverInMemory{}
+			renameAlbum := catalog.NewRenameAlbum(
+				tt.fields.Catalog,
+				&catalog.TransferMediasFromRepository{TransferMediasRepository: tt.fields.Catalog},
+				tt.fields.Covers,
+				observer,
+			)
+
+			err := renameAlbum.RenameAlbum(context.Background(), tt.args.request)
+			if !tt.wantErr(t, err, fmt.Sprintf("RenameAlbum(%v)", tt.args.request)) {
+				return
 			}
-			tt.wantErr(t, r.RenameAlbum(context.Background(), tt.args.request), fmt.Sprintf("RenameAlbum(%v)", tt.args.request))
-		})
-	}
-}
 
-func expectRenameAlbumObserverNotCalled() func(t *testing.T) catalog.RenameAlbumObserver {
-	return func(t *testing.T) catalog.RenameAlbumObserver {
-		return mocks.NewRenameAlbumObserver(t)
-	}
-}
-
-func expectRenameAlbumObserverCalledWith(currentId catalog.AlbumId, request catalog.CreateAlbumRequest) func(t *testing.T) catalog.RenameAlbumObserver {
-	return func(t *testing.T) catalog.RenameAlbumObserver {
-		observer := mocks.NewRenameAlbumObserver(t)
-		observer.EXPECT().OnRenameAlbum(mock.Anything, currentId, request).Return(nil).Once()
-		return observer
-	}
-}
-
-func expectUpdateAlbumNameCalledWith(albumId catalog.AlbumId, newName string) func(t *testing.T) catalog.UpdateAlbumNamePort {
-	return func(t *testing.T) catalog.UpdateAlbumNamePort {
-		port := mocks.NewUpdateAlbumNamePort(t)
-		port.EXPECT().UpdateAlbumName(mock.Anything, albumId, newName).Return(nil).Once()
-		return port
-	}
-}
-
-func expectUpdateAlbumNameNotCalled() func(t *testing.T) catalog.UpdateAlbumNamePort {
-	return func(t *testing.T) catalog.UpdateAlbumNamePort {
-		return mocks.NewUpdateAlbumNamePort(t)
-	}
-}
-
-func stubFindAlbumByIdWith(existingAlbum *catalog.Album) func(t *testing.T) catalog.FindAlbumByIdPort {
-	return func(t *testing.T) catalog.FindAlbumByIdPort {
-		return catalog.FindAlbumByIdFunc(func(ctx context.Context, id catalog.AlbumId) (*catalog.Album, error) {
-			if existingAlbum.AlbumId.IsEqual(id) {
-				return existingAlbum, nil
+			names := make(map[catalog.AlbumId]string, len(tt.fields.Catalog.AlbumsByIds()))
+			for id, album := range tt.fields.Catalog.AlbumsByIds() {
+				names[id] = album.Name
 			}
-			return nil, catalog.AlbumNotFoundErr
-		})
-	}
-}
-
-func expectDeleteAlbumRepositoryPortCalled(id catalog.AlbumId) func(t *testing.T) catalog.DeleteAlbumRepositoryPort {
-	return func(t *testing.T) catalog.DeleteAlbumRepositoryPort {
-		port := mocks.NewDeleteAlbumRepositoryPort(t)
-		port.EXPECT().DeleteAlbum(mock.Anything, id).Return(nil).Once()
-		return port
-	}
-}
-func expectDeleteAlbumRepositoryPortNotCalled() func(t *testing.T) catalog.DeleteAlbumRepositoryPort {
-	return func(t *testing.T) catalog.DeleteAlbumRepositoryPort {
-		return catalog.DeleteAlbumRepositoryFunc(func(ctx context.Context, id catalog.AlbumId) error {
-			t.Error("DeleteAlbumRepositoryPort should not be called")
-			return nil
+			assert.Equal(t, tt.expectAlbumsByIds, names, "album names in the catalog")
+			assert.Equal(t, tt.expectMediasByAlbum, tt.fields.Catalog.MediasByAlbum(), "medias per album")
+			assert.Equal(t, tt.expectRenamedEvents, observer.Events, "AlbumRenamed events fired")
+			assert.Equal(t, tt.expectCoversByAlbum, tt.fields.Covers.Covers, "covers in the repository")
 		})
 	}
 }

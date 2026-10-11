@@ -2,11 +2,12 @@ package catalog
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"slices"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -174,51 +175,6 @@ func (t *Timeline) FindForAlbum(albumId AlbumId) (segments []PrioritySegment) {
 	}
 
 	return segments
-}
-
-// FindBetween is deprecated, use FindSegmentsBetween instead
-func (t *Timeline) FindBetween(start, end time.Time) (segments []PrioritySegment, missed []PrioritySegment) {
-	startIndex := sort.Search(len(t.segments), func(i int) bool {
-		return t.segments[i].to.After(start)
-	})
-
-	if startIndex >= len(t.segments) {
-		return
-	}
-
-	endIndex := sort.Search(len(t.segments)-startIndex, func(i int) bool {
-		return !t.segments[startIndex+i].from.Before(end)
-	})
-
-	previousEnd := start
-	for _, seg := range t.segments[startIndex : startIndex+endIndex] {
-		if previousEnd.Before(seg.from) {
-			missed = append(missed, PrioritySegment{
-				Start: previousEnd,
-				End:   seg.from,
-			})
-		}
-		previousEnd = seg.to
-		segments = append(segments, PrioritySegment{
-			Start:  maxTime(seg.from, start),
-			End:    minTime(seg.to, end),
-			Albums: toSortedArray(seg.albums, priorityDescComparator),
-		})
-	}
-
-	if len(segments) == 0 {
-		missed = append(missed, PrioritySegment{
-			Start: start,
-			End:   end,
-		})
-	} else if segments[len(segments)-1].End.Before(end) {
-		missed = append(missed, PrioritySegment{
-			Start: segments[len(segments)-1].End,
-			End:   end,
-		})
-	}
-
-	return segments, missed
 }
 
 // FindSegmentsBetween returns a list of segments between start and end date. Segments will cover the whole period, but might not have any album.

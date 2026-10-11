@@ -40,7 +40,7 @@ type AlbumId struct {
 
 // IsEqual uses unique identifier to compare both albums
 func (a AlbumId) IsEqual(other AlbumId) bool {
-	return a.Owner == a.Owner && a.FolderName == other.FolderName
+	return a.Owner == other.Owner && a.FolderName == other.FolderName
 }
 
 func (a AlbumId) IsValid() error {

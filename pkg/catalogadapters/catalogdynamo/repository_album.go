@@ -16,10 +16,13 @@ import (
 )
 
 func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*catalog.Album, error) {
-	expr, err := expression.NewBuilder().WithKeyCondition(expression.KeyAnd(
-		expression.Key("PK").Equal(expression.Value(fmt.Sprintf("%s#ALBUM", owner))),
-		expression.Key("SK").BeginsWith("ALBUM#"),
-	)).Build()
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(expression.KeyAnd(
+			expression.Key("PK").Equal(expression.Value(fmt.Sprintf("%s#ALBUM", owner))),
+			expression.Key("SK").BeginsWith("ALBUM#"),
+		)).
+		WithFilter(expression.Name("AlbumName").AttributeExists()).
+		Build()
 	if err != nil {
 		return nil, err
 	}
@@ -28,6 +31,7 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Own
 		ExpressionAttributeValues: expr.Values(),
 		ExpressionAttributeNames:  expr.Names(),
 		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
 		TableName:                 &r.table,
 	}
 	data, err := r.client.Query(ctx, query)
@@ -48,33 +52,44 @@ func (r *Repository) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Own
 	return albums, nil
 }
 
-func (r *Repository) UpdateAlbumName(ctx context.Context, albumId catalog.AlbumId, newName string) error {
+func (r *Repository) UpdateAlbumName(ctx context.Context, albumId catalog.AlbumId, newName string) (catalog.Album, catalog.Album, error) {
 	update, err := expression.NewBuilder().
 		WithUpdate(expression.Set(expression.Name("AlbumName"), expression.Value(newName))).
 		WithCondition(expression.Name("PK").Equal(expression.Value(AlbumPrimaryKey(albumId.Owner, albumId.FolderName).PK))).
 		Build()
 	if err != nil {
-		return errors.Wrapf(err, "failed to build update name expression for album %s", albumId)
+		return catalog.Album{}, catalog.Album{}, errors.Wrapf(err, "failed to build update name expression for album %s", albumId)
 	}
 
 	albumKey, err := attributevalue.MarshalMap(AlbumPrimaryKey(albumId.Owner, albumId.FolderName))
 	if err != nil {
-		return errors.Wrapf(err, "failed to build update name expression for album %s", albumId)
+		return catalog.Album{}, catalog.Album{}, errors.Wrapf(err, "failed to build update name expression for album %s", albumId)
 	}
 
-	_, err = r.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+	output, err := r.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		Key:                       albumKey,
 		TableName:                 &r.table,
 		ConditionExpression:       update.Condition(),
 		ExpressionAttributeNames:  update.Names(),
 		ExpressionAttributeValues: update.Values(),
 		UpdateExpression:          update.Update(),
+		ReturnValues:              types.ReturnValueAllOld,
 	})
 	var conditionalCheckFailedException *types.ConditionalCheckFailedException
 	if errors.As(err, &conditionalCheckFailedException) {
-		return catalog.MediaNotFoundError
+		return catalog.Album{}, catalog.Album{}, catalog.MediaNotFoundError
 	}
-	return errors.Wrapf(err, "failed to build update name expression for album %s", albumId)
+	if err != nil {
+		return catalog.Album{}, catalog.Album{}, errors.Wrapf(err, "failed to exec update name expression for album %s", albumId)
+	}
+
+	previous, err := unmarshalAlbum(output.Attributes)
+	if err != nil {
+		return catalog.Album{}, catalog.Album{}, errors.Wrapf(err, "failed to unmarshal updated album %s", albumId)
+	}
+	renamed := *previous
+	renamed.Name = newName
+	return *previous, renamed, nil
 }
 
 func (r *Repository) InsertAlbum(ctx context.Context, album catalog.Album) error {

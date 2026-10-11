@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -13,122 +14,112 @@ var (
 	AlbumFolderNameAlreadyTakenErr   = errors.New("Album folder name is already taken")
 )
 
-type CreateAlbumObserver interface {
-	ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error
+// AlbumCreated is fired after a new album has been persisted and its overlapping medias
+// have been transferred: it carries the newly created album, the medias that were
+// actually moved into it (if any), and the cover sets of every album whose covers were
+// updated by the creation. Albums whose cover set did not change are omitted from
+// Covers; a missing album means "no cover update required".
+type AlbumCreated struct {
+	CreatedAlbum      Album
+	TransferredMedias TransferredMedias
+	Covers            map[AlbumId][]Cover
 }
 
-type CreateAlbumObserverFunc func(ctx context.Context, createdAlbum Album) error
-
-func (f CreateAlbumObserverFunc) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
-	return f(ctx, createdAlbum)
+type AlbumCreatedObserver interface {
+	OnAlbumCreated(ctx context.Context, event AlbumCreated) error
 }
 
-// NewAlbumCreate creates the service to create a new album, including the transfer of medias
+type AlbumCreatedObserverFunc func(ctx context.Context, event AlbumCreated) error
+
+func (f AlbumCreatedObserverFunc) OnAlbumCreated(ctx context.Context, event AlbumCreated) error {
+	return f(ctx, event)
+}
+
+// NewAlbumCreate creates the service to create a new album, including the transfer of medias.
 func NewAlbumCreate(
-	FindAlbumsByOwnerPort FindAlbumsByOwnerPort,
-	InsertAlbumPort InsertAlbumPort,
-	TransferMediasPort TransferMediasRepositoryPort,
-	TimelineMutationObservers ...TimelineMutationObserver,
+	TimelineRepository TimelineRepository,
+	TransferMedias TransferMediasService,
+	CoverService CoverServicePort,
+	AlbumCreatedObservers ...AlbumCreatedObserver,
 ) *CreateAlbum {
 	return &CreateAlbum{
-		FindAlbumsByOwnerPort: FindAlbumsByOwnerPort,
-		CreateAlbumWithTimeline: &CreateAlbumStateless{
-			Observers: []CreateAlbumObserverWithTimeline{
-				&CreateAlbumObserverWrapper{CreateAlbumObserver: &CreateAlbumExecutor{
-					InsertAlbumPort: InsertAlbumPort,
-				}},
-				&CreateAlbumMediaTransfer{
-					MediaTransfer: &MediaTransferExecutor{
-						TransferMediasRepository:  TransferMediasPort,
-						TimelineMutationObservers: TimelineMutationObservers,
-					},
-				},
-			},
+		TimelineRepository: TimelineRepository,
+		BulkCreateAlbum: &BulkCreateAlbum{
+			TimelineRepository:    TimelineRepository,
+			TransferMediasService: TransferMedias,
+			CoverService:          CoverService,
+			AlbumCreatedObservers: AlbumCreatedObservers,
 		},
 	}
 }
 
-type InsertAlbumPort interface {
-	InsertAlbum(ctx context.Context, album Album) error
-}
-
-type InsertAlbumPortFunc func(ctx context.Context, album Album) error
-
-func (f InsertAlbumPortFunc) InsertAlbum(ctx context.Context, album Album) error {
-	return f(ctx, album)
-}
-
-type CreateAlbumObserverWithTimeline interface {
-	ObserveCreateAlbum(ctx context.Context, timeline *TimelineAggregate, createdAlbum Album) error
-}
-
-type CreateAlbumObserverWrapper struct {
-	CreateAlbumObserver
-}
-
-func (c *CreateAlbumObserverWrapper) ObserveCreateAlbum(ctx context.Context, _ *TimelineAggregate, createdAlbum Album) error {
-	return c.CreateAlbumObserver.ObserveCreateAlbum(ctx, createdAlbum)
-}
-
-type CreateAlbumWithTimeline interface {
-	Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error)
-}
-
+// CreateAlbum inserts a new album and, if it overlaps with existing albums, transfers the
+// overlapping medias into it. On success, an AlbumCreated event is fired to every observer.
 type CreateAlbum struct {
-	FindAlbumsByOwnerPort   FindAlbumsByOwnerPort
-	CreateAlbumWithTimeline CreateAlbumWithTimeline
+	TimelineRepository TimelineRepository
+	BulkCreateAlbum    *BulkCreateAlbum
 }
 
-// Create creates a new album
 func (c *CreateAlbum) Create(ctx context.Context, request CreateAlbumRequest) (*AlbumId, error) {
-	albums, err := c.FindAlbumsByOwnerPort.FindAlbumsByOwner(ctx, request.Owner)
+	timeline, err := c.TimelineRepository.LoadTimeline(ctx, request.Owner)
 	if err != nil {
 		return nil, err
 	}
 
-	timeline := NewLazyTimelineAggregate(albums)
-
-	return c.CreateAlbumWithTimeline.Create(ctx, timeline, request)
+	return c.BulkCreateAlbum.Create(ctx, timeline, request)
 }
 
-type CreateAlbumStateless struct {
-	Observers []CreateAlbumObserverWithTimeline
+type AlbumCreatedAsTimelineMutation struct {
+	TimelineMutationObserver TimelineMutationObserver
 }
 
-func (c *CreateAlbumStateless) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
-	album, err := timeline.CreateNewAlbum(request)
+func (a *AlbumCreatedAsTimelineMutation) OnAlbumCreated(ctx context.Context, event AlbumCreated) error {
+	if event.TransferredMedias.IsEmpty() {
+		return nil
+	}
+	return a.TimelineMutationObserver.OnTransferredMedias(ctx, event.TransferredMedias)
+}
+
+type BulkCreateAlbum struct {
+	TimelineRepository    TimelineRepository
+	TransferMediasService TransferMediasService
+	CoverService          CoverServicePort
+	AlbumCreatedObservers []AlbumCreatedObserver
+}
+
+func (c *BulkCreateAlbum) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
+
+	album, records, err := timeline.CreateNewAlbum(request)
 	if err != nil {
 		return nil, err
 	}
 
-	for index, observer := range c.Observers {
-		if err = observer.ObserveCreateAlbum(ctx, timeline, album); err != nil {
-			return nil, errors.Wrapf(err, "CreateNewAlbum(%s) failed at observer %d/%d", request, index, len(c.Observers))
-		}
+	if err = c.TimelineRepository.InsertAlbum(ctx, album); err != nil {
+		return nil, err
+	}
+
+	transferred, err := c.TransferMediasService.TransferMedias(ctx, records)
+	if err != nil {
+		return nil, err
+	}
+
+	covers, err := c.CoverService.ApplyTransfer(ctx, transferred)
+	if err != nil {
+		return nil, errors.Wrapf(err, "CreateAlbum failed to apply cover transfer for %s", album.AlbumId)
 	}
 
 	log.WithField("Owner", request.Owner).Infof("Album %s created", album)
 
-	return &album.AlbumId, nil
-}
-
-type CreateAlbumExecutor struct {
-	InsertAlbumPort InsertAlbumPort
-}
-
-func (c *CreateAlbumExecutor) ObserveCreateAlbum(ctx context.Context, createdAlbum Album) error {
-	return c.InsertAlbumPort.InsertAlbum(ctx, createdAlbum)
-}
-
-type CreateAlbumMediaTransfer struct {
-	MediaTransfer MediaTransfer
-}
-
-func (c *CreateAlbumMediaTransfer) ObserveCreateAlbum(ctx context.Context, timeline *TimelineAggregate, createdAlbum Album) error {
-	records, err := timeline.AddNew(createdAlbum)
-	if err != nil {
-		return err
+	event := AlbumCreated{
+		CreatedAlbum:      album,
+		TransferredMedias: transferred,
+		Covers:            covers,
+	}
+	for _, observer := range c.AlbumCreatedObservers {
+		if err = observer.OnAlbumCreated(ctx, event); err != nil {
+			return nil, err
+		}
 	}
 
-	return c.MediaTransfer.Transfer(ctx, records)
+	return &album.AlbumId, nil
 }

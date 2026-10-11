@@ -11,26 +11,26 @@ import (
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
-func (r *Repository) TransferMediasFromRecords(ctx context.Context, records catalog.MediaTransferRecords) (catalog.TransferredMedias, error) {
-	medias := catalog.NewTransferredMedias()
+func (r *Repository) TransferMediasFromRecords(ctx context.Context, records catalog.MediaTransferRecords) (map[catalog.AlbumId][]catalog.MediaId, error) {
+	transfers := make(map[catalog.AlbumId][]catalog.MediaId)
 
 	for albumId, selectors := range records {
 		mediaIds, err := r.findMediaIdsFromSelectors(ctx, albumId, selectors)
 		if err != nil {
-			return medias, err
+			return transfers, err
 		}
 
 		if len(mediaIds) > 0 {
 			err = r.transferMedias(ctx, albumId, mediaIds)
 			if err != nil {
-				return medias, err
+				return transfers, err
 			}
 
-			medias.Transfers[albumId] = mediaIds
+			transfers[albumId] = mediaIds
 		}
 	}
 
-	return medias, nil
+	return transfers, nil
 }
 
 func (r *Repository) findMediaIdsFromSelectors(ctx context.Context, targetAlbumId catalog.AlbumId, selectors []catalog.MediaSelector) ([]catalog.MediaId, error) {

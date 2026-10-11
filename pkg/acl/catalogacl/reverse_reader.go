@@ -2,12 +2,13 @@ package catalogacl
 
 import (
 	"context"
+	"slices"
+
 	"github.com/thomasduchatelle/dphoto/pkg/acl/aclcore"
 	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"github.com/thomasduchatelle/dphoto/pkg/catalogviews"
 	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"github.com/thomasduchatelle/dphoto/pkg/usermodel"
-	"slices"
 )
 
 type ScopeReadRepositoryPort interface {
@@ -49,6 +50,19 @@ func (f *ReverseReader) ListAlbumIdsSharedWithUser(ctx context.Context, userId u
 	}
 
 	return albums, err
+}
+
+func (f *ReverseReader) GetOwnerUserId(ctx context.Context, owner ownermodel.Owner) (usermodel.UserId, error) {
+	scopes, err := f.ScopeRepository.ListScopesByOwner(ctx, owner, aclcore.MainOwnerScope)
+	if err != nil {
+		return "", err
+	}
+	for _, scope := range scopes {
+		if scope.Type == aclcore.MainOwnerScope && scope.ResourceOwner == owner {
+			return scope.GrantedTo, nil
+		}
+	}
+	return "", nil
 }
 
 func (f *ReverseReader) ListUsersWhoCanAccessAlbum(ctx context.Context, albumIds ...catalog.AlbumId) (map[catalog.AlbumId][]catalogviews.Availability, error) {

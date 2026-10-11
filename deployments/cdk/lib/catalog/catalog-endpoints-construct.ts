@@ -96,6 +96,14 @@ export class CatalogEndpointsConstruct extends Construct {
         catalogStore.grantCatalogReadWriteAccess(amendAlbumName.lambda);
         archiveStore.grantReadAccessToRawAndCacheMedias(amendAlbumName.lambda);
         archivist.grantAccessToAsyncArchivist(amendAlbumName.lambda);
+
+        const randomizeAlbumCovers = createSingleRouteEndpoint(this, 'RandomizeAlbumCovers', {
+            ...endpointProps,
+            functionName: 'randomize-album-covers',
+            path: '/api/v1/owners/{owner}/albums/{folderName}/covers/refresh',
+            method: apigatewayv2.HttpMethod.POST,
+        });
+        catalogStore.grantCatalogReadWriteAccess(randomizeAlbumCovers.lambda);
     }
 
     private accessControlEndpoints(endpointProps: {

@@ -10,6 +10,13 @@ var (
 )
 
 type MediaType string
+
+const (
+	MediaTypeImage MediaType = "IMAGE"
+	MediaTypeVideo MediaType = "VIDEO"
+	MediaTypeOther MediaType = "OTHER"
+)
+
 type MediaOrientation string
 
 type MediaSignature struct {

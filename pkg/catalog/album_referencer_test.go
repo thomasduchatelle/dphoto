@@ -1,182 +1,158 @@
-package catalog
+package catalog_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
+	"github.com/thomasduchatelle/dphoto/pkg/ownermodel"
 )
 
-func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
-	owner := ownermodel.Owner("owner-1")
+func TestNewAlbumAutoPopulateReferencer(t *testing.T) {
+	const owner = ownermodel.Owner("owner-1")
+	jan26 := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb26 := time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC)
+	apr26 := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC)
+	oct25 := time.Date(2025, time.October, 1, 0, 0, 0, 0, time.UTC)
 	jan23 := time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)
-	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
-	apr24 := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
-	album23 := Album{
-		AlbumId: AlbumId{
-			Owner:      owner,
-			FolderName: NewFolderName("/2023"),
-		},
-		Name:  "2023",
-		Start: jan23,
-		End:   feb24,
+
+	q1_26Album := catalog.Album{
+		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/2026-Q1")},
+		Name:    "Q1 2026",
+		Start:   jan26,
+		End:     apr26,
 	}
-	q1Album := Album{
-		AlbumId: AlbumId{
-			Owner:      owner,
-			FolderName: NewFolderName("/2024-Q1"),
-		},
-		Name:  "Q1 2024",
-		Start: jan24,
-		End:   apr24,
+	q4_25Album := &catalog.Album{
+		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/2025-Q4")},
+		Name:    "Q4 2025",
+		Start:   oct25,
+		End:     jan26,
 	}
-	q4album := Album{
-		AlbumId: AlbumId{
-			Owner:      owner,
-			FolderName: NewFolderName("/2023-Q4"),
-		},
-		Name:  "Q4 2023",
-		Start: time.Date(2023, time.October, 1, 0, 0, 0, 0, time.UTC),
-		End:   time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
+	wideAlbum := &catalog.Album{
+		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/wide")},
+		Name:    "wide",
+		Start:   jan23,
+		End:     feb26,
 	}
-	recordsFrom23 := MediaTransferRecords{
-		q1Album.AlbumId: {
-			{
-				FromAlbums: []AlbumId{album23.AlbumId},
-				Start:      jan24,
-				End:        apr24,
-			},
-		},
-	}
-	transferredMediasFrom23 := TransferredMedias{
-		Transfers: map[AlbumId][]MediaId{
-			q1Album.AlbumId: {MediaId("media-1"), MediaId("media-2")},
-		},
-		FromAlbums: []AlbumId{album23.AlbumId},
-	}
+
+	photo5feb26 := photoAt("photo5feb26", feb26.AddDate(0, 0, 5))
+
 	type fields struct {
-		owner                     ownermodel.Owner
-		findAlbumsByOwner         FindAlbumsByOwnerPort
-		transferMediasPort        *TransferMediasRepositoryPortFake
-		timelineMutationObservers []TimelineMutationObserver
-	}
-	type args struct {
-		mediaTime time.Time
+		Catalog *CatalogInMemory
 	}
 	type exec struct {
-		args    args
-		want    AlbumReference
-		wantErr assert.ErrorAssertionFunc
+		mediaTime time.Time
+		want      catalog.AlbumReference
+		wantErr   assert.ErrorAssertionFunc
 	}
 	tests := []struct {
-		name            string
-		fields          fields
-		exec            []exec
-		wantInserted    []*Album
-		wantTransferred MediaTransferRecords
-		wantObserved    []TransferredMedias
+		name                string
+		fields              fields
+		exec                []exec
+		expectAlbumIds      []catalog.AlbumId
+		expectMediasByAlbum map[catalog.AlbumId][]*catalog.MediaMeta
+		expectCreatedEvents []catalog.AlbumCreated
 	}{
 		{
-			name: "it should create a new album (complete journey) but without transferring albums because no overlap with other albums",
-			fields: fields{
-				owner:              owner,
-				findAlbumsByOwner:  make(FindAlbumsByOwnerPortFake),
-				transferMediasPort: new(TransferMediasRepositoryPortFake),
-			},
+			name:   "it should look up an existing album by media time without creating anything",
+			fields: fields{Catalog: NewCatalogInMemory(withAlbum(&q1_26Album))},
 			exec: []exec{
 				{
-					args: args{
-						mediaTime: feb24,
-					},
-					want:    AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: true},
-					wantErr: assert.NoError,
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: false},
+					wantErr:   assert.NoError,
 				},
 			},
-			wantInserted: []*Album{&q1Album},
-			wantObserved: nil,
+			expectAlbumIds:      []catalog.AlbumId{q1_26Album.AlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{q1_26Album.AlbumId: nil},
 		},
 		{
-			name: "it should create a new album without transferring medias to it",
-			fields: fields{
-				owner:              owner,
-				findAlbumsByOwner:  FindAlbumsByOwnerPortFake{owner: []*Album{&q4album}},
-				transferMediasPort: new(TransferMediasRepositoryPortFake),
-			},
+			name:   "it should create a new quarterly album with no transfer when an adjacent album does not overlap",
+			fields: fields{Catalog: NewCatalogInMemory(withAlbum(q4_25Album))},
 			exec: []exec{
 				{
-					args: args{
-						mediaTime: feb24,
-					},
-					want:    AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: true},
-					wantErr: assert.NoError,
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: true},
+					wantErr:   assert.NoError,
 				},
 			},
-			wantInserted: []*Album{&q1Album},
-			wantObserved: nil,
+			expectAlbumIds: []catalog.AlbumId{q4_25Album.AlbumId, q1_26Album.AlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				q4_25Album.AlbumId: nil,
+				q1_26Album.AlbumId: nil,
+			},
+			expectCreatedEvents: []catalog.AlbumCreated{{
+				CreatedAlbum:      q1_26Album,
+				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
+			}},
 		},
 		{
-			name: "it should create a new album and transfer medias to it",
-			fields: fields{
-				owner:             owner,
-				findAlbumsByOwner: FindAlbumsByOwnerPortFake{owner: []*Album{&album23}},
-				transferMediasPort: &TransferMediasRepositoryPortFake{
-					TransferredMedias: transferredMediasFrom23,
-				},
-			},
+			name:   "it should create a new quarterly album AND transfer overlapping medias when the new album overlaps an existing one",
+			fields: fields{Catalog: NewCatalogInMemory(withAlbum(wideAlbum, photo5feb26))},
 			exec: []exec{
 				{
-					args: args{
-						mediaTime: feb24,
-					},
-					want:    AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: true},
-					wantErr: assert.NoError,
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: true},
+					wantErr:   assert.NoError,
 				},
 			},
-			wantInserted:    []*Album{&q1Album},
-			wantTransferred: recordsFrom23,
-			wantObserved:    []TransferredMedias{transferredMediasFrom23},
+			expectAlbumIds: []catalog.AlbumId{wideAlbum.AlbumId, q1_26Album.AlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				wideAlbum.AlbumId:  nil,
+				q1_26Album.AlbumId: {photo5feb26},
+			},
+			expectCreatedEvents: []catalog.AlbumCreated{{
+				CreatedAlbum: q1_26Album,
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{q1_26Album.AlbumId: {photo5feb26.Id}},
+					FromAlbums: []catalog.AlbumId{wideAlbum.AlbumId},
+				},
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					q1_26Album.AlbumId: {randomCover(photo5feb26)},
+				},
+			}},
 		},
 		{
-			name: "it should create the album on the first call, and find it on the second call (without requesting list of albums again)",
-			fields: fields{
-				owner:              owner,
-				findAlbumsByOwner:  make(FindAlbumsByOwnerPortFake),
-				transferMediasPort: new(TransferMediasRepositoryPortFake),
-			},
+			name:   "it should reuse the auto-created album for a second media in the same quarter via the cached timeline",
+			fields: fields{Catalog: NewCatalogInMemory()},
 			exec: []exec{
 				{
-					args: args{
-						mediaTime: feb24,
-					},
-					want:    AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: true},
-					wantErr: assert.NoError,
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: true},
+					wantErr:   assert.NoError,
 				},
 				{
-					args: args{
-						mediaTime: feb24,
-					},
-					want:    AlbumReference{AlbumId: &q1Album.AlbumId, AlbumJustCreated: false},
-					wantErr: assert.NoError,
+					mediaTime: feb26,
+					want:      catalog.AlbumReference{AlbumId: &q1_26Album.AlbumId, AlbumJustCreated: false},
+					wantErr:   assert.NoError,
 				},
 			},
-			wantInserted: []*Album{&q1Album},
-			wantObserved: nil,
+			expectAlbumIds:      []catalog.AlbumId{q1_26Album.AlbumId},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{q1_26Album.AlbumId: nil},
+			expectCreatedEvents: []catalog.AlbumCreated{{
+				CreatedAlbum:      q1_26Album,
+				TransferredMedias: catalog.TransferredMedias{Transfers: map[catalog.AlbumId][]catalog.MediaId{}},
+			}},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			insertAlbumPortFake := new(InsertAlbumPortFake)
-			observer := new(TimelineMutationObserverFake)
+			observer := &AlbumCreatedObserverInMemory{}
+			coverService := &catalog.CoverService{
+				CoverRepository:     NewCoverRepositoryInMemory(),
+				MediaReadRepository: tt.fields.Catalog,
+				Randomiser:          deterministicRandomiser,
+			}
 
-			referencer, err := NewAlbumAutoPopulateReferencer(
-				tt.fields.owner,
-				tt.fields.findAlbumsByOwner,
-				insertAlbumPortFake,
-				tt.fields.transferMediasPort,
+			referencer, err := catalog.NewAlbumAutoPopulateReferencer(
+				owner,
+				tt.fields.Catalog,
+				&catalog.TransferMediasFromRepository{TransferMediasRepository: tt.fields.Catalog},
+				coverService,
 				observer,
 			)
 			if !assert.NoError(t, err) {
@@ -184,38 +160,37 @@ func TestNewAlbumAutoPopulateReferencerAcceptance(t *testing.T) {
 			}
 
 			for _, ex := range tt.exec {
-				got, err := referencer.FindReference(context.Background(), ex.args.mediaTime)
-				if !ex.wantErr(t, err) {
+				got, err := referencer.FindReference(context.Background(), ex.mediaTime)
+				if !ex.wantErr(t, err, "FindReference(%v)", ex.mediaTime) {
 					return
 				}
-				assert.Equal(t, ex.want, got, "FindReference(%v, %v)", context.Background(), ex.args.mediaTime)
+				assert.Equal(t, ex.want, got, "FindReference(%v)", ex.mediaTime)
 			}
 
-			assert.Equal(t, tt.wantInserted, insertAlbumPortFake.Albums)
-			assert.Equal(t, tt.wantTransferred, tt.fields.transferMediasPort.GotSelectors)
-			assert.Equal(t, tt.wantObserved, observer.Observed)
+			assert.ElementsMatch(t, tt.expectAlbumIds, tt.fields.Catalog.AlbumIds(), "albums in the catalog")
+			assert.Equal(t, tt.expectMediasByAlbum, tt.fields.Catalog.MediasByAlbum(), "medias per album")
+			assert.Equal(t, tt.expectCreatedEvents, observer.Events, "AlbumCreated events fired")
 		})
 	}
 }
 
 func TestNewAlbumDryRunReferencer(t *testing.T) {
-	owner := ownermodel.Owner("owner-1")
-	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-	jan25 := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
-	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
-	album24 := Album{
-		AlbumId: AlbumId{
+	const owner = ownermodel.Owner("owner-1")
+	jan26 := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	jan27 := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb26 := time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC)
+	album26 := &catalog.Album{
+		AlbumId: catalog.AlbumId{
 			Owner:      owner,
-			FolderName: NewFolderName("/2024"),
+			FolderName: catalog.NewFolderName("/2026"),
 		},
-		Name:  "2024",
-		Start: jan24,
-		End:   jan25,
+		Name:  "2026",
+		Start: jan26,
+		End:   jan27,
 	}
 
 	type fields struct {
-		owner             ownermodel.Owner
-		findAlbumsByOwner FindAlbumsByOwnerPort
+		Catalog *CatalogInMemory
 	}
 	type args struct {
 		mediaTime time.Time
@@ -224,35 +199,25 @@ func TestNewAlbumDryRunReferencer(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    AlbumReference
+		want    catalog.AlbumReference
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name: "it should return a reference for an album that has been found",
-			fields: fields{
-				owner:             owner,
-				findAlbumsByOwner: FindAlbumsByOwnerPortFake{owner: []*Album{&album24}},
-			},
-			args: args{
-				mediaTime: feb24,
-			},
-			want: AlbumReference{
-				AlbumId:          &album24.AlbumId,
+			name:   "it should return a reference for an album that has been found",
+			fields: fields{Catalog: NewCatalogInMemory(withAlbum(album26))},
+			args:   args{mediaTime: feb26},
+			want: catalog.AlbumReference{
+				AlbumId:          &album26.AlbumId,
 				AlbumJustCreated: false,
 			},
 			wantErr: assert.NoError,
 		},
 		{
-			name: "it should makeup a reference when the album has not been found",
-			fields: fields{
-				owner:             owner,
-				findAlbumsByOwner: make(FindAlbumsByOwnerPortFake),
-			},
-			args: args{
-				mediaTime: jan24,
-			},
-			want: AlbumReference{
-				AlbumId:          &AlbumId{Owner: owner, FolderName: NewFolderName("/new-album")},
+			name:   "it should makeup a reference when the album has not been found",
+			fields: fields{Catalog: NewCatalogInMemory()},
+			args:   args{mediaTime: jan26},
+			want: catalog.AlbumReference{
+				AlbumId:          &catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/new-album")},
 				AlbumJustCreated: true,
 			},
 			wantErr: assert.NoError,
@@ -261,62 +226,62 @@ func TestNewAlbumDryRunReferencer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			referencer, err := NewAlbumDryRunReferencer(tt.fields.owner, tt.fields.findAlbumsByOwner)
+			referencer, err := catalog.NewAlbumDryRunReferencer(owner, tt.fields.Catalog)
 			if !assert.NoError(t, err) {
 				return
 			}
 
 			got, err := referencer.FindReference(context.Background(), tt.args.mediaTime)
 			if tt.wantErr(t, err) {
-				assert.Equalf(t, tt.want, got, "FindReference(%v, %v)", context.Background(), tt.args.mediaTime)
+				assert.Equalf(t, tt.want, got, "FindReference(%v)", tt.args.mediaTime)
 			}
 		})
 	}
 }
 
 func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
-	owner := ownermodel.Owner("owner-1")
-	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
-	apr24 := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
-	q1Album := Album{
-		AlbumId: AlbumId{
+	const owner = ownermodel.Owner("owner-1")
+	jan26 := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	feb26 := time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC)
+	apr26 := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC)
+	q1Album := catalog.Album{
+		AlbumId: catalog.AlbumId{
 			Owner:      owner,
-			FolderName: NewFolderName("/2024-Q1"),
+			FolderName: catalog.NewFolderName("/2026-Q1"),
 		},
-		Name:  "Q1 2024",
-		Start: jan24,
-		End:   apr24,
+		Name:  "Q1 2026",
+		Start: jan26,
+		End:   apr26,
 	}
-	febAprAlbum := Album{
-		AlbumId: AlbumId{
+	febAprAlbum := catalog.Album{
+		AlbumId: catalog.AlbumId{
 			Owner:      owner,
-			FolderName: NewFolderName("/2024-Feb-Apr"),
+			FolderName: catalog.NewFolderName("/2026-Feb-Apr"),
 		},
-		Name:  "Feb-Apr 2024",
-		Start: feb24,
-		End:   apr24,
+		Name:  "Feb-Apr 2026",
+		Start: feb26,
+		End:   apr26,
 	}
 
 	type args struct {
 		owner     ownermodel.Owner
-		albums    []*Album
+		albums    []*catalog.Album
 		mediaTime time.Time
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    AlbumReference
+		want    catalog.AlbumReference
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "it should find an album id that exists in a timelines",
 			args: args{
 				owner:     owner,
-				albums:    []*Album{&q1Album},
-				mediaTime: feb24,
+				albums:    []*catalog.Album{&q1Album},
+				mediaTime: feb26,
 			},
-			want: AlbumReference{
+			want: catalog.AlbumReference{
 				AlbumId:          &q1Album.AlbumId,
 				AlbumJustCreated: false,
 			},
@@ -327,24 +292,24 @@ func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
 			args: args{
 				owner:     owner,
 				albums:    nil,
-				mediaTime: feb24,
+				mediaTime: feb26,
 			},
-			want: AlbumReference{},
+			want: catalog.AlbumReference{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, NoAlbumLookedUpError, i)
+				return assert.ErrorIs(t, err, catalog.NoAlbumLookedUpError, i)
 			},
 		},
 		{
 			name: "it should pick the album with highest priority",
 			args: args{
 				owner: owner,
-				albums: []*Album{
+				albums: []*catalog.Album{
 					&febAprAlbum,
 					&q1Album,
 				},
-				mediaTime: feb24,
+				mediaTime: feb26,
 			},
-			want: AlbumReference{
+			want: catalog.AlbumReference{
 				AlbumId:          &febAprAlbum.AlbumId,
 				AlbumJustCreated: false,
 			},
@@ -354,95 +319,16 @@ func TestTimelineLookupStrategy_LookupAlbum(t1 *testing.T) {
 
 	for _, tt := range tests {
 		t1.Run(tt.name, func(t1 *testing.T) {
-			t := TimelineLookupStrategy{}
-			got, err := t.LookupAlbum(context.Background(), tt.args.owner, NewLazyTimelineAggregate(tt.args.albums), tt.args.mediaTime)
-			if !tt.wantErr(t1, err, fmt.Sprintf("LookupAlbum(%v, %v, %v, %v)", context.Background(), tt.args.owner, tt.args.albums, tt.args.mediaTime)) {
+			timeline, err := catalog.NewTimelineAggregate(tt.args.albums)
+			if !assert.NoError(t1, err) {
 				return
 			}
-			assert.Equalf(t1, tt.want, got, "LookupAlbum(%v, %v, %v, %v)", context.Background(), tt.args.owner, tt.args.albums, tt.args.mediaTime)
-		})
-	}
-}
-
-func TestAlbumAutoCreateLookupStrategy_LookupAlbum(t *testing.T) {
-	owner := ownermodel.Owner("owner-1")
-	jan24 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-	feb24 := time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC)
-	apr24 := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
-
-	type args struct {
-		owner     ownermodel.Owner
-		mediaTime time.Time
-	}
-	tests := []struct {
-		name             string
-		args             args
-		want             AlbumReference
-		wantCreateAlbums []CreateAlbumRequest
-		wantErr          assert.ErrorAssertionFunc
-	}{
-		{
-			name: "it should initiate an album creation for a quarter",
-			args: args{
-				owner:     owner,
-				mediaTime: feb24,
-			},
-			want: AlbumReference{
-				AlbumId:          &AlbumId{Owner: owner, FolderName: NewFolderName("/2024-Q1")},
-				AlbumJustCreated: true,
-			},
-			wantCreateAlbums: []CreateAlbumRequest{
-				{
-					Owner:            owner,
-					Name:             "Q1 2024",
-					Start:            jan24,
-					End:              apr24,
-					ForcedFolderName: "/2024-Q1",
-				},
-			},
-			wantErr: assert.NoError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			delegate := new(CreateAlbumWithTimelineFake)
-			a := &AlbumAutoCreateLookupStrategy{
-				Delegate: delegate,
-			}
-
-			timeline := NewLazyTimelineAggregate(nil)
-			got, err := a.LookupAlbum(context.Background(), tt.args.owner, timeline, tt.args.mediaTime)
-			if !tt.wantErr(t, err, fmt.Sprintf("LookupAlbum(%v, %v, %v, %v)", context.Background(), tt.args.owner, timeline, tt.args.mediaTime)) {
+			strategy := catalog.TimelineLookupStrategy{}
+			got, err := strategy.LookupAlbum(context.Background(), tt.args.owner, timeline, tt.args.mediaTime)
+			if !tt.wantErr(t1, err, fmt.Sprintf("LookupAlbum(%v, %v, %v)", tt.args.owner, tt.args.albums, tt.args.mediaTime)) {
 				return
 			}
-
-			assert.Equalf(t, tt.want, got, "LookupAlbum(%v, %v, %v, %v)", context.Background(), tt.args.owner, timeline, tt.args.mediaTime)
+			assert.Equalf(t1, tt.want, got, "LookupAlbum(%v, %v, %v)", tt.args.owner, tt.args.albums, tt.args.mediaTime)
 		})
 	}
-}
-
-type CreateAlbumWithTimelineFake struct {
-	Requests []CreateAlbumRequest
-}
-
-func (a *CreateAlbumWithTimelineFake) Create(ctx context.Context, timeline *TimelineAggregate, request CreateAlbumRequest) (*AlbumId, error) {
-	a.Requests = append(a.Requests, request)
-	return &AlbumId{Owner: request.Owner, FolderName: NewFolderName(request.ForcedFolderName)}, nil
-}
-
-type FindAlbumsByOwnerPortFake map[ownermodel.Owner][]*Album
-
-func (f FindAlbumsByOwnerPortFake) FindAlbumsByOwner(ctx context.Context, owner ownermodel.Owner) ([]*Album, error) {
-	albums, _ := f[owner]
-	return albums, nil
-}
-
-type InsertAlbumPortFake struct {
-	Albums []*Album
-}
-
-func (i *InsertAlbumPortFake) InsertAlbum(ctx context.Context, album Album) error {
-	i.Albums = append(i.Albums, &album)
-	return nil
 }

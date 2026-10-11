@@ -3,136 +3,48 @@ package catalog_test
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/thomasduchatelle/dphoto/internal/mocks"
-	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/thomasduchatelle/dphoto/pkg/catalog"
 )
 
-func TestNewAmendAlbumDatesAcceptance(t *testing.T) {
-	const owner = "ironman"
-	avenger1Id := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/avenger-1")}
-	jan24 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	may24 := time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
-	jun24 := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
-	jul24 := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
-	jan25 := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-
-	existingAlbum := catalog.Album{
-		AlbumId: avenger1Id,
-		Name:    "Avenger 1",
-		Start:   may24,
-		End:     jul24,
-	}
-	allYearAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/all-year")},
-		Name:    "All Year",
-		Start:   jan24,
-		End:     jan25,
-	}
-	transferredMedias := catalog.TransferredMedias{
-		Transfers: map[catalog.AlbumId][]catalog.MediaId{
-			avenger1Id: {"media-1", "media-2"},
-		},
-	}
-
-	type fields struct {
-		findAlbumsByOwner         func(t *testing.T) catalog.FindAlbumsByOwnerPort
-		countMediasBySelectors    func(t *testing.T) catalog.CountMediasBySelectorsPort
-		amendAlbumDateRepository  func(t *testing.T) catalog.AmendAlbumDateRepositoryPort
-		transferMedias            func(t *testing.T) catalog.TransferMediasRepositoryPort
-		timelineMutationObservers func(t *testing.T) catalog.TimelineMutationObserver
-	}
-	type args struct {
-		albumId catalog.AlbumId
-		start   time.Time
-		end     time.Time
-	}
-	tests := []struct {
-		name      string
-		fields    fields
-		args      args
-		wantError assert.ErrorAssertionFunc
-	}{
-		{
-			name: "it should amend the dates of an album, end to end, and call the observers",
-			fields: fields{
-				findAlbumsByOwner:        stubFindAlbumsByOwnerWith("ironman", &existingAlbum, &allYearAlbum),
-				countMediasBySelectors:   stubCountMediasBySelectorsPort(1),
-				amendAlbumDateRepository: expectAmendAlbumDateRepositoryCalled(avenger1Id, may24, jan25),
-				transferMedias: expectTransferMediasRepositoryPortCalled(catalog.MediaTransferRecords{
-					avenger1Id: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{allYearAlbum.AlbumId},
-							Start:      jul24,
-							End:        jan25,
-						},
-					},
-				}, transferredMedias),
-				timelineMutationObservers: expectTimelineMutationObserverCalled(catalog.TransferredMedias{
-					Transfers:  transferredMedias.Transfers,
-					FromAlbums: []catalog.AlbumId{allYearAlbum.AlbumId},
-				}),
-			},
-			args: args{
-				albumId: avenger1Id,
-				start:   may24,
-				end:     jan25,
-			},
-			wantError: assert.NoError,
-		},
-		{
-			name: "it should not amend the dates and not call the observer if OrphanMediasError is raised",
-			fields: fields{
-				findAlbumsByOwner:         stubFindAlbumsByOwnerWith("ironman", &existingAlbum),
-				countMediasBySelectors:    stubCountMediasBySelectorsPort(1),
-				amendAlbumDateRepository:  expectAmendAlbumDateRepositoryNotCalled(),
-				transferMedias:            expectTransferMediasPortNotCalled(),
-				timelineMutationObservers: expectTimelineMutationObserverNotCalled(),
-			},
-			args: args{
-				albumId: avenger1Id,
-				start:   may24,
-				end:     jun24,
-			},
-			wantError: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			amendAlbumDates := catalog.NewAmendAlbumDates(
-				tt.fields.findAlbumsByOwner(t),
-				tt.fields.countMediasBySelectors(t),
-				tt.fields.amendAlbumDateRepository(t),
-				tt.fields.transferMedias(t),
-				tt.fields.timelineMutationObservers(t),
-			)
-
-			err := amendAlbumDates.AmendAlbumDates(context.Background(), tt.args.albumId, tt.args.start, tt.args.end)
-			tt.wantError(t, err, fmt.Sprintf("AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end))
-		})
-	}
+type albumDates struct {
+	start time.Time
+	end   time.Time
 }
 
 func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 	const owner = "ironman"
-	avenger1Id := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/avenger-1")}
-	may24 := time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
-	jun24 := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
-	jul24 := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
 
-	existingAlbum := catalog.Album{
-		AlbumId: avenger1Id,
-		Name:    "Avenger 1",
-		Start:   may24,
-		End:     jun24,
-	}
+	jan26 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	may01 := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
+	may03 := time.Date(2026, 5, 3, 0, 0, 0, 0, time.UTC)
+	may04 := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
+	may05 := time.Date(2026, 5, 5, 0, 0, 0, 0, time.UTC)
+	jan27 := time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	may26Id := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/may-26")}
+	may26Album := &catalog.Album{AlbumId: may26Id, Name: "may 26", Start: may01, End: may05}
+	allYearId := catalog.AlbumId{Owner: owner, FolderName: catalog.NewFolderName("/2026")}
+	allYearAlbum := &catalog.Album{AlbumId: allYearId, Name: "2026", Start: jan26, End: jan27}
+
+	photo2may26 := photoAt("photo2may26", may01.AddDate(0, 0, 1))
+	photo3may26 := photoAt("photo3may26", may03)
+	photo4may26 := photoAt("photo4may26", may04)
+
+	transferErr := errors.New("TEST transfer medias failure")
+
+	// TransferPort is an optional per-case override: when nil the test uses
+	// tt.fields.Catalog (the real TransferMediasFromRepository path); when set it is
+	// wrapped by TransferMediasFromRepository so a failing wrapper can short-circuit
+	// the transfer step before the new dates are persisted.
 	type fields struct {
-		Albums []*catalog.Album
+		Catalog      *CatalogInMemory
+		Covers       *CoverRepositoryInMemory
+		TransferPort catalog.TransferMediasRepositoryPort
 	}
 	type args struct {
 		albumId catalog.AlbumId
@@ -140,387 +52,164 @@ func TestAmendAlbumDates_AmendAlbumDates(t *testing.T) {
 		end     time.Time
 	}
 	tests := []struct {
-		name         string
-		fields       fields
-		args         args
-		wantObserved []catalog.DatesUpdate
-		wantErr      assert.ErrorAssertionFunc
+		name                string
+		fields              fields
+		args                args
+		expectAlbumDates    map[catalog.AlbumId]albumDates
+		expectMediasByAlbum map[catalog.AlbumId][]*catalog.MediaMeta
+		expectAmendedEvents []catalog.AlbumDatesAmended
+		expectStoredCovers  map[catalog.AlbumId][]catalog.Cover
+		wantErr             assert.ErrorAssertionFunc
 	}{
 		{
-			name:   "it should return an error if the album is not found",
-			fields: fields{},
-			args: args{
-				albumId: avenger1Id,
-				start:   may24,
-				end:     jun24,
+			name: "it should shrink the album, transfer the medias that fall outside the new range to the surrounding album, and reconcile covers across both albums",
+			fields: fields{
+				Catalog: NewCatalogInMemory(
+					withAlbum(allYearAlbum),
+					withAlbum(may26Album, photo2may26, photo3may26, photo4may26),
+				),
+				Covers: NewCoverRepositoryInMemory(
+					coversFor(may26Id, pickedCover(photo4may26), randomCover(photo2may26)),
+				),
 			},
+			args: args{albumId: may26Id, start: may01, end: may04},
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				may26Id:   {start: may01, end: may04},
+				allYearId: {start: jan26, end: jan27},
+			},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				may26Id:   {photo2may26, photo3may26},
+				allYearId: {photo4may26},
+			},
+			expectAmendedEvents: []catalog.AlbumDatesAmended{{
+				DatesUpdate: catalog.DatesUpdate{
+					UpdatedAlbum:  catalog.Album{AlbumId: may26Id, Name: "may 26", Start: may01, End: may04},
+					PreviousStart: may01,
+					PreviousEnd:   may05,
+				},
+				TransferredMedias: catalog.TransferredMedias{
+					Transfers:  map[catalog.AlbumId][]catalog.MediaId{allYearId: {photo4may26.Id}},
+					FromAlbums: []catalog.AlbumId{may26Id},
+				},
+				Covers: map[catalog.AlbumId][]catalog.Cover{
+					may26Id:   {randomCover(photo2may26), randomCover(photo3may26)},
+					allYearId: {pickedCover(photo4may26)},
+				},
+			}},
+			expectStoredCovers: map[catalog.AlbumId][]catalog.Cover{
+				may26Id:   {randomCover(photo2may26), randomCover(photo3may26)},
+				allYearId: {pickedCover(photo4may26)},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should return OrphanedMediasErr and not persist nor transfer when medias would be orphaned",
+			fields: fields{
+				Catalog: NewCatalogInMemory(withAlbum(may26Album, photo4may26)),
+				Covers:  NewCoverRepositoryInMemory(),
+			},
+			args: args{albumId: may26Id, start: may01, end: may03},
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				may26Id: {start: may01, end: may05},
+			},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{may26Id: {photo4may26}},
+			expectStoredCovers:  map[catalog.AlbumId][]catalog.Cover{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
+			},
+		},
+		{
+			name: "it should return without firing any event when the dates have not changed",
+			fields: fields{
+				Catalog: NewCatalogInMemory(withAlbum(may26Album)),
+				Covers:  NewCoverRepositoryInMemory(),
+			},
+			args: args{albumId: may26Id, start: may01, end: may05},
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				may26Id: {start: may01, end: may05},
+			},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{may26Id: nil},
+			expectStoredCovers:  map[catalog.AlbumId][]catalog.Cover{},
+			wantErr:             assert.NoError,
+		},
+		{
+			name: "it should return AlbumNotFoundErr when the album does not exist",
+			fields: fields{
+				Catalog: NewCatalogInMemory(),
+				Covers:  NewCoverRepositoryInMemory(),
+			},
+			args:                args{albumId: may26Id, start: may01, end: may05},
+			expectAlbumDates:    map[catalog.AlbumId]albumDates{},
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{},
+			expectStoredCovers:  map[catalog.AlbumId][]catalog.Cover{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, catalog.AlbumNotFoundErr, i...)
 			},
 		},
 		{
-			name: "it should return immediately if dates haven't changed",
-			fields: fields{
-				Albums: []*catalog.Album{&existingAlbum},
+			name: "it should leave the album dates unchanged when the media transfer fails: no media is moved, nothing is persisted, so a retry can safely re-run the whole operation",
+			fields: func() fields {
+				backing := NewCatalogInMemory(
+					withAlbum(allYearAlbum),
+					withAlbum(may26Album, photo4may26),
+				)
+				return fields{
+					Catalog:      backing,
+					Covers:       NewCoverRepositoryInMemory(),
+					TransferPort: &catalogTransferMediasFailing{CatalogInMemory: backing, Err: transferErr},
+				}
+			}(),
+			args: args{albumId: may26Id, start: may01, end: may04},
+			expectAlbumDates: map[catalog.AlbumId]albumDates{
+				may26Id:   {start: may01, end: may05},
+				allYearId: {start: jan26, end: jan27},
 			},
-			args: args{
-				albumId: avenger1Id,
-				start:   may24,
-				end:     jun24,
+			expectMediasByAlbum: map[catalog.AlbumId][]*catalog.MediaMeta{
+				may26Id:   {photo4may26},
+				allYearId: nil,
 			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should call the observers if dates have changed",
-			fields: fields{
-				Albums: []*catalog.Album{&existingAlbum},
+			expectStoredCovers: map[catalog.AlbumId][]catalog.Cover{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, transferErr, i...)
 			},
-			args: args{
-				albumId: avenger1Id,
-				start:   may24,
-				end:     jul24,
-			},
-			wantObserved: []catalog.DatesUpdate{
-				{
-					UpdatedAlbum: catalog.Album{
-						AlbumId: avenger1Id,
-						Name:    "Avenger 1",
-						Start:   may24,
-						End:     jul24,
-					},
-					PreviousStart: existingAlbum.Start,
-					PreviousEnd:   existingAlbum.End,
-				},
-			},
-			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			observer := new(AlbumDatesAmendedObserverFake)
-			a := &catalog.AmendAlbumDatesStateless{
-				Observers: []catalog.AlbumDatesAmendedObserverWithTimeline{
-					observer,
-				},
+			transferPort := tt.fields.TransferPort
+			if transferPort == nil {
+				transferPort = tt.fields.Catalog
+			}
+			observer := &AlbumDatesAmendedObserverInMemory{}
+			coverService := &catalog.CoverService{
+				CoverRepository:     tt.fields.Covers,
+				MediaReadRepository: tt.fields.Catalog,
+				Randomiser:          deterministicRandomiser,
 			}
 
-			err := a.AmendAlbumDates(context.Background(), catalog.NewLazyTimelineAggregate(tt.fields.Albums), tt.args.albumId, tt.args.start, tt.args.end)
-			if !tt.wantErr(t, err, fmt.Sprintf("AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end)) {
+			amendAlbumDates := catalog.NewAmendAlbumDates(
+				tt.fields.Catalog,
+				tt.fields.Catalog,
+				&catalog.TransferMediasFromRepository{TransferMediasRepository: transferPort},
+				coverService,
+				observer,
+			)
+
+			err := amendAlbumDates.AmendAlbumDates(context.Background(), tt.args.albumId, tt.args.start, tt.args.end)
+			if !tt.wantErr(t, err, fmt.Sprintf("AmendAlbumDates(%v, %v, %v)", tt.args.albumId, tt.args.start, tt.args.end)) {
 				return
 			}
 
-			assert.ElementsMatchf(t, observer.DateAmendedAlbums, tt.wantObserved, "AmendAlbumDates(%v, %v, %v, %v)", context.Background(), tt.args.albumId, tt.args.start, tt.args.end)
-		})
-	}
-}
-
-func TestAmendAlbumMediaTransfer_OnAlbumDatesAmended(t *testing.T) {
-	fullYearAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/full-year")},
-		Name:    "Full Year",
-		Start:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		End:     time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
-	}
-	mayAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/may")},
-		Name:    "May",
-		Start:   time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC),
-		End:     time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC),
-	}
-	junAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/jun")},
-		Name:    "Jun",
-		Start:   time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC),
-		End:     time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC),
-	}
-	fifthJunAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/jun-fifth")},
-		Name:    "Jun Fifth",
-		Start:   time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC),
-		End:     time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC),
-	}
-	aprToJunAlbum := catalog.Album{
-		AlbumId: catalog.AlbumId{Owner: "ironman", FolderName: catalog.NewFolderName("/apr-to-jun")},
-		Name:    "Apr to Jun",
-		Start:   time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC),
-		End:     time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC),
-	}
-
-	type fields struct {
-		CountMediasBySelectors func(t *testing.T) catalog.CountMediasBySelectorsPort
-		MediaTransfer          func(t *testing.T) catalog.MediaTransfer
-	}
-	type args struct {
-		existingTimeline []*catalog.Album
-		updatedAlbum     catalog.DatesUpdate
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "it should not transfer any media because there were not other albums are present - GROWING BOTH SIDES",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
-				MediaTransfer:          expectMediaTransferNotCalled(),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&mayAlbum},
-				updatedAlbum:     amendWithDatesOf(mayAlbum, aprToJunAlbum.Start, aprToJunAlbum.End),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should not transfer any media because there were not other albums are present - SHRINKING BOTH SIDES",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(0),
-				MediaTransfer:          expectMediaTransferNotCalled(),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&aprToJunAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, mayAlbum.Start, mayAlbum.End),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should transfer medias IN the amended album - GROWING BOTH SIDES",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					mayAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{fullYearAlbum.AlbumId},
-							Start:      aprToJunAlbum.Start,
-							End:        mayAlbum.Start,
-						},
-						{
-							FromAlbums: []catalog.AlbumId{fullYearAlbum.AlbumId},
-							Start:      mayAlbum.End,
-							End:        aprToJunAlbum.End,
-						},
-					},
-				}),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&fullYearAlbum, &mayAlbum},
-				updatedAlbum:     amendWithDatesOf(mayAlbum, aprToJunAlbum.Start, aprToJunAlbum.End),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should transfer medias OUT the amended album - SHRINKING BOTH SIDES",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					fullYearAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
-							Start:      aprToJunAlbum.Start,
-							End:        mayAlbum.Start,
-						},
-						{
-							FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
-							Start:      mayAlbum.End,
-							End:        aprToJunAlbum.End,
-						},
-					},
-				}),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&fullYearAlbum, &aprToJunAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, mayAlbum.Start, mayAlbum.End),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should transfer medias OUT the amended album - SHRINKING BEFORE with another high priority album",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					fullYearAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
-							Start:      aprToJunAlbum.Start,
-							End:        mayAlbum.Start,
-						},
-						{
-							FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
-							Start:      mayAlbum.End,
-							End:        fifthJunAlbum.Start,
-						},
-					},
-				}),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&fullYearAlbum, &aprToJunAlbum, &mayAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should loose some segments on covered time range when growing",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					junAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{fifthJunAlbum.AlbumId},
-							Start:      fifthJunAlbum.Start,
-							End:        junAlbum.End,
-						},
-					},
-				}),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&fifthJunAlbum, &junAlbum},
-				updatedAlbum:     amendWithDatesOf(fifthJunAlbum, aprToJunAlbum.Start, junAlbum.End),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should win some segments on covered time range when shrinking",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					fullYearAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
-							Start:      aprToJunAlbum.Start,
-							End:        junAlbum.Start,
-						},
-					},
-					aprToJunAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{junAlbum.AlbumId, fullYearAlbum.AlbumId},
-							Start:      fifthJunAlbum.Start,
-							End:        fifthJunAlbum.End,
-						},
-					},
-				}),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&aprToJunAlbum, &junAlbum, &fullYearAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should transfer medias even when timeline has already been updated in case the changes is re-applied [scenario: win some segments on covered time range when shrinking]",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
-				MediaTransfer: expectMediaTransferCalled(catalog.MediaTransferRecords{
-					fullYearAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{aprToJunAlbum.AlbumId},
-							Start:      aprToJunAlbum.Start,
-							End:        junAlbum.Start,
-						},
-					},
-					aprToJunAlbum.AlbumId: []catalog.MediaSelector{
-						{
-							FromAlbums: []catalog.AlbumId{junAlbum.AlbumId, fullYearAlbum.AlbumId},
-							Start:      fifthJunAlbum.Start,
-							End:        fifthJunAlbum.End,
-						},
-					},
-				}),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&catalog.Album{
-					AlbumId: aprToJunAlbum.AlbumId,
-					Name:    aprToJunAlbum.Name,
-					Start:   fifthJunAlbum.Start,
-					End:     fifthJunAlbum.End,
-				}, &junAlbum, &fullYearAlbum},
-				updatedAlbum: amendWithDatesOf(aprToJunAlbum, fifthJunAlbum.Start, fifthJunAlbum.End),
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "it should abort if some medias are made orphan - SHRINKING BOTH SIDES",
-			fields: fields{
-				CountMediasBySelectors: stubCountMediasBySelectorsPort(1),
-				MediaTransfer:          expectMediaTransferNotCalled(),
-			},
-			args: args{
-				existingTimeline: []*catalog.Album{&aprToJunAlbum},
-				updatedAlbum:     amendWithDatesOf(aprToJunAlbum, junAlbum.Start, junAlbum.End),
-			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, catalog.OrphanedMediasErr, i...)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := &catalog.AmendAlbumMediaTransfer{
-				CountMediasBySelectors: tt.fields.CountMediasBySelectors(t),
-				MediaTransfer:          tt.fields.MediaTransfer(t),
+			dates := make(map[catalog.AlbumId]albumDates, len(tt.fields.Catalog.AlbumsByIds()))
+			for id, album := range tt.fields.Catalog.AlbumsByIds() {
+				dates[id] = albumDates{start: album.Start, end: album.End}
 			}
-
-			err := a.OnAlbumDatesAmendedWithTimeline(context.Background(), catalog.NewLazyTimelineAggregate(tt.args.existingTimeline), tt.args.updatedAlbum)
-			tt.wantErr(t, err, fmt.Sprintf("OnAlbumDatesAmended(%v, %v, %v)", context.Background(), tt.args.existingTimeline, tt.args.updatedAlbum))
+			assert.Equal(t, tt.expectAlbumDates, dates, "album dates in the catalog")
+			assert.Equal(t, tt.expectMediasByAlbum, tt.fields.Catalog.MediasByAlbum(), "medias remaining per album")
+			assert.Equal(t, tt.expectAmendedEvents, observer.Events, "AlbumDatesAmended events fired")
+			assert.Equal(t, tt.expectStoredCovers, tt.fields.Covers.Covers, "covers stored in the repository")
 		})
 	}
 }
 
-func amendWithDatesOf(album catalog.Album, start, end time.Time) catalog.DatesUpdate {
-	update := catalog.DatesUpdate{
-		UpdatedAlbum:  album,
-		PreviousStart: album.Start,
-		PreviousEnd:   album.End,
-	}
-	update.UpdatedAlbum.Start = start
-	update.UpdatedAlbum.End = end
 
-	return update
-}
-
-func expectAmendAlbumDateRepositoryNotCalled() func(t *testing.T) catalog.AmendAlbumDateRepositoryPort {
-	return func(t *testing.T) catalog.AmendAlbumDateRepositoryPort {
-		return mocks.NewAmendAlbumDateRepositoryPort(t)
-	}
-}
-
-func expectAmendAlbumDateRepositoryCalled(albumId catalog.AlbumId, start time.Time, end time.Time) func(t *testing.T) catalog.AmendAlbumDateRepositoryPort {
-	return func(t *testing.T) catalog.AmendAlbumDateRepositoryPort {
-		repo := mocks.NewAmendAlbumDateRepositoryPort(t)
-		repo.EXPECT().AmendDates(mock.Anything, albumId, start, end).Return(nil).Once()
-		return repo
-	}
-}
-
-type AlbumDatesAmendedObserverFake struct {
-	DateAmendedAlbums []catalog.DatesUpdate
-}
-
-func (a *AlbumDatesAmendedObserverFake) OnAlbumDatesAmendedWithTimeline(ctx context.Context, timeline *catalog.TimelineAggregate, amendedAlbum catalog.DatesUpdate) error {
-	a.DateAmendedAlbums = append(a.DateAmendedAlbums, amendedAlbum)
-	return nil
-}
-
-func (a *AlbumDatesAmendedObserverFake) OnAlbumDatesAmended(ctx context.Context, amendedAlbum catalog.DatesUpdate) error {
-	a.DateAmendedAlbums = append(a.DateAmendedAlbums, amendedAlbum)
-	return nil
-}
-
-func expectTimelineMutationObserverCalled(transfers catalog.TransferredMedias) func(t *testing.T) catalog.TimelineMutationObserver {
-	return func(t *testing.T) catalog.TimelineMutationObserver {
-		observer := mocks.NewTimelineMutationObserver(t)
-		observer.EXPECT().OnTransferredMedias(mock.Anything, transfers).Return(nil).Once()
-		return observer
-	}
-}
-
-func expectTransferMediasRepositoryPortCalled(expectedRecords catalog.MediaTransferRecords, returnedTransfers catalog.TransferredMedias) func(t *testing.T) catalog.TransferMediasRepositoryPort {
-	return func(t *testing.T) catalog.TransferMediasRepositoryPort {
-		port := mocks.NewTransferMediasRepositoryPort(t)
-		port.EXPECT().
-			TransferMediasFromRecords(mock.Anything, expectedRecords).
-			Return(returnedTransfers, nil).
-			Once()
-		return port
-	}
-}
