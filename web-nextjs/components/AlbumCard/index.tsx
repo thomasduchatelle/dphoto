@@ -70,7 +70,7 @@ export const AlbumCard = ({album, onShare, compact = false}: AlbumCardProps) => 
             })}
         >
             <AlbumThumbnails album={album} compact={compact}/>
-            <CompactBar album={album} temperatureColor={temperatureColor} dateRange={dateRange} compact={compact}/>
+            <CompactBar album={album} temperatureColor={temperatureColor} dateRange={dateRange} compact={compact} onShareClick={onShareClick}/>
             {!compact && <ExpandedOverlay album={album} temperatureColor={temperatureColor} dateRange={dateRange} onShareClick={onShareClick}/>}
         </Box>
     );

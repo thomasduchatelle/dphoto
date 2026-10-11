@@ -185,3 +185,44 @@ export const SharedBySeveral: Story = {
         },
     },
 }
+
+export const CompactWithShareCallback: Story = {
+    args: {
+        album: clairObscurAlbum,
+        compact: true,
+    },
+}
+
+export const CompactSharedWithoutCallback: Story = {
+    args: {
+        album: {
+            ...clairObscurAlbum,
+            sharedWith: [{user: {name: 'Hulk', email: 'hulk@avenger.com', picture: '/static/hulk-profile.webp'}}],
+        },
+        compact: true,
+        onShare: undefined,
+    },
+}
+
+export const CompactPrivateWithoutCallback: Story = {
+    args: {
+        album: clairObscurAlbum,
+        compact: true,
+        onShare: undefined,
+    },
+}
+
+export const CompactOwnedBySomeoneElse: Story = {
+    args: {
+        album: {
+            ...clairObscurAlbum,
+            ownedBy: {
+                name: 'Natasha',
+                users: [
+                    {name: 'Natasha', email: 'blackwidow@avenger.com', picture: '/static/black-widow-profile.jpg'},
+                ],
+            },
+        },
+        compact: true,
+    },
+}

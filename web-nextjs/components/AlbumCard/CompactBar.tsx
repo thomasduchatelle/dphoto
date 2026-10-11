@@ -1,6 +1,6 @@
 'use client';
 
-import {Box, Typography} from '@mui/material';
+import {Box, IconButton, Typography} from '@mui/material';
 import {Album} from '@/domains/catalog/language/catalog-state';
 import {SharedByIndicator} from './SharedByIndicator';
 import {ShareBadge} from './ShareBadge';
@@ -10,9 +10,10 @@ export interface CompactBarProps {
     temperatureColor: string;
     dateRange: string;
     compact: boolean;
+    onShareClick?: (e: React.MouseEvent) => void;
 }
 
-export const CompactBar = ({album, temperatureColor, dateRange, compact}: CompactBarProps) => (
+export const CompactBar = ({album, temperatureColor, dateRange, compact, onShareClick}: CompactBarProps) => (
     <Box
         className="compact-bar"
         sx={{
@@ -63,7 +64,12 @@ export const CompactBar = ({album, temperatureColor, dateRange, compact}: Compac
             >
                 {album.totalCount}
             </Typography>
-            {album.sharedWith.length > 0 && (
+            {!album.ownedBy && onShareClick && (
+                <IconButton onClick={onShareClick} sx={{p: 0.5}}>
+                    <ShareBadge count={album.sharedWith.length} color={temperatureColor}/>
+                </IconButton>
+            )}
+            {!album.ownedBy && !onShareClick && album.sharedWith.length > 0 && (
                 <ShareBadge count={album.sharedWith.length} color={temperatureColor}/>
             )}
             {album.ownedBy && (
