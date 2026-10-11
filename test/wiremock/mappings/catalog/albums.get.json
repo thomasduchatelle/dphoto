@@ -14,7 +14,13 @@
         "start": "2021-12-24T00:00:00Z",
         "end": "2022-01-04T00:00:00Z",
         "totalCount": 360,
-        "directlyOwned": true
+        "directlyOwned": true,
+        "covers": [
+          {"mediaId": "god_of_war_01", "filename": "god_of_war_1.jpeg", "origin": "RANDOM"},
+          {"mediaId": "god_of_war_02", "filename": "god_of_war_2.jpeg", "origin": "RANDOM"},
+          {"mediaId": "god_of_war_03", "filename": "god_of_war_3.jpeg", "origin": "RANDOM"},
+          {"mediaId": "god_of_war_04", "filename": "god_of_war_4.jpeg", "origin": "RANDOM"}
+        ]
       },
       {
         "name": "Subnautica",
@@ -27,7 +33,13 @@
         "sharedWith": {
           "blackwindow@avenger.com": "contributor",
           "hulk@avenger.com": "visitor"
-        }
+        },
+        "covers": [
+          {"mediaId": "012", "filename": "subnautica_12.jpeg", "origin": "RANDOM"},
+          {"mediaId": "013", "filename": "subnautica_13.png", "origin": "RANDOM"},
+          {"mediaId": "014", "filename": "subnautica_14.jpeg", "origin": "RANDOM"},
+          {"mediaId": "007", "filename": "subnautica_7.jpeg", "origin": "CHERRY_PICKED"}
+        ]
       },
       {
         "name": "Horizon Zero Down",
@@ -35,7 +47,13 @@
         "folderName": "/2022-Q1",
         "start": "2022-01-01T00:00:00Z",
         "end": "2022-04-01T00:00:00Z",
-        "totalCount": 420
+        "totalCount": 420,
+        "covers": [
+          {"mediaId": "horizon_01", "filename": "horizon_1.jpeg", "origin": "RANDOM"},
+          {"mediaId": "horizon_02", "filename": "horizon_2.jpeg", "origin": "RANDOM"},
+          {"mediaId": "horizon_03", "filename": "horizon_3.jpeg", "origin": "RANDOM"},
+          {"mediaId": "horizon_04", "filename": "horizon_4.jpeg", "origin": "RANDOM"}
+        ]
       },
       {
         "name": "Q4 2021",
@@ -44,7 +62,13 @@
         "start": "2021-10-01T00:00:00Z",
         "end": "2022-01-01T00:00:00Z",
         "totalCount": 32,
-        "directlyOwned": true
+        "directlyOwned": true,
+        "covers": [
+          {"mediaId": "q4_2021_01", "filename": "q4_2021_1.jpeg", "origin": "RANDOM"},
+          {"mediaId": "q4_2021_02", "filename": "q4_2021_2.jpeg", "origin": "RANDOM"},
+          {"mediaId": "q4_2021_03", "filename": "q4_2021_3.jpeg", "origin": "RANDOM"},
+          {"mediaId": "q4_2021_04", "filename": "q4_2021_4.jpeg", "origin": "RANDOM"}
+        ]
       }
     ]
   }
