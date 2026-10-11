@@ -1,49 +1,66 @@
-# Rename album modal
+# Rename album modal (component + stories)
 
 **Status**: ready
-**Depends on**: `01-header-action-scaffold.md` — needs the enabled Rename button, the stub modal placeholder, and the open/close thunks that 01 creates for the rename slice.
+**Depends on**: none — the component is unwired, delivered with Storybook only; wiring happens in story 01.
 
 ## Description
 
-Replace the rename stub modal on the album page with a working rename dialog: an owner can change the
-album's display name.
+Deliver a `RenameAlbumModal` React component with Storybook stories, matching the layout and behaviour of
+`web/src/components/albums/EditNameDialog/EditNameDialog.tsx` and driven by the props shape returned by the
+already-migrated `editNameDialogSelector`.
 
-The domain layer is already migrated: see `web-nextjs/domains/catalog/album-edit-name/`. This story is UI
-wiring and a dialog component.
+The component is **not** mounted into the album page by this story. The follow-up wiring story (01) is
+responsible for mounting it in `AlbumPageContent` and connecting the handlers to the real thunks.
+
+## Props contract
+
+Props = `EditNameDialogSelection & EditNameDialogHandlers`.
+
+- `EditNameDialogSelection` is imported verbatim from
+  `web-nextjs/domains/catalog/album-edit-name/selector-editNameDialogSelector.ts`. Current shape at time of
+  writing:
+  `{ isOpen, originalName, albumName, customFolderName, isCustomFolderNameEnabled, isLoading,
+     technicalError?, isSaveEnabled, nameError?, folderNameError? }` (via `BaseEditNameSelection`). Follow
+  the selector export — do not duplicate the type.
+- `EditNameDialogHandlers` is a new interface declared next to the component, with one callback per thunk
+  the dialog triggers:
+  - `onClose(): void` — paired with `closeEditNameDialog`.
+  - `onAlbumNameChange(name: string): void` — paired with the name-change action.
+  - `onFolderNameEnabledChange(enabled: boolean): void` — paired with the folder-name-enabled action.
+  - `onFolderNameChange(folderName: string): void` — paired with the folder-name-change action.
+  - `onSave(): void` — paired with `saveAlbumName`.
+
+Place the component at
+`web-nextjs/app/(authenticated)/albums/[ownerId]/[albumId]/_components/RenameAlbumModal/`.
 
 ## Context
 
-- The Rename button is enabled and wired to the open-modal thunk by story 01. This story replaces the stub
-  modal component with the real dialog.
-- Thunks and state slices to use (all under `domains/catalog/album-edit-name/`):
-  - Open / close modal thunks.
-  - Save thunk that calls the backend rename endpoint.
-  - Error action/state slice that surfaces backend errors into the dialog.
-- Reference the old implementation for behaviour parity:
-  `web/src/components/edit-album-name-dialog/` and `web/src/core/catalog/album-edit-name/`.
-- Dialog contents:
-  - Album name text field, pre-filled with the current name.
-  - Context line showing album metadata (date range + photo count).
-  - Cancel and Save buttons.
-- Validation: name must be non-empty (trimmed); Save disabled until valid.
+- Reference layout and behaviour: `web/src/components/albums/EditNameDialog/EditNameDialog.tsx`. Keep the
+  same structure: linear progress bar on top for loading, title "Edit Name", close icon, name text field,
+  folder-name input with the switch toggle, Cancel / Save in actions.
+- `FolderNameInput` already exists duplicated inside PR #307
+  (`web-nextjs/app/(authenticated)/_components/CreateAlbumModal/FolderNameInput.tsx`). **Copy it into your
+  own modal folder** (`RenameAlbumModal/FolderNameInput.tsx`) — do not try to extract to a shared location,
+  that cleanup is deferred to story 01.
+- Follow the `ui-components` and `nextjs` skills: Storybook for visual testing, no unit test files for pure
+  UI, props must be a straight line from the selector output.
 
 ## Acceptance Criteria
 
-- Clicking Rename in `AlbumHeader` (or `AlbumActionsFab`) opens the dialog with the name pre-filled and
-  focus set to the name field.
-- Changing the name and clicking Save:
-  - Shows a loading state on Save.
-  - On success: closes the dialog; the new name appears immediately in the album page header, in the
-    browser tab title (if applicable), and on the home page album card.
-  - On failure: shows the error inline inside the dialog with a retry.
-- Clearing the name disables Save and shows a validation error below the field.
-- Cancel closes the dialog without saving; pressing ESC does the same.
-- Dialog is keyboard-accessible (Tab, Enter to submit, ESC to cancel) and responsive on mobile / tablet /
-  desktop.
-- Storybook stories cover: pre-filled with a short name, pre-filled with a long name, empty / validation
-  error, submission error, loading.
+- `RenameAlbumModal` component accepts `EditNameDialogSelection & EditNameDialogHandlers`.
+- When `isOpen` is true, the dialog renders with the name field pre-filled from `albumName`.
+- Validation: Save is disabled when `isSaveEnabled` is false; `nameError` / `folderNameError` render inline
+  under the matching inputs.
+- `technicalError` renders as an `Alert severity="error"` at the top of the content.
+- Loading state (`isLoading`) shows the top progress bar and disables inputs + Save.
+- The component is a `'use client'` React component, no server-only code.
+- Storybook stories cover: short name pre-filled, long name pre-filled, validation error, submission error,
+  loading, with custom folder name enabled.
+- The dialog is responsive (full-screen on mobile) and keyboard-accessible (ESC closes, Tab moves between
+  fields).
 
 ## Out of scope
 
-- Changing the album's underlying folder name — not a parity feature; the backend endpoint for rename only
-  changes the display name.
+- Mounting the modal in `AlbumPageContent` — story 01.
+- Any change to the Rename button in `AlbumHeader` / `AlbumActionsFab` — story 01.
+- Extracting `FolderNameInput` to a shared location — deferred to story 01's cleanup.
