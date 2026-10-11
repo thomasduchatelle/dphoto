@@ -308,7 +308,7 @@ function convertCoversFromREST(owner: string, covers: RestAlbumCover[] | undefin
         mediaId: c.mediaId,
         filename: c.filename,
         origin: c.origin === 'CHERRY_PICKED' ? 'CHERRY_PICKED' : 'RANDOM' as CoverOrigin,
-        contentPath: `/api/v1/owners/${owner}/medias/${c.mediaId}/${c.filename}?w=257`,
+        contentPath: mediaUrl(`/api/v1/owners/${owner}/medias/${c.mediaId}/${c.filename}`, 257),
     }))
 }
 
