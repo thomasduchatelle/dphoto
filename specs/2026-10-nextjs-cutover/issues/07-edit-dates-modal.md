@@ -1,54 +1,69 @@
-# Edit album dates modal
+# Edit album dates modal (component + stories)
 
-**Status**: ready
-**Depends on**: `01-header-action-scaffold.md` — needs the enabled Dates button, the stub modal placeholder, and the open/close thunks that 01 creates for the edit-dates slice.
+**Status**: done
+**Depends on**: none — the component is unwired, delivered with Storybook only; wiring happens in story 01.
 
 ## Description
 
-Replace the edit-dates stub modal on the album page with a working date-range editor: an owner can change
-the album's start and end dates, with the backend re-indexing the medias accordingly.
+Deliver an `EditDatesModal` React component with Storybook stories, matching the layout and behaviour of
+`web/src/components/albums/EditDatesDialog/EditDatesDialog.tsx` and driven by the props shape returned by
+the already-migrated `editDatesDialogSelector`.
 
-The domain layer is already migrated: see `web-nextjs/domains/catalog/album-edit-dates/`. This story is UI
-wiring and a dialog component.
+The component is **not** mounted into the album page by this story. The follow-up wiring story (01) is
+responsible for mounting it in `AlbumPageContent` and connecting the handlers to the real thunks.
+
+## Props contract
+
+Props = `EditDatesDialogSelection & EditDatesDialogHandlers`.
+
+- `EditDatesDialogSelection` is imported verbatim from
+  `web-nextjs/domains/catalog/album-edit-dates/selector-editDatesDialogSelector.ts`. Current shape at time
+  of writing:
+  `{ isOpen, albumName, startDate, endDate, startAtDayStart, endAtDayEnd, isLoading, errorCode?,
+     dateRangeError?, isSaveEnabled }`. Follow the selector export — do not duplicate the type.
+- `EditDatesDialogHandlers` is a new interface declared next to the component, with one callback per thunk
+  the dialog triggers:
+  - `onClose(): void` — paired with `closeEditDatesDialog`.
+  - `onStartDateChange(date: Date | null): void` — paired with the start-date action.
+  - `onEndDateChange(date: Date | null): void` — paired with the end-date action.
+  - `onStartAtDayStartChange(checked: boolean): void` — paired with the start-day-start action.
+  - `onEndAtDayEndChange(checked: boolean): void` — paired with the end-day-end action.
+  - `onSave(): void` — paired with `updateAlbumDates`.
+
+Place the component at
+`web-nextjs/app/(authenticated)/albums/[ownerId]/[albumId]/_components/EditDatesModal/`.
 
 ## Context
 
-- The Dates button is enabled and wired to the open-modal thunk by story 01. This story replaces the stub
-  modal component with the real dialog.
-- Thunks and state slices to use (all under `domains/catalog/album-edit-dates/`):
-  - Open / close modal thunks.
-  - Save thunk that calls the backend endpoint and triggers re-indexing.
-  - Error action/state slice that surfaces backend errors (including orphan warnings) into the dialog.
-- Reference the old implementation for behaviour parity:
-  `web/src/components/edit-album-dates-dialog/` and `web/src/core/catalog/album-edit-dates/`.
-- Dialog contents:
-  - Context line with the current album name.
-  - Start date picker, pre-filled.
-  - End date picker, pre-filled.
-  - Cancel and Save buttons.
-- Validation: end date must be strictly after start date; Save disabled otherwise.
-- The backend may return an orphan-media warning (the new range would exclude medias currently in the
-  album). The dialog surfaces this as an inline warning with details and a confirmation to proceed (either
-  a second click on Save, or an explicit "Proceed anyway" button — mirror the old UX).
+- Reference layout and behaviour: `web/src/components/albums/EditDatesDialog/EditDatesDialog.tsx`. Keep the
+  same structure: linear progress bar on top, title "Edit dates of {albumName}", close icon, date range
+  picker, `errorCode` as an inline alert, Cancel / Save in actions.
+- `DateRangePicker` already exists duplicated inside PR #307
+  (`web-nextjs/app/(authenticated)/_components/CreateAlbumModal/DateRangePicker.tsx`). **Copy it into your
+  own modal folder** (`EditDatesModal/DateRangePicker.tsx`) — do not try to extract to a shared location,
+  that cleanup is deferred to story 01.
+- `@mui/x-date-pickers` and `dayjs` were added to `web-nextjs/package.json` by PR #307. If merge order
+  turns out otherwise and they are missing, add them (same versions used by PR #307: `^8.29.4` and
+  `^1.11.23`).
+- Follow the `ui-components` and `nextjs` skills: Storybook for visual testing, no unit test files for
+  pure UI, props must be a straight line from the selector output.
 
 ## Acceptance Criteria
 
-- Clicking Dates in `AlbumHeader` (or `AlbumActionsFab`) opens the dialog with both dates pre-filled.
-- Adjusting dates to an invalid range (end ≤ start) disables Save and shows an inline validation message.
-- Submitting a valid range:
-  - Shows a loading state on Save.
-  - On success: closes the dialog; the album page refreshes to show the updated media set and the header
-    reflects the new date range.
-  - On failure: shows the error inline inside the dialog with a retry.
-  - If the backend returns an orphan-media warning: show the warning with details inside the dialog; the
-    user must explicitly acknowledge before the change is applied.
-- Cancel closes the dialog without saving; pressing ESC does the same.
-- Dialog is keyboard-accessible (Tab to move, arrow keys inside the date picker, Enter to submit, ESC to
-  cancel) and responsive on mobile / tablet / desktop.
-- Storybook stories cover: default pre-filled, invalid range, orphan warning, submission error, loading.
+- `EditDatesModal` component accepts `EditDatesDialogSelection & EditDatesDialogHandlers`.
+- When `isOpen` is true, the dialog renders with both date pickers pre-filled from the selection.
+- Validation: Save is disabled when `isSaveEnabled` is false; `dateRangeError` renders inline on the date
+  pickers.
+- `errorCode` renders as an `Alert severity="error"` at the top of the content.
+- Loading state (`isLoading`) shows the top progress bar and disables inputs + Save.
+- The component is a `'use client'` React component, no server-only code.
+- Storybook stories cover: default pre-filled, invalid range (end before start), submission error, loading,
+  "start at day start" toggled off (shows DateTimePicker instead of DatePicker).
+- The dialog is responsive (full-screen on mobile) and keyboard-accessible.
 
 ## Out of scope
 
-- Visual photo preview of what the album would contain with the new range — deferred (needs a backend
-  "medias by date" endpoint).
-- Live preview of the orphaned medias as thumbnails — deferred.
+- Mounting the modal in `AlbumPageContent` — story 01.
+- Any change to the Dates button in `AlbumHeader` / `AlbumActionsFab` — story 01.
+- Orphan-media preview with thumbnails — deferred (needs a backend "medias by date" endpoint).
+- Extracting `DateRangePicker` to a shared location — deferred to story 01's cleanup.

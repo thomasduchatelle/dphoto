@@ -6,9 +6,12 @@
   },
   "response": {
     "status": 422,
+    "headers": {
+      "Content-Type": "application/json"
+    },
     "jsonBody": {
-      "errorType": "OrphanedMedias",
-      "message": "252 orphaned medias prevent XYZ to be deleted: albums cannot be deleted if it makes medias orphaned"
+      "code": "OrphanedMedias",
+      "message": "252 medias from tony@stark.com/2021-12_christmas cannot be reallocated: albums cannot be deleted or amended if it orphans medias."
     }
   }
 }

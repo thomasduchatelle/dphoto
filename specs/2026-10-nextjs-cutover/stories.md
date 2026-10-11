@@ -1,45 +1,57 @@
 # NextJS Cutover — stories
 
-Draft of the ten issues. Each becomes `issues/NN-<slug>.md`. Parallelism target: after issue 01 lands,
-issues 02–09 can all be picked up in parallel; issue 10 is the final merge/deploy.
+Draft of the ten issues. Each becomes `issues/NN-<slug>.md`. Parallelism target: issues 02–08 can all be
+picked up in parallel from day 1 (modal components are unwired, Storybook-driven); issue 01 is the final
+wiring step that mounts them on the album page.
 
 ## Parallelism map
 
 ```
-01 header-action-scaffold ──┬── 02 fullscreen-viewer-yarl ──── 03 viewer-capabilities
-                            │
-                            ├── 05 modal-share-album
-                            ├── 06 modal-rename-album
-                            ├── 07 modal-edit-dates
-                            └── 08 modal-delete-album
+(day 1, in parallel)   02 fullscreen-viewer-yarl ──── 03 viewer-capabilities
+                       04 create-album-modal  (independent, lives on home page)
+                       05 share-album-modal           (component + stories only)
+                       06 rename-album-modal          (component + stories only)
+                       07 edit-dates-modal            (component + stories only)
+                       08 delete-album-modal          (component + stories only)
+                       09 client-token-refresh        (soft-blocks 05–08; discovered during 04)
 
-(independent)   04 create-album-modal
-(independent)   09 client-token-refresh    (soft-blocks 05–08; discovered during 04)
+(after 05-08 merge)    01 wire-album-header-modals    (mounts them on the album page)
 
-(after all)     10 cutover
+(after everything)     10 cutover
 ```
 
-Issues 02 and 03 are sequential (03 depends on 02). All five modals (04–08) are independent of each other and
-of the viewer, provided 01 has landed and placed the stub modal components. 10 is the final cutover.
+Issues 02 and 03 remain sequential (03 depends on 02). Modals 05–08 are **component-only** stories: each
+delivers a pure React component plus Storybook stories, with props = `<DialogSelection> & <Handlers>` so the
+component matches the exact shape returned by the existing selectors in `web-nextjs/domains/catalog/`. They
+are **not** mounted into the album page by these stories — mounting is done by 01 in a single pass once all
+four modals exist.
 
 ## Design decisions
 
-- **No shared "modal framework"**. Each modal is its own component, owning its own open/close state via the
-  existing thunks (`openXxxModal` / `closeXxxModal`). This avoids a cross-story coordination hazard.
-- **The owner-action buttons live in `AlbumHeader`** (desktop) **and `AlbumActionsFab`** (mobile). Issue 01
-  enables them and wires each to a `useXxxModal` hook + stub component. The modal stories replace the stub.
-- **Viewer stories 02 and 03 are copied verbatim** from the archived feature (issues 09 and 10). The
+- **No shared "modal framework"**. Each modal is its own component, its props derived from its own
+  domain-layer selector. No cross-story coordination hazard.
+- **Each modal story delivers only the component + Storybook**. Props shape: `SelectorFrag & XxxHandlers`
+  where `SelectorFrag` comes verbatim from the matching `selector-xxxDialogSelector.ts` in
+  `web-nextjs/domains/catalog/<slice>/`, and `XxxHandlers` is a sibling interface declaring one callback
+  per thunk. No wiring into `AlbumHeader`, `AlbumActionsFab`, or `AlbumPageContent`.
+- **The old `web/` dialog in `web/src/components/albums/<Xxx>Dialog/` is the layout reference** for its
+  NextJS equivalent. Keep the same structure, labels, destructive styling, loading/error affordances. Allow
+  minor polish only where MUI v7 or NextJS idioms differ.
+- **Shared helpers (`DateRangePicker`, `FolderNameInput`)**: PR #307 (04 create-album-modal) places them
+  inside its own folder. For stories 06 (rename) and 07 (edit-dates), the subagent copies them locally into
+  its own modal folder. The duplication is intentional: it keeps the PRs independent. The follow-up
+  wiring story (01) is free to extract them into `web-nextjs/components/` as a cleanup.
+- **The viewer stories 02 and 03 are copied verbatim** from the archived feature (issues 09 and 10). The
   internal links to ADRs 0001 and 0003 and the ADR paths are preserved (just one directory level deeper).
 
 ## Stories
 
-### 01 — Header owner-action scaffolding
+### 01 — Wire album-header modals into the album page
 
-Enable the Share / Rename / Dates buttons in `AlbumHeader`, add a Delete button, and create stub modal
-components so the modal stories can land in parallel without conflicts. Visibility is driven by album
-ownership (owner-only). Buttons dispatch the corresponding `openXxxModal` thunk; the stub component renders
-"Not implemented yet" and a Close button wired to `closeXxxModal`. Same wiring for `AlbumActionsFab` on
-mobile.
+Done **last** among parity work. Enables the Share / Rename / Dates buttons in `AlbumHeader` (currently
+disabled), adds a Delete button next to them, mirrors them in `AlbumActionsFab`, and mounts the four modal
+components delivered by stories 05–08 inside `AlbumPageContent`, each wired to its selector and to the
+matching thunks. All four buttons are owner-only (hidden for non-owners, not just disabled).
 
 ### 02 — Fullscreen media viewer (YARL + route-driven)
 
@@ -57,28 +69,29 @@ Owner-only button on the home page opens a dialog with name (required), start/en
 custom folder name. Wires `createAlbumThunk`. Validation inline. Success closes the dialog and refreshes
 the album list. No visual photo preview — deferred.
 
-### 05 — Share album modal
+### 05 — Share album modal (component + stories)
 
-Owner-only, from `AlbumHeader`. Lists users with access (avatars + names + emails), grant access by email
-with validation, revoke with confirmation. Wires existing `openSharingModal` / `grantAlbumAccessThunk` /
-`revokeAlbumAccessThunk` / `closeSharingModal` thunks and state in `domains/catalog/sharing/`.
+Deliver a `ShareAlbumModal` React component with Storybook stories. Props shape: `SharingDialogFrag &
+ShareAlbumModalHandlers`. Behaviour and layout mirror `web/src/components/albums/ShareDialog/index.tsx`.
+**Not** mounted into the album page by this story.
 
-### 06 — Rename album modal
+### 06 — Rename album modal (component + stories)
 
-Owner-only, from `AlbumHeader`. Dialog with name field pre-filled. Wires `album-edit-name` thunks. Updated
-name reflected immediately in header and album list.
+Deliver a `RenameAlbumModal` React component with Storybook stories. Props shape: `EditNameDialogSelection &
+EditNameDialogHandlers`. Behaviour and layout mirror `web/src/components/albums/EditNameDialog/`.
+**Not** mounted into the album page by this story.
 
-### 07 — Edit album dates modal
+### 07 — Edit album dates modal (component + stories)
 
-Owner-only, from `AlbumHeader`. Dialog with start/end date pickers pre-filled. Backend-driven orphan warning
-surfaces as a dialog message. Wires `album-edit-dates` thunks. On success, album page refreshes to show the
-updated media set. No visual photo preview — deferred.
+Deliver an `EditDatesModal` React component with Storybook stories. Props shape: `EditDatesDialogSelection &
+EditDatesDialogHandlers`. Behaviour and layout mirror `web/src/components/albums/EditDatesDialog/`.
+**Not** mounted into the album page by this story.
 
-### 08 — Delete album modal
+### 08 — Delete album modal (component + stories)
 
-Owner-only, from `AlbumHeader`. Confirmation dialog with destructive styling, Cancel as default focus. Wires
-`album-delete` thunks. On success, user is navigated back to the home page and the album disappears from the
-list.
+Deliver a `DeleteAlbumModal` React component with Storybook stories. Props shape: `DeleteDialogFrag &
+DeleteAlbumModalHandlers`. Behaviour and layout mirror `web/src/components/albums/DeleteAlbumDialog/`.
+**Not** mounted into the album page by this story.
 
 ### 09 — Client-side access-token refresh
 

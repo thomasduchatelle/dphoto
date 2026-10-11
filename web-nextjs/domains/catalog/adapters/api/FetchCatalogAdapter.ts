@@ -282,8 +282,8 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const errorData = await response.json();
-                    if (errorData.code && errorData.message) {
-                        throw new CatalogError(errorData.code, errorData.message);
+                    if (errorData.message) {
+                        throw new CatalogError(errorData.code ?? '', errorData.message);
                     }
                 }
 

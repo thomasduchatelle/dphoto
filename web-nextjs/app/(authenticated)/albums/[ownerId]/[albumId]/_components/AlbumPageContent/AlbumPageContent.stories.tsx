@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
+import {fn} from 'storybook/test';
 import {AlbumPageContentView} from './index';
 import AppLayout from '@/components/AppLayout';
 import {MediaType, MediaWithinADay} from '@/domains/catalog/language';
@@ -159,6 +160,13 @@ const baseState = {
 
 const baseSelection = catalogViewerPageSelector(baseState);
 
+const actionArgs = {
+    isOwner: true,
+    onRename: fn(),
+    onEditDates: fn(),
+    onDelete: fn(),
+};
+
 const meta = {
     title: 'Catalog/AlbumPageContent',
     component: AlbumPageContentView,
@@ -178,7 +186,7 @@ const meta = {
             </AppLayout>
         ),
     ],
-    args: baseSelection,
+    args: {...baseSelection, ...actionArgs},
 } satisfies Meta<typeof AlbumPageContentView>;
 
 export default meta;
@@ -261,5 +269,11 @@ export const WithError: Story = {
     args: {
         ...baseSelection,
         error: new Error('Failed to fetch medias from the server'),
+    },
+};
+
+export const Viewer: Story = {
+    args: {
+        isOwner: false,
     },
 };

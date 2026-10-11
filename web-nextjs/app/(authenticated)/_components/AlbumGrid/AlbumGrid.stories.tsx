@@ -156,6 +156,7 @@ const meta = {
         albums: sampleAlbums,
         onShare: fn(),
         onCreateAlbum: fn(),
+        onDeleteAlbum: fn(),
         filterOptions: sampleFilterOptions,
         activeFilter: sampleFilterOptions[0],
         onFilterChange: fn(),

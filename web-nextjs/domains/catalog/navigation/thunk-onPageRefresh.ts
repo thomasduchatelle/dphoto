@@ -1,11 +1,11 @@
 import {Album, AlbumId, albumIdEquals, CatalogViewerState, Media} from "../language";
 import {AlbumsAndMediasLoaded, albumsAndMediasLoaded} from "./action-albumsAndMediasLoaded";
+import {AlbumsLoaded, albumsLoaded} from "./action-albumsLoaded";
 import {MediaLoadFailed, mediaLoadFailed} from "./action-mediaLoadFailed";
 import {mediasLoaded} from "./action-mediasLoaded";
-import {NoAlbumAvailable} from "./action-noAlbumAvailable";
+import {NoAlbumAvailable, noAlbumAvailable} from "./action-noAlbumAvailable";
 import {CatalogDispatch} from "../common/catalog-dispatch";
 import {ThunkDeclaration} from "@/libs/dthunks";
-import {loadAlbumsAndMedias} from "./utils-loadAlbumsAndMedias";
 
 export interface OnPageRefreshArgs {
     allAlbums: Album[]
@@ -22,7 +22,7 @@ export interface FetchAlbumsAndMediasPort {
 
 export class OnPageRefresh {
     constructor(
-        private readonly dispatch: (action: MediaLoadFailed | AlbumsAndMediasLoaded | NoAlbumAvailable | ReturnType<typeof mediasLoaded>) => void,
+        private readonly dispatch: (action: MediaLoadFailed | AlbumsAndMediasLoaded | AlbumsLoaded | NoAlbumAvailable | ReturnType<typeof mediasLoaded>) => void,
         private readonly fetchAlbumsAndMediasPort: FetchAlbumsAndMediasPort
     ) {
     }
@@ -32,7 +32,7 @@ export class OnPageRefresh {
     }): Promise<void> => {
         if (!albumId) {
             if (!albumsLoaded) {
-                return this.loadDefaultAlbum().then(this.dispatch)
+                return this.loadAlbumsOnly().then(this.dispatch)
             }
 
         } else if (!albumsLoaded && !albumIdEquals(mediasLoadedFromAlbumId, albumId) && !albumIdEquals(loadingMediasFor, albumId)) {
@@ -82,8 +82,20 @@ export class OnPageRefresh {
         }
     }
 
-    private loadDefaultAlbum = async (): Promise<AlbumsAndMediasLoaded | NoAlbumAvailable | MediaLoadFailed> => {
-        return await loadAlbumsAndMedias(this.fetchAlbumsAndMediasPort);
+    private loadAlbumsOnly = async (): Promise<AlbumsLoaded | NoAlbumAvailable> => {
+        try {
+            const albums = await this.fetchAlbumsAndMediasPort.fetchAlbums();
+
+            if (!albums || albums.length === 0) {
+                return noAlbumAvailable(undefined);
+            }
+
+            return albumsLoaded({albums});
+
+        } catch (e) {
+            console.log("onPageRefresh > loading albums failed", e);
+            return noAlbumAvailable(e as Error);
+        }
     }
 }
 

@@ -1,10 +1,15 @@
 'use client';
 
-import {useReducer} from 'react';
+import {useMemo, useReducer} from 'react';
 import {notFound} from 'next/navigation';
 import {Box} from '@mui/material';
 import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
 import {CatalogViewerPageSelection, catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
+import {displayedAlbumSelector} from '@/domains/catalog/language/selector-displayedAlbum';
+import {deleteDialogSelector} from '@/domains/catalog/album-delete/selector-deleteDialogSelector';
+import {editDatesDialogSelector} from '@/domains/catalog/album-edit-dates/selector-editDatesDialogSelector';
+import {editNameDialogSelector} from '@/domains/catalog/album-edit-name/selector-editNameDialogSelector';
+import {newClientAdapterFactory} from '@/domains/catalog/adapters/client-adapter-factory';
 import {useSessionAwareThunks} from '@/libs/security/client';
 import {ErrorMessage} from '@/components/ErrorMessage';
 import {AlbumHeader} from '../AlbumHeader';
@@ -14,6 +19,9 @@ import {NeighbourAlbumLink} from '../NeighbourAlbumLink';
 import {PreviousAlbumBanner} from '../PreviousAlbumBanner';
 import {AlbumActionsFab} from '../AlbumActionsFab';
 import {NoMedia} from '../NoMedia';
+import {DeleteAlbumModal} from '@/components/DeleteAlbumModal';
+import {EditDatesModal} from '../EditDatesModal';
+import {EditNameDialog} from '../EditNameDialog';
 
 export interface AlbumPageContentProps {
     initialState: CatalogViewerState;
@@ -22,8 +30,8 @@ export interface AlbumPageContentProps {
 export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
 
-    const {onPageRefresh, loadAlbumPage, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
-    useSessionAwareThunks(dispatchOnlyThunks, {dispatch}, state);
+    const adapter = useMemo(() => newClientAdapterFactory(), []);
+    const thunks = useSessionAwareThunks(catalogThunks, {dispatch, adapter}, state);
 
     const selection = catalogViewerPageSelector(state);
 
@@ -31,12 +39,61 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
         notFound();
     }
 
-    return <AlbumPageContentView {...selection}/>;
+    return (
+        <>
+            <AlbumPageContentView
+                {...selection}
+                isOwner={displayedAlbumSelector(state).displayedAlbumIdIsOwned}
+                onRename={thunks.openEditNameDialog}
+                onEditDates={thunks.openEditDatesDialog}
+                onDelete={thunks.openDeleteAlbumDialog}
+            />
+
+            <DeleteAlbumModal
+                {...deleteDialogSelector(state)}
+                onClose={thunks.closeDeleteAlbumDialog}
+                onDelete={thunks.deleteAlbum}
+            />
+            <EditDatesModal
+                {...editDatesDialogSelector(state)}
+                onClose={thunks.closeEditDatesDialog}
+                onSave={thunks.updateAlbumDates}
+                onStartDateChange={thunks.updateEditDatesDialogStartDate}
+                onEndDateChange={thunks.updateEditDatesDialogEndDate}
+                onStartAtDayStartChange={thunks.updateEditDatesDialogStartAtDayStart}
+                onEndAtDayEndChange={thunks.updateEditDatesDialogEndAtDayEnd}
+            />
+            <EditNameDialog
+                {...editNameDialogSelector(state)}
+                onClose={thunks.closeEditNameDialog}
+                onSave={thunks.saveAlbumName}
+                onAlbumNameChange={thunks.changeAlbumName}
+                onFolderNameEnabledChange={thunks.changeFolderNameEnabled}
+                onFolderNameChange={thunks.changeFolderName}
+            />
+        </>
+    );
 }
 
-export type AlbumPageContentViewProps = CatalogViewerPageSelection;
+export interface AlbumPageContentViewProps extends CatalogViewerPageSelection {
+    isOwner: boolean;
+    onRename: () => void;
+    onEditDates: () => void;
+    onDelete: () => void;
+}
 
-export function AlbumPageContentView({albums, displayedAlbum, medias, previousAlbum, nextAlbum, error}: AlbumPageContentViewProps) {
+export function AlbumPageContentView({
+                                         albums,
+                                         displayedAlbum,
+                                         medias,
+                                         previousAlbum,
+                                         nextAlbum,
+                                         error,
+                                         isOwner,
+                                         onRename,
+                                         onEditDates,
+                                         onDelete,
+                                     }: AlbumPageContentViewProps) {
     if (error) {
         return <ErrorMessage error={error} title="Failed to load the album"/>;
     }
@@ -46,7 +103,13 @@ export function AlbumPageContentView({albums, displayedAlbum, medias, previousAl
             <AlbumRail albums={albums} displayedAlbumId={displayedAlbum?.albumId}/>
 
             <Box sx={{flex: 1, minWidth: 0}}>
-                <AlbumHeader album={displayedAlbum}/>
+                <AlbumHeader
+                    album={displayedAlbum}
+                    isOwner={isOwner}
+                    onRename={onRename}
+                    onEditDates={onEditDates}
+                    onDelete={onDelete}
+                />
 
                 {medias.length === 0 ? (
                     <NoMedia nextAlbum={nextAlbum} previousAlbum={previousAlbum}/>
@@ -71,7 +134,12 @@ export function AlbumPageContentView({albums, displayedAlbum, medias, previousAl
             </Box>
 
             <PreviousAlbumBanner album={previousAlbum}/>
-            <AlbumActionsFab/>
+            <AlbumActionsFab
+                isOwner={isOwner}
+                onRename={onRename}
+                onEditDates={onEditDates}
+                onDelete={onDelete}
+            />
         </Box>
     );
 }

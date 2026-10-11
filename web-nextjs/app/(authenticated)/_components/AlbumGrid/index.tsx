@@ -2,6 +2,7 @@
 
 import {Box, IconButton} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Link from 'next/link';
 import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId} from '@/domains/catalog/language/catalog-state';
 import {albumUrl} from '@/domains/catalog/navigation/album-url';
@@ -13,12 +14,13 @@ export interface AlbumGridProps {
     albums: Album[];
     onShare: (albumId: AlbumId) => void;
     onCreateAlbum?: () => void;
+    onDeleteAlbum?: () => void;
     filterOptions: AlbumFilterEntry[];
     activeFilter: AlbumFilterEntry;
     onFilterChange: (filter: AlbumFilterCriterion) => void;
 }
 
-export const AlbumGrid = ({albums, onShare, onCreateAlbum, filterOptions, activeFilter, onFilterChange}: AlbumGridProps) => {
+export const AlbumGrid = ({albums, onShare, onCreateAlbum, onDeleteAlbum, filterOptions, activeFilter, onFilterChange}: AlbumGridProps) => {
     if (albums.length === 0) {
         return <NoAlbum onCreateAlbum={onCreateAlbum}/>;
     }
@@ -47,6 +49,16 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, filterOptions, active
                         aria-label="Create album"
                     >
                         <AddIcon/>
+                    </IconButton>
+                )}
+                {onDeleteAlbum && (
+                    <IconButton
+                        color="primary"
+                        size="large"
+                        onClick={onDeleteAlbum}
+                        aria-label="Delete album"
+                    >
+                        <DeleteIcon/>
                     </IconButton>
                 )}
             </Box>

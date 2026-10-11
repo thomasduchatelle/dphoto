@@ -1,41 +1,41 @@
-# Enable owner-action buttons on the album page with stub modals
+# Wire album-header modals into the album page
 
 **Status**: ready
-**Depends on**: none
+**Depends on**: `05-share-album-modal.md`, `06-rename-album-modal.md`, `07-edit-dates-modal.md`,
+`08-delete-album-modal.md` — this story mounts the modal components those stories deliver.
 
 ## Description
 
-The album page's `AlbumHeader` (desktop) and `AlbumActionsFab` (mobile) already present Share / Rename /
-Dates buttons as **disabled**. This story enables them for album owners, adds a **Delete** button next to
-them, and wires each to a stub modal component so that the modal stories (05, 06, 07, 08) can land
-independently without colliding on the same files.
+Final wiring step for the album page's owner-only actions. Enables the Share / Rename / Dates buttons in
+`AlbumHeader` (currently disabled), adds a Delete button next to them, mirrors them in `AlbumActionsFab`,
+and mounts the four modal components (`ShareAlbumModal`, `RenameAlbumModal`, `EditDatesModal`,
+`DeleteAlbumModal`) inside `AlbumPageContent`, each driven by its selector and the matching thunks.
 
-The thunks these actions dispatch already exist in `web-nextjs/domains/catalog/`:
-
-- Sharing: `openSharingModal` / `closeSharingModal` in `domains/catalog/sharing/`
-- Rename: thunks in `domains/catalog/album-edit-name/`
-- Edit dates: thunks in `domains/catalog/album-edit-dates/`
-- Delete: thunks in `domains/catalog/album-delete/`
-
-If the open/close thunks for rename / edit-dates / delete do not yet exist, create them following the same
-pattern as the sharing modal thunks (`thunk-openSharingModal.ts`, `thunk-closeSharingModal.ts`,
-`action-sharingModalOpened.ts`, `action-sharingModalClosed.ts`) and extend the catalog state in
-`domains/catalog/language/` with the matching open/error fields.
+All four actions are **owner-only**: the buttons must not be rendered for non-owners (not just disabled).
 
 ## Context
 
 - `AlbumHeader` lives at
-  `web-nextjs/app/(authenticated)/albums/[ownerId]/[albumId]/_components/AlbumHeader/index.tsx`. The four
-  action buttons are currently rendered as `<Button ... disabled>`.
-- `AlbumActionsFab` lives next to it and mirrors the actions as a mobile speed-dial.
+  `web-nextjs/app/(authenticated)/albums/[ownerId]/[albumId]/_components/AlbumHeader/index.tsx`. The Share
+  / Rename / Dates buttons are currently rendered as `<Button ... disabled>`. Delete is not yet present.
+- `AlbumActionsFab` is next to it and mirrors the actions as a mobile speed-dial. Mirror the same owner-only
+  logic there, including a new Delete entry.
 - Album ownership is derivable from the catalog state / the authenticated user context already used by the
   page.
-- Share / rename / dates / delete must be **owner-only**: viewers must not see the buttons at all (not just
-  disabled).
-- A stub modal is a component that is mounted when the corresponding `modalOpen` state is true, renders a
-  dialog with a title ("Share / Rename / Edit dates / Delete — not implemented yet"), a Close button wired
-  to the matching `closeXxxModal` thunk, and nothing else. This stub will be replaced by the full modal in
-  stories 05 / 06 / 07 / 08.
+- The four modal components live under
+  `web-nextjs/app/(authenticated)/albums/[ownerId]/[albumId]/_components/` after their respective PRs
+  (05–08). Their props are `<SelectorFrag> & <Handlers>` so wiring is: pass the selector output as a
+  spread, then one handler per thunk.
+- Selectors already exist in `web-nextjs/domains/catalog/`:
+  - `sharing/selector-sharingDialogSelector.ts` → `sharingDialogSelector`
+  - `album-edit-name/selector-editNameDialogSelector.ts` → `editNameDialogSelector`
+  - `album-edit-dates/selector-editDatesDialogSelector.ts` → `editDatesDialogSelector`
+  - `album-delete/selector-deleteDialogSelector.ts` → `deleteDialogSelector`
+- Thunks already exist in the matching slice folders. Follow the pattern used in `HomeContent` for the
+  create-album flow (PR #307) when wiring the client adapter / thunks.
+- Shared helpers duplicated across modal folders by stories 06 / 07 (and 04 for create) may be unified now,
+  or left duplicated and deferred to a follow-up — the subagent should propose the simpler option in the PR
+  description.
 
 ## Acceptance Criteria
 
@@ -44,19 +44,19 @@ pattern as the sharing modal thunks (`thunk-openSharingModal.ts`, `thunk-closeSh
 - A **Delete** button is added next to them in `AlbumHeader`, with destructive styling (`color="error"` or
   equivalent), also owner-only.
 - `AlbumActionsFab` on mobile mirrors all four owner-only actions.
-- Each button dispatches the matching `openXxxModal` thunk when clicked.
-- Four stub modal components are created, one per action, mounted on the album page and controlled by their
-  respective open-state slice. Each stub renders a dialog with a title, a short "Not implemented yet"
-  message, and a Close button wired to `closeXxxModal`.
-- Clicking a button opens the corresponding stub modal; closing it dismisses it; the album page remains
+- Each button dispatches the matching open-modal thunk on click.
+- `AlbumPageContent` mounts the four modal components. Each receives: the output of its selector as a
+  spread, plus one handler prop per thunk the modal exposes (e.g. `onClose`, `onSave`, `onGrant`, etc.).
+- Clicking a button opens its modal with the correct state; closing dismisses it; the album page stays
   interactive underneath.
-- Storybook stories for `AlbumHeader` cover both viewer and owner states (viewer: no buttons; owner: all
-  four buttons visible).
-- Open/close thunks and state slices for rename / edit-dates / delete exist and are tested (following the
-  sharing pattern), if they did not already.
+- Storybook stories for `AlbumHeader` cover both viewer (no buttons) and owner (all four buttons visible)
+  states.
+- Any shared helpers (`DateRangePicker`, `FolderNameInput`) duplicated across modal folders are either
+  consolidated into `web-nextjs/components/` **or** left duplicated with an explicit note in the PR
+  description — pick the simpler option, don't force the extraction if it bloats the diff.
 
 ## Out of scope
 
-- Any real modal content — stories 05, 06, 07, 08 replace the stubs.
-- Changes to the create-album button on the home page — handled by story 04.
+- Any change to the modal components' internal UI — handled by stories 05–08.
+- Any change to the create-album button on the home page — handled by story 04.
 - Any change to the fullscreen media viewer — handled by stories 02 and 03.

@@ -1,6 +1,6 @@
 'use client';
 
-import {Box, Button, IconButton, Stack, Typography} from '@mui/material';
+import {Box, Button, IconButton, Stack, Tooltip, Typography} from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Link from '@/components/Link';
 import {Album} from '@/domains/catalog/language';
@@ -8,13 +8,18 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ShareIcon from "@mui/icons-material/Share";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumHeaderProps {
     album: Album | undefined;
+    isOwner: boolean;
+    onRename: () => void;
+    onEditDates: () => void;
+    onDelete: () => void;
 }
 
-export function AlbumHeader({album}: AlbumHeaderProps) {
+export function AlbumHeader({album, isOwner, onRename, onEditDates, onDelete}: AlbumHeaderProps) {
     return (
         <Box
             sx={(theme) => ({
@@ -44,11 +49,20 @@ export function AlbumHeader({album}: AlbumHeaderProps) {
                     </Typography>
                 )}
             </Box>
-            <Stack direction="row" gap={1} sx={{display: {xs: 'none', lg: 'flex'}, flexShrink: 0}}>
+            <Stack direction="row" gap={1} alignItems="center" sx={{display: {xs: 'none', lg: 'flex'}, flexShrink: 0}}>
                 <Button variant="outlined" color='secondary' startIcon={<PlayArrowIcon/>} disabled>Play</Button>
-                <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} disabled>Share</Button>
-                <Button variant="outlined" color='secondary' startIcon={<DriveFileRenameOutlineIcon/>} disabled>Rename</Button>
-                <Button variant="outlined" color='secondary' startIcon={<CalendarMonthIcon/>} disabled>Dates</Button>
+                {isOwner && (
+                    <>
+                        <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} disabled>Share</Button>
+                        <Button variant="outlined" color='secondary' startIcon={<DriveFileRenameOutlineIcon/>} onClick={onRename}>Rename</Button>
+                        <Button variant="outlined" color='secondary' startIcon={<CalendarMonthIcon/>} onClick={onEditDates}>Dates</Button>
+                        <Tooltip title="Delete album">
+                            <IconButton color='secondary' onClick={onDelete} aria-label="Delete album">
+                                <DeleteIcon/>
+                            </IconButton>
+                        </Tooltip>
+                    </>
+                )}
             </Stack>
         </Box>
     );
