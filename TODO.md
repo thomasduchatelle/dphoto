@@ -42,6 +42,22 @@ TODOs
 * [X] Update the `dphoto configure ...` command: since migration from terraform, the proposed option doesn't work
 * [ ] Update the readme file and other documentation: let's add some user-friendly screenshots ! ... and some C4 modeling
 
+**Deferred UI ideas (post-cutover):**
+
+* [ ] **Random photo discovery** on the home page — surface forgotten memories as a "Highlights" strip above
+  the album list. Needs a `GET /api/v1/owners/[ownerId]/randomPhotos` endpoint. Dropped from the cutover
+  because album covers already cover the "preview" use case.
+* [ ] **Timeline navigation** in the album page header — show adjacent albums with sample photos for seamless
+  temporal browsing. Beyond the existing neighbour-album rail.
+* [ ] **Visual date-picker with photo preview** for create-album and edit-album-dates — show ~12 thumbnails
+  from the selected range as the user adjusts the dates. Needs a backend "medias by date" endpoint
+  (independent of any album).
+* [ ] **Scroll-restore** to the last-viewed media when the full-screen viewer closes. The grid stays mounted
+  so this is only a nice-to-have for users who navigated several photos deep inside the viewer.
+* [ ] **Album preview on hover** (desktop) or two-tap (mobile) — peek at an album's content before
+  committing to a full navigation.
+* [ ] **Progressive image loading** (blur-up low → medium → high quality) in the full-screen viewer.
+
 API latency
 ---------------------------------------
 

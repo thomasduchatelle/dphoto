@@ -1,6 +1,6 @@
 # Full-screen media viewer with route-driven modal interception
 
-**Status**: ready
+**Status**: wontdo — superseded by `specs/2026-10-nextjs-cutover/issues/02-fullscreen-viewer-yarl.md` (content preserved verbatim).
 
 ## Description
 

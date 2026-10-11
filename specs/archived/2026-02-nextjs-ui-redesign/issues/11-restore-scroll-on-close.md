@@ -1,6 +1,6 @@
 # Restore scroll to the last viewed media when the viewer closes
 
-**Status**: ready
+**Status**: wontdo — dropped from the cutover scope. The grid stays mounted behind the modal (per ADR-0001), so a user who closes the viewer returns to their original scroll position. "Scroll to the last-viewed media on close" is a nice-to-have that is deferred and tracked in `TODO.md`.
 
 ## Description
 
@@ -11,8 +11,8 @@ keep browsing from there, instead of landing back at their original scroll posit
 ## Context
 
 - The full-screen viewer is route-driven per
-  **[ADR-0003](../../../docs/adr/0003-photo-viewer-lightbox-driven-by-route.md)** and
-  **[ADR-0001](../../../docs/adr/0001-owner-based-routing-and-modal-interception.md)**: the currently displayed
+  **[ADR-0003](../../../../docs/adr/0003-photo-viewer-lightbox-driven-by-route.md)** and
+  **[ADR-0001](../../../../docs/adr/0001-owner-based-routing-and-modal-interception.md)**: the currently displayed
   media is the `mediaId` in the URL (`/albums/[ownerId]/[albumId]/photos/[mediaId]`), and closing is
   `router.back()`. Determine the last-viewed media from the route — do not add separate bespoke state to track
   it.

@@ -1,6 +1,6 @@
 # Viewer capabilities: zoom, download, position counter, video
 
-**Status**: ready
+**Status**: wontdo — superseded by `specs/2026-10-nextjs-cutover/issues/03-viewer-capabilities.md` (content preserved verbatim).
 
 ## Description
 
