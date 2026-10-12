@@ -4,6 +4,7 @@ import {
     COOKIE_AUTH_REDIRECT_AFTER_LOGIN,
     COOKIE_AUTH_STATE,
     COOKIE_SESSION_ACCESS_TOKEN,
+    COOKIE_SESSION_ACCESS_TOKEN_EXPIRES_AT,
     COOKIE_SESSION_REFRESH_TOKEN,
     COOKIE_SESSION_USER_INFO
 } from './constants';
@@ -28,6 +29,7 @@ export function clearFullSession(): SetCookies {
         [COOKIE_SESSION_ACCESS_TOKEN]: COOKIE_VALUE_DELETE,
         [COOKIE_SESSION_REFRESH_TOKEN]: COOKIE_VALUE_DELETE,
         [COOKIE_SESSION_USER_INFO]: COOKIE_VALUE_DELETE,
+        [COOKIE_SESSION_ACCESS_TOKEN_EXPIRES_AT]: {value: '', maxAge: 0, httpOnly: false},
 
         [COOKIE_AUTH_STATE]: COOKIE_VALUE_DELETE,
         [COOKIE_AUTH_CODE_VERIFIER]: COOKIE_VALUE_DELETE,
@@ -69,10 +71,16 @@ export function storeSession(session: {
     refreshToken: string;
     idToken: string;
 }): SetCookies {
+    const expiresAtSeconds = Math.floor(Date.now() / 1000) + session.accessTokenExpiresIn;
     return {
         [COOKIE_SESSION_ACCESS_TOKEN]: {value: session.accessToken, maxAge: session.accessTokenExpiresIn},
         [COOKIE_SESSION_REFRESH_TOKEN]: {value: session.refreshToken, maxAge: 30 * 24 * 3600},
         [COOKIE_SESSION_USER_INFO]: {value: session.idToken, maxAge: 30 * 24 * 3600},
+        [COOKIE_SESSION_ACCESS_TOKEN_EXPIRES_AT]: {
+            value: expiresAtSeconds.toString(),
+            maxAge: session.accessTokenExpiresIn,
+            httpOnly: false,
+        },
     };
 }
 

@@ -15,6 +15,7 @@ export interface ReadCookieStore {
 export interface CookieValue {
     value: string;
     maxAge: number; // use 0 to delete
+    httpOnly?: boolean; // defaults to true
 }
 
 export function appliesCookies(response: NextResponse, setCookies?: SetCookies): NextResponse {
@@ -23,7 +24,7 @@ export function appliesCookies(response: NextResponse, setCookies?: SetCookies):
             response.cookies.set(key, value.value, {
                 maxAge: value.maxAge,
                 path: '/',
-                httpOnly: true,
+                httpOnly: value.httpOnly ?? true,
                 secure: true,
                 sameSite: 'lax',
             });
