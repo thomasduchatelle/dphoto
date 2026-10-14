@@ -1,6 +1,7 @@
 'use client';
 
-import {Box} from '@mui/material';
+import {Box, IconButton} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import Link from 'next/link';
 import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId} from '@/domains/catalog/language/catalog-state';
 import {albumUrl} from '@/domains/catalog/navigation/album-url';
@@ -24,12 +25,30 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, filterOptions, active
 
     return (
         <Box>
-            <Box sx={{width: '100%', maxWidth: 1920, mx: 'auto', marginBottom: 4}}>
+            <Box sx={{
+                width: '100%',
+                maxWidth: 1920,
+                mx: 'auto',
+                marginBottom: 4,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+            }}>
                 <AlbumFilterControl
                     filterOptions={filterOptions}
                     activeFilter={activeFilter}
                     onFilterChange={onFilterChange}
                 />
+                {onCreateAlbum && (
+                    <IconButton
+                        color="primary"
+                        size="large"
+                        onClick={onCreateAlbum}
+                        aria-label="Create album"
+                    >
+                        <AddIcon/>
+                    </IconButton>
+                )}
             </Box>
             <Box
                 component="section"
