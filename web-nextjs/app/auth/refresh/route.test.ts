@@ -6,12 +6,7 @@ import {NextRequest} from 'next/server';
 vi.mock('server-only', () => ({}));
 
 const {POST} = await import('./route');
-import {
-    COOKIE_SESSION_ACCESS_TOKEN,
-    COOKIE_SESSION_ACCESS_TOKEN_EXPIRES_AT,
-    COOKIE_SESSION_REFRESH_TOKEN,
-    COOKIE_SESSION_USER_INFO,
-} from '@/libs/security/constants';
+import {COOKIE_SESSION_ACCESS_TOKEN, COOKIE_SESSION_REFRESH_TOKEN, COOKIE_SESSION_USER_INFO} from '@/libs/security/constants';
 import {FakeOIDCServer} from '@/__tests__/helpers/fake-oidc-server';
 import {createCognitoAccessToken, createTokenResponse, TEST_CLIENT_ID, TEST_CLIENT_SECRET, TEST_ISSUER_URL} from '@/__tests__/helpers/test-helper-oidc';
 import {setCookiesOf} from '@/__tests__/helpers/test-assertions';
@@ -40,7 +35,7 @@ describe('POST /auth/refresh', () => {
         fakeOIDCServer.stop();
     });
 
-    it('should return 401 and clear session cookies when no refresh token is present', async () => {
+    it('should return 401 and clear session cookies (access token cleared as non-httpOnly to match how it is stored)', async () => {
         const request = new NextRequest('https://example.com/auth/refresh', {method: 'POST'});
 
         const response = await POST(request);
@@ -48,10 +43,9 @@ describe('POST /auth/refresh', () => {
         expect(response.status).toBe(401);
         const cookies = setCookiesOf(response);
         expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toMatchObject({value: '', maxAge: 0});
-        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN]).toMatchObject({value: '', maxAge: 0});
-        expect(cookies[COOKIE_SESSION_USER_INFO]).toMatchObject({value: '', maxAge: 0});
-        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN_EXPIRES_AT]).toMatchObject({value: '', maxAge: 0});
-        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN_EXPIRES_AT].httpOnly).toBeUndefined();
+        expect(cookies[COOKIE_SESSION_ACCESS_TOKEN].httpOnly).toBeUndefined();
+        expect(cookies[COOKIE_SESSION_REFRESH_TOKEN]).toMatchObject({value: '', maxAge: 0, httpOnly: true});
+        expect(cookies[COOKIE_SESSION_USER_INFO]).toMatchObject({value: '', maxAge: 0, httpOnly: true});
     });
 
     it('should return 401 and clear session cookies when the refresh fails upstream', async () => {

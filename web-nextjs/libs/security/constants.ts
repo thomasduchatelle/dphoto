@@ -1,7 +1,6 @@
 export const COOKIE_SESSION_ACCESS_TOKEN = 'dphoto-access-token';
 export const COOKIE_SESSION_REFRESH_TOKEN = 'dphoto-refresh-token';
 export const COOKIE_SESSION_USER_INFO = 'dphoto-user-info';
-export const COOKIE_SESSION_ACCESS_TOKEN_EXPIRES_AT = 'dphoto-access-token-expires-at';
 
 export const COOKIE_AUTH_STATE = 'dphoto-oauth-state';
 export const COOKIE_AUTH_CODE_VERIFIER = 'dphoto-oauth-code-verifier';

@@ -19,7 +19,7 @@ export interface CookieValue {
 }
 
 export function appliesCookies(response: NextResponse, setCookies?: SetCookies): NextResponse {
-    if(setCookies) {
+    if (setCookies) {
         for (const [key, value] of Object.entries(setCookies)) {
             response.cookies.set(key, value.value, {
                 maxAge: value.maxAge,
