@@ -51,11 +51,14 @@ export type MasterCatalogAdapter =
     & SaveAlbumNamePort
     & FetchAlbumsAndMediasPort
 
+export type FetchFn = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
 export class FetchCatalogAdapter implements MasterCatalogAdapter {
     constructor(
         private readonly accessTokenSupplier: () => Promise<string | undefined>,
         private readonly baseUrlSupplier: () => Promise<string> = async () => "/api/v1",
         private readonly basePathSupplier: () => Promise<string> = async () => "",
+        private readonly fetchImpl: FetchFn = fetch,
     ) {
     }
 
@@ -271,7 +274,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
         try {
             const fullUrl = `${baseUrl}${url}`;
             console.log("Requesting:", fullUrl, options);
-            const response = await fetch(fullUrl, {...defaultOptions, ...options});
+            const response = await this.fetchImpl(fullUrl, {...defaultOptions, ...options});
 
             if (!response.ok) {
                 const contentType = response.headers.get('content-type');
