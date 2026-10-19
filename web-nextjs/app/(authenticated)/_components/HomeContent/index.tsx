@@ -1,31 +1,52 @@
 'use client';
 
 import {AlbumGrid} from "../AlbumGrid";
-import {catalogReducer, catalogThunks, CatalogViewerState} from "@/domains/catalog";
+import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, catalogReducer, catalogThunks, CatalogViewerState} from "@/domains/catalog";
 import {useReducer} from "react";
-import {useThunks} from "@/libs/dthunks/react";
+import {useSessionAwareThunks} from "@/libs/security/client";
 import {ErrorMessage} from "@/components/ErrorMessage";
 
 export const HomeContent = ({initialState}: { initialState: CatalogViewerState }) => {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {onPageRefresh, loadAlbumPage, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
-    const thunks = useThunks(dispatchOnlyThunks, {dispatch}, state);
-
-    if (state.error) {
-        return (
-            <ErrorMessage error={state.error} title="Failed to load the albums"/>
-        )
-    }
+    const thunks = useSessionAwareThunks(dispatchOnlyThunks, {dispatch}, state);
 
     return (
-        <AlbumGrid
+        <HomeContentView
+            error={state.error}
             albums={state.albums}
             filterOptions={state.albumFilterOptions}
             activeFilter={state.albumFilter}
             onFilterChange={thunks.onAlbumFilterChange}
             onShare={thunks.openSharingModal}
+        />
+    );
+}
+
+export interface HomeContentViewProps {
+    error?: Error;
+    albums: Album[];
+    filterOptions: AlbumFilterEntry[];
+    activeFilter: AlbumFilterEntry;
+    onFilterChange: (filter: AlbumFilterCriterion) => void;
+    onShare: (albumId: AlbumId) => void;
+}
+
+export const HomeContentView = ({error, albums, filterOptions, activeFilter, onFilterChange, onShare}: HomeContentViewProps) => {
+    if (error) {
+        return (
+            <ErrorMessage error={error} title="Failed to load the albums"/>
+        );
+    }
+
+    return (
+        <AlbumGrid
+            albums={albums}
+            filterOptions={filterOptions}
+            activeFilter={activeFilter}
+            onFilterChange={onFilterChange}
+            onShare={onShare}
         />
     );
 }

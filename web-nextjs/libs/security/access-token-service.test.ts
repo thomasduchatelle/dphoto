@@ -79,7 +79,7 @@ describe('refreshSession', () => {
         fakeOIDCServer.stop();
     });
 
-    it('should return failure and clear cookies when no refresh token is provided', async () => {
+    it('should return failure and clear cookies when no refresh token is provided (access token cleared as non-httpOnly to match how it is stored)', async () => {
         const cookieStore: ReadCookieStore = {
             get: (name: string) => undefined
         };
@@ -87,7 +87,7 @@ describe('refreshSession', () => {
         const result = await refreshSession(cookieStore);
 
         expect(result.success).toBe(false);
-        expect(result.cookies[COOKIE_SESSION_ACCESS_TOKEN]).toEqual({value: '', maxAge: 0});
+        expect(result.cookies[COOKIE_SESSION_ACCESS_TOKEN]).toEqual({value: '', maxAge: 0, httpOnly: false});
         expect(result.cookies[COOKIE_SESSION_REFRESH_TOKEN]).toEqual({value: '', maxAge: 0});
         expect(result.cookies[COOKIE_SESSION_USER_INFO]).toEqual({value: '', maxAge: 0});
     });
@@ -118,7 +118,7 @@ describe('refreshSession', () => {
 
         // openid-client library validates responses and rejects fake JWTs
         expect(result.success).toBe(false);
-        expect(result.cookies[COOKIE_SESSION_ACCESS_TOKEN]).toEqual({value: '', maxAge: 0});
+        expect(result.cookies[COOKIE_SESSION_ACCESS_TOKEN]).toEqual({value: '', maxAge: 0, httpOnly: false});
         expect(result.cookies[COOKIE_SESSION_REFRESH_TOKEN]).toEqual({value: '', maxAge: 0});
         expect(result.cookies[COOKIE_SESSION_USER_INFO]).toEqual({value: '', maxAge: 0});
     });
@@ -140,7 +140,7 @@ describe('refreshSession', () => {
         const result = await refreshSession(cookieStore);
 
         expect(result.success).toBe(false);
-        expect(result.cookies[COOKIE_SESSION_ACCESS_TOKEN]).toEqual({value: '', maxAge: 0});
+        expect(result.cookies[COOKIE_SESSION_ACCESS_TOKEN]).toEqual({value: '', maxAge: 0, httpOnly: false});
         expect(result.cookies[COOKIE_SESSION_REFRESH_TOKEN]).toEqual({value: '', maxAge: 0});
         expect(result.cookies[COOKIE_SESSION_USER_INFO]).toEqual({value: '', maxAge: 0});
     });

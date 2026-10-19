@@ -1,7 +1,8 @@
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
-import {AlbumPageContent} from './index';
+import {AlbumPageContentView} from './index';
 import AppLayout from '@/components/AppLayout';
 import {MediaType, MediaWithinADay} from '@/domains/catalog/language';
+import {catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
 import {loadedStateWithTwoAlbums, sampleAlbums, someMediasByDays,} from '@/domains/catalog/tests/test-helper-state';
 
 const multiDayMedias: MediaWithinADay[] = [
@@ -156,9 +157,11 @@ const baseState = {
     medias: multiDayMedias,
 };
 
+const baseSelection = catalogViewerPageSelector(baseState);
+
 const meta = {
     title: 'Catalog/AlbumPageContent',
-    component: AlbumPageContent,
+    component: AlbumPageContentView,
     parameters: {layout: 'fullscreen'},
     decorators: [
         (Story: () => React.ReactNode) => (
@@ -175,10 +178,8 @@ const meta = {
             </AppLayout>
         ),
     ],
-    args: {
-        initialState: baseState,
-    },
-} satisfies Meta<typeof AlbumPageContent>;
+    args: baseSelection,
+} satisfies Meta<typeof AlbumPageContentView>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -186,26 +187,22 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const PreviousAlbum: Story = {
-    args: {
-        initialState: {
-            ...baseState,
-            mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
-        },
-    },
+    args: catalogViewerPageSelector({
+        ...baseState,
+        mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
+    }),
 };
 
 export const NextAlbum: Story = {
-    args: {
-        initialState: {
-            ...baseState,
-            mediasLoadedFromAlbumId: sampleAlbums[2].albumId,
-            medias: someMediasByDays.map(d => ({
-                ...d,
-                medias: d.medias.map(m => ({...m, contentPath: '/thumbnails/the-witcher-3-01.jpg', thumbnailUrl: '/thumbnails/the-witcher-3-01.jpg'})),
-            })),
-            albums: [baseState.albums[0], baseState.albums[1], baseState.albums[2]],
-        },
-    },
+    args: catalogViewerPageSelector({
+        ...baseState,
+        mediasLoadedFromAlbumId: sampleAlbums[2].albumId,
+        medias: someMediasByDays.map(d => ({
+            ...d,
+            medias: d.medias.map(m => ({...m, contentPath: '/thumbnails/the-witcher-3-01.jpg', thumbnailUrl: '/thumbnails/the-witcher-3-01.jpg'})),
+        })),
+        albums: [baseState.albums[0], baseState.albums[1], baseState.albums[2]],
+    }),
 };
 
 export const ScrolledUp: Story = {
@@ -218,60 +215,51 @@ export const ScrolledUp: Story = {
 };
 
 export const SingleAlbum: Story = {
-    args: {
-        initialState: {
-            ...loadedStateWithTwoAlbums,
-            allAlbums: [sampleAlbums[0]],
-            albums: [sampleAlbums[0]],
-            mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
-            medias: multiDayMedias,
-        },
-    },
+    args: catalogViewerPageSelector({
+        ...loadedStateWithTwoAlbums,
+        allAlbums: [sampleAlbums[0]],
+        albums: [sampleAlbums[0]],
+        mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
+        medias: multiDayMedias,
+    }),
 };
 
 export const NoMedias: Story = {
-    args: {
-        initialState: {
-            ...baseState,
-            medias: [],
-        },
-    },
+    args: catalogViewerPageSelector({
+        ...baseState,
+        medias: [],
+    }),
 };
 
 export const NoMediasNextOnly: Story = {
-    args: {
-        initialState: {
-            ...baseState,
-            mediasLoadedFromAlbumId: sampleAlbums[sampleAlbums.length - 1].albumId,
-            medias: [],
-        },
-    },
+    args: catalogViewerPageSelector({
+        ...baseState,
+        mediasLoadedFromAlbumId: sampleAlbums[sampleAlbums.length - 1].albumId,
+        medias: [],
+    }),
 };
 
 export const NoMediasPreviousOnly: Story = {
-    args: {
-        initialState: {
-            ...baseState,
-            mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
-            medias: [],
-        },
-    },
+    args: catalogViewerPageSelector({
+        ...baseState,
+        mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
+        medias: [],
+    }),
 };
 
 export const NoMediasAlone: Story = {
-    args: {
-        initialState: {
-            ...loadedStateWithTwoAlbums,
-            allAlbums: [sampleAlbums[0]],
-            albums: [sampleAlbums[0]],
-            mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
-            medias: [],
-        },
-    },
+    args: catalogViewerPageSelector({
+        ...loadedStateWithTwoAlbums,
+        allAlbums: [sampleAlbums[0]],
+        albums: [sampleAlbums[0]],
+        mediasLoadedFromAlbumId: sampleAlbums[0].albumId,
+        medias: [],
+    }),
 };
 
 export const WithError: Story = {
     args: {
-        initialState: {...loadedStateWithTwoAlbums, error: new Error('Failed to fetch medias from the server')},
+        ...baseSelection,
+        error: new Error('Failed to fetch medias from the server'),
     },
 };

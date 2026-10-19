@@ -4,8 +4,8 @@ import {useReducer} from 'react';
 import {notFound} from 'next/navigation';
 import {Box} from '@mui/material';
 import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
-import {catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
-import {useThunks} from '@/libs/dthunks/react';
+import {CatalogViewerPageSelection, catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
+import {useSessionAwareThunks} from '@/libs/security/client';
 import {ErrorMessage} from '@/components/ErrorMessage';
 import {AlbumHeader} from '../AlbumHeader';
 import {AlbumRail} from '../AlbumRail';
@@ -23,16 +23,22 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
 
     const {onPageRefresh, loadAlbumPage, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
-    useThunks(dispatchOnlyThunks, {dispatch}, state);
+    useSessionAwareThunks(dispatchOnlyThunks, {dispatch}, state);
 
-    const {displayedAlbum, medias, albums, previousAlbum, nextAlbum, albumNotFound, error} = catalogViewerPageSelector(state);
+    const selection = catalogViewerPageSelector(state);
 
-    if (error) {
-        return <ErrorMessage error={error} title="Failed to load the album"/>;
+    if (!selection.error && selection.albumNotFound) {
+        notFound();
     }
 
-    if (albumNotFound) {
-        notFound();
+    return <AlbumPageContentView {...selection}/>;
+}
+
+export type AlbumPageContentViewProps = CatalogViewerPageSelection;
+
+export function AlbumPageContentView({albums, displayedAlbum, medias, previousAlbum, nextAlbum, error}: AlbumPageContentViewProps) {
+    if (error) {
+        return <ErrorMessage error={error} title="Failed to load the album"/>;
     }
 
     return (
