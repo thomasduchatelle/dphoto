@@ -89,7 +89,7 @@ describe('logout-utils', () => {
 
             const deleteCookieValue = {value: '', maxAge: 0};
 
-            expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toStrictEqual(deleteCookieValue);
+            expect(cookies[COOKIE_SESSION_ACCESS_TOKEN]).toStrictEqual({...deleteCookieValue, httpOnly: false});
             expect(cookies[COOKIE_SESSION_REFRESH_TOKEN]).toStrictEqual(deleteCookieValue);
             expect(cookies[COOKIE_SESSION_USER_INFO]).toStrictEqual(deleteCookieValue);
             expect(cookies[COOKIE_AUTH_STATE]).toStrictEqual(deleteCookieValue);

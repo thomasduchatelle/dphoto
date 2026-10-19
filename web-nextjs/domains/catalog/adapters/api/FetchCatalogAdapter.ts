@@ -3,6 +3,7 @@ import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
 import {mediaUrl, prefixRelativeUrl, withBasePath} from "@/libs/requests/media-url";
+import {SessionExpiredException} from "@/libs/security/client";
 
 interface RestAlbum {
     owner: string
@@ -273,6 +274,10 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
             console.log("Requesting:", fullUrl, options);
             const response = await fetch(fullUrl, {...defaultOptions, ...options});
 
+            if (response.status === 401) {
+                throw new SessionExpiredException(`'${options?.method ?? 'GET'} ${fullUrl}' was rejected by the backend as unauthenticated`);
+            }
+
             if (!response.ok) {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
@@ -292,6 +297,9 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
 
             return response.json();
         } catch (err) {
+            if (err instanceof SessionExpiredException) {
+                throw err;
+            }
             if (err instanceof CatalogError) {
                 throw err;
             }
