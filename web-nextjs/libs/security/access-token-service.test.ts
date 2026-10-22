@@ -145,3 +145,33 @@ describe('refreshSession', () => {
         expect(result.cookies[COOKIE_SESSION_USER_INFO]).toEqual({value: '', maxAge: 0});
     });
 });
+
+describe('refreshSession with local auth bypass', () => {
+    beforeEach(() => {
+        vi.stubEnv('NODE_ENV', 'development');
+        vi.stubEnv('OAUTH_ISSUER_URL', '');
+    });
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    it('should mint a fresh owner-scoped stub session without any refresh token', async () => {
+        const cookieStore: ReadCookieStore = {
+            get: () => undefined,
+        };
+
+        const result = await refreshSession(cookieStore);
+
+        expect(result.success).toBe(true);
+
+        const accessCookie = result.cookies[COOKIE_SESSION_ACCESS_TOKEN];
+        expect(accessCookie.httpOnly).toBe(false);
+        expect(accessCookie.maxAge).toBeGreaterThan(24 * 3600);
+
+        const token = await parseCurrentAccessToken(accessCookie.value);
+        expect(token).not.toBeNull();
+        expect(token?.isOwner).toBe(true);
+        expect(token?.aboutToExpire).toBe(false);
+    });
+});

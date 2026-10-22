@@ -1,52 +1,52 @@
 'use client';
 
 import {AlbumGrid} from "../AlbumGrid";
-import {Album, AlbumFilterCriterion, AlbumFilterEntry, AlbumId, catalogReducer, catalogThunks, CatalogViewerState} from "@/domains/catalog";
-import {useReducer} from "react";
+import {CreateAlbumModal} from "../CreateAlbumModal";
+import {catalogReducer, catalogThunks, CatalogViewerState} from "@/domains/catalog";
+import {createDialogSelector} from "@/domains/catalog/album-create";
+import {newClientAdapterFactory} from "@/domains/catalog/adapters/client-adapter-factory";
+import {useMemo, useReducer} from "react";
 import {useSessionAwareThunks} from "@/libs/security/client";
 import {ErrorMessage} from "@/components/ErrorMessage";
 
 export const HomeContent = ({initialState}: { initialState: CatalogViewerState }) => {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
 
-    const {onPageRefresh, loadAlbumPage, deleteAlbum, updateAlbumDates, submitCreateAlbum, saveAlbumName, grantAlbumAccess, revokeAlbumAccess, ...dispatchOnlyThunks} = catalogThunks;
-    const thunks = useSessionAwareThunks(dispatchOnlyThunks, {dispatch}, state);
+    const adapter = useMemo(() => newClientAdapterFactory(), []);
 
-    return (
-        <HomeContentView
-            error={state.error}
-            albums={state.albums}
-            filterOptions={state.albumFilterOptions}
-            activeFilter={state.albumFilter}
-            onFilterChange={thunks.onAlbumFilterChange}
-            onShare={thunks.openSharingModal}
-        />
-    );
-}
+    const thunks = useSessionAwareThunks(catalogThunks, {dispatch, adapter}, state);
 
-export interface HomeContentViewProps {
-    error?: Error;
-    albums: Album[];
-    filterOptions: AlbumFilterEntry[];
-    activeFilter: AlbumFilterEntry;
-    onFilterChange: (filter: AlbumFilterCriterion) => void;
-    onShare: (albumId: AlbumId) => void;
-}
+    const createDialog = createDialogSelector(state);
+    const canCreateAlbum = state.currentUser.isOwner;
 
-export const HomeContentView = ({error, albums, filterOptions, activeFilter, onFilterChange, onShare}: HomeContentViewProps) => {
-    if (error) {
+    if (state.error) {
         return (
-            <ErrorMessage error={error} title="Failed to load the albums"/>
+            <ErrorMessage error={state.error} title="Failed to load the albums"/>
         );
     }
 
     return (
-        <AlbumGrid
-            albums={albums}
-            filterOptions={filterOptions}
-            activeFilter={activeFilter}
-            onFilterChange={onFilterChange}
-            onShare={onShare}
-        />
+        <>
+            <AlbumGrid
+                albums={state.albums}
+                filterOptions={state.albumFilterOptions}
+                activeFilter={state.albumFilter}
+                onFilterChange={thunks.onAlbumFilterChange}
+                onShare={thunks.openSharingModal}
+                onCreateAlbum={canCreateAlbum ? thunks.openCreateDialog : undefined}
+            />
+            <CreateAlbumModal
+                {...createDialog}
+                onClose={thunks.closeCreateDialog}
+                onSubmit={thunks.submitCreateAlbum}
+                onNameChange={thunks.changeAlbumName}
+                onFolderNameChange={thunks.changeFolderName}
+                onWithCustomFolderNameChange={thunks.changeFolderNameEnabled}
+                onStartsAtStartOfTheDayChange={thunks.updateCreateDialogStartsAtStartOfTheDay}
+                onEndsAtEndOfTheDayChange={thunks.updateCreateDialogEndsAtEndOfTheDay}
+                onStartDateChange={thunks.updateCreateDialogStartDate}
+                onEndDateChange={thunks.updateCreateDialogEndDate}
+            />
+        </>
     );
 }
