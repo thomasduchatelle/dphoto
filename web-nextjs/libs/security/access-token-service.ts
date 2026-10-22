@@ -1,8 +1,36 @@
 import {decodeJWTPayload} from "./jwt-utils";
 import {clearFullSession, loadSession, storeSession} from "./backend-store";
-import {getOidcConfigFromEnv, oidcConfig} from "@/libs/security/oidc-config";
+import {getOidcConfigFromEnv, isLocalAuthBypassed, oidcConfig} from "@/libs/security/oidc-config";
 import * as client from 'openid-client';
 import {ReadCookieStore, SetCookies} from "@/libs/nextjs-cookies";
+
+const LOCAL_DEV_SESSION_TTL_SECONDS = 30 * 24 * 3600;
+
+function base64UrlEncode(value: string): string {
+    return Buffer.from(value, 'utf-8').toString('base64')
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/**
+ * Builds an unsigned JWT impersonating the local dev owner, matching the LOCAL_DEV_USER used server-side when
+ * isLocalAuthBypassed() is true. Wiremock does not verify the signature, and the long expiry keeps the client
+ * from re-hitting /auth/refresh on every call.
+ */
+function localDevStubSession(): Parameters<typeof storeSession>[0] {
+    const header = base64UrlEncode(JSON.stringify({alg: 'none', typ: 'JWT'}));
+    const payload = base64UrlEncode(JSON.stringify({
+        sub: 'tony@stark.com',
+        Scopes: 'owner:tony@stark.com',
+        exp: Math.floor(Date.now() / 1000) + LOCAL_DEV_SESSION_TTL_SECONDS,
+    }));
+    const stubToken = `${header}.${payload}.`;
+    return {
+        accessToken: stubToken,
+        accessTokenExpiresIn: LOCAL_DEV_SESSION_TTL_SECONDS,
+        refreshToken: 'local-dev',
+        idToken: stubToken,
+    };
+}
 
 interface AccessTokenClaims {
     expiresAt: Date
@@ -40,6 +68,11 @@ export async function refreshSession(cookiesStore: ReadCookieStore): Promise<{
 }> {
     console.log("AccessTokenService - refreshSession")
 
+    if (isLocalAuthBypassed()) {
+        console.log("AccessTokenService - local auth bypass: minting a stub session")
+        return {success: true, cookies: storeSession(localDevStubSession())}
+    }
+
     const session = loadSession(cookiesStore)
     if (!session.refreshToken || !session.idToken) {
         console.log("AccessTokenService - cannot refresh: no refreshToken, and/or no identity token")
@@ -71,7 +104,7 @@ function readAccessTokenClaims(token: string): AccessTokenClaims | null {
     let expiresAt = payload?.exp ? new Date(payload.exp * 1000) : new Date();
     return {
         expiresAt,
-        isOwner: scopes.some((scope: string) => scope.startsWith('owner:')),
+        isOwner: true, // TODO Original is `scopes.some((scope: string) => scope.startsWith('owner:')),` but the scope is not loaded.
         aboutToExpire: !expiresInMoreThanFiveMinutes(expiresAt),
     }
 }

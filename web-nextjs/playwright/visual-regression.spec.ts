@@ -33,8 +33,15 @@ Object.keys(stories).forEach((storyId) => {
             // Storybook URL format: iframe.html?id=story-id&viewMode=story
             await page.goto(`${url}/iframe.html?id=${storyId}&viewMode=story`);
 
-            // Wait for Storybook to render the story
-            await page.waitForSelector('#storybook-root', {timeout: 10000});
+            // Wait for Storybook to render the story.
+            // Only wait for the root to be attached, not visible: components that render in a
+            // portal (e.g. MUI Dialog/Modal) mount their content on document.body and leave
+            // #storybook-root empty and aria-hidden, so a visibility wait would always time out.
+            await page.waitForSelector('#storybook-root', {state: 'attached', timeout: 10000});
+
+            // Storybook toggles `sb-show-main` on the body once the story is rendered (and removes
+            // the "preparing" class). This is portal-agnostic, unlike checking the root's visibility.
+            // await page.waitForSelector('body.sb-show-main:not(.sb-show-preparing-story)', {timeout: 10000});
 
             // Wait for network to be idle to ensure all resources are loaded
             await page.waitForLoadState('networkidle');
