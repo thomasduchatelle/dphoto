@@ -4,10 +4,13 @@ import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import {UserPoolClient} from "aws-cdk-lib/aws-cognito";
+import {CatalogAccessManager} from "../catalog/catalog-access-manager";
+import {CognitoPreTokenConstruct} from "../access/cognito-pre-token-construct";
 
 export interface CognitoStackProps extends cdk.StackProps {
     environmentName: string;
     config: EnvironmentConfig;
+    catalogStore: CatalogAccessManager;
 }
 
 export interface CognitoStackExports {
@@ -37,6 +40,12 @@ export class CognitoStack extends cdk.Stack {
 
         this.userPoolClient = this.createDPhotoClient(prefix, props.config.domainName, props.config.cognitoExtraRedirectURLs);
         this.userPoolClient.node.addDependency(googleProvider)
+
+        new CognitoPreTokenConstruct(this, 'PreTokenGeneration', {
+            environmentName: props.environmentName,
+            userPool: this.userPool,
+            catalogStore: props.catalogStore,
+        });
     }
 
     /**
