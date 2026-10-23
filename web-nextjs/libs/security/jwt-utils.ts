@@ -1,7 +1,9 @@
 interface JWTPayload {
     sub?: string;
-    Scopes?: string;  // Backend token - space-separated scopes with "owner:" prefix
-    scope?: string;   // Cognito token - space-separated OAuth scopes
+    scope?: string;              // Cognito token - space-separated OAuth scopes
+    "dphoto:email"?: string;     // Injected by the pre-token-generation trigger - the DPhoto UserId
+    "dphoto:owner"?: string;     // Injected by the pre-token-generation trigger - empty/absent for non-owners
+    "dphoto:scopes"?: string;    // Injected by the pre-token-generation trigger - space-separated DPhoto scopes
     exp?: number;
     iat?: number;
 
