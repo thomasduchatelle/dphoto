@@ -20,7 +20,9 @@ function localDevStubSession(): Parameters<typeof storeSession>[0] {
     const header = base64UrlEncode(JSON.stringify({alg: 'none', typ: 'JWT'}));
     const payload = base64UrlEncode(JSON.stringify({
         sub: 'tony@stark.com',
-        Scopes: 'owner:tony@stark.com',
+        'dphoto:email': 'tony@stark.com',
+        'dphoto:owner': 'tony@stark.com',
+        'dphoto:scopes': 'owner:tony@stark.com',
         exp: Math.floor(Date.now() / 1000) + LOCAL_DEV_SESSION_TTL_SECONDS,
     }));
     const stubToken = `${header}.${payload}.`;
@@ -100,11 +102,10 @@ function readAccessTokenClaims(token: string): AccessTokenClaims | null {
         return null;
     }
 
-    const scopes = payload.Scopes?.split(' ') ?? []
-    let expiresAt = payload?.exp ? new Date(payload.exp * 1000) : new Date();
+    const expiresAt = new Date(payload.exp * 1000);
     return {
         expiresAt,
-        isOwner: true, // TODO Original is `scopes.some((scope: string) => scope.startsWith('owner:')),` but the scope is not loaded.
+        isOwner: !!payload["dphoto:owner"],
         aboutToExpire: !expiresInMoreThanFiveMinutes(expiresAt),
     }
 }

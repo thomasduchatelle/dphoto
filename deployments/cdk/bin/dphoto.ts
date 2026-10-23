@@ -44,11 +44,13 @@ export default async function main(
         description: `DPhoto ${environmentName}: create Cognito User Pool and Client (semi-persistent)`,
         environmentName: environmentName,
         config: config,
+        catalogStore: infrastructureStack.catalogStore,
         env: {
             account: account,
             region: region
         },
     });
+    cognitoStack.addDependency(infrastructureStack);
 
     // Application Stack has everything else, it can be destroyed and recreated at any time (gateway, workload deployments, UI, ...)
     const applicationStack = new ApplicationStack(app, `dphoto-${environmentName}-application`, {

@@ -97,7 +97,6 @@ func (t *OAuthTokenMethod) String() string {
 
 type OAuth2IssuerConfig struct {
 	ConfigSource     string
-	UserInfoEndpoint string
 	PublicKeysLookup func(method OAuthTokenMethod) (interface{}, error)
 }
 
