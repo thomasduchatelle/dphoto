@@ -5,6 +5,9 @@ import {Checkbox, FormControlLabel, Grid, TextField} from "@mui/material";
 import {DatePicker, DateTimePicker} from "@mui/x-date-pickers";
 import dayjs, {Dayjs} from "dayjs";
 
+const DATE_FORMAT = "DD/MM/YYYY";
+const DATE_TIME_FORMAT = "DD/MM/YYYY HH:mm";
+
 export interface DateRangePickerProps {
     startDate: Date | null;
     endDate: Date | null;
@@ -70,6 +73,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 {startAtDayStart ? (
                     <DatePicker
                         label="First day"
+                        format={DATE_FORMAT}
                         disabled={disabled}
                         value={fromUTCDate(startDate)}
                         onChange={onStartChange}
@@ -86,6 +90,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 ) : (
                     <DateTimePicker
                         label="First day"
+                        format={DATE_TIME_FORMAT}
                         disabled={disabled}
                         value={fromUTCDate(startDate)}
                         onChange={onStartChange}
@@ -117,6 +122,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 {endAtDayEnd ? (
                     <DatePicker
                         label="Last day"
+                        format={DATE_FORMAT}
                         disabled={disabled}
                         value={fromUTCDate(endDate)}
                         onChange={onEndChange}
@@ -132,6 +138,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 ) : (
                     <DateTimePicker
                         label="Last day"
+                        format={DATE_TIME_FORMAT}
                         disabled={disabled}
                         value={fromUTCDate(endDate)}
                         onChange={onEndChange}
