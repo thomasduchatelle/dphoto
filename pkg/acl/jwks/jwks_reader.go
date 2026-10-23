@@ -14,9 +14,8 @@ import (
 )
 
 type openIdConfiguration struct {
-	Issuer           string `json:"issuer"`
-	JwksUri          string `json:"jwks_uri"`
-	UserInfoEndpoint string `json:"userinfo_endpoint"`
+	Issuer  string `json:"issuer"`
+	JwksUri string `json:"jwks_uri"`
 }
 
 type jwksKey struct {
@@ -44,8 +43,7 @@ func readUrl(openIdConfigUrl string) (string, aclcore.OAuth2IssuerConfig, error)
 	}
 
 	return index.Issuer, aclcore.OAuth2IssuerConfig{
-		ConfigSource:     openIdConfigUrl,
-		UserInfoEndpoint: index.UserInfoEndpoint,
+		ConfigSource: openIdConfigUrl,
 		PublicKeysLookup: func(method aclcore.OAuthTokenMethod) (interface{}, error) {
 			if method.Algorithm != jwt.SigningMethodRS256.Alg() {
 				return nil, errors.Errorf("[OAuth2JwksConfigReader] %s algorithm is not supported.", method.Algorithm)
