@@ -57,6 +57,22 @@ describe('parseCurrentAccessToken', () => {
         expect(result?.expiresAt.getTime()).toBeLessThan(Date.now());
         expect(result?.aboutToExpire).toBe(true);
     });
+
+    it('should mark the user as owner when the dphoto:owner claim is present', async () => {
+        const token = createCognitoAccessToken({owner: 'tomdush@gmail.com'});
+
+        const result = await parseCurrentAccessToken(token);
+
+        expect(result?.isOwner).toBe(true);
+    });
+
+    it('should mark the user as non-owner when the dphoto:owner claim is absent', async () => {
+        const token = createCognitoAccessToken({owner: '', dphotoScopes: 'visitor'});
+
+        const result = await parseCurrentAccessToken(token);
+
+        expect(result?.isOwner).toBe(false);
+    });
 });
 
 describe('refreshSession', () => {

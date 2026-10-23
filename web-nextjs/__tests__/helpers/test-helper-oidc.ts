@@ -11,9 +11,12 @@ export const createCognitoAccessToken = (claims: {
     scope?: string;
     exp?: number;
     iat?: number;
+    email?: string;
+    owner?: string;
+    dphotoScopes?: string;
 }): string => {
     const now = Math.floor(Date.now() / 1000);
-    const payload = {
+    const payload: Record<string, unknown> = {
         sub: claims.sub || '52d5a4b4-4021-70f5-51c2-6bbdc346fc76',
         'cognito:groups': ['eu-west-1_7CivTjR7R_Google'],
         iss: TEST_ISSUER_URL,
@@ -27,7 +30,14 @@ export const createCognitoAccessToken = (claims: {
         iat: claims.iat || now,
         jti: '0e3c8081-1807-437b-a269-cf1b8757cd73',
         username: claims.username || 'Google_109832440005038882419',
+        'dphoto:email': claims.email || 'tomdush@gmail.com',
+        'dphoto:scopes': claims.dphotoScopes ?? 'owner:tomdush@gmail.com',
     };
+    if (claims.owner !== undefined) {
+        payload['dphoto:owner'] = claims.owner;
+    } else {
+        payload['dphoto:owner'] = 'tomdush@gmail.com';
+    }
 
     const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
     const body = Buffer.from(JSON.stringify(payload)).toString('base64url');

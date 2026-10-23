@@ -127,7 +127,6 @@ func MultiIssuerAccessTokenDecoder() aclcore.TokenDecoder {
 				cognitoDecoder = &aclcore.CognitoTokenDecoder{
 					ExpectedIssuer: issuer,
 					IssuerConfig:   config,
-					ScopesReader:   ssoAuthenticatorPermissionReader(),
 				}
 				log.Infof("Cognito token decoder initialized for issuer: %s", issuer)
 			}

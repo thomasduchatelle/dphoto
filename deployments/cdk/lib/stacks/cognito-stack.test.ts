@@ -2,27 +2,35 @@ import * as cdk from 'aws-cdk-lib';
 import {Template} from 'aws-cdk-lib/assertions';
 import {CognitoStack} from './cognito-stack';
 import {environments} from '../config/environments';
+import {FakeCatalogAccessManager} from '../test/fakes/fake-access-managers';
+
+jest.mock('aws-cdk-lib/aws-lambda', () => {
+    const actual = jest.requireActual('aws-cdk-lib/aws-lambda');
+    return {
+        ...actual,
+        Code: {
+            ...actual.Code,
+            fromAsset: jest.fn().mockImplementation(() => {
+                return actual.Code.fromAsset('bin/');
+            }),
+        }
+    };
+});
 
 describe('CognitoStack', () => {
     let app: cdk.App;
     let stack: CognitoStack;
     let template: Template;
-    let mockCognitoCertificate: cdk.aws_certificatemanager.ICertificate;
+    let fakeCatalogAccessManager: FakeCatalogAccessManager;
 
     beforeEach(() => {
         app = new cdk.App();
-        
-        // Create a temporary stack for the certificate import
-        const tempStack = new cdk.Stack(app, 'TempStack');
-        mockCognitoCertificate = cdk.aws_certificatemanager.Certificate.fromCertificateArn(
-            tempStack,
-            'MockCognitoCert',
-            'arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012'
-        );
+        fakeCatalogAccessManager = new FakeCatalogAccessManager();
 
         stack = new CognitoStack(app, 'TestCognitoStack', {
             environmentName: 'test',
             config: environments.test,
+            catalogStore: fakeCatalogAccessManager,
             env: {
                 account: '123456789012',
                 region: 'eu-west-1'
@@ -54,6 +62,20 @@ describe('CognitoStack', () => {
         template.hasResourceProperties('AWS::Cognito::UserPoolGroup', {
             GroupName: 'visitor',
         });
+    });
+
+    test('attaches a V2 Pre Token Generation trigger to the user pool', () => {
+        template.hasResourceProperties('AWS::Cognito::UserPool', {
+            LambdaConfig: {
+                PreTokenGenerationConfig: {
+                    LambdaVersion: 'V2_0',
+                },
+            },
+        });
+    });
+
+    test('grants the pre-token Lambda read access to the catalog table', () => {
+        expect(fakeCatalogAccessManager.hasBeenGrantedForCatalogRead('dphoto-test-cognito-pre-token')).toBe('');
     });
 
     test('configures Google as identity provider', () => {
