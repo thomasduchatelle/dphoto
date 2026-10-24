@@ -1,4 +1,4 @@
-import {CatalogViewerState} from "../language";
+import {Album, AlbumId, CatalogError, CatalogViewerAction, CatalogViewerState} from "../language";
 import {loadedStateWithTwoAlbums} from "../tests/test-helper-state";
 import {createDialogOpened} from "./action-createDialogOpened";
 import {createDialogSelector} from "./selector-createDialogSelector";
@@ -6,6 +6,8 @@ import {startDateUpdated} from "../date-range/action-startDateUpdated";
 import {endDateUpdated} from "../date-range/action-endDateUpdated";
 import {atStartDayToggled} from "../date-range/action-atStartDayToggled";
 import {atEndDayToggled} from "../date-range/action-atEndDayToggled";
+import {albumNameChanged} from "../base-name-edit/action-albumNameChanged";
+import {CreateAlbumPort, CreateAlbumRequest, submitCreateAlbumThunk} from "./thunk-submitCreateAlbum";
 
 describe("acceptance:createAlbum-dateRange", () => {
     let state: CatalogViewerState;
@@ -85,5 +87,37 @@ describe("acceptance:createAlbum-dateRange", () => {
 
         selection = createDialogSelector(state);
         expect(selection.dateRangeError).toBeUndefined();
+    });
+
+    it("should surface a folder name clash as an error under the name field", async () => {
+        const nameAction = albumNameChanged("Clair Obscur");
+        state = nameAction.reducer(state, nameAction);
+
+        const port: CreateAlbumPort = {
+            createAlbum: (_request: CreateAlbumRequest): Promise<AlbumId> => {
+                return Promise.reject(new CatalogError("AlbumFolderNameAlreadyTakenErr", "An album with this folder name already exists."));
+            },
+            fetchAlbums: (): Promise<Album[]> => Promise.reject(new Error("should not be called")),
+        };
+
+        await expect(
+            submitCreateAlbumThunk((action: CatalogViewerAction) => {
+                state = action.reducer(state, action);
+            }, port, {
+                albumName: "Clair Obscur",
+                startDate: new Date("2023-06-01"),
+                endDate: new Date("2023-06-30"),
+                customFolderName: "",
+                startAtDayStart: true,
+                endAtDayEnd: true,
+                isCustomFolderNameEnabled: false,
+            })
+        ).rejects.toThrow();
+
+        const selection = createDialogSelector(state);
+        expect(selection.nameError).toBe("An album with this folder name already exists.");
+        expect(selection.error).toBeUndefined();
+        expect(selection.canSubmit).toBe(false);
+        expect(selection.isLoading).toBe(false);
     });
 });

@@ -9,7 +9,7 @@ import {
 import {createDialogSelector} from "./selector-createDialogSelector";
 
 describe('action:createAlbumFailed', () => {
-    it('should set the error and clear the loading status when dialog is a CreateDialog', () => {
+    it('should set the general error and clear the loading status when dialog is a CreateDialog', () => {
         const state: CatalogViewerState = {
             ...loadedStateWithTwoAlbums,
             dialog: {
@@ -17,15 +17,34 @@ describe('action:createAlbumFailed', () => {
                 isLoading: true,
             },
         };
-        const errorMessage = "Failed to create album";
 
-        const action = createAlbumFailed(errorMessage);
+        const action = createAlbumFailed({error: "Failed to create album"});
         const newState = action.reducer(state, action);
 
         expect(createDialogSelector(newState)).toEqual({
             ...createDialogSelectionPrefilledForMar25,
             isLoading: false,
-            error: errorMessage,
+            error: "Failed to create album",
+        });
+    });
+
+    it('should set the name error and disable submit when a nameError is provided', () => {
+        const state: CatalogViewerState = {
+            ...loadedStateWithTwoAlbums,
+            dialog: {
+                ...createDialogPrefilledForMar25,
+                isLoading: true,
+            },
+        };
+
+        const action = createAlbumFailed({nameError: {nameError: "An album with this folder name already exists."}});
+        const newState = action.reducer(state, action);
+
+        expect(createDialogSelector(newState)).toEqual({
+            ...createDialogSelectionPrefilledForMar25,
+            isLoading: false,
+            canSubmit: false,
+            nameError: "An album with this folder name already exists.",
         });
     });
 
@@ -34,9 +53,8 @@ describe('action:createAlbumFailed', () => {
             ...loadedStateWithTwoAlbums,
             dialog: deleteDialogWithOneAlbum,
         };
-        const errorMessage = "Failed to create album";
 
-        const action = createAlbumFailed(errorMessage);
+        const action = createAlbumFailed({error: "Failed to create album"});
         const newState = action.reducer(state, action);
 
         expect(newState).toBe(state);
@@ -47,9 +65,8 @@ describe('action:createAlbumFailed', () => {
             ...loadedStateWithTwoAlbums,
             dialog: undefined,
         };
-        const errorMessage = "Failed to create album";
 
-        const action = createAlbumFailed(errorMessage);
+        const action = createAlbumFailed({error: "Failed to create album"});
         const newState = action.reducer(state, action);
 
         expect(newState).toBe(state);

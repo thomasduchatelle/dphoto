@@ -1,9 +1,14 @@
 import {createAction} from "@/libs/daction";
-import {CatalogViewerState, isCreateDialog} from "../language";
+import {CatalogViewerState, editNameDialogNoError, isCreateDialog, NameError} from "../language";
 
-export const createAlbumFailed = createAction<CatalogViewerState, string>(
+interface CreateAlbumFailedPayload {
+    nameError?: NameError;
+    error?: string;
+}
+
+export const createAlbumFailed = createAction<CatalogViewerState, CreateAlbumFailedPayload>(
     "CreateAlbumFailed",
-    (current: CatalogViewerState, error: string) => {
+    (current: CatalogViewerState, {nameError, error}: CreateAlbumFailedPayload) => {
         if (!isCreateDialog(current.dialog)) {
             return current;
         }
@@ -13,6 +18,7 @@ export const createAlbumFailed = createAction<CatalogViewerState, string>(
             dialog: {
                 ...current.dialog,
                 isLoading: false,
+                nameError: nameError ?? editNameDialogNoError,
                 error,
             },
         };

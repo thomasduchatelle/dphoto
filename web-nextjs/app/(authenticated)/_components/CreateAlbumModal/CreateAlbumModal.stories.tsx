@@ -78,6 +78,16 @@ export const NameAlreadyExists: Story = {
     },
 };
 
+export const FolderNameAlreadyExists: Story = {
+    args: {
+        albumName: 'Clair Obscur',
+        isCustomFolderNameEnabled: true,
+        customFolderName: '2025-04_clair-obscur',
+        folderNameError: 'An album with this folder name already exists.',
+        canSubmit: false,
+    },
+};
+
 export const Loading: Story = {
     args: {
         albumName: 'Clair Obscur',
