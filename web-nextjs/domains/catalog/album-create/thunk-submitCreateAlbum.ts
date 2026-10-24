@@ -44,7 +44,7 @@ export async function submitCreateAlbumThunk(
     });
 
     if (!validation.areDatesValid || !validation.isDateRangeValid) {
-        dispatch(createAlbumFailed({message: validation.dateRangeError ?? "The start and end dates are mandatory."}));
+        dispatch(createAlbumFailed({error: validation.dateRangeError ?? "The start and end dates are mandatory."}));
         return;
     }
 
@@ -64,10 +64,11 @@ export async function submitCreateAlbumThunk(
         const albums = await createAlbumPort.fetchAlbums();
         dispatch(albumsLoaded({albums, redirectTo: albumId}));
     } catch (error) {
-        if (isCatalogError(error)) {
-            dispatch(createAlbumFailed({code: error.code, message: error.message}));
+        if (isCatalogError(error) && error.code === "AlbumFolderNameAlreadyTakenErr") {
+            const nameError = isCustomFolderNameEnabled ? {folderNameError: error.message} : {nameError: error.message};
+            dispatch(createAlbumFailed({nameError}));
         } else {
-            dispatch(createAlbumFailed({message: getErrorMessage(error) ?? "The album couldn't be created, try again later."}));
+            dispatch(createAlbumFailed({error: getErrorMessage(error) ?? "The album couldn't be created, try again later."}));
         }
         throw error;
     }

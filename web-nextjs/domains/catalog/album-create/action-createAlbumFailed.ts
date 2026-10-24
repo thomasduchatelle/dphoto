@@ -2,28 +2,15 @@ import {createAction} from "@/libs/daction";
 import {CatalogViewerState, editNameDialogNoError, isCreateDialog, NameError} from "../language";
 
 interface CreateAlbumFailedPayload {
-    code?: string;
-    message: string;
+    nameError?: NameError;
+    error?: string;
 }
 
 export const createAlbumFailed = createAction<CatalogViewerState, CreateAlbumFailedPayload>(
     "CreateAlbumFailed",
-    (current: CatalogViewerState, {code, message}: CreateAlbumFailedPayload) => {
+    (current: CatalogViewerState, {nameError, error}: CreateAlbumFailedPayload) => {
         if (!isCreateDialog(current.dialog)) {
             return current;
-        }
-
-        let nameError: NameError = editNameDialogNoError;
-        let error: string | undefined = undefined;
-
-        if (code === "AlbumFolderNameAlreadyTakenErr") {
-            if (current.dialog.isCustomFolderNameEnabled) {
-                nameError = {folderNameError: message};
-            } else {
-                nameError = {nameError: message};
-            }
-        } else {
-            error = message;
         }
 
         return {
@@ -31,7 +18,7 @@ export const createAlbumFailed = createAction<CatalogViewerState, CreateAlbumFai
             dialog: {
                 ...current.dialog,
                 isLoading: false,
-                nameError,
+                nameError: nameError ?? editNameDialogNoError,
                 error,
             },
         };
