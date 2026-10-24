@@ -1,6 +1,6 @@
 # Full-screen media viewer with route-driven modal interception
 
-**Status**: ready
+**Status**: done
 **Depends on**: none — independent of the modal stories; can start on day 1.
 
 ## Description

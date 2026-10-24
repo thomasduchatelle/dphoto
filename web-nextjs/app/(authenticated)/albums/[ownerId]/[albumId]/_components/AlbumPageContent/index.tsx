@@ -48,11 +48,11 @@ export function AlbumPageContentView({albums, displayedAlbum, medias, previousAl
             <Box sx={{flex: 1, minWidth: 0}}>
                 <AlbumHeader album={displayedAlbum}/>
 
-                {medias.length === 0 ? (
+                {medias.length === 0 || !displayedAlbum ? (
                     <NoMedia nextAlbum={nextAlbum} previousAlbum={previousAlbum}/>
                 ) : (
                     <>
-                        <AlbumMediaGrid medias={medias}/>
+                        <AlbumMediaGrid albumId={displayedAlbum.albumId} medias={medias}/>
                         {nextAlbum && (
                             <Box
                                 sx={{

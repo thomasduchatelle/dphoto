@@ -1,19 +1,26 @@
 import {Box} from '@mui/material';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
-import {Media, MediaType} from '@/domains/catalog/language';
+import Link from '@/components/Link';
+import {AlbumId, Media, MediaType} from '@/domains/catalog/language';
+import {photoUrl} from '@/domains/catalog/navigation';
 
 export interface MediaThumbnailProps {
+    albumId: AlbumId;
     media: Media;
 }
 
-export function MediaThumbnail({media}: MediaThumbnailProps) {
+export function MediaThumbnail({albumId, media}: MediaThumbnailProps) {
     return (
         <Box
+            component={Link}
+            href={photoUrl(albumId, media.id)}
+            prefetch={false}
             sx={{
                 aspectRatio: '1',
                 position: 'relative',
                 overflow: 'hidden',
                 bgcolor: 'rgba(255,255,255,0.05)',
+                display: 'block',
             }}
         >
             <Box
