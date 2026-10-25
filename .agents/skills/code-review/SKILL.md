@@ -1,9 +1,17 @@
 ---
 name: code-review
-description: "Review the changes since a fixed point (commit, branch, tag, or merge-base): can the code be merged ?"
+description: "Review the code changes on a branch: can the code be merged? It defines the priorities, and the code review standards, to use on this repository. You cannot code and review ; if you coded, dispatch a subagent to do the review."
 ---
 
+You cannot code and review ; if you coded, dispatch a subagent to do the review.
+
+# Code review
+
 **You must answer a simple - but complex - question: can this code be merged ?**
+
+You are to review all the changes for the branch you're on. Load the commits, inspect the code, read the requirements in the issue-tracker to understand the context, load the relevant skills.
+
+## Comment only on what matter
 
 The criticality of the comments are classified as follows:
 
@@ -13,16 +21,31 @@ The criticality of the comments are classified as follows:
 4. **risk of poor maintainability** - architecture and standard has been violated, testing strategy hasn't been respected, and that will affect future development. Look for responsibility leakage, poor boundaries, dead code or unnecessary code that could cause confusion... You're not nitpicking here, it's confirmed serious offences.
 5. **risk of bugs** - newly delivered features will not work as expected. Look for any smell in the code that has been produced, any accidental behaviour. Explain why the test missed it if possible.
 
-After that line, no point of raising a comment. Ignore every "poor coding standard" nitpicking, strict guidance or skilled not followed, recommended but not necessary changes.
+If asked to review a certain aspect (ex: feature parity), add it to the above list.
 
-You're the last line of defence. Before you, the code has been pair-programed and reviewed by a lead. After it's straight to production. You must make it count, not making noise.
+**You shall only comment on what would prevent the branch to be merged: no nitpicking, no praising.** You're the last line of defence. Before you, the code has been pair-programed and reviewed by a lead. After it's straight to production. You must make it count, not making noise.
 
----
+## Assess the mergeability
 
-You are to review all the changes for the branch you're on. Load the commits, inspect the code, read the requirements in the issue-tracker to understand the context.
+After a thorough review of the changes, give a clear recommendation:
 
-If you've been asked to review a PR, post a single comment on the PR with your recommendation and your findings. The recommendations are:
-
-* `MERGE` - no issue has been found, the PR is safe to merge.
-* `RECONSIDER` - while there is no confirmed critical issue (data loss, regression, security), one point needs to be investigated to confirm it's a false-positive.
 * `HOLD` - a critical issue has been found: it is not safe to merge.
+* `RECONSIDER` - while there is no confirmed critical issue (data loss, regression, security), at least one point needs to be investigated to fix or to mark as false-positive.
+* `MERGE` - no issue has been found, the PR is safe to merge.
+
+## Where to comment
+
+Use the most appropriate way to report your comments:
+
+* if reviewing on a PR, then comment on the PR.
+* if reviewing a local branch, comment in the chat.
+
+## Follow-up reviews
+
+If reviewing a PR that you have already reviewed (comments from the same account), only review what has changed and:
+
+* raise new comment only if they were introduced by the recent changes.
+* resolve or close previous comments that are not relevant any more.
+* if your comment was answered but not fixed, review the answer. Then resolve the comment if you can confirm the reason the code wasn't changed, or push-back further if you consider the author is still missing something.
+
+Finally, conclude with a new mergeability recommendation.
