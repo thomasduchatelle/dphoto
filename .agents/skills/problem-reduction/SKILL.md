@@ -51,7 +51,7 @@ Keep every part concise and short, do not extrapolate.
 
 ## Common pitfalls
 
-* **no history in the issues** - when amending an issue, the resulting issue must be as it would be if it was written properly on the first time: do not mention the reason of the change or what it was before, it will confuse the reader.
+* **no history in the issues** - when amending an issue, the resulting issue must be as it would be if it was written properly on the first time: do not mention the reason of the change or what it was before, it will confuse the reader. The user might explain its decision and idea so you can adapt or push back ; these explanations are adressed to you, they are not to be recorded. 
 * **keep it concise** - if the user can describe a requirement in two sentences, you shall keep it 2 sentences as well. Only extend it if it brings important information that were discussed before with the user. Do not add things that you're thinking about: if you can come up with the solution, so can the agent. If that's non-obvious, you should debate it with the user first.
 * **fragmented issues** - there is no benefit to splitting an issue that already fits into a coding session. If issues become too small for no benefit (parallelisation), raise it to the user.
 * **sequential tasks** - several tasks that need to be implemented in a certain order and without possible parallelisation is a sign of fragmented issues.
