@@ -100,6 +100,12 @@ have no refresh path, so a tab left open past the access-token TTL fails the nex
 `POST /auth/refresh` route handler reusing `refreshSession`, and a shared `fetch` wrapper that
 retries-on-401 once. Soft-blocks 05–08 so write-stories don't inherit the stale-tab assumption.
 
+### 11 — Viewer slideshow (Play auto-advances)
+
+Post-cutover enhancement (not a launch criterion). Make the existing **Play** button start an auto-advancing
+full-screen slideshow via YARL's bundled Slideshow plugin, keeping the route-driven URL contract. Depends on
+02 (viewer) and 01 (Play wiring).
+
 ### 10 — Cutover: delete `web/` and drop the basepath
 
 Mechanical closure of the feature. Only picked up when 01–08 are all `done`.
