@@ -1,6 +1,6 @@
 # Neighbour-album rail: limit to 7 albums centred on the displayed one
 
-**Status**: ready
+**Status**: done
 **Depends on**: none — a self-contained change to the rail selection + `AlbumRail`; can start on day 1.
 
 ## Description

@@ -99,7 +99,7 @@ export interface AlbumPageContentViewProps extends CatalogViewerPageSelection {
 }
 
 export function AlbumPageContentView({
-                                         albums,
+                                         railAlbums,
                                          displayedAlbum,
                                          medias,
                                          firstMediaHref,
@@ -119,7 +119,7 @@ export function AlbumPageContentView({
 
     return (
         <Box sx={{display: 'flex', alignItems: 'flex-start', mx: {xs: -2, sm: -3, md: -4}, mt: {xs: -2, sm: -3, md: -4}}}>
-            <AlbumRail albums={albums} displayedAlbumId={displayedAlbum?.albumId}/>
+            <AlbumRail albums={railAlbums} displayedAlbumId={displayedAlbum?.albumId}/>
 
             <Box sx={{flex: 1, minWidth: 0}}>
                 <AlbumHeader

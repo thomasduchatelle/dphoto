@@ -51,6 +51,7 @@ describe("action:albumsAndMediasLoaded", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[0]],
+            railAlbums: [twoAlbums[0]],
             displayedAlbum: twoAlbums[0],
             previousAlbum: undefined,
             nextAlbum: undefined,
@@ -98,6 +99,7 @@ describe("action:albumsAndMediasLoaded", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [loadedStateWithTwoAlbums.albums[0], newDirectlyOwnedAlbum],
+            railAlbums: [loadedStateWithTwoAlbums.albums[0], newDirectlyOwnedAlbum],
             displayedAlbum: twoAlbums[0],
             medias: groupByDay(someMediasByDays.flatMap(m => m.medias)),
         });
@@ -164,6 +166,7 @@ describe("action:albumsAndMediasLoaded", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[1]],
+            railAlbums: [twoAlbums[1]],
             displayedAlbum: twoAlbums[1],
             previousAlbum: undefined,
             nextAlbum: undefined,

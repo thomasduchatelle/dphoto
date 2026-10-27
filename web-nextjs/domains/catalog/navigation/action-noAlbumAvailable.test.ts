@@ -16,6 +16,7 @@ describe("action:noAlbumAvailable", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             albumsLoaded: true,
             albums: [],
+            railAlbums: [],
             displayedAlbum: undefined,
             medias: [],
             mediasLoaded: true,

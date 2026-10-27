@@ -230,6 +230,7 @@ export const loadedStateWithTwoAlbums: CatalogViewerState = {
 export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = {
     albumsLoaded: true,
     albums: twoAlbums,
+    railAlbums: twoAlbums,
     displayedAlbum: twoAlbums[0],
     previousAlbum: twoAlbums[1],
     nextAlbum: undefined,
