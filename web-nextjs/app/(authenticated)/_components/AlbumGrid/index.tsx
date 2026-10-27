@@ -1,6 +1,6 @@
 'use client';
 
-import {Box, IconButton} from '@mui/material';
+import {Box, Button, IconButton, Tooltip} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Link from 'next/link';
@@ -42,24 +42,52 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, onDeleteAlbum, filter
                     onFilterChange={onFilterChange}
                 />
                 {onCreateAlbum && (
-                    <IconButton
-                        color="primary"
-                        size="large"
-                        onClick={onCreateAlbum}
-                        aria-label="Create album"
-                    >
-                        <AddIcon/>
-                    </IconButton>
+                    <>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<AddIcon/>}
+                            onClick={onCreateAlbum}
+                            aria-label="Create album"
+                            sx={{display: {xs: 'none', sm: 'inline-flex'}}}
+                        >
+                            Create
+                        </Button>
+                        <Tooltip title="Create album">
+                            <IconButton
+                                color="secondary"
+                                onClick={onCreateAlbum}
+                                aria-label="Create album"
+                                sx={{display: {xs: 'inline-flex', sm: 'none'}}}
+                            >
+                                <AddIcon/>
+                            </IconButton>
+                        </Tooltip>
+                    </>
                 )}
                 {onDeleteAlbum && (
-                    <IconButton
-                        color="primary"
-                        size="large"
-                        onClick={onDeleteAlbum}
-                        aria-label="Delete album"
-                    >
-                        <DeleteIcon/>
-                    </IconButton>
+                    <>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<DeleteIcon/>}
+                            onClick={onDeleteAlbum}
+                            aria-label="Delete album"
+                            sx={{display: {xs: 'none', sm: 'inline-flex'}}}
+                        >
+                            Delete
+                        </Button>
+                        <Tooltip title="Delete album">
+                            <IconButton
+                                color="secondary"
+                                onClick={onDeleteAlbum}
+                                aria-label="Delete album"
+                                sx={{display: {xs: 'inline-flex', sm: 'none'}}}
+                            >
+                                <DeleteIcon/>
+                            </IconButton>
+                        </Tooltip>
+                    </>
                 )}
             </Box>
             <Box

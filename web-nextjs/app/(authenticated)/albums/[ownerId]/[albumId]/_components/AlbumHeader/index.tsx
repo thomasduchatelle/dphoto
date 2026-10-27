@@ -9,6 +9,7 @@ import ShareIcon from "@mui/icons-material/Share";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
 import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumHeaderProps {
@@ -19,9 +20,10 @@ export interface AlbumHeaderProps {
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
+    onCreateAlbum: () => void;
 }
 
-export function AlbumHeader({album, isOwner, playHref, onShare, onRename, onEditDates, onDelete}: AlbumHeaderProps) {
+export function AlbumHeader({album, isOwner, playHref, onShare, onRename, onEditDates, onDelete, onCreateAlbum}: AlbumHeaderProps) {
     return (
         <Box
             sx={(theme) => ({
@@ -65,6 +67,7 @@ export function AlbumHeader({album, isOwner, playHref, onShare, onRename, onEdit
                 </Button>
                 {isOwner && (
                     <>
+                        <Button variant="outlined" color='secondary' startIcon={<AddIcon/>} onClick={onCreateAlbum}>Create</Button>
                         <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} onClick={onShare}>Share</Button>
                         <Button variant="outlined" color='secondary' startIcon={<DriveFileRenameOutlineIcon/>} onClick={onRename}>Rename</Button>
                         <Button variant="outlined" color='secondary' startIcon={<CalendarMonthIcon/>} onClick={onEditDates}>Dates</Button>
