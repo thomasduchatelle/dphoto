@@ -1,11 +1,13 @@
 'use client';
 
-import {useMemo, useReducer} from 'react';
-import {notFound, useRouter} from 'next/navigation';
+import {useEffect, useMemo, useReducer} from 'react';
+import {notFound, useParams, useRouter} from 'next/navigation';
 import {Box} from '@mui/material';
 import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
 import {CatalogViewerPageSelection, catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
+import {albumUrl} from '@/domains/catalog/navigation/album-url';
 import {displayedAlbumSelector} from '@/domains/catalog/language/selector-displayedAlbum';
+import {createDialogSelector} from '@/domains/catalog/album-create';
 import {deleteDialogSelector} from '@/domains/catalog/album-delete/selector-deleteDialogSelector';
 import {editDatesDialogSelector} from '@/domains/catalog/album-edit-dates/selector-editDatesDialogSelector';
 import {editNameDialogSelector} from '@/domains/catalog/album-edit-name/selector-editNameDialogSelector';
@@ -20,6 +22,7 @@ import {NeighbourAlbumLink} from '../NeighbourAlbumLink';
 import {PreviousAlbumBanner} from '../PreviousAlbumBanner';
 import {AlbumActionsFab} from '../AlbumActionsFab';
 import {NoMedia} from '../NoMedia';
+import {CreateAlbumModal} from '../../../../../_components/CreateAlbumModal';
 import {DeleteAlbumModal} from '@/components/DeleteAlbumModal';
 import {EditDatesModal} from '../EditDatesModal';
 import {EditNameDialog} from '../EditNameDialog';
@@ -32,18 +35,26 @@ export interface AlbumPageContentProps {
 export function AlbumPageContent({initialState}: AlbumPageContentProps) {
     const [state, dispatch] = useReducer(catalogReducer, initialState);
     const router = useRouter();
+    const params = useParams<{ ownerId: string; albumId: string }>();
 
     const adapter = useMemo(() => newClientAdapterFactory(), []);
     const thunks = useSessionAwareThunks(catalogThunks, {dispatch, adapter}, state);
 
     const selection = catalogViewerPageSelector(state);
 
+    const displayedAlbumId = selection.displayedAlbum?.albumId;
+    const routeAlbumId = {owner: decodeURIComponent(params.ownerId), folderName: decodeURIComponent(params.albumId)};
+    useEffect(() => {
+        if (displayedAlbumId && (displayedAlbumId.owner !== routeAlbumId.owner || displayedAlbumId.folderName !== routeAlbumId.folderName)) {
+            router.replace(albumUrl(displayedAlbumId));
+        }
+    }, [displayedAlbumId, routeAlbumId.owner, routeAlbumId.folderName, router]);
+
     if (!selection.error && selection.albumNotFound) {
         notFound();
     }
 
     const firstMediaHref = selection.firstMediaHref;
-    const displayedAlbumId = selection.displayedAlbum?.albumId;
 
     return (
         <>
@@ -55,8 +66,21 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                 onRename={thunks.openEditNameDialog}
                 onEditDates={thunks.openEditDatesDialog}
                 onDelete={thunks.openDeleteAlbumDialog}
+                onCreateAlbum={thunks.openCreateDialog}
             />
 
+            <CreateAlbumModal
+                {...createDialogSelector(state)}
+                onClose={thunks.closeCreateDialog}
+                onSubmit={thunks.submitCreateAlbum}
+                onNameChange={thunks.changeAlbumName}
+                onFolderNameChange={thunks.changeFolderName}
+                onWithCustomFolderNameChange={thunks.changeFolderNameEnabled}
+                onStartsAtStartOfTheDayChange={thunks.updateCreateDialogStartsAtStartOfTheDay}
+                onEndsAtEndOfTheDayChange={thunks.updateCreateDialogEndsAtEndOfTheDay}
+                onStartDateChange={thunks.updateCreateDialogStartDate}
+                onEndDateChange={thunks.updateCreateDialogEndDate}
+            />
             <ShareAlbumModal
                 {...sharingDialogSelector(state)}
                 onClose={thunks.closeSharingModal}
@@ -96,6 +120,7 @@ export interface AlbumPageContentViewProps extends CatalogViewerPageSelection {
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
+    onCreateAlbum: () => void;
 }
 
 export function AlbumPageContentView({
@@ -112,6 +137,7 @@ export function AlbumPageContentView({
                                          onRename,
                                          onEditDates,
                                          onDelete,
+                                         onCreateAlbum,
                                      }: AlbumPageContentViewProps) {
     if (error) {
         return <ErrorMessage error={error} title="Failed to load the album"/>;
@@ -130,6 +156,7 @@ export function AlbumPageContentView({
                     onRename={onRename}
                     onEditDates={onEditDates}
                     onDelete={onDelete}
+                    onCreateAlbum={onCreateAlbum}
                 />
 
                 {medias.length === 0 || !displayedAlbum ? (
@@ -162,6 +189,7 @@ export function AlbumPageContentView({
                 onRename={onRename}
                 onEditDates={onEditDates}
                 onDelete={onDelete}
+                onCreateAlbum={onCreateAlbum}
             />
         </Box>
     );

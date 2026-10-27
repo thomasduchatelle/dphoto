@@ -7,6 +7,7 @@ import ShareIcon from '@mui/icons-material/Share';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 
 export interface AlbumActionsFabProps {
     isOwner: boolean;
@@ -15,9 +16,10 @@ export interface AlbumActionsFabProps {
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
+    onCreateAlbum: () => void;
 }
 
-export function AlbumActionsFab({isOwner, onPlay, onShare, onRename, onEditDates, onDelete}: AlbumActionsFabProps) {
+export function AlbumActionsFab({isOwner, onPlay, onShare, onRename, onEditDates, onDelete, onCreateAlbum}: AlbumActionsFabProps) {
     return (
         <SpeedDial
             ariaLabel="Album actions"
@@ -43,6 +45,7 @@ export function AlbumActionsFab({isOwner, onPlay, onShare, onRename, onEditDates
                 />
             )}
             {isOwner ? [
+                <SpeedDialAction key="create" icon={<AddIcon/>} tooltipTitle="Create" tooltipOpen onClick={onCreateAlbum}/>,
                 <SpeedDialAction key="share" icon={<ShareIcon/>} tooltipTitle="Share" tooltipOpen onClick={onShare}/>,
                 <SpeedDialAction key="rename" icon={<DriveFileRenameOutlineIcon/>} tooltipTitle="Rename" tooltipOpen onClick={onRename}/>,
                 <SpeedDialAction key="dates" icon={<CalendarMonthIcon/>} tooltipTitle="Dates" tooltipOpen onClick={onEditDates}/>,
