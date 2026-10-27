@@ -3,7 +3,6 @@ import {Construct} from 'constructs';
 import {EnvironmentConfig} from '../config/environments';
 import {ApiGatewayConstruct} from '../utils/api-gateway-construct';
 import {CatalogEndpointsConstruct} from '../catalog/catalog-endpoints-construct';
-import {WakuWebUiConstruct} from '../utils/waku-web-ui-construct';
 import {ArchiveEndpointsConstruct} from "../archive/archive-endpoints-construct";
 import {VersionEndpointConstruct} from "../utils/version-endpoint-construct";
 import {UserEndpointsConstruct} from "../access/user-endpoints-construct";
@@ -14,7 +13,7 @@ import {CatalogAccessManager} from "../catalog/catalog-access-manager";
 import {ArchivistAccessManager} from "../archive/archivist-access-manager";
 import {AuthenticationEndpointsConstruct} from "../access/authentication-endpoints-construct";
 import {SSTIntegrationConstruct} from "../utils/sst-integration-construct";
-import {NextJsRoutingConstruct} from "../utils/nextjs-redirection-construct";
+import {NextJsRoutingConstruct} from "../utils/nextjs-routing-construct";
 
 export interface DPhotoApplicationStackProps extends cdk.StackProps {
     environmentName: string;
@@ -49,12 +48,6 @@ export class ApplicationStack extends cdk.Stack {
         const apiGateway = new ApiGatewayConstruct(this, 'ApiGateway', {
             environmentName,
             ...config,
-        });
-
-        new WakuWebUiConstruct(this, 'WakuWebUi', {
-            environmentName,
-            httpApi: apiGateway.httpApi,
-            oauth2ClientConfig: oauth2ClientConfig,
         });
 
         this.integrateNextJsUI(config, apiGateway, environmentName, oauth2ClientConfig);

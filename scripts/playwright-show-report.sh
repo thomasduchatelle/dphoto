@@ -97,8 +97,8 @@ fi
 
 REPORT_DIR="$TMP_DIR"
 
-if [[ -d "$REPORT_DIR/web/playwright-report" ]] ; then
-  REPORT_DIR="$REPORT_DIR/web/playwright-report"
+if [[ -d "$REPORT_DIR/web-nextjs/playwright-report" ]] ; then
+  REPORT_DIR="$REPORT_DIR/web-nextjs/playwright-report"
 fi
 
 if [[ -d "$REPORT_DIR/playwright-report" ]] ; then
@@ -106,7 +106,7 @@ if [[ -d "$REPORT_DIR/playwright-report" ]] ; then
 fi
 
 info "Opening report from $ZIP_FILE"
-cd "$DIR/../web"
+cd "$DIR/../web-nextjs"
 debug "npx playwright show-report \"$REPORT_DIR\""
 npx playwright show-report "$REPORT_DIR"
 

@@ -2,7 +2,7 @@ import {Album, AlbumCover, AlbumId, albumKey, CatalogError, computeAlbumTemperat
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
 import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
-import {mediaUrl, prefixRelativeUrl, withBasePath} from "@/libs/requests/media-url";
+import {mediaUrl} from "@/libs/requests/media-url";
 import {SessionExpiredException} from "@/libs/security/client";
 
 interface RestAlbum {
@@ -56,7 +56,6 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     constructor(
         private readonly accessTokenSupplier: () => Promise<string | undefined>,
         private readonly baseUrlSupplier: () => Promise<string> = async () => "/api/v1",
-        private readonly basePathSupplier: () => Promise<string> = async () => "",
     ) {
     }
 
@@ -87,17 +86,12 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                 return Promise.allSettled([
                     this.findOwnerDetails(new Set<string>(albums.filter(a => !a.directlyOwned).map(a => a.owner))),
                     this.findUserDetails(new Set<string>(albums.flatMap(a => Object.entries(a.sharedWith ?? {}).map(([email]) => email)))),
-                    this.basePathSupplier(),
-                ]).then(([ownersResp, usersResp, prefixResp]) => {
-                    const prefix = prefixResp.status === "fulfilled" ? prefixResp.value : '';
-
-                    const prefixUrl = (url: string | undefined) => prefixRelativeUrl(url, prefix);
-
+                ]).then(([ownersResp, usersResp]) => {
                     const owners = ownersResp.status === "fulfilled" ? ownersResp.value.reduce(
                         (map, owner) => {
                             map.set(owner.id, {
                                 name: owner.name,
-                                users: owner.users.map(u => ({...u, picture: prefixUrl(u.picture)})),
+                                users: owner.users,
                             } as OwnerDetails)
                             return map
                         },
@@ -106,7 +100,7 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
 
                     const users = usersResp.status === "fulfilled" ? usersResp.value.reduce(
                         (map, user) => {
-                            map.set(user.email, {...user, picture: prefixUrl(user.picture)})
+                            map.set(user.email, user)
                             return map
                         },
                         new Map<string, UserDetails>()
@@ -176,8 +170,6 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
     }
 
     public async fetchMedias(albumId: AlbumId): Promise<Media[]> {
-        const prefix = await this.basePathSupplier();
-
         return this.fetchRequest<RestMedia[]>(
             `/owners/${albumId.owner}/albums/${albumId.folderName}/medias`
         )
@@ -199,8 +191,8 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                         uiRelativePath: `/albums/${albumId.owner}/${albumId.folderName}/${media.id}/${media.filename}`,
                         contentPath,
                         thumbnailUrl: type === MediaType.VIDEO
-                            ? withBasePath('/video-placeholder.png')
-                            : mediaUrl(contentPath, 360, prefix),
+                            ? '/video-placeholder.png'
+                            : mediaUrl(contentPath, 360),
                     };
                 }).sort((a, b) => b.time.getTime() - a.time.getTime())
             })

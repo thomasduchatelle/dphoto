@@ -1,5 +1,4 @@
 import {NextRequest} from 'next/server';
-import {basePath} from "./basepath";
 import {headers} from "next/headers";
 
 /**
@@ -89,14 +88,6 @@ function getRequestURL(request: NextRequest): URL {
         url = overloadWithForwardedUrl(url, forwardedHeader);
     }
 
-    if (basePath && !url.pathname.startsWith(basePath)) { // the proxy gets the base path in its request URL.
-        url.pathname = basePath + url.pathname
-
-        if (url.pathname.endsWith("/")) {
-            url.pathname = url.pathname.slice(0, -1);
-        }
-    }
-
     return url
 }
 
@@ -125,20 +116,14 @@ export function newOriginFromHeaders(): Origin {
 }
 
 /**
- * Generates a redirect URL from the original HOST and PROTO (if the request got forwarded), and which includes the basepath (if set)
+ * Generates a redirect URL from the original HOST and PROTO (if the request got forwarded).
  */
 export async function redirectUrl(path: string, origin: Origin = newOriginFromHeaders()): Promise<URL> {
-    return new URL(`${basePath}${path}`, await origin.getCurrentUrl());
+    return new URL(path, await origin.getCurrentUrl());
 }
 
 
-export async function requestUrlWithBaseBath(request: URL): Promise<URL> {
+export async function requestUrl(request: URL): Promise<URL> {
     const h = await headers()
-    let updated = new URL(request)
-
-    if (basePath && !request.pathname.startsWith(basePath)) {
-        updated.pathname = `${basePath}${request.pathname}`;
-    }
-
-    return overloadWithForwardedUrl(updated, h.get("forwarded"));
+    return overloadWithForwardedUrl(new URL(request), h.get("forwarded"));
 }

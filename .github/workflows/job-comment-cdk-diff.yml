@@ -7,10 +7,6 @@ on:
         description: "The issue number on which the comment is posted"
         required: true
         type: string
-      cache-suffix:
-        description: "Suffix to add to the cache key"
-        type: string
-        default: "0.1"
 
 jobs:
   cdk-diff-comment:
@@ -28,12 +24,6 @@ jobs:
         with:
           name: dist-api
           path: bin
-
-      - name: Download web
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-web
-          path: web/dist
 
       - name: CDK Diff (live)
         id: diff

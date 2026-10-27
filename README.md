@@ -71,8 +71,7 @@ Components:
   APIs
 * [DPhoto CLI](cmd/dphoto/README.md): installed on the end-user computer, backup photos and videos using command line
   interface
-* [WEB](web): sources of the React WEB application (Create React App).
-* [WEB-WAKU](web-waku): new Waku-based web application (parallel deployment at `/waku` path).
+* [WEB](web-nextjs): sources of the NextJS web application (served at the root path).
 
 Note: the repository follows https://github.com/golang-standards/project-layout structure convention.
 
@@ -100,23 +99,11 @@ Setup the environment:
 
 ### Running development servers
 
-Two web applications can be run in parallel:
-
-**CRA Web Application** (existing, available at `/`):
+Start the NextJS web application (served at the root path, with a WireMock backend):
 ```bash
-cd web
-yarn start
+make start-web-nextjs
 # Runs on http://localhost:3000
 ```
-
-**Waku Web Application** (new, available at `/waku`):
-```bash
-cd web-waku
-npm run dev
-# Runs on http://localhost:3001
-```
-
-Both dev servers can run simultaneously without port conflicts.
 
 
 ### Commit messages & Github Actions
@@ -130,8 +117,7 @@ With:
 * domains: catalog, archive, backup
 * area: web, cli, proj, api, ...
 * supported tags are:
-  * `+update-snapshots`: updates visual regression snapshots for web-nextjs (primary web project)
-  * `+update-snapshots-waku`: updates visual regression snapshots for web (legacy Waku project)
+  * `+update-snapshots`: updates visual regression snapshots for web-nextjs
   * `+patch`, `+minor`, `+major`: control the version of the software
   * `+pr`: creates a Pull Request if the pipeline is successful
 

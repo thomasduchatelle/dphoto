@@ -8,10 +8,6 @@ jobs:
   test-go:
     uses: ./.github/workflows/job-test-go.yml
     secrets: inherit
-  test-ts:
-    uses: ./.github/workflows/job-test-ts.yml
-    with:
-      update-snapshots: false
   test-nextjs:
     uses: ./.github/workflows/job-test-nextjs.yml
     with:
@@ -20,8 +16,6 @@ jobs:
     uses: ./.github/workflows/job-build-go.yml
     with:
       snapshot: "false"
-  build-ts:
-    uses: ./.github/workflows/job-build-ts.yml
   build-nextjs:
     uses: ./.github/workflows/job-build-nextjs.yml
 
@@ -34,31 +28,25 @@ jobs:
     uses: ./.github/workflows/job-deploy.yml
     needs:
       - test-go
-      - test-ts
       - test-nextjs
       - build-go
-      - build-ts
       - build-nextjs
       - test-cdk
     secrets: inherit
     with:
       target: next
-      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
 
   deploy-live:
     uses: ./.github/workflows/job-deploy.yml
     needs:
       - test-go
-      - test-ts
       - test-nextjs
       - build-go
-      - build-ts
       - build-nextjs
       - test-cdk
     secrets: inherit
     with:
       target: live
-      cache-suffix: ${{ needs.build-ts.outputs.cache-suffix }}
 
   release:
     runs-on: ubuntu-latest

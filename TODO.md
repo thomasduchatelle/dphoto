@@ -11,9 +11,9 @@ TODOs
    1. aiming for 2 stacks: long term data stores, and WEB overlay
    2. migration paths to be included and executed
    3. new domain to be used
-5. [ ] migrating to NextJS from native React: mature and well supported React Framework
+5. [X] migrating to NextJS from native React: mature and well supported React Framework
    1. progressive migration - decoupling behaviours from framework before re-integrating them to new framework
-   2. parallel deployment - /nextjs would get to the new UI
+   2. parallel deployment - /nextjs got to the new UI ; cutover completed (web/ retired, NextJS serves at root)
    3. AWS Cognito - moving to public IDP must be considered ; suggestion is to start from scratch, then add authentication, then add the pages and
       features
    4. NPM - Yarn or PNPM don't look justified for this project

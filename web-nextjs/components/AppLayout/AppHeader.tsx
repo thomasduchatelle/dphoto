@@ -10,10 +10,9 @@ export interface AppHeaderProps {
     user: AuthenticatedUser;
     logoutUrl: string;
     isScrolled?: boolean;
-    basePath?: string;
 }
 
-export const AppHeader = ({user, logoutUrl, isScrolled = false, basePath = "/nextjs"}: AppHeaderProps) => {
+export const AppHeader = ({user, logoutUrl, isScrolled = false}: AppHeaderProps) => {
     return (
         <AppBar
             position="static"
@@ -48,7 +47,7 @@ export const AppHeader = ({user, logoutUrl, isScrolled = false, basePath = "/nex
                     }}
                 >
                     <Image
-                        src={`${basePath}/dphoto-fulllogo-large.png`}
+                        src="/dphoto-fulllogo-large.png"
                         alt="DPhoto"
                         width={160}
                         height={40}

@@ -5,7 +5,7 @@ on:
 
 jobs:
   check-comment:
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '+update-snapshots') && !contains(github.event.comment.body, '+update-snapshots-waku') }}
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '+update-snapshots') }}
     runs-on: ubuntu-latest
     outputs:
       pr-ref: ${{ steps.pr.outputs.ref }}
