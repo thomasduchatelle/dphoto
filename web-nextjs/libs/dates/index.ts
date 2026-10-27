@@ -6,3 +6,10 @@ export function toLocaleDateWithDay(date: Date) {
         year: 'numeric',
     }).format(date);
 }
+
+export function toLocaleTimeOfDay(date: Date) {
+    return new Intl.DateTimeFormat(['en-UK', 'fr-FR'], {
+        hour: 'numeric',
+        minute: '2-digit',
+    }).format(date);
+}
