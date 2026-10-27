@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
 import {fn} from 'storybook/test';
+import {Box} from '@mui/material';
 import {AlbumPageContentView} from './index';
 import AppLayout from '@/components/AppLayout';
 import {MediaType, MediaWithinADay} from '@/domains/catalog/language';
@@ -278,4 +279,28 @@ export const Viewer: Story = {
     args: {
         isOwner: false,
     },
+};
+
+export const OverlayVisible: Story = {
+    args: catalogViewerPageSelector({
+        ...baseState,
+        medias: [
+            {
+                day: new Date(2025, 3, 25),
+                medias: [
+                    {...multiDayMedias[0].medias[0], source: 'Samsung Galaxy S24'},
+                    {...multiDayMedias[0].medias[1], source: ''},
+                    {...multiDayMedias[0].medias[2], source: 'Canon EOS R6'},
+                    {...multiDayMedias[0].medias[3], source: 'iPhone 15 Pro'},
+                ],
+            },
+        ],
+    }),
+    decorators: [
+        (Story) => (
+            <Box sx={{'& .MediaThumbnail-overlay': {display: 'flex !important'}}}>
+                <Story/>
+            </Box>
+        ),
+    ],
 };

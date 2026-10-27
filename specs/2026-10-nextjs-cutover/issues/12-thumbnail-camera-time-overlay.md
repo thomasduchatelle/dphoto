@@ -1,6 +1,6 @@
 # Media thumbnail overlay: camera and time on hover
 
-**Status**: ready
+**Status**: done
 **Depends on**: none — a self-contained change to `MediaThumbnail`, Storybook-driven; can start on day 1.
 
 ## Description
