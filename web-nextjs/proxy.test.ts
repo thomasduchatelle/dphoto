@@ -52,7 +52,7 @@ describe('authentication middleware/proxy', () => {
 
         const redirection = redirectionOf(response);
         expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
-        expect(redirection.params.redirect_uri).toBe('https://example.com/nextjs/auth/callback');
+        expect(redirection.params.redirect_uri).toBe('https://example.com/auth/callback');
 
         const cookies = setCookiesOf(response);
         expect(cookies[COOKIE_AUTH_STATE]).toBeDefined();
@@ -76,7 +76,7 @@ describe('authentication middleware/proxy', () => {
 
         const redirection = redirectionOf(response);
         expect(redirection.url).toBe(`${TEST_ISSUER_URL}/oauth2/authorize`);
-        expect(redirection.params.redirect_uri).toBe('https://my-domain.com/nextjs/auth/callback');
+        expect(redirection.params.redirect_uri).toBe('https://my-domain.com/auth/callback');
 
         const cookies = setCookiesOf(response);
         expect(cookies[COOKIE_AUTH_STATE]).toBeDefined();

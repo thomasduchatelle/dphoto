@@ -1,5 +1,4 @@
 import {COOKIE_SESSION_ACCESS_TOKEN} from "@/libs/security/constants";
-import {withBasePath} from "@/libs/requests/media-url";
 import {SessionExpiredException} from "./session-expired-exception";
 
 const DEFAULT_FRESHNESS_THRESHOLD_SECONDS = 60;
@@ -50,7 +49,7 @@ function isFreshEnough(token: string | null): boolean {
 async function performRefresh(): Promise<void> {
     let response: Response;
     try {
-        response = await fetch(withBasePath("/auth/refresh"), {
+        response = await fetch("/auth/refresh", {
             method: "POST",
             credentials: "include",
         });

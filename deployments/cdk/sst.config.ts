@@ -36,7 +36,7 @@ export default $config({
             router: {
                 instance: router,
                 domain: domainName,
-                path: "/nextjs",
+                path: "/",
             },
             server: {
                 memory: "512 MB",

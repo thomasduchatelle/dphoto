@@ -18,21 +18,16 @@ This is a mono-repository containing the code of the backend, the CLI, the websi
 - `api/lambdas/` - in **Golang/AWS SDK** source of the REST API deployed as AWS Lambdas with an AWS API Gateway (v2 HTTP). Each operation is deployed as one lambda handler and is in its own folder.
     - `api/lambdas/common/` contains utilities shared by most handlers (get context from authorizer, ...)
     - `api/lambdas/authorizer/` contains the API Gateway authorizer logic, running before any REST request is processed
-- `web-nextjs/` - **Typescript / React / NextJS framework** Website built on top of the REST API, deployed using SST.
-    - this is a new project, implemented incrementally to replace `web/`.
+- `web-nextjs/` - **Typescript / React / NextJS framework** Website built on top of the REST API, deployed using SST. It is the only web project; it serves at the root path.
     - **NextJS App Router** is used: file structure must respect its principles.
     - Files structure must follow the best practices from NextJS.
+    - `web-nextjs/domains/catalog/language/` - data structures used across the web application, **very important for context**.
 - `deployments/cdk/` - AWS CDK infrastructure (TypeScript/Jest), and SST configuration to deploy `web-nextjs`.
 - `.github/` - CI definitions, and Agent instructions.
     - `.github/actions/` - customised actions used within this repository only
     - `.github/workflows/job-*.yml` - reusable sub-workflow to build, test, and deploy the application
     - `.github/workflows/workflow-*.yml` - workflows triggered by external events, they call the "job workflow", never replicate their content.
 - `internal/` - **Golang**: utilities that lower the complexity of the CLI but is not part of the domain of the application.
-- `web/` - **DEPRECATED! Project will be replaced by web-nextjs** ; Typescript / React / Waku framework Website built on top of the REST API, deployed as a lambda.
-    - `web/src/core/catalog/language/` - data structures used across the web application, **very important for context**.
-    - `web/src/core/catalog/**/` - other folders are handlers for the operations available on the UI.
-    - `web/src/components/` - React components, usually pure.
-    - `web/src/pages/` - Waku page-driven navigation built from the components.
 - `DATA_MODEL.md` - documentation of the indexes and records of the single-table structure in DynamoDB. It must be kept up to date with the data model.
 - `docs/adr/` - the Architecture Decision Record
 - `docs/{acl,archive,backup,catalog}/CONTEXT.md` - Use this glossary's vocabulary of each context when communicating with the user.
@@ -84,15 +79,6 @@ npx vitest run        # run unit tests only (~5s)
 ```
 
 Do not run the targets `npm run test`, `npm run test:ci`, `npm run test:visual`, `npm run test:update`, `npm run storybook` ; `npm run test` and `npm run test:ci` chain `test:visual` (Playwright) and the rest are not appropriate for agentic development.
-
-### Typescript - `web/`
-
-**Always run from the web folder `cd web`, and always run `npm install` before executing other commands !**
-
-```shell
-npx vitest run        # run unit tests only (~17s)
-npm run build         # build the application for deployment
-```
 
 ### Typescript - `deployments/cdk/`
 

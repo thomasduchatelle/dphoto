@@ -2,12 +2,12 @@
 
 all: clean test build
 
-clean: clean-web clean-api
+clean: clean-api
 	go clean -testcache
 
 setup: setup-cdk setup-go setup-app
 
-test: test-cdk test-go test-web
+test: test-cdk test-go test-web-nextjs
 
 build: build-go build-app
 
@@ -73,55 +73,6 @@ install-cli:
 	go install ./cmd/...
 
 #######################################
-## WEB
-#######################################
-
-.PHONY: clean-web setup-web setup-web-ci setup-web-ci-no-playwright test-web test-web-ci test-web-agent update-snapshots-waku update-snapshots-waku-ci build-web start ladle playwright
-
-clean-web:
-	cd web && rm -rf dist/ && rm -f bin/waku-lambda.zip
-
-setup-web:
-	cd web && npm install
-	cd web && npx playwright install
-
-setup-web-ci: setup-web-ci-no-playwright
-	cd web && npx playwright install chromium --with-deps
-
-setup-web-ci-no-playwright:
-	cd web && npm ci
-
-test-web:
-	cd web && npm test
-
-test-web-ci:
-	cd web && npm run test:ci
-
-test-web-agent:
-	cd web && CI=true npm run test:unit
-
-update-snapshots-waku:
-	@echo "Update local snapshots for web (waku)"
-	rm -rf web/playwright/visual-regression.spec.ts-local && cd web && npm run test:visual -- -u --reporter list
-
-update-snapshots-waku-ci:
-	@echo "Update snapshots for web (waku) [should only be used on CI]"
-	rm -rf web/playwright/visual-regression.spec.ts-snapshots && cd web && npm run test:visual -- -u
-
-build-web:
-	cd web && npm run build:lambda
-
-start:
-	docker-compose up -d wiremock && \
-		cd web && npm run dev
-
-ladle:
-	cd web && npm run ladle
-
-playwright:
-	cd web && npx playwright test --reporter html
-
-#######################################
 ## WEB - NEXTJS
 #######################################
 
@@ -185,18 +136,18 @@ build-api:
 		for bin in * ; do mv "$$bin" bootstrap && zip "$$bin.zip" bootstrap ; done
 
 #######################################
-## APP = WEB + API
+## APP = WEB-NEXTJS + API
 #######################################
 
 .PHONY: setup-app clean-app test-app build-app bg down
 
-setup-app: setup-web
+setup-app: setup-web-nextjs
 
-clean-app: clean-api clean-web
+clean-app: clean-api
 
-test-app: test-api test-web
+test-app: test-api test-web-nextjs
 
-build-app: build-api build-web build-web-nextjs
+build-app: build-api build-web-nextjs
 
 bg:
 	docker-compose --profile bg up -d

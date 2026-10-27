@@ -10,10 +10,9 @@ export interface AppLayoutProps {
     children: ReactNode;
     user: AuthenticatedUser;
     logoutUrl: string;
-    basePath?: string;
 }
 
-export default function AppLayout({children, user, logoutUrl, basePath}: AppLayoutProps) {
+export default function AppLayout({children, user, logoutUrl}: AppLayoutProps) {
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -37,7 +36,7 @@ export default function AppLayout({children, user, logoutUrl, basePath}: AppLayo
                     zIndex: 1100,
                 }}
             >
-                <AppHeader user={user} logoutUrl={logoutUrl} isScrolled={isScrolled} basePath={basePath}/>
+                <AppHeader user={user} logoutUrl={logoutUrl} isScrolled={isScrolled}/>
             </Box>
             <Box
                 component="main"

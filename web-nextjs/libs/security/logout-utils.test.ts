@@ -79,7 +79,7 @@ describe('logout-utils', () => {
             const url = new URL(logoutUrl);
             expect(url.origin + url.pathname).toBe(`${TEST_ISSUER_URL}/logout`);
             expect(url.searchParams.get('client_id')).toBe(TEST_CLIENT_ID);
-            expect(url.searchParams.get('logout_uri')).toBe('https://example.com/nextjs/auth/logout');
+            expect(url.searchParams.get('logout_uri')).toBe('https://example.com/auth/logout');
         });
     });
 

@@ -9,8 +9,7 @@ import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import 'yet-another-react-lightbox/styles.css';
 import 'yet-another-react-lightbox/plugins/counter.css';
 import {Media, MediaType} from '@/domains/catalog/language';
-import {mediaUrl, prefixRelativeUrl} from '@/libs/requests/media-url';
-import {runtimeApiPrefix} from '@/libs/requests/basepath';
+import {mediaUrl} from '@/libs/requests/media-url';
 
 export interface FullScreenMediaViewerProps {
     medias: Media[];
@@ -31,7 +30,7 @@ const FULL_RES_WIDTHS = [1440, 2400] as const;
 const THUMBNAIL_WIDTH = 360;
 
 function toSlide(media: Media): Slide {
-    const originalUrl = prefixRelativeUrl(media.contentPath, runtimeApiPrefix) ?? media.contentPath;
+    const originalUrl = media.contentPath;
     const filename = media.contentPath.split('/').pop() || media.id;
     const download = {url: originalUrl, filename};
 

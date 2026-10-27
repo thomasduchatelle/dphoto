@@ -7,8 +7,6 @@ import Link from '@/components/Link';
 import {AlbumId, Media, MediaType} from '@/domains/catalog/language';
 import {photoUrl} from '@/domains/catalog/navigation/photo-url';
 import {toLocaleTimeOfDay} from '@/libs/dates';
-import {prefixRelativeUrl} from '@/libs/requests/media-url';
-import {runtimeApiPrefix} from '@/libs/requests/basepath';
 
 export interface MediaThumbnailProps {
     albumId: AlbumId;
@@ -16,7 +14,7 @@ export interface MediaThumbnailProps {
 }
 
 export function MediaThumbnail({albumId, media}: MediaThumbnailProps) {
-    const downloadUrl = prefixRelativeUrl(media.contentPath, runtimeApiPrefix) ?? media.contentPath;
+    const downloadUrl = media.contentPath;
     const downloadName = media.contentPath.split('/').pop() || media.id;
 
     const handleDownload = (e: React.MouseEvent) => {

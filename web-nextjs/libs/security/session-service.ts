@@ -2,7 +2,7 @@ import {clearAuthSession, clearFullSession, loadAuthSession, loadSession, storeA
 import {getLogoutUrl} from "@/libs/security/logout-utils";
 import {getOidcConfigFromEnv, isLocalAuthBypassed, oidcConfig} from "@/libs/security/oidc-config";
 import * as client from "openid-client";
-import {newOriginFromRequest, redirectUrl, requestUrlWithBaseBath} from "@/libs/requests";
+import {newOriginFromRequest, redirectUrl, requestUrl} from "@/libs/requests";
 import {decodeJWTPayload} from "@/libs/security/jwt-utils";
 import {parseCurrentAccessToken} from "@/libs/security/access-token-service";
 import {CookieValue, newReadCookieStore, ReadCookieStore, Redirection, SetCookies} from "@/libs/nextjs-cookies";
@@ -169,8 +169,7 @@ async function redirectToErrorPage(request: NextRequest, error: string, errorDes
 }
 
 export async function authenticate(request: NextRequest): Promise<Redirection> {
-    const requestUrl = request.nextUrl
-    const searchParams = requestUrl.searchParams;
+    const searchParams = request.nextUrl.searchParams;
     const authenticationFlowState = loadAuthSession(newReadCookieStore(request));
 
     const errorParam = searchParams.get('error');
@@ -189,7 +188,7 @@ export async function authenticate(request: NextRequest): Promise<Redirection> {
     try {
         const tokens: client.TokenEndpointResponse = await client.authorizationCodeGrant(
             config,
-            await requestUrlWithBaseBath(requestUrl), // This is the URL of this route
+            await requestUrl(request.nextUrl), // This is the URL of this route
             {
                 pkceCodeVerifier: authenticationFlowState.codeVerifier,
                 expectedState: authenticationFlowState.state,

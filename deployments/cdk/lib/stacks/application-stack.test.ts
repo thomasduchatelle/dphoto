@@ -142,8 +142,6 @@ describe('DPhotoApplicationStack', () => {
             {method: 'GET', path: '/api/v1/version'},
             {method: 'ANY', path: '/api/{path+}'},
             {method: 'ANY', path: '/{proxy+}'},
-            {method: 'ANY', path: '/nextjs/{proxy+}'},
-            {method: 'ANY', path: '/nextjs'},
             {method: '$default', path: ''},
         ];
 

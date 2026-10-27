@@ -1,7 +1,5 @@
 import * as client from 'openid-client';
 
-export const basePath = '/nextjs';
-
 export type OpenIdConfig = {
     issuer: string;
     clientId: string;

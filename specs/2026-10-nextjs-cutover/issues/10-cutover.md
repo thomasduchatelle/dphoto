@@ -1,6 +1,6 @@
 # Cutover: delete `web/` and drop the `/nextjs` basepath
 
-**Status**: ready
+**Status**: done
 **Depends on**: `01` through `09` — must only be picked up once every other issue in this feature is `done` and Thomas has validated `web-nextjs` as his primary interface.
 
 ## Description

@@ -1,8 +1,3 @@
-export interface FeatureFlags {
-    // 2025-01 - Disable WAKU and use NextJS instead for the frontend.
-    useNextJS?: boolean;
-}
-
 export interface EnvironmentConfig {
     production: boolean
     // Pairs of access keys used by the CLI

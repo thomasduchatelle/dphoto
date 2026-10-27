@@ -17,7 +17,6 @@ const meta = {
             isOwner: true,
         },
         logoutUrl: '/auth/logout',
-        basePath: "",
         children: (
             <Box>
                 <Typography variant="h1" sx={{mb: 2}}>
@@ -69,7 +68,7 @@ export const Scrolled: Story = {
             }}
         >
             <Box component="header" sx={{position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100}}>
-                <AppHeader user={args.user} logoutUrl={args.logoutUrl} isScrolled={true} basePath=""/>
+                <AppHeader user={args.user} logoutUrl={args.logoutUrl} isScrolled={true}/>
             </Box>
             <Box component="main" sx={{marginTop: 0, padding: {xs: 2, sm: 3, md: 4}, flexGrow: 1}}>
                 <Box

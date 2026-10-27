@@ -20,7 +20,7 @@ describe('getOriginalOrigin', () => {
         const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
-        expect(result.pathname).toBe('/nextjs/path');
+        expect(result.pathname).toBe('/path');
     });
 
     it('should extract origin from RFC 7239 Forwarded header with http', async () => {
@@ -34,7 +34,7 @@ describe('getOriginalOrigin', () => {
         const result = await getRequestURL(request);
 
         expect(result.origin).toBe('http://example.com');
-        expect(result.pathname).toBe('/nextjs/path');
+        expect(result.pathname).toBe('/path');
     });
 
     it('should accept forwarded host with port when hostname matches', async () => {
@@ -48,7 +48,7 @@ describe('getOriginalOrigin', () => {
         const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com:8443');
-        expect(result.pathname).toBe('/nextjs/path');
+        expect(result.pathname).toBe('/path');
     });
 
     it('should handle quoted values in Forwarded header', async () => {
@@ -62,7 +62,7 @@ describe('getOriginalOrigin', () => {
         const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
-        expect(result.pathname).toBe('/nextjs/path');
+        expect(result.pathname).toBe('/path');
     });
 
     it('should accept quoted host with port when hostname matches', async () => {
@@ -76,7 +76,7 @@ describe('getOriginalOrigin', () => {
         const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com:8443');
-        expect(result.pathname).toBe('/nextjs/path');
+        expect(result.pathname).toBe('/path');
     });
 
     it('should fallback to request.url when Forwarded header is not present', async () => {
@@ -87,7 +87,7 @@ describe('getOriginalOrigin', () => {
         const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
-        expect(result.pathname).toBe('/nextjs/path');
+        expect(result.pathname).toBe('/path');
     });
 
     it('should fallback when Forwarded header is missing proto', async () => {
@@ -101,7 +101,7 @@ describe('getOriginalOrigin', () => {
         const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
-        expect(result.pathname).toBe('/nextjs/path');
+        expect(result.pathname).toBe('/path');
     });
 
     it('should fallback when Forwarded header is missing host', async () => {
@@ -115,7 +115,7 @@ describe('getOriginalOrigin', () => {
         const result = await getRequestURL(request);
 
         expect(result.origin).toBe('https://example.com');
-        expect(result.pathname).toBe('/nextjs/path');
+        expect(result.pathname).toBe('/path');
     });
 
     describe('security validations', () => {
@@ -130,7 +130,7 @@ describe('getOriginalOrigin', () => {
             const result = await getRequestURL(request);
 
             expect(result.origin).toBe('https://api-gateway.example.com');
-            expect(result.pathname).toBe('/nextjs/path');
+            expect(result.pathname).toBe('/path');
         });
 
         it('should reject invalid protocol like ftp', async () => {
@@ -144,7 +144,7 @@ describe('getOriginalOrigin', () => {
             const result = await getRequestURL(request);
 
             expect(result.origin).toBe('https://api-gateway.example.com');
-            expect(result.pathname).toBe('/nextjs/path');
+            expect(result.pathname).toBe('/path');
         });
 
         it('should reject invalid protocol like javascript', async () => {
@@ -158,7 +158,7 @@ describe('getOriginalOrigin', () => {
             const result = await getRequestURL(request);
 
             expect(result.origin).toBe('https://api-gateway.example.com');
-            expect(result.pathname).toBe('/nextjs/path');
+            expect(result.pathname).toBe('/path');
         });
 
         it('should handle malformed Forwarded header gracefully', async () => {
@@ -172,29 +172,19 @@ describe('getOriginalOrigin', () => {
             const result = await getRequestURL(request);
 
             expect(result.origin).toBe('https://example.com');
-            expect(result.pathname).toBe('/nextjs/path');
+            expect(result.pathname).toBe('/path');
         });
     });
 
-    describe('basePath handling', () => {
-        it('should add basePath to pathname', async () => {
+    describe('pathname handling', () => {
+        it('should preserve the request pathname', async () => {
             const request = new NextRequest('https://example.com/albums', {
                 method: 'GET',
             });
 
             const result = await getRequestURL(request);
 
-            expect(result.pathname).toBe('/nextjs/albums');
-        });
-
-        it('should remove trailing slash after adding basePath', async () => {
-            const request = new NextRequest('https://example.com/albums/', {
-                method: 'GET',
-            });
-
-            const result = await getRequestURL(request);
-
-            expect(result.pathname).toBe('/nextjs/albums');
+            expect(result.pathname).toBe('/albums');
         });
 
         it('should handle root path correctly', async () => {
@@ -204,7 +194,7 @@ describe('getOriginalOrigin', () => {
 
             const result = await getRequestURL(request);
 
-            expect(result.pathname).toBe('/nextjs');
+            expect(result.pathname).toBe('/');
         });
     });
 });

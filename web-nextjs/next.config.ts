@@ -11,7 +11,6 @@ const nextConfig: NextConfig = {
             }
         ]
     },
-    basePath: '/nextjs', // when removed, each image src must be updated.
     async rewrites() {
         if (process.env.NODE_ENV === 'development') {
             return [

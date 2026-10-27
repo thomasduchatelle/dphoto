@@ -2,13 +2,12 @@ import {NextRequest, NextResponse} from 'next/server';
 import {completeLogout, getSessionStatus, initiateAuthenticationFlow, refreshSession} from "@/libs/security";
 import {appliesCookies, buildRedirectResponse, newReadCookieStore} from "@/libs/nextjs-cookies";
 
-// if basepath was not set, this would work: `export const config = { matcher: [`/(${skipProxyForPageMatching}`] }`
 export const skipProxyForPageMatching = /^(?!_next\/static|_next\/image|favicon.ico|api|auth|.*\.js$|.*\.png$|.*\.svg$|.*\.jpg$|.*\.gif$).*/i
 
 export async function proxy(request: NextRequest) {
     const isPublicPath = !skipProxyForPageMatching.test(request.nextUrl.pathname.substring(1))
 
-    if (request.nextUrl.pathname.replaceAll("^/nextjs", "") === '/auth/logout') {
+    if (request.nextUrl.pathname === '/auth/logout') {
         // Cookies cannot be set from a server component
         // https://nextjs.org/docs/app/api-reference/functions/cookies#understanding-cookie-behavior-in-server-components
         return appliesCookies(NextResponse.next(), completeLogout());

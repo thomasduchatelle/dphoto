@@ -5,10 +5,6 @@ on:
         description: "Target of the deployment: only 'next' is supported"
         required: true
         type: string
-      cache-suffix:
-        description: "Suffix to add to the cache key"
-        type: string
-        default: "0.1"
       ref:
         description: "Git ref to checkout (branch, tag, or SHA)"
         type: string
@@ -41,12 +37,6 @@ jobs:
         with:
           name: dist-api
           path: bin
-
-      - name: Download web
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-web
-          path: web/dist
 
       - name: Download nextjs
         uses: actions/download-artifact@v4
