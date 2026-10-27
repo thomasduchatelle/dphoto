@@ -14,6 +14,8 @@ wiring step that mounts them on the album page.
                        07 edit-dates-modal            (component + stories only)
                        08 delete-album-modal          (component + stories only)
                        09 client-token-refresh        (soft-blocks 05–08; discovered during 04)
+                       12 thumbnail-camera-time-overlay (independent, grid thumbnail only)
+                       13 rail-neighbour-window         (independent, rail windowing only)
 
 (after 05-08 merge)    01 wire-album-header-modals    (mounts them on the album page)
 
@@ -105,6 +107,18 @@ retries-on-401 once. Soft-blocks 05–08 so write-stories don't inherit the stal
 Post-cutover enhancement (not a launch criterion). Make the existing **Play** button start an auto-advancing
 full-screen slideshow via YARL's bundled Slideshow plugin, keeping the route-driven URL contract. Depends on
 02 (viewer) and 01 (Play wiring).
+
+### 12 — Thumbnail camera + time overlay
+
+Parity with `web/`'s hover overlay: show the camera (`media.source`) and the **time of day** on each grid
+thumbnail on hover, in `MediaThumbnail`. Unlike `web/`, drop the date — it is redundant with the per-day
+grouping header. Storybook-driven, independent, no wiring into other components.
+
+### 13 — Neighbour-album rail windowing
+
+Limit the album rail on the album page to at most 7 albums centred on the displayed one (3 before + 3 after;
+6 after if it is first, 6 before if it is last; all if 7 or fewer). New behaviour — compute the window as a
+pure helper in the navigation selector and keep `AlbumRail` dumb. Independent.
 
 ### 10 — Cutover: delete `web/` and drop the basepath
 

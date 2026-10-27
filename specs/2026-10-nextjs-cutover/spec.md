@@ -48,6 +48,12 @@ Plus the mechanical pieces:
 - **Album header action scaffolding** — enable the (currently disabled) owner-action buttons in
   `AlbumHeader`, add a Delete button, and wire each button to a stub modal component so modal stories can land
   in parallel without conflicts.
+- **Media thumbnail overlay** — reach parity with `web/`'s hover overlay by showing the camera and the time
+  on each grid thumbnail on hover. Unlike `web/`, the overlay does **not** show the date (year/month/day) — it
+  is redundant with the per-day grouping header. Camera + time only.
+- **Neighbour-album rail windowing** — limit the album rail on the album page to at most 7 albums centred on
+  the displayed one (3 before + 3 after), biasing the window to keep 7 visible at the list edges (6 after when
+  the displayed album is first, 6 before when it is last).
 - **Cutover** — delete `web/`, remove `basePath: '/nextjs'` from `web-nextjs/next.config.ts`, update CDK /
   deployment config to route the root path to `web-nextjs`, update docs.
 
