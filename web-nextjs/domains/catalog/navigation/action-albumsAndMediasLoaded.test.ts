@@ -131,7 +131,7 @@ describe("action:albumsAndMediasLoaded", () => {
             previousAlbum: undefined,
             nextAlbum: twoAlbums[0],
             medias: someMediasByDays,
-            firstMediaHref: "/albums/herself/feb-25/photos/media-1",
+            firstMediaHref: "/albums/herself/feb-25/photos/media-1?play",
         });
         expect(albumListActionsSelector(got)).toEqual({
             ...albumListActionsPropsForLoadedState,
@@ -168,7 +168,7 @@ describe("action:albumsAndMediasLoaded", () => {
             previousAlbum: undefined,
             nextAlbum: undefined,
             medias: someMediasByDays,
-            firstMediaHref: "/albums/herself/feb-25/photos/media-1",
+            firstMediaHref: "/albums/herself/feb-25/photos/media-1?play",
         });
         expect(albumListActionsSelector(got)).toEqual({
             ...albumListActionsPropsForLoadedState,

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import {Box} from '@mui/material';
 import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 import Lightbox, {RenderSlideProps, SlideImage} from 'yet-another-react-lightbox';
+import Slideshow from 'yet-another-react-lightbox/plugins/slideshow';
 import 'yet-another-react-lightbox/styles.css';
 import {Media} from '@/domains/catalog/language';
 import {catalogImageLoader} from '@/libs/image-loader';
@@ -12,6 +13,7 @@ import {catalogImageLoader} from '@/libs/image-loader';
 export interface FullScreenMediaViewerProps {
     medias: Media[];
     displayedIndex: number;
+    slideshow?: boolean;
     onClose: () => void;
     onNavigate: (mediaId: string) => void;
 }
@@ -62,7 +64,7 @@ function renderSlide(props: RenderSlideProps<SlideImage>) {
     return <MediaSlide key={props.slide.src} {...props}/>;
 }
 
-export function FullScreenMediaViewer({medias, displayedIndex, onClose, onNavigate}: FullScreenMediaViewerProps) {
+export function FullScreenMediaViewer({medias, displayedIndex, slideshow, onClose, onNavigate}: FullScreenMediaViewerProps) {
     const slides: SlideImage[] = medias.map(media => ({
         type: 'image',
         src: media.contentPath,
@@ -76,6 +78,8 @@ export function FullScreenMediaViewer({medias, displayedIndex, onClose, onNaviga
             slides={slides}
             carousel={{finite: true, padding: 0}}
             controller={{closeOnBackdropClick: true}}
+            plugins={[Slideshow]}
+            slideshow={{autoplay: slideshow}}
             on={{
                 view: ({index}) => {
                     const media = medias[index];

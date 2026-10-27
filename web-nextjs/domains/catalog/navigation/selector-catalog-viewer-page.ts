@@ -28,7 +28,7 @@ export function catalogViewerPageSelector(state: CatalogViewerState): CatalogVie
         previousAlbum: displayedIndex >= 0 && displayedIndex < state.allAlbums.length - 1 ? state.allAlbums[displayedIndex + 1] : undefined,
         nextAlbum: displayedIndex > 0 ? state.allAlbums[displayedIndex - 1] : undefined,
         medias: state.medias,
-        firstMediaHref: displayedAlbum && firstMedia ? photoUrl(displayedAlbum.albumId, firstMedia.id) : undefined,
+        firstMediaHref: displayedAlbum && firstMedia ? photoUrl(displayedAlbum.albumId, firstMedia.id, {autoplay: true}) : undefined,
         mediasLoaded: state.mediasLoaded,
         albumNotFound: state.albumNotFound,
         error: state.error,

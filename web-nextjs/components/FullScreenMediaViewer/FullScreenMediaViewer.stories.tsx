@@ -52,6 +52,12 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+export const Slideshow: Story = {
+    args: {
+        slideshow: true,
+    },
+};
+
 export const SecondMedia: Story = {
     args: {
         displayedIndex: 1,

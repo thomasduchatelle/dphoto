@@ -1,6 +1,6 @@
 # Viewer slideshow: Play starts an auto-advancing full-screen show
 
-**Status**: ready
+**Status**: done
 **Depends on**: `02-fullscreen-viewer-yarl.md` (the route-driven YARL viewer), `01-header-action-scaffold.md` (the Play button wiring).
 
 > Post-cutover enhancement. **Not** a launch criterion for the NextJS cutover — the feature ships whether or
