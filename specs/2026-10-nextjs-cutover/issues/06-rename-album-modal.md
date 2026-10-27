@@ -1,6 +1,6 @@
 # Rename album modal (component + stories)
 
-**Status**: ready
+**Status**: done
 **Depends on**: none — the component is unwired, delivered with Storybook only; wiring happens in story 01.
 
 ## Description
