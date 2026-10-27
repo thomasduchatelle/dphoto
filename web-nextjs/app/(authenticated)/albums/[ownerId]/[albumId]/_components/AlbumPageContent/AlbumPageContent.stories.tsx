@@ -168,6 +168,7 @@ const actionArgs = {
     onRename: fn(),
     onEditDates: fn(),
     onDelete: fn(),
+    onCreateAlbum: fn(),
 };
 
 const meta = {

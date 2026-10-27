@@ -1,6 +1,6 @@
 'use client';
 
-import {Box, IconButton} from '@mui/material';
+import {Box, Button} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Link from 'next/link';
@@ -42,24 +42,26 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, onDeleteAlbum, filter
                     onFilterChange={onFilterChange}
                 />
                 {onCreateAlbum && (
-                    <IconButton
-                        color="primary"
-                        size="large"
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        startIcon={<AddIcon/>}
                         onClick={onCreateAlbum}
                         aria-label="Create album"
                     >
-                        <AddIcon/>
-                    </IconButton>
+                        Create
+                    </Button>
                 )}
                 {onDeleteAlbum && (
-                    <IconButton
-                        color="primary"
-                        size="large"
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        startIcon={<DeleteIcon/>}
                         onClick={onDeleteAlbum}
                         aria-label="Delete album"
                     >
-                        <DeleteIcon/>
-                    </IconButton>
+                        Delete
+                    </Button>
                 )}
             </Box>
             <Box
