@@ -1,5 +1,5 @@
 export function toLocaleDateWithDay(date: Date) {
-    return new Intl.DateTimeFormat(['en-UK', 'fr-FR'], {
+    return new Intl.DateTimeFormat(['en-GB', 'fr-FR'], {
         weekday: 'long',
         day: 'numeric',
         month: 'short',
@@ -8,8 +8,9 @@ export function toLocaleDateWithDay(date: Date) {
 }
 
 export function toLocaleTimeOfDay(date: Date) {
-    return new Intl.DateTimeFormat(['en-UK', 'fr-FR'], {
-        hour: 'numeric',
+    return new Intl.DateTimeFormat(['en-GB', 'fr-FR'], {
+        hour: '2-digit',
         minute: '2-digit',
+        hourCycle: 'h23',
     }).format(date);
 }
