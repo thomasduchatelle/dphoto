@@ -40,6 +40,7 @@ describe("action:albumsLoaded", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[0]],
+            railAlbums: [twoAlbums[0]],
         });
         expect(albumListActionsSelector(got)).toEqual({
             ...albumListActionsPropsForLoadedState,

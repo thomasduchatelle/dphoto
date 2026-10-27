@@ -20,6 +20,7 @@ describe("action:albumsFiltered", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[0]],
+            railAlbums: [twoAlbums[0]],
         });
         expect(albumListActionsSelector(got)).toEqual({
             ...albumListActionsPropsForLoadedState,
@@ -39,6 +40,7 @@ describe("action:albumsFiltered", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: twoAlbums,
+            railAlbums: twoAlbums,
         });
         expect(albumListActionsSelector(got)).toEqual({
             ...albumListActionsPropsForLoadedState,
@@ -55,6 +57,7 @@ describe("action:albumsFiltered", () => {
         expect(catalogViewerPageSelector(got)).toEqual({
             ...selectionForLoadedStateWithTwoAlbums,
             albums: [twoAlbums[1]],
+            railAlbums: [twoAlbums[1]],
             // displayedAlbum: twoAlbums[1], // Displayed album remains the same
         });
         expect(albumListActionsSelector(got)).toEqual({
