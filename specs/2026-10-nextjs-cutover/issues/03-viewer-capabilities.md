@@ -1,6 +1,6 @@
 # Viewer capabilities: zoom, download, position counter, video
 
-**Status**: ready
+**Status**: done
 **Depends on**: `02-fullscreen-viewer-yarl.md` — the YARL viewer must exist before plugins are configured on it.
 
 ## Description

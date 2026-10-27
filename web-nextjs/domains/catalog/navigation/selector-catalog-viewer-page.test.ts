@@ -42,10 +42,10 @@ describe('catalogViewerPageSelector', () => {
         expect(result.nextAlbum).toBeUndefined();
     });
 
-    it('returns the photo URL of the first media as firstMediaHref', () => {
+    it('returns the auto-playing photo URL of the first media as firstMediaHref so Play starts the slideshow', () => {
         const result = catalogViewerPageSelector(loadedStateWithTwoAlbums);
 
-        expect(result.firstMediaHref).toEqual('/albums/myself/jan-25/photos/media-1');
+        expect(result.firstMediaHref).toEqual('/albums/myself/jan-25/photos/media-1?play');
     });
 
     it('returns undefined firstMediaHref when the album has no media', () => {

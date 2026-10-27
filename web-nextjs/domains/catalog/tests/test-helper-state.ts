@@ -235,7 +235,7 @@ export const selectionForLoadedStateWithTwoAlbums: CatalogViewerPageSelection = 
     previousAlbum: twoAlbums[1],
     nextAlbum: undefined,
     medias: someMediasByDays,
-    firstMediaHref: "/albums/myself/jan-25/photos/media-1",
+    firstMediaHref: "/albums/myself/jan-25/photos/media-1?play",
     mediasLoaded: true,
     albumNotFound: false,
 };

@@ -52,6 +52,12 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+export const Slideshow: Story = {
+    args: {
+        slideshow: true,
+    },
+};
+
 export const SecondMedia: Story = {
     args: {
         displayedIndex: 1,
@@ -61,6 +67,24 @@ export const SecondMedia: Story = {
 export const LastMedia: Story = {
     args: {
         displayedIndex: 2,
+    },
+};
+
+export const WithVideo: Story = {
+    args: {
+        medias: [
+            {
+                id: 'media-video',
+                type: MediaType.VIDEO,
+                time: new Date('2025-04-24T10:00:00Z'),
+                uiRelativePath: 'media-video/clair-obscur.mp4',
+                contentPath: '/videos/clair-obscur.mp4',
+                thumbnailUrl: '/video-placeholder.png',
+                source: '',
+            },
+            ...sampleMedias,
+        ],
+        displayedIndex: 0,
     },
 };
 

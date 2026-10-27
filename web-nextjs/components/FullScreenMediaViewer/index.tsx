@@ -1,81 +1,74 @@
 'use client';
 
-import {useState} from 'react';
-import Image from 'next/image';
-import {Box} from '@mui/material';
-import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
-import Lightbox, {RenderSlideProps, SlideImage} from 'yet-another-react-lightbox';
+import Lightbox, {Slide} from 'yet-another-react-lightbox';
+import Counter from 'yet-another-react-lightbox/plugins/counter';
+import Download from 'yet-another-react-lightbox/plugins/download';
+import Slideshow from 'yet-another-react-lightbox/plugins/slideshow';
+import Video from 'yet-another-react-lightbox/plugins/video';
+import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import 'yet-another-react-lightbox/styles.css';
-import {Media} from '@/domains/catalog/language';
-import {catalogImageLoader} from '@/libs/image-loader';
+import 'yet-another-react-lightbox/plugins/counter.css';
+import {Media, MediaType} from '@/domains/catalog/language';
+import {mediaUrl, prefixRelativeUrl} from '@/libs/requests/media-url';
+import {runtimeApiPrefix} from '@/libs/requests/basepath';
 
 export interface FullScreenMediaViewerProps {
     medias: Media[];
     displayedIndex: number;
+    slideshow?: boolean;
     onClose: () => void;
     onNavigate: (mediaId: string) => void;
 }
 
-function MediaSlide({slide, rect}: RenderSlideProps<SlideImage>) {
-    const [failed, setFailed] = useState(false);
+// Widths requested through the custom image URL (`contentPath?w=<width>`). YARL
+// picks the smallest source the viewport needs and upgrades as larger ones
+// arrive — so the already-cached thumbnail shows instantly while the full-res
+// image loads. The full-res sources also give the Zoom plugin the real image
+// to magnify (the plugin stays disabled when no native image slide is rendered).
+const FULL_RES_WIDTHS = [1440, 2400] as const;
+// Approximate rendered width of the grid thumbnail; only used so the browser
+// ranks the thumbnail below the full-res sources in the srcSet.
+const THUMBNAIL_WIDTH = 360;
 
-    if (failed) {
-        return (
-            <Box
-                role="img"
-                aria-label="This media could not be loaded"
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 1,
-                    color: 'rgba(255,255,255,0.5)',
-                }}
-            >
-                <BrokenImageOutlinedIcon sx={{fontSize: 64}}/>
-                <Box component="span" sx={{fontSize: '0.9rem'}}>This media could not be loaded</Box>
-            </Box>
-        );
+function toSlide(media: Media): Slide {
+    const originalUrl = prefixRelativeUrl(media.contentPath, runtimeApiPrefix) ?? media.contentPath;
+    const filename = media.contentPath.split('/').pop() || media.id;
+    const download = {url: originalUrl, filename};
+
+    if (media.type === MediaType.VIDEO) {
+        return {
+            type: 'video',
+            poster: media.thumbnailUrl,
+            sources: [{src: originalUrl, type: 'video/mp4'}],
+            download,
+        };
     }
 
-    const sizes = `(max-width: 900px) 1440px, 2400px`;
-    const width = rect.width > 0 ? Math.round(rect.width) : 1440;
-    const height = rect.height > 0 ? Math.round(rect.height) : 1440;
+    const srcSet = [
+        {src: media.thumbnailUrl, width: THUMBNAIL_WIDTH, height: THUMBNAIL_WIDTH},
+        ...FULL_RES_WIDTHS.map(width => ({src: mediaUrl(media.contentPath, width), width, height: width})),
+    ];
 
-    return (
-        <Image
-            loader={catalogImageLoader}
-            src={slide.src}
-            alt=""
-            width={width}
-            height={height}
-            sizes={sizes}
-            style={{maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain'}}
-            onError={() => setFailed(true)}
-            priority
-        />
-    );
-}
-
-function renderSlide(props: RenderSlideProps<SlideImage>) {
-    return <MediaSlide key={props.slide.src} {...props}/>;
-}
-
-export function FullScreenMediaViewer({medias, displayedIndex, onClose, onNavigate}: FullScreenMediaViewerProps) {
-    const slides: SlideImage[] = medias.map(media => ({
+    return {
         type: 'image',
-        src: media.contentPath,
-    }));
+        src: mediaUrl(media.contentPath, FULL_RES_WIDTHS[FULL_RES_WIDTHS.length - 1]),
+        srcSet,
+        download,
+    };
+}
 
+export function FullScreenMediaViewer({medias, displayedIndex, slideshow, onClose, onNavigate}: FullScreenMediaViewerProps) {
     return (
         <Lightbox
             open
             close={onClose}
             index={displayedIndex}
-            slides={slides}
+            slides={medias.map(toSlide)}
+            plugins={[Counter, Download, Slideshow, Video, Zoom]}
+            counter={{separator: 'of'}}
             carousel={{finite: true, padding: 0}}
             controller={{closeOnBackdropClick: true}}
+            slideshow={{autoplay: slideshow}}
             on={{
                 view: ({index}) => {
                     const media = medias[index];
@@ -84,7 +77,6 @@ export function FullScreenMediaViewer({medias, displayedIndex, onClose, onNaviga
                     }
                 },
             }}
-            render={{slide: renderSlide}}
         />
     );
 }
