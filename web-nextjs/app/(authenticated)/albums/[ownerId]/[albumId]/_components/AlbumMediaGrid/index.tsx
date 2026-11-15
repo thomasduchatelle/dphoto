@@ -1,14 +1,16 @@
 import {Box, Typography} from '@mui/material';
-import {AlbumId, MediaWithinADay} from '@/domains/catalog/language';
+import {AlbumId, MediaId, MediaWithinADay} from '@/domains/catalog/language';
 import {MediaThumbnail} from './MediaThumbnail';
 import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumMediaGridProps {
     albumId: AlbumId;
     medias: MediaWithinADay[];
+    isOwner: boolean;
+    onToggleFavorite: (mediaId: MediaId, currentTags: string[]) => void;
 }
 
-export function AlbumMediaGrid({albumId, medias}: AlbumMediaGridProps) {
+export function AlbumMediaGrid({albumId, medias, isOwner, onToggleFavorite}: AlbumMediaGridProps) {
     return (
         <Box sx={(theme) => ({
             borderTop: '1px solid rgba(255,255,255,0.07)',
@@ -27,7 +29,13 @@ export function AlbumMediaGrid({albumId, medias}: AlbumMediaGridProps) {
                         }}
                     >
                         {dayMedias.map((media) => (
-                            <MediaThumbnail key={media.id} albumId={albumId} media={media}/>
+                            <MediaThumbnail
+                                key={media.id}
+                                albumId={albumId}
+                                media={media}
+                                isOwner={isOwner}
+                                onToggleFavorite={onToggleFavorite}
+                            />
                         ))}
                     </Box>
                 </Box>

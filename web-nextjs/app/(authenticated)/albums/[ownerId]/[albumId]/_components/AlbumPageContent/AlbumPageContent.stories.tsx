@@ -18,7 +18,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm1.jpg',
                 contentPath: '/thumbnails/clair-obscur-1.jpg',
                 thumbnailUrl: '/thumbnails/clair-obscur-1.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm2',
@@ -27,7 +28,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm2.jpg',
                 contentPath: '/thumbnails/clair-obscur-2.jpg',
                 thumbnailUrl: '/thumbnails/clair-obscur-2.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm3',
@@ -36,7 +38,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm3.mp4',
                 contentPath: '/thumbnails/clair-obscur-3.jpg',
                 thumbnailUrl: '/video-placeholder.png',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm4',
@@ -45,7 +48,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm4.jpg',
                 contentPath: '/thumbnails/clair-obscur-4.jpg',
                 thumbnailUrl: '/thumbnails/clair-obscur-4.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm5',
@@ -54,7 +58,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm5.jpg',
                 contentPath: '/thumbnails/astro-bot-01.jpg',
                 thumbnailUrl: '/thumbnails/astro-bot-01.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm6',
@@ -63,7 +68,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm6.jpg',
                 contentPath: '/thumbnails/astro-bot-02.jpg',
                 thumbnailUrl: '/thumbnails/astro-bot-02.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
         ],
     },
@@ -77,7 +83,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm7.jpg',
                 contentPath: '/thumbnails/the-witcher-3-01.jpg',
                 thumbnailUrl: '/thumbnails/the-witcher-3-01.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm8',
@@ -86,7 +93,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm8.jpg',
                 contentPath: '/thumbnails/the-witcher-3-02.jpg',
                 thumbnailUrl: '/thumbnails/the-witcher-3-02.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm9',
@@ -95,7 +103,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm9.mp4',
                 contentPath: '/thumbnails/the-witcher-3-03.jpg',
                 thumbnailUrl: '/video-placeholder.png',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm10',
@@ -104,7 +113,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm10.jpg',
                 contentPath: '/thumbnails/death-stranding-1-01.jpg',
                 thumbnailUrl: '/thumbnails/death-stranding-1-01.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm11',
@@ -113,7 +123,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm11.jpg',
                 contentPath: '/thumbnails/death-stranding-1-02.jpg',
                 thumbnailUrl: '/thumbnails/death-stranding-1-02.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
         ],
     },
@@ -127,7 +138,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm12.jpg',
                 contentPath: '/thumbnails/death-stranding-2-01.jpg',
                 thumbnailUrl: '/thumbnails/death-stranding-2-01.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm13',
@@ -136,7 +148,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm13.jpg',
                 contentPath: '/thumbnails/death-stranding-1-03.jpg',
                 thumbnailUrl: '/thumbnails/death-stranding-1-03.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
             {
                 id: 'm14',
@@ -145,7 +158,8 @@ const multiDayMedias: MediaWithinADay[] = [
                 uiRelativePath: 'm14.jpg',
                 contentPath: '/thumbnails/death-stranding-1-04.jpg',
                 thumbnailUrl: '/thumbnails/death-stranding-1-04.jpg',
-                source: ''
+                source: '',
+                tags: []
             },
         ],
     },
@@ -168,6 +182,7 @@ const actionArgs = {
     onRename: fn(),
     onEditDates: fn(),
     onDelete: fn(),
+    onToggleFavorite: fn(),
 };
 
 const meta = {

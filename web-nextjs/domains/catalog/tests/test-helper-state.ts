@@ -187,6 +187,7 @@ const someMedias = [{
     contentPath: "/media-1.jpg",
     thumbnailUrl: "/media-1.jpg?w=360",
     source: "",
+    tags: [],
 }];
 
 // use someMediasByDays as what is expected in the state when `someMedias` are received by the adapter
