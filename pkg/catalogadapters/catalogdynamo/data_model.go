@@ -24,6 +24,13 @@ type AlbumIndexKey struct {
 	AlbumIndexSK string // AlbumIndexSK identify the object within the index, and is naturally sorted
 }
 
+// MediaByTagKey is the secondary key that lists every media carrying a tag for an owner,
+// across albums, in O(matches).
+type MediaByTagKey struct {
+	MediaByTagPK string // MediaByTagPK is {owner}#{tag}
+	MediaByTagSK string // MediaByTagSK is MEDIA#{id}, naturally unique per media
+}
+
 type AlbumRecord struct {
 	appdynamodb.TablePk
 	AlbumIndexKey
@@ -59,6 +66,41 @@ type MediaRecord struct {
 	Filename      string                 // Filename is the original filename for display purpose only ; physical filename is in MediaLocationData
 	SignatureSize int
 	SignatureHash string
+}
+
+// TagRecord is one item per (media, tag), stored as a sibling of the media on its partition
+// (PK={owner}#MEDIA#{id}, SK=TAG#{tag}). It mirrors the media's AlbumIndexKey partition so a
+// single album query returns the media rows and their tag rows together (no per-media query),
+// and it feeds the MediaByTagIndex GSI to list medias of a tag across albums.
+type TagRecord struct {
+	appdynamodb.TablePk
+	AlbumIndexKey
+	MediaByTagKey
+	Id              string // Id is the media id the tag is attached to
+	Tag             string // Tag is the normalised tag string
+	AlbumOwner      string
+	AlbumFolderName string
+}
+
+func TagPrimaryKey(owner ownermodel.Owner, mediaId catalog.MediaId, tag catalog.Tag) appdynamodb.TablePk {
+	return appdynamodb.TablePk{
+		PK: appdynamodb.MediaPrimaryKeyPK(string(owner), string(mediaId)),
+		SK: fmt.Sprintf("TAG#%s", tag),
+	}
+}
+
+func TagAlbumIndexedKey(owner ownermodel.Owner, folderName catalog.FolderName, mediaId catalog.MediaId, tag catalog.Tag) AlbumIndexKey {
+	return AlbumIndexKey{
+		AlbumIndexPK: AlbumIndexedKeyPK(owner, folderName),
+		AlbumIndexSK: fmt.Sprintf("TAG#%s#%s", mediaId, tag),
+	}
+}
+
+func MediaByTagIndexedKey(owner ownermodel.Owner, mediaId catalog.MediaId, tag catalog.Tag) MediaByTagKey {
+	return MediaByTagKey{
+		MediaByTagPK: fmt.Sprintf("%s#%s", owner, tag),
+		MediaByTagSK: fmt.Sprintf("MEDIA#%s", mediaId),
+	}
 }
 
 func AlbumPrimaryKey(owner ownermodel.Owner, folderName catalog.FolderName) appdynamodb.TablePk {
@@ -233,6 +275,51 @@ func unmarshalMediaMetaData(attributes map[string]types.AttributeValue) (*catalo
 	}
 
 	return &media, nil
+}
+
+func marshalTag(albumId catalog.AlbumId, mediaId catalog.MediaId, tag catalog.Tag) (map[string]types.AttributeValue, error) {
+	if err := albumId.IsValid(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if isBlank(string(mediaId)) {
+		return nil, errors.Errorf("media ID is mandatory")
+	}
+
+	return attributevalue.MarshalMap(&TagRecord{
+		TablePk:         TagPrimaryKey(albumId.Owner, mediaId, tag),
+		AlbumIndexKey:   TagAlbumIndexedKey(albumId.Owner, albumId.FolderName, mediaId, tag),
+		MediaByTagKey:   MediaByTagIndexedKey(albumId.Owner, mediaId, tag),
+		Id:              string(mediaId),
+		Tag:             tag.String(),
+		AlbumOwner:      albumId.Owner.String(),
+		AlbumFolderName: albumId.FolderName.String(),
+	})
+}
+
+func unmarshalTag(attributes map[string]types.AttributeValue) (catalog.MediaId, catalog.Tag, catalog.AlbumId, error) {
+	var data TagRecord
+	if err := attributevalue.UnmarshalMap(attributes, &data); err != nil {
+		return "", catalog.Tag{}, catalog.AlbumId{}, errors.Wrapf(err, "failed to unmarshal tag attributes %+v", attributes)
+	}
+
+	tag, err := catalog.NewTag(data.Tag)
+	if err != nil {
+		return "", catalog.Tag{}, catalog.AlbumId{}, errors.Wrapf(err, "invalid persisted tag %q", data.Tag)
+	}
+
+	albumId := catalog.AlbumId{
+		Owner:      ownermodel.Owner(data.AlbumOwner),
+		FolderName: catalog.NewFolderName(data.AlbumFolderName),
+	}
+	return catalog.MediaId(data.Id), tag, albumId, nil
+}
+
+// isTagRecord reports whether an item is a (media, tag) sibling, based on its sort key.
+func isTagRecord(attributes map[string]types.AttributeValue) bool {
+	if sk, ok := attributes["SK"].(*types.AttributeValueMemberS); ok {
+		return strings.HasPrefix(sk.Value, "TAG#")
+	}
+	return false
 }
 
 func readMediaId(record map[string]types.AttributeValue) catalog.MediaId {
