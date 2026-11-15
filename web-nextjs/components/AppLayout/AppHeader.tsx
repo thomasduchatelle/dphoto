@@ -5,6 +5,7 @@ import Link from '@/components/Link';
 import Image from 'next/image';
 import {AuthenticatedUser} from '@/libs/security/session-service';
 import {UserMenu} from './UserMenu';
+import {AppNav} from './AppNav';
 
 export interface AppHeaderProps {
     user: AuthenticatedUser;
@@ -38,8 +39,8 @@ export const AppHeader = ({user, logoutUrl, isScrolled = false}: AppHeaderProps)
                         display: 'flex',
                         alignItems: 'center',
                         textDecoration: 'none',
-                        flexGrow: 1,
                         height: 40,
+                        mr: {xs: 2, sm: 4},
                         position: 'relative',
                         '&:hover': {
                             opacity: 0.8,
@@ -55,6 +56,8 @@ export const AppHeader = ({user, logoutUrl, isScrolled = false}: AppHeaderProps)
                         style={{objectFit: 'contain'}}
                     />
                 </Box>
+                <AppNav/>
+                <Box sx={{flexGrow: 1}}/>
                 <UserMenu user={user} logoutUrl={logoutUrl}/>
             </Toolbar>
         </AppBar>

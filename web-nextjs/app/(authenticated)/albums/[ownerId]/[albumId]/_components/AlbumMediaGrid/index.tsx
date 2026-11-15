@@ -1,6 +1,6 @@
 import {Box, Typography} from '@mui/material';
 import {AlbumId, MediaId, MediaWithinADay} from '@/domains/catalog/language';
-import {MediaThumbnail} from './MediaThumbnail';
+import {MediaThumbnail} from '@/components/MediaThumbnail';
 import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumMediaGridProps {
