@@ -3,7 +3,7 @@
 import {useMemo, useReducer} from 'react';
 import {notFound, useRouter} from 'next/navigation';
 import {Box} from '@mui/material';
-import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
+import {catalogReducer, catalogThunks, CatalogViewerState, MediaId} from '@/domains/catalog';
 import {CatalogViewerPageSelection, catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
 import {displayedAlbumSelector} from '@/domains/catalog/language/selector-displayedAlbum';
 import {deleteDialogSelector} from '@/domains/catalog/album-delete/selector-deleteDialogSelector';
@@ -55,6 +55,7 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                 onRename={thunks.openEditNameDialog}
                 onEditDates={thunks.openEditDatesDialog}
                 onDelete={thunks.openDeleteAlbumDialog}
+                onToggleFavorite={thunks.toggleFavorite}
             />
 
             <ShareAlbumModal
@@ -96,6 +97,7 @@ export interface AlbumPageContentViewProps extends CatalogViewerPageSelection {
     onRename: () => void;
     onEditDates: () => void;
     onDelete: () => void;
+    onToggleFavorite: (mediaId: MediaId, currentTags: string[]) => void;
 }
 
 export function AlbumPageContentView({
@@ -112,6 +114,7 @@ export function AlbumPageContentView({
                                          onRename,
                                          onEditDates,
                                          onDelete,
+                                         onToggleFavorite,
                                      }: AlbumPageContentViewProps) {
     if (error) {
         return <ErrorMessage error={error} title="Failed to load the album"/>;
@@ -136,7 +139,7 @@ export function AlbumPageContentView({
                     <NoMedia nextAlbum={nextAlbum} previousAlbum={previousAlbum}/>
                 ) : (
                     <>
-                        <AlbumMediaGrid albumId={displayedAlbum.albumId} medias={medias}/>
+                        <AlbumMediaGrid albumId={displayedAlbum.albumId} medias={medias} isOwner={isOwner} onToggleFavorite={onToggleFavorite}/>
                         {nextAlbum && (
                             <Box
                                 sx={{

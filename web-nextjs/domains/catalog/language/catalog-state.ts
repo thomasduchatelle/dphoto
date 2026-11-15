@@ -36,6 +36,8 @@ export enum MediaType {
 
 export type MediaId = string
 
+export const FAVORITE_TAG = "favorite"
+
 export interface Media {
     id: MediaId
     type: MediaType
@@ -44,6 +46,7 @@ export interface Media {
     contentPath: string
     thumbnailUrl: string // thumbnailUrl is the display-ready URL of the media thumbnail
     source: string
+    tags: string[] // tags are the normalised tag strings attached to the media (e.g. "favorite", "people:luke")
 }
 
 export interface MediaWithinADay {

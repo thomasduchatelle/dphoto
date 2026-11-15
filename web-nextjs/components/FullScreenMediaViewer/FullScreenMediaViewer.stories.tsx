@@ -12,6 +12,7 @@ const sampleMedias: Media[] = [
         contentPath: '/thumbnails/clair-obscur-1.jpg',
         thumbnailUrl: '/thumbnails/clair-obscur-1.jpg',
         source: '',
+        tags: [],
     },
     {
         id: 'media-2',
@@ -21,6 +22,7 @@ const sampleMedias: Media[] = [
         contentPath: '/thumbnails/clair-obscur-2.jpg',
         thumbnailUrl: '/thumbnails/clair-obscur-2.jpg',
         source: '',
+        tags: [],
     },
     {
         id: 'media-3',
@@ -30,6 +32,7 @@ const sampleMedias: Media[] = [
         contentPath: '/thumbnails/clair-obscur-3.jpg',
         thumbnailUrl: '/thumbnails/clair-obscur-3.jpg',
         source: '',
+        tags: [],
     },
 ];
 
@@ -81,6 +84,7 @@ export const WithVideo: Story = {
                 contentPath: '/videos/clair-obscur.mp4',
                 thumbnailUrl: '/video-placeholder.png',
                 source: '',
+                tags: [],
             },
             ...sampleMedias,
         ],
@@ -99,6 +103,7 @@ export const BrokenImage: Story = {
                 contentPath: '/thumbnails/this-media-does-not-exist.jpg',
                 thumbnailUrl: '/thumbnails/this-media-does-not-exist.jpg',
                 source: '',
+                tags: [],
             },
         ],
         displayedIndex: 0,

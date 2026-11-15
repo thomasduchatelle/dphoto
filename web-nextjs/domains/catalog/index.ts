@@ -4,6 +4,7 @@ export * from "./navigation";
 export * from "./album-delete";
 export * from "./album-edit-dates";
 export * from "./album-edit-name";
+export * from "./media-tag";
 export * from "./actions";
 export * from "./thunks";
 export * from "./language";
