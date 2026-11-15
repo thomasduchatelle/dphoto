@@ -421,6 +421,72 @@ func TestCatalogAuthorizer_CanCreateAlbum(t *testing.T) {
 	}
 }
 
+func TestCatalogAuthorizer_CanManageTags(t *testing.T) {
+	owner1 := ownermodel.Owner("owner-1")
+	owner2 := ownermodel.Owner("owner-2")
+	userOfOwner1 := usermodel.CurrentUser{UserId: "user-1", Owner: &owner1}
+	userOfOwner2 := usermodel.CurrentUser{UserId: "user-2", Owner: &owner2}
+	userNoOwner := usermodel.CurrentUser{UserId: "user-3"}
+	isAccessForbidden := func(t assert.TestingT, err error, i ...interface{}) bool {
+		return assert.ErrorIs(t, err, aclcore.AccessForbiddenError)
+	}
+
+	type fields struct {
+		HasPermissionPort HasPermissionPort
+	}
+	type args struct {
+		user  usermodel.CurrentUser
+		owner ownermodel.Owner
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "it should GRANT to the owner itself (from the currentUser)",
+			fields:  fields{HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{}},
+			args:    args{user: userOfOwner1, owner: owner1},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should GRANT to a user that is MainOwner of the resources owner",
+			fields: fields{
+				HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{
+					Scopes: []*aclcore.Scope{
+						{Type: aclcore.MainOwnerScope, GrantedTo: userNoOwner.UserId, ResourceOwner: owner1},
+					},
+				},
+			},
+			args:    args{user: userNoOwner, owner: owner1},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "it should DENY a user whose owner is a different owner",
+			fields:  fields{HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{}},
+			args:    args{user: userOfOwner2, owner: owner1},
+			wantErr: isAccessForbidden,
+		},
+		{
+			name:    "it should DENY a user with no owner and no MainOwner permission",
+			fields:  fields{HasPermissionPort: &aclcore.ScopeReadRepositoryInMemory{}},
+			args:    args{user: userNoOwner, owner: owner1},
+			wantErr: isAccessForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &CatalogAuthorizer{
+				HasPermissionPort: tt.fields.HasPermissionPort,
+			}
+			err := a.CanManageTags(context.Background(), tt.args.user, tt.args.owner)
+			tt.wantErr(t, err, "CanManageTags(%v, %v)", tt.args.user, tt.args.owner)
+		})
+	}
+}
+
 func TestCatalogAuthorizer_CanDeleteAlbum(t *testing.T) {
 	owner1 := ownermodel.Owner("owner-1")
 	owner2 := ownermodel.Owner("owner-2")

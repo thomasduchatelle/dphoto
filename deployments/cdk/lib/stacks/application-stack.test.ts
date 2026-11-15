@@ -88,6 +88,12 @@ describe('DPhotoApplicationStack', () => {
         const randomizeCoversFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/albums/{folderName}/covers/refresh', 'POST');
         expect(randomizeCoversFunction).toBeDefined();
 
+        const tagMediaFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/medias/{mediaId}/tags/{tag}', 'PUT');
+        expect(tagMediaFunction).toBeDefined();
+
+        const listMediasByTagFunction = findLambdaByRoute(template, '/api/v1/owners/{owner}/tags/{tag}/medias', 'GET');
+        expect(listMediasByTagFunction).toBeDefined();
+
         const oauthTokenEndpoint = findLambdaByRoute(template, '/oauth/token', 'POST');
         expect(oauthTokenEndpoint).toBeDefined();
 
@@ -97,6 +103,7 @@ describe('DPhotoApplicationStack', () => {
         expect(fakeCatalogAccessManager.hasBeenGrantedForCatalogRead(
             functionName(listAlbumsFunction),
             functionName(listMediasFunction),
+            functionName(listMediasByTagFunction),
         )).toBe('');
         expect(fakeCatalogAccessManager.hasOnlyBeenGrantedCatalogReadWriteTo(
             functionName(createAlbumsFunction),
@@ -105,6 +112,7 @@ describe('DPhotoApplicationStack', () => {
             functionName(amendDateFunction),
             functionName(amendNameFunction),
             functionName(randomizeCoversFunction),
+            functionName(tagMediaFunction),
             functionName(oauthTokenEndpoint),
             functionName(oauthLogoutEndpoint),
         )).toBe('');

@@ -189,6 +189,38 @@ func TestMatchRoute(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
+			name: "it should match the tag-media route and not the get-media route (different segment count)",
+			routes: []Route{
+				{Pattern: "/api/v1/owners/{owner}/medias/{mediaId}/{filename}", Method: "PUT"},
+				{Pattern: "/api/v1/owners/{owner}/medias/{mediaId}/tags/{tag}", Method: "PUT"},
+			},
+			method:      "PUT",
+			path:        "/api/v1/owners/alice/medias/media123/tags/people:luke",
+			wantPattern: "/api/v1/owners/{owner}/medias/{mediaId}/tags/{tag}",
+			wantMethod:  "PUT",
+			wantPathParams: map[string]string{
+				"owner":   "alice",
+				"mediaId": "media123",
+				"tag":     "people:luke",
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "it should match the list-medias-by-tag route",
+			routes: []Route{
+				{Pattern: "/api/v1/owners/{owner}/tags/{tag}/medias", Method: "GET"},
+			},
+			method:      "GET",
+			path:        "/api/v1/owners/alice/tags/favorite/medias",
+			wantPattern: "/api/v1/owners/{owner}/tags/{tag}/medias",
+			wantMethod:  "GET",
+			wantPathParams: map[string]string{
+				"owner": "alice",
+				"tag":   "favorite",
+			},
+			wantErr: assert.NoError,
+		},
+		{
 			name: "it should handle special characters in path parameters",
 			routes: []Route{
 				{Pattern: "/api/v1/owners/{owner}/albums/{folderName}", Method: "GET"},

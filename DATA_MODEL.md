@@ -13,6 +13,7 @@ Schema
 | {OWNER}#ALBUM            | ALBUM#{FOLDER_NAME}                         | Album metadata                                           | catalogdynamo        |
 | {OWNER}#ALBUM            | ALBUM#{FOLDER_NAME}#COVERS                  | Album covers (whole ordered set, up to 4) as one item. Moves to the new SK on folder-change rename; unchanged on in-place rename; deleted when the album is deleted. | catalogdynamo        |
 | {OWNER}#MEDIA#{id}       | #METADATA                                   | Media metadata                                           | catalogdynamo        | 
+| {OWNER}#MEDIA#{id}       | TAG#{TAG}                                   | One item per (media, tag) ; sibling of the media, carries MediaId + AlbumId (owner + folder). Loaded alongside the media when an album is read. | catalogdynamo        |
 | {OWNER}#MEDIA#{id}       | LOCATION#                                   | Media location if the archive                            | archivedynamo        |
 | USER#{EMAIL}             | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | Scopes allowed for a user (ownership, shared, ...)       | aclscopedynamodb     |
 | USER#{EMAIL}             | IDENTITY#                                   | Details about the user (name, picture, ...)              | aclidentitydynamodb  |
@@ -28,8 +29,9 @@ Schema
 
 | Name                   | PK name / SK name              | PK                                      | SK                                          | Description                                                                                      |
 |------------------------|--------------------------------|-----------------------------------------|---------------------------------------------|--------------------------------------------------------------------------------------------------|
-| AlbumIndex             | AlbumIndexPK / AlbumIndexSK    | {OWNER}#{FOLDER_NAME}                   | #METADATA                                   | Catalog - Find medias by albums                                                                  |
+| AlbumIndex             | AlbumIndexPK / AlbumIndexSK    | {OWNER}#{FOLDER_NAME}                   | #METADATA ; MEDIA#{DATETIME}#{ID} ; TAG#{ID}#{TAG} | Catalog - Find medias of an album (and their tag siblings) in one query                   |
 | ReverseLocationIndex   | LocationKeyPrefix / LocationId | {S3 KEY (WITHOUT FILE NAME)}            | {MEDIA ID}                                  | Archive - Warmup cache                                                                           |
 | ReverseGrantIndex      | ResourceOwner / SK             | {OWNER}                                 | SCOPE#{TYPE}#{RESOURCE OWNER}#{RESOURCE ID} | ACL - list to whom resources are shared                                                          |
 | RefreshTokenExpiration | SK / AbsoluteExpiryTime        | #REFRESH_SPEC                           | {DATETIME}                                  | OAuth - housekeeping old refresh token                                                           |
 | AlbumViewByAlbumIndex  | AlbumViewIndexPK / SK          | ALBUM#{OWNER}#{FOLDER_NAME}#ALBUMS_VIEW | {AVAILABILITY_TYPE}#{OWNER}#{FOLDER_NAME}   | View - list every viewer row of an album (drives event-driven updates without an ACL round-trip) |
+| MediaByTagIndex        | MediaByTagPK / MediaByTagSK    | {OWNER}#{TAG}                           | MEDIA#{MEDIA ID}                            | Catalog - list every media carrying a tag for an owner, across albums, in O(matches)             |

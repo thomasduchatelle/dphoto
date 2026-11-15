@@ -38,19 +38,37 @@ func (r *Repository) FindMedias(ctx context.Context, request *catalog.FindMediaR
 		return nil, err
 	}
 
+	// The album partition holds, for each media, one #METADATA row and zero or more TAG#
+	// siblings. A single query returns both: medias are collected in order, tags are attached
+	// to their media by id, so an album read carries every media with its tags (no per-media
+	// query).
 	var medias []*catalog.MediaMeta
+	mediaById := make(map[catalog.MediaId]*catalog.MediaMeta)
 
 	crawler := dynamoutils.NewQueryStream(ctx, r.client, queries)
 	for crawler.HasNext() {
-		media, err := unmarshalMediaMetaData(crawler.Next())
+		item := crawler.Next()
+
+		if isTagRecord(item) {
+			mediaId, tag, _, err := unmarshalTag(item)
+			if err != nil {
+				return nil, err
+			}
+			if media, ok := mediaById[mediaId]; ok {
+				media.Tags = append(media.Tags, tag)
+			}
+			continue
+		}
+
+		media, err := unmarshalMediaMetaData(item)
 		if err != nil {
 			return nil, err
 		}
-
+		mediaById[media.Id] = media
 		medias = append(medias, media)
 	}
 
-	return medias, err
+	return medias, crawler.Error()
 }
 
 func (r *Repository) FindMediaCurrentAlbum(ctx context.Context, owner ownermodel.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {

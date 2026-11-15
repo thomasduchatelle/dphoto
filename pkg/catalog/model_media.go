@@ -49,6 +49,14 @@ type MediaMeta struct {
 	Filename  string         // Filename original filename when image was uploaded
 	Type      MediaType
 	Details   MediaDetails
+	Tags      []Tag // Tags are the normalised labels attached to the media, loaded alongside it
+}
+
+// MediaWithAlbum is a media carrying the AlbumId it belongs to, returned when listing medias
+// across albums (e.g. by tag) so the caller can link each media back to its album.
+type MediaWithAlbum struct {
+	MediaMeta
+	AlbumId AlbumId
 }
 
 // MediaDetails are extracted from the metadata within photos and videos and stored as it.
