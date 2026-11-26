@@ -51,7 +51,7 @@ export function EditDatesModal({
                                    onEndAtDayEndChange,
                                }: EditDatesModalProps) {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -72,7 +72,7 @@ export function EditDatesModal({
             >
                 <Box sx={{height: '4px', marginTop: '0px !important'}}>
                     {isLoading && (
-                        <LinearProgress sx={{borderRadius: {sm: '4px 4px 0px 0px'}}}/>
+                        <LinearProgress sx={{borderRadius: {lg: '4px 4px 0px 0px'}}}/>
                     )}
                 </Box>
                 <DialogTitle id="edit-dates-dialog-title">Edit dates of {albumName}</DialogTitle>

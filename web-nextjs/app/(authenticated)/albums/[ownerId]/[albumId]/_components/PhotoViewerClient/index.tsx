@@ -1,9 +1,12 @@
 'use client';
 
-import {useReducer} from 'react';
+import {useMemo, useReducer} from 'react';
 import {notFound, useRouter, useSearchParams} from 'next/navigation';
-import {catalogReducer, CatalogViewerState} from '@/domains/catalog';
+import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
 import {selectFullScreenMediaViewer, photoUrl, albumUrl} from '@/domains/catalog/navigation';
+import {displayedAlbumSelector} from '@/domains/catalog/language/selector-displayedAlbum';
+import {newClientAdapterFactory} from '@/domains/catalog/adapters/client-adapter-factory';
+import {useSessionAwareThunks} from '@/libs/security/client';
 import {FullScreenMediaViewer} from '@/components/FullScreenMediaViewer';
 
 export type PhotoViewerCloseBehavior = 'back' | 'album';
@@ -15,9 +18,12 @@ export interface PhotoViewerClientProps {
 }
 
 export function PhotoViewerClient({initialState, mediaId, closeBehavior}: PhotoViewerClientProps) {
-    const [state] = useReducer(catalogReducer, initialState);
+    const [state, dispatch] = useReducer(catalogReducer, initialState);
     const router = useRouter();
     const slideshow = useSearchParams().has('play');
+
+    const adapter = useMemo(() => newClientAdapterFactory(), []);
+    const thunks = useSessionAwareThunks(catalogThunks, {dispatch, adapter}, state);
 
     const {albumId, medias, displayedIndex, mediaNotFound} = selectFullScreenMediaViewer(state, mediaId);
 
@@ -42,8 +48,11 @@ export function PhotoViewerClient({initialState, mediaId, closeBehavior}: PhotoV
             medias={medias}
             displayedIndex={displayedIndex}
             slideshow={slideshow}
+            isOwner={displayedAlbumSelector(state).displayedAlbumIdIsOwned}
             onClose={handleClose}
             onNavigate={handleNavigate}
+            onAddTag={thunks.addTag}
+            onRemoveTag={thunks.removeTag}
         />
     );
 }

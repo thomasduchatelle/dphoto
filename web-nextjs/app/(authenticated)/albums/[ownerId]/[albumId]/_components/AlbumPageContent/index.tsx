@@ -3,7 +3,7 @@
 import {useEffect, useMemo, useReducer} from 'react';
 import {notFound, useParams, useRouter} from 'next/navigation';
 import {Box} from '@mui/material';
-import {catalogReducer, catalogThunks, CatalogViewerState} from '@/domains/catalog';
+import {catalogReducer, catalogThunks, CatalogViewerState, MediaId} from '@/domains/catalog';
 import {CatalogViewerPageSelection, catalogViewerPageSelector} from '@/domains/catalog/navigation/selector-catalog-viewer-page';
 import {albumUrl} from '@/domains/catalog/navigation/album-url';
 import {displayedAlbumSelector} from '@/domains/catalog/language/selector-displayedAlbum';
@@ -67,6 +67,8 @@ export function AlbumPageContent({initialState}: AlbumPageContentProps) {
                 onEditDates={thunks.openEditDatesDialog}
                 onDelete={thunks.openDeleteAlbumDialog}
                 onCreateAlbum={thunks.openCreateDialog}
+                onAddTag={thunks.addTag}
+                onRemoveTag={thunks.removeTag}
             />
 
             <CreateAlbumModal
@@ -121,6 +123,8 @@ export interface AlbumPageContentViewProps extends CatalogViewerPageSelection {
     onEditDates: () => void;
     onDelete: () => void;
     onCreateAlbum: () => void;
+    onAddTag: (mediaId: MediaId, tag: string) => void;
+    onRemoveTag: (mediaId: MediaId, tag: string) => void;
 }
 
 export function AlbumPageContentView({
@@ -138,6 +142,8 @@ export function AlbumPageContentView({
                                          onEditDates,
                                          onDelete,
                                          onCreateAlbum,
+                                         onAddTag,
+                                         onRemoveTag,
                                      }: AlbumPageContentViewProps) {
     if (error) {
         return <ErrorMessage error={error} title="Failed to load the album"/>;
@@ -163,7 +169,7 @@ export function AlbumPageContentView({
                     <NoMedia nextAlbum={nextAlbum} previousAlbum={previousAlbum}/>
                 ) : (
                     <>
-                        <AlbumMediaGrid albumId={displayedAlbum.albumId} medias={medias}/>
+                        <AlbumMediaGrid albumId={displayedAlbum.albumId} medias={medias} isOwner={isOwner} onAddTag={onAddTag} onRemoveTag={onRemoveTag}/>
                         {nextAlbum && (
                             <Box
                                 sx={{

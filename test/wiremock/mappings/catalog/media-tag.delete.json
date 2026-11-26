@@ -1,0 +1,10 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "DELETE",
+    "urlPattern": "/api/v1/owners/[^/]+/medias/[^/]+/tags/.+"
+  },
+  "response": {
+    "status": 204
+  }
+}

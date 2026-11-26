@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
 import {fn} from 'storybook/test';
 import {FullScreenMediaViewer} from './index';
-import {Media, MediaType} from '@/domains/catalog/language';
+import {FAVORITE_TAG, Media, MediaType} from '@/domains/catalog/language';
 
 const sampleMedias: Media[] = [
     {
@@ -12,6 +12,7 @@ const sampleMedias: Media[] = [
         contentPath: '/thumbnails/clair-obscur-1.jpg',
         thumbnailUrl: '/thumbnails/clair-obscur-1.jpg',
         source: '',
+        tags: [],
     },
     {
         id: 'media-2',
@@ -21,6 +22,7 @@ const sampleMedias: Media[] = [
         contentPath: '/thumbnails/clair-obscur-2.jpg',
         thumbnailUrl: '/thumbnails/clair-obscur-2.jpg',
         source: '',
+        tags: [FAVORITE_TAG],
     },
     {
         id: 'media-3',
@@ -30,6 +32,7 @@ const sampleMedias: Media[] = [
         contentPath: '/thumbnails/clair-obscur-3.jpg',
         thumbnailUrl: '/thumbnails/clair-obscur-3.jpg',
         source: '',
+        tags: [],
     },
 ];
 
@@ -42,8 +45,11 @@ const meta = {
     args: {
         medias: sampleMedias,
         displayedIndex: 0,
+        isOwner: true,
         onClose: fn(),
         onNavigate: fn(),
+        onAddTag: fn(),
+        onRemoveTag: fn(),
     },
 } satisfies Meta<typeof FullScreenMediaViewer>;
 
@@ -51,6 +57,25 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const Favourite: Story = {
+    args: {
+        displayedIndex: 1,
+    },
+};
+
+export const NotOwner: Story = {
+    args: {
+        isOwner: false,
+        displayedIndex: 1,
+    },
+};
+
+export const NotOwnerNotFavourite: Story = {
+    args: {
+        isOwner: false,
+    },
+};
 
 export const Slideshow: Story = {
     args: {
@@ -81,6 +106,7 @@ export const WithVideo: Story = {
                 contentPath: '/videos/clair-obscur.mp4',
                 thumbnailUrl: '/video-placeholder.png',
                 source: '',
+                tags: [],
             },
             ...sampleMedias,
         ],
@@ -99,6 +125,7 @@ export const BrokenImage: Story = {
                 contentPath: '/thumbnails/this-media-does-not-exist.jpg',
                 thumbnailUrl: '/thumbnails/this-media-does-not-exist.jpg',
                 source: '',
+                tags: [],
             },
         ],
         displayedIndex: 0,

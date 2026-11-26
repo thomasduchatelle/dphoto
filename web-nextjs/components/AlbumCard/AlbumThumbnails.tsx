@@ -9,7 +9,7 @@ export interface AlbumThumbnailsProps {
 }
 
 export const AlbumThumbnails = ({album, compact = false}: AlbumThumbnailsProps) => (
-    <Box sx={{display: 'grid', gridTemplateColumns: compact ? 'repeat(4, 1fr)' : {xs: 'repeat(4, 1fr)', sm: 'repeat(2, 1fr)'}, gap: 1}}>
+    <Box sx={{display: 'grid', gridTemplateColumns: compact ? 'repeat(4, 1fr)' : {xs: 'repeat(4, 1fr)', lg: 'repeat(2, 1fr)'}, gap: 1}}>
         {[0, 1, 2, 3].map((i) => {
             const cover = album.covers[i];
             return (

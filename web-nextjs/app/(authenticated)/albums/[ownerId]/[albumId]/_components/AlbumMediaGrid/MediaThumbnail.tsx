@@ -3,19 +3,95 @@
 import {Box, IconButton} from '@mui/material';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import DownloadIcon from '@mui/icons-material/Download';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import Link from '@/components/Link';
-import {AlbumId, Media, MediaType} from '@/domains/catalog/language';
+import {AlbumId, FAVORITE_TAG, Media, MediaId, MediaType} from '@/domains/catalog/language';
 import {photoUrl} from '@/domains/catalog/navigation/photo-url';
 import {toLocaleTimeOfDay} from '@/libs/dates';
+
+interface FavoriteStarProps {
+    isOwner: boolean;
+    isFavorite: boolean;
+    onToggle: (e: React.MouseEvent) => void;
+}
+
+function FavoriteStar({isOwner, isFavorite, onToggle}: FavoriteStarProps) {
+    if (!isOwner) {
+        if (!isFavorite) {
+            return null;
+        }
+        return (
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    p: 0.75,
+                    color: 'warning.main',
+                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))',
+                    pointerEvents: 'none',
+                }}
+            >
+                <StarIcon sx={{fontSize: '1.2rem', display: 'block'}}/>
+            </Box>
+        );
+    }
+
+    return (
+        <Box
+            className="MediaThumbnail-star"
+            sx={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                alignItems: 'flex-start',
+                justifyContent: 'flex-end',
+                p: 0.25,
+            }}
+        >
+            <IconButton
+                aria-label={isFavorite ? 'Remove from favourites' : 'Mark as favourite'}
+                aria-pressed={isFavorite}
+                title={isFavorite ? 'Remove from favourites' : 'Mark as favourite'}
+                size="small"
+                onClick={onToggle}
+                sx={{
+                    color: isFavorite ? 'warning.main' : 'rgba(255,255,255,0.85)',
+                    p: 0.5,
+                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))',
+                }}
+            >
+                {isFavorite
+                    ? <StarIcon sx={{fontSize: '1.2rem'}}/>
+                    : <StarBorderIcon sx={{fontSize: '1.2rem'}}/>}
+            </IconButton>
+        </Box>
+    );
+}
 
 export interface MediaThumbnailProps {
     albumId: AlbumId;
     media: Media;
+    isOwner: boolean;
+    onAddTag: (mediaId: MediaId, tag: string) => void;
+    onRemoveTag: (mediaId: MediaId, tag: string) => void;
 }
 
-export function MediaThumbnail({albumId, media}: MediaThumbnailProps) {
+export function MediaThumbnail({albumId, media, isOwner, onAddTag, onRemoveTag}: MediaThumbnailProps) {
     const downloadUrl = media.contentPath;
     const downloadName = media.contentPath.split('/').pop() || media.id;
+    const isFavorite = media.tags.includes(FAVORITE_TAG);
+
+    const handleToggleFavorite = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isFavorite) {
+            onRemoveTag(media.id, FAVORITE_TAG);
+        } else {
+            onAddTag(media.id, FAVORITE_TAG);
+        }
+    };
 
     const handleDownload = (e: React.MouseEvent) => {
         // The thumbnail is itself a link; stop navigation and trigger a plain
@@ -47,6 +123,12 @@ export function MediaThumbnail({albumId, media}: MediaThumbnailProps) {
                 '&:hover .MediaThumbnail-overlay': {
                     display: {lg: 'flex'},
                 },
+                '& .MediaThumbnail-star': {
+                    display: isFavorite ? 'flex' : {xs: 'flex', lg: 'none'},
+                },
+                '&:hover .MediaThumbnail-star': {
+                    display: 'flex',
+                },
             }}
         >
             <Box
@@ -56,6 +138,7 @@ export function MediaThumbnail({albumId, media}: MediaThumbnailProps) {
                 loading="lazy"
                 sx={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}}
             />
+            <FavoriteStar isOwner={isOwner} isFavorite={isFavorite} onToggle={handleToggleFavorite}/>
             {media.type === MediaType.VIDEO && (
                 <Box
                     sx={{
@@ -64,6 +147,7 @@ export function MediaThumbnail({albumId, media}: MediaThumbnailProps) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        pointerEvents: 'none',
                     }}
                 >
                     <PlayCircleOutlineIcon sx={{color: 'rgba(255,255,255,0.9)', fontSize: {xs: 32, md: 40}}}/>

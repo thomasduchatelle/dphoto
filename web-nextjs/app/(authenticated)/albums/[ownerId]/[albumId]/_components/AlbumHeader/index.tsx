@@ -1,6 +1,6 @@
 'use client';
 
-import {Box, Button, IconButton, Stack, Tooltip, Typography} from '@mui/material';
+import {Box, IconButton, Stack, Tooltip, Typography} from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Link from '@/components/Link';
 import {Album} from '@/domains/catalog/language';
@@ -54,23 +54,42 @@ export function AlbumHeader({album, isOwner, playHref, onShare, onRename, onEdit
                 )}
             </Box>
             <Stack direction="row" gap={1} alignItems="center" sx={{display: {xs: 'none', lg: 'flex'}, flexShrink: 0}}>
-                <Button
-                    variant="outlined"
-                    color='secondary'
-                    startIcon={<PlayArrowIcon/>}
-                    component={Link}
-                    href={playHref ?? ''}
-                    prefetch={false}
-                    disabled={!playHref}
-                >
-                    Play
-                </Button>
+                <Tooltip title="Play">
+                    <span>
+                        <IconButton
+                            color='secondary'
+                            component={Link}
+                            href={playHref ?? ''}
+                            prefetch={false}
+                            disabled={!playHref}
+                            aria-label="Play"
+                        >
+                            <PlayArrowIcon/>
+                        </IconButton>
+                    </span>
+                </Tooltip>
                 {isOwner && (
                     <>
-                        <Button variant="outlined" color='secondary' startIcon={<AddIcon/>} onClick={onCreateAlbum}>Create</Button>
-                        <Button variant="outlined" color='secondary' startIcon={<ShareIcon/>} onClick={onShare}>Share</Button>
-                        <Button variant="outlined" color='secondary' startIcon={<DriveFileRenameOutlineIcon/>} onClick={onRename}>Rename</Button>
-                        <Button variant="outlined" color='secondary' startIcon={<CalendarMonthIcon/>} onClick={onEditDates}>Dates</Button>
+                        <Tooltip title="Create album">
+                            <IconButton color='secondary' onClick={onCreateAlbum} aria-label="Create album">
+                                <AddIcon/>
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Share album">
+                            <IconButton color='secondary' onClick={onShare} aria-label="Share album">
+                                <ShareIcon/>
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Rename album">
+                            <IconButton color='secondary' onClick={onRename} aria-label="Rename album">
+                                <DriveFileRenameOutlineIcon/>
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit dates">
+                            <IconButton color='secondary' onClick={onEditDates} aria-label="Edit dates">
+                                <CalendarMonthIcon/>
+                            </IconButton>
+                        </Tooltip>
                         <Tooltip title="Delete album">
                             <IconButton color='secondary' onClick={onDelete} aria-label="Delete album">
                                 <DeleteIcon/>

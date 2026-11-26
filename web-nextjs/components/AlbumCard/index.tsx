@@ -48,7 +48,7 @@ export const AlbumCard = ({album, onShare, compact = false}: AlbumCardProps) => 
                 position: 'relative',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                [theme.breakpoints.up('sm')]: {
+                [theme.breakpoints.up('lg')]: {
                     '&:hover': {
                         boxShadow: '0 12px 40px rgba(24, 89, 134, 0.4)',
                         '& .album-photo': {
