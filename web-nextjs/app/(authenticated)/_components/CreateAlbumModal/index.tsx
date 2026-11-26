@@ -63,7 +63,7 @@ export function CreateAlbumModal({
                                      onEndDateChange,
                                  }: CreateAlbumModalProps) {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -84,7 +84,7 @@ export function CreateAlbumModal({
             >
                 <Box sx={{height: '4px', marginTop: '0px !important'}}>
                     {isLoading && (
-                        <LinearProgress sx={{borderRadius: {sm: '4px 4px 0px 0px'}}}/>
+                        <LinearProgress sx={{borderRadius: {lg: '4px 4px 0px 0px'}}}/>
                     )}
                 </Box>
                 <DialogTitle id="create-album-dialog-title">Create an album</DialogTitle>

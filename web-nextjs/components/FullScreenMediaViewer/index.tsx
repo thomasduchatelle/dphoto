@@ -1,6 +1,6 @@
 'use client';
 
-import Lightbox, {Slide} from 'yet-another-react-lightbox';
+import Lightbox, {IconButton, Label, Slide, useLightboxState} from 'yet-another-react-lightbox';
 import Counter from 'yet-another-react-lightbox/plugins/counter';
 import Download from 'yet-another-react-lightbox/plugins/download';
 import Slideshow from 'yet-another-react-lightbox/plugins/slideshow';
@@ -8,15 +8,20 @@ import Video from 'yet-another-react-lightbox/plugins/video';
 import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import 'yet-another-react-lightbox/styles.css';
 import 'yet-another-react-lightbox/plugins/counter.css';
-import {Media, MediaType} from '@/domains/catalog/language';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import {FAVORITE_TAG, Media, MediaId, MediaType} from '@/domains/catalog/language';
 import {mediaUrl} from '@/libs/requests/media-url';
 
 export interface FullScreenMediaViewerProps {
     medias: Media[];
     displayedIndex: number;
     slideshow?: boolean;
+    isOwner: boolean;
     onClose: () => void;
     onNavigate: (mediaId: string) => void;
+    onAddTag: (mediaId: MediaId, tag: string) => void;
+    onRemoveTag: (mediaId: MediaId, tag: string) => void;
 }
 
 // Widths requested through the custom image URL (`contentPath?w=<width>`). YARL
@@ -56,7 +61,27 @@ function toSlide(media: Media): Slide {
     };
 }
 
-export function FullScreenMediaViewer({medias, displayedIndex, slideshow, onClose, onNavigate}: FullScreenMediaViewerProps) {
+function FavoriteButton({medias, isOwner, onAddTag, onRemoveTag}: Pick<FullScreenMediaViewerProps, 'medias' | 'isOwner' | 'onAddTag' | 'onRemoveTag'>) {
+    const {currentIndex} = useLightboxState();
+    const media = medias[currentIndex];
+    if (!media) {
+        return null;
+    }
+
+    const isFavorite = media.tags.includes(FAVORITE_TAG);
+
+    return (
+        <IconButton
+            key="favorite"
+            label={(isFavorite ? 'Remove from favourites' : 'Mark as favourite') as Label}
+            icon={isFavorite ? StarIcon : StarBorderIcon}
+            disabled={!isOwner}
+            onClick={() => isFavorite ? onRemoveTag(media.id, FAVORITE_TAG) : onAddTag(media.id, FAVORITE_TAG)}
+        />
+    );
+}
+
+export function FullScreenMediaViewer({medias, displayedIndex, slideshow, isOwner, onClose, onNavigate, onAddTag, onRemoveTag}: FullScreenMediaViewerProps) {
     return (
         <Lightbox
             open
@@ -68,6 +93,14 @@ export function FullScreenMediaViewer({medias, displayedIndex, slideshow, onClos
             carousel={{finite: true, padding: 0}}
             controller={{closeOnBackdropClick: true}}
             slideshow={{autoplay: slideshow}}
+            toolbar={{
+                buttons: [
+                    <FavoriteButton key="favorite" medias={medias} isOwner={isOwner} onAddTag={onAddTag} onRemoveTag={onRemoveTag}/>,
+                    'download',
+                    'slideshow',
+                    'close',
+                ],
+            }}
             on={{
                 view: ({index}) => {
                     const media = medias[index];

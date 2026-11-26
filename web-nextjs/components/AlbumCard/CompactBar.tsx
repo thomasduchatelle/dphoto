@@ -78,7 +78,7 @@ export const CompactBar = ({album, temperatureColor, dateRange, compact, onShare
         </Box>
         <Typography
             sx={{
-                display: {xs: 'block', sm: compact ? 'block' : 'none'},
+                display: {xs: 'block', lg: compact ? 'block' : 'none'},
                 width: '100%',
                 fontFamily: 'Courier New, monospace',
                 fontSize: 11,

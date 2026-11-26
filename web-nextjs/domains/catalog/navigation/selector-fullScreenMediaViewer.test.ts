@@ -11,6 +11,7 @@ const mediaA: Media = {
     contentPath: '/media-a.jpg',
     thumbnailUrl: '/media-a.jpg?w=360',
     source: '',
+    tags: [],
 };
 
 const mediaB: Media = {
@@ -21,6 +22,7 @@ const mediaB: Media = {
     contentPath: '/media-b.jpg',
     thumbnailUrl: '/media-b.jpg?w=360',
     source: '',
+    tags: [],
 };
 
 const mediaC: Media = {
@@ -31,6 +33,7 @@ const mediaC: Media = {
     contentPath: '/media-c.jpg',
     thumbnailUrl: '/media-c.jpg?w=360',
     source: '',
+    tags: [],
 };
 
 const stateWithMultipleMedias: CatalogViewerState = {

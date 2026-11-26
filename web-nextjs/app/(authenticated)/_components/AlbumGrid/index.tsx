@@ -49,7 +49,7 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, onDeleteAlbum, filter
                             startIcon={<AddIcon/>}
                             onClick={onCreateAlbum}
                             aria-label="Create album"
-                            sx={{display: {xs: 'none', sm: 'inline-flex'}}}
+                            sx={{display: {xs: 'none', lg: 'inline-flex'}}}
                         >
                             Create
                         </Button>
@@ -58,7 +58,7 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, onDeleteAlbum, filter
                                 color="secondary"
                                 onClick={onCreateAlbum}
                                 aria-label="Create album"
-                                sx={{display: {xs: 'inline-flex', sm: 'none'}}}
+                                sx={{display: {xs: 'inline-flex', lg: 'none'}}}
                             >
                                 <AddIcon/>
                             </IconButton>
@@ -73,7 +73,7 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, onDeleteAlbum, filter
                             startIcon={<DeleteIcon/>}
                             onClick={onDeleteAlbum}
                             aria-label="Delete album"
-                            sx={{display: {xs: 'none', sm: 'inline-flex'}}}
+                            sx={{display: {xs: 'none', lg: 'inline-flex'}}}
                         >
                             Delete
                         </Button>
@@ -82,7 +82,7 @@ export const AlbumGrid = ({albums, onShare, onCreateAlbum, onDeleteAlbum, filter
                                 color="secondary"
                                 onClick={onDeleteAlbum}
                                 aria-label="Delete album"
-                                sx={{display: {xs: 'inline-flex', sm: 'none'}}}
+                                sx={{display: {xs: 'inline-flex', lg: 'none'}}}
                             >
                                 <DeleteIcon/>
                             </IconButton>

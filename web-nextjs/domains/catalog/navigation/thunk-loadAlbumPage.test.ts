@@ -18,6 +18,7 @@ const someMedias: Media[] = [
         contentPath: '/media-1.jpg',
         thumbnailUrl: '/media-1.jpg?w=360',
         source: '',
+        tags: [],
     },
 ];
 

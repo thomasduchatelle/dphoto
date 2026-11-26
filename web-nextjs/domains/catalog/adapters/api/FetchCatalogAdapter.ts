@@ -1,6 +1,6 @@
 import {Album, AlbumCover, AlbumId, albumKey, CatalogError, computeAlbumTemperatures, CoverOrigin, Media, MediaType, OwnerDetails, UserDetails} from "../../language";
 import {GrantAlbumAccessAPI, RevokeAlbumAccessAPI} from "../../sharing";
-import {DeleteAlbumPort, FetchAlbumsAndMediasPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
+import {AddTagPort, DeleteAlbumPort, FetchAlbumsAndMediasPort, RemoveTagPort, SaveAlbumNamePort, UpdateAlbumDatesPort} from "@/domains/catalog";
 import {CreateAlbumPort, CreateAlbumRequest} from "../../album-create/thunk-submitCreateAlbum";
 import {mediaUrl} from "@/libs/requests/media-url";
 import {SessionExpiredException} from "@/libs/security/client";
@@ -29,6 +29,7 @@ interface RestMedia {
     filename: string
     time: string
     source: string
+    tags?: string[]
 }
 
 interface RestUserDetails {
@@ -51,6 +52,8 @@ export type MasterCatalogAdapter =
     & UpdateAlbumDatesPort
     & SaveAlbumNamePort
     & FetchAlbumsAndMediasPort
+    & AddTagPort
+    & RemoveTagPort
 
 export class FetchCatalogAdapter implements MasterCatalogAdapter {
     constructor(
@@ -193,9 +196,24 @@ export class FetchCatalogAdapter implements MasterCatalogAdapter {
                         thumbnailUrl: type === MediaType.VIDEO
                             ? '/video-placeholder.png'
                             : mediaUrl(contentPath, 360),
+                        tags: media.tags ?? [],
                     };
                 }).sort((a, b) => b.time.getTime() - a.time.getTime())
             })
+    }
+
+    public async addTag(owner: string, mediaId: string, tag: string): Promise<void> {
+        await this.fetchRequest(
+            `/owners/${owner}/medias/${mediaId}/tags/${encodeURIComponent(tag)}`,
+            {method: 'PUT'}
+        );
+    }
+
+    public async removeTag(owner: string, mediaId: string, tag: string): Promise<void> {
+        await this.fetchRequest(
+            `/owners/${owner}/medias/${mediaId}/tags/${encodeURIComponent(tag)}`,
+            {method: 'DELETE'}
+        );
     }
 
     public grantAccessToAlbum(albumId: AlbumId, email: string): Promise<void> {

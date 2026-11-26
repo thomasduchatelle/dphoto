@@ -253,7 +253,8 @@ function newMedia(mediaId: MediaId, dateTime: string): Media {
         uiRelativePath: `${mediaId}/image-${mediaId}.jpg`,
         contentPath: `/content/$\{id}/image-${mediaId}.jpg`,
         thumbnailUrl: `/content/$\{id}/image-${mediaId}.jpg?w=360`,
-        source: 'Samsung Galaxy S24'
+        source: 'Samsung Galaxy S24',
+        tags: []
     };
 }
 

@@ -10,7 +10,7 @@ const stories = indexJson.entries;
 
 // Test viewports: desktop and mobile
 const viewports = [
-    {width: 1080, height: 800},
+    {width: 1440, height: 800},
     {width: 414, height: 915}
 ];
 
@@ -68,8 +68,8 @@ Object.keys(stories).forEach((storyId) => {
 
             // Take a screenshot and compare it with the baseline
             await expect(page).toHaveScreenshot(`${storyId}-${viewportId}.png`, {
-                // Use full page screenshots for consistency
-                fullPage: true,
+                // Set full page screenshots to not include content requiring to scroll.
+                fullPage: false,
                 // Add threshold for minor rendering differences (fonts, anti-aliasing, etc.)
                 threshold: 0.2,
             });

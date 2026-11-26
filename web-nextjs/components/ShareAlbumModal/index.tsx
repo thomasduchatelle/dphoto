@@ -47,7 +47,7 @@ function isValidEmail(email: string): boolean {
 
 export function ShareAlbumModal({open, sharedWith, suggestions, error, onClose, onGrant, onRevoke}: ShareAlbumModalProps) {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
     return (
         <Dialog

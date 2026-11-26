@@ -1,14 +1,17 @@
 import {Box, Typography} from '@mui/material';
-import {AlbumId, MediaWithinADay} from '@/domains/catalog/language';
+import {AlbumId, MediaId, MediaWithinADay} from '@/domains/catalog/language';
 import {MediaThumbnail} from './MediaThumbnail';
 import {toLocaleDateWithDay} from "@/libs/dates";
 
 export interface AlbumMediaGridProps {
     albumId: AlbumId;
     medias: MediaWithinADay[];
+    isOwner: boolean;
+    onAddTag: (mediaId: MediaId, tag: string) => void;
+    onRemoveTag: (mediaId: MediaId, tag: string) => void;
 }
 
-export function AlbumMediaGrid({albumId, medias}: AlbumMediaGridProps) {
+export function AlbumMediaGrid({albumId, medias, isOwner, onAddTag, onRemoveTag}: AlbumMediaGridProps) {
     return (
         <Box sx={(theme) => ({
             borderTop: '1px solid rgba(255,255,255,0.07)',
@@ -27,7 +30,14 @@ export function AlbumMediaGrid({albumId, medias}: AlbumMediaGridProps) {
                         }}
                     >
                         {dayMedias.map((media) => (
-                            <MediaThumbnail key={media.id} albumId={albumId} media={media}/>
+                            <MediaThumbnail
+                                key={media.id}
+                                albumId={albumId}
+                                media={media}
+                                isOwner={isOwner}
+                                onAddTag={onAddTag}
+                                onRemoveTag={onRemoveTag}
+                            />
                         ))}
                     </Box>
                 </Box>
