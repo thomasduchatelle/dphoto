@@ -4,7 +4,7 @@ import {Construct} from 'constructs';
 import {Workload} from '../utils/workload';
 import {pinLogicalId} from '../utils/override-logical-ids';
 
-export const CatalogTableIndexes = ["AlbumIndex", "ReverseLocationIndex", "ReverseGrantIndex", "RefreshTokenExpiration", "AlbumViewByAlbumIndex"];
+export const CatalogTableIndexes = ["AlbumIndex", "ReverseLocationIndex", "ReverseGrantIndex", "RefreshTokenExpiration", "AlbumViewByAlbumIndex", "MediaByTagIndex"];
 
 export interface CatalogStoreConstructProps {
     environmentName: string;
@@ -97,6 +97,18 @@ export class CatalogStoreConstruct extends Construct {
                         type: dynamodb.AttributeType.STRING
                     },
                     projectionType: dynamodb.ProjectionType.ALL
+                },
+                {
+                    indexName: 'MediaByTagIndex',
+                    partitionKey: {
+                        name: 'MediaByTagPK',
+                        type: dynamodb.AttributeType.STRING
+                    },
+                    sortKey: {
+                        name: 'MediaByTagSK',
+                        type: dynamodb.AttributeType.STRING
+                    },
+                    projectionType: dynamodb.ProjectionType.KEYS_ONLY
                 }
             ],
         });

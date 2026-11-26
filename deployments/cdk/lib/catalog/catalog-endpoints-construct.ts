@@ -27,6 +27,7 @@ export class CatalogEndpointsConstruct extends Construct {
 
         this.readOnlyCatalogEndpoints(endpointProps, props.catalogStore);
         this.amendTimelineEndpoints(endpointProps, props.catalogStore, props.archiveMessaging, props.archiveStore);
+        this.taggingEndpoints(endpointProps, props.catalogStore);
         this.accessControlEndpoints(endpointProps, props.catalogStore);
     }
 
@@ -104,6 +105,36 @@ export class CatalogEndpointsConstruct extends Construct {
             method: apigatewayv2.HttpMethod.POST,
         });
         catalogStore.grantCatalogReadWriteAccess(randomizeAlbumCovers.lambda);
+    }
+
+    private taggingEndpoints(endpointProps: {
+        environmentName: string;
+        httpApi: HttpApi;
+        authorizer?: IHttpRouteAuthorizer
+    }, catalogStore: CatalogAccessManager) {
+        const tagMedia = new SimpleGoEndpoint(this, 'TagMedia', {
+            ...endpointProps,
+            functionName: 'tag-media',
+            routes: [
+                {
+                    path: '/api/v1/owners/{owner}/medias/{mediaId}/tags/{tag}',
+                    method: apigatewayv2.HttpMethod.PUT,
+                },
+                {
+                    path: '/api/v1/owners/{owner}/medias/{mediaId}/tags/{tag}',
+                    method: apigatewayv2.HttpMethod.DELETE,
+                }
+            ]
+        });
+        catalogStore.grantCatalogReadWriteAccess(tagMedia.lambda);
+
+        const listMediasByTag = createSingleRouteEndpoint(this, 'ListMediasByTag', {
+            ...endpointProps,
+            functionName: 'list-medias-by-tag',
+            path: '/api/v1/owners/{owner}/tags/{tag}/medias',
+            method: apigatewayv2.HttpMethod.GET,
+        });
+        catalogStore.grantCatalogReadAccess(listMediasByTag.lambda);
     }
 
     private accessControlEndpoints(endpointProps: {

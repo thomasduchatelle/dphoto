@@ -38,6 +38,8 @@ func (r *Repository) FindMedias(ctx context.Context, request *catalog.FindMediaR
 		return nil, err
 	}
 
+	// Each media's #METADATA row carries its tag set (the source of truth), so a single album
+	// query returns every media with its tags — no per-media query, no tag sibling to merge.
 	var medias []*catalog.MediaMeta
 
 	crawler := dynamoutils.NewQueryStream(ctx, r.client, queries)
@@ -46,11 +48,10 @@ func (r *Repository) FindMedias(ctx context.Context, request *catalog.FindMediaR
 		if err != nil {
 			return nil, err
 		}
-
 		medias = append(medias, media)
 	}
 
-	return medias, err
+	return medias, crawler.Error()
 }
 
 func (r *Repository) FindMediaCurrentAlbum(ctx context.Context, owner ownermodel.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {

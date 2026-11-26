@@ -155,6 +155,29 @@ var supportedRoutes = []AuthorizedRoute{
 		},
 	},
 
+	// Tagging endpoints - owner-only
+	{
+		Route: Route{Pattern: "/api/v1/owners/{owner}/medias/{mediaId}/tags/{tag}", Method: "PUT"},
+		Authorize: func(ctx context.Context, authoriser *catalogacl.CatalogAuthorizer, user usermodel.CurrentUser, pathParams map[string]string) error {
+			// tag-media (add)
+			return authoriser.CanManageTags(ctx, user, ownermodel.Owner(pathParams["owner"]))
+		},
+	},
+	{
+		Route: Route{Pattern: "/api/v1/owners/{owner}/medias/{mediaId}/tags/{tag}", Method: "DELETE"},
+		Authorize: func(ctx context.Context, authoriser *catalogacl.CatalogAuthorizer, user usermodel.CurrentUser, pathParams map[string]string) error {
+			// tag-media (remove)
+			return authoriser.CanManageTags(ctx, user, ownermodel.Owner(pathParams["owner"]))
+		},
+	},
+	{
+		Route: Route{Pattern: "/api/v1/owners/{owner}/tags/{tag}/medias", Method: "GET"},
+		Authorize: func(ctx context.Context, authoriser *catalogacl.CatalogAuthorizer, user usermodel.CurrentUser, pathParams map[string]string) error {
+			// list-medias-by-tag
+			return authoriser.CanManageTags(ctx, user, ownermodel.Owner(pathParams["owner"]))
+		},
+	},
+
 	// Archive endpoints
 	{
 		Route: Route{Pattern: "/api/v1/owners/{owner}/medias/{mediaId}/{filename}", Method: "GET"},

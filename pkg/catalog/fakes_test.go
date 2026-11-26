@@ -23,12 +23,16 @@ type albumWithMedias struct {
 // mutation and deleting an album that still contains medias is explicitly rejected
 // (AlbumNotEmptyErr).
 //
+// Tags are held in a separate map keyed by media id, because a media is tagged independently
+// from the album it lives in: moving a media between albums never touches its tags.
+//
 // It implements every port the production code consumes:
 // catalog.TimelineRepository, catalog.MediaReadRepository, catalog.TransferMediasRepositoryPort,
 // catalog.CountMediasBySelectorsPort, catalog.InsertMediasRepositoryPort, catalog.FindAlbumByOwnerPort,
-// catalog.RepositoryAdapter.
+// catalog.TagRepository, catalog.RepositoryAdapter.
 type CatalogInMemory struct {
 	albums map[catalog.AlbumId]*albumWithMedias
+	tags   map[catalog.MediaId][]catalog.Tag
 }
 
 // AlbumSeed is the single seed structure consumed by NewCatalogInMemory: an album with
@@ -54,12 +58,20 @@ func withMedias(albumId catalog.AlbumId, medias ...*catalog.MediaMeta) AlbumSeed
 }
 
 func NewCatalogInMemory(seeds ...AlbumSeed) *CatalogInMemory {
-	store := &CatalogInMemory{albums: make(map[catalog.AlbumId]*albumWithMedias)}
+	store := &CatalogInMemory{
+		albums: make(map[catalog.AlbumId]*albumWithMedias),
+		tags:   make(map[catalog.MediaId][]catalog.Tag),
+	}
 	for _, seed := range seeds {
 		clone := *seed.Album
 		store.albums[seed.Album.AlbumId] = &albumWithMedias{
 			Album:  clone,
 			Medias: append([]*catalog.MediaMeta(nil), seed.Medias...),
+		}
+		for _, media := range seed.Medias {
+			if len(media.Tags) > 0 {
+				store.tags[media.Id] = append([]catalog.Tag(nil), media.Tags...)
+			}
 		}
 	}
 	return store
@@ -179,9 +191,19 @@ func (c *CatalogInMemory) FindMedias(_ context.Context, request *catalog.FindMed
 		if _, ok := request.AlbumFolderNames[id.FolderName]; !ok {
 			continue
 		}
-		medias = append(medias, entry.Medias...)
+		for _, media := range entry.Medias {
+			medias = append(medias, c.withTags(media))
+		}
 	}
 	return medias, nil
+}
+
+// withTags returns a copy of the media with the tags held in the separate tag map, mirroring
+// production where the tag set lives on the media #METADATA row (its source of truth).
+func (c *CatalogInMemory) withTags(media *catalog.MediaMeta) *catalog.MediaMeta {
+	clone := *media
+	clone.Tags = append([]catalog.Tag(nil), c.tags[media.Id]...)
+	return &clone
 }
 
 func (c *CatalogInMemory) FindMediaCurrentAlbum(_ context.Context, owner ownermodel.Owner, mediaId catalog.MediaId) (*catalog.AlbumId, error) {
@@ -197,6 +219,76 @@ func (c *CatalogInMemory) FindMediaCurrentAlbum(_ context.Context, owner ownermo
 		}
 	}
 	return nil, catalog.MediaNotFoundError
+}
+
+// AddTag attaches the tag to the owner's media. It full-scans to prove the media is owned
+// (MediaNotFoundError otherwise), then records the tag independently of the album. Idempotent.
+func (c *CatalogInMemory) AddTag(ctx context.Context, owner ownermodel.Owner, mediaId catalog.MediaId, tag catalog.Tag) error {
+	if _, err := c.FindMediaCurrentAlbum(ctx, owner, mediaId); err != nil {
+		return err
+	}
+	for _, existing := range c.tags[mediaId] {
+		if existing.String() == tag.String() {
+			return nil
+		}
+	}
+	c.tags[mediaId] = append(c.tags[mediaId], tag)
+	return nil
+}
+
+// RemoveTag detaches the tag from the owner's media. Idempotent: removing an absent tag, or a
+// tag of a media that is not owned, succeeds.
+func (c *CatalogInMemory) RemoveTag(_ context.Context, _ ownermodel.Owner, mediaId catalog.MediaId, tag catalog.Tag) error {
+	remaining := c.tags[mediaId][:0]
+	for _, existing := range c.tags[mediaId] {
+		if existing.String() != tag.String() {
+			remaining = append(remaining, existing)
+		}
+	}
+	if len(remaining) == 0 {
+		delete(c.tags, mediaId)
+	} else {
+		c.tags[mediaId] = remaining
+	}
+	return nil
+}
+
+// FindMediasByTag full-scans the medias to return every one carrying the tag for the owner,
+// each with the album it currently lives in and its full tag set.
+func (c *CatalogInMemory) FindMediasByTag(_ context.Context, owner ownermodel.Owner, tag catalog.Tag) ([]*catalog.MediaWithAlbum, error) {
+	var medias []*catalog.MediaWithAlbum
+	for albumId, entry := range c.albums {
+		if albumId.Owner != owner {
+			continue
+		}
+		for _, media := range entry.Medias {
+			for _, existing := range c.tags[media.Id] {
+				if existing.String() == tag.String() {
+					medias = append(medias, &catalog.MediaWithAlbum{
+						MediaMeta: *c.withTags(media),
+						AlbumId:   albumId,
+					})
+					break
+				}
+			}
+		}
+	}
+	return medias, nil
+}
+
+// TagsByMedia projects the tag map as sorted normalised strings so a test can assert the full
+// persisted tag state.
+func (c *CatalogInMemory) TagsByMedia() map[catalog.MediaId][]string {
+	result := make(map[catalog.MediaId][]string, len(c.tags))
+	for mediaId, tags := range c.tags {
+		values := make([]string, 0, len(tags))
+		for _, tag := range tags {
+			values = append(values, tag.String())
+		}
+		slices.Sort(values)
+		result[mediaId] = values
+	}
+	return result
 }
 
 func (c *CatalogInMemory) InsertMedias(_ context.Context, owner ownermodel.Owner, medias []catalog.CreateMediaRequest) error {
@@ -413,5 +505,3 @@ func pickedCover(media *catalog.MediaMeta) catalog.Cover {
 func randomCover(media *catalog.MediaMeta) catalog.Cover {
 	return catalog.Cover{MediaId: media.Id, Filename: media.Filename, Origin: catalog.CoverOriginRandom}
 }
-
-

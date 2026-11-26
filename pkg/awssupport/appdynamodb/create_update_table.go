@@ -47,6 +47,8 @@ func CreateTableIfNecessary(ctx context.Context, table string, client *dynamodb.
 			{AttributeName: aws.String("ResourceOwner"), AttributeType: types.ScalarAttributeTypeS},
 			{AttributeName: aws.String("AbsoluteExpiryTime"), AttributeType: types.ScalarAttributeTypeS},
 			{AttributeName: aws.String("AlbumViewIndexPK"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("MediaByTagPK"), AttributeType: types.ScalarAttributeTypeS},
+			{AttributeName: aws.String("MediaByTagSK"), AttributeType: types.ScalarAttributeTypeS},
 		},
 		KeySchema: []types.KeySchemaElement{
 			{AttributeName: aws.String("PK"), KeyType: types.KeyTypeHash},
@@ -97,6 +99,15 @@ func CreateTableIfNecessary(ctx context.Context, table string, client *dynamodb.
 					{AttributeName: aws.String("SK"), KeyType: types.KeyTypeRange},
 				},
 				Projection:            &types.Projection{ProjectionType: types.ProjectionTypeAll},
+				ProvisionedThroughput: secondaryIndexProvisionedThroughput,
+			},
+			{
+				IndexName: aws.String("MediaByTagIndex"), // from 'catalogdynamo' tagging extension
+				KeySchema: []types.KeySchemaElement{
+					{AttributeName: aws.String("MediaByTagPK"), KeyType: types.KeyTypeHash},
+					{AttributeName: aws.String("MediaByTagSK"), KeyType: types.KeyTypeRange},
+				},
+				Projection:            &types.Projection{ProjectionType: types.ProjectionTypeKeysOnly},
 				ProvisionedThroughput: secondaryIndexProvisionedThroughput,
 			},
 		},
