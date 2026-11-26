@@ -91,6 +91,12 @@ func CatalogMediaQueries(ctx context.Context) *catalog.MediaQueries {
 	})
 }
 
+func TagServiceCase(ctx context.Context) *catalog.TagService {
+	return singletons.MustSingleton(func() (*catalog.TagService, error) {
+		return catalog.NewTagService(CatalogRepository(ctx)), nil
+	})
+}
+
 func CoverServiceCase(ctx context.Context) *catalog.CoverService {
 	return singletons.MustSingleton(func() (*catalog.CoverService, error) {
 		repository := CatalogRepository(ctx)

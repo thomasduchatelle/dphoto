@@ -19,6 +19,7 @@ type Media struct {
 	Filename string    `json:"filename"` // Filename is user-friendly and have the right extension
 	Time     time.Time `json:"time"`     // Time is the datetime at which the media has been taken
 	Source   string    `json:"source"`   // Source is the camera that capture the media, taken from the file metadata
+	Tags     []string  `json:"tags"`     // Tags are the normalised tag strings attached to the media
 }
 
 func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
@@ -51,10 +52,19 @@ func Handler(request events.APIGatewayV2HTTPRequest) (common.Response, error) {
 			Filename: media.Filename,
 			Time:     media.Details.DateTime,
 			Source:   strings.Join([]string{media.Details.Make, media.Details.Model}, " "),
+			Tags:     tagStrings(media.Tags),
 		}
 	}
 
 	return common.Ok(resp)
+}
+
+func tagStrings(tags []catalog.Tag) []string {
+	result := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		result = append(result, tag.String())
+	}
+	return result
 }
 
 func main() {

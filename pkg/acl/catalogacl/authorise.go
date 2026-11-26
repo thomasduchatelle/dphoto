@@ -125,6 +125,27 @@ func (a *CatalogAuthorizer) CanCreateAlbum(ctx context.Context, user usermodel.C
 	return nil, aclcore.AccessForbiddenError
 }
 
+// CanManageTags returns nil if the user owns the resources of owner (and may therefore tag,
+// untag, and browse by tag their medias), or an error otherwise. Tags are owner-only: visitor
+// access is out of scope.
+func (a *CatalogAuthorizer) CanManageTags(ctx context.Context, user usermodel.CurrentUser, owner ownermodel.Owner) error {
+	if user.Owner != nil && *user.Owner == owner {
+		return nil
+	}
+
+	permissions, err := a.HasPermissionPort.ListScopesByUser(ctx, user.UserId, aclcore.MainOwnerScope)
+	if err != nil {
+		return errors.Wrapf(err, "failed to check permissions for user %s", user.UserId)
+	}
+	for _, perm := range permissions {
+		if perm.ResourceOwner == owner {
+			return nil
+		}
+	}
+
+	return aclcore.AccessForbiddenError
+}
+
 // CanDeleteAlbum returns nil if the user is allowed to delete the album, or an error otherwise.
 func (a *CatalogAuthorizer) CanDeleteAlbum(ctx context.Context, user usermodel.CurrentUser, albumId catalog.AlbumId) error {
 	if user.Owner != nil && *user.Owner == albumId.Owner {

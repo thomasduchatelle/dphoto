@@ -24,6 +24,13 @@ type AlbumIndexKey struct {
 	AlbumIndexSK string // AlbumIndexSK identify the object within the index, and is naturally sorted
 }
 
+// MediaByTagKey is the secondary key that lists every media carrying a tag for an owner,
+// across albums, in O(matches).
+type MediaByTagKey struct {
+	MediaByTagPK string // MediaByTagPK is {owner}#{tag}
+	MediaByTagSK string // MediaByTagSK is MEDIA#{id}, naturally unique per media
+}
+
 type AlbumRecord struct {
 	appdynamodb.TablePk
 	AlbumIndexKey
@@ -59,6 +66,35 @@ type MediaRecord struct {
 	Filename      string                 // Filename is the original filename for display purpose only ; physical filename is in MediaLocationData
 	SignatureSize int
 	SignatureHash string
+	Tags          []string `dynamodbav:"Tags,stringset,omitempty"` // Tags is the source of truth of the media's tags, stored as a String Set so ADD/DELETE merge concurrent writes ; TAG# siblings are a derived index
+}
+
+// TagRecord is one item per (media, tag), stored as a sibling of the media on its partition
+// (PK={owner}#MEDIA#{id}, SK=TAG#{tag}). It is a derived index item feeding the MediaByTagIndex
+// GSI to list medias of a tag across albums ; the tag set source of truth is the media's
+// #METADATA row. It carries no album reference, so moving a media between albums never touches
+// its tags. TagVersion carries the media's #METADATA TagVersion at the time it was written, so
+// concurrent add/remove of the same tag reconcile the sibling in version order.
+type TagRecord struct {
+	appdynamodb.TablePk
+	MediaByTagKey
+	Id         string // Id is the media id the tag is attached to
+	Tag        string // Tag is the normalised tag string
+	TagVersion int64  // TagVersion is the media's #METADATA TagVersion that last wrote this sibling ; guards against a stale concurrent delete
+}
+
+func TagPrimaryKey(owner ownermodel.Owner, mediaId catalog.MediaId, tag catalog.Tag) appdynamodb.TablePk {
+	return appdynamodb.TablePk{
+		PK: appdynamodb.MediaPrimaryKeyPK(string(owner), string(mediaId)),
+		SK: fmt.Sprintf("TAG#%s", tag),
+	}
+}
+
+func MediaByTagIndexedKey(owner ownermodel.Owner, mediaId catalog.MediaId, tag catalog.Tag) MediaByTagKey {
+	return MediaByTagKey{
+		MediaByTagPK: fmt.Sprintf("%s#%s", owner, tag),
+		MediaByTagSK: fmt.Sprintf("MEDIA#%s", mediaId),
+	}
 }
 
 func AlbumPrimaryKey(owner ownermodel.Owner, folderName catalog.FolderName) appdynamodb.TablePk {
@@ -221,6 +257,12 @@ func unmarshalMediaMetaData(attributes map[string]types.AttributeValue) (*catalo
 	}
 
 	details.DateTime = data.DateTime // note: mapstructure do not support times
+
+	tags, err := unmarshalTags(data.Tags)
+	if err != nil {
+		return nil, err
+	}
+
 	media := catalog.MediaMeta{
 		Id: catalog.MediaId(data.Id),
 		Signature: catalog.MediaSignature{
@@ -230,9 +272,57 @@ func unmarshalMediaMetaData(attributes map[string]types.AttributeValue) (*catalo
 		Filename: data.Filename,
 		Type:     catalog.MediaType(data.Type),
 		Details:  details,
+		Tags:     tags,
 	}
 
 	return &media, nil
+}
+
+func unmarshalTags(raw []string) ([]catalog.Tag, error) {
+	if len(raw) == 0 {
+		return nil, nil
+	}
+	tags := make([]catalog.Tag, 0, len(raw))
+	for _, value := range raw {
+		tag, err := catalog.NewTag(value)
+		if err != nil {
+			return nil, errors.Wrapf(err, "invalid persisted tag %q", value)
+		}
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
+func marshalTag(owner ownermodel.Owner, mediaId catalog.MediaId, tag catalog.Tag, version int64) (map[string]types.AttributeValue, error) {
+	if err := owner.IsValid(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if isBlank(string(mediaId)) {
+		return nil, errors.Errorf("media ID is mandatory")
+	}
+
+	return attributevalue.MarshalMap(&TagRecord{
+		TablePk:       TagPrimaryKey(owner, mediaId, tag),
+		MediaByTagKey: MediaByTagIndexedKey(owner, mediaId, tag),
+		Id:            string(mediaId),
+		Tag:           tag.String(),
+		TagVersion:    version,
+	})
+}
+
+// unmarshalTagMediaId reads the media id from a MediaByTagIndex item. The index projects
+// KEYS_ONLY, so the id is derived from the MediaByTagSK (MEDIA#{id}) rather than a projected
+// attribute.
+func unmarshalTagMediaId(attributes map[string]types.AttributeValue) (catalog.MediaId, error) {
+	value, ok := attributes["MediaByTagSK"].(*types.AttributeValueMemberS)
+	if !ok {
+		return "", errors.Errorf("tag index item is missing MediaByTagSK: %+v", attributes)
+	}
+	id, found := strings.CutPrefix(value.Value, "MEDIA#")
+	if !found || id == "" {
+		return "", errors.Errorf("tag index item has an unexpected MediaByTagSK %q", value.Value)
+	}
+	return catalog.MediaId(id), nil
 }
 
 func readMediaId(record map[string]types.AttributeValue) catalog.MediaId {
